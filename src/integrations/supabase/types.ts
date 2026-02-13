@@ -14,7 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assessments: {
+        Row: {
+          anamnesis_data: Json | null
+          created_at: string
+          diagnosis: Json | null
+          id: string
+          original_assessment_id: string | null
+          paid_at: string | null
+          pain_regions: string[] | null
+          pain_score: number | null
+          payment_status: string | null
+          redo_used: boolean | null
+          status: string
+          test_results: Json | null
+          treatment_plan: Json | null
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          anamnesis_data?: Json | null
+          created_at?: string
+          diagnosis?: Json | null
+          id?: string
+          original_assessment_id?: string | null
+          paid_at?: string | null
+          pain_regions?: string[] | null
+          pain_score?: number | null
+          payment_status?: string | null
+          redo_used?: boolean | null
+          status?: string
+          test_results?: Json | null
+          treatment_plan?: Json | null
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          anamnesis_data?: Json | null
+          created_at?: string
+          diagnosis?: Json | null
+          id?: string
+          original_assessment_id?: string | null
+          paid_at?: string | null
+          pain_regions?: string[] | null
+          pain_score?: number | null
+          payment_status?: string | null
+          redo_used?: boolean | null
+          status?: string
+          test_results?: Json | null
+          treatment_plan?: Json | null
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessments_original_assessment_id_fkey"
+            columns: ["original_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          age: number | null
+          created_at: string
+          full_name: string | null
+          id: string
+          occupation: string | null
+          preferred_language: string | null
+          sex: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          occupation?: string | null
+          preferred_language?: string | null
+          sex?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          occupation?: string | null
+          preferred_language?: string | null
+          sex?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
