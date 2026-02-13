@@ -19,9 +19,10 @@ interface DiagnosisResultProps {
   mode: "basic" | "premium";
   onBack: () => void;
   onNewAssessment: () => void;
+  onGenerateTreatment?: () => void;
 }
 
-const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment }: DiagnosisResultProps) => {
+const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment }: DiagnosisResultProps) => {
   const { t } = useLanguage();
 
   const confidenceConfig = {
@@ -103,6 +104,19 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment }: Diagnosis
                 </li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Premium: Generate Treatment Plan CTA */}
+      {mode === "premium" && onGenerateTreatment && (
+        <Card className="rounded-xl border-primary/30 bg-primary/5">
+          <CardContent className="py-4 text-center space-y-3">
+            <p className="text-sm font-medium text-foreground">{t("diagnosis.treatment_cta_text")}</p>
+            <Button onClick={onGenerateTreatment} className="rounded-xl gap-2">
+              <Sparkles className="h-4 w-4" />
+              {t("diagnosis.generate_treatment")}
+            </Button>
           </CardContent>
         </Card>
       )}
