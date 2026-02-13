@@ -1,25 +1,49 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Globe, ArrowLeft } from "lucide-react";
+import { Globe, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import RedFlagScreening from "@/components/assessment/RedFlagScreening";
 import RedFlagAlert from "@/components/assessment/RedFlagAlert";
 import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/AnamnesisForm";
+import DiagnosisResult from "@/components/assessment/DiagnosisResult";
 
-type AssessmentStep = "redflags" | "redflag_alert" | "anamnesis" | "result";
+type AssessmentStep = "redflags" | "redflag_alert" | "anamnesis" | "loading" | "result";
 
 const Assessment = () => {
   const { type } = useParams<{ type: string }>();
   const mode = type === "premium" ? "premium" : "basic";
-  const { t, toggleLanguage } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [step, setStep] = useState<AssessmentStep>("redflags");
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
+  const [diagnosis, setDiagnosis] = useState<any>(null);
 
-  const handleAnamnesisComplete = (data: AnamnesisData) => {
+  const handleAnamnesisComplete = async (data: AnamnesisData) => {
     setAnamnesisData(data);
-    setStep("result");
+    setStep("loading");
+
+    try {
+      const { data: result, error } = await supabase.functions.invoke("generate-diagnosis", {
+        body: { anamnesisData: data, mode, language },
+      });
+
+      if (error) throw error;
+
+      setDiagnosis(result.diagnosis);
+      setStep("result");
+    } catch (err: any) {
+      console.error("Diagnosis error:", err);
+      toast({
+        title: t("diagnosis.error_title"),
+        description: t("diagnosis.error_desc"),
+        variant: "destructive",
+      });
+      setStep("anamnesis");
+    }
   };
 
   return (
@@ -63,11 +87,20 @@ const Assessment = () => {
             onBack={() => setStep("redflags")}
           />
         )}
-        {step === "result" && anamnesisData && (
+        {step === "loading" && (
           <div className="text-center py-20 space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
             <h2 className="text-2xl font-bold text-foreground">{t("result.processing")}</h2>
             <p className="text-muted-foreground">{t("result.processing_desc")}</p>
           </div>
+        )}
+        {step === "result" && diagnosis && (
+          <DiagnosisResult
+            diagnosis={diagnosis}
+            mode={mode}
+            onBack={() => setStep("anamnesis")}
+            onNewAssessment={() => navigate("/")}
+          />
         )}
       </main>
     </div>

@@ -179,6 +179,24 @@ const translations: Record<Language, Record<string, string>> = {
     // Result
     "result.processing": "Processando sua avaliação...",
     "result.processing_desc": "Em breve você receberá sua hipótese diagnóstica.",
+
+    // Diagnosis
+    "diagnosis.title": "Hipótese Diagnóstica",
+    "diagnosis.confidence_label": "Nível de confiança",
+    "diagnosis.confidence.low": "Baixo",
+    "diagnosis.confidence.moderate": "Moderado",
+    "diagnosis.confidence.high": "Alto",
+    "diagnosis.summary": "Resumo",
+    "diagnosis.explanation": "O que está acontecendo?",
+    "diagnosis.reasoning": "Por que essa hipótese?",
+    "diagnosis.recommendations": "Recomendações",
+    "diagnosis.disclaimer_label": "Aviso importante",
+    "diagnosis.upsell": "Quer uma explicação detalhada, recomendações personalizadas e um plano de tratamento completo?",
+    "diagnosis.upgrade_cta": "Fazer Avaliação Premium",
+    "diagnosis.back": "Voltar",
+    "diagnosis.new_assessment": "Nova Avaliação",
+    "diagnosis.error_title": "Erro ao gerar diagnóstico",
+    "diagnosis.error_desc": "Ocorreu um erro ao processar sua avaliação. Tente novamente.",
   },
   en: {
     // Nav
@@ -350,6 +368,24 @@ const translations: Record<Language, Record<string, string>> = {
     // Result
     "result.processing": "Processing your assessment...",
     "result.processing_desc": "You will receive your diagnostic hypothesis shortly.",
+
+    // Diagnosis
+    "diagnosis.title": "Diagnostic Hypothesis",
+    "diagnosis.confidence_label": "Confidence level",
+    "diagnosis.confidence.low": "Low",
+    "diagnosis.confidence.moderate": "Moderate",
+    "diagnosis.confidence.high": "High",
+    "diagnosis.summary": "Summary",
+    "diagnosis.explanation": "What's happening?",
+    "diagnosis.reasoning": "Why this hypothesis?",
+    "diagnosis.recommendations": "Recommendations",
+    "diagnosis.disclaimer_label": "Important notice",
+    "diagnosis.upsell": "Want a detailed explanation, personalized recommendations and a complete treatment plan?",
+    "diagnosis.upgrade_cta": "Get Premium Assessment",
+    "diagnosis.back": "Back",
+    "diagnosis.new_assessment": "New Assessment",
+    "diagnosis.error_title": "Error generating diagnosis",
+    "diagnosis.error_desc": "An error occurred while processing your assessment. Please try again.",
   },
 };
 
