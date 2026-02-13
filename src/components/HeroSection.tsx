@@ -2,9 +2,11 @@ import { motion } from "framer-motion";
 import { ArrowRight, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <section className="relative overflow-hidden py-20 md:py-32">
@@ -33,10 +35,10 @@ const HeroSection = () => {
           </p>
 
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button size="lg" variant="outline" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto">
+            <Button size="lg" variant="outline" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto" onClick={() => navigate("/assessment/basic")}>
               {t("hero.cta.basic")}
             </Button>
-            <Button size="lg" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto gap-2">
+            <Button size="lg" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto gap-2" onClick={() => navigate("/assessment/premium")}>
               {t("hero.cta.premium")}
               <ArrowRight className="h-4 w-4" />
             </Button>
