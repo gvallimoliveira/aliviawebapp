@@ -10,8 +10,9 @@ import RedFlagAlert from "@/components/assessment/RedFlagAlert";
 import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/AnamnesisForm";
 import FunctionalTests, { type TestResult } from "@/components/assessment/FunctionalTests";
 import DiagnosisResult from "@/components/assessment/DiagnosisResult";
+import TreatmentPlan from "@/components/assessment/TreatmentPlan";
 
-type AssessmentStep = "redflags" | "redflag_alert" | "anamnesis" | "functional_tests" | "loading" | "result";
+type AssessmentStep = "redflags" | "redflag_alert" | "anamnesis" | "functional_tests" | "loading" | "result" | "loading_treatment" | "treatment";
 
 const Assessment = () => {
   const { type } = useParams<{ type: string }>();
@@ -23,6 +24,7 @@ const Assessment = () => {
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [diagnosis, setDiagnosis] = useState<any>(null);
+  const [treatmentPlan, setTreatmentPlan] = useState<any>(null);
 
   const handleAnamnesisComplete = (data: AnamnesisData) => {
     setAnamnesisData(data);
@@ -55,6 +57,26 @@ const Assessment = () => {
         variant: "destructive",
       });
       setStep(mode === "premium" ? "functional_tests" : "anamnesis");
+    }
+  };
+
+  const generateTreatmentPlan = async () => {
+    setStep("loading_treatment");
+    try {
+      const { data: result, error } = await supabase.functions.invoke("generate-treatment", {
+        body: { anamnesisData, testResults, diagnosis, mode, language },
+      });
+      if (error) throw error;
+      setTreatmentPlan(result.treatmentPlan);
+      setStep("treatment");
+    } catch (err: any) {
+      console.error("Treatment plan error:", err);
+      toast({
+        title: t("treatment.error_title"),
+        description: t("treatment.error_desc"),
+        variant: "destructive",
+      });
+      setStep("result");
     }
   };
 
@@ -118,6 +140,21 @@ const Assessment = () => {
             diagnosis={diagnosis}
             mode={mode}
             onBack={() => setStep(mode === "premium" ? "functional_tests" : "anamnesis")}
+            onNewAssessment={() => navigate("/")}
+            onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
+          />
+        )}
+        {step === "loading_treatment" && (
+          <div className="text-center py-20 space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+            <h2 className="text-2xl font-bold text-foreground">{t("treatment.processing")}</h2>
+            <p className="text-muted-foreground">{t("treatment.processing_desc")}</p>
+          </div>
+        )}
+        {step === "treatment" && treatmentPlan && (
+          <TreatmentPlan
+            plan={treatmentPlan}
+            onBack={() => setStep("result")}
             onNewAssessment={() => navigate("/")}
           />
         )}
