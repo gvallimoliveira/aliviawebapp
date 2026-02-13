@@ -8,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import RedFlagScreening from "@/components/assessment/RedFlagScreening";
 import RedFlagAlert from "@/components/assessment/RedFlagAlert";
 import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/AnamnesisForm";
+import FunctionalTests, { type TestResult } from "@/components/assessment/FunctionalTests";
 import DiagnosisResult from "@/components/assessment/DiagnosisResult";
 
-type AssessmentStep = "redflags" | "redflag_alert" | "anamnesis" | "loading" | "result";
+type AssessmentStep = "redflags" | "redflag_alert" | "anamnesis" | "functional_tests" | "loading" | "result";
 
 const Assessment = () => {
   const { type } = useParams<{ type: string }>();
@@ -20,19 +21,30 @@ const Assessment = () => {
   const { toast } = useToast();
   const [step, setStep] = useState<AssessmentStep>("redflags");
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [diagnosis, setDiagnosis] = useState<any>(null);
 
-  const handleAnamnesisComplete = async (data: AnamnesisData) => {
+  const handleAnamnesisComplete = (data: AnamnesisData) => {
     setAnamnesisData(data);
-    setStep("loading");
+    if (mode === "premium") {
+      setStep("functional_tests");
+    } else {
+      generateDiagnosis(data, []);
+    }
+  };
 
+  const handleTestsComplete = (results: TestResult[]) => {
+    setTestResults(results);
+    generateDiagnosis(anamnesisData!, results);
+  };
+
+  const generateDiagnosis = async (data: AnamnesisData, tests: TestResult[]) => {
+    setStep("loading");
     try {
       const { data: result, error } = await supabase.functions.invoke("generate-diagnosis", {
-        body: { anamnesisData: data, mode, language },
+        body: { anamnesisData: data, testResults: tests, mode, language },
       });
-
       if (error) throw error;
-
       setDiagnosis(result.diagnosis);
       setStep("result");
     } catch (err: any) {
@@ -42,7 +54,7 @@ const Assessment = () => {
         description: t("diagnosis.error_desc"),
         variant: "destructive",
       });
-      setStep("anamnesis");
+      setStep(mode === "premium" ? "functional_tests" : "anamnesis");
     }
   };
 
@@ -87,6 +99,13 @@ const Assessment = () => {
             onBack={() => setStep("redflags")}
           />
         )}
+        {step === "functional_tests" && anamnesisData && (
+          <FunctionalTests
+            painRegions={anamnesisData.painRegions}
+            onComplete={handleTestsComplete}
+            onBack={() => setStep("anamnesis")}
+          />
+        )}
         {step === "loading" && (
           <div className="text-center py-20 space-y-4">
             <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
@@ -98,7 +117,7 @@ const Assessment = () => {
           <DiagnosisResult
             diagnosis={diagnosis}
             mode={mode}
-            onBack={() => setStep("anamnesis")}
+            onBack={() => setStep(mode === "premium" ? "functional_tests" : "anamnesis")}
             onNewAssessment={() => navigate("/")}
           />
         )}
