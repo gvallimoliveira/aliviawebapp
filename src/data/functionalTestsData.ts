@@ -347,8 +347,74 @@ export const functionalTests: FunctionalTest[] = [
   },
 ];
 
+// Maps PainMap region IDs to functional test region IDs
+const regionNormalization: Record<string, string[]> = {
+  // Front view
+  head: ["head"],
+  neck_front: ["cervical"],
+  right_shoulder: ["shoulder_front"],
+  left_shoulder: ["shoulder_front"],
+  chest: ["chest"],
+  right_elbow: ["elbow"],
+  left_elbow: ["elbow"],
+  abdomen: ["abdomen"],
+  right_wrist: ["wrist"],
+  left_wrist: ["wrist"],
+  right_hand: ["hand"],
+  left_hand: ["hand"],
+  right_hip: ["hip", "groin"],
+  left_hip: ["hip", "groin"],
+  right_thigh: ["thigh_front"],
+  left_thigh: ["thigh_front"],
+  right_knee: ["knee_front", "knee_side"],
+  left_knee: ["knee_front", "knee_side"],
+  right_shin: ["leg_back"],
+  left_shin: ["leg_back"],
+  right_ankle: ["ankle"],
+  left_ankle: ["ankle"],
+  right_foot: ["foot"],
+  left_foot: ["foot"],
+  // Back view
+  head_back: ["head"],
+  cervical: ["cervical"],
+  upper_back: ["upper_back", "thoracic"],
+  lower_back: ["lower_back", "lumbar"],
+  sacral: ["lower_back", "lumbar"],
+  right_shoulder_back: ["shoulder_back"],
+  left_shoulder_back: ["shoulder_back"],
+  right_gluteal: ["glutes", "hip"],
+  left_gluteal: ["glutes", "hip"],
+  right_hamstring: ["thigh_back"],
+  left_hamstring: ["thigh_back"],
+  right_calf: ["leg_back"],
+  left_calf: ["leg_back"],
+  // Side view
+  head_side: ["head"],
+  neck_side: ["cervical"],
+  shoulder_side: ["shoulder_side", "shoulder_front", "shoulder_back"],
+  trunk_side: ["upper_back", "thoracic", "lower_back", "lumbar"],
+  arm_side: ["elbow"],
+  forearm_side: ["forearm", "wrist"],
+  hip_side: ["hip"],
+  thigh_side: ["thigh_front", "thigh_back"],
+  knee_side: ["knee_side", "knee_front", "knee_back"],
+  leg_side: ["leg_back"],
+  foot_side: ["foot", "ankle"],
+};
+
 export function getTestsForRegions(selectedRegions: string[]): FunctionalTest[] {
+  // Normalize PainMap region IDs to functional test region IDs
+  const normalizedRegions = new Set<string>();
+  selectedRegions.forEach((region) => {
+    const mapped = regionNormalization[region];
+    if (mapped) {
+      mapped.forEach((r) => normalizedRegions.add(r));
+    } else {
+      normalizedRegions.add(region);
+    }
+  });
+
   return functionalTests.filter((test) =>
-    test.regions.some((r) => selectedRegions.includes(r))
+    test.regions.some((r) => normalizedRegions.has(r))
   );
 }
