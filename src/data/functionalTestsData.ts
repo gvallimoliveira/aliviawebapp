@@ -287,6 +287,38 @@ export const functionalTests: FunctionalTest[] = [
     videoUrl: "https://www.youtube.com/watch?v=XISJxsccN28",
     regions: ["ankle", "foot"],
   },
+  {
+    id: "star_excursion_test",
+    category: "stability",
+    nameKey: "ftest.star_excursion_test.name",
+    instructionKey: "ftest.star_excursion_test.instruction",
+    videoUrl: "https://www.youtube.com/watch?v=4GMzE7NV3W0",
+    regions: ["ankle", "foot", "knee_front", "knee_side", "hip"],
+  },
+  {
+    id: "y_balance_test",
+    category: "stability",
+    nameKey: "ftest.y_balance_test.name",
+    instructionKey: "ftest.y_balance_test.instruction",
+    videoUrl: "https://www.youtube.com/watch?v=qFVuS-P2FrI",
+    regions: ["ankle", "foot", "knee_front", "knee_side"],
+  },
+  {
+    id: "single_leg_heel_rise",
+    category: "strength",
+    nameKey: "ftest.single_leg_heel_rise.name",
+    instructionKey: "ftest.single_leg_heel_rise.instruction",
+    videoUrl: "https://www.youtube.com/watch?v=XISJxsccN28",
+    regions: ["ankle", "foot", "leg_back"],
+  },
+  {
+    id: "weight_bearing_lunge_test",
+    category: "mobility",
+    nameKey: "ftest.weight_bearing_lunge_test.name",
+    instructionKey: "ftest.weight_bearing_lunge_test.instruction",
+    videoUrl: "https://www.youtube.com/watch?v=U7woPNLUT3Q",
+    regions: ["ankle", "foot"],
+  },
 
   // ===== ELBOW / WRIST =====
   {
