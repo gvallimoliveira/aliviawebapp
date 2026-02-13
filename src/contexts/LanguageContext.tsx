@@ -68,6 +68,37 @@ const translations: Record<Language, Record<string, string>> = {
     // Footer
     "footer.disclaimer": "Este aplicativo não substitui uma consulta médica. Em caso de emergência, procure atendimento presencial.",
     "footer.rights": "Todos os direitos reservados.",
+
+    // Auth
+    "auth.login_title": "Entrar na sua conta",
+    "auth.login_desc": "Acesse suas avaliações e histórico",
+    "auth.signup_title": "Criar uma conta",
+    "auth.signup_desc": "Cadastre-se para acessar a avaliação premium",
+    "auth.name": "Nome completo",
+    "auth.name_placeholder": "Seu nome",
+    "auth.email": "E-mail",
+    "auth.email_placeholder": "seu@email.com",
+    "auth.password": "Senha",
+    "auth.password_placeholder": "Mínimo 6 caracteres",
+    "auth.login_button": "Entrar",
+    "auth.signup_button": "Cadastrar",
+    "auth.no_account": "Não tem conta? Cadastre-se",
+    "auth.has_account": "Já tem conta? Entrar",
+    "auth.error": "Erro",
+    "auth.check_email": "Verifique seu e-mail",
+    "auth.check_email_desc": "Enviamos um link de confirmação para o seu e-mail.",
+
+    // Dashboard
+    "dashboard.welcome": "Olá",
+    "dashboard.subtitle": "Gerencie suas avaliações de dor",
+    "dashboard.new_basic": "Avaliação Básica",
+    "dashboard.new_basic_desc": "Avaliação gratuita com hipótese diagnóstica",
+    "dashboard.new_premium": "Avaliação Premium",
+    "dashboard.new_premium_desc": "Avaliação completa com plano de tratamento — R$100",
+    "dashboard.history": "Histórico de Avaliações",
+    "dashboard.no_assessments": "Você ainda não realizou nenhuma avaliação.",
+    "dashboard.completed": "Concluída",
+    "dashboard.in_progress": "Em andamento",
   },
   en: {
     // Nav
@@ -128,6 +159,37 @@ const translations: Record<Language, Record<string, string>> = {
     // Footer
     "footer.disclaimer": "This app does not replace a medical consultation. In case of emergency, seek in-person care.",
     "footer.rights": "All rights reserved.",
+
+    // Auth
+    "auth.login_title": "Sign in to your account",
+    "auth.login_desc": "Access your assessments and history",
+    "auth.signup_title": "Create an account",
+    "auth.signup_desc": "Sign up to access the premium assessment",
+    "auth.name": "Full name",
+    "auth.name_placeholder": "Your name",
+    "auth.email": "Email",
+    "auth.email_placeholder": "your@email.com",
+    "auth.password": "Password",
+    "auth.password_placeholder": "Minimum 6 characters",
+    "auth.login_button": "Sign In",
+    "auth.signup_button": "Sign Up",
+    "auth.no_account": "Don't have an account? Sign up",
+    "auth.has_account": "Already have an account? Sign in",
+    "auth.error": "Error",
+    "auth.check_email": "Check your email",
+    "auth.check_email_desc": "We sent a confirmation link to your email.",
+
+    // Dashboard
+    "dashboard.welcome": "Hello",
+    "dashboard.subtitle": "Manage your pain assessments",
+    "dashboard.new_basic": "Basic Assessment",
+    "dashboard.new_basic_desc": "Free assessment with diagnostic hypothesis",
+    "dashboard.new_premium": "Premium Assessment",
+    "dashboard.new_premium_desc": "Complete assessment with treatment plan — R$100",
+    "dashboard.history": "Assessment History",
+    "dashboard.no_assessments": "You haven't completed any assessments yet.",
+    "dashboard.completed": "Completed",
+    "dashboard.in_progress": "In progress",
   },
 };
 
