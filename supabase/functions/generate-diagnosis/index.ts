@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, mode, language } = await req.json();
+    const { anamnesisData, testResults, mode, language } = await req.json();
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
@@ -49,7 +49,10 @@ Response format (JSON):
 - Activity level: ${anamnesisData.activityLevel}
 - Pain score (0-10): ${anamnesisData.painScore}
 
-Assessment mode: ${isBasic ? "Basic (provide only hypothesis, confidence, summary and disclaimer)" : "Premium (provide full detailed analysis)"}
+${testResults && testResults.length > 0 ? `Functional test results:
+${testResults.map((t: any) => `- ${t.testId}: ${t.painful ? "PAINFUL/UNCOMFORTABLE" : "No discomfort"}`).join("\n")}` : "No functional tests performed."}
+
+Assessment mode: ${isBasic ? "Basic (provide only hypothesis, confidence, summary and disclaimer)" : "Premium (provide full detailed analysis including functional test findings)"}
 
 Generate the diagnostic hypothesis in valid JSON format.`;
 
