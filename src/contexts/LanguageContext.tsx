@@ -99,6 +99,16 @@ const translations: Record<Language, Record<string, string>> = {
     "dashboard.no_assessments": "Você ainda não realizou nenhuma avaliação.",
     "dashboard.completed": "Concluída",
     "dashboard.in_progress": "Em andamento",
+    "dashboard.diagnosis_done": "Diagnóstico pronto",
+    "dashboard.active": "Ativo",
+    "dashboard.expired": "Expirado",
+    "dashboard.day_left": "dia restante",
+    "dashboard.days_left": "dias restantes",
+    "dashboard.access_expired": "Acesso expirado",
+    "dashboard.assessments_used": "Avaliações utilizadas",
+    "dashboard.assessment_remaining": "avaliação restante",
+    "dashboard.assessments_remaining": "avaliações restantes",
+    "dashboard.no_assessments_remaining": "Nenhuma avaliação restante neste período",
 
     // Red Flags
     "redflags.title": "Triagem de Segurança",
@@ -442,6 +452,16 @@ const translations: Record<Language, Record<string, string>> = {
     "dashboard.no_assessments": "You haven't completed any assessments yet.",
     "dashboard.completed": "Completed",
     "dashboard.in_progress": "In progress",
+    "dashboard.diagnosis_done": "Diagnosis ready",
+    "dashboard.active": "Active",
+    "dashboard.expired": "Expired",
+    "dashboard.day_left": "day remaining",
+    "dashboard.days_left": "days remaining",
+    "dashboard.access_expired": "Access expired",
+    "dashboard.assessments_used": "Assessments used",
+    "dashboard.assessment_remaining": "assessment remaining",
+    "dashboard.assessments_remaining": "assessments remaining",
+    "dashboard.no_assessments_remaining": "No assessments remaining in this period",
 
     // Red Flags
     "redflags.title": "Safety Screening",
