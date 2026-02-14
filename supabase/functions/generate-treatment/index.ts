@@ -30,6 +30,12 @@ KNOWLEDGE BASE (use as clinical reference):
 - SONAFE (Sociedade Nacional de Fisioterapia Esportiva) publications
 - "Kinesiology of the Musculoskeletal System" by Donald Neumann
 - "Clinical Neurodynamics" by Michael Shacklock
+- Ellenbecker & Cools (BJSM 2010): Evidence-based shoulder impingement rehab - scapular stabilization exercises, rotator cuff strengthening progression, addressing posterior capsule tightness with sleeper stretches and cross-body adduction
+- Fahlstrom et al. (2003): Eccentric calf-muscle training protocol for chronic mid-portion Achilles tendinosis (Alfredson protocol) - 89% success rate. IMPORTANT: This protocol is NOT effective for insertional Achilles tendon pain (only 32% success); for insertional pain, avoid exercises that compress the tendon against the calcaneus
+- Werner et al. (J Shoulder Elbow Surg 2010): Sleep position guidance for shoulder patients - recommend supine sleeping to reduce subacromial pressure; avoid side-lying on affected shoulder and prone positions
+- Teng & Powers (J Athletic Training 2016): For runners with knee pain, assess hip-extensor strength; weak hip extensors → upright trunk → knee overload. Treatment should include hip-extensor strengthening and forward-lean trunk posture training
+- Maranhão-Filho et al. (2011): Unstable surfaces (wobble boards, BOSU) do NOT effectively train proprioception. Prefer progressive balance challenges with firm surfaces and sensory manipulation (eyes closed, head movements)
+- VISA-A Questionnaire: Use for Achilles tendon disorder severity assessment (0-100 scale); scores below 50 indicate significant functional limitation
 
 IMPORTANT RULES:
 - Always respond in ${lang}.
