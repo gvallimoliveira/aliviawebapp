@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ const Auth = () => {
   const { signIn, signUp } = useAuth();
   const { t, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (location.state as any)?.redirectTo || "/dashboard";
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,7 +31,7 @@ const Auth = () => {
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
       } else {
-        navigate("/dashboard");
+        navigate(redirectTo);
       }
     } else {
       const { error } = await signUp(email, password, fullName);

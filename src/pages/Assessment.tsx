@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Globe, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import RedFlagScreening from "@/components/assessment/RedFlagScreening";
@@ -18,6 +19,7 @@ const Assessment = () => {
   const { type } = useParams<{ type: string }>();
   const mode = type === "premium" ? "premium" : "basic";
   const { t, language, toggleLanguage } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [step, setStep] = useState<AssessmentStep>("redflags");
@@ -25,22 +27,85 @@ const Assessment = () => {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [diagnosis, setDiagnosis] = useState<any>(null);
   const [treatmentPlan, setTreatmentPlan] = useState<any>(null);
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
 
-  const handleAnamnesisComplete = (data: AnamnesisData) => {
-    setAnamnesisData(data);
-    if (mode === "premium") {
-      setStep("functional_tests");
-    } else {
-      generateDiagnosis(data, []);
+  // Redirect premium users to auth if not logged in
+  useEffect(() => {
+    if (!authLoading && mode === "premium" && !user) {
+      toast({
+        title: t("auth.required_title") || "Login necessário",
+        description: t("auth.required_desc") || "Faça login para acessar a avaliação premium.",
+        variant: "destructive",
+      });
+      navigate("/auth", { state: { redirectTo: `/assessment/premium` } });
+    }
+  }, [authLoading, mode, user, navigate]);
+
+  const createAssessment = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("assessments")
+        .insert({
+          type: mode,
+          status: "in_progress",
+          user_id: user?.id || null,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      setAssessmentId(data.id);
+      return data.id;
+    } catch (err) {
+      console.error("Error creating assessment:", err);
+      return null;
     }
   };
 
-  const handleTestsComplete = (results: TestResult[]) => {
-    setTestResults(results);
-    generateDiagnosis(anamnesisData!, results);
+  const updateAssessment = async (id: string, updates: Record<string, any>) => {
+    try {
+      const { error } = await supabase
+        .from("assessments")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Error updating assessment:", err);
+    }
   };
 
-  const generateDiagnosis = async (data: AnamnesisData, tests: TestResult[]) => {
+  const handleAnamnesisComplete = async (data: AnamnesisData) => {
+    setAnamnesisData(data);
+
+    // Create assessment record and save anamnesis
+    const id = await createAssessment();
+    if (id) {
+      await updateAssessment(id, {
+        anamnesis_data: data as any,
+        pain_regions: data.painRegions,
+        pain_score: data.painScore,
+      });
+    }
+
+    if (mode === "premium") {
+      setStep("functional_tests");
+    } else {
+      generateDiagnosis(data, [], id);
+    }
+  };
+
+  const handleTestsComplete = async (results: TestResult[]) => {
+    setTestResults(results);
+
+    if (assessmentId) {
+      await updateAssessment(assessmentId, {
+        test_results: results as any,
+      });
+    }
+
+    generateDiagnosis(anamnesisData!, results, assessmentId);
+  };
+
+  const generateDiagnosis = async (data: AnamnesisData, tests: TestResult[], currentAssessmentId?: string | null) => {
     setStep("loading");
     try {
       const { data: result, error } = await supabase.functions.invoke("generate-diagnosis", {
@@ -48,6 +113,16 @@ const Assessment = () => {
       });
       if (error) throw error;
       setDiagnosis(result.diagnosis);
+
+      // Save diagnosis to DB
+      const id = currentAssessmentId || assessmentId;
+      if (id) {
+        await updateAssessment(id, {
+          diagnosis: result.diagnosis as any,
+          status: "diagnosis_complete",
+        });
+      }
+
       setStep("result");
     } catch (err: any) {
       console.error("Diagnosis error:", err);
@@ -68,6 +143,15 @@ const Assessment = () => {
       });
       if (error) throw error;
       setTreatmentPlan(result.treatmentPlan);
+
+      // Save treatment plan to DB
+      if (assessmentId) {
+        await updateAssessment(assessmentId, {
+          treatment_plan: result.treatmentPlan as any,
+          status: "completed",
+        });
+      }
+
       setStep("treatment");
     } catch (err: any) {
       console.error("Treatment plan error:", err);
@@ -79,6 +163,15 @@ const Assessment = () => {
       setStep("result");
     }
   };
+
+  // Show loading while checking auth for premium
+  if (authLoading && mode === "premium") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
