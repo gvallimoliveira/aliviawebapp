@@ -326,6 +326,7 @@ const Assessment = () => {
             painRegions={anamnesisData.painRegions}
             onComplete={handleTestsComplete}
             onBack={() => setStep("questionnaire")}
+            hasQuestionnaires={questionnaireResults.length > 0}
           />
         )}
         {step === "loading" && (
