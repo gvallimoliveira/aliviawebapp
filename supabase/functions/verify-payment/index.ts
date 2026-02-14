@@ -30,7 +30,7 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Mode 1: Verify a specific checkout session and mark assessment as paid
+    // Mode 1: Verify a specific checkout session and create the PAID assessment record
     if (session_id) {
       const session = await stripe.checkout.sessions.retrieve(session_id);
       
@@ -40,22 +40,29 @@ serve(async (req) => {
         });
       }
 
-      // Update latest in_progress premium assessment for this user as paid
-      const { data: assessment } = await supabaseClient
+      // Check if this session was already processed (idempotency)
+      const { data: existingAssessment } = await supabaseClient
         .from("assessments")
         .select("id")
         .eq("user_id", user.id)
         .eq("type", "premium")
-        .eq("payment_status", "pending")
+        .eq("payment_status", "paid")
+        .eq("status", "in_progress")
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
 
-      if (assessment) {
+      // Only create the paid anchor assessment if one doesn't exist from this payment
+      if (!existingAssessment) {
         await supabaseClient
           .from("assessments")
-          .update({ payment_status: "paid", paid_at: new Date().toISOString() })
-          .eq("id", assessment.id);
+          .insert({
+            user_id: user.id,
+            type: "premium",
+            status: "in_progress",
+            payment_status: "paid",
+            paid_at: new Date().toISOString(),
+          });
       }
 
       return new Response(JSON.stringify({ paid: true }), {
@@ -63,34 +70,60 @@ serve(async (req) => {
       });
     }
 
-    // Mode 2: Check if user has a valid premium access (paid within last 7 days)
+    // Mode 2: Check if user has valid premium access
     if (check_access) {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const { data: validAssessments } = await supabaseClient
+      // Find the latest PAID premium assessment within 7 days (the payment anchor)
+      const { data: paidAssessment } = await supabaseClient
         .from("assessments")
-        .select("id, paid_at, redo_used, created_at")
+        .select("id, paid_at")
         .eq("user_id", user.id)
         .eq("type", "premium")
         .eq("payment_status", "paid")
         .gte("paid_at", sevenDaysAgo.toISOString())
         .order("paid_at", { ascending: false })
-        .limit(1);
+        .limit(1)
+        .single();
 
-      if (validAssessments && validAssessments.length > 0) {
-        const assessment = validAssessments[0];
-        return new Response(JSON.stringify({
-          has_access: true,
-          can_redo: !assessment.redo_used,
-          assessment_id: assessment.id,
-          paid_at: assessment.paid_at,
-        }), {
+      if (!paidAssessment) {
+        return new Response(JSON.stringify({ has_access: false, can_redo: false, assessments_used: 0 }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      return new Response(JSON.stringify({ has_access: false, can_redo: false }), {
+      // Count ALL premium assessments by this user created since the payment anchor
+      const { data: assessmentsSincePaid, count } = await supabaseClient
+        .from("assessments")
+        .select("id", { count: "exact" })
+        .eq("user_id", user.id)
+        .eq("type", "premium")
+        .gte("created_at", paidAssessment.paid_at);
+
+      const totalUsed = count ?? 0;
+      // Max 2 assessments per payment (the paid anchor counts as 1 slot used when it has anamnesis data)
+      // Actually, the paid anchor is just a payment record. Real assessments are created separately.
+      // Let's count assessments that have anamnesis_data (i.e., actually started)
+      const { count: startedCount } = await supabaseClient
+        .from("assessments")
+        .select("id", { count: "exact" })
+        .eq("user_id", user.id)
+        .eq("type", "premium")
+        .gte("created_at", paidAssessment.paid_at)
+        .not("anamnesis_data", "eq", "{}");
+
+      const assessmentsUsed = startedCount ?? 0;
+      const hasAccess = assessmentsUsed < 2;
+
+      return new Response(JSON.stringify({
+        has_access: hasAccess,
+        can_redo: hasAccess && assessmentsUsed === 1,
+        assessments_used: assessmentsUsed,
+        max_assessments: 2,
+        payment_id: paidAssessment.id,
+        paid_at: paidAssessment.paid_at,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

@@ -30,7 +30,7 @@ const Assessment = () => {
   const [treatmentPlan, setTreatmentPlan] = useState<any>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
-  const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessment_id?: string } | null>(null);
+  const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string } | null>(null);
 
   // Redirect premium users to auth if not logged in
   useEffect(() => {
@@ -95,8 +95,8 @@ const Assessment = () => {
           type: mode,
           status: "in_progress",
           user_id: user?.id || null,
-          payment_status: mode === "premium" ? "paid" : "pending",
-          paid_at: mode === "premium" ? new Date().toISOString() : null,
+          payment_status: mode === "premium" ? "covered" : "pending",
+          original_assessment_id: mode === "premium" ? premiumAccess?.payment_id || null : null,
         })
         .select("id")
         .single();
