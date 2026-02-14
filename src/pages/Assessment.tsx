@@ -14,6 +14,7 @@ import FunctionalTests, { type TestResult } from "@/components/assessment/Functi
 import DiagnosisResult from "@/components/assessment/DiagnosisResult";
 import TreatmentPlan from "@/components/assessment/TreatmentPlan";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
+import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 
 type AssessmentStep = "payment_check" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "result" | "loading_treatment" | "treatment";
@@ -240,6 +241,9 @@ const Assessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
+        {step !== "payment_check" && (
+          <AssessmentStepper currentStep={step} mode={mode as "basic" | "premium"} />
+        )}
         {step === "payment_check" && premiumAccess !== null && !premiumAccess.has_access && (
           <div className="space-y-6 text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
