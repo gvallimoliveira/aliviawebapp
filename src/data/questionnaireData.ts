@@ -365,6 +365,92 @@ const faosQuestions: QuestionnaireQuestion[] = [
 ];
 
 // =============================================
+// 6. VISA-A - Victorian Institute of Sport Assessment - Achilles
+// =============================================
+
+const visaAQuestions: QuestionnaireQuestion[] = [
+  {
+    id: "visa_a1",
+    subscale: "pain",
+    text_pt: "Por quantos minutos você sente rigidez no tendão de Aquiles ao acordar de manhã?",
+    text_en: "For how many minutes do you have stiffness in the Achilles region on first getting up?",
+    options: [
+      { value: 10, label_pt: "0 minutos", label_en: "0 minutes" },
+      { value: 7, label_pt: "1–5 minutos", label_en: "1–5 minutes" },
+      { value: 5, label_pt: "6–10 minutos", label_en: "6–10 minutes" },
+      { value: 2, label_pt: "11–30 minutos", label_en: "11–30 minutes" },
+      { value: 0, label_pt: "> 30 minutos", label_en: "> 30 minutes" },
+    ],
+  },
+  {
+    id: "visa_a2",
+    subscale: "pain",
+    text_pt: "Quando se alonga sobre uma borda (como um degrau), você tem dor no tendão de Aquiles?",
+    text_en: "Once you are warmed up for the day, do you have pain when stretching the Achilles tendon over the edge of a step?",
+    options: SCALE_0_10.map((o) => ({ ...o, value: 10 - o.value })),
+  },
+  {
+    id: "visa_a3",
+    subscale: "pain",
+    text_pt: "Após caminhar em superfície plana por 30 minutos, você sente dor no tendão de Aquiles nas próximas 2 horas?",
+    text_en: "After walking on flat ground for 30 minutes, do you have pain within the next 2 hours?",
+    options: SCALE_0_10.map((o) => ({ ...o, value: 10 - o.value })),
+  },
+  {
+    id: "visa_a4",
+    subscale: "pain",
+    text_pt: "Ao descer escadas com ritmo normal, você sente dor no tendão de Aquiles?",
+    text_en: "Do you have pain walking downstairs with a normal gait cycle?",
+    options: SCALE_0_10.map((o) => ({ ...o, value: 10 - o.value })),
+  },
+  {
+    id: "visa_a5",
+    subscale: "function",
+    text_pt: "Você sente dor durante ou imediatamente após fazer 10 elevações de calcanhar (na ponta dos pés) em uma perna só?",
+    text_en: "Do you have pain during or immediately after doing 10 single leg heel raises from a flat surface?",
+    options: SCALE_0_10.map((o) => ({ ...o, value: 10 - o.value })),
+  },
+  {
+    id: "visa_a6",
+    subscale: "function",
+    text_pt: "Quantos saltos em uma perna só você consegue fazer sem dor?",
+    text_en: "How many single leg hops can you do without pain?",
+    options: [
+      { value: 0, label_pt: "0", label_en: "0" },
+      { value: 2, label_pt: "1–5", label_en: "1–5" },
+      { value: 4, label_pt: "6–10", label_en: "6–10" },
+      { value: 7, label_pt: "11–20", label_en: "11–20" },
+      { value: 10, label_pt: "> 20", label_en: "> 20" },
+    ],
+  },
+  {
+    id: "visa_a7",
+    subscale: "activity",
+    text_pt: "Você pratica alguma atividade física atualmente?",
+    text_en: "Are you currently undertaking sport or other physical activity?",
+    options: [
+      { value: 0, label_pt: "Não, por causa da dor no tendão", label_en: "Not at all, due to Achilles tendon pain" },
+      { value: 4, label_pt: "Treino modificado ± competição modificada", label_en: "Modified training ± modified competition" },
+      { value: 7, label_pt: "Treino completo ± competição, mas não no mesmo nível", label_en: "Full training ± competition but not at same level" },
+      { value: 10, label_pt: "Competindo no mesmo nível ou acima", label_en: "Competing at the same or higher level" },
+    ],
+  },
+  {
+    id: "visa_a8",
+    subscale: "activity",
+    text_pt: "Por quanto tempo você consegue treinar/praticar sem dor?",
+    text_en: "How long can you train/practice without pain?",
+    options: [
+      { value: 0, label_pt: "Não consigo treinar", label_en: "Cannot train" },
+      { value: 7, label_pt: "1–10 minutos", label_en: "1–10 minutes" },
+      { value: 14, label_pt: "11–20 minutos", label_en: "11–20 minutes" },
+      { value: 21, label_pt: "21–30 minutos", label_en: "21–30 minutes" },
+      { value: 30, label_pt: "> 30 minutos", label_en: "> 30 minutes" },
+    ],
+  },
+];
+
+// =============================================
 // Questionnaire definitions
 // =============================================
 
@@ -502,8 +588,6 @@ export const questionnaires: QuestionnaireDefinition[] = [
     regionMapping: [
       "right_ankle", "left_ankle",
       "right_foot", "left_foot",
-      "right_achilles", "left_achilles",
-      "right_heel", "left_heel",
       "foot_side",
     ],
     scoringDirection: "higher_better",
@@ -521,6 +605,33 @@ export const questionnaires: QuestionnaireDefinition[] = [
       { min: 50, max: 74, label_pt: "Disfunção leve a moderada", label_en: "Mild to moderate dysfunction", severity: "moderate" },
       { min: 25, max: 49, label_pt: "Disfunção moderada a severa", label_en: "Moderate to severe dysfunction", severity: "severe" },
       { min: 0, max: 24, label_pt: "Disfunção severa", label_en: "Severe dysfunction", severity: "extreme" },
+    ],
+  },
+  {
+    id: "visa_a",
+    name: "VISA-A",
+    fullName_pt: "Avaliação do Instituto Vitoriano de Esportes - Aquiles",
+    fullName_en: "Victorian Institute of Sport Assessment - Achilles",
+    description_pt: "Avalia a gravidade e o impacto funcional da tendinopatia do tendão de Aquiles.",
+    description_en: "Evaluates the severity and functional impact of Achilles tendinopathy.",
+    reference: "Robinson JM, et al. The VISA-A questionnaire: a valid and reliable index of the clinical severity of Achilles tendinopathy. Br J Sports Med. 2001;35(5):335-41.",
+    regionMapping: [
+      "right_achilles", "left_achilles",
+      "right_heel", "left_heel",
+    ],
+    scoringDirection: "higher_better",
+    subscaleLabels: {
+      pain: { pt: "Dor e Rigidez", en: "Pain & Stiffness" },
+      function: { pt: "Função", en: "Function" },
+      activity: { pt: "Atividade", en: "Activity" },
+    },
+    questions: visaAQuestions,
+    interpretation: [
+      { min: 80, max: 100, label_pt: "Função excelente", label_en: "Excellent function", severity: "minimal" },
+      { min: 60, max: 79, label_pt: "Disfunção leve", label_en: "Mild dysfunction", severity: "mild" },
+      { min: 40, max: 59, label_pt: "Disfunção moderada", label_en: "Moderate dysfunction", severity: "moderate" },
+      { min: 20, max: 39, label_pt: "Disfunção severa", label_en: "Severe dysfunction", severity: "severe" },
+      { min: 0, max: 19, label_pt: "Disfunção muito severa", label_en: "Very severe dysfunction", severity: "extreme" },
     ],
   },
 ];
@@ -580,6 +691,11 @@ export function calculateQuestionnaireScore(
       // SPADI: each item 0-10
       const maxPossible = subscaleQuestions.length * 10;
       subscaleScores[subscale] = Math.round((sum / maxPossible) * 100);
+    } else if (questionnaire.id === "visa_a") {
+      // VISA-A: raw sum already represents score (max varies per question)
+      const maxMap: Record<string, number> = { pain: 40, function: 20, activity: 40 };
+      const maxPossible = maxMap[subscale] || subscaleQuestions.length * 10;
+      subscaleScores[subscale] = Math.round((sum / maxPossible) * 100);
     } else {
       // KOOS/HOOS/FAOS: 0-4 Likert, score = 100 - (sum / (items * 4) * 100)
       const maxPossible = subscaleQuestions.length * 4;
@@ -594,6 +710,10 @@ export function calculateQuestionnaireScore(
     const totalSum = answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
     const maxPossible = answeredQuestions.length * 5;
     percentageScore = Math.round((totalSum / maxPossible) * 100);
+  } else if (questionnaire.id === "visa_a") {
+    // VISA-A: total = raw sum of all answers, max = 100
+    const totalSum = answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
+    percentageScore = Math.min(Math.round(totalSum), 100);
   } else if (questionnaire.id === "spadi") {
     const subscalePercentages = Object.values(subscaleScores);
     percentageScore = Math.round(subscalePercentages.reduce((a, b) => a + b, 0) / subscalePercentages.length);
