@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, ExternalLink, Check, X, Activity } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Check, X, Activity, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getTestsForRegions, testCategories, type FunctionalTest } from "@/data/functionalTestsData";
 
@@ -16,6 +17,7 @@ interface FunctionalTestsProps {
   painRegions: string[];
   onComplete: (results: TestResult[]) => void;
   onBack: () => void;
+  hasQuestionnaires?: boolean;
 }
 
 const categoryIcons: Record<string, string> = {
@@ -27,7 +29,7 @@ const categoryIcons: Record<string, string> = {
   trigger_points: "📍",
 };
 
-const FunctionalTests = ({ painRegions, onComplete, onBack }: FunctionalTestsProps) => {
+const FunctionalTests = ({ painRegions, onComplete, onBack, hasQuestionnaires = false }: FunctionalTestsProps) => {
   const { t } = useLanguage();
   const tests = useMemo(() => getTestsForRegions(painRegions), [painRegions]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -85,6 +87,14 @@ const FunctionalTests = ({ painRegions, onComplete, onBack }: FunctionalTestsPro
           <h2 className="text-lg font-bold text-foreground">{t("ftest.title")}</h2>
         </div>
         <p className="text-sm text-muted-foreground">{t("ftest.subtitle")}</p>
+        {hasQuestionnaires && (
+          <Alert className="mt-3 rounded-xl border-primary/20 bg-primary/5">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-xs text-muted-foreground">
+              {t("ftest.questionnaire_overlap_notice")}
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
 
       {/* Category progress pills */}
