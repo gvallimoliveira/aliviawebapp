@@ -80,13 +80,17 @@ const Admin = () => {
         method: "GET",
       });
 
-      if (error) throw error;
-      if (data?.error === "Access denied") {
+      if (error) {
+        // 403 means user is not VIP — expected behavior
         setIsVip(false);
         setLoading(false);
         return;
       }
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) {
+        setIsVip(false);
+        setLoading(false);
+        return;
+      }
 
       setIsVip(true);
       setVipUsers(data.vip_users || []);
