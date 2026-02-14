@@ -100,6 +100,25 @@ Response format (JSON):
   "references": ["Reference 1", "Reference 2"]
 }
 
+THERMOTHERAPY AND INJURY PROTOCOL GUIDELINES:
+- Analyze the pain characteristics (onset, pain types, presence of edema/swelling) to determine the appropriate protocol:
+
+1. For ACUTE injuries (recent onset, presence of edema/swelling, traumatic mechanism):
+   - Include the P.R.I.C.E. protocol in generalGuidelines: Protection, Rest, Ice (crioterapia - aplicar gelo por 15-20 min a cada 2-3 horas), Compression (bandagem compressiva), Elevation (elevar o membro acima do nível do coração).
+   - Emphasize ice/cold therapy for the first 48-72 hours to reduce swelling and inflammation.
+   - Reference: van den Bekerom et al. (2012) - PRICE protocol for acute soft tissue injuries.
+
+2. For CHRONIC pain or MYOFASCIAL pain (gradual onset, muscle tension, trigger points, stiffness, no acute edema):
+   - Include the P.E.A.C.E. & L.O.V.E. protocol in generalGuidelines:
+     * PEACE (initial phase): Protection, Elevation, Avoid anti-inflammatory modalities, Compression, Education & patient empowerment.
+     * LOVE (subsequent management): Load (progressive loading), Optimism (positive mindset), Vascularisation (cardiovascular activity), Exercise (active approach to recovery).
+   - Recommend HEAT THERAPY (termoterapia de adição): bolsa de água quente ou compressa morna por 15-20 minutos antes dos exercícios para relaxamento muscular, aumento do fluxo sanguíneo e alívio da rigidez.
+   - Reference: Dubois & Esculier (2020) - PEACE & LOVE framework for soft tissue injuries, BJSM.
+
+3. For SUBACUTE conditions (2-6 weeks post-injury, resolving edema):
+   - Transition from PRICE to PEACE & LOVE approach.
+   - Can introduce contrast therapy (alternância quente/frio) if appropriate.
+
 EXERCISE GUIDELINES:
 - Short-term: 3-5 exercises focused on pain relief and gentle mobility
 - Medium-term: 4-6 exercises adding strengthening and functional movements

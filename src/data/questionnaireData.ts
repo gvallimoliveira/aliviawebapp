@@ -286,25 +286,18 @@ const spadiQuestions: QuestionnaireQuestion[] = [
 // =============================================
 
 const koosQuestions: QuestionnaireQuestion[] = [
-  // Pain (4 items)
+  // Pain (2 items - frequency + most discriminative functional pain)
   { id: "koos_p1", subscale: "pain", text_pt: "Com que frequência você sente dor no joelho?", text_en: "How often is your knee painful?", options: LIKERT_5_FREQUENCY_PAIN },
-  { id: "koos_p5", subscale: "pain", text_pt: "Dor ao caminhar em superfície plana?", text_en: "Pain walking on flat surface?", options: LIKERT_5_DIFFICULTY },
   { id: "koos_p6", subscale: "pain", text_pt: "Dor ao subir ou descer escadas?", text_en: "Pain going up or down stairs?", options: LIKERT_5_DIFFICULTY },
-  { id: "koos_p9", subscale: "pain", text_pt: "Dor ao ficar em pé?", text_en: "Pain standing upright?", options: LIKERT_5_DIFFICULTY },
-  // Symptoms (3 items)
+  // Symptoms (2 items - stiffness + swelling are most clinically relevant)
   { id: "koos_s1", subscale: "symptoms", text_pt: "Qual a rigidez do seu joelho ao acordar de manhã?", text_en: "How severe is your knee stiffness after first wakening?", options: LIKERT_5_DIFFICULTY },
   { id: "koos_s3", subscale: "symptoms", text_pt: "Você tem inchaço no joelho?", text_en: "Do you have swelling in your knee?", options: LIKERT_5_FREQUENCY },
-  { id: "koos_s6", subscale: "symptoms", text_pt: "Você consegue esticar o joelho completamente?", text_en: "Can you straighten your knee fully?", options: LIKERT_5_ABILITY_REVERSED },
-  // ADL (4 items)
+  // ADL (2 items - most functionally discriminative)
   { id: "koos_a1", subscale: "adl", text_pt: "Dificuldade ao descer escadas?", text_en: "Descending stairs?", options: LIKERT_5_DIFFICULTY },
   { id: "koos_a3", subscale: "adl", text_pt: "Dificuldade ao levantar da posição sentada?", text_en: "Rising from sitting?", options: LIKERT_5_DIFFICULTY },
-  { id: "koos_a5", subscale: "adl", text_pt: "Dificuldade ao se abaixar para pegar um objeto no chão?", text_en: "Bending to floor/picking up an object?", options: LIKERT_5_DIFFICULTY },
-  { id: "koos_a6", subscale: "adl", text_pt: "Dificuldade ao caminhar em superfície plana?", text_en: "Walking on flat surface?", options: LIKERT_5_DIFFICULTY },
-  // Sport (2 items)
+  // Sport (1 item - squatting is most universal)
   { id: "koos_sp1", subscale: "sport", text_pt: "Dificuldade ao agachar?", text_en: "Squatting?", options: LIKERT_5_DIFFICULTY },
-  { id: "koos_sp2", subscale: "sport", text_pt: "Dificuldade ao correr?", text_en: "Running?", options: LIKERT_5_DIFFICULTY },
-  // QoL (2 items)
-  { id: "koos_q1", subscale: "qol", text_pt: "Com que frequência você percebe o problema no joelho?", text_en: "How often are you aware of your knee problems?", options: LIKERT_5_AWARENESS },
+  // QoL (1 item - overall difficulty is most comprehensive)
   { id: "koos_q4", subscale: "qol", text_pt: "No geral, quanta dificuldade você tem com seu joelho?", text_en: "In general, how much difficulty do you have with your knee?", options: LIKERT_5_DIFFICULTY },
 ];
 
