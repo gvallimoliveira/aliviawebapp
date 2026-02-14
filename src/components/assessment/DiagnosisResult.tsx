@@ -132,7 +132,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Sabemos que a sua dor está te preocupando! Não deixe esse problema aumentar até se tornar uma limitação na sua vida, podemos te ajudar com nosso plano de tratamento na avaliação premium.
+              Sabemos que a sua dor está te preocupando! Não deixe esse problema aumentar até se tornar uma limitação na sua vida, podemos ajudar com orientações personalizadas, e com nosso plano de tratamento na avaliação Premium.
             </p>
             <div className="text-center">
               <Button
