@@ -154,9 +154,9 @@ const FunctionalTests = ({ painRegions, onComplete, onBack, hasQuestionnaires = 
                 <p className="text-sm text-muted-foreground leading-relaxed">{t(currentTest.instructionKey)}</p>
               </div>
 
-              {/* Video link */}
+              {/* Video search link */}
               <a
-                href={currentTest.videoUrl}
+                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(currentTest.searchQuery)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
