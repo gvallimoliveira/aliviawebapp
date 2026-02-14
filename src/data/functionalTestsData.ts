@@ -3,7 +3,7 @@ export interface FunctionalTest {
   category: "mobility" | "flexibility" | "strength" | "stability" | "neurodynamic" | "trigger_points";
   nameKey: string;
   instructionKey: string;
-  videoUrl: string;
+  searchQuery: string;
   regions: string[]; // matches painRegions from PainMap
 }
 
@@ -24,7 +24,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.cervical_rotation.name",
     instructionKey: "ftest.cervical_rotation.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=wQylqaCl8Zo",
+    searchQuery: "cervical rotation mobility test physiotherapy",
     regions: ["cervical", "head"],
   },
   {
@@ -32,7 +32,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.cervical_flexion.name",
     instructionKey: "ftest.cervical_flexion.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=wQylqaCl8Zo",
+    searchQuery: "cervical flexion mobility test physiotherapy",
     regions: ["cervical", "head"],
   },
   {
@@ -40,7 +40,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "flexibility",
     nameKey: "ftest.upper_trap_stretch.name",
     instructionKey: "ftest.upper_trap_stretch.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=8ZQGJ3sIWv0",
+    searchQuery: "upper trapezius stretch test physiotherapy",
     regions: ["cervical", "shoulder_front", "shoulder_back"],
   },
   {
@@ -48,7 +48,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "strength",
     nameKey: "ftest.deep_neck_flexor.name",
     instructionKey: "ftest.deep_neck_flexor.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=2N5kkVbmaZM",
+    searchQuery: "deep neck flexor endurance test physiotherapy",
     regions: ["cervical", "head"],
   },
   {
@@ -56,7 +56,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "trigger_points",
     nameKey: "ftest.cervical_trigger_points.name",
     instructionKey: "ftest.cervical_trigger_points.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=wnGCBslPaRY",
+    searchQuery: "cervical trigger points palpation assessment physiotherapy",
     regions: ["cervical", "head"],
   },
 
@@ -66,7 +66,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.shoulder_flexion.name",
     instructionKey: "ftest.shoulder_flexion.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=wnGCBslPaRY",
+    searchQuery: "shoulder flexion range of motion test physiotherapy",
     regions: ["shoulder_front", "shoulder_back", "shoulder_side"],
   },
   {
@@ -74,7 +74,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.shoulder_rotation.name",
     instructionKey: "ftest.shoulder_rotation.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=wnGCBslPaRY",
+    searchQuery: "shoulder internal external rotation test physiotherapy",
     regions: ["shoulder_front", "shoulder_back", "shoulder_side"],
   },
   {
@@ -82,7 +82,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "flexibility",
     nameKey: "ftest.pec_stretch.name",
     instructionKey: "ftest.pec_stretch.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=wnGCBslPaRY",
+    searchQuery: "pectoralis muscle flexibility test doorway stretch",
     regions: ["shoulder_front", "chest"],
   },
   {
@@ -90,7 +90,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "strength",
     nameKey: "ftest.shoulder_isometric.name",
     instructionKey: "ftest.shoulder_isometric.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=wnGCBslPaRY",
+    searchQuery: "shoulder isometric strength test physiotherapy",
     regions: ["shoulder_front", "shoulder_back", "shoulder_side"],
   },
   {
@@ -98,7 +98,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "stability",
     nameKey: "ftest.scapular_stability.name",
     instructionKey: "ftest.scapular_stability.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=wnGCBslPaRY",
+    searchQuery: "scapular stability wall push up test physiotherapy",
     regions: ["shoulder_back", "upper_back", "shoulder_side"],
   },
 
@@ -108,7 +108,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.thoracic_rotation.name",
     instructionKey: "ftest.thoracic_rotation.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=SZcuAOyUKOU",
+    searchQuery: "thoracic rotation mobility test seated physiotherapy",
     regions: ["upper_back", "thoracic"],
   },
   {
@@ -116,7 +116,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "flexibility",
     nameKey: "ftest.thoracic_extension.name",
     instructionKey: "ftest.thoracic_extension.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=SZcuAOyUKOU",
+    searchQuery: "thoracic extension flexibility test foam roller physiotherapy",
     regions: ["upper_back", "thoracic"],
   },
 
@@ -126,7 +126,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.lumbar_flexion.name",
     instructionKey: "ftest.lumbar_flexion.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=XwQoK4v9mKk",
+    searchQuery: "lumbar flexion standing toe touch test physiotherapy",
     regions: ["lumbar", "lower_back"],
   },
   {
@@ -134,7 +134,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.lumbar_extension.name",
     instructionKey: "ftest.lumbar_extension.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=XwQoK4v9mKk",
+    searchQuery: "lumbar extension standing test physiotherapy",
     regions: ["lumbar", "lower_back"],
   },
   {
@@ -142,7 +142,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "flexibility",
     nameKey: "ftest.hamstring_flexibility.name",
     instructionKey: "ftest.hamstring_flexibility.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=XwQoK4v9mKk",
+    searchQuery: "hamstring flexibility straight leg raise test",
     regions: ["lumbar", "lower_back", "hip", "thigh_back"],
   },
   {
@@ -150,7 +150,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "strength",
     nameKey: "ftest.core_endurance.name",
     instructionKey: "ftest.core_endurance.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=ASdvN_XEl_c",
+    searchQuery: "core endurance plank test physiotherapy",
     regions: ["lumbar", "lower_back", "abdomen"],
   },
   {
@@ -158,7 +158,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "stability",
     nameKey: "ftest.single_leg_balance.name",
     instructionKey: "ftest.single_leg_balance.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=ASdvN_XEl_c",
+    searchQuery: "single leg balance test 30 seconds physiotherapy",
     regions: ["lumbar", "lower_back", "hip"],
   },
   {
@@ -166,7 +166,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "neurodynamic",
     nameKey: "ftest.slump_test.name",
     instructionKey: "ftest.slump_test.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=r1MFHvr3GGc",
+    searchQuery: "slump test neurodynamic assessment physiotherapy",
     regions: ["lumbar", "lower_back", "thigh_back", "leg_back"],
   },
   {
@@ -174,7 +174,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "neurodynamic",
     nameKey: "ftest.mckenzie_extension.name",
     instructionKey: "ftest.mckenzie_extension.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=r1MFHvr3GGc",
+    searchQuery: "mckenzie repeated extension test lumbar physiotherapy",
     regions: ["lumbar", "lower_back"],
   },
   {
@@ -182,7 +182,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "trigger_points",
     nameKey: "ftest.lumbar_trigger_points.name",
     instructionKey: "ftest.lumbar_trigger_points.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=r1MFHvr3GGc",
+    searchQuery: "lumbar trigger points palpation quadratus lumborum",
     regions: ["lumbar", "lower_back", "hip"],
   },
 
@@ -192,7 +192,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.hip_flexion.name",
     instructionKey: "ftest.hip_flexion.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=Y8MUaYGSEls",
+    searchQuery: "hip flexion range of motion test supine physiotherapy",
     regions: ["hip", "groin"],
   },
   {
@@ -200,7 +200,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.hip_rotation.name",
     instructionKey: "ftest.hip_rotation.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=Y8MUaYGSEls",
+    searchQuery: "hip internal external rotation test seated physiotherapy",
     regions: ["hip", "groin"],
   },
   {
@@ -208,7 +208,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "flexibility",
     nameKey: "ftest.hip_flexor_stretch.name",
     instructionKey: "ftest.hip_flexor_stretch.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=Y8MUaYGSEls",
+    searchQuery: "Thomas test hip flexor tightness assessment physiotherapy",
     regions: ["hip", "thigh_front", "groin"],
   },
   {
@@ -216,7 +216,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "strength",
     nameKey: "ftest.glute_bridge.name",
     instructionKey: "ftest.glute_bridge.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=Y8MUaYGSEls",
+    searchQuery: "single leg glute bridge strength test physiotherapy",
     regions: ["hip", "glutes", "lower_back"],
   },
 
@@ -226,7 +226,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.knee_flexion_extension.name",
     instructionKey: "ftest.knee_flexion_extension.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=D7uroMkEv5g",
+    searchQuery: "knee flexion extension range of motion test physiotherapy",
     regions: ["knee_front", "knee_back", "knee_side"],
   },
   {
@@ -234,7 +234,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "flexibility",
     nameKey: "ftest.quad_flexibility.name",
     instructionKey: "ftest.quad_flexibility.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=D7uroMkEv5g",
+    searchQuery: "quadriceps flexibility Ely test prone physiotherapy",
     regions: ["knee_front", "thigh_front"],
   },
   {
@@ -242,7 +242,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "strength",
     nameKey: "ftest.single_leg_squat.name",
     instructionKey: "ftest.single_leg_squat.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=D7uroMkEv5g",
+    searchQuery: "single leg squat test knee valgus assessment physiotherapy",
     regions: ["knee_front", "knee_back", "knee_side"],
   },
   {
@@ -250,7 +250,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "stability",
     nameKey: "ftest.knee_stability.name",
     instructionKey: "ftest.knee_stability.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=D7uroMkEv5g",
+    searchQuery: "knee stability single leg balance test physiotherapy",
     regions: ["knee_front", "knee_back", "knee_side"],
   },
 
@@ -260,7 +260,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "stability",
     nameKey: "ftest.single_leg_balance_ankle.name",
     instructionKey: "ftest.single_leg_balance_ankle.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=XISJxsccN28",
+    searchQuery: "single leg balance test 30 seconds ankle stability physiotherapy",
     regions: ["ankle", "foot"],
   },
   {
@@ -268,7 +268,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.weight_bearing_lunge_test.name",
     instructionKey: "ftest.weight_bearing_lunge_test.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=U7woPNLUT3Q",
+    searchQuery: "weight bearing lunge test ankle dorsiflexion measurement physiotherapy",
     regions: ["ankle", "foot"],
   },
   {
@@ -276,7 +276,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "strength",
     nameKey: "ftest.heel_rise_test.name",
     instructionKey: "ftest.heel_rise_test.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=XISJxsccN28",
+    searchQuery: "single leg heel rise test calf strength endurance physiotherapy",
     regions: ["ankle", "foot", "leg_back"],
   },
 
@@ -286,7 +286,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "mobility",
     nameKey: "ftest.wrist_flexion_extension.name",
     instructionKey: "ftest.wrist_flexion_extension.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=mPFxS_OP5qY",
+    searchQuery: "wrist flexion extension range of motion test physiotherapy",
     regions: ["wrist", "forearm", "elbow"],
   },
   {
@@ -294,7 +294,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "strength",
     nameKey: "ftest.grip_strength.name",
     instructionKey: "ftest.grip_strength.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=mPFxS_OP5qY",
+    searchQuery: "grip strength test squeeze bottle hand physiotherapy",
     regions: ["wrist", "forearm", "elbow", "hand"],
   },
   {
@@ -302,7 +302,7 @@ export const functionalTests: FunctionalTest[] = [
     category: "neurodynamic",
     nameKey: "ftest.neural_tension_upper.name",
     instructionKey: "ftest.neural_tension_upper.instruction",
-    videoUrl: "https://www.youtube.com/watch?v=mPFxS_OP5qY",
+    searchQuery: "upper limb neural tension test ULNT median nerve physiotherapy",
     regions: ["cervical", "shoulder_front", "elbow", "wrist", "hand"],
   },
 ];

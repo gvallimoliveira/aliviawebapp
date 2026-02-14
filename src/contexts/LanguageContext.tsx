@@ -227,7 +227,7 @@ const translations: Record<Language, Record<string, string>> = {
     "payment.feature_2": "Diagnóstico com explicação detalhada",
     "payment.feature_3": "Plano de tratamento em 3 fases",
     "payment.feature_4": "Exercícios com vídeos do YouTube",
-    "payment.feature_5": "Questionários internacionalmente validados (KOOS, SPADI, ODI, HOOS, FAOS)",
+    "payment.feature_5": "Questionários validados (KOOS, SPADI, ODI, HOOS, FAOS, VISA-A)",
     "payment.pay_now": "Pagar e começar",
     "payment.checking": "Verificando acesso...",
     "payment.verifying": "Verificando pagamento...",
@@ -239,6 +239,8 @@ const translations: Record<Language, Record<string, string>> = {
     "payment.back_home": "Voltar ao início",
     "payment.error_title": "Erro no pagamento",
     "payment.error_desc": "Não foi possível iniciar o pagamento. Tente novamente.",
+    "payment.limit_reached_title": "Limite de avaliações atingido",
+    "payment.limit_reached_desc": "Você já realizou 2 avaliações neste período. Faça um novo pagamento para continuar.",
 
     // Functional Tests
     "ftest.title": "Testes Funcionais",
@@ -590,7 +592,7 @@ const translations: Record<Language, Record<string, string>> = {
     "payment.feature_2": "Diagnosis with detailed explanation",
     "payment.feature_3": "3-phase treatment plan",
     "payment.feature_4": "Exercises with YouTube videos",
-    "payment.feature_5": "Internationally validated questionnaires (KOOS, SPADI, ODI, HOOS, FAOS)",
+    "payment.feature_5": "Validated questionnaires (KOOS, SPADI, ODI, HOOS, FAOS, VISA-A)",
     "payment.pay_now": "Pay and start",
     "payment.checking": "Checking access...",
     "payment.verifying": "Verifying payment...",
@@ -602,6 +604,8 @@ const translations: Record<Language, Record<string, string>> = {
     "payment.back_home": "Back to home",
     "payment.error_title": "Payment error",
     "payment.error_desc": "Unable to start payment. Please try again.",
+    "payment.limit_reached_title": "Assessment limit reached",
+    "payment.limit_reached_desc": "You have already completed 2 assessments in this period. Make a new payment to continue.",
 
     // Functional Tests
     "ftest.title": "Functional Tests",
