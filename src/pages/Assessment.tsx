@@ -329,6 +329,7 @@ const Assessment = () => {
         {step === "treatment" && treatmentPlan && (
           <TreatmentPlan
             plan={treatmentPlan}
+            diagnosis={diagnosis}
             onBack={() => setStep("result")}
             onNewAssessment={() => navigate("/")}
           />

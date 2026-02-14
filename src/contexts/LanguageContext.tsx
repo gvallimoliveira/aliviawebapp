@@ -48,6 +48,7 @@ const translations: Record<Language, Record<string, string>> = {
     "compare.treatment": "Plano de Tratamento",
     "compare.treatment.phases": "Curto, médio e longo prazo",
     "compare.exercises": "Exercícios com Vídeos",
+    "compare.pdf_export": "Relatório em PDF",
     "compare.history": "Histórico de Avaliações",
     "compare.redo": "Refazer em 7 dias",
     "compare.login": "Login necessário",
@@ -361,6 +362,14 @@ const translations: Record<Language, Record<string, string>> = {
     "treatment.cat.breathing": "Respiração",
     "treatment.cat.stability": "Estabilidade",
     "treatment.cat.pain_management": "Controle de Dor",
+
+    // PDF
+    "pdf.cta_text": "Baixe o relatório completo em PDF para compartilhar com seu médico ou fisioterapeuta.",
+    "pdf.download": "Baixar Relatório em PDF",
+    "pdf.generating": "Gerando PDF...",
+    "pdf.success": "PDF gerado com sucesso!",
+    "pdf.error": "Erro ao gerar PDF. Tente novamente.",
+    "pdf.no_data": "Dados insuficientes para gerar o PDF.",
   },
   en: {
     // Nav
@@ -401,6 +410,7 @@ const translations: Record<Language, Record<string, string>> = {
     "compare.treatment": "Treatment Plan",
     "compare.treatment.phases": "Short, medium and long term",
     "compare.exercises": "Exercises with Videos",
+    "compare.pdf_export": "PDF Report",
     "compare.history": "Assessment History",
     "compare.redo": "Redo within 7 days",
     "compare.login": "Login required",
@@ -706,6 +716,14 @@ const translations: Record<Language, Record<string, string>> = {
     "treatment.cat.breathing": "Breathing",
     "treatment.cat.stability": "Stability",
     "treatment.cat.pain_management": "Pain Management",
+
+    // PDF
+    "pdf.cta_text": "Download the full PDF report to share with your doctor or physiotherapist.",
+    "pdf.download": "Download PDF Report",
+    "pdf.generating": "Generating PDF...",
+    "pdf.success": "PDF generated successfully!",
+    "pdf.error": "Error generating PDF. Please try again.",
+    "pdf.no_data": "Insufficient data to generate PDF.",
   },
 };
 
