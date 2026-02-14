@@ -48,11 +48,11 @@ const HowItWorksSection = () => {
               <p className="text-sm leading-relaxed text-muted-foreground mb-4">
                 {t(`how.${step.key}.desc`)}
               </p>
-              <div className="overflow-hidden rounded-xl border border-border/50 shadow-md">
+              <div className="overflow-hidden rounded-xl border border-border/50 shadow-md aspect-[3/4]">
                 <img
                   src={step.image}
                   alt={t(`how.${step.key}.title`)}
-                  className="w-full h-auto object-cover"
+                  className="w-full h-full object-cover object-top"
                   loading="lazy"
                 />
               </div>
