@@ -72,6 +72,25 @@ serve(async (req) => {
 
     // Mode 2: Check if user has valid premium access
     if (check_access) {
+      // Check VIP status
+      const { data: vipUser } = await supabaseClient
+        .from("vip_users")
+        .select("id")
+        .eq("email", user.email)
+        .maybeSingle();
+
+      if (vipUser) {
+        return new Response(JSON.stringify({
+          has_access: true,
+          can_redo: true,
+          assessments_used: 0,
+          max_assessments: 999,
+          is_vip: true,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -102,9 +121,6 @@ serve(async (req) => {
         .gte("created_at", paidAssessment.paid_at);
 
       const totalUsed = count ?? 0;
-      // Max 2 assessments per payment (the paid anchor counts as 1 slot used when it has anamnesis data)
-      // Actually, the paid anchor is just a payment record. Real assessments are created separately.
-      // Let's count assessments that have anamnesis_data (i.e., actually started)
       const { count: startedCount } = await supabaseClient
         .from("assessments")
         .select("id", { count: "exact" })
