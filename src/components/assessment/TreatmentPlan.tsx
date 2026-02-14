@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft,
   Play,
@@ -76,6 +77,7 @@ const phaseConfig: Record<string, { colorClass: string; bgClass: string }> = {
 const TreatmentPlan = ({ plan, diagnosis, onBack, onNewAssessment }: TreatmentPlanProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [expandedPhase, setExpandedPhase] = useState<string>("short_term");
   const [pdfLoading, setPdfLoading] = useState(false);
 
@@ -87,7 +89,7 @@ const TreatmentPlan = ({ plan, diagnosis, onBack, onNewAssessment }: TreatmentPl
     setPdfLoading(true);
     try {
       const { generateAssessmentPdf } = await import("@/utils/generatePdf");
-      generateAssessmentPdf({ diagnosis, treatmentPlan: plan, language });
+      generateAssessmentPdf({ diagnosis, treatmentPlan: plan, language, userName: user?.user_metadata?.full_name || "" });
       toast({ title: t("pdf.success") });
     } catch {
       toast({ title: t("pdf.error"), variant: "destructive" });

@@ -193,6 +193,12 @@ const translations: Record<Language, Record<string, string>> = {
     "anamnesis.pain_score_desc": "0 = sem dor, 10 = pior dor imaginável",
     "anamnesis.no_pain": "Sem dor",
     "anamnesis.worst_pain": "Pior dor",
+    "anamnesis.pain_duration_title": "Há quanto tempo você está com essa dor?",
+    "anamnesis.pain_duration_subtitle": "Selecione a opção mais próxima",
+    "anamnesis.duration.less_week": "Menos de uma semana",
+    "anamnesis.duration.one_month": "Há cerca de 1 mês",
+    "anamnesis.duration.three_six_months": "3 a 6 meses",
+    "anamnesis.duration.one_year_plus": "1 ano ou mais",
 
     // Result
     "result.processing": "Processando sua avaliação...",
@@ -558,6 +564,12 @@ const translations: Record<Language, Record<string, string>> = {
     "anamnesis.pain_score_desc": "0 = no pain, 10 = worst pain imaginable",
     "anamnesis.no_pain": "No pain",
     "anamnesis.worst_pain": "Worst pain",
+    "anamnesis.pain_duration_title": "How long have you had this pain?",
+    "anamnesis.pain_duration_subtitle": "Select the closest option",
+    "anamnesis.duration.less_week": "Less than a week",
+    "anamnesis.duration.one_month": "About 1 month",
+    "anamnesis.duration.three_six_months": "3 to 6 months",
+    "anamnesis.duration.one_year_plus": "1 year or more",
 
     // Result
     "result.processing": "Processing your assessment...",
