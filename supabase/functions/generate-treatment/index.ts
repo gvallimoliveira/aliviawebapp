@@ -20,12 +20,20 @@ serve(async (req) => {
 
     const systemPrompt = `You are an experienced musculoskeletal physiotherapist AI assistant. Based on the patient's data, diagnostic hypothesis, and functional test results, create a personalized treatment plan in 3 phases.
 
+KNOWLEDGE BASE (use as clinical reference):
+- Sociedade Brasileira de Ortopedia e Traumatologia (SBOT) publications and guidelines
+- SONAFE (Sociedade Nacional de Fisioterapia Esportiva) publications
+- "Kinesiology of the Musculoskeletal System" by Donald Neumann
+- "Clinical Neurodynamics" by Michael Shacklock
+
 IMPORTANT RULES:
 - Always respond in ${lang}.
 - This is for educational purposes only — always include a disclaimer.
 - Never recommend medication.
 - Be empathetic and use accessible language.
-- Each exercise MUST include a real YouTube video URL for demonstration.
+- Each exercise MUST include exactly TWO real YouTube video URLs for demonstration (in case one is deleted).
+- PRIORITIZE videos from the "Physiotutors" YouTube channel whenever possible. The second video can be from other reputable physiotherapy channels (e.g., E3 Fisioterapia, Bob & Brad, Dr. Andrea Furlan).
+- Use ONLY well-known, established YouTube channels with physiotherapy/exercise content.
 - Adapt the plan based on pain score (${painScore}/10):
   ${isHighPain 
     ? "- Pain score is HIGH (≥6): Short-term phase should focus ONLY on conservative/analgesic approaches (rest, ice/heat, gentle stretching, breathing). NO muscle activation or strengthening in short-term."
@@ -47,7 +55,10 @@ Response format (JSON):
           "sets": "3",
           "reps": "10-12",
           "frequency": "Daily",
-          "videoUrl": "https://www.youtube.com/watch?v=REAL_VIDEO_ID",
+          "videoUrls": [
+            "https://www.youtube.com/watch?v=VIDEO_ID_1",
+            "https://www.youtube.com/watch?v=VIDEO_ID_2"
+          ],
           "category": "stretching" | "strengthening" | "mobility" | "breathing" | "stability" | "pain_management"
         }
       ]
@@ -69,15 +80,17 @@ Response format (JSON):
   ],
   "generalGuidelines": ["guideline 1", "guideline 2", "guideline 3"],
   "progressionCriteria": "When to progress to the next phase",
-  "disclaimer": "Medical disclaimer"
+  "disclaimer": "Medical disclaimer",
+  "references": ["Reference 1", "Reference 2"]
 }
 
 EXERCISE GUIDELINES:
 - Short-term: 3-5 exercises focused on pain relief and gentle mobility
 - Medium-term: 4-6 exercises adding strengthening and functional movements
 - Long-term: 4-6 exercises for return to full activity and prevention
-- Each exercise must have a valid YouTube video URL (use well-known physiotherapy channels)
-- Adapt intensity based on activity level: ${anamnesisData?.activityLevel || "not specified"}`;
+- Each exercise MUST have exactly 2 YouTube video URLs (preferably from Physiotutors first)
+- Adapt intensity based on activity level: ${anamnesisData?.activityLevel || "not specified"}
+- Include references from the knowledge base sources listed above`;
 
     const painfulTests = testResults?.filter((t: any) => t.painful).map((t: any) => t.testId) || [];
     const normalTests = testResults?.filter((t: any) => !t.painful).map((t: any) => t.testId) || [];

@@ -28,7 +28,8 @@ interface Exercise {
   sets: string;
   reps: string;
   frequency: string;
-  videoUrl: string;
+  videoUrl?: string;
+  videoUrls?: string[];
   category: string;
 }
 
@@ -169,18 +170,27 @@ const TreatmentPlan = ({ plan, onBack, onNewAssessment }: TreatmentPlanProps) =>
                           <span className="px-2 py-0.5 rounded bg-muted">{exercise.sets} {t("treatment.sets")} × {exercise.reps}</span>
                           <span className="px-2 py-0.5 rounded bg-muted">{exercise.frequency}</span>
                         </div>
-                        {exercise.videoUrl && (
-                          <a
-                            href={exercise.videoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline mt-1"
-                          >
-                            <Play className="h-3 w-3" />
-                            {t("treatment.watch_video")}
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
+                        {(() => {
+                          const urls = exercise.videoUrls || (exercise.videoUrl ? [exercise.videoUrl] : []);
+                          if (urls.length === 0) return null;
+                          return (
+                            <div className="flex flex-col gap-1 mt-1">
+                              {urls.map((url, vIdx) => (
+                                <a
+                                  key={vIdx}
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                                >
+                                  <Play className="h-3 w-3" />
+                                  {t("treatment.watch_video")} {urls.length > 1 ? `(${vIdx + 1})` : ""}
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}
