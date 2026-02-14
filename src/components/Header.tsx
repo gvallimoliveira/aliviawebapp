@@ -1,4 +1,4 @@
-import { Globe, LogOut } from "lucide-react";
+import { Globe, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +40,9 @@ const Header = () => {
           </Button>
           {user ? (
             <>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Admin">
+                <ShieldCheck className="h-4 w-4" />
+              </Button>
               <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
                 {t("nav.dashboard")}
               </Button>
