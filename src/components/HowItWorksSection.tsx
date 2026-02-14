@@ -1,11 +1,14 @@
 import { motion } from "framer-motion";
 import { ClipboardList, Activity, FileCheck } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import stepAnamnesis from "@/assets/step-anamnesis.jpg";
+import stepTests from "@/assets/step-tests.jpg";
+import stepReport from "@/assets/step-report.jpg";
 
 const steps = [
-  { icon: ClipboardList, color: "bg-primary/10 text-primary", key: "step1" },
-  { icon: Activity, color: "bg-accent/20 text-accent-foreground", key: "step2" },
-  { icon: FileCheck, color: "bg-secondary text-secondary-foreground", key: "step3" },
+  { icon: ClipboardList, color: "bg-primary/10 text-primary", key: "step1", image: stepAnamnesis },
+  { icon: Activity, color: "bg-accent/20 text-accent-foreground", key: "step2", image: stepTests },
+  { icon: FileCheck, color: "bg-secondary text-secondary-foreground", key: "step3", image: stepReport },
 ];
 
 const HowItWorksSection = () => {
@@ -42,9 +45,17 @@ const HowItWorksSection = () => {
               <h3 className="mb-2 text-lg font-semibold text-foreground">
                 {t(`how.${step.key}.title`)}
               </h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <p className="text-sm leading-relaxed text-muted-foreground mb-4">
                 {t(`how.${step.key}.desc`)}
               </p>
+              <div className="overflow-hidden rounded-xl border border-border/50 shadow-md">
+                <img
+                  src={step.image}
+                  alt={t(`how.${step.key}.title`)}
+                  className="w-full h-auto object-cover"
+                  loading="lazy"
+                />
+              </div>
             </motion.div>
           ))}
         </div>
