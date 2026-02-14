@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 import Assessment from "./pages/Assessment";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/assessment/:type" element={<Assessment />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
