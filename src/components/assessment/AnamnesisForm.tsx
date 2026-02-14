@@ -21,6 +21,7 @@ export interface AnamnesisData {
   relievingFactors: string;
   activityLevel: string;
   painScore: number;
+  hasGymAccess: string;
 }
 
 interface AnamnesisFormProps {
@@ -43,6 +44,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     relievingFactors: "",
     activityLevel: "",
     painScore: 5,
+    hasGymAccess: "",
   });
 
   const complaints = [
@@ -233,7 +235,32 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       </div>
     ),
 
-    // Step 6: Pain Score
+    // Step 6: Gym Access
+    () => (
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">{t("anamnesis.gym_access_title")}</h3>
+        <p className="text-sm text-muted-foreground">{t("anamnesis.gym_access_subtitle")}</p>
+        <div className="grid gap-3">
+          {["anamnesis.gym.yes", "anamnesis.gym.no"].map((option) => (
+            <Card
+              key={option}
+              className={`cursor-pointer transition-all ${data.hasGymAccess === option ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`}
+              onClick={() => setData({ ...data, hasGymAccess: option })}
+            >
+              <CardContent className="py-3 px-4 flex items-center gap-3">
+                <span className="text-lg">{option.includes("yes") ? "🏋️" : "🏠"}</span>
+                <div>
+                  <span className="text-sm font-medium">{t(option)}</span>
+                  <p className="text-xs text-muted-foreground">{t(`${option}_desc`)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    ),
+
+    // Step 7: Pain Score
     () => (
       <div className="space-y-6">
         <h3 className="text-lg font-semibold">{t("anamnesis.pain_score_title")}</h3>
@@ -270,7 +297,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       case 3: return data.painTypes.length > 0;
       case 4: return data.evolution !== "";
       case 5: return data.activityLevel !== "";
-      case 6: return true;
+      case 6: return data.hasGymAccess !== "";
+      case 7: return true;
       default: return false;
     }
   };
