@@ -3,9 +3,11 @@ import { Check, X, ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
 
 const ComparisonSection = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   const features = [
     { key: "redflags", basic: true, premium: true },
@@ -80,7 +82,7 @@ const ComparisonSection = () => {
                 ))}
               </CardContent>
               <CardFooter>
-                <Button variant="outline" className="w-full rounded-xl py-5">
+                <Button variant="outline" className="w-full rounded-xl py-5" onClick={() => navigate("/assessment/basic")}>
                   {t("compare.start.basic")}
                 </Button>
               </CardFooter>
@@ -116,7 +118,7 @@ const ComparisonSection = () => {
                 ))}
               </CardContent>
               <CardFooter>
-                <Button className="w-full rounded-xl py-5 gap-2">
+                <Button className="w-full rounded-xl py-5 gap-2" onClick={() => navigate("/assessment/premium")}>
                   {t("compare.start.premium")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
