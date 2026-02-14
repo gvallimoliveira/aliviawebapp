@@ -17,6 +17,7 @@ const ComparisonSection = () => {
       basic: t("compare.anamnesis.basic"),
       premium: t("compare.anamnesis.premium"),
     },
+    { key: "questionnaires", basic: false, premium: true },
     { key: "tests", basic: false, premium: true },
     {
       key: "diagnosis",

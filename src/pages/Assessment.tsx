@@ -13,8 +13,10 @@ import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/Anamn
 import FunctionalTests, { type TestResult } from "@/components/assessment/FunctionalTests";
 import DiagnosisResult from "@/components/assessment/DiagnosisResult";
 import TreatmentPlan from "@/components/assessment/TreatmentPlan";
+import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
+import { type QuestionnaireResult } from "@/data/questionnaireData";
 
-type AssessmentStep = "payment_check" | "redflags" | "redflag_alert" | "anamnesis" | "functional_tests" | "loading" | "result" | "loading_treatment" | "treatment";
+type AssessmentStep = "payment_check" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "result" | "loading_treatment" | "treatment";
 
 const Assessment = () => {
   const { type } = useParams<{ type: string }>();
@@ -26,6 +28,7 @@ const Assessment = () => {
   const [step, setStep] = useState<AssessmentStep>(mode === "premium" ? "payment_check" : "redflags");
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
+  const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
   const [diagnosis, setDiagnosis] = useState<any>(null);
   const [treatmentPlan, setTreatmentPlan] = useState<any>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
@@ -132,10 +135,19 @@ const Assessment = () => {
       });
     }
     if (mode === "premium") {
-      setStep("functional_tests");
+      setStep("questionnaire");
     } else {
       generateDiagnosis(data, [], id);
     }
+  };
+
+  const handleQuestionnaireComplete = (results: QuestionnaireResult[]) => {
+    setQuestionnaireResults(results);
+    setStep("functional_tests");
+  };
+
+  const handleQuestionnaireSkip = () => {
+    setStep("functional_tests");
   };
 
   const handleTestsComplete = async (results: TestResult[]) => {
@@ -150,7 +162,7 @@ const Assessment = () => {
     setStep("loading");
     try {
       const { data: result, error } = await supabase.functions.invoke("generate-diagnosis", {
-        body: { anamnesisData: data, testResults: tests, mode, language },
+        body: { anamnesisData: data, testResults: tests, questionnaireResults, mode, language },
       });
       if (error) throw error;
       setDiagnosis(result.diagnosis);
@@ -174,7 +186,7 @@ const Assessment = () => {
     setStep("loading_treatment");
     try {
       const { data: result, error } = await supabase.functions.invoke("generate-treatment", {
-        body: { anamnesisData, testResults, diagnosis, mode, language },
+        body: { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language },
       });
       if (error) throw error;
       setTreatmentPlan(result.treatmentPlan);
@@ -256,6 +268,7 @@ const Assessment = () => {
                   <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_2") || "Diagnóstico com explicação detalhada"}</li>
                   <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_3") || "Plano de tratamento em 3 fases"}</li>
                   <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_4") || "Exercícios com vídeos do YouTube"}</li>
+                  <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_5") || "Questionários internacionalmente validados"}</li>
                 </ul>
                 <Button
                   onClick={handlePayment}
@@ -296,11 +309,19 @@ const Assessment = () => {
             onBack={() => setStep("redflags")}
           />
         )}
+        {step === "questionnaire" && anamnesisData && (
+          <QuestionnaireStep
+            painRegions={anamnesisData.painRegions}
+            onComplete={handleQuestionnaireComplete}
+            onBack={() => setStep("anamnesis")}
+            onSkip={handleQuestionnaireSkip}
+          />
+        )}
         {step === "functional_tests" && anamnesisData && (
           <FunctionalTests
             painRegions={anamnesisData.painRegions}
             onComplete={handleTestsComplete}
-            onBack={() => setStep("anamnesis")}
+            onBack={() => setStep("questionnaire")}
           />
         )}
         {step === "loading" && (

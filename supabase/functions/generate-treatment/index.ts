@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, diagnosis, mode, language } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language } = await req.json();
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const painScore = anamnesisData?.painScore ?? 5;
@@ -37,8 +37,12 @@ IMPORTANT RULES:
 - Never recommend medication.
 - Be empathetic and use accessible language.
 - EQUIPMENT CONTEXT: ${equipmentContext}
+- When validated questionnaire results (e.g., KOOS, HOOS, FAOS, SPADI, ODI) are provided, use the subscale scores to identify the most impaired functional areas and prioritize exercises that target those specific deficits.
+- For example: if the sport/recreation subscale is most affected, include sport-specific rehabilitation exercises in medium/long-term phases.
+- If daily living (ADL) subscale is most affected, prioritize functional exercises for everyday tasks.
+- Include therapeutic goals derived from questionnaire findings (e.g., "Improve stair climbing ability based on KOOS ADL score of 45%").
 - Adapt the plan based on pain score (${painScore}/10):
-  ${isHighPain 
+  ${isHighPain
     ? "- Pain score is HIGH (≥6): Short-term phase should focus ONLY on conservative/analgesic approaches (rest, ice/heat, gentle stretching, breathing). NO muscle activation or strengthening in short-term."
     : "- Pain score is MODERATE/LOW (<6): Short-term can include gentle muscle activation and mobility exercises alongside pain management."
   }
@@ -116,11 +120,16 @@ EXERCISE GUIDELINES:
 
 Diagnostic hypothesis: ${diagnosis?.hypothesis || "Not available"}
 
+${questionnaireResults && questionnaireResults.length > 0 ? `Validated questionnaire results:
+${questionnaireResults.map((q: any) => `- ${q.questionnaireName} (${q.questionnaireId.toUpperCase()}): Total score ${q.percentageScore}% | Interpretation: ${q.interpretation_pt || q.interpretation_en} | Severity: ${q.severity}
+  Subscale scores: ${Object.entries(q.subscaleScores || {}).map(([k, v]) => `${k}: ${v}%`).join(", ")}
+  IMPORTANT: Use these subscale scores to prioritize exercises targeting the weakest functional areas.`).join("\n")}` : "No validated questionnaires applied."}
+
 ${testResults && testResults.length > 0 ? `Functional test results:
 - Painful/Uncomfortable tests: ${painfulTests.join(", ") || "None"}
 - Normal tests: ${normalTests.join(", ") || "None"}` : "No functional tests performed."}
 
-Generate a personalized 3-phase treatment plan in valid JSON format. Focus exercises on the affected regions and address the deficits found in the functional tests. Remember: use "searchQuery" instead of "videoUrls" for each exercise.`;
+Generate a personalized 3-phase treatment plan in valid JSON format. Focus exercises on the affected regions, address deficits found in functional tests, and target the most impaired functional areas identified by the validated questionnaires. Remember: use "searchQuery" instead of "videoUrls" for each exercise.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
