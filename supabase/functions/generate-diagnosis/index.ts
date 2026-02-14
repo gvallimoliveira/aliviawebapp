@@ -24,6 +24,12 @@ KNOWLEDGE BASE (use as clinical reference):
 - SONAFE (Sociedade Nacional de Fisioterapia Esportiva) publications
 - "Kinesiology of the Musculoskeletal System" by Donald Neumann
 - "Clinical Neurodynamics" by Michael Shacklock
+- Ellenbecker & Cools (BJSM 2010): Rehabilitation of shoulder impingement syndrome and rotator cuff injuries - primary vs secondary impingement, scapular dysfunction role, rotator cuff weakness patterns
+- Fahlstrom et al. (Knee Surg Sports Traumatol Arthrosc 2003): Eccentric calf-muscle training for chronic Achilles tendinosis - 89% success rate for mid-portion tendinosis, poor results (32%) for insertional pain
+- Werner et al. (J Shoulder Elbow Surg 2010): Subacromial pressures vary with sleep positions - supine position shows significantly lower pressures than side/prone positions
+- Teng & Powers (J Athletic Training 2016): Hip-extensor weakness leads to upright trunk posture during running, causing overreliance on knee extensors and contributing to patellofemoral injuries
+- Maranhão-Filho et al. (Arq Neuropsiquiatr 2011): Static balance assessment using CTSIB-modified and Functional Reach Test - unstable surfaces do not effectively train proprioception
+- VISA-A Questionnaire (Robinson et al.): Validated outcome measure for Achilles tendon disorders, 8-item scale scored 0-100
 
 IMPORTANT RULES:
 - Always respond in ${lang}.
