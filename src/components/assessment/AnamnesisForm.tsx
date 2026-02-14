@@ -22,6 +22,7 @@ export interface AnamnesisData {
   activityLevel: string;
   painScore: number;
   hasGymAccess: string;
+  painDuration: string;
 }
 
 interface AnamnesisFormProps {
@@ -45,6 +46,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     activityLevel: "",
     painScore: 5,
     hasGymAccess: "",
+    painDuration: "",
   });
 
   const complaints = [
@@ -235,7 +237,28 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       </div>
     ),
 
-    // Step 6: Gym Access
+    // Step 6: Pain Duration
+    () => (
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">{t("anamnesis.pain_duration_title")}</h3>
+        <p className="text-sm text-muted-foreground">{t("anamnesis.pain_duration_subtitle")}</p>
+        <div className="grid gap-3">
+          {["anamnesis.duration.less_week", "anamnesis.duration.one_month", "anamnesis.duration.three_six_months", "anamnesis.duration.one_year_plus"].map((option) => (
+            <Card
+              key={option}
+              className={`cursor-pointer transition-all ${data.painDuration === option ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`}
+              onClick={() => setData({ ...data, painDuration: option })}
+            >
+              <CardContent className="py-3 px-4">
+                <span className="text-sm font-medium">{t(option)}</span>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    ),
+
+    // Step 7: Gym Access
     () => (
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">{t("anamnesis.gym_access_title")}</h3>
@@ -297,8 +320,9 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       case 3: return data.painTypes.length > 0;
       case 4: return data.evolution !== "";
       case 5: return data.activityLevel !== "";
-      case 6: return data.hasGymAccess !== "";
-      case 7: return true;
+      case 6: return data.painDuration !== "";
+      case 7: return data.hasGymAccess !== "";
+      case 8: return true;
       default: return false;
     }
   };

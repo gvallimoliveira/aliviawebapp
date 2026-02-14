@@ -62,6 +62,7 @@ Response format (JSON):
 - Relieving factors: ${anamnesisData.relievingFactors || "Not specified"}
 - Activity level: ${anamnesisData.activityLevel}
 - Pain score (0-10): ${anamnesisData.painScore}
+- Pain duration: ${anamnesisData.painDuration || "Not specified"}
 
 ${testResults && testResults.length > 0 ? `Functional test results:
 ${testResults.map((t: any) => `- ${t.testId}: ${t.painful ? "PAINFUL/UNCOMFORTABLE" : "No discomfort"}`).join("\n")}` : "No functional tests performed."}
