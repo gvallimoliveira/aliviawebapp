@@ -32,6 +32,7 @@ interface Exercise {
   frequency: string;
   videoUrl?: string;
   videoUrls?: string[];
+  searchQuery?: string;
   category: string;
 }
 
@@ -194,6 +195,26 @@ const TreatmentPlan = ({ plan, diagnosis, onBack, onNewAssessment }: TreatmentPl
                         </div>
                         {(() => {
                           const urls = exercise.videoUrls || (exercise.videoUrl ? [exercise.videoUrl] : []);
+                          const searchQuery = exercise.searchQuery;
+                          
+                          if (searchQuery) {
+                            const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
+                            return (
+                              <div className="mt-1">
+                                <a
+                                  href={ytSearchUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                                >
+                                  <Play className="h-3 w-3" />
+                                  {t("treatment.search_video")}
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </div>
+                            );
+                          }
+                          
                           if (urls.length === 0) return null;
                           return (
                             <div className="flex flex-col gap-1 mt-1">

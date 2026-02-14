@@ -17,6 +17,11 @@ serve(async (req) => {
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const painScore = anamnesisData?.painScore ?? 5;
     const isHighPain = painScore >= 6;
+    const hasGym = anamnesisData?.hasGymAccess?.includes("yes") ?? false;
+
+    const equipmentContext = hasGym
+      ? "The patient HAS ACCESS to a gym with free weights, resistance machines, and standard gym equipment. You can prescribe exercises using barbells, dumbbells, cable machines, leg press, etc."
+      : "The patient does NOT have access to a gym. All exercises MUST be bodyweight-based OR use minimal/affordable equipment like resistance bands (elastic bands), tennis balls, foam rollers, or towels. Suggest resistance bands as an affordable alternative when appropriate, mentioning they are low-cost and versatile.";
 
     const systemPrompt = `You are an experienced musculoskeletal physiotherapist AI assistant. Based on the patient's data, diagnostic hypothesis, and functional test results, create a personalized treatment plan in 3 phases.
 
@@ -31,14 +36,18 @@ IMPORTANT RULES:
 - This is for educational purposes only — always include a disclaimer.
 - Never recommend medication.
 - Be empathetic and use accessible language.
-- Each exercise MUST include exactly TWO real YouTube video URLs for demonstration (in case one is deleted).
-- PRIORITIZE videos from the "Physiotutors" YouTube channel whenever possible. The second video can be from other reputable physiotherapy channels (e.g., E3 Fisioterapia, Bob & Brad, Dr. Andrea Furlan).
-- Use ONLY well-known, established YouTube channels with physiotherapy/exercise content.
+- EQUIPMENT CONTEXT: ${equipmentContext}
 - Adapt the plan based on pain score (${painScore}/10):
   ${isHighPain 
     ? "- Pain score is HIGH (≥6): Short-term phase should focus ONLY on conservative/analgesic approaches (rest, ice/heat, gentle stretching, breathing). NO muscle activation or strengthening in short-term."
     : "- Pain score is MODERATE/LOW (<6): Short-term can include gentle muscle activation and mobility exercises alongside pain management."
   }
+
+CRITICAL RULE FOR YOUTUBE VIDEOS:
+- Do NOT invent or fabricate YouTube URLs. AI-generated URLs will lead to broken pages.
+- Instead of providing videoUrls, provide a "searchQuery" field for each exercise. This search query should be a specific YouTube search string that the user can use to find the correct demonstration video.
+- The search query should be in the same language as the response (${lang}).
+- Example: "searchQuery": "shoulder external rotation exercise physiotherapy demonstration"
 
 Response format (JSON):
 {
@@ -55,10 +64,7 @@ Response format (JSON):
           "sets": "3",
           "reps": "10-12",
           "frequency": "Daily",
-          "videoUrls": [
-            "https://www.youtube.com/watch?v=VIDEO_ID_1",
-            "https://www.youtube.com/watch?v=VIDEO_ID_2"
-          ],
+          "searchQuery": "specific youtube search query for this exercise",
           "category": "stretching" | "strengthening" | "mobility" | "breathing" | "stability" | "pain_management"
         }
       ]
@@ -88,7 +94,8 @@ EXERCISE GUIDELINES:
 - Short-term: 3-5 exercises focused on pain relief and gentle mobility
 - Medium-term: 4-6 exercises adding strengthening and functional movements
 - Long-term: 4-6 exercises for return to full activity and prevention
-- Each exercise MUST have exactly 2 YouTube video URLs (preferably from Physiotutors first)
+- Each exercise MUST have a "searchQuery" field (NOT videoUrls)
+- Adapt exercises based on equipment availability: ${hasGym ? "gym equipment available" : "bodyweight and resistance bands only"}
 - Adapt intensity based on activity level: ${anamnesisData?.activityLevel || "not specified"}
 - Include references from the knowledge base sources listed above`;
 
@@ -105,6 +112,7 @@ EXERCISE GUIDELINES:
 - Relieving factors: ${anamnesisData?.relievingFactors || "Not specified"}
 - Activity level: ${anamnesisData?.activityLevel}
 - Onset: ${anamnesisData?.onset}
+- Gym access: ${hasGym ? "Yes — has access to gym with free weights and resistance machines" : "No — no gym access, exercises should be bodyweight or use resistance bands"}
 
 Diagnostic hypothesis: ${diagnosis?.hypothesis || "Not available"}
 
@@ -112,7 +120,7 @@ ${testResults && testResults.length > 0 ? `Functional test results:
 - Painful/Uncomfortable tests: ${painfulTests.join(", ") || "None"}
 - Normal tests: ${normalTests.join(", ") || "None"}` : "No functional tests performed."}
 
-Generate a personalized 3-phase treatment plan in valid JSON format. Focus exercises on the affected regions and address the deficits found in the functional tests.`;
+Generate a personalized 3-phase treatment plan in valid JSON format. Focus exercises on the affected regions and address the deficits found in the functional tests. Remember: use "searchQuery" instead of "videoUrls" for each exercise.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
