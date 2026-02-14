@@ -121,19 +121,35 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         </Card>
       )}
 
-      {/* Basic mode upsell */}
+      {/* Basic mode: tip + upsell */}
       {mode === "basic" && (
-        <Card className="rounded-xl border-primary/30 bg-primary/5">
-          <CardContent className="py-4 text-center space-y-3">
-            <p className="text-sm font-medium text-foreground">{t("diagnosis.upsell")}</p>
-            <Button
-              onClick={() => window.location.href = "/assessment/premium"}
-              className="rounded-xl"
-            >
-              {t("diagnosis.upgrade_cta")}
-            </Button>
-          </CardContent>
-        </Card>
+        <>
+          <Card className="rounded-xl border-primary/30 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Olha a dica!
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Sabemos que a sua dor está te preocupando! Não deixe esse problema aumentar até se tornar uma limitação na sua vida, podemos te ajudar com nosso plano de tratamento na avaliação premium.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl border-primary/30 bg-primary/5">
+            <CardContent className="py-4 text-center space-y-3">
+              <p className="text-sm font-medium text-foreground">{t("diagnosis.upsell")}</p>
+              <Button
+                onClick={() => window.location.href = "/assessment/premium"}
+                className="rounded-xl"
+              >
+                {t("diagnosis.upgrade_cta")}
+              </Button>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {/* Disclaimer */}
