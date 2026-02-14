@@ -235,17 +235,21 @@ const Assessment = () => {
               {t("payment.premium_title") || "Avaliação Premium"}
             </div>
             <h2 className="text-2xl font-bold text-foreground">
-              {t("payment.unlock_title") || "Desbloqueie sua avaliação completa"}
+              {premiumAccess.assessments_used && premiumAccess.assessments_used >= 2
+                ? (t("payment.limit_reached_title") || "Limite de avaliações atingido")
+                : (t("payment.unlock_title") || "Desbloqueie sua avaliação completa")}
             </h2>
             <p className="text-muted-foreground max-w-md mx-auto">
-              {t("payment.unlock_desc") || "Inclui anamnese completa, testes funcionais, diagnóstico detalhado com explicação e plano de tratamento personalizado por fases."}
+              {premiumAccess.assessments_used && premiumAccess.assessments_used >= 2
+                ? (t("payment.limit_reached_desc") || "Você já realizou 2 avaliações neste período. Faça um novo pagamento para continuar.")
+                : (t("payment.unlock_desc") || "Inclui anamnese completa, testes funcionais, diagnóstico detalhado com explicação e plano de tratamento personalizado por fases.")}
             </p>
 
             <Card className="rounded-xl border-primary/30 max-w-sm mx-auto">
               <CardContent className="py-6 space-y-4">
                 <div className="text-4xl font-bold text-foreground">R$ 100</div>
                 <p className="text-sm text-muted-foreground">
-                  {t("payment.includes_redo") || "Inclui 1 reavaliação gratuita em até 7 dias"}
+                  {t("payment.includes_redo") || "Inclui até 2 avaliações em 7 dias"}
                 </p>
                 <ul className="text-sm text-left space-y-2 text-muted-foreground">
                   <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_1") || "Testes funcionais guiados por vídeo"}</li>
