@@ -16,11 +16,13 @@ import {
   CheckCircle,
   ListChecks,
   ExternalLink,
+  FileDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface Exercise {
   name: string;
@@ -50,6 +52,7 @@ interface TreatmentPlanData {
 
 interface TreatmentPlanProps {
   plan: TreatmentPlanData;
+  diagnosis?: any;
   onBack: () => void;
   onNewAssessment: () => void;
 }
@@ -69,9 +72,28 @@ const phaseConfig: Record<string, { colorClass: string; bgClass: string }> = {
   long_term: { colorClass: "text-green-600", bgClass: "bg-green-50 border-green-200" },
 };
 
-const TreatmentPlan = ({ plan, onBack, onNewAssessment }: TreatmentPlanProps) => {
-  const { t } = useLanguage();
+const TreatmentPlan = ({ plan, diagnosis, onBack, onNewAssessment }: TreatmentPlanProps) => {
+  const { t, language } = useLanguage();
+  const { toast } = useToast();
   const [expandedPhase, setExpandedPhase] = useState<string>("short_term");
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!diagnosis) {
+      toast({ title: t("pdf.no_data"), variant: "destructive" });
+      return;
+    }
+    setPdfLoading(true);
+    try {
+      const { generateAssessmentPdf } = await import("@/utils/generatePdf");
+      generateAssessmentPdf({ diagnosis, treatmentPlan: plan, language });
+      toast({ title: t("pdf.success") });
+    } catch {
+      toast({ title: t("pdf.error"), variant: "destructive" });
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const togglePhase = (phaseId: string) => {
     setExpandedPhase((prev) => (prev === phaseId ? "" : phaseId));
@@ -237,6 +259,19 @@ const TreatmentPlan = ({ plan, onBack, onNewAssessment }: TreatmentPlanProps) =>
         <AlertTriangle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
         <p className="text-xs text-muted-foreground">{plan.disclaimer}</p>
       </div>
+
+      {/* Export PDF */}
+      {diagnosis && (
+        <Card className="rounded-xl border-primary/30 bg-primary/5">
+          <CardContent className="py-4 text-center space-y-3">
+            <p className="text-sm font-medium text-foreground">{t("pdf.cta_text")}</p>
+            <Button onClick={handleExportPdf} disabled={pdfLoading} className="rounded-xl gap-2">
+              <FileDown className="h-4 w-4" />
+              {pdfLoading ? t("pdf.generating") : t("pdf.download")}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Actions */}
       <div className="flex justify-between pt-4">

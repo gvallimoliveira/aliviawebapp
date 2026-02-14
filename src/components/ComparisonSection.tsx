@@ -26,6 +26,7 @@ const ComparisonSection = () => {
     { key: "treatment", basic: false, premium: t("compare.treatment.phases") },
     { key: "exercises", basic: false, premium: true },
     { key: "history", basic: false, premium: true },
+    { key: "pdf_export", basic: false, premium: true },
     { key: "redo", basic: false, premium: true },
     { key: "login", basic: false, premium: true },
   ];
