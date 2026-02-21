@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { regionPaths, type View } from "./painMapData";
+import { regionPaths, bodyOutlinePaths, type View } from "./painMapData";
 
 interface PainMapProps {
   selectedRegions: string[];
@@ -29,6 +29,7 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
   ];
 
   const regions = regionPaths[view];
+  const outlines = bodyOutlinePaths[view];
 
   const getRegionLabel = (region: { label_pt: string; label_en: string }) =>
     language === "pt" ? region.label_pt : region.label_en;
@@ -63,19 +64,24 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
       <div className="flex justify-center">
         <div className="relative bg-card rounded-2xl border border-border/50 p-4 shadow-sm">
           <svg
-            viewBox="0 0 200 440"
+            viewBox="0 0 184 420"
             className="w-full max-w-[280px] h-auto"
-            style={{ minHeight: "400px" }}
+            style={{ minHeight: "420px" }}
           >
-            {/* Body outline for context */}
-            <defs>
-              <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--muted))" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="hsl(var(--muted))" stopOpacity="0.1" />
-              </linearGradient>
-            </defs>
+            {/* Anatomical outline — decorative strokes */}
+            {outlines.map((d, i) => (
+              <path
+                key={`outline-${i}`}
+                d={d}
+                fill="none"
+                stroke="hsl(var(--foreground) / 0.25)"
+                strokeWidth="1"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            ))}
 
-            {/* Clickable regions */}
+            {/* Clickable regions — transparent until hovered/selected */}
             {Object.entries(regions).map(([id, region]) => {
               const isSelected = selectedRegions.includes(id);
               const isHovered = hoveredRegion === id;
@@ -85,19 +91,19 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
                   d={region.d}
                   fill={
                     isSelected
-                      ? "hsl(var(--destructive) / 0.4)"
+                      ? "hsl(var(--destructive) / 0.35)"
                       : isHovered
-                      ? "hsl(var(--primary) / 0.2)"
-                      : "hsl(var(--muted) / 0.5)"
+                      ? "hsl(var(--primary) / 0.15)"
+                      : "transparent"
                   }
                   stroke={
                     isSelected
                       ? "hsl(var(--destructive))"
                       : isHovered
                       ? "hsl(var(--primary))"
-                      : "hsl(var(--border))"
+                      : "hsl(var(--border) / 0.3)"
                   }
-                  strokeWidth={isSelected || isHovered ? 2 : 1}
+                  strokeWidth={isSelected ? 2 : isHovered ? 1.5 : 0.5}
                   className="cursor-pointer transition-all duration-200"
                   onClick={() => toggleRegion(id)}
                   onMouseEnter={() => setHoveredRegion(id)}
@@ -111,8 +117,8 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
             {/* Hover tooltip */}
             {hoveredRegion && regions[hoveredRegion] && (
               <g>
-                <rect x="10" y="415" width="180" height="22" rx="6" fill="hsl(var(--card))" stroke="hsl(var(--border))" />
-                <text x="100" y="430" textAnchor="middle" fontSize="11" fill="hsl(var(--foreground))" fontFamily="system-ui">
+                <rect x="10" y="406" width="164" height="20" rx="6" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="0.5" />
+                <text x="92" y="419" textAnchor="middle" fontSize="10" fill="hsl(var(--foreground))" fontFamily="system-ui">
                   {getRegionLabel(regions[hoveredRegion])}
                 </text>
               </g>
