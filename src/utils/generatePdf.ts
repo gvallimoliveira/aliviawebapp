@@ -134,12 +134,6 @@ export function generateAssessmentPdf({ diagnosis, treatmentPlan, language, user
     doc.setFont("helvetica", "normal");
     doc.text(userName, MARGIN + 6 + labelW, y + 9);
     
-    doc.setFont("helvetica", "bold");
-    const dateLabel = isPt ? "Data: " : "Date: ";
-    const dateLabelW = doc.getTextWidth(dateLabel);
-    doc.text(dateLabel, PAGE_WIDTH - MARGIN - 6 - dateLabelW - doc.getTextWidth(dateStr), y + 9);
-    doc.setFont("helvetica", "normal");
-    doc.text(dateStr, PAGE_WIDTH - MARGIN - 6 - doc.getTextWidth(dateStr), y + 9);
     y += 20;
   }
 
