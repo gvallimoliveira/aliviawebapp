@@ -21,7 +21,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Hero
     "hero.title": "Cuide da sua dor com orientação especializada",
-    "hero.subtitle": "Avaliação musculoesquelética guiada que ajuda você a entender sua dor e encontrar o caminho para o alívio — de forma segura e acessível.",
+    "hero.subtitle": "Avaliação musculoesquelética formulada por fisioterapeuta, que ajuda você a entender sua dor e encontrar o caminho para o alívio — de forma segura e acessível.",
     "hero.cta.basic": "Avaliação Básica Gratuita",
     "hero.cta.premium": "Avaliação Premium",
     "hero.badge": "Autoavaliação inteligente",
@@ -392,7 +392,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Hero
     "hero.title": "Take care of your pain with expert guidance",
-    "hero.subtitle": "A guided musculoskeletal assessment that helps you understand your pain and find the path to relief — safely and accessibly.",
+    "hero.subtitle": "A musculoskeletal assessment designed by a physiotherapist, helping you understand your pain and find the path to relief — safely and accessibly.",
     "hero.cta.basic": "Free Basic Assessment",
     "hero.cta.premium": "Premium Assessment",
     "hero.badge": "Smart self-assessment",
