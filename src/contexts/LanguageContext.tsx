@@ -67,6 +67,9 @@ const translations: Record<Language, Record<string, string>> = {
     "how.step3.title": "Receba seu Resultado",
     "how.step3.desc": "Hipótese diagnóstica e plano de tratamento personalizado",
 
+    // Social
+    "social.title": "Nos encontre nas redes sociais",
+
     // Footer
     "footer.disclaimer": "Este aplicativo não substitui uma consulta médica. Em caso de emergência, procure atendimento presencial.",
     "footer.rights": "Todos os direitos reservados.",
@@ -467,6 +470,9 @@ const translations: Record<Language, Record<string, string>> = {
     "how.step2.desc": "Functional tests with video instructions (Premium)",
     "how.step3.title": "Get your Results",
     "how.step3.desc": "Diagnostic hypothesis and personalized treatment plan",
+
+    // Social
+    "social.title": "Find us on social media",
 
     // Footer
     "footer.disclaimer": "This app does not replace a medical consultation. In case of emergency, seek in-person care.",
