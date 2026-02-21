@@ -17,6 +17,42 @@ serve(async (req) => {
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
 
+    // Detect shoulder-related complaint
+    const shoulderComplaints = ["anamnesis.complaint.shoulder_pain"];
+    const shoulderRegions = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
+    const armRegions = ["right_arm", "left_arm", "arm_side"];
+    const isShoulderCase = shoulderComplaints.includes(anamnesisData.chiefComplaint) ||
+      (anamnesisData.painRegions || []).some((r: string) => shoulderRegions.includes(r));
+    const hasArmComponent = (anamnesisData.painRegions || []).some((r: string) => armRegions.includes(r));
+
+    const shoulderBlock = isShoulderCase ? `
+SHOULDER-SPECIFIC CLINICAL REASONING (MANDATORY for shoulder complaints):
+When the chief complaint involves the shoulder (with or without ipsilateral arm pain), you MUST systematically consider BOTH intra-articular and extra-articular origins:
+
+INTRA-ARTICULAR hypotheses to consider:
+- Adhesive capsulitis (frozen shoulder): CRITICAL — women aged 35-55 are the primary demographic. Consider patient sex and age range carefully. Gradual onset with progressive global ROM restriction (especially external rotation and abduction) is highly suggestive.
+- Labral lesions (SLAP, Bankart): common in overhead athletes and post-traumatic cases
+- Glenohumeral instability: anterior, posterior or multidirectional — consider age, trauma history, hypermobility
+- Subacromial impingement syndrome: painful arc, overhead activities, night pain when sleeping on affected side
+- Internal impingement: posterior shoulder pain in overhead athletes during late cocking phase
+
+EXTRA-ARTICULAR hypotheses to consider:
+- Rotator cuff tendinopathy (supraspinatus, infraspinatus, subscapularis, teres minor): most common cause of shoulder pain, consider which tendon based on pain pattern and aggravating movements
+- Calcific tendinitis: acute severe pain, limited ROM, common in 30-50 age group
+- Biceps tendinopathy (long head): anterior shoulder pain, aggravated by lifting and supination
+- Myofascial tension/trigger points: upper trapezius, levator scapulae, infraspinatus referred pain patterns
+- Muscle strains: deltoid, pectoralis major, especially post-exertion
+- Acromioclavicular joint pathology: localized superior shoulder pain, cross-body adduction aggravates
+- Scapular dyskinesis: altered scapulohumeral rhythm contributing to impingement
+
+${hasArmComponent ? "IMPORTANT: The patient reports ipsilateral arm pain. Consider cervical radiculopathy (C5-C6), thoracic outlet syndrome, and neural tension as differential diagnoses alongside primary shoulder pathology." : ""}
+
+DEMOGRAPHIC CONTEXT:
+- Patient sex: ${anamnesisData.sex || "Not provided"}
+- Age range: ${anamnesisData.ageRange || "Not provided"}
+${anamnesisData.sex === "anamnesis.sex.female" && ["anamnesis.age.35_44", "anamnesis.age.45_55"].includes(anamnesisData.ageRange) ? "⚠️ HIGH ALERT: Female patient in 35-55 age range — adhesive capsulitis must be strongly considered, especially with gradual onset and progressive ROM restriction." : ""}
+` : "";
+
     const systemPrompt = `You are an experienced musculoskeletal physiotherapist AI assistant. Based on the patient's anamnesis data and validated questionnaire results, generate a diagnostic hypothesis.
 
 KNOWLEDGE BASE (use as clinical reference):
@@ -30,6 +66,11 @@ KNOWLEDGE BASE (use as clinical reference):
 - Teng & Powers (J Athletic Training 2016): Hip-extensor weakness leads to upright trunk posture during running, causing overreliance on knee extensors and contributing to patellofemoral injuries
 - Maranhão-Filho et al. (Arq Neuropsiquiatr 2011): Static balance assessment using CTSIB-modified and Functional Reach Test - unstable surfaces do not effectively train proprioception
 - VISA-A Questionnaire (Robinson et al.): Validated outcome measure for Achilles tendon disorders, 8-item scale scored 0-100
+- Neviaser & Hannafin (J Am Acad Orthop Surg 2010): Adhesive capsulitis - 4 stages (pre-adhesive, freezing, frozen, thawing), predominantly affects women 40-60 years
+- Luime et al. (Ann Rheum Dis 2004): Prevalence and incidence of shoulder pain — lifetime prevalence up to 67%
+- Lewis (BJSM 2016): Rotator cuff tendinopathy — load management and progressive rehabilitation framework
+
+${shoulderBlock}
 
 IMPORTANT RULES:
 - Always respond in ${lang}.
@@ -63,6 +104,8 @@ Response format (JSON):
 - Activity level: ${anamnesisData.activityLevel}
 - Pain score (0-10): ${anamnesisData.painScore}
 - Pain duration: ${anamnesisData.painDuration || "Not specified"}
+- Sex: ${anamnesisData.sex || "Not specified"}
+- Age range: ${anamnesisData.ageRange || "Not specified"}
 
 ${testResults && testResults.length > 0 ? `Functional test results:
 ${testResults.map((t: any) => `- ${t.testId}: ${t.painful ? "PAINFUL/UNCOMFORTABLE" : "No discomfort"}`).join("\n")}` : "No functional tests performed."}
