@@ -25,6 +25,17 @@ serve(async (req) => {
       (anamnesisData.painRegions || []).some((r: string) => shoulderRegions.includes(r));
     const hasArmComponent = (anamnesisData.painRegions || []).some((r: string) => armRegions.includes(r));
 
+    // Detect knee/thigh-related complaint
+    const kneeComplaints = ["anamnesis.complaint.knee_pain"];
+    const kneeRegions = ["right_knee", "left_knee", "right_knee_back", "left_knee_back", "knee_side"];
+    const thighRegions = ["right_thigh", "left_thigh", "right_hamstring", "left_hamstring", "thigh_side"];
+    const hipComplaints = ["anamnesis.complaint.hip_pain"];
+    const isKneeCase = kneeComplaints.includes(anamnesisData.chiefComplaint) ||
+      (anamnesisData.painRegions || []).some((r: string) => kneeRegions.includes(r));
+    const isThighCase = (anamnesisData.painRegions || []).some((r: string) => thighRegions.includes(r));
+    const isHipCase = hipComplaints.includes(anamnesisData.chiefComplaint);
+    const isKneeThighCase = isKneeCase || isThighCase;
+
     const shoulderBlock = isShoulderCase ? `
 SHOULDER-SPECIFIC CLINICAL REASONING (MANDATORY for shoulder complaints):
 When the chief complaint involves the shoulder (with or without ipsilateral arm pain), you MUST systematically consider BOTH intra-articular and extra-articular origins:
@@ -53,6 +64,42 @@ DEMOGRAPHIC CONTEXT:
 ${anamnesisData.sex === "anamnesis.sex.female" && ["anamnesis.age.35_44", "anamnesis.age.45_55"].includes(anamnesisData.ageRange) ? "⚠️ HIGH ALERT: Female patient in 35-55 age range — adhesive capsulitis must be strongly considered, especially with gradual onset and progressive ROM restriction." : ""}
 ` : "";
 
+    const kneeThighBlock = isKneeThighCase ? `
+KNEE/THIGH-SPECIFIC CLINICAL REASONING (MANDATORY for knee and thigh complaints):
+You MUST systematically consider BOTH intra-articular and extra-articular origins:
+
+INTRA-ARTICULAR hypotheses to consider:
+- Meniscal lesions (medial and lateral): locking, catching, joint line tenderness, McMurray-like symptoms. Medial meniscus is more commonly injured. Consider degenerative tears in patients >40 and traumatic tears in younger/athletic patients.
+- Ligament injuries: ACL (pivot/cutting sports, feeling of "pop", instability), PCL (dashboard injury, posterior tibial sag), MCL (valgus stress, medial pain), LCL (varus stress, lateral pain)
+- Chondromalacia patellae / Patellofemoral pain syndrome: anterior knee pain worsened by stairs, prolonged sitting (cinema sign), squatting. Common in young active individuals, especially women. Consider VMO weakness, patellar tracking, Q-angle.
+- Osteochondral lesions: persistent swelling, mechanical symptoms, post-traumatic
+- Plica syndrome: medial parapatellar snapping, pseudo-locking
+
+EXTRA-ARTICULAR hypotheses to consider:
+- Patellar tendinopathy (jumper's knee): inferior pole pain, load-dependent (jumping, squatting, stairs). Common in volleyball, basketball, running athletes. Gradual onset, worsens with tendon loading.
+- Pes anserine tendinopathy/bursitis (pata de ganso): medial proximal tibial pain, common in overweight individuals, women, and runners. Pain worsens with stairs and resisted knee flexion/internal rotation.
+- Iliotibial band syndrome: lateral knee pain, especially in runners and cyclists. Pain at ~30° flexion, worsened by downhill running.
+- Quadriceps tendinopathy: superior patellar pole pain, worsened by loading activities
+
+${isThighCase ? `THIGH-SPECIFIC hypotheses (MANDATORY when thigh pain is reported):
+- Hamstring strain/injury (posterior thigh): common in sprinting, kicking sports. Consider biceps femoris (most common), semimembranosus, semitendinosus. Acute onset during eccentric loading. Grade severity by function and pain level.
+- Rectus femoris strain (anterior thigh): common in kicking sports (football). Pain with hip flexion and knee extension. Often at musculotendinous junction or proximal origin (AIIS avulsion in adolescents).
+- Quadriceps contusion: direct trauma, anterior/lateral thigh, consider myositis ossificans risk if severe
+- Adductor strain: medial thigh pain, common in football/hockey, pain with resisted adduction
+- Myofascial tension/trigger points: vastus lateralis, rectus femoris, hamstring referred pain patterns
+- Meralgia paresthetica (lateral femoral cutaneous nerve): anterolateral thigh numbness/burning, consider in overweight patients or tight belts/clothing` : ""}
+
+${isHipCase || isThighCase ? `HIP-KNEE CHAIN CONSIDERATIONS:
+- Hip pathology (FAI, labral tears, hip OA) can refer pain to the anterior thigh and knee
+- Teng & Powers (2016): hip-extensor weakness leads to overreliance on knee extensors — consider proximal causes for distal symptoms
+- L3-L4 radiculopathy can mimic anterior knee/thigh pain` : ""}
+
+BIOMECHANICAL CONSIDERATIONS:
+- Assess kinetic chain: foot pronation, hip weakness (especially gluteus medius), and core stability can all contribute to knee pathology
+- Consider activity type: running (ITB, patellofemoral, pes anserine), jumping (patellar tendinopathy), cutting/pivoting (ACL, meniscal), contact sports (MCL, contusion)
+- Pain duration matters: acute (<2 weeks) suggests strain/sprain; chronic (>3 months) suggests tendinopathy, degenerative changes, or biomechanical dysfunction
+` : "";
+
     const systemPrompt = `You are an experienced musculoskeletal physiotherapist AI assistant. Based on the patient's anamnesis data and validated questionnaire results, generate a diagnostic hypothesis.
 
 KNOWLEDGE BASE (use as clinical reference):
@@ -60,17 +107,19 @@ KNOWLEDGE BASE (use as clinical reference):
 - SONAFE (Sociedade Nacional de Fisioterapia Esportiva) publications
 - "Kinesiology of the Musculoskeletal System" by Donald Neumann
 - "Clinical Neurodynamics" by Michael Shacklock
-- Ellenbecker & Cools (BJSM 2010): Rehabilitation of shoulder impingement syndrome and rotator cuff injuries - primary vs secondary impingement, scapular dysfunction role, rotator cuff weakness patterns
-- Fahlstrom et al. (Knee Surg Sports Traumatol Arthrosc 2003): Eccentric calf-muscle training for chronic Achilles tendinosis - 89% success rate for mid-portion tendinosis, poor results (32%) for insertional pain
-- Werner et al. (J Shoulder Elbow Surg 2010): Subacromial pressures vary with sleep positions - supine position shows significantly lower pressures than side/prone positions
-- Teng & Powers (J Athletic Training 2016): Hip-extensor weakness leads to upright trunk posture during running, causing overreliance on knee extensors and contributing to patellofemoral injuries
-- Maranhão-Filho et al. (Arq Neuropsiquiatr 2011): Static balance assessment using CTSIB-modified and Functional Reach Test - unstable surfaces do not effectively train proprioception
-- VISA-A Questionnaire (Robinson et al.): Validated outcome measure for Achilles tendon disorders, 8-item scale scored 0-100
-- Neviaser & Hannafin (J Am Acad Orthop Surg 2010): Adhesive capsulitis - 4 stages (pre-adhesive, freezing, frozen, thawing), predominantly affects women 40-60 years
-- Luime et al. (Ann Rheum Dis 2004): Prevalence and incidence of shoulder pain — lifetime prevalence up to 67%
-- Lewis (BJSM 2016): Rotator cuff tendinopathy — load management and progressive rehabilitation framework
+- Ellenbecker & Cools (BJSM 2010): Rehabilitation of shoulder impingement syndrome and rotator cuff injuries
+- Fahlstrom et al. (Knee Surg Sports Traumatol Arthrosc 2003): Eccentric calf-muscle training for chronic Achilles tendinosis
+- Werner et al. (J Shoulder Elbow Surg 2010): Subacromial pressures vary with sleep positions
+- Teng & Powers (J Athletic Training 2016): Hip-extensor weakness and patellofemoral injuries
+- VISA-A Questionnaire (Robinson et al.): Validated outcome measure for Achilles tendon disorders
+- Neviaser & Hannafin (J Am Acad Orthop Surg 2010): Adhesive capsulitis staging
+- Crossley et al. (BJSM 2016): Patellofemoral pain consensus — exercise therapy cornerstone
+- Cook & Purdam (BJSM 2009): Continuum model of tendon pathology
+- Malliaras et al. (Sports Med 2015): Patellar tendinopathy load management
+- Thorborg et al. (BJSM 2017): Hip and groin injury classification
 
 ${shoulderBlock}
+${kneeThighBlock}
 
 IMPORTANT RULES:
 - Always respond in ${lang}.
