@@ -263,7 +263,7 @@ const Assessment = () => {
 
             <Card className="rounded-xl border-primary/30 max-w-sm mx-auto">
               <CardContent className="py-6 space-y-4">
-                <div className="text-4xl font-bold text-foreground">R$ 100</div>
+                <div className="text-4xl font-bold text-foreground">R$ 129</div>
                 <p className="text-sm text-muted-foreground">
                   {t("payment.includes_redo") || "Inclui até 2 avaliações em 7 dias"}
                 </p>
