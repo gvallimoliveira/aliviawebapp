@@ -23,6 +23,8 @@ export interface AnamnesisData {
   painScore: number;
   hasGymAccess: string;
   painDuration: string;
+  sex: string;
+  ageRange: string;
 }
 
 interface AnamnesisFormProps {
@@ -47,6 +49,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     painScore: 5,
     hasGymAccess: "",
     painDuration: "",
+    sex: "",
+    ageRange: "",
   });
 
   const complaints = [
@@ -78,6 +82,14 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     "anamnesis.activity.athlete",
   ];
 
+  const ageRanges = [
+    "anamnesis.age.under_25",
+    "anamnesis.age.25_34",
+    "anamnesis.age.35_44",
+    "anamnesis.age.45_55",
+    "anamnesis.age.over_55",
+  ];
+
   const toggleArrayItem = (key: keyof AnamnesisData, item: string) => {
     const arr = data[key] as string[];
     if (arr.includes(item)) {
@@ -93,239 +105,214 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     return "text-destructive";
   };
 
-  const steps = [
-    // Step 0: Chief Complaint
-    () => (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">{t("anamnesis.complaint_title")}</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {complaints.map((c) => (
-            <Button
-              key={c}
-              variant={data.chiefComplaint === c ? "default" : "outline"}
-              size="sm"
-              className="justify-start text-left h-auto py-2.5 rounded-xl"
-              onClick={() => setData({ ...data, chiefComplaint: c })}
-            >
-              {t(c)}
-            </Button>
-          ))}
-        </div>
-        <div className="space-y-2">
-          <Label>{t("anamnesis.other_complaint")}</Label>
-          <Input
-            value={data.customComplaint}
-            onChange={(e) => setData({ ...data, customComplaint: e.target.value.slice(0, 200) })}
-            placeholder={t("anamnesis.other_complaint_placeholder")}
-            maxLength={200}
-          />
-        </div>
-      </div>
-    ),
+  const isShoulderRelated = () => {
+    const shoulderComplaints = ["anamnesis.complaint.shoulder_pain"];
+    const shoulderRegions = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
+    return shoulderComplaints.includes(data.chiefComplaint) || data.painRegions.some(r => shoulderRegions.includes(r));
+  };
 
-    // Step 1: Onset
-    () => (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">{t("anamnesis.onset_title")}</h3>
-        <div className="grid gap-3">
-          {["anamnesis.onset.sudden", "anamnesis.onset.gradual", "anamnesis.onset.trauma"].map((o) => (
-            <Card
-              key={o}
-              className={`cursor-pointer transition-all ${data.onset === o ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`}
-              onClick={() => setData({ ...data, onset: o })}
-            >
-              <CardContent className="py-3 px-4">
-                <span className="text-sm font-medium">{t(o)}</span>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    ),
+  // Define step IDs for clarity
+  type StepId = "complaint" | "onset" | "painmap" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "gym" | "painscore";
 
-    // Step 2: Pain Map
-    () => (
-      <PainMap
-        selectedRegions={data.painRegions}
-        onRegionsChange={(regions) => setData({ ...data, painRegions: regions })}
-      />
-    ),
+  const buildStepSequence = (): StepId[] => {
+    const base: StepId[] = ["complaint", "onset", "painmap", "paintype", "evolution", "factors", "duration", "gym", "painscore"];
+    if (isShoulderRelated()) {
+      // Insert sex_age right after painmap (after user selects shoulder regions)
+      const idx = base.indexOf("paintype");
+      base.splice(idx, 0, "sex_age");
+    }
+    return base;
+  };
 
-    // Step 3: Pain Type
-    () => (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">{t("anamnesis.pain_type_title")}</h3>
-        <p className="text-sm text-muted-foreground">{t("anamnesis.pain_type_subtitle")}</p>
-        <div className="grid grid-cols-2 gap-2">
-          {painTypes.map((pt) => (
-            <Button
-              key={pt}
-              variant={data.painTypes.includes(pt) ? "default" : "outline"}
-              size="sm"
-              className="rounded-xl h-auto py-2.5"
-              onClick={() => toggleArrayItem("painTypes", pt)}
-            >
-              {t(pt)}
-            </Button>
-          ))}
-        </div>
-      </div>
-    ),
+  const stepSequence = buildStepSequence();
 
-    // Step 4: Evolution
-    () => (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">{t("anamnesis.evolution_title")}</h3>
-        <div className="grid gap-3">
-          {["anamnesis.evolution.improving", "anamnesis.evolution.stable", "anamnesis.evolution.worsening"].map((e) => (
-            <Card
-              key={e}
-              className={`cursor-pointer transition-all ${data.evolution === e ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`}
-              onClick={() => setData({ ...data, evolution: e })}
-            >
-              <CardContent className="py-3 px-4 flex items-center gap-3">
-                <span className={`text-lg ${e.includes("improving") ? "text-primary" : e.includes("worsening") ? "text-destructive" : "text-muted-foreground"}`}>
-                  {e.includes("improving") ? "📈" : e.includes("worsening") ? "📉" : "➡️"}
-                </span>
-                <span className="text-sm font-medium">{t(e)}</span>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    ),
-
-    // Step 5: Aggravating/Relieving + Activity Level (combined for basic mode)
-    () => (
-      <div className="space-y-5">
-        <div className="space-y-2">
-          <Label>{t("anamnesis.aggravating")}</Label>
-          <Textarea
-            value={data.aggravatingFactors}
-            onChange={(e) => setData({ ...data, aggravatingFactors: e.target.value.slice(0, 500) })}
-            placeholder={t("anamnesis.aggravating_placeholder")}
-            rows={2}
-            maxLength={500}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>{t("anamnesis.relieving")}</Label>
-          <Textarea
-            value={data.relievingFactors}
-            onChange={(e) => setData({ ...data, relievingFactors: e.target.value.slice(0, 500) })}
-            placeholder={t("anamnesis.relieving_placeholder")}
-            rows={2}
-            maxLength={500}
-          />
-        </div>
-        <div className="space-y-3">
-          <Label>{t("anamnesis.activity_level")}</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {activityLevels.map((a) => (
-              <Button
-                key={a}
-                variant={data.activityLevel === a ? "default" : "outline"}
-                size="sm"
-                className="rounded-xl h-auto py-2.5"
-                onClick={() => setData({ ...data, activityLevel: a })}
-              >
-                {t(a)}
-              </Button>
-            ))}
+  const renderStep = (id: StepId) => {
+    switch (id) {
+      case "complaint":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t("anamnesis.complaint_title")}</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {complaints.map((c) => (
+                <Button key={c} variant={data.chiefComplaint === c ? "default" : "outline"} size="sm" className="justify-start text-left h-auto py-2.5 rounded-xl" onClick={() => setData({ ...data, chiefComplaint: c })}>
+                  {t(c)}
+                </Button>
+              ))}
+            </div>
+            <div className="space-y-2">
+              <Label>{t("anamnesis.other_complaint")}</Label>
+              <Input value={data.customComplaint} onChange={(e) => setData({ ...data, customComplaint: e.target.value.slice(0, 200) })} placeholder={t("anamnesis.other_complaint_placeholder")} maxLength={200} />
+            </div>
           </div>
-        </div>
-      </div>
-    ),
-
-    // Step 6: Pain Duration
-    () => (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">{t("anamnesis.pain_duration_title")}</h3>
-        <p className="text-sm text-muted-foreground">{t("anamnesis.pain_duration_subtitle")}</p>
-        <div className="grid gap-3">
-          {["anamnesis.duration.less_week", "anamnesis.duration.one_month", "anamnesis.duration.three_six_months", "anamnesis.duration.one_year_plus"].map((option) => (
-            <Card
-              key={option}
-              className={`cursor-pointer transition-all ${data.painDuration === option ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`}
-              onClick={() => setData({ ...data, painDuration: option })}
-            >
-              <CardContent className="py-3 px-4">
-                <span className="text-sm font-medium">{t(option)}</span>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    ),
-
-    // Step 7: Gym Access
-    () => (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">{t("anamnesis.gym_access_title")}</h3>
-        <p className="text-sm text-muted-foreground">{t("anamnesis.gym_access_subtitle")}</p>
-        <div className="grid gap-3">
-          {["anamnesis.gym.yes", "anamnesis.gym.no"].map((option) => (
-            <Card
-              key={option}
-              className={`cursor-pointer transition-all ${data.hasGymAccess === option ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`}
-              onClick={() => setData({ ...data, hasGymAccess: option })}
-            >
-              <CardContent className="py-3 px-4 flex items-center gap-3">
-                <span className="text-lg">{option.includes("yes") ? "🏋️" : "🏠"}</span>
-                <div>
-                  <span className="text-sm font-medium">{t(option)}</span>
-                  <p className="text-xs text-muted-foreground">{t(`${option}_desc`)}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    ),
-
-    // Step 7: Pain Score
-    () => (
-      <div className="space-y-6">
-        <h3 className="text-lg font-semibold">{t("anamnesis.pain_score_title")}</h3>
-        <div className="text-center">
-          <span className={`text-6xl font-bold ${getPainScoreColor(data.painScore)}`}>
-            {data.painScore}
-          </span>
-          <p className="text-sm text-muted-foreground mt-2">{t("anamnesis.pain_score_desc")}</p>
-        </div>
-        <div className="px-4">
-          <Slider
-            value={[data.painScore]}
-            onValueChange={([v]) => setData({ ...data, painScore: v })}
-            min={0}
-            max={10}
-            step={1}
-            className="w-full"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground mt-2">
-            <span>{t("anamnesis.no_pain")}</span>
-            <span>{t("anamnesis.worst_pain")}</span>
+        );
+      case "onset":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t("anamnesis.onset_title")}</h3>
+            <div className="grid gap-3">
+              {["anamnesis.onset.sudden", "anamnesis.onset.gradual", "anamnesis.onset.trauma"].map((o) => (
+                <Card key={o} className={`cursor-pointer transition-all ${data.onset === o ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, onset: o })}>
+                  <CardContent className="py-3 px-4"><span className="text-sm font-medium">{t(o)}</span></CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
-    ),
-  ];
-
-  const totalSteps = steps.length;
-  const canGoNext = () => {
-    switch (step) {
-      case 0: return data.chiefComplaint !== "" || data.customComplaint.trim() !== "";
-      case 1: return data.onset !== "";
-      case 2: return data.painRegions.length > 0;
-      case 3: return data.painTypes.length > 0;
-      case 4: return data.evolution !== "";
-      case 5: return data.activityLevel !== "";
-      case 6: return data.painDuration !== "";
-      case 7: return data.hasGymAccess !== "";
-      case 8: return true;
-      default: return false;
+        );
+      case "painmap":
+        return <PainMap selectedRegions={data.painRegions} onRegionsChange={(regions) => setData({ ...data, painRegions: regions })} />;
+      case "sex_age":
+        return (
+          <div className="space-y-5">
+            <h3 className="text-lg font-semibold">{t("anamnesis.sex_age_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.sex_age_subtitle")}</p>
+            <div className="space-y-3">
+              <Label>{t("anamnesis.sex_label")}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {["anamnesis.sex.male", "anamnesis.sex.female"].map((s) => (
+                  <Button key={s} variant={data.sex === s ? "default" : "outline"} size="sm" className="rounded-xl h-auto py-2.5" onClick={() => setData({ ...data, sex: s })}>
+                    {t(s)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-3">
+              <Label>{t("anamnesis.age_range_label")}</Label>
+              <div className="grid gap-2">
+                {ageRanges.map((a) => (
+                  <Card key={a} className={`cursor-pointer transition-all ${data.ageRange === a ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, ageRange: a })}>
+                    <CardContent className="py-3 px-4"><span className="text-sm font-medium">{t(a)}</span></CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      case "paintype":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_type_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.pain_type_subtitle")}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {painTypes.map((pt) => (
+                <Button key={pt} variant={data.painTypes.includes(pt) ? "default" : "outline"} size="sm" className="rounded-xl h-auto py-2.5" onClick={() => toggleArrayItem("painTypes", pt)}>
+                  {t(pt)}
+                </Button>
+              ))}
+            </div>
+          </div>
+        );
+      case "evolution":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t("anamnesis.evolution_title")}</h3>
+            <div className="grid gap-3">
+              {["anamnesis.evolution.improving", "anamnesis.evolution.stable", "anamnesis.evolution.worsening"].map((e) => (
+                <Card key={e} className={`cursor-pointer transition-all ${data.evolution === e ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, evolution: e })}>
+                  <CardContent className="py-3 px-4 flex items-center gap-3">
+                    <span className={`text-lg ${e.includes("improving") ? "text-primary" : e.includes("worsening") ? "text-destructive" : "text-muted-foreground"}`}>
+                      {e.includes("improving") ? "📈" : e.includes("worsening") ? "📉" : "➡️"}
+                    </span>
+                    <span className="text-sm font-medium">{t(e)}</span>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        );
+      case "factors":
+        return (
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Label>{t("anamnesis.aggravating")}</Label>
+              <Textarea value={data.aggravatingFactors} onChange={(e) => setData({ ...data, aggravatingFactors: e.target.value.slice(0, 500) })} placeholder={t("anamnesis.aggravating_placeholder")} rows={2} maxLength={500} />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("anamnesis.relieving")}</Label>
+              <Textarea value={data.relievingFactors} onChange={(e) => setData({ ...data, relievingFactors: e.target.value.slice(0, 500) })} placeholder={t("anamnesis.relieving_placeholder")} rows={2} maxLength={500} />
+            </div>
+            <div className="space-y-3">
+              <Label>{t("anamnesis.activity_level")}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {activityLevels.map((a) => (
+                  <Button key={a} variant={data.activityLevel === a ? "default" : "outline"} size="sm" className="rounded-xl h-auto py-2.5" onClick={() => setData({ ...data, activityLevel: a })}>
+                    {t(a)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      case "duration":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_duration_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.pain_duration_subtitle")}</p>
+            <div className="grid gap-3">
+              {["anamnesis.duration.less_week", "anamnesis.duration.one_month", "anamnesis.duration.three_six_months", "anamnesis.duration.one_year_plus"].map((option) => (
+                <Card key={option} className={`cursor-pointer transition-all ${data.painDuration === option ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, painDuration: option })}>
+                  <CardContent className="py-3 px-4"><span className="text-sm font-medium">{t(option)}</span></CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        );
+      case "gym":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t("anamnesis.gym_access_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.gym_access_subtitle")}</p>
+            <div className="grid gap-3">
+              {["anamnesis.gym.yes", "anamnesis.gym.no"].map((option) => (
+                <Card key={option} className={`cursor-pointer transition-all ${data.hasGymAccess === option ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, hasGymAccess: option })}>
+                  <CardContent className="py-3 px-4 flex items-center gap-3">
+                    <span className="text-lg">{option.includes("yes") ? "🏋️" : "🏠"}</span>
+                    <div>
+                      <span className="text-sm font-medium">{t(option)}</span>
+                      <p className="text-xs text-muted-foreground">{t(`${option}_desc`)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        );
+      case "painscore":
+        return (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_score_title")}</h3>
+            <div className="text-center">
+              <span className={`text-6xl font-bold ${getPainScoreColor(data.painScore)}`}>{data.painScore}</span>
+              <p className="text-sm text-muted-foreground mt-2">{t("anamnesis.pain_score_desc")}</p>
+            </div>
+            <div className="px-4">
+              <Slider value={[data.painScore]} onValueChange={([v]) => setData({ ...data, painScore: v })} min={0} max={10} step={1} className="w-full" />
+              <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                <span>{t("anamnesis.no_pain")}</span>
+                <span>{t("anamnesis.worst_pain")}</span>
+              </div>
+            </div>
+          </div>
+        );
     }
   };
+
+  const isStepValid = (id: StepId): boolean => {
+    switch (id) {
+      case "complaint": return data.chiefComplaint !== "" || data.customComplaint.trim() !== "";
+      case "onset": return data.onset !== "";
+      case "painmap": return data.painRegions.length > 0;
+      case "sex_age": return data.sex !== "" && data.ageRange !== "";
+      case "paintype": return data.painTypes.length > 0;
+      case "evolution": return data.evolution !== "";
+      case "factors": return data.activityLevel !== "";
+      case "duration": return data.painDuration !== "";
+      case "gym": return data.hasGymAccess !== "";
+      case "painscore": return true;
+    }
+  };
+
+  const totalSteps = stepSequence.length;
+  const canGoNext = () => isStepValid(stepSequence[step]);
 
   const handleNext = () => {
     if (step < totalSteps - 1) {
@@ -364,7 +351,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
       >
-        {steps[step]()}
+        {renderStep(stepSequence[step])}
       </motion.div>
 
       {/* Navigation */}
