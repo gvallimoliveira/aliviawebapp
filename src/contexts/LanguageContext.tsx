@@ -372,6 +372,36 @@ const translations: Record<Language, Record<string, string>> = {
     "treatment.cat.stability": "Estabilidade",
     "treatment.cat.pain_management": "Controle de Dor",
 
+    // Stats
+    "stats.basic": "Avaliações básicas realizadas",
+    "stats.premium": "Avaliações premium realizadas",
+    "stats.total": "Pessoas ajudadas",
+
+    // Testimonials
+    "testimonials.title": "O que dizem nossos usuários",
+    "testimonials.t1.text": "Cara, eu tava com uma dor no joelho que não passava fazia meses. Fiz a avaliação premium e finalmente entendi o que tava acontecendo. Os exercícios que me recomendaram foram certeiros, em 3 semanas já tava melhor demais!",
+    "testimonials.t1.name": "Marcos Ferreira",
+    "testimonials.t1.role": "Corredor amador, 34 anos",
+    "testimonials.t2.text": "Achei a plataforma super intuitiva e bem organizada. Como professora, passo muito tempo em pé e sentada alternando, e desenvolvi uma dor lombar crônica. A avaliação me deu um plano claro e fácil de seguir. Recomendo muito.",
+    "testimonials.t2.name": "Camila Santos",
+    "testimonials.t2.role": "Professora, 41 anos",
+    "testimonials.t3.text": "No início fiquei meio cético, mas resolvi testar. Fiz primeiro a básica pra ver como era e gostei tanto que paguei a premium no mesmo dia. O relatório é muito completo, parece que fui numa consulta de verdade. Valeu cada centavo!",
+    "testimonials.t3.name": "Ricardo Lima",
+    "testimonials.t3.role": "Empresário, 52 anos",
+
+    // FAQ
+    "faq.title": "Perguntas Frequentes",
+    "faq.faq1.q": "O que é essa avaliação e como funciona?",
+    "faq.faq1.a": "É uma avaliação musculoesquelética online, formulada por um fisioterapeuta especialista, que guia você por perguntas sobre sua dor, testes funcionais e gera uma hipótese diagnóstica com plano de tratamento personalizado. Tudo feito de forma segura e prática pelo seu celular ou computador.",
+    "faq.faq2.q": "Por que devo investir na avaliação premium?",
+    "faq.faq2.a": "A versão premium inclui anamnese completa, testes funcionais com vídeo, questionários validados cientificamente, diagnóstico detalhado com explicação, plano de tratamento em 3 fases com exercícios e relatório em PDF. É como ter uma consulta completa de fisioterapia pelo preço de uma fração do valor presencial.",
+    "faq.faq3.q": "Quem é o fisioterapeuta responsável?",
+    "faq.faq3.a": "A avaliação foi formulada por um fisioterapeuta especializado em Traumato-Ortopedia e Fisioterapia Desportiva, com pós-graduação na área e mais de 7 anos de experiência clínica reabilitando pacientes com dores musculoesqueléticas diversas.",
+    "faq.faq4.q": "Essa avaliação substitui uma consulta presencial?",
+    "faq.faq4.a": "Não. A avaliação é uma ferramenta de triagem e orientação. Ela ajuda a entender sua dor e direcionar o tratamento, mas não substitui o diagnóstico médico ou fisioterapêutico presencial. Em casos graves, sempre procure atendimento profissional.",
+    "faq.faq5.q": "Posso refazer a avaliação?",
+    "faq.faq5.a": "Sim! Na versão premium, você pode refazer a avaliação uma vez em até 7 dias após a compra, permitindo acompanhar a evolução da sua dor e ajustar o tratamento conforme necessário.",
+
     // PDF
     "pdf.cta_text": "Baixe o relatório completo em PDF para compartilhar com seu médico ou fisioterapeuta.",
     "pdf.download": "Baixar Relatório em PDF",
@@ -735,6 +765,37 @@ const translations: Record<Language, Record<string, string>> = {
     "treatment.cat.breathing": "Breathing",
     "treatment.cat.stability": "Stability",
     "treatment.cat.pain_management": "Pain Management",
+
+    // PDF
+    // Stats
+    "stats.basic": "Basic assessments completed",
+    "stats.premium": "Premium assessments completed",
+    "stats.total": "People helped",
+
+    // Testimonials
+    "testimonials.title": "What our users say",
+    "testimonials.t1.text": "I had this knee pain that wouldn't go away for months. I did the premium assessment and finally understood what was going on. The exercises they recommended were spot-on, within 3 weeks I was feeling so much better!",
+    "testimonials.t1.name": "Marcos Ferreira",
+    "testimonials.t1.role": "Amateur runner, 34 years old",
+    "testimonials.t2.text": "I found the platform very intuitive and well organized. As a teacher, I spend a lot of time standing and sitting, which gave me chronic lower back pain. The assessment gave me a clear, easy-to-follow plan. Highly recommend.",
+    "testimonials.t2.name": "Camila Santos",
+    "testimonials.t2.role": "Teacher, 41 years old",
+    "testimonials.t3.text": "I was skeptical at first, but decided to give it a try. Did the basic one first and liked it so much I paid for premium the same day. The report is incredibly thorough — felt like a real consultation. Worth every penny!",
+    "testimonials.t3.name": "Ricardo Lima",
+    "testimonials.t3.role": "Entrepreneur, 52 years old",
+
+    // FAQ
+    "faq.title": "Frequently Asked Questions",
+    "faq.faq1.q": "What is this assessment and how does it work?",
+    "faq.faq1.a": "It's an online musculoskeletal assessment designed by a specialist physiotherapist. It guides you through questions about your pain, functional tests, and generates a diagnostic hypothesis with a personalized treatment plan — all done safely from your phone or computer.",
+    "faq.faq2.q": "Why should I invest in the premium assessment?",
+    "faq.faq2.a": "The premium version includes a complete anamnesis, functional tests with video, scientifically validated questionnaires, a detailed diagnosis with explanation, a 3-phase treatment plan with exercises, and a PDF report. It's like having a complete physiotherapy consultation at a fraction of the in-person cost.",
+    "faq.faq3.q": "Who is the physiotherapist behind this?",
+    "faq.faq3.a": "The assessment was designed by a physiotherapist specialized in Orthopedic and Sports Physiotherapy, with a postgraduate degree and over 7 years of clinical experience rehabilitating patients with various musculoskeletal conditions.",
+    "faq.faq4.q": "Does this assessment replace an in-person consultation?",
+    "faq.faq4.a": "No. The assessment is a screening and guidance tool. It helps you understand your pain and directs treatment, but it does not replace in-person medical or physiotherapy diagnosis. In serious cases, always seek professional care.",
+    "faq.faq5.q": "Can I redo the assessment?",
+    "faq.faq5.a": "Yes! With the premium version, you can redo the assessment once within 7 days of purchase, allowing you to track your pain progress and adjust treatment as needed.",
 
     // PDF
     "pdf.cta_text": "Download the full PDF report to share with your doctor or physiotherapist.",
