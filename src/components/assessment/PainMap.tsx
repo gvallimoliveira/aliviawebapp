@@ -64,9 +64,9 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
       <div className="flex justify-center">
         <div className="relative bg-card rounded-2xl border border-border/50 p-4 shadow-sm">
           <svg
-            viewBox="0 0 184 420"
-            className="w-full max-w-[280px] h-auto"
-            style={{ minHeight: "420px" }}
+            viewBox="0 0 184 416"
+            className="w-full max-w-[300px] h-auto"
+            style={{ minHeight: "440px" }}
           >
             {/* Anatomical outline — decorative strokes */}
             {outlines.map((d, i) => (
