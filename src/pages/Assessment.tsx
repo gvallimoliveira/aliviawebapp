@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles } from "lucide-react";
+import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +19,7 @@ import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 
-type AssessmentStep = "payment_check" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "result" | "loading_treatment" | "treatment";
+type AssessmentStep = "payment_check" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
 const Assessment = () => {
   const { type } = useParams<{ type: string }>();
@@ -34,6 +36,8 @@ const Assessment = () => {
   const [treatmentPlan, setTreatmentPlan] = useState<any>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [additionalInfo, setAdditionalInfo] = useState("");
+  const [hasRetried, setHasRetried] = useState(false);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string } | null>(null);
 
   // Redirect premium users to auth if not logged in
@@ -159,11 +163,15 @@ const Assessment = () => {
     generateDiagnosis(anamnesisData!, results, assessmentId);
   };
 
-  const generateDiagnosis = async (data: AnamnesisData, tests: TestResult[], currentAssessmentId?: string | null) => {
+  const generateDiagnosis = async (data: AnamnesisData, tests: TestResult[], currentAssessmentId?: string | null, extraInfo?: string) => {
     setStep("loading");
     try {
+      const bodyData: any = { anamnesisData: data, testResults: tests, questionnaireResults, mode, language };
+      if (extraInfo) {
+        bodyData.additionalInfo = extraInfo;
+      }
       const { data: result, error } = await supabase.functions.invoke("generate-diagnosis", {
-        body: { anamnesisData: data, testResults: tests, questionnaireResults, mode, language },
+        body: bodyData,
       });
       if (error) throw error;
       setDiagnosis(result.diagnosis);
@@ -171,7 +179,12 @@ const Assessment = () => {
       if (id) {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "diagnosis_complete" });
       }
-      setStep("result");
+      // If low confidence and haven't retried yet, show extra info step
+      if (result.diagnosis.confidence === "low" && !hasRetried && !extraInfo) {
+        setStep("low_confidence");
+      } else {
+        setStep("result");
+      }
     } catch (err: any) {
       console.error("Diagnosis error:", err);
       toast({
@@ -181,6 +194,26 @@ const Assessment = () => {
       });
       setStep(mode === "premium" ? "functional_tests" : "anamnesis");
     }
+  };
+
+  const handleLowConfidenceSubmit = () => {
+    setHasRetried(true);
+    if (additionalInfo.trim()) {
+      // Regenerate with extra info
+      const updatedAnamnesis = {
+        ...anamnesisData!,
+        additionalInfo: additionalInfo.trim(),
+      };
+      setAnamnesisData(updatedAnamnesis);
+      generateDiagnosis(updatedAnamnesis, testResults, assessmentId, additionalInfo.trim());
+    } else {
+      setStep("result");
+    }
+  };
+
+  const handleLowConfidenceSkip = () => {
+    setHasRetried(true);
+    setStep("result");
   };
 
   const generateTreatmentPlan = async () => {
@@ -335,6 +368,58 @@ const Assessment = () => {
             <h2 className="text-2xl font-bold text-foreground">{t("result.processing")}</h2>
             <p className="text-muted-foreground">{t("result.processing_desc")}</p>
           </div>
+        )}
+        {step === "low_confidence" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="text-center space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-medium">
+                <MessageCircle className="h-4 w-4" />
+                {t("diagnosis.low_confidence_title")}
+              </div>
+            </div>
+
+            <Card className="rounded-xl border-yellow-200 bg-yellow-50/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base text-foreground flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-yellow-600" />
+                  {t("diagnosis.low_confidence_title")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {t("diagnosis.low_confidence_desc")}
+                </p>
+                <Textarea
+                  value={additionalInfo}
+                  onChange={(e) => setAdditionalInfo(e.target.value)}
+                  placeholder={t("diagnosis.low_confidence_placeholder")}
+                  className="min-h-[120px] rounded-xl border-yellow-200 focus-visible:ring-yellow-400"
+                />
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={handleLowConfidenceSubmit}
+                    disabled={!additionalInfo.trim()}
+                    className="flex-1 rounded-xl gap-2"
+                  >
+                    <Send className="h-4 w-4" />
+                    {t("diagnosis.low_confidence_submit")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleLowConfidenceSkip}
+                    className="flex-1 rounded-xl gap-2"
+                  >
+                    {t("diagnosis.low_confidence_skip")}
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
         {step === "result" && diagnosis && (
           <DiagnosisResult
