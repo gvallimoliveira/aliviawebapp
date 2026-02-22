@@ -276,23 +276,87 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
             </div>
           </div>
         );
-      case "painscore":
+      case "painscore": {
+        const faces = ["😊", "🙂", "😐", "😟", "😣", "😖", "😫", "😩", "🤯", "😵", "😱"];
+        const gradientColors = [
+          "hsl(150, 60%, 45%)",
+          "hsl(130, 55%, 45%)",
+          "hsl(100, 50%, 48%)",
+          "hsl(70, 55%, 48%)",
+          "hsl(50, 65%, 50%)",
+          "hsl(40, 70%, 50%)",
+          "hsl(30, 75%, 48%)",
+          "hsl(20, 80%, 48%)",
+          "hsl(10, 80%, 48%)",
+          "hsl(0, 75%, 48%)",
+          "hsl(0, 85%, 40%)",
+        ];
         return (
           <div className="space-y-6">
             <h3 className="text-lg font-semibold">{t("anamnesis.pain_score_title")}</h3>
-            <div className="text-center">
-              <span className={`text-6xl font-bold ${getPainScoreColor(data.painScore)}`}>{data.painScore}</span>
-              <p className="text-sm text-muted-foreground mt-2">{t("anamnesis.pain_score_desc")}</p>
+
+            {/* Face + Number */}
+            <div className="text-center space-y-1">
+              <motion.span
+                key={data.painScore}
+                initial={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="text-5xl inline-block"
+              >
+                {faces[data.painScore]}
+              </motion.span>
+              <div
+                className="text-5xl font-black tabular-nums transition-colors duration-300"
+                style={{ color: gradientColors[data.painScore] }}
+              >
+                {data.painScore}
+              </div>
+              <p className="text-sm text-muted-foreground">{t("anamnesis.pain_score_desc")}</p>
             </div>
-            <div className="px-4">
-              <Slider value={[data.painScore]} onValueChange={([v]) => setData({ ...data, painScore: v })} min={0} max={10} step={1} className="w-full" />
-              <div className="flex justify-between text-xs text-muted-foreground mt-2">
+
+            {/* VAS gradient bar with indicator */}
+            <div className="px-2 space-y-3">
+              <div className="relative h-5 rounded-full overflow-visible border border-border/60 shadow-inner"
+                style={{ background: `linear-gradient(to right, ${gradientColors.join(", ")})`, borderRadius: "9999px" }}
+              >
+                <motion.div
+                  className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-[3px] shadow-lg z-10"
+                  style={{ borderColor: gradientColors[data.painScore] }}
+                  animate={{ left: `calc(${(data.painScore / 10) * 100}% - 12px)` }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                />
+              </div>
+
+              {/* Clickable number row */}
+              <div className="flex justify-between">
+                {Array.from({ length: 11 }, (_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setData({ ...data, painScore: i })}
+                    className="flex flex-col items-center cursor-pointer"
+                  >
+                    <span
+                      className="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition-all duration-200"
+                      style={{
+                        backgroundColor: data.painScore === i ? gradientColors[i] : "transparent",
+                        color: data.painScore === i ? "white" : "hsl(var(--muted-foreground))",
+                      }}
+                    >
+                      {i}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{t("anamnesis.no_pain")}</span>
                 <span>{t("anamnesis.worst_pain")}</span>
               </div>
             </div>
           </div>
         );
+      }
     }
   };
 
