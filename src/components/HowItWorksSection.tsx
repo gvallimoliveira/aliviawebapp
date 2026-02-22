@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
 import { ClipboardList, Activity, FileCheck } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import stepAnamnesis from "@/assets/step-anamnesis.jpg";
+import stepPainmap from "@/assets/step-painmap.jpg";
 import stepTests from "@/assets/step-tests.jpg";
 import stepReport from "@/assets/step-report.jpg";
 
 const steps = [
-  { icon: ClipboardList, color: "bg-primary/10 text-primary", key: "step1", image: stepAnamnesis },
+  { icon: ClipboardList, color: "bg-primary/10 text-primary", key: "step1", image: stepPainmap },
   { icon: Activity, color: "bg-accent/20 text-accent-foreground", key: "step2", image: stepTests },
   { icon: FileCheck, color: "bg-secondary text-secondary-foreground", key: "step3", image: stepReport },
 ];
