@@ -128,6 +128,16 @@ const ComparisonSection = () => {
             </Card>
           </motion.div>
         </div>
+
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="mt-10 text-center text-lg font-medium italic text-muted-foreground"
+        >
+          "Unimos a visão do especialista com a precisão e agilidade da IA."
+        </motion.p>
       </div>
     </section>
   );
