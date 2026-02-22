@@ -56,26 +56,17 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
   );
 
   const exportPaths = useCallback(() => {
-    const output: Record<string, { id: string; d: string }[]> = {};
-    for (const [v, regs] of Object.entries(editedRegions)) {
-      output[v] = regs.map((r) => ({ id: r.id, d: r.d }));
+    // Export only the current view to avoid console truncation
+    const regs = editedRegions[view];
+    let ts = `\n  // ${view.toUpperCase()}\n  ${view}: [\n`;
+    for (const r of regs) {
+      ts += `    { id: "${r.id}", label_pt: "${r.label_pt}", label_en: "${r.label_en}",\n      d: "${r.d}" },\n`;
     }
-    console.log("=== EXPORTED PAIN MAP PATHS ===");
-    console.log(JSON.stringify(output, null, 2));
-    
-    // Also log as copy-pasteable TS
-    let ts = "";
-    for (const [v, regs] of Object.entries(editedRegions)) {
-      ts += `\n  // ${v.toUpperCase()}\n  ${v}: [\n`;
-      for (const r of regs) {
-        ts += `    { id: "${r.id}", label_pt: "${r.label_pt}", label_en: "${r.label_en}",\n      d: "${r.d}" },\n`;
-      }
-      ts += "  ],\n";
-    }
-    console.log("=== COPY-PASTE TS FORMAT ===");
+    ts += "  ],\n";
+    console.log(`=== EXPORTED ${view.toUpperCase()} VIEW ===`);
     console.log(ts);
-    toast.success("Paths exportados no Console (F12 → Console)");
-  }, [editedRegions]);
+    toast.success(`Paths da vista "${view}" exportados no Console (F12 → Console)`);
+  }, [editedRegions, view]);
 
   const getLabel = (region: { label_pt: string; label_en: string }) =>
     language === "pt" ? region.label_pt : region.label_en;
