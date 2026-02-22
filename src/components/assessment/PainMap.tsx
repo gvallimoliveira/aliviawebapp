@@ -72,12 +72,12 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
         ))}
       </div>
 
-      {/* Body Map with clickable overlay */}
+      {/* Body Map with SVG overlay */}
       <div className="flex justify-center">
         <div className="relative bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden"
           style={{ width: "280px", height: "560px" }}
         >
-          {/* Background image for current view */}
+          {/* Background anatomical image */}
           <img
             src={viewImages[view]}
             alt={`Body map - ${view}`}
@@ -85,46 +85,61 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
             draggable={false}
           />
 
-          {/* Clickable regions overlay */}
-          {regions.map((region) => {
-            const [x, y, w, h] = region.area;
-            const isSelected = selectedRegions.includes(region.id);
-            const isHovered = hoveredRegion === region.id;
+          {/* SVG overlay with precise clickable regions */}
+          <svg
+            viewBox="0 0 200 440"
+            className="absolute inset-0 w-full h-full"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            {regions.map((region) => {
+              const isSelected = selectedRegions.includes(region.id);
+              const isHovered = hoveredRegion === region.id;
 
-            return (
-              <div
-                key={region.id}
-                className="absolute cursor-pointer transition-all duration-200 rounded-sm"
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  width: `${w}%`,
-                  height: `${h}%`,
-                  backgroundColor: isSelected
-                    ? "hsla(0, 80%, 55%, 0.35)"
-                    : isHovered
-                    ? "hsla(var(--primary), 0.15)"
-                    : "transparent",
-                  border: isSelected
-                    ? "2px solid hsla(0, 80%, 55%, 0.7)"
-                    : isHovered
-                    ? "1.5px solid hsla(var(--primary), 0.4)"
-                    : "1px solid transparent",
-                }}
-                onClick={() => toggleRegion(region.id)}
-                onMouseEnter={() => setHoveredRegion(region.id)}
-                onMouseLeave={() => setHoveredRegion(null)}
-                title={getLabel(region)}
-              />
-            );
-          })}
+              return (
+                <path
+                  key={region.id}
+                  d={region.d}
+                  fill={
+                    isSelected
+                      ? "hsla(0, 80%, 55%, 0.35)"
+                      : isHovered
+                      ? "hsla(170, 60%, 45%, 0.2)"
+                      : "transparent"
+                  }
+                  stroke={
+                    isSelected
+                      ? "hsla(0, 80%, 55%, 0.7)"
+                      : isHovered
+                      ? "hsla(170, 60%, 45%, 0.5)"
+                      : "transparent"
+                  }
+                  strokeWidth={isSelected ? 1.5 : isHovered ? 1 : 0}
+                  className="cursor-pointer transition-all duration-200"
+                  onClick={() => toggleRegion(region.id)}
+                  onMouseEnter={() => setHoveredRegion(region.id)}
+                  onMouseLeave={() => setHoveredRegion(null)}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              );
+            })}
 
-          {/* Hover tooltip */}
-          {hoveredRegion && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-card border border-border rounded-lg shadow-md text-xs text-foreground whitespace-nowrap pointer-events-none z-10">
-              {getLabel(regions.find((r) => r.id === hoveredRegion)!)}
-            </div>
-          )}
+            {/* Hover tooltip */}
+            {hoveredRegion && (() => {
+              const region = regions.find((r) => r.id === hoveredRegion);
+              if (!region) return null;
+              return (
+                <g>
+                  <rect x="20" y="420" width="160" height="18" rx="6"
+                    fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="0.5" />
+                  <text x="100" y="432" textAnchor="middle" fontSize="9"
+                    fill="hsl(var(--foreground))" fontFamily="system-ui">
+                    {getLabel(region)}
+                  </text>
+                </g>
+              );
+            })()}
+          </svg>
         </div>
       </div>
 
