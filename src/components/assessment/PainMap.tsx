@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { regionsByView, getAllRegions, type View, type ClickableRegion } from "./painMapData";
 import PainMapPathEditor from "./PainMapPathEditor";
@@ -73,6 +74,7 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
     }
     console.log("=== COPY-PASTE TS FORMAT ===");
     console.log(ts);
+    toast.success("Paths exportados no Console (F12 → Console)");
   }, [editedRegions]);
 
   const getLabel = (region: { label_pt: string; label_en: string }) =>
