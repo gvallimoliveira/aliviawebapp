@@ -74,14 +74,20 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
 
       {/* Body Map with SVG overlay */}
       <div className="flex justify-center">
-        <div className="relative bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden"
-          style={{ width: "280px", height: "560px" }}
+        {/*
+          Container uses the same aspect ratio as the SVG viewBox (200:440)
+          so the image (object-fill) and SVG overlay are perfectly aligned.
+        */}
+        <div
+          className="relative bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden"
+          style={{ width: "260px", aspectRatio: "200 / 440" }}
         >
-          {/* Background anatomical image */}
+          {/* Background anatomical image – stretched to fill container */}
           <img
             src={viewImages[view]}
             alt={`Body map - ${view}`}
-            className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+            className="absolute inset-0 w-full h-full pointer-events-none select-none"
+            style={{ objectFit: "fill" }}
             draggable={false}
           />
 
@@ -89,7 +95,7 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
           <svg
             viewBox="0 0 200 440"
             className="absolute inset-0 w-full h-full"
-            preserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="none"
           >
             {regions.map((region) => {
               const isSelected = selectedRegions.includes(region.id);
@@ -103,7 +109,7 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
                     isSelected
                       ? "hsla(0, 80%, 55%, 0.35)"
                       : isHovered
-                      ? "hsla(170, 60%, 45%, 0.2)"
+                      ? "hsla(170, 60%, 45%, 0.25)"
                       : "transparent"
                   }
                   stroke={
@@ -130,9 +136,9 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
               if (!region) return null;
               return (
                 <g>
-                  <rect x="20" y="420" width="160" height="18" rx="6"
+                  <rect x="20" y="422" width="160" height="16" rx="6"
                     fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="0.5" />
-                  <text x="100" y="432" textAnchor="middle" fontSize="9"
+                  <text x="100" y="433" textAnchor="middle" fontSize="8"
                     fill="hsl(var(--foreground))" fontFamily="system-ui">
                     {getLabel(region)}
                   </text>

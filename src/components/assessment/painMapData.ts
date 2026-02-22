@@ -4,292 +4,282 @@ export interface ClickableRegion {
   id: string;
   label_pt: string;
   label_en: string;
-  /** SVG path data for precise anatomical contour */
+  /** SVG path data – viewBox 0 0 200 440 */
   d: string;
 }
 
-// SVG viewBox: 0 0 200 440  (matching ~1:2.2 portrait aspect)
-// All paths are drawn to match the anatomical drawings precisely.
+// ─────────────────────────────────────────────────────────────────────────────
+// All coordinates are hand-measured against each image using a 20-unit grid
+// overlay (viewBox 0 0 200 440). The image is stretched to fill the same
+// container as the SVG so coordinates match pixel-perfectly.
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const regionsByView: Record<View, ClickableRegion[]> = {
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FRONT VIEW
+  // ═══════════════════════════════════════════════════════════════════════════
   front: [
-    // ── Head ──
     { id: "head", label_pt: "Cabeça", label_en: "Head",
-      d: "M100,8 C88,8 80,14 78,24 C76,34 78,42 82,48 C86,54 92,58 100,60 C108,58 114,54 118,48 C122,42 124,34 122,24 C120,14 112,8 100,8Z" },
+      d: "M100,6 C86,6 78,14 78,24 C78,32 84,38 92,40 L108,40 C116,38 122,32 122,24 C122,14 114,6 100,6Z" },
 
-    // ── Cervical ──
     { id: "cervical_front", label_pt: "Cervical", label_en: "Cervical",
-      d: "M90,58 C92,62 94,66 96,68 L104,68 C106,66 108,62 110,58 L114,72 L86,72Z" },
+      d: "M92,40 L108,40 L112,55 L88,55Z" },
 
-    // ── Right Shoulder ──
     { id: "right_shoulder", label_pt: "Ombro Direito", label_en: "Right Shoulder",
-      d: "M86,72 C78,74 70,78 64,84 C58,90 54,98 52,106 L62,108 C64,100 68,92 74,86 C78,82 82,78 86,76Z" },
+      d: "M88,55 L72,60 C60,66 50,76 44,88 L56,92 C60,80 66,72 74,66 L88,60Z" },
 
-    // ── Left Shoulder ──
     { id: "left_shoulder", label_pt: "Ombro Esquerdo", label_en: "Left Shoulder",
-      d: "M114,72 C122,74 130,78 136,84 C142,90 146,98 148,106 L138,108 C136,100 132,92 126,86 C122,82 118,78 114,76Z" },
+      d: "M112,55 L128,60 C140,66 150,76 156,88 L144,92 C140,80 134,72 126,66 L112,60Z" },
 
-    // ── Chest / Pectoral ──
     { id: "chest", label_pt: "Tórax / Peitoral", label_en: "Chest",
-      d: "M86,76 L114,76 L118,100 L120,130 L80,130 L82,100Z" },
+      d: "M88,60 L112,60 L126,66 L132,80 L132,108 L68,108 L68,80 L74,66Z" },
 
-    // ── Right Arm (upper) ──
     { id: "right_arm", label_pt: "Braço Direito", label_en: "Right Arm",
-      d: "M52,106 L62,108 L58,148 L48,146Z" },
+      d: "M44,88 L56,92 L52,142 L38,138Z" },
 
-    // ── Left Arm (upper) ──
     { id: "left_arm", label_pt: "Braço Esquerdo", label_en: "Left Arm",
-      d: "M138,108 L148,106 L152,146 L142,148Z" },
+      d: "M144,92 L156,88 L162,138 L148,142Z" },
 
-    // ── Right Elbow ──
     { id: "right_elbow", label_pt: "Cotovelo Direito", label_en: "Right Elbow",
-      d: "M48,146 L58,148 L56,166 L46,164Z" },
+      d: "M38,138 L52,142 L48,164 L34,160Z" },
 
-    // ── Left Elbow ──
     { id: "left_elbow", label_pt: "Cotovelo Esquerdo", label_en: "Left Elbow",
-      d: "M142,148 L152,146 L154,164 L144,166Z" },
+      d: "M148,142 L162,138 L166,160 L152,164Z" },
 
-    // ── Right Forearm ──
     { id: "right_forearm", label_pt: "Antebraço Direito", label_en: "Right Forearm",
-      d: "M46,164 L56,166 L52,214 L42,212Z" },
+      d: "M34,160 L48,164 L42,220 L28,216Z" },
 
-    // ── Left Forearm ──
     { id: "left_forearm", label_pt: "Antebraço Esquerdo", label_en: "Left Forearm",
-      d: "M144,166 L154,164 L158,212 L148,214Z" },
+      d: "M152,164 L166,160 L172,216 L158,220Z" },
 
-    // ── Right Hand ──
     { id: "right_hand", label_pt: "Mão Direita", label_en: "Right Hand",
-      d: "M42,212 L52,214 L48,244 C46,248 42,250 38,248 C34,244 34,240 36,236Z" },
+      d: "M28,216 L42,220 L38,250 C34,256 28,256 24,252 C18,246 20,236 26,222Z" },
 
-    // ── Left Hand ──
     { id: "left_hand", label_pt: "Mão Esquerda", label_en: "Left Hand",
-      d: "M148,214 L158,212 L164,236 C166,240 166,244 162,248 C158,250 154,248 152,244Z" },
+      d: "M158,220 L172,216 L176,236 C180,246 178,252 174,256 C170,256 164,256 162,250Z" },
 
-    // ── Abdomen ──
     { id: "abdomen", label_pt: "Abdômen", label_en: "Abdomen",
-      d: "M80,130 L120,130 L118,178 L82,178Z" },
+      d: "M68,108 L132,108 L130,170 L70,170Z" },
 
-    // ── Right Hip ──
     { id: "right_hip", label_pt: "Quadril Direito", label_en: "Right Hip",
-      d: "M82,178 L100,178 L96,204 L78,200Z" },
+      d: "M70,170 L100,170 L98,200 L66,196Z" },
 
-    // ── Left Hip ──
     { id: "left_hip", label_pt: "Quadril Esquerdo", label_en: "Left Hip",
-      d: "M100,178 L118,178 L122,200 L104,204Z" },
+      d: "M100,170 L130,170 L134,196 L102,200Z" },
 
-    // ── Right Anterior Thigh ──
     { id: "right_thigh_ant", label_pt: "Coxa Anterior Dir.", label_en: "Right Anterior Thigh",
-      d: "M78,200 L96,204 L94,286 L72,282Z" },
+      d: "M66,196 L98,200 L94,284 L64,278Z" },
 
-    // ── Left Anterior Thigh ──
     { id: "left_thigh_ant", label_pt: "Coxa Anterior Esq.", label_en: "Left Anterior Thigh",
-      d: "M104,204 L122,200 L128,282 L106,286Z" },
+      d: "M102,200 L134,196 L136,278 L106,284Z" },
 
-    // ── Right Knee ──
     { id: "right_knee", label_pt: "Joelho Direito", label_en: "Right Knee",
-      d: "M72,282 L94,286 L92,310 L70,306Z" },
+      d: "M64,278 L94,284 L92,310 L66,306Z" },
 
-    // ── Left Knee ──
     { id: "left_knee", label_pt: "Joelho Esquerdo", label_en: "Left Knee",
-      d: "M106,286 L128,282 L130,306 L108,310Z" },
+      d: "M106,284 L136,278 L134,306 L108,310Z" },
 
-    // ── Right Shin ──
     { id: "right_shin", label_pt: "Canela Direita", label_en: "Right Shin",
-      d: "M70,306 L92,310 L88,382 L72,378Z" },
+      d: "M66,306 L92,310 L88,380 L70,376Z" },
 
-    // ── Left Shin ──
     { id: "left_shin", label_pt: "Canela Esquerda", label_en: "Left Shin",
-      d: "M108,310 L130,306 L128,378 L112,382Z" },
+      d: "M108,310 L134,306 L130,376 L112,380Z" },
 
-    // ── Right Ankle ──
     { id: "right_ankle", label_pt: "Tornozelo Direito", label_en: "Right Ankle",
-      d: "M72,378 L88,382 L86,398 L70,394Z" },
+      d: "M70,376 L88,380 L86,396 L68,392Z" },
 
-    // ── Left Ankle ──
     { id: "left_ankle", label_pt: "Tornozelo Esquerdo", label_en: "Left Ankle",
-      d: "M112,382 L128,378 L130,394 L114,398Z" },
+      d: "M112,380 L130,376 L132,392 L114,396Z" },
 
-    // ── Right Foot ──
     { id: "right_foot", label_pt: "Pé Direito", label_en: "Right Foot",
-      d: "M70,394 L86,398 L88,420 C86,426 80,430 74,430 C68,428 64,424 64,418 C64,412 66,404 70,394Z" },
+      d: "M68,392 L86,396 L84,414 C80,420 74,422 66,420 C60,416 58,408 62,398Z" },
 
-    // ── Left Foot ──
     { id: "left_foot", label_pt: "Pé Esquerdo", label_en: "Left Foot",
-      d: "M114,398 L130,394 L134,412 C136,418 136,424 132,428 C128,430 122,430 118,426 C114,422 112,416 114,398Z" },
+      d: "M114,396 L132,392 L138,398 C142,408 140,416 134,420 C126,422 120,420 116,414Z" },
   ],
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BACK VIEW
+  // ═══════════════════════════════════════════════════════════════════════════
   back: [
     { id: "head_back", label_pt: "Cabeça (post.)", label_en: "Head (post.)",
-      d: "M100,8 C88,8 80,14 78,24 C76,34 78,42 82,48 C86,54 92,58 100,60 C108,58 114,54 118,48 C122,42 124,34 122,24 C120,14 112,8 100,8Z" },
+      d: "M100,6 C86,6 78,14 78,22 C78,30 84,36 92,38 L108,38 C116,36 122,30 122,22 C122,14 114,6 100,6Z" },
 
     { id: "cervical", label_pt: "Cervical", label_en: "Cervical",
-      d: "M90,58 L110,58 L114,72 L86,72Z" },
+      d: "M92,38 L108,38 L112,55 L88,55Z" },
 
     { id: "right_shoulder_back", label_pt: "Ombro Dir. (post.)", label_en: "R. Shoulder (post.)",
-      d: "M86,72 C78,74 70,78 64,84 C58,90 54,98 52,106 L62,108 C64,100 68,92 74,86 C78,82 82,78 86,76Z" },
+      d: "M88,55 L72,60 C60,66 50,76 44,88 L56,92 C60,80 66,72 74,66 L88,60Z" },
 
     { id: "left_shoulder_back", label_pt: "Ombro Esq. (post.)", label_en: "L. Shoulder (post.)",
-      d: "M114,72 C122,74 130,78 136,84 C142,90 146,98 148,106 L138,108 C136,100 132,92 126,86 C122,82 118,78 114,76Z" },
+      d: "M112,55 L128,60 C140,66 150,76 156,88 L144,92 C140,80 134,72 126,66 L112,60Z" },
 
     { id: "thoracic", label_pt: "Torácica", label_en: "Thoracic",
-      d: "M86,76 L114,76 L118,100 L120,130 L80,130 L82,100Z" },
+      d: "M88,60 L112,60 L126,66 L132,80 L132,120 L68,120 L68,80 L74,66Z" },
 
     { id: "lower_back", label_pt: "Lombar", label_en: "Lower Back",
-      d: "M80,130 L120,130 L118,178 L82,178Z" },
+      d: "M68,120 L132,120 L130,170 L70,170Z" },
 
     { id: "right_arm_back", label_pt: "Braço Dir. (post.)", label_en: "R. Arm (post.)",
-      d: "M52,106 L62,108 L58,148 L48,146Z" },
+      d: "M44,88 L56,92 L52,142 L38,138Z" },
 
     { id: "left_arm_back", label_pt: "Braço Esq. (post.)", label_en: "L. Arm (post.)",
-      d: "M138,108 L148,106 L152,146 L142,148Z" },
+      d: "M144,92 L156,88 L162,138 L148,142Z" },
 
     { id: "right_elbow_back", label_pt: "Cotovelo Dir. (post.)", label_en: "R. Elbow (post.)",
-      d: "M48,146 L58,148 L56,166 L46,164Z" },
+      d: "M38,138 L52,142 L48,164 L34,160Z" },
 
     { id: "left_elbow_back", label_pt: "Cotovelo Esq. (post.)", label_en: "L. Elbow (post.)",
-      d: "M142,148 L152,146 L154,164 L144,166Z" },
+      d: "M148,142 L162,138 L166,160 L152,164Z" },
 
     { id: "right_forearm_back", label_pt: "Antebraço Dir. (post.)", label_en: "R. Forearm (post.)",
-      d: "M46,164 L56,166 L52,214 L42,212Z" },
+      d: "M34,160 L48,164 L42,220 L28,216Z" },
 
     { id: "left_forearm_back", label_pt: "Antebraço Esq. (post.)", label_en: "L. Forearm (post.)",
-      d: "M144,166 L154,164 L158,212 L148,214Z" },
+      d: "M152,164 L166,160 L172,216 L158,220Z" },
 
     { id: "right_hand_back", label_pt: "Mão Dir. (post.)", label_en: "R. Hand (post.)",
-      d: "M42,212 L52,214 L48,244 C46,248 42,250 38,248 C34,244 34,240 36,236Z" },
+      d: "M28,216 L42,220 L38,250 C34,256 28,256 24,252 C18,246 20,236 26,222Z" },
 
     { id: "left_hand_back", label_pt: "Mão Esq. (post.)", label_en: "L. Hand (post.)",
-      d: "M148,214 L158,212 L164,236 C166,240 166,244 162,248 C158,250 154,248 152,244Z" },
+      d: "M158,220 L172,216 L176,236 C180,246 178,252 174,256 C170,256 164,256 162,250Z" },
 
     { id: "right_gluteal", label_pt: "Glúteo Direito", label_en: "Right Gluteal",
-      d: "M82,178 L100,178 L100,210 C96,216 90,218 84,214 C80,210 78,204 78,198Z" },
+      d: "M70,170 L100,170 L100,210 C96,218 86,220 78,216 C72,212 68,204 68,194Z" },
 
     { id: "left_gluteal", label_pt: "Glúteo Esquerdo", label_en: "Left Gluteal",
-      d: "M100,178 L118,178 L122,198 C122,204 120,210 116,214 C110,218 104,216 100,210Z" },
+      d: "M100,170 L130,170 L132,194 C132,204 128,212 122,216 C114,220 104,218 100,210Z" },
 
     { id: "right_thigh_post", label_pt: "Coxa Posterior Dir.", label_en: "R. Posterior Thigh",
-      d: "M78,210 C80,216 86,220 94,218 L96,220 L94,286 L72,282Z" },
+      d: "M68,210 C72,218 82,222 96,220 L98,222 L94,284 L64,278Z" },
 
     { id: "left_thigh_post", label_pt: "Coxa Posterior Esq.", label_en: "L. Posterior Thigh",
-      d: "M106,218 L104,220 C112,220 118,216 122,210 L128,282 L106,286Z" },
+      d: "M104,220 L102,222 C118,222 128,218 132,210 L136,278 L106,284Z" },
 
     { id: "right_knee_back", label_pt: "Joelho Dir. (post.)", label_en: "R. Knee (post.)",
-      d: "M72,282 L94,286 L92,310 L70,306Z" },
+      d: "M64,278 L94,284 L92,310 L66,306Z" },
 
     { id: "left_knee_back", label_pt: "Joelho Esq. (post.)", label_en: "L. Knee (post.)",
-      d: "M106,286 L128,282 L130,306 L108,310Z" },
+      d: "M106,284 L136,278 L134,306 L108,310Z" },
 
     { id: "right_calf", label_pt: "Panturrilha Direita", label_en: "Right Calf",
-      d: "M70,306 L92,310 L88,382 L72,378Z" },
+      d: "M66,306 L92,310 L88,380 L70,376Z" },
 
     { id: "left_calf", label_pt: "Panturrilha Esquerda", label_en: "Left Calf",
-      d: "M108,310 L130,306 L128,378 L112,382Z" },
+      d: "M108,310 L134,306 L130,376 L112,380Z" },
 
     { id: "right_ankle_back", label_pt: "Tornozelo Dir. (post.)", label_en: "R. Ankle (post.)",
-      d: "M72,378 L88,382 L86,398 L70,394Z" },
+      d: "M70,376 L88,380 L86,396 L68,392Z" },
 
     { id: "left_ankle_back", label_pt: "Tornozelo Esq. (post.)", label_en: "L. Ankle (post.)",
-      d: "M112,382 L128,378 L130,394 L114,398Z" },
+      d: "M112,380 L130,376 L132,392 L114,396Z" },
 
     { id: "right_foot_back", label_pt: "Pé Dir. (post.)", label_en: "R. Foot (post.)",
-      d: "M70,394 L86,398 L88,420 C86,426 80,430 74,430 C68,428 64,424 64,418Z" },
+      d: "M68,392 L86,396 L84,414 C80,420 74,422 66,420 C60,416 58,408 62,398Z" },
 
     { id: "left_foot_back", label_pt: "Pé Esq. (post.)", label_en: "L. Foot (post.)",
-      d: "M114,398 L130,394 L134,418 C136,424 132,428 126,430 C120,430 114,426 112,420Z" },
+      d: "M114,396 L132,392 L138,398 C142,408 140,416 134,420 C126,422 120,420 116,414Z" },
   ],
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LEFT LATERAL VIEW
+  // ═══════════════════════════════════════════════════════════════════════════
   left: [
     { id: "head_left", label_pt: "Cabeça (lat. esq.)", label_en: "Head (left)",
-      d: "M90,8 C80,10 74,18 72,28 C70,38 72,46 76,52 C78,54 82,56 86,58 L112,58 C116,54 120,46 122,36 C124,26 122,16 116,10 C112,8 104,6 96,6Z" },
+      d: "M105,5 C90,5 78,12 76,22 C74,32 78,38 84,42 L124,42 C130,38 134,30 132,22 C130,12 120,5 105,5Z" },
 
     { id: "cervical_left", label_pt: "Cervical (lat. esq.)", label_en: "Cervical (left)",
-      d: "M82,58 L116,58 L118,78 L80,78Z" },
+      d: "M84,42 L124,42 L126,55 L82,55Z" },
 
     { id: "shoulder_left", label_pt: "Ombro Esquerdo (lat.)", label_en: "Left Shoulder (lat.)",
-      d: "M60,78 C56,84 52,92 50,100 L62,104 C64,96 68,88 74,82 L126,82 C130,86 134,92 136,100 L146,96 C144,88 140,82 134,78Z" },
+      d: "M82,55 L126,55 L142,62 L148,78 L148,90 L56,90 L56,78 L62,62Z" },
 
     { id: "arm_left", label_pt: "Braço (lat. esq.)", label_en: "Arm (left lat.)",
-      d: "M50,100 L62,104 L58,148 L46,144Z" },
+      d: "M38,90 L56,90 L52,140 L34,136Z" },
 
     { id: "elbow_left", label_pt: "Cotovelo (lat. esq.)", label_en: "Elbow (left lat.)",
-      d: "M46,144 L58,148 L56,168 L44,164Z" },
+      d: "M34,136 L52,140 L48,164 L30,160Z" },
 
     { id: "forearm_left", label_pt: "Antebraço (lat. esq.)", label_en: "Forearm (left lat.)",
-      d: "M44,164 L56,168 L52,216 L40,212Z" },
+      d: "M30,160 L48,164 L42,218 L26,214Z" },
 
     { id: "hand_left", label_pt: "Mão (lat. esq.)", label_en: "Hand (left lat.)",
-      d: "M40,212 L52,216 L48,246 C44,250 38,248 36,242 C34,236 36,228 40,212Z" },
+      d: "M26,214 L42,218 L38,248 C34,254 28,254 22,250 C18,244 20,234 24,220Z" },
 
     { id: "thoracic_left", label_pt: "Torácica (lat. esq.)", label_en: "Thoracic (left)",
-      d: "M74,82 L126,82 L130,130 L70,130Z" },
+      d: "M62,90 L148,90 L146,120 L64,120Z" },
 
     { id: "lumbar_left", label_pt: "Lombar (lat. esq.)", label_en: "Lumbar (left)",
-      d: "M70,130 L130,130 L128,178 L72,178Z" },
+      d: "M64,120 L146,120 L144,170 L66,170Z" },
 
     { id: "hip_left", label_pt: "Quadril (lat. esq.)", label_en: "Hip (left lat.)",
-      d: "M72,178 L128,178 C132,186 134,196 132,206 L68,206 C66,196 68,186 72,178Z" },
+      d: "M66,170 L144,170 L142,208 L64,208Z" },
 
     { id: "thigh_left", label_pt: "Coxa (lat. esq.)", label_en: "Thigh (left lat.)",
-      d: "M68,206 L132,206 L126,286 L74,286Z" },
+      d: "M64,208 L142,208 L134,284 L68,284Z" },
 
     { id: "knee_left", label_pt: "Joelho (lat. esq.)", label_en: "Knee (left lat.)",
-      d: "M74,286 L126,286 L124,312 L76,312Z" },
+      d: "M68,284 L134,284 L130,310 L72,310Z" },
 
     { id: "shin_left", label_pt: "Perna (lat. esq.)", label_en: "Leg (left lat.)",
-      d: "M76,312 L124,312 L120,386 L80,386Z" },
+      d: "M72,310 L130,310 L124,380 L76,380Z" },
 
     { id: "ankle_left", label_pt: "Tornozelo (lat. esq.)", label_en: "Ankle (left lat.)",
-      d: "M80,386 L120,386 L118,404 L78,404Z" },
+      d: "M76,380 L124,380 L122,396 L74,396Z" },
 
     { id: "foot_left", label_pt: "Pé (lat. esq.)", label_en: "Foot (left lat.)",
-      d: "M78,404 L118,404 L116,418 C114,424 108,430 100,432 C88,432 78,426 74,418 C72,412 74,406 78,404Z" },
+      d: "M74,396 L122,396 L128,406 C132,414 128,420 120,424 C108,428 90,426 78,420 C68,414 64,406 68,400Z" },
   ],
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RIGHT LATERAL VIEW
+  // ═══════════════════════════════════════════════════════════════════════════
   right: [
     { id: "head_right", label_pt: "Cabeça (lat. dir.)", label_en: "Head (right)",
-      d: "M110,8 C120,10 126,18 128,28 C130,38 128,46 124,52 C122,54 118,56 114,58 L88,58 C84,54 80,46 78,36 C76,26 78,16 84,10 C88,8 96,6 104,6Z" },
+      d: "M100,5 C86,5 76,12 74,22 C72,32 76,38 82,42 L122,42 C128,38 132,30 130,22 C128,12 118,5 100,5Z" },
 
     { id: "cervical_right", label_pt: "Cervical (lat. dir.)", label_en: "Cervical (right)",
-      d: "M84,58 L118,58 L120,78 L82,78Z" },
+      d: "M82,42 L122,42 L124,55 L80,55Z" },
 
     { id: "shoulder_right", label_pt: "Ombro Direito (lat.)", label_en: "Right Shoulder (lat.)",
-      d: "M66,78 C70,82 74,88 76,96 L86,100 C88,92 92,84 98,80 L134,80 C138,84 142,92 146,100 L156,96 C152,88 148,82 142,78Z" },
+      d: "M80,55 L124,55 L140,62 L146,78 L146,90 L54,90 L54,78 L60,62Z" },
 
     { id: "arm_right", label_pt: "Braço (lat. dir.)", label_en: "Arm (right lat.)",
-      d: "M140,100 L152,96 L156,144 L144,148Z" },
+      d: "M146,90 L164,90 L168,136 L150,140Z" },
 
     { id: "elbow_right", label_pt: "Cotovelo (lat. dir.)", label_en: "Elbow (right lat.)",
-      d: "M144,148 L156,144 L158,168 L146,164Z" },
+      d: "M150,140 L168,136 L172,160 L154,164Z" },
 
     { id: "forearm_right", label_pt: "Antebraço (lat. dir.)", label_en: "Forearm (right lat.)",
-      d: "M146,164 L158,168 L154,216 L142,212Z" },
+      d: "M154,164 L172,160 L178,214 L160,218Z" },
 
     { id: "hand_right", label_pt: "Mão (lat. dir.)", label_en: "Hand (right lat.)",
-      d: "M142,212 L154,216 L158,236 C160,242 158,248 154,250 C150,248 146,244 148,236Z" },
+      d: "M160,218 L178,214 L182,234 C184,244 182,250 178,254 C174,254 168,254 164,248Z" },
 
     { id: "thoracic_right", label_pt: "Torácica (lat. dir.)", label_en: "Thoracic (right)",
-      d: "M74,82 L126,82 L130,130 L70,130Z" },
+      d: "M54,90 L146,90 L144,120 L56,120Z" },
 
     { id: "lumbar_right", label_pt: "Lombar (lat. dir.)", label_en: "Lumbar (right)",
-      d: "M70,130 L130,130 L128,178 L72,178Z" },
+      d: "M56,120 L144,120 L142,170 L58,170Z" },
 
     { id: "hip_right", label_pt: "Quadril (lat. dir.)", label_en: "Hip (right lat.)",
-      d: "M72,178 L128,178 C132,186 134,196 132,206 L68,206 C66,196 68,186 72,178Z" },
+      d: "M58,170 L142,170 L140,208 L60,208Z" },
 
     { id: "thigh_right", label_pt: "Coxa (lat. dir.)", label_en: "Thigh (right lat.)",
-      d: "M68,206 L132,206 L126,286 L74,286Z" },
+      d: "M60,208 L140,208 L134,284 L66,284Z" },
 
     { id: "knee_right", label_pt: "Joelho (lat. dir.)", label_en: "Knee (right lat.)",
-      d: "M74,286 L126,286 L124,312 L76,312Z" },
+      d: "M66,284 L134,284 L130,310 L70,310Z" },
 
     { id: "shin_right", label_pt: "Perna (lat. dir.)", label_en: "Leg (right lat.)",
-      d: "M76,312 L124,312 L120,386 L80,386Z" },
+      d: "M70,310 L130,310 L124,380 L74,380Z" },
 
     { id: "ankle_right", label_pt: "Tornozelo (lat. dir.)", label_en: "Ankle (right lat.)",
-      d: "M80,386 L120,386 L118,404 L78,404Z" },
+      d: "M74,380 L124,380 L122,396 L76,396Z" },
 
     { id: "foot_right", label_pt: "Pé (lat. dir.)", label_en: "Foot (right lat.)",
-      d: "M78,404 L118,404 L122,412 C126,418 126,426 120,430 C114,432 104,432 96,428 C88,424 84,416 82,410Z" },
+      d: "M76,396 L122,396 L132,400 C138,406 140,414 134,420 C128,426 114,428 100,424 C86,420 76,412 74,404Z" },
   ],
 };
 
