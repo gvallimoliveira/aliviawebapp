@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { regionsByView, getAllRegions, type View, type ClickableRegion } from "./painMapData";
@@ -24,6 +25,8 @@ interface PainMapProps {
 
 const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const isAdmin = user?.email === "gvallimoliveira@gmail.com";
   const [view, setView] = useState<View>("front");
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -95,14 +98,16 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
             {language === "pt" ? v.label_pt : v.label_en}
           </Button>
         ))}
-        <Button
-          size="sm"
-          variant={debugMode ? "destructive" : "ghost"}
-          onClick={() => setDebugMode(!debugMode)}
-          className="rounded-xl text-xs"
-        >
-          {debugMode ? "✏️ Editor ON" : "🔧 Debug"}
-        </Button>
+        {isAdmin && (
+          <Button
+            size="sm"
+            variant={debugMode ? "destructive" : "ghost"}
+            onClick={() => setDebugMode(!debugMode)}
+            className="rounded-xl text-xs"
+          >
+            {debugMode ? "✏️ Editor ON" : "🔧 Debug"}
+          </Button>
+        )}
       </div>
 
       {/* Debug export button */}
