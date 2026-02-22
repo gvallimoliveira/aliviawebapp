@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Globe, ArrowLeft, Mail, Lock, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import logoAlivia from "@/assets/logo-alivia.png";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -50,10 +51,7 @@ const Auth = () => {
         <div className="container flex h-16 items-center justify-between">
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">A</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">Aliv.IA</span>
+            <img src={logoAlivia} alt="Aliv.IA" className="h-9" />
           </button>
           <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
             <Globe className="h-4 w-4" />
