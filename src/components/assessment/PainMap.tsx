@@ -2,8 +2,18 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { regionsByView, getAllRegions, viewColumns, type View } from "./painMapData";
-import bodyMapImage from "@/assets/body-map.jpg";
+import { regionsByView, getAllRegions, type View } from "./painMapData";
+import bodyFront from "@/assets/body-front.jpg";
+import bodyBack from "@/assets/body-back.jpg";
+import bodyLeft from "@/assets/body-left.jpg";
+import bodyRight from "@/assets/body-right.jpg";
+
+const viewImages: Record<View, string> = {
+  front: bodyFront,
+  back: bodyBack,
+  left: bodyLeft,
+  right: bodyRight,
+};
 
 interface PainMapProps {
   selectedRegions: string[];
@@ -32,16 +42,9 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
 
   const regions = regionsByView[view];
   const allRegions = getAllRegions();
-  const [colStart] = viewColumns[view];
 
   const getLabel = (region: { label_pt: string; label_en: string }) =>
     language === "pt" ? region.label_pt : region.label_en;
-
-  // Image has 4 figures side by side. We use background-position to show only one column.
-  // colStart: 0=front, 0.25=back, 0.5=left, 0.75=right
-  // background-position-x: percentage maps source to container
-  // With background-size: 400% auto, each column fills the container width
-  const bgPositionX = `${(colStart / 0.75) * 100}%`;
 
   return (
     <motion.div
@@ -71,17 +74,17 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
 
       {/* Body Map with clickable overlay */}
       <div className="flex justify-center">
-        <div
-          className="relative bg-card rounded-2xl border border-border/50 shadow-sm"
-          style={{
-            width: "280px",
-            height: "560px",
-            backgroundImage: `url(${bodyMapImage})`,
-            backgroundSize: "400% 100%",
-            backgroundPosition: `${bgPositionX} 0%`,
-            backgroundRepeat: "no-repeat",
-          }}
+        <div className="relative bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden"
+          style={{ width: "280px", height: "560px" }}
         >
+          {/* Background image for current view */}
+          <img
+            src={viewImages[view]}
+            alt={`Body map - ${view}`}
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+            draggable={false}
+          />
+
           {/* Clickable regions overlay */}
           {regions.map((region) => {
             const [x, y, w, h] = region.area;
