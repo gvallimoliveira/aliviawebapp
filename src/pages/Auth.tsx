@@ -51,9 +51,9 @@ const Auth = () => {
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">M</span>
+              <span className="text-lg font-bold text-primary-foreground">A</span>
             </div>
-            <span className="text-xl font-bold text-foreground">MoveWell</span>
+            <span className="text-xl font-bold text-foreground">Aliv.IA</span>
           </button>
           <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
             <Globe className="h-4 w-4" />
