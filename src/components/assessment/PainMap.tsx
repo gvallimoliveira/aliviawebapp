@@ -2,7 +2,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { regionPaths, bodyOutlinePaths, type View } from "./painMapData";
+import { regionsByView, getAllRegions, viewColumns, type View } from "./painMapData";
+import bodyMapImage from "@/assets/body-map.jpg";
 
 interface PainMapProps {
   selectedRegions: string[];
@@ -22,17 +23,25 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
     }
   };
 
-  const views: { key: View; labelKey: string }[] = [
-    { key: "front", labelKey: "painmap.front" },
-    { key: "back", labelKey: "painmap.back" },
-    { key: "side", labelKey: "painmap.side" },
+  const views: { key: View; label_pt: string; label_en: string }[] = [
+    { key: "front", label_pt: "Frontal", label_en: "Front" },
+    { key: "back", label_pt: "Posterior", label_en: "Back" },
+    { key: "left", label_pt: "Lat. Esquerda", label_en: "Left Side" },
+    { key: "right", label_pt: "Lat. Direita", label_en: "Right Side" },
   ];
 
-  const regions = regionPaths[view];
-  const outlines = bodyOutlinePaths[view];
+  const regions = regionsByView[view];
+  const allRegions = getAllRegions();
+  const [colStart] = viewColumns[view];
 
-  const getRegionLabel = (region: { label_pt: string; label_en: string }) =>
+  const getLabel = (region: { label_pt: string; label_en: string }) =>
     language === "pt" ? region.label_pt : region.label_en;
+
+  // Image has 4 figures side by side. We use background-position to show only one column.
+  // colStart: 0=front, 0.25=back, 0.5=left, 0.75=right
+  // background-position-x: percentage maps source to container
+  // With background-size: 400% auto, each column fills the container width
+  const bgPositionX = `${(colStart / 0.75) * 100}%`;
 
   return (
     <motion.div
@@ -46,84 +55,73 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
       </div>
 
       {/* View toggle */}
-      <div className="flex justify-center gap-2">
+      <div className="flex justify-center gap-2 flex-wrap">
         {views.map((v) => (
           <Button
             key={v.key}
             size="sm"
             variant={view === v.key ? "default" : "outline"}
             onClick={() => setView(v.key)}
-            className="rounded-xl"
+            className="rounded-xl text-xs"
           >
-            {t(v.labelKey)}
+            {language === "pt" ? v.label_pt : v.label_en}
           </Button>
         ))}
       </div>
 
-      {/* SVG Body Map */}
+      {/* Body Map with clickable overlay */}
       <div className="flex justify-center">
-        <div className="relative bg-card rounded-2xl border border-border/50 p-4 shadow-sm">
-          <svg
-            viewBox="0 0 184 416"
-            className="w-full max-w-[300px] h-auto"
-            style={{ minHeight: "440px" }}
-          >
-            {/* Anatomical outline — decorative strokes */}
-            {outlines.map((d, i) => (
-              <path
-                key={`outline-${i}`}
-                d={d}
-                fill="none"
-                stroke="hsl(var(--foreground) / 0.25)"
-                strokeWidth="1"
-                strokeLinejoin="round"
-                strokeLinecap="round"
+        <div
+          className="relative bg-card rounded-2xl border border-border/50 shadow-sm"
+          style={{
+            width: "280px",
+            height: "560px",
+            backgroundImage: `url(${bodyMapImage})`,
+            backgroundSize: "400% 100%",
+            backgroundPosition: `${bgPositionX} 0%`,
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {/* Clickable regions overlay */}
+          {regions.map((region) => {
+            const [x, y, w, h] = region.area;
+            const isSelected = selectedRegions.includes(region.id);
+            const isHovered = hoveredRegion === region.id;
+
+            return (
+              <div
+                key={region.id}
+                className="absolute cursor-pointer transition-all duration-200 rounded-sm"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  width: `${w}%`,
+                  height: `${h}%`,
+                  backgroundColor: isSelected
+                    ? "hsla(0, 80%, 55%, 0.35)"
+                    : isHovered
+                    ? "hsla(var(--primary), 0.15)"
+                    : "transparent",
+                  border: isSelected
+                    ? "2px solid hsla(0, 80%, 55%, 0.7)"
+                    : isHovered
+                    ? "1.5px solid hsla(var(--primary), 0.4)"
+                    : "1px solid transparent",
+                }}
+                onClick={() => toggleRegion(region.id)}
+                onMouseEnter={() => setHoveredRegion(region.id)}
+                onMouseLeave={() => setHoveredRegion(null)}
+                title={getLabel(region)}
               />
-            ))}
+            );
+          })}
 
-            {/* Clickable regions — transparent until hovered/selected */}
-            {Object.entries(regions).map(([id, region]) => {
-              const isSelected = selectedRegions.includes(id);
-              const isHovered = hoveredRegion === id;
-              return (
-                <path
-                  key={id}
-                  d={region.d}
-                  fill={
-                    isSelected
-                      ? "hsl(var(--destructive) / 0.35)"
-                      : isHovered
-                      ? "hsl(var(--primary) / 0.15)"
-                      : "transparent"
-                  }
-                  stroke={
-                    isSelected
-                      ? "hsl(var(--destructive))"
-                      : isHovered
-                      ? "hsl(var(--primary))"
-                      : "hsl(var(--border) / 0.3)"
-                  }
-                  strokeWidth={isSelected ? 2 : isHovered ? 1.5 : 0.5}
-                  className="cursor-pointer transition-all duration-200"
-                  onClick={() => toggleRegion(id)}
-                  onMouseEnter={() => setHoveredRegion(id)}
-                  onMouseLeave={() => setHoveredRegion(null)}
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              );
-            })}
-
-            {/* Hover tooltip */}
-            {hoveredRegion && regions[hoveredRegion] && (
-              <g>
-                <rect x="10" y="406" width="164" height="20" rx="6" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="0.5" />
-                <text x="92" y="419" textAnchor="middle" fontSize="10" fill="hsl(var(--foreground))" fontFamily="system-ui">
-                  {getRegionLabel(regions[hoveredRegion])}
-                </text>
-              </g>
-            )}
-          </svg>
+          {/* Hover tooltip */}
+          {hoveredRegion && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-card border border-border rounded-lg shadow-md text-xs text-foreground whitespace-nowrap pointer-events-none z-10">
+              {getLabel(regions.find((r) => r.id === hoveredRegion)!)}
+            </div>
+          )}
         </div>
       </div>
 
@@ -131,7 +129,6 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
       {selectedRegions.length > 0 && (
         <div className="flex flex-wrap gap-2 justify-center">
           {selectedRegions.map((id) => {
-            const allRegions = { ...regionPaths.front, ...regionPaths.back, ...regionPaths.side };
             const region = allRegions[id];
             return region ? (
               <span
@@ -139,7 +136,7 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
                 onClick={() => toggleRegion(id)}
                 className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-destructive/10 text-destructive text-xs font-medium cursor-pointer hover:bg-destructive/20 transition-colors"
               >
-                {getRegionLabel(region)} ×
+                {getLabel(region)} ×
               </span>
             ) : null;
           })}
