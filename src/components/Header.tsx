@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import logoAlivia from "@/assets/logo-alivia.png";
 
 const Header = () => {
   const { t, toggleLanguage } = useLanguage();
@@ -18,10 +19,7 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">A</span>
-          </div>
-          <span className="text-xl font-bold text-foreground">Aliv.IA</span>
+          <img src={logoAlivia} alt="Aliv.IA" className="h-9" />
         </div>
 
         <nav className="hidden items-center gap-6 md:flex">
