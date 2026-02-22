@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import logoAlivia from "@/assets/logo-alivia.png";
 
 const Header = () => {
   const { t, toggleLanguage } = useLanguage();
@@ -19,7 +18,10 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-          <img src={logoAlivia} alt="Aliv.IA" className="h-9" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
+            <span className="text-lg font-bold text-primary-foreground border-solid shadow-none">M</span>
+          </div>
+          <span className="text-xl font-bold text-foreground">MoveWell</span>
         </div>
 
         <nav className="hidden items-center gap-6 md:flex">
@@ -36,8 +38,8 @@ const Header = () => {
             <Globe className="h-4 w-4" />
             {t("nav.language")}
           </Button>
-          {user ? (
-            <>
+          {user ?
+          <>
               <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Admin">
                 <ShieldCheck className="h-4 w-4" />
               </Button>
@@ -47,16 +49,16 @@ const Header = () => {
               <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
                 <LogOut className="h-4 w-4" />
               </Button>
-            </>
-          ) : (
-            <Button variant="outline" size="sm" onClick={() => navigate("/auth")}>
+            </> :
+
+          <Button variant="outline" size="sm" onClick={() => navigate("/auth")}>
               {t("nav.login")}
             </Button>
-          )}
+          }
         </div>
       </div>
-    </header>
-  );
+    </header>);
+
 };
 
 export default Header;
