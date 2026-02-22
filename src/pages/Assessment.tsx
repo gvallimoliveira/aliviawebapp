@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate } from "react-router-dom";
 import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -256,10 +257,8 @@ const Assessment = () => {
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-               <span className="text-lg font-bold text-primary-foreground">A</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">Aliv.IA</span>
+            <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
+            <span className="text-xl font-bold text-foreground">Aliv.iA</span>
           </button>
           <div className="flex items-center gap-3">
             <span className={`text-xs font-medium px-3 py-1 rounded-full ${mode === "premium" ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"}`}>
