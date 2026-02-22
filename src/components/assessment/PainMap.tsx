@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { regionsByView, getAllRegions, type View } from "./painMapData";
+import { regionsByView, getAllRegions, type View, type ClickableRegion } from "./painMapData";
+import PainMapPathEditor from "./PainMapPathEditor";
 import bodyFront from "@/assets/body-front.jpg";
 import bodyBack from "@/assets/body-back.jpg";
 import bodyLeft from "@/assets/body-left.jpg";
@@ -24,6 +25,9 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
   const { t, language } = useLanguage();
   const [view, setView] = useState<View>("front");
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
+  const [debugMode, setDebugMode] = useState(false);
+  const [editedRegions, setEditedRegions] = useState<Record<View, ClickableRegion[]>>({ ...regionsByView });
+  const [selectedEditRegion, setSelectedEditRegion] = useState<string | null>(null);
 
   const toggleRegion = (regionId: string) => {
     if (selectedRegions.includes(regionId)) {
@@ -40,8 +44,36 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
     { key: "right", label_pt: "Lat. Direita", label_en: "Right Side" },
   ];
 
-  const regions = regionsByView[view];
+  const regions = debugMode ? editedRegions[view] : regionsByView[view];
   const allRegions = getAllRegions();
+
+  const handleEditRegionsUpdate = useCallback(
+    (updated: ClickableRegion[]) => {
+      setEditedRegions((prev) => ({ ...prev, [view]: updated }));
+    },
+    [view]
+  );
+
+  const exportPaths = useCallback(() => {
+    const output: Record<string, { id: string; d: string }[]> = {};
+    for (const [v, regs] of Object.entries(editedRegions)) {
+      output[v] = regs.map((r) => ({ id: r.id, d: r.d }));
+    }
+    console.log("=== EXPORTED PAIN MAP PATHS ===");
+    console.log(JSON.stringify(output, null, 2));
+    
+    // Also log as copy-pasteable TS
+    let ts = "";
+    for (const [v, regs] of Object.entries(editedRegions)) {
+      ts += `\n  // ${v.toUpperCase()}\n  ${v}: [\n`;
+      for (const r of regs) {
+        ts += `    { id: "${r.id}", label_pt: "${r.label_pt}", label_en: "${r.label_en}",\n      d: "${r.d}" },\n`;
+      }
+      ts += "  ],\n";
+    }
+    console.log("=== COPY-PASTE TS FORMAT ===");
+    console.log(ts);
+  }, [editedRegions]);
 
   const getLabel = (region: { label_pt: string; label_en: string }) =>
     language === "pt" ? region.label_pt : region.label_en;
@@ -70,7 +102,27 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
             {language === "pt" ? v.label_pt : v.label_en}
           </Button>
         ))}
+        <Button
+          size="sm"
+          variant={debugMode ? "destructive" : "ghost"}
+          onClick={() => setDebugMode(!debugMode)}
+          className="rounded-xl text-xs"
+        >
+          {debugMode ? "✏️ Editor ON" : "🔧 Debug"}
+        </Button>
       </div>
+
+      {/* Debug export button */}
+      {debugMode && (
+        <div className="flex justify-center gap-2">
+          <Button size="sm" variant="outline" onClick={exportPaths} className="rounded-xl text-xs">
+            📋 Export to Console
+          </Button>
+          <p className="text-xs text-muted-foreground self-center">
+            Clique numa região → arraste os pontos amarelos
+          </p>
+        </div>
+      )}
 
       {/* Body Map with SVG overlay */}
       <div className="flex justify-center">
@@ -91,61 +143,68 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
             draggable={false}
           />
 
-          {/* SVG overlay with precise clickable regions */}
-          <svg
-            viewBox="0 0 200 440"
-            className="absolute inset-0 w-full h-full"
-            preserveAspectRatio="none"
-          >
-            {regions.map((region) => {
-              const isSelected = selectedRegions.includes(region.id);
-              const isHovered = hoveredRegion === region.id;
+          {debugMode ? (
+            <PainMapPathEditor
+              regions={editedRegions[view]}
+              onRegionsUpdate={handleEditRegionsUpdate}
+              selectedRegionId={selectedEditRegion}
+              onSelectRegion={setSelectedEditRegion}
+            />
+          ) : (
+            <svg
+              viewBox="0 0 200 440"
+              className="absolute inset-0 w-full h-full"
+              preserveAspectRatio="none"
+            >
+              {regions.map((region) => {
+                const isSelected = selectedRegions.includes(region.id);
+                const isHovered = hoveredRegion === region.id;
 
-              return (
-                <path
-                  key={region.id}
-                  d={region.d}
-                  fill={
-                    isSelected
-                      ? "hsla(0, 80%, 55%, 0.35)"
-                      : isHovered
-                      ? "hsla(170, 60%, 45%, 0.25)"
-                      : "transparent"
-                  }
-                  stroke={
-                    isSelected
-                      ? "hsla(0, 80%, 55%, 0.7)"
-                      : isHovered
-                      ? "hsla(170, 60%, 45%, 0.5)"
-                      : "transparent"
-                  }
-                  strokeWidth={isSelected ? 1.5 : isHovered ? 1 : 0}
-                  className="cursor-pointer transition-all duration-200"
-                  onClick={() => toggleRegion(region.id)}
-                  onMouseEnter={() => setHoveredRegion(region.id)}
-                  onMouseLeave={() => setHoveredRegion(null)}
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              );
-            })}
+                return (
+                  <path
+                    key={region.id}
+                    d={region.d}
+                    fill={
+                      isSelected
+                        ? "hsla(0, 80%, 55%, 0.35)"
+                        : isHovered
+                        ? "hsla(170, 60%, 45%, 0.25)"
+                        : "transparent"
+                    }
+                    stroke={
+                      isSelected
+                        ? "hsla(0, 80%, 55%, 0.7)"
+                        : isHovered
+                        ? "hsla(170, 60%, 45%, 0.5)"
+                        : "transparent"
+                    }
+                    strokeWidth={isSelected ? 1.5 : isHovered ? 1 : 0}
+                    className="cursor-pointer transition-all duration-200"
+                    onClick={() => toggleRegion(region.id)}
+                    onMouseEnter={() => setHoveredRegion(region.id)}
+                    onMouseLeave={() => setHoveredRegion(null)}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                );
+              })}
 
-            {/* Hover tooltip */}
-            {hoveredRegion && (() => {
-              const region = regions.find((r) => r.id === hoveredRegion);
-              if (!region) return null;
-              return (
-                <g>
-                  <rect x="20" y="422" width="160" height="16" rx="6"
-                    fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="0.5" />
-                  <text x="100" y="433" textAnchor="middle" fontSize="8"
-                    fill="hsl(var(--foreground))" fontFamily="system-ui">
-                    {getLabel(region)}
-                  </text>
-                </g>
-              );
-            })()}
-          </svg>
+              {hoveredRegion && (() => {
+                const region = regions.find((r) => r.id === hoveredRegion);
+                if (!region) return null;
+                return (
+                  <g>
+                    <rect x="20" y="422" width="160" height="16" rx="6"
+                      fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="0.5" />
+                    <text x="100" y="433" textAnchor="middle" fontSize="8"
+                      fill="hsl(var(--foreground))" fontFamily="system-ui">
+                      {getLabel(region)}
+                    </text>
+                  </g>
+                );
+              })()}
+            </svg>
+          )}
         </div>
       </div>
 
