@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,8 @@ interface AnamnesisFormProps {
 const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   const { t } = useLanguage();
   const [step, setStep] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const vasBarRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<AnamnesisData>({
     chiefComplaint: "",
     customComplaint: "",
@@ -314,16 +316,36 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
               <p className="text-sm text-muted-foreground">{t("anamnesis.pain_score_desc")}</p>
             </div>
 
-            {/* VAS gradient bar with indicator */}
+            {/* VAS gradient bar with drag + click */}
             <div className="px-2 space-y-3">
-              <div className="relative h-5 rounded-full overflow-visible border border-border/60 shadow-inner"
+              <div
+                ref={vasBarRef}
+                className="relative h-5 rounded-full overflow-visible border border-border/60 shadow-inner cursor-pointer touch-none select-none"
                 style={{ background: `linear-gradient(to right, ${gradientColors.join(", ")})`, borderRadius: "9999px" }}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                  setIsDragging(true);
+                  if (vasBarRef.current) {
+                    const rect = vasBarRef.current.getBoundingClientRect();
+                    const score = Math.round(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 10);
+                    setData((prev) => ({ ...prev, painScore: score }));
+                  }
+                }}
+                onPointerMove={(e) => {
+                  if (!isDragging || !vasBarRef.current) return;
+                  const rect = vasBarRef.current.getBoundingClientRect();
+                  const score = Math.round(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 10);
+                  setData((prev) => ({ ...prev, painScore: score }));
+                }}
+                onPointerUp={() => setIsDragging(false)}
+                onPointerCancel={() => setIsDragging(false)}
               >
                 <motion.div
-                  className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-[3px] shadow-lg z-10"
+                  className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-[3px] shadow-lg z-10 pointer-events-none"
                   style={{ borderColor: gradientColors[data.painScore] }}
                   animate={{ left: `calc(${(data.painScore / 10) * 100}% - 12px)` }}
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  transition={isDragging ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 25 }}
                 />
               </div>
 
