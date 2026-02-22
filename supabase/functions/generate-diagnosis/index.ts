@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, mode, language } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo } = await req.json();
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
@@ -155,6 +155,9 @@ Response format (JSON):
 - Pain duration: ${anamnesisData.painDuration || "Not specified"}
 - Sex: ${anamnesisData.sex || "Not specified"}
 - Age range: ${anamnesisData.ageRange || "Not specified"}
+
+${additionalInfo ? `Additional information provided by the patient (USE THIS to refine your hypothesis and potentially increase confidence):
+${additionalInfo}` : ""}
 
 ${testResults && testResults.length > 0 ? `Functional test results:
 ${testResults.map((t: any) => `- ${t.testId}: ${t.painful ? "PAINFUL/UNCOMFORTABLE" : "No discomfort"}`).join("\n")}` : "No functional tests performed."}

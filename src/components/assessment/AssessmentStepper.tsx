@@ -30,6 +30,7 @@ const STEP_MAP: Record<string, string> = {
   questionnaire: "questionnaire",
   functional_tests: "functional_tests",
   loading: "result",
+  low_confidence: "result",
   result: "result",
   loading_treatment: "treatment",
   treatment: "treatment",

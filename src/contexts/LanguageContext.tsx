@@ -237,6 +237,11 @@ const translations: Record<Language, Record<string, string>> = {
     "diagnosis.new_assessment": "Nova Avaliação",
     "diagnosis.error_title": "Erro ao gerar diagnóstico",
     "diagnosis.error_desc": "Ocorreu um erro ao processar sua avaliação. Tente novamente.",
+    "diagnosis.low_confidence_title": "Precisamos de mais detalhes",
+    "diagnosis.low_confidence_desc": "Nossa análise inicial indica que precisamos de mais informações para fornecer um resultado mais preciso. Você tem mais algum detalhe sobre sua queixa que possa compartilhar?",
+    "diagnosis.low_confidence_placeholder": "Ex: A dor começou depois de um treino intenso, piora quando levanto o braço acima da cabeça, já fiz fisioterapia antes...",
+    "diagnosis.low_confidence_submit": "Enviar e gerar diagnóstico",
+    "diagnosis.low_confidence_skip": "Pular e ver resultado",
 
     // Payment
     "payment.premium_title": "Avaliação Premium",
@@ -652,6 +657,11 @@ const translations: Record<Language, Record<string, string>> = {
     "diagnosis.new_assessment": "New Assessment",
     "diagnosis.error_title": "Error generating diagnosis",
     "diagnosis.error_desc": "An error occurred while processing your assessment. Please try again.",
+    "diagnosis.low_confidence_title": "We need more details",
+    "diagnosis.low_confidence_desc": "Our initial analysis suggests we need more information to provide a more accurate result. Do you have any additional details about your complaint that you could share?",
+    "diagnosis.low_confidence_placeholder": "E.g.: The pain started after an intense workout, it gets worse when I raise my arm above my head, I've done physiotherapy before...",
+    "diagnosis.low_confidence_submit": "Submit and generate diagnosis",
+    "diagnosis.low_confidence_skip": "Skip and see result",
 
     // Payment
     "payment.premium_title": "Premium Assessment",
