@@ -257,9 +257,9 @@ const Assessment = () => {
           >
             <ArrowLeft className="h-4 w-4" />
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">M</span>
+               <span className="text-lg font-bold text-primary-foreground">A</span>
             </div>
-            <span className="text-xl font-bold text-foreground">MoveWell</span>
+            <span className="text-xl font-bold text-foreground">Aliv.IA</span>
           </button>
           <div className="flex items-center gap-3">
             <span className={`text-xs font-medium px-3 py-1 rounded-full ${mode === "premium" ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"}`}>

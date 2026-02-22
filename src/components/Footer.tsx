@@ -8,7 +8,7 @@ const Footer = () => {
       <div className="container text-center">
         <p className="mb-3 text-sm text-muted-foreground">{t("footer.disclaimer")}</p>
         <p className="text-xs text-muted-foreground/60">
-          © {new Date().getFullYear()} MoveWell. {t("footer.rights")}
+          © {new Date().getFullYear()} Aliv.IA. {t("footer.rights")}
         </p>
       </div>
     </footer>

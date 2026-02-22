@@ -112,7 +112,7 @@ export function generateAssessmentPdf({ diagnosis, treatmentPlan, language, user
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
-  doc.text("MoveWell", MARGIN, 18);
+  doc.text("Aliv.IA", MARGIN, 18);
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
   doc.text(isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report", MARGIN, 27);
@@ -345,7 +345,7 @@ export function generateAssessmentPdf({ diagnosis, treatmentPlan, language, user
     doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...COLORS.muted);
-    doc.text(`MoveWell — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`, MARGIN, 290);
+    doc.text(`Aliv.IA — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`, MARGIN, 290);
     doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - 8, 290);
     // Bottom accent line
     doc.setDrawColor(...COLORS.primary);
@@ -353,7 +353,7 @@ export function generateAssessmentPdf({ diagnosis, treatmentPlan, language, user
     doc.line(MARGIN, 287, PAGE_WIDTH - MARGIN, 287);
   }
 
-  doc.save(`MoveWell_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
+  doc.save(`AlivIA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
 // ── Helper: Section Title ──
