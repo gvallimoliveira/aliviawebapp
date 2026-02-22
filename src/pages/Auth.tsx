@@ -51,7 +51,8 @@ const Auth = () => {
         <div className="container flex h-16 items-center justify-between">
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
-            <img src={logoAlivia} alt="Aliv.IA" className="h-9" />
+            <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
+            <span className="text-xl font-bold text-foreground">Aliv.iA</span>
           </button>
           <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
             <Globe className="h-4 w-4" />
