@@ -463,7 +463,7 @@ const translations: Record<Language, Record<string, string>> = {
     "compare.diagnosis.premium": "With detailed explanation",
     "compare.treatment": "Treatment Plan",
     "compare.treatment.phases": "Short, medium and long term",
-    "compare.exercises": "Exercises with Videos",
+    "compare.exercises": "Exercises with Videos (YouTube)",
     "compare.pdf_export": "PDF Report",
     "compare.history": "Assessment History",
     "compare.redo": "Redo within 7 days",
