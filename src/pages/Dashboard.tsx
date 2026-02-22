@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import logoAlivia from "@/assets/logo-alivia.png";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -123,10 +124,8 @@ const Dashboard = () => {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <button onClick={() => navigate("/")} className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">A</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">Aliv.IA</span>
+            <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
+            <span className="text-xl font-bold text-foreground">Aliv.iA</span>
           </button>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
