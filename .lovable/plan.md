@@ -1,30 +1,29 @@
 
 
-# Profissional Prioritario na Busca
+# Dois Links de Video por Exercicio (PhysioTutors + Shorts)
 
-## Objetivo
-Garantir que o profissional "Guilherme Vallim de Oliveira" (CREFITO 359566-F) sempre apareca como primeiro resultado na listagem de profissionais.
+## Resumo
+Cada exercicio no plano de tratamento passara a exibir 2 links de busca no YouTube:
+1. **PhysioTutors** -- palavras-chave do exercicio + "physiotutors"
+2. **Shorts** -- mesmas palavras-chave + "shorts"
 
-## Abordagem
-Apos buscar os profissionais do banco, reordenar o array no frontend para que o profissional com CREFITO `359566-F` fique sempre no topo, independente dos filtros aplicados.
+## Mudancas
 
-## Mudanca
+### 1. Edge Function `generate-treatment/index.ts`
+- Alterar o prompt do sistema para instruir a IA a gerar **dois** campos de busca por exercicio:
+  - `searchQueryPro`: searchQuery + " physiotutors"
+  - `searchQueryShorts`: searchQuery + " shorts"
+- Atualizar o JSON de exemplo no prompt para incluir esses dois campos no lugar do campo unico `searchQuery`.
 
-### `src/pages/ProfessionalSearch.tsx`
-Na funcao `fetchProfessionals`, apos receber os dados do banco, aplicar uma ordenacao local:
+### 2. Frontend `TreatmentPlan.tsx`
+- Atualizar a interface `Exercise` para incluir `searchQueryPro?: string` e `searchQueryShorts?: string`.
+- Na renderizacao dos links, substituir o link unico por dois links:
+  - Primeiro: icone Play + "PhysioTutors" apontando para busca YouTube com `searchQueryPro` (ou fallback: `searchQuery + " physiotutors"`)
+  - Segundo: icone Play + "Shorts" apontando para busca YouTube com `searchQueryShorts` (ou fallback: `searchQuery + " shorts"`)
+- Manter fallback: se so existir `searchQuery` (planos antigos), derivar os dois links automaticamente adicionando "physiotutors" e "shorts" ao texto.
 
-```
-const sorted = (data || []).sort((a, b) => {
-  if (a.crefito === "359566-F") return -1;
-  if (b.crefito === "359566-F") return 1;
-  return 0;
-});
-setProfessionals(sorted);
-```
+### 3. Reimplantar a Edge Function
+- Deploy automatico apos edicao.
 
-Isso mantem a ordem alfabetica existente para todos os outros profissionais e coloca o CREFITO especificado no topo.
-
-## Escopo
-- Apenas 1 arquivo editado: `src/pages/ProfessionalSearch.tsx`
-- Nenhuma mudanca no banco de dados
-
+## Resultado
+O usuario vera dois botoes de video por exercicio, facilitando acesso a conteudo de referencia (PhysioTutors) e videos curtos (Shorts).
