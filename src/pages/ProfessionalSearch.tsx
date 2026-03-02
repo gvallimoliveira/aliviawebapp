@@ -215,7 +215,15 @@ const ProfessionalSearch = () => {
                 <CardContent className="py-5 px-5 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold text-foreground">{p.full_name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-foreground">{p.full_name}</h3>
+                        {p.crefito === "359566-F" && (
+                          <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] gap-1">
+                            <Sparkles className="h-3 w-3" />
+                            Aliv.iA App Creator
+                          </Badge>
+                        )}
+                      </div>
                       {p.crefito && (
                         <p className="text-xs text-muted-foreground">CREFITO: {p.crefito}</p>
                       )}
