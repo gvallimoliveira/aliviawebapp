@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import ProfessionalManagement from "@/components/admin/ProfessionalManagement";
 
 interface VipUser {
   id: string;
@@ -263,6 +264,7 @@ const Admin = () => {
             )}
           </CardContent>
         </Card>
+        <ProfessionalManagement language={language} />
       </main>
       <Footer />
     </div>

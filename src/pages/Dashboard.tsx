@@ -283,6 +283,27 @@ const Dashboard = () => {
           )}
         </div>
 
+        {/* Professional Approval Status */}
+        {professional && (
+          <Card className={`border ${professional.approved
+            ? "border-emerald-200 bg-emerald-500/5"
+            : "border-amber-200 bg-amber-500/5"}`}>
+            <CardContent className="py-4 px-5 flex items-center gap-3">
+              {professional.approved ? (
+                <>
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                  <span className="text-sm font-medium text-emerald-700">{t("prof.profile_active")}</span>
+                </>
+              ) : (
+                <>
+                  <Clock className="h-5 w-5 text-amber-600 shrink-0" />
+                  <span className="text-sm text-amber-700">{t("prof.profile_under_review")}</span>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Professional Referrals (for professionals) */}
         {professional && referrals.length > 0 && (
           <div>
