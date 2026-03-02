@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Shield } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import logoAlivia from "@/assets/logo-alivia.png";
 
 const HeroSection = () => {
   const { t } = useLanguage();
@@ -21,8 +22,23 @@ const HeroSection = () => {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="mx-auto max-w-3xl text-center"
         >
+          {/* Animated logo */}
+          <motion.div
+            className="mb-8 flex justify-center"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <motion.img
+              src={logoAlivia}
+              alt="Aliv.iA"
+              className="h-28 w-28 md:h-36 md:w-36 drop-shadow-[0_0_25px_hsl(var(--primary)/0.35)]"
+              animate={{ y: [0, -6, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+            />
+          </motion.div>
+
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-            <Shield className="h-4 w-4" />
             {t("hero.badge")}
           </div>
 

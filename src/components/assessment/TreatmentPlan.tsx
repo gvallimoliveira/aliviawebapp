@@ -96,7 +96,7 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, onBack, onNewAssessment 
     setPdfLoading(true);
     try {
       const { generateAssessmentPdf } = await import("@/utils/generatePdf");
-      generateAssessmentPdf({ diagnosis, treatmentPlan: plan, language, userName: user?.user_metadata?.full_name || "" });
+      await generateAssessmentPdf({ diagnosis, treatmentPlan: plan, language, userName: user?.user_metadata?.full_name || "" });
       toast({ title: t("pdf.success") });
     } catch {
       toast({ title: t("pdf.error"), variant: "destructive" });

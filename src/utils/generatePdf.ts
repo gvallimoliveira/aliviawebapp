@@ -102,20 +102,48 @@ function drawBadge(
   doc.text(text, x + padX, y);
 }
 
-export function generateAssessmentPdf({ diagnosis, treatmentPlan, language, userName }: PdfOptions) {
+async function loadLogoBase64(): Promise<string | null> {
+  try {
+    const { default: logoUrl } = await import("@/assets/logo-alivia.png");
+    const response = await fetch(logoUrl);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language, userName }: PdfOptions) {
   const doc = new jsPDF();
   const isPt = language === "pt";
   let y = MARGIN;
 
+  // Load logo
+  const logoBase64 = await loadLogoBase64();
+
   // ── Header Band ──
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
+  
+  let textStartX = MARGIN;
+  if (logoBase64) {
+    try {
+      doc.addImage(logoBase64, "PNG", MARGIN, 5, 12, 12);
+      textStartX = MARGIN + 15;
+    } catch { /* fallback without logo */ }
+  }
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
-  doc.text("Aliv.iA", MARGIN, 18);
+  doc.text("Aliv.iA", textStartX, 18);
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report", MARGIN, 27);
+  doc.text(isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report", textStartX, 27);
   doc.setFontSize(8);
   const dateStr = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", {
     year: "numeric", month: "long", day: "numeric",
