@@ -57,7 +57,10 @@ CRITICAL RULE FOR YOUTUBE VIDEOS:
 - Do NOT invent or fabricate YouTube URLs. AI-generated URLs will lead to broken pages.
 - Instead of providing videoUrls, provide a "searchQuery" field for each exercise. This search query should be a specific YouTube search string that the user can use to find the correct demonstration video.
 - The search query should be in the same language as the response (${lang}).
-- Example: "searchQuery": "shoulder external rotation exercise physiotherapy demonstration"
+- For each exercise, generate TWO search query fields:
+  - "searchQueryPro": the exercise keywords + " physiotutors" (reference channel for professionals)
+  - "searchQueryShorts": the exercise keywords + " shorts" (short-form videos)
+- Example: "searchQueryPro": "shoulder external rotation exercise physiotutors", "searchQueryShorts": "shoulder external rotation exercise shorts"
 
 Response format (JSON):
 {
@@ -74,7 +77,8 @@ Response format (JSON):
           "sets": "3",
           "reps": "10-12",
           "frequency": "Daily",
-          "searchQuery": "specific youtube search query for this exercise",
+          "searchQueryPro": "exercise keywords physiotutors",
+          "searchQueryShorts": "exercise keywords shorts",
           "category": "stretching" | "strengthening" | "mobility" | "breathing" | "stability" | "pain_management"
         }
       ]
@@ -123,7 +127,7 @@ EXERCISE GUIDELINES:
 - Short-term: 3-5 exercises focused on pain relief and gentle mobility
 - Medium-term: 4-6 exercises adding strengthening and functional movements
 - Long-term: 4-6 exercises for return to full activity and prevention
-- Each exercise MUST have a "searchQuery" field (NOT videoUrls)
+- Each exercise MUST have "searchQueryPro" and "searchQueryShorts" fields (NOT videoUrls or searchQuery)
 - Adapt exercises based on equipment availability: ${hasGym ? "gym equipment available" : "bodyweight and resistance bands only"}
 - Adapt intensity based on activity level: ${anamnesisData?.activityLevel || "not specified"}
 - Include references from the knowledge base sources listed above`;
@@ -154,7 +158,7 @@ ${testResults && testResults.length > 0 ? `Functional test results:
 - Painful/Uncomfortable tests: ${painfulTests.join(", ") || "None"}
 - Normal tests: ${normalTests.join(", ") || "None"}` : "No functional tests performed."}
 
-Generate a personalized 3-phase treatment plan in valid JSON format. Focus exercises on the affected regions, address deficits found in functional tests, and target the most impaired functional areas identified by the validated questionnaires. Remember: use "searchQuery" instead of "videoUrls" for each exercise.`;
+Generate a personalized 3-phase treatment plan in valid JSON format. Focus exercises on the affected regions, address deficits found in functional tests, and target the most impaired functional areas identified by the validated questionnaires. Remember: use "searchQueryPro" and "searchQueryShorts" instead of "videoUrls" or "searchQuery" for each exercise.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
