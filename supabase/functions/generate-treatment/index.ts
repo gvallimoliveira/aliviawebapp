@@ -56,11 +56,11 @@ IMPORTANT RULES:
 CRITICAL RULE FOR YOUTUBE VIDEOS:
 - Do NOT invent or fabricate YouTube URLs. AI-generated URLs will lead to broken pages.
 - Instead of providing videoUrls, provide a "searchQuery" field for each exercise. This search query should be a specific YouTube search string that the user can use to find the correct demonstration video.
-- The search query should be in the same language as the response (${lang}).
+- The search query for "searchQueryShorts" should be in the same language as the response (${lang}).
 - For each exercise, generate TWO search query fields:
-  - "searchQueryPro": the exercise keywords + " physiotutors" (reference channel for professionals)
-  - "searchQueryShorts": the exercise keywords + " shorts" (short-form videos)
-- Example: "searchQueryPro": "shoulder external rotation exercise physiotutors", "searchQueryShorts": "shoulder external rotation exercise shorts"
+  - "searchQueryPro": the exercise keywords translated to ENGLISH + " physiotutors" (reference channel for professionals). ALWAYS in English regardless of the response language.
+  - "searchQueryShorts": the exercise keywords in the SAME language as the response + " shorts" (short-form videos)
+- Example: "searchQueryPro": "shoulder external rotation exercise physiotutors", "searchQueryShorts": "exercício rotação externa ombro shorts"
 
 Response format (JSON):
 {
