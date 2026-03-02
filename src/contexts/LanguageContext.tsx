@@ -558,6 +558,21 @@ const translations: Record<Language, Record<string, string>> = {
     "assessment_view.no_diagnosis": "Diagnóstico ainda não gerado",
     "assessment_view.pain_score": "Nota de Dor",
 
+    // Forgot / Reset Password
+    "auth.forgot_password": "Esqueci minha senha",
+    "auth.forgot_title": "Recuperar Senha",
+    "auth.forgot_desc": "Informe seu e-mail para receber o link de recuperação",
+    "auth.send_reset": "Enviar link",
+    "auth.reset_sent": "E-mail enviado!",
+    "auth.reset_sent_desc": "Verifique sua caixa de entrada",
+    "auth.back_to_login": "Voltar ao login",
+    "auth.new_password": "Nova senha",
+    "auth.confirm_password": "Confirmar senha",
+    "auth.passwords_no_match": "As senhas não coincidem",
+    "auth.reset_success": "Senha atualizada!",
+    "auth.reset_success_desc": "Sua senha foi redefinida com sucesso.",
+    "auth.reset_button": "Redefinir senha",
+
     // PDF
     "pdf.cta_text": "Baixe o relatório completo em PDF para compartilhar com seu médico ou fisioterapeuta.",
     "pdf.download": "Baixar Relatório em PDF",
@@ -1107,6 +1122,21 @@ const translations: Record<Language, Record<string, string>> = {
     "assessment_view.back": "Back to Dashboard",
     "assessment_view.no_diagnosis": "Diagnosis not generated yet",
     "assessment_view.pain_score": "Pain Score",
+
+    // Forgot / Reset Password
+    "auth.forgot_password": "Forgot password?",
+    "auth.forgot_title": "Reset Password",
+    "auth.forgot_desc": "Enter your email to receive a reset link",
+    "auth.send_reset": "Send reset link",
+    "auth.reset_sent": "Email sent!",
+    "auth.reset_sent_desc": "Check your inbox",
+    "auth.back_to_login": "Back to login",
+    "auth.new_password": "New password",
+    "auth.confirm_password": "Confirm password",
+    "auth.passwords_no_match": "Passwords don't match",
+    "auth.reset_success": "Password updated!",
+    "auth.reset_success_desc": "Your password has been reset successfully.",
+    "auth.reset_button": "Reset password",
 
     // PDF
     "pdf.cta_text": "Download the full PDF report to share with your doctor or physiotherapist.",
