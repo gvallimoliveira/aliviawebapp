@@ -1,143 +1,75 @@
-# Tabela Comparativa Atualizada + Destaques na Landing + Marketplace de Profissionais
+# Aprovacao Admin para Profissionais
 
-## Parte 1: Atualizar a Tabela Comparativa
+## Resumo
 
-Adicionar novas linhas na tabela de comparacao Basic vs Premium:
-
-
-| Recurso                              | Basic  | Premium |
-| ------------------------------------ | ------ | ------- |
-| Diario de Dor                        | X      | Check   |
-| Comparacao Antes/Depois              | X      | Check   |
-| &nbsp;                               | &nbsp; | &nbsp;  |
-| Indicacao de Profissional Presencial | X      | Check   |
-
-
-**Arquivos**: `ComparisonSection.tsx`, `LanguageContext.tsx` (novas chaves i18n)
+Adicionar campo `approved` (boolean, default false) na tabela `professionals`. Profissionais so aparecem na busca apos aprovacao do admin. O admin gerencia aprovacoes na pagina `/admin`. alem disso, no futuro, so terá acesso a essa lista de profissionais quem pagar por avaliação premium. ou seja, futuramente nao vai bastar se cadastrar  para ter acesso a listagem dos profissionais pelo painel do usuario. quero que coloque já um comando aguardando ter essa ordem ativada pelo admin.  obs importantissima: preencher crefito é obrigatório para cadastro. 
 
 ---
 
-## Parte 2: Destaques na Landing Page (nova secao)
+## 1. Banco de Dados
 
-Criar uma nova secao `HighlightsSection.tsx` posicionada entre `StatsSection` e `ComparisonSection` na landing page. Sera um grid de 4 cards destacando:
+Migracao SQL:
 
-1. **Diario de Dor** - Acompanhe sua evolucao diaria com graficos de progresso
-2. **Questionarios Validados** - KOOS, SPADI, ODI, VISA-A usados por clinicas e pesquisadores
-3. **Avaliacao baseada em evidencias** - Resolva suas dores musculoesqueleticas sem sair de casa
-4. **Conexao com profissional** - Se precisar de acompanhamento presencial, encontre fisioterapeutas na sua regiao
+- Adicionar coluna `approved boolean NOT NULL DEFAULT false` na tabela `professionals`
+- Atualizar a policy de SELECT para exigir `approved = true` (alem de `active = true`) para usuarios normais
+- Criar nova policy permitindo que admins (VIP users) vejam TODOS os profissionais (incluindo nao aprovados)
+- Criar security definer function `is_admin()` que verifica se o usuario esta na tabela `vip_users`
 
-Cada card tera um icone, titulo e descricao curta. Layout responsivo: 2 colunas mobile, 4 desktop.
+```text
+professionals.approved = false  -->  Nao aparece na busca publica
+professionals.approved = true   -->  Visivel para pacientes
+Admin (VIP user)                -->  Ve todos os profissionais
+```
 
-**Arquivos**: novo `src/components/HighlightsSection.tsx`, `Index.tsx`, `LanguageContext.tsx`
+## 2. Pagina de Registro do Profissional
 
----
+Atualizar `ProfessionalRegister.tsx`:
 
-## Parte 3: Marketplace de Profissionais
+- Apos salvar, mostrar mensagem informando que o cadastro foi enviado para aprovacao
+- Se ja cadastrado e `approved = false`, mostrar badge "Aguardando aprovacao"
+- Se `approved = true`, mostrar badge "Aprovado"
 
-### 3.1 Banco de Dados
+## 3. Pagina Admin - Gestao de Profissionais
 
-Nova tabela `professionals`:
+Atualizar `Admin.tsx` para incluir nova secao:
 
+- Listar profissionais pendentes de aprovacao (`approved = false`)
+- Listar profissionais aprovados
+- Botoes para aprovar/rejeitar (toggle `approved`)
+- Mostrar nome, CREFITO, cidade/estado, especialidades de cada profissional
+- Usar a edge function `manage-vip-users` como referencia de pattern, mas acessar diretamente via Supabase client (admin ja eh VIP)
 
-| Coluna         | Tipo                   | Descricao                                     |
-| -------------- | ---------------------- | --------------------------------------------- |
-| id             | uuid (PK)              | &nbsp;                                        |
-| user_id        | uuid (NOT NULL)        | Referencia ao auth user                       |
-| full_name      | text (NOT NULL)        | Nome completo                                 |
-| crefito        | text                   | Registro profissional                         |
-| specialties    | text[]                 | Ex: ["ortopedia", "esportiva", "neurologica"] |
-| city           | text (NOT NULL)        | Cidade                                        |
-| state          | text (NOT NULL)        | Estado (UF)                                   |
-| bio            | text                   | Descricao curta                               |
-| phone          | text                   | Contato (WhatsApp)                            |
-| email          | text                   | Email profissional                            |
-| clinic_name    | text                   | Nome do consultorio/clinica                   |
-| clinic_address | text                   | Endereco completo                             |
-| active         | boolean (default true) | Se aceita novos pacientes                     |
-| created_at     | timestamptz            | &nbsp;                                        |
-| updated_at     | timestamptz            | &nbsp;                                        |
+## 4. Dashboard do Profissional
 
+Atualizar `Dashboard.tsx`:
 
-RLS:
+- Na secao do profissional, mostrar status de aprovacao
+- Se `approved = false`: banner amarelo "Seu perfil esta em analise. Voce sera notificado quando for aprovado."
+- Se `approved = true`: badge verde "Perfil ativo"
 
-- SELECT: qualquer usuario autenticado pode ver profissionais ativos
-- INSERT/UPDATE: apenas o proprio profissional (user_id = auth.uid())
+## 5. Traducoes (i18n)
 
-Nova tabela `professional_referrals` (registro de indicacoes):
+Novas chaves PT/EN:
 
-
-| Coluna          | Tipo                            | Descricao                     |
-| --------------- | ------------------------------- | ----------------------------- |
-| id              | uuid (PK)                       | &nbsp;                        |
-| patient_user_id | uuid (NOT NULL)                 | Paciente que solicitou        |
-| professional_id | uuid (FK professionals)         | Profissional indicado         |
-| assessment_id   | uuid (FK assessments, nullable) | Avaliacao relacionada         |
-| status          | text (default 'pending')        | pending, contacted, completed |
-| created_at      | timestamptz                     | &nbsp;                        |
-
-
-RLS:
-
-- Paciente pode ver e criar suas proprias indicacoes
-- Profissional pode ver indicacoes direcionadas a ele
-
-### 3.2 Pagina de Cadastro do Profissional
-
-Nova pagina `/professional/register` com formulario:
-
-- Nome, CREFITO, especialidades (multi-select), cidade, estado, bio, telefone, email, clinica
-- Requer autenticacao (redireciona para /auth se nao logado)
-- Salva na tabela `professionals`
-
-### 3.3 Pagina de Busca de Profissionais
-
-Nova pagina `/professionals` acessivel a usuarios autenticados:
-
-- Filtro por estado e cidade
-- Filtro por especialidade
-- Lista de cards com: nome, especialidades (badges), cidade/estado, bio, botao "Entrar em contato"
-- Botao de contato abre link WhatsApp ou mostra email/telefone
-- Ao clicar "Solicitar indicacao", cria registro em `professional_referrals`
-
-### 3.4 Integracao no Fluxo do Paciente
-
-No componente `DiagnosisResult.tsx` e/ou `TreatmentPlan.tsx`, apos o resultado:
-
-- Card com CTA: "Precisa de acompanhamento presencial? Encontre um fisioterapeuta na sua regiao"
-- Botao leva para `/professionals`
-
-### 3.5 Dashboard do Profissional
-
-No Dashboard, se o usuario logado tem registro em `professionals`:
-
-- Secao extra mostrando indicacoes recebidas (tabela `professional_referrals`)
-- Status de cada indicacao
+- `prof.pending_approval` / "Aguardando aprovacao" / "Pending approval"
+- `prof.approved` / "Aprovado" / "Approved"  
+- `prof.submitted_for_review` / "Cadastro enviado para analise!" / "Registration submitted for review!"
+- `prof.profile_under_review` / "Seu perfil esta em analise..." / "Your profile is under review..."
+- `admin.professionals_title` / "Gestao de Profissionais" / "Professional Management"
+- `admin.approve` / "Aprovar" / "Approve"
+- `admin.revoke` / "Revogar" / "Revoke"
+- `admin.pending` / "Pendentes" / "Pending"
+- `admin.approved_list` / "Aprovados" / "Approved"
 
 ---
 
-## Resumo de Arquivos
+## Arquivos Modificados
 
 
-| Arquivo                                         | Acao                                               |
-| ----------------------------------------------- | -------------------------------------------------- |
-| `supabase/migrations/`                          | Tabelas `professionals` e `professional_referrals` |
-| `src/components/ComparisonSection.tsx`          | Novas linhas na tabela                             |
-| `src/components/HighlightsSection.tsx`          | Nova secao de destaques                            |
-| `src/pages/Index.tsx`                           | Integrar HighlightsSection                         |
-| `src/pages/ProfessionalRegister.tsx`            | Formulario de cadastro                             |
-| `src/pages/ProfessionalSearch.tsx`              | Busca e listagem                                   |
-| `src/components/assessment/DiagnosisResult.tsx` | CTA para buscar profissional                       |
-| `src/components/assessment/TreatmentPlan.tsx`   | CTA para buscar profissional                       |
-| `src/pages/Dashboard.tsx`                       | Secao de indicacoes (para profissionais)           |
-| `src/App.tsx`                                   | Novas rotas                                        |
-| `src/contexts/LanguageContext.tsx`              | Traducoes PT/EN                                    |
-
-
-## Ordem de Implementacao
-
-1. Migracoes do banco (professionals + professional_referrals)
-2. Tabela comparativa atualizada + secao de destaques
-3. Paginas do marketplace (cadastro + busca)
-4. CTAs no fluxo de avaliacao
-5. Dashboard do profissional
-6. Traducoes completas
+| Arquivo                              | Acao                                                         |
+| ------------------------------------ | ------------------------------------------------------------ |
+| `supabase/migrations/`               | Coluna `approved`, policies atualizadas, funcao `is_admin()` |
+| `src/pages/ProfessionalRegister.tsx` | Feedback de status pos-cadastro                              |
+| `src/pages/Admin.tsx`                | Nova secao de gestao de profissionais                        |
+| `src/pages/Dashboard.tsx`            | Banner de status de aprovacao                                |
+| `src/contexts/LanguageContext.tsx`   | Novas traducoes                                              |
