@@ -296,6 +296,71 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referral_rewards: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          id: string
+          referral_code_id: string | null
+          referred_user_id: string
+          referrer_user_id: string
+          rewarded_at: string | null
+          status: string
+          stripe_coupon_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          referral_code_id?: string | null
+          referred_user_id: string
+          referrer_user_id: string
+          rewarded_at?: string | null
+          status?: string
+          stripe_coupon_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          referral_code_id?: string | null
+          referred_user_id?: string
+          referrer_user_id?: string
+          rewarded_at?: string | null
+          status?: string
+          stripe_coupon_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_referral_code_id_fkey"
+            columns: ["referral_code_id"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vip_users: {
         Row: {
           created_at: string

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import PainDiary from "@/components/dashboard/PainDiary";
 import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
+import ReferralCard from "@/components/dashboard/ReferralCard";
 import {
   Globe, LogOut, Plus, ClipboardList, Calendar, MapPin,
   Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus
@@ -21,6 +22,7 @@ interface PremiumAccess {
   assessments_used?: number;
   max_assessments?: number;
   paid_at?: string;
+  available_discount?: { discount_percent: number } | null;
 }
 
 const Dashboard = () => {
@@ -333,6 +335,9 @@ const Dashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Referral Card */}
+        <ReferralCard availableDiscount={premiumAccess?.available_discount} />
 
         {/* Pain Diary */}
         <PainDiary />

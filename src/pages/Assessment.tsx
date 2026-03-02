@@ -80,9 +80,14 @@ const Assessment = () => {
   const handlePayment = async () => {
     setPaymentLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-payment");
+      const referralCode = localStorage.getItem("alivia_referral_code");
+      const { data, error } = await supabase.functions.invoke("create-payment", {
+        body: referralCode ? { referral_code: referralCode } : {},
+      });
       if (error) throw error;
       if (data?.url) {
+        // Clear referral code after use
+        if (referralCode) localStorage.removeItem("alivia_referral_code");
         window.open(data.url, '_blank');
       }
     } catch (err) {
