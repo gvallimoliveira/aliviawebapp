@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, ClipboardList, Stethoscope, Activity, ArrowRight, Loader2 } from "lucide-react";
+import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import logoAlivia from "@/assets/logo-alivia.png";
 
 interface WelcomeStepProps {
   mode: "basic" | "premium";
@@ -64,9 +65,9 @@ const WelcomeStep = ({ mode, onContinue }: WelcomeStepProps) => {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={isTransitioning ? { scale: 1.2, opacity: 0 } : { scale: 1, opacity: 1 }}
           transition={{ delay: isTransitioning ? 0 : 0.2, duration: 0.4 }}
-          className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"
+          className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center p-2"
         >
-          <Heart className="h-8 w-8 text-primary" />
+          <img src={logoAlivia} alt="Aliv.iA" className="h-14 w-14 object-contain" />
         </motion.div>
 
         <div className="space-y-3 max-w-md">
