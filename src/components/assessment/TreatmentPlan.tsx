@@ -346,6 +346,16 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, onBack, onNewAssessment 
         </Card>
       )}
 
+      {/* Professional CTA */}
+      <Card className="rounded-xl border-primary/30 bg-primary/5">
+        <CardContent className="py-4 text-center space-y-3">
+          <p className="text-sm font-medium text-foreground">{t("prof.cta_text")}</p>
+          <Button variant="outline" className="rounded-xl gap-2" onClick={() => window.location.href = "/professionals"}>
+            {t("prof.find_professional")}
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Export PDF */}
       {diagnosis && (
         <Card className="rounded-xl border-primary/30 bg-primary/5">
