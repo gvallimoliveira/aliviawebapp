@@ -437,6 +437,29 @@ const translations: Record<Language, Record<string, string>> = {
     "followup.week": "Semana",
     "followup.no_reminders": "Nenhum lembrete agendado ainda.",
 
+    // Pain Diary
+    "diary.title": "Diário de Dor",
+    "diary.log_pain": "Como está sua dor hoje?",
+    "diary.notes_placeholder": "Observações (opcional)",
+    "diary.today_logged": "Registro de hoje",
+    "diary.evolution": "Evolução da dor",
+    "diary.no_entries": "Nenhum registro ainda. Comece registrando sua dor hoje!",
+    "diary.register": "Registrar",
+    "diary.update": "Atualizar",
+    "diary.edit": "Editar",
+    "diary.saved": "Registro salvo!",
+    "diary.error": "Erro ao salvar registro.",
+
+    // Comparison
+    "comparison.title": "Comparação Antes / Depois",
+    "comparison.first": "Primeira avaliação",
+    "comparison.latest": "Última avaliação",
+    "comparison.pain": "Dor",
+    "comparison.hypothesis": "Hipótese",
+    "comparison.improved": "Melhora",
+    "comparison.worsened": "Piora",
+    "comparison.stable": "Estável — sem mudança na dor",
+
     // PDF
     "pdf.cta_text": "Baixe o relatório completo em PDF para compartilhar com seu médico ou fisioterapeuta.",
     "pdf.download": "Baixar Relatório em PDF",
@@ -865,6 +888,29 @@ const translations: Record<Language, Record<string, string>> = {
     "followup.next_reminder": "Next reminder",
     "followup.week": "Week",
     "followup.no_reminders": "No reminders scheduled yet.",
+
+    // Pain Diary
+    "diary.title": "Pain Diary",
+    "diary.log_pain": "How is your pain today?",
+    "diary.notes_placeholder": "Notes (optional)",
+    "diary.today_logged": "Today's entry",
+    "diary.evolution": "Pain evolution",
+    "diary.no_entries": "No entries yet. Start by logging your pain today!",
+    "diary.register": "Log",
+    "diary.update": "Update",
+    "diary.edit": "Edit",
+    "diary.saved": "Entry saved!",
+    "diary.error": "Error saving entry.",
+
+    // Comparison
+    "comparison.title": "Before / After Comparison",
+    "comparison.first": "First assessment",
+    "comparison.latest": "Latest assessment",
+    "comparison.pain": "Pain",
+    "comparison.hypothesis": "Hypothesis",
+    "comparison.improved": "Improved",
+    "comparison.worsened": "Worsened",
+    "comparison.stable": "Stable — no change in pain",
 
     // PDF
     "pdf.cta_text": "Download the full PDF report to share with your doctor or physiotherapist.",

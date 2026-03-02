@@ -123,6 +123,44 @@ export type Database = {
           },
         ]
       }
+      pain_diary_entries: {
+        Row: {
+          assessment_id: string | null
+          created_at: string
+          id: string
+          logged_at: string
+          notes: string | null
+          pain_score: number
+          user_id: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          created_at?: string
+          id?: string
+          logged_at?: string
+          notes?: string | null
+          pain_score: number
+          user_id: string
+        }
+        Update: {
+          assessment_id?: string | null
+          created_at?: string
+          id?: string
+          logged_at?: string
+          notes?: string | null
+          pain_score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pain_diary_entries_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number | null

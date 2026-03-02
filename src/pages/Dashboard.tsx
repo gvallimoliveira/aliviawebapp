@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import PainDiary from "@/components/dashboard/PainDiary";
+import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
 import {
   Globe, LogOut, Plus, ClipboardList, Calendar, MapPin,
   Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle
@@ -233,6 +235,12 @@ const Dashboard = () => {
             </CardHeader>
           </Card>
         </div>
+
+        {/* Pain Diary */}
+        <PainDiary />
+
+        {/* Before/After Comparison */}
+        <AssessmentComparison assessments={assessments} />
 
         {/* Follow-up Reminders */}
         {followUps.length > 0 && (
