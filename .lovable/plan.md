@@ -1,75 +1,143 @@
+# Tabela Comparativa Atualizada + Destaques na Landing + Marketplace de Profissionais
+
+## Parte 1: Atualizar a Tabela Comparativa
+
+Adicionar novas linhas na tabela de comparacao Basic vs Premium:
 
 
-# Diario de Dor + Comparacao Antes/Depois
+| Recurso                              | Basic  | Premium |
+| ------------------------------------ | ------ | ------- |
+| Diario de Dor                        | X      | Check   |
+| Comparacao Antes/Depois              | X      | Check   |
+| &nbsp;                               | &nbsp; | &nbsp;  |
+| Indicacao de Profissional Presencial | X      | Check   |
 
-## Feature 1: Diario de Dor
 
-### Banco de Dados
-Nova tabela `pain_diary_entries`:
-- `id` (uuid, PK)
-- `user_id` (uuid, NOT NULL)
-- `assessment_id` (uuid, FK para assessments, nullable) -- vincula ao tratamento ativo
-- `pain_score` (integer, 0-10, NOT NULL)
-- `notes` (text, nullable) -- campo opcional para observacoes curtas
-- `logged_at` (date, NOT NULL, default today) -- apenas data, 1 registro por dia
-- `created_at` (timestamptz, default now())
-
-RLS: usuarios podem SELECT, INSERT e UPDATE seus proprios registros. Constraint UNIQUE em (user_id, logged_at) para evitar duplicatas no mesmo dia.
-
-### UI: Pagina do Diario de Dor
-Novo componente `src/components/dashboard/PainDiary.tsx` integrado ao Dashboard:
-
-- **Registro rapido**: Slider de 0-10 com um botao "Registrar" + campo de nota opcional. Um toque para salvar.
-- **Grafico de evolucao**: Usar `recharts` (ja instalado) com um `LineChart` mostrando a dor ao longo dos dias/semanas. Eixo X = datas, Eixo Y = 0-10.
-- **Historico recente**: Lista dos ultimos 7 registros com data e nota.
-- Se ja registrou hoje, mostrar o valor atual com opcao de editar.
-
-### Integracao no Dashboard
-Adicionar uma nova secao no Dashboard entre os "Quick Actions" e o "Follow-up Reminders":
-- Card com titulo "Diario de Dor" e icone
-- Mostra o grafico inline (ultimos 30 dias)
-- Botao para registrar a dor de hoje
+**Arquivos**: `ComparisonSection.tsx`, `LanguageContext.tsx` (novas chaves i18n)
 
 ---
 
-## Feature 2: Comparacao Antes/Depois
+## Parte 2: Destaques na Landing Page (nova secao)
 
-### Logica
-Quando o usuario tem 2+ avaliacoes premium completadas, mostrar uma secao de comparacao no Dashboard:
-- Seleciona automaticamente a primeira e a ultima avaliacao premium completada
-- Mostra lado a lado:
-  - Data da avaliacao
-  - Nota de dor (pain_score)
-  - Hipotese diagnostica
-  - Regioes de dor
-  - Resultados dos testes funcionais (se disponiveis)
-  - Score dos questionarios (se disponiveis)
+Criar uma nova secao `HighlightsSection.tsx` posicionada entre `StatsSection` e `ComparisonSection` na landing page. Sera um grid de 4 cards destacando:
 
-### UI: Componente de Comparacao
-Novo componente `src/components/dashboard/AssessmentComparison.tsx`:
-- Layout em 2 colunas (ou empilhado no mobile)
-- Coluna esquerda: "Primeira avaliacao" com data e dados
-- Coluna direita: "Ultima avaliacao" com data e dados
-- Indicadores visuais de melhora/piora (setas verdes para baixo na dor, badges de melhora)
-- Destaque visual quando a dor diminuiu (ex: "Dor: 8/10 -> 4/10" com cor verde)
+1. **Diario de Dor** - Acompanhe sua evolucao diaria com graficos de progresso
+2. **Questionarios Validados** - KOOS, SPADI, ODI, VISA-A usados por clinicas e pesquisadores
+3. **Avaliacao baseada em evidencias** - Resolva suas dores musculoesqueleticas sem sair de casa
+4. **Conexao com profissional** - Se precisar de acompanhamento presencial, encontre fisioterapeutas na sua regiao
 
-### Integracao no Dashboard
-Aparece apenas quando existem 2+ avaliacoes premium completadas. Posicionada antes do historico de avaliacoes.
+Cada card tera um icone, titulo e descricao curta. Layout responsivo: 2 colunas mobile, 4 desktop.
+
+**Arquivos**: novo `src/components/HighlightsSection.tsx`, `Index.tsx`, `LanguageContext.tsx`
 
 ---
 
-## Traducoes (i18n)
-Novas chaves PT e EN para:
-- `diary.title`, `diary.subtitle`, `diary.log_pain`, `diary.notes_placeholder`, `diary.today_logged`, `diary.evolution`, `diary.no_entries`
-- `comparison.title`, `comparison.first`, `comparison.latest`, `comparison.pain_change`, `comparison.improved`, `comparison.worsened`, `comparison.stable`
+## Parte 3: Marketplace de Profissionais
 
-## Resumo dos Arquivos
+### 3.1 Banco de Dados
 
-| Arquivo | Acao |
-|---------|------|
-| `supabase/migrations/` | Nova tabela `pain_diary_entries` |
-| `src/components/dashboard/PainDiary.tsx` | Novo componente do diario |
-| `src/components/dashboard/AssessmentComparison.tsx` | Novo componente de comparacao |
-| `src/pages/Dashboard.tsx` | Integrar ambos os componentes |
-| `src/contexts/LanguageContext.tsx` | Novas traducoes PT/EN |
+Nova tabela `professionals`:
 
+
+| Coluna         | Tipo                   | Descricao                                     |
+| -------------- | ---------------------- | --------------------------------------------- |
+| id             | uuid (PK)              | &nbsp;                                        |
+| user_id        | uuid (NOT NULL)        | Referencia ao auth user                       |
+| full_name      | text (NOT NULL)        | Nome completo                                 |
+| crefito        | text                   | Registro profissional                         |
+| specialties    | text[]                 | Ex: ["ortopedia", "esportiva", "neurologica"] |
+| city           | text (NOT NULL)        | Cidade                                        |
+| state          | text (NOT NULL)        | Estado (UF)                                   |
+| bio            | text                   | Descricao curta                               |
+| phone          | text                   | Contato (WhatsApp)                            |
+| email          | text                   | Email profissional                            |
+| clinic_name    | text                   | Nome do consultorio/clinica                   |
+| clinic_address | text                   | Endereco completo                             |
+| active         | boolean (default true) | Se aceita novos pacientes                     |
+| created_at     | timestamptz            | &nbsp;                                        |
+| updated_at     | timestamptz            | &nbsp;                                        |
+
+
+RLS:
+
+- SELECT: qualquer usuario autenticado pode ver profissionais ativos
+- INSERT/UPDATE: apenas o proprio profissional (user_id = auth.uid())
+
+Nova tabela `professional_referrals` (registro de indicacoes):
+
+
+| Coluna          | Tipo                            | Descricao                     |
+| --------------- | ------------------------------- | ----------------------------- |
+| id              | uuid (PK)                       | &nbsp;                        |
+| patient_user_id | uuid (NOT NULL)                 | Paciente que solicitou        |
+| professional_id | uuid (FK professionals)         | Profissional indicado         |
+| assessment_id   | uuid (FK assessments, nullable) | Avaliacao relacionada         |
+| status          | text (default 'pending')        | pending, contacted, completed |
+| created_at      | timestamptz                     | &nbsp;                        |
+
+
+RLS:
+
+- Paciente pode ver e criar suas proprias indicacoes
+- Profissional pode ver indicacoes direcionadas a ele
+
+### 3.2 Pagina de Cadastro do Profissional
+
+Nova pagina `/professional/register` com formulario:
+
+- Nome, CREFITO, especialidades (multi-select), cidade, estado, bio, telefone, email, clinica
+- Requer autenticacao (redireciona para /auth se nao logado)
+- Salva na tabela `professionals`
+
+### 3.3 Pagina de Busca de Profissionais
+
+Nova pagina `/professionals` acessivel a usuarios autenticados:
+
+- Filtro por estado e cidade
+- Filtro por especialidade
+- Lista de cards com: nome, especialidades (badges), cidade/estado, bio, botao "Entrar em contato"
+- Botao de contato abre link WhatsApp ou mostra email/telefone
+- Ao clicar "Solicitar indicacao", cria registro em `professional_referrals`
+
+### 3.4 Integracao no Fluxo do Paciente
+
+No componente `DiagnosisResult.tsx` e/ou `TreatmentPlan.tsx`, apos o resultado:
+
+- Card com CTA: "Precisa de acompanhamento presencial? Encontre um fisioterapeuta na sua regiao"
+- Botao leva para `/professionals`
+
+### 3.5 Dashboard do Profissional
+
+No Dashboard, se o usuario logado tem registro em `professionals`:
+
+- Secao extra mostrando indicacoes recebidas (tabela `professional_referrals`)
+- Status de cada indicacao
+
+---
+
+## Resumo de Arquivos
+
+
+| Arquivo                                         | Acao                                               |
+| ----------------------------------------------- | -------------------------------------------------- |
+| `supabase/migrations/`                          | Tabelas `professionals` e `professional_referrals` |
+| `src/components/ComparisonSection.tsx`          | Novas linhas na tabela                             |
+| `src/components/HighlightsSection.tsx`          | Nova secao de destaques                            |
+| `src/pages/Index.tsx`                           | Integrar HighlightsSection                         |
+| `src/pages/ProfessionalRegister.tsx`            | Formulario de cadastro                             |
+| `src/pages/ProfessionalSearch.tsx`              | Busca e listagem                                   |
+| `src/components/assessment/DiagnosisResult.tsx` | CTA para buscar profissional                       |
+| `src/components/assessment/TreatmentPlan.tsx`   | CTA para buscar profissional                       |
+| `src/pages/Dashboard.tsx`                       | Secao de indicacoes (para profissionais)           |
+| `src/App.tsx`                                   | Novas rotas                                        |
+| `src/contexts/LanguageContext.tsx`              | Traducoes PT/EN                                    |
+
+
+## Ordem de Implementacao
+
+1. Migracoes do banco (professionals + professional_referrals)
+2. Tabela comparativa atualizada + secao de destaques
+3. Paginas do marketplace (cadastro + busca)
+4. CTAs no fluxo de avaliacao
+5. Dashboard do profissional
+6. Traducoes completas
