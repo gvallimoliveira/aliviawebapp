@@ -12,11 +12,12 @@ import logoAlivia from "@/assets/logo-alivia.png";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
   const { t, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,7 +28,15 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (isLogin) {
+    if (isForgotPassword) {
+      const { error } = await resetPassword(email);
+      if (error) {
+        toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: t("auth.reset_sent"), description: t("auth.reset_sent_desc") });
+        setIsForgotPassword(false);
+      }
+    } else if (isLogin) {
       const { error } = await signIn(email, password);
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
@@ -65,10 +74,10 @@ const Auth = () => {
         <Card className="w-full max-w-md border-border/50 shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">
-              {isLogin ? t("auth.login_title") : t("auth.signup_title")}
+              {isForgotPassword ? t("auth.forgot_title") : isLogin ? t("auth.login_title") : t("auth.signup_title")}
             </CardTitle>
             <CardDescription>
-              {isLogin ? t("auth.login_desc") : t("auth.signup_desc")}
+              {isForgotPassword ? t("auth.forgot_desc") : isLogin ? t("auth.login_desc") : t("auth.signup_desc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -105,34 +114,57 @@ const Auth = () => {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">{t("auth.password")}</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t("auth.password_placeholder")}
-                    className="pl-10"
-                    minLength={6}
-                    required
-                  />
+              {!isForgotPassword && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">{t("auth.password")}</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t("auth.password_placeholder")}
+                      className="pl-10"
+                      minLength={6}
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
+              {isLogin && !isForgotPassword && (
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPassword(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    {t("auth.forgot_password")}
+                  </button>
+                </div>
+              )}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "..." : isLogin ? t("auth.login_button") : t("auth.signup_button")}
+                {loading ? "..." : isForgotPassword ? t("auth.send_reset") : isLogin ? t("auth.login_button") : t("auth.signup_button")}
               </Button>
             </form>
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-primary hover:underline"
-              >
-                {isLogin ? t("auth.no_account") : t("auth.has_account")}
-              </button>
+            <div className="mt-6 text-center space-y-2">
+              {isForgotPassword ? (
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPassword(false)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {t("auth.back_to_login")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {isLogin ? t("auth.no_account") : t("auth.has_account")}
+                </button>
+              )}
             </div>
           </CardContent>
         </Card>
