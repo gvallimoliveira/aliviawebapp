@@ -81,23 +81,19 @@ const Admin = () => {
         method: "GET",
       });
 
-      if (error) {
-        // 403 means user is not VIP — expected behavior
+      if (error || data?.error) {
         setIsVip(false);
-        setLoading(false);
-        return;
-      }
-      if (data?.error) {
-        setIsVip(false);
+        setVipUsers([]);
         setLoading(false);
         return;
       }
 
       setIsVip(true);
-      setVipUsers(data.vip_users || []);
+      setVipUsers(data?.vip_users || []);
     } catch (err: any) {
       console.error(err);
       setIsVip(false);
+      setVipUsers([]);
     } finally {
       setLoading(false);
     }
