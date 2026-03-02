@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
+import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
 
 type Language = "pt" | "en";
 
@@ -33,7 +34,7 @@ const translations: Record<Language, Record<string, string>> = {
     "compare.basic": "Básica",
     "compare.premium": "Premium",
     "compare.basic.price": "Grátis",
-    "compare.premium.price": "R$ 129",
+    "compare.premium.price": PREMIUM_PRICE_FORMATTED,
     "compare.basic.desc": "Uma degustação do que podemos oferecer",
     "compare.premium.desc": "Avaliação completa com plano de tratamento",
     "compare.anamnesis": "Anamnese",
@@ -99,7 +100,7 @@ const translations: Record<Language, Record<string, string>> = {
     "dashboard.new_basic": "Avaliação Básica",
     "dashboard.new_basic_desc": "Avaliação gratuita com hipótese diagnóstica",
     "dashboard.new_premium": "Avaliação Premium",
-    "dashboard.new_premium_desc": "Avaliação completa com plano de tratamento — R$129",
+    "dashboard.new_premium_desc": `Avaliação completa com plano de tratamento — ${PREMIUM_PRICE_FORMATTED}`,
     "dashboard.history": "Histórico de Avaliações",
     "dashboard.no_assessments": "Você ainda não realizou nenhuma avaliação.",
     "dashboard.completed": "Concluída",
@@ -453,7 +454,7 @@ const translations: Record<Language, Record<string, string>> = {
     "compare.basic": "Basic",
     "compare.premium": "Premium",
     "compare.basic.price": "Free",
-    "compare.premium.price": "R$ 129",
+    "compare.premium.price": PREMIUM_PRICE_FORMATTED,
     "compare.basic.desc": "A taste of what we can offer",
     "compare.premium.desc": "Complete assessment with treatment plan",
     "compare.anamnesis": "Anamnesis",
@@ -519,7 +520,7 @@ const translations: Record<Language, Record<string, string>> = {
     "dashboard.new_basic": "Basic Assessment",
     "dashboard.new_basic_desc": "Free assessment with diagnostic hypothesis",
     "dashboard.new_premium": "Premium Assessment",
-    "dashboard.new_premium_desc": "Complete assessment with treatment plan — R$129",
+    "dashboard.new_premium_desc": `Complete assessment with treatment plan — ${PREMIUM_PRICE_FORMATTED}`,
     "dashboard.history": "Assessment History",
     "dashboard.no_assessments": "You haven't completed any assessments yet.",
     "dashboard.completed": "Completed",
