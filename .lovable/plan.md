@@ -1,94 +1,75 @@
 
 
-# Acompanhamento Pos-Avaliacao por Email
+# Diario de Dor + Comparacao Antes/Depois
 
-## Objetivo
-Criar um sistema de lembretes por email que acompanha o usuario apos a avaliacao premium, enviando check-ins nas semanas 1, 2, 4 e 6 para perguntar como esta se sentindo e incentivar a adesao ao plano de tratamento.
+## Feature 1: Diario de Dor
 
-## Arquitetura
-
-```text
-+-------------------+       +----------------------+       +------------------+
-| assessments table  | ----> | follow_up_emails     | ----> | send-follow-up   |
-| (completed premium)|       | (schedule tracking)  |       | (edge function)  |
-+-------------------+       +----------------------+       +------------------+
-                                                                  |
-                                                            Lovable AI API
-                                                            (email rendering)
-                                                                  |
-                                                           pg_cron trigger
-                                                           (runs daily)
-```
-
-## Etapas de Implementacao
-
-### 1. Nova tabela: `follow_up_emails`
-Tabela para rastrear quais emails foram agendados e enviados:
-
+### Banco de Dados
+Nova tabela `pain_diary_entries`:
 - `id` (uuid, PK)
-- `assessment_id` (uuid, FK para assessments)
-- `user_id` (uuid)
-- `email` (text)
-- `week_number` (int) -- 1, 2, 4, 6
-- `scheduled_for` (timestamptz) -- data calculada
-- `sent_at` (timestamptz, nullable) -- null = pendente
-- `status` (text) -- pending, sent, failed
-- `created_at` (timestamptz)
+- `user_id` (uuid, NOT NULL)
+- `assessment_id` (uuid, FK para assessments, nullable) -- vincula ao tratamento ativo
+- `pain_score` (integer, 0-10, NOT NULL)
+- `notes` (text, nullable) -- campo opcional para observacoes curtas
+- `logged_at` (date, NOT NULL, default today) -- apenas data, 1 registro por dia
+- `created_at` (timestamptz, default now())
 
-RLS: usuarios podem ver seus proprios registros de follow-up.
+RLS: usuarios podem SELECT, INSERT e UPDATE seus proprios registros. Constraint UNIQUE em (user_id, logged_at) para evitar duplicatas no mesmo dia.
 
-### 2. Agendar follow-ups automaticamente
-Quando uma avaliacao premium e concluida (status = "completed"), inserir 4 registros na tabela `follow_up_emails` com as datas de envio:
-- Semana 1: +7 dias
-- Semana 2: +14 dias
-- Semana 4: +28 dias
-- Semana 6: +42 dias
+### UI: Pagina do Diario de Dor
+Novo componente `src/components/dashboard/PainDiary.tsx` integrado ao Dashboard:
 
-Isso sera feito via um **trigger no banco de dados** que dispara quando `assessments.status` muda para "completed" em avaliacoes premium.
+- **Registro rapido**: Slider de 0-10 com um botao "Registrar" + campo de nota opcional. Um toque para salvar.
+- **Grafico de evolucao**: Usar `recharts` (ja instalado) com um `LineChart` mostrando a dor ao longo dos dias/semanas. Eixo X = datas, Eixo Y = 0-10.
+- **Historico recente**: Lista dos ultimos 7 registros com data e nota.
+- Se ja registrou hoje, mostrar o valor atual com opcao de editar.
 
-### 3. Edge Function: `send-follow-up`
-Nova edge function que:
-1. Consulta `follow_up_emails` onde `scheduled_for <= now()` e `status = 'pending'`
-2. Para cada email pendente, busca os dados da avaliacao (regiao de dor, diagnostico, fase do tratamento correspondente a semana)
-3. Usa a Lovable AI API (gemini-2.5-flash) para gerar o conteudo do email personalizado em PT ou EN (conforme idioma do perfil)
-4. Envia o email via Resend (ou servico similar)
-5. Atualiza `sent_at` e `status` para "sent"
+### Integracao no Dashboard
+Adicionar uma nova secao no Dashboard entre os "Quick Actions" e o "Follow-up Reminders":
+- Card com titulo "Diario de Dor" e icone
+- Mostra o grafico inline (ultimos 30 dias)
+- Botao para registrar a dor de hoje
 
-O conteudo do email incluira:
-- Saudacao personalizada com o nome do usuario
-- Pergunta "Como voce esta se sentindo?"
-- Lembrete dos exercicios da fase atual do tratamento
-- Link para o app (dashboard) para registrar progresso
-- Incentivo motivacional adequado a fase
+---
 
-### 4. Cron Job (pg_cron + pg_net)
-Agendar a edge function para rodar **1x por dia** (ex: 9h da manha UTC-3) verificando emails pendentes.
+## Feature 2: Comparacao Antes/Depois
 
-### 5. UI: Opt-in e Historico
-- **Opt-in no TreatmentPlan.tsx**: Apos gerar o plano, mostrar um card perguntando se o usuario quer receber lembretes por email. Um switch/checkbox com texto explicativo.
-- **Dashboard.tsx**: Adicionar uma secao mostrando os proximos lembretes agendados e os ja enviados, com icones de status.
+### Logica
+Quando o usuario tem 2+ avaliacoes premium completadas, mostrar uma secao de comparacao no Dashboard:
+- Seleciona automaticamente a primeira e a ultima avaliacao premium completada
+- Mostra lado a lado:
+  - Data da avaliacao
+  - Nota de dor (pain_score)
+  - Hipotese diagnostica
+  - Regioes de dor
+  - Resultados dos testes funcionais (se disponiveis)
+  - Score dos questionarios (se disponiveis)
 
-### 6. Traducoes (i18n)
-Adicionar chaves de traducao em ambos os idiomas:
-- `followup.opt_in_title` / `followup.opt_in_desc`
-- `followup.scheduled` / `followup.sent` / `followup.next_reminder`
-- Textos do card no dashboard
+### UI: Componente de Comparacao
+Novo componente `src/components/dashboard/AssessmentComparison.tsx`:
+- Layout em 2 colunas (ou empilhado no mobile)
+- Coluna esquerda: "Primeira avaliacao" com data e dados
+- Coluna direita: "Ultima avaliacao" com data e dados
+- Indicadores visuais de melhora/piora (setas verdes para baixo na dor, badges de melhora)
+- Destaque visual quando a dor diminuiu (ex: "Dor: 8/10 -> 4/10" com cor verde)
 
-## Dependencia: Servico de Email
-Para enviar os emails transacionais (nao sao emails de autenticacao), sera necessario integrar um servico como **Resend**. Sera preciso:
-- Configurar a API key do Resend como secret
-- Ou usar um conector disponivel
+### Integracao no Dashboard
+Aparece apenas quando existem 2+ avaliacoes premium completadas. Posicionada antes do historico de avaliacoes.
 
-Antes de implementar, precisaremos confirmar se voce ja possui uma conta Resend ou preferencia de servico de email.
+---
+
+## Traducoes (i18n)
+Novas chaves PT e EN para:
+- `diary.title`, `diary.subtitle`, `diary.log_pain`, `diary.notes_placeholder`, `diary.today_logged`, `diary.evolution`, `diary.no_entries`
+- `comparison.title`, `comparison.first`, `comparison.latest`, `comparison.pain_change`, `comparison.improved`, `comparison.worsened`, `comparison.stable`
 
 ## Resumo dos Arquivos
 
 | Arquivo | Acao |
 |---------|------|
-| `supabase/migrations/` | Nova tabela `follow_up_emails` + trigger |
-| `supabase/functions/send-follow-up/index.ts` | Nova edge function |
-| `supabase/config.toml` | Registrar nova function |
-| `src/components/assessment/TreatmentPlan.tsx` | Card de opt-in para lembretes |
-| `src/pages/Dashboard.tsx` | Secao de proximos lembretes |
+| `supabase/migrations/` | Nova tabela `pain_diary_entries` |
+| `src/components/dashboard/PainDiary.tsx` | Novo componente do diario |
+| `src/components/dashboard/AssessmentComparison.tsx` | Novo componente de comparacao |
+| `src/pages/Dashboard.tsx` | Integrar ambos os componentes |
 | `src/contexts/LanguageContext.tsx` | Novas traducoes PT/EN |
 
