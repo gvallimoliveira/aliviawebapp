@@ -79,6 +79,50 @@ export type Database = {
           },
         ]
       }
+      follow_up_emails: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          email: string
+          id: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          user_id: string
+          week_number: number
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          email: string
+          id?: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          user_id: string
+          week_number: number
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_emails_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number | null
