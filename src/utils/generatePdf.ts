@@ -129,21 +129,25 @@ export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language
   // ── Header Band ──
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
   
+  const logoH = 14;
+  const logoW = 14;
+  const logoY = (38 - logoH) / 2; // vertically center in header band
   let textStartX = MARGIN;
   if (logoBase64) {
     try {
-      doc.addImage(logoBase64, "PNG", MARGIN, 5, 12, 12);
-      textStartX = MARGIN + 15;
+      doc.addImage(logoBase64, "PNG", MARGIN, logoY, logoW, logoH);
+      textStartX = MARGIN + logoW + 3;
     } catch { /* fallback without logo */ }
   }
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
-  doc.text("Aliv.iA", textStartX, 18);
+  const titleY = logoY + logoH / 2 + 2;
+  doc.text("Aliv.iA", textStartX, titleY);
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report", textStartX, 27);
+  doc.text(isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report", textStartX, titleY + 9);
   doc.setFontSize(8);
   const dateStr = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", {
     year: "numeric", month: "long", day: "numeric",

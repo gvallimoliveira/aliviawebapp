@@ -146,16 +146,6 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         </Card>
       )}
 
-      {/* Professional CTA */}
-      <Card className="rounded-xl border-primary/30 bg-primary/5">
-        <CardContent className="py-4 text-center space-y-3">
-          <p className="text-sm font-medium text-foreground">{t("prof.cta_text")}</p>
-          <Button variant="outline" className="rounded-xl gap-2" onClick={() => window.location.href = "/professionals"}>
-            {t("prof.find_professional")}
-          </Button>
-        </CardContent>
-      </Card>
-
       {/* Disclaimer */}
       <div className="flex items-start gap-2 p-4 rounded-xl bg-muted/50 border border-border/50">
         <AlertTriangle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
