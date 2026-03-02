@@ -552,6 +552,12 @@ const translations: Record<Language, Record<string, string>> = {
     "referral.discount_available": "Você tem {percent}% de desconto!",
     "referral.discount_applied": "Desconto de indicação aplicado",
 
+    // Assessment View
+    "assessment_view.title": "Detalhes da Avaliação",
+    "assessment_view.back": "Voltar ao Dashboard",
+    "assessment_view.no_diagnosis": "Diagnóstico ainda não gerado",
+    "assessment_view.pain_score": "Nota de Dor",
+
     // PDF
     "pdf.cta_text": "Baixe o relatório completo em PDF para compartilhar com seu médico ou fisioterapeuta.",
     "pdf.download": "Baixar Relatório em PDF",
@@ -1095,6 +1101,12 @@ const translations: Record<Language, Record<string, string>> = {
     "referral.friends_referred": "friends referred",
     "referral.discount_available": "You have {percent}% off!",
     "referral.discount_applied": "Referral discount applied",
+
+    // Assessment View
+    "assessment_view.title": "Assessment Details",
+    "assessment_view.back": "Back to Dashboard",
+    "assessment_view.no_diagnosis": "Diagnosis not generated yet",
+    "assessment_view.pain_score": "Pain Score",
 
     // PDF
     "pdf.cta_text": "Download the full PDF report to share with your doctor or physiotherapist.",

@@ -12,7 +12,7 @@ import PainDiary from "@/components/dashboard/PainDiary";
 import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
 import ReferralCard from "@/components/dashboard/ReferralCard";
 import {
-  Globe, LogOut, Plus, ClipboardList, Calendar, MapPin,
+  Globe, LogOut, Plus, ClipboardList, Calendar, MapPin, ChevronRight,
   Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus
 } from "lucide-react";
 
@@ -411,67 +411,74 @@ const Dashboard = () => {
                   .map((r: string) => painRegionLabels[r] || r)
                   .slice(0, 3);
                 const extraRegions = (a.pain_regions || []).length - 3;
+                const isClickable = a.diagnosis || ["completed", "diagnosis_complete"].includes(a.status);
 
                 return (
                   <Card
                     key={a.id}
-                    className="hover:shadow-md transition-all border-border/60 hover:border-border group"
+                    className={`hover:shadow-md transition-all border-border/60 hover:border-border group ${isClickable ? "cursor-pointer" : ""}`}
+                    onClick={isClickable ? () => navigate(`/assessment/view/${a.id}`) : undefined}
                   >
                     <CardContent className="py-4 px-5">
-                      <div className="flex flex-col gap-3">
-                        {/* Top row: type badge, date, status */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] font-semibold px-2 py-0.5 ${
-                                a.type === "premium"
-                                  ? "bg-primary/10 text-primary border-primary/20"
-                                  : "bg-secondary text-secondary-foreground border-border"
-                              }`}
-                            >
-                              {a.type === "premium" ? "Premium" : t("compare.basic")}
-                            </Badge>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <Calendar className="h-3 w-3" />
-                              {new Date(a.created_at).toLocaleDateString("pt-BR", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              })}
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 flex flex-col gap-3">
+                          {/* Top row: type badge, date, status */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] font-semibold px-2 py-0.5 ${
+                                  a.type === "premium"
+                                    ? "bg-primary/10 text-primary border-primary/20"
+                                    : "bg-secondary text-secondary-foreground border-border"
+                                }`}
+                              >
+                                {a.type === "premium" ? "Premium" : t("compare.basic")}
+                              </Badge>
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Calendar className="h-3 w-3" />
+                                {new Date(a.created_at).toLocaleDateString("pt-BR", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </div>
                             </div>
+                            <Badge variant="outline" className={`text-[10px] px-2 py-0.5 gap-1 ${statusConfig.color}`}>
+                              <StatusIcon className={`h-3 w-3 ${a.status === "in_progress" ? "animate-spin" : ""}`} />
+                              {statusConfig.label}
+                            </Badge>
                           </div>
-                          <Badge variant="outline" className={`text-[10px] px-2 py-0.5 gap-1 ${statusConfig.color}`}>
-                            <StatusIcon className={`h-3 w-3 ${a.status === "in_progress" ? "animate-spin" : ""}`} />
-                            {statusConfig.label}
-                          </Badge>
+
+                          {/* Hypothesis / diagnosis preview */}
+                          {hypothesis && (
+                            <p className="text-sm font-medium text-foreground leading-snug line-clamp-1">
+                              {hypothesis}
+                            </p>
+                          )}
+
+                          {/* Pain regions */}
+                          {regions.length > 0 && (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+                              {regions.map((r: string, i: number) => (
+                                <span key={i} className="text-xs bg-muted/60 text-muted-foreground px-2 py-0.5 rounded-full">
+                                  {r}
+                                </span>
+                              ))}
+                              {extraRegions > 0 && (
+                                <span className="text-xs text-muted-foreground">+{extraRegions}</span>
+                              )}
+                              {a.pain_score != null && (
+                                <span className="text-xs text-muted-foreground ml-1">
+                                  • Dor: {a.pain_score}/10
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
-
-                        {/* Hypothesis / diagnosis preview */}
-                        {hypothesis && (
-                          <p className="text-sm font-medium text-foreground leading-snug line-clamp-1">
-                            {hypothesis}
-                          </p>
-                        )}
-
-                        {/* Pain regions */}
-                        {regions.length > 0 && (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-                            {regions.map((r: string, i: number) => (
-                              <span key={i} className="text-xs bg-muted/60 text-muted-foreground px-2 py-0.5 rounded-full">
-                                {r}
-                              </span>
-                            ))}
-                            {extraRegions > 0 && (
-                              <span className="text-xs text-muted-foreground">+{extraRegions}</span>
-                            )}
-                            {a.pain_score != null && (
-                              <span className="text-xs text-muted-foreground ml-1">
-                                • Dor: {a.pain_score}/10
-                              </span>
-                            )}
-                          </div>
+                        {isClickable && (
+                          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
                         )}
                       </div>
                     </CardContent>

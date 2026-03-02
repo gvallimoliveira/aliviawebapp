@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 import Assessment from "./pages/Assessment";
+import AssessmentView from "./pages/AssessmentView";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Admin from "./pages/Admin";
 import ProfessionalRegister from "./pages/ProfessionalRegister";
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/assessment/view/:id" element={<AssessmentView />} />
               <Route path="/assessment/:type" element={<Assessment />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
               <Route path="/admin" element={<Admin />} />
