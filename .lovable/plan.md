@@ -1,33 +1,40 @@
-# Tela de Onboarding antes da Triagem
 
-## O que muda
+# Fortalecer Branding da Logo Aliv.iA
 
-Uma tela introdutoria de boas-vindas sera exibida antes da triagem de red flags. Ela tera tom acolhedor, explicara brevemente o processo e estimara o tempo. O usuario avanca clicando em "Comecar".
+## Resumo
+Substituir a logo atual (`logo-alivia.png`) pela nova imagem enviada (mao humana + circuitos) em todos os locais onde ja e usada, e adiciona-la como elemento de destaque na landing page e no relatorio PDF.
 
-## Mudancas tecnicas
+## Mudancas
 
-### 1. Novo step "welcome" no fluxo (`Assessment.tsx`)
+### 1. Substituir o arquivo da logo
+- Copiar a imagem enviada (`user-uploads://Gemini_Generated_Image_k4oxibk4oxibk4ox.png`) para `src/assets/logo-alivia.png`, sobrescrevendo a atual.
+- Todos os imports existentes (`Header.tsx`, `Auth.tsx`) ja apontam para esse caminho, entao a troca sera automatica.
 
-- Adicionar `"welcome"` ao tipo `AssessmentStep`.
-- Alterar o estado inicial de `step` de `"redflags"` para `"welcome"` (tanto basic quanto premium, apos payment_check).
-- Quando premium tem acesso, ir para `"welcome"` em vez de `"redflags"`.
-- Renderizar o novo componente `WelcomeStep` quando `step === "welcome"`, com `onContinue={() => setStep("redflags")}`.
+### 2. Landing Page -- Hero com logo como elemento visual
+- Em `HeroSection.tsx`, importar a logo e exibi-la como elemento grande e animado acima do titulo (ou ao lado em desktop).
+- A logo aparecera com tamanho generoso (~120px), leve animacao de float/pulse com framer-motion, e um glow sutil em teal ao redor (coerente com o blur de fundo ja existente).
+- Substituir o icone `Shield` do badge por nada ou manter, ja que a logo fala por si.
 
-### 2. Novo componente `WelcomeStep` (`src/components/assessment/WelcomeStep.tsx`)
+### 3. Landing Page -- Footer com logo
+- Em `Footer.tsx`, adicionar a logo pequena (~40px) acima do texto de disclaimer, centralizando-a como marca visual.
 
-- Layout centralizado com animacao fade-in (framer-motion).
-- Icone acolhedor (Heart ou Sparkles).
-- Titulo: "Vamos entender sua dor juntos" / "Let's understand your pain together".
-- Subtitulo com tempo estimado: "Sao apenas X minutos" (basic: ~3 min, premium: ~5 a 8 min).
-- 3 bullets rapidos do que vai acontecer (triagem, anamnese, diagnostico).
-- Botao "Comecar avaliacao" / "Start assessment".
-- Props: `mode` (basic/premium) e `onContinue`.
+### 4. Relatorio PDF -- Logo no cabecalho
+- Em `generatePdf.ts`, converter a logo para base64 e inseri-la no cabecalho do PDF ao lado do texto "Aliv.iA" usando `doc.addImage()`.
+- A logo sera exibida com ~12mm de altura, alinhada a esquerda, com o texto "Aliv.iA" deslocado para a direita.
+- Para manter o PDF auto-contido, a logo sera embutida como string base64 constante no arquivo.
 
-### 3. Atualizar `AssessmentStepper.tsx`
+### 5. WelcomeStep -- Logo no onboarding
+- Em `WelcomeStep.tsx`, substituir o icone `Heart` pelo import da logo, exibindo-a no circulo de boas-vindas para reforcar a identidade.
 
-- Adicionar `"welcome"` ao `STEP_MAP` mapeando para `"redflags"` (mesmo circulo, sem passo extra visivel no stepper).
-- O stepper nao mostrara um passo adicional -- o welcome e apenas uma introducao antes do primeiro passo real.
+## Detalhes tecnicos
 
-### 4. Traducoes
+- **PDF base64**: Sera necessario converter a imagem PNG para base64 e armazena-la como constante em `generatePdf.ts` (ou arquivo auxiliar). O jsPDF suporta `addImage(base64, 'PNG', x, y, w, h)`.
+- **Hero animation**: Usar `motion.img` com `animate={{ y: [0, -6, 0] }}` e `transition={{ repeat: Infinity, duration: 3 }}` para um efeito de float suave.
+- **Glow effect**: Aplicar `drop-shadow` via Tailwind ou `filter` CSS para simular o brilho teal da imagem original.
 
-- As strings serao inline com fallback (mesmo padrao usado no resto do arquivo Assessment.tsx), usando `t("welcome.title") || "fallback"`.
+## Arquivos afetados
+- `src/assets/logo-alivia.png` (substituido)
+- `src/components/HeroSection.tsx`
+- `src/components/Footer.tsx`
+- `src/utils/generatePdf.ts`
+- `src/components/assessment/WelcomeStep.tsx`
