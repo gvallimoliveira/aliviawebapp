@@ -541,6 +541,17 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.no_pending": "Nenhum profissional pendente.",
     "admin.no_approved": "Nenhum profissional aprovado.",
 
+    // Referral
+    "referral.title": "Indique e Ganhe",
+    "referral.subtitle": "Indique amigos e ganhe 20% de desconto na próxima avaliação Premium.",
+    "referral.copy_link": "Copiar Link",
+    "referral.copied": "Link copiado!",
+    "referral.share": "Compartilhar",
+    "referral.share_text": "Experimente o Aliv.iA — avaliação de dor com IA! Use meu link para se cadastrar:",
+    "referral.friends_referred": "amigos indicados",
+    "referral.discount_available": "Você tem {percent}% de desconto!",
+    "referral.discount_applied": "Desconto de indicação aplicado",
+
     // PDF
     "pdf.cta_text": "Baixe o relatório completo em PDF para compartilhar com seu médico ou fisioterapeuta.",
     "pdf.download": "Baixar Relatório em PDF",
@@ -1073,6 +1084,17 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.approved_list": "Approved",
     "admin.no_pending": "No pending professionals.",
     "admin.no_approved": "No approved professionals.",
+
+    // Referral
+    "referral.title": "Refer & Earn",
+    "referral.subtitle": "Refer friends and earn 20% off your next Premium assessment.",
+    "referral.copy_link": "Copy Link",
+    "referral.copied": "Link copied!",
+    "referral.share": "Share",
+    "referral.share_text": "Try Aliv.iA — AI-powered pain assessment! Use my link to sign up:",
+    "referral.friends_referred": "friends referred",
+    "referral.discount_available": "You have {percent}% off!",
+    "referral.discount_applied": "Referral discount applied",
 
     // PDF
     "pdf.cta_text": "Download the full PDF report to share with your doctor or physiotherapist.",

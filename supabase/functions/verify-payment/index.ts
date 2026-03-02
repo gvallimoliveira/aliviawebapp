@@ -86,10 +86,25 @@ serve(async (req) => {
           assessments_used: 0,
           max_assessments: 999,
           is_vip: true,
+          available_discount: null,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      // Check for available referral discount
+      const { data: availableReward } = await supabaseClient
+        .from("referral_rewards")
+        .select("id, discount_percent, stripe_coupon_id")
+        .eq("referrer_user_id", user.id)
+        .eq("status", "rewarded")
+        .not("stripe_coupon_id", "is", null)
+        .limit(1)
+        .maybeSingle();
+
+      const availableDiscount = availableReward
+        ? { discount_percent: availableReward.discount_percent }
+        : null;
 
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -107,20 +122,24 @@ serve(async (req) => {
         .single();
 
       if (!paidAssessment) {
-        return new Response(JSON.stringify({ has_access: false, can_redo: false, assessments_used: 0 }), {
+        return new Response(JSON.stringify({
+          has_access: false,
+          can_redo: false,
+          assessments_used: 0,
+          available_discount: availableDiscount,
+        }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       // Count ALL premium assessments by this user created since the payment anchor
-      const { data: assessmentsSincePaid, count } = await supabaseClient
+      const { count } = await supabaseClient
         .from("assessments")
         .select("id", { count: "exact" })
         .eq("user_id", user.id)
         .eq("type", "premium")
         .gte("created_at", paidAssessment.paid_at);
 
-      const totalUsed = count ?? 0;
       const { count: startedCount } = await supabaseClient
         .from("assessments")
         .select("id", { count: "exact" })
@@ -139,6 +158,7 @@ serve(async (req) => {
         max_assessments: 2,
         payment_id: paidAssessment.id,
         paid_at: paidAssessment.paid_at,
+        available_discount: availableDiscount,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
