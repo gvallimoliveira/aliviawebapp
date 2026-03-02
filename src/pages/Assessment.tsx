@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
+import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
 import { useParams, useNavigate } from "react-router-dom";
 import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -295,7 +296,7 @@ const Assessment = () => {
 
             <Card className="rounded-xl border-primary/30 max-w-sm mx-auto">
               <CardContent className="py-6 space-y-4">
-                <div className="text-4xl font-bold text-foreground">R$ 129</div>
+                <div className="text-4xl font-bold text-foreground">{PREMIUM_PRICE_FORMATTED}</div>
                 <p className="text-sm text-muted-foreground">
                   {t("payment.includes_redo") || "Inclui até 2 avaliações em 7 dias"}
                 </p>

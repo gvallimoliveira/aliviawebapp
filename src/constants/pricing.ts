@@ -1,0 +1,2 @@
+export const PREMIUM_PRICE = 129;
+export const PREMIUM_PRICE_FORMATTED = `R$ ${PREMIUM_PRICE}`;
