@@ -36,6 +36,8 @@ interface Exercise {
   videoUrl?: string;
   videoUrls?: string[];
   searchQuery?: string;
+  searchQueryPro?: string;
+  searchQueryShorts?: string;
   category: string;
 }
 
@@ -230,27 +232,41 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, onBack, onNewAssessment 
                           <span className="px-2 py-0.5 rounded bg-muted">{exercise.frequency}</span>
                         </div>
                         {(() => {
-                          const urls = exercise.videoUrls || (exercise.videoUrl ? [exercise.videoUrl] : []);
-                          const searchQuery = exercise.searchQuery;
-                          
-                          if (searchQuery) {
-                            const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
+                          const proQuery = exercise.searchQueryPro || (exercise.searchQuery ? `${exercise.searchQuery} physiotutors` : null);
+                          const shortsQuery = exercise.searchQueryShorts || (exercise.searchQuery ? `${exercise.searchQuery} shorts` : null);
+
+                          if (proQuery || shortsQuery) {
                             return (
-                              <div className="mt-1">
-                                <a
-                                  href={ytSearchUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-                                >
-                                  <Play className="h-3 w-3" />
-                                  {t("treatment.search_video")}
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
+                              <div className="flex flex-wrap gap-3 mt-1">
+                                {proQuery && (
+                                  <a
+                                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(proQuery)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                                  >
+                                    <Play className="h-3 w-3" />
+                                    PhysioTutors
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                                {shortsQuery && (
+                                  <a
+                                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(shortsQuery)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                                  >
+                                    <Play className="h-3 w-3" />
+                                    Shorts
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
                               </div>
                             );
                           }
-                          
+
+                          const urls = exercise.videoUrls || (exercise.videoUrl ? [exercise.videoUrl] : []);
                           if (urls.length === 0) return null;
                           return (
                             <div className="flex flex-col gap-1 mt-1">
