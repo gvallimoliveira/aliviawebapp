@@ -441,6 +441,7 @@ const Assessment = () => {
           <TreatmentPlan
             plan={treatmentPlan}
             diagnosis={diagnosis}
+            assessmentId={assessmentId || undefined}
             onBack={() => setStep("result")}
             onNewAssessment={() => navigate("/")}
           />
