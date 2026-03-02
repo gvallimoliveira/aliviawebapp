@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
-import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
+import { PREMIUM_PRICE, PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
 import { useParams, useNavigate } from "react-router-dom";
 import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,7 +41,7 @@ const Assessment = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [hasRetried, setHasRetried] = useState(false);
-  const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string } | null>(null);
+  const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
 
   // Redirect premium users to auth if not logged in
   useEffect(() => {
@@ -301,7 +302,19 @@ const Assessment = () => {
 
             <Card className="rounded-xl border-primary/30 max-w-sm mx-auto">
               <CardContent className="py-6 space-y-4">
-                <div className="text-4xl font-bold text-foreground">{PREMIUM_PRICE_FORMATTED}</div>
+                {premiumAccess.available_discount ? (
+                  <div className="space-y-1">
+                    <div className="text-2xl text-muted-foreground line-through">{PREMIUM_PRICE_FORMATTED}</div>
+                    <div className="text-4xl font-bold text-foreground">
+                      R$ {Math.round(PREMIUM_PRICE * (1 - premiumAccess.available_discount.discount_percent / 100))}
+                    </div>
+                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-xs">
+                      {t("referral.discount_applied")}
+                    </Badge>
+                  </div>
+                ) : (
+                  <div className="text-4xl font-bold text-foreground">{PREMIUM_PRICE_FORMATTED}</div>
+                )}
                 <p className="text-sm text-muted-foreground">
                   {t("payment.includes_redo") || "Inclui até 2 avaliações em 7 dias"}
                 </p>
