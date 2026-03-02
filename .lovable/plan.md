@@ -1,88 +1,94 @@
 
 
-# App de Auto-Manejo de Dor Musculoesquelética e Radicular
+# Acompanhamento Pos-Avaliacao por Email
 
-## Visão Geral
-Aplicativo web bilíngue (PT-BR / EN) com design moderno e acolhedor que guia o usuário por uma avaliação de dor musculoesquelética, oferecendo dois modos: **Avaliação Básica** (gratuita, sem login) e **Avaliação Premium** (R$100 por avaliação, com direito a refazer 1x em 7 dias).
+## Objetivo
+Criar um sistema de lembretes por email que acompanha o usuario apos a avaliacao premium, enviando check-ins nas semanas 1, 2, 4 e 6 para perguntar como esta se sentindo e incentivar a adesao ao plano de tratamento.
 
----
+## Arquitetura
 
-## 1. Landing Page & Navegação
-- Página inicial explicando o propósito do app com visual acolhedor (cores quentes, cantos arredondados)
-- Botão de troca de idioma (PT-BR / EN) acessível em toda a aplicação
-- Comparativo claro entre Avaliação Básica e Premium em formato de tabela:
-  - **Básica**: Anamnese simplificada → Hipótese diagnóstica (sem explicação detalhada, sem plano de tratamento)
-  - **Premium**: Anamnese completa → Testes funcionais → Hipótese com explicação → Plano de tratamento (curto/médio/longo prazo) com exercícios
-- CTAs para "Começar Avaliação Básica" e "Começar Avaliação Premium"
+```text
++-------------------+       +----------------------+       +------------------+
+| assessments table  | ----> | follow_up_emails     | ----> | send-follow-up   |
+| (completed premium)|       | (schedule tracking)  |       | (edge function)  |
++-------------------+       +----------------------+       +------------------+
+                                                                  |
+                                                            Lovable AI API
+                                                            (email rendering)
+                                                                  |
+                                                           pg_cron trigger
+                                                           (runs daily)
+```
 
-## 2. Autenticação e Perfil (Premium)
-- Cadastro e login com email/senha via Supabase Auth
-- Perfil básico: nome, idade, sexo, ocupação
-- Login obrigatório apenas para avaliação premium
-- Dashboard do usuário logado com:
-  - Botão "Nova Avaliação" (escolha básica ou premium)
-  - Histórico de avaliações anteriores (data, região, status)
-  - Resumo da última avaliação com progresso do tratamento
+## Etapas de Implementacao
 
-## 3. Pagamento (Premium)
-- Integração com Stripe para pagamento único de R$100 por avaliação
-- Direito a refazer a avaliação 1x dentro de 7 dias em caso de piora clínica
-- Controle de validade da avaliação no banco de dados
+### 1. Nova tabela: `follow_up_emails`
+Tabela para rastrear quais emails foram agendados e enviados:
 
-## 4. Etapa 1: Anamnese (Formulário Guiado)
-### 4.1 Triagem de Bandeiras Vermelhas
-- Perguntas sobre sinais de alerta (trauma recente, perda de peso, febre, perda de controle esfincteriano, dor noturna intensa, história de câncer, etc.)
-- Se detectada → tela de alerta recomendando avaliação médica urgente, bloqueando continuidade
+- `id` (uuid, PK)
+- `assessment_id` (uuid, FK para assessments)
+- `user_id` (uuid)
+- `email` (text)
+- `week_number` (int) -- 1, 2, 4, 6
+- `scheduled_for` (timestamptz) -- data calculada
+- `sent_at` (timestamptz, nullable) -- null = pendente
+- `status` (text) -- pending, sent, failed
+- `created_at` (timestamptz)
 
-### 4.2 Coleta da Queixa
-- Queixa principal (campo texto + opções comuns)
-- Como iniciou (evento desencadeador vs. gradual)
-- **Mapa de Dor Interativo**: silhueta SVG do corpo humano em 3 vistas (frente, costas, lateral) com regiões clicáveis (ombro, cervical, lombar, joelho, quadril, tornozelo, punho, cotovelo, pés, etc.)
-- Tipo de dor: pontual, irradiada, queimação, formigamento (seleção múltipla)
-- Evolução: melhorando / estável / piorando (escala visual)
-- Movimentos que aliviam e que pioram (lista por região + campo livre)
-- Nível de atividade física (sedentário / ativo leve / praticante regular / atleta)
-- Escala de dor numérica (0-10)
+RLS: usuarios podem ver seus proprios registros de follow-up.
 
-**Na avaliação básica**: anamnese mais objetiva e direta, sem testes funcionais
+### 2. Agendar follow-ups automaticamente
+Quando uma avaliacao premium e concluida (status = "completed"), inserir 4 registros na tabela `follow_up_emails` com as datas de envio:
+- Semana 1: +7 dias
+- Semana 2: +14 dias
+- Semana 4: +28 dias
+- Semana 6: +42 dias
 
-## 5. Etapa 2: Testes Funcionais (Apenas Premium)
-- Testes filtrados pela região selecionada no mapa de dor
-- Cada teste com instruções escritas + link de vídeo do YouTube
-- Resposta binária: "Doloroso/Desconfortável" ou "Sem desconforto"
-- Categorias de testes:
-  - Mobilidade ativa
-  - Flexibilidade
-  - Força/Resistência
-  - Estabilidade
-  - Neurodinâmicos (Slump test, tensão neural, posições McKenzie)
-  - Localização de pontos gatilho (instruções com bolinha de tênis/rolo miofascial, mapa de pontos gatilho com dor referida)
+Isso sera feito via um **trigger no banco de dados** que dispara quando `assessments.status` muda para "completed" em avaliacoes premium.
 
-## 6. Etapa 3: Resultado
-### 6.1 Hipótese Diagnóstica (Básica e Premium)
-- Gerada com base nas respostas da anamnese (+ testes no premium)
-- **Básica**: apenas a hipótese, sem explicação detalhada — funciona como "degustação"
-- **Premium**: explicação acessível do que está acontecendo, nível de confiança, recomendação de buscar profissional se necessário
+### 3. Edge Function: `send-follow-up`
+Nova edge function que:
+1. Consulta `follow_up_emails` onde `scheduled_for <= now()` e `status = 'pending'`
+2. Para cada email pendente, busca os dados da avaliacao (regiao de dor, diagnostico, fase do tratamento correspondente a semana)
+3. Usa a Lovable AI API (gemini-2.5-flash) para gerar o conteudo do email personalizado em PT ou EN (conforme idioma do perfil)
+4. Envia o email via Resend (ou servico similar)
+5. Atualiza `sent_at` e `status` para "sent"
 
-### 6.2 Plano de Tratamento (Apenas Premium)
-- Adaptado conforme a nota de dor:
-  - **Dor < 6**: curto prazo inclui exercícios de ativação muscular, mobilidade e flexibilidade
-  - **Dor ≥ 6**: curto prazo conservador, apenas condutas analgésicas e anti-inflamatórias
-- Fases:
-  - **Curto prazo (1-2 semanas)**: alívio de dor, exercícios iniciais, orientações posturais
-  - **Médio prazo (2-6 semanas)**: progressão, fortalecimento, mobilidade
-  - **Longo prazo (6+ semanas)**: manutenção, prevenção, retorno a atividades
-- Cada exercício com descrição + link YouTube
-- Ao final, CTA incentivando upgrade para quem veio da básica
+O conteudo do email incluira:
+- Saudacao personalizada com o nome do usuario
+- Pergunta "Como voce esta se sentindo?"
+- Lembrete dos exercicios da fase atual do tratamento
+- Link para o app (dashboard) para registrar progresso
+- Incentivo motivacional adequado a fase
 
-## 7. Backend (Supabase)
-- Tabelas: perfis de usuários, avaliações, respostas de anamnese, resultados de testes, planos de tratamento, pagamentos/acessos premium
-- Autenticação com email/senha
-- Histórico completo de avaliações por usuário
-- Controle de validade de 7 dias para refazer avaliação premium
-- Conteúdo clínico (testes, exercícios, diagnósticos) estruturado com dados de exemplo para revisão posterior
+### 4. Cron Job (pg_cron + pg_net)
+Agendar a edge function para rodar **1x por dia** (ex: 9h da manha UTC-3) verificando emails pendentes.
 
-## 8. Internacionalização (i18n)
-- Toda a interface e conteúdo clínico disponível em Português (BR) e Inglês
-- Botão de troca de idioma persistente
+### 5. UI: Opt-in e Historico
+- **Opt-in no TreatmentPlan.tsx**: Apos gerar o plano, mostrar um card perguntando se o usuario quer receber lembretes por email. Um switch/checkbox com texto explicativo.
+- **Dashboard.tsx**: Adicionar uma secao mostrando os proximos lembretes agendados e os ja enviados, com icones de status.
+
+### 6. Traducoes (i18n)
+Adicionar chaves de traducao em ambos os idiomas:
+- `followup.opt_in_title` / `followup.opt_in_desc`
+- `followup.scheduled` / `followup.sent` / `followup.next_reminder`
+- Textos do card no dashboard
+
+## Dependencia: Servico de Email
+Para enviar os emails transacionais (nao sao emails de autenticacao), sera necessario integrar um servico como **Resend**. Sera preciso:
+- Configurar a API key do Resend como secret
+- Ou usar um conector disponivel
+
+Antes de implementar, precisaremos confirmar se voce ja possui uma conta Resend ou preferencia de servico de email.
+
+## Resumo dos Arquivos
+
+| Arquivo | Acao |
+|---------|------|
+| `supabase/migrations/` | Nova tabela `follow_up_emails` + trigger |
+| `supabase/functions/send-follow-up/index.ts` | Nova edge function |
+| `supabase/config.toml` | Registrar nova function |
+| `src/components/assessment/TreatmentPlan.tsx` | Card de opt-in para lembretes |
+| `src/pages/Dashboard.tsx` | Secao de proximos lembretes |
+| `src/contexts/LanguageContext.tsx` | Novas traducoes PT/EN |
 
