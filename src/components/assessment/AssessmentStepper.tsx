@@ -24,6 +24,7 @@ const BASIC_STEPS: Step[] = [
 
 // Map current assessment step to stepper step
 const STEP_MAP: Record<string, string> = {
+  welcome: "redflags",
   redflags: "redflags",
   redflag_alert: "redflags",
   anamnesis: "anamnesis",

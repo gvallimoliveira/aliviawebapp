@@ -20,9 +20,10 @@ import DiagnosisResult from "@/components/assessment/DiagnosisResult";
 import TreatmentPlan from "@/components/assessment/TreatmentPlan";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
+import WelcomeStep from "@/components/assessment/WelcomeStep";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 
-type AssessmentStep = "payment_check" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
+type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
 const Assessment = () => {
   const { type } = useParams<{ type: string }>();
@@ -31,7 +32,7 @@ const Assessment = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [step, setStep] = useState<AssessmentStep>(mode === "premium" ? "payment_check" : "redflags");
+  const [step, setStep] = useState<AssessmentStep>(mode === "premium" ? "payment_check" : "welcome");
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
@@ -70,7 +71,7 @@ const Assessment = () => {
       if (error) throw error;
       setPremiumAccess(data);
       if (data?.has_access) {
-        setStep("redflags");
+        setStep("welcome");
       }
     } catch (err) {
       console.error("Error checking premium access:", err);
@@ -280,9 +281,14 @@ const Assessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
-        {step !== "payment_check" && (
+        {step !== "payment_check" && step !== "welcome" && (
           <AssessmentStepper currentStep={step} mode={mode as "basic" | "premium"} />
         )}
+
+        {step === "welcome" && (
+          <WelcomeStep mode={mode as "basic" | "premium"} onContinue={() => setStep("redflags")} />
+        )}
+
         {step === "payment_check" && premiumAccess !== null && !premiumAccess.has_access && (
           <div className="space-y-6 text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
