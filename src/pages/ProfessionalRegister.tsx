@@ -94,6 +94,10 @@ const ProfessionalRegister = () => {
       toast({ title: t("prof.required_fields"), variant: "destructive" });
       return;
     }
+    if (!form.crefito.trim()) {
+      toast({ title: t("prof.crefito_required"), variant: "destructive" });
+      return;
+    }
     setSaving(true);
     try {
       const payload = { ...form, user_id: user.id };
@@ -102,8 +106,15 @@ const ProfessionalRegister = () => {
       } else {
         await (supabase.from("professionals" as any) as any).insert(payload);
       }
-      toast({ title: t("prof.saved") });
-      navigate("/dashboard");
+      toast({ title: existing ? t("prof.saved") : t("prof.submitted_for_review") });
+      if (!existing) {
+        // Re-fetch to show status badge
+        const { data: newData } = await (supabase.from("professionals" as any) as any)
+          .select("*").eq("user_id", user.id).maybeSingle();
+        if (newData) setExisting(newData);
+      } else {
+        navigate("/dashboard");
+      }
     } catch {
       toast({ title: t("prof.error"), variant: "destructive" });
     } finally {
@@ -142,6 +153,16 @@ const ProfessionalRegister = () => {
             </div>
             <CardTitle className="text-2xl">{t("prof.register_title")}</CardTitle>
             <CardDescription>{t("prof.register_desc")}</CardDescription>
+            {existing && (
+              <Badge
+                variant="outline"
+                className={`mt-2 ${existing.approved
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-200"
+                  : "bg-amber-500/10 text-amber-600 border-amber-200"}`}
+              >
+                {existing.approved ? t("prof.approved") : t("prof.pending_approval")}
+              </Badge>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -151,8 +172,8 @@ const ProfessionalRegister = () => {
                   <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t("prof.crefito")}</Label>
-                  <Input value={form.crefito} onChange={(e) => setForm({ ...form, crefito: e.target.value })} />
+                  <Label>{t("prof.crefito")} *</Label>
+                  <Input value={form.crefito} onChange={(e) => setForm({ ...form, crefito: e.target.value })} required />
                 </div>
               </div>
 

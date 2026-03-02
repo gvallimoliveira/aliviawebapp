@@ -521,6 +521,22 @@ const translations: Record<Language, Record<string, string>> = {
     "prof.spec.uroginecologica": "Uroginecológica",
     "prof.spec.reumatologica": "Reumatológica",
 
+    // Approval
+    "prof.pending_approval": "Aguardando aprovação",
+    "prof.approved": "Aprovado",
+    "prof.submitted_for_review": "Cadastro enviado para análise! Seu perfil será revisado por nossa equipe.",
+    "prof.profile_under_review": "Seu perfil está em análise. Você será notificado quando for aprovado.",
+    "prof.profile_active": "Perfil ativo",
+    "prof.crefito_required": "O CREFITO é obrigatório para o cadastro.",
+    "admin.professionals_title": "Gestão de Profissionais",
+    "admin.professionals_desc": "Aprove ou revogue cadastros de profissionais",
+    "admin.approve": "Aprovar",
+    "admin.revoke": "Revogar",
+    "admin.pending": "Pendentes",
+    "admin.approved_list": "Aprovados",
+    "admin.no_pending": "Nenhum profissional pendente.",
+    "admin.no_approved": "Nenhum profissional aprovado.",
+
     // PDF
     "pdf.cta_text": "Baixe o relatório completo em PDF para compartilhar com seu médico ou fisioterapeuta.",
     "pdf.download": "Baixar Relatório em PDF",
@@ -1033,6 +1049,22 @@ const translations: Record<Language, Record<string, string>> = {
     "prof.spec.aquatica": "Aquatic",
     "prof.spec.uroginecologica": "Urogynecological",
     "prof.spec.reumatologica": "Rheumatological",
+
+    // Approval
+    "prof.pending_approval": "Pending approval",
+    "prof.approved": "Approved",
+    "prof.submitted_for_review": "Registration submitted for review! Your profile will be reviewed by our team.",
+    "prof.profile_under_review": "Your profile is under review. You will be notified when approved.",
+    "prof.profile_active": "Profile active",
+    "prof.crefito_required": "CREFITO is required for registration.",
+    "admin.professionals_title": "Professional Management",
+    "admin.professionals_desc": "Approve or revoke professional registrations",
+    "admin.approve": "Approve",
+    "admin.revoke": "Revoke",
+    "admin.pending": "Pending",
+    "admin.approved_list": "Approved",
+    "admin.no_pending": "No pending professionals.",
+    "admin.no_approved": "No approved professionals.",
 
     // PDF
     "pdf.cta_text": "Download the full PDF report to share with your doctor or physiotherapist.",

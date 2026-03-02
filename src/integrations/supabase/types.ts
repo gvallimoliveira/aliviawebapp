@@ -206,6 +206,7 @@ export type Database = {
       professionals: {
         Row: {
           active: boolean
+          approved: boolean
           bio: string | null
           city: string
           clinic_address: string | null
@@ -223,6 +224,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          approved?: boolean
           bio?: string | null
           city: string
           clinic_address?: string | null
@@ -240,6 +242,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          approved?: boolean
           bio?: string | null
           city?: string
           clinic_address?: string | null
@@ -319,7 +322,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
