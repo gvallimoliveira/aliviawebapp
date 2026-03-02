@@ -12,7 +12,7 @@ import PainDiary from "@/components/dashboard/PainDiary";
 import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
 import {
   Globe, LogOut, Plus, ClipboardList, Calendar, MapPin,
-  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle
+  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus
 } from "lucide-react";
 
 interface PremiumAccess {
@@ -32,6 +32,8 @@ const Dashboard = () => {
   const [premiumAccess, setPremiumAccess] = useState<PremiumAccess | null>(null);
   const [premiumLoading, setPremiumLoading] = useState(true);
   const [followUps, setFollowUps] = useState<any[]>([]);
+  const [professional, setProfessional] = useState<any>(null);
+  const [referrals, setReferrals] = useState<any[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -69,6 +71,23 @@ const Dashboard = () => {
           setPremiumLoading(false);
         })
         .catch(() => setPremiumLoading(false));
+
+      // Check if user is a professional
+      (supabase.from("professionals" as any) as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }: any) => {
+          if (data) {
+            setProfessional(data);
+            // Fetch referrals for this professional
+            (supabase.from("professional_referrals" as any) as any)
+              .select("*")
+              .eq("professional_id", data.id)
+              .order("created_at", { ascending: false })
+              .then(({ data: refs }: any) => setReferrals(refs || []));
+          }
+        });
     }
   }, [user]);
 
@@ -235,6 +254,58 @@ const Dashboard = () => {
             </CardHeader>
           </Card>
         </div>
+
+        {/* Professional CTA / Register */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group" onClick={() => navigate("/professionals")}>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary group-hover:bg-primary/10 transition-colors">
+                  <Users className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+                {t("prof.find_professional")}
+              </CardTitle>
+              <CardDescription className="text-sm">{t("prof.cta_text")}</CardDescription>
+            </CardHeader>
+          </Card>
+          {!professional && (
+            <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group" onClick={() => navigate("/professional/register")}>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary group-hover:bg-primary/10 transition-colors">
+                    <UserPlus className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                  {t("prof.register_cta")}
+                </CardTitle>
+                <CardDescription className="text-sm">{t("prof.register_cta_desc")}</CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+        </div>
+
+        {/* Professional Referrals (for professionals) */}
+        {professional && referrals.length > 0 && (
+          <div>
+            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5 text-muted-foreground" />
+              {t("prof.referrals_title")}
+            </h2>
+            <div className="space-y-2">
+              {referrals.map((r: any) => (
+                <Card key={r.id} className="border-border/60">
+                  <CardContent className="py-3 px-4 flex items-center justify-between">
+                    <div className="text-sm text-foreground">
+                      {t("prof.referral_from_patient")}
+                    </div>
+                    <Badge variant="outline" className="text-[10px] px-2 py-0.5">
+                      {r.status}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Pain Diary */}
         <PainDiary />

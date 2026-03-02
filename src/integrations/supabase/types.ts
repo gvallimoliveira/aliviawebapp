@@ -161,6 +161,102 @@ export type Database = {
           },
         ]
       }
+      professional_referrals: {
+        Row: {
+          assessment_id: string | null
+          created_at: string
+          id: string
+          patient_user_id: string
+          professional_id: string
+          status: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          created_at?: string
+          id?: string
+          patient_user_id: string
+          professional_id: string
+          status?: string
+        }
+        Update: {
+          assessment_id?: string | null
+          created_at?: string
+          id?: string
+          patient_user_id?: string
+          professional_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_referrals_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_referrals_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professionals: {
+        Row: {
+          active: boolean
+          bio: string | null
+          city: string
+          clinic_address: string | null
+          clinic_name: string | null
+          created_at: string
+          crefito: string | null
+          email: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          specialties: string[] | null
+          state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          bio?: string | null
+          city: string
+          clinic_address?: string | null
+          clinic_name?: string | null
+          created_at?: string
+          crefito?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          specialties?: string[] | null
+          state: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          bio?: string | null
+          city?: string
+          clinic_address?: string | null
+          clinic_name?: string | null
+          created_at?: string
+          crefito?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          specialties?: string[] | null
+          state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number | null

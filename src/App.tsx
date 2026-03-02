@@ -13,6 +13,8 @@ import NotFound from "./pages/NotFound";
 import Assessment from "./pages/Assessment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Admin from "./pages/Admin";
+import ProfessionalRegister from "./pages/ProfessionalRegister";
+import ProfessionalSearch from "./pages/ProfessionalSearch";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,8 @@ const App = () => (
               <Route path="/assessment/:type" element={<Assessment />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/professional/register" element={<ProfessionalRegister />} />
+              <Route path="/professionals" element={<ProfessionalSearch />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
