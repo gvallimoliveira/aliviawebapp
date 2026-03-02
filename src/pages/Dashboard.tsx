@@ -257,7 +257,13 @@ const Dashboard = () => {
 
         {/* Professional CTA / Register */}
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group" onClick={() => navigate("/professionals")}>
+          <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group relative" onClick={() => navigate("/professionals")}>
+            {!premiumLoading && !premiumAccess?.has_access && (
+              <Badge variant="outline" className="absolute top-3 right-3 bg-primary/10 text-primary border-primary/20 text-[10px] gap-1">
+                <Crown className="h-3 w-3" />
+                Premium
+              </Badge>
+            )}
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary group-hover:bg-primary/10 transition-colors">
