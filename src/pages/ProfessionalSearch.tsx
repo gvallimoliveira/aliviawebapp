@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, MapPin, Phone, Mail, Search, UserCheck } from "lucide-react";
+import { ArrowLeft, Loader2, MapPin, Phone, Mail, Search, UserCheck, Crown, Lock, Sparkles } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
+import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
 
 const STATES = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS",
@@ -27,15 +28,33 @@ const ProfessionalSearch = () => {
   const [stateFilter, setStateFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const [referralLoading, setReferralLoading] = useState<string | null>(null);
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const [accessLoading, setAccessLoading] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
 
+  // Check premium access
   useEffect(() => {
     if (!user) return;
+    supabase.functions
+      .invoke("verify-payment", { body: { check_access: true } })
+      .then(({ data }) => {
+        const access = data?.has_access === true || data?.is_vip === true;
+        setHasAccess(access);
+        setAccessLoading(false);
+      })
+      .catch(() => {
+        setHasAccess(false);
+        setAccessLoading(false);
+      });
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || !hasAccess) return;
     fetchProfessionals();
-  }, [user, stateFilter, cityFilter]);
+  }, [user, hasAccess, stateFilter, cityFilter]);
 
   const fetchProfessionals = async () => {
     setLoading(true);
@@ -69,10 +88,61 @@ const ProfessionalSearch = () => {
     window.open(`https://wa.me/${number}`, "_blank");
   };
 
-  if (authLoading) {
+  if (authLoading || accessLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Premium paywall
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
+          <div className="container flex h-16 items-center justify-between">
+            <button onClick={() => navigate("/")} className="flex items-center gap-2">
+              <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
+              <span className="text-xl font-bold text-foreground">Aliv.iA</span>
+            </button>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5">
+              <ArrowLeft className="h-4 w-4" />
+              {t("diagnosis.back")}
+            </Button>
+          </div>
+        </header>
+
+        <main className="container max-w-lg py-16 px-4">
+          <Card className="border-primary/30 overflow-hidden">
+            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 text-center space-y-5">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mx-auto">
+                <Lock className="h-8 w-8 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">
+                {t("prof.premium_required_title")}
+              </h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {t("prof.premium_required_desc")}
+              </p>
+              <div className="flex items-center justify-center gap-2 text-primary font-semibold">
+                <Crown className="h-5 w-5" />
+                <span>{PREMIUM_PRICE_FORMATTED}</span>
+              </div>
+              <Button
+                size="lg"
+                className="w-full gap-2 rounded-xl"
+                onClick={() => navigate("/assessment/premium")}
+              >
+                <Sparkles className="h-4 w-4" />
+                {t("prof.get_premium_access")}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                {t("prof.premium_includes_search")}
+              </p>
+            </div>
+          </Card>
+        </main>
       </div>
     );
   }
