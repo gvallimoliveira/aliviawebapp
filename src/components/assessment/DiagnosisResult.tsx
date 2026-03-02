@@ -127,12 +127,12 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
-              Olha a dica!
+              {t("diagnosis.upsell_title")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Sabemos que a sua dor está te preocupando! Não deixe esse problema aumentar até se tornar uma limitação na sua vida, podemos ajudar com orientações personalizadas, e com nosso plano de tratamento na avaliação Premium.
+              {t("diagnosis.upsell_text")}
             </p>
             <div className="text-center">
               <Button
