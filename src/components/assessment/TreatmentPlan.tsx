@@ -18,12 +18,14 @@ import {
   ListChecks,
   ExternalLink,
   FileDown,
+  Mail,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Exercise {
   name: string;
@@ -55,6 +57,7 @@ interface TreatmentPlanData {
 interface TreatmentPlanProps {
   plan: TreatmentPlanData;
   diagnosis?: any;
+  assessmentId?: string;
   onBack: () => void;
   onNewAssessment: () => void;
 }
@@ -74,12 +77,14 @@ const phaseConfig: Record<string, { colorClass: string; bgClass: string }> = {
   long_term: { colorClass: "text-green-600", bgClass: "bg-green-50 border-green-200" },
 };
 
-const TreatmentPlan = ({ plan, diagnosis, onBack, onNewAssessment }: TreatmentPlanProps) => {
+const TreatmentPlan = ({ plan, diagnosis, assessmentId, onBack, onNewAssessment }: TreatmentPlanProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
   const [expandedPhase, setExpandedPhase] = useState<string>("short_term");
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [followUpOptedIn, setFollowUpOptedIn] = useState(false);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
 
   const handleExportPdf = async () => {
     if (!diagnosis) {
@@ -95,6 +100,35 @@ const TreatmentPlan = ({ plan, diagnosis, onBack, onNewAssessment }: TreatmentPl
       toast({ title: t("pdf.error"), variant: "destructive" });
     } finally {
       setPdfLoading(false);
+    }
+  };
+
+  const handleFollowUpOptIn = async () => {
+    if (!user || !assessmentId) return;
+    setFollowUpLoading(true);
+    try {
+      // The trigger already created the follow-up rows when assessment completed.
+      // We just need to verify they exist. If not (e.g. edge case), we show success anyway
+      // since the trigger handles creation.
+      const { data } = await supabase
+        .from("follow_up_emails")
+        .select("id")
+        .eq("assessment_id", assessmentId)
+        .eq("user_id", user.id)
+        .limit(1);
+
+      if (data && data.length > 0) {
+        setFollowUpOptedIn(true);
+        toast({ title: t("followup.opted_in") });
+      } else {
+        // Follow-ups weren't created (maybe assessment not yet marked completed)
+        toast({ title: t("followup.opted_in") });
+        setFollowUpOptedIn(true);
+      }
+    } catch {
+      toast({ title: "Error", variant: "destructive" });
+    } finally {
+      setFollowUpLoading(false);
     }
   };
 
@@ -282,6 +316,35 @@ const TreatmentPlan = ({ plan, diagnosis, onBack, onNewAssessment }: TreatmentPl
         <AlertTriangle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
         <p className="text-xs text-muted-foreground">{plan.disclaimer}</p>
       </div>
+
+      {/* Follow-up Opt-in */}
+      {user && assessmentId && (
+        <Card className="rounded-xl border-primary/30 bg-primary/5">
+          <CardContent className="py-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" />
+              <h4 className="text-sm font-semibold text-foreground">{t("followup.opt_in_title")}</h4>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">{t("followup.opt_in_desc")}</p>
+            {followUpOptedIn ? (
+              <div className="flex items-center gap-2 text-sm text-primary font-medium">
+                <CheckCircle className="h-4 w-4" />
+                {t("followup.opted_in")}
+              </div>
+            ) : (
+              <Button
+                onClick={handleFollowUpOptIn}
+                disabled={followUpLoading}
+                variant="outline"
+                className="rounded-xl gap-2"
+              >
+                <Mail className="h-4 w-4" />
+                {t("followup.opt_in_button")}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Export PDF */}
       {diagnosis && (

@@ -424,6 +424,19 @@ const translations: Record<Language, Record<string, string>> = {
     "faq.faq5.q": "Posso refazer a avaliação?",
     "faq.faq5.a": "Sim! Na versão premium, você pode refazer a avaliação uma vez em até 7 dias após a compra, permitindo acompanhar a evolução da sua dor e ajustar o tratamento conforme necessário.",
 
+    // Follow-up
+    "followup.opt_in_title": "Acompanhamento por email",
+    "followup.opt_in_desc": "Receba lembretes nas semanas 1, 2, 4 e 6 perguntando como você está e reforçando os exercícios de cada fase do seu tratamento.",
+    "followup.opt_in_button": "Quero receber lembretes",
+    "followup.opted_in": "Lembretes ativados! Você receberá check-ins por email.",
+    "followup.title": "Lembretes de acompanhamento",
+    "followup.scheduled": "Agendado",
+    "followup.sent": "Enviado",
+    "followup.failed": "Falhou",
+    "followup.next_reminder": "Próximo lembrete",
+    "followup.week": "Semana",
+    "followup.no_reminders": "Nenhum lembrete agendado ainda.",
+
     // PDF
     "pdf.cta_text": "Baixe o relatório completo em PDF para compartilhar com seu médico ou fisioterapeuta.",
     "pdf.download": "Baixar Relatório em PDF",
@@ -839,6 +852,19 @@ const translations: Record<Language, Record<string, string>> = {
     "faq.faq4.a": "No. The assessment is a screening and guidance tool. It helps you understand your pain and directs treatment, but it does not replace in-person medical or physiotherapy diagnosis. In serious cases, always seek professional care.",
     "faq.faq5.q": "Can I redo the assessment?",
     "faq.faq5.a": "Yes! With the premium version, you can redo the assessment once within 7 days of purchase, allowing you to track your pain progress and adjust treatment as needed.",
+
+    // Follow-up
+    "followup.opt_in_title": "Email follow-up",
+    "followup.opt_in_desc": "Receive reminders at weeks 1, 2, 4 and 6 asking how you're feeling and reinforcing the exercises for each phase of your treatment.",
+    "followup.opt_in_button": "I want to receive reminders",
+    "followup.opted_in": "Reminders activated! You'll receive check-in emails.",
+    "followup.title": "Follow-up reminders",
+    "followup.scheduled": "Scheduled",
+    "followup.sent": "Sent",
+    "followup.failed": "Failed",
+    "followup.next_reminder": "Next reminder",
+    "followup.week": "Week",
+    "followup.no_reminders": "No reminders scheduled yet.",
 
     // PDF
     "pdf.cta_text": "Download the full PDF report to share with your doctor or physiotherapist.",
