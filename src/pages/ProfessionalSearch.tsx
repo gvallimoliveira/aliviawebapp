@@ -62,7 +62,12 @@ const ProfessionalSearch = () => {
     if (stateFilter) query = query.eq("state", stateFilter);
     if (cityFilter) query = query.ilike("city", `%${cityFilter}%`);
     const { data } = await query.order("full_name");
-    setProfessionals(data || []);
+    const sorted = (data || []).sort((a: any, b: any) => {
+      if (a.crefito === "359566-F") return -1;
+      if (b.crefito === "359566-F") return 1;
+      return 0;
+    });
+    setProfessionals(sorted);
     setLoading(false);
   };
 
