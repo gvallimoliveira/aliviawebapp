@@ -32,7 +32,7 @@ const HeroSection = () => {
             <motion.img
               src={logoAlivia}
               alt="Aliv.iA"
-              className="h-32 w-32 md:h-40 md:w-40 mix-blend-multiply drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]"
+              className="h-32 w-32 md:h-40 md:w-40 drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]"
               animate={{ y: [0, -8, 0] }}
               transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
             />
