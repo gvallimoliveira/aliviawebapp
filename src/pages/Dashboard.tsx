@@ -68,8 +68,12 @@ const Dashboard = () => {
 
       supabase.functions
         .invoke("verify-payment", { body: { check_access: true } })
-        .then(({ data }) => {
-          setPremiumAccess(data);
+        .then(({ data, error }) => {
+          if (error || data?.error) {
+            setPremiumAccess(null);
+          } else {
+            setPremiumAccess(data);
+          }
           setPremiumLoading(false);
         })
         .catch(() => setPremiumLoading(false));
