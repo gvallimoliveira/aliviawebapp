@@ -25,6 +25,7 @@ export type Database = {
           pain_regions: string[] | null
           pain_score: number | null
           payment_status: string | null
+          professional_id: string | null
           redo_used: boolean | null
           status: string
           test_results: Json | null
@@ -43,6 +44,7 @@ export type Database = {
           pain_regions?: string[] | null
           pain_score?: number | null
           payment_status?: string | null
+          professional_id?: string | null
           redo_used?: boolean | null
           status?: string
           test_results?: Json | null
@@ -61,6 +63,7 @@ export type Database = {
           pain_regions?: string[] | null
           pain_score?: number | null
           payment_status?: string | null
+          professional_id?: string | null
           redo_used?: boolean | null
           status?: string
           test_results?: Json | null
@@ -75,6 +78,13 @@ export type Database = {
             columns: ["original_assessment_id"]
             isOneToOne: false
             referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
         ]
@@ -220,6 +230,8 @@ export type Database = {
           social_media: string | null
           specialties: string[] | null
           state: string
+          subscription_status: string
+          subscription_stripe_id: string | null
           updated_at: string
           user_id: string
         }
@@ -239,6 +251,8 @@ export type Database = {
           social_media?: string | null
           specialties?: string[] | null
           state: string
+          subscription_status?: string
+          subscription_stripe_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -258,6 +272,8 @@ export type Database = {
           social_media?: string | null
           specialties?: string[] | null
           state?: string
+          subscription_status?: string
+          subscription_stripe_id?: string | null
           updated_at?: string
           user_id?: string
         }
