@@ -36,6 +36,7 @@ const ProfessionalAssessment = () => {
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [hasRetried, setHasRetried] = useState(false);
   const [patientName, setPatientName] = useState("");
+  const [redFlagData, setRedFlagData] = useState<Record<string, boolean> | null>(null);
 
   // Validate professional exists and has active subscription
   useEffect(() => {
@@ -82,10 +83,24 @@ const ProfessionalAssessment = () => {
 
   const updateAssessment = async (id: string, updates: Record<string, any>) => {
     try {
-      await supabase.from("assessments").update(updates).eq("id", id);
+      const { error } = await supabase.from("assessments").update(updates).eq("id", id);
+      if (error) console.error("Update error:", error);
     } catch (err) {
       console.error("Error updating assessment:", err);
     }
+  };
+
+  const handleRedFlagged = async (flaggedItems: Record<string, boolean>) => {
+    setRedFlagData(flaggedItems);
+    // Create assessment with red_flagged status so professional sees it
+    const id = await createAssessment();
+    if (id) {
+      await updateAssessment(id, {
+        red_flags: flaggedItems as any,
+        status: "red_flagged",
+      });
+    }
+    setStep("redflag_alert");
   };
 
   const handleAnamnesisComplete = async (data: AnamnesisData) => {
@@ -257,9 +272,16 @@ const ProfessionalAssessment = () => {
           <RedFlagScreening
             onPass={() => setStep("anamnesis")}
             onFlagged={() => setStep("redflag_alert")}
+            onFlaggedWithData={handleRedFlagged}
           />
         )}
-        {step === "redflag_alert" && <RedFlagAlert />}
+        {step === "redflag_alert" && (
+          <RedFlagAlert
+            mode="professional"
+            flaggedItems={redFlagData || undefined}
+            professionalName={professional?.full_name}
+          />
+        )}
 
         {step === "anamnesis" && (
           <AnamnesisForm

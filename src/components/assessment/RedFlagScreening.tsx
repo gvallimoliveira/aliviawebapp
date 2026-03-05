@@ -8,9 +8,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface RedFlagScreeningProps {
   onPass: () => void;
   onFlagged: () => void;
+  onFlaggedWithData?: (flaggedItems: Record<string, boolean>) => void;
 }
 
-const RedFlagScreening = ({ onPass, onFlagged }: RedFlagScreeningProps) => {
+const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData }: RedFlagScreeningProps) => {
   const { t } = useLanguage();
   const [answers, setAnswers] = useState<Record<string, boolean | null>>({});
 
@@ -34,7 +35,11 @@ const RedFlagScreening = ({ onPass, onFlagged }: RedFlagScreeningProps) => {
 
   const handleContinue = () => {
     if (hasRedFlag) {
-      onFlagged();
+      if (onFlaggedWithData) {
+        onFlaggedWithData(answers as Record<string, boolean>);
+      } else {
+        onFlagged();
+      }
     } else {
       onPass();
     }
