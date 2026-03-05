@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
@@ -46,9 +46,21 @@ const HeroSection = () => {
             {t("hero.title")}
           </h1>
 
-          <p className="mb-10 text-lg leading-relaxed text-muted-foreground md:text-xl">
+          <p className="mb-8 text-lg leading-relaxed text-muted-foreground md:text-xl">
             {t("hero.subtitle")}
           </p>
+
+          {/* Micro-badges: social proof + time */}
+          <div className="mb-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4 text-primary" />
+              <span>{t("hero.social_proof")}</span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4 text-primary" />
+              <span>{t("hero.time_badge")}</span>
+            </div>
+          </div>
 
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button size="lg" variant="outline" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto" onClick={() => navigate("/assessment/basic")}>
