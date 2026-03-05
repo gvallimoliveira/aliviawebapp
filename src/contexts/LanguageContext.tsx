@@ -80,6 +80,7 @@ const translations: Record<Language, Record<string, string>> = {
     "how.bonus.report": "Relatório em PDF",
     "how.bonus.diary": "Diário de Dor",
     "how.bonus.premium_label": "Exclusivo Premium",
+    "how.bonus.see_inside": "Veja por dentro o que você vai receber",
 
     // Social
     "social.title": "Nos encontre nas redes sociais",
@@ -672,6 +673,7 @@ const translations: Record<Language, Record<string, string>> = {
     "how.bonus.report": "PDF Report",
     "how.bonus.diary": "Pain Diary",
     "how.bonus.premium_label": "Premium Exclusive",
+    "how.bonus.see_inside": "See what you'll get inside",
 
     // Social
     "social.title": "Find us on social media",
