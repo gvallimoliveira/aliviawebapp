@@ -32,6 +32,7 @@ const PROFESSIONAL_STEPS: Step[] = [
 // Map current assessment step to stepper step
 const STEP_MAP: Record<string, string> = {
   welcome: "redflags",
+  patient_info: "redflags",
   redflags: "redflags",
   redflag_alert: "redflags",
   anamnesis: "anamnesis",

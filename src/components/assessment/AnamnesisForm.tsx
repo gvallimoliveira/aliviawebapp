@@ -28,7 +28,7 @@ export interface AnamnesisData {
 }
 
 interface AnamnesisFormProps {
-  mode: "basic" | "premium";
+  mode: "basic" | "premium" | "professional";
   onComplete: (data: AnamnesisData) => void;
   onBack: () => void;
 }

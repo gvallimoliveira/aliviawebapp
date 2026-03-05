@@ -24,6 +24,7 @@ export type Database = {
           paid_at: string | null
           pain_regions: string[] | null
           pain_score: number | null
+          patient_name: string | null
           payment_status: string | null
           professional_id: string | null
           redo_used: boolean | null
@@ -43,6 +44,7 @@ export type Database = {
           paid_at?: string | null
           pain_regions?: string[] | null
           pain_score?: number | null
+          patient_name?: string | null
           payment_status?: string | null
           professional_id?: string | null
           redo_used?: boolean | null
@@ -62,6 +64,7 @@ export type Database = {
           paid_at?: string | null
           pain_regions?: string[] | null
           pain_score?: number | null
+          patient_name?: string | null
           payment_status?: string | null
           professional_id?: string | null
           redo_used?: boolean | null

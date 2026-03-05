@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate } from "react-router-dom";
-import { Globe, ArrowLeft, Loader2, MessageCircle, Send, ChevronRight, Stethoscope, AlertTriangle } from "lucide-react";
+import { Globe, ArrowLeft, Loader2, MessageCircle, Send, ChevronRight, Stethoscope, AlertTriangle, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +19,7 @@ import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 
-type ProfStep = "loading_check" | "inactive" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "low_confidence" | "result";
+type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "low_confidence" | "result";
 
 const ProfessionalAssessment = () => {
   const { professionalId } = useParams<{ professionalId: string }>();
@@ -33,6 +35,7 @@ const ProfessionalAssessment = () => {
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [hasRetried, setHasRetried] = useState(false);
+  const [patientName, setPatientName] = useState("");
 
   // Validate professional exists and has active subscription
   useEffect(() => {
@@ -64,7 +67,8 @@ const ProfessionalAssessment = () => {
           user_id: null,
           professional_id: professionalId,
           payment_status: "covered",
-        })
+          patient_name: patientName || null,
+        } as any)
         .select("id")
         .single();
       if (error) throw error;
@@ -191,16 +195,62 @@ const ProfessionalAssessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
-        {step !== "welcome" && (
-          <AssessmentStepper currentStep={step} mode={"professional" as any} />
+        {step !== "welcome" && step !== "patient_info" && (
+          <AssessmentStepper currentStep={step} mode="professional" />
         )}
 
         {step === "welcome" && professional && (
           <WelcomeStep
-            mode={"professional" as any}
+            mode="professional"
             professionalName={professional.full_name}
-            onContinue={() => setStep("redflags")}
+            onContinue={() => setStep("patient_info")}
           />
+        )}
+
+        {step === "patient_info" && professional && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div className="text-center space-y-2">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mx-auto">
+                <User className="h-7 w-7 text-primary" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">
+                {t("patient_info.title")}
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                {t("patient_info.desc").replace("{name}", professional.full_name)}
+              </p>
+            </div>
+
+            <Card className="rounded-xl">
+              <CardContent className="pt-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="patient-name">{t("patient_info.name_label")}</Label>
+                  <Input
+                    id="patient-name"
+                    value={patientName}
+                    onChange={(e) => setPatientName(e.target.value.slice(0, 100))}
+                    placeholder={t("patient_info.name_placeholder")}
+                    maxLength={100}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground">{t("patient_info.steps_info")}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Button
+              onClick={() => setStep("redflags")}
+              disabled={!patientName.trim()}
+              className="w-full rounded-xl gap-2"
+              size="lg"
+            >
+              {t("patient_info.continue")}
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </motion.div>
         )}
 
         {step === "redflags" && (
@@ -213,7 +263,7 @@ const ProfessionalAssessment = () => {
 
         {step === "anamnesis" && (
           <AnamnesisForm
-            mode={"professional" as any}
+            mode="professional"
             onComplete={handleAnamnesisComplete}
             onBack={() => setStep("redflags")}
           />
