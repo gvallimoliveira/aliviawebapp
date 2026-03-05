@@ -16,6 +16,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import Admin from "./pages/Admin";
 import ProfessionalRegister from "./pages/ProfessionalRegister";
 import ProfessionalSearch from "./pages/ProfessionalSearch";
+import ProfessionalAssessment from "./pages/ProfessionalAssessment";
 import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/professional/register" element={<ProfessionalRegister />} />
               <Route path="/professionals" element={<ProfessionalSearch />} />
+              <Route path="/assessment/professional/:professionalId" element={<ProfessionalAssessment />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

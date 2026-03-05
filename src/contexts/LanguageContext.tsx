@@ -604,6 +604,29 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Sticky CTA
     "sticky.cta": "Comece sua avaliação agora",
+
+    // Pro Plan B2B
+    "pro.plan_title": "Plano Profissional",
+    "pro.paywall_title": "Potencialize suas consultas",
+    "pro.paywall_desc": "Receba anamnese completa, mapa de dor e questionários validados do seu paciente antes da consulta. Seja mais assertivo na avaliação e tratamento, e economize até 30 minutos por atendimento.",
+    "pro.feature_1": "Link personalizado para enviar ao paciente antes da consulta",
+    "pro.feature_2": "Anamnese completa com mapa de dor e questionários validados prontos",
+    "pro.feature_3": "Mais assertividade: chegue na consulta com dados estruturados do paciente",
+    "pro.feature_4": "Impressione seus pacientes com um relatório profissional de triagem",
+    "pro.subscribe_cta": "Assinar Plano Profissional",
+    "pro.generate_link_title": "Link de Avaliação para Pacientes",
+    "pro.generate_link_desc": "Envie este link ao paciente antes da consulta. Ele preencherá triagem, anamnese e questionários — você receberá tudo pronto.",
+    "pro.total_assessments": "Avaliações recebidas",
+    "pro.this_month": "Este mês",
+    "pro.patient_assessments": "Avaliações dos Pacientes",
+    "pro.no_patient_assessments": "Nenhuma avaliação recebida ainda. Envie o link ao seu primeiro paciente!",
+    "pro.renews": "Renova em",
+    "pro.manage_subscription": "Gerenciar assinatura",
+    "pro.badge_professional": "Avaliação Profissional",
+    "pro.link_inactive_title": "Link indisponível",
+    "pro.link_inactive_desc": "Este link de avaliação profissional não está ativo no momento. Entre em contato com seu fisioterapeuta.",
+    "pro.result_sent_title": "Relatório enviado ao seu fisioterapeuta",
+    "pro.result_sent_desc": "Este relatório de triagem foi enviado ao(à) fisioterapeuta {name}. Ele(a) complementará sua avaliação presencialmente com testes funcionais e definição do plano de tratamento.",
   },
   en: {
     // Nav
@@ -1193,6 +1216,29 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Sticky CTA
     "sticky.cta": "Start your assessment now",
+
+    // Pro Plan B2B
+    "pro.plan_title": "Professional Plan",
+    "pro.paywall_title": "Supercharge your consultations",
+    "pro.paywall_desc": "Receive complete anamnesis, pain map and validated questionnaires from your patient before the consultation. Be more accurate in assessment and treatment, and save up to 30 minutes per session.",
+    "pro.feature_1": "Custom link to send patients before consultation",
+    "pro.feature_2": "Complete anamnesis with pain map and validated questionnaires ready",
+    "pro.feature_3": "Greater accuracy: arrive at the consultation with structured patient data",
+    "pro.feature_4": "Impress your patients with a professional triage report",
+    "pro.subscribe_cta": "Subscribe to Professional Plan",
+    "pro.generate_link_title": "Patient Assessment Link",
+    "pro.generate_link_desc": "Send this link to your patient before the consultation. They'll complete screening, anamnesis and questionnaires — you'll receive everything ready.",
+    "pro.total_assessments": "Assessments received",
+    "pro.this_month": "This month",
+    "pro.patient_assessments": "Patient Assessments",
+    "pro.no_patient_assessments": "No assessments received yet. Send the link to your first patient!",
+    "pro.renews": "Renews on",
+    "pro.manage_subscription": "Manage subscription",
+    "pro.badge_professional": "Professional Assessment",
+    "pro.link_inactive_title": "Link unavailable",
+    "pro.link_inactive_desc": "This professional assessment link is not currently active. Please contact your physiotherapist.",
+    "pro.result_sent_title": "Report sent to your physiotherapist",
+    "pro.result_sent_desc": "This triage report was sent to physiotherapist {name}. They will complete your assessment in person with functional tests and treatment plan definition.",
   },
 };
 

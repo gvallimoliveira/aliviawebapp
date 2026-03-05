@@ -17,3 +17,12 @@ verify_jwt = false
 
 [functions.send-follow-up]
 verify_jwt = false
+
+[functions.create-pro-subscription]
+verify_jwt = false
+
+[functions.check-pro-subscription]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false

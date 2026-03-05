@@ -22,6 +22,13 @@ const BASIC_STEPS: Step[] = [
   { id: "result", label_pt: "Diagnóstico", label_en: "Diagnosis" },
 ];
 
+const PROFESSIONAL_STEPS: Step[] = [
+  { id: "redflags", label_pt: "Triagem", label_en: "Screening" },
+  { id: "anamnesis", label_pt: "Anamnese", label_en: "Anamnesis" },
+  { id: "questionnaire", label_pt: "Questionários", label_en: "Questionnaires" },
+  { id: "result", label_pt: "Hipótese", label_en: "Hypothesis" },
+];
+
 // Map current assessment step to stepper step
 const STEP_MAP: Record<string, string> = {
   welcome: "redflags",
@@ -39,12 +46,12 @@ const STEP_MAP: Record<string, string> = {
 
 interface AssessmentStepperProps {
   currentStep: string;
-  mode: "basic" | "premium";
+  mode: "basic" | "premium" | "professional";
 }
 
 const AssessmentStepper = ({ currentStep, mode }: AssessmentStepperProps) => {
   const { language } = useLanguage();
-  const steps = mode === "premium" ? PREMIUM_STEPS : BASIC_STEPS;
+  const steps = mode === "premium" ? PREMIUM_STEPS : mode === "professional" ? PROFESSIONAL_STEPS : BASIC_STEPS;
   const mappedStep = STEP_MAP[currentStep] || currentStep;
   const currentIndex = steps.findIndex((s) => s.id === mappedStep);
 

@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import PainDiary from "@/components/dashboard/PainDiary";
 import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
 import ReferralCard from "@/components/dashboard/ReferralCard";
+import ProDashboard from "@/components/dashboard/ProDashboard";
 import {
   Globe, LogOut, Plus, ClipboardList, Calendar, MapPin, ChevronRight,
   Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus
@@ -295,25 +296,20 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Professional Approval Status */}
+        {/* Professional Approval Status & Pro Dashboard */}
         {professional && (
-          <Card className={`border ${professional.approved
-            ? "border-emerald-200 bg-emerald-500/5"
-            : "border-amber-200 bg-amber-500/5"}`}>
-            <CardContent className="py-4 px-5 flex items-center gap-3">
-              {professional.approved ? (
-                <>
-                  <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-                  <span className="text-sm font-medium text-emerald-700">{t("prof.profile_active")}</span>
-                </>
-              ) : (
-                <>
+          <>
+            {!professional.approved ? (
+              <Card className="border-amber-200 bg-amber-500/5">
+                <CardContent className="py-4 px-5 flex items-center gap-3">
                   <Clock className="h-5 w-5 text-amber-600 shrink-0" />
                   <span className="text-sm text-amber-700">{t("prof.profile_under_review")}</span>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ) : (
+              <ProDashboard professional={professional} />
+            )}
+          </>
         )}
 
         {/* Professional Referrals (for professionals) */}
