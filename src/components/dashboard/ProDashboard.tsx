@@ -262,6 +262,9 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
                   <CardContent className="py-3 px-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 space-y-1.5 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">
+                          {(a as any).patient_name || t("pro.anonymous_patient")}
+                        </p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Calendar className="h-3 w-3" />
                           {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}

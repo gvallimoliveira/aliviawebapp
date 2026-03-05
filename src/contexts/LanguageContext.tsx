@@ -646,6 +646,15 @@ const translations: Record<Language, Record<string, string>> = {
     "b2b.cta_cancel": "Cancele quando quiser. Sem fidelidade.",
     "b2b.cta_button": "Assinar Plano Profissional",
 
+    // Patient Info (Professional flow)
+    "patient_info.title": "Identificação do Paciente",
+    "patient_info.desc": "O(a) Dr(a). {name} solicitou que você preencha esta avaliação. Por favor, informe seu nome para que o profissional possa identificar seu relatório.",
+    "patient_info.name_label": "Nome completo do paciente",
+    "patient_info.name_placeholder": "Digite seu nome completo",
+    "patient_info.steps_info": "A avaliação leva cerca de 5 minutos e inclui triagem de segurança, anamnese e questionários validados.",
+    "patient_info.continue": "Continuar",
+    "pro.anonymous_patient": "Paciente não identificado",
+
     // Dashboard Tabs
     "dashboard.tab_my_health": "Minha Saúde",
     "dashboard.tab_professional": "Painel Profissional",
@@ -1285,6 +1294,15 @@ const translations: Record<Language, Record<string, string>> = {
     "b2b.cta_desc": "All of this for just",
     "b2b.cta_cancel": "Cancel anytime. No commitment.",
     "b2b.cta_button": "Subscribe to Professional Plan",
+
+    // Patient Info (Professional flow)
+    "patient_info.title": "Patient Identification",
+    "patient_info.desc": "Dr. {name} has requested that you complete this assessment. Please enter your name so the professional can identify your report.",
+    "patient_info.name_label": "Patient full name",
+    "patient_info.name_placeholder": "Enter your full name",
+    "patient_info.steps_info": "The assessment takes about 5 minutes and includes safety screening, anamnesis and validated questionnaires.",
+    "patient_info.continue": "Continue",
+    "pro.anonymous_patient": "Unidentified patient",
 
     // Dashboard Tabs
     "dashboard.tab_my_health": "My Health",
