@@ -226,6 +226,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          is_partner: boolean
           phone: string | null
           social_media: string | null
           specialties: string[] | null
@@ -247,6 +248,7 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          is_partner?: boolean
           phone?: string | null
           social_media?: string | null
           specialties?: string[] | null
@@ -268,6 +270,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          is_partner?: boolean
           phone?: string | null
           social_media?: string | null
           specialties?: string[] | null

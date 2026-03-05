@@ -25,7 +25,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string } | null>(null);
+  const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean } | null>(null);
   const [subLoading, setSubLoading] = useState(true);
   const [linkCopied, setLinkCopied] = useState(false);
   const [patientAssessments, setPatientAssessments] = useState<any[]>([]);
@@ -177,10 +177,10 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
               <p className="font-semibold text-foreground flex items-center gap-2">
                 {t("pro.plan_title")}
                 <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
-                  {t("dashboard.active")}
+                  {subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
                 </Badge>
               </p>
-              {subscription.subscription_end && (
+              {!subscription?.is_partner && subscription?.subscription_end && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
@@ -188,10 +188,12 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
               )}
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl">
-            {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Settings className="h-3.5 w-3.5" />}
-            {t("pro.manage_subscription")}
-          </Button>
+          {!subscription?.is_partner && (
+            <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl">
+              {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Settings className="h-3.5 w-3.5" />}
+              {t("pro.manage_subscription")}
+            </Button>
+          )}
         </CardContent>
       </Card>
 
