@@ -1,109 +1,52 @@
 
 
-## Plano: Canal B2B - Plano Profissional (R$49/mês)
+## Plano: Seção B2B na Landing Page + Admin Parceiros Gratuitos
 
-### Visão Geral
+### 1. Nova seção na Landing Page para Fisioterapeutas
 
-Criar um sistema de assinatura mensal para fisioterapeutas que permite enviar links de avaliação personalizada aos pacientes antes da consulta. A avaliação do link do fisioterapeuta inclui apenas: triagem de red flags, anamnese, questionários e mapa de dor -- **sem** testes funcionais e **sem** plano de tratamento (esses ficam para o profissional fazer presencialmente).
+Criar componente `ProfessionalSection.tsx` posicionado entre `TestimonialsSection` e `FaqSection` na Index. Conteudo focado em venda B2B:
 
----
+- Titulo: "Fisioterapeuta, potencialize suas consultas"
+- 3-4 cards de beneficios com icones (Clock: "Economize 30min por consulta", Target: "Avaliações mais assertivas", FileText: "Anamnese + questionários prontos", TrendingUp: "Impressione com relatórios profissionais")
+- Argumento central: "Receba seus pacientes com anamnese completa, mapa de dor e questionários validados antes da primeira consulta. Avaliações mais assertivas, tratamentos mais eficazes."
+- CTA: "Assinar Plano Profissional — R$49/mês" → navega para `/professional/register`
+- Visual: gradiente sutil, badge "Para Profissionais", design premium
 
-### Arquitetura
+### 2. Admin: Gestão de Parceiros Gratuitos
 
-```text
-┌──────────────────────────────────────────────────────────┐
-│  Fisioterapeuta (assinante R$49/mês)                     │
-│  Dashboard Pro → Gera link → Paciente preenche           │
-│  → Fisio vê relatório completo do paciente               │
-└──────────────────────────────────────────────────────────┘
+Adicionar nova seção no `Admin.tsx` com um card "Parceiros — Acesso Gratuito":
 
-Fluxo:
-1. Fisio se cadastra/faz login → /professional/register
-2. Fisio assina plano mensal (Stripe subscription)
-3. Dashboard Pro aparece com botão "Gerar link para paciente"
-4. Link público: /assessment/professional/:professionalId
-5. Paciente preenche: red flags → anamnese → questionários → diagnóstico (sem testes funcionais, sem tratamento)
-6. Assessment é salvo com professional_id vinculado
-7. Fisio vê lista de avaliações dos seus pacientes no Dashboard Pro
+- Input de email do profissional cadastrado
+- Ao clicar "Liberar", uma Edge Function (`manage-vip-users` ou nova) busca o profissional pelo email na tabela `professionals` e seta `subscription_status = 'active'` sem Stripe
+- Lista de profissionais com status "partner" (parceiros com acesso gratuito)
+- Botão para revogar acesso gratuito (volta `subscription_status` para `inactive`)
+
+**Abordagem técnica para parceiros:**
+- Adicionar coluna `is_partner` (boolean, default false) na tabela `professionals` — distingue parceiros gratuitos de assinantes pagos
+- Modificar `check-pro-subscription`: se `is_partner = true`, retorna `{ subscribed: true }` sem verificar Stripe
+- Admin pode setar `is_partner = true/false` via edge function (reusa `manage-vip-users` com novo action ou cria endpoint dedicado no mesmo)
+- No `ProDashboard`, parceiros veem badge "Parceiro" ao inves de "Ativo" e nao veem botao "Gerenciar assinatura"
+
+### 3. Migracao SQL
+
+```sql
+ALTER TABLE public.professionals ADD COLUMN IF NOT EXISTS is_partner boolean NOT NULL DEFAULT false;
 ```
 
----
+### 4. Traduções
 
-### Alterações Necessárias
-
-#### 1. Database (Migrações SQL)
-
-- Adicionar coluna `subscription_status` (text, default 'inactive') e `subscription_stripe_id` (text, nullable) na tabela `professionals`
-- Adicionar coluna `professional_id` (uuid, nullable) na tabela `assessments` para vincular avaliação ao fisioterapeuta
-- Adicionar RLS: profissionais com assinatura ativa podem ler assessments vinculados ao seu `professional_id`
-
-#### 2. Stripe - Produto e Assinatura
-
-- Criar produto "Plano Profissional" no Stripe (R$49/mês recorrente) via ferramenta Stripe
-- Edge Function `create-pro-subscription`: cria checkout session com mode "subscription" para o fisioterapeuta autenticado
-- Edge Function `check-pro-subscription`: verifica se o fisioterapeuta tem assinatura ativa no Stripe, retorna status
-- Registrar em `supabase/config.toml`
-
-#### 3. Novo tipo de avaliação: "professional"
-
-- Rota: `/assessment/professional/:professionalId`
-- Fluxo reduzido: welcome → redflags → anamnesis → questionnaire → loading → result (diagnóstico apenas com hypothesis, confidence, summary, disclaimer -- sem explanation, recommendations, treatment)
-- **Sem** etapa de testes funcionais
-- **Sem** etapa de tratamento
-- **Sem** necessidade de login do paciente (assessment com user_id null mas professional_id preenchido)
-- Stepper adaptado: apenas 4 etapas (Triagem, Anamnese, Questionários, Resultado)
-- No resultado, exibir mensagem: "Este relatório foi enviado ao seu fisioterapeuta [nome]. Ele(a) complementará a avaliação presencialmente."
-
-#### 4. Dashboard Profissional (seção no Dashboard existente)
-
-Quando `professional.subscription_status === 'active'`:
-- Card "Gerar Link de Avaliação" com botão para copiar link `/assessment/professional/:id`
-- Lista de avaliações recebidas (assessments com `professional_id = profissional.id`) com:
-  - Nome/data, regiões de dor, score, hipótese diagnóstica
-  - Botão para ver detalhes completos (reutilizar AssessmentView)
-- Contador: "X avaliações recebidas este mês"
-
-#### 5. Paywall da Assinatura
-
-- No Dashboard, se o profissional é aprovado mas **não** tem assinatura ativa, exibir card de upsell:
-  - "Economize 30min por consulta"
-  - "Receba anamnese, mapa de dor e questionários antes do paciente chegar"
-  - CTA: "Assinar por R$49/mês"
-- Botão "Gerenciar assinatura" (customer-portal) para quem já assina
-
-#### 6. Ajustes no generate-diagnosis
-
-- Quando `mode === "professional"`: gerar apenas hypothesis, confidence, summary e disclaimer (igual ao basic), mas com acesso aos questionários (diferente do basic que não tem questionários)
-- Adicionar nota no resultado: "Hipótese preliminar para triagem. O diagnóstico definitivo será responsabilidade do profissional."
-
-#### 7. Traduções (LanguageContext)
-
-- Novas chaves PT/EN para: plano profissional, gerar link, avaliações recebidas, mensagens de paywall, disclaimer do modo profissional
-
----
+Novas chaves PT/EN para seção B2B na landing e para o admin de parceiros.
 
 ### Arquivos a criar/editar
 
 | Arquivo | Ação |
 |---|---|
-| `src/constants/pricing.ts` | Adicionar `PRO_PLAN_PRICE = 49` |
-| `supabase/functions/create-pro-subscription/index.ts` | Novo - checkout Stripe subscription |
-| `supabase/functions/check-pro-subscription/index.ts` | Novo - verificar assinatura ativa |
-| `supabase/config.toml` | Registrar novas functions |
-| `src/pages/Assessment.tsx` | Suportar mode "professional" com fluxo reduzido |
-| `src/components/assessment/AssessmentStepper.tsx` | Adicionar steps para mode "professional" |
-| `supabase/functions/generate-diagnosis/index.ts` | Suportar mode "professional" |
-| `src/pages/Dashboard.tsx` | Seção Pro Dashboard com link, lista de avaliações, paywall |
-| `src/App.tsx` | Nova rota `/assessment/professional/:professionalId` |
+| `src/components/ProfessionalSection.tsx` | Novo — seção B2B landing |
+| `src/pages/Index.tsx` | Adicionar ProfessionalSection |
+| `src/pages/Admin.tsx` | Adicionar card de gestão de parceiros |
+| `supabase/functions/check-pro-subscription/index.ts` | Verificar `is_partner` antes de Stripe |
+| `supabase/functions/manage-vip-users/index.ts` | Adicionar action PATCH para toggle `is_partner` |
+| `src/components/dashboard/ProDashboard.tsx` | Badge "Parceiro" para partners |
 | `src/contexts/LanguageContext.tsx` | Novas traduções |
-| Migration SQL | Colunas novas + RLS |
-
----
-
-### Segurança
-
-- Paciente **não precisa** de login para preencher avaliação via link do fisioterapeuta
-- Assessment é criado com `user_id = null` e `professional_id = fisio.id`
-- RLS garante que o fisioterapeuta só vê assessments com seu `professional_id`
-- Link só funciona se o profissional estiver aprovado **e** com assinatura ativa (validação no frontend + backend)
+| Migration SQL | Coluna `is_partner` |
 
