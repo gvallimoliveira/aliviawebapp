@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import logoAlivia from "@/assets/logo-alivia.png";
 
-interface WelcomeStepProps {
-  mode: "basic" | "premium";
+export interface WelcomeStepProps {
+  mode: "basic" | "premium" | "professional";
+  professionalName?: string;
   onContinue: () => void;
 }
 
-const WelcomeStep = ({ mode, onContinue }: WelcomeStepProps) => {
+const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) => {
   const { language } = useLanguage();
   const isPt = language === "pt";
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -21,6 +22,8 @@ const WelcomeStep = ({ mode, onContinue }: WelcomeStepProps) => {
   };
   const estimatedTime = mode === "premium"
     ? (isPt ? "5 a 8 minutos" : "5 to 8 minutes")
+    : mode === "professional"
+    ? (isPt ? "5 a 7 minutos" : "5 to 7 minutes")
     : (isPt ? "3 minutos" : "3 minutes");
 
   const steps = mode === "premium"
@@ -36,6 +39,21 @@ const WelcomeStep = ({ mode, onContinue }: WelcomeStepProps) => {
         {
           icon: <Activity className="h-5 w-5 text-primary" />,
           text: isPt ? "Diagnóstico detalhado + plano de tratamento" : "Detailed diagnosis + treatment plan",
+        },
+      ]
+    : mode === "professional"
+    ? [
+        {
+          icon: <ClipboardList className="h-5 w-5 text-primary" />,
+          text: isPt ? "Triagem de segurança rápida" : "Quick safety screening",
+        },
+        {
+          icon: <Stethoscope className="h-5 w-5 text-primary" />,
+          text: isPt ? "Anamnese completa e mapa de dor" : "Complete anamnesis and pain map",
+        },
+        {
+          icon: <Activity className="h-5 w-5 text-primary" />,
+          text: isPt ? "Questionários validados e hipótese preliminar" : "Validated questionnaires and preliminary hypothesis",
         },
       ]
     : [
@@ -72,12 +90,18 @@ const WelcomeStep = ({ mode, onContinue }: WelcomeStepProps) => {
 
         <div className="space-y-3 max-w-md">
           <h2 className="text-2xl font-bold text-foreground">
-            {isPt ? "Vamos entender sua dor juntos" : "Let's understand your pain together"}
+            {mode === "professional" && professionalName
+              ? (isPt ? `Avaliação pré-consulta com ${professionalName}` : `Pre-consultation assessment with ${professionalName}`)
+              : (isPt ? "Vamos entender sua dor juntos" : "Let's understand your pain together")}
           </h2>
           <p className="text-muted-foreground">
-            {isPt
-              ? `São apenas ${estimatedTime}. Vamos guiar você por algumas etapas simples.`
-              : `It only takes ${estimatedTime}. We'll guide you through a few simple steps.`}
+            {mode === "professional"
+              ? (isPt
+                ? `São apenas ${estimatedTime}. Suas respostas serão enviadas diretamente ao seu fisioterapeuta para uma avaliação mais assertiva.`
+                : `It only takes ${estimatedTime}. Your answers will be sent directly to your physiotherapist for a more accurate assessment.`)
+              : (isPt
+                ? `São apenas ${estimatedTime}. Vamos guiar você por algumas etapas simples.`
+                : `It only takes ${estimatedTime}. We'll guide you through a few simple steps.`)}
           </p>
         </div>
 

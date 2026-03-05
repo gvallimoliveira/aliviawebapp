@@ -16,6 +16,7 @@ serve(async (req) => {
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
+    const isProfessional = mode === "professional";
 
     // Detect shoulder-related complaint
     const shoulderComplaints = ["anamnesis.complaint.shoulder_pain"];
@@ -135,11 +136,11 @@ Response format (JSON):
   "hypothesis": "Main diagnostic hypothesis name",
   "confidence": "low" | "moderate" | "high",
   "summary": "Brief 1-2 sentence summary of the hypothesis",
-  ${isBasic ? "" : `"explanation": "Detailed explanation of what's happening in the body (2-3 paragraphs). Reference questionnaire findings when available.",
+  ${isBasic || isProfessional ? "" : `"explanation": "Detailed explanation of what's happening in the body (2-3 paragraphs). Reference questionnaire findings when available.",
   "reasoning": "Why this hypothesis based on the provided data, including questionnaire score interpretation",
   "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
   "functionalProfile": "Summary of the patient's functional limitations based on questionnaire subscale scores (e.g., most affected areas: daily activities, sport, quality of life)",`}
-  "disclaimer": "Medical disclaimer text"
+  "disclaimer": "${isProfessional ? (lang === "English" ? "Preliminary hypothesis for triage purposes. The definitive diagnosis will be the responsibility of the attending physiotherapist." : "Hipótese preliminar para fins de triagem. O diagnóstico definitivo será de responsabilidade do fisioterapeuta responsável.") : "Medical disclaimer text"}"
 }`;
 
     const userPrompt = `Patient anamnesis data:
@@ -167,7 +168,7 @@ ${questionnaireResults && questionnaireResults.length > 0 ? `Validated questionn
 ${questionnaireResults.map((q: any) => `- ${q.questionnaireName} (${q.questionnaireId.toUpperCase()}): Total score ${q.percentageScore}% | Interpretation: ${q.interpretation_pt || q.interpretation_en} | Severity: ${q.severity}
   Subscale scores: ${Object.entries(q.subscaleScores || {}).map(([k, v]) => `${k}: ${v}%`).join(", ")}`).join("\n")}` : "No validated questionnaires applied."}
 
-Assessment mode: ${isBasic ? "Basic (provide only hypothesis, confidence, summary and disclaimer)" : "Premium (provide full detailed analysis including functional test findings and questionnaire-based functional profile)"}
+Assessment mode: ${isBasic ? "Basic (provide only hypothesis, confidence, summary and disclaimer)" : isProfessional ? "Professional triage (provide only hypothesis, confidence, summary and disclaimer. The disclaimer MUST state this is a preliminary hypothesis for triage and the definitive diagnosis is the responsibility of the attending physiotherapist)" : "Premium (provide full detailed analysis including functional test findings and questionnaire-based functional profile)"}
 
 Generate the diagnostic hypothesis in valid JSON format.`;
 
