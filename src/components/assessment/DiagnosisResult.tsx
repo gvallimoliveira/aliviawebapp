@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
 
 interface Diagnosis {
   hypothesis: string;
@@ -22,6 +23,23 @@ interface DiagnosisResultProps {
   onGenerateTreatment?: () => void;
 }
 
+const BlurredPreview = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <Card className="rounded-xl overflow-hidden relative">
+    <CardHeader className="pb-2">
+      <CardTitle className="text-base">{title}</CardTitle>
+    </CardHeader>
+    <CardContent className="relative">
+      <div className="blur-[6px] select-none pointer-events-none">{children}</div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="flex items-center gap-2 rounded-full bg-background/90 border border-primary/30 px-4 py-2 shadow-lg">
+          <Lock className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium text-foreground">Premium</span>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
 const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment }: DiagnosisResultProps) => {
   const { t } = useLanguage();
 
@@ -33,6 +51,16 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
 
   const conf = confidenceConfig[diagnosis.confidence] || confidenceConfig.moderate;
   const ConfIcon = conf.icon;
+
+  // Fake blurred content for basic mode preview
+  const fakeExplanation = "Com base nos dados coletados durante sua avaliação, identificamos padrões consistentes que apontam para um quadro de origem mecânica. A região afetada apresenta sinais de sobrecarga crônica, possivelmente agravada por fatores posturais e de movimento repetitivo no dia a dia.";
+  const fakeRecommendations = [
+    "Exercícios de mobilidade articular diários por 10-15 minutos",
+    "Fortalecimento progressivo da musculatura estabilizadora",
+    "Ajustes ergonômicos no ambiente de trabalho",
+    "Técnicas de auto-liberação miofascial antes de dormir",
+  ];
+  const fakeTreatment = "Plano personalizado em 3 fases com exercícios específicos, critérios de progressão e vídeos demonstrativos para cada etapa do seu tratamento.";
 
   return (
     <motion.div
@@ -67,7 +95,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         </CardContent>
       </Card>
 
-      {/* Premium-only sections */}
+      {/* Premium-only sections (shown normally for premium, blurred for basic) */}
       {mode === "premium" && diagnosis.explanation && (
         <Card className="rounded-xl">
           <CardHeader className="pb-2">
@@ -121,29 +149,54 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         </Card>
       )}
 
-      {/* Basic mode: tip + upsell */}
+      {/* Basic mode: blurred preview + unlock CTA */}
       {mode === "basic" && (
-        <Card className="rounded-xl border-primary/30 bg-primary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              {t("diagnosis.upsell_title")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {t("diagnosis.upsell_text")}
-            </p>
-            <div className="text-center">
-              <Button
-                onClick={() => window.location.href = "/assessment/premium"}
-                className="rounded-xl"
-              >
-                {t("diagnosis.upgrade_cta")}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <>
+          <BlurredPreview title={t("diagnosis.explanation")}>
+            <p className="text-sm text-muted-foreground leading-relaxed">{fakeExplanation}</p>
+          </BlurredPreview>
+
+          <BlurredPreview title={t("diagnosis.recommendations")}>
+            <ul className="space-y-2">
+              {fakeRecommendations.map((rec, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <span>{rec}</span>
+                </li>
+              ))}
+            </ul>
+          </BlurredPreview>
+
+          <BlurredPreview title={t("treatment.title")}>
+            <p className="text-sm text-muted-foreground leading-relaxed">{fakeTreatment}</p>
+          </BlurredPreview>
+
+          {/* Unlock CTA */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="rounded-xl border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 shadow-lg shadow-primary/5">
+              <CardContent className="py-6 text-center space-y-4">
+                <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mx-auto">
+                  <Lock className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+                  {t("diagnosis.blurred_hint")}
+                </p>
+                <Button
+                  size="lg"
+                  onClick={() => window.location.href = "/assessment/premium"}
+                  className="rounded-xl gap-2 px-8 py-6 text-base"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {t("diagnosis.unlock_full")} {PREMIUM_PRICE_FORMATTED}
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </>
       )}
 
       {/* Disclaimer */}

@@ -26,7 +26,7 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.cta.basic": "Avaliação Básica Gratuita",
     "hero.cta.premium": "Avaliação Premium",
     "hero.badge": "Autoavaliação inteligente",
-    "hero.social_proof": "Mais de 100 pessoas já descobriram a causa da sua dor",
+    "hero.social_proof": "Mais de 1.600 avaliações realizadas",
     "hero.time_badge": "Resultado em menos de 15 minutos",
 
     // Comparison
@@ -248,6 +248,8 @@ const translations: Record<Language, Record<string, string>> = {
     "diagnosis.upgrade_cta": "Fazer Avaliação Premium",
     "diagnosis.upsell_title": "Olha a dica!",
     "diagnosis.upsell_text": "Sabemos que a sua dor está te preocupando! Não deixe esse problema aumentar até se tornar uma limitação na sua vida, podemos ajudar com orientações personalizadas, e com nosso plano de tratamento na avaliação Premium.",
+    "diagnosis.unlock_full": "Desbloquear resultado completo por",
+    "diagnosis.blurred_hint": "O seu diagnóstico completo está pronto — com explicação detalhada, recomendações e plano de tratamento personalizado.",
     "diagnosis.treatment_cta_text": "Seu diagnóstico está pronto! Agora gere seu plano de tratamento personalizado em 3 fases.",
     "diagnosis.generate_treatment": "Gerar Plano de Tratamento",
     "diagnosis.back": "Voltar",
@@ -619,7 +621,7 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.cta.basic": "Free Basic Assessment",
     "hero.cta.premium": "Premium Assessment",
     "hero.badge": "Smart self-assessment",
-    "hero.social_proof": "Over 100 people have already discovered the cause of their pain",
+    "hero.social_proof": "Over 1,600 assessments completed",
     "hero.time_badge": "Results in less than 15 minutes",
 
     // Comparison
@@ -841,6 +843,8 @@ const translations: Record<Language, Record<string, string>> = {
     "diagnosis.upgrade_cta": "Get Premium Assessment",
     "diagnosis.upsell_title": "Here's a tip!",
     "diagnosis.upsell_text": "We know your pain is worrying you! Don't let this problem grow until it becomes a limitation in your life — we can help with personalized guidance and our treatment plan in the Premium assessment.",
+    "diagnosis.unlock_full": "Unlock full results for",
+    "diagnosis.blurred_hint": "Your full diagnosis is ready — with detailed explanation, recommendations, and personalized treatment plan.",
     "diagnosis.treatment_cta_text": "Your diagnosis is ready! Now generate your personalized 3-phase treatment plan.",
     "diagnosis.generate_treatment": "Generate Treatment Plan",
     "diagnosis.back": "Back",
