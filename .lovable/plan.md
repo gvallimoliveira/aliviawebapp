@@ -1,41 +1,36 @@
+## Plano: Mini Landing Page para Profissionais (`/profissionais`)
+
+### Objetivo
+
+Criar uma pagina dedicada em `/profissionais` que funciona como mini landing page B2B. O link "Para Profissionais" no header passara a apontar para esta pagina em vez de `/professional/register`. A pagina apresenta beneficios, funcionalidades do painel, preco e CTA de cadastro/login.
+
+### Nova pagina: `src/pages/ProfessionalLanding.tsx`
+
+Estrutura da pagina:
+
+1. **Header** com logo + botao "Ja sou profissional" (leva ao `/professional/register` ou `/auth`)
+2. **Hero** com titulo forte ("Transforme sua pratica clinica com IA: esteja um passo a frente dos demais"), subtitulo e CTA principal
+3. **Beneficios** - Reutiliza os 4 cards de beneficios ja existentes no `ProfessionalSection` (economia de tempo, assertividade, relatorios, produtividade)
+4. **Como funciona** - 3-4 passos visuais: Cadastre-se, Gere seu link, Envie ao paciente, Receba o relatorio
+5. **Funcionalidades do Painel** - Lista de features: link personalizado, dashboard com relatorios, nome do paciente, hipotese diagnostica IA, resumo clinico
+6. **Preco** - Card com R$49/mes, lista de inclusoes, CTA "Comecar agora"
+7. **FAQ** curto (2-3 perguntas especificas para profissionais)
+8. **Footer** simples
+
+### Arquivos editados
 
 
-## Plano: Geração de Artigos com IA no Painel Admin do Blog
+| Arquivo                                  | Mudanca                                                             |
+| ---------------------------------------- | ------------------------------------------------------------------- |
+| `src/pages/ProfessionalLanding.tsx`      | Nova pagina (mini landing B2B)                                      |
+| `src/App.tsx`                            | Rota `/profissionais`                                               |
+| `src/components/Header.tsx`              | Link "Para Profissionais" aponta para `/profissionais`              |
+| `src/components/ProfessionalSection.tsx` | CTA aponta para `/profissionais` em vez de `/professional/register` |
+| `src/contexts/LanguageContext.tsx`       | Traducoes novas para a mini landing                                 |
 
-### Visão Geral
 
-Adicionar botão "Gerar com IA" no formulário do blog que recebe tema e palavras-chave, envia para edge function que usa Lovable AI (Gemini 3 Flash) com prompt especializado em fisioterapia, SEO, gatilhos mentais e conversão para avaliação. O resultado preenche título, conteúdo, excerpt e tags automaticamente como rascunho editável.
+### Fluxo do usuario
 
-### Edge Function: `generate-blog-article`
-
-Nova edge function que recebe `{ topic, keywords[] }` e chama o Lovable AI Gateway com prompt de sistema especializado:
-
-- Papel: redator de conteúdo de saúde/fisioterapia
-- Instruções: linguagem simples e acessível, gatilhos mentais (urgência, autoridade, prova social), SEO com palavras-chave naturalmente distribuídas, CTA para avaliação Aliv.iA
-- Output via tool calling estruturado: `{ title_pt, title_en, content_pt, content_en, excerpt_pt, excerpt_en, tags[] }`
-- Modelo: `google/gemini-3-flash-preview`
-
-```toml
-[functions.generate-blog-article]
-verify_jwt = false
-```
-
-### Frontend: BlogManagement.tsx
-
-- Adicionar botão "✨ Gerar com IA" ao lado de "Novo Artigo"
-- Ao clicar, abre mini-formulário com:
-  - Input "Tema do artigo" (ex: "dor no ombro")
-  - Input "Palavras-chave SEO" (separadas por vírgula)
-  - Botão "Gerar Rascunho"
-- Loading state com spinner durante geração
-- Resultado preenche o formulário de edição existente (título, conteúdo, excerpt, tags, slug) como rascunho
-- Admin pode revisar/editar antes de salvar
-
-### Arquivos
-
-| Arquivo | Mudança |
-|---|---|
-| `supabase/functions/generate-blog-article/index.ts` | Nova edge function com prompt especializado e tool calling |
-| `supabase/config.toml` | Adicionar `[functions.generate-blog-article]` |
-| `src/components/admin/BlogManagement.tsx` | Botão "Gerar com IA", mini-form de tema/keywords, integração com edge function |
-
+- Header: "Para Profissionais" → `/profissionais` (mini landing)
+- Na mini landing: "Comecar agora" → `/auth` (se nao logado) ou `/professional/register` (se logado)
+- Na mini landing: "Ja sou profissional" → `/professional/register`
