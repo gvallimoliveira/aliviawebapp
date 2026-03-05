@@ -1,47 +1,52 @@
 
 
-## Plano: Separar Dashboard em Tabs (Cliente / Profissional) + Link de avaliação na página de registro
+## Plano: Welcome + Nome do Paciente no Fluxo Profissional + Fix do Erro
 
-### Problema
-1. Dashboard mistura conteúdo de cliente (avaliações pessoais, premium, diário de dor) com conteúdo profissional (ProDashboard, referrals) — confuso para quem é ambos.
-2. Página `/professional/register` só tem formulário de cadastro, falta o link de avaliação para enviar ao paciente.
+### Problemas Identificados
+
+1. **Erro na anamnese**: `AnamnesisForm` aceita `mode: "basic" | "premium"` mas `ProfessionalAssessment` passa `mode="professional"` (cast forçado). Isso pode causar comportamento inesperado em lógica condicional dentro do formulário.
+
+2. **Sem onboarding para paciente**: O paciente que acessa o link do profissional vai direto ao `WelcomeStep` genérico sem identificar-se. O fisioterapeuta não sabe qual paciente completou qual avaliação.
+
+3. **Sem nome do paciente**: A tabela `assessments` não armazena o nome do paciente (quando `user_id` é null, como no fluxo profissional). O `ProDashboard` lista avaliações sem identificação.
 
 ### Solução
 
-**1. Dashboard com Tabs para usuários profissionais**
+**1. Adicionar coluna `patient_name` na tabela `assessments`**
 
-Quando o usuário é profissional cadastrado e aprovado, o Dashboard exibe duas abas usando o componente `Tabs`:
+```sql
+ALTER TABLE public.assessments ADD COLUMN IF NOT EXISTS patient_name text;
+```
 
-- **"Minha Saúde"** (tab padrão): conteúdo atual de cliente — premium status, quick actions (avaliação básica/premium), histórico de avaliações pessoais, diário de dor, comparativo, follow-ups, referral card.
-- **"Painel Profissional"**: ProDashboard (link de avaliação, stats, lista de pacientes), referrals profissionais.
+Permite que avaliações profissionais (sem user_id) tenham o nome do paciente.
 
-Para usuários que NÃO são profissionais, nada muda — o dashboard continua como está, sem tabs.
+**2. Criar tela de boas-vindas específica para paciente profissional**
 
-**2. Link de avaliação na página `/professional/register`**
+Novo step `"patient_info"` no `ProfessionalAssessment.tsx`, entre `"welcome"` e `"redflags"`:
+- Saudação personalizada: "Olá! O(a) Dr(a). {nome} solicitou que você preencha esta avaliação."
+- Campo obrigatório: Nome completo do paciente
+- Breve explicação do que vai acontecer (3 etapas, ~5 min)
+- Botão "Continuar" que salva o nome e avança para red flags
 
-Para profissionais já cadastrados e aprovados (com assinatura ativa ou parceiro), adicionar um card acima do formulário com:
-- O link de avaliação copiável (`/assessment/professional/:id`)
-- Botão "Copiar link"
-- Breve texto explicativo
+**3. Corrigir tipo do `mode` no `AnamnesisForm`**
+
+Atualizar a interface `AnamnesisFormProps` para aceitar `"basic" | "premium" | "professional"` eliminando os casts `as any`.
+
+**4. Salvar `patient_name` na avaliação**
+
+Ao criar o assessment em `ProfessionalAssessment`, incluir o `patient_name` no insert.
+
+**5. Exibir nome do paciente no `ProDashboard`**
+
+Na lista de avaliações recebidas, mostrar `patient_name` ao invés de "Paciente anônimo".
 
 ### Arquivos a editar
 
 | Arquivo | Mudança |
 |---|---|
-| `src/pages/Dashboard.tsx` | Envolver conteúdo em `Tabs` quando `professional?.approved`. Tab "Minha Saúde" com conteúdo cliente, tab "Painel Profissional" com `ProDashboard` + referrals |
-| `src/pages/ProfessionalRegister.tsx` | Adicionar card com link de avaliação copiável para profissionais aprovados com assinatura ativa ou `is_partner` |
-| `src/contexts/LanguageContext.tsx` | Novas traduções para labels das tabs e card de link |
-
-### Estrutura do Dashboard (quando profissional)
-
-```text
-┌──────────────────────────────────────┐
-│  Welcome, Nome                       │
-│  ┌──────────────┬───────────────────┐ │
-│  │ Minha Saúde  │ Painel Profiss.   │ │
-│  └──────────────┴───────────────────┘ │
-│                                      │
-│  [conteúdo da tab selecionada]       │
-└──────────────────────────────────────┘
-```
+| Migration SQL | Coluna `patient_name` em `assessments` |
+| `src/pages/ProfessionalAssessment.tsx` | Novo step `patient_info` com input de nome; salvar `patient_name` no insert; remover casts `as any` |
+| `src/components/assessment/AnamnesisForm.tsx` | Aceitar `mode: "professional"` no tipo |
+| `src/components/dashboard/ProDashboard.tsx` | Exibir `patient_name` na lista de avaliações |
+| `src/contexts/LanguageContext.tsx` | Traduções para tela de nome do paciente |
 
