@@ -20,6 +20,7 @@ import ProfessionalAssessment from "./pages/ProfessionalAssessment";
 import ResetPassword from "./pages/ResetPassword";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import ProfessionalLanding from "./pages/ProfessionalLanding";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/profissionais" element={<ProfessionalLanding />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
