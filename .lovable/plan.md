@@ -1,58 +1,109 @@
-# Landing Page: Imagens Atualizadas + Gatilhos Mentais
 
-## 1. Substituir imagens do "Como Funciona"
 
-Expandir de 3 para 6 etapas visuais mostrando o fluxo real do app, usando os screenshots enviados. Layout em grid responsivo (2 colunas mobile, 3 desktop) com as imagens enquadradas em mockup de celular/browser.
+## Plano: Canal B2B - Plano Profissional (R$49/mês)
 
-Mapeamento das imagens:
+### Visão Geral
 
-- Etapa 1 "Conte sobre sua dor" → `anamnesealivia1.JPG`
-- Etapa 2 "Marque onde dói" → `anamnsealivia3.JPG` (slider de intensidade, mais visual que o pain map vazio)
-- Etapa 3 "Questionários validados" → `quest.JPG`
-- Etapa 4 "Testes funcionais" → `funcao.JPG`
-- Etapa 5 "Diagnóstico detalhado" → `diag.JPG`
-- Etapa 6 "Plano de tratamento" → `fases.JPG`
+Criar um sistema de assinatura mensal para fisioterapeutas que permite enviar links de avaliação personalizada aos pacientes antes da consulta. A avaliação do link do fisioterapeuta inclui apenas: triagem de red flags, anamnese, questionários e mapa de dor -- **sem** testes funcionais e **sem** plano de tratamento (esses ficam para o profissional fazer presencialmente).
 
-Copiar as 6 imagens para `src/assets/` e atualizar `HowItWorksSection.tsx` com os novos imports e dados. Atualizar as chaves de traducao em `LanguageContext.tsx` para os 6 passos.
+---
 
-## 2. Gatilhos Mentais na Landing Page
+### Arquitetura
 
-### A. Hero -- Urgencia + Curiosidade
+```text
+┌──────────────────────────────────────────────────────────┐
+│  Fisioterapeuta (assinante R$49/mês)                     │
+│  Dashboard Pro → Gera link → Paciente preenche           │
+│  → Fisio vê relatório completo do paciente               │
+└──────────────────────────────────────────────────────────┘
 
-- Adicionar subtexto abaixo do CTA: "Mais de 100 pessoas ja descobriram a causa da sua dor" (prova social imediata).
-- Adicionar micro-badge "Resultado em menos de 15 minutos" para reduzir friccao percebida.
+Fluxo:
+1. Fisio se cadastra/faz login → /professional/register
+2. Fisio assina plano mensal (Stripe subscription)
+3. Dashboard Pro aparece com botão "Gerar link para paciente"
+4. Link público: /assessment/professional/:professionalId
+5. Paciente preenche: red flags → anamnese → questionários → diagnóstico (sem testes funcionais, sem tratamento)
+6. Assessment é salvo com professional_id vinculado
+7. Fisio vê lista de avaliações dos seus pacientes no Dashboard Pro
+```
 
-### B. Secao "Por que a Aliv.iA?" (Highlights) -- Autoridade
+---
 
-- Adicionar um destaque de autoridade: "Formulada por fisioterapeuta pos-graduado com 7+ anos de experiencia" com icone de selo/verificacao.
+### Alterações Necessárias
 
-### C. Secao Comparativa -- Aversao a Perda + Ancoragem
+#### 1. Database (Migrações SQL)
 
-- Adicionar frase de ancoragem acima da tabela: "Uma sessao de fisioterapia custa em media R$150-300. A Alivia oferece avaliacao completa + plano de tratamento por apenas R$129."
-- Destacar visualmente os recursos que o usuario PERDE ao nao escolher Premium (cor mais forte nos "X" do basico).
+- Adicionar coluna `subscription_status` (text, default 'inactive') e `subscription_stripe_id` (text, nullable) na tabela `professionals`
+- Adicionar coluna `professional_id` (uuid, nullable) na tabela `assessments` para vincular avaliação ao fisioterapeuta
+- Adicionar RLS: profissionais com assinatura ativa podem ler assessments vinculados ao seu `professional_id`
 
-### D. Secao de screenshots -- Curiosidade + Prova de Valor
+#### 2. Stripe - Produto e Assinatura
 
-- Abaixo do "Como Funciona", adicionar frase-gatilho: "Veja por dentro o que voce vai receber" antes das imagens.
-- Adicionar 2 imagens extras como "bonus visual": o relatorio PDF (`relatorio.JPG`) e o diario de dor (`diariodor.JPG`) com labels como "Exclusivo Premium".
+- Criar produto "Plano Profissional" no Stripe (R$49/mês recorrente) via ferramenta Stripe
+- Edge Function `create-pro-subscription`: cria checkout session com mode "subscription" para o fisioterapeuta autenticado
+- Edge Function `check-pro-subscription`: verifica se o fisioterapeuta tem assinatura ativa no Stripe, retorna status
+- Registrar em `supabase/config.toml`
 
-### E. CTA flutuante -- Urgencia
+#### 3. Novo tipo de avaliação: "professional"
 
-- Adicionar um botao CTA fixo no rodape (sticky bottom bar) que aparece ao rolar para baixo, com texto "Comece sua avaliacao agora" e botao para Premium.
+- Rota: `/assessment/professional/:professionalId`
+- Fluxo reduzido: welcome → redflags → anamnesis → questionnaire → loading → result (diagnóstico apenas com hypothesis, confidence, summary, disclaimer -- sem explanation, recommendations, treatment)
+- **Sem** etapa de testes funcionais
+- **Sem** etapa de tratamento
+- **Sem** necessidade de login do paciente (assessment com user_id null mas professional_id preenchido)
+- Stepper adaptado: apenas 4 etapas (Triagem, Anamnese, Questionários, Resultado)
+- No resultado, exibir mensagem: "Este relatório foi enviado ao seu fisioterapeuta [nome]. Ele(a) complementará a avaliação presencialmente."
 
-## Arquivos afetados
+#### 4. Dashboard Profissional (seção no Dashboard existente)
 
-- `src/assets/` -- 8 imagens novas copiadas
-- `src/components/HowItWorksSection.tsx` -- expandir para 6+ etapas, nova secao "por dentro"
-- `src/components/HeroSection.tsx` -- adicionar micro-badges de prova social e tempo
-- `src/components/HighlightsSection.tsx` -- adicionar card de autoridade
-- `src/components/ComparisonSection.tsx` -- adicionar frase de ancoragem de preco
-- `src/contexts/LanguageContext.tsx` -- novas chaves de traducao (pt + en)
-- `src/pages/Index.tsx` -- adicionar componente de CTA sticky
+Quando `professional.subscription_status === 'active'`:
+- Card "Gerar Link de Avaliação" com botão para copiar link `/assessment/professional/:id`
+- Lista de avaliações recebidas (assessments com `professional_id = profissional.id`) com:
+  - Nome/data, regiões de dor, score, hipótese diagnóstica
+  - Botão para ver detalhes completos (reutilizar AssessmentView)
+- Contador: "X avaliações recebidas este mês"
 
-## Detalhes tecnicos
+#### 5. Paywall da Assinatura
 
-- Imagens copiadas com `lov-copy` para `src/assets/step-*.jpg`
-- Layout do HowItWorksSection: grid `grid-cols-2 md:grid-cols-3` com cards menores e imagens com `rounded-xl shadow-lg border`
-- CTA sticky: `fixed bottom-0` com `z-50`, aparece via scroll listener ou Intersection Observer, animado com framer-motion
-- Badge "Exclusivo Premium" sobre imagens: `absolute` posicionado com fundo primary
+- No Dashboard, se o profissional é aprovado mas **não** tem assinatura ativa, exibir card de upsell:
+  - "Economize 30min por consulta"
+  - "Receba anamnese, mapa de dor e questionários antes do paciente chegar"
+  - CTA: "Assinar por R$49/mês"
+- Botão "Gerenciar assinatura" (customer-portal) para quem já assina
+
+#### 6. Ajustes no generate-diagnosis
+
+- Quando `mode === "professional"`: gerar apenas hypothesis, confidence, summary e disclaimer (igual ao basic), mas com acesso aos questionários (diferente do basic que não tem questionários)
+- Adicionar nota no resultado: "Hipótese preliminar para triagem. O diagnóstico definitivo será responsabilidade do profissional."
+
+#### 7. Traduções (LanguageContext)
+
+- Novas chaves PT/EN para: plano profissional, gerar link, avaliações recebidas, mensagens de paywall, disclaimer do modo profissional
+
+---
+
+### Arquivos a criar/editar
+
+| Arquivo | Ação |
+|---|---|
+| `src/constants/pricing.ts` | Adicionar `PRO_PLAN_PRICE = 49` |
+| `supabase/functions/create-pro-subscription/index.ts` | Novo - checkout Stripe subscription |
+| `supabase/functions/check-pro-subscription/index.ts` | Novo - verificar assinatura ativa |
+| `supabase/config.toml` | Registrar novas functions |
+| `src/pages/Assessment.tsx` | Suportar mode "professional" com fluxo reduzido |
+| `src/components/assessment/AssessmentStepper.tsx` | Adicionar steps para mode "professional" |
+| `supabase/functions/generate-diagnosis/index.ts` | Suportar mode "professional" |
+| `src/pages/Dashboard.tsx` | Seção Pro Dashboard com link, lista de avaliações, paywall |
+| `src/App.tsx` | Nova rota `/assessment/professional/:professionalId` |
+| `src/contexts/LanguageContext.tsx` | Novas traduções |
+| Migration SQL | Colunas novas + RLS |
+
+---
+
+### Segurança
+
+- Paciente **não precisa** de login para preencher avaliação via link do fisioterapeuta
+- Assessment é criado com `user_id = null` e `professional_id = fisio.id`
+- RLS garante que o fisioterapeuta só vê assessments com seu `professional_id`
+- Link só funciona se o profissional estiver aprovado **e** com assinatura ativa (validação no frontend + backend)
+
