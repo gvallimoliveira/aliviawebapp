@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
+  AlertTriangle,
 } from "lucide-react";
 
 interface ProDashboardProps {
@@ -253,27 +254,52 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             {patientAssessments.map((a) => {
               const regions = (a.pain_regions || []).map((r: string) => painRegionLabels[r] || r).slice(0, 3);
               const hypothesis = a.diagnosis?.hypothesis;
+              const isRedFlagged = a.status === "red_flagged" || (a as any).red_flags != null;
+              const redFlagItems = (a as any).red_flags
+                ? Object.entries((a as any).red_flags).filter(([, v]) => v === true).map(([k]) => k)
+                : [];
               return (
                 <Card
                   key={a.id}
-                  className="cursor-pointer hover:shadow-md transition-all border-border/60 hover:border-border group"
+                  className={`cursor-pointer hover:shadow-md transition-all border-border/60 hover:border-border group ${isRedFlagged ? "border-destructive/30" : ""}`}
                   onClick={() => navigate(`/assessment/view/${a.id}`)}
                 >
                   <CardContent className="py-3 px-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 space-y-1.5 min-w-0">
-                        <p className="text-sm font-semibold text-foreground">
-                          {(a as any).patient_name || t("pro.anonymous_patient")}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold text-foreground">
+                            {(a as any).patient_name || t("pro.anonymous_patient")}
+                          </p>
+                          {isRedFlagged && (
+                            <Badge variant="destructive" className="text-[10px] gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              {t("pro.redflag_badge")}
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Calendar className="h-3 w-3" />
                           {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                           {a.pain_score != null && <span>• Dor: {a.pain_score}/10</span>}
+                          {isRedFlagged && !hypothesis && (
+                            <span className="text-destructive font-medium">• {t("pro.redflag_status")}</span>
+                          )}
                         </div>
                         {hypothesis && (
                           <p className="text-sm font-medium text-foreground line-clamp-1">{hypothesis}</p>
                         )}
-                        {regions.length > 0 && (
+                        {isRedFlagged && redFlagItems.length > 0 && (
+                          <div className="flex items-start gap-1 flex-wrap text-[10px] text-destructive">
+                            {redFlagItems.slice(0, 3).map((key: string, i: number) => (
+                              <span key={i} className="bg-destructive/10 px-1.5 py-0.5 rounded-full">{t(key)}</span>
+                            ))}
+                            {redFlagItems.length > 3 && (
+                              <span className="bg-destructive/10 px-1.5 py-0.5 rounded-full">+{redFlagItems.length - 3}</span>
+                            )}
+                          </div>
+                        )}
+                        {regions.length > 0 && !isRedFlagged && (
                           <div className="flex items-center gap-1 flex-wrap">
                             <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
                             {regions.map((r: string, i: number) => (

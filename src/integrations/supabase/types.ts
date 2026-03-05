@@ -27,6 +27,7 @@ export type Database = {
           patient_name: string | null
           payment_status: string | null
           professional_id: string | null
+          red_flags: Json | null
           redo_used: boolean | null
           status: string
           test_results: Json | null
@@ -47,6 +48,7 @@ export type Database = {
           patient_name?: string | null
           payment_status?: string | null
           professional_id?: string | null
+          red_flags?: Json | null
           redo_used?: boolean | null
           status?: string
           test_results?: Json | null
@@ -67,6 +69,7 @@ export type Database = {
           patient_name?: string | null
           payment_status?: string | null
           professional_id?: string | null
+          red_flags?: Json | null
           redo_used?: boolean | null
           status?: string
           test_results?: Json | null

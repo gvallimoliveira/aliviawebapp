@@ -664,6 +664,14 @@ const translations: Record<Language, Record<string, string>> = {
     "prof.assessment_link_desc": "Envie este link para seus pacientes realizarem a triagem antes da consulta presencial.",
     "prof.copy_link": "Copiar link",
     "prof.link_copied": "Link copiado!",
+
+    // Red Flag Alert - Professional mode
+    "redflag_alert.pro_title": "Atenção: Sinais de Alerta Identificados",
+    "redflag_alert.pro_message": "Na triagem de segurança, foram identificados sinais de alerta (bandeiras vermelhas) que requerem atenção. Informe ao(à) fisioterapeuta {name} sobre esses achados. Por segurança, é recomendado buscar avaliação médica antes de prosseguir com o tratamento fisioterapêutico.",
+    "redflag_alert.pro_recommendation": "O(a) fisioterapeuta receberá um alerta sobre esses achados e poderá orientá-lo(a) sobre os próximos passos.",
+    "redflag_alert.pro_items_title": "Itens identificados na triagem:",
+    "pro.redflag_badge": "⚠ Red Flags",
+    "pro.redflag_status": "Triagem com alertas",
   },
   en: {
     // Nav
@@ -1313,6 +1321,14 @@ const translations: Record<Language, Record<string, string>> = {
     "prof.assessment_link_desc": "Send this link to your patients for pre-consultation triage.",
     "prof.copy_link": "Copy link",
     "prof.link_copied": "Link copied!",
+
+    // Red Flag Alert - Professional mode
+    "redflag_alert.pro_title": "Attention: Alert Signs Identified",
+    "redflag_alert.pro_message": "During the safety screening, alert signs (red flags) were identified that require attention. Please inform physiotherapist {name} about these findings. For safety, it is recommended to seek medical evaluation before proceeding with physiotherapy treatment.",
+    "redflag_alert.pro_recommendation": "Your physiotherapist will receive an alert about these findings and can guide you on next steps.",
+    "redflag_alert.pro_items_title": "Items identified in screening:",
+    "pro.redflag_badge": "⚠ Red Flags",
+    "pro.redflag_status": "Screening with alerts",
   },
 };
 
