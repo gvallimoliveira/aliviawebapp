@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "lucide-react";
+import { setSeo, setBlogListJsonLd, SEO_CONSTANTS } from "@/lib/seo";
 
 interface BlogPost {
   id: string;
@@ -26,21 +27,16 @@ const Blog = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = language === "pt"
-      ? "Blog | Aliv.iA — Artigos sobre dor e fisioterapia"
-      : "Blog | Aliv.iA — Articles about pain and physiotherapy";
-
-    const meta = document.querySelector('meta[name="description"]');
-    const desc = language === "pt"
-      ? "Artigos sobre dor musculoesquelética, fisioterapia, exercícios e bem-estar. Dicas de especialistas para cuidar da sua saúde."
-      : "Articles about musculoskeletal pain, physiotherapy, exercises and wellness. Expert tips to take care of your health.";
-    if (meta) meta.setAttribute("content", desc);
-    else {
-      const m = document.createElement("meta");
-      m.name = "description";
-      m.content = desc;
-      document.head.appendChild(m);
-    }
+    setSeo({
+      title: language === "pt"
+        ? "Blog | Aliv.iA — Artigos sobre dor e fisioterapia"
+        : "Blog | Aliv.iA — Articles about pain and physiotherapy",
+      description: language === "pt"
+        ? "Artigos sobre dor musculoesquelética, fisioterapia, exercícios e bem-estar. Dicas de especialistas para cuidar da sua saúde."
+        : "Articles about musculoskeletal pain, physiotherapy, exercises and wellness. Expert tips to take care of your health.",
+      url: `${SEO_CONSTANTS.SITE_URL}/blog`,
+      type: "website",
+    });
   }, [language]);
 
   useEffect(() => {
@@ -50,8 +46,20 @@ const Blog = () => {
         .select("id, slug, title_pt, title_en, excerpt_pt, excerpt_en, cover_image_url, tags, published_at, author_name")
         .eq("published", true)
         .order("published_at", { ascending: false });
-      setPosts((data as BlogPost[]) || []);
+      const fetched = (data as BlogPost[]) || [];
+      setPosts(fetched);
       setLoading(false);
+
+      if (fetched.length > 0) {
+        setBlogListJsonLd(
+          fetched.map((p) => ({
+            title: p.title_pt,
+            url: `${SEO_CONSTANTS.SITE_URL}/blog/${p.slug}`,
+            image: p.cover_image_url || undefined,
+            date: p.published_at || undefined,
+          }))
+        );
+      }
     };
     fetchPosts();
   }, []);

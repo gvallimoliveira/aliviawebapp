@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar } from "lucide-react";
+import { setSeo, setBlogPostJsonLd, SEO_CONSTANTS } from "@/lib/seo";
 
 interface Post {
   id: string;
@@ -46,18 +47,29 @@ const BlogPost = () => {
   useEffect(() => {
     if (!post) return;
     const title = (language === "en" && post.title_en) ? post.title_en : post.title_pt;
-    document.title = `${title} | Aliv.iA Blog`;
+    const excerpt = (language === "en" && post.excerpt_en) ? post.excerpt_en : (post.excerpt_pt || title);
+    const url = `${SEO_CONSTANTS.SITE_URL}/blog/${post.slug}`;
 
-    const excerpt = (language === "en" && post.excerpt_en) ? post.excerpt_en : post.excerpt_pt;
-    const meta = document.querySelector('meta[name="description"]');
-    const desc = excerpt || title;
-    if (meta) meta.setAttribute("content", desc);
-    else {
-      const m = document.createElement("meta");
-      m.name = "description";
-      m.content = desc;
-      document.head.appendChild(m);
-    }
+    setSeo({
+      title: `${title} | Aliv.iA Blog`,
+      description: excerpt,
+      url,
+      image: post.cover_image_url || undefined,
+      type: "article",
+      publishedAt: post.published_at || undefined,
+      author: post.author_name,
+      tags: post.tags,
+    });
+
+    setBlogPostJsonLd({
+      title,
+      description: excerpt,
+      url,
+      image: post.cover_image_url || undefined,
+      publishedAt: post.published_at || undefined,
+      author: post.author_name,
+      tags: post.tags,
+    });
   }, [post, language]);
 
   const getTitle = (p: Post) => (language === "en" && p.title_en) ? p.title_en : p.title_pt;

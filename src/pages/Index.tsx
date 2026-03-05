@@ -12,6 +12,7 @@ import FaqSection from "@/components/FaqSection";
 import SocialSection from "@/components/SocialSection";
 import Footer from "@/components/Footer";
 import StickyCTA from "@/components/StickyCTA";
+import { setSeo, setLandingJsonLd } from "@/lib/seo";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -22,6 +23,16 @@ const Index = () => {
       localStorage.setItem("alivia_referral_code", ref);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    setSeo({
+      title: "Aliv.iA – Avaliação Musculoesquelética Inteligente",
+      description: "Avaliação musculoesquelética com inteligência artificial. Diagnóstico preliminar e plano de tratamento personalizado em minutos.",
+      url: "https://alivia.app",
+      type: "website",
+    });
+    setLandingJsonLd();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
