@@ -645,6 +645,16 @@ const translations: Record<Language, Record<string, string>> = {
     "b2b.cta_desc": "Tudo isso por apenas",
     "b2b.cta_cancel": "Cancele quando quiser. Sem fidelidade.",
     "b2b.cta_button": "Assinar Plano Profissional",
+
+    // Dashboard Tabs
+    "dashboard.tab_my_health": "Minha Saúde",
+    "dashboard.tab_professional": "Painel Profissional",
+
+    // Professional Link Card
+    "prof.assessment_link_title": "Link de Avaliação para Pacientes",
+    "prof.assessment_link_desc": "Envie este link para seus pacientes realizarem a triagem antes da consulta presencial.",
+    "prof.copy_link": "Copiar link",
+    "prof.link_copied": "Link copiado!",
   },
   en: {
     // Nav
@@ -1275,6 +1285,16 @@ const translations: Record<Language, Record<string, string>> = {
     "b2b.cta_desc": "All of this for just",
     "b2b.cta_cancel": "Cancel anytime. No commitment.",
     "b2b.cta_button": "Subscribe to Professional Plan",
+
+    // Dashboard Tabs
+    "dashboard.tab_my_health": "My Health",
+    "dashboard.tab_professional": "Professional Panel",
+
+    // Professional Link Card
+    "prof.assessment_link_title": "Patient Assessment Link",
+    "prof.assessment_link_desc": "Send this link to your patients for pre-consultation triage.",
+    "prof.copy_link": "Copy link",
+    "prof.link_copied": "Link copied!",
   },
 };
 

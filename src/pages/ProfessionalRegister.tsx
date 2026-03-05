@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, UserPlus, Instagram } from "lucide-react";
+import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const SPECIALTIES = [
@@ -33,6 +33,7 @@ const ProfessionalRegister = () => {
   const [saving, setSaving] = useState(false);
   const [existing, setExisting] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const [form, setForm] = useState({
     full_name: "",
@@ -151,7 +152,44 @@ const ProfessionalRegister = () => {
         </div>
       </header>
 
-      <main className="container max-w-2xl py-8 px-4">
+      <main className="container max-w-2xl py-8 px-4 space-y-6">
+        {/* Assessment Link Card for approved professionals */}
+        {existing?.approved && (existing.subscription_status === "active" || existing.is_partner) && (
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                  <Link2 className="h-5 w-5 text-primary" />
+                </div>
+                {t("prof.assessment_link_title")}
+              </CardTitle>
+              <CardDescription>{t("prof.assessment_link_desc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Input
+                  readOnly
+                  value={`${window.location.origin}/assessment/professional/${existing.id}`}
+                  className="text-sm bg-muted/50 font-mono"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-1.5"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/assessment/professional/${existing.id}`);
+                    setLinkCopied(true);
+                    toast({ title: t("prof.link_copied") });
+                    setTimeout(() => setLinkCopied(false), 2000);
+                  }}
+                >
+                  {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {t("prof.copy_link")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <Card className="rounded-2xl">
           <CardHeader className="text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 mb-2">
