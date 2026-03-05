@@ -1,52 +1,44 @@
 
 
-## Plano: Welcome + Nome do Paciente no Fluxo Profissional + Fix do Erro
+## Plano: Fix Questionário Quadril + Fix Avaliação Profissional Não Chega ao Painel
 
-### Problemas Identificados
+### Problema 1: HOOS não aparece para dor no quadril
 
-1. **Erro na anamnese**: `AnamnesisForm` aceita `mode: "basic" | "premium"` mas `ProfessionalAssessment` passa `mode="professional"` (cast forçado). Isso pode causar comportamento inesperado em lógica condicional dentro do formulário.
+O mapa de dor nas vistas laterais usa IDs `"hip_left"` e `"hip_right"`, mas o `regionMapping` do HOOS lista `"hip_side"` (que não existe no mapa). Resultado: selecionar quadril na vista lateral não aciona o HOOS.
 
-2. **Sem onboarding para paciente**: O paciente que acessa o link do profissional vai direto ao `WelcomeStep` genérico sem identificar-se. O fisioterapeuta não sabe qual paciente completou qual avaliação.
+**Fix**: Adicionar `"hip_left"` e `"hip_right"` ao `regionMapping` do HOOS em `src/data/questionnaireData.ts`.
 
-3. **Sem nome do paciente**: A tabela `assessments` não armazena o nome do paciente (quando `user_id` é null, como no fluxo profissional). O `ProDashboard` lista avaliações sem identificação.
+### Problema 2: Avaliação profissional não é salva/atualizada (bug crítico de RLS)
 
-### Solução
+A tabela `assessments` tem duas políticas **RESTRICTIVE** para UPDATE:
+1. "Anyone can update professional assessments" — `type = 'professional' AND user_id IS NULL AND professional_id IS NOT NULL` ✅
+2. "Users can update their own assessments" — `auth.uid() = user_id` ❌
 
-**1. Adicionar coluna `patient_name` na tabela `assessments`**
+Como ambas são RESTRICTIVE, **ambas precisam passar**. Para avaliações profissionais, `user_id` é NULL e o paciente pode ser anônimo (`auth.uid()` = NULL). Em SQL, `NULL = NULL` retorna FALSE, então a política 2 bloqueia TODA atualização.
+
+Isso significa que `updateAssessment()` falha silenciosamente — a anamnese, diagnóstico e `status: "completed"` **nunca são salvos**. Por isso a avaliação não aparece no painel profissional (fica "in_progress" sem dados).
+
+**Fix**: Criar nova migration SQL que dropa a política restritiva "Users can update their own assessments" e a recria como PERMISSIVE (ao invés de RESTRICTIVE). A política "Anyone can update professional assessments" também deve ser PERMISSIVE. Quando há pelo menos uma PERMISSIVE, basta uma delas passar.
 
 ```sql
-ALTER TABLE public.assessments ADD COLUMN IF NOT EXISTS patient_name text;
+-- Drop restrictive policies
+DROP POLICY "Users can update their own assessments" ON public.assessments;
+DROP POLICY "Anyone can update professional assessments" ON public.assessments;
+
+-- Recreate as PERMISSIVE
+CREATE POLICY "Users can update their own assessments"
+  ON public.assessments FOR UPDATE TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Anyone can update professional assessments"
+  ON public.assessments FOR UPDATE TO anon, authenticated
+  USING (type = 'professional' AND user_id IS NULL AND professional_id IS NOT NULL);
 ```
-
-Permite que avaliações profissionais (sem user_id) tenham o nome do paciente.
-
-**2. Criar tela de boas-vindas específica para paciente profissional**
-
-Novo step `"patient_info"` no `ProfessionalAssessment.tsx`, entre `"welcome"` e `"redflags"`:
-- Saudação personalizada: "Olá! O(a) Dr(a). {nome} solicitou que você preencha esta avaliação."
-- Campo obrigatório: Nome completo do paciente
-- Breve explicação do que vai acontecer (3 etapas, ~5 min)
-- Botão "Continuar" que salva o nome e avança para red flags
-
-**3. Corrigir tipo do `mode` no `AnamnesisForm`**
-
-Atualizar a interface `AnamnesisFormProps` para aceitar `"basic" | "premium" | "professional"` eliminando os casts `as any`.
-
-**4. Salvar `patient_name` na avaliação**
-
-Ao criar o assessment em `ProfessionalAssessment`, incluir o `patient_name` no insert.
-
-**5. Exibir nome do paciente no `ProDashboard`**
-
-Na lista de avaliações recebidas, mostrar `patient_name` ao invés de "Paciente anônimo".
 
 ### Arquivos a editar
 
 | Arquivo | Mudança |
 |---|---|
-| Migration SQL | Coluna `patient_name` em `assessments` |
-| `src/pages/ProfessionalAssessment.tsx` | Novo step `patient_info` com input de nome; salvar `patient_name` no insert; remover casts `as any` |
-| `src/components/assessment/AnamnesisForm.tsx` | Aceitar `mode: "professional"` no tipo |
-| `src/components/dashboard/ProDashboard.tsx` | Exibir `patient_name` na lista de avaliações |
-| `src/contexts/LanguageContext.tsx` | Traduções para tela de nome do paciente |
+| Migration SQL | Recriar políticas de UPDATE em `assessments` como PERMISSIVE |
+| `src/data/questionnaireData.ts` | Adicionar `"hip_left"`, `"hip_right"` ao `regionMapping` do HOOS |
 
