@@ -217,6 +217,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          social_media: string | null
           specialties: string[] | null
           state: string
           updated_at: string
@@ -235,6 +236,7 @@ export type Database = {
           full_name: string
           id?: string
           phone?: string | null
+          social_media?: string | null
           specialties?: string[] | null
           state: string
           updated_at?: string
@@ -253,6 +255,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          social_media?: string | null
           specialties?: string[] | null
           state?: string
           updated_at?: string

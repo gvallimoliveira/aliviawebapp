@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, MapPin, Phone, Mail, Search, UserCheck, Crown, Lock, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, MapPin, Phone, Mail, Search, UserCheck, Crown, Lock, Sparkles, Instagram } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
 
@@ -255,6 +255,14 @@ const ProfessionalSearch = () => {
                   )}
 
                   <div className="flex flex-wrap gap-2 pt-1">
+                    {p.social_media && (
+                      <Button size="sm" variant="outline" className="rounded-xl gap-1.5 text-xs" asChild>
+                        <a href={p.social_media.startsWith("http") ? p.social_media : `https://instagram.com/${p.social_media.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer">
+                          <Instagram className="h-3 w-3" />
+                          {p.social_media.startsWith("@") ? p.social_media : "Instagram"}
+                        </a>
+                      </Button>
+                    )}
                     {p.phone && (
                       <Button size="sm" variant="outline" className="rounded-xl gap-1.5 text-xs" onClick={() => openWhatsApp(p.phone)}>
                         <Phone className="h-3 w-3" />

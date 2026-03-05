@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, UserPlus } from "lucide-react";
+import { ArrowLeft, Loader2, UserPlus, Instagram } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const SPECIALTIES = [
@@ -37,6 +37,7 @@ const ProfessionalRegister = () => {
   const [form, setForm] = useState({
     full_name: "",
     crefito: "",
+    social_media: "",
     specialties: [] as string[],
     city: "",
     state: "",
@@ -64,6 +65,7 @@ const ProfessionalRegister = () => {
           setForm({
             full_name: data.full_name || "",
             crefito: data.crefito || "",
+            social_media: data.social_media || "",
             specialties: data.specialties || [],
             city: data.city || "",
             state: data.state || "",
@@ -96,6 +98,10 @@ const ProfessionalRegister = () => {
     }
     if (!form.crefito.trim()) {
       toast({ title: t("prof.crefito_required"), variant: "destructive" });
+      return;
+    }
+    if (!form.social_media.trim()) {
+      toast({ title: t("prof.social_media_required"), variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -175,6 +181,20 @@ const ProfessionalRegister = () => {
                   <Label>{t("prof.crefito")} *</Label>
                   <Input value={form.crefito} onChange={(e) => setForm({ ...form, crefito: e.target.value })} required />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <Instagram className="h-4 w-4 text-muted-foreground" />
+                  {t("prof.social_media")} *
+                </Label>
+                <Input
+                  value={form.social_media}
+                  onChange={(e) => setForm({ ...form, social_media: e.target.value })}
+                  placeholder="@seu_perfil"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">{t("prof.social_media_hint")}</p>
               </div>
 
               <div className="space-y-2">
