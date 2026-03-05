@@ -61,7 +61,7 @@ const ProfessionalSection = () => {
             </div>
             <p className="text-xs text-muted-foreground mb-5">{t("b2b.cta_cancel")}</p>
             <Button
-              onClick={() => navigate("/professional/register")}
+              onClick={() => navigate("/profissionais")}
               size="lg"
               className="rounded-xl gap-2 px-8"
             >

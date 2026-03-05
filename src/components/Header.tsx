@@ -34,7 +34,7 @@ const Header = () => {
             {t("blog.title")}
           </a>
           <button
-            onClick={() => navigate("/professional/register")}
+            onClick={() => navigate("/profissionais")}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80"
           >
             <Stethoscope className="h-3.5 w-3.5" />
