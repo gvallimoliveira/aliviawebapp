@@ -1,40 +1,58 @@
+# Landing Page: Imagens Atualizadas + Gatilhos Mentais
 
-# Fortalecer Branding da Logo Aliv.iA
+## 1. Substituir imagens do "Como Funciona"
 
-## Resumo
-Substituir a logo atual (`logo-alivia.png`) pela nova imagem enviada (mao humana + circuitos) em todos os locais onde ja e usada, e adiciona-la como elemento de destaque na landing page e no relatorio PDF.
+Expandir de 3 para 6 etapas visuais mostrando o fluxo real do app, usando os screenshots enviados. Layout em grid responsivo (2 colunas mobile, 3 desktop) com as imagens enquadradas em mockup de celular/browser.
 
-## Mudancas
+Mapeamento das imagens:
 
-### 1. Substituir o arquivo da logo
-- Copiar a imagem enviada (`user-uploads://Gemini_Generated_Image_k4oxibk4oxibk4ox.png`) para `src/assets/logo-alivia.png`, sobrescrevendo a atual.
-- Todos os imports existentes (`Header.tsx`, `Auth.tsx`) ja apontam para esse caminho, entao a troca sera automatica.
+- Etapa 1 "Conte sobre sua dor" → `anamnesealivia1.JPG`
+- Etapa 2 "Marque onde dói" → `anamnsealivia3.JPG` (slider de intensidade, mais visual que o pain map vazio)
+- Etapa 3 "Questionários validados" → `quest.JPG`
+- Etapa 4 "Testes funcionais" → `funcao.JPG`
+- Etapa 5 "Diagnóstico detalhado" → `diag.JPG`
+- Etapa 6 "Plano de tratamento" → `fases.JPG`
 
-### 2. Landing Page -- Hero com logo como elemento visual
-- Em `HeroSection.tsx`, importar a logo e exibi-la como elemento grande e animado acima do titulo (ou ao lado em desktop).
-- A logo aparecera com tamanho generoso (~120px), leve animacao de float/pulse com framer-motion, e um glow sutil em teal ao redor (coerente com o blur de fundo ja existente).
-- Substituir o icone `Shield` do badge por nada ou manter, ja que a logo fala por si.
+Copiar as 6 imagens para `src/assets/` e atualizar `HowItWorksSection.tsx` com os novos imports e dados. Atualizar as chaves de traducao em `LanguageContext.tsx` para os 6 passos.
 
-### 3. Landing Page -- Footer com logo
-- Em `Footer.tsx`, adicionar a logo pequena (~40px) acima do texto de disclaimer, centralizando-a como marca visual.
+## 2. Gatilhos Mentais na Landing Page
 
-### 4. Relatorio PDF -- Logo no cabecalho
-- Em `generatePdf.ts`, converter a logo para base64 e inseri-la no cabecalho do PDF ao lado do texto "Aliv.iA" usando `doc.addImage()`.
-- A logo sera exibida com ~12mm de altura, alinhada a esquerda, com o texto "Aliv.iA" deslocado para a direita.
-- Para manter o PDF auto-contido, a logo sera embutida como string base64 constante no arquivo.
+### A. Hero -- Urgencia + Curiosidade
 
-### 5. WelcomeStep -- Logo no onboarding
-- Em `WelcomeStep.tsx`, substituir o icone `Heart` pelo import da logo, exibindo-a no circulo de boas-vindas para reforcar a identidade.
+- Adicionar subtexto abaixo do CTA: "Mais de 100 pessoas ja descobriram a causa da sua dor" (prova social imediata).
+- Adicionar micro-badge "Resultado em menos de 15 minutos" para reduzir friccao percebida.
+
+### B. Secao "Por que a Aliv.iA?" (Highlights) -- Autoridade
+
+- Adicionar um destaque de autoridade: "Formulada por fisioterapeuta pos-graduado com 7+ anos de experiencia" com icone de selo/verificacao.
+
+### C. Secao Comparativa -- Aversao a Perda + Ancoragem
+
+- Adicionar frase de ancoragem acima da tabela: "Uma sessao de fisioterapia custa em media R$150-300. A Alivia oferece avaliacao completa + plano de tratamento por apenas R$129."
+- Destacar visualmente os recursos que o usuario PERDE ao nao escolher Premium (cor mais forte nos "X" do basico).
+
+### D. Secao de screenshots -- Curiosidade + Prova de Valor
+
+- Abaixo do "Como Funciona", adicionar frase-gatilho: "Veja por dentro o que voce vai receber" antes das imagens.
+- Adicionar 2 imagens extras como "bonus visual": o relatorio PDF (`relatorio.JPG`) e o diario de dor (`diariodor.JPG`) com labels como "Exclusivo Premium".
+
+### E. CTA flutuante -- Urgencia
+
+- Adicionar um botao CTA fixo no rodape (sticky bottom bar) que aparece ao rolar para baixo, com texto "Comece sua avaliacao agora" e botao para Premium.
+
+## Arquivos afetados
+
+- `src/assets/` -- 8 imagens novas copiadas
+- `src/components/HowItWorksSection.tsx` -- expandir para 6+ etapas, nova secao "por dentro"
+- `src/components/HeroSection.tsx` -- adicionar micro-badges de prova social e tempo
+- `src/components/HighlightsSection.tsx` -- adicionar card de autoridade
+- `src/components/ComparisonSection.tsx` -- adicionar frase de ancoragem de preco
+- `src/contexts/LanguageContext.tsx` -- novas chaves de traducao (pt + en)
+- `src/pages/Index.tsx` -- adicionar componente de CTA sticky
 
 ## Detalhes tecnicos
 
-- **PDF base64**: Sera necessario converter a imagem PNG para base64 e armazena-la como constante em `generatePdf.ts` (ou arquivo auxiliar). O jsPDF suporta `addImage(base64, 'PNG', x, y, w, h)`.
-- **Hero animation**: Usar `motion.img` com `animate={{ y: [0, -6, 0] }}` e `transition={{ repeat: Infinity, duration: 3 }}` para um efeito de float suave.
-- **Glow effect**: Aplicar `drop-shadow` via Tailwind ou `filter` CSS para simular o brilho teal da imagem original.
-
-## Arquivos afetados
-- `src/assets/logo-alivia.png` (substituido)
-- `src/components/HeroSection.tsx`
-- `src/components/Footer.tsx`
-- `src/utils/generatePdf.ts`
-- `src/components/assessment/WelcomeStep.tsx`
+- Imagens copiadas com `lov-copy` para `src/assets/step-*.jpg`
+- Layout do HowItWorksSection: grid `grid-cols-2 md:grid-cols-3` com cards menores e imagens com `rounded-xl shadow-lg border`
+- CTA sticky: `fixed bottom-0` com `z-50`, aparece via scroll listener ou Intersection Observer, animado com framer-motion
+- Badge "Exclusivo Premium" sobre imagens: `absolute` posicionado com fundo primary
