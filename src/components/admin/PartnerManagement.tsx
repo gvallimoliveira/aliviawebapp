@@ -65,7 +65,6 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("manage-vip-users", {
-        method: "GET",
         body: { action: "list_partners" },
       });
       if (error) throw error;
@@ -82,7 +81,6 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     setAdding(true);
     try {
       const { data, error } = await supabase.functions.invoke("manage-vip-users", {
-        method: "PATCH",
         body: { action: "set_partner", email: email.trim(), is_partner: true },
       });
       if (error) throw error;
@@ -106,7 +104,6 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     setRevokingId(id);
     try {
       const { data, error } = await supabase.functions.invoke("manage-vip-users", {
-        method: "PATCH",
         body: { action: "set_partner", professional_id: id, is_partner: false },
       });
       if (error) throw error;

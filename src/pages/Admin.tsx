@@ -79,7 +79,7 @@ const Admin = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("manage-vip-users", {
-        method: "GET",
+        body: { action: "list_vip" },
       });
 
       if (error || data?.error) {
@@ -105,8 +105,7 @@ const Admin = () => {
     setAdding(true);
     try {
       const { data, error } = await supabase.functions.invoke("manage-vip-users", {
-        method: "POST",
-        body: { email: newEmail.trim(), notes: newNotes.trim() || null },
+        body: { action: "add_vip", email: newEmail.trim(), notes: newNotes.trim() || null },
       });
 
       if (error) throw error;
@@ -132,8 +131,7 @@ const Admin = () => {
     setDeletingId(id);
     try {
       const { data, error } = await supabase.functions.invoke("manage-vip-users", {
-        method: "DELETE",
-        body: { id },
+        body: { action: "delete_vip", id },
       });
 
       if (error) throw error;
