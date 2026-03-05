@@ -575,7 +575,7 @@ export const questionnaires: QuestionnaireDefinition[] = [
     regionMapping: [
       "right_hip", "left_hip",
       "right_gluteal", "left_gluteal",
-      "hip_side",
+      "hip_side", "hip_left", "hip_right",
     ],
     scoringDirection: "higher_better",
     subscaleLabels: {
