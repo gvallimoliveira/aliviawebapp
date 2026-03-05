@@ -11,12 +11,12 @@ import stepReport from "@/assets/step-report.jpg";
 import stepDiary from "@/assets/step-diary.jpg";
 
 const steps = [
-  { icon: ClipboardList, key: "step1", image: stepAnamnesis, zoom: "scale-110 object-top" },
-  { icon: MapPin, key: "step2", image: stepPainmap, zoom: "scale-105" },
-  { icon: FileText, key: "step3", image: stepQuestionnaires, zoom: "scale-110 object-top" },
-  { icon: Activity, key: "step4", image: stepTests, zoom: "scale-110 object-top" },
-  { icon: Stethoscope, key: "step5", image: stepDiagnosis, zoom: "scale-110 object-top" },
-  { icon: CalendarCheck, key: "step6", image: stepTreatment, zoom: "scale-105 object-top" },
+  { icon: ClipboardList, key: "step1", image: stepAnamnesis },
+  { icon: MapPin, key: "step2", image: stepPainmap },
+  { icon: FileText, key: "step3", image: stepQuestionnaires },
+  { icon: Activity, key: "step4", image: stepTests },
+  { icon: Stethoscope, key: "step5", image: stepDiagnosis },
+  { icon: CalendarCheck, key: "step6", image: stepTreatment },
 ];
 
 const bonusItems = [
@@ -50,33 +50,47 @@ const HowItWorksSection = () => {
           {t("how.subtitle")}
         </motion.p>
 
-        {/* 6-step grid */}
-        <div className="mx-auto grid max-w-5xl gap-6 grid-cols-2 md:grid-cols-3">
+        {/* 6-step grid — phone mockup cards */}
+        <div className="mx-auto grid max-w-6xl gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {steps.map((step, i) => (
             <motion.div
               key={step.key}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="flex flex-col items-center text-center"
+              transition={{ delay: i * 0.08, duration: 0.5 }}
+              className="group flex flex-col items-center text-center"
             >
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                {i + 1}
+              {/* Step badge + title */}
+              <div className="mb-4 flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md">
+                  {i + 1}
+                </div>
+                <h3 className="text-sm font-semibold text-foreground md:text-base">
+                  {t(`how.${step.key}.title`)}
+                </h3>
               </div>
-              <h3 className="mb-1 text-sm font-semibold text-foreground md:text-base">
-                {t(`how.${step.key}.title`)}
-              </h3>
-              <p className="text-xs leading-relaxed text-muted-foreground mb-3 md:text-sm">
+
+              <p className="text-xs leading-relaxed text-muted-foreground mb-4 max-w-[260px] md:text-sm">
                 {t(`how.${step.key}.desc`)}
               </p>
-              <div className="overflow-hidden rounded-xl border border-border/50 shadow-lg aspect-[3/4]">
-                <img
-                  src={step.image}
-                  alt={t(`how.${step.key}.title`)}
-                  className={`w-full h-full object-cover ${step.zoom || ""}`}
-                  loading="lazy"
-                />
+
+              {/* Phone mockup frame */}
+              <div className="relative w-full max-w-[280px] mx-auto">
+                {/* Phone bezel */}
+                <div className="rounded-[24px] border-[3px] border-foreground/10 bg-background shadow-2xl shadow-foreground/5 overflow-hidden transition-shadow duration-300 group-hover:shadow-primary/10 group-hover:border-primary/20">
+                  {/* Status bar */}
+                  <div className="h-6 bg-muted/50 flex items-center justify-center">
+                    <div className="w-16 h-1 rounded-full bg-foreground/10" />
+                  </div>
+                  {/* Screen content — full image, no crop */}
+                  <img
+                    src={step.image}
+                    alt={t(`how.${step.key}.title`)}
+                    className="w-full h-auto block"
+                    loading="lazy"
+                  />
+                </div>
               </div>
             </motion.div>
           ))}
@@ -87,9 +101,13 @@ const HowItWorksSection = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-16"
+          className="mt-20"
         >
-          <div className="mx-auto grid max-w-3xl gap-6 grid-cols-2">
+          <p className="text-center text-sm font-medium text-muted-foreground mb-8 tracking-wide uppercase">
+            {t("how.bonus.see_inside")}
+          </p>
+
+          <div className="mx-auto grid max-w-4xl gap-8 grid-cols-1 sm:grid-cols-2">
             {bonusItems.map((item, i) => (
               <motion.div
                 key={item.key}
@@ -97,22 +115,25 @@ const HowItWorksSection = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.15 }}
-                className="relative flex flex-col items-center text-center"
+                className="group relative flex flex-col items-center text-center"
               >
+                {/* Premium label */}
                 <div className="absolute -top-3 z-10 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground whitespace-nowrap">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3.5 py-1 text-xs font-semibold text-primary-foreground whitespace-nowrap shadow-lg shadow-primary/20">
                     <Star className="h-3 w-3" />
                     {t("how.bonus.premium_label")}
                   </span>
                 </div>
-                <div className="overflow-hidden rounded-xl border-2 border-primary/30 shadow-lg shadow-primary/10 pt-3">
-                  <p className="text-sm font-semibold text-foreground mb-2 mt-2">
+
+                {/* Card frame */}
+                <div className="w-full rounded-[20px] border-2 border-primary/20 bg-background shadow-xl shadow-primary/5 overflow-hidden pt-5 transition-all duration-300 group-hover:border-primary/30 group-hover:shadow-primary/10">
+                  <p className="text-sm font-semibold text-foreground mb-3 px-4">
                     {t(`how.bonus.${item.key}`)}
                   </p>
                   <img
                     src={item.image}
                     alt={t(`how.bonus.${item.key}`)}
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto block"
                     loading="lazy"
                   />
                 </div>
