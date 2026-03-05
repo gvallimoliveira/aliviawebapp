@@ -1,9 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -26,13 +26,8 @@ serve(async (req) => {
       });
     }
 
-    const anonClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: userError } = await anonClient.auth.getUser();
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
@@ -40,7 +35,7 @@ serve(async (req) => {
       });
     }
 
-    // Check if caller is VIP (only VIPs can manage VIPs)
+    // Check if caller is VIP (admin)
     const { data: callerVip } = await supabaseClient
       .from("vip_users")
       .select("id")
@@ -54,112 +49,81 @@ serve(async (req) => {
       });
     }
 
-    const method = req.method;
+    const body = await req.json().catch(() => ({}));
+    const action = body.action;
 
-    // GET — list VIP users + partners
-    if (method === "GET") {
-      // Check if body has action (for partner listing)
-      let action = null;
-      try {
-        const url = new URL(req.url);
-        action = url.searchParams.get("action");
-      } catch {}
-      
-      // Also try body
-      let bodyAction = null;
-      try {
-        const cloned = req.clone();
-        const body = await cloned.json();
-        bodyAction = body?.action;
-      } catch {}
+    // List partners
+    if (action === "list_partners") {
+      const { data, error } = await supabaseClient
+        .from("professionals")
+        .select("id, full_name, email, city, state")
+        .eq("is_partner", true)
+        .order("full_name");
 
-      const finalAction = action || bodyAction;
+      if (error) throw error;
+      return new Response(JSON.stringify({ partners: data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-      if (finalAction === "list_partners") {
-        const { data, error } = await supabaseClient
+    // Set partner status
+    if (action === "set_partner") {
+      const { email, professional_id, is_partner } = body;
+
+      let targetId = professional_id;
+
+      if (!targetId && email) {
+        const { data: pro } = await supabaseClient
           .from("professionals")
-          .select("id, full_name, email, city, state")
-          .eq("is_partner", true)
-          .order("full_name");
+          .select("id")
+          .eq("email", email.toLowerCase().trim())
+          .maybeSingle();
 
-        if (error) throw error;
-        return new Response(JSON.stringify({ partners: data }), {
+        if (!pro) {
+          return new Response(JSON.stringify({ error: "not_found" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        targetId = pro.id;
+      }
+
+      if (!targetId) {
+        return new Response(JSON.stringify({ error: "email or professional_id required" }), {
+          status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
+      const { error } = await supabaseClient
+        .from("professionals")
+        .update({
+          is_partner: is_partner,
+          subscription_status: is_partner ? "active" : "inactive",
+        })
+        .eq("id", targetId);
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // List VIP users
+    if (action === "list_vip" || !action) {
       const { data, error } = await supabaseClient
         .from("vip_users")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-
       return new Response(JSON.stringify({ vip_users: data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const body = await req.json();
-
-    // PATCH — toggle partner status
-    if (method === "PATCH") {
-      const { action, email, professional_id, is_partner } = body;
-
-      if (action === "set_partner") {
-        let query;
-        if (professional_id) {
-          query = supabaseClient
-            .from("professionals")
-            .update({ 
-              is_partner: is_partner, 
-              subscription_status: is_partner ? "active" : "inactive" 
-            })
-            .eq("id", professional_id);
-        } else if (email) {
-          // Find professional by email
-          const { data: pro } = await supabaseClient
-            .from("professionals")
-            .select("id")
-            .eq("email", email.toLowerCase().trim())
-            .maybeSingle();
-
-          if (!pro) {
-            return new Response(JSON.stringify({ error: "not_found" }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-
-          query = supabaseClient
-            .from("professionals")
-            .update({ 
-              is_partner: is_partner, 
-              subscription_status: is_partner ? "active" : "inactive" 
-            })
-            .eq("id", pro.id);
-        } else {
-          return new Response(JSON.stringify({ error: "email or professional_id required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        const { error } = await query;
-        if (error) throw error;
-
-        return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      return new Response(JSON.stringify({ error: "Unknown action" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // POST — add VIP user
-    if (method === "POST") {
+    // Add VIP user
+    if (action === "add_vip") {
       const { email, notes } = body;
       if (!email) {
         return new Response(JSON.stringify({ error: "Email is required" }), {
@@ -190,8 +154,8 @@ serve(async (req) => {
       });
     }
 
-    // DELETE — remove VIP user
-    if (method === "DELETE") {
+    // Delete VIP user
+    if (action === "delete_vip") {
       const { id } = body;
       if (!id) {
         return new Response(JSON.stringify({ error: "ID is required" }), {
@@ -212,8 +176,8 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
+    return new Response(JSON.stringify({ error: "Unknown action" }), {
+      status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
