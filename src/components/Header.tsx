@@ -1,4 +1,4 @@
-import { Globe, LogOut, ShieldCheck } from "lucide-react";
+import { Globe, LogOut, ShieldCheck, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,6 +30,13 @@ const Header = () => {
           <a href="#how" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             {t("how.title")}
           </a>
+          <button
+            onClick={() => navigate("/professional/register")}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+          >
+            <Stethoscope className="h-3.5 w-3.5" />
+            {t("nav.professional")}
+          </button>
         </nav>
 
         <div className="flex items-center gap-3">

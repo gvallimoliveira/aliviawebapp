@@ -19,6 +19,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.dashboard": "Painel",
     "nav.logout": "Sair",
     "nav.language": "EN",
+    "nav.professional": "Para Profissionais",
 
     // Hero
     "hero.title": "Cuide da sua dor com orientação especializada",
@@ -654,6 +655,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.dashboard": "Dashboard",
     "nav.logout": "Sign Out",
     "nav.language": "PT",
+    "nav.professional": "For Professionals",
 
     // Hero
     "hero.title": "Take care of your pain with expert guidance",
