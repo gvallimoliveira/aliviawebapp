@@ -1,44 +1,70 @@
 
 
-## Plano: Fix Questionário Quadril + Fix Avaliação Profissional Não Chega ao Painel
+## Plano: Fix Avaliação Profissional Não Salva + Red Flags para Fluxo Profissional
 
-### Problema 1: HOOS não aparece para dor no quadril
+### Diagnóstico
 
-O mapa de dor nas vistas laterais usa IDs `"hip_left"` e `"hip_right"`, mas o `regionMapping` do HOOS lista `"hip_side"` (que não existe no mapa). Resultado: selecionar quadril na vista lateral não aciona o HOOS.
+**Bug principal: Avaliação profissional nunca é salva no banco**
 
-**Fix**: Adicionar `"hip_left"` e `"hip_right"` ao `regionMapping` do HOOS em `src/data/questionnaireData.ts`.
+As políticas de RLS para UPDATE estão corretas (PERMISSIVE). O problema real é na **leitura após INSERT**:
 
-### Problema 2: Avaliação profissional não é salva/atualizada (bug crítico de RLS)
+1. `createAssessment()` faz `.insert(...).select("id").single()` 
+2. Após o INSERT, o Supabase tenta ler o registro de volta (SELECT)
+3. Não existe política SELECT para `anon` em assessments profissionais
+4. `.select("id")` retorna null → `data.id` lança erro → `createAssessment` retorna null
+5. `updateAssessment` nunca é chamado (sem ID), diagnóstico nunca é salvo
+6. Assessment fica "in_progress" sem dados → não aparece no painel
 
-A tabela `assessments` tem duas políticas **RESTRICTIVE** para UPDATE:
-1. "Anyone can update professional assessments" — `type = 'professional' AND user_id IS NULL AND professional_id IS NOT NULL` ✅
-2. "Users can update their own assessments" — `auth.uid() = user_id` ❌
+**Confirmação**: Query no banco mostra **zero** assessments profissionais.
 
-Como ambas são RESTRICTIVE, **ambas precisam passar**. Para avaliações profissionais, `user_id` é NULL e o paciente pode ser anônimo (`auth.uid()` = NULL). Em SQL, `NULL = NULL` retorna FALSE, então a política 2 bloqueia TODA atualização.
+**Bug secundário**: `updateAssessment()` não verifica o `error` retornado pelo Supabase (só usa try/catch, que não captura erros de RLS).
 
-Isso significa que `updateAssessment()` falha silenciosamente — a anamnese, diagnóstico e `status: "completed"` **nunca são salvos**. Por isso a avaliação não aparece no painel profissional (fica "in_progress" sem dados).
+### Solução
 
-**Fix**: Criar nova migration SQL que dropa a política restritiva "Users can update their own assessments" e a recria como PERMISSIVE (ao invés de RESTRICTIVE). A política "Anyone can update professional assessments" também deve ser PERMISSIVE. Quando há pelo menos uma PERMISSIVE, basta uma delas passar.
+**1. Migration: Adicionar SELECT policy para assessments profissionais**
 
 ```sql
--- Drop restrictive policies
-DROP POLICY "Users can update their own assessments" ON public.assessments;
-DROP POLICY "Anyone can update professional assessments" ON public.assessments;
-
--- Recreate as PERMISSIVE
-CREATE POLICY "Users can update their own assessments"
-  ON public.assessments FOR UPDATE TO authenticated
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Anyone can update professional assessments"
-  ON public.assessments FOR UPDATE TO anon, authenticated
+CREATE POLICY "Anyone can view professional assessments for flow"
+  ON public.assessments FOR SELECT TO anon, authenticated
   USING (type = 'professional' AND user_id IS NULL AND professional_id IS NOT NULL);
 ```
+
+Também adicionar coluna `red_flags` (jsonb) para armazenar dados da triagem:
+
+```sql
+ALTER TABLE public.assessments ADD COLUMN IF NOT EXISTS red_flags jsonb DEFAULT NULL;
+```
+
+**2. Fix `updateAssessment` no ProfessionalAssessment.tsx**
+
+Verificar `error` do retorno do Supabase em vez de depender apenas de try/catch:
+
+```ts
+const { error } = await supabase.from("assessments").update(updates).eq("id", id);
+if (error) console.error("Update error:", error);
+```
+
+**3. Red Flags no fluxo profissional: salvar e não bloquear**
+
+Atualmente, quando há red flag, o paciente vê "procure um médico" e o fluxo para. No fluxo profissional, o comportamento deve ser:
+
+- `RedFlagScreening` passa as respostas de volta via callback (novo prop `onFlaggedWithData`)
+- `ProfessionalAssessment` cria o assessment com `red_flags` salvas e `status: "red_flagged"`
+- Paciente vê mensagem contextualizada: "Informe ao seu fisioterapeuta que foram identificados sinais de alerta na triagem. É recomendado buscar opinião médica antes de prosseguir."
+- O fluxo **não continua** para anamnese (por segurança), mas o profissional recebe a notificação
+
+**4. Alerta de Red Flag no ProDashboard**
+
+Na lista de assessments, exibir badge vermelho "⚠ Red Flags" para assessments com `red_flags` não nulo. Ao clicar, mostrar quais itens foram positivos.
 
 ### Arquivos a editar
 
 | Arquivo | Mudança |
 |---|---|
-| Migration SQL | Recriar políticas de UPDATE em `assessments` como PERMISSIVE |
-| `src/data/questionnaireData.ts` | Adicionar `"hip_left"`, `"hip_right"` ao `regionMapping` do HOOS |
+| Migration SQL | Política SELECT para anon em assessments profissionais + coluna `red_flags` |
+| `src/pages/ProfessionalAssessment.tsx` | Fix error handling em `updateAssessment`; salvar red flags; criar assessment mesmo quando flagged; mensagem profissional específica |
+| `src/components/assessment/RedFlagScreening.tsx` | Novo prop `onFlaggedWithData` para retornar respostas |
+| `src/components/assessment/RedFlagAlert.tsx` | Aceitar prop `mode` para mostrar mensagem diferente no fluxo profissional |
+| `src/components/dashboard/ProDashboard.tsx` | Badge de alerta red flag nas assessments; exibir quais flags foram positivas |
+| `src/contexts/LanguageContext.tsx` | Traduções para mensagem profissional de red flag e badge no painel |
 
