@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { regionsByView, type View, type ClickableRegion } from "@/components/assessment/painMapData";
 
 interface Exercise {
   name: string;
@@ -34,23 +35,43 @@ interface Diagnosis {
   disclaimer: string;
 }
 
+interface AnamnesisData {
+  chiefComplaint: string;
+  customComplaint: string;
+  onset: string;
+  painRegions: string[];
+  painTypes: string[];
+  evolution: string;
+  aggravatingFactors: string;
+  relievingFactors: string;
+  activityLevel: string;
+  painScore: number;
+  hasGymAccess: string;
+  painDuration: string;
+  sex: string;
+  ageRange: string;
+}
+
 interface PdfOptions {
   diagnosis: Diagnosis;
   treatmentPlan: TreatmentPlanData;
   language: "pt" | "en";
   userName?: string;
+  anamnesisData?: AnamnesisData;
+  painRegions?: string[];
+  testResults?: any;
 }
 
 // Design tokens from webapp (HSL converted to RGB)
 const COLORS = {
-  primary: [39, 124, 103] as [number, number, number],       // hsl(168,55%,38%)
-  primaryLight: [230, 245, 241] as [number, number, number],  // light teal bg
-  foreground: [35, 28, 22] as [number, number, number],       // hsl(20,30%,12%)
-  muted: [120, 110, 100] as [number, number, number],         // muted text
-  accent: [250, 225, 210] as [number, number, number],        // hsl(24,80%,92%)
-  accentDark: [180, 100, 50] as [number, number, number],     // warm accent
-  background: [252, 250, 247] as [number, number, number],    // hsl(30,50%,98%)
-  border: [220, 215, 208] as [number, number, number],        // hsl(30,20%,88%)
+  primary: [39, 124, 103] as [number, number, number],
+  primaryLight: [230, 245, 241] as [number, number, number],
+  foreground: [35, 28, 22] as [number, number, number],
+  muted: [120, 110, 100] as [number, number, number],
+  accent: [250, 225, 210] as [number, number, number],
+  accentDark: [180, 100, 50] as [number, number, number],
+  background: [252, 250, 247] as [number, number, number],
+  border: [220, 215, 208] as [number, number, number],
   white: [255, 255, 255] as [number, number, number],
   red: [200, 60, 60] as [number, number, number],
   yellow: [180, 140, 40] as [number, number, number],
@@ -118,7 +139,271 @@ async function loadLogoBase64(): Promise<string | null> {
   }
 }
 
-export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language, userName }: PdfOptions) {
+async function loadImageAsBase64(importFn: () => Promise<{ default: string }>): Promise<string | null> {
+  try {
+    const { default: url } = await importFn();
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+// Translate i18n keys to display text for PDF
+function translateKey(key: string, isPt: boolean): string {
+  const map: Record<string, [string, string]> = {
+    "anamnesis.complaint.neck_pain": ["Dor no pescoço", "Neck pain"],
+    "anamnesis.complaint.back_pain": ["Dor nas costas", "Back pain"],
+    "anamnesis.complaint.shoulder_pain": ["Dor no ombro", "Shoulder pain"],
+    "anamnesis.complaint.knee_pain": ["Dor no joelho", "Knee pain"],
+    "anamnesis.complaint.hip_pain": ["Dor no quadril", "Hip pain"],
+    "anamnesis.complaint.ankle_pain": ["Dor no tornozelo", "Ankle pain"],
+    "anamnesis.complaint.wrist_pain": ["Dor no punho", "Wrist pain"],
+    "anamnesis.complaint.elbow_pain": ["Dor no cotovelo", "Elbow pain"],
+    "anamnesis.complaint.foot_pain": ["Dor no pé", "Foot pain"],
+    "anamnesis.complaint.headache": ["Cefaleia", "Headache"],
+    "anamnesis.onset.sudden": ["Início súbito", "Sudden onset"],
+    "anamnesis.onset.gradual": ["Início gradual", "Gradual onset"],
+    "anamnesis.onset.trauma": ["Trauma / Lesão", "Trauma / Injury"],
+    "anamnesis.pain_type.local": ["Dor local", "Local pain"],
+    "anamnesis.pain_type.radiating": ["Dor irradiada", "Radiating pain"],
+    "anamnesis.pain_type.burning": ["Queimação", "Burning"],
+    "anamnesis.pain_type.tingling": ["Formigamento", "Tingling"],
+    "anamnesis.pain_type.throbbing": ["Latejante", "Throbbing"],
+    "anamnesis.pain_type.stabbing": ["Pontada", "Stabbing"],
+    "anamnesis.evolution.improving": ["Melhorando", "Improving"],
+    "anamnesis.evolution.stable": ["Estável", "Stable"],
+    "anamnesis.evolution.worsening": ["Piorando", "Worsening"],
+    "anamnesis.activity.sedentary": ["Sedentário", "Sedentary"],
+    "anamnesis.activity.light": ["Atividade leve", "Light activity"],
+    "anamnesis.activity.regular": ["Atividade regular", "Regular activity"],
+    "anamnesis.activity.athlete": ["Atleta", "Athlete"],
+    "anamnesis.duration.less_week": ["Menos de uma semana", "Less than a week"],
+    "anamnesis.duration.one_month": ["Cerca de 1 mês", "About 1 month"],
+    "anamnesis.duration.three_six_months": ["3 a 6 meses", "3 to 6 months"],
+    "anamnesis.duration.one_year_plus": ["1 ano ou mais", "1 year or more"],
+    "anamnesis.gym.yes": ["Sim", "Yes"],
+    "anamnesis.gym.no": ["Não", "No"],
+    "anamnesis.sex.male": ["Masculino", "Male"],
+    "anamnesis.sex.female": ["Feminino", "Female"],
+    "anamnesis.age.under_25": ["Menos de 25 anos", "Under 25"],
+    "anamnesis.age.25_34": ["25–34 anos", "25–34"],
+    "anamnesis.age.35_44": ["35–44 anos", "35–44"],
+    "anamnesis.age.45_55": ["45–55 anos", "45–55"],
+    "anamnesis.age.over_55": ["Mais de 55 anos", "Over 55"],
+  };
+  const entry = map[key];
+  if (entry) return isPt ? entry[0] : entry[1];
+  return key;
+}
+
+// ── Pain Map SVG rendering ──
+async function generatePainMapImages(painRegions: string[]): Promise<{ view: string; dataUrl: string }[]> {
+  const viewImages: Record<View, () => Promise<{ default: string }>> = {
+    front: () => import("@/assets/body-front.jpg"),
+    back: () => import("@/assets/body-back.jpg"),
+    left: () => import("@/assets/body-left.jpg"),
+    right: () => import("@/assets/body-right.jpg"),
+  };
+
+  const results: { view: string; dataUrl: string }[] = [];
+
+  for (const view of (["front", "back", "left", "right"] as View[])) {
+    const regions = regionsByView[view];
+    const selectedInView = regions.filter(r => painRegions.includes(r.id));
+    if (selectedInView.length === 0) continue;
+
+    const imgBase64 = await loadImageAsBase64(viewImages[view]);
+    if (!imgBase64) continue;
+
+    const pathsSvg = selectedInView.map(r =>
+      `<path d="${r.d}" fill="rgba(220, 50, 50, 0.45)" stroke="rgba(200, 40, 40, 0.8)" stroke-width="1.5"/>`
+    ).join("\n");
+
+    const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 440" width="200" height="440">
+      <image href="${imgBase64}" x="0" y="0" width="200" height="440" preserveAspectRatio="xMidYMid slice"/>
+      ${pathsSvg}
+    </svg>`;
+
+    try {
+      const dataUrl = await svgToDataUrl(svgStr, 200, 440);
+      const viewLabels: Record<string, string> = { front: "Frontal", back: "Posterior", left: "Lat. Esq.", right: "Lat. Dir." };
+      results.push({ view: viewLabels[view] || view, dataUrl });
+    } catch (e) {
+      console.error(`Error rendering pain map view ${view}:`, e);
+    }
+  }
+
+  return results;
+}
+
+function svgToDataUrl(svgStr: string, w: number, h: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject("No canvas context"); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject("Image load failed"); };
+    img.src = url;
+  });
+}
+
+// ── Render Anamnesis Section ──
+function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData, isPt: boolean): number {
+  y = renderSectionTitle(doc, y, isPt ? "Anamnese" : "Anamnesis", COLORS.primary);
+
+  const fields: { label: string; value: string }[] = [];
+
+  if (anamnesis.chiefComplaint) {
+    fields.push({ label: isPt ? "Queixa Principal" : "Chief Complaint", value: translateKey(anamnesis.chiefComplaint, isPt) });
+  }
+  if (anamnesis.customComplaint) {
+    fields.push({ label: isPt ? "Queixa Adicional" : "Additional Complaint", value: anamnesis.customComplaint });
+  }
+  if (anamnesis.onset) {
+    fields.push({ label: isPt ? "Modo de Início" : "Onset", value: translateKey(anamnesis.onset, isPt) });
+  }
+  if (anamnesis.painScore != null) {
+    fields.push({ label: isPt ? "Nível de Dor (EVA)" : "Pain Level (VAS)", value: `${anamnesis.painScore}/10` });
+  }
+  if (anamnesis.painTypes?.length) {
+    fields.push({ label: isPt ? "Tipos de Dor" : "Pain Types", value: anamnesis.painTypes.map(p => translateKey(p, isPt)).join(", ") });
+  }
+  if (anamnesis.evolution) {
+    fields.push({ label: isPt ? "Evolução" : "Evolution", value: translateKey(anamnesis.evolution, isPt) });
+  }
+  if (anamnesis.painDuration) {
+    fields.push({ label: isPt ? "Duração da Dor" : "Pain Duration", value: translateKey(anamnesis.painDuration, isPt) });
+  }
+  if (anamnesis.aggravatingFactors) {
+    fields.push({ label: isPt ? "Fatores Agravantes" : "Aggravating Factors", value: anamnesis.aggravatingFactors });
+  }
+  if (anamnesis.relievingFactors) {
+    fields.push({ label: isPt ? "Fatores Aliviantes" : "Relieving Factors", value: anamnesis.relievingFactors });
+  }
+  if (anamnesis.activityLevel) {
+    fields.push({ label: isPt ? "Nível de Atividade" : "Activity Level", value: translateKey(anamnesis.activityLevel, isPt) });
+  }
+  if (anamnesis.hasGymAccess) {
+    fields.push({ label: isPt ? "Acesso a Academia" : "Gym Access", value: translateKey(anamnesis.hasGymAccess, isPt) });
+  }
+  if (anamnesis.sex) {
+    fields.push({ label: isPt ? "Sexo Biológico" : "Biological Sex", value: translateKey(anamnesis.sex, isPt) });
+  }
+  if (anamnesis.ageRange) {
+    fields.push({ label: isPt ? "Faixa Etária" : "Age Range", value: translateKey(anamnesis.ageRange, isPt) });
+  }
+
+  // Pain regions as text
+  if (anamnesis.painRegions?.length) {
+    const regionLabels = anamnesis.painRegions.map(id => {
+      for (const view of Object.values(regionsByView)) {
+        const r = view.find(reg => reg.id === id);
+        if (r) return isPt ? r.label_pt : r.label_en;
+      }
+      return id;
+    });
+    fields.push({ label: isPt ? "Regiões de Dor" : "Pain Regions", value: regionLabels.join(", ") });
+  }
+
+  for (const field of fields) {
+    y = checkPage(doc, y, 10);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.foreground);
+    const labelText = `${field.label}: `;
+    doc.text(labelText, MARGIN + 2, y);
+    const labelW = doc.getTextWidth(labelText);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLORS.muted);
+    const valueLines = doc.splitTextToSize(field.value, CONTENT_WIDTH - 4 - labelW);
+    doc.text(valueLines, MARGIN + 2 + labelW, y);
+    y += valueLines.length * 3.5 + 2;
+  }
+
+  y += 4;
+  return y;
+}
+
+// ── Render Pain Map Images Section ──
+async function renderPainMapSection(doc: jsPDF, y: number, painRegions: string[], isPt: boolean): Promise<number> {
+  const images = await generatePainMapImages(painRegions);
+  if (images.length === 0) return y;
+
+  y = checkPage(doc, y, 65);
+  y = renderSectionTitle(doc, y, isPt ? "Mapa de Dor" : "Pain Map", COLORS.primary);
+
+  const mapW = 35;
+  const mapH = mapW * (440 / 200); // maintain aspect ratio
+  const gap = 4;
+  const totalW = images.length * mapW + (images.length - 1) * gap;
+  let startX = MARGIN + (CONTENT_WIDTH - totalW) / 2;
+
+  y = checkPage(doc, y, mapH + 12);
+
+  for (const img of images) {
+    try {
+      doc.addImage(img.dataUrl, "PNG", startX, y, mapW, mapH);
+      // View label below
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(...COLORS.muted);
+      const labelW = doc.getTextWidth(img.view);
+      doc.text(img.view, startX + (mapW - labelW) / 2, y + mapH + 4);
+    } catch (e) {
+      console.error("Error adding pain map image:", e);
+    }
+    startX += mapW + gap;
+  }
+
+  y += mapH + 10;
+  return y;
+}
+
+// ── Render Test Results Section ──
+function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt: boolean): number {
+  if (!testResults || (Array.isArray(testResults) && testResults.length === 0)) return y;
+
+  y = checkPage(doc, y, 16);
+  y = renderSectionTitle(doc, y, isPt ? "Resultados dos Testes" : "Test Results", COLORS.primary);
+
+  const items = Array.isArray(testResults) ? testResults : [testResults];
+  for (const test of items) {
+    y = checkPage(doc, y, 10);
+    const name = test.name || test.testName || test.id || "";
+    const result = test.result || test.score || test.value || "";
+    if (name) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.foreground);
+      doc.text(`${name}: `, MARGIN + 2, y);
+      const lw = doc.getTextWidth(`${name}: `);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...COLORS.muted);
+      doc.text(String(result), MARGIN + 2 + lw, y);
+      y += 5;
+    }
+  }
+  y += 4;
+  return y;
+}
+
+export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults }: PdfOptions) {
   const doc = new jsPDF();
   const isPt = language === "pt";
   let y = MARGIN;
@@ -131,7 +416,7 @@ export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language
   
   const logoH = 14;
   const logoW = 14;
-  const logoY = (38 - logoH) / 2; // vertically center in header band
+  const logoY = (38 - logoH) / 2;
   let textStartX = MARGIN;
   if (logoBase64) {
     try {
@@ -165,8 +450,32 @@ export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language
     const labelW = doc.getTextWidth(isPt ? "Paciente: " : "Patient: ");
     doc.setFont("helvetica", "normal");
     doc.text(userName, MARGIN + 6 + labelW, y + 9);
-    
     y += 20;
+  }
+
+  // ── Anamnesis Section ──
+  if (anamnesisData) {
+    y = renderAnamnesisSection(doc, y, anamnesisData, isPt);
+  }
+
+  // ── Pain Map ──
+  const regions = painRegions || anamnesisData?.painRegions;
+  if (regions && regions.length > 0) {
+    y = await renderPainMapSection(doc, y, regions, isPt);
+  }
+
+  // ── Test Results ──
+  if (testResults) {
+    y = renderTestResultsSection(doc, y, testResults, isPt);
+  }
+
+  // ── Separator before diagnosis ──
+  if (anamnesisData || (regions && regions.length > 0)) {
+    y = checkPage(doc, y, 10);
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
+    y += 8;
   }
 
   // ── Diagnosis Section ──
@@ -277,16 +586,13 @@ export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language
       const exH = 10 + descLines.length * 3.5 + 8;
       y = checkPage(doc, y, exH);
 
-      // Exercise card
       drawRoundedRect(doc, MARGIN + 2, y, CONTENT_WIDTH - 4, exH, 3, COLORS.background, COLORS.border);
 
-      // Exercise name
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...COLORS.foreground);
       doc.text(ex.name, MARGIN + 8, y + 6);
 
-      // Category badge
       const catLabels: Record<string, Record<string, string>> = {
         stretching: { pt: "Along.", en: "Stretch" },
         strengthening: { pt: "Fortal.", en: "Strength" },
@@ -303,13 +609,11 @@ export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language
       doc.setTextColor(...COLORS.foreground);
       doc.text(catText, PAGE_WIDTH - MARGIN - 6 - catTw - 2, y + 6);
 
-      // Description
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...COLORS.muted);
       doc.text(descLines, MARGIN + 8, y + 12);
 
-      // Sets/reps/frequency
       const metaY = y + 12 + descLines.length * 3.5 + 2;
       doc.setFontSize(7);
       doc.setTextColor(...COLORS.primary);
@@ -379,7 +683,6 @@ export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language
     doc.setTextColor(...COLORS.muted);
     doc.text(`Aliv.iA — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`, MARGIN, 290);
     doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - 8, 290);
-    // Bottom accent line
     doc.setDrawColor(...COLORS.primary);
     doc.setLineWidth(1.5);
     doc.line(MARGIN, 287, PAGE_WIDTH - MARGIN, 287);
