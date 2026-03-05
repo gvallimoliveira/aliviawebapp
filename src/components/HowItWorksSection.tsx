@@ -11,12 +11,12 @@ import stepReport from "@/assets/step-report.jpg";
 import stepDiary from "@/assets/step-diary.jpg";
 
 const steps = [
-  { icon: ClipboardList, key: "step1", image: stepAnamnesis },
-  { icon: MapPin, key: "step2", image: stepPainmap },
-  { icon: FileText, key: "step3", image: stepQuestionnaires },
-  { icon: Activity, key: "step4", image: stepTests },
-  { icon: Stethoscope, key: "step5", image: stepDiagnosis },
-  { icon: CalendarCheck, key: "step6", image: stepTreatment },
+  { icon: ClipboardList, key: "step1", image: stepAnamnesis, zoom: "scale-110 object-top" },
+  { icon: MapPin, key: "step2", image: stepPainmap, zoom: "scale-105" },
+  { icon: FileText, key: "step3", image: stepQuestionnaires, zoom: "scale-110 object-top" },
+  { icon: Activity, key: "step4", image: stepTests, zoom: "scale-110 object-top" },
+  { icon: Stethoscope, key: "step5", image: stepDiagnosis, zoom: "scale-110 object-top" },
+  { icon: CalendarCheck, key: "step6", image: stepTreatment, zoom: "scale-105 object-top" },
 ];
 
 const bonusItems = [
@@ -70,11 +70,11 @@ const HowItWorksSection = () => {
               <p className="text-xs leading-relaxed text-muted-foreground mb-3 md:text-sm">
                 {t(`how.${step.key}.desc`)}
               </p>
-              <div className="overflow-hidden rounded-xl border border-border/50 shadow-lg">
+              <div className="overflow-hidden rounded-xl border border-border/50 shadow-lg aspect-[3/4]">
                 <img
                   src={step.image}
                   alt={t(`how.${step.key}.title`)}
-                  className="w-full h-auto object-cover"
+                  className={`w-full h-full object-cover ${step.zoom || ""}`}
                   loading="lazy"
                 />
               </div>
