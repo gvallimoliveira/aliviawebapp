@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trash2, Plus, Pencil, Loader2, X, BookOpen } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Trash2, Plus, Pencil, Loader2, X, BookOpen, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface BlogPost {
@@ -39,7 +40,10 @@ const BlogManagement = ({ language }: { language: string }) => {
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
-
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [aiTopic, setAiTopic] = useState("");
+  const [aiKeywords, setAiKeywords] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [form, setForm] = useState({
     title_pt: "", title_en: "", content_pt: "", content_en: "",
     excerpt_pt: "", excerpt_en: "", slug: "", tags: "", author_name: "Aliv.iA",
@@ -56,6 +60,10 @@ const BlogManagement = ({ language }: { language: string }) => {
         slug: "Slug (URL)", tags: "Tags (separadas por vírgula)", cover: "Imagem de capa",
         save: "Salvar", cancel: "Cancelar", saved: "Artigo salvo!", deleted: "Artigo excluído.",
         confirm_delete: "Excluir este artigo?", author: "Autor", no_posts: "Nenhum artigo.",
+        ai_generate: "Gerar com IA", ai_topic: "Tema do artigo", ai_topic_placeholder: "Ex: dor no ombro",
+        ai_keywords: "Palavras-chave SEO", ai_keywords_placeholder: "Ex: dor no ombro, fisioterapia, tratamento",
+        ai_btn: "Gerar Rascunho", ai_generating: "Gerando artigo...", ai_title: "Gerar Artigo com IA",
+        ai_desc: "A IA criará um rascunho completo otimizado para SEO e conversão.",
       },
       en: {
         title: "Manage Blog", new: "New Article", edit: "Edit", delete: "Delete",
@@ -65,6 +73,10 @@ const BlogManagement = ({ language }: { language: string }) => {
         slug: "Slug (URL)", tags: "Tags (comma-separated)", cover: "Cover image",
         save: "Save", cancel: "Cancel", saved: "Article saved!", deleted: "Article deleted.",
         confirm_delete: "Delete this article?", author: "Author", no_posts: "No articles.",
+        ai_generate: "Generate with AI", ai_topic: "Article topic", ai_topic_placeholder: "E.g.: shoulder pain",
+        ai_keywords: "SEO Keywords", ai_keywords_placeholder: "E.g.: shoulder pain, physiotherapy, treatment",
+        ai_btn: "Generate Draft", ai_generating: "Generating article...", ai_title: "Generate Article with AI",
+        ai_desc: "AI will create a complete draft optimized for SEO and conversion.",
       },
     };
     return labels[language]?.[key] || labels.en[key] || key;
@@ -102,6 +114,43 @@ const BlogManagement = ({ language }: { language: string }) => {
   };
 
   const closeForm = () => { setEditing(null); setIsNew(false); };
+
+  const handleAiGenerate = async () => {
+    if (!aiTopic.trim()) return;
+    setAiGenerating(true);
+    try {
+      const keywords = aiKeywords.split(",").map((k) => k.trim()).filter(Boolean);
+      const { data, error } = await supabase.functions.invoke("generate-blog-article", {
+        body: { topic: aiTopic, keywords },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setIsNew(true);
+      setEditing(null);
+      setForm({
+        title_pt: data.title_pt || "",
+        title_en: data.title_en || "",
+        content_pt: data.content_pt || "",
+        content_en: data.content_en || "",
+        excerpt_pt: data.excerpt_pt || "",
+        excerpt_en: data.excerpt_en || "",
+        slug: slugify(data.title_pt || aiTopic),
+        tags: (data.tags || []).join(", "),
+        author_name: "Aliv.iA",
+        published: false,
+      });
+      setAiDialogOpen(false);
+      setAiTopic("");
+      setAiKeywords("");
+      toast({ description: language === "pt" ? "Rascunho gerado! Revise antes de salvar." : "Draft generated! Review before saving." });
+    } catch (e: any) {
+      console.error("AI generation error:", e);
+      toast({ title: "Erro", description: e.message || "Falha ao gerar artigo", variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
 
   const handleTitleChange = (val: string) => {
     setForm((f) => ({ ...f, title_pt: val, slug: isNew ? slugify(val) : f.slug }));
@@ -169,9 +218,14 @@ const BlogManagement = ({ language }: { language: string }) => {
           <CardTitle className="text-lg">{t("title")}</CardTitle>
         </div>
         {!showForm && (
-          <Button size="sm" onClick={openNew} className="gap-1.5">
-            <Plus className="h-4 w-4" /> {t("new")}
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setAiDialogOpen(true)} className="gap-1.5">
+              <Sparkles className="h-4 w-4" /> {t("ai_generate")}
+            </Button>
+            <Button size="sm" onClick={openNew} className="gap-1.5">
+              <Plus className="h-4 w-4" /> {t("new")}
+            </Button>
+          </div>
         )}
       </CardHeader>
       <CardContent>
@@ -277,6 +331,51 @@ const BlogManagement = ({ language }: { language: string }) => {
           </Table>
         )}
       </CardContent>
+      <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" /> {t("ai_title")}
+            </DialogTitle>
+            <DialogDescription>{t("ai_desc")}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label>{t("ai_topic")} *</Label>
+              <Input
+                value={aiTopic}
+                onChange={(e) => setAiTopic(e.target.value)}
+                placeholder={t("ai_topic_placeholder")}
+                disabled={aiGenerating}
+              />
+            </div>
+            <div>
+              <Label>{t("ai_keywords")}</Label>
+              <Input
+                value={aiKeywords}
+                onChange={(e) => setAiKeywords(e.target.value)}
+                placeholder={t("ai_keywords_placeholder")}
+                disabled={aiGenerating}
+              />
+            </div>
+            <Button
+              onClick={handleAiGenerate}
+              disabled={aiGenerating || !aiTopic.trim()}
+              className="w-full gap-2"
+            >
+              {aiGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("ai_generating")}
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" /> {t("ai_btn")}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
