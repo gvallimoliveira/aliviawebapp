@@ -14,6 +14,7 @@ import { Trash2, Plus, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ProfessionalManagement from "@/components/admin/ProfessionalManagement";
 import PartnerManagement from "@/components/admin/PartnerManagement";
+import BlogManagement from "@/components/admin/BlogManagement";
 
 interface VipUser {
   id: string;
@@ -261,6 +262,7 @@ const Admin = () => {
         </Card>
         <ProfessionalManagement language={language} />
         <PartnerManagement language={language} />
+        <BlogManagement language={language} />
       </main>
       <Footer />
     </div>

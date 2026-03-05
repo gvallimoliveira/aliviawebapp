@@ -18,6 +18,8 @@ import ProfessionalRegister from "./pages/ProfessionalRegister";
 import ProfessionalSearch from "./pages/ProfessionalSearch";
 import ProfessionalAssessment from "./pages/ProfessionalAssessment";
 import ResetPassword from "./pages/ResetPassword";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +43,8 @@ const App = () => (
               <Route path="/professionals" element={<ProfessionalSearch />} />
               <Route path="/assessment/professional/:professionalId" element={<ProfessionalAssessment />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
