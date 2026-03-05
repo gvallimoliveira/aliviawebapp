@@ -1,70 +1,87 @@
+## Plano: Blog Integrado com Painel Admin
 
+### Visao Geral
 
-## Plano: Fix Avaliação Profissional Não Salva + Red Flags para Fluxo Profissional
+Blog acessivel em `/blog` e `/blog/:slug`, com painel de criacao/edicao no admin (`/admin`). Artigos otimizados para SEO com meta tags, URLs amigaveis e conteudo indexavel pelo Google.
 
-### Diagnóstico
+a landing page tb deve ser otimizada para SEO. fundamental performar bem no google. 
 
-**Bug principal: Avaliação profissional nunca é salva no banco**
+### Database
 
-As políticas de RLS para UPDATE estão corretas (PERMISSIVE). O problema real é na **leitura após INSERT**:
-
-1. `createAssessment()` faz `.insert(...).select("id").single()` 
-2. Após o INSERT, o Supabase tenta ler o registro de volta (SELECT)
-3. Não existe política SELECT para `anon` em assessments profissionais
-4. `.select("id")` retorna null → `data.id` lança erro → `createAssessment` retorna null
-5. `updateAssessment` nunca é chamado (sem ID), diagnóstico nunca é salvo
-6. Assessment fica "in_progress" sem dados → não aparece no painel
-
-**Confirmação**: Query no banco mostra **zero** assessments profissionais.
-
-**Bug secundário**: `updateAssessment()` não verifica o `error` retornado pelo Supabase (só usa try/catch, que não captura erros de RLS).
-
-### Solução
-
-**1. Migration: Adicionar SELECT policy para assessments profissionais**
+Nova tabela `blog_posts`:
 
 ```sql
-CREATE POLICY "Anyone can view professional assessments for flow"
-  ON public.assessments FOR SELECT TO anon, authenticated
-  USING (type = 'professional' AND user_id IS NULL AND professional_id IS NOT NULL);
+CREATE TABLE public.blog_posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug text UNIQUE NOT NULL,
+  title_pt text NOT NULL,
+  title_en text,
+  content_pt text NOT NULL,
+  content_en text,
+  excerpt_pt text,
+  excerpt_en text,
+  cover_image_url text,
+  author_name text NOT NULL DEFAULT 'Aliv.iA',
+  tags text[] DEFAULT '{}',
+  published boolean DEFAULT false,
+  published_at timestamptz,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
+
+-- Qualquer pessoa pode ler posts publicados (SEO)
+CREATE POLICY "Anyone can read published posts"
+  ON public.blog_posts FOR SELECT TO anon, authenticated
+  USING (published = true);
+
+-- Admins podem CRUD completo
+CREATE POLICY "Admins can manage all posts"
+  ON public.blog_posts FOR ALL TO authenticated
+  USING (is_admin(auth.uid()))
+  WITH CHECK (is_admin(auth.uid()));
 ```
 
-Também adicionar coluna `red_flags` (jsonb) para armazenar dados da triagem:
+### Storage
 
-```sql
-ALTER TABLE public.assessments ADD COLUMN IF NOT EXISTS red_flags jsonb DEFAULT NULL;
-```
+Criar bucket `blog-images` para upload de imagens de capa dos artigos.
 
-**2. Fix `updateAssessment` no ProfessionalAssessment.tsx**
+### Arquivos novos
 
-Verificar `error` do retorno do Supabase em vez de depender apenas de try/catch:
 
-```ts
-const { error } = await supabase.from("assessments").update(updates).eq("id", id);
-if (error) console.error("Update error:", error);
-```
+| Arquivo                                   | Descricao                                                                                                                                                                                             |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/pages/Blog.tsx`                      | Listagem de posts com cards (titulo, excerpt, data, tags). Link no header/footer.                                                                                                                     |
+| `src/pages/BlogPost.tsx`                  | Pagina individual do artigo com SEO meta tags via `document.title` e meta description. Renderiza markdown/HTML do conteudo.                                                                           |
+| `src/components/admin/BlogManagement.tsx` | Componente dentro do Admin: lista posts, botao criar/editar, formulario com campos titulo, slug (auto-gerado), conteudo (textarea), excerpt, tags, imagem de capa, toggle publicado. Suporta PT e EN. |
 
-**3. Red Flags no fluxo profissional: salvar e não bloquear**
 
-Atualmente, quando há red flag, o paciente vê "procure um médico" e o fluxo para. No fluxo profissional, o comportamento deve ser:
+### Arquivos editados
 
-- `RedFlagScreening` passa as respostas de volta via callback (novo prop `onFlaggedWithData`)
-- `ProfessionalAssessment` cria o assessment com `red_flags` salvas e `status: "red_flagged"`
-- Paciente vê mensagem contextualizada: "Informe ao seu fisioterapeuta que foram identificados sinais de alerta na triagem. É recomendado buscar opinião médica antes de prosseguir."
-- O fluxo **não continua** para anamnese (por segurança), mas o profissional recebe a notificação
 
-**4. Alerta de Red Flag no ProDashboard**
+| Arquivo                            | Mudanca                                |
+| ---------------------------------- | -------------------------------------- |
+| `src/App.tsx`                      | Rotas `/blog` e `/blog/:slug`          |
+| `src/pages/Admin.tsx`              | Importar e renderizar `BlogManagement` |
+| `src/components/Header.tsx`        | Link "Blog" na nav                     |
+| `src/components/Footer.tsx`        | Link "Blog" no footer                  |
+| `src/contexts/LanguageContext.tsx` | Traducoes para blog                    |
 
-Na lista de assessments, exibir badge vermelho "⚠ Red Flags" para assessments com `red_flags` não nulo. Ao clicar, mostrar quais itens foram positivos.
 
-### Arquivos a editar
+### SEO
 
-| Arquivo | Mudança |
-|---|---|
-| Migration SQL | Política SELECT para anon em assessments profissionais + coluna `red_flags` |
-| `src/pages/ProfessionalAssessment.tsx` | Fix error handling em `updateAssessment`; salvar red flags; criar assessment mesmo quando flagged; mensagem profissional específica |
-| `src/components/assessment/RedFlagScreening.tsx` | Novo prop `onFlaggedWithData` para retornar respostas |
-| `src/components/assessment/RedFlagAlert.tsx` | Aceitar prop `mode` para mostrar mensagem diferente no fluxo profissional |
-| `src/components/dashboard/ProDashboard.tsx` | Badge de alerta red flag nas assessments; exibir quais flags foram positivas |
-| `src/contexts/LanguageContext.tsx` | Traduções para mensagem profissional de red flag e badge no painel |
+- Cada post define `document.title` e injeta `<meta name="description">` dinamicamente
+- URLs amigaveis: `/blog/dor-no-ombro-quando-procurar-medico`
+- Posts publicados sao acessiveis sem autenticacao (policy `anon` SELECT)
+- Adicionar `/blog` ao `robots.txt` (ja permite tudo)
 
+### Painel Admin - Funcionalidades
+
+- Listar todos os posts (rascunhos + publicados) com status badge
+- Criar novo post com formulario completo
+- Editar post existente
+- Toggle publicar/despublicar
+- Deletar post
+- Upload de imagem de capa para storage
+- Auto-gerar slug a partir do titulo
