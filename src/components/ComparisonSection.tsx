@@ -42,7 +42,7 @@ const ComparisonSection = () => {
     return value ?
     <Check className="mx-auto h-5 w-5 text-primary" /> :
 
-    <X className="mx-auto h-5 w-5 text-muted-foreground/40" />;
+    <X className="mx-auto h-5 w-5 text-destructive/60" />;
 
   };
 
@@ -59,6 +59,9 @@ const ComparisonSection = () => {
             {t("compare.title")}
           </h2>
           <p className="text-lg text-muted-foreground">{t("compare.subtitle")}</p>
+          <p className="mt-4 text-base font-medium text-primary">
+            {t("compare.anchor")} <span className="font-bold">{t("compare.premium.price")}</span>.
+          </p>
         </motion.div>
 
         {/* Cards layout for mobile, table-like for desktop */}

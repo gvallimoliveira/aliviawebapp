@@ -26,10 +26,13 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.cta.basic": "Avaliação Básica Gratuita",
     "hero.cta.premium": "Avaliação Premium",
     "hero.badge": "Autoavaliação inteligente",
+    "hero.social_proof": "Mais de 100 pessoas já descobriram a causa da sua dor",
+    "hero.time_badge": "Resultado em menos de 15 minutos",
 
     // Comparison
     "compare.title": "Escolha sua avaliação",
     "compare.subtitle": "Compare os recursos e escolha o plano ideal para suas necessidades",
+    "compare.anchor": "Uma sessão de fisioterapia custa em média R$150–300. A Aliv.iA oferece avaliação completa + plano de tratamento por apenas",
     "compare.feature": "Recurso",
     "compare.basic": "Básica",
     "compare.premium": "Premium",
@@ -61,12 +64,22 @@ const translations: Record<Language, Record<string, string>> = {
 
     // How it works
     "how.title": "Como funciona?",
-    "how.step1.title": "Responda a Anamnese",
-    "how.step1.desc": "Perguntas guiadas sobre sua dor, histórico e sintomas",
-    "how.step2.title": "Realize os Testes",
-    "how.step2.desc": "Testes funcionais com instruções em vídeo (Premium)",
-    "how.step3.title": "Receba seu Resultado",
-    "how.step3.desc": "Hipótese diagnóstica e plano de tratamento personalizado",
+    "how.subtitle": "Veja por dentro o que você vai receber",
+    "how.step1.title": "Conte sobre sua dor",
+    "how.step1.desc": "Perguntas guiadas sobre sua queixa, histórico e sintomas para entendermos seu caso",
+    "how.step2.title": "Marque onde dói",
+    "how.step2.desc": "Mapa de dor interativo com escala de intensidade para localizar exatamente o problema",
+    "how.step3.title": "Questionários validados",
+    "how.step3.desc": "KOOS, SPADI, ODI e outros — os mesmos usados em clínicas e pesquisas no mundo todo",
+    "how.step4.title": "Testes funcionais",
+    "how.step4.desc": "Testes guiados por vídeo para avaliar mobilidade, força e estabilidade (Premium)",
+    "how.step5.title": "Diagnóstico detalhado",
+    "how.step5.desc": "Hipótese diagnóstica com explicação completa do que está acontecendo",
+    "how.step6.title": "Plano de tratamento",
+    "how.step6.desc": "Exercícios personalizados em 3 fases: curto, médio e longo prazo",
+    "how.bonus.report": "Relatório em PDF",
+    "how.bonus.diary": "Diário de Dor",
+    "how.bonus.premium_label": "Exclusivo Premium",
 
     // Social
     "social.title": "Nos encontre nas redes sociais",
@@ -468,6 +481,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Highlights
     "highlights.title": "Por que a Aliv.iA?",
     "highlights.subtitle": "Ferramentas pensadas para quem quer cuidar da sua dor com autonomia e segurança",
+    "highlights.authority.title": "Formulada por Especialista",
+    "highlights.authority.desc": "Desenvolvida por fisioterapeuta pós-graduado em Traumato-Ortopedia com 7+ anos de experiência clínica.",
     "highlights.diary.title": "Diário de Dor",
     "highlights.diary.desc": "Acompanhe sua evolução diária com gráficos de progresso e registros simples.",
     "highlights.questionnaires.title": "Questionários Validados",
@@ -580,6 +595,9 @@ const translations: Record<Language, Record<string, string>> = {
     "pdf.success": "PDF gerado com sucesso!",
     "pdf.error": "Erro ao gerar PDF. Tente novamente.",
     "pdf.no_data": "Dados insuficientes para gerar o PDF.",
+
+    // Sticky CTA
+    "sticky.cta": "Comece sua avaliação agora",
   },
   en: {
     // Nav
@@ -597,10 +615,13 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.cta.basic": "Free Basic Assessment",
     "hero.cta.premium": "Premium Assessment",
     "hero.badge": "Smart self-assessment",
+    "hero.social_proof": "Over 100 people have already discovered the cause of their pain",
+    "hero.time_badge": "Results in less than 15 minutes",
 
     // Comparison
     "compare.title": "Choose your assessment",
     "compare.subtitle": "Compare features and choose the ideal plan for your needs",
+    "compare.anchor": "A physiotherapy session costs on average R$150–300. Aliv.iA offers a complete assessment + treatment plan for just",
     "compare.feature": "Feature",
     "compare.basic": "Basic",
     "compare.premium": "Premium",
@@ -632,12 +653,22 @@ const translations: Record<Language, Record<string, string>> = {
 
     // How it works
     "how.title": "How does it work?",
-    "how.step1.title": "Answer the Anamnesis",
-    "how.step1.desc": "Guided questions about your pain, history and symptoms",
-    "how.step2.title": "Perform the Tests",
-    "how.step2.desc": "Functional tests with video instructions (Premium)",
-    "how.step3.title": "Get your Results",
-    "how.step3.desc": "Diagnostic hypothesis and personalized treatment plan",
+    "how.subtitle": "See what you'll receive from the inside",
+    "how.step1.title": "Tell us about your pain",
+    "how.step1.desc": "Guided questions about your complaint, history and symptoms to understand your case",
+    "how.step2.title": "Mark where it hurts",
+    "how.step2.desc": "Interactive pain map with intensity scale to pinpoint exactly where the problem is",
+    "how.step3.title": "Validated questionnaires",
+    "how.step3.desc": "KOOS, SPADI, ODI and others — the same ones used in clinics and research worldwide",
+    "how.step4.title": "Functional tests",
+    "how.step4.desc": "Video-guided tests to evaluate mobility, strength and stability (Premium)",
+    "how.step5.title": "Detailed diagnosis",
+    "how.step5.desc": "Diagnostic hypothesis with full explanation of what's happening",
+    "how.step6.title": "Treatment plan",
+    "how.step6.desc": "Personalized exercises in 3 phases: short, medium and long term",
+    "how.bonus.report": "PDF Report",
+    "how.bonus.diary": "Pain Diary",
+    "how.bonus.premium_label": "Premium Exclusive",
 
     // Social
     "social.title": "Find us on social media",
@@ -1033,6 +1064,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Highlights
     "highlights.title": "Why Aliv.iA?",
     "highlights.subtitle": "Tools designed for those who want to take care of their pain with autonomy and safety",
+    "highlights.authority.title": "Designed by a Specialist",
+    "highlights.authority.desc": "Developed by a postgraduate physiotherapist in Orthopedic Trauma with 7+ years of clinical experience.",
     "highlights.diary.title": "Pain Diary",
     "highlights.diary.desc": "Track your daily progress with charts and simple entries.",
     "highlights.questionnaires.title": "Validated Questionnaires",
@@ -1145,6 +1178,9 @@ const translations: Record<Language, Record<string, string>> = {
     "pdf.success": "PDF generated successfully!",
     "pdf.error": "Error generating PDF. Please try again.",
     "pdf.no_data": "Insufficient data to generate PDF.",
+
+    // Sticky CTA
+    "sticky.cta": "Start your assessment now",
   },
 };
 

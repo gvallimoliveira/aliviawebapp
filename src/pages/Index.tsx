@@ -10,6 +10,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import FaqSection from "@/components/FaqSection";
 import SocialSection from "@/components/SocialSection";
 import Footer from "@/components/Footer";
+import StickyCTA from "@/components/StickyCTA";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -35,6 +36,7 @@ const Index = () => {
         <SocialSection />
       </main>
       <Footer />
+      <StickyCTA />
     </div>
   );
 };
