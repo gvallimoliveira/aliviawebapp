@@ -627,6 +627,23 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.link_inactive_desc": "Este link de avaliação profissional não está ativo no momento. Entre em contato com seu fisioterapeuta.",
     "pro.result_sent_title": "Relatório enviado ao seu fisioterapeuta",
     "pro.result_sent_desc": "Este relatório de triagem foi enviado ao(à) fisioterapeuta {name}. Ele(a) complementará sua avaliação presencialmente com testes funcionais e definição do plano de tratamento.",
+    "pro.badge_partner": "Parceiro",
+
+    // B2B Landing Section
+    "b2b.badge": "Para Fisioterapeutas",
+    "b2b.title": "Fisioterapeuta, potencialize suas consultas",
+    "b2b.subtitle": "Receba seus pacientes com anamnese completa, mapa de dor e questionários validados antes da primeira consulta. Avaliações mais assertivas, tratamentos mais eficazes.",
+    "b2b.benefit_1_title": "Economize 30min por consulta",
+    "b2b.benefit_1_desc": "Seu paciente chega com triagem, anamnese e questionários preenchidos. Você ganha tempo para o que importa: avaliar e tratar.",
+    "b2b.benefit_2_title": "Avaliações mais assertivas",
+    "b2b.benefit_2_desc": "Dados estruturados e organizados antes da consulta. Identifique padrões, priorize hipóteses e tome decisões clínicas mais seguras.",
+    "b2b.benefit_3_title": "Anamnese + questionários prontos",
+    "b2b.benefit_3_desc": "KOOS, SPADI, ODI, HOOS, FAOS, VISA-A — questionários validados preenchidos pelo paciente, prontos para sua análise.",
+    "b2b.benefit_4_title": "Relatórios profissionais",
+    "b2b.benefit_4_desc": "Impressione seus pacientes com um relatório de triagem profissional. Diferencie-se e agregue valor ao seu atendimento.",
+    "b2b.cta_desc": "Tudo isso por apenas",
+    "b2b.cta_cancel": "Cancele quando quiser. Sem fidelidade.",
+    "b2b.cta_button": "Assinar Plano Profissional",
   },
   en: {
     // Nav
@@ -1239,6 +1256,23 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.link_inactive_desc": "This professional assessment link is not currently active. Please contact your physiotherapist.",
     "pro.result_sent_title": "Report sent to your physiotherapist",
     "pro.result_sent_desc": "This triage report was sent to physiotherapist {name}. They will complete your assessment in person with functional tests and treatment plan definition.",
+    "pro.badge_partner": "Partner",
+
+    // B2B Landing Section
+    "b2b.badge": "For Physiotherapists",
+    "b2b.title": "Physiotherapist, supercharge your consultations",
+    "b2b.subtitle": "Receive your patients with complete anamnesis, pain map and validated questionnaires before the first consultation. More accurate assessments, more effective treatments.",
+    "b2b.benefit_1_title": "Save 30min per consultation",
+    "b2b.benefit_1_desc": "Your patient arrives with screening, anamnesis and questionnaires completed. You gain time for what matters: assess and treat.",
+    "b2b.benefit_2_title": "More accurate assessments",
+    "b2b.benefit_2_desc": "Structured and organized data before the consultation. Identify patterns, prioritize hypotheses and make safer clinical decisions.",
+    "b2b.benefit_3_title": "Anamnesis + questionnaires ready",
+    "b2b.benefit_3_desc": "KOOS, SPADI, ODI, HOOS, FAOS, VISA-A — validated questionnaires filled by the patient, ready for your analysis.",
+    "b2b.benefit_4_title": "Professional reports",
+    "b2b.benefit_4_desc": "Impress your patients with a professional triage report. Stand out and add value to your service.",
+    "b2b.cta_desc": "All of this for just",
+    "b2b.cta_cancel": "Cancel anytime. No commitment.",
+    "b2b.cta_button": "Subscribe to Professional Plan",
   },
 };
 

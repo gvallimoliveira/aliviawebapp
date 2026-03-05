@@ -39,12 +39,32 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { email: user.email });
 
+    // Check if user is a partner first — bypass Stripe entirely
+    const { data: proData } = await supabaseClient
+      .from("professionals")
+      .select("id, is_partner, subscription_status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (proData?.is_partner) {
+      logStep("User is a partner — granting access without Stripe");
+      // Ensure subscription_status is active for partners
+      if (proData.subscription_status !== "active") {
+        await supabaseClient
+          .from("professionals")
+          .update({ subscription_status: "active" })
+          .eq("user_id", user.id);
+      }
+      return new Response(JSON.stringify({ subscribed: true, is_partner: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
-      // Update professionals table
       await supabaseClient
         .from("professionals")
         .update({ subscription_status: "inactive", subscription_stripe_id: null })
@@ -76,7 +96,6 @@ serve(async (req) => {
       logStep("No active subscription");
     }
 
-    // Sync to professionals table
     await supabaseClient
       .from("professionals")
       .update({
