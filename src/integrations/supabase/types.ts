@@ -95,6 +95,60 @@ export type Database = {
           },
         ]
       }
+      blog_posts: {
+        Row: {
+          author_name: string
+          content_en: string | null
+          content_pt: string
+          cover_image_url: string | null
+          created_at: string | null
+          excerpt_en: string | null
+          excerpt_pt: string | null
+          id: string
+          published: boolean | null
+          published_at: string | null
+          slug: string
+          tags: string[] | null
+          title_en: string | null
+          title_pt: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_name?: string
+          content_en?: string | null
+          content_pt: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          excerpt_en?: string | null
+          excerpt_pt?: string | null
+          id?: string
+          published?: boolean | null
+          published_at?: string | null
+          slug: string
+          tags?: string[] | null
+          title_en?: string | null
+          title_pt: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_name?: string
+          content_en?: string | null
+          content_pt?: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          excerpt_en?: string | null
+          excerpt_pt?: string | null
+          id?: string
+          published?: boolean | null
+          published_at?: string | null
+          slug?: string
+          tags?: string[] | null
+          title_en?: string | null
+          title_pt?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       follow_up_emails: {
         Row: {
           assessment_id: string

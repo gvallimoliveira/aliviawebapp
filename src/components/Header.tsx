@@ -30,6 +30,9 @@ const Header = () => {
           <a href="#how" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             {t("how.title")}
           </a>
+          <a href="/blog" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            {t("blog.title")}
+          </a>
           <button
             onClick={() => navigate("/professional/register")}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80"
