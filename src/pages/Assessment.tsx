@@ -466,6 +466,9 @@ const Assessment = () => {
             plan={treatmentPlan}
             diagnosis={diagnosis}
             assessmentId={assessmentId || undefined}
+            anamnesisData={anamnesisData || undefined}
+            painRegions={anamnesisData?.painRegions}
+            testResults={testResults.length > 0 ? testResults : questionnaireResults.length > 0 ? questionnaireResults : undefined}
             onBack={() => setStep("result")}
             onNewAssessment={() => navigate("/")}
           />

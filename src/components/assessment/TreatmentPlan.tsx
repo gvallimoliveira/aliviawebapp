@@ -60,6 +60,9 @@ interface TreatmentPlanProps {
   plan: TreatmentPlanData;
   diagnosis?: any;
   assessmentId?: string;
+  anamnesisData?: any;
+  painRegions?: string[];
+  testResults?: any;
   onBack: () => void;
   onNewAssessment: () => void;
 }
@@ -79,7 +82,7 @@ const phaseConfig: Record<string, { colorClass: string; bgClass: string }> = {
   long_term: { colorClass: "text-green-600", bgClass: "bg-green-50 border-green-200" },
 };
 
-const TreatmentPlan = ({ plan, diagnosis, assessmentId, onBack, onNewAssessment }: TreatmentPlanProps) => {
+const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegions, testResults, onBack, onNewAssessment }: TreatmentPlanProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -96,7 +99,7 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, onBack, onNewAssessment 
     setPdfLoading(true);
     try {
       const { generateAssessmentPdf } = await import("@/utils/generatePdf");
-      await generateAssessmentPdf({ diagnosis, treatmentPlan: plan, language, userName: user?.user_metadata?.full_name || "" });
+      await generateAssessmentPdf({ diagnosis, treatmentPlan: plan, language, userName: user?.user_metadata?.full_name || "", anamnesisData, painRegions, testResults });
       toast({ title: t("pdf.success") });
     } catch {
       toast({ title: t("pdf.error"), variant: "destructive" });
