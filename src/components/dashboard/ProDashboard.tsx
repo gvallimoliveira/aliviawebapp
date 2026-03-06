@@ -116,6 +116,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     }
   };
 
+  const thisMonthCount = patientAssessments.filter((a) => {
     const d = new Date(a.created_at);
     const now = new Date();
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
