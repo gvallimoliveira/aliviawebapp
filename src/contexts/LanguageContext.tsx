@@ -1531,6 +1531,12 @@ const translations: Record<Language, Record<string, string>> = {
     "b2b.faq2.a": "No. The assessment via professional link is completely free for the patient. Only the professional subscribes to the plan.",
     "b2b.faq3.q": "Can I cancel at any time?",
     "b2b.faq3.a": "Yes! No commitment, no penalty. Cancel whenever you want directly from the panel.",
+    "b2b.plan_monthly": "Monthly",
+    "b2b.plan_annual": "Annual",
+    "b2b.best_value": "Best value",
+    "b2b.billed_annually": "Billed annually: R$ 418.80/year",
+    "b2b.save_30": "Save 30%",
+    "b2b.per_month": "month",
 
     // Patient Info (Professional flow)
     "patient_info.title": "Patient Identification",
