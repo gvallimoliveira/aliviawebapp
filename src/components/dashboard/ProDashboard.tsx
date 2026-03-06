@@ -96,6 +96,18 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     }
   };
 
+  const handleLifetimeCheckout = async () => {
+    setLifetimeLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-pro-lifetime-treatment");
+      if (error) throw error;
+      if (data?.url) window.open(data.url, "_blank");
+    } catch {
+      toast({ title: t("payment.error_title"), description: t("payment.error_desc"), variant: "destructive" });
+    } finally {
+      setLifetimeLoading(false);
+    }
+
   const copyLink = () => {
     const link = `${window.location.origin}/assessment/professional/${professional.id}`;
     navigator.clipboard.writeText(link);
