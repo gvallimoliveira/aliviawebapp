@@ -232,6 +232,19 @@ const ProfessionalAssessment = () => {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="patient-email">{t("patient_info.email_label")}</Label>
+                  <Input
+                    id="patient-email"
+                    type="email"
+                    value={patientEmail}
+                    onChange={(e) => setPatientEmail(e.target.value.slice(0, 150))}
+                    placeholder={t("patient_info.email_placeholder")}
+                    maxLength={150}
+                  />
+                  <p className="text-xs text-muted-foreground">{t("patient_info.email_hint")}</p>
+                </div>
+
                 <div className="bg-muted/50 rounded-lg p-3 space-y-1">
                   <p className="text-xs text-muted-foreground">{t("patient_info.steps_info")}</p>
                 </div>
