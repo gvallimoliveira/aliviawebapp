@@ -360,6 +360,72 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </CardContent>
       </Card>
 
+      {/* Lifetime Treatment Upsell — only for non-lifetime pros */}
+      {!professional.lifetime_treatment && (isWithinFirstMonth ? (
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <CardContent className="py-5">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 shrink-0">
+                <Zap className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 space-y-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-foreground">{t("pro_lifetime.upsell_title")}</h3>
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] gap-1">
+                      <Gift className="h-3 w-3" />
+                      {t("pro_lifetime.limited_offer")}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t("pro_lifetime.upsell_desc")}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-bold text-foreground">{PRO_LIFETIME_TREATMENT_PRICE_FORMATTED}</span>
+                  <span className="text-sm text-muted-foreground line-through">{PRO_LIFETIME_TREATMENT_ORIGINAL_FORMATTED}</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-primary font-medium">
+                  <Clock className="h-3.5 w-3.5" />
+                  {t("pro_lifetime.days_left").replace("{days}", String(daysLeftForOffer))}
+                </div>
+                <Button
+                  onClick={handleLifetimeCheckout}
+                  disabled={lifetimeLoading}
+                  className="w-full sm:w-auto rounded-xl gap-2"
+                >
+                  {lifetimeLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                  {t("pro_lifetime.buy_cta")}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-border/60">
+          <CardContent className="py-4 px-5 flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted shrink-0">
+              <Zap className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-foreground text-sm">{t("pro_lifetime.upsell_title")}</h3>
+              <p className="text-xs text-muted-foreground">{t("pro_lifetime.upsell_desc_regular")}</p>
+            </div>
+            <div className="text-right shrink-0">
+              <span className="text-lg font-bold text-foreground">{PRO_LIFETIME_TREATMENT_ORIGINAL_FORMATTED}</span>
+            </div>
+            <Button
+              onClick={handleLifetimeCheckout}
+              disabled={lifetimeLoading}
+              size="sm"
+              className="rounded-xl gap-1.5 shrink-0"
+            >
+              {lifetimeLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+              {t("pro_lifetime.buy_cta")}
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
+
       {/* Generate Link */}
       <Card className="border-primary/20">
         <CardHeader className="pb-3">
