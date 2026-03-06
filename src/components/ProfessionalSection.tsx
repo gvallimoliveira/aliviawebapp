@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Target, FileText, Activity, Stethoscope, ArrowRight } from "lucide-react";
+import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 
 const ProfessionalSection = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [billing, setBilling] = useState<"monthly" | "annual">("annual");
 
   const benefits = [
     { icon: Clock, titleKey: "b2b.benefit_1_title", descKey: "b2b.benefit_1_desc" },
@@ -15,9 +18,13 @@ const ProfessionalSection = () => {
     { icon: Activity, titleKey: "b2b.benefit_4_title", descKey: "b2b.benefit_4_desc" },
   ];
 
+  const price = billing === "monthly" ? PRO_PLAN_PRICE : PRO_PLAN_ANNUAL_PRICE;
+  const priceFormatted = billing === "monthly"
+    ? `R$${PRO_PLAN_PRICE}`
+    : `R$${PRO_PLAN_ANNUAL_PRICE.toFixed(2).replace(".", ",")}`;
+
   return (
     <section id="profissionais" className="py-20 relative overflow-hidden">
-      {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/30" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
 
@@ -56,9 +63,40 @@ const ProfessionalSection = () => {
         <div className="text-center space-y-4">
           <div className="inline-block rounded-2xl border border-primary/20 bg-card/90 backdrop-blur-sm px-8 py-6 shadow-sm">
             <p className="text-sm text-muted-foreground mb-3">{t("b2b.cta_desc")}</p>
-            <div className="text-3xl font-bold text-foreground mb-1">
-              A partir de R$34,90<span className="text-lg font-normal text-muted-foreground">/mês</span>
+
+            {/* Toggle mensal / anual */}
+            <div className="inline-flex items-center rounded-full border border-border bg-muted/50 p-1 mb-4">
+              <button
+                onClick={() => setBilling("monthly")}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+                  billing === "monthly"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t("b2b.plan_monthly")}
+              </button>
+              <button
+                onClick={() => setBilling("annual")}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  billing === "annual"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t("b2b.plan_annual")}
+                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px] px-1.5 py-0">
+                  {t("b2b.save_30")}
+                </Badge>
+              </button>
             </div>
+
+            <div className="text-3xl font-bold text-foreground mb-1">
+              {priceFormatted}<span className="text-lg font-normal text-muted-foreground">/{t("b2b.per_month")}</span>
+            </div>
+            {billing === "annual" && (
+              <p className="text-xs text-muted-foreground mb-1">{t("b2b.billed_annually")}</p>
+            )}
             <p className="text-xs text-muted-foreground mb-5">{t("b2b.cta_cancel")}</p>
             <Button
               onClick={() => navigate("/profissionais")}
