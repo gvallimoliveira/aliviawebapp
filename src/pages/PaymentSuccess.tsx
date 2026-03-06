@@ -8,9 +8,15 @@ import { useLanguage } from "@/contexts/LanguageContext";
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [verifying, setVerifying] = useState(true);
   const [verified, setVerified] = useState(false);
+  const [generatingTreatment, setGeneratingTreatment] = useState(false);
+  const [treatmentDone, setTreatmentDone] = useState(false);
+
+  const paymentType = searchParams.get("type");
+  const assessmentId = searchParams.get("assessment_id");
+  const isProTreatment = paymentType === "pro_treatment" && assessmentId;
 
   useEffect(() => {
     const sessionId = searchParams.get("session_id");
@@ -28,12 +34,74 @@ const PaymentSuccess = () => {
       .catch(() => setVerifying(false));
   }, [searchParams, navigate]);
 
+  // After verification, generate treatment for pro_treatment payments
+  useEffect(() => {
+    if (!verified || !isProTreatment || generatingTreatment || treatmentDone) return;
+
+    const generateTreatment = async () => {
+      setGeneratingTreatment(true);
+      try {
+        // Fetch assessment data
+        const { data: assessment } = await supabase
+          .from("assessments")
+          .select("*")
+          .eq("id", assessmentId)
+          .single();
+
+        if (!assessment) throw new Error("Assessment not found");
+
+        const { data: treatmentData, error } = await supabase.functions.invoke("generate-treatment", {
+          body: {
+            anamnesisData: assessment.anamnesis_data,
+            testResults: assessment.test_results,
+            questionnaireResults: Array.isArray(assessment.test_results) ? assessment.test_results : [],
+            diagnosis: assessment.diagnosis,
+            mode: "professional",
+            language: language,
+          },
+        });
+
+        if (error) throw error;
+
+        // Save treatment plan to assessment
+        await supabase
+          .from("assessments")
+          .update({
+            treatment_plan: treatmentData.treatmentPlan,
+            payment_status: "treatment_paid",
+          })
+          .eq("id", assessmentId);
+
+        setTreatmentDone(true);
+      } catch (err) {
+        console.error("Error generating treatment:", err);
+      } finally {
+        setGeneratingTreatment(false);
+      }
+    };
+
+    generateTreatment();
+  }, [verified, isProTreatment, assessmentId, generatingTreatment, treatmentDone, language]);
+
   if (verifying) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
           <p className="text-muted-foreground">{t("payment.verifying") || "Verificando pagamento..."}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Pro treatment: generating treatment
+  if (isProTreatment && verified && (generatingTreatment || !treatmentDone)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">{t("treatment.processing") || "Gerando seu plano de tratamento..."}</p>
+          <p className="text-xs text-muted-foreground/60">{t("treatment.processing_desc")}</p>
         </div>
       </div>
     );
@@ -46,13 +114,26 @@ const PaymentSuccess = () => {
           <>
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
             <h1 className="text-2xl font-bold text-foreground">
-              {t("payment.success_title") || "Pagamento confirmado!"}
+              {isProTreatment
+                ? (t("pro_treatment.success_title") || "Plano de tratamento desbloqueado!")
+                : (t("payment.success_title") || "Pagamento confirmado!")}
             </h1>
             <p className="text-muted-foreground">
-              {t("payment.success_desc") || "Sua avaliação premium está liberada. Você pode refazê-la 1 vez nos próximos 7 dias."}
+              {isProTreatment
+                ? (t("pro_treatment.success_desc") || "O plano de tratamento foi gerado com sucesso para esta avaliação.")
+                : (t("payment.success_desc") || "Sua avaliação premium está liberada.")}
             </p>
-            <Button onClick={() => navigate("/assessment/premium")} className="rounded-xl">
-              {t("payment.start_assessment") || "Iniciar Avaliação Premium"}
+            <Button
+              onClick={() =>
+                isProTreatment
+                  ? navigate(`/assessment/view/${assessmentId}`)
+                  : navigate("/assessment/premium")
+              }
+              className="rounded-xl"
+            >
+              {isProTreatment
+                ? (t("pro_treatment.view_plan") || "Ver Plano de Tratamento")
+                : (t("payment.start_assessment") || "Iniciar Avaliação Premium")}
             </Button>
           </>
         ) : (

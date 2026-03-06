@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
-  AlertTriangle,
+  AlertTriangle, FileCheck, Lock,
 } from "lucide-react";
 
 interface ProDashboardProps {
@@ -275,6 +275,18 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
                             <Badge variant="destructive" className="text-[10px] gap-1">
                               <AlertTriangle className="h-3 w-3" />
                               {t("pro.redflag_badge")}
+                            </Badge>
+                          )}
+                          {!isRedFlagged && a.diagnosis && !a.treatment_plan && (
+                            <Badge variant="outline" className="text-[10px] gap-1 bg-amber-500/10 text-amber-600 border-amber-200">
+                              <Lock className="h-3 w-3" />
+                              {t("pro_treatment.badge_available")}
+                            </Badge>
+                          )}
+                          {a.treatment_plan && (
+                            <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                              <FileCheck className="h-3 w-3" />
+                              {t("pro_treatment.badge_unlocked")}
                             </Badge>
                           )}
                         </div>
