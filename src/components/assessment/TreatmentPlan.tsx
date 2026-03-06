@@ -46,6 +46,7 @@ interface Phase {
   duration: string;
   goal: string;
   focus: string;
+  stepsMapping?: string;
   exercises: Exercise[];
 }
 
@@ -54,6 +55,7 @@ interface TreatmentPlanData {
   generalGuidelines: string[];
   progressionCriteria: string;
   disclaimer: string;
+  difiContext?: string;
 }
 
 interface TreatmentPlanProps {
@@ -156,6 +158,22 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
         <p className="text-sm text-muted-foreground">{t("treatment.subtitle")}</p>
       </div>
 
+      {/* D.I.F.I. Educational Card */}
+      {plan.difiContext && (
+        <Card className="rounded-xl border-destructive/30 bg-destructive/5">
+          <CardContent className="py-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10">
+                <span className="text-sm font-black text-destructive">D.I.F.I.</span>
+              </div>
+              <h4 className="text-sm font-semibold text-foreground">{t("treatment.difi.title")}</h4>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">{plan.difiContext}</p>
+            <p className="text-xs font-medium text-destructive/80">{t("treatment.difi.desc")}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Phases */}
       {plan.phases.map((phase, index) => {
         const config = phaseConfig[phase.id] || phaseConfig.short_term;
@@ -187,6 +205,12 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
                     <ChevronDown className="h-5 w-5 text-muted-foreground" />
                   )}
                 </div>
+                {/* STEPS Badge */}
+                {(phase.stepsMapping || t(`treatment.steps.${phase.id}`) !== `treatment.steps.${phase.id}`) && (
+                  <Badge variant="outline" className="mt-2 text-[10px] font-medium border-primary/30 text-primary bg-primary/5 w-fit">
+                    {phase.stepsMapping || t(`treatment.steps.${phase.id}`)}
+                  </Badge>
+                )}
               </CardHeader>
             </button>
 
