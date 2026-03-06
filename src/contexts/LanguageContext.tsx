@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
+
 
 type Language = "pt" | "en";
 

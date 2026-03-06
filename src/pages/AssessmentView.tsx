@@ -414,7 +414,29 @@ const AssessmentView = () => {
                   body: { assessment_id: assessment.id },
                 });
                 if (error) throw error;
-                if (data?.url) {
+                // If professional has lifetime treatment, the function returns { free: true }
+                if (data?.free) {
+                  // Directly generate treatment
+                  const { data: treatmentResult, error: treatmentError } = await supabase.functions.invoke("generate-treatment", {
+                    body: {
+                      anamnesisData: assessment.anamnesis_data,
+                      testResults: assessment.test_results,
+                      questionnaireResults: [],
+                      diagnosis: assessment.diagnosis,
+                      mode: "professional",
+                      language: language,
+                    },
+                  });
+                  if (treatmentError) throw treatmentError;
+                  if (treatmentResult?.treatmentPlan) {
+                    await supabase.from("assessments").update({
+                      treatment_plan: treatmentResult.treatmentPlan,
+                      status: "completed",
+                    }).eq("id", assessment.id);
+                    setAssessment({ ...assessment, treatment_plan: treatmentResult.treatmentPlan });
+                    setShowTreatment(true);
+                  }
+                } else if (data?.url) {
                   const w = window.open(data.url, "_blank");
                   if (!w) window.location.href = data.url;
                 }
