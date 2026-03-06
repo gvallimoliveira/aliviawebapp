@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { PRO_PLAN_PRICE_FORMATTED } from "@/constants/pricing";
+import { mockPatientAssessments } from "@/data/mockPatientData";
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
 } from "@/components/ui/card";
@@ -14,9 +15,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
-  AlertTriangle, FileCheck, Lock, Activity,
+  AlertTriangle, FileCheck, Lock, Activity, FileText,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
+import { generateAssessmentPdf } from "@/utils/generatePdf";
 
 interface ProDashboardProps {
   professional: any;
@@ -95,6 +97,25 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
+  const handleDownloadPdf = async (assessment: any) => {
+    if (!assessment.diagnosis) return;
+    try {
+      const lang = document.documentElement.lang === "en" ? "en" : "pt";
+      await generateAssessmentPdf({
+        diagnosis: assessment.diagnosis,
+        treatmentPlan: assessment.treatment_plan,
+        language: lang as "pt" | "en",
+        userName: assessment.patient_name || "Paciente",
+        anamnesisData: assessment.anamnesis_data,
+        painRegions: assessment.pain_regions,
+        testResults: assessment.test_results,
+      });
+      toast({ title: t("pro.download_pdf") });
+    } catch {
+      toast({ title: "Erro ao gerar PDF", variant: "destructive" });
+    }
+  };
+
   const thisMonthCount = patientAssessments.filter((a) => {
     const d = new Date(a.created_at);
     const now = new Date();
@@ -115,54 +136,150 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     );
   }
 
-  // Paywall — professional not subscribed
+  // Use mock data for demo when not subscribed
+  const displayAssessments = subscription?.subscribed ? patientAssessments : mockPatientAssessments;
+  const displayThisMonthCount = subscription?.subscribed ? thisMonthCount : 2;
+  const displayTotalCount = subscription?.subscribed ? patientAssessments.length : mockPatientAssessments.length;
+
+  const renderBlurOverlay = () => (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-xl">
+      <div className="text-center max-w-sm px-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mx-auto mb-4">
+          <Lock className="h-7 w-7 text-primary" />
+        </div>
+        <h3 className="text-lg font-bold text-foreground mb-2">{t("pro.paywall_title")}</h3>
+        <p className="text-sm text-muted-foreground mb-4">{t("pro.paywall_desc")}</p>
+        <div className="text-2xl font-bold text-foreground mb-4">{PRO_PLAN_PRICE_FORMATTED}</div>
+        <Button
+          onClick={handleSubscribe}
+          disabled={checkoutLoading}
+          className="w-full rounded-xl gap-2"
+          size="lg"
+        >
+          {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+          {t("pro.subscribe_cta")}
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Paywall — professional not subscribed: show blurred preview
   if (!subscription?.subscribed) {
     return (
-      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <CardHeader className="text-center pb-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mx-auto mb-2">
-            <Stethoscope className="h-4 w-4" />
-            {t("pro.plan_title")}
-          </div>
-          <CardTitle className="text-2xl">{t("pro.paywall_title")}</CardTitle>
-          <CardDescription className="max-w-lg mx-auto">
-            {t("pro.paywall_desc")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6 max-w-md mx-auto">
-          <div className="text-center">
-            <div className="text-4xl font-bold text-foreground">{PRO_PLAN_PRICE_FORMATTED}</div>
-          </div>
-          <ul className="space-y-3 text-sm">
-            <li className="flex items-start gap-2 text-muted-foreground">
-              <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              {t("pro.feature_1")}
-            </li>
-            <li className="flex items-start gap-2 text-muted-foreground">
-              <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              {t("pro.feature_2")}
-            </li>
-            <li className="flex items-start gap-2 text-muted-foreground">
-              <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              {t("pro.feature_3")}
-            </li>
-            <li className="flex items-start gap-2 text-muted-foreground">
-              <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              {t("pro.feature_4")}
-            </li>
-          </ul>
-          <Button
-            onClick={handleSubscribe}
-            disabled={checkoutLoading}
-            className="w-full rounded-xl gap-2"
-            size="lg"
-          >
-            {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-            {t("pro.subscribe_cta")}
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        {/* Demo badge */}
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="py-3 px-5 flex items-center gap-3">
+            <Sparkles className="h-5 w-5 text-primary shrink-0" />
+            <p className="text-sm text-foreground">
+              {t("pro.demo_notice")}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Blurred Generate Link */}
+        <div className="relative">
+          <Card className="border-primary/20 opacity-60">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-primary" />
+                {t("pro.generate_link_title")}
+              </CardTitle>
+              <CardDescription className="text-sm">{t("pro.generate_link_desc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
+                  {window.location.origin}/assessment/professional/seu-id
+                </code>
+                <Button variant="outline" className="gap-1.5 rounded-xl shrink-0" disabled>
+                  <Copy className="h-4 w-4" />
+                  {t("referral.copy_link")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          {renderBlurOverlay()}
+        </div>
+
+        {/* Stats with mock */}
+        <div className="grid grid-cols-2 gap-4">
+          <Card>
+            <CardContent className="py-4 text-center">
+              <p className="text-3xl font-bold text-foreground">{displayTotalCount}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("pro.total_assessments")}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="py-4 text-center">
+              <p className="text-3xl font-bold text-primary">{displayThisMonthCount}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("pro.this_month")}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Blurred patient list & dashboard */}
+        <div className="relative min-h-[300px]">
+          <Tabs defaultValue="assessments" className="w-full">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="assessments" className="gap-1.5">
+                <Users className="h-4 w-4" />
+                {t("pro.patient_assessments")}
+              </TabsTrigger>
+              <TabsTrigger value="evolution" className="gap-1.5">
+                <Activity className="h-4 w-4" />
+                {t("pro.patients_title")}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="assessments">
+              <div className="space-y-2 opacity-60">
+                {displayAssessments.map((a: any) => {
+                  const regions = (a.pain_regions || []).map((r: string) => painRegionLabels[r] || r).slice(0, 3);
+                  return (
+                    <Card key={a.id} className="border-border/60">
+                      <CardContent className="py-3 px-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 space-y-1.5 min-w-0">
+                            <p className="text-sm font-semibold text-foreground">{a.patient_name}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                              {a.pain_score != null && <span>• Dor: {a.pain_score}/10</span>}
+                            </div>
+                            {a.diagnosis?.hypothesis && (
+                              <p className="text-sm font-medium text-foreground line-clamp-1">{a.diagnosis.hypothesis}</p>
+                            )}
+                            {regions.length > 0 && (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+                                {regions.map((r: string, i: number) => (
+                                  <span key={i} className="text-[10px] bg-muted/60 text-muted-foreground px-1.5 py-0.5 rounded-full">{r}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="evolution">
+              <div className="opacity-60">
+                <PatientEvolutionDashboard
+                  assessments={displayAssessments as any}
+                  professionalId={professional.id}
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+          {renderBlurOverlay()}
+        </div>
+      </div>
     );
   }
 
@@ -338,7 +455,23 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
                               </div>
                             )}
                           </div>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
+                          <div className="flex items-center gap-1 shrink-0">
+                            {a.diagnosis && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title={t("pro.download_pdf")}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDownloadPdf(a);
+                                }}
+                              >
+                                <FileText className="h-4 w-4 text-primary" />
+                              </Button>
+                            )}
+                            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

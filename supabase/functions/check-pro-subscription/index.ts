@@ -96,12 +96,19 @@ serve(async (req) => {
       logStep("No active subscription");
     }
 
+    const updatePayload: Record<string, any> = {
+      subscription_status: hasActiveSub ? "active" : "inactive",
+      subscription_stripe_id: subscriptionId,
+    };
+
+    // Auto-approve professional when they subscribe
+    if (hasActiveSub) {
+      updatePayload.approved = true;
+    }
+
     await supabaseClient
       .from("professionals")
-      .update({
-        subscription_status: hasActiveSub ? "active" : "inactive",
-        subscription_stripe_id: subscriptionId,
-      })
+      .update(updatePayload)
       .eq("user_id", user.id);
 
     return new Response(JSON.stringify({

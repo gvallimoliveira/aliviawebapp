@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,8 @@ const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { t, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
   const [assessments, setAssessments] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [premiumAccess, setPremiumAccess] = useState<PremiumAccess | null>(null);
@@ -94,6 +96,9 @@ const Dashboard = () => {
               .eq("professional_id", data.id)
               .order("created_at", { ascending: false })
               .then(({ data: refs }: any) => setReferrals(refs || []));
+          } else if (tabFromUrl === "professional") {
+            // First-time pro user: redirect to registration
+            navigate("/professional/register", { replace: true });
           }
         });
     }
@@ -455,8 +460,8 @@ const Dashboard = () => {
           <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
         </div>
 
-        {professional?.approved ? (
-          <Tabs defaultValue="health" className="space-y-6">
+        {professional ? (
+          <Tabs defaultValue={tabFromUrl === "professional" ? "professional" : "health"} className="space-y-6">
             <TabsList className="w-full grid grid-cols-2">
               <TabsTrigger value="health" className="gap-1.5">
                 <Heart className="h-4 w-4" />
@@ -480,15 +485,6 @@ const Dashboard = () => {
         ) : (
           <div className="space-y-8">
             {renderClientContent()}
-            {/* Professional Approval Status */}
-            {professional && !professional.approved && (
-              <Card className="border-amber-200 bg-amber-500/5">
-                <CardContent className="py-4 px-5 flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-amber-600 shrink-0" />
-                  <span className="text-sm text-amber-700">{t("prof.profile_under_review")}</span>
-                </CardContent>
-              </Card>
-            )}
           </div>
         )}
       </main>
