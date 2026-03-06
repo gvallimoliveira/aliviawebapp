@@ -1,87 +1,41 @@
-## Plano: Desbloqueio de Plano de Tratamento para Avaliações Profissionais (R$19,90)
+## Plano: Remover hipótese diagnóstica da tela do paciente no fluxo profissional
 
-### Contexto
+### Raciocínio
 
-Atualmente, avaliações profissionais (`type: "professional"`) geram apenas hipótese diagnóstica + resumo, sem plano de tratamento. A proposta é oferecer ao fisioterapeuta a possibilidade de desbloquear o plano de tratamento por R$9,90 por avaliação, usando a mesma estratégia de "blurred preview" já utilizada na conversão basic→premium.
+Os dois argumentos são sólidos:
 
----
+1. Evitar viés clínico — o paciente chegar à consulta com uma "hipótese de IA" pode interferir na relação terapêutica e na avaliação do profissional.
+2. Oportunidade comercial — o paciente curioso pode fazer a avaliação básica gratuita por conta própria, conhecendo melhor o app.
 
-### 1. Constante de Preço
-
-`**src/constants/pricing.ts**` — Adicionar:
-
-```typescript
-export const PRO_TREATMENT_PRICE = 19.90;
-export const PRO_TREATMENT_PRICE_FORMATTED = `R$ 19,90`;
-```
-
-### 2. Produto e Preço no Stripe
-
-Criar produto "Pro Treatment Unlock" com preço R$9,90 (one-time) via ferramenta Stripe.
-
-### 3. Edge Function: `create-pro-treatment-payment`
-
-Nova edge function que:
-
-- Autentica o profissional (deve ser dono da avaliação via `professional_id`)
-- Recebe `assessment_id` no body
-- Cria checkout session Stripe com `mode: "payment"`, preço R$9,90
-- `success_url` → `/payment-success?session_id={CHECKOUT_SESSION_ID}&type=pro_treatment&assessment_id=<id>`
-- Metadata inclui `assessment_id` e `user_id`
-
-### 4. Lógica de Verificação e Geração
-
-Estender `verify-payment` ou criar lógica no fluxo de sucesso:
-
-- Ao verificar pagamento de `type=pro_treatment`, invocar `generate-treatment` com os dados da avaliação profissional
-- Salvar o `treatment_plan` na avaliação e marcar `payment_status` como `"treatment_paid"` (ou usar campo adicional)
-
-Alternativa mais simples: na página de sucesso, após verificação do pagamento, chamar `generate-treatment` diretamente do frontend (o profissional está autenticado e os dados já estão no banco).
-
-### 5. UI — Blurred Preview na Visualização da Avaliação Profissional
-
-`**src/pages/AssessmentView.tsx**` — Quando `assessment.type === "professional"`:
-
-- Após o resultado do diagnóstico, mostrar preview desfocada do plano de tratamento (similar ao `BlurredPreview` do `DiagnosisResult.tsx`)
-- Se `treatment_plan` já existe → mostra normalmente
-- Se não existe → mostra 3 cards blurred (fases curto/médio/longo prazo com conteúdo fake) + CTA de desbloqueio R$9,90
-- CTA invoca `create-pro-treatment-payment` com o `assessment_id`
-
-### 6. UI — Indicador na Lista de Avaliações (ProDashboard)
-
-`**src/components/dashboard/ProDashboard.tsx**` — Na lista de avaliações do profissional:
-
-- Adicionar badge sutil "Tratamento disponível" nas avaliações que têm diagnóstico mas não têm `treatment_plan`
-- Badge "Tratamento desbloqueado" nas que já têm `treatment_plan`
-
-### 7. Página de Sucesso do Pagamento
-
-`**src/pages/PaymentSuccess.tsx**` — Estender para:
-
-- Detectar `type=pro_treatment` nos search params
-- Após verificação, gerar tratamento automaticamente (chamando `generate-treatment`)
-- Redirecionar para `/assessment/view/<id>` com tratamento já gerado
-
-### 8. Traduções
-
-`**src/contexts/LanguageContext.tsx**` — Novas chaves para:
-
-- Textos do CTA de desbloqueio
-- Badge de tratamento disponível/desbloqueado
-- Mensagens de sucesso de pagamento pro treatment
+A diagnose continua sendo gerada e salva no banco (o profissional precisa dela no dashboard). A mudança é **apenas na UI do paciente**.
 
 ---
 
-### Arquivos a criar/editar
+### Mudanças
 
+**1. `src/pages/ProfessionalAssessment.tsx**`
 
-| Arquivo                                                    | Mudança                                                          |
-| ---------------------------------------------------------- | ---------------------------------------------------------------- |
-| `src/constants/pricing.ts`                                 | Nova constante `PRO_TREATMENT_PRICE`                             |
-| `supabase/functions/create-pro-treatment-payment/index.ts` | **Novo** — checkout Stripe R$9,90                                |
-| `supabase/functions/verify-payment/index.ts`               | Estender para lidar com `type=pro_treatment`                     |
-| `src/pages/PaymentSuccess.tsx`                             | Fluxo pro_treatment: gerar tratamento + redirect                 |
-| `src/pages/AssessmentView.tsx`                             | Blurred preview + CTA desbloqueio para assessments profissionais |
-| `src/components/dashboard/ProDashboard.tsx`                | Badge tratamento disponível/desbloqueado                         |
-| `src/contexts/LanguageContext.tsx`                         | Traduções                                                        |
-| `supabase/config.toml`                                     | Registrar nova function                                          |
+- Remover o componente `ProfessionalDiagnosisResult` inteiro (ele exibe hipótese, confiança e resumo ao paciente).
+- Remover os steps `low_confidence` e `result` da renderização do paciente.
+- Após `generateDiagnosis` completar com sucesso, ir direto para um novo step `"thank_you"` em vez de `"result"` ou `"low_confidence"`.
+- Criar um componente inline `ThankYouStep` que mostra:
+  - Icone de check/sucesso
+  - Titulo: "Obrigado por preencher a pré-avaliação!"
+  - Mensagem: "Já encaminhamos ao Dr. {nome} os dados coletados e integrados para aumentar a efetividade da sua avaliação presencial."
+    &nbsp;
+  - Botão "Voltar ao início". retorna a landing page do app. 
+- Atualizar o tipo `ProfStep` para incluir `"thank_you"` e remover `"low_confidence"` e `"result"`.
+
+**2. `src/contexts/LanguageContext.tsx**`
+
+- Adicionar chaves de tradução PT/EN:
+  - `pro.thankyou_title` — "Obrigado por preencher a pré-avaliação!" / "Thank you for completing the pre-assessment!"
+  - `pro.thankyou_desc` — "Já encaminhamos ao Dr. {name} os dados coletados..." / "We've sent Dr. {name} the collected data..."
+  - `pro.thankyou_cta` — "Quer conhecer melhor sua dor? Faça uma avaliação gratuita" / "Want to understand your pain better? Take a free assessment"
+
+### O que NÃO muda
+
+- A IA continua gerando a diagnose normalmente (a edge function `generate-diagnosis` é chamada igual).
+- O resultado continua sendo salvo na tabela `assessments` com `status: "completed"` e campo `diagnosis` preenchido.
+- O profissional continua vendo a hipótese no seu dashboard (`ProDashboard` / `AssessmentView`).
+- O fluxo de desbloqueio de tratamento (R$9,90) não é afetado — ele opera no dashboard do profissional.
