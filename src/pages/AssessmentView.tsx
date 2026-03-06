@@ -322,7 +322,7 @@ const AssessmentView = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="py-4 space-y-4">
-              {(assessment.test_results as unknown as QuestionnaireResult[]).map((r: QuestionnaireResult) => {
+              {(assessment.test_results as any[]).filter((r: any) => r.questionnaireId).map((r: QuestionnaireResult) => {
                 const qDef = questionnaires.find((q) => q.id === r.questionnaireId);
                 const severityColor =
                   r.severity === "minimal" ? "text-primary" :
