@@ -191,12 +191,18 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
               )}
             </div>
           </div>
-          {!subscription?.is_partner && (
-            <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl">
-              {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Settings className="h-3.5 w-3.5" />}
-              {t("pro.manage_subscription")}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl">
+              <Settings className="h-3.5 w-3.5" />
+              {t("pro.edit_profile")}
             </Button>
-          )}
+            {!subscription?.is_partner && (
+              <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl">
+                {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
+                {t("pro.manage_subscription")}
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
