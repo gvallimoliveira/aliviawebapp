@@ -1,0 +1,1 @@
+ALTER TABLE public.professionals ADD COLUMN lifetime_treatment boolean NOT NULL DEFAULT false;

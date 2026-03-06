@@ -35,12 +35,26 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { email: user.email });
 
+    // Parse plan type from body
+    let plan: "monthly" | "annual" = "monthly";
+    try {
+      const body = await req.json();
+      if (body?.plan === "annual") plan = "annual";
+    } catch {
+      // Default to monthly
+    }
+
+    const priceId = plan === "annual"
+      ? "price_1T853mCBxbFcCp8It1Z6GNNh"  // Annual R$418,80/year
+      : "price_1T7Rv6CBxbFcCp8I1Tsv0WwS";  // Monthly R$49/month
+
+    logStep("Plan selected", { plan, priceId });
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not set");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Check existing customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
@@ -55,7 +69,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: "price_1T7Rv6CBxbFcCp8I1Tsv0WwS",
+          price: priceId,
           quantity: 1,
         },
       ],

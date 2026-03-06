@@ -290,6 +290,7 @@ export type Database = {
           full_name: string
           id: string
           is_partner: boolean
+          lifetime_treatment: boolean
           phone: string | null
           profile_photo_url: string | null
           social_media: string | null
@@ -313,6 +314,7 @@ export type Database = {
           full_name: string
           id?: string
           is_partner?: boolean
+          lifetime_treatment?: boolean
           phone?: string | null
           profile_photo_url?: string | null
           social_media?: string | null
@@ -336,6 +338,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_partner?: boolean
+          lifetime_treatment?: boolean
           phone?: string | null
           profile_photo_url?: string | null
           social_media?: string | null
