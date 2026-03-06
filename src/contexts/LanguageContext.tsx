@@ -623,6 +623,7 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.no_patient_assessments": "Nenhuma avaliação recebida ainda. Envie o link ao seu primeiro paciente!",
     "pro.renews": "Renova em",
     "pro.manage_subscription": "Gerenciar assinatura",
+    "pro.edit_profile": "Editar perfil",
     "pro.badge_professional": "Avaliação Profissional",
     "pro.link_inactive_title": "Link indisponível",
     "pro.link_inactive_desc": "Este link de avaliação profissional não está ativo no momento. Entre em contato com seu fisioterapeuta.",
