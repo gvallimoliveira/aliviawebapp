@@ -35,6 +35,10 @@ const ProfessionalRegister = () => {
   const [existing, setExisting] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     full_name: "",
