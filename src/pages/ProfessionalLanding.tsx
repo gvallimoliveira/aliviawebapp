@@ -14,7 +14,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import {
-  Clock, Target, FileText, TrendingUp, Stethoscope, ArrowRight,
+  Clock, Target, FileText, Activity, Stethoscope, ArrowRight,
   UserPlus, Link2, Send, ClipboardCheck, Check,
   LayoutDashboard, Brain, User, FileBarChart, Zap,
 } from "lucide-react";
