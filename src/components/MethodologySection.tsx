@@ -115,17 +115,16 @@ const MethodologySection = () => {
             {t("methodology.difi_title")}
           </motion.h3>
 
-          <div className="mx-auto max-w-lg">
+          <div className="mx-auto max-w-lg px-4">
             {/* Cycle diagram */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="relative mx-auto w-72 h-72 sm:w-80 sm:h-80"
+              className="relative mx-auto w-64 h-64 sm:w-72 sm:h-72 my-8"
             >
               {/* Circular path */}
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 320">
-                {/* Circle track */}
+              <svg className="absolute inset-[15%] w-[70%] h-[70%]" viewBox="0 0 320 320">
                 <circle
                   cx="160"
                   cy="160"
@@ -135,39 +134,10 @@ const MethodologySection = () => {
                   strokeWidth="2"
                   strokeDasharray="6 6"
                 />
-                {/* Arrows along the circle */}
-                <path
-                  d="M 160 40 A 120 120 0 0 1 280 160"
-                  fill="none"
-                  stroke="hsl(var(--destructive))"
-                  strokeWidth="2.5"
-                  markerEnd="url(#arrowhead)"
-                  opacity="0.7"
-                />
-                <path
-                  d="M 280 160 A 120 120 0 0 1 160 280"
-                  fill="none"
-                  stroke="hsl(var(--destructive))"
-                  strokeWidth="2.5"
-                  markerEnd="url(#arrowhead)"
-                  opacity="0.7"
-                />
-                <path
-                  d="M 160 280 A 120 120 0 0 1 40 160"
-                  fill="none"
-                  stroke="hsl(var(--destructive))"
-                  strokeWidth="2.5"
-                  markerEnd="url(#arrowhead)"
-                  opacity="0.7"
-                />
-                <path
-                  d="M 40 160 A 120 120 0 0 1 160 40"
-                  fill="none"
-                  stroke="hsl(var(--destructive))"
-                  strokeWidth="2.5"
-                  markerEnd="url(#arrowhead)"
-                  opacity="0.7"
-                />
+                <path d="M 160 40 A 120 120 0 0 1 280 160" fill="none" stroke="hsl(var(--destructive))" strokeWidth="2.5" markerEnd="url(#arrowhead)" opacity="0.7" />
+                <path d="M 280 160 A 120 120 0 0 1 160 280" fill="none" stroke="hsl(var(--destructive))" strokeWidth="2.5" markerEnd="url(#arrowhead)" opacity="0.7" />
+                <path d="M 160 280 A 120 120 0 0 1 40 160" fill="none" stroke="hsl(var(--destructive))" strokeWidth="2.5" markerEnd="url(#arrowhead)" opacity="0.7" />
+                <path d="M 40 160 A 120 120 0 0 1 160 40" fill="none" stroke="hsl(var(--destructive))" strokeWidth="2.5" markerEnd="url(#arrowhead)" opacity="0.7" />
                 <defs>
                   <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
                     <polygon points="0 0, 8 3, 0 6" fill="hsl(var(--destructive))" opacity="0.7" />
@@ -175,15 +145,15 @@ const MethodologySection = () => {
                 </defs>
               </svg>
 
-              {/* D.I.F.I. nodes positioned at 4 points */}
+              {/* D.I.F.I. nodes positioned with proper spacing */}
               {difiItems.map((item, i) => {
                 const positions = [
-                  { top: "0%", left: "50%", transform: "translate(-50%, -50%)" },
-                  { top: "50%", left: "100%", transform: "translate(-50%, -50%)" },
-                  { top: "100%", left: "50%", transform: "translate(-50%, -50%)" },
-                  { top: "50%", left: "0%", transform: "translate(-50%, -50%)" },
+                  { top: "0%", left: "50%", transform: "translateX(-50%)" },
+                  { top: "50%", right: "0%", transform: "translateY(-50%)" },
+                  { bottom: "0%", left: "50%", transform: "translateX(-50%)" },
+                  { top: "50%", left: "0%", transform: "translateY(-50%)" },
                 ];
-                const pos = positions[i];
+                const pos = positions[i] as React.CSSProperties;
                 return (
                   <motion.div
                     key={item.key}
@@ -194,10 +164,10 @@ const MethodologySection = () => {
                     className="absolute flex flex-col items-center"
                     style={pos}
                   >
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-destructive/30 bg-card shadow-md">
-                      <span className="text-lg font-black text-destructive">{item.letter}</span>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-destructive/30 bg-card shadow-md">
+                      <span className="text-base font-black text-destructive">{item.letter}</span>
                     </div>
-                    <span className="mt-1 text-[11px] font-semibold text-foreground whitespace-nowrap">
+                    <span className="mt-1 text-[10px] font-semibold text-foreground whitespace-nowrap">
                       {t(`methodology.difi.${item.key}`)}
                     </span>
                   </motion.div>
@@ -212,10 +182,10 @@ const MethodologySection = () => {
                 transition={{ delay: 0.8 }}
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
               >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg">
-                  <Zap className="h-7 w-7 text-primary-foreground" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg">
+                  <Zap className="h-6 w-6 text-primary-foreground" />
                 </div>
-                <span className="mt-1 text-[10px] font-bold text-primary whitespace-nowrap">
+                <span className="mt-1 text-[9px] font-bold text-primary whitespace-nowrap">
                   Aliv.iA
                 </span>
               </motion.div>
