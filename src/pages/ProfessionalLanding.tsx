@@ -43,9 +43,9 @@ const ProfessionalLanding = () => {
 
   const handleCTA = () => {
     if (user) {
-      navigate("/professional/register");
+      navigate("/dashboard?tab=professional");
     } else {
-      navigate("/auth");
+      navigate("/auth", { state: { redirectTo: "/dashboard?tab=professional" } });
     }
   };
 
