@@ -461,7 +461,7 @@ const Dashboard = () => {
         </div>
 
         {professional?.approved ? (
-          <Tabs defaultValue="health" className="space-y-6">
+          <Tabs defaultValue={tabFromUrl === "professional" ? "professional" : "health"} className="space-y-6">
             <TabsList className="w-full grid grid-cols-2">
               <TabsTrigger value="health" className="gap-1.5">
                 <Heart className="h-4 w-4" />
