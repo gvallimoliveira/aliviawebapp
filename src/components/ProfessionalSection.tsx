@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Target, FileText, TrendingUp, Stethoscope, ArrowRight } from "lucide-react";
+import { Clock, Target, FileText, Activity, Stethoscope, ArrowRight } from "lucide-react";
 
 const ProfessionalSection = () => {
   const navigate = useNavigate();
