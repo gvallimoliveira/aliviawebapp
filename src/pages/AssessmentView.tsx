@@ -312,8 +312,8 @@ const AssessmentView = () => {
           </Card>
         )}
 
-        {/* Questionnaire Results */}
-        {assessment.test_results && Array.isArray(assessment.test_results) && (assessment.test_results as unknown as QuestionnaireResult[]).length > 0 && (
+        {/* Questionnaire Results — only render items that actually have questionnaireId */}
+        {assessment.test_results && Array.isArray(assessment.test_results) && (assessment.test_results as any[]).filter((r: any) => r.questionnaireId).length > 0 && (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
