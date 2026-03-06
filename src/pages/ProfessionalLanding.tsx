@@ -18,7 +18,7 @@ import {
   UserPlus, Link2, Send, ClipboardCheck, Check,
   LayoutDashboard, Brain, User, FileBarChart, Zap,
 } from "lucide-react";
-import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE, PRO_LIFETIME_TREATMENT_PRICE, PRO_LIFETIME_TREATMENT_ORIGINAL_PRICE } from "@/constants/pricing";
+import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import { setSeo } from "@/lib/seo";
 import { useEffect } from "react";
 
