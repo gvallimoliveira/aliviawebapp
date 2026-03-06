@@ -115,7 +115,7 @@ const translations: Record<Language, Record<string, string>> = {
     "dashboard.new_basic": "Avaliação Básica",
     "dashboard.new_basic_desc": "Avaliação gratuita com hipótese diagnóstica",
     "dashboard.new_premium": "Avaliação Premium",
-    "dashboard.new_premium_desc": `Avaliação completa com plano de tratamento — ${PREMIUM_PRICE_FORMATTED}`,
+    "dashboard.new_premium_desc": "Avaliação completa com plano de tratamento — R$ 99,90/mês",
     "dashboard.history": "Histórico de Avaliações",
     "dashboard.no_assessments": "Você ainda não realizou nenhuma avaliação.",
     "dashboard.completed": "Concluída",
