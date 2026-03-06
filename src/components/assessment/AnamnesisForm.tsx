@@ -25,6 +25,13 @@ export interface AnamnesisData {
   painDuration: string;
   sex: string;
   ageRange: string;
+  hasPriorSurgery: string;
+  surgeryDetails: string;
+  painSubArea: string;
+  hadTwist: string;
+  hadSprain: string;
+  hadDislocation: string;
+  ottawaPositive: string;
 }
 
 interface AnamnesisFormProps {
