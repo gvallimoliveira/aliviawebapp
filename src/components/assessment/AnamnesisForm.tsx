@@ -25,6 +25,13 @@ export interface AnamnesisData {
   painDuration: string;
   sex: string;
   ageRange: string;
+  hasPriorSurgery: string;
+  surgeryDetails: string;
+  painSubArea: string;
+  hadTwist: string;
+  hadSprain: string;
+  hadDislocation: string;
+  ottawaPositive: string;
 }
 
 interface AnamnesisFormProps {
@@ -53,6 +60,13 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     painDuration: "",
     sex: "",
     ageRange: "",
+    hasPriorSurgery: "",
+    surgeryDetails: "",
+    painSubArea: "",
+    hadTwist: "",
+    hadSprain: "",
+    hadDislocation: "",
+    ottawaPositive: "",
   });
 
   const complaints = [
@@ -113,16 +127,89 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     return shoulderComplaints.includes(data.chiefComplaint) || data.painRegions.some(r => shoulderRegions.includes(r));
   };
 
+  // Region detection for sub-questions
+  const kneeRegions = ["right_knee", "left_knee", "right_knee_back", "left_knee_back", "knee_side"];
+  const ankleRegions = ["right_ankle", "left_ankle", "right_ankle_back", "left_ankle_back", "ankle_side"];
+  const hipRegions = ["right_hip", "left_hip", "right_hip_back", "left_hip_back", "hip_side"];
+  const shoulderRegionsAll = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
+  const cervicalRegions = ["neck_front", "neck_back", "neck_side"];
+
+  const getSelectedSingleRegionType = (): string | null => {
+    const regions = data.painRegions;
+    if (regions.length === 0) return null;
+    // Check if ALL selected regions belong to ONE region type
+    const checks: [string[], string][] = [
+      [kneeRegions, "knee"],
+      [ankleRegions, "ankle"],
+      [hipRegions, "hip"],
+      [shoulderRegionsAll, "shoulder"],
+      [cervicalRegions, "cervical"],
+    ];
+    for (const [regionList, type] of checks) {
+      if (regions.every(r => regionList.includes(r)) && regions.some(r => regionList.includes(r))) {
+        return type;
+      }
+    }
+    // Also check by chief complaint if single complaint matches
+    const complaintMap: Record<string, string> = {
+      "anamnesis.complaint.knee_pain": "knee",
+      "anamnesis.complaint.ankle_pain": "ankle",
+      "anamnesis.complaint.hip_pain": "hip",
+      "anamnesis.complaint.shoulder_pain": "shoulder",
+      "anamnesis.complaint.neck_pain": "cervical",
+    };
+    if (complaintMap[data.chiefComplaint] && regions.length <= 2) {
+      return complaintMap[data.chiefComplaint];
+    }
+    return null;
+  };
+
+  const needsRegionDetail = () => getSelectedSingleRegionType() !== null;
+
+  const getSubAreasForRegion = (region: string): { id: string; label: string; desc: string }[] => {
+    switch (region) {
+      case "knee": return [
+        { id: "front", label: "anamnesis.subarea.front", desc: "anamnesis.knee.front_desc" },
+        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.knee.lateral_desc" },
+        { id: "medial", label: "anamnesis.subarea.medial", desc: "anamnesis.knee.medial_desc" },
+        { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.knee.posterior_desc" },
+      ];
+      case "ankle": return [
+        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.ankle.lateral_desc" },
+        { id: "medial", label: "anamnesis.subarea.medial", desc: "anamnesis.ankle.medial_desc" },
+        { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.ankle.posterior_desc" },
+        { id: "anterolateral", label: "anamnesis.subarea.anterolateral", desc: "anamnesis.ankle.anterolateral_desc" },
+      ];
+      case "hip": return [
+        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.hip.lateral_desc" },
+        { id: "anterior", label: "anamnesis.subarea.front", desc: "anamnesis.hip.anterior_desc" },
+      ];
+      case "shoulder": return [
+        { id: "anterior", label: "anamnesis.subarea.front", desc: "anamnesis.shoulder.anterior_desc" },
+        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.shoulder.lateral_desc" },
+        { id: "superior", label: "anamnesis.subarea.superior", desc: "anamnesis.shoulder.superior_desc" },
+      ];
+      case "cervical": return [
+        { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.cervical.posterior_desc" },
+        { id: "anterolateral", label: "anamnesis.subarea.anterolateral", desc: "anamnesis.cervical.anterolateral_desc" },
+      ];
+      default: return [];
+    }
+  };
+
   // Define step IDs for clarity
-  type StepId = "complaint" | "onset" | "painmap" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "gym" | "painscore";
+  type StepId = "complaint" | "onset" | "surgery" | "painmap" | "region_detail" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "gym" | "painscore";
 
   const buildStepSequence = (): StepId[] => {
-    const base: StepId[] = ["complaint", "onset", "painmap", "paintype", "evolution", "factors", "duration", "gym", "painscore"];
-    if (isShoulderRelated()) {
-      // Insert sex_age right after painmap (after user selects shoulder regions)
-      const idx = base.indexOf("paintype");
-      base.splice(idx, 0, "sex_age");
+    const base: StepId[] = ["complaint", "onset", "surgery", "painmap"];
+    // Add region_detail if applicable
+    if (needsRegionDetail()) {
+      base.push("region_detail");
     }
+    if (isShoulderRelated()) {
+      base.push("sex_age");
+    }
+    base.push("paintype", "evolution", "factors", "duration", "gym", "painscore");
     return base;
   };
 
@@ -160,8 +247,92 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
             </div>
           </div>
         );
+      case "surgery":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t("anamnesis.surgery_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.surgery_subtitle")}</p>
+            <div className="grid grid-cols-2 gap-3">
+              {["anamnesis.surgery.yes", "anamnesis.surgery.no"].map((option) => (
+                <Card key={option} className={`cursor-pointer transition-all ${data.hasPriorSurgery === option ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, hasPriorSurgery: option, ...(option.includes("no") ? { surgeryDetails: "" } : {}) })}>
+                  <CardContent className="py-4 px-4 text-center">
+                    <span className="text-2xl block mb-1">{option.includes("yes") ? "✅" : "❌"}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            {data.hasPriorSurgery === "anamnesis.surgery.yes" && (
+              <div className="space-y-2 mt-3">
+                <Label>{t("anamnesis.surgery_details")}</Label>
+                <Textarea
+                  value={data.surgeryDetails}
+                  onChange={(e) => setData({ ...data, surgeryDetails: e.target.value.slice(0, 500) })}
+                  placeholder={t("anamnesis.surgery_details_placeholder")}
+                  rows={3}
+                  maxLength={500}
+                />
+              </div>
+            )}
+          </div>
+        );
       case "painmap":
         return <PainMap selectedRegions={data.painRegions} onRegionsChange={(regions) => setData({ ...data, painRegions: regions })} />;
+      case "region_detail": {
+        const regionType = getSelectedSingleRegionType();
+        if (!regionType) return null;
+        const subAreas = getSubAreasForRegion(regionType);
+        const needsTraumaQuestion = regionType === "knee" || regionType === "ankle" || regionType === "shoulder";
+        const traumaKey = regionType === "knee" ? "hadTwist" : regionType === "ankle" ? "hadSprain" : "hadDislocation";
+        const traumaQuestion = regionType === "knee" ? "anamnesis.knee_twist" : regionType === "ankle" ? "anamnesis.ankle_sprain" : "anamnesis.shoulder_dislocation";
+        const traumaValue = regionType === "knee" ? data.hadTwist : regionType === "ankle" ? data.hadSprain : data.hadDislocation;
+        const showOttawa = (regionType === "knee" && data.hadTwist === "anamnesis.trauma.yes") || (regionType === "ankle" && data.hadSprain === "anamnesis.trauma.yes");
+
+        return (
+          <div className="space-y-5">
+            <h3 className="text-lg font-semibold">{t("anamnesis.region_detail_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.region_detail_subtitle")}</p>
+            <div className="grid gap-3">
+              {subAreas.map((area) => (
+                <Card key={area.id} className={`cursor-pointer transition-all ${data.painSubArea === area.id ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, painSubArea: area.id })}>
+                  <CardContent className="py-3 px-4">
+                    <span className="text-sm font-medium">{t(area.label)}</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t(area.desc)}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            {needsTraumaQuestion && (
+              <div className="space-y-3 mt-4 p-4 bg-muted/50 rounded-xl">
+                <Label className="text-sm font-medium">{t(traumaQuestion)}</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                    <Button key={opt} variant={traumaValue === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, [traumaKey]: opt })}>
+                      {t(opt)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {showOttawa && (
+              <div className="space-y-3 mt-2 p-4 bg-destructive/5 border border-destructive/20 rounded-xl">
+                <Label className="text-sm font-medium">{t("anamnesis.ottawa_title")}</Label>
+                <p className="text-sm text-muted-foreground">{t(regionType === "knee" ? "anamnesis.ottawa_knee" : "anamnesis.ottawa_ankle")}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                    <Button key={opt} variant={data.ottawaPositive === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, ottawaPositive: opt })}>
+                      {t(opt)}
+                    </Button>
+                  ))}
+                </div>
+                {data.ottawaPositive === "anamnesis.trauma.no" && (
+                  <p className="text-sm text-destructive font-medium">{t("anamnesis.ottawa_warning")}</p>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
       case "sex_age":
         return (
           <div className="space-y-5">
@@ -386,7 +557,9 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     switch (id) {
       case "complaint": return data.chiefComplaint !== "" || data.customComplaint.trim() !== "";
       case "onset": return data.onset !== "";
+      case "surgery": return data.hasPriorSurgery !== "";
       case "painmap": return data.painRegions.length > 0;
+      case "region_detail": return data.painSubArea !== "";
       case "sex_age": return data.sex !== "" && data.ageRange !== "";
       case "paintype": return data.painTypes.length > 0;
       case "evolution": return data.evolution !== "";

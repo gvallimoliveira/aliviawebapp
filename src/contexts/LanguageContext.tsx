@@ -795,6 +795,62 @@ const translations: Record<Language, Record<string, string>> = {
     "treatment.steps.long_term": "Steps 5-6: Força Específica & Alta",
     "treatment.difi.title": "Ciclo D.I.F.I. identificado",
     "treatment.difi.desc": "Seu plano foi desenhado para quebrar o ciclo vicioso Dor → Inibição → Fraqueza → Incapacidade.",
+
+    // Surgery history
+    "anamnesis.surgery_title": "Você já fez alguma cirurgia?",
+    "anamnesis.surgery_subtitle": "Cirurgias prévias podem influenciar o diagnóstico e tratamento.",
+    "anamnesis.surgery.yes": "Sim",
+    "anamnesis.surgery.no": "Não",
+    "anamnesis.surgery_details": "Descreva brevemente a(s) cirurgia(s)",
+    "anamnesis.surgery_details_placeholder": "Ex: artroscopia no joelho direito em 2020, cirurgia de hérnia de disco L4-L5...",
+
+    // Region-specific sub-questions
+    "anamnesis.region_detail_title": "Detalhe a localização da dor",
+    "anamnesis.region_detail_subtitle": "Selecione a área mais específica onde você sente dor",
+    "anamnesis.subarea.front": "Frente",
+    "anamnesis.subarea.lateral": "Lateral (parte de fora)",
+    "anamnesis.subarea.medial": "Medial (parte de dentro)",
+    "anamnesis.subarea.posterior": "Posterior (parte de trás)",
+    "anamnesis.subarea.anterolateral": "Antero-lateral",
+    "anamnesis.subarea.superior": "Superior / Medial",
+
+    // Knee sub-areas descriptions
+    "anamnesis.knee.front_desc": "Região da frente do joelho (patela)",
+    "anamnesis.knee.lateral_desc": "Parte externa do joelho",
+    "anamnesis.knee.medial_desc": "Parte interna do joelho",
+    "anamnesis.knee.posterior_desc": "Parte de trás do joelho",
+
+    // Ankle sub-areas descriptions
+    "anamnesis.ankle.lateral_desc": "Região lateral (parte de fora)",
+    "anamnesis.ankle.medial_desc": "Região medial (parte de dentro)",
+    "anamnesis.ankle.posterior_desc": "Região posterior (calcanhar/tendão)",
+    "anamnesis.ankle.anterolateral_desc": "Região antero-lateral",
+
+    // Hip sub-areas descriptions
+    "anamnesis.hip.lateral_desc": "Região lateral do quadril",
+    "anamnesis.hip.anterior_desc": "Região anterior (virilha/frente)",
+
+    // Shoulder sub-areas descriptions
+    "anamnesis.shoulder.anterior_desc": "Região anterior do ombro",
+    "anamnesis.shoulder.lateral_desc": "Região lateral do ombro",
+    "anamnesis.shoulder.superior_desc": "Região superior / medial do ombro",
+
+    // Cervical sub-areas descriptions
+    "anamnesis.cervical.posterior_desc": "Região posterior do pescoço",
+    "anamnesis.cervical.anterolateral_desc": "Região antero-lateral do pescoço",
+
+    // Trauma questions
+    "anamnesis.knee_twist": "Houve alguma torção no joelho?",
+    "anamnesis.ankle_sprain": "Houve entorse recente no tornozelo?",
+    "anamnesis.shoulder_dislocation": "Você já teve luxação no ombro?",
+    "anamnesis.trauma.yes": "Sim",
+    "anamnesis.trauma.no": "Não",
+
+    // Ottawa rules
+    "anamnesis.ottawa_title": "Regras de Ottawa",
+    "anamnesis.ottawa_knee": "Você consegue dar 4 passos com apoio total logo após o evento?",
+    "anamnesis.ottawa_ankle": "Você consegue dar 4 passos com apoio total logo após o evento?",
+    "anamnesis.ottawa_warning": "⚠️ Recomendamos procurar atendimento médico para descartar fratura antes de continuar.",
   },
   en: {
     // Nav
@@ -1575,6 +1631,62 @@ const translations: Record<Language, Record<string, string>> = {
     "treatment.steps.long_term": "Steps 5-6: Specific Strength & Discharge",
     "treatment.difi.title": "D.I.F.I. cycle identified",
     "treatment.difi.desc": "Your plan is designed to break the vicious cycle: Pain → Inhibition → Weakness → Disability.",
+
+    // Surgery history
+    "anamnesis.surgery_title": "Have you had any prior surgeries?",
+    "anamnesis.surgery_subtitle": "Previous surgeries may influence diagnosis and treatment.",
+    "anamnesis.surgery.yes": "Yes",
+    "anamnesis.surgery.no": "No",
+    "anamnesis.surgery_details": "Briefly describe the surgery/surgeries",
+    "anamnesis.surgery_details_placeholder": "E.g.: right knee arthroscopy in 2020, L4-L5 disc herniation surgery...",
+
+    // Region-specific sub-questions
+    "anamnesis.region_detail_title": "Detail your pain location",
+    "anamnesis.region_detail_subtitle": "Select the most specific area where you feel pain",
+    "anamnesis.subarea.front": "Front",
+    "anamnesis.subarea.lateral": "Lateral (outside)",
+    "anamnesis.subarea.medial": "Medial (inside)",
+    "anamnesis.subarea.posterior": "Posterior (back)",
+    "anamnesis.subarea.anterolateral": "Antero-lateral",
+    "anamnesis.subarea.superior": "Superior / Medial",
+
+    // Knee sub-areas descriptions
+    "anamnesis.knee.front_desc": "Front of the knee (patella area)",
+    "anamnesis.knee.lateral_desc": "Outside of the knee",
+    "anamnesis.knee.medial_desc": "Inside of the knee",
+    "anamnesis.knee.posterior_desc": "Back of the knee",
+
+    // Ankle sub-areas descriptions
+    "anamnesis.ankle.lateral_desc": "Lateral region (outside)",
+    "anamnesis.ankle.medial_desc": "Medial region (inside)",
+    "anamnesis.ankle.posterior_desc": "Posterior region (heel/tendon)",
+    "anamnesis.ankle.anterolateral_desc": "Antero-lateral region",
+
+    // Hip sub-areas descriptions
+    "anamnesis.hip.lateral_desc": "Lateral hip region",
+    "anamnesis.hip.anterior_desc": "Anterior region (groin/front)",
+
+    // Shoulder sub-areas descriptions
+    "anamnesis.shoulder.anterior_desc": "Anterior shoulder region",
+    "anamnesis.shoulder.lateral_desc": "Lateral shoulder region",
+    "anamnesis.shoulder.superior_desc": "Superior / medial shoulder region",
+
+    // Cervical sub-areas descriptions
+    "anamnesis.cervical.posterior_desc": "Back of the neck",
+    "anamnesis.cervical.anterolateral_desc": "Antero-lateral neck region",
+
+    // Trauma questions
+    "anamnesis.knee_twist": "Did you twist your knee?",
+    "anamnesis.ankle_sprain": "Have you had a recent ankle sprain?",
+    "anamnesis.shoulder_dislocation": "Have you ever had a shoulder dislocation?",
+    "anamnesis.trauma.yes": "Yes",
+    "anamnesis.trauma.no": "No",
+
+    // Ottawa rules
+    "anamnesis.ottawa_title": "Ottawa Rules",
+    "anamnesis.ottawa_knee": "Can you take 4 weight-bearing steps immediately after the event?",
+    "anamnesis.ottawa_ankle": "Can you take 4 weight-bearing steps immediately after the event?",
+    "anamnesis.ottawa_warning": "⚠️ We recommend seeking medical care to rule out fracture before continuing.",
   },
 };
 
