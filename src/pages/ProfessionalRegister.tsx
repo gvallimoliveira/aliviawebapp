@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check } from "lucide-react";
+import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const SPECIALTIES = [
   "ortopedia", "esportiva", "neurologica", "respiratoria",
@@ -34,6 +35,10 @@ const ProfessionalRegister = () => {
   const [existing, setExisting] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     full_name: "",
@@ -76,6 +81,9 @@ const ProfessionalRegister = () => {
             clinic_name: data.clinic_name || "",
             clinic_address: data.clinic_address || "",
           });
+          if (data.profile_photo_url) {
+            setPhotoPreview(data.profile_photo_url);
+          }
         }
         setLoadingProfile(false);
       });
@@ -88,6 +96,36 @@ const ProfessionalRegister = () => {
         ? prev.specialties.filter((x) => x !== s)
         : [...prev.specialties, s],
     }));
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagem muito grande (máx. 5MB)", variant: "destructive" });
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photoFile || !user) return null;
+    setUploadingPhoto(true);
+    const ext = photoFile.name.split(".").pop();
+    const path = `${user.id}/profile.${ext}`;
+    const { error } = await supabase.storage
+      .from("professional-photos")
+      .upload(path, photoFile, { upsert: true });
+    setUploadingPhoto(false);
+    if (error) {
+      console.error("Upload error:", error);
+      return null;
+    }
+    const { data: urlData } = supabase.storage
+      .from("professional-photos")
+      .getPublicUrl(path);
+    return urlData.publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,7 +145,16 @@ const ProfessionalRegister = () => {
     }
     setSaving(true);
     try {
-      const payload = { ...form, user_id: user.id };
+      let photoUrl: string | null = null;
+      if (photoFile) {
+        photoUrl = await uploadPhoto();
+      }
+
+      const payload: any = { ...form, user_id: user.id };
+      if (photoUrl) {
+        payload.profile_photo_url = photoUrl;
+      }
+
       if (existing) {
         await (supabase.from("professionals" as any) as any).update(payload).eq("id", existing.id);
       } else {
@@ -115,7 +162,6 @@ const ProfessionalRegister = () => {
       }
       toast({ title: existing ? t("prof.saved") : t("prof.submitted_for_review") });
       if (!existing) {
-        // Re-fetch to show status badge
         const { data: newData } = await (supabase.from("professionals" as any) as any)
           .select("*").eq("user_id", user.id).maybeSingle();
         if (newData) setExisting(newData);
@@ -210,6 +256,48 @@ const ProfessionalRegister = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Profile Photo Upload */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="relative group">
+                  <Avatar className="h-24 w-24 border-2 border-border">
+                    <AvatarImage src={photoPreview || undefined} alt="Profile" />
+                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                      {form.full_name ? form.full_name.charAt(0).toUpperCase() : <Camera className="h-8 w-8" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute inset-0 flex items-center justify-center rounded-full bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Camera className="h-6 w-6 text-foreground" />
+                  </button>
+                  {photoPreview && (
+                    <button
+                      type="button"
+                      onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                      className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoSelect}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {photoPreview ? t("prof.change_photo") : t("prof.add_photo")}
+                </button>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>{t("prof.full_name")} *</Label>

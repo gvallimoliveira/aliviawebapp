@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, MapPin, Phone, Mail, Search, UserCheck, Crown, Lock, Sparkles, Instagram } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const STATES = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS",
@@ -214,19 +215,27 @@ const ProfessionalSearch = () => {
               <Card key={p.id} className="rounded-2xl hover:shadow-md transition-all">
                 <CardContent className="py-5 px-5 space-y-3">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-foreground">{p.full_name}</h3>
-                        {p.crefito === "359566-F" && (
-                          <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] gap-1">
-                            <Sparkles className="h-3 w-3" />
-                            Aliv.iA App Creator
-                          </Badge>
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-12 w-12 border border-border shrink-0">
+                        <AvatarImage src={p.profile_photo_url || undefined} alt={p.full_name} />
+                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                          {p.full_name?.charAt(0)?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-foreground">{p.full_name}</h3>
+                          {p.crefito === "359566-F" && (
+                            <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] gap-1">
+                              <Sparkles className="h-3 w-3" />
+                              Aliv.iA App Creator
+                            </Badge>
+                          )}
+                        </div>
+                        {p.crefito && (
+                          <p className="text-xs text-muted-foreground">CREFITO: {p.crefito}</p>
                         )}
                       </div>
-                      {p.crefito && (
-                        <p className="text-xs text-muted-foreground">CREFITO: {p.crefito}</p>
-                      )}
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                       <MapPin className="h-3 w-3" />
