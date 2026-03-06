@@ -1,65 +1,76 @@
+## Plano: Integrar Conceitos STEPS e D.I.F.I. no App
+
+### Visão Geral
+
+Dois conceitos clínicos proprietários serão integrados em **4 frentes**: (1) raciocínio da IA no tratamento, (2) landing page, (3) geração de 2 posts de blog, e (4) resultado do diagnóstico/tratamento para o paciente.
+
+---
+
+### 1. Raciocínio da IA — Edge Functions
+
+`**generate-treatment/index.ts**` — Incorporar o framework STEPS no prompt do sistema:
+
+- Instruir a IA a mapear as 3 fases do tratamento ao framework STEPS (short_term = Steps 1-2, medium_term = Steps 3-4, long_term = Steps 5-6)
+- Adicionar campo `stepsMapping` no JSON de resposta indicando quais Steps cada fase cobre, ainda usando os termos Curto, médio e longo prazo pois é mais compreendido universalmente. 
+- Adicionar o conceito D.I.F.I. no `systemPrompt` como modelo explicativo: a IA deve mencionar o ciclo D.I.F.I. na explicação ao paciente quando houver dor crônica ou score EVA ≥ 5, explicando que a reabilitação visa quebrar esse ciclo
+
+`**generate-diagnosis/index.ts**` — Incorporar D.I.F.I. no raciocínio diagnóstico:
+
+- Instruir a IA a referenciar o ciclo D.I.F.I. no campo `explanation` quando aplicável (dor crônica, inibição muscular evidente, fraqueza funcional detectada por questionários)
+- Contextualizar como a avaliação Aliv.iA identifica em qual ponto do ciclo o paciente se encontra
+
+---
+
+### 2. Landing Page — Nova Seção
+
+`**src/components/HighlightsSection.tsx**` ou novo componente `src/components/MethodologySection.tsx`:
+
+- Criar seção "Nossa Metodologia" entre Highlights e Comparison
+- **Bloco STEPS**: visual de escada/degraus (6 steps) com ícones e descrições curtas, mostrando a progressão da reabilitação
+- **Bloco D.I.F.I.**: diagrama circular/ciclo mostrando D→I→F→I→D com setas, e um "break" visual indicando onde a Aliv.iA intervém
+- Texto persuasivo: "Desenvolvido por especialista com 7+ anos de experiência" + "Identificamos exatamente onde você está e para onde precisa ir"
+
+`**src/contexts/LanguageContext.tsx**` — Adicionar traduções PT/EN para os textos da seção
+
+`**src/pages/Index.tsx**` — Incluir o novo componente na ordem da landing page
+
+---
+
+### 3. Blog — 2 Posts Automáticos via Edge Function
+
+**Post 1: "Os 6 Degraus da Reabilitação: Entenda o Caminho da Lesão até a Alta"**
+
+- Conteúdo educativo explicando cada Step com exemplos do dia a dia
+- CTAs para avaliação: "Descubra em qual degrau você está agora"
+- Tags: reabilitação, fisioterapia, recuperação, lesão, tratamento
+
+**Post 2: "Ciclo D.I.F.I.: Por Que Sua Dor Não Melhora (e Como Quebrar Esse Ciclo)"**
+
+- Explicar o ciclo vicioso Dor→Inibição→Fraqueza→Incapacidade
+- Posicionar a avaliação como o "raio-X funcional" que identifica a origem
+- Tags: dor crônica, fraqueza muscular, incapacidade, ciclo vicioso, avaliação
+
+Implementação: Vou gerar os artigos diretamente no código usando a edge function `generate-blog-article`, adicionando instruções específicas sobre STEPS e D.I.F.I. no prompt para garantir precisão conceitual. Alternativamente, posso criar os posts como seed data direto no banco.
+
+---
+
+### 4. UI do Resultado (Tratamento)
+
+`**src/components/assessment/TreatmentPlan.tsx**`:
+
+- Adicionar badge visual em cada fase mostrando o Step correspondente (ex: "Steps 1-2: Controle de Dor & Reparo")
+- Adicionar card educativo D.I.F.I. no topo do tratamento quando dor ≥ 5 ou evolução crônica, com diagrama simplificado do ciclo e texto: "Seu plano foi desenhado para quebrar este ciclo"
+
+---
+
+### Arquivos a editar
 
 
-## Plano: Implementar 4 Novos Questionarios (QuickDASH, NDI, HIT-6, LEFS-8)
-
-### Resumo
-
-Adicionar 4 questionarios validados ao `questionnaireData.ts`, cobrindo todas as regioes restantes do mapa de dor. A exibicao na AssessmentView ja esta implementada. Sobre o LEFS: usaremos a versao **LEFS-8** (8 itens), uma short-form validada por Mehta et al. (2016) que mantem >95% da capacidade discriminativa do LEFS-20.
-
-### Questionarios a implementar
-
-| ID | Nome | Itens | Regioes cobertas (IDs do painMap) | Scoring |
-|---|---|---|---|---|
-| `quickdash` | QuickDASH | 11 | right/left_elbow, right/left_forearm, right/left_hand, elbow_left/right, forearm_left/right, hand_left/right, arm_left/right (back variants tambem) | higher_worse (0-100%) |
-| `ndi` | NDI | 10 | cervical, cervical_front, cervical_left, cervical_right, head, head_back, head_left, head_right | higher_worse, formato identico ao ODI |
-| `hit6` | HIT-6 | 6 | head, head_back, head_left, head_right | higher_worse (36-78 raw → normalizado %) |
-| `lefs8` | LEFS-8 | 8 | right/left_thigh_ant, right/left_thigh_post, thigh_left/right, right/left_calf, right/left_shin, shin_left/right | higher_better (0-32 → %) |
-
-### Detalhes por questionario
-
-**1. QuickDASH (11 itens)**
-- Subescalas: `daily_activities` (6 itens), `symptoms` (3 itens), `social_impact` (2 itens)
-- Opcoes: Likert 1-5 (sem dificuldade → incapaz)
-- Score: ((soma/n) - 1) * 25 = 0-100%
-- Referencia: Beaton DE, et al. J Bone Joint Surg Am. 2005;87(5):1038-46
-
-**2. NDI (10 itens)**
-- Subescalas identicas ao ODI: pain_intensity, personal_care, lifting, reading, headache, concentration, work, driving, sleeping, recreation
-- Opcoes: 6 niveis (0-5) como ODI
-- Score: soma / (n*5) * 100
-- Referencia: Vernon H, Mior S. J Manipulative Physiol Ther. 1991;14(7):409-15
-
-**3. HIT-6 (6 itens)**
-- Subescala unica: `impact`
-- Opcoes: Never(6), Rarely(8), Sometimes(10), Very Often(11), Always(13)
-- Score raw: 36-78. Normalizado: ((raw-36)/42)*100
-- Referencia: Kosinski M, et al. Qual Life Res. 2003;12(8):963-74
-
-**4. LEFS-8 (8 itens, short-form validada)**
-- Itens selecionados com base na analise de Mehta et al.: atividades funcionais mais discriminativas do membro inferior (agachar, correr, caminhar quarteiroes, subir escadas, ficar em pe 1h, entrar/sair do carro, subir/descer calcada, atividades habituais)
-- Opcoes: Likert 0-4 (extrema dificuldade → nenhuma dificuldade)
-- Score: (soma / 32) * 100 → higher_better
-- Referencia: Mehta SP, et al. Phys Ther. 2016;96(7):1014-24
-
-### Arquivo editado
-
-| Arquivo | Mudanca |
-|---|---|
-| `src/data/questionnaireData.ts` | Adicionar 4 arrays de perguntas + 4 definicoes no array `questionnaires` + atualizar `calculateQuestionnaireScore` para tratar scoring do QuickDASH e HIT-6 |
-
-### Scoring no `calculateQuestionnaireScore`
-
-Adicionar tratamento para:
-- `quickdash`: ((soma/n_respondidos) - 1) * 25
-- `ndi`: identico ao ODI (soma / (n*5) * 100)
-- `hit6`: ((soma - 36) / 42) * 100
-- `lefs8`: tratado como KOOS/HOOS (higher_better, Likert 0-4) — ja coberto pelo else generico, mas invertido: (soma / (n*4)) * 100
-
-### Mapeamento de regioes
-
-Todas as variantes de cada regiao no painMapData serao incluidas no `regionMapping`:
-- **Cotovelo/Mao**: `right_elbow`, `left_elbow`, `right_elbow_back`, `left_elbow_back`, `elbow_left`, `elbow_right`, `right_forearm`, `left_forearm`, `right_forearm_back`, `left_forearm_back`, `forearm_left`, `forearm_right`, `right_hand`, `left_hand`, `right_hand_back`, `left_hand_back`, `hand_left`, `hand_right`, `right_arm`, `left_arm`, `right_arm_back`, `left_arm_back`, `arm_left`, `arm_right`
-- **Cervical/Cabeca**: `cervical`, `cervical_front`, `cervical_left`, `cervical_right`, `head`, `head_back`, `head_left`, `head_right`
-- **HIT-6**: apenas `head`, `head_back`, `head_left`, `head_right`
-- **LEFS-8**: `right_thigh_ant`, `left_thigh_ant`, `right_thigh_post`, `left_thigh_post`, `thigh_left`, `thigh_right`, `right_calf`, `left_calf`, `right_shin`, `left_shin`, `shin_left`, `shin_right`
-
+| Arquivo                                          | Mudança                                                   |
+| ------------------------------------------------ | --------------------------------------------------------- |
+| `supabase/functions/generate-treatment/index.ts` | Adicionar STEPS framework + D.I.F.I. no system prompt     |
+| `supabase/functions/generate-diagnosis/index.ts` | Adicionar D.I.F.I. no prompt de diagnóstico               |
+| `src/components/MethodologySection.tsx`          | **Novo** — seção visual STEPS (escada) + D.I.F.I. (ciclo) |
+| `src/pages/Index.tsx`                            | Importar MethodologySection                               |
+| `src/contexts/LanguageContext.tsx`               | Traduções da nova seção                                   |
+| `src/components/assessment/TreatmentPlan.tsx`    | Badges de Steps nas fases + card D.I.F.I. educativo       |
