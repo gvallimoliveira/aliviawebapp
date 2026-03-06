@@ -1593,6 +1593,14 @@ const translations: Record<Language, Record<string, string>> = {
     "pro_treatment.success_desc": "The treatment plan was successfully generated for this assessment.",
     "pro_treatment.view_plan": "View Treatment Plan",
 
+    // Pro Lifetime Treatment Upsell
+    "pro_lifetime.upsell_title": "Lifetime Treatment",
+    "pro_lifetime.limited_offer": "Limited offer",
+    "pro_lifetime.upsell_desc": "Unlock all treatment plans forever. No additional cost per assessment.",
+    "pro_lifetime.upsell_desc_regular": "Unlock all treatment plans forever.",
+    "pro_lifetime.days_left": "{days} days left for this offer",
+    "pro_lifetime.buy_cta": "Unlock Lifetime",
+
     // Blog
     "blog.title": "Blog",
     "blog.subtitle": "Articles about pain, physiotherapy and wellness",
