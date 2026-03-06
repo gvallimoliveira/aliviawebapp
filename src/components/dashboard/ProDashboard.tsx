@@ -97,7 +97,25 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
-  const thisMonthCount = patientAssessments.filter((a) => {
+  const handleDownloadPdf = async (assessment: any) => {
+    if (!assessment.diagnosis) return;
+    try {
+      const lang = document.documentElement.lang === "en" ? "en" : "pt";
+      await generateAssessmentPdf({
+        diagnosis: assessment.diagnosis,
+        treatmentPlan: assessment.treatment_plan,
+        language: lang as "pt" | "en",
+        userName: assessment.patient_name || "Paciente",
+        anamnesisData: assessment.anamnesis_data,
+        painRegions: assessment.pain_regions,
+        testResults: assessment.test_results,
+      });
+      toast({ title: t("pro.download_pdf") });
+    } catch {
+      toast({ title: "Erro ao gerar PDF", variant: "destructive" });
+    }
+  };
+
     const d = new Date(a.created_at);
     const now = new Date();
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
