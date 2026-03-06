@@ -472,6 +472,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
                             )}
                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                           </div>
+                        </div>
                       </CardContent>
                     </Card>
                   );
