@@ -36,11 +36,26 @@ serve(async (req) => {
     // Verify the professional owns this assessment
     const { data: professional } = await supabaseClient
       .from("professionals")
-      .select("id")
+      .select("id, lifetime_treatment")
       .eq("user_id", user.id)
       .single();
 
     if (!professional) throw new Error("Not a registered professional");
+
+    // If professional has lifetime treatment, skip payment — return free access
+    if (professional.lifetime_treatment) {
+      // Mark assessment for treatment generation
+      await supabaseClient
+        .from("assessments")
+        .update({ payment_status: "treatment_paid" })
+        .eq("id", assessment_id)
+        .eq("professional_id", professional.id);
+
+      return new Response(JSON.stringify({ free: true, assessment_id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     const { data: assessment } = await supabaseClient
       .from("assessments")
@@ -70,7 +85,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: "price_1T7ojBCBxbFcCp8IppBdyyNZ",
+          price: "price_1T854NCBxbFcCp8IpPdh93Qd",  // R$29,90
           quantity: 1,
         },
       ],

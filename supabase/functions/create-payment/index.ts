@@ -29,20 +29,18 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
 
-    // Parse body for optional referral_code
     let referralCode: string | null = null;
     try {
       const body = await req.json();
       referralCode = body?.referral_code || null;
     } catch {
-      // No body or invalid JSON, that's fine
+      // No body or invalid JSON
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Check for existing Stripe customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
@@ -53,63 +51,54 @@ serve(async (req) => {
 
     // Handle referral code logic
     let referralCodeRecord: any = null;
-    let stripeCouponId: string | undefined;
 
     if (referralCode) {
-      // Validate referral code
       const { data: codeData } = await supabaseAdmin
         .from("referral_codes")
         .select("id, user_id, code")
         .eq("code", referralCode)
         .single();
 
-      if (codeData) {
-        // Prevent self-referral
-        if (codeData.user_id !== user.id) {
-          referralCodeRecord = codeData;
+      if (codeData && codeData.user_id !== user.id) {
+        referralCodeRecord = codeData;
 
-          // Check if this user was already referred
-          const { data: existingReward } = await supabaseAdmin
+        const { data: existingReward } = await supabaseAdmin
+          .from("referral_rewards")
+          .select("id")
+          .eq("referred_user_id", user.id)
+          .limit(1)
+          .single();
+
+        if (!existingReward) {
+          await supabaseAdmin.from("referral_rewards").insert({
+            referrer_user_id: codeData.user_id,
+            referred_user_id: user.id,
+            referral_code_id: codeData.id,
+            status: "pending",
+            discount_percent: 20,
+          });
+
+          const coupon = await stripe.coupons.create({
+            percent_off: 20,
+            duration: "once",
+            name: `Referral discount for ${codeData.code}`,
+          });
+
+          await supabaseAdmin
             .from("referral_rewards")
-            .select("id")
+            .update({
+              status: "rewarded",
+              stripe_coupon_id: coupon.id,
+              rewarded_at: new Date().toISOString(),
+            })
+            .eq("referrer_user_id", codeData.user_id)
             .eq("referred_user_id", user.id)
-            .limit(1)
-            .single();
-
-          if (!existingReward) {
-            // Create referral reward record as pending
-            await supabaseAdmin.from("referral_rewards").insert({
-              referrer_user_id: codeData.user_id,
-              referred_user_id: user.id,
-              referral_code_id: codeData.id,
-              status: "pending",
-              discount_percent: 20,
-            });
-
-            // Create a Stripe coupon for the referrer (20% off, once)
-            const coupon = await stripe.coupons.create({
-              percent_off: 20,
-              duration: "once",
-              name: `Referral discount for ${codeData.code}`,
-            });
-
-            // Update the reward with the coupon ID and mark as rewarded
-            await supabaseAdmin
-              .from("referral_rewards")
-              .update({
-                status: "rewarded",
-                stripe_coupon_id: coupon.id,
-                rewarded_at: new Date().toISOString(),
-              })
-              .eq("referrer_user_id", codeData.user_id)
-              .eq("referred_user_id", user.id)
-              .eq("status", "pending");
-          }
+            .eq("status", "pending");
         }
       }
     }
 
-    // Check if user has an available discount (they are the referrer with a rewarded coupon)
+    // Check if user has an available discount
     let discountCoupon: string | undefined;
     const { data: availableReward } = await supabaseAdmin
       .from("referral_rewards")
@@ -122,23 +111,23 @@ serve(async (req) => {
 
     if (availableReward?.stripe_coupon_id) {
       discountCoupon = availableReward.stripe_coupon_id;
-      // Mark as used
       await supabaseAdmin
         .from("referral_rewards")
         .update({ status: "used" })
         .eq("id", availableReward.id);
     }
 
+    // Premium is now a SUBSCRIPTION (monthly R$99,90)
     const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: "price_1T3PFdCBxbFcCp8IRSDxZce5",
+          price: "price_1T853WCBxbFcCp8IFOFnTkfY",
           quantity: 1,
         },
       ],
-      mode: "payment",
+      mode: "subscription",
       success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/assessment/premium`,
       metadata: {
@@ -146,7 +135,6 @@ serve(async (req) => {
       },
     };
 
-    // Apply discount if available
     if (discountCoupon) {
       sessionParams.discounts = [{ coupon: discountCoupon }];
     }

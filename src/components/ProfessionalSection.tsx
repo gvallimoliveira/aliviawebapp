@@ -57,7 +57,7 @@ const ProfessionalSection = () => {
           <div className="inline-block rounded-2xl border border-primary/20 bg-card/90 backdrop-blur-sm px-8 py-6 shadow-sm">
             <p className="text-sm text-muted-foreground mb-3">{t("b2b.cta_desc")}</p>
             <div className="text-3xl font-bold text-foreground mb-1">
-              R$49<span className="text-lg font-normal text-muted-foreground">/mês</span>
+              A partir de R$34,90<span className="text-lg font-normal text-muted-foreground">/mês</span>
             </div>
             <p className="text-xs text-muted-foreground mb-5">{t("b2b.cta_cancel")}</p>
             <Button

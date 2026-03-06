@@ -63,10 +63,12 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     setPatientAssessments(data || []);
   };
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (plan: "monthly" | "annual" = "monthly") => {
     setCheckoutLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-pro-subscription");
+      const { data, error } = await supabase.functions.invoke("create-pro-subscription", {
+        body: { plan },
+      });
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
     } catch {
@@ -151,7 +153,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         <p className="text-sm text-muted-foreground mb-4">{t("pro.paywall_desc")}</p>
         <div className="text-2xl font-bold text-foreground mb-4">{PRO_PLAN_PRICE_FORMATTED}</div>
         <Button
-          onClick={handleSubscribe}
+          onClick={() => handleSubscribe()}
           disabled={checkoutLoading}
           className="w-full rounded-xl gap-2"
           size="lg"

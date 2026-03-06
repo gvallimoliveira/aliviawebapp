@@ -41,22 +41,22 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Mode 1: Verify a specific checkout session and create the PAID assessment record
+    // Mode 1: Verify a specific checkout session
     if (session_id) {
       const session = await stripe.checkout.sessions.retrieve(session_id);
-      
+
       if (session.payment_status !== "paid") {
         return new Response(JSON.stringify({ paid: false }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Check if this is a pro_treatment payment — verify and mark for frontend treatment generation
       const paymentType = session.metadata?.type;
+
+      // Handle pro_treatment payment
       if (paymentType === "pro_treatment") {
         const assessmentId = session.metadata?.assessment_id;
         if (assessmentId) {
-          // Mark assessment as treatment_paid so frontend can generate
           await supabaseClient
             .from("assessments")
             .update({ payment_status: "treatment_paid" })
@@ -67,7 +67,22 @@ serve(async (req) => {
         });
       }
 
-      // Check if this session was already processed (idempotency)
+      // Handle pro_lifetime_treatment payment
+      if (paymentType === "pro_lifetime_treatment") {
+        const professionalId = session.metadata?.professional_id;
+        if (professionalId) {
+          await supabaseClient
+            .from("professionals")
+            .update({ lifetime_treatment: true })
+            .eq("id", professionalId);
+        }
+        return new Response(JSON.stringify({ paid: true, type: "pro_lifetime_treatment" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Handle premium subscription verification
+      // For subscriptions, check_access is the primary check; session verification just confirms
       const { data: existingAssessment } = await supabaseClient
         .from("assessments")
         .select("id")
@@ -79,7 +94,6 @@ serve(async (req) => {
         .limit(1)
         .single();
 
-      // Only create the paid anchor assessment if one doesn't exist from this payment
       if (!existingAssessment) {
         await supabaseClient
           .from("assessments")
@@ -97,7 +111,7 @@ serve(async (req) => {
       });
     }
 
-    // Mode 2: Check if user has valid premium access
+    // Mode 2: Check if user has valid premium access (subscription-based)
     if (check_access) {
       // Check VIP status
       const { data: vipUser } = await supabaseClient
@@ -133,22 +147,9 @@ serve(async (req) => {
         ? { discount_percent: availableReward.discount_percent }
         : null;
 
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-      // Find the latest PAID premium assessment within 7 days (the payment anchor)
-      const { data: paidAssessment } = await supabaseClient
-        .from("assessments")
-        .select("id, paid_at")
-        .eq("user_id", user.id)
-        .eq("type", "premium")
-        .eq("payment_status", "paid")
-        .gte("paid_at", sevenDaysAgo.toISOString())
-        .order("paid_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (!paidAssessment) {
+      // Check active premium subscription via Stripe
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length === 0) {
         return new Response(JSON.stringify({
           has_access: false,
           can_redo: false,
@@ -159,20 +160,38 @@ serve(async (req) => {
         });
       }
 
-      // Count ALL premium assessments by this user created since the payment anchor
-      const { count } = await supabaseClient
-        .from("assessments")
-        .select("id", { count: "exact" })
-        .eq("user_id", user.id)
-        .eq("type", "premium")
-        .gte("created_at", paidAssessment.paid_at);
+      const customerId = customers.data[0].id;
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 10,
+      });
+
+      // Find premium subscription (prod_U6HcKYW069jBRN)
+      const premiumSub = subscriptions.data.find(sub =>
+        sub.items.data.some(item => item.price.product === "prod_U6HcKYW069jBRN")
+      );
+
+      if (!premiumSub) {
+        return new Response(JSON.stringify({
+          has_access: false,
+          can_redo: false,
+          assessments_used: 0,
+          available_discount: availableDiscount,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Premium subscriber — count assessments in the current billing period
+      const periodStart = new Date(premiumSub.current_period_start * 1000).toISOString();
 
       const { count: startedCount } = await supabaseClient
         .from("assessments")
         .select("id", { count: "exact" })
         .eq("user_id", user.id)
         .eq("type", "premium")
-        .gte("created_at", paidAssessment.paid_at)
+        .gte("created_at", periodStart)
         .not("anamnesis_data", "eq", "{}");
 
       const assessmentsUsed = startedCount ?? 0;
@@ -183,8 +202,7 @@ serve(async (req) => {
         can_redo: hasAccess && assessmentsUsed === 1,
         assessments_used: assessmentsUsed,
         max_assessments: 2,
-        payment_id: paidAssessment.id,
-        paid_at: paidAssessment.paid_at,
+        subscription_end: new Date(premiumSub.current_period_end * 1000).toISOString(),
         available_discount: availableDiscount,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

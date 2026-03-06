@@ -322,7 +322,7 @@ const Assessment = () => {
                   <div className="text-4xl font-bold text-foreground">{PREMIUM_PRICE_FORMATTED}</div>
                 )}
                 <p className="text-sm text-muted-foreground">
-                  {t("payment.includes_redo") || "Inclui até 2 avaliações em 7 dias"}
+                  {t("payment.includes_redo") || "Assinatura mensal — 2 avaliações por mês"}
                 </p>
                 <ul className="text-sm text-left space-y-2 text-muted-foreground">
                   <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_1") || "Testes funcionais guiados por vídeo"}</li>
