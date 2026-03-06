@@ -247,8 +247,92 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
             </div>
           </div>
         );
+      case "surgery":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t("anamnesis.surgery_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.surgery_subtitle")}</p>
+            <div className="grid grid-cols-2 gap-3">
+              {["anamnesis.surgery.yes", "anamnesis.surgery.no"].map((option) => (
+                <Card key={option} className={`cursor-pointer transition-all ${data.hasPriorSurgery === option ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, hasPriorSurgery: option, ...(option.includes("no") ? { surgeryDetails: "" } : {}) })}>
+                  <CardContent className="py-4 px-4 text-center">
+                    <span className="text-2xl block mb-1">{option.includes("yes") ? "✅" : "❌"}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            {data.hasPriorSurgery === "anamnesis.surgery.yes" && (
+              <div className="space-y-2 mt-3">
+                <Label>{t("anamnesis.surgery_details")}</Label>
+                <Textarea
+                  value={data.surgeryDetails}
+                  onChange={(e) => setData({ ...data, surgeryDetails: e.target.value.slice(0, 500) })}
+                  placeholder={t("anamnesis.surgery_details_placeholder")}
+                  rows={3}
+                  maxLength={500}
+                />
+              </div>
+            )}
+          </div>
+        );
       case "painmap":
         return <PainMap selectedRegions={data.painRegions} onRegionsChange={(regions) => setData({ ...data, painRegions: regions })} />;
+      case "region_detail": {
+        const regionType = getSelectedSingleRegionType();
+        if (!regionType) return null;
+        const subAreas = getSubAreasForRegion(regionType);
+        const needsTraumaQuestion = regionType === "knee" || regionType === "ankle" || regionType === "shoulder";
+        const traumaKey = regionType === "knee" ? "hadTwist" : regionType === "ankle" ? "hadSprain" : "hadDislocation";
+        const traumaQuestion = regionType === "knee" ? "anamnesis.knee_twist" : regionType === "ankle" ? "anamnesis.ankle_sprain" : "anamnesis.shoulder_dislocation";
+        const traumaValue = regionType === "knee" ? data.hadTwist : regionType === "ankle" ? data.hadSprain : data.hadDislocation;
+        const showOttawa = (regionType === "knee" && data.hadTwist === "anamnesis.trauma.yes") || (regionType === "ankle" && data.hadSprain === "anamnesis.trauma.yes");
+
+        return (
+          <div className="space-y-5">
+            <h3 className="text-lg font-semibold">{t("anamnesis.region_detail_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.region_detail_subtitle")}</p>
+            <div className="grid gap-3">
+              {subAreas.map((area) => (
+                <Card key={area.id} className={`cursor-pointer transition-all ${data.painSubArea === area.id ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, painSubArea: area.id })}>
+                  <CardContent className="py-3 px-4">
+                    <span className="text-sm font-medium">{t(area.label)}</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t(area.desc)}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            {needsTraumaQuestion && (
+              <div className="space-y-3 mt-4 p-4 bg-muted/50 rounded-xl">
+                <Label className="text-sm font-medium">{t(traumaQuestion)}</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                    <Button key={opt} variant={traumaValue === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, [traumaKey]: opt })}>
+                      {t(opt)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {showOttawa && (
+              <div className="space-y-3 mt-2 p-4 bg-destructive/5 border border-destructive/20 rounded-xl">
+                <Label className="text-sm font-medium">{t("anamnesis.ottawa_title")}</Label>
+                <p className="text-sm text-muted-foreground">{t(regionType === "knee" ? "anamnesis.ottawa_knee" : "anamnesis.ottawa_ankle")}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                    <Button key={opt} variant={data.ottawaPositive === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, ottawaPositive: opt })}>
+                      {t(opt)}
+                    </Button>
+                  ))}
+                </div>
+                {data.ottawaPositive === "anamnesis.trauma.no" && (
+                  <p className="text-sm text-destructive font-medium">{t("anamnesis.ottawa_warning")}</p>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
       case "sex_age":
         return (
           <div className="space-y-5">
