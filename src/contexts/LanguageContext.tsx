@@ -633,7 +633,7 @@ const translations: Record<Language, Record<string, string>> = {
     // B2B Landing Section
     "b2b.badge": "Para Fisioterapeutas",
     "b2b.title": "Fisioterapeuta, potencialize suas consultas",
-    "b2b.subtitle": "Receba seus pacientes com anamnese completa, mapa de dor e questionários validados antes da primeira consulta. Avaliações mais assertivas, tratamentos mais eficazes.",
+    "b2b.subtitle": "Encaminhe um Link de pré avaliação e receba seus pacientes já com anamnese direcionada, mapa de dor e questionários validados antes da primeira consulta. Avaliações mais assertivas, tratamentos mais eficazes.",
     "b2b.benefit_1_title": "Economize 30min por consulta",
     "b2b.benefit_1_desc": "Seu paciente chega com triagem, anamnese e questionários preenchidos. Você ganha tempo para o que importa: avaliar e tratar.",
     "b2b.benefit_2_title": "Avaliações mais assertivas",
