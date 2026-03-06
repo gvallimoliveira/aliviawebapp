@@ -628,6 +628,8 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.link_inactive_desc": "Este link de avaliação profissional não está ativo no momento. Entre em contato com seu fisioterapeuta.",
     "pro.result_sent_title": "Relatório enviado ao seu fisioterapeuta",
     "pro.result_sent_desc": "Este relatório de triagem foi enviado ao(à) fisioterapeuta {name}. Ele(a) complementará sua avaliação presencialmente com testes funcionais e definição do plano de tratamento.",
+    "pro.thankyou_title": "Obrigado por preencher a pré-avaliação!",
+    "pro.thankyou_desc": "Já encaminhamos ao Dr. {name} os dados coletados e integrados para aumentar a efetividade da sua avaliação presencial.",
     "pro.badge_partner": "Parceiro",
 
     // B2B Landing Section
@@ -1388,6 +1390,8 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.link_inactive_desc": "This professional assessment link is not currently active. Please contact your physiotherapist.",
     "pro.result_sent_title": "Report sent to your physiotherapist",
     "pro.result_sent_desc": "This triage report was sent to physiotherapist {name}. They will complete your assessment in person with functional tests and treatment plan definition.",
+    "pro.thankyou_title": "Thank you for completing the pre-assessment!",
+    "pro.thankyou_desc": "We've sent Dr. {name} the collected and integrated data to enhance the effectiveness of your in-person assessment.",
     "pro.badge_partner": "Partner",
 
     // B2B Landing Section
