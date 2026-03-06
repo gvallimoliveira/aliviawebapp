@@ -1,25 +1,39 @@
 
 
-## Plano: Ajustes nas seções de pricing B2B
+## Plano: Branding — favicon, título da tab e badge Lovable
 
-### 1. `ProfessionalSection.tsx` — Toggle mensal/anual no CTA
+### 1. Remover badge "Made with Lovable"
 
-Atualmente mostra preço fixo "A partir de R$34,90/mês". Mudar para:
-- Adicionar `useState` com toggle `monthly | annual`
-- Dois botões side-by-side (Mensal / Anual) que alternam o preço exibido
-- Mensal: R$49/mês | Anual: R$34,90/mês (com badge "Economize 30%")
-- O CTA continua navegando para `/profissionais`
+Para remover o badge, o usuário precisa ativá-lo nas configurações do projeto: **Settings → Hide 'Lovable' Badge**. Isso não é controlado pelo código — é uma opção da plataforma Lovable.
 
-### 2. `ProfessionalLanding.tsx` — Remover card Lifetime + corrigir hardcodes
+### 2. Favicon — trocar para logo Aliv.iA
 
-**Remover**: Todo o terceiro card "Lifetime Treatment" (linhas 284-314) da seção de pricing.
+**`index.html`** — Adicionar tag `<link rel="icon">` apontando para o logo já existente no projeto:
 
-**Layout**: Mudar grid de `md:grid-cols-3` para `md:grid-cols-2` para exibir apenas os 2 cards (Mensal e Anual) centralizados.
+```html
+<link rel="icon" type="image/png" href="/src/assets/logo-alivia.png" />
+```
 
-**Hardcodes a corrigir**: Revisar textos que estão hardcoded como fallbacks (ex: `|| "Mensal"`, `|| "Anual"`, `|| "Melhor valor"`, `|| "Cobrado anualmente: R$ 418,80/ano"`, `|| "Economize 30%"`) — estes já usam `t()` com fallback, o que é aceitável, mas confirmar que as traduções existem no LanguageContext. Se o usuário quer remover os hardcodes, mover todos esses textos para as traduções e remover os fallbacks `||`.
+Nota: Como Vite processa assets em `src/assets`, o ideal é copiar `logo-alivia.png` para `public/favicon.png` e referenciar `/favicon.png`. Alternativamente, pode-se converter para `.ico`.
 
-### Arquivos a modificar
-1. `src/components/ProfessionalSection.tsx` — Adicionar toggle mensal/anual com estado
-2. `src/pages/ProfessionalLanding.tsx` — Remover card vitalício, ajustar grid para 2 colunas, limpar hardcodes
-3. `src/contexts/LanguageContext.tsx` — Garantir que todas as chaves de tradução existem (plan_monthly, plan_annual, best_value, billed_annually, save_30)
+### 3. Título da tab
+
+**`index.html`** — Alterar a tag `<title>`:
+
+```html
+<title>Aliv.iA Webapp</title>
+```
+
+Também atualizar o `setSeo` em `Index.tsx` e demais páginas para usar "Aliv.iA Webapp" como título padrão, ou manter títulos específicos por página mas sem menções ao portal de desenvolvimento.
+
+---
+
+### Arquivos a editar
+
+| Arquivo | Mudança |
+|---|---|
+| `index.html` | Mudar `<title>` para "Aliv.iA Webapp", adicionar `<link rel="icon">` |
+| `public/favicon.png` | Copiar `logo-alivia.png` para public |
+| `src/pages/Index.tsx` | Atualizar título no `setSeo` |
+| `src/pages/ProfessionalLanding.tsx` | Atualizar título no `setSeo` |
 

@@ -18,7 +18,7 @@ import {
   UserPlus, Link2, Send, ClipboardCheck, Check,
   LayoutDashboard, Brain, User, FileBarChart, Zap,
 } from "lucide-react";
-import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE, PRO_LIFETIME_TREATMENT_PRICE, PRO_LIFETIME_TREATMENT_ORIGINAL_PRICE } from "@/constants/pricing";
+import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import { setSeo } from "@/lib/seo";
 import { useEffect } from "react";
 
@@ -218,16 +218,16 @@ const ProfessionalLanding = () => {
             {t("b2b.pricing_title")}
           </motion.h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {/* Monthly Plan */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
               <Card className="border-border/60 h-full">
                 <div className="px-6 py-4 text-center border-b border-border/40">
-                  <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">{t("b2b.plan_monthly") || "Mensal"}</p>
+                  <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">{t("b2b.plan_monthly")}</p>
                 </div>
                 <CardContent className="p-6 text-center">
                   <div className="text-4xl font-bold text-foreground mb-1">
-                    R${PRO_PLAN_PRICE}<span className="text-lg font-normal text-muted-foreground">/mês</span>
+                    R${PRO_PLAN_PRICE}<span className="text-lg font-normal text-muted-foreground">/{t("b2b.per_month")}</span>
                   </div>
                   <p className="text-sm text-muted-foreground mb-6">{t("b2b.cta_cancel")}</p>
                   <ul className="text-left space-y-3 mb-8">
@@ -251,19 +251,19 @@ const ProfessionalLanding = () => {
               <Card className="border-primary/30 shadow-lg relative h-full bg-primary/[0.02]">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                    {t("b2b.best_value") || "Melhor valor"}
+                    {t("b2b.best_value")}
                   </span>
                 </div>
                 <div className="px-6 py-4 pt-6 text-center border-b border-primary/10 bg-primary/5">
-                  <p className="text-sm font-medium uppercase tracking-wider text-primary">{t("b2b.plan_annual") || "Anual"}</p>
+                  <p className="text-sm font-medium uppercase tracking-wider text-primary">{t("b2b.plan_annual")}</p>
                 </div>
                 <CardContent className="p-6 text-center">
                   <div className="text-4xl font-bold text-foreground mb-1">
-                    R${PRO_PLAN_ANNUAL_PRICE.toFixed(2).replace(".", ",")}<span className="text-lg font-normal text-muted-foreground">/mês</span>
+                    R${PRO_PLAN_ANNUAL_PRICE.toFixed(2).replace(".", ",")}<span className="text-lg font-normal text-muted-foreground">/{t("b2b.per_month")}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-1">{t("b2b.billed_annually") || "Cobrado anualmente: R$ 418,80/ano"}</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t("b2b.billed_annually")}</p>
                   <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-xs mb-4">
-                    {t("b2b.save_30") || "Economize 30%"}
+                    {t("b2b.save_30")}
                   </Badge>
                   <ul className="text-left space-y-3 mb-8">
                     {pricingIncludes.map((key, i) => (
@@ -274,38 +274,6 @@ const ProfessionalLanding = () => {
                     ))}
                   </ul>
                   <Button onClick={handleCTA} size="lg" className="w-full rounded-xl gap-2 text-base">
-                    {t("b2b.hero_cta")}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Lifetime Treatment */}
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={2}>
-              <Card className="border-amber-200 h-full bg-amber-500/[0.02]">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white">
-                    🔥 {t("b2b.first_month_offer") || "Oferta 1º mês"}
-                  </span>
-                </div>
-                <div className="px-6 py-4 pt-6 text-center border-b border-amber-100 bg-amber-50/50">
-                  <p className="text-sm font-medium uppercase tracking-wider text-amber-700">{t("b2b.lifetime_treatment_title") || "Tratamento Vitalício"}</p>
-                </div>
-                <CardContent className="p-6 text-center">
-                  <div className="text-lg text-muted-foreground line-through mb-0">
-                    R$ {PRO_LIFETIME_TREATMENT_ORIGINAL_PRICE.toFixed(2).replace(".", ",")}
-                  </div>
-                  <div className="text-4xl font-bold text-foreground mb-1">
-                    R$ {PRO_LIFETIME_TREATMENT_PRICE.toFixed(2).replace(".", ",")}
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-6">{t("b2b.one_time_payment") || "Pagamento único — acesso vitalício"}</p>
-                  <ul className="text-left space-y-3 mb-8 text-sm text-foreground">
-                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />{t("b2b.lifetime_inc_1") || "Gere tratamentos ilimitados por IA"}</li>
-                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />{t("b2b.lifetime_inc_2") || "Sem cobrança por avaliação"}</li>
-                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />{t("b2b.lifetime_inc_3") || "Acesso permanente, pague uma vez"}</li>
-                  </ul>
-                  <Button onClick={handleCTA} variant="outline" size="lg" className="w-full rounded-xl gap-2 text-base border-amber-300 text-amber-700 hover:bg-amber-50">
                     {t("b2b.hero_cta")}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
