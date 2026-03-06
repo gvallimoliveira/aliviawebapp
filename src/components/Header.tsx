@@ -20,7 +20,7 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
           <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
-          <span className="text-xl font-bold text-foreground">Aliv.iA</span>
+          <span className="hidden sm:inline text-xl font-bold text-foreground">Aliv.iA</span>
         </div>
 
         <nav className="hidden items-center gap-6 md:flex">
@@ -43,9 +43,9 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
+          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2 sm:px-3">
             <Globe className="h-4 w-4" />
-            {t("nav.language")}
+            <span className="hidden sm:inline">{t("nav.language")}</span>
           </Button>
           {user ?
           <>
