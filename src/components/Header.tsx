@@ -42,6 +42,15 @@ const Header = () => {
           </button>
         </nav>
 
+        {/* Mobile-only professional link */}
+        <button
+          onClick={() => navigate("/profissionais")}
+          className="inline-flex items-center gap-1 text-sm font-medium text-primary md:hidden"
+        >
+          <Stethoscope className="h-4 w-4" />
+          <span className="hidden sm:inline">{t("nav.professional")}</span>
+        </button>
+
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2 sm:px-3">
             <Globe className="h-4 w-4" />
