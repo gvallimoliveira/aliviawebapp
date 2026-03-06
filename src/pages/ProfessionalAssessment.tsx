@@ -32,6 +32,7 @@ const ProfessionalAssessment = () => {
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [patientName, setPatientName] = useState("");
+  const [patientEmail, setPatientEmail] = useState("");
   const [redFlagData, setRedFlagData] = useState<Record<string, boolean> | null>(null);
 
   // Validate professional exists and has active subscription
