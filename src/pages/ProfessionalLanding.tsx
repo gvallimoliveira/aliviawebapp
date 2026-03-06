@@ -114,7 +114,13 @@ const ProfessionalLanding = () => {
               {t("b2b.hero_cta")}
               <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="lg" className="rounded-xl px-8 text-base" onClick={() => navigate("/professional/register")}>
+            <Button variant="outline" size="lg" className="rounded-xl px-8 text-base" onClick={() => {
+              if (user) {
+                navigate("/dashboard?tab=professional");
+              } else {
+                navigate("/auth", { state: { redirectTo: "/dashboard?tab=professional" } });
+              }
+            }}>
               {t("b2b.hero_login")}
             </Button>
           </motion.div>
