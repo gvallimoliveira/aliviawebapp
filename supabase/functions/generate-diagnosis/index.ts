@@ -218,6 +218,9 @@ KNOWLEDGE BASE (use as clinical reference):
 
 ${shoulderBlock}
 ${kneeThighBlock}
+${subAreaBlock}
+${ottawaBlock}
+${surgeryBlock}
 
 IMPORTANT RULES:
 - Always respond in ${lang}.
