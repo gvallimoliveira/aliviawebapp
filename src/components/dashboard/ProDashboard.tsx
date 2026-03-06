@@ -107,6 +107,24 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     } finally {
       setLifetimeLoading(false);
     }
+  };
+
+  // Check if professional registered within last 30 days for urgency pricing
+  const isWithinFirstMonth = useMemo(() => {
+    if (!professional?.created_at) return false;
+    const created = new Date(professional.created_at);
+    const now = new Date();
+    const diffDays = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+    return diffDays <= 30;
+  }, [professional?.created_at]);
+
+  const daysLeftForOffer = useMemo(() => {
+    if (!professional?.created_at) return 0;
+    const created = new Date(professional.created_at);
+    const deadline = new Date(created.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    return Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  }, [professional?.created_at]);
 
   const copyLink = () => {
     const link = `${window.location.origin}/assessment/professional/${professional.id}`;
