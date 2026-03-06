@@ -63,10 +63,12 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     setPatientAssessments(data || []);
   };
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (plan: "monthly" | "annual" = "monthly") => {
     setCheckoutLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-pro-subscription");
+      const { data, error } = await supabase.functions.invoke("create-pro-subscription", {
+        body: { plan },
+      });
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
     } catch {

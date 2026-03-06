@@ -881,7 +881,7 @@ const translations: Record<Language, Record<string, string>> = {
     "compare.basic": "Basic",
     "compare.premium": "Premium",
     "compare.basic.price": "Free",
-    "compare.premium.price": PREMIUM_PRICE_FORMATTED,
+    "compare.premium.price": "R$ 99.90/mo",
     "compare.basic.desc": "A taste of what we can offer",
     "compare.premium.desc": "Complete assessment with treatment plan",
     "compare.anamnesis": "Anamnesis",
