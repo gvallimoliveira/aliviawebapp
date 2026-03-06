@@ -743,6 +743,14 @@ const translations: Record<Language, Record<string, string>> = {
     "pro_treatment.success_desc": "O plano de tratamento foi gerado com sucesso para esta avaliação.",
     "pro_treatment.view_plan": "Ver Plano de Tratamento",
 
+    // Pro Lifetime Treatment Upsell
+    "pro_lifetime.upsell_title": "Tratamento Vitalício",
+    "pro_lifetime.limited_offer": "Oferta limitada",
+    "pro_lifetime.upsell_desc": "Desbloqueie todos os planos de tratamento para sempre. Sem custos adicionais por avaliação.",
+    "pro_lifetime.upsell_desc_regular": "Desbloqueie todos os planos de tratamento para sempre.",
+    "pro_lifetime.days_left": "{days} dias restantes para esta oferta",
+    "pro_lifetime.buy_cta": "Desbloquear Vitalício",
+
     // Blog
     "blog.title": "Blog",
     "blog.subtitle": "Artigos sobre dor, fisioterapia e bem-estar",
@@ -1584,6 +1592,14 @@ const translations: Record<Language, Record<string, string>> = {
     "pro_treatment.success_title": "Treatment plan unlocked!",
     "pro_treatment.success_desc": "The treatment plan was successfully generated for this assessment.",
     "pro_treatment.view_plan": "View Treatment Plan",
+
+    // Pro Lifetime Treatment Upsell
+    "pro_lifetime.upsell_title": "Lifetime Treatment",
+    "pro_lifetime.limited_offer": "Limited offer",
+    "pro_lifetime.upsell_desc": "Unlock all treatment plans forever. No additional cost per assessment.",
+    "pro_lifetime.upsell_desc_regular": "Unlock all treatment plans forever.",
+    "pro_lifetime.days_left": "{days} days left for this offer",
+    "pro_lifetime.buy_cta": "Unlock Lifetime",
 
     // Blog
     "blog.title": "Blog",

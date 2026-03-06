@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { PRO_PLAN_PRICE_FORMATTED } from "@/constants/pricing";
+import {
+  PRO_PLAN_PRICE_FORMATTED,
+  PRO_LIFETIME_TREATMENT_PRICE_FORMATTED,
+  PRO_LIFETIME_TREATMENT_ORIGINAL_FORMATTED,
+} from "@/constants/pricing";
 import { mockPatientAssessments } from "@/data/mockPatientData";
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
@@ -15,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
-  AlertTriangle, FileCheck, Lock, Activity, FileText,
+  AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
@@ -35,6 +39,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [patientAssessments, setPatientAssessments] = useState<any[]>([]);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [lifetimeLoading, setLifetimeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
@@ -90,6 +95,36 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       setPortalLoading(false);
     }
   };
+
+  const handleLifetimeCheckout = async () => {
+    setLifetimeLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-pro-lifetime-treatment");
+      if (error) throw error;
+      if (data?.url) window.open(data.url, "_blank");
+    } catch {
+      toast({ title: t("payment.error_title"), description: t("payment.error_desc"), variant: "destructive" });
+    } finally {
+      setLifetimeLoading(false);
+    }
+  };
+
+  // Check if professional registered within last 30 days for urgency pricing
+  const isWithinFirstMonth = useMemo(() => {
+    if (!professional?.created_at) return false;
+    const created = new Date(professional.created_at);
+    const now = new Date();
+    const diffDays = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+    return diffDays <= 30;
+  }, [professional?.created_at]);
+
+  const daysLeftForOffer = useMemo(() => {
+    if (!professional?.created_at) return 0;
+    const created = new Date(professional.created_at);
+    const deadline = new Date(created.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    return Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  }, [professional?.created_at]);
 
   const copyLink = () => {
     const link = `${window.location.origin}/assessment/professional/${professional.id}`;
@@ -324,6 +359,72 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Lifetime Treatment Upsell — only for non-lifetime pros */}
+      {!professional.lifetime_treatment && (isWithinFirstMonth ? (
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <CardContent className="py-5">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 shrink-0">
+                <Zap className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 space-y-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-foreground">{t("pro_lifetime.upsell_title")}</h3>
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] gap-1">
+                      <Gift className="h-3 w-3" />
+                      {t("pro_lifetime.limited_offer")}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t("pro_lifetime.upsell_desc")}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-bold text-foreground">{PRO_LIFETIME_TREATMENT_PRICE_FORMATTED}</span>
+                  <span className="text-sm text-muted-foreground line-through">{PRO_LIFETIME_TREATMENT_ORIGINAL_FORMATTED}</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-primary font-medium">
+                  <Clock className="h-3.5 w-3.5" />
+                  {t("pro_lifetime.days_left").replace("{days}", String(daysLeftForOffer))}
+                </div>
+                <Button
+                  onClick={handleLifetimeCheckout}
+                  disabled={lifetimeLoading}
+                  className="w-full sm:w-auto rounded-xl gap-2"
+                >
+                  {lifetimeLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                  {t("pro_lifetime.buy_cta")}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-border/60">
+          <CardContent className="py-4 px-5 flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted shrink-0">
+              <Zap className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-foreground text-sm">{t("pro_lifetime.upsell_title")}</h3>
+              <p className="text-xs text-muted-foreground">{t("pro_lifetime.upsell_desc_regular")}</p>
+            </div>
+            <div className="text-right shrink-0">
+              <span className="text-lg font-bold text-foreground">{PRO_LIFETIME_TREATMENT_ORIGINAL_FORMATTED}</span>
+            </div>
+            <Button
+              onClick={handleLifetimeCheckout}
+              disabled={lifetimeLoading}
+              size="sm"
+              className="rounded-xl gap-1.5 shrink-0"
+            >
+              {lifetimeLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+              {t("pro_lifetime.buy_cta")}
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
 
       {/* Generate Link */}
       <Card className="border-primary/20">
