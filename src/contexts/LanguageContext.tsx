@@ -741,6 +741,33 @@ const translations: Record<Language, Record<string, string>> = {
     "blog.admin.deleted": "Artigo excluído.",
     "blog.admin.confirm_delete": "Tem certeza que deseja excluir este artigo?",
     "blog.admin.author": "Autor",
+
+    // Methodology Section
+    "methodology.badge": "Nossa Metodologia",
+    "methodology.title": "Ciência por trás da sua recuperação",
+    "methodology.subtitle": "Conceitos clínicos proprietários que guiam cada etapa da sua reabilitação — do diagnóstico à alta.",
+    "methodology.steps_title": "STEPS — Os 6 Degraus da Reabilitação",
+    "methodology.steps.step1.title": "Controle de Dor & Inflamação",
+    "methodology.steps.step2.title": "Reparo & Cicatrização Tecidual",
+    "methodology.steps.step3.title": "Mobilidade & Flexibilidade",
+    "methodology.steps.step4.title": "Força & Controle Motor Geral",
+    "methodology.steps.step5.title": "Força & Controle Específico",
+    "methodology.steps.step6.title": "Retorno à Atividade / Alta",
+    "methodology.steps_desc": "Cada fase do seu plano de tratamento é mapeada a esses degraus. Identificamos exatamente onde você está e para onde precisa ir.",
+    "methodology.difi_title": "Ciclo D.I.F.I. — Por que sua dor não melhora?",
+    "methodology.difi.dor": "Dor",
+    "methodology.difi.inibicao": "Inibição",
+    "methodology.difi.fraqueza": "Fraqueza",
+    "methodology.difi.incapacidade": "Incapacidade",
+    "methodology.difi_desc": "Dor causa inibição muscular reflexa, que gera fraqueza progressiva, levando à incapacidade funcional — e mais dor. A Aliv.iA identifica em qual ponto desse ciclo vicioso você se encontra para quebrar essa corrente.",
+    "methodology.authority": "Desenvolvido por fisioterapeuta especialista com 7+ anos de experiência clínica em reabilitação musculoesquelética.",
+
+    // Treatment STEPS badges
+    "treatment.steps.short_term": "Steps 1-2: Controle de Dor & Reparo",
+    "treatment.steps.medium_term": "Steps 3-4: Mobilidade & Força Geral",
+    "treatment.steps.long_term": "Steps 5-6: Força Específica & Alta",
+    "treatment.difi.title": "Ciclo D.I.F.I. identificado",
+    "treatment.difi.desc": "Seu plano foi desenhado para quebrar o ciclo vicioso Dor → Inibição → Fraqueza → Incapacidade.",
   },
   en: {
     // Nav
@@ -1467,6 +1494,33 @@ const translations: Record<Language, Record<string, string>> = {
     "blog.admin.deleted": "Article deleted.",
     "blog.admin.confirm_delete": "Are you sure you want to delete this article?",
     "blog.admin.author": "Author",
+
+    // Methodology Section
+    "methodology.badge": "Our Methodology",
+    "methodology.title": "The science behind your recovery",
+    "methodology.subtitle": "Proprietary clinical concepts that guide every step of your rehabilitation — from diagnosis to discharge.",
+    "methodology.steps_title": "STEPS — The 6 Stages of Rehabilitation",
+    "methodology.steps.step1.title": "Pain & Inflammation Control",
+    "methodology.steps.step2.title": "Tissue Repair & Healing",
+    "methodology.steps.step3.title": "Mobility & Flexibility",
+    "methodology.steps.step4.title": "General Strength & Motor Control",
+    "methodology.steps.step5.title": "Sport-Specific Strength & Control",
+    "methodology.steps.step6.title": "Return to Activity / Discharge",
+    "methodology.steps_desc": "Each phase of your treatment plan maps to these stages. We identify exactly where you are and where you need to go.",
+    "methodology.difi_title": "D.I.F.I. Cycle — Why your pain doesn't improve",
+    "methodology.difi.dor": "Pain",
+    "methodology.difi.inibicao": "Inhibition",
+    "methodology.difi.fraqueza": "Weakness",
+    "methodology.difi.incapacidade": "Disability",
+    "methodology.difi_desc": "Pain causes reflexive muscle inhibition, which leads to progressive weakness, creating functional disability — and more pain. Aliv.iA identifies where in this vicious cycle you are, so we can break the chain.",
+    "methodology.authority": "Developed by a specialist physiotherapist with 7+ years of clinical experience in musculoskeletal rehabilitation.",
+
+    // Treatment STEPS badges
+    "treatment.steps.short_term": "Steps 1-2: Pain Control & Repair",
+    "treatment.steps.medium_term": "Steps 3-4: Mobility & General Strength",
+    "treatment.steps.long_term": "Steps 5-6: Specific Strength & Discharge",
+    "treatment.difi.title": "D.I.F.I. cycle identified",
+    "treatment.difi.desc": "Your plan is designed to break the vicious cycle: Pain → Inhibition → Weakness → Disability.",
   },
 };
 
