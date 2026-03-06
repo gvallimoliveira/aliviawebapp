@@ -1461,12 +1461,25 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Patient Info (Professional flow)
     "patient_info.title": "Patient Identification",
-    "patient_info.desc": "Dr. {name} has requested that you complete this assessment. Please enter your name so the professional can identify your report.",
+    "patient_info.desc": "Dr. {name} has requested that you complete this assessment. Please enter your details so the professional can identify your report.",
     "patient_info.name_label": "Patient full name",
     "patient_info.name_placeholder": "Enter your full name",
+    "patient_info.email_label": "Patient email",
+    "patient_info.email_placeholder": "your@email.com",
+    "patient_info.email_hint": "Used for evolutionary tracking of your metrics.",
     "patient_info.steps_info": "The assessment takes about 5 minutes and includes safety screening, anamnesis and validated questionnaires.",
     "patient_info.continue": "Continue",
     "pro.anonymous_patient": "Unidentified patient",
+    "pro.patients_title": "Patients",
+    "pro.patients_desc": "Select a patient to view their evolution",
+    "pro.evolution_title": "Patient Evolution",
+    "pro.pain_evolution": "Pain Evolution",
+    "pro.questionnaire_evolution": "Questionnaire Evolution",
+    "pro.assessments_count": "assessments",
+    "pro.last_assessment": "Last assessment",
+    "pro.back_to_patients": "Back to patients",
+    "pro.no_patients": "No patients with registered email yet.",
+    "pro.no_questionnaire_data": "No questionnaire data to compare.",
 
     // Dashboard Tabs
     "dashboard.tab_my_health": "My Health",
