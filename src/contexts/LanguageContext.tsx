@@ -1631,6 +1631,62 @@ const translations: Record<Language, Record<string, string>> = {
     "treatment.steps.long_term": "Steps 5-6: Specific Strength & Discharge",
     "treatment.difi.title": "D.I.F.I. cycle identified",
     "treatment.difi.desc": "Your plan is designed to break the vicious cycle: Pain → Inhibition → Weakness → Disability.",
+
+    // Surgery history
+    "anamnesis.surgery_title": "Have you had any prior surgeries?",
+    "anamnesis.surgery_subtitle": "Previous surgeries may influence diagnosis and treatment.",
+    "anamnesis.surgery.yes": "Yes",
+    "anamnesis.surgery.no": "No",
+    "anamnesis.surgery_details": "Briefly describe the surgery/surgeries",
+    "anamnesis.surgery_details_placeholder": "E.g.: right knee arthroscopy in 2020, L4-L5 disc herniation surgery...",
+
+    // Region-specific sub-questions
+    "anamnesis.region_detail_title": "Detail your pain location",
+    "anamnesis.region_detail_subtitle": "Select the most specific area where you feel pain",
+    "anamnesis.subarea.front": "Front",
+    "anamnesis.subarea.lateral": "Lateral (outside)",
+    "anamnesis.subarea.medial": "Medial (inside)",
+    "anamnesis.subarea.posterior": "Posterior (back)",
+    "anamnesis.subarea.anterolateral": "Antero-lateral",
+    "anamnesis.subarea.superior": "Superior / Medial",
+
+    // Knee sub-areas descriptions
+    "anamnesis.knee.front_desc": "Front of the knee (patella area)",
+    "anamnesis.knee.lateral_desc": "Outside of the knee",
+    "anamnesis.knee.medial_desc": "Inside of the knee",
+    "anamnesis.knee.posterior_desc": "Back of the knee",
+
+    // Ankle sub-areas descriptions
+    "anamnesis.ankle.lateral_desc": "Lateral region (outside)",
+    "anamnesis.ankle.medial_desc": "Medial region (inside)",
+    "anamnesis.ankle.posterior_desc": "Posterior region (heel/tendon)",
+    "anamnesis.ankle.anterolateral_desc": "Antero-lateral region",
+
+    // Hip sub-areas descriptions
+    "anamnesis.hip.lateral_desc": "Lateral hip region",
+    "anamnesis.hip.anterior_desc": "Anterior region (groin/front)",
+
+    // Shoulder sub-areas descriptions
+    "anamnesis.shoulder.anterior_desc": "Anterior shoulder region",
+    "anamnesis.shoulder.lateral_desc": "Lateral shoulder region",
+    "anamnesis.shoulder.superior_desc": "Superior / medial shoulder region",
+
+    // Cervical sub-areas descriptions
+    "anamnesis.cervical.posterior_desc": "Back of the neck",
+    "anamnesis.cervical.anterolateral_desc": "Antero-lateral neck region",
+
+    // Trauma questions
+    "anamnesis.knee_twist": "Did you twist your knee?",
+    "anamnesis.ankle_sprain": "Have you had a recent ankle sprain?",
+    "anamnesis.shoulder_dislocation": "Have you ever had a shoulder dislocation?",
+    "anamnesis.trauma.yes": "Yes",
+    "anamnesis.trauma.no": "No",
+
+    // Ottawa rules
+    "anamnesis.ottawa_title": "Ottawa Rules",
+    "anamnesis.ottawa_knee": "Can you take 4 weight-bearing steps immediately after the event?",
+    "anamnesis.ottawa_ankle": "Can you take 4 weight-bearing steps immediately after the event?",
+    "anamnesis.ottawa_warning": "⚠️ We recommend seeking medical care to rule out fracture before continuing.",
   },
 };
 
