@@ -10,11 +10,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
-  AlertTriangle, FileCheck, Lock,
+  AlertTriangle, FileCheck, Lock, Activity,
 } from "lucide-react";
+import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 
 interface ProDashboardProps {
   professional: any;
