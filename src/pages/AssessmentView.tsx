@@ -414,7 +414,10 @@ const AssessmentView = () => {
                   body: { assessment_id: assessment.id },
                 });
                 if (error) throw error;
-                if (data?.url) window.location.href = data.url;
+                if (data?.url) {
+                  const w = window.open(data.url, "_blank");
+                  if (!w) window.location.href = data.url;
+                }
               } catch {
                 toast({ title: t("payment.error_title"), description: t("payment.error_desc"), variant: "destructive" });
               } finally {
