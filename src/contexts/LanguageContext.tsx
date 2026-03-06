@@ -1399,6 +1399,7 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.no_patient_assessments": "No assessments received yet. Send the link to your first patient!",
     "pro.renews": "Renews on",
     "pro.manage_subscription": "Manage subscription",
+    "pro.edit_profile": "Edit profile",
     "pro.badge_professional": "Professional Assessment",
     "pro.link_inactive_title": "Link unavailable",
     "pro.link_inactive_desc": "This professional assessment link is not currently active. Please contact your physiotherapist.",
