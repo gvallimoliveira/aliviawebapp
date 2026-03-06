@@ -81,6 +81,9 @@ const ProfessionalRegister = () => {
             clinic_name: data.clinic_name || "",
             clinic_address: data.clinic_address || "",
           });
+          if (data.profile_photo_url) {
+            setPhotoPreview(data.profile_photo_url);
+          }
         }
         setLoadingProfile(false);
       });
