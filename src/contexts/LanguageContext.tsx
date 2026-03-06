@@ -958,7 +958,7 @@ const translations: Record<Language, Record<string, string>> = {
     "dashboard.new_basic": "Basic Assessment",
     "dashboard.new_basic_desc": "Free assessment with diagnostic hypothesis",
     "dashboard.new_premium": "Premium Assessment",
-    "dashboard.new_premium_desc": `Complete assessment with treatment plan — ${PREMIUM_PRICE_FORMATTED}`,
+    "dashboard.new_premium_desc": "Complete assessment with treatment plan — R$ 99.90/mo",
     "dashboard.history": "Assessment History",
     "dashboard.no_assessments": "You haven't completed any assessments yet.",
     "dashboard.completed": "Completed",
