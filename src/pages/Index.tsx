@@ -27,7 +27,7 @@ const Index = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Aliv.iA – Avaliação Musculoesquelética Inteligente",
+      title: "Aliv.iA Webapp",
       description: "Avaliação musculoesquelética com inteligência artificial. Diagnóstico preliminar e plano de tratamento personalizado em minutos.",
       url: "https://alivia.app",
       type: "website",

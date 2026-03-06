@@ -34,7 +34,7 @@ const ProfessionalLanding = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Aliv.iA — Para Profissionais | Painel de Triagem com IA",
+      title: "Aliv.iA Webapp — Para Profissionais",
       description: "Receba pacientes com anamnese, mapa de dor e questionários prontos. Economize 30 min por consulta com o painel profissional Aliv.iA.",
       url: `${window.location.origin}/profissionais`,
       type: "website",
