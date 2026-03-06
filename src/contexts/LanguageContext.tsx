@@ -686,12 +686,25 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Patient Info (Professional flow)
     "patient_info.title": "Identificação do Paciente",
-    "patient_info.desc": "O(a) Dr(a). {name} solicitou que você preencha esta avaliação. Por favor, informe seu nome para que o profissional possa identificar seu relatório.",
+    "patient_info.desc": "O(a) Dr(a). {name} solicitou que você preencha esta avaliação. Por favor, informe seus dados para que o profissional possa identificar seu relatório.",
     "patient_info.name_label": "Nome completo do paciente",
     "patient_info.name_placeholder": "Digite seu nome completo",
+    "patient_info.email_label": "E-mail do paciente",
+    "patient_info.email_placeholder": "seu@email.com",
+    "patient_info.email_hint": "Usado para acompanhamento evolutivo das suas métricas.",
     "patient_info.steps_info": "A avaliação leva cerca de 5 minutos e inclui triagem de segurança, anamnese e questionários validados.",
     "patient_info.continue": "Continuar",
     "pro.anonymous_patient": "Paciente não identificado",
+    "pro.patients_title": "Pacientes",
+    "pro.patients_desc": "Selecione um paciente para ver a evolução",
+    "pro.evolution_title": "Evolução do Paciente",
+    "pro.pain_evolution": "Evolução da Dor",
+    "pro.questionnaire_evolution": "Evolução dos Questionários",
+    "pro.assessments_count": "avaliações",
+    "pro.last_assessment": "Última avaliação",
+    "pro.back_to_patients": "Voltar para pacientes",
+    "pro.no_patients": "Nenhum paciente com e-mail cadastrado ainda.",
+    "pro.no_questionnaire_data": "Sem dados de questionários para comparar.",
 
     // Dashboard Tabs
     "dashboard.tab_my_health": "Minha Saúde",
