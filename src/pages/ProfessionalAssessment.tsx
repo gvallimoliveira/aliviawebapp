@@ -66,6 +66,7 @@ const ProfessionalAssessment = () => {
           professional_id: professionalId,
           payment_status: "covered",
           patient_name: patientName || null,
+          patient_email: patientEmail || null,
         } as any)
         .select("id")
         .single();
