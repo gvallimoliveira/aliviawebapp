@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
-  AlertTriangle, FileCheck, Lock, Activity, FileText,
+  AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
