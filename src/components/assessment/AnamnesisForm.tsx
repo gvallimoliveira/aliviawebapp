@@ -127,16 +127,89 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     return shoulderComplaints.includes(data.chiefComplaint) || data.painRegions.some(r => shoulderRegions.includes(r));
   };
 
+  // Region detection for sub-questions
+  const kneeRegions = ["right_knee", "left_knee", "right_knee_back", "left_knee_back", "knee_side"];
+  const ankleRegions = ["right_ankle", "left_ankle", "right_ankle_back", "left_ankle_back", "ankle_side"];
+  const hipRegions = ["right_hip", "left_hip", "right_hip_back", "left_hip_back", "hip_side"];
+  const shoulderRegionsAll = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
+  const cervicalRegions = ["neck_front", "neck_back", "neck_side"];
+
+  const getSelectedSingleRegionType = (): string | null => {
+    const regions = data.painRegions;
+    if (regions.length === 0) return null;
+    // Check if ALL selected regions belong to ONE region type
+    const checks: [string[], string][] = [
+      [kneeRegions, "knee"],
+      [ankleRegions, "ankle"],
+      [hipRegions, "hip"],
+      [shoulderRegionsAll, "shoulder"],
+      [cervicalRegions, "cervical"],
+    ];
+    for (const [regionList, type] of checks) {
+      if (regions.every(r => regionList.includes(r)) && regions.some(r => regionList.includes(r))) {
+        return type;
+      }
+    }
+    // Also check by chief complaint if single complaint matches
+    const complaintMap: Record<string, string> = {
+      "anamnesis.complaint.knee_pain": "knee",
+      "anamnesis.complaint.ankle_pain": "ankle",
+      "anamnesis.complaint.hip_pain": "hip",
+      "anamnesis.complaint.shoulder_pain": "shoulder",
+      "anamnesis.complaint.neck_pain": "cervical",
+    };
+    if (complaintMap[data.chiefComplaint] && regions.length <= 2) {
+      return complaintMap[data.chiefComplaint];
+    }
+    return null;
+  };
+
+  const needsRegionDetail = () => getSelectedSingleRegionType() !== null;
+
+  const getSubAreasForRegion = (region: string): { id: string; label: string; desc: string }[] => {
+    switch (region) {
+      case "knee": return [
+        { id: "front", label: "anamnesis.subarea.front", desc: "anamnesis.knee.front_desc" },
+        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.knee.lateral_desc" },
+        { id: "medial", label: "anamnesis.subarea.medial", desc: "anamnesis.knee.medial_desc" },
+        { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.knee.posterior_desc" },
+      ];
+      case "ankle": return [
+        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.ankle.lateral_desc" },
+        { id: "medial", label: "anamnesis.subarea.medial", desc: "anamnesis.ankle.medial_desc" },
+        { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.ankle.posterior_desc" },
+        { id: "anterolateral", label: "anamnesis.subarea.anterolateral", desc: "anamnesis.ankle.anterolateral_desc" },
+      ];
+      case "hip": return [
+        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.hip.lateral_desc" },
+        { id: "anterior", label: "anamnesis.subarea.front", desc: "anamnesis.hip.anterior_desc" },
+      ];
+      case "shoulder": return [
+        { id: "anterior", label: "anamnesis.subarea.front", desc: "anamnesis.shoulder.anterior_desc" },
+        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.shoulder.lateral_desc" },
+        { id: "superior", label: "anamnesis.subarea.superior", desc: "anamnesis.shoulder.superior_desc" },
+      ];
+      case "cervical": return [
+        { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.cervical.posterior_desc" },
+        { id: "anterolateral", label: "anamnesis.subarea.anterolateral", desc: "anamnesis.cervical.anterolateral_desc" },
+      ];
+      default: return [];
+    }
+  };
+
   // Define step IDs for clarity
-  type StepId = "complaint" | "onset" | "painmap" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "gym" | "painscore";
+  type StepId = "complaint" | "onset" | "surgery" | "painmap" | "region_detail" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "gym" | "painscore";
 
   const buildStepSequence = (): StepId[] => {
-    const base: StepId[] = ["complaint", "onset", "painmap", "paintype", "evolution", "factors", "duration", "gym", "painscore"];
-    if (isShoulderRelated()) {
-      // Insert sex_age right after painmap (after user selects shoulder regions)
-      const idx = base.indexOf("paintype");
-      base.splice(idx, 0, "sex_age");
+    const base: StepId[] = ["complaint", "onset", "surgery", "painmap"];
+    // Add region_detail if applicable
+    if (needsRegionDetail()) {
+      base.push("region_detail");
     }
+    if (isShoulderRelated()) {
+      base.push("sex_age");
+    }
+    base.push("paintype", "evolution", "factors", "duration", "gym", "painscore");
     return base;
   };
 
