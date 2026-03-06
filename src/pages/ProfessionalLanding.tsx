@@ -14,7 +14,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import {
-  Clock, Target, FileText, TrendingUp, Stethoscope, ArrowRight,
+  Clock, Target, FileText, Activity, Stethoscope, ArrowRight,
   UserPlus, Link2, Send, ClipboardCheck, Check,
   LayoutDashboard, Brain, User, FileBarChart, Zap,
 } from "lucide-react";
@@ -53,7 +53,7 @@ const ProfessionalLanding = () => {
     { icon: Clock, titleKey: "b2b.benefit_1_title", descKey: "b2b.benefit_1_desc" },
     { icon: Target, titleKey: "b2b.benefit_2_title", descKey: "b2b.benefit_2_desc" },
     { icon: FileText, titleKey: "b2b.benefit_3_title", descKey: "b2b.benefit_3_desc" },
-    { icon: TrendingUp, titleKey: "b2b.benefit_4_title", descKey: "b2b.benefit_4_desc" },
+    { icon: Activity, titleKey: "b2b.benefit_4_title", descKey: "b2b.benefit_4_desc" },
   ];
 
   const steps = [

@@ -10,11 +10,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
-  AlertTriangle, FileCheck, Lock,
+  AlertTriangle, FileCheck, Lock, Activity,
 } from "lucide-react";
+import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 
 interface ProDashboardProps {
   professional: any;
@@ -236,99 +238,118 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </Card>
       </div>
 
-      {/* Patient Assessment List */}
-      <div>
-        <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-          <Users className="h-5 w-5 text-muted-foreground" />
-          {t("pro.patient_assessments")}
-        </h3>
-        {patientAssessments.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="py-8 text-center">
-              <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">{t("pro.no_patient_assessments")}</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {patientAssessments.map((a) => {
-              const regions = (a.pain_regions || []).map((r: string) => painRegionLabels[r] || r).slice(0, 3);
-              const hypothesis = a.diagnosis?.hypothesis;
-              const isRedFlagged = a.status === "red_flagged" || (a as any).red_flags != null;
-              const redFlagItems = (a as any).red_flags
-                ? Object.entries((a as any).red_flags).filter(([, v]) => v === true).map(([k]) => k)
-                : [];
-              return (
-                <Card
-                  key={a.id}
-                  className={`cursor-pointer hover:shadow-md transition-all border-border/60 hover:border-border group ${isRedFlagged ? "border-destructive/30" : ""}`}
-                  onClick={() => navigate(`/assessment/view/${a.id}`)}
-                >
-                  <CardContent className="py-3 px-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex-1 space-y-1.5 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-semibold text-foreground">
-                            {(a as any).patient_name || t("pro.anonymous_patient")}
-                          </p>
-                          {isRedFlagged && (
-                            <Badge variant="destructive" className="text-[10px] gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              {t("pro.redflag_badge")}
-                            </Badge>
-                          )}
-                          {!isRedFlagged && a.diagnosis && !a.treatment_plan && (
-                            <Badge variant="outline" className="text-[10px] gap-1 bg-amber-500/10 text-amber-600 border-amber-200">
-                              <Lock className="h-3 w-3" />
-                              {t("pro_treatment.badge_available")}
-                            </Badge>
-                          )}
-                          {a.treatment_plan && (
-                            <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-200">
-                              <FileCheck className="h-3 w-3" />
-                              {t("pro_treatment.badge_unlocked")}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-                          {a.pain_score != null && <span>• Dor: {a.pain_score}/10</span>}
-                          {isRedFlagged && !hypothesis && (
-                            <span className="text-destructive font-medium">• {t("pro.redflag_status")}</span>
-                          )}
-                        </div>
-                        {hypothesis && (
-                          <p className="text-sm font-medium text-foreground line-clamp-1">{hypothesis}</p>
-                        )}
-                        {isRedFlagged && redFlagItems.length > 0 && (
-                          <div className="flex items-start gap-1 flex-wrap text-[10px] text-destructive">
-                            {redFlagItems.slice(0, 3).map((key: string, i: number) => (
-                              <span key={i} className="bg-destructive/10 px-1.5 py-0.5 rounded-full">{t(key)}</span>
-                            ))}
-                            {redFlagItems.length > 3 && (
-                              <span className="bg-destructive/10 px-1.5 py-0.5 rounded-full">+{redFlagItems.length - 3}</span>
+      {/* Tabs: Assessments vs Evolution */}
+      <Tabs defaultValue="assessments" className="w-full">
+        <TabsList className="w-full grid grid-cols-2">
+          <TabsTrigger value="assessments" className="gap-1.5">
+            <Users className="h-4 w-4" />
+            {t("pro.patient_assessments")}
+          </TabsTrigger>
+          <TabsTrigger value="evolution" className="gap-1.5">
+            <Activity className="h-4 w-4" />
+            {t("pro.patients_title")}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="assessments">
+          {/* Patient Assessment List */}
+          <div>
+            {patientAssessments.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="py-8 text-center">
+                  <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">{t("pro.no_patient_assessments")}</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {patientAssessments.map((a) => {
+                  const regions = (a.pain_regions || []).map((r: string) => painRegionLabels[r] || r).slice(0, 3);
+                  const hypothesis = a.diagnosis?.hypothesis;
+                  const isRedFlagged = a.status === "red_flagged" || (a as any).red_flags != null;
+                  const redFlagItems = (a as any).red_flags
+                    ? Object.entries((a as any).red_flags).filter(([, v]) => v === true).map(([k]) => k)
+                    : [];
+                  return (
+                    <Card
+                      key={a.id}
+                      className={`cursor-pointer hover:shadow-md transition-all border-border/60 hover:border-border group ${isRedFlagged ? "border-destructive/30" : ""}`}
+                      onClick={() => navigate(`/assessment/view/${a.id}`)}
+                    >
+                      <CardContent className="py-3 px-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 space-y-1.5 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-semibold text-foreground">
+                                {(a as any).patient_name || t("pro.anonymous_patient")}
+                              </p>
+                              {isRedFlagged && (
+                                <Badge variant="destructive" className="text-[10px] gap-1">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  {t("pro.redflag_badge")}
+                                </Badge>
+                              )}
+                              {!isRedFlagged && a.diagnosis && !a.treatment_plan && (
+                                <Badge variant="outline" className="text-[10px] gap-1 bg-amber-500/10 text-amber-600 border-amber-200">
+                                  <Lock className="h-3 w-3" />
+                                  {t("pro_treatment.badge_available")}
+                                </Badge>
+                              )}
+                              {a.treatment_plan && (
+                                <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                                  <FileCheck className="h-3 w-3" />
+                                  {t("pro_treatment.badge_unlocked")}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                              {a.pain_score != null && <span>• Dor: {a.pain_score}/10</span>}
+                              {isRedFlagged && !hypothesis && (
+                                <span className="text-destructive font-medium">• {t("pro.redflag_status")}</span>
+                              )}
+                            </div>
+                            {hypothesis && (
+                              <p className="text-sm font-medium text-foreground line-clamp-1">{hypothesis}</p>
+                            )}
+                            {isRedFlagged && redFlagItems.length > 0 && (
+                              <div className="flex items-start gap-1 flex-wrap text-[10px] text-destructive">
+                                {redFlagItems.slice(0, 3).map((key: string, i: number) => (
+                                  <span key={i} className="bg-destructive/10 px-1.5 py-0.5 rounded-full">{t(key)}</span>
+                                ))}
+                                {redFlagItems.length > 3 && (
+                                  <span className="bg-destructive/10 px-1.5 py-0.5 rounded-full">+{redFlagItems.length - 3}</span>
+                                )}
+                              </div>
+                            )}
+                            {regions.length > 0 && !isRedFlagged && (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+                                {regions.map((r: string, i: number) => (
+                                  <span key={i} className="text-[10px] bg-muted/60 text-muted-foreground px-1.5 py-0.5 rounded-full">{r}</span>
+                                ))}
+                              </div>
                             )}
                           </div>
-                        )}
-                        {regions.length > 0 && !isRedFlagged && (
-                          <div className="flex items-center gap-1 flex-wrap">
-                            <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-                            {regions.map((r: string, i: number) => (
-                              <span key={i} className="text-[10px] bg-muted/60 text-muted-foreground px-1.5 py-0.5 rounded-full">{r}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="evolution">
+          <PatientEvolutionDashboard
+            assessments={patientAssessments}
+            professionalId={professional.id}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -32,6 +32,7 @@ const ProfessionalAssessment = () => {
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [patientName, setPatientName] = useState("");
+  const [patientEmail, setPatientEmail] = useState("");
   const [redFlagData, setRedFlagData] = useState<Record<string, boolean> | null>(null);
 
   // Validate professional exists and has active subscription
@@ -65,6 +66,7 @@ const ProfessionalAssessment = () => {
           professional_id: professionalId,
           payment_status: "covered",
           patient_name: patientName || null,
+          patient_email: patientEmail || null,
         } as any)
         .select("id")
         .single();
@@ -228,6 +230,19 @@ const ProfessionalAssessment = () => {
                     maxLength={100}
                     autoFocus
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="patient-email">{t("patient_info.email_label")}</Label>
+                  <Input
+                    id="patient-email"
+                    type="email"
+                    value={patientEmail}
+                    onChange={(e) => setPatientEmail(e.target.value.slice(0, 150))}
+                    placeholder={t("patient_info.email_placeholder")}
+                    maxLength={150}
+                  />
+                  <p className="text-xs text-muted-foreground">{t("patient_info.email_hint")}</p>
                 </div>
 
                 <div className="bg-muted/50 rounded-lg p-3 space-y-1">

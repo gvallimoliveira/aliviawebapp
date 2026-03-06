@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Target, FileText, TrendingUp, Stethoscope, ArrowRight } from "lucide-react";
+import { Clock, Target, FileText, Activity, Stethoscope, ArrowRight } from "lucide-react";
 
 const ProfessionalSection = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const ProfessionalSection = () => {
     { icon: Clock, titleKey: "b2b.benefit_1_title", descKey: "b2b.benefit_1_desc" },
     { icon: Target, titleKey: "b2b.benefit_2_title", descKey: "b2b.benefit_2_desc" },
     { icon: FileText, titleKey: "b2b.benefit_3_title", descKey: "b2b.benefit_3_desc" },
-    { icon: TrendingUp, titleKey: "b2b.benefit_4_title", descKey: "b2b.benefit_4_desc" },
+    { icon: Activity, titleKey: "b2b.benefit_4_title", descKey: "b2b.benefit_4_desc" },
   ];
 
   return (
