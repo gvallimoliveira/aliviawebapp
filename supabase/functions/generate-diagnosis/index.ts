@@ -14,6 +14,14 @@ serve(async (req) => {
   try {
     const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo } = await req.json();
 
+    const painSubArea = anamnesisData.painSubArea || "";
+    const hadTwist = anamnesisData.hadTwist || "";
+    const hadSprain = anamnesisData.hadSprain || "";
+    const hadDislocation = anamnesisData.hadDislocation || "";
+    const ottawaPositive = anamnesisData.ottawaPositive || "";
+    const hasPriorSurgery = anamnesisData.hasPriorSurgery || "";
+    const surgeryDetails = anamnesisData.surgeryDetails || "";
+
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
     const isProfessional = mode === "professional";
