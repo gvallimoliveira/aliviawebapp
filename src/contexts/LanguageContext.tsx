@@ -1410,6 +1410,8 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.thankyou_title": "Thank you for completing the pre-assessment!",
     "pro.thankyou_desc": "We've sent Dr. {name} the collected and integrated data to enhance the effectiveness of your in-person assessment.",
     "pro.badge_partner": "Partner",
+    "pro.demo_notice": "This is a demo panel with fictional patient data. Subscribe to the Professional Plan to unlock all features.",
+    "pro.download_pdf": "Download PDF",
 
     // B2B Landing Section
     "b2b.badge": "For Physiotherapists",
