@@ -460,7 +460,7 @@ const Dashboard = () => {
           <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
         </div>
 
-        {professional?.approved ? (
+        {professional ? (
           <Tabs defaultValue={tabFromUrl === "professional" ? "professional" : "health"} className="space-y-6">
             <TabsList className="w-full grid grid-cols-2">
               <TabsTrigger value="health" className="gap-1.5">
@@ -485,15 +485,6 @@ const Dashboard = () => {
         ) : (
           <div className="space-y-8">
             {renderClientContent()}
-            {/* Professional Approval Status */}
-            {professional && !professional.approved && (
-              <Card className="border-amber-200 bg-amber-500/5">
-                <CardContent className="py-4 px-5 flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-amber-600 shrink-0" />
-                  <span className="text-sm text-amber-700">{t("prof.profile_under_review")}</span>
-                </CardContent>
-              </Card>
-            )}
           </div>
         )}
       </main>
