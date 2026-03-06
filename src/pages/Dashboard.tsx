@@ -31,6 +31,8 @@ const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { t, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
   const [assessments, setAssessments] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [premiumAccess, setPremiumAccess] = useState<PremiumAccess | null>(null);
