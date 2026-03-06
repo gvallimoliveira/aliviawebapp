@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate } from "react-router-dom";
-import { Globe, ArrowLeft, Loader2, MessageCircle, Send, ChevronRight, Stethoscope, AlertTriangle, User } from "lucide-react";
+import { Globe, Loader2, ChevronRight, Stethoscope, AlertTriangle, User, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +18,7 @@ import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 
-type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "low_confidence" | "result";
+type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "thank_you";
 
 const ProfessionalAssessment = () => {
   const { professionalId } = useParams<{ professionalId: string }>();
@@ -31,10 +30,7 @@ const ProfessionalAssessment = () => {
   const [professional, setProfessional] = useState<any>(null);
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
-  const [diagnosis, setDiagnosis] = useState<any>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
-  const [additionalInfo, setAdditionalInfo] = useState("");
-  const [hasRetried, setHasRetried] = useState(false);
   const [patientName, setPatientName] = useState("");
   const [redFlagData, setRedFlagData] = useState<Record<string, boolean> | null>(null);
 
@@ -125,26 +121,20 @@ const ProfessionalAssessment = () => {
     generateDiagnosis(anamnesisData!, [], assessmentId);
   };
 
-  const generateDiagnosis = async (data: AnamnesisData, qResults: QuestionnaireResult[], currentId?: string | null, extraInfo?: string) => {
+  const generateDiagnosis = async (data: AnamnesisData, qResults: QuestionnaireResult[], currentId?: string | null) => {
     setStep("loading");
     try {
       const bodyData: any = { anamnesisData: data, testResults: [], questionnaireResults: qResults, mode: "professional", language };
-      if (extraInfo) bodyData.additionalInfo = extraInfo;
 
       const { data: result, error } = await supabase.functions.invoke("generate-diagnosis", { body: bodyData });
       if (error) throw error;
-      setDiagnosis(result.diagnosis);
 
       const id = currentId || assessmentId;
       if (id) {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "completed" });
       }
 
-      if (result.diagnosis.confidence === "low" && !hasRetried && !extraInfo) {
-        setStep("low_confidence");
-      } else {
-        setStep("result");
-      }
+      setStep("thank_you");
     } catch (err: any) {
       console.error("Diagnosis error:", err);
       toast({ title: t("diagnosis.error_title"), description: t("diagnosis.error_desc"), variant: "destructive" });
@@ -152,16 +142,6 @@ const ProfessionalAssessment = () => {
     }
   };
 
-  const handleLowConfidenceSubmit = () => {
-    setHasRetried(true);
-    if (additionalInfo.trim()) {
-      const updated = { ...anamnesisData!, additionalInfo: additionalInfo.trim() };
-      setAnamnesisData(updated);
-      generateDiagnosis(updated, questionnaireResults, assessmentId, additionalInfo.trim());
-    } else {
-      setStep("result");
-    }
-  };
 
   if (step === "loading_check") {
     return (
@@ -308,107 +288,25 @@ const ProfessionalAssessment = () => {
           </div>
         )}
 
-        {step === "low_confidence" && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-            <Card className="rounded-xl border-yellow-200 bg-yellow-50/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base text-foreground flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-yellow-600" />
-                  {t("diagnosis.low_confidence_title")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{t("diagnosis.low_confidence_desc")}</p>
-                <Textarea
-                  value={additionalInfo}
-                  onChange={(e) => setAdditionalInfo(e.target.value)}
-                  placeholder={t("diagnosis.low_confidence_placeholder")}
-                  className="min-h-[120px] rounded-xl"
-                />
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button onClick={handleLowConfidenceSubmit} disabled={!additionalInfo.trim()} className="flex-1 rounded-xl gap-2">
-                    <Send className="h-4 w-4" />
-                    {t("diagnosis.low_confidence_submit")}
-                  </Button>
-                  <Button variant="outline" onClick={() => { setHasRetried(true); setStep("result"); }} className="flex-1 rounded-xl gap-2">
-                    {t("diagnosis.low_confidence_skip")}
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+        {step === "thank_you" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 text-center py-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mx-auto">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">{t("pro.thankyou_title")}</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              {t("pro.thankyou_desc").replace("{name}", professional?.full_name || "")}
+            </p>
 
-        {step === "result" && diagnosis && (
-          <ProfessionalDiagnosisResult
-            diagnosis={diagnosis}
-            professionalName={professional?.full_name || ""}
-          />
+            <div className="pt-4">
+              <Button onClick={() => navigate("/")} variant="outline" className="rounded-xl">
+                {t("redflag_alert.back")}
+              </Button>
+            </div>
+          </motion.div>
         )}
       </main>
     </div>
-  );
-};
-
-// Simplified result for professional mode — no treatment, no recommendations
-const ProfessionalDiagnosisResult = ({ diagnosis, professionalName }: { diagnosis: any; professionalName: string }) => {
-  const { t } = useLanguage();
-  const navigate = useNavigate();
-
-  const confidenceConfig: Record<string, any> = {
-    low: { color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200", label: t("diagnosis.confidence.low") },
-    moderate: { color: "text-primary", bg: "bg-primary/5 border-primary/20", label: t("diagnosis.confidence.moderate") },
-    high: { color: "text-green-600", bg: "bg-green-50 border-green-200", label: t("diagnosis.confidence.high") },
-  };
-  const conf = confidenceConfig[diagnosis.confidence] || confidenceConfig.moderate;
-
-  return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">{diagnosis.hypothesis}</h2>
-      </div>
-
-      <div className={`flex items-center gap-2 px-4 py-3 rounded-xl border ${conf.bg}`}>
-        <span className={`text-sm font-medium ${conf.color}`}>
-          {t("diagnosis.confidence_label")}: {conf.label}
-        </span>
-      </div>
-
-      <Card className="rounded-xl">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">{t("diagnosis.summary")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground leading-relaxed">{diagnosis.summary}</p>
-        </CardContent>
-      </Card>
-
-      {/* Professional disclaimer */}
-      <Card className="rounded-xl border-blue-200 bg-blue-50/50">
-        <CardContent className="py-4 flex items-start gap-3">
-          <Stethoscope className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">{t("pro.result_sent_title")}</p>
-            <p className="text-sm text-muted-foreground">
-              {t("pro.result_sent_desc").replace("{name}", professionalName)}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Disclaimer */}
-      <div className="flex items-start gap-2 p-4 rounded-xl bg-muted/50 border border-border/50">
-        <AlertTriangle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-        <p className="text-xs text-muted-foreground">{diagnosis.disclaimer}</p>
-      </div>
-
-      <div className="text-center pt-4">
-        <Button onClick={() => navigate("/")} variant="outline" className="rounded-xl">
-          {t("redflag_alert.back")}
-        </Button>
-      </div>
-    </motion.div>
   );
 };
 
