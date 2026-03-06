@@ -98,6 +98,36 @@ const ProfessionalRegister = () => {
     }));
   };
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagem muito grande (máx. 5MB)", variant: "destructive" });
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photoFile || !user) return null;
+    setUploadingPhoto(true);
+    const ext = photoFile.name.split(".").pop();
+    const path = `${user.id}/profile.${ext}`;
+    const { error } = await supabase.storage
+      .from("professional-photos")
+      .upload(path, photoFile, { upsert: true });
+    setUploadingPhoto(false);
+    if (error) {
+      console.error("Upload error:", error);
+      return null;
+    }
+    const { data: urlData } = supabase.storage
+      .from("professional-photos")
+      .getPublicUrl(path);
+    return urlData.publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -115,7 +145,16 @@ const ProfessionalRegister = () => {
     }
     setSaving(true);
     try {
-      const payload = { ...form, user_id: user.id };
+      let photoUrl: string | null = null;
+      if (photoFile) {
+        photoUrl = await uploadPhoto();
+      }
+
+      const payload: any = { ...form, user_id: user.id };
+      if (photoUrl) {
+        payload.profile_photo_url = photoUrl;
+      }
+
       if (existing) {
         await (supabase.from("professionals" as any) as any).update(payload).eq("id", existing.id);
       } else {
@@ -123,7 +162,6 @@ const ProfessionalRegister = () => {
       }
       toast({ title: existing ? t("prof.saved") : t("prof.submitted_for_review") });
       if (!existing) {
-        // Re-fetch to show status badge
         const { data: newData } = await (supabase.from("professionals" as any) as any)
           .select("*").eq("user_id", user.id).maybeSingle();
         if (newData) setExisting(newData);
