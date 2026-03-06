@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { PRO_PLAN_PRICE_FORMATTED } from "@/constants/pricing";
+import {
+  PRO_PLAN_PRICE_FORMATTED,
+  PRO_LIFETIME_TREATMENT_PRICE_FORMATTED,
+  PRO_LIFETIME_TREATMENT_ORIGINAL_FORMATTED,
+} from "@/constants/pricing";
 import { mockPatientAssessments } from "@/data/mockPatientData";
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
