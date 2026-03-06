@@ -51,6 +51,22 @@ serve(async (req) => {
         });
       }
 
+      // Check if this is a pro_treatment payment — verify and mark for frontend treatment generation
+      const paymentType = session.metadata?.type;
+      if (paymentType === "pro_treatment") {
+        const assessmentId = session.metadata?.assessment_id;
+        if (assessmentId) {
+          // Mark assessment as treatment_paid so frontend can generate
+          await supabaseClient
+            .from("assessments")
+            .update({ payment_status: "treatment_paid" })
+            .eq("id", assessmentId);
+        }
+        return new Response(JSON.stringify({ paid: true, type: "pro_treatment", assessment_id: assessmentId }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Check if this session was already processed (idempotency)
       const { data: existingAssessment } = await supabaseClient
         .from("assessments")

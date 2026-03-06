@@ -7,13 +7,15 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles } from "lucide-react";
 import DiagnosisResult from "@/components/assessment/DiagnosisResult";
 import TreatmentPlan from "@/components/assessment/TreatmentPlan";
 import PainMapView from "@/components/assessment/PainMapView";
 import { regionsByView } from "@/components/assessment/painMapData";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { Progress } from "@/components/ui/progress";
+import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
+import { useToast } from "@/hooks/use-toast";
 
 // Translate i18n keys for display
 function translateKey(key: string, isPt: boolean): string {
@@ -76,9 +78,11 @@ const AssessmentView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { t, language, toggleLanguage } = useLanguage();
+  const { toast } = useToast();
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showTreatment, setShowTreatment] = useState(false);
+  const [unlockLoading, setUnlockLoading] = useState(false);
   const isPt = language === "pt";
 
   useEffect(() => {
@@ -400,6 +404,28 @@ const AssessmentView = () => {
           />
         )}
 
+        {/* Blurred Treatment Preview for Professional Assessments */}
+        {assessment.type === "professional" && assessment.diagnosis && !assessment.treatment_plan && !showTreatment && (
+          <BlurredTreatmentPreview
+            onUnlock={async () => {
+              setUnlockLoading(true);
+              try {
+                const { data, error } = await supabase.functions.invoke("create-pro-treatment-payment", {
+                  body: { assessment_id: assessment.id },
+                });
+                if (error) throw error;
+                if (data?.url) window.location.href = data.url;
+              } catch {
+                toast({ title: t("payment.error_title"), description: t("payment.error_desc"), variant: "destructive" });
+              } finally {
+                setUnlockLoading(false);
+              }
+            }}
+            loading={unlockLoading}
+            isPt={isPt}
+          />
+        )}
+
         {/* No diagnosis yet */}
         {!assessment.diagnosis && (
           <Card className="border-dashed">
@@ -424,5 +450,104 @@ const AnamnesisField = ({ icon, label, value }: { icon?: React.ReactNode; label:
     </div>
   </div>
 );
+
+// Blurred treatment preview for professional assessments
+const BlurredTreatmentPreview = ({
+  onUnlock,
+  loading,
+  isPt,
+}: {
+  onUnlock: () => void;
+  loading: boolean;
+  isPt: boolean;
+}) => {
+  const fakePhases = [
+    {
+      title: isPt ? "Fase 1 — Curto Prazo" : "Phase 1 — Short Term",
+      duration: isPt ? "1-2 semanas" : "1-2 weeks",
+      exercises: isPt
+        ? ["Controle de dor e inflamação", "Mobilização articular suave", "Exercícios respiratórios"]
+        : ["Pain and inflammation control", "Gentle joint mobilization", "Breathing exercises"],
+    },
+    {
+      title: isPt ? "Fase 2 — Médio Prazo" : "Phase 2 — Medium Term",
+      duration: isPt ? "3-6 semanas" : "3-6 weeks",
+      exercises: isPt
+        ? ["Fortalecimento progressivo", "Exercícios de estabilidade", "Alongamentos específicos", "Treino de controle motor"]
+        : ["Progressive strengthening", "Stability exercises", "Specific stretches", "Motor control training"],
+    },
+    {
+      title: isPt ? "Fase 3 — Longo Prazo" : "Phase 3 — Long Term",
+      duration: isPt ? "7-12 semanas" : "7-12 weeks",
+      exercises: isPt
+        ? ["Força específica para atividade", "Retorno à atividade plena", "Programa de prevenção"]
+        : ["Activity-specific strength", "Full return to activity", "Prevention program"],
+    },
+  ];
+
+  return (
+    <Card className="border-primary/20 overflow-hidden">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          {isPt ? "Plano de Tratamento Personalizado" : "Personalized Treatment Plan"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Blurred fake phases */}
+        <div className="space-y-3 relative">
+          {fakePhases.map((phase, i) => (
+            <div key={i} className="p-3 rounded-lg bg-muted/30 border border-border/50 blur-[6px] select-none pointer-events-none">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-sm text-foreground">{phase.title}</p>
+                <span className="text-xs text-muted-foreground">{phase.duration}</span>
+              </div>
+              <ul className="space-y-1">
+                {phase.exercises.map((ex, j) => (
+                  <li key={j} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary/40 shrink-0" />
+                    {ex}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+
+          {/* Overlay CTA */}
+          <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[1px] rounded-lg">
+            <div className="text-center space-y-3 px-4 max-w-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mx-auto">
+                <Lock className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-sm font-semibold text-foreground">
+                {isPt
+                  ? "Plano de tratamento disponível para esta avaliação"
+                  : "Treatment plan available for this assessment"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isPt
+                  ? "Desbloqueie exercícios personalizados em 3 fases (curto, médio e longo prazo) gerados pela IA com base nesta avaliação."
+                  : "Unlock personalized exercises in 3 phases (short, medium and long term) generated by AI based on this assessment."}
+              </p>
+              <Button
+                onClick={onUnlock}
+                disabled={loading}
+                className="rounded-xl gap-2"
+                size="lg"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Lock className="h-4 w-4" />
+                )}
+                {isPt ? `Desbloquear por ${PRO_TREATMENT_PRICE_FORMATTED}` : `Unlock for ${PRO_TREATMENT_PRICE_FORMATTED}`}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 export default AssessmentView;

@@ -8,3 +8,10 @@ export const PRO_PLAN_STRIPE = {
   product_id: "prod_U5dB77Y8adgxGf",
   price_id: "price_1T7Rv6CBxbFcCp8I1Tsv0WwS",
 };
+
+export const PRO_TREATMENT_PRICE = 9.90;
+export const PRO_TREATMENT_PRICE_FORMATTED = `R$ 9,90`;
+export const PRO_TREATMENT_STRIPE = {
+  product_id: "prod_U60kJ6Tj0qKcNA",
+  price_id: "price_1T7ojBCBxbFcCp8IppBdyyNZ",
+};

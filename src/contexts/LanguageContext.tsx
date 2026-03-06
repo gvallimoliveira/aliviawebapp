@@ -709,6 +709,13 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.redflag_badge": "⚠ Red Flags",
     "pro.redflag_status": "Triagem com alertas",
 
+    // Pro Treatment Unlock
+    "pro_treatment.badge_available": "Tratamento disponível",
+    "pro_treatment.badge_unlocked": "Tratamento desbloqueado",
+    "pro_treatment.success_title": "Plano de tratamento desbloqueado!",
+    "pro_treatment.success_desc": "O plano de tratamento foi gerado com sucesso para esta avaliação.",
+    "pro_treatment.view_plan": "Ver Plano de Tratamento",
+
     // Blog
     "blog.title": "Blog",
     "blog.subtitle": "Artigos sobre dor, fisioterapia e bem-estar",
@@ -1461,6 +1468,13 @@ const translations: Record<Language, Record<string, string>> = {
     "redflag_alert.pro_items_title": "Items identified in screening:",
     "pro.redflag_badge": "⚠ Red Flags",
     "pro.redflag_status": "Screening with alerts",
+
+    // Pro Treatment Unlock
+    "pro_treatment.badge_available": "Treatment available",
+    "pro_treatment.badge_unlocked": "Treatment unlocked",
+    "pro_treatment.success_title": "Treatment plan unlocked!",
+    "pro_treatment.success_desc": "The treatment plan was successfully generated for this assessment.",
+    "pro_treatment.view_plan": "View Treatment Plan",
 
     // Blog
     "blog.title": "Blog",
