@@ -652,7 +652,7 @@ const translations: Record<Language, Record<string, string>> = {
     // B2B Landing Page
     "b2b.hero_title": "Transforme sua prática clínica com IA: esteja um passo à frente dos demais",
     "b2b.hero_subtitle": "Receba seus pacientes com triagem completa, anamnese detalhada e questionários validados — tudo pronto antes da consulta.",
-    "b2b.hero_cta": "Começar agora",
+    "b2b.hero_cta": "Criar cadastro profissional",
     "b2b.hero_login": "Já sou profissional",
     "b2b.benefits_title": "Por que usar o Aliv.iA?",
     "b2b.how_title": "Como funciona?",
@@ -1428,7 +1428,7 @@ const translations: Record<Language, Record<string, string>> = {
     // B2B Landing Page
     "b2b.hero_title": "Transform your clinical practice with AI: stay one step ahead",
     "b2b.hero_subtitle": "Receive your patients with complete triage, detailed anamnesis and validated questionnaires — all ready before the consultation.",
-    "b2b.hero_cta": "Get started",
+    "b2b.hero_cta": "Create professional account",
     "b2b.hero_login": "Already a professional",
     "b2b.benefits_title": "Why use Aliv.iA?",
     "b2b.how_title": "How does it work?",
