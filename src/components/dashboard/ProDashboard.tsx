@@ -39,6 +39,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [patientAssessments, setPatientAssessments] = useState<any[]>([]);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [lifetimeLoading, setLifetimeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
