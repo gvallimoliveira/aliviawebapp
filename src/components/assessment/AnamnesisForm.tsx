@@ -60,6 +60,13 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     painDuration: "",
     sex: "",
     ageRange: "",
+    hasPriorSurgery: "",
+    surgeryDetails: "",
+    painSubArea: "",
+    hadTwist: "",
+    hadSprain: "",
+    hadDislocation: "",
+    ottawaPositive: "",
   });
 
   const complaints = [
