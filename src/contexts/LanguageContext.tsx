@@ -38,7 +38,7 @@ const translations: Record<Language, Record<string, string>> = {
     "compare.basic": "Básica",
     "compare.premium": "Premium",
     "compare.basic.price": "Grátis",
-    "compare.premium.price": PREMIUM_PRICE_FORMATTED,
+    "compare.premium.price": "R$ 99,90/mês",
     "compare.basic.desc": "Uma degustação do que podemos oferecer",
     "compare.premium.desc": "Avaliação completa com plano de tratamento",
     "compare.anamnesis": "Anamnese",
