@@ -468,6 +468,209 @@ const visaAQuestions: QuestionnaireQuestion[] = [
 ];
 
 // =============================================
+// 7. QuickDASH - Disabilities of the Arm, Shoulder and Hand
+// =============================================
+
+const LIKERT_5_QUICKDASH: QuestionOption[] = [
+  { value: 1, label_pt: "Nenhuma dificuldade", label_en: "No difficulty" },
+  { value: 2, label_pt: "Pouca dificuldade", label_en: "Mild difficulty" },
+  { value: 3, label_pt: "Dificuldade moderada", label_en: "Moderate difficulty" },
+  { value: 4, label_pt: "Muita dificuldade", label_en: "Severe difficulty" },
+  { value: 5, label_pt: "Incapaz", label_en: "Unable" },
+];
+
+const LIKERT_5_QUICKDASH_SYMPTOMS: QuestionOption[] = [
+  { value: 1, label_pt: "Nenhuma", label_en: "None" },
+  { value: 2, label_pt: "Leve", label_en: "Mild" },
+  { value: 3, label_pt: "Moderada", label_en: "Moderate" },
+  { value: 4, label_pt: "Intensa", label_en: "Severe" },
+  { value: 5, label_pt: "Extrema", label_en: "Extreme" },
+];
+
+const LIKERT_5_QUICKDASH_INTERFERENCE: QuestionOption[] = [
+  { value: 1, label_pt: "De forma alguma", label_en: "Not at all" },
+  { value: 2, label_pt: "Levemente", label_en: "Slightly" },
+  { value: 3, label_pt: "Moderadamente", label_en: "Moderately" },
+  { value: 4, label_pt: "Muito", label_en: "Quite a bit" },
+  { value: 5, label_pt: "Extremamente", label_en: "Extremely" },
+];
+
+const quickdashQuestions: QuestionnaireQuestion[] = [
+  { id: "qd_1", subscale: "daily_activities", text_pt: "Abrir um pote novo ou com a tampa bem apertada", text_en: "Open a tight or new jar", options: LIKERT_5_QUICKDASH },
+  { id: "qd_2", subscale: "daily_activities", text_pt: "Realizar tarefas domésticas pesadas (lavar paredes, chão)", text_en: "Do heavy household chores (wash walls, floors)", options: LIKERT_5_QUICKDASH },
+  { id: "qd_3", subscale: "daily_activities", text_pt: "Carregar uma sacola de compras ou pasta", text_en: "Carry a shopping bag or briefcase", options: LIKERT_5_QUICKDASH },
+  { id: "qd_4", subscale: "daily_activities", text_pt: "Lavar suas costas", text_en: "Wash your back", options: LIKERT_5_QUICKDASH },
+  { id: "qd_5", subscale: "daily_activities", text_pt: "Usar uma faca para cortar alimentos", text_en: "Use a knife to cut food", options: LIKERT_5_QUICKDASH },
+  { id: "qd_6", subscale: "daily_activities", text_pt: "Atividades de lazer que exigem força no braço (jardinagem, martelar)", text_en: "Recreational activities requiring force or impact (gardening, hammering)", options: LIKERT_5_QUICKDASH },
+  { id: "qd_7", subscale: "symptoms", text_pt: "Na última semana, qual a intensidade da dor no braço, ombro ou mão?", text_en: "Arm, shoulder or hand pain in the past week?", options: LIKERT_5_QUICKDASH_SYMPTOMS },
+  { id: "qd_8", subscale: "symptoms", text_pt: "Formigamento (alfinetadas) no braço, ombro ou mão?", text_en: "Tingling (pins and needles) in your arm, shoulder or hand?", options: LIKERT_5_QUICKDASH_SYMPTOMS },
+  { id: "qd_9", subscale: "symptoms", text_pt: "Quanta dificuldade para dormir por causa da dor no braço, ombro ou mão?", text_en: "How much difficulty sleeping because of pain in arm, shoulder or hand?", options: LIKERT_5_QUICKDASH_SYMPTOMS },
+  { id: "qd_10", subscale: "social_impact", text_pt: "Quanto o problema no braço, ombro ou mão interferiu nas atividades sociais na última semana?", text_en: "How much has your arm, shoulder or hand problem interfered with social activities?", options: LIKERT_5_QUICKDASH_INTERFERENCE },
+  { id: "qd_11", subscale: "social_impact", text_pt: "Quanto você se sentiu limitado no trabalho ou atividades diárias pelo problema no braço, ombro ou mão?", text_en: "How much has your arm, shoulder or hand problem limited your work or daily activities?", options: LIKERT_5_QUICKDASH_INTERFERENCE },
+];
+
+// =============================================
+// 8. NDI - Neck Disability Index
+// =============================================
+
+const ndiQuestions: QuestionnaireQuestion[] = [
+  {
+    id: "ndi_1", subscale: "pain_intensity", text_pt: "Intensidade da dor no pescoço", text_en: "Neck Pain Intensity",
+    options: [
+      { value: 0, label_pt: "Não sinto dor no momento", label_en: "I have no pain at the moment" },
+      { value: 1, label_pt: "A dor é muito leve no momento", label_en: "The pain is very mild at the moment" },
+      { value: 2, label_pt: "A dor é moderada no momento", label_en: "The pain is moderate at the moment" },
+      { value: 3, label_pt: "A dor é razoavelmente forte", label_en: "The pain is fairly severe" },
+      { value: 4, label_pt: "A dor é muito forte", label_en: "The pain is very severe" },
+      { value: 5, label_pt: "A dor é a pior imaginável", label_en: "The pain is the worst imaginable" },
+    ],
+  },
+  {
+    id: "ndi_2", subscale: "personal_care", text_pt: "Cuidados pessoais (banho, vestir-se)", text_en: "Personal Care (washing, dressing)",
+    options: [
+      { value: 0, label_pt: "Consigo me cuidar normalmente sem dor extra", label_en: "I can look after myself normally without causing extra pain" },
+      { value: 1, label_pt: "Consigo me cuidar normalmente, mas causa dor extra", label_en: "I can look after myself normally but it causes extra pain" },
+      { value: 2, label_pt: "É doloroso me cuidar e sou lento e cuidadoso", label_en: "It is painful to look after myself and I am slow and careful" },
+      { value: 3, label_pt: "Preciso de alguma ajuda, mas faço a maioria", label_en: "I need some help but manage most of my personal care" },
+      { value: 4, label_pt: "Preciso de ajuda diariamente na maioria dos cuidados", label_en: "I need help every day in most aspects of self-care" },
+      { value: 5, label_pt: "Não consigo me vestir sozinho, tomo banho com dificuldade", label_en: "I do not get dressed, I wash with difficulty and stay in bed" },
+    ],
+  },
+  {
+    id: "ndi_3", subscale: "lifting", text_pt: "Levantar objetos", text_en: "Lifting",
+    options: [
+      { value: 0, label_pt: "Consigo levantar pesos pesados sem dor no pescoço", label_en: "I can lift heavy weights without extra neck pain" },
+      { value: 1, label_pt: "Consigo levantar pesos pesados, mas com dor extra no pescoço", label_en: "I can lift heavy weights but it gives extra neck pain" },
+      { value: 2, label_pt: "A dor me impede de levantar pesos pesados do chão", label_en: "Pain prevents me from lifting heavy weights off the floor" },
+      { value: 3, label_pt: "Consigo levantar objetos leves a médios se bem posicionados", label_en: "I can only lift light to medium weights if conveniently positioned" },
+      { value: 4, label_pt: "Consigo levantar apenas objetos muito leves", label_en: "I can only lift very light weights" },
+      { value: 5, label_pt: "Não consigo levantar ou carregar nada", label_en: "I cannot lift or carry anything at all" },
+    ],
+  },
+  {
+    id: "ndi_4", subscale: "reading", text_pt: "Leitura", text_en: "Reading",
+    options: [
+      { value: 0, label_pt: "Posso ler o quanto quiser sem dor no pescoço", label_en: "I can read as much as I want with no neck pain" },
+      { value: 1, label_pt: "Posso ler o quanto quiser com dor leve no pescoço", label_en: "I can read as much as I want with slight neck pain" },
+      { value: 2, label_pt: "Posso ler o quanto quiser com dor moderada no pescoço", label_en: "I can read as much as I want with moderate neck pain" },
+      { value: 3, label_pt: "Não consigo ler o quanto quiser por causa da dor moderada", label_en: "I can't read as much as I want because of moderate neck pain" },
+      { value: 4, label_pt: "Mal consigo ler por causa da dor forte no pescoço", label_en: "I can hardly read at all because of severe neck pain" },
+      { value: 5, label_pt: "Não consigo ler de forma alguma", label_en: "I cannot read at all" },
+    ],
+  },
+  {
+    id: "ndi_5", subscale: "headache", text_pt: "Dores de cabeça", text_en: "Headaches",
+    options: [
+      { value: 0, label_pt: "Não tenho dores de cabeça", label_en: "I have no headaches at all" },
+      { value: 1, label_pt: "Tenho dores de cabeça leves e pouco frequentes", label_en: "I have slight headaches which come infrequently" },
+      { value: 2, label_pt: "Tenho dores de cabeça moderadas e pouco frequentes", label_en: "I have moderate headaches which come infrequently" },
+      { value: 3, label_pt: "Tenho dores de cabeça moderadas frequentes", label_en: "I have moderate headaches which come frequently" },
+      { value: 4, label_pt: "Tenho dores de cabeça fortes frequentes", label_en: "I have severe headaches which come frequently" },
+      { value: 5, label_pt: "Tenho dores de cabeça quase o tempo todo", label_en: "I have headaches almost all the time" },
+    ],
+  },
+  {
+    id: "ndi_6", subscale: "concentration", text_pt: "Concentração", text_en: "Concentration",
+    options: [
+      { value: 0, label_pt: "Consigo me concentrar totalmente sem dificuldade", label_en: "I can concentrate fully when I want with no difficulty" },
+      { value: 1, label_pt: "Consigo me concentrar totalmente com dificuldade leve", label_en: "I can concentrate fully when I want with slight difficulty" },
+      { value: 2, label_pt: "Tenho dificuldade razoável para me concentrar", label_en: "I have a fair degree of difficulty in concentrating" },
+      { value: 3, label_pt: "Tenho muita dificuldade para me concentrar", label_en: "I have a lot of difficulty in concentrating" },
+      { value: 4, label_pt: "Tenho enorme dificuldade para me concentrar", label_en: "I have a great deal of difficulty in concentrating" },
+      { value: 5, label_pt: "Não consigo me concentrar de forma alguma", label_en: "I cannot concentrate at all" },
+    ],
+  },
+  {
+    id: "ndi_7", subscale: "work", text_pt: "Trabalho", text_en: "Work",
+    options: [
+      { value: 0, label_pt: "Posso trabalhar o quanto quiser", label_en: "I can do as much work as I want" },
+      { value: 1, label_pt: "Só consigo fazer meu trabalho habitual, nada mais", label_en: "I can only do my usual work, but no more" },
+      { value: 2, label_pt: "Consigo fazer a maior parte do trabalho, mas não mais", label_en: "I can do most of my usual work, but no more" },
+      { value: 3, label_pt: "Não consigo fazer meu trabalho habitual", label_en: "I cannot do my usual work" },
+      { value: 4, label_pt: "Mal consigo fazer qualquer trabalho", label_en: "I can hardly do any work at all" },
+      { value: 5, label_pt: "Não consigo fazer nenhum trabalho", label_en: "I can't do any work at all" },
+    ],
+  },
+  {
+    id: "ndi_8", subscale: "driving", text_pt: "Dirigir", text_en: "Driving",
+    options: [
+      { value: 0, label_pt: "Posso dirigir sem dor no pescoço", label_en: "I can drive my car without any neck pain" },
+      { value: 1, label_pt: "Posso dirigir o quanto quiser com dor leve", label_en: "I can drive as long as I want with slight neck pain" },
+      { value: 2, label_pt: "Posso dirigir o quanto quiser com dor moderada", label_en: "I can drive as long as I want with moderate neck pain" },
+      { value: 3, label_pt: "Não posso dirigir tanto por causa da dor moderada", label_en: "I can't drive as long as I want because of moderate pain" },
+      { value: 4, label_pt: "Mal consigo dirigir por causa da dor forte", label_en: "I can hardly drive at all because of severe neck pain" },
+      { value: 5, label_pt: "Não consigo dirigir por causa da dor", label_en: "I can't drive at all" },
+    ],
+  },
+  {
+    id: "ndi_9", subscale: "sleeping", text_pt: "Dormir", text_en: "Sleeping",
+    options: [
+      { value: 0, label_pt: "Não tenho problemas para dormir", label_en: "I have no trouble sleeping" },
+      { value: 1, label_pt: "Meu sono é levemente perturbado (menos de 1h sem dormir)", label_en: "My sleep is slightly disturbed (less than 1 hour sleepless)" },
+      { value: 2, label_pt: "Meu sono é levemente perturbado (1-2h sem dormir)", label_en: "My sleep is mildly disturbed (1-2 hours sleepless)" },
+      { value: 3, label_pt: "Meu sono é moderadamente perturbado (2-3h sem dormir)", label_en: "My sleep is moderately disturbed (2-3 hours sleepless)" },
+      { value: 4, label_pt: "Meu sono é muito perturbado (3-5h sem dormir)", label_en: "My sleep is greatly disturbed (3-5 hours sleepless)" },
+      { value: 5, label_pt: "Meu sono é completamente perturbado (5-7h sem dormir)", label_en: "My sleep is completely disturbed (5-7 hours sleepless)" },
+    ],
+  },
+  {
+    id: "ndi_10", subscale: "recreation", text_pt: "Recreação / Lazer", text_en: "Recreation",
+    options: [
+      { value: 0, label_pt: "Consigo fazer todas as atividades de lazer sem dor", label_en: "I am able to engage in all recreation activities with no neck pain" },
+      { value: 1, label_pt: "Consigo fazer todas as atividades com alguma dor no pescoço", label_en: "I am able to engage in all activities with some neck pain" },
+      { value: 2, label_pt: "Consigo fazer a maioria, mas não todas as atividades de lazer", label_en: "I am able to engage in most, but not all activities" },
+      { value: 3, label_pt: "Consigo fazer apenas poucas atividades de lazer", label_en: "I am able to engage in a few of my usual activities" },
+      { value: 4, label_pt: "Mal consigo fazer qualquer atividade de lazer", label_en: "I can hardly do any recreational activities" },
+      { value: 5, label_pt: "Não consigo fazer nenhuma atividade de lazer", label_en: "I can't do any recreational activities at all" },
+    ],
+  },
+];
+
+// =============================================
+// 9. HIT-6 - Headache Impact Test
+// =============================================
+
+const HIT6_OPTIONS: QuestionOption[] = [
+  { value: 6, label_pt: "Nunca", label_en: "Never" },
+  { value: 8, label_pt: "Raramente", label_en: "Rarely" },
+  { value: 10, label_pt: "Às vezes", label_en: "Sometimes" },
+  { value: 11, label_pt: "Frequentemente", label_en: "Very Often" },
+  { value: 13, label_pt: "Sempre", label_en: "Always" },
+];
+
+const hit6Questions: QuestionnaireQuestion[] = [
+  { id: "hit6_1", subscale: "impact", text_pt: "Quando você tem dores de cabeça, com que frequência a dor é intensa?", text_en: "When you have headaches, how often is the pain severe?", options: HIT6_OPTIONS },
+  { id: "hit6_2", subscale: "impact", text_pt: "Com que frequência as dores de cabeça limitam sua capacidade de fazer atividades diárias habituais?", text_en: "How often do headaches limit your ability to do usual daily activities?", options: HIT6_OPTIONS },
+  { id: "hit6_3", subscale: "impact", text_pt: "Quando você tem dor de cabeça, com que frequência gostaria de poder deitar-se?", text_en: "When you have a headache, how often do you wish you could lie down?", options: HIT6_OPTIONS },
+  { id: "hit6_4", subscale: "impact", text_pt: "Nas últimas 4 semanas, com que frequência você se sentiu cansado(a) ou fatigado(a) demais para trabalhar ou realizar atividades por causa das dores de cabeça?", text_en: "In the past 4 weeks, how often have you felt too tired to do work or daily activities because of your headaches?", options: HIT6_OPTIONS },
+  { id: "hit6_5", subscale: "impact", text_pt: "Nas últimas 4 semanas, com que frequência você se sentiu irritado(a) por causa das dores de cabeça?", text_en: "In the past 4 weeks, how often have you felt fed up or irritated because of your headaches?", options: HIT6_OPTIONS },
+  { id: "hit6_6", subscale: "impact", text_pt: "Nas últimas 4 semanas, com que frequência as dores de cabeça limitaram sua capacidade de se concentrar no trabalho ou atividades diárias?", text_en: "In the past 4 weeks, how often did headaches limit your ability to concentrate on work or daily activities?", options: HIT6_OPTIONS },
+];
+
+// =============================================
+// 10. LEFS-8 - Lower Extremity Functional Scale (Short Form)
+// =============================================
+
+const LIKERT_5_LEFS: QuestionOption[] = [
+  { value: 0, label_pt: "Extrema dificuldade ou incapaz", label_en: "Extreme difficulty or unable" },
+  { value: 1, label_pt: "Muita dificuldade", label_en: "Quite a bit of difficulty" },
+  { value: 2, label_pt: "Dificuldade moderada", label_en: "Moderate difficulty" },
+  { value: 3, label_pt: "Pouca dificuldade", label_en: "A little bit of difficulty" },
+  { value: 4, label_pt: "Nenhuma dificuldade", label_en: "No difficulty" },
+];
+
+const lefs8Questions: QuestionnaireQuestion[] = [
+  { id: "lefs8_1", subscale: "function", text_pt: "Agachar-se", text_en: "Squatting", options: LIKERT_5_LEFS },
+  { id: "lefs8_2", subscale: "function", text_pt: "Correr", text_en: "Running", options: LIKERT_5_LEFS },
+  { id: "lefs8_3", subscale: "function", text_pt: "Caminhar 2 quarteirões", text_en: "Walking 2 blocks", options: LIKERT_5_LEFS },
+  { id: "lefs8_4", subscale: "function", text_pt: "Subir 10 degraus de escada", text_en: "Going up 10 stairs", options: LIKERT_5_LEFS },
+  { id: "lefs8_5", subscale: "function", text_pt: "Ficar em pé por 1 hora", text_en: "Standing for 1 hour", options: LIKERT_5_LEFS },
+  { id: "lefs8_6", subscale: "function", text_pt: "Entrar e sair do carro", text_en: "Getting in or out of a car", options: LIKERT_5_LEFS },
+  { id: "lefs8_7", subscale: "function", text_pt: "Subir e descer calçada/meio-fio", text_en: "Going up or down curbs", options: LIKERT_5_LEFS },
+  { id: "lefs8_8", subscale: "activity", text_pt: "Realizar suas atividades habituais de vida diária", text_en: "Performing your usual hobbies or daily activities", options: LIKERT_5_LEFS },
+];
+
+// =============================================
 // Questionnaire definitions
 // =============================================
 
@@ -651,6 +854,123 @@ export const questionnaires: QuestionnaireDefinition[] = [
       { min: 0, max: 19, label_pt: "Disfunção muito severa", label_en: "Very severe dysfunction", severity: "extreme" },
     ],
   },
+  // 7. QuickDASH
+  {
+    id: "quickdash",
+    name: "QuickDASH",
+    fullName_pt: "Incapacidades do Braço, Ombro e Mão (versão rápida)",
+    fullName_en: "Quick Disabilities of the Arm, Shoulder and Hand",
+    description_pt: "Avalia a dificuldade funcional e sintomas no membro superior (cotovelo, antebraço, punho, mão).",
+    description_en: "Evaluates functional difficulty and symptoms in the upper extremity (elbow, forearm, wrist, hand).",
+    reference: "Beaton DE, et al. J Bone Joint Surg Am. 2005;87(5):1038-46.",
+    regionMapping: [
+      "right_elbow", "left_elbow", "right_elbow_back", "left_elbow_back", "elbow_left", "elbow_right",
+      "right_forearm", "left_forearm", "right_forearm_back", "left_forearm_back", "forearm_left", "forearm_right",
+      "right_hand", "left_hand", "right_hand_back", "left_hand_back", "hand_left", "hand_right",
+      "right_arm", "left_arm", "right_arm_back", "left_arm_back", "arm_left", "arm_right",
+    ],
+    scoringDirection: "higher_worse",
+    subscaleLabels: {
+      daily_activities: { pt: "Atividades Diárias", en: "Daily Activities" },
+      symptoms: { pt: "Sintomas", en: "Symptoms" },
+      social_impact: { pt: "Impacto Social", en: "Social Impact" },
+    },
+    questions: quickdashQuestions,
+    interpretation: [
+      { min: 0, max: 20, label_pt: "Incapacidade mínima", label_en: "Minimal disability", severity: "minimal" },
+      { min: 21, max: 40, label_pt: "Incapacidade leve", label_en: "Mild disability", severity: "mild" },
+      { min: 41, max: 60, label_pt: "Incapacidade moderada", label_en: "Moderate disability", severity: "moderate" },
+      { min: 61, max: 80, label_pt: "Incapacidade severa", label_en: "Severe disability", severity: "severe" },
+      { min: 81, max: 100, label_pt: "Incapacidade extrema", label_en: "Extreme disability", severity: "extreme" },
+    ],
+  },
+  // 8. NDI
+  {
+    id: "ndi",
+    name: "NDI",
+    fullName_pt: "Índice de Incapacidade do Pescoço",
+    fullName_en: "Neck Disability Index",
+    description_pt: "Avalia como a dor cervical afeta sua capacidade de realizar atividades do dia a dia.",
+    description_en: "Evaluates how neck pain affects your ability to manage everyday activities.",
+    reference: "Vernon H, Mior S. J Manipulative Physiol Ther. 1991;14(7):409-15.",
+    regionMapping: [
+      "cervical", "cervical_front", "cervical_left", "cervical_right",
+      "head", "head_back", "head_left", "head_right",
+    ],
+    scoringDirection: "higher_worse",
+    subscaleLabels: {
+      pain_intensity: { pt: "Intensidade da Dor", en: "Pain Intensity" },
+      personal_care: { pt: "Cuidados Pessoais", en: "Personal Care" },
+      lifting: { pt: "Levantar Objetos", en: "Lifting" },
+      reading: { pt: "Leitura", en: "Reading" },
+      headache: { pt: "Dor de Cabeça", en: "Headaches" },
+      concentration: { pt: "Concentração", en: "Concentration" },
+      work: { pt: "Trabalho", en: "Work" },
+      driving: { pt: "Dirigir", en: "Driving" },
+      sleeping: { pt: "Dormir", en: "Sleeping" },
+      recreation: { pt: "Recreação", en: "Recreation" },
+    },
+    questions: ndiQuestions,
+    interpretation: [
+      { min: 0, max: 8, label_pt: "Sem incapacidade", label_en: "No disability", severity: "minimal" },
+      { min: 9, max: 28, label_pt: "Incapacidade leve", label_en: "Mild disability", severity: "mild" },
+      { min: 29, max: 48, label_pt: "Incapacidade moderada", label_en: "Moderate disability", severity: "moderate" },
+      { min: 49, max: 68, label_pt: "Incapacidade severa", label_en: "Severe disability", severity: "severe" },
+      { min: 69, max: 100, label_pt: "Incapacidade completa", label_en: "Complete disability", severity: "extreme" },
+    ],
+  },
+  // 9. HIT-6
+  {
+    id: "hit6",
+    name: "HIT-6",
+    fullName_pt: "Teste de Impacto da Cefaleia",
+    fullName_en: "Headache Impact Test",
+    description_pt: "Avalia o impacto das dores de cabeça no seu dia a dia, trabalho e atividades sociais.",
+    description_en: "Measures the impact headaches have on your daily life, work and social activities.",
+    reference: "Kosinski M, et al. Qual Life Res. 2003;12(8):963-74.",
+    regionMapping: [
+      "head", "head_back", "head_left", "head_right",
+    ],
+    scoringDirection: "higher_worse",
+    subscaleLabels: {
+      impact: { pt: "Impacto", en: "Impact" },
+    },
+    questions: hit6Questions,
+    interpretation: [
+      { min: 0, max: 25, label_pt: "Pouco ou nenhum impacto", label_en: "Little or no impact", severity: "minimal" },
+      { min: 26, max: 50, label_pt: "Algum impacto", label_en: "Some impact", severity: "mild" },
+      { min: 51, max: 75, label_pt: "Impacto substancial", label_en: "Substantial impact", severity: "moderate" },
+      { min: 76, max: 100, label_pt: "Impacto severo", label_en: "Severe impact", severity: "severe" },
+    ],
+  },
+  // 10. LEFS-8
+  {
+    id: "lefs8",
+    name: "LEFS-8",
+    fullName_pt: "Escala Funcional de Membro Inferior (versão curta)",
+    fullName_en: "Lower Extremity Functional Scale (Short Form)",
+    description_pt: "Avalia sua capacidade funcional de membro inferior em atividades do dia a dia.",
+    description_en: "Evaluates your lower extremity functional ability in daily activities.",
+    reference: "Mehta SP, et al. Phys Ther. 2016;96(7):1014-24.",
+    regionMapping: [
+      "right_thigh_ant", "left_thigh_ant", "right_thigh_post", "left_thigh_post",
+      "thigh_left", "thigh_right",
+      "right_calf", "left_calf", "right_shin", "left_shin",
+      "shin_left", "shin_right",
+    ],
+    scoringDirection: "higher_better",
+    subscaleLabels: {
+      function: { pt: "Função", en: "Function" },
+      activity: { pt: "Atividade", en: "Activity" },
+    },
+    questions: lefs8Questions,
+    interpretation: [
+      { min: 75, max: 100, label_pt: "Função normal ou quase normal", label_en: "Normal or near-normal function", severity: "minimal" },
+      { min: 50, max: 74, label_pt: "Disfunção leve a moderada", label_en: "Mild to moderate dysfunction", severity: "moderate" },
+      { min: 25, max: 49, label_pt: "Disfunção moderada a severa", label_en: "Moderate to severe dysfunction", severity: "severe" },
+      { min: 0, max: 24, label_pt: "Disfunção severa", label_en: "Severe dysfunction", severity: "extreme" },
+    ],
+  },
 ];
 
 // =============================================
@@ -701,8 +1021,8 @@ export function calculateQuestionnaireScore(
     const subscaleQuestions = answeredQuestions.filter((q) => q.subscale === subscale);
     const sum = subscaleQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
 
-    if (questionnaire.id === "odi") {
-      // ODI: each item 0-5, percentage = sum / (items * 5) * 100
+    if (questionnaire.id === "odi" || questionnaire.id === "ndi") {
+      // ODI/NDI: each item 0-5, percentage = sum / (items * 5) * 100
       subscaleScores[subscale] = Math.round((answers[subscaleQuestions[0].id] ?? 0) / 5 * 100);
     } else if (questionnaire.id === "spadi") {
       // SPADI: each item 0-10
@@ -712,6 +1032,16 @@ export function calculateQuestionnaireScore(
       // VISA-A: raw sum already represents score (max varies per question)
       const maxMap: Record<string, number> = { pain: 40, function: 20, activity: 40 };
       const maxPossible = maxMap[subscale] || subscaleQuestions.length * 10;
+      subscaleScores[subscale] = Math.round((sum / maxPossible) * 100);
+    } else if (questionnaire.id === "quickdash") {
+      // QuickDASH: ((sum/n) - 1) * 25
+      subscaleScores[subscale] = Math.round(((sum / subscaleQuestions.length) - 1) * 25);
+    } else if (questionnaire.id === "hit6") {
+      // HIT-6: single subscale, raw 36-78 → normalized later; per-subscale just show raw %
+      subscaleScores[subscale] = Math.round(((sum - (subscaleQuestions.length * 6)) / (subscaleQuestions.length * 7)) * 100);
+    } else if (questionnaire.id === "lefs8") {
+      // LEFS-8: higher_better, 0-4 Likert → (sum / (n*4)) * 100
+      const maxPossible = subscaleQuestions.length * 4;
       subscaleScores[subscale] = Math.round((sum / maxPossible) * 100);
     } else {
       // KOOS/HOOS/FAOS: 0-4 Likert, score = 100 - (sum / (items * 4) * 100)
@@ -723,17 +1053,28 @@ export function calculateQuestionnaireScore(
   // Calculate total score
   let percentageScore: number;
 
-  if (questionnaire.id === "odi") {
+  if (questionnaire.id === "odi" || questionnaire.id === "ndi") {
     const totalSum = answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
     const maxPossible = answeredQuestions.length * 5;
     percentageScore = Math.round((totalSum / maxPossible) * 100);
   } else if (questionnaire.id === "visa_a") {
-    // VISA-A: total = raw sum of all answers, max = 100
     const totalSum = answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
     percentageScore = Math.min(Math.round(totalSum), 100);
   } else if (questionnaire.id === "spadi") {
     const subscalePercentages = Object.values(subscaleScores);
     percentageScore = Math.round(subscalePercentages.reduce((a, b) => a + b, 0) / subscalePercentages.length);
+  } else if (questionnaire.id === "quickdash") {
+    // QuickDASH: ((sum/n) - 1) * 25
+    const totalSum = answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
+    percentageScore = Math.round(((totalSum / answeredQuestions.length) - 1) * 25);
+  } else if (questionnaire.id === "hit6") {
+    // HIT-6: raw 36-78 → ((raw-36)/42)*100
+    const totalSum = answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
+    percentageScore = Math.round(((totalSum - 36) / 42) * 100);
+  } else if (questionnaire.id === "lefs8") {
+    // LEFS-8: (sum / 32) * 100
+    const totalSum = answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
+    percentageScore = Math.round((totalSum / (answeredQuestions.length * 4)) * 100);
   } else {
     // KOOS/HOOS/FAOS: average of all subscale scores
     const subscaleValues = Object.values(subscaleScores);
@@ -751,7 +1092,13 @@ export function calculateQuestionnaireScore(
     answers,
     subscaleScores,
     totalScore: answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0),
-    maxScore: answeredQuestions.length * (questionnaire.id === "odi" ? 5 : questionnaire.id === "spadi" ? 10 : 4),
+    maxScore: answeredQuestions.length * (
+      questionnaire.id === "odi" || questionnaire.id === "ndi" ? 5 :
+      questionnaire.id === "spadi" ? 10 :
+      questionnaire.id === "quickdash" ? 5 :
+      questionnaire.id === "hit6" ? 13 :
+      4
+    ),
     percentageScore,
     interpretation_pt: interp.label_pt,
     interpretation_en: interp.label_en,
