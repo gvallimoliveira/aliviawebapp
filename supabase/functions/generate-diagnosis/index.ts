@@ -109,6 +109,74 @@ BIOMECHANICAL CONSIDERATIONS:
 - Pain duration matters: acute (<2 weeks) suggests strain/sprain; chronic (>3 months) suggests tendinopathy, degenerative changes, or biomechanical dysfunction
 ` : "";
 
+    // Sub-area specific reasoning block
+    const subAreaBlock = painSubArea ? (() => {
+      const regionType = (() => {
+        const kneeR = ["right_knee", "left_knee", "right_knee_back", "left_knee_back", "knee_side"];
+        const ankleR = ["right_ankle", "left_ankle", "right_ankle_back", "left_ankle_back", "ankle_side"];
+        const hipR = ["right_hip", "left_hip", "right_hip_back", "left_hip_back", "hip_side"];
+        const shoulderR = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
+        const cervicalR = ["neck_front", "neck_back", "neck_side"];
+        const regions = anamnesisData.painRegions || [];
+        if (regions.some((r: string) => kneeR.includes(r)) || kneeComplaints.includes(anamnesisData.chiefComplaint)) return "knee";
+        if (regions.some((r: string) => ankleR.includes(r)) || anamnesisData.chiefComplaint === "anamnesis.complaint.ankle_pain") return "ankle";
+        if (regions.some((r: string) => hipR.includes(r)) || hipComplaints.includes(anamnesisData.chiefComplaint)) return "hip";
+        if (regions.some((r: string) => shoulderR.includes(r)) || anamnesisData.chiefComplaint === "anamnesis.complaint.shoulder_pain") return "shoulder";
+        if (regions.some((r: string) => cervicalR.includes(r)) || anamnesisData.chiefComplaint === "anamnesis.complaint.neck_pain") return "cervical";
+        return null;
+      })();
+
+      const mappings: Record<string, Record<string, string>> = {
+        knee: {
+          front: "PRIORITIZE: Condromalacia patelar / Síndrome femoropatelar, Hoffite (fat pad impingement), Tendinopatia patelar (jumper's knee). These are the most likely diagnoses for ANTERIOR knee pain.",
+          lateral: "PRIORITIZE: Síndrome da banda iliotibial (ITB), Lesão do menisco lateral, Lesão do LCL. These are the most likely diagnoses for LATERAL knee pain.",
+          medial: "PRIORITIZE: Tendinopatia/bursite da pata de ganso (pes anserine), Lesão do menisco medial, Lesão do LCM. These are the most likely diagnoses for MEDIAL knee pain.",
+          posterior: "PRIORITIZE: Cisto de Baker, Lesão do LCP, Tendinopatia dos isquiotibiais distais. These are the most likely diagnoses for POSTERIOR knee pain.",
+        },
+        ankle: {
+          lateral: "PRIORITIZE: Lesão do ligamento talofibular anterior (LTFA), Instabilidade lateral crônica do tornozelo. Most common in lateral ankle pain, especially post-sprain.",
+          medial: "PRIORITIZE: Lesão do ligamento deltoide, Tendinopatia do tibial posterior. Most common in medial ankle pain.",
+          posterior: "PRIORITIZE: Impacto posterior do talus (os trigonum), Deformidade de Haglund, Tendinopatia de Aquiles insercional. Most common in posterior ankle pain.",
+          anterolateral: "PRIORITIZE: Lesão da sindesmose tibiofibular (high ankle sprain), Impacto anterolateral. Most common in antero-lateral ankle pain.",
+        },
+        hip: {
+          lateral: "PRIORITIZE: Bursite trocantérica / Síndrome da dor trocantérica maior, Tendinopatia glútea (glúteo médio/mínimo). Most common in lateral hip pain.",
+          anterior: "PRIORITIZE: Impacto femoroacetabular (FAI), Tendinopatia do reto femoral, Lesão labral do quadril. Most common in anterior hip/groin pain.",
+        },
+        shoulder: {
+          anterior: "PRIORITIZE: Tendinopatia do cabo longo do bíceps, Lesão labral anterior (Bankart). Most common in anterior shoulder pain.",
+          lateral: "PRIORITIZE: Bursite subacromial, Tendinopatia do supraespinhal, Síndrome do impacto subacromial. Most common in lateral shoulder pain.",
+          superior: "PRIORITIZE: Conflito subacromial, Lesão SLAP, Artropatia acromioclavicular. Most common in superior/medial shoulder pain.",
+        },
+        cervical: {
+          posterior: "PRIORITIZE: Artropatias facetárias cervicais, Tensão miofascial (trapézio superior, esplênio, semiespinhal), Disfunção segmentar cervical. Most common in posterior neck pain.",
+          anterolateral: "PRIORITIZE: Disfunção do músculo esternocleidomastóideo (ECM), Pontos-gatilho do ECM (com referência de dor para face/cabeça), Tensão do escaleno anterior. Most common in antero-lateral neck pain.",
+        },
+      };
+
+      const mapping = regionType && mappings[regionType]?.[painSubArea];
+      return mapping ? `\nSUB-AREA SPECIFIC GUIDANCE (MANDATORY — patient specified exact pain location):\n${mapping}\n` : "";
+    })() : "";
+
+    // Ottawa rules block
+    const ottawaBlock = (() => {
+      if (hadTwist === "anamnesis.trauma.yes" && ottawaPositive === "anamnesis.trauma.no") {
+        return "\n⚠️ OTTAWA KNEE RULES: Patient reports knee twist AND inability to bear weight (4 steps). STRONGLY recommend X-ray to rule out fracture before proceeding with musculoskeletal hypothesis. Mention this in recommendations.\n";
+      }
+      if (hadSprain === "anamnesis.trauma.yes" && ottawaPositive === "anamnesis.trauma.no") {
+        return "\n⚠️ OTTAWA ANKLE RULES: Patient reports ankle sprain AND inability to bear weight (4 steps). STRONGLY recommend X-ray to rule out fracture before proceeding with musculoskeletal hypothesis. Mention this in recommendations.\n";
+      }
+      if (hadDislocation === "anamnesis.trauma.yes") {
+        return "\n⚠️ SHOULDER DISLOCATION HISTORY: Patient reports previous shoulder dislocation. STRONGLY consider glenohumeral instability, Bankart lesion, Hill-Sachs lesion, and SLAP lesion as primary hypotheses. Recurrent instability is a key consideration.\n";
+      }
+      return "";
+    })();
+
+    // Surgery history block
+    const surgeryBlock = hasPriorSurgery === "anamnesis.surgery.yes" && surgeryDetails
+      ? `\nPRIOR SURGERY HISTORY (IMPORTANT — integrate into clinical reasoning):\nThe patient reports previous surgery: "${surgeryDetails}"\nConsider: post-surgical adhesions, altered biomechanics, hardware-related symptoms, adjacent segment pathology, re-injury of repaired structures, and whether current symptoms may be related to the prior surgical intervention.\n`
+      : "";
+
     const systemPrompt = `You are an experienced musculoskeletal physiotherapist AI assistant. Based on the patient's anamnesis data and validated questionnaire results, generate a diagnostic hypothesis.
 
 PROPRIETARY MODEL — D.I.F.I. (Pain Feedback Cycle):
