@@ -632,6 +632,8 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.thankyou_title": "Obrigado por preencher a pré-avaliação!",
     "pro.thankyou_desc": "Já encaminhamos ao Dr. {name} os dados coletados e integrados para aumentar a efetividade da sua avaliação presencial.",
     "pro.badge_partner": "Parceiro",
+    "pro.demo_notice": "Este é um painel demonstrativo com dados fictícios de pacientes. Assine o Plano Profissional para desbloquear todas as funcionalidades.",
+    "pro.download_pdf": "Baixar PDF",
 
     // B2B Landing Section
     "b2b.badge": "Para Fisioterapeutas",
