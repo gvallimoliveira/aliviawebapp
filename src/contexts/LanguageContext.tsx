@@ -745,7 +745,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Methodology Section
     "methodology.badge": "Nossa Metodologia",
     "methodology.title": "Ciência por trás da sua recuperação",
-    "methodology.subtitle": "Conceitos clínicos proprietários que guiam cada etapa da sua reabilitação — do diagnóstico à alta.",
+    "methodology.subtitle": "Conceitos clínicos que guiam cada etapa da sua reabilitação — do diagnóstico à alta.",
     "methodology.steps_title": "STEPS — Os 6 Degraus da Reabilitação",
     "methodology.steps.step1.title": "Controle de Dor & Inflamação",
     "methodology.steps.step2.title": "Reparo & Cicatrização Tecidual",
@@ -1498,7 +1498,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Methodology Section
     "methodology.badge": "Our Methodology",
     "methodology.title": "The science behind your recovery",
-    "methodology.subtitle": "Proprietary clinical concepts that guide every step of your rehabilitation — from diagnosis to discharge.",
+    "methodology.subtitle": "Clinical concepts that guide every step of your rehabilitation — from diagnosis to discharge.",
     "methodology.steps_title": "STEPS — The 6 Stages of Rehabilitation",
     "methodology.steps.step1.title": "Pain & Inflammation Control",
     "methodology.steps.step2.title": "Tissue Repair & Healing",
