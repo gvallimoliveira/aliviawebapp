@@ -1110,7 +1110,7 @@ const translations: Record<Language, Record<string, string>> = {
     "payment.premium_title": "Premium Assessment",
     "payment.unlock_title": "Unlock your complete assessment",
     "payment.unlock_desc": "Includes full anamnesis, functional tests, detailed diagnosis with explanation and personalized phased treatment plan.",
-    "payment.includes_redo": "Includes 1 free reassessment within 7 days",
+    "payment.includes_redo": "Monthly subscription — 2 assessments per cycle",
     "payment.feature_1": "Video-guided functional tests",
     "payment.feature_2": "Diagnosis with detailed explanation",
     "payment.feature_3": "3-phase treatment plan",
