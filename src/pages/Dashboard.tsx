@@ -96,6 +96,9 @@ const Dashboard = () => {
               .eq("professional_id", data.id)
               .order("created_at", { ascending: false })
               .then(({ data: refs }: any) => setReferrals(refs || []));
+          } else if (tabFromUrl === "professional") {
+            // First-time pro user: redirect to registration
+            navigate("/professional/register", { replace: true });
           }
         });
     }
