@@ -199,14 +199,14 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip }: Question
       {/* Questions */}
       <motion.div key={`${currentQ.id}-${currentSubscale}`} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="space-y-4">
         {subscaleQuestions.map((question) => {
-          const isODI = currentQ.id === "odi";
+          const isODILike = currentQ.id === "odi" || currentQ.id === "ndi";
           const isSPADI = currentQ.id === "spadi";
           const selectedValue = currentAnswers[question.id];
 
           return (
             <div key={question.id} className="space-y-2">
               <p className="text-sm font-medium">{language === "pt" ? question.text_pt : question.text_en}</p>
-              {isODI ? (
+              {isODILike ? (
                 <div className="space-y-1.5">
                   {question.options.map((opt) => (
                     <Card key={opt.value} className={`cursor-pointer transition-all ${selectedValue === opt.value ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => handleAnswer(question.id, opt.value)}>
