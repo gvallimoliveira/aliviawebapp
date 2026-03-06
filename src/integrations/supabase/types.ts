@@ -291,6 +291,7 @@ export type Database = {
           id: string
           is_partner: boolean
           phone: string | null
+          profile_photo_url: string | null
           social_media: string | null
           specialties: string[] | null
           state: string
@@ -313,6 +314,7 @@ export type Database = {
           id?: string
           is_partner?: boolean
           phone?: string | null
+          profile_photo_url?: string | null
           social_media?: string | null
           specialties?: string[] | null
           state: string
@@ -335,6 +337,7 @@ export type Database = {
           id?: string
           is_partner?: boolean
           phone?: string | null
+          profile_photo_url?: string | null
           social_media?: string | null
           specialties?: string[] | null
           state?: string
