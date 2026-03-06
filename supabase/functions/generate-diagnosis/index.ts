@@ -257,6 +257,12 @@ Response format (JSON):
 - Pain duration: ${anamnesisData.painDuration || "Not specified"}
 - Sex: ${anamnesisData.sex || "Not specified"}
 - Age range: ${anamnesisData.ageRange || "Not specified"}
+- Prior surgery: ${hasPriorSurgery === "anamnesis.surgery.yes" ? `Yes — ${surgeryDetails}` : "No"}
+- Pain sub-area: ${painSubArea || "Not specified"}
+- Knee twist: ${hadTwist || "N/A"}
+- Ankle sprain: ${hadSprain || "N/A"}
+- Shoulder dislocation history: ${hadDislocation || "N/A"}
+- Ottawa rules (weight-bearing): ${ottawaPositive || "N/A"}
 
 ${additionalInfo ? `Additional information provided by the patient (USE THIS to refine your hypothesis and potentially increase confidence):
 ${additionalInfo}` : ""}
