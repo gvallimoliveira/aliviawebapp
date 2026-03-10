@@ -1,39 +1,20 @@
 
 
-## Plano: Branding — favicon, título da tab e badge Lovable
+## Correções Mobile
 
-### 1. Remover badge "Made with Lovable"
+### 1. Menu hamburger não aparece no celular
 
-Para remover o badge, o usuário precisa ativá-lo nas configurações do projeto: **Settings → Hide 'Lovable' Badge**. Isso não é controlado pelo código — é uma opção da plataforma Lovable.
+O botão hamburger está presente (linha 79-87 do Header.tsx) com `className="md:hidden"`, o que deveria funcionar. O problema provável é que o container pai usa `justify-between` mas pode haver elementos intermediários (como o link "Para Profissionais" mobile-only adicionado anteriormente) que estão empurrando o layout. Preciso verificar se há um botão mobile-only extra que foi adicionado e pode estar conflitando. O código atual parece correto — o hamburger deveria aparecer. Pode ser um problema de z-index ou overflow. Vou garantir que o botão hamburger tenha visibilidade forçada em mobile e remover qualquer elemento duplicado que possa interferir.
 
-### 2. Favicon — trocar para logo Aliv.iA
+**Ação**: Revisar se há elementos extras entre o logo e o hamburger que possam estar causando overflow horizontal, escondendo o botão fora da tela.
 
-**`index.html`** — Adicionar tag `<link rel="icon">` apontando para o logo já existente no projeto:
+### 2. Badge "Economize 30%" ilegível no botão Anual ativo
 
-```html
-<link rel="icon" type="image/png" href="/src/assets/logo-alivia.png" />
-```
+Quando o botão "Anual" está selecionado, ele recebe `bg-primary text-primary-foreground`. Dentro dele, a Badge usa `bg-emerald-500/10 text-emerald-600` — sobre o fundo primary (verde escuro), o texto emerald-600 fica invisível.
 
-Nota: Como Vite processa assets em `src/assets`, o ideal é copiar `logo-alivia.png` para `public/favicon.png` e referenciar `/favicon.png`. Alternativamente, pode-se converter para `.ico`.
+**Correção**: Quando `billing === "annual"`, a Badge deve usar cores com contraste adequado sobre o fundo primary, por exemplo: `bg-white/20 text-white border-white/30`.
 
-### 3. Título da tab
-
-**`index.html`** — Alterar a tag `<title>`:
-
-```html
-<title>Aliv.iA Webapp</title>
-```
-
-Também atualizar o `setSeo` em `Index.tsx` e demais páginas para usar "Aliv.iA Webapp" como título padrão, ou manter títulos específicos por página mas sem menções ao portal de desenvolvimento.
-
----
-
-### Arquivos a editar
-
-| Arquivo | Mudança |
-|---|---|
-| `index.html` | Mudar `<title>` para "Aliv.iA Webapp", adicionar `<link rel="icon">` |
-| `public/favicon.png` | Copiar `logo-alivia.png` para public |
-| `src/pages/Index.tsx` | Atualizar título no `setSeo` |
-| `src/pages/ProfessionalLanding.tsx` | Atualizar título no `setSeo` |
+### Arquivos a modificar
+1. **`src/components/Header.tsx`** — Investigar e corrigir visibilidade do hamburger em mobile real (possível overflow do container)
+2. **`src/components/ProfessionalSection.tsx`** — Alterar cores da Badge "Economize 30%" quando o botão Anual está ativo para garantir legibilidade
 
