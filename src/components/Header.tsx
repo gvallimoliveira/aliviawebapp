@@ -24,8 +24,8 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => go("/")}>
+      <div className="container flex h-16 items-center justify-between overflow-visible">
+        <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => go("/")}>
           <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
           <span className="hidden sm:inline text-xl font-bold text-foreground">Aliv.iA</span>
         </div>
