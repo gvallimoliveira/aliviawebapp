@@ -744,7 +744,7 @@ const translations: Record<Language, Record<string, string>> = {
     "pro_treatment.view_plan": "Ver Plano de Tratamento",
 
     // Pro Lifetime Treatment Upsell
-    "pro_lifetime.upsell_title": "Tratamento Vitalício",
+    "pro_lifetime.upsell_title": "Planos de Tratamentos - Acesso Permanente",
     "pro_lifetime.limited_offer": "Oferta limitada",
     "pro_lifetime.upsell_desc": "Desbloqueie todos os planos de tratamento para sempre. Sem custos adicionais por avaliação.",
     "pro_lifetime.upsell_desc_regular": "Desbloqueie todos os planos de tratamento para sempre.",
