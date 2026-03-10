@@ -54,7 +54,7 @@ interface AnamnesisData {
 
 interface PdfOptions {
   diagnosis: Diagnosis;
-  treatmentPlan: TreatmentPlanData;
+  treatmentPlan?: TreatmentPlanData;
   language: "pt" | "en";
   userName?: string;
   anamnesisData?: AnamnesisData;
@@ -522,133 +522,141 @@ export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language
   }
 
   // ── Treatment Plan ──
-  y = checkPage(doc, y, 30);
-  doc.setDrawColor(...COLORS.border);
-  doc.setLineWidth(0.3);
-  doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
-  y += 8;
-  y = renderSectionTitle(doc, y, isPt ? "Plano de Tratamento" : "Treatment Plan", COLORS.primary);
-
-  const phaseConfig: Record<string, {
-    label: Record<string, string>;
-    color: [number, number, number];
-    bg: [number, number, number];
-  }> = {
-    short_term: {
-      label: { pt: "Fase 1 — Curto Prazo", en: "Phase 1 — Short Term" },
-      color: COLORS.yellow,
-      bg: [255, 248, 230],
-    },
-    medium_term: {
-      label: { pt: "Fase 2 — Médio Prazo", en: "Phase 2 — Medium Term" },
-      color: COLORS.primary,
-      bg: COLORS.primaryLight,
-    },
-    long_term: {
-      label: { pt: "Fase 3 — Longo Prazo", en: "Phase 3 — Long Term" },
-      color: COLORS.green,
-      bg: [230, 248, 235],
-    },
-  };
-
-  for (const phase of treatmentPlan.phases) {
-    const pc = phaseConfig[phase.id] || phaseConfig.short_term;
+  if (treatmentPlan) {
     y = checkPage(doc, y, 30);
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
+    y += 8;
+    y = renderSectionTitle(doc, y, isPt ? "Plano de Tratamento" : "Treatment Plan", COLORS.primary);
 
-    // Phase header bar
-    drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 3, pc.bg, pc.color);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(...pc.color);
-    doc.text(pc.label[language] || phase.id, MARGIN + 6, y + 9);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...COLORS.muted);
-    const durText = phase.duration;
-    doc.text(durText, PAGE_WIDTH - MARGIN - 6 - doc.getTextWidth(durText), y + 9);
-    y += 18;
+    const phaseConfig: Record<string, {
+      label: Record<string, string>;
+      color: [number, number, number];
+      bg: [number, number, number];
+    }> = {
+      short_term: {
+        label: { pt: "Fase 1 — Curto Prazo", en: "Phase 1 — Short Term" },
+        color: COLORS.yellow,
+        bg: [255, 248, 230],
+      },
+      medium_term: {
+        label: { pt: "Fase 2 — Médio Prazo", en: "Phase 2 — Medium Term" },
+        color: COLORS.primary,
+        bg: COLORS.primaryLight,
+      },
+      long_term: {
+        label: { pt: "Fase 3 — Longo Prazo", en: "Phase 3 — Long Term" },
+        color: COLORS.green,
+        bg: [230, 248, 235],
+      },
+    };
 
-    // Goal & Focus
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...COLORS.foreground);
-    const goalLabel = isPt ? "Objetivo: " : "Goal: ";
-    doc.text(goalLabel, MARGIN + 2, y);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...COLORS.muted);
-    const goalLines = doc.splitTextToSize(phase.goal, CONTENT_WIDTH - 4 - doc.getTextWidth(goalLabel));
-    doc.text(goalLines, MARGIN + 2 + doc.getTextWidth(goalLabel), y);
-    y += goalLines.length * 3.5 + 4;
+    for (const phase of treatmentPlan.phases) {
+      const pc = phaseConfig[phase.id] || phaseConfig.short_term;
+      y = checkPage(doc, y, 30);
 
-    // Exercises
-    for (const ex of phase.exercises) {
-      const descLines = doc.splitTextToSize(ex.description, CONTENT_WIDTH - 20);
-      const exH = 10 + descLines.length * 3.5 + 8;
-      y = checkPage(doc, y, exH);
-
-      drawRoundedRect(doc, MARGIN + 2, y, CONTENT_WIDTH - 4, exH, 3, COLORS.background, COLORS.border);
-
+      // Phase header bar
+      drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 3, pc.bg, pc.color);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(...COLORS.foreground);
-      doc.text(ex.name, MARGIN + 8, y + 6);
-
-      const catLabels: Record<string, Record<string, string>> = {
-        stretching: { pt: "Along.", en: "Stretch" },
-        strengthening: { pt: "Fortal.", en: "Strength" },
-        mobility: { pt: "Mobilid.", en: "Mobility" },
-        breathing: { pt: "Respir.", en: "Breath" },
-        stability: { pt: "Estabil.", en: "Stability" },
-        pain_management: { pt: "Dor", en: "Pain Mgmt" },
-      };
-      const catText = (catLabels[ex.category]?.[language] || ex.category).toUpperCase();
-      const catTw = doc.getTextWidth(catText) + 1;
-      drawRoundedRect(doc, PAGE_WIDTH - MARGIN - 6 - catTw - 6, y + 1.5, catTw + 8, 7, 2, COLORS.accent);
-      doc.setFontSize(6);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...COLORS.foreground);
-      doc.text(catText, PAGE_WIDTH - MARGIN - 6 - catTw - 2, y + 6);
-
+      doc.setFontSize(10);
+      doc.setTextColor(...pc.color);
+      doc.text(pc.label[language] || pc.label.en, MARGIN + 6, y + 9);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...COLORS.muted);
-      doc.text(descLines, MARGIN + 8, y + 12);
+      doc.text(phase.duration, PAGE_WIDTH - MARGIN - doc.getTextWidth(phase.duration) - 6, y + 9);
+      y += 18;
 
-      const metaY = y + 12 + descLines.length * 3.5 + 2;
-      doc.setFontSize(7);
-      doc.setTextColor(...COLORS.primary);
+      // Goal & Focus
+      if (phase.goal) {
+        y = checkPage(doc, y, 12);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(...COLORS.foreground);
+        doc.text(isPt ? "Objetivo:" : "Goal:", MARGIN + 4, y);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...COLORS.muted);
+        const goalLines = doc.splitTextToSize(phase.goal, CONTENT_WIDTH - 30);
+        doc.text(goalLines, MARGIN + 28, y);
+        y += goalLines.length * 3.5 + 4;
+      }
+
+      if (phase.focus) {
+        y = checkPage(doc, y, 12);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(...COLORS.foreground);
+        doc.text(isPt ? "Foco:" : "Focus:", MARGIN + 4, y);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...COLORS.muted);
+        const focusLines = doc.splitTextToSize(phase.focus, CONTENT_WIDTH - 30);
+        doc.text(focusLines, MARGIN + 28, y);
+        y += focusLines.length * 3.5 + 4;
+      }
+
+      // Exercises
+      for (const ex of phase.exercises) {
+        y = checkPage(doc, y, 25);
+
+        // Exercise name
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(...COLORS.foreground);
+        doc.text(`• ${ex.name}`, MARGIN + 6, y);
+
+        // Category badge
+        doc.setFontSize(6);
+        doc.setTextColor(...COLORS.muted);
+        const catLabel = ex.category.replace(/_/g, " ");
+        doc.text(`[${catLabel}]`, MARGIN + 6 + doc.getTextWidth(`• ${ex.name}  `), y);
+        y += 4;
+
+        // Description
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(...COLORS.muted);
+        const descLines = doc.splitTextToSize(ex.description, CONTENT_WIDTH - 14);
+        y = checkPage(doc, y, descLines.length * 3.5);
+        doc.text(descLines, MARGIN + 10, y);
+        y += descLines.length * 3.5 + 2;
+
+        // Sets / Reps / Frequency
+        doc.setFontSize(7);
+        doc.setTextColor(...COLORS.foreground);
+        doc.text(`${ex.sets} × ${ex.reps}  |  ${ex.frequency}`, MARGIN + 10, y);
+        y += 6;
+      }
+
+      y += 4;
+    }
+
+    // General Guidelines
+    if (treatmentPlan.generalGuidelines && treatmentPlan.generalGuidelines.length > 0) {
+      y = checkPage(doc, y, 20);
       doc.setFont("helvetica", "bold");
-      const meta = `${ex.sets} ${isPt ? "séries" : "sets"} × ${ex.reps}  |  ${ex.frequency}`;
-      doc.text(meta, MARGIN + 8, metaY);
-
-      y += exH + 3;
-    }
-    y += 4;
-  }
-
-  // ── General Guidelines ──
-  if (treatmentPlan.generalGuidelines?.length) {
-    y = checkPage(doc, y, 20);
-    y = renderSectionTitle(doc, y, isPt ? "Orientações Gerais" : "General Guidelines", COLORS.primary);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    for (const g of treatmentPlan.generalGuidelines) {
-      y = checkPage(doc, y, 10);
-      doc.setTextColor(...COLORS.primary);
-      doc.text("✓", MARGIN + 2, y);
+      doc.setFontSize(9);
       doc.setTextColor(...COLORS.foreground);
-      const lines = doc.splitTextToSize(g, CONTENT_WIDTH - 10);
-      doc.text(lines, MARGIN + 8, y);
-      y += lines.length * 3.5 + 3;
+      doc.text(isPt ? "Orientações Gerais" : "General Guidelines", MARGIN, y);
+      y += 6;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.muted);
+      for (const g of treatmentPlan.generalGuidelines) {
+        y = checkPage(doc, y, 8);
+        const gLines = doc.splitTextToSize(`✓ ${g}`, CONTENT_WIDTH - 6);
+        doc.text(gLines, MARGIN + 4, y);
+        y += gLines.length * 3.5 + 2;
+      }
+      y += 4;
     }
-    y += 4;
-  }
 
-  // ── Progression Criteria ──
-  if (treatmentPlan.progressionCriteria) {
-    y = checkPage(doc, y, 20);
-    y = renderSubSection(doc, y, isPt ? "Critérios de Progressão" : "Progression Criteria", treatmentPlan.progressionCriteria);
-  }
+    // Progression Criteria
+    if (treatmentPlan.progressionCriteria) {
+      y = checkPage(doc, y, 20);
+      y = renderSubSection(doc, y, isPt ? "Critérios de Progressão" : "Progression Criteria", treatmentPlan.progressionCriteria);
+    }
+  } // end if (treatmentPlan)
 
   // ── Disclaimer ──
   y = checkPage(doc, y, 40);
