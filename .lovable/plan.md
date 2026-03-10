@@ -1,39 +1,19 @@
 
 
-## Plano: Branding — favicon, título da tab e badge Lovable
+## Correção: Erro ao gerar PDF para pré-avaliações sem plano de tratamento
 
-### 1. Remover badge "Made with Lovable"
+### Problema
+Quando um paciente completa a avaliação pelo link profissional mas ainda não tem um plano de tratamento (`treatment_plan` é `null`), a função `generateAssessmentPdf` tenta iterar sobre `treatmentPlan.phases` (linha 554 de `generatePdf.ts`), causando o erro `Cannot read properties of null`.
 
-Para remover o badge, o usuário precisa ativá-lo nas configurações do projeto: **Settings → Hide 'Lovable' Badge**. Isso não é controlado pelo código — é uma opção da plataforma Lovable.
+### Solução
 
-### 2. Favicon — trocar para logo Aliv.iA
+**Arquivo: `src/utils/generatePdf.ts`**
+- Tornar `treatmentPlan` opcional na interface `PdfOptions`
+- Envolver toda a seção de Treatment Plan (linhas 524-651) em uma verificação `if (treatmentPlan)`, permitindo gerar PDF apenas com diagnóstico + anamnese
 
-**`index.html`** — Adicionar tag `<link rel="icon">` apontando para o logo já existente no projeto:
+**Arquivo: `src/components/dashboard/ProDashboard.tsx`**
+- Nenhuma alteração necessária — o código já passa `assessment.treatment_plan` que pode ser `null`, o fix é no `generatePdf.ts`
 
-```html
-<link rel="icon" type="image/png" href="/src/assets/logo-alivia.png" />
-```
-
-Nota: Como Vite processa assets em `src/assets`, o ideal é copiar `logo-alivia.png` para `public/favicon.png` e referenciar `/favicon.png`. Alternativamente, pode-se converter para `.ico`.
-
-### 3. Título da tab
-
-**`index.html`** — Alterar a tag `<title>`:
-
-```html
-<title>Aliv.iA Webapp</title>
-```
-
-Também atualizar o `setSeo` em `Index.tsx` e demais páginas para usar "Aliv.iA Webapp" como título padrão, ou manter títulos específicos por página mas sem menções ao portal de desenvolvimento.
-
----
-
-### Arquivos a editar
-
-| Arquivo | Mudança |
-|---|---|
-| `index.html` | Mudar `<title>` para "Aliv.iA Webapp", adicionar `<link rel="icon">` |
-| `public/favicon.png` | Copiar `logo-alivia.png` para public |
-| `src/pages/Index.tsx` | Atualizar título no `setSeo` |
-| `src/pages/ProfessionalLanding.tsx` | Atualizar título no `setSeo` |
+### Resultado
+O PDF será gerado com sucesso contendo anamnese, mapa de dor e diagnóstico, omitindo a seção de tratamento quando não disponível.
 
