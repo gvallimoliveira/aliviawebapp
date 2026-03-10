@@ -85,7 +85,11 @@ const ProfessionalSection = () => {
                 }`}
               >
                 {t("b2b.plan_annual")}
-                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px] px-1.5 py-0">
+                <Badge className={`text-[10px] px-1.5 py-0 ${
+                  billing === "annual"
+                    ? "bg-white/20 text-white border-white/30"
+                    : "bg-emerald-500/10 text-emerald-600 border-emerald-200"
+                }`}>
                   {t("b2b.save_30")}
                 </Badge>
               </button>
