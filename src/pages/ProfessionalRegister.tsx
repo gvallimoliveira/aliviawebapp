@@ -322,7 +322,14 @@ const ProfessionalRegister = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>{t("prof.crefito")} *</Label>
-                  <Input value={form.crefito} onChange={(e) => setForm({ ...form, crefito: e.target.value })} required />
+                  <Input
+                    value={form.crefito}
+                    onChange={(e) => setForm({ ...form, crefito: e.target.value.toUpperCase() })}
+                    placeholder="000000-F"
+                    maxLength={8}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">{t("prof.crefito_invalid_format")}</p>
                 </div>
               </div>
 
