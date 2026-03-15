@@ -79,6 +79,8 @@ const AssessmentView = () => {
   const { user, loading: authLoading } = useAuth();
   const { t, language, toggleLanguage } = useLanguage();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const backUrl = searchParams.get("from") === "professional" ? "/dashboard?tab=professional" : "/dashboard";
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showTreatment, setShowTreatment] = useState(false);

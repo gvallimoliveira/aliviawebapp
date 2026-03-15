@@ -331,7 +331,7 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
             <Card
               key={a.id}
               className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20"
-              onClick={() => navigate(`/assessment/view/${a.id}`)}
+              onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
             >
               <CardContent className="py-3 px-4 flex items-center justify-between">
                 <div className="space-y-0.5">
