@@ -4,17 +4,21 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, TrendingDown, TrendingUp, Minus,
+  FileText, ClipboardList, Stethoscope,
 } from "lucide-react";
+import PainMapView from "@/components/assessment/PainMapView";
 
 interface PatientEvolutionDashboardProps {
   assessments: any[];
   professionalId: string;
+  onDownloadPdf?: (assessment: any) => void;
 }
 
 interface PatientGroup {
@@ -32,7 +36,15 @@ const CHART_COLORS = [
   "hsl(280, 60%, 55%)",
 ];
 
-const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardProps) => {
+const SEVERITY_COLORS: Record<string, string> = {
+  minimal: "bg-emerald-500",
+  mild: "bg-yellow-500",
+  moderate: "bg-orange-500",
+  severe: "bg-destructive",
+  extreme: "bg-destructive",
+};
+
+const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolutionDashboardProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
@@ -58,7 +70,6 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
         group.name = (a as any).patient_name || group.name;
       }
     });
-    // Sort assessments within each group chronologically
     map.forEach((g) => g.assessments.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
     return Array.from(map.values()).sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
   }, [assessments]);
@@ -91,7 +102,6 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
           const trend = firstScore != null && lastScore != null
             ? lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable"
             : null;
-          // Sparkline data for this patient
           const sparkData = p.assessments
             .filter((a: any) => a.pain_score != null)
             .map((a: any, i: number) => ({ i, s: a.pain_score }));
@@ -140,7 +150,6 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
                       </span>
                     </div>
                   </div>
-                  {/* Mini sparkline */}
                   {sparkData.length >= 2 && (
                     <div className="w-20 h-8 shrink-0">
                       <ResponsiveContainer width="100%" height="100%">
@@ -168,7 +177,7 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
     );
   }
 
-  // Evolution detail view
+  // ── Evolution detail view ──
   const patient = patients.find((p) => p.email === selectedEmail)!;
   const painData = patient.assessments
     .filter((a: any) => a.pain_score != null)
@@ -177,31 +186,31 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
       score: a.pain_score,
     }));
 
-  // Extract questionnaire scores across assessments
-  const questionnaireMap = new Map<string, { dates: string[]; scores: number[] }>();
+  // Questionnaire scores across assessments
+  const questionnaireMap = new Map<string, { dates: string[]; scores: number[]; severities: string[]; names: string[] }>();
   patient.assessments.forEach((a: any) => {
     const results = a.test_results;
     if (!Array.isArray(results)) return;
     results.forEach((r: any) => {
-      if (!r.questionnaireId || r.score == null) return;
-      const name = r.questionnaireId.toUpperCase();
+      if (!r.questionnaireId || r.percentageScore == null) return;
+      const name = r.questionnaireName || r.questionnaireId.toUpperCase();
       if (!questionnaireMap.has(name)) {
-        questionnaireMap.set(name, { dates: [], scores: [] });
+        questionnaireMap.set(name, { dates: [], scores: [], severities: [], names: [] });
       }
       const entry = questionnaireMap.get(name)!;
       entry.dates.push(new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }));
-      entry.scores.push(r.score);
+      entry.scores.push(r.percentageScore);
+      entry.severities.push(r.severity || "");
+      entry.names.push(r.questionnaireName || name);
     });
   });
 
-  // Build questionnaire chart data
   const questionnaireNames = Array.from(questionnaireMap.keys());
   const questionnaireData: any[] = [];
   if (questionnaireNames.length > 0) {
     const maxLen = Math.max(...Array.from(questionnaireMap.values()).map((v) => v.dates.length));
     for (let i = 0; i < maxLen; i++) {
       const point: any = { index: i + 1 };
-      // Use the date from the first questionnaire that has this index
       for (const [name, entry] of questionnaireMap) {
         if (i < entry.scores.length) {
           point[name] = entry.scores[i];
@@ -211,6 +220,27 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
       questionnaireData.push(point);
     }
   }
+
+  // Helper to extract questionnaire results from a single assessment
+  const getQuestionnaireResults = (a: any) => {
+    if (!Array.isArray(a.test_results)) return [];
+    return a.test_results.filter((r: any) => r.questionnaireId && r.percentageScore != null);
+  };
+
+  // Helper to get anamnesis summary fields
+  const getAnamnesisFields = (a: any) => {
+    const d = a.anamnesis_data;
+    if (!d) return [];
+    const fields: { label: string; value: string }[] = [];
+    if (d.chiefComplaint) fields.push({ label: "Queixa", value: d.chiefComplaint });
+    if (d.onset) fields.push({ label: "Início", value: d.onset });
+    if (d.evolution) fields.push({ label: "Evolução", value: d.evolution });
+    if (d.painDuration) fields.push({ label: "Duração", value: d.painDuration });
+    if (d.activityLevel) fields.push({ label: "Atividade", value: d.activityLevel });
+    if (d.aggravatingFactors) fields.push({ label: "Agravantes", value: d.aggravatingFactors });
+    if (d.relievingFactors) fields.push({ label: "Aliviantes", value: d.relievingFactors });
+    return fields;
+  };
 
   return (
     <div className="space-y-5">
@@ -227,7 +257,7 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
         </p>
       </div>
 
-      {/* Pain Evolution Chart */}
+      {/* ── Pain Evolution Chart ── */}
       {painData.length > 1 ? (
         <Card>
           <CardHeader className="pb-2">
@@ -243,9 +273,7 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                   <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <Tooltip
-                    contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
-                  />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
                   <Area type="monotone" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4 }} name="Dor" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -276,12 +304,37 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
         </Card>
       ) : null}
 
-      {/* Questionnaire Evolution Chart */}
+      {/* ── Pain Map Comparison ── */}
+      {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Stethoscope className="h-4 w-4 text-primary" />
+              Mapa de Dor — Comparativo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {patient.assessments.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => (
+                <div key={a.id} className="text-center space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                    {a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}
+                  </p>
+                  <PainMapView painRegions={a.pain_regions} compact />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Questionnaire Evolution Chart ── */}
       {questionnaireNames.length > 0 && questionnaireData.length > 0 ? (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" />
+              <ClipboardList className="h-4 w-4 text-primary" />
               {t("pro.questionnaire_evolution")}
             </CardTitle>
             <CardDescription className="text-xs">
@@ -294,10 +347,8 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
                 <LineChart data={questionnaireData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <Tooltip
-                    contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
-                  />
+                  <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
                   <Legend />
                   {questionnaireNames.map((name, i) => (
                     <Line
@@ -323,32 +374,97 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
         </Card>
       )}
 
-      {/* Assessment list */}
+      {/* ── Per-assessment details ── */}
       <div>
-        <h4 className="text-sm font-semibold text-foreground mb-2">{t("dashboard.history")}</h4>
-        <div className="space-y-2">
-          {patient.assessments.map((a: any) => (
-            <Card
-              key={a.id}
-              className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20"
-              onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
-            >
-              <CardContent className="py-3 px-4 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium text-foreground">
-                    {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {a.pain_score != null && <span>Dor: {a.pain_score}/10</span>}
-                    {a.diagnosis?.hypothesis && (
-                      <span className="line-clamp-1">• {a.diagnosis.hypothesis}</span>
-                    )}
+        <h4 className="text-sm font-semibold text-foreground mb-3">{t("dashboard.history")}</h4>
+        <div className="space-y-4">
+          {patient.assessments.map((a: any) => {
+            const qResults = getQuestionnaireResults(a);
+            const anamnesisFields = getAnamnesisFields(a);
+            return (
+              <Card key={a.id} className="overflow-hidden">
+                <CardContent className="py-4 px-4 space-y-3">
+                  {/* Header row */}
+                  <div
+                    className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
+                  >
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-semibold text-foreground">
+                        {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {a.pain_score != null && <span>Dor: {a.pain_score}/10</span>}
+                        {a.diagnosis?.hypothesis && (
+                          <span className="line-clamp-1">• {a.diagnosis.hypothesis}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {a.diagnosis && onDownloadPdf && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="PDF"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDownloadPdf(a);
+                          }}
+                        >
+                          <FileText className="h-4 w-4 text-primary" />
+                        </Button>
+                      )}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
                   </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-              </CardContent>
-            </Card>
-          ))}
+
+                  {/* Questionnaire results */}
+                  {qResults.length > 0 && (
+                    <div className="space-y-2 border-t border-border pt-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                        <ClipboardList className="h-3 w-3" /> Questionários
+                      </p>
+                      {qResults.map((r: any, idx: number) => (
+                        <div key={idx} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-medium text-foreground">{r.questionnaireName || r.questionnaireId}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-muted-foreground">{Math.round(r.percentageScore)}%</span>
+                              {r.severity && (
+                                <Badge variant="outline" className="text-[9px] py-0 px-1.5 capitalize">
+                                  {r.interpretation_pt || r.severity}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Progress
+                            value={r.percentageScore}
+                            className="h-1.5"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Anamnesis summary */}
+                  {anamnesisFields.length > 0 && (
+                    <div className="border-t border-border pt-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Anamnese</p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                        {anamnesisFields.map((f, i) => (
+                          <div key={i}>
+                            <span className="text-muted-foreground">{f.label}: </span>
+                            <span className="text-foreground">{f.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>
