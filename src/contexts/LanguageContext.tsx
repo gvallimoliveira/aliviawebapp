@@ -1760,6 +1760,28 @@ const translations: Record<Language, Record<string, string>> = {
     "anamnesis.ottawa_knee": "Can you take 4 weight-bearing steps immediately after the event?",
     "anamnesis.ottawa_ankle": "Can you take 4 weight-bearing steps immediately after the event?",
     "anamnesis.ottawa_warning": "⚠️ We recommend seeking medical care to rule out fracture before continuing.",
+
+    // Onboarding
+    "onboarding.next": "Next",
+    "onboarding.skip": "Skip tutorial",
+    "onboarding.finish": "Got it!",
+    "onboarding.restart": "Replay tutorial",
+    "onboarding.patient.step1.title": "Welcome to Aliv.iA! 👋",
+    "onboarding.patient.step1.desc": "This is your health dashboard. Track your assessments, progress and much more.",
+    "onboarding.patient.step2.title": "Take an assessment",
+    "onboarding.patient.step2.desc": "Choose between Basic (free) or Premium (with complete treatment plan).",
+    "onboarding.patient.step3.title": "Pain Diary",
+    "onboarding.patient.step3.desc": "Log your pain daily and track how it evolves over time.",
+    "onboarding.patient.step4.title": "Find a professional",
+    "onboarding.patient.step4.desc": "Search for specialized physiotherapists near you for in-person follow-up.",
+    "onboarding.pro.step1.title": "Your professional dashboard 🩺",
+    "onboarding.pro.step1.desc": "Manage your patients, track their progress and view practice metrics here.",
+    "onboarding.pro.step2.title": "Assessment link",
+    "onboarding.pro.step2.desc": "Copy and share this link with your patients. They complete the assessment and results appear here automatically.",
+    "onboarding.pro.step3.title": "Your patients",
+    "onboarding.pro.step3.desc": "View all assessments completed by your patients and track each one's progress.",
+    "onboarding.pro.step4.title": "Pro subscription",
+    "onboarding.pro.step4.desc": "Subscribe to Pro to unlock full dashboard access, custom link and reports.",
   },
 };
 
