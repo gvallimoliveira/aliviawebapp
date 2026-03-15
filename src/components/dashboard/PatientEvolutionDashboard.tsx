@@ -281,18 +281,23 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
     return results.filter((r: any) => r.questionnaireId && r.percentageScore != null);
   };
 
-  // Helper to get anamnesis summary fields
+  // Helper to get anamnesis summary fields with translated values
   const getAnamnesisFields = (a: any) => {
     const d = a.anamnesis_data;
     if (!d) return [];
     const fields: { label: string; value: string }[] = [];
-    if (d.chiefComplaint) fields.push({ label: "Queixa", value: d.chiefComplaint });
-    if (d.onset) fields.push({ label: "Início", value: d.onset });
-    if (d.evolution) fields.push({ label: "Evolução", value: d.evolution });
-    if (d.painDuration) fields.push({ label: "Duração", value: d.painDuration });
-    if (d.activityLevel) fields.push({ label: "Atividade", value: d.activityLevel });
+    if (d.chiefComplaint) fields.push({ label: "Queixa Principal", value: translateKey(d.chiefComplaint) });
+    if (d.customComplaint) fields.push({ label: "Queixa (detalhe)", value: d.customComplaint });
+    if (d.onset) fields.push({ label: "Modo de Início", value: translateKey(d.onset) });
+    if (d.evolution) fields.push({ label: "Evolução", value: translateKey(d.evolution) });
+    if (d.painDuration) fields.push({ label: "Duração da Dor", value: translateKey(d.painDuration) });
+    if (d.painTypes?.length) fields.push({ label: "Tipos de Dor", value: d.painTypes.map((p: string) => translateKey(p)).join(", ") });
+    if (d.activityLevel) fields.push({ label: "Nível de Atividade", value: translateKey(d.activityLevel) });
     if (d.aggravatingFactors) fields.push({ label: "Agravantes", value: d.aggravatingFactors });
     if (d.relievingFactors) fields.push({ label: "Aliviantes", value: d.relievingFactors });
+    if (d.hasGymAccess) fields.push({ label: "Acesso a Academia", value: translateKey(d.hasGymAccess) });
+    if (d.sex) fields.push({ label: "Sexo Biológico", value: translateKey(d.sex) });
+    if (d.ageRange) fields.push({ label: "Faixa Etária", value: translateKey(d.ageRange) });
     return fields;
   };
 
