@@ -145,14 +145,31 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
   if (!selectedEmail) {
     return (
       <div className="space-y-3">
-        <div className="mb-2">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            {t("pro.patients_title")}
-          </h3>
-          <p className="text-sm text-muted-foreground">{t("pro.patients_desc")}</p>
+        <div className="mb-2 space-y-3">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              {t("pro.patients_title")}
+            </h3>
+            <p className="text-sm text-muted-foreground">{t("pro.patients_desc")}</p>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
-        {patients.map((p) => {
+        {patients
+          .filter((p) => {
+            if (!searchQuery.trim()) return true;
+            const q = searchQuery.toLowerCase();
+            return p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q);
+          })
+          .map((p) => {
           const firstScore = p.assessments[0]?.pain_score;
           const lastScore = p.assessments[p.assessments.length - 1]?.pain_score;
           const trend = firstScore != null && lastScore != null
