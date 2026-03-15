@@ -198,18 +198,18 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
                         {p.assessments.length} {t("pro.assessments_count")}
                       </Badge>
                       {trend === "improving" && (
-                        <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-0.5">
-                          <TrendingDown className="h-3 w-3" /> Melhorando
+                        <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                          Melhorando
                         </Badge>
                       )}
                       {trend === "worsening" && (
-                        <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20 gap-0.5">
-                          <TrendingUp className="h-3 w-3" /> Piorando
+                        <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">
+                          Piorando
                         </Badge>
                       )}
                       {trend === "stable" && (
-                        <Badge variant="outline" className="text-[10px] gap-0.5">
-                          <Minus className="h-3 w-3" /> Estável
+                        <Badge variant="outline" className="text-[10px]">
+                          Estável
                         </Badge>
                       )}
                     </div>
