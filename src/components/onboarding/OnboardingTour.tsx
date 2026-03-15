@@ -112,32 +112,56 @@ function getTooltipPosition(
   position?: "top" | "bottom" | "left" | "right"
 ): React.CSSProperties {
   if (!rect) {
-    // Center on screen
     return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
   }
 
   const gap = 16;
-  const pos = position || "bottom";
+  const isMobile = window.innerWidth < 640;
+  const tooltipWidth = isMobile ? Math.min(320, window.innerWidth - 32) : 320;
+  const tooltipHeight = 160; // approximate
+
+  // On mobile, always position below or above — never left/right
+  const pos = isMobile ? "auto" : (position || "bottom");
+
+  if (pos === "auto") {
+    // Mobile: check if there's room below, otherwise go above
+    const spaceBelow = window.innerHeight - rect.bottom - gap;
+    const spaceAbove = rect.top - gap;
+
+    const centerX = Math.max(16, Math.min(
+      (window.innerWidth - tooltipWidth) / 2,
+      window.innerWidth - tooltipWidth - 16
+    ));
+
+    if (spaceBelow >= tooltipHeight) {
+      return { top: rect.bottom + gap, left: centerX };
+    } else if (spaceAbove >= tooltipHeight) {
+      return { bottom: window.innerHeight - rect.top + gap, left: centerX };
+    } else {
+      // Not enough space either way — overlay centered below header
+      return { top: Math.min(rect.bottom + gap, window.innerHeight - tooltipHeight - 16), left: centerX };
+    }
+  }
 
   switch (pos) {
     case "top":
       return {
         bottom: window.innerHeight - rect.top + gap,
-        left: Math.max(16, rect.left + rect.width / 2 - 160),
+        left: Math.max(16, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16)),
       };
     case "bottom":
       return {
         top: rect.bottom + gap,
-        left: Math.max(16, Math.min(rect.left + rect.width / 2 - 160, window.innerWidth - 336)),
+        left: Math.max(16, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16)),
       };
     case "left":
       return {
-        top: rect.top + rect.height / 2 - 60,
+        top: Math.max(16, Math.min(rect.top + rect.height / 2 - 60, window.innerHeight - tooltipHeight - 16)),
         right: window.innerWidth - rect.left + gap,
       };
     case "right":
       return {
-        top: rect.top + rect.height / 2 - 60,
+        top: Math.max(16, Math.min(rect.top + rect.height / 2 - 60, window.innerHeight - tooltipHeight - 16)),
         left: rect.right + gap,
       };
   }
