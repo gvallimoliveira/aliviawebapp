@@ -51,6 +51,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [lifetimeLoading, setLifetimeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const proOnboarding = useOnboarding("onboarding_pro_completed", proSteps);
 
   useEffect(() => {
     checkSubscription();
