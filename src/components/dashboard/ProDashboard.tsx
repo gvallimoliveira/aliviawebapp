@@ -272,8 +272,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </div>
 
         {/* Blurred patient list & dashboard */}
-        <div className="relative min-h-[300px]">
-          <Tabs defaultValue="assessments" className="w-full">
+        <div data-onboarding="pro-patients" className="relative min-h-[300px]">
+          <Tabs data-onboarding="pro-subscription" defaultValue="assessments" className="w-full">
             <TabsList className="w-full grid grid-cols-2">
               <TabsTrigger value="assessments" className="gap-1.5">
                 <Users className="h-4 w-4" />
