@@ -509,7 +509,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
                     <Card
                       key={a.id}
                       className={`cursor-pointer hover:shadow-md transition-all border-border/60 hover:border-border group ${isRedFlagged ? "border-destructive/30" : ""}`}
-                      onClick={() => navigate(`/assessment/view/${a.id}`)}
+                      onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
                     >
                       <CardContent className="py-3 px-4">
                         <div className="flex items-center justify-between gap-3">

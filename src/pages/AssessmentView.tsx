@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,6 +79,8 @@ const AssessmentView = () => {
   const { user, loading: authLoading } = useAuth();
   const { t, language, toggleLanguage } = useLanguage();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const backUrl = searchParams.get("from") === "professional" ? "/dashboard?tab=professional" : "/dashboard";
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showTreatment, setShowTreatment] = useState(false);
@@ -100,7 +102,7 @@ const AssessmentView = () => {
         .single()
         .then(({ data, error }) => {
           if (error || !data) {
-            navigate("/dashboard");
+            navigate(backUrl);
           } else {
             setAssessment(data);
             if (data.treatment_plan && !data.diagnosis) {
@@ -143,7 +145,7 @@ const AssessmentView = () => {
 
       <main className="container max-w-2xl py-8 px-4 space-y-6">
         {/* Back button */}
-        <Button variant="ghost" onClick={() => navigate("/dashboard")} className="gap-2 -ml-2">
+        <Button variant="ghost" onClick={() => navigate(backUrl)} className="gap-2 -ml-2">
           <ArrowLeft className="h-4 w-4" />
           {t("assessment_view.back")}
         </Button>
@@ -382,7 +384,7 @@ const AssessmentView = () => {
           <DiagnosisResult
             diagnosis={assessment.diagnosis}
             mode={assessment.type as "basic" | "premium"}
-            onBack={() => navigate("/dashboard")}
+            onBack={() => navigate(backUrl)}
             onNewAssessment={() => navigate("/assessment/premium")}
             onGenerateTreatment={
               assessment.treatment_plan ? () => setShowTreatment(true) : undefined
