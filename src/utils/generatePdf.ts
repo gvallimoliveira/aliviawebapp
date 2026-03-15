@@ -379,27 +379,96 @@ async function renderPainMapSection(doc: jsPDF, y: number, painRegions: string[]
 function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt: boolean): number {
   if (!testResults || (Array.isArray(testResults) && testResults.length === 0)) return y;
 
-  y = checkPage(doc, y, 16);
-  y = renderSectionTitle(doc, y, isPt ? "Resultados dos Testes" : "Test Results", COLORS.primary);
-
   const items = Array.isArray(testResults) ? testResults : [testResults];
-  for (const test of items) {
-    y = checkPage(doc, y, 10);
-    const name = test.name || test.testName || test.id || "";
-    const result = test.result || test.score || test.value || "";
-    if (name) {
+  const questionnaireItems = items.filter((t: any) => t.questionnaireId && t.percentageScore != null);
+  const genericItems = items.filter((t: any) => !t.questionnaireId);
+
+  // Render validated questionnaire results
+  if (questionnaireItems.length > 0) {
+    y = checkPage(doc, y, 16);
+    y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary);
+
+    for (const q of questionnaireItems) {
+      y = checkPage(doc, y, 22);
+      const qName = q.questionnaireName || q.questionnaireId.toUpperCase();
+      const pct = Math.round(q.percentageScore);
+      const severity = q.severity || "";
+      const interpretation = isPt ? (q.interpretation_pt || severity) : (q.interpretation_en || severity);
+
+      // Name + score
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
+      doc.setFontSize(9);
       doc.setTextColor(...COLORS.foreground);
-      doc.text(`${name}: `, MARGIN + 2, y);
-      const lw = doc.getTextWidth(`${name}: `);
+      doc.text(qName, MARGIN + 2, y);
       doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
       doc.setTextColor(...COLORS.muted);
-      doc.text(String(result), MARGIN + 2 + lw, y);
+      doc.text(`${pct}%`, MARGIN + 2 + doc.getTextWidth(qName + "  "), y);
+      y += 4;
+
+      // Progress bar
+      const barW = CONTENT_WIDTH - 4;
+      const barH = 3;
+      drawRoundedRect(doc, MARGIN + 2, y, barW, barH, 1, [230, 230, 230]);
+      const filledW = (pct / 100) * barW;
+      const barColor: [number, number, number] = severity === "minimal" || severity === "mild"
+        ? COLORS.green
+        : severity === "moderate" ? COLORS.yellow : COLORS.red;
+      if (filledW > 0) {
+        drawRoundedRect(doc, MARGIN + 2, y, filledW, barH, 1, barColor);
+      }
       y += 5;
+
+      // Interpretation label
+      if (interpretation) {
+        doc.setFontSize(7);
+        doc.setTextColor(...COLORS.muted);
+        doc.text(`${isPt ? "Interpretação" : "Interpretation"}: ${interpretation}`, MARGIN + 2, y);
+        y += 4;
+      }
+
+      // Subscale scores
+      if (q.subscaleScores && typeof q.subscaleScores === "object") {
+        const entries = Object.entries(q.subscaleScores);
+        if (entries.length > 1) {
+          doc.setFontSize(7);
+          for (const [key, val] of entries) {
+            y = checkPage(doc, y, 5);
+            doc.setTextColor(...COLORS.muted);
+            doc.text(`  ${key}: ${val}`, MARGIN + 4, y);
+            y += 3.5;
+          }
+        }
+      }
+      y += 3;
     }
+    y += 2;
   }
-  y += 4;
+
+  // Render generic test results (non-questionnaire)
+  if (genericItems.length > 0) {
+    y = checkPage(doc, y, 16);
+    y = renderSectionTitle(doc, y, isPt ? "Resultados dos Testes" : "Test Results", COLORS.primary);
+
+    for (const test of genericItems) {
+      y = checkPage(doc, y, 10);
+      const name = test.name || test.testName || test.id || "";
+      const result = test.result || test.score || test.value || "";
+      if (name) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(...COLORS.foreground);
+        doc.text(`${name}: `, MARGIN + 2, y);
+        const lw = doc.getTextWidth(`${name}: `);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...COLORS.muted);
+        doc.text(String(result), MARGIN + 2 + lw, y);
+        y += 5;
+      }
+    }
+    y += 4;
+  }
+
   return y;
 }
 
