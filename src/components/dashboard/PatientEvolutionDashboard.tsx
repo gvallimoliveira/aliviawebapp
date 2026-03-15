@@ -1,20 +1,24 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
-  FileText, ClipboardList, Stethoscope, Search,
+  FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
+import JSZip from "jszip";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
