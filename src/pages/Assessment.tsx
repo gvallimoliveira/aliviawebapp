@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
-import { PREMIUM_PRICE, PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
+import { PREMIUM_PRICE, PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 import { useParams, useNavigate } from "react-router-dom";
-import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight } from "lucide-react";
+import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight, Calendar, Zap, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +43,7 @@ const Assessment = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [hasRetried, setHasRetried] = useState(false);
+  const [isMonthly, setIsMonthly] = useState(true);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
 
   // Redirect premium users to auth if not logged in
@@ -83,12 +85,14 @@ const Assessment = () => {
     setPaymentLoading(true);
     try {
       const referralCode = localStorage.getItem("alivia_referral_code");
+      const body: any = { payment_type: isMonthly ? "monthly" : "single" };
+      if (referralCode) body.referral_code = referralCode;
+
       const { data, error } = await supabase.functions.invoke("create-payment", {
-        body: referralCode ? { referral_code: referralCode } : {},
+        body,
       });
       if (error) throw error;
       if (data?.url) {
-        // Clear referral code after use
         if (referralCode) localStorage.removeItem("alivia_referral_code");
         window.open(data.url, '_blank');
       }
@@ -188,7 +192,6 @@ const Assessment = () => {
       if (id) {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "diagnosis_complete" });
       }
-      // If low confidence and haven't retried yet, show extra info step
       if (result.diagnosis.confidence === "low" && !hasRetried && !extraInfo) {
         setStep("low_confidence");
       } else {
@@ -208,7 +211,6 @@ const Assessment = () => {
   const handleLowConfidenceSubmit = () => {
     setHasRetried(true);
     if (additionalInfo.trim()) {
-      // Regenerate with extra info
       const updatedAnamnesis = {
         ...anamnesisData!,
         additionalInfo: additionalInfo.trim(),
@@ -247,6 +249,9 @@ const Assessment = () => {
       setStep("result");
     }
   };
+
+  const currentPrice = isMonthly ? PREMIUM_PRICE : PREMIUM_SINGLE_PRICE;
+  const currentPriceFormatted = isMonthly ? PREMIUM_PRICE_FORMATTED : PREMIUM_SINGLE_PRICE_FORMATTED;
 
   if (authLoading && mode === "premium") {
     return (
@@ -306,31 +311,68 @@ const Assessment = () => {
                 : (t("payment.unlock_desc") || "Inclui anamnese completa, testes funcionais, diagnóstico detalhado com explicação e plano de tratamento personalizado por fases.")}
             </p>
 
+            {/* Switch toggle */}
+            <div className="flex items-center justify-center gap-3 py-2">
+              <span className={`text-sm font-medium transition-colors ${isMonthly ? "text-primary" : "text-muted-foreground"}`}>
+                <Calendar className="inline h-3.5 w-3.5 mr-1" />
+                {t("compare.toggle.monthly")}
+              </span>
+              <Switch
+                checked={!isMonthly}
+                onCheckedChange={(checked) => setIsMonthly(!checked)}
+              />
+              <span className={`text-sm font-medium transition-colors ${!isMonthly ? "text-primary" : "text-muted-foreground"}`}>
+                <Zap className="inline h-3.5 w-3.5 mr-1" />
+                {t("compare.toggle.single")}
+              </span>
+            </div>
+
             <Card className="rounded-xl border-primary/30 max-w-sm mx-auto">
               <CardContent className="py-6 space-y-4">
                 {premiumAccess.available_discount ? (
                   <div className="space-y-1">
-                    <div className="text-2xl text-muted-foreground line-through">{PREMIUM_PRICE_FORMATTED}</div>
+                    <div className="text-2xl text-muted-foreground line-through">{currentPriceFormatted}</div>
                     <div className="text-4xl font-bold text-foreground">
-                      R$ {Math.round(PREMIUM_PRICE * (1 - premiumAccess.available_discount.discount_percent / 100))}
+                      R$ {Math.round(currentPrice * (1 - premiumAccess.available_discount.discount_percent / 100))}
                     </div>
                     <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-xs">
                       {t("referral.discount_applied")}
                     </Badge>
                   </div>
                 ) : (
-                  <div className="text-4xl font-bold text-foreground">{PREMIUM_PRICE_FORMATTED}</div>
+                  <div className="text-4xl font-bold text-foreground">{currentPriceFormatted}</div>
                 )}
+
+                {isMonthly && (
+                  <Badge variant="outline" className="border-primary/30 text-primary text-xs">
+                    {t("compare.monthly.best_value")}
+                  </Badge>
+                )}
+
                 <p className="text-sm text-muted-foreground">
-                  {t("payment.includes_redo") || "Assinatura mensal — 2 avaliações por mês"}
+                  {isMonthly
+                    ? (t("payment.includes_redo") || "Assinatura mensal — 2 avaliações por ciclo")
+                    : (t("payment.single_desc") || "Pagamento único — 1 avaliação completa")}
                 </p>
+
                 <ul className="text-sm text-left space-y-2 text-muted-foreground">
                   <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_1") || "Testes funcionais guiados por vídeo"}</li>
                   <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_2") || "Diagnóstico com explicação detalhada"}</li>
                   <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_3") || "Plano de tratamento em 3 fases"}</li>
                   <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_4") || "Exercícios com vídeos do YouTube"}</li>
-                  <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_5") || "Questionários internacionalmente validados"}</li>
+                  <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_5") || "Questionários validados (KOOS, SPADI, ODI)"}</li>
                 </ul>
+
+                {isMonthly && (
+                  <div className="rounded-lg bg-primary/5 p-3 text-xs text-left text-muted-foreground space-y-1">
+                    <p className="font-medium text-primary text-sm">{t("compare.monthly.benefits_title")}</p>
+                    <p className="flex items-start gap-1.5"><Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> {t("compare.monthly.benefit_1")}</p>
+                    <p className="flex items-start gap-1.5"><Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> {t("compare.monthly.benefit_2")}</p>
+                    <p className="flex items-start gap-1.5"><Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> {t("compare.monthly.benefit_3")}</p>
+                    <p className="flex items-start gap-1.5"><Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> {t("compare.monthly.benefit_4")}</p>
+                  </div>
+                )}
+
                 <Button
                   onClick={handlePayment}
                   disabled={paymentLoading}

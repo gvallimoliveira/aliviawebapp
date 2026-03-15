@@ -292,6 +292,7 @@ export type Database = {
           is_partner: boolean
           lifetime_treatment: boolean
           phone: string | null
+          pro_access_expires_at: string | null
           profile_photo_url: string | null
           social_media: string | null
           specialties: string[] | null
@@ -316,6 +317,7 @@ export type Database = {
           is_partner?: boolean
           lifetime_treatment?: boolean
           phone?: string | null
+          pro_access_expires_at?: string | null
           profile_photo_url?: string | null
           social_media?: string | null
           specialties?: string[] | null
@@ -340,6 +342,7 @@ export type Database = {
           is_partner?: boolean
           lifetime_treatment?: boolean
           phone?: string | null
+          pro_access_expires_at?: string | null
           profile_photo_url?: string | null
           social_media?: string | null
           specialties?: string[] | null

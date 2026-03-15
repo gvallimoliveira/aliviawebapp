@@ -1,0 +1,1 @@
+ALTER TABLE public.professionals ADD COLUMN IF NOT EXISTS pro_access_expires_at timestamptz DEFAULT NULL;
