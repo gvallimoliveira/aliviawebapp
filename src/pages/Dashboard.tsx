@@ -304,7 +304,9 @@ const Dashboard = () => {
       <ReferralCard availableDiscount={premiumAccess?.available_discount} />
 
       {/* Pain Diary */}
-      <PainDiary />
+      <div data-onboarding="patient-diary">
+        <PainDiary />
+      </div>
 
       {/* Before/After Comparison */}
       <AssessmentComparison assessments={assessments} />
