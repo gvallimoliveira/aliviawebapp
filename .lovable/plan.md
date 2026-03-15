@@ -1,63 +1,39 @@
 
 
-## Notas Privadas do Profissional + Exportação em Lote de PDFs
+## Plano: Branding — favicon, título da tab e badge Lovable
 
-### 1. Tabela `professional_notes` (nova migração)
+### 1. Remover badge "Made with Lovable"
 
-```sql
-CREATE TABLE public.professional_notes (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  professional_id uuid NOT NULL,
-  assessment_id uuid NOT NULL,
-  content text NOT NULL DEFAULT '',
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(professional_id, assessment_id)
-);
+Para remover o badge, o usuário precisa ativá-lo nas configurações do projeto: **Settings → Hide 'Lovable' Badge**. Isso não é controlado pelo código — é uma opção da plataforma Lovable.
 
-ALTER TABLE public.professional_notes ENABLE ROW LEVEL SECURITY;
+### 2. Favicon — trocar para logo Aliv.iA
 
--- Profissionais veem/editam apenas suas próprias notas
-CREATE POLICY "Pros can manage own notes" ON public.professional_notes
-  FOR ALL TO authenticated
-  USING (professional_id IN (SELECT id FROM professionals WHERE user_id = auth.uid()))
-  WITH CHECK (professional_id IN (SELECT id FROM professionals WHERE user_id = auth.uid()));
+**`index.html`** — Adicionar tag `<link rel="icon">` apontando para o logo já existente no projeto:
+
+```html
+<link rel="icon" type="image/png" href="/src/assets/logo-alivia.png" />
 ```
 
-### 2. Notas privadas na página do paciente (`PatientEvolutionDashboard.tsx`)
+Nota: Como Vite processa assets em `src/assets`, o ideal é copiar `logo-alivia.png` para `public/favicon.png` e referenciar `/favicon.png`. Alternativamente, pode-se converter para `.ico`.
 
-- Em cada card de avaliação (seção "Per-assessment details"), adicionar um campo `Textarea` colapsável com label "Notas privadas"
-- Ao digitar, debounce de 1s faz upsert na tabela `professional_notes` via Supabase client
-- Carregar notas ao abrir a visão detalhada do paciente com query `professional_notes` filtrada por `professional_id` e assessment IDs do paciente
-- Ícone de caderno (NotebookPen) no header do card quando há nota salva
+### 3. Título da tab
 
-### 3. Notas no PDF (`generatePdf.ts`)
+**`index.html`** — Alterar a tag `<title>`:
 
-- Adicionar campo opcional `professionalNotes?: string` ao `PdfOptions`
-- Renderizar seção "Notas do Profissional" entre o diagnóstico e o disclaimer, com fundo cinza claro e texto em itálico
-- No `handleDownloadPdf` do `ProDashboard.tsx`, buscar a nota correspondente e passá-la ao gerador
+```html
+<title>Aliv.iA Webapp</title>
+```
 
-### 4. Exportação em lote de PDFs
+Também atualizar o `setSeo` em `Index.tsx` e demais páginas para usar "Aliv.iA Webapp" como título padrão, ou manter títulos específicos por página mas sem menções ao portal de desenvolvimento.
 
-- No header da lista de pacientes (`PatientEvolutionDashboard`), adicionar botão "Exportar PDFs" com ícone `Download`
-- Ao clicar, gera PDFs de todas as avaliações com diagnóstico do paciente selecionado (ou todos os pacientes se na lista geral)
-- Usa `JSZip` (nova dependência) para empacotar múltiplos PDFs em um `.zip`
-- Progresso visual com toast ou barra de loading inline
-- Cada PDF inclui as notas privadas se existirem
-- Alternativa simplificada: se apenas 1 paciente selecionado, gera PDFs sequenciais sem zip; se múltiplos, empacota em zip
+---
 
-### 5. Traduções
+### Arquivos a editar
 
-Novas keys em `LanguageContext.tsx`:
-- `pro.private_notes` / `pro.private_notes_placeholder`
-- `pro.export_pdfs` / `pro.exporting_pdfs`
-- `pro.notes_saved`
-
-### Arquivos alterados
-- **Nova migração SQL** — tabela `professional_notes`
-- **PatientEvolutionDashboard.tsx** — textarea de notas, botão exportar lote, fetch de notas
-- **ProDashboard.tsx** — passar notas ao `handleDownloadPdf`
-- **generatePdf.ts** — seção "Notas do Profissional" no PDF
-- **LanguageContext.tsx** — traduções
-- **package.json** — adicionar `jszip`
+| Arquivo | Mudança |
+|---|---|
+| `index.html` | Mudar `<title>` para "Aliv.iA Webapp", adicionar `<link rel="icon">` |
+| `public/favicon.png` | Copiar `logo-alivia.png` para public |
+| `src/pages/Index.tsx` | Atualizar título no `setSeo` |
+| `src/pages/ProfessionalLanding.tsx` | Atualizar título no `setSeo` |
 

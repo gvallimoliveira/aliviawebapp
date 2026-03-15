@@ -1,20 +1,24 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
-  FileText, ClipboardList, Stethoscope, Search,
+  FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
+import JSZip from "jszip";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
@@ -98,11 +102,95 @@ const SEVERITY_COLORS: Record<string, string> = {
   extreme: "bg-destructive",
 };
 
-const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf }: PatientEvolutionDashboardProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [noteSaving, setNoteSaving] = useState<Record<string, boolean>>({});
+  const [batchExporting, setBatchExporting] = useState(false);
+  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
+
+  // Load notes for all assessments
+  useEffect(() => {
+    if (!professionalId || assessments.length === 0) return;
+    const assessmentIds = assessments.map((a) => a.id);
+    supabase
+      .from("professional_notes")
+      .select("assessment_id, content")
+      .eq("professional_id", professionalId)
+      .in("assessment_id", assessmentIds)
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach((n: any) => { map[n.assessment_id] = n.content; });
+          setNotes(map);
+        }
+      });
+  }, [professionalId, assessments]);
+
+  const saveNote = useCallback((assessmentId: string, content: string) => {
+    if (!professionalId) return;
+    setNotes((prev) => ({ ...prev, [assessmentId]: content }));
+    if (debounceTimers.current[assessmentId]) clearTimeout(debounceTimers.current[assessmentId]);
+    debounceTimers.current[assessmentId] = setTimeout(async () => {
+      setNoteSaving((prev) => ({ ...prev, [assessmentId]: true }));
+      await supabase.from("professional_notes").upsert(
+        { professional_id: professionalId, assessment_id: assessmentId, content, updated_at: new Date().toISOString() },
+        { onConflict: "professional_id,assessment_id" }
+      );
+      setNoteSaving((prev) => ({ ...prev, [assessmentId]: false }));
+    }, 1000);
+  }, [professionalId]);
+
+  const handleBatchExport = useCallback(async (targetAssessments: any[]) => {
+    const withDiagnosis = targetAssessments.filter((a) => a.diagnosis);
+    if (withDiagnosis.length === 0) {
+      toast({ title: t("pro.no_pdfs"), variant: "destructive" });
+      return;
+    }
+    setBatchExporting(true);
+    try {
+      const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
+      const lang = document.documentElement.lang === "en" ? "en" : "pt";
+      if (withDiagnosis.length === 1) {
+        // Single PDF — just download directly
+        if (onDownloadPdf) { onDownloadPdf(withDiagnosis[0]); }
+      } else {
+        const zip = new JSZip();
+        for (const a of withDiagnosis) {
+          const blob = await generateAssessmentPdfBlob({
+            diagnosis: a.diagnosis,
+            treatmentPlan: a.treatment_plan,
+            language: lang as "pt" | "en",
+            userName: a.patient_name || "Paciente",
+            anamnesisData: a.anamnesis_data,
+            painRegions: a.pain_regions,
+            testResults: a.test_results,
+            professionalNotes: notes[a.id] || undefined,
+          });
+          const date = new Date(a.created_at).toISOString().slice(0, 10);
+          const name = (a.patient_name || "paciente").replace(/\s+/g, "_");
+          zip.file(`AliviA_${name}_${date}.pdf`, blob);
+        }
+        const content = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(content);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `AliviA_Relatorios_${new Date().toISOString().slice(0, 10)}.zip`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+      toast({ title: t("pro.export_done") });
+    } catch (e) {
+      console.error(e);
+      toast({ title: t("pro.export_error"), variant: "destructive" });
+    } finally {
+      setBatchExporting(false);
+    }
+  }, [notes, onDownloadPdf, t, toast]);
 
   // Group assessments by patient_email (fallback to patient_name)
   const patients = useMemo(() => {
@@ -146,12 +234,24 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
     return (
       <div className="space-y-3">
         <div className="mb-2 space-y-3">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              {t("pro.patients_title")}
-            </h3>
-            <p className="text-sm text-muted-foreground">{t("pro.patients_desc")}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                {t("pro.patients_title")}
+              </h3>
+              <p className="text-sm text-muted-foreground">{t("pro.patients_desc")}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-xl shrink-0"
+              disabled={batchExporting}
+              onClick={() => handleBatchExport(assessments)}
+            >
+              {batchExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+              {t("pro.export_pdfs")}
+            </Button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -524,6 +624,22 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
                       </div>
                     </div>
                   )}
+
+                  {/* Private notes */}
+                  <div className="border-t border-border pt-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                      <NotebookPen className="h-3 w-3" />
+                      {t("pro.private_notes")}
+                      {noteSaving[a.id] && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
+                      {notes[a.id] && !noteSaving[a.id] && <Badge variant="outline" className="text-[9px] py-0 px-1.5">{t("pro.notes_saved")}</Badge>}
+                    </p>
+                    <Textarea
+                      placeholder={t("pro.private_notes_placeholder")}
+                      value={notes[a.id] || ""}
+                      onChange={(e) => saveNote(a.id, e.target.value)}
+                      className="text-xs min-h-[60px] resize-y"
+                    />
+                  </div>
                 </CardContent>
               </Card>
             );

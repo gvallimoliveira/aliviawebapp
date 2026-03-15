@@ -60,6 +60,7 @@ interface PdfOptions {
   anamnesisData?: AnamnesisData;
   painRegions?: string[];
   testResults?: any;
+  professionalNotes?: string;
 }
 
 // Design tokens from webapp (HSL converted to RGB)
@@ -475,7 +476,18 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
   return y;
 }
 
-export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults }: PdfOptions) {
+export async function generateAssessmentPdfBlob(options: PdfOptions): Promise<Blob> {
+  const doc = await _buildPdfDoc(options);
+  return doc.output("blob");
+}
+
+export async function generateAssessmentPdf(options: PdfOptions) {
+  const doc = await _buildPdfDoc(options);
+  const isPt = options.language === "pt";
+  doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
+async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes }: PdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPt = language === "pt";
   let y = MARGIN;
@@ -730,6 +742,25 @@ export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language
     }
   } // end if (treatmentPlan)
 
+  // ── Professional Notes ──
+  if (professionalNotes) {
+    y = checkPage(doc, y, 30);
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
+    y += 8;
+    y = renderSectionTitle(doc, y, isPt ? "Notas do Profissional" : "Professional Notes", COLORS.primary);
+    const noteLines = doc.splitTextToSize(professionalNotes, CONTENT_WIDTH - 12);
+    const noteH = noteLines.length * 3.5 + 12;
+    y = checkPage(doc, y, noteH);
+    drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, noteH, 4, [245, 243, 240], COLORS.border);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(noteLines, MARGIN + 6, y + 8);
+    y += noteH + 6;
+  }
+
   // ── Disclaimer ──
   y = checkPage(doc, y, 40);
   doc.setDrawColor(...COLORS.border);
@@ -768,7 +799,7 @@ export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language
     doc.line(MARGIN, 287, PAGE_WIDTH - MARGIN, 287);
   }
 
-  doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
+  return doc;
 }
 
 // ── Helper: Section Title ──

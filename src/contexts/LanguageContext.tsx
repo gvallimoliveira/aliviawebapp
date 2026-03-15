@@ -899,6 +899,16 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.pro.step3.desc": "Veja todas as avaliações realizadas pelos seus pacientes e acompanhe a evolução de cada um.",
     "onboarding.pro.step4.title": "Assinatura Pro",
     "onboarding.pro.step4.desc": "Assine o plano Pro para desbloquear o acesso completo ao painel, link personalizado e relatórios.",
+
+    // Professional Notes & Batch Export
+    "pro.private_notes": "Notas privadas",
+    "pro.private_notes_placeholder": "Adicione observações clínicas privadas sobre esta avaliação...",
+    "pro.notes_saved": "Salvo",
+    "pro.export_pdfs": "Exportar PDFs",
+    "pro.exporting_pdfs": "Exportando...",
+    "pro.export_done": "PDFs exportados com sucesso!",
+    "pro.export_error": "Erro ao exportar PDFs",
+    "pro.no_pdfs": "Nenhuma avaliação com diagnóstico para exportar",
   },
   en: {
     // Nav
@@ -1782,6 +1792,16 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.pro.step3.desc": "View all assessments completed by your patients and track each one's progress.",
     "onboarding.pro.step4.title": "Pro subscription",
     "onboarding.pro.step4.desc": "Subscribe to Pro to unlock full dashboard access, custom link and reports.",
+
+    // Professional Notes & Batch Export
+    "pro.private_notes": "Private notes",
+    "pro.private_notes_placeholder": "Add private clinical observations about this assessment...",
+    "pro.notes_saved": "Saved",
+    "pro.export_pdfs": "Export PDFs",
+    "pro.exporting_pdfs": "Exporting...",
+    "pro.export_done": "PDFs exported successfully!",
+    "pro.export_error": "Error exporting PDFs",
+    "pro.no_pdfs": "No assessments with diagnosis to export",
   },
 };
 
