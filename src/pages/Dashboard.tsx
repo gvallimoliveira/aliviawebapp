@@ -508,6 +508,15 @@ const Dashboard = () => {
           </div>
         )}
       </main>
+
+      <OnboardingTour
+        step={onboarding.step}
+        currentStep={onboarding.currentStep}
+        totalSteps={onboarding.totalSteps}
+        isActive={onboarding.isActive}
+        onNext={onboarding.next}
+        onSkip={onboarding.skip}
+      />
     </div>
   );
 };

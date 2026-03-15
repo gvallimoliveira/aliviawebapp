@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import OnboardingTour from "@/components/onboarding/OnboardingTour";
+import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
