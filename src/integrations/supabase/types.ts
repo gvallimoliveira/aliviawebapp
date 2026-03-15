@@ -327,7 +327,7 @@ export type Database = {
           clinic_address: string | null
           clinic_name: string | null
           created_at: string
-          crefito: string | null
+          crefito: string
           email: string | null
           full_name: string
           id: string
@@ -352,7 +352,7 @@ export type Database = {
           clinic_address?: string | null
           clinic_name?: string | null
           created_at?: string
-          crefito?: string | null
+          crefito: string
           email?: string | null
           full_name: string
           id?: string
@@ -377,7 +377,7 @@ export type Database = {
           clinic_address?: string | null
           clinic_name?: string | null
           created_at?: string
-          crefito?: string | null
+          crefito?: string
           email?: string | null
           full_name?: string
           id?: string

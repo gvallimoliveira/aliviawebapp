@@ -128,6 +128,8 @@ const ProfessionalRegister = () => {
     return urlData.publicUrl;
   };
 
+  const CREFITO_REGEX = /^\d{1,6}-[A-Z]$/;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -135,8 +137,13 @@ const ProfessionalRegister = () => {
       toast({ title: t("prof.required_fields"), variant: "destructive" });
       return;
     }
-    if (!form.crefito.trim()) {
+    const normalizedCrefito = form.crefito.trim().toUpperCase();
+    if (!normalizedCrefito) {
       toast({ title: t("prof.crefito_required"), variant: "destructive" });
+      return;
+    }
+    if (!CREFITO_REGEX.test(normalizedCrefito)) {
+      toast({ title: t("prof.crefito_invalid_format"), variant: "destructive" });
       return;
     }
     if (!form.social_media.trim()) {
@@ -145,12 +152,22 @@ const ProfessionalRegister = () => {
     }
     setSaving(true);
     try {
+      // Check for duplicate CREFITO
+      const { data: dupCheck } = await (supabase.from("professionals" as any) as any)
+        .select("id, user_id")
+        .eq("crefito", normalizedCrefito)
+        .maybeSingle();
+      if (dupCheck && dupCheck.user_id !== user.id) {
+        toast({ title: t("prof.crefito_already_registered"), variant: "destructive" });
+        setSaving(false);
+        return;
+      }
       let photoUrl: string | null = null;
       if (photoFile) {
         photoUrl = await uploadPhoto();
       }
 
-      const payload: any = { ...form, user_id: user.id };
+      const payload: any = { ...form, crefito: normalizedCrefito, user_id: user.id };
       if (photoUrl) {
         payload.profile_photo_url = photoUrl;
       }
@@ -305,7 +322,14 @@ const ProfessionalRegister = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>{t("prof.crefito")} *</Label>
-                  <Input value={form.crefito} onChange={(e) => setForm({ ...form, crefito: e.target.value })} required />
+                  <Input
+                    value={form.crefito}
+                    onChange={(e) => setForm({ ...form, crefito: e.target.value.toUpperCase() })}
+                    placeholder="000000-F"
+                    maxLength={8}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">{t("prof.crefito_invalid_format")}</p>
                 </div>
               </div>
 
