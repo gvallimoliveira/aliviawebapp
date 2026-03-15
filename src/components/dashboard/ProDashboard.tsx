@@ -22,6 +22,7 @@ import {
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
+import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
 
 interface ProDashboardProps {
@@ -255,6 +256,11 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
           </Card>
         </div>
 
+        {/* Analytics Charts (demo) */}
+        <div className="opacity-60">
+          <ProAnalyticsCharts assessments={displayAssessments} />
+        </div>
+
         {/* Blurred patient list & dashboard */}
         <div className="relative min-h-[300px]">
           <Tabs defaultValue="assessments" className="w-full">
@@ -448,7 +454,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </CardContent>
       </Card>
 
-      {/* Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="py-4 text-center">
@@ -463,6 +469,9 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Analytics Charts */}
+      <ProAnalyticsCharts assessments={patientAssessments} />
 
       {/* Tabs: Assessments vs Evolution */}
       <Tabs defaultValue="assessments" className="w-full">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, TrendingDown, TrendingUp, Minus,
@@ -90,6 +91,12 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
           const trend = firstScore != null && lastScore != null
             ? lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable"
             : null;
+          // Sparkline data for this patient
+          const sparkData = p.assessments
+            .filter((a: any) => a.pain_score != null)
+            .map((a: any, i: number) => ({ i, s: a.pain_score }));
+          const sparkColor = trend === "improving" ? "hsl(150, 60%, 45%)" : trend === "worsening" ? "hsl(0, 70%, 55%)" : "hsl(var(--primary))";
+
           return (
             <Card
               key={p.email}
@@ -133,6 +140,24 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
                       </span>
                     </div>
                   </div>
+                  {/* Mini sparkline */}
+                  {sparkData.length >= 2 && (
+                    <div className="w-20 h-8 shrink-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={sparkData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+                          <Area
+                            type="monotone"
+                            dataKey="s"
+                            stroke={sparkColor}
+                            fill={sparkColor}
+                            fillOpacity={0.15}
+                            strokeWidth={1.5}
+                            dot={false}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                   <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                 </div>
               </CardContent>
@@ -214,15 +239,15 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
           <CardContent>
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={painData}>
+                <AreaChart data={painData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                   <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                   <Tooltip
                     contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
                   />
-                  <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} name="Dor" />
-                </LineChart>
+                  <Area type="monotone" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4 }} name="Dor" />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -236,8 +261,17 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-foreground">{painData[0].score}/10</p>
-            <p className="text-xs text-muted-foreground">{painData[0].date}</p>
+            <div className="h-32">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={painData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                  <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
+                  <Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Dor" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       ) : null}
