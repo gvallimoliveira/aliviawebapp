@@ -22,6 +22,7 @@ import {
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
+import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
 
 interface ProDashboardProps {
