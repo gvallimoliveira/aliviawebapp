@@ -145,7 +145,7 @@ const AssessmentView = () => {
 
       <main className="container max-w-2xl py-8 px-4 space-y-6">
         {/* Back button */}
-        <Button variant="ghost" onClick={() => navigate("/dashboard")} className="gap-2 -ml-2">
+        <Button variant="ghost" onClick={() => navigate(backUrl)} className="gap-2 -ml-2">
           <ArrowLeft className="h-4 w-4" />
           {t("assessment_view.back")}
         </Button>
