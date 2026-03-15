@@ -241,7 +241,7 @@ const Dashboard = () => {
       )}
 
       {/* Quick Actions */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div data-onboarding="patient-assessments" className="grid gap-4 sm:grid-cols-2">
         <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group" onClick={() => navigate("/assessment/basic")}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
