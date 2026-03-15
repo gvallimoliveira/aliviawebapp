@@ -45,10 +45,13 @@ serve(async (req) => {
     }
 
     const priceId = plan === "annual"
-      ? "price_1T853mCBxbFcCp8It1Z6GNNh"  // Annual R$418,80/year
+      ? "price_1T853mCBxbFcCp8It1Z6GNNh"  // Annual R$418,80 (one-time payment)
       : "price_1T7Rv6CBxbFcCp8I1Tsv0WwS";  // Monthly R$49/month
 
-    logStep("Plan selected", { plan, priceId });
+    // Annual = payment (one-time), Monthly = subscription
+    const sessionMode = plan === "annual" ? "payment" : "subscription";
+
+    logStep("Plan selected", { plan, priceId, sessionMode });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not set");
@@ -73,9 +76,13 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      mode: "subscription",
+      mode: sessionMode,
       success_url: `${origin}/dashboard?subscription=success`,
       cancel_url: `${origin}/dashboard?subscription=cancelled`,
+      metadata: {
+        user_id: user.id,
+        plan,
+      },
     });
 
     logStep("Checkout session created", { sessionId: session.id });
