@@ -29,6 +29,13 @@ interface PremiumAccess {
   available_discount?: { discount_percent: number } | null;
 }
 
+const patientSteps: OnboardingStep[] = [
+  { targetId: "patient-welcome", titleKey: "onboarding.patient.step1.title", descriptionKey: "onboarding.patient.step1.desc" },
+  { targetId: "patient-assessments", titleKey: "onboarding.patient.step2.title", descriptionKey: "onboarding.patient.step2.desc", position: "bottom" },
+  { targetId: "patient-diary", titleKey: "onboarding.patient.step3.title", descriptionKey: "onboarding.patient.step3.desc", position: "bottom" },
+  { targetId: "patient-find-pro", titleKey: "onboarding.patient.step4.title", descriptionKey: "onboarding.patient.step4.desc", position: "bottom" },
+];
+
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { t, toggleLanguage } = useLanguage();
@@ -43,6 +50,7 @@ const Dashboard = () => {
   const [professional, setProfessional] = useState<any>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
 
+  const onboarding = useOnboarding("onboarding_patient_completed", patientSteps);
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
