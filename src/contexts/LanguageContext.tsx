@@ -877,6 +877,28 @@ const translations: Record<Language, Record<string, string>> = {
     "anamnesis.ottawa_knee": "Você consegue dar 4 passos com apoio total logo após o evento?",
     "anamnesis.ottawa_ankle": "Você consegue dar 4 passos com apoio total logo após o evento?",
     "anamnesis.ottawa_warning": "⚠️ Recomendamos procurar atendimento médico para descartar fratura antes de continuar.",
+
+    // Onboarding
+    "onboarding.next": "Próximo",
+    "onboarding.skip": "Pular tutorial",
+    "onboarding.finish": "Entendi!",
+    "onboarding.restart": "Rever tutorial",
+    "onboarding.patient.step1.title": "Bem-vindo ao Aliv.iA! 👋",
+    "onboarding.patient.step1.desc": "Este é o seu painel de saúde. Aqui você acompanha suas avaliações, evolução e muito mais.",
+    "onboarding.patient.step2.title": "Faça sua avaliação",
+    "onboarding.patient.step2.desc": "Escolha entre a avaliação Básica (gratuita) ou Premium (com plano de tratamento completo).",
+    "onboarding.patient.step3.title": "Diário de Dor",
+    "onboarding.patient.step3.desc": "Registre sua dor diariamente e acompanhe a evolução ao longo do tempo.",
+    "onboarding.patient.step4.title": "Encontre um profissional",
+    "onboarding.patient.step4.desc": "Busque fisioterapeutas especializados perto de você para acompanhamento presencial.",
+    "onboarding.pro.step1.title": "Seu painel profissional 🩺",
+    "onboarding.pro.step1.desc": "Aqui você gerencia seus pacientes, acompanha evoluções e visualiza métricas da sua prática.",
+    "onboarding.pro.step2.title": "Link de avaliação",
+    "onboarding.pro.step2.desc": "Copie e envie este link para seus pacientes. Eles fazem a avaliação e o resultado aparece aqui automaticamente.",
+    "onboarding.pro.step3.title": "Seus pacientes",
+    "onboarding.pro.step3.desc": "Veja todas as avaliações realizadas pelos seus pacientes e acompanhe a evolução de cada um.",
+    "onboarding.pro.step4.title": "Assinatura Pro",
+    "onboarding.pro.step4.desc": "Assine o plano Pro para desbloquear o acesso completo ao painel, link personalizado e relatórios.",
   },
   en: {
     // Nav
