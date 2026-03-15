@@ -114,8 +114,12 @@ const ProfessionalAssessment = () => {
     setStep("questionnaire");
   };
 
-  const handleQuestionnaireComplete = (results: QuestionnaireResult[]) => {
+  const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
     setQuestionnaireResults(results);
+    // Persist questionnaire results to DB
+    if (assessmentId && results.length > 0) {
+      await updateAssessment(assessmentId, { test_results: results as any });
+    }
     generateDiagnosis(anamnesisData!, results, assessmentId);
   };
 
