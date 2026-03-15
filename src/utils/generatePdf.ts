@@ -60,6 +60,7 @@ interface PdfOptions {
   anamnesisData?: AnamnesisData;
   painRegions?: string[];
   testResults?: any;
+  professionalNotes?: string;
 }
 
 // Design tokens from webapp (HSL converted to RGB)
