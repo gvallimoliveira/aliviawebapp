@@ -11,7 +11,7 @@ import {
   BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import {
-  ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, TrendingDown, TrendingUp, Minus,
+  ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search,
 } from "lucide-react";
 import PainMapView from "@/components/assessment/PainMapView";
