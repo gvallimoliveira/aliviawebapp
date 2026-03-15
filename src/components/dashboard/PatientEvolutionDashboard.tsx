@@ -243,8 +243,8 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
   // Questionnaire scores across assessments
   const questionnaireMap = new Map<string, { dates: string[]; scores: number[]; severities: string[]; names: string[] }>();
   patient.assessments.forEach((a: any) => {
-    const results = a.test_results;
-    if (!Array.isArray(results)) return;
+    const results = normalizeTestResults(a.test_results);
+    if (results.length === 0) return;
     results.forEach((r: any) => {
       if (!r.questionnaireId || r.percentageScore == null) return;
       const name = r.questionnaireName || r.questionnaireId.toUpperCase();
