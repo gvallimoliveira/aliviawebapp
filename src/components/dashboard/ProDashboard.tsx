@@ -216,7 +216,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     return (
       <div className="space-y-6">
         {/* Demo badge */}
-        <Card className="border-primary/20 bg-primary/5">
+        <Card data-onboarding="pro-welcome" className="border-primary/20 bg-primary/5">
           <CardContent className="py-3 px-5 flex items-center gap-3">
             <Sparkles className="h-5 w-5 text-primary shrink-0" />
             <p className="text-sm text-foreground">
