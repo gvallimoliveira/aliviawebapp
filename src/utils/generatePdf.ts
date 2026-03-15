@@ -377,7 +377,10 @@ async function renderPainMapSection(doc: jsPDF, y: number, painRegions: string[]
 
 // ── Render Test Results Section ──
 function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt: boolean): number {
-  if (!testResults || (Array.isArray(testResults) && testResults.length === 0)) return y;
+  // Normalize: could be null, empty object {}, or array
+  if (!testResults) return y;
+  if (typeof testResults === "object" && !Array.isArray(testResults) && Object.keys(testResults).length === 0) return y;
+  if (Array.isArray(testResults) && testResults.length === 0) return y;
 
   const items = Array.isArray(testResults) ? testResults : [testResults];
   const questionnaireItems = items.filter((t: any) => t.questionnaireId && t.percentageScore != null);

@@ -428,7 +428,9 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
       ) : (
         <Card className="border-dashed">
           <CardContent className="py-6 text-center">
-            <p className="text-sm text-muted-foreground">{t("pro.no_questionnaire_data")}</p>
+            <ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p>
           </CardContent>
         </Card>
       )}
