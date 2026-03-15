@@ -31,6 +31,13 @@ interface ProDashboardProps {
   professional: any;
 }
 
+const proSteps: OnboardingStep[] = [
+  { targetId: "pro-welcome", titleKey: "onboarding.pro.step1.title", descriptionKey: "onboarding.pro.step1.desc" },
+  { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom" },
+  { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom" },
+  { targetId: "pro-subscription", titleKey: "onboarding.pro.step4.title", descriptionKey: "onboarding.pro.step4.desc", position: "bottom" },
+];
+
 const ProDashboard = ({ professional }: ProDashboardProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
