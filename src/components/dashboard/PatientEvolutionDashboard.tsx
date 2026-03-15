@@ -91,6 +91,12 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
           const trend = firstScore != null && lastScore != null
             ? lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable"
             : null;
+          // Sparkline data for this patient
+          const sparkData = p.assessments
+            .filter((a: any) => a.pain_score != null)
+            .map((a: any, i: number) => ({ i, s: a.pain_score }));
+          const sparkColor = trend === "improving" ? "hsl(150, 60%, 45%)" : trend === "worsening" ? "hsl(0, 70%, 55%)" : "hsl(var(--primary))";
+
           return (
             <Card
               key={p.email}
@@ -134,6 +140,24 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
                       </span>
                     </div>
                   </div>
+                  {/* Mini sparkline */}
+                  {sparkData.length >= 2 && (
+                    <div className="w-20 h-8 shrink-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={sparkData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+                          <Area
+                            type="monotone"
+                            dataKey="s"
+                            stroke={sparkColor}
+                            fill={sparkColor}
+                            fillOpacity={0.15}
+                            strokeWidth={1.5}
+                            dot={false}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                   <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                 </div>
               </CardContent>
