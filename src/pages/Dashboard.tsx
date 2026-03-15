@@ -13,9 +13,11 @@ import PainDiary from "@/components/dashboard/PainDiary";
 import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
 import ReferralCard from "@/components/dashboard/ReferralCard";
 import ProDashboard from "@/components/dashboard/ProDashboard";
+import OnboardingTour from "@/components/onboarding/OnboardingTour";
+import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import {
   Globe, LogOut, Plus, ClipboardList, Calendar, MapPin, ChevronRight,
-  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus, Heart, Stethoscope
+  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus, Heart, Stethoscope, RotateCcw
 } from "lucide-react";
 
 interface PremiumAccess {
@@ -26,6 +28,13 @@ interface PremiumAccess {
   paid_at?: string;
   available_discount?: { discount_percent: number } | null;
 }
+
+const patientSteps: OnboardingStep[] = [
+  { targetId: "patient-welcome", titleKey: "onboarding.patient.step1.title", descriptionKey: "onboarding.patient.step1.desc" },
+  { targetId: "patient-assessments", titleKey: "onboarding.patient.step2.title", descriptionKey: "onboarding.patient.step2.desc", position: "bottom" },
+  { targetId: "patient-diary", titleKey: "onboarding.patient.step3.title", descriptionKey: "onboarding.patient.step3.desc", position: "bottom" },
+  { targetId: "patient-find-pro", titleKey: "onboarding.patient.step4.title", descriptionKey: "onboarding.patient.step4.desc", position: "bottom" },
+];
 
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -41,6 +50,7 @@ const Dashboard = () => {
   const [professional, setProfessional] = useState<any>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
 
+  const onboarding = useOnboarding("onboarding_patient_completed", patientSteps);
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
@@ -231,7 +241,7 @@ const Dashboard = () => {
       )}
 
       {/* Quick Actions */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div data-onboarding="patient-assessments" className="grid gap-4 sm:grid-cols-2">
         <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group" onClick={() => navigate("/assessment/basic")}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -257,7 +267,7 @@ const Dashboard = () => {
       </div>
 
       {/* Find Professional / Register CTA */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div data-onboarding="patient-find-pro" className="grid gap-4 sm:grid-cols-2">
         <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group relative" onClick={() => navigate("/professionals")}>
           {!premiumLoading && !premiumAccess?.has_access && (
             <Badge variant="outline" className="absolute top-3 right-3 bg-primary/10 text-primary border-primary/20 text-[10px] gap-1">
@@ -294,7 +304,9 @@ const Dashboard = () => {
       <ReferralCard availableDiscount={premiumAccess?.available_discount} />
 
       {/* Pain Diary */}
-      <PainDiary />
+      <div data-onboarding="patient-diary">
+        <PainDiary />
+      </div>
 
       {/* Before/After Comparison */}
       <AssessmentComparison assessments={assessments} />
@@ -453,11 +465,19 @@ const Dashboard = () => {
 
       <main className="container max-w-4xl py-8 px-4 space-y-8">
         {/* Welcome */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            {t("dashboard.welcome")}{profile?.full_name ? `, ${profile.full_name}` : ""}
-          </h1>
-          <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
+        <div data-onboarding="patient-welcome" className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("dashboard.welcome")}{profile?.full_name ? `, ${profile.full_name}` : ""}
+            </h1>
+            <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
+          </div>
+          {!onboarding.isActive && (
+            <Button variant="ghost" size="sm" onClick={onboarding.restart} className="gap-1.5 text-xs text-muted-foreground">
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t("onboarding.restart")}
+            </Button>
+          )}
         </div>
 
         {professional ? (
@@ -488,6 +508,15 @@ const Dashboard = () => {
           </div>
         )}
       </main>
+
+      <OnboardingTour
+        step={onboarding.step}
+        currentStep={onboarding.currentStep}
+        totalSteps={onboarding.totalSteps}
+        isActive={onboarding.isActive}
+        onNext={onboarding.next}
+        onSkip={onboarding.skip}
+      />
     </div>
   );
 };

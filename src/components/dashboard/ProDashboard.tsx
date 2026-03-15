@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import OnboardingTour from "@/components/onboarding/OnboardingTour";
+import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
-  AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift,
+  AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, RotateCcw,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
@@ -28,6 +30,13 @@ import { generateAssessmentPdf } from "@/utils/generatePdf";
 interface ProDashboardProps {
   professional: any;
 }
+
+const proSteps: OnboardingStep[] = [
+  { targetId: "pro-welcome", titleKey: "onboarding.pro.step1.title", descriptionKey: "onboarding.pro.step1.desc" },
+  { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom" },
+  { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom" },
+  { targetId: "pro-subscription", titleKey: "onboarding.pro.step4.title", descriptionKey: "onboarding.pro.step4.desc", position: "bottom" },
+];
 
 const ProDashboard = ({ professional }: ProDashboardProps) => {
   const { t } = useLanguage();
@@ -42,6 +51,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [lifetimeLoading, setLifetimeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const proOnboarding = useOnboarding("onboarding_pro_completed", proSteps);
 
   useEffect(() => {
     checkSubscription();
@@ -206,7 +216,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     return (
       <div className="space-y-6">
         {/* Demo badge */}
-        <Card className="border-primary/20 bg-primary/5">
+        <Card data-onboarding="pro-welcome" className="border-primary/20 bg-primary/5">
           <CardContent className="py-3 px-5 flex items-center gap-3">
             <Sparkles className="h-5 w-5 text-primary shrink-0" />
             <p className="text-sm text-foreground">
@@ -216,7 +226,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </Card>
 
         {/* Blurred Generate Link */}
-        <div className="relative">
+        <div data-onboarding="pro-link" className="relative">
           <Card className="border-primary/20 opacity-60">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -262,8 +272,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </div>
 
         {/* Blurred patient list & dashboard */}
-        <div className="relative min-h-[300px]">
-          <Tabs defaultValue="assessments" className="w-full">
+        <div data-onboarding="pro-patients" className="relative min-h-[300px]">
+          <Tabs data-onboarding="pro-subscription" defaultValue="assessments" className="w-full">
             <TabsList className="w-full grid grid-cols-2">
               <TabsTrigger value="assessments" className="gap-1.5">
                 <Users className="h-4 w-4" />
@@ -322,6 +332,15 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
           </Tabs>
           {renderBlurOverlay()}
         </div>
+
+        <OnboardingTour
+          step={proOnboarding.step}
+          currentStep={proOnboarding.currentStep}
+          totalSteps={proOnboarding.totalSteps}
+          isActive={proOnboarding.isActive}
+          onNext={proOnboarding.next}
+          onSkip={proOnboarding.skip}
+        />
       </div>
     );
   }
@@ -330,7 +349,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   return (
     <div className="space-y-6">
       {/* Status bar */}
-      <Card className="border-emerald-200 bg-emerald-500/5">
+      <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
         <CardContent className="py-4 px-5 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
@@ -433,7 +452,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       ))}
 
       {/* Generate Link */}
-      <Card className="border-primary/20">
+      <Card data-onboarding="pro-link" className="border-primary/20">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Link2 className="h-4 w-4 text-primary" />
@@ -474,10 +493,31 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       <ProAnalyticsCharts assessments={patientAssessments} />
 
       {/* Patient list grouped by email */}
-      <PatientEvolutionDashboard
-        assessments={patientAssessments}
-        professionalId={professional.id}
-        onDownloadPdf={handleDownloadPdf}
+      <div data-onboarding="pro-patients">
+        <PatientEvolutionDashboard
+          assessments={patientAssessments}
+          professionalId={professional.id}
+          onDownloadPdf={handleDownloadPdf}
+        />
+      </div>
+
+      {/* Restart tutorial */}
+      {!proOnboarding.isActive && (
+        <div className="flex justify-center">
+          <Button variant="ghost" size="sm" onClick={proOnboarding.restart} className="gap-1.5 text-xs text-muted-foreground">
+            <RotateCcw className="h-3.5 w-3.5" />
+            {t("onboarding.restart")}
+          </Button>
+        </div>
+      )}
+
+      <OnboardingTour
+        step={proOnboarding.step}
+        currentStep={proOnboarding.currentStep}
+        totalSteps={proOnboarding.totalSteps}
+        isActive={proOnboarding.isActive}
+        onNext={proOnboarding.next}
+        onSkip={proOnboarding.skip}
       />
     </div>
   );
