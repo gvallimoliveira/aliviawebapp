@@ -465,11 +465,19 @@ const Dashboard = () => {
 
       <main className="container max-w-4xl py-8 px-4 space-y-8">
         {/* Welcome */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            {t("dashboard.welcome")}{profile?.full_name ? `, ${profile.full_name}` : ""}
-          </h1>
-          <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
+        <div data-onboarding="patient-welcome" className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("dashboard.welcome")}{profile?.full_name ? `, ${profile.full_name}` : ""}
+            </h1>
+            <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
+          </div>
+          {!onboarding.isActive && (
+            <Button variant="ghost" size="sm" onClick={onboarding.restart} className="gap-1.5 text-xs text-muted-foreground">
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t("onboarding.restart")}
+            </Button>
+          )}
         </div>
 
         {professional ? (
