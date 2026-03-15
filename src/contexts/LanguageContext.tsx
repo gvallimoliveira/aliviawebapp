@@ -278,6 +278,7 @@ const translations: Record<Language, Record<string, string>> = {
     "payment.unlock_title": "Desbloqueie sua avaliação completa",
     "payment.unlock_desc": "Inclui anamnese completa, testes funcionais, diagnóstico detalhado com explicação e plano de tratamento personalizado por fases.",
     "payment.includes_redo": "Assinatura mensal — 2 avaliações por ciclo",
+    "payment.single_desc": "Pagamento único — 1 avaliação completa",
     "payment.includes_sub_desc": "Cancele quando quiser",
     "payment.feature_1": "Testes funcionais guiados por vídeo",
     "payment.feature_2": "Diagnóstico com explicação detalhada",
