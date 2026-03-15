@@ -484,10 +484,31 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       <ProAnalyticsCharts assessments={patientAssessments} />
 
       {/* Patient list grouped by email */}
-      <PatientEvolutionDashboard
-        assessments={patientAssessments}
-        professionalId={professional.id}
-        onDownloadPdf={handleDownloadPdf}
+      <div data-onboarding="pro-patients">
+        <PatientEvolutionDashboard
+          assessments={patientAssessments}
+          professionalId={professional.id}
+          onDownloadPdf={handleDownloadPdf}
+        />
+      </div>
+
+      {/* Restart tutorial */}
+      {!proOnboarding.isActive && (
+        <div className="flex justify-center">
+          <Button variant="ghost" size="sm" onClick={proOnboarding.restart} className="gap-1.5 text-xs text-muted-foreground">
+            <RotateCcw className="h-3.5 w-3.5" />
+            {t("onboarding.restart")}
+          </Button>
+        </div>
+      )}
+
+      <OnboardingTour
+        step={proOnboarding.step}
+        currentStep={proOnboarding.currentStep}
+        totalSteps={proOnboarding.totalSteps}
+        isActive={proOnboarding.isActive}
+        onNext={proOnboarding.next}
+        onSkip={proOnboarding.skip}
       />
     </div>
   );
