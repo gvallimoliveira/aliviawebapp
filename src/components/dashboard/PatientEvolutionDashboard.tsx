@@ -239,15 +239,15 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
           <CardContent>
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={painData}>
+                <AreaChart data={painData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                   <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                   <Tooltip
                     contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
                   />
-                  <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} name="Dor" />
-                </LineChart>
+                  <Area type="monotone" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4 }} name="Dor" />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -261,8 +261,17 @@ const PatientEvolutionDashboard = ({ assessments }: PatientEvolutionDashboardPro
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-foreground">{painData[0].score}/10</p>
-            <p className="text-xs text-muted-foreground">{painData[0].date}</p>
+            <div className="h-32">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={painData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                  <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
+                  <Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Dor" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       ) : null}

@@ -256,6 +256,11 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
           </Card>
         </div>
 
+        {/* Analytics Charts (demo) */}
+        <div className="opacity-60">
+          <ProAnalyticsCharts assessments={displayAssessments} />
+        </div>
+
         {/* Blurred patient list & dashboard */}
         <div className="relative min-h-[300px]">
           <Tabs defaultValue="assessments" className="w-full">
