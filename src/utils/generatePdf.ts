@@ -476,7 +476,18 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
   return y;
 }
 
-export async function generateAssessmentPdf({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults }: PdfOptions) {
+export async function generateAssessmentPdfBlob(options: PdfOptions): Promise<Blob> {
+  const doc = await _buildPdfDoc(options);
+  return doc.output("blob");
+}
+
+export async function generateAssessmentPdf(options: PdfOptions) {
+  const doc = await _buildPdfDoc(options);
+  const isPt = options.language === "pt";
+  doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
+async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes }: PdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPt = language === "pt";
   let y = MARGIN;
