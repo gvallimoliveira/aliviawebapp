@@ -226,7 +226,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </Card>
 
         {/* Blurred Generate Link */}
-        <div className="relative">
+        <div data-onboarding="pro-link" className="relative">
           <Card className="border-primary/20 opacity-60">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
