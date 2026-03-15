@@ -102,6 +102,7 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Group assessments by patient_email (fallback to patient_name)
   const patients = useMemo(() => {
