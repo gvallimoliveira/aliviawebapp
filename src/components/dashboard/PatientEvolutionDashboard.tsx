@@ -15,6 +15,59 @@ import {
 } from "lucide-react";
 import PainMapView from "@/components/assessment/PainMapView";
 
+// Translate i18n anamnesis keys to display text
+function translateKey(key: string): string {
+  const map: Record<string, string> = {
+    "anamnesis.complaint.neck_pain": "Dor no pescoço",
+    "anamnesis.complaint.back_pain": "Dor nas costas",
+    "anamnesis.complaint.shoulder_pain": "Dor no ombro",
+    "anamnesis.complaint.knee_pain": "Dor no joelho",
+    "anamnesis.complaint.hip_pain": "Dor no quadril",
+    "anamnesis.complaint.ankle_pain": "Dor no tornozelo",
+    "anamnesis.complaint.wrist_pain": "Dor no punho",
+    "anamnesis.complaint.elbow_pain": "Dor no cotovelo",
+    "anamnesis.complaint.foot_pain": "Dor no pé",
+    "anamnesis.complaint.headache": "Cefaleia",
+    "anamnesis.onset.sudden": "Início súbito",
+    "anamnesis.onset.gradual": "Início gradual",
+    "anamnesis.onset.trauma": "Trauma / Lesão",
+    "anamnesis.pain_type.local": "Dor local",
+    "anamnesis.pain_type.radiating": "Dor irradiada",
+    "anamnesis.pain_type.burning": "Queimação",
+    "anamnesis.pain_type.tingling": "Formigamento",
+    "anamnesis.pain_type.throbbing": "Latejante",
+    "anamnesis.pain_type.stabbing": "Pontada",
+    "anamnesis.evolution.improving": "Melhorando",
+    "anamnesis.evolution.stable": "Estável",
+    "anamnesis.evolution.worsening": "Piorando",
+    "anamnesis.activity.sedentary": "Sedentário",
+    "anamnesis.activity.light": "Atividade leve",
+    "anamnesis.activity.regular": "Atividade regular",
+    "anamnesis.activity.athlete": "Atleta",
+    "anamnesis.duration.less_week": "Menos de uma semana",
+    "anamnesis.duration.one_month": "Cerca de 1 mês",
+    "anamnesis.duration.three_six_months": "3 a 6 meses",
+    "anamnesis.duration.one_year_plus": "1 ano ou mais",
+    "anamnesis.gym.yes": "Sim",
+    "anamnesis.gym.no": "Não",
+    "anamnesis.sex.male": "Masculino",
+    "anamnesis.sex.female": "Feminino",
+    "anamnesis.age.under_25": "Menos de 25 anos",
+    "anamnesis.age.25_34": "25–34 anos",
+    "anamnesis.age.35_44": "35–44 anos",
+    "anamnesis.age.45_55": "45–55 anos",
+    "anamnesis.age.over_55": "Mais de 55 anos",
+  };
+  return map[key] || key;
+}
+
+// Normalize test_results: could be null, {}, or an array
+function normalizeTestResults(tr: any): any[] {
+  if (Array.isArray(tr)) return tr;
+  if (tr && typeof tr === "object" && Object.keys(tr).length > 0) return [tr];
+  return [];
+}
+
 interface PatientEvolutionDashboardProps {
   assessments: any[];
   professionalId: string;
