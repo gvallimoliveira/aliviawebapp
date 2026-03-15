@@ -167,7 +167,7 @@ const ProfessionalRegister = () => {
         photoUrl = await uploadPhoto();
       }
 
-      const payload: any = { ...form, user_id: user.id };
+      const payload: any = { ...form, crefito: normalizedCrefito, user_id: user.id };
       if (photoUrl) {
         payload.profile_photo_url = photoUrl;
       }

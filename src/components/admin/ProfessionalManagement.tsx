@@ -121,7 +121,21 @@ const ProfessionalManagement = ({ language }: Props) => {
           {list.map((p) => (
             <TableRow key={p.id}>
               <TableCell className="font-medium">{p.full_name}</TableCell>
-              <TableCell className="text-muted-foreground">{p.crefito || "—"}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono text-sm font-semibold">{p.crefito || "—"}</span>
+                  {p.crefito && (
+                    <a
+                      href={`https://www.coffito.gov.br/nsite/?page_id=2350`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:underline"
+                    >
+                      {language === "pt" ? "Verificar" : "Verify"}
+                    </a>
+                  )}
+                </div>
+              </TableCell>
               <TableCell className="text-muted-foreground">{p.city}/{p.state}</TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
