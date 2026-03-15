@@ -102,11 +102,95 @@ const SEVERITY_COLORS: Record<string, string> = {
   extreme: "bg-destructive",
 };
 
-const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf }: PatientEvolutionDashboardProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [noteSaving, setNoteSaving] = useState<Record<string, boolean>>({});
+  const [batchExporting, setBatchExporting] = useState(false);
+  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
+
+  // Load notes for all assessments
+  useEffect(() => {
+    if (!professionalId || assessments.length === 0) return;
+    const assessmentIds = assessments.map((a) => a.id);
+    supabase
+      .from("professional_notes")
+      .select("assessment_id, content")
+      .eq("professional_id", professionalId)
+      .in("assessment_id", assessmentIds)
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach((n: any) => { map[n.assessment_id] = n.content; });
+          setNotes(map);
+        }
+      });
+  }, [professionalId, assessments]);
+
+  const saveNote = useCallback((assessmentId: string, content: string) => {
+    if (!professionalId) return;
+    setNotes((prev) => ({ ...prev, [assessmentId]: content }));
+    if (debounceTimers.current[assessmentId]) clearTimeout(debounceTimers.current[assessmentId]);
+    debounceTimers.current[assessmentId] = setTimeout(async () => {
+      setNoteSaving((prev) => ({ ...prev, [assessmentId]: true }));
+      await supabase.from("professional_notes").upsert(
+        { professional_id: professionalId, assessment_id: assessmentId, content, updated_at: new Date().toISOString() },
+        { onConflict: "professional_id,assessment_id" }
+      );
+      setNoteSaving((prev) => ({ ...prev, [assessmentId]: false }));
+    }, 1000);
+  }, [professionalId]);
+
+  const handleBatchExport = useCallback(async (targetAssessments: any[]) => {
+    const withDiagnosis = targetAssessments.filter((a) => a.diagnosis);
+    if (withDiagnosis.length === 0) {
+      toast({ title: t("pro.no_pdfs"), variant: "destructive" });
+      return;
+    }
+    setBatchExporting(true);
+    try {
+      const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
+      const lang = document.documentElement.lang === "en" ? "en" : "pt";
+      if (withDiagnosis.length === 1) {
+        // Single PDF — just download directly
+        if (onDownloadPdf) { onDownloadPdf(withDiagnosis[0]); }
+      } else {
+        const zip = new JSZip();
+        for (const a of withDiagnosis) {
+          const blob = await generateAssessmentPdfBlob({
+            diagnosis: a.diagnosis,
+            treatmentPlan: a.treatment_plan,
+            language: lang as "pt" | "en",
+            userName: a.patient_name || "Paciente",
+            anamnesisData: a.anamnesis_data,
+            painRegions: a.pain_regions,
+            testResults: a.test_results,
+            professionalNotes: notes[a.id] || undefined,
+          });
+          const date = new Date(a.created_at).toISOString().slice(0, 10);
+          const name = (a.patient_name || "paciente").replace(/\s+/g, "_");
+          zip.file(`AliviA_${name}_${date}.pdf`, blob);
+        }
+        const content = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(content);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `AliviA_Relatorios_${new Date().toISOString().slice(0, 10)}.zip`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+      toast({ title: t("pro.export_done") });
+    } catch (e) {
+      console.error(e);
+      toast({ title: t("pro.export_error"), variant: "destructive" });
+    } finally {
+      setBatchExporting(false);
+    }
+  }, [notes, onDownloadPdf, t, toast]);
 
   // Group assessments by patient_email (fallback to patient_name)
   const patients = useMemo(() => {
