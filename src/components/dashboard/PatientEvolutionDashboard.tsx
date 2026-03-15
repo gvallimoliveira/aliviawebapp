@@ -15,6 +15,59 @@ import {
 } from "lucide-react";
 import PainMapView from "@/components/assessment/PainMapView";
 
+// Translate i18n anamnesis keys to display text
+function translateKey(key: string): string {
+  const map: Record<string, string> = {
+    "anamnesis.complaint.neck_pain": "Dor no pescoço",
+    "anamnesis.complaint.back_pain": "Dor nas costas",
+    "anamnesis.complaint.shoulder_pain": "Dor no ombro",
+    "anamnesis.complaint.knee_pain": "Dor no joelho",
+    "anamnesis.complaint.hip_pain": "Dor no quadril",
+    "anamnesis.complaint.ankle_pain": "Dor no tornozelo",
+    "anamnesis.complaint.wrist_pain": "Dor no punho",
+    "anamnesis.complaint.elbow_pain": "Dor no cotovelo",
+    "anamnesis.complaint.foot_pain": "Dor no pé",
+    "anamnesis.complaint.headache": "Cefaleia",
+    "anamnesis.onset.sudden": "Início súbito",
+    "anamnesis.onset.gradual": "Início gradual",
+    "anamnesis.onset.trauma": "Trauma / Lesão",
+    "anamnesis.pain_type.local": "Dor local",
+    "anamnesis.pain_type.radiating": "Dor irradiada",
+    "anamnesis.pain_type.burning": "Queimação",
+    "anamnesis.pain_type.tingling": "Formigamento",
+    "anamnesis.pain_type.throbbing": "Latejante",
+    "anamnesis.pain_type.stabbing": "Pontada",
+    "anamnesis.evolution.improving": "Melhorando",
+    "anamnesis.evolution.stable": "Estável",
+    "anamnesis.evolution.worsening": "Piorando",
+    "anamnesis.activity.sedentary": "Sedentário",
+    "anamnesis.activity.light": "Atividade leve",
+    "anamnesis.activity.regular": "Atividade regular",
+    "anamnesis.activity.athlete": "Atleta",
+    "anamnesis.duration.less_week": "Menos de uma semana",
+    "anamnesis.duration.one_month": "Cerca de 1 mês",
+    "anamnesis.duration.three_six_months": "3 a 6 meses",
+    "anamnesis.duration.one_year_plus": "1 ano ou mais",
+    "anamnesis.gym.yes": "Sim",
+    "anamnesis.gym.no": "Não",
+    "anamnesis.sex.male": "Masculino",
+    "anamnesis.sex.female": "Feminino",
+    "anamnesis.age.under_25": "Menos de 25 anos",
+    "anamnesis.age.25_34": "25–34 anos",
+    "anamnesis.age.35_44": "35–44 anos",
+    "anamnesis.age.45_55": "45–55 anos",
+    "anamnesis.age.over_55": "Mais de 55 anos",
+  };
+  return map[key] || key;
+}
+
+// Normalize test_results: could be null, {}, or an array
+function normalizeTestResults(tr: any): any[] {
+  if (Array.isArray(tr)) return tr;
+  if (tr && typeof tr === "object" && Object.keys(tr).length > 0) return [tr];
+  return [];
+}
+
 interface PatientEvolutionDashboardProps {
   assessments: any[];
   professionalId: string;
@@ -49,25 +102,26 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
   const navigate = useNavigate();
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
 
-  // Group assessments by patient_email
+  // Group assessments by patient_email (fallback to patient_name)
   const patients = useMemo(() => {
     const map = new Map<string, PatientGroup>();
     assessments.forEach((a) => {
       const email = (a as any).patient_email;
-      if (!email) return;
-      if (!map.has(email)) {
-        map.set(email, {
-          email,
-          name: (a as any).patient_name || email,
+      const name = (a as any).patient_name;
+      const key = email || name || a.id; // fallback to id if both null
+      if (!map.has(key)) {
+        map.set(key, {
+          email: email || "",
+          name: name || email || "Sem nome",
           assessments: [],
           lastDate: a.created_at,
         });
       }
-      const group = map.get(email)!;
+      const group = map.get(key)!;
       group.assessments.push(a);
       if (a.created_at > group.lastDate) {
         group.lastDate = a.created_at;
-        group.name = (a as any).patient_name || group.name;
+        group.name = name || group.name;
       }
     });
     map.forEach((g) => g.assessments.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
@@ -189,8 +243,8 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
   // Questionnaire scores across assessments
   const questionnaireMap = new Map<string, { dates: string[]; scores: number[]; severities: string[]; names: string[] }>();
   patient.assessments.forEach((a: any) => {
-    const results = a.test_results;
-    if (!Array.isArray(results)) return;
+    const results = normalizeTestResults(a.test_results);
+    if (results.length === 0) return;
     results.forEach((r: any) => {
       if (!r.questionnaireId || r.percentageScore == null) return;
       const name = r.questionnaireName || r.questionnaireId.toUpperCase();
@@ -223,22 +277,27 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
 
   // Helper to extract questionnaire results from a single assessment
   const getQuestionnaireResults = (a: any) => {
-    if (!Array.isArray(a.test_results)) return [];
-    return a.test_results.filter((r: any) => r.questionnaireId && r.percentageScore != null);
+    const results = normalizeTestResults(a.test_results);
+    return results.filter((r: any) => r.questionnaireId && r.percentageScore != null);
   };
 
-  // Helper to get anamnesis summary fields
+  // Helper to get anamnesis summary fields with translated values
   const getAnamnesisFields = (a: any) => {
     const d = a.anamnesis_data;
     if (!d) return [];
     const fields: { label: string; value: string }[] = [];
-    if (d.chiefComplaint) fields.push({ label: "Queixa", value: d.chiefComplaint });
-    if (d.onset) fields.push({ label: "Início", value: d.onset });
-    if (d.evolution) fields.push({ label: "Evolução", value: d.evolution });
-    if (d.painDuration) fields.push({ label: "Duração", value: d.painDuration });
-    if (d.activityLevel) fields.push({ label: "Atividade", value: d.activityLevel });
+    if (d.chiefComplaint) fields.push({ label: "Queixa Principal", value: translateKey(d.chiefComplaint) });
+    if (d.customComplaint) fields.push({ label: "Queixa (detalhe)", value: d.customComplaint });
+    if (d.onset) fields.push({ label: "Modo de Início", value: translateKey(d.onset) });
+    if (d.evolution) fields.push({ label: "Evolução", value: translateKey(d.evolution) });
+    if (d.painDuration) fields.push({ label: "Duração da Dor", value: translateKey(d.painDuration) });
+    if (d.painTypes?.length) fields.push({ label: "Tipos de Dor", value: d.painTypes.map((p: string) => translateKey(p)).join(", ") });
+    if (d.activityLevel) fields.push({ label: "Nível de Atividade", value: translateKey(d.activityLevel) });
     if (d.aggravatingFactors) fields.push({ label: "Agravantes", value: d.aggravatingFactors });
     if (d.relievingFactors) fields.push({ label: "Aliviantes", value: d.relievingFactors });
+    if (d.hasGymAccess) fields.push({ label: "Acesso a Academia", value: translateKey(d.hasGymAccess) });
+    if (d.sex) fields.push({ label: "Sexo Biológico", value: translateKey(d.sex) });
+    if (d.ageRange) fields.push({ label: "Faixa Etária", value: translateKey(d.ageRange) });
     return fields;
   };
 
@@ -369,7 +428,9 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
       ) : (
         <Card className="border-dashed">
           <CardContent className="py-6 text-center">
-            <p className="text-sm text-muted-foreground">{t("pro.no_questionnaire_data")}</p>
+            <ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p>
           </CardContent>
         </Card>
       )}
