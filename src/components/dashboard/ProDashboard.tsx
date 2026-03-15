@@ -449,7 +449,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </CardContent>
       </Card>
 
-      {/* Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="py-4 text-center">
@@ -464,6 +464,9 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Analytics Charts */}
+      <ProAnalyticsCharts assessments={patientAssessments} />
 
       {/* Tabs: Assessments vs Evolution */}
       <Tabs defaultValue="assessments" className="w-full">
