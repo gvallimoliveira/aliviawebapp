@@ -234,12 +234,24 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
     return (
       <div className="space-y-3">
         <div className="mb-2 space-y-3">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              {t("pro.patients_title")}
-            </h3>
-            <p className="text-sm text-muted-foreground">{t("pro.patients_desc")}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                {t("pro.patients_title")}
+              </h3>
+              <p className="text-sm text-muted-foreground">{t("pro.patients_desc")}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-xl shrink-0"
+              disabled={batchExporting}
+              onClick={() => handleBatchExport(assessments)}
+            >
+              {batchExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+              {t("pro.export_pdfs")}
+            </Button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
