@@ -332,6 +332,15 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
           </Tabs>
           {renderBlurOverlay()}
         </div>
+
+        <OnboardingTour
+          step={proOnboarding.step}
+          currentStep={proOnboarding.currentStep}
+          totalSteps={proOnboarding.totalSteps}
+          isActive={proOnboarding.isActive}
+          onNext={proOnboarding.next}
+          onSkip={proOnboarding.skip}
+        />
       </div>
     );
   }
