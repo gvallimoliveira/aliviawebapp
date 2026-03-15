@@ -23,7 +23,7 @@ const InstagramIcon = ({ className }: { className?: string }) => (
 );
 
 const profiles = [
-  { handle: "@alivia.app", url: "https://instagram.com/alivia.app" },
+  { handle: "aliviawebapp", url: "https://instagram.com/alivia.app" },
   { handle: "@gvallim.fisioterapia", url: "https://instagram.com/gvallim.fisioterapia" },
 ];
 
