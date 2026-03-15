@@ -443,7 +443,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       ))}
 
       {/* Generate Link */}
-      <Card className="border-primary/20">
+      <Card data-onboarding="pro-link" className="border-primary/20">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Link2 className="h-4 w-4 text-primary" />
