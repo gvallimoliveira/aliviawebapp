@@ -384,7 +384,7 @@ const AssessmentView = () => {
           <DiagnosisResult
             diagnosis={assessment.diagnosis}
             mode={assessment.type as "basic" | "premium"}
-            onBack={() => navigate("/dashboard")}
+            onBack={() => navigate(backUrl)}
             onNewAssessment={() => navigate("/assessment/premium")}
             onGenerateTreatment={
               assessment.treatment_plan ? () => setShowTreatment(true) : undefined
