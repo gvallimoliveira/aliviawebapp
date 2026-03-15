@@ -102,7 +102,7 @@ const AssessmentView = () => {
         .single()
         .then(({ data, error }) => {
           if (error || !data) {
-            navigate("/dashboard");
+            navigate(backUrl);
           } else {
             setAssessment(data);
             if (data.treatment_plan && !data.diagnosis) {
