@@ -13,9 +13,11 @@ import PainDiary from "@/components/dashboard/PainDiary";
 import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
 import ReferralCard from "@/components/dashboard/ReferralCard";
 import ProDashboard from "@/components/dashboard/ProDashboard";
+import OnboardingTour from "@/components/onboarding/OnboardingTour";
+import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import {
   Globe, LogOut, Plus, ClipboardList, Calendar, MapPin, ChevronRight,
-  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus, Heart, Stethoscope
+  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus, Heart, Stethoscope, RotateCcw
 } from "lucide-react";
 
 interface PremiumAccess {
