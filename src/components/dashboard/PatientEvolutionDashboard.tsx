@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, TrendingDown, TrendingUp, Minus,
