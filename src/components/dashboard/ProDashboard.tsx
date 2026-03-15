@@ -340,7 +340,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   return (
     <div className="space-y-6">
       {/* Status bar */}
-      <Card className="border-emerald-200 bg-emerald-500/5">
+      <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
         <CardContent className="py-4 px-5 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
