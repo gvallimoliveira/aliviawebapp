@@ -128,6 +128,8 @@ const ProfessionalRegister = () => {
     return urlData.publicUrl;
   };
 
+  const CREFITO_REGEX = /^\d{1,6}-[A-Z]$/;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -135,8 +137,13 @@ const ProfessionalRegister = () => {
       toast({ title: t("prof.required_fields"), variant: "destructive" });
       return;
     }
-    if (!form.crefito.trim()) {
+    const normalizedCrefito = form.crefito.trim().toUpperCase();
+    if (!normalizedCrefito) {
       toast({ title: t("prof.crefito_required"), variant: "destructive" });
+      return;
+    }
+    if (!CREFITO_REGEX.test(normalizedCrefito)) {
+      toast({ title: t("prof.crefito_invalid_format"), variant: "destructive" });
       return;
     }
     if (!form.social_media.trim()) {
@@ -145,6 +152,16 @@ const ProfessionalRegister = () => {
     }
     setSaving(true);
     try {
+      // Check for duplicate CREFITO
+      const { data: dupCheck } = await (supabase.from("professionals" as any) as any)
+        .select("id, user_id")
+        .eq("crefito", normalizedCrefito)
+        .maybeSingle();
+      if (dupCheck && dupCheck.user_id !== user.id) {
+        toast({ title: t("prof.crefito_already_registered"), variant: "destructive" });
+        setSaving(false);
+        return;
+      }
       let photoUrl: string | null = null;
       if (photoFile) {
         photoUrl = await uploadPhoto();
