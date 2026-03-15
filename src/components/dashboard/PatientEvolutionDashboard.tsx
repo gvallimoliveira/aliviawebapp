@@ -277,8 +277,8 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
 
   // Helper to extract questionnaire results from a single assessment
   const getQuestionnaireResults = (a: any) => {
-    if (!Array.isArray(a.test_results)) return [];
-    return a.test_results.filter((r: any) => r.questionnaireId && r.percentageScore != null);
+    const results = normalizeTestResults(a.test_results);
+    return results.filter((r: any) => r.questionnaireId && r.percentageScore != null);
   };
 
   // Helper to get anamnesis summary fields
