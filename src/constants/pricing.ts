@@ -1,10 +1,19 @@
-// Premium — assinatura mensal B2C
-export const PREMIUM_PRICE = 99.90;
-export const PREMIUM_PRICE_FORMATTED = "R$ 99,90/mês";
+// Premium Mensal — assinatura B2C R$79,90/mês
+export const PREMIUM_PRICE = 79.90;
+export const PREMIUM_PRICE_FORMATTED = "R$ 79,90/mês";
 
 export const PREMIUM_STRIPE = {
-  product_id: "prod_U6HcKYW069jBRN",
-  price_id: "price_1T853WCBxbFcCp8IFOFnTkfY",
+  product_id: "prod_U9PZeaM93PlMwb",
+  price_id: "price_1TB6k8CBxbFcCp8I4piuJ3Dm",
+};
+
+// Premium Avulso — pagamento único R$109
+export const PREMIUM_SINGLE_PRICE = 109;
+export const PREMIUM_SINGLE_PRICE_FORMATTED = "R$ 109,00";
+
+export const PREMIUM_SINGLE_STRIPE = {
+  product_id: "prod_U9PZ5EOMytUZXX",
+  price_id: "price_1TB6kPCBxbFcCp8IUAo03Qeu",
 };
 
 // Pro Mensal — B2B
@@ -16,7 +25,7 @@ export const PRO_PLAN_STRIPE = {
   price_id: "price_1T7Rv6CBxbFcCp8I1Tsv0WwS",
 };
 
-// Pro Anual — B2B
+// Pro Anual — B2B (cobrança única de R$418,80, acesso por 1 ano)
 export const PRO_PLAN_ANNUAL_PRICE = 34.90;
 export const PRO_PLAN_ANNUAL_PRICE_FORMATTED = "R$ 34,90/mês";
 export const PRO_PLAN_ANNUAL_TOTAL = 418.80;
