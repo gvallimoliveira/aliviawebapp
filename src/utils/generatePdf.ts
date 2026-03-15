@@ -799,7 +799,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     doc.line(MARGIN, 287, PAGE_WIDTH - MARGIN, 287);
   }
 
-  doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
+  return doc;
 }
 
 // ── Helper: Section Title ──

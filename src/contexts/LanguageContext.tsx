@@ -1792,6 +1792,16 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.pro.step3.desc": "View all assessments completed by your patients and track each one's progress.",
     "onboarding.pro.step4.title": "Pro subscription",
     "onboarding.pro.step4.desc": "Subscribe to Pro to unlock full dashboard access, custom link and reports.",
+
+    // Professional Notes & Batch Export
+    "pro.private_notes": "Private notes",
+    "pro.private_notes_placeholder": "Add private clinical observations about this assessment...",
+    "pro.notes_saved": "Saved",
+    "pro.export_pdfs": "Export PDFs",
+    "pro.exporting_pdfs": "Exporting...",
+    "pro.export_done": "PDFs exported successfully!",
+    "pro.export_error": "Error exporting PDFs",
+    "pro.no_pdfs": "No assessments with diagnosis to export",
   },
 };
 

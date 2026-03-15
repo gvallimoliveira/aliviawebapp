@@ -624,6 +624,22 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
                       </div>
                     </div>
                   )}
+
+                  {/* Private notes */}
+                  <div className="border-t border-border pt-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                      <NotebookPen className="h-3 w-3" />
+                      {t("pro.private_notes")}
+                      {noteSaving[a.id] && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
+                      {notes[a.id] && !noteSaving[a.id] && <Badge variant="outline" className="text-[9px] py-0 px-1.5">{t("pro.notes_saved")}</Badge>}
+                    </p>
+                    <Textarea
+                      placeholder={t("pro.private_notes_placeholder")}
+                      value={notes[a.id] || ""}
+                      onChange={(e) => saveNote(a.id, e.target.value)}
+                      className="text-xs min-h-[60px] resize-y"
+                    />
+                  </div>
                 </CardContent>
               </Card>
             );
