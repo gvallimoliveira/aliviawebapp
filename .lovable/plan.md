@@ -1,15 +1,39 @@
 
 
-## Remover gráfico sparkline e ícones de seta dos cards de pacientes
+## Plano: Branding — favicon, título da tab e badge Lovable
 
-### Problema
-A seta para baixo (TrendingDown) no badge "Melhorando" e a seta para cima (TrendingUp) no "Piorando" causam confusão visual. O sparkline no canto direito também reforça essa contradição.
+### 1. Remover badge "Made with Lovable"
 
-### Mudanças em `src/components/dashboard/PatientEvolutionDashboard.tsx`
+Para remover o badge, o usuário precisa ativá-lo nas configurações do projeto: **Settings → Hide 'Lovable' Badge**. Isso não é controlado pelo código — é uma opção da plataforma Lovable.
 
-1. **Remover os ícones** `TrendingDown`, `TrendingUp` e `Minus` dos badges de tendência (linhas 200-214) — manter apenas o texto "Melhorando", "Piorando", "Estável" com as cores atuais
-2. **Remover o sparkline chart** (linhas 226-242) — o mini gráfico de área no canto direito do card
-3. **Limpar imports** não utilizados (`TrendingDown`, `TrendingUp`, `AreaChart`, `Area`, `ResponsiveContainer` se não usados em outro lugar)
+### 2. Favicon — trocar para logo Aliv.iA
 
-O badge de tendência continuará visível com as cores verde/vermelho/neutro, apenas sem os ícones de seta.
+**`index.html`** — Adicionar tag `<link rel="icon">` apontando para o logo já existente no projeto:
+
+```html
+<link rel="icon" type="image/png" href="/src/assets/logo-alivia.png" />
+```
+
+Nota: Como Vite processa assets em `src/assets`, o ideal é copiar `logo-alivia.png` para `public/favicon.png` e referenciar `/favicon.png`. Alternativamente, pode-se converter para `.ico`.
+
+### 3. Título da tab
+
+**`index.html`** — Alterar a tag `<title>`:
+
+```html
+<title>Aliv.iA Webapp</title>
+```
+
+Também atualizar o `setSeo` em `Index.tsx` e demais páginas para usar "Aliv.iA Webapp" como título padrão, ou manter títulos específicos por página mas sem menções ao portal de desenvolvimento.
+
+---
+
+### Arquivos a editar
+
+| Arquivo | Mudança |
+|---|---|
+| `index.html` | Mudar `<title>` para "Aliv.iA Webapp", adicionar `<link rel="icon">` |
+| `public/favicon.png` | Copiar `logo-alivia.png` para public |
+| `src/pages/Index.tsx` | Atualizar título no `setSeo` |
+| `src/pages/ProfessionalLanding.tsx` | Atualizar título no `setSeo` |
 

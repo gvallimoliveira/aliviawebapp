@@ -11,7 +11,7 @@ import {
   BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import {
-  ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, TrendingDown, TrendingUp, Minus,
+  ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search,
 } from "lucide-react";
 import PainMapView from "@/components/assessment/PainMapView";
@@ -198,18 +198,18 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
                         {p.assessments.length} {t("pro.assessments_count")}
                       </Badge>
                       {trend === "improving" && (
-                        <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-0.5">
-                          <TrendingDown className="h-3 w-3" /> Melhorando
+                        <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                          Melhorando
                         </Badge>
                       )}
                       {trend === "worsening" && (
-                        <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20 gap-0.5">
-                          <TrendingUp className="h-3 w-3" /> Piorando
+                        <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">
+                          Piorando
                         </Badge>
                       )}
                       {trend === "stable" && (
-                        <Badge variant="outline" className="text-[10px] gap-0.5">
-                          <Minus className="h-3 w-3" /> Estável
+                        <Badge variant="outline" className="text-[10px]">
+                          Estável
                         </Badge>
                       )}
                     </div>
@@ -223,23 +223,6 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
                       </span>
                     </div>
                   </div>
-                  {sparkData.length >= 2 && (
-                    <div className="w-20 h-8 shrink-0">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={sparkData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
-                          <Area
-                            type="monotone"
-                            dataKey="s"
-                            stroke={sparkColor}
-                            fill={sparkColor}
-                            fillOpacity={0.15}
-                            strokeWidth={1.5}
-                            dot={false}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
                   <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                 </div>
               </CardContent>
