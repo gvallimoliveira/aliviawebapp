@@ -149,6 +149,17 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     if (!assessment.diagnosis) return;
     try {
       const lang = document.documentElement.lang === "en" ? "en" : "pt";
+      // Fetch professional note for this assessment
+      let proNote: string | undefined;
+      if (professional?.id) {
+        const { data } = await supabase
+          .from("professional_notes")
+          .select("content")
+          .eq("professional_id", professional.id)
+          .eq("assessment_id", assessment.id)
+          .maybeSingle();
+        if (data?.content) proNote = data.content;
+      }
       await generateAssessmentPdf({
         diagnosis: assessment.diagnosis,
         treatmentPlan: assessment.treatment_plan,
@@ -157,6 +168,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         anamnesisData: assessment.anamnesis_data,
         painRegions: assessment.pain_regions,
         testResults: assessment.test_results,
+        professionalNotes: proNote,
       });
       toast({ title: t("pro.download_pdf") });
     } catch {
