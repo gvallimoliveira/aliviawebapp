@@ -49,25 +49,26 @@ const PatientEvolutionDashboard = ({ assessments, onDownloadPdf }: PatientEvolut
   const navigate = useNavigate();
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
 
-  // Group assessments by patient_email
+  // Group assessments by patient_email (fallback to patient_name)
   const patients = useMemo(() => {
     const map = new Map<string, PatientGroup>();
     assessments.forEach((a) => {
       const email = (a as any).patient_email;
-      if (!email) return;
-      if (!map.has(email)) {
-        map.set(email, {
-          email,
-          name: (a as any).patient_name || email,
+      const name = (a as any).patient_name;
+      const key = email || name || a.id; // fallback to id if both null
+      if (!map.has(key)) {
+        map.set(key, {
+          email: email || "",
+          name: name || email || "Sem nome",
           assessments: [],
           lastDate: a.created_at,
         });
       }
-      const group = map.get(email)!;
+      const group = map.get(key)!;
       group.assessments.push(a);
       if (a.created_at > group.lastDate) {
         group.lastDate = a.created_at;
-        group.name = (a as any).patient_name || group.name;
+        group.name = name || group.name;
       }
     });
     map.forEach((g) => g.assessments.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
