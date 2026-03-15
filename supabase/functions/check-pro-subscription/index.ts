@@ -39,16 +39,15 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { email: user.email });
 
-    // Check if user is a partner first — bypass Stripe entirely
+    // Check if user is a partner or has annual access first
     const { data: proData } = await supabaseClient
       .from("professionals")
-      .select("id, is_partner, subscription_status")
+      .select("id, is_partner, subscription_status, pro_access_expires_at")
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (proData?.is_partner) {
       logStep("User is a partner — granting access without Stripe");
-      // Ensure subscription_status is active for partners
       if (proData.subscription_status !== "active") {
         await supabaseClient
           .from("professionals")
@@ -58,6 +57,34 @@ serve(async (req) => {
       return new Response(JSON.stringify({ subscribed: true, is_partner: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Check annual one-time payment access
+    if (proData?.pro_access_expires_at) {
+      const expiresAt = new Date(proData.pro_access_expires_at);
+      const now = new Date();
+      if (expiresAt > now) {
+        logStep("Annual access still valid", { expires: expiresAt.toISOString() });
+        if (proData.subscription_status !== "active") {
+          await supabaseClient
+            .from("professionals")
+            .update({ subscription_status: "active", approved: true })
+            .eq("user_id", user.id);
+        }
+        return new Response(JSON.stringify({
+          subscribed: true,
+          subscription_end: expiresAt.toISOString(),
+          is_annual: true,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } else {
+        logStep("Annual access expired", { expired: expiresAt.toISOString() });
+        await supabaseClient
+          .from("professionals")
+          .update({ subscription_status: "inactive", pro_access_expires_at: null })
+          .eq("user_id", user.id);
+      }
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
