@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, TrendingDown, TrendingUp, Minus,
-  FileText, ClipboardList, Stethoscope,
+  FileText, ClipboardList, Stethoscope, Search,
 } from "lucide-react";
 import PainMapView from "@/components/assessment/PainMapView";
 
