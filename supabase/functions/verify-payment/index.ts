@@ -127,6 +127,7 @@ serve(async (req) => {
           assessments_used: 0,
           max_assessments: 999,
           is_vip: true,
+          subscription_type: "monthly",
           available_discount: null,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
