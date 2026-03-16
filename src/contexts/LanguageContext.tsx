@@ -140,6 +140,8 @@ const translations: Record<Language, Record<string, string>> = {
     "dashboard.assessment_remaining": "avaliação restante",
     "dashboard.assessments_remaining": "avaliações restantes",
     "dashboard.no_assessments_remaining": "Nenhuma avaliação restante neste período",
+    "dashboard.single_purchase_banner": "Você possui uma avaliação avulsa. Assine o Premium para acompanhar sua evolução com diário de dor, métricas e comparativos.",
+    "dashboard.upgrade_to_monthly": "Assinar Premium mensal",
 
     // Red Flags
     "redflags.title": "Triagem de Segurança",
