@@ -248,6 +248,7 @@ serve(async (req) => {
         can_redo: hasAccess && assessmentsUsed === 1,
         assessments_used: assessmentsUsed,
         max_assessments: 2,
+        subscription_type: "monthly",
         subscription_end: new Date(premiumSub.current_period_end * 1000).toISOString(),
         available_discount: availableDiscount,
       }), {
