@@ -150,10 +150,33 @@ serve(async (req) => {
       // Check active premium subscription via Stripe
       const customers = await stripe.customers.list({ email: user.email, limit: 1 });
       if (customers.data.length === 0) {
+        // No Stripe customer — check for single purchase assessments
+        const { data: singleAssessment } = await supabaseClient
+          .from("assessments")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("type", "premium")
+          .eq("payment_status", "paid")
+          .limit(1)
+          .maybeSingle();
+
+        if (singleAssessment) {
+          return new Response(JSON.stringify({
+            has_access: true,
+            can_redo: false,
+            assessments_used: 0,
+            subscription_type: "single",
+            available_discount: availableDiscount,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         return new Response(JSON.stringify({
           has_access: false,
           can_redo: false,
           assessments_used: 0,
+          subscription_type: null,
           available_discount: availableDiscount,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -173,10 +196,33 @@ serve(async (req) => {
       );
 
       if (!premiumSub) {
+        // No active subscription — check for single purchase assessments
+        const { data: singleAssessment } = await supabaseClient
+          .from("assessments")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("type", "premium")
+          .eq("payment_status", "paid")
+          .limit(1)
+          .maybeSingle();
+
+        if (singleAssessment) {
+          return new Response(JSON.stringify({
+            has_access: true,
+            can_redo: false,
+            assessments_used: 0,
+            subscription_type: "single",
+            available_discount: availableDiscount,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         return new Response(JSON.stringify({
           has_access: false,
           can_redo: false,
           assessments_used: 0,
+          subscription_type: null,
           available_discount: availableDiscount,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
