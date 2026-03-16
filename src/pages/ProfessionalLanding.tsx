@@ -262,6 +262,7 @@ const ProfessionalLanding = () => {
                     R${PRO_PLAN_ANNUAL_PRICE.toFixed(2).replace(".", ",")}<span className="text-lg font-normal text-muted-foreground">/{t("b2b.per_month")}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mb-1">{t("b2b.billed_annually")}</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t("b2b.annual_no_refund")}</p>
                   <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-xs mb-4">
                     {t("b2b.save_30")}
                   </Badge>
