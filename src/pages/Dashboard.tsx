@@ -26,6 +26,7 @@ interface PremiumAccess {
   assessments_used?: number;
   max_assessments?: number;
   paid_at?: string;
+  subscription_type?: "monthly" | "single" | null;
   available_discount?: { discount_percent: number } | null;
 }
 
