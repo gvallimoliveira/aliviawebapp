@@ -1046,6 +1046,8 @@ const translations: Record<Language, Record<string, string>> = {
     "dashboard.assessment_remaining": "assessment remaining",
     "dashboard.assessments_remaining": "assessments remaining",
     "dashboard.no_assessments_remaining": "No assessments remaining in this period",
+    "dashboard.single_purchase_banner": "You have a single assessment purchase. Subscribe to Premium to track your progress with pain diary, metrics, and comparisons.",
+    "dashboard.upgrade_to_monthly": "Subscribe to monthly Premium",
 
     // Red Flags
     "redflags.title": "Safety Screening",
