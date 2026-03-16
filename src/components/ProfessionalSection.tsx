@@ -101,7 +101,9 @@ const ProfessionalSection = () => {
             {billing === "annual" && (
               <p className="text-xs text-muted-foreground mb-1">{t("b2b.billed_annually")}</p>
             )}
-            <p className="text-xs text-muted-foreground mb-5">{t("b2b.cta_cancel")}</p>
+            <p className="text-xs text-muted-foreground mb-5">
+              {billing === "monthly" ? t("b2b.cta_cancel") : t("b2b.annual_no_refund")}
+            </p>
             <Button
               onClick={() => navigate("/profissionais")}
               size="lg"

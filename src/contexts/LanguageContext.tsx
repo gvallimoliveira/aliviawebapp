@@ -140,6 +140,8 @@ const translations: Record<Language, Record<string, string>> = {
     "dashboard.assessment_remaining": "avaliação restante",
     "dashboard.assessments_remaining": "avaliações restantes",
     "dashboard.no_assessments_remaining": "Nenhuma avaliação restante neste período",
+    "dashboard.single_purchase_banner": "Você possui uma avaliação avulsa. Assine o Premium para acompanhar sua evolução com diário de dor, métricas e comparativos.",
+    "dashboard.upgrade_to_monthly": "Assinar Premium mensal",
 
     // Red Flags
     "redflags.title": "Triagem de Segurança",
@@ -707,6 +709,7 @@ const translations: Record<Language, Record<string, string>> = {
     "b2b.plan_annual": "Anual",
     "b2b.best_value": "Melhor valor",
     "b2b.billed_annually": "Cobrado anualmente: R$ 418,80/ano",
+    "b2b.annual_no_refund": "Pagamento único. Acesso garantido por 1 ano.",
     "b2b.save_30": "Economize 30%",
     "b2b.per_month": "mês",
 
@@ -1043,6 +1046,8 @@ const translations: Record<Language, Record<string, string>> = {
     "dashboard.assessment_remaining": "assessment remaining",
     "dashboard.assessments_remaining": "assessments remaining",
     "dashboard.no_assessments_remaining": "No assessments remaining in this period",
+    "dashboard.single_purchase_banner": "You have a single assessment purchase. Subscribe to Premium to track your progress with pain diary, metrics, and comparisons.",
+    "dashboard.upgrade_to_monthly": "Subscribe to monthly Premium",
 
     // Red Flags
     "redflags.title": "Safety Screening",
@@ -1603,6 +1608,7 @@ const translations: Record<Language, Record<string, string>> = {
     "b2b.plan_annual": "Annual",
     "b2b.best_value": "Best value",
     "b2b.billed_annually": "Billed annually: R$ 418.80/year",
+    "b2b.annual_no_refund": "One-time payment. 1-year access guaranteed.",
     "b2b.save_30": "Save 30%",
     "b2b.per_month": "month",
 
