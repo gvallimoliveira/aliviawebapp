@@ -1604,6 +1604,7 @@ const translations: Record<Language, Record<string, string>> = {
     "b2b.plan_annual": "Annual",
     "b2b.best_value": "Best value",
     "b2b.billed_annually": "Billed annually: R$ 418.80/year",
+    "b2b.annual_no_refund": "One-time payment. 1-year access guaranteed.",
     "b2b.save_30": "Save 30%",
     "b2b.per_month": "month",
 
