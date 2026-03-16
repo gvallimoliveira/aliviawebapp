@@ -304,16 +304,39 @@ const Dashboard = () => {
       {/* Referral Card */}
       <ReferralCard availableDiscount={premiumAccess?.available_discount} />
 
-      {/* Pain Diary */}
-      <div data-onboarding="patient-diary">
-        <PainDiary />
-      </div>
+      {/* Single Purchase Upgrade Banner */}
+      {!premiumLoading && premiumAccess?.subscription_type === "single" && (
+        <Card className="border-primary/20 bg-primary/[0.03]">
+          <CardContent className="py-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex-1">
+                <p className="text-sm text-foreground leading-relaxed">
+                  {t("dashboard.single_purchase_banner")}
+                </p>
+              </div>
+              <Button onClick={() => navigate("/assessment/premium")} size="sm" className="gap-1.5 shrink-0">
+                <Crown className="h-3.5 w-3.5" />
+                {t("dashboard.upgrade_to_monthly")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Before/After Comparison */}
-      <AssessmentComparison assessments={assessments} />
+      {/* Pain Diary — only for subscribers */}
+      {premiumAccess?.subscription_type !== "single" && (
+        <div data-onboarding="patient-diary">
+          <PainDiary />
+        </div>
+      )}
 
-      {/* Follow-up Reminders */}
-      {followUps.length > 0 && (
+      {/* Before/After Comparison — only for subscribers */}
+      {premiumAccess?.subscription_type !== "single" && (
+        <AssessmentComparison assessments={assessments} />
+      )}
+
+      {/* Follow-up Reminders — only for subscribers */}
+      {premiumAccess?.subscription_type !== "single" && followUps.length > 0 && (
         <div>
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
             <Mail className="h-5 w-5 text-muted-foreground" />
