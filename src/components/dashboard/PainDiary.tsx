@@ -32,7 +32,7 @@ const PainDiary = () => {
   const fetchEntries = async () => {
     if (!user) return;
     const { data } = await supabase
-      .from("pain_diary_entries" as any)
+      .from("pain_diary_entries")
       .select("*")
       .eq("user_id", user.id)
       .order("logged_at", { ascending: true })
