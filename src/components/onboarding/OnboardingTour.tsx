@@ -116,53 +116,68 @@ function getTooltipPosition(
   }
 
   const gap = 16;
-  const isMobile = window.innerWidth < 640;
-  const tooltipWidth = isMobile ? Math.min(320, window.innerWidth - 32) : 320;
-  const tooltipHeight = 160; // approximate
+  const margin = 16;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const isMobile = vw < 640;
+  const tooltipWidth = isMobile ? Math.min(320, vw - margin * 2) : 320;
+  const tooltipHeight = 180; // approximate including buttons
 
-  // On mobile, always position below or above — never left/right
-  const pos = isMobile ? "auto" : (position || "bottom");
+  const clampLeft = (idealLeft: number) =>
+    Math.max(margin, Math.min(idealLeft, vw - tooltipWidth - margin));
 
-  if (pos === "auto") {
-    // Mobile: check if there's room below, otherwise go above
-    const spaceBelow = window.innerHeight - rect.bottom - gap;
-    const spaceAbove = rect.top - gap;
+  const clampTop = (idealTop: number) =>
+    Math.max(margin, Math.min(idealTop, vh - tooltipHeight - margin));
 
-    const centerX = Math.max(16, Math.min(
-      (window.innerWidth - tooltipWidth) / 2,
-      window.innerWidth - tooltipWidth - 16
-    ));
+  // Decide best position: prefer requested, fallback if no room
+  const spaceBelow = vh - rect.bottom - gap;
+  const spaceAbove = rect.top - gap;
+  const spaceRight = vw - rect.right - gap;
+  const spaceLeft = rect.left - gap;
 
-    if (spaceBelow >= tooltipHeight) {
-      return { top: rect.bottom + gap, left: centerX };
-    } else if (spaceAbove >= tooltipHeight) {
-      return { bottom: window.innerHeight - rect.top + gap, left: centerX };
-    } else {
-      // Not enough space either way — overlay centered below header
-      return { top: Math.min(rect.bottom + gap, window.innerHeight - tooltipHeight - 16), left: centerX };
+  let pos: "top" | "bottom" | "left" | "right" = position || "bottom";
+
+  // On mobile, only allow top/bottom
+  if (isMobile) {
+    pos = spaceBelow >= tooltipHeight ? "bottom" : "top";
+  } else {
+    // If requested position doesn't fit, find one that does
+    const fits = (p: string) => {
+      if (p === "bottom") return spaceBelow >= tooltipHeight;
+      if (p === "top") return spaceAbove >= tooltipHeight;
+      if (p === "right") return spaceRight >= tooltipWidth;
+      if (p === "left") return spaceLeft >= tooltipWidth;
+      return false;
+    };
+    if (!fits(pos)) {
+      const fallbacks: Array<"bottom" | "top" | "right" | "left"> = ["bottom", "top", "right", "left"];
+      pos = fallbacks.find(fits) || "bottom";
     }
   }
+
+  const centerX = clampLeft(rect.left + rect.width / 2 - tooltipWidth / 2);
+  const centerY = clampTop(rect.top + rect.height / 2 - tooltipHeight / 2);
 
   switch (pos) {
     case "top":
       return {
-        bottom: window.innerHeight - rect.top + gap,
-        left: Math.max(16, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16)),
+        top: clampTop(rect.top - gap - tooltipHeight),
+        left: centerX,
       };
     case "bottom":
       return {
-        top: rect.bottom + gap,
-        left: Math.max(16, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16)),
+        top: clampTop(rect.bottom + gap),
+        left: centerX,
       };
     case "left":
       return {
-        top: Math.max(16, Math.min(rect.top + rect.height / 2 - 60, window.innerHeight - tooltipHeight - 16)),
-        right: window.innerWidth - rect.left + gap,
+        top: centerY,
+        left: clampLeft(rect.left - gap - tooltipWidth),
       };
     case "right":
       return {
-        top: Math.max(16, Math.min(rect.top + rect.height / 2 - 60, window.innerHeight - tooltipHeight - 16)),
-        left: rect.right + gap,
+        top: centerY,
+        left: clampLeft(rect.right + gap),
       };
   }
 }
