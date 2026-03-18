@@ -905,6 +905,8 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.pro.step3.desc": "Veja todas as avaliações realizadas pelos seus pacientes e acompanhe a evolução de cada um.",
     "onboarding.pro.step4.title": "Assinatura Pro",
     "onboarding.pro.step4.desc": "Assine o plano Pro para desbloquear o acesso completo ao painel, link personalizado e relatórios.",
+    "onboarding.pro_tab.title": "Painel Profissional",
+    "onboarding.pro_tab.desc": "Aqui você gerencia seus pacientes e acompanha as avaliações que eles realizam pelo seu link.",
 
     // Professional Notes & Batch Export
     "pro.private_notes": "Notas privadas",
@@ -1804,6 +1806,8 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.pro.step3.desc": "View all assessments completed by your patients and track each one's progress.",
     "onboarding.pro.step4.title": "Pro subscription",
     "onboarding.pro.step4.desc": "Subscribe to Pro to unlock full dashboard access, custom link and reports.",
+    "onboarding.pro_tab.title": "Professional Dashboard",
+    "onboarding.pro_tab.desc": "Here you manage your patients and track assessments they complete through your link.",
 
     // Professional Notes & Batch Export
     "pro.private_notes": "Private notes",
