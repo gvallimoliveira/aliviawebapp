@@ -529,13 +529,13 @@ const Dashboard = () => {
         </div>
 
         {professional ? (
-          <Tabs defaultValue={tabFromUrl === "professional" ? "professional" : "health"} className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="w-full grid grid-cols-2">
               <TabsTrigger value="health" className="gap-1.5">
                 <Heart className="h-4 w-4" />
                 {t("dashboard.tab_my_health")}
               </TabsTrigger>
-              <TabsTrigger value="professional" className="gap-1.5">
+              <TabsTrigger value="professional" className="gap-1.5" data-onboarding="pro-tab-trigger">
                 <Stethoscope className="h-4 w-4" />
                 {t("dashboard.tab_professional")}
               </TabsTrigger>
