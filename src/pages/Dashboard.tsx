@@ -69,8 +69,13 @@ const Dashboard = () => {
   const [followUps, setFollowUps] = useState<any[]>([]);
   const [professional, setProfessional] = useState<any>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("health");
 
-  const onboarding = useOnboarding("onboarding_patient_completed", patientSteps);
+  const onboardingSteps = useMemo(
+    () => buildOnboardingSteps(premiumAccess?.subscription_type, !!professional),
+    [premiumAccess?.subscription_type, !!professional]
+  );
+  const onboarding = useOnboarding("onboarding_patient_completed", onboardingSteps);
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
