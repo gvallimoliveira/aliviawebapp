@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
-  AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, RotateCcw,
+  AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
@@ -29,13 +28,6 @@ import { generateAssessmentPdf } from "@/utils/generatePdf";
 interface ProDashboardProps {
   professional: any;
 }
-
-const proSteps: OnboardingStep[] = [
-  { targetId: "pro-welcome", titleKey: "onboarding.pro.step1.title", descriptionKey: "onboarding.pro.step1.desc" },
-  { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom" },
-  { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom" },
-  { targetId: "pro-subscription", titleKey: "onboarding.pro.step4.title", descriptionKey: "onboarding.pro.step4.desc", position: "bottom" },
-];
 
 const ProDashboard = ({ professional }: ProDashboardProps) => {
   const { t } = useLanguage();
