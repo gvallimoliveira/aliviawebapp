@@ -82,6 +82,24 @@ const Dashboard = () => {
     }
   }, [user, authLoading, navigate]);
 
+  // Set initial tab from URL
+  useEffect(() => {
+    if (tabFromUrl === "professional" && professional) {
+      setActiveTab("professional");
+    }
+  }, [tabFromUrl, professional]);
+
+  // Auto-switch tab when onboarding reaches pro steps
+  useEffect(() => {
+    if (!onboarding.isActive || !onboarding.step) return;
+    const proTargets = ["pro-link", "pro-patients", "pro-subscription"];
+    if (proTargets.includes(onboarding.step.targetId)) {
+      setActiveTab("professional");
+    } else if (onboarding.step.targetId.startsWith("patient-")) {
+      setActiveTab("health");
+    }
+  }, [onboarding.step, onboarding.isActive]);
+
   useEffect(() => {
     if (user) {
       supabase
