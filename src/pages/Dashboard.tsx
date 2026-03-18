@@ -19,6 +19,7 @@ import {
   Globe, LogOut, Plus, ClipboardList, Calendar, MapPin, ChevronRight,
   Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus, Heart, Stethoscope, RotateCcw
 } from "lucide-react";
+import { useMemo } from "react";
 
 interface PremiumAccess {
   has_access: boolean;
@@ -30,12 +31,30 @@ interface PremiumAccess {
   available_discount?: { discount_percent: number } | null;
 }
 
-const patientSteps: OnboardingStep[] = [
-  { targetId: "patient-welcome", titleKey: "onboarding.patient.step1.title", descriptionKey: "onboarding.patient.step1.desc" },
-  { targetId: "patient-assessments", titleKey: "onboarding.patient.step2.title", descriptionKey: "onboarding.patient.step2.desc", position: "bottom" },
-  { targetId: "patient-diary", titleKey: "onboarding.patient.step3.title", descriptionKey: "onboarding.patient.step3.desc", position: "bottom" },
-  { targetId: "patient-find-pro", titleKey: "onboarding.patient.step4.title", descriptionKey: "onboarding.patient.step4.desc", position: "bottom" },
-];
+function buildOnboardingSteps(subscriptionType?: "monthly" | "single" | null, isProfessional?: boolean): OnboardingStep[] {
+  const steps: OnboardingStep[] = [
+    { targetId: "patient-welcome", titleKey: "onboarding.patient.step1.title", descriptionKey: "onboarding.patient.step1.desc" },
+    { targetId: "patient-assessments", titleKey: "onboarding.patient.step2.title", descriptionKey: "onboarding.patient.step2.desc", position: "bottom" },
+    { targetId: "patient-find-pro", titleKey: "onboarding.patient.step4.title", descriptionKey: "onboarding.patient.step4.desc", position: "bottom" },
+  ];
+
+  // Only add diary step if user is a subscriber (not single purchase)
+  if (subscriptionType !== "single") {
+    steps.push({ targetId: "patient-diary", titleKey: "onboarding.patient.step3.title", descriptionKey: "onboarding.patient.step3.desc", position: "bottom" });
+  }
+
+  // Add pro steps for professionals
+  if (isProfessional) {
+    steps.push(
+      { targetId: "pro-tab-trigger", titleKey: "onboarding.pro_tab.title", descriptionKey: "onboarding.pro_tab.desc", position: "bottom" },
+      { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom" },
+      { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom" },
+      { targetId: "pro-subscription", titleKey: "onboarding.pro.step4.title", descriptionKey: "onboarding.pro.step4.desc", position: "bottom" },
+    );
+  }
+
+  return steps;
+}
 
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();

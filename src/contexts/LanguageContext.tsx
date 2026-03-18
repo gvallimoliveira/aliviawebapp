@@ -1806,6 +1806,8 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.pro.step3.desc": "View all assessments completed by your patients and track each one's progress.",
     "onboarding.pro.step4.title": "Pro subscription",
     "onboarding.pro.step4.desc": "Subscribe to Pro to unlock full dashboard access, custom link and reports.",
+    "onboarding.pro_tab.title": "Professional Dashboard",
+    "onboarding.pro_tab.desc": "Here you manage your patients and track assessments they complete through your link.",
 
     // Professional Notes & Batch Export
     "pro.private_notes": "Private notes",
