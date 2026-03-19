@@ -35,8 +35,10 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     revoke: "Revogar",
     no_partners: "Nenhum parceiro ativo.",
     granted: "Acesso liberado com sucesso!",
+    granted_created: "Conta criada automaticamente com senha padrão: parceiroalivia",
     revoked: "Acesso revogado.",
     not_found: "Profissional não encontrado com este e-mail.",
+    auto_create_hint: "Se o profissional não tiver conta, uma será criada automaticamente com senha padrão.",
     error: "Erro",
     name: "Nome",
     location: "Localização",
@@ -49,8 +51,10 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     revoke: "Revoke",
     no_partners: "No active partners.",
     granted: "Access granted successfully!",
+    granted_created: "Account auto-created with default password: parceiroalivia",
     revoked: "Access revoked.",
     not_found: "No professional found with this email.",
+    auto_create_hint: "If the professional doesn't have an account, one will be created automatically with a default password.",
     error: "Error",
     name: "Name",
     location: "Location",
@@ -90,7 +94,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
         return;
       }
       if (data?.error) throw new Error(data.error);
-      toast({ title: "✅", description: t.granted });
+      toast({ title: "✅", description: data?.created ? t.granted_created : t.granted });
       setEmail("");
       loadPartners();
     } catch (err: any) {
@@ -127,7 +131,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t.grant}</CardTitle>
-          <CardDescription>{t.desc}</CardDescription>
+          <CardDescription>{t.desc}<br /><span className="text-xs text-muted-foreground/70">{t.auto_create_hint}</span></CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-3">
