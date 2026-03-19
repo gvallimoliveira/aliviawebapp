@@ -131,7 +131,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t.grant}</CardTitle>
-          <CardDescription>{t.desc}</CardDescription>
+          <CardDescription>{t.desc}<br /><span className="text-xs text-muted-foreground/70">{t.auto_create_hint}</span></CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-3">

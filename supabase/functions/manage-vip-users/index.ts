@@ -73,18 +73,94 @@ serve(async (req) => {
       let targetId = professional_id;
 
       if (!targetId && email) {
+        const normalizedEmail = email.toLowerCase().trim();
+
         const { data: pro } = await supabaseClient
           .from("professionals")
           .select("id")
-          .eq("email", email.toLowerCase().trim())
+          .eq("email", normalizedEmail)
           .maybeSingle();
 
-        if (!pro) {
+        if (pro) {
+          targetId = pro.id;
+        } else if (is_partner) {
+          // Professional not found — auto-create account + professional profile
+          // 1. Create auth user with default password
+          const { data: newUserData, error: createError } = await supabaseClient.auth.admin.createUser({
+            email: normalizedEmail,
+            password: "parceiroalivia",
+            email_confirm: true,
+          });
+
+          if (createError) {
+            // If user already exists in auth but not in professionals
+            if (createError.message?.includes("already been registered")) {
+              // Try to find existing auth user
+              const { data: { users }, error: listErr } = await supabaseClient.auth.admin.listUsers();
+              const existingUser = users?.find((u: any) => u.email === normalizedEmail);
+              if (!existingUser) {
+                return new Response(JSON.stringify({ error: createError.message }), {
+                  status: 400,
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+              }
+              // Create professional profile for existing auth user
+              const namePart = normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
+              const { data: newPro, error: insertErr } = await supabaseClient
+                .from("professionals")
+                .insert({
+                  user_id: existingUser.id,
+                  email: normalizedEmail,
+                  full_name: namePart,
+                  crefito: "000000-X",
+                  city: "A definir",
+                  state: "XX",
+                  is_partner: true,
+                  approved: true,
+                  subscription_status: "active",
+                })
+                .select("id")
+                .single();
+
+              if (insertErr) throw insertErr;
+
+              return new Response(JSON.stringify({ success: true, created: true }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              });
+            }
+            throw createError;
+          }
+
+          const newUserId = newUserData.user.id;
+          const namePart = normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
+
+          // 2. Create professional profile (profile is auto-created by handle_new_user trigger)
+          const { data: newPro, error: insertErr } = await supabaseClient
+            .from("professionals")
+            .insert({
+              user_id: newUserId,
+              email: normalizedEmail,
+              full_name: namePart,
+              crefito: "000000-X",
+              city: "A definir",
+              state: "XX",
+              is_partner: true,
+              approved: true,
+              subscription_status: "active",
+            })
+            .select("id")
+            .single();
+
+          if (insertErr) throw insertErr;
+
+          return new Response(JSON.stringify({ success: true, created: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        } else {
           return new Response(JSON.stringify({ error: "not_found" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        targetId = pro.id;
       }
 
       if (!targetId) {
