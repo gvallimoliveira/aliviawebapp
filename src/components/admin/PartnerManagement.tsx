@@ -94,7 +94,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
         return;
       }
       if (data?.error) throw new Error(data.error);
-      toast({ title: "✅", description: t.granted });
+      toast({ title: "✅", description: data?.created ? t.granted_created : t.granted });
       setEmail("");
       loadPartners();
     } catch (err: any) {
