@@ -21,6 +21,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import ProfessionalLanding from "./pages/ProfessionalLanding";
+import CompleteProfile from "./pages/CompleteProfile";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/profissionais" element={<ProfessionalLanding />} />
+              <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
