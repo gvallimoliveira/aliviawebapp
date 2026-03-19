@@ -142,6 +142,11 @@ const Dashboard = () => {
         .maybeSingle()
         .then(({ data }: any) => {
           if (data) {
+            // Redirect partners with placeholder data to complete profile
+            if (data.is_partner && (data.crefito === "000000-X" || data.city === "A definir")) {
+              navigate("/complete-profile", { replace: true });
+              return;
+            }
             setProfessional(data);
             // Fetch referrals for this professional
             (supabase.from("professional_referrals" as any) as any)
