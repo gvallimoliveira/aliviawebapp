@@ -17,6 +17,7 @@ const PaymentSuccess = () => {
   const paymentType = searchParams.get("type");
   const assessmentId = searchParams.get("assessment_id");
   const isProTreatment = paymentType === "pro_treatment" && assessmentId;
+  const isProAnnual = paymentType === "pro_annual";
 
   useEffect(() => {
     const sessionId = searchParams.get("session_id");
