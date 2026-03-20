@@ -45,7 +45,7 @@ serve(async (req) => {
     }
 
     const priceId = plan === "annual"
-      ? "price_1T853mCBxbFcCp8It1Z6GNNh"  // Annual R$418,80 (one-time payment)
+      ? "price_1TCruvCBxbFcCp8IAjlnnNTO"  // Annual R$418,80 (one-time payment)
       : "price_1T7Rv6CBxbFcCp8I1Tsv0WwS";  // Monthly R$49/month
 
     // Annual = payment (one-time), Monthly = subscription
@@ -67,6 +67,10 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://alivia.app";
 
+    const successUrl = plan === "annual"
+      ? `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&type=pro_annual`
+      : `${origin}/dashboard?subscription=success`;
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -77,11 +81,12 @@ serve(async (req) => {
         },
       ],
       mode: sessionMode,
-      success_url: `${origin}/dashboard?subscription=success`,
+      success_url: successUrl,
       cancel_url: `${origin}/dashboard?subscription=cancelled`,
       metadata: {
         user_id: user.id,
         plan,
+        type: plan === "annual" ? "pro_annual" : "pro_subscription",
       },
     });
 

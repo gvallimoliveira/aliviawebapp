@@ -81,6 +81,26 @@ serve(async (req) => {
         });
       }
 
+      // Handle pro_annual payment (one-time annual plan)
+      if (paymentType === "pro_annual") {
+        const userId = session.metadata?.user_id;
+        if (userId) {
+          const expiresAt = new Date();
+          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+          await supabaseClient
+            .from("professionals")
+            .update({
+              subscription_status: "active",
+              approved: true,
+              pro_access_expires_at: expiresAt.toISOString(),
+            })
+            .eq("user_id", userId);
+        }
+        return new Response(JSON.stringify({ paid: true, type: "pro_annual" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Handle premium subscription verification
       // For subscriptions, check_access is the primary check; session verification just confirms
       const { data: existingAssessment } = await supabaseClient

@@ -17,6 +17,7 @@ const PaymentSuccess = () => {
   const paymentType = searchParams.get("type");
   const assessmentId = searchParams.get("assessment_id");
   const isProTreatment = paymentType === "pro_treatment" && assessmentId;
+  const isProAnnual = paymentType === "pro_annual";
 
   useEffect(() => {
     const sessionId = searchParams.get("session_id");
@@ -114,26 +115,34 @@ const PaymentSuccess = () => {
           <>
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
             <h1 className="text-2xl font-bold text-foreground">
-              {isProTreatment
-                ? (t("pro_treatment.success_title") || "Plano de tratamento desbloqueado!")
-                : (t("payment.success_title") || "Pagamento confirmado!")}
-            </h1>
-            <p className="text-muted-foreground">
-              {isProTreatment
-                ? (t("pro_treatment.success_desc") || "O plano de tratamento foi gerado com sucesso para esta avaliação.")
-                : (t("payment.success_desc") || "Sua avaliação premium está liberada.")}
-            </p>
-            <Button
-              onClick={() =>
-                isProTreatment
-                  ? navigate(`/assessment/view/${assessmentId}`)
-                  : navigate("/assessment/premium")
-              }
-              className="rounded-xl"
-            >
-              {isProTreatment
-                ? (t("pro_treatment.view_plan") || "Ver Plano de Tratamento")
-                : (t("payment.start_assessment") || "Iniciar Avaliação Premium")}
+                {isProTreatment
+                  ? (t("pro_treatment.success_title") || "Plano de tratamento desbloqueado!")
+                  : isProAnnual
+                    ? (t("pro_annual.success_title") || "Plano Profissional Anual ativado!")
+                    : (t("payment.success_title") || "Pagamento confirmado!")}
+              </h1>
+              <p className="text-muted-foreground">
+                {isProTreatment
+                  ? (t("pro_treatment.success_desc") || "O plano de tratamento foi gerado com sucesso para esta avaliação.")
+                  : isProAnnual
+                    ? (t("pro_annual.success_desc") || "Seu acesso profissional está ativo por 1 ano. Aproveite!")
+                    : (t("payment.success_desc") || "Sua avaliação premium está liberada.")}
+              </p>
+              <Button
+                onClick={() =>
+                  isProTreatment
+                    ? navigate(`/assessment/view/${assessmentId}`)
+                    : isProAnnual
+                      ? navigate("/dashboard")
+                      : navigate("/assessment/premium")
+                }
+                className="rounded-xl"
+              >
+                {isProTreatment
+                  ? (t("pro_treatment.view_plan") || "Ver Plano de Tratamento")
+                  : isProAnnual
+                    ? (t("pro_annual.go_dashboard") || "Ir para o Dashboard")
+                    : (t("payment.start_assessment") || "Iniciar Avaliação Premium")}
             </Button>
           </>
         ) : (

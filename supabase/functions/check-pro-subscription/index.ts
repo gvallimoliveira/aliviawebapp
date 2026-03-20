@@ -107,20 +107,23 @@ serve(async (req) => {
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
-      limit: 1,
+      limit: 10,
     });
 
-    const hasActiveSub = subscriptions.data.length > 0;
+    // Filter only Pro subscriptions (prod_U5dB77Y8adgxGf)
+    const proSub = subscriptions.data.find(sub =>
+      sub.items.data.some(item => item.price.product === "prod_U5dB77Y8adgxGf")
+    );
+    const hasActiveSub = !!proSub;
     let subscriptionEnd = null;
     let subscriptionId = null;
 
-    if (hasActiveSub) {
-      const sub = subscriptions.data[0];
-      subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
-      subscriptionId = sub.id;
-      logStep("Active subscription found", { subscriptionId });
+    if (hasActiveSub && proSub) {
+      subscriptionEnd = new Date(proSub.current_period_end * 1000).toISOString();
+      subscriptionId = proSub.id;
+      logStep("Active Pro subscription found", { subscriptionId });
     } else {
-      logStep("No active subscription");
+      logStep("No active Pro subscription");
     }
 
     const updatePayload: Record<string, any> = {
