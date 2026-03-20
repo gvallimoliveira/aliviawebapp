@@ -61,17 +61,10 @@ serve(async (req) => {
     // Use the lifetime treatment price (R$149,90)
     // If not first month, we could use a different price at R$249,90
     // For now, the Stripe price is R$149,90 — if not first month, create a dynamic price
-    let priceId = "price_1T8546CBxbFcCp8IwpQN1AZD"; // R$149,90
-
-    if (!isFirstMonth) {
-      // Create a one-time price at R$249,90 for non-first-month users
-      const price = await stripe.prices.create({
-        unit_amount: 24990,
-        currency: "brl",
-        product: "prod_U6HdfkecpWCTyD",
-      });
-      priceId = price.id;
-    }
+    // R$149,90 for first 30 days, R$249,90 after
+    const priceId = isFirstMonth
+      ? "price_1T8546CBxbFcCp8IwpQN1AZD"   // R$149,90 promotional
+      : "price_1TCrvQCBxbFcCp8IlbHkAA9G";  // R$249,90 regular
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

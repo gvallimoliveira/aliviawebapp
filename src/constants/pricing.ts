@@ -31,8 +31,8 @@ export const PRO_PLAN_ANNUAL_PRICE_FORMATTED = "R$ 34,90/mês";
 export const PRO_PLAN_ANNUAL_TOTAL = 418.80;
 
 export const PRO_PLAN_ANNUAL_STRIPE = {
-  product_id: "prod_U6HddACIn9ZUvy",
-  price_id: "price_1T853mCBxbFcCp8It1Z6GNNh",
+  product_id: "prod_UBENhRLOTa0bHS",
+  price_id: "price_1TCruvCBxbFcCp8IAjlnnNTO",
 };
 
 // Pro Treatment avulso — R$29,90

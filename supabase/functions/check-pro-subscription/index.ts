@@ -118,13 +118,12 @@ serve(async (req) => {
     let subscriptionEnd = null;
     let subscriptionId = null;
 
-    if (hasActiveSub) {
-      const sub = subscriptions.data[0];
-      subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
-      subscriptionId = sub.id;
-      logStep("Active subscription found", { subscriptionId });
+    if (hasActiveSub && proSub) {
+      subscriptionEnd = new Date(proSub.current_period_end * 1000).toISOString();
+      subscriptionId = proSub.id;
+      logStep("Active Pro subscription found", { subscriptionId });
     } else {
-      logStep("No active subscription");
+      logStep("No active Pro subscription");
     }
 
     const updatePayload: Record<string, any> = {
