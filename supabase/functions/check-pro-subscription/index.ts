@@ -107,10 +107,14 @@ serve(async (req) => {
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
-      limit: 1,
+      limit: 10,
     });
 
-    const hasActiveSub = subscriptions.data.length > 0;
+    // Filter only Pro subscriptions (prod_U5dB77Y8adgxGf)
+    const proSub = subscriptions.data.find(sub =>
+      sub.items.data.some(item => item.price.product === "prod_U5dB77Y8adgxGf")
+    );
+    const hasActiveSub = !!proSub;
     let subscriptionEnd = null;
     let subscriptionId = null;
 
