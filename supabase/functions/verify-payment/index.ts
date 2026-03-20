@@ -193,7 +193,7 @@ serve(async (req) => {
 
       // Find premium subscription (prod_U6HcKYW069jBRN)
       const premiumSub = subscriptions.data.find(sub =>
-        sub.items.data.some(item => item.price.product === "prod_U6HcKYW069jBRN")
+        sub.items.data.some(item => item.price.product === "prod_U9PZeaM93PlMwb")
       );
 
       if (!premiumSub) {
