@@ -34,8 +34,8 @@ serve(async (req) => {
             default_allowed_updates: ["price", "promotion_code"],
             proration_behavior: "create_prorations",
             products: [
-              { product: "prod_U9PZeaM93PlMwb", prices: ["price_1TCrZOCBxbFcCp8IVe5xSwzq"] },
-              { product: "prod_U5dB77Y8adgxGf", prices: ["price_1TCruvCBxbFcCp8IAjlnnNTO"] },
+              { product: "prod_U9PZeaM93PlMwb", prices: ["price_1TB6k8CBxbFcCp8I4piuJ3Dm"] },
+              { product: "prod_U5dB77Y8adgxGf", prices: ["price_1T7Rv6CBxbFcCp8I1Tsv0WwS"] },
             ],
           },
           payment_method_update: { enabled: true },
