@@ -42,12 +42,13 @@ const Index = () => {
       <main>
         <HeroSection />
         <StatsSection />
+        <DualAudienceSection />
         <HighlightsSection />
         <MethodologySection />
-        <ComparisonSection />
         <HowItWorksSection />
-        <TestimonialsSection />
+        <ComparisonSection />
         <ProfessionalSection />
+        <TestimonialsSection />
         <FaqSection />
         <SocialSection />
       </main>

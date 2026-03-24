@@ -1842,6 +1842,22 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.export_done": "PDFs exported successfully!",
     "pro.export_error": "Error exporting PDFs",
     "pro.no_pdfs": "No assessments with diagnosis to export",
+
+    // Dual Audience Section
+    "dual.title": "Who is Aliv.iA for?",
+    "dual.subtitle": "One platform, two paths. Choose what makes sense for you.",
+    "dual.patient.title": "I'm in pain and want to understand why",
+    "dual.patient.bullet1": "Guided assessment from home",
+    "dual.patient.bullet2": "Preliminary diagnosis in minutes",
+    "dual.patient.bullet3": "Personalized treatment plan",
+    "dual.patient.bullet4": "Find professionals in your area",
+    "dual.patient.cta": "Start my assessment",
+    "dual.pro.title": "I'm a physiotherapist seeking precision",
+    "dual.pro.bullet1": "Receive patients with anamnesis ready",
+    "dual.pro.bullet2": "Save 30 min per consultation",
+    "dual.pro.bullet3": "Validated questionnaires already applied",
+    "dual.pro.bullet4": "Patient evolution dashboard",
+    "dual.pro.cta": "Explore the professional panel",
   },
 };
 
