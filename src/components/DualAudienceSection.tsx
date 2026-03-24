@@ -65,14 +65,22 @@ const DualAudienceSection = () => {
                 </li>
               ))}
             </ul>
-            <Button
-              onClick={() => navigate("/assessment/basic")}
-              className="w-full rounded-xl gap-2"
-              size="lg"
-            >
-              {t("dual.patient.cta")}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2 w-full">
+              <Button
+                onClick={() => navigate("/assessment/basic")}
+                variant="outline"
+                className="flex-1 rounded-xl"
+              >
+                {t("hero.cta.basic")}
+              </Button>
+              <Button
+                onClick={() => navigate("/assessment/premium")}
+                className="flex-1 rounded-xl gap-1"
+              >
+                {t("hero.cta.premium")}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           </motion.div>
 
           {/* Card Profissional */}
