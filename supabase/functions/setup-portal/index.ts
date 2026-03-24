@@ -33,6 +33,10 @@ serve(async (req) => {
             enabled: true,
             default_allowed_updates: ["price", "promotion_code"],
             proration_behavior: "create_prorations",
+            products: [
+              { product: "prod_U9PZeaM93PlMwb", prices: ["price_1TCrZOCBxbFcCp8IVe5xSwzq"] },
+              { product: "prod_U5dB77Y8adgxGf", prices: ["price_1TCruvCBxbFcCp8IAjlnnNTO"] },
+            ],
           },
           payment_method_update: { enabled: true },
           invoice_history: { enabled: true },
