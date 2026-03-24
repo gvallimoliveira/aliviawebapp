@@ -1,50 +1,80 @@
 
 
-## Auditoria Completa do Fluxo de Pagamento — Aliv.iA
+## Reestruturação da Landing Page: Dupla proposta de valor (B2C + B2B)
 
-### ✅ Bugs Corrigidos
+### Diagnóstico atual
 
-#### 1. Product ID desatualizado no verify-payment (corrigido anteriormente)
-- `verify-payment` buscava `prod_U6HcKYW069jBRN` (produto antigo) → atualizado para `prod_U9PZeaM93PlMwb`
+A landing page segue esta ordem:
+1. Hero -- fala apenas de "dor" (B2C puro)
+2. Stats -- avaliações realizadas
+3. Highlights -- "Por que a Aliv.iA?" (foco B2C)
+4. Methodology -- STEPS + D.I.F.I.
+5. Comparison -- planos Basico vs Premium (B2C)
+6. How it Works -- 6 etapas da avaliação (B2C)
+7. Testimonials
+8. **ProfessionalSection** -- unica menção ao B2B, lá embaixo
+9. FAQ
+10. Social
 
-#### 2. Plano Profissional Anual: modo incompatível com tipo de preço (CRÍTICO)
-- **Problema**: `create-pro-subscription` usava `mode: "payment"` com um preço `recurring` (interval: year). Stripe rejeita essa combinação → **nenhum profissional conseguia comprar o plano anual**.
-- **Correção**: Criado novo preço one-time `price_1TCruvCBxbFcCp8IAjlnnNTO` (R$418,80) para substituir o preço recorrente. Código atualizado.
+O profissional so descobre que a plataforma serve para ele na seção 8. A proposta dual nunca aparece de forma integrada.
 
-#### 3. Plano Anual: sem verificação de pagamento (CRÍTICO)
-- **Problema**: Após pagar o plano anual, o profissional era redirecionado para `/dashboard?subscription=success` sem nenhuma verificação. O campo `pro_access_expires_at` nunca era preenchido → **profissional pagava mas não recebia acesso**.
-- **Correção**: Redirecionamento para `/payment-success?session_id=...&type=pro_annual`. Handler adicionado em `verify-payment` para setar `pro_access_expires_at` com +1 ano e `approved: true`.
+### Estrategia proposta
 
-#### 4. Criação dinâmica de preços no Tratamento Vitalício
-- **Problema**: Para usuários fora dos primeiros 30 dias, `create-pro-lifetime-treatment` criava um novo preço Stripe a cada tentativa → poluição de preços no Stripe.
-- **Correção**: Criado preço fixo `price_1TCrvQCBxbFcCp8IlbHkAA9G` (R$249,90). Código atualizado para usar preço fixo.
+Manter a estrutura existente (nao criar componentes novos), mas fazer 3 alterações cirurgicas:
 
-#### 5. check-pro-subscription: falso positivo com assinaturas B2C
-- **Problema**: Buscava qualquer assinatura ativa (limit 1) sem filtrar por produto. Se o profissional também tivesse assinatura Premium B2C, poderia ser detectado como tendo plano Pro.
-- **Correção**: Filtro adicionado por `prod_U5dB77Y8adgxGf` (Plano Profissional).
+**1. Hero reescrito com proposta dual**
+- Titulo: posicionar Aliv.iA como plataforma de avaliação inteligente para **dois perfis**
+- Subtitulo: uma frase que abraça ambos ("Entenda sua dor com precisao clinica — ou potencialize suas avaliacoes como profissional")
+- **3 CTAs** em vez de 2: "Avaliacao Gratuita" | "Avaliacao Premium" | "Sou Profissional" (outline, com icone de estetoscopio, redireciona para /profissionais)
+- Novo micro-badge: "Usado por fisioterapeutas e pacientes"
 
-### ⚠️ Itens para Atenção
+**2. Nova seção "Para quem é a Aliv.iA?" logo apos Stats (posição 3)**
+- Criar componente `DualAudienceSection.tsx`
+- Layout: 2 cards lado a lado (mobile: empilhados)
+  - Card 1 (B2C): icone de usuario + "Para voce que sente dor" + 3-4 bullets curtos + CTA "Fazer minha avaliacao"
+  - Card 2 (B2B): icone de estetoscopio + "Para o fisioterapeuta" + 3-4 bullets curtos + CTA "Conhecer o painel profissional" → /profissionais
+- Gatilhos: autoridade (formulada por especialista), economia de tempo (30min/consulta), precisao (IA + evidencia)
 
-#### 6. Business Name no Stripe
-- A API ainda retorna **"Área restrita de New business"**. Se você já alterou, pode levar algum tempo para propagar. Verifique em: [Settings → Business Details](https://dashboard.stripe.com/settings/business-details)
+**3. Reordenar seções no Index.tsx**
+Nova ordem:
+1. Hero (reescrito)
+2. Stats
+3. **DualAudienceSection** (NOVA)
+4. Highlights
+5. Methodology
+6. HowItWorks
+7. ComparisonSection (planos B2C)
+8. **ProfessionalSection** (sobe para antes dos testimonials)
+9. Testimonials
+10. FAQ
+11. Social
 
-#### 7. Produtos obsoletos do Aliv.iA no Stripe
-Os seguintes produtos são antigos do Aliv.iA e devem ser **arquivados** no Stripe para evitar confusão:
-- `prod_U6HcKYW069jBRN` — "Assinatura Premium Aliv.iA" (substituído por `prod_U9PZeaM93PlMwb`)
-- `prod_U60kJ6Tj0qKcNA` — "Pro Treatment Unlock" (substituído por `prod_U6Hd8n833TWnrV`)
+### Detalhes tecnicos
 
-#### 8. Customer Portal Stripe
-- O Customer Portal precisa estar configurado no painel Stripe para funcionar: [Ativar portal](https://dashboard.stripe.com/settings/billing/portal)
-- Sem essa configuração, o botão "Gerenciar assinatura" vai dar erro.
+**Arquivos alterados:**
+- `src/components/HeroSection.tsx` -- adicionar 3o CTA, reescrever textos via chaves de traducao
+- `src/components/DualAudienceSection.tsx` -- novo componente com 2 cards
+- `src/pages/Index.tsx` -- nova ordem de seções + import DualAudienceSection
+- `src/contexts/LanguageContext.tsx` -- novas chaves de traducao (PT + EN):
+  - `hero.title` (reescrito)
+  - `hero.subtitle` (reescrito)
+  - `hero.badge` (reescrito)
+  - `hero.cta.professional` (novo)
+  - `hero.social_proof` (manter)
+  - `dual.title`, `dual.subtitle`
+  - `dual.patient.title`, `dual.patient.bullet1-4`, `dual.patient.cta`
+  - `dual.pro.title`, `dual.pro.bullet1-4`, `dual.pro.cta`
 
-### Mapa Final de Produtos Ativos
+### Conteudo textual (PT)
 
-| Produto | Product ID | Price ID | Valor | Tipo | Usado em |
-|---|---|---|---|---|---|
-| Premium Mensal (B2C) | `prod_U9PZeaM93PlMwb` | `price_1TB6k8CBxbFcCp8I4piuJ3Dm` | R$79,90/mês | subscription | `create-payment` |
-| Premium Avulso (B2C) | `prod_U9PZ5EOMytUZXX` | `price_1TB6kPCBxbFcCp8IUAo03Qeu` | R$109,00 | payment | `create-payment` |
-| Pro Mensal (B2B) | `prod_U5dB77Y8adgxGf` | `price_1T7Rv6CBxbFcCp8I1Tsv0WwS` | R$49,00/mês | subscription | `create-pro-subscription` |
-| Pro Anual (B2B) | `prod_UBENhRLOTa0bHS` | `price_1TCruvCBxbFcCp8IAjlnnNTO` | R$418,80 | payment | `create-pro-subscription` |
-| Tratamento Avulso | `prod_U6Hd8n833TWnrV` | `price_1T854NCBxbFcCp8IpPdh93Qd` | R$29,90 | payment | `create-pro-treatment-payment` |
-| Tratamento Vitalício (promo) | `prod_U6HdfkecpWCTyD` | `price_1T8546CBxbFcCp8IwpQN1AZD` | R$149,90 | payment | `create-pro-lifetime-treatment` |
-| Tratamento Vitalício (regular) | `prod_UBEOREW3toWxBh` | `price_1TCrvQCBxbFcCp8IlbHkAA9G` | R$249,90 | payment | `create-pro-lifetime-treatment` |
+**Hero:**
+- Badge: "Avaliacao musculoesqueletica com IA"
+- Titulo: "Avaliacao inteligente para quem sente dor — e para quem trata"
+- Subtitulo: "Entenda sua dor com precisao clinica ou potencialize suas avaliacoes profissionais. Tudo baseado em evidencia, formulado por fisioterapeuta especialista."
+- CTA 3: "Sou Profissional"
+
+**DualAudienceSection:**
+- Titulo: "Para quem e a Aliv.iA?"
+- Card Paciente: "Sinto dor e quero entender" / bullets: Avaliacao guiada sem sair de casa / Diagnostico preliminar em minutos / Plano de tratamento personalizado / Encontre profissionais na sua regiao
+- Card Profissional: "Sou fisioterapeuta e quero mais precisao" / bullets: Receba pacientes com anamnese pronta / Economize 30 min por consulta / Questionarios validados ja aplicados / Dashboard de evolucao do paciente
+
