@@ -22,12 +22,13 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.professional": "Para Profissionais",
 
     // Hero
-    "hero.title": "Cuide da sua dor com orientação especializada",
-    "hero.subtitle": "Avaliação musculoesquelética formulada por fisioterapeuta, que ajuda você a entender sua dor e encontrar o caminho para o alívio — de forma segura e acessível.",
-    "hero.cta.basic": "Avaliação Básica Gratuita",
+    "hero.title": "Avaliação inteligente para quem sente dor — e para quem trata",
+    "hero.subtitle": "Entenda sua dor com precisão clínica ou potencialize suas avaliações profissionais. Baseado em evidência, formulado por fisioterapeuta especialista.",
+    "hero.cta.basic": "Avaliação Gratuita",
     "hero.cta.premium": "Avaliação Premium",
-    "hero.badge": "Autoavaliação inteligente",
-    "hero.social_proof": "Mais de 1.600 avaliações realizadas",
+    "hero.cta.professional": "Sou Profissional",
+    "hero.badge": "Avaliação musculoesquelética com IA",
+    "hero.social_proof": "Usado por pacientes e fisioterapeutas",
     "hero.time_badge": "Resultado em menos de 15 minutos",
 
     // Comparison
@@ -920,6 +921,22 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.export_done": "PDFs exportados com sucesso!",
     "pro.export_error": "Erro ao exportar PDFs",
     "pro.no_pdfs": "Nenhuma avaliação com diagnóstico para exportar",
+
+    // Dual Audience Section
+    "dual.title": "Para quem é a Aliv.iA?",
+    "dual.subtitle": "Uma plataforma, dois caminhos. Escolha o que faz sentido para você.",
+    "dual.patient.title": "Sinto dor e quero entender",
+    "dual.patient.bullet1": "Avaliação guiada sem sair de casa",
+    "dual.patient.bullet2": "Diagnóstico preliminar em minutos",
+    "dual.patient.bullet3": "Plano de tratamento personalizado",
+    "dual.patient.bullet4": "Encontre profissionais na sua região",
+    "dual.patient.cta": "Fazer minha avaliação",
+    "dual.pro.title": "Sou fisioterapeuta e quero mais precisão",
+    "dual.pro.bullet1": "Receba pacientes com anamnese pronta",
+    "dual.pro.bullet2": "Economize 30 min por consulta",
+    "dual.pro.bullet3": "Questionários validados já aplicados",
+    "dual.pro.bullet4": "Dashboard de evolução do paciente",
+    "dual.pro.cta": "Conhecer o painel profissional",
   },
   en: {
     // Nav
@@ -933,12 +950,13 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.professional": "For Professionals",
 
     // Hero
-    "hero.title": "Take care of your pain with expert guidance",
-    "hero.subtitle": "A musculoskeletal assessment designed by a physiotherapist, helping you understand your pain and find the path to relief — safely and accessibly.",
-    "hero.cta.basic": "Free Basic Assessment",
+    "hero.title": "Smart assessment for those in pain — and those who treat it",
+    "hero.subtitle": "Understand your pain with clinical precision or enhance your professional assessments. Evidence-based, designed by a specialist physiotherapist.",
+    "hero.cta.basic": "Free Assessment",
     "hero.cta.premium": "Premium Assessment",
-    "hero.badge": "Smart self-assessment",
-    "hero.social_proof": "Over 1,600 assessments completed",
+    "hero.cta.professional": "I'm a Professional",
+    "hero.badge": "AI-powered musculoskeletal assessment",
+    "hero.social_proof": "Used by patients and physiotherapists",
     "hero.time_badge": "Results in less than 15 minutes",
 
     // Comparison
@@ -1824,6 +1842,22 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.export_done": "PDFs exported successfully!",
     "pro.export_error": "Error exporting PDFs",
     "pro.no_pdfs": "No assessments with diagnosis to export",
+
+    // Dual Audience Section
+    "dual.title": "Who is Aliv.iA for?",
+    "dual.subtitle": "One platform, two paths. Choose what makes sense for you.",
+    "dual.patient.title": "I'm in pain and want to understand why",
+    "dual.patient.bullet1": "Guided assessment from home",
+    "dual.patient.bullet2": "Preliminary diagnosis in minutes",
+    "dual.patient.bullet3": "Personalized treatment plan",
+    "dual.patient.bullet4": "Find professionals in your area",
+    "dual.patient.cta": "Start my assessment",
+    "dual.pro.title": "I'm a physiotherapist seeking precision",
+    "dual.pro.bullet1": "Receive patients with anamnesis ready",
+    "dual.pro.bullet2": "Save 30 min per consultation",
+    "dual.pro.bullet3": "Validated questionnaires already applied",
+    "dual.pro.bullet4": "Patient evolution dashboard",
+    "dual.pro.cta": "Explore the professional panel",
   },
 };
 

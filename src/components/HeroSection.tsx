@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Clock, Users } from "lucide-react";
+import { ArrowRight, Clock, Users, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
@@ -62,13 +62,17 @@ const HeroSection = () => {
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row flex-wrap">
             <Button size="lg" variant="outline" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto" onClick={() => navigate("/assessment/basic")}>
               {t("hero.cta.basic")}
             </Button>
             <Button size="lg" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto gap-2" onClick={() => navigate("/assessment/premium")}>
               {t("hero.cta.premium")}
               <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button size="lg" variant="outline" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto gap-2 border-primary/30 text-primary hover:bg-primary/5" onClick={() => navigate("/profissionais")}>
+              <Stethoscope className="h-4 w-4" />
+              {t("hero.cta.professional")}
             </Button>
           </div>
         </motion.div>
