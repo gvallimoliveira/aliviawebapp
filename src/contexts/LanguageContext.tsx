@@ -22,12 +22,13 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.professional": "Para Profissionais",
 
     // Hero
-    "hero.title": "Cuide da sua dor com orientação especializada",
-    "hero.subtitle": "Avaliação musculoesquelética formulada por fisioterapeuta, que ajuda você a entender sua dor e encontrar o caminho para o alívio — de forma segura e acessível.",
-    "hero.cta.basic": "Avaliação Básica Gratuita",
+    "hero.title": "Avaliação inteligente para quem sente dor — e para quem trata",
+    "hero.subtitle": "Entenda sua dor com precisão clínica ou potencialize suas avaliações profissionais. Baseado em evidência, formulado por fisioterapeuta especialista.",
+    "hero.cta.basic": "Avaliação Gratuita",
     "hero.cta.premium": "Avaliação Premium",
-    "hero.badge": "Autoavaliação inteligente",
-    "hero.social_proof": "Mais de 1.600 avaliações realizadas",
+    "hero.cta.professional": "Sou Profissional",
+    "hero.badge": "Avaliação musculoesquelética com IA",
+    "hero.social_proof": "Usado por pacientes e fisioterapeutas",
     "hero.time_badge": "Resultado em menos de 15 minutos",
 
     // Comparison
