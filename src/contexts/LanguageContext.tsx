@@ -950,12 +950,13 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.professional": "For Professionals",
 
     // Hero
-    "hero.title": "Take care of your pain with expert guidance",
-    "hero.subtitle": "A musculoskeletal assessment designed by a physiotherapist, helping you understand your pain and find the path to relief — safely and accessibly.",
-    "hero.cta.basic": "Free Basic Assessment",
+    "hero.title": "Smart assessment for those in pain — and those who treat it",
+    "hero.subtitle": "Understand your pain with clinical precision or enhance your professional assessments. Evidence-based, designed by a specialist physiotherapist.",
+    "hero.cta.basic": "Free Assessment",
     "hero.cta.premium": "Premium Assessment",
-    "hero.badge": "Smart self-assessment",
-    "hero.social_proof": "Over 1,600 assessments completed",
+    "hero.cta.professional": "I'm a Professional",
+    "hero.badge": "AI-powered musculoskeletal assessment",
+    "hero.social_proof": "Used by patients and physiotherapists",
     "hero.time_badge": "Results in less than 15 minutes",
 
     // Comparison
