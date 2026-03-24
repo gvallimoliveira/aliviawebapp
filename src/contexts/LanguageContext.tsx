@@ -627,7 +627,7 @@ const translations: Record<Language, Record<string, string>> = {
     "pdf.no_data": "Dados insuficientes para gerar o PDF.",
 
     // Sticky CTA
-    "sticky.cta": "Comece sua avaliação agora",
+    "sticky.cta": "Paciente ou profissional? Comece agora.",
 
     // Pro Plan B2B
     "pro.plan_title": "Plano Profissional",
@@ -1548,7 +1548,7 @@ const translations: Record<Language, Record<string, string>> = {
     "pdf.no_data": "Insufficient data to generate PDF.",
 
     // Sticky CTA
-    "sticky.cta": "Start your assessment now",
+    "sticky.cta": "Patient or professional? Start now.",
 
     // Pro Plan B2B
     "pro.plan_title": "Professional Plan",
