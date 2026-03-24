@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +48,16 @@ const StickyCTA = () => {
               >
                 {t("hero.cta.premium")}
                 <ArrowRight className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl gap-1 flex-1 sm:flex-none border-primary/30 text-primary hover:bg-primary/5"
+                onClick={() => navigate("/profissionais")}
+              >
+                <Stethoscope className="h-3 w-3" />
+                <span className="hidden sm:inline">{t("hero.cta.professional")}</span>
+                <span className="sm:hidden">Pro</span>
               </Button>
             </div>
           </div>
