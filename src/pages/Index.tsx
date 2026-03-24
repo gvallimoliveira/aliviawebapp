@@ -44,9 +44,9 @@ const Index = () => {
         <StatsSection />
         <DualAudienceSection />
         <HighlightsSection />
+        <ComparisonSection />
         <MethodologySection />
         <HowItWorksSection />
-        <ComparisonSection />
         <ProfessionalSection />
         <TestimonialsSection />
         <FaqSection />
