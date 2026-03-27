@@ -209,7 +209,7 @@ const ProfessionalLanding = () => {
       </section>
 
       {/* Pricing */}
-      <section className="py-16 md:py-20 bg-muted/30">
+      <section id="compare" className="py-16 md:py-20 bg-muted/30">
         <div className="container max-w-4xl mx-auto px-4">
           <motion.h2
             initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}

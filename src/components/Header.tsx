@@ -98,7 +98,7 @@ const Header = () => {
               onClick={() => setMobileOpen(false)}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
-              {t("compare.title")}
+              {isProfessionalPage ? (t("nav.language") === "EN" ? "Planos e preços" : "Plans & pricing") : t("compare.title")}
             </a>
             <a
               href="#how"
