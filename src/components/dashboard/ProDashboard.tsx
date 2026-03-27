@@ -24,6 +24,7 @@ import {
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface ProDashboardProps {
   professional: any;
