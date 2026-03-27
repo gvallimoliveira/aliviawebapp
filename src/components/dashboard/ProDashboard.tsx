@@ -130,7 +130,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   }, [professional?.created_at]);
 
   const copyLink = () => {
-    const link = `${window.location.origin}/assessment/professional/${professional.id}`;
+    const link = `${getPublicOrigin()}/assessment/professional/${professional.id}`;
     navigator.clipboard.writeText(link);
     setLinkCopied(true);
     toast({ title: t("referral.copied") });
