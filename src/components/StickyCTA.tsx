@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 
-const StickyCTA = () => {
+const StickyCTA = ({ showProfessional = true }: { showProfessional?: boolean }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
