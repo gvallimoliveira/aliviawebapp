@@ -1,39 +1,101 @@
 
 
-## Corrigir links personalizados dos profissionais para funcionar externamente
+## Reestruturação: Pré-Landing + Landing Paciente + Landing Profissional refinada
 
-### Problema
+### Visão geral
 
-O link personalizado (`/assessment/professional/:id`) é gerado usando `window.location.origin`. Quando o profissional copia esse link a partir do **preview do Lovable**, a URL gerada aponta para `id-preview--*.lovable.app`, que exige login na plataforma Lovable — tornando o link inacessível para pacientes.
+Criar 3 camadas de funil:
 
-### Solução
-
-Substituir `window.location.origin` por uma constante que aponte para a URL de produção. Se o app já estiver rodando no domínio publicado, usar `window.location.origin` normalmente. Se estiver no preview, usar a URL publicada como fallback.
-
-### Arquivos a modificar
-
-**1. Criar helper `src/lib/getPublicOrigin.ts`**
-
-```typescript
-export const getPublicOrigin = () => {
-  const origin = window.location.origin;
-  // Se estiver no preview do Lovable, usar URL de produção
-  if (origin.includes("id-preview--") || origin.includes("localhost")) {
-    return "https://aliviawebapp.com.br"; // domínio customizado
-  }
-  return origin;
-};
+```text
+/ (Pré-Landing - Gateway)
+├── "Sinto dor" → /para-pacientes (Nova Landing B2C)
+└── "Sou Profissional" → /profissionais (Landing B2B existente, refinada)
 ```
 
-**2. `src/components/dashboard/ProDashboard.tsx`** (3 ocorrências)
-- Importar `getPublicOrigin`
-- Substituir `window.location.origin` por `getPublicOrigin()` na função `copyLink` e nos dois `<code>` que exibem o link
+A landing page atual (`Index.tsx`) será preservada como `/landing-legacy` (rota inativa mas acessível sob demanda).
 
-**3. `src/pages/ProfessionalRegister.tsx`** (2 ocorrências)
-- Importar `getPublicOrigin`
-- Substituir `window.location.origin` por `getPublicOrigin()` no `<Input readOnly>` e no `onClick` do botão de copiar
+---
 
-### Resultado
+### 1. Pré-Landing Page (nova rota `/`)
 
-Os links copiados sempre apontarão para `https://aliviawebapp.com.br/assessment/professional/:id`, funcionando para qualquer pessoa sem necessidade de login na Lovable.
+**Arquivo:** `src/pages/Gateway.tsx`
+
+Página minimalista e impactante com a identidade visual do app:
+- Logo Aliv.iA flutuante animada (mesmo estilo do Hero atual)
+- Gradientes e blobs de fundo consistentes com o app
+- Headline: "Avaliação musculoesquelética inteligente"
+- Subheadline: "Escolha seu perfil para descobrir como a Aliv.iA pode ajudar você"
+- **Dois cards lado a lado** (mobile: empilhados):
+  - **Card Paciente**: ícone User, título "Sinto dor e quero resolver", breve descrição (3 bullets curtos sobre o benefício), botão "Começar minha avaliação" → `/para-pacientes`
+  - **Card Profissional**: ícone Stethoscope, título "Sou fisioterapeuta", breve descrição (3 bullets curtos), botão "Conhecer o painel profissional" → `/profissionais`
+- Gatilhos de prova social (badge "X+ avaliações realizadas")
+- Footer mínimo ou link para blog
+
+### 2. Landing Page Paciente (nova rota `/para-pacientes`)
+
+**Arquivo:** `src/pages/PatientLanding.tsx`
+
+Transferir e adaptar as seções relevantes ao paciente da landing atual:
+- Header (com navegação ajustada)
+- HeroSection adaptado (sem CTA profissional, foco 100% B2C)
+- StatsSection
+- HighlightsSection ("Por que a Aliv.iA?")
+- ComparisonSection (Básico vs Premium)
+- MethodologySection (STEPS + D.I.F.I.)
+- HowItWorksSection (etapas da avaliação)
+- TestimonialsSection
+- FaqSection (filtrar FAQs relevantes ao paciente)
+- SocialSection
+- Footer
+- StickyCTA (sem botão profissional)
+
+### 3. Landing Profissional refinada (`/profissionais`)
+
+**Arquivo:** `src/pages/ProfessionalLanding.tsx` (editar existente)
+
+Melhorias a aplicar:
+- Incorporar os cards de benefício que hoje estão no `ProfessionalSection` da landing atual (economize tempo, relatórios PDF, anamnese pré-preenchida, dashboard de evolução)
+- Adicionar seção de "Como funciona" com os 4 passos visuais
+- Adicionar prova social / depoimentos de profissionais (se houver)
+- Manter pricing e FAQ existentes
+- Refinar copy com gatilhos de urgência e autoridade
+
+### 4. Arquivamento da Landing atual
+
+- Renomear `src/pages/Index.tsx` → `src/pages/LandingLegacy.tsx`
+- Adicionar rota `/landing-legacy` no `App.tsx`
+- A rota `/` passará a renderizar `Gateway.tsx`
+
+### 5. Ajustes de navegação
+
+**`src/App.tsx`:**
+- `/` → `Gateway`
+- `/para-pacientes` → `PatientLanding`
+- `/landing-legacy` → `LandingLegacy` (página original preservada)
+- `/profissionais` → `ProfessionalLanding` (já existe)
+
+**`src/components/Header.tsx`:**
+- Logo clica → `/` (gateway)
+- Links de navegação adaptados conforme contexto da página
+
+---
+
+### Arquivos a criar/modificar
+
+| Ação | Arquivo |
+|------|---------|
+| Criar | `src/pages/Gateway.tsx` |
+| Criar | `src/pages/PatientLanding.tsx` |
+| Renomear | `src/pages/Index.tsx` → `src/pages/LandingLegacy.tsx` |
+| Editar | `src/pages/ProfessionalLanding.tsx` (refinar com cards do ProfessionalSection) |
+| Editar | `src/App.tsx` (rotas) |
+| Editar | `src/components/Header.tsx` (navegação) |
+
+### Detalhes técnicos
+
+- Gateway usa framer-motion para animações consistentes
+- PatientLanding reutiliza componentes existentes (HeroSection adaptado ou inline)
+- SEO (`setSeo`) configurado em cada página com title/description únicos
+- Referral code (`?ref=`) preservado na Gateway e PatientLanding
+- Todas as páginas mantêm a mesma paleta de cores, tipografia e estilo visual
 
