@@ -233,7 +233,7 @@ const ProfessionalRegister = () => {
               <div className="flex gap-2">
                 <Input
                   readOnly
-                  value={`${window.location.origin}/assessment/professional/${existing.id}`}
+                  value={`${getPublicOrigin()}/assessment/professional/${existing.id}`}
                   className="text-sm bg-muted/50 font-mono"
                 />
                 <Button
