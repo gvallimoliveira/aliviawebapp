@@ -1,80 +1,38 @@
 
 
-## Reestruturação da Landing Page: Dupla proposta de valor (B2C + B2B)
+## Corrigir atualização automática do PWA (app na tela de início)
 
-### Diagnóstico atual
+### Problema
 
-A landing page segue esta ordem:
-1. Hero -- fala apenas de "dor" (B2C puro)
-2. Stats -- avaliações realizadas
-3. Highlights -- "Por que a Aliv.iA?" (foco B2C)
-4. Methodology -- STEPS + D.I.F.I.
-5. Comparison -- planos Basico vs Premium (B2C)
-6. How it Works -- 6 etapas da avaliação (B2C)
-7. Testimonials
-8. **ProfessionalSection** -- unica menção ao B2B, lá embaixo
-9. FAQ
-10. Social
+O `registerType: "autoUpdate"` está configurado no Vite, mas o `vite-plugin-pwa` com essa opção precisa que o service worker seja **registrado explicitamente** no código da aplicação para que o ciclo de atualização funcione. Sem isso, o service worker antigo fica em cache indefinidamente e o app instalado na tela de início nunca busca a versão nova.
 
-O profissional so descobre que a plataforma serve para ele na seção 8. A proposta dual nunca aparece de forma integrada.
+### Solução
 
-### Estrategia proposta
+Duas alterações:
 
-Manter a estrutura existente (nao criar componentes novos), mas fazer 3 alterações cirurgicas:
+**1. `src/main.tsx` — Registrar o service worker com lógica de auto-update**
 
-**1. Hero reescrito com proposta dual**
-- Titulo: posicionar Aliv.iA como plataforma de avaliação inteligente para **dois perfis**
-- Subtitulo: uma frase que abraça ambos ("Entenda sua dor com precisao clinica — ou potencialize suas avaliacoes como profissional")
-- **3 CTAs** em vez de 2: "Avaliacao Gratuita" | "Avaliacao Premium" | "Sou Profissional" (outline, com icone de estetoscopio, redireciona para /profissionais)
-- Novo micro-badge: "Usado por fisioterapeutas e pacientes"
+Adicionar o registro do `registerSW` do `vite-plugin-pwa/virtual` que:
+- Detecta quando há uma nova versão disponível
+- Aplica a atualização automaticamente
+- Força reload quando o novo service worker assume o controle
+- Inclui intervalo de verificação periódica (a cada 60 segundos) para que ao reabrir o app, ele busque atualizações rapidamente
+- Inclui guard para não registrar em iframes ou no preview do Lovable
 
-**2. Nova seção "Para quem é a Aliv.iA?" logo apos Stats (posição 3)**
-- Criar componente `DualAudienceSection.tsx`
-- Layout: 2 cards lado a lado (mobile: empilhados)
-  - Card 1 (B2C): icone de usuario + "Para voce que sente dor" + 3-4 bullets curtos + CTA "Fazer minha avaliacao"
-  - Card 2 (B2B): icone de estetoscopio + "Para o fisioterapeuta" + 3-4 bullets curtos + CTA "Conhecer o painel profissional" → /profissionais
-- Gatilhos: autoridade (formulada por especialista), economia de tempo (30min/consulta), precisao (IA + evidencia)
+**2. `vite.config.ts` — Adicionar `skipWaiting` e `clientsClaim`**
 
-**3. Reordenar seções no Index.tsx**
-Nova ordem:
-1. Hero (reescrito)
-2. Stats
-3. **DualAudienceSection** (NOVA)
-4. Highlights
-5. Methodology
-6. HowItWorks
-7. ComparisonSection (planos B2C)
-8. **ProfessionalSection** (sobe para antes dos testimonials)
-9. Testimonials
-10. FAQ
-11. Social
+Configurar o Workbox para:
+- `skipWaiting: true` — o novo service worker assume imediatamente sem esperar que o usuário feche todas as abas
+- `clientsClaim: true` — o novo service worker toma controle de todas as páginas abertas imediatamente
+- `devOptions: { enabled: false }` — desabilitar no desenvolvimento para não interferir no preview
 
-### Detalhes tecnicos
+### Resultado esperado
 
-**Arquivos alterados:**
-- `src/components/HeroSection.tsx` -- adicionar 3o CTA, reescrever textos via chaves de traducao
-- `src/components/DualAudienceSection.tsx` -- novo componente com 2 cards
-- `src/pages/Index.tsx` -- nova ordem de seções + import DualAudienceSection
-- `src/contexts/LanguageContext.tsx` -- novas chaves de traducao (PT + EN):
-  - `hero.title` (reescrito)
-  - `hero.subtitle` (reescrito)
-  - `hero.badge` (reescrito)
-  - `hero.cta.professional` (novo)
-  - `hero.social_proof` (manter)
-  - `dual.title`, `dual.subtitle`
-  - `dual.patient.title`, `dual.patient.bullet1-4`, `dual.patient.cta`
-  - `dual.pro.title`, `dual.pro.bullet1-4`, `dual.pro.cta`
+Quando você publicar uma atualização e o usuário reabrir o app na tela de início, o service worker vai detectar a nova versão em até 60 segundos, baixar os novos assets e recarregar automaticamente — comportamento idêntico ao navegador normal.
 
-### Conteudo textual (PT)
+### Detalhes técnicos
 
-**Hero:**
-- Badge: "Avaliacao musculoesqueletica com IA"
-- Titulo: "Avaliacao inteligente para quem sente dor — e para quem trata"
-- Subtitulo: "Entenda sua dor com precisao clinica ou potencialize suas avaliacoes profissionais. Tudo baseado em evidencia, formulado por fisioterapeuta especialista."
-- CTA 3: "Sou Profissional"
-
-**DualAudienceSection:**
-- Titulo: "Para quem e a Aliv.iA?"
-- Card Paciente: "Sinto dor e quero entender" / bullets: Avaliacao guiada sem sair de casa / Diagnostico preliminar em minutos / Plano de tratamento personalizado / Encontre profissionais na sua regiao
-- Card Profissional: "Sou fisioterapeuta e quero mais precisao" / bullets: Receba pacientes com anamnese pronta / Economize 30 min por consulta / Questionarios validados ja aplicados / Dashboard de evolucao do paciente
+Arquivos modificados:
+- `vite.config.ts` — adicionar `skipWaiting`, `clientsClaim`, `devOptions`
+- `src/main.tsx` — adicionar registro do SW com `registerSW({ immediate: true, onRegisteredSW })` e intervalo de polling de 60s
 
