@@ -31,7 +31,7 @@ const OnboardingStep = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.25 }}
-      className="fixed z-[60] w-[320px] max-w-[90vw] rounded-2xl border border-border bg-card p-5 shadow-xl"
+      className="fixed z-[60] w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-card p-5 shadow-xl"
       style={style}
     >
       <button
