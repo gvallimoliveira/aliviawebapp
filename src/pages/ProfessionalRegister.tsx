@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 const SPECIALTIES = [
   "ortopedia", "esportiva", "neurologica", "respiratoria",
@@ -232,7 +233,7 @@ const ProfessionalRegister = () => {
               <div className="flex gap-2">
                 <Input
                   readOnly
-                  value={`${window.location.origin}/assessment/professional/${existing.id}`}
+                  value={`${getPublicOrigin()}/assessment/professional/${existing.id}`}
                   className="text-sm bg-muted/50 font-mono"
                 />
                 <Button
@@ -240,7 +241,7 @@ const ProfessionalRegister = () => {
                   size="sm"
                   className="shrink-0 gap-1.5"
                   onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/assessment/professional/${existing.id}`);
+                    navigator.clipboard.writeText(`${getPublicOrigin()}/assessment/professional/${existing.id}`);
                     setLinkCopied(true);
                     toast({ title: t("prof.link_copied") });
                     setTimeout(() => setLinkCopied(false), 2000);

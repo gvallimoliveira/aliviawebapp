@@ -24,6 +24,7 @@ import {
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface ProDashboardProps {
   professional: any;
@@ -129,7 +130,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   }, [professional?.created_at]);
 
   const copyLink = () => {
-    const link = `${window.location.origin}/assessment/professional/${professional.id}`;
+    const link = `${getPublicOrigin()}/assessment/professional/${professional.id}`;
     navigator.clipboard.writeText(link);
     setLinkCopied(true);
     toast({ title: t("referral.copied") });
@@ -241,7 +242,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             <CardContent>
               <div className="flex gap-2">
                 <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-                  {window.location.origin}/assessment/professional/seu-id
+                  {getPublicOrigin()}/assessment/professional/seu-id
                 </code>
                 <Button variant="outline" className="gap-1.5 rounded-xl shrink-0" disabled>
                   <Copy className="h-4 w-4" />
@@ -458,7 +459,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         <CardContent>
           <div className="flex gap-2">
             <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-              {window.location.origin}/assessment/professional/{professional.id}
+              {getPublicOrigin()}/assessment/professional/{professional.id}
             </code>
             <Button onClick={copyLink} variant="outline" className="gap-1.5 rounded-xl shrink-0">
               {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
