@@ -1,35 +1,53 @@
 
 
-## Corrigir scroll e navegação do Header na landing profissional
+## Integrar Microsoft Clarity para Heatmaps e Análise de Comportamento
 
-### Problemas identificados
+### O que é
 
-1. **Scroll não reseta ao navegar para `/profissionais`** — não existe um componente `ScrollToTop`, então ao clicar no card da Gateway a página abre no meio.
-2. **Links "Como funciona" e "Escolha sua avaliação" no Header** — apontam para `#compare` e `#how`, que são IDs de seções da PatientLanding. Na ProfessionalLanding essas seções não existem nem possuem IDs, então os links não fazem nada.
+Microsoft Clarity é uma ferramenta gratuita que captura:
+- **Heatmaps de clique** — onde os usuários clicam na página
+- **Heatmaps de scroll** — até onde os usuários descem
+- **Gravações de sessão** — replay completo da navegação do usuário
+- **Dead clicks e rage clicks** — detecção automática de frustração
+- **Insights automáticos** — métricas de engajamento por página
 
-### Solução
+### Como funciona
 
-**1. Criar `src/components/ScrollToTop.tsx`**
-- Componente que usa `useLocation` + `useEffect` para fazer `window.scrollTo(0, 0)` a cada mudança de rota.
+1. Você cria uma conta gratuita em [clarity.microsoft.com](https://clarity.microsoft.com)
+2. Cria um projeto e obtém o **Tracking ID** (ex: `abc123xyz`)
+3. Eu integro o script do Clarity no `index.html` do app
+4. Todos os dados ficam disponíveis no dashboard do Clarity
 
-**2. Adicionar `ScrollToTop` ao `src/App.tsx`**
-- Dentro do `<BrowserRouter>`, antes de `<Routes>`.
+### Como acessar os dados depois
 
-**3. Adicionar IDs às seções da ProfessionalLanding (`src/pages/ProfessionalLanding.tsx`)**
-- Seção "How it works" → `id="how"`
-- Seção "Pricing" → `id="compare"`
+- Acesse [clarity.microsoft.com](https://clarity.microsoft.com) → seu projeto
+- **Dashboard**: métricas gerais (sessões, scroll depth, rage clicks)
+- **Heatmaps**: selecione qualquer página para ver mapas de calor de clique e scroll
+- **Recordings**: assista gravações reais de sessões de usuários
+- **Filtros**: filtre por dispositivo (mobile/desktop), país, página específica, etc.
 
-**4. Tornar o Header consciente da página (`src/components/Header.tsx`)**
-- Usar `useLocation` para detectar se está em `/profissionais`.
-- Na landing profissional, ajustar os labels dos links de navegação: "Como funciona" → `#how`, "Planos e preços" → `#compare` (em vez de "Escolha sua avaliação").
-- Nas demais páginas, manter o comportamento atual.
+### Implementação técnica
 
-### Arquivos
+**Arquivo: `index.html`**
+- Adicionar o script de tracking do Clarity no `<head>`, antes do fechamento
+- O script é um snippet padrão JavaScript fornecido pelo Clarity, com o Tracking ID do projeto
 
-| Ação | Arquivo |
-|------|---------|
-| Criar | `src/components/ScrollToTop.tsx` |
-| Editar | `src/App.tsx` (adicionar ScrollToTop) |
-| Editar | `src/pages/ProfessionalLanding.tsx` (adicionar `id="how"` e `id="compare"` nas seções) |
-| Editar | `src/components/Header.tsx` (links contextuais por rota) |
+```html
+<script type="text/javascript">
+  (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "SEU_TRACKING_ID");
+</script>
+```
+
+### Próximo passo
+
+Para implementar, preciso que você:
+1. Acesse [clarity.microsoft.com](https://clarity.microsoft.com) e crie uma conta (pode usar conta Microsoft/Google)
+2. Crie um novo projeto com a URL `https://aliviawebapp.com.br`
+3. Me envie o **Tracking ID** gerado (uma string curta tipo `abc123xyz`)
+
+Com o ID em mãos, eu adiciono o script e o tracking começa automaticamente em todas as páginas.
 
