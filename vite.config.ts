@@ -19,7 +19,12 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.png", "pwa-icon-192.png", "pwa-icon-512.png"],
+      devOptions: {
+        enabled: false,
+      },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,webp,woff,woff2}"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
