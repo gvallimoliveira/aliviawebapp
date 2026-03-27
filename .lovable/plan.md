@@ -1,38 +1,39 @@
 
 
-## Corrigir atualização automática do PWA (app na tela de início)
+## Corrigir links personalizados dos profissionais para funcionar externamente
 
 ### Problema
 
-O `registerType: "autoUpdate"` está configurado no Vite, mas o `vite-plugin-pwa` com essa opção precisa que o service worker seja **registrado explicitamente** no código da aplicação para que o ciclo de atualização funcione. Sem isso, o service worker antigo fica em cache indefinidamente e o app instalado na tela de início nunca busca a versão nova.
+O link personalizado (`/assessment/professional/:id`) é gerado usando `window.location.origin`. Quando o profissional copia esse link a partir do **preview do Lovable**, a URL gerada aponta para `id-preview--*.lovable.app`, que exige login na plataforma Lovable — tornando o link inacessível para pacientes.
 
 ### Solução
 
-Duas alterações:
+Substituir `window.location.origin` por uma constante que aponte para a URL de produção. Se o app já estiver rodando no domínio publicado, usar `window.location.origin` normalmente. Se estiver no preview, usar a URL publicada como fallback.
 
-**1. `src/main.tsx` — Registrar o service worker com lógica de auto-update**
+### Arquivos a modificar
 
-Adicionar o registro do `registerSW` do `vite-plugin-pwa/virtual` que:
-- Detecta quando há uma nova versão disponível
-- Aplica a atualização automaticamente
-- Força reload quando o novo service worker assume o controle
-- Inclui intervalo de verificação periódica (a cada 60 segundos) para que ao reabrir o app, ele busque atualizações rapidamente
-- Inclui guard para não registrar em iframes ou no preview do Lovable
+**1. Criar helper `src/lib/getPublicOrigin.ts`**
 
-**2. `vite.config.ts` — Adicionar `skipWaiting` e `clientsClaim`**
+```typescript
+export const getPublicOrigin = () => {
+  const origin = window.location.origin;
+  // Se estiver no preview do Lovable, usar URL de produção
+  if (origin.includes("id-preview--") || origin.includes("localhost")) {
+    return "https://aliviawebapp.com.br"; // domínio customizado
+  }
+  return origin;
+};
+```
 
-Configurar o Workbox para:
-- `skipWaiting: true` — o novo service worker assume imediatamente sem esperar que o usuário feche todas as abas
-- `clientsClaim: true` — o novo service worker toma controle de todas as páginas abertas imediatamente
-- `devOptions: { enabled: false }` — desabilitar no desenvolvimento para não interferir no preview
+**2. `src/components/dashboard/ProDashboard.tsx`** (3 ocorrências)
+- Importar `getPublicOrigin`
+- Substituir `window.location.origin` por `getPublicOrigin()` na função `copyLink` e nos dois `<code>` que exibem o link
 
-### Resultado esperado
+**3. `src/pages/ProfessionalRegister.tsx`** (2 ocorrências)
+- Importar `getPublicOrigin`
+- Substituir `window.location.origin` por `getPublicOrigin()` no `<Input readOnly>` e no `onClick` do botão de copiar
 
-Quando você publicar uma atualização e o usuário reabrir o app na tela de início, o service worker vai detectar a nova versão em até 60 segundos, baixar os novos assets e recarregar automaticamente — comportamento idêntico ao navegador normal.
+### Resultado
 
-### Detalhes técnicos
-
-Arquivos modificados:
-- `vite.config.ts` — adicionar `skipWaiting`, `clientsClaim`, `devOptions`
-- `src/main.tsx` — adicionar registro do SW com `registerSW({ immediate: true, onRegisteredSW })` e intervalo de polling de 60s
+Os links copiados sempre apontarão para `https://aliviawebapp.com.br/assessment/professional/:id`, funcionando para qualquer pessoa sem necessidade de login na Lovable.
 
