@@ -922,6 +922,24 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.export_error": "Erro ao exportar PDFs",
     "pro.no_pdfs": "Nenhuma avaliação com diagnóstico para exportar",
 
+    // Gateway
+    "gateway.badge": "Avaliação musculoesquelética com IA",
+    "gateway.title": "Avaliação musculoesquelética inteligente",
+    "gateway.subtitle": "Escolha seu perfil para descobrir como a Aliv.iA pode ajudar você",
+    "gateway.patient.title": "Sinto dor e quero resolver",
+    "gateway.patient.desc": "Entenda sua dor com precisão clínica e receba um plano de ação personalizado.",
+    "gateway.patient.bullet1": "Avaliação guiada sem sair de casa",
+    "gateway.patient.bullet2": "Diagnóstico preliminar em minutos",
+    "gateway.patient.bullet3": "Plano de tratamento personalizado",
+    "gateway.patient.cta": "Começar minha avaliação",
+    "gateway.pro.title": "Sou fisioterapeuta",
+    "gateway.pro.desc": "Potencialize suas consultas com triagem inteligente e dados estruturados.",
+    "gateway.pro.bullet1": "Anamnese e questionários prontos antes da consulta",
+    "gateway.pro.bullet2": "Maior precisão clínica nas avaliações",
+    "gateway.pro.bullet3": "Dashboard de evolução do paciente",
+    "gateway.pro.cta": "Conhecer o painel profissional",
+    "gateway.social_proof": "Usado por pacientes e fisioterapeutas em todo o Brasil",
+
     // Dual Audience Section
     "dual.title": "Para quem é a Aliv.iA?",
     "dual.subtitle": "Uma plataforma, dois caminhos. Escolha o que faz sentido para você.",
@@ -1842,6 +1860,24 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.export_done": "PDFs exported successfully!",
     "pro.export_error": "Error exporting PDFs",
     "pro.no_pdfs": "No assessments with diagnosis to export",
+
+    // Gateway
+    "gateway.badge": "AI-powered musculoskeletal assessment",
+    "gateway.title": "Smart musculoskeletal assessment",
+    "gateway.subtitle": "Choose your profile to discover how Aliv.iA can help you",
+    "gateway.patient.title": "I'm in pain and want answers",
+    "gateway.patient.desc": "Understand your pain with clinical precision and get a personalized action plan.",
+    "gateway.patient.bullet1": "Guided assessment from home",
+    "gateway.patient.bullet2": "Preliminary diagnosis in minutes",
+    "gateway.patient.bullet3": "Personalized treatment plan",
+    "gateway.patient.cta": "Start my assessment",
+    "gateway.pro.title": "I'm a physiotherapist",
+    "gateway.pro.desc": "Supercharge your consultations with smart triage and structured data.",
+    "gateway.pro.bullet1": "Anamnesis and questionnaires ready before consultation",
+    "gateway.pro.bullet2": "Greater clinical accuracy in assessments",
+    "gateway.pro.bullet3": "Patient evolution dashboard",
+    "gateway.pro.cta": "Explore the professional panel",
+    "gateway.social_proof": "Used by patients and physiotherapists across Brazil",
 
     // Dual Audience Section
     "dual.title": "Who is Aliv.iA for?",

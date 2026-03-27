@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
+import Gateway from "./pages/Gateway";
+import PatientLanding from "./pages/PatientLanding";
+import LandingLegacy from "./pages/LandingLegacy";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
@@ -34,7 +36,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Gateway />} />
+              <Route path="/para-pacientes" element={<PatientLanding />} />
+              <Route path="/landing-legacy" element={<LandingLegacy />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/assessment/view/:id" element={<AssessmentView />} />

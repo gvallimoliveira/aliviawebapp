@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
 
-const HeroSection = () => {
+const HeroSection = ({ showProfessionalCTA = true }: { showProfessionalCTA?: boolean }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
@@ -70,10 +70,12 @@ const HeroSection = () => {
               {t("hero.cta.premium")}
               <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button size="lg" variant="outline" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto gap-2 border-primary/30 text-primary hover:bg-primary/5" onClick={() => navigate("/profissionais")}>
-              <Stethoscope className="h-4 w-4" />
-              {t("hero.cta.professional")}
-            </Button>
+            {showProfessionalCTA && (
+              <Button size="lg" variant="outline" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto gap-2 border-primary/30 text-primary hover:bg-primary/5" onClick={() => navigate("/profissionais")}>
+                <Stethoscope className="h-4 w-4" />
+                {t("hero.cta.professional")}
+              </Button>
+            )}
           </div>
         </motion.div>
       </div>
