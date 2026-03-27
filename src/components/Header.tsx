@@ -10,7 +10,9 @@ const Header = () => {
   const { t, toggleLanguage } = useLanguage();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isProfessionalPage = location.pathname === "/profissionais";
 
   const handleSignOut = async () => {
     await signOut();
