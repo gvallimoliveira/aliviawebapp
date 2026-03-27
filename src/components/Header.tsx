@@ -3,14 +3,16 @@ import { Globe, LogOut, Menu, ShieldCheck, Stethoscope, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const Header = () => {
   const { t, toggleLanguage } = useLanguage();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isProfessionalPage = location.pathname === "/profissionais";
 
   const handleSignOut = async () => {
     await signOut();
@@ -33,7 +35,7 @@ const Header = () => {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-6 md:flex">
           <a href="#compare" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            {t("compare.title")}
+            {isProfessionalPage ? (t("nav.language") === "EN" ? "Planos e preços" : "Plans & pricing") : t("compare.title")}
           </a>
           <a href="#how" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             {t("how.title")}
@@ -96,7 +98,7 @@ const Header = () => {
               onClick={() => setMobileOpen(false)}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
-              {t("compare.title")}
+              {isProfessionalPage ? (t("nav.language") === "EN" ? "Planos e preços" : "Plans & pricing") : t("compare.title")}
             </a>
             <a
               href="#how"
