@@ -922,6 +922,24 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.export_error": "Erro ao exportar PDFs",
     "pro.no_pdfs": "Nenhuma avaliação com diagnóstico para exportar",
 
+    // Gateway
+    "gateway.badge": "Avaliação musculoesquelética com IA",
+    "gateway.title": "Avaliação musculoesquelética inteligente",
+    "gateway.subtitle": "Escolha seu perfil para descobrir como a Aliv.iA pode ajudar você",
+    "gateway.patient.title": "Sinto dor e quero resolver",
+    "gateway.patient.desc": "Entenda sua dor com precisão clínica e receba um plano de ação personalizado.",
+    "gateway.patient.bullet1": "Avaliação guiada sem sair de casa",
+    "gateway.patient.bullet2": "Diagnóstico preliminar em minutos",
+    "gateway.patient.bullet3": "Plano de tratamento personalizado",
+    "gateway.patient.cta": "Começar minha avaliação",
+    "gateway.pro.title": "Sou fisioterapeuta",
+    "gateway.pro.desc": "Potencialize suas consultas com triagem inteligente e dados estruturados.",
+    "gateway.pro.bullet1": "Anamnese e questionários prontos antes da consulta",
+    "gateway.pro.bullet2": "Maior precisão clínica nas avaliações",
+    "gateway.pro.bullet3": "Dashboard de evolução do paciente",
+    "gateway.pro.cta": "Conhecer o painel profissional",
+    "gateway.social_proof": "Usado por pacientes e fisioterapeutas em todo o Brasil",
+
     // Dual Audience Section
     "dual.title": "Para quem é a Aliv.iA?",
     "dual.subtitle": "Uma plataforma, dois caminhos. Escolha o que faz sentido para você.",
