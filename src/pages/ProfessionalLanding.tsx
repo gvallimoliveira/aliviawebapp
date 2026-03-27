@@ -155,7 +155,7 @@ const ProfessionalLanding = () => {
       </section>
 
       {/* How it works */}
-      <section className="py-16 md:py-20 bg-muted/30">
+      <section id="how" className="py-16 md:py-20 bg-muted/30">
         <div className="container max-w-5xl mx-auto px-4">
           <motion.h2
             initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
