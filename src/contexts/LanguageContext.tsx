@@ -22,8 +22,8 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.professional": "Para Profissionais",
 
     // Hero
-    "hero.title": "Avaliação inteligente para quem sente dor — e para fisioterapeutas que tratam dores",
-    "hero.subtitle": "Entenda sua dor com precisão clínica ou potencialize suas avaliações profissionais. Baseado em evidência, formulado por fisioterapeuta especialista.",
+    "hero.title": "Avaliação inteligente para quem quer resolver suas dores ",
+    "hero.subtitle": "Entenda sua dor com precisão clínica Baseado em evidência, formulado por fisioterapeuta especialista.",
     "hero.cta.basic": "Avaliação Gratuita",
     "hero.cta.premium": "Avaliação Premium",
     "hero.cta.professional": "Sou Profissional",
