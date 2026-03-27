@@ -3,7 +3,7 @@ import { Globe, LogOut, Menu, ShieldCheck, Stethoscope, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const Header = () => {
