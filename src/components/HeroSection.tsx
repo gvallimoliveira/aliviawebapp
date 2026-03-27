@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
 
-const HeroSection = () => {
+const HeroSection = ({ showProfessionalCTA = true }: { showProfessionalCTA?: boolean }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
