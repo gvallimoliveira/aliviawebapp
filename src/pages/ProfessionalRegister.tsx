@@ -241,7 +241,7 @@ const ProfessionalRegister = () => {
                   size="sm"
                   className="shrink-0 gap-1.5"
                   onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/assessment/professional/${existing.id}`);
+                    navigator.clipboard.writeText(`${getPublicOrigin()}/assessment/professional/${existing.id}`);
                     setLinkCopied(true);
                     toast({ title: t("prof.link_copied") });
                     setTimeout(() => setLinkCopied(false), 2000);

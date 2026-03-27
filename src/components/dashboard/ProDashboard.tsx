@@ -459,7 +459,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         <CardContent>
           <div className="flex gap-2">
             <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-              {window.location.origin}/assessment/professional/{professional.id}
+              {getPublicOrigin()}/assessment/professional/{professional.id}
             </code>
             <Button onClick={copyLink} variant="outline" className="gap-1.5 rounded-xl shrink-0">
               {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
