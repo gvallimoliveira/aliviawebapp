@@ -343,10 +343,8 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
       score: a.pain_score,
     }));
 
-  // Questionnaire scores across assessments
   // Build detailed questionnaire evolution data with subscales
   const questionnaireEvolution = useMemo(() => {
-    // Collect all questionnaire results across assessments
     const resultsByQuestionnaire = new Map<string, {
       name: string;
       qDef: typeof questionnaires[0] | undefined;
@@ -373,7 +371,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
       });
     });
 
-    // For each questionnaire, identify the 3 worst subscales (from latest assessment)
     const charts: {
       name: string;
       totalKey: string;
@@ -390,7 +387,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
       const isHigherWorse = qDef?.scoringDirection === "higher_worse";
       const lang = document.documentElement.lang === "en" ? "en" : "pt";
 
-      // Get subscale scores from latest, sort by worst
       const subscaleEntries = Object.entries(latestEntry.subscaleScores)
         .filter(([key]) => subscaleLabels[key])
         .map(([key, value]) => ({
@@ -411,7 +407,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
         subscaleEntries.forEach((sub) => {
           const rawScore = entry.subscaleScores[sub.key];
           if (rawScore != null) {
-            // Convert subscale to percentage based on max possible per subscale
             const questions = qDef?.questions.filter((q) => q.subscale === sub.key) || [];
             const maxPerQuestion = questions.length > 0
               ? Math.max(...questions[0].options.map((o) => o.value))
@@ -444,6 +439,26 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
   const getQuestionnaireResults = (a: any) => {
     const results = normalizeTestResults(a.test_results);
     return results.filter((r: any) => r.questionnaireId && r.percentageScore != null);
+  };
+
+  // Helper to get anamnesis summary fields with translated values
+  const getAnamnesisFields = (a: any) => {
+    const d = a.anamnesis_data;
+    if (!d) return [];
+    const fields: { label: string; value: string }[] = [];
+    if (d.chiefComplaint) fields.push({ label: "Queixa Principal", value: translateKey(d.chiefComplaint) });
+    if (d.customComplaint) fields.push({ label: "Queixa (detalhe)", value: d.customComplaint });
+    if (d.onset) fields.push({ label: "Modo de Início", value: translateKey(d.onset) });
+    if (d.evolution) fields.push({ label: "Evolução", value: translateKey(d.evolution) });
+    if (d.painDuration) fields.push({ label: "Duração da Dor", value: translateKey(d.painDuration) });
+    if (d.painTypes?.length) fields.push({ label: "Tipos de Dor", value: d.painTypes.map((p: string) => translateKey(p)).join(", ") });
+    if (d.activityLevel) fields.push({ label: "Nível de Atividade", value: translateKey(d.activityLevel) });
+    if (d.aggravatingFactors) fields.push({ label: "Agravantes", value: d.aggravatingFactors });
+    if (d.relievingFactors) fields.push({ label: "Aliviantes", value: d.relievingFactors });
+    if (d.hasGymAccess) fields.push({ label: "Acesso a Academia", value: translateKey(d.hasGymAccess) });
+    if (d.sex) fields.push({ label: "Sexo Biológico", value: translateKey(d.sex) });
+    if (d.ageRange) fields.push({ label: "Faixa Etária", value: translateKey(d.ageRange) });
+    return fields;
   };
 
   return (
@@ -556,7 +571,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
                       <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" domain={[0, 100]} />
                       <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
                       <Legend />
-                      {/* Total score line - bold */}
                       <Line
                         type="monotone"
                         dataKey={chart.totalKey}
@@ -565,7 +579,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
                         dot={{ r: 5 }}
                         connectNulls
                       />
-                      {/* Subscale lines - thinner, dashed */}
                       {chart.subscaleKeys.map((sub, i) => (
                         <Line
                           key={sub.key}
@@ -582,7 +595,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
                   </ResponsiveContainer>
                 </div>
               ) : (
-                /* Single assessment: show grouped bars */
                 <div className="h-56">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chart.data}>
@@ -627,7 +639,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
             return (
               <Card key={a.id} className="overflow-hidden">
                 <CardContent className="py-4 px-4 space-y-3">
-                  {/* Header row */}
                   <div
                     className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
@@ -662,7 +673,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
                     </div>
                   </div>
 
-                  {/* Questionnaire results */}
                   {qResults.length > 0 && (
                     <div className="space-y-2 border-t border-border pt-3">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
@@ -681,16 +691,12 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
                               )}
                             </div>
                           </div>
-                          <Progress
-                            value={r.percentageScore}
-                            className="h-1.5"
-                          />
+                          <Progress value={r.percentageScore} className="h-1.5" />
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Anamnesis summary */}
                   {anamnesisFields.length > 0 && (
                     <div className="border-t border-border pt-3">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Anamnese</p>
@@ -705,7 +711,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
                     </div>
                   )}
 
-                  {/* Private notes */}
                   <div className="border-t border-border pt-3">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
                       <NotebookPen className="h-3 w-3" />
