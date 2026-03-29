@@ -17,7 +17,7 @@ import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import {
   Globe, LogOut, Plus, ClipboardList, Calendar, MapPin, ChevronRight,
-  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus, Heart, Stethoscope, RotateCcw
+  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Users, UserPlus, Heart, Stethoscope, RotateCcw
 } from "lucide-react";
 import { useMemo } from "react";
 
@@ -66,7 +66,7 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [premiumAccess, setPremiumAccess] = useState<PremiumAccess | null>(null);
   const [premiumLoading, setPremiumLoading] = useState(true);
-  const [followUps, setFollowUps] = useState<any[]>([]);
+  
   const [professional, setProfessional] = useState<any>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>("health");
@@ -115,13 +115,6 @@ const Dashboard = () => {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .then(({ data }) => setAssessments(data || []));
-
-      supabase
-        .from("follow_up_emails")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("scheduled_for", { ascending: true })
-        .then(({ data }) => setFollowUps(data || []));
 
       supabase.functions
         .invoke("verify-payment", { body: { check_access: true } })
@@ -380,49 +373,6 @@ const Dashboard = () => {
       {/* Before/After Comparison — only for subscribers */}
       {premiumAccess?.subscription_type !== "single" && (
         <AssessmentComparison assessments={assessments} />
-      )}
-
-      {/* Follow-up Reminders — only for subscribers */}
-      {premiumAccess?.subscription_type !== "single" && followUps.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Mail className="h-5 w-5 text-muted-foreground" />
-            {t("followup.title")}
-          </h2>
-          <div className="space-y-2">
-            {followUps.map((fu) => {
-              const statusIcon = fu.status === "sent" ? Send : fu.status === "failed" ? AlertCircle : Clock;
-              const StatusIcon = statusIcon;
-              const statusColor = fu.status === "sent"
-                ? "bg-emerald-500/10 text-emerald-600 border-emerald-200"
-                : fu.status === "failed"
-                ? "bg-destructive/10 text-destructive border-destructive/20"
-                : "bg-blue-500/10 text-blue-600 border-blue-200";
-              return (
-                <Card key={fu.id} className="border-border/60">
-                  <CardContent className="py-3 px-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <StatusIcon className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <span className="text-sm font-medium text-foreground">
-                          {t("followup.week")} {fu.week_number}
-                        </span>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(fu.scheduled_for).toLocaleDateString("pt-BR", {
-                            day: "2-digit", month: "short", year: "numeric",
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${statusColor}`}>
-                      {t(`followup.${fu.status === "pending" ? "scheduled" : fu.status}`)}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
       )}
 
       {/* Assessment History */}
