@@ -116,13 +116,6 @@ const Dashboard = () => {
         .order("created_at", { ascending: false })
         .then(({ data }) => setAssessments(data || []));
 
-      supabase
-        .from("follow_up_emails")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("scheduled_for", { ascending: true })
-        .then(({ data }) => setFollowUps(data || []));
-
       supabase.functions
         .invoke("verify-payment", { body: { check_access: true } })
         .then(({ data, error }) => {
