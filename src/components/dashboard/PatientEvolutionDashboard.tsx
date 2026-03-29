@@ -344,190 +344,176 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
     }));
 
   // Questionnaire scores across assessments
-  const questionnaireMap = new Map<string, { dates: string[]; scores: number[]; severities: string[]; names: string[] }>();
-  patient.assessments.forEach((a: any) => {
-    const results = normalizeTestResults(a.test_results);
-    if (results.length === 0) return;
-    results.forEach((r: any) => {
-      if (!r.questionnaireId || r.percentageScore == null) return;
-      const name = r.questionnaireName || r.questionnaireId.toUpperCase();
-      if (!questionnaireMap.has(name)) {
-        questionnaireMap.set(name, { dates: [], scores: [], severities: [], names: [] });
-      }
-      const entry = questionnaireMap.get(name)!;
-      entry.dates.push(new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }));
-      entry.scores.push(r.percentageScore);
-      entry.severities.push(r.severity || "");
-      entry.names.push(r.questionnaireName || name);
-    });
-  });
+  // Build detailed questionnaire evolution data with subscales
+  const questionnaireEvolution = useMemo(() => {
+    // Collect all questionnaire results across assessments
+    const resultsByQuestionnaire = new Map<string, {
+      name: string;
+      qDef: typeof questionnaires[0] | undefined;
+      entries: { date: string; percentageScore: number; subscaleScores: Record<string, number> }[];
+    }>();
 
-  const questionnaireNames = Array.from(questionnaireMap.keys());
-  const questionnaireData: any[] = [];
-  if (questionnaireNames.length > 0) {
-    const maxLen = Math.max(...Array.from(questionnaireMap.values()).map((v) => v.dates.length));
-    for (let i = 0; i < maxLen; i++) {
-      const point: any = { index: i + 1 };
-      for (const [name, entry] of questionnaireMap) {
-        if (i < entry.scores.length) {
-          point[name] = entry.scores[i];
-          if (!point.date) point.date = entry.dates[i];
+    patient.assessments.forEach((a: any) => {
+      const results = normalizeTestResults(a.test_results);
+      results.forEach((r: any) => {
+        if (!r.questionnaireId || r.percentageScore == null) return;
+        const name = r.questionnaireName || r.questionnaireId.toUpperCase();
+        if (!resultsByQuestionnaire.has(r.questionnaireId)) {
+          resultsByQuestionnaire.set(r.questionnaireId, {
+            name,
+            qDef: questionnaires.find((q) => q.id === r.questionnaireId),
+            entries: [],
+          });
         }
-      }
-      questionnaireData.push(point);
-    }
-  }
+        resultsByQuestionnaire.get(r.questionnaireId)!.entries.push({
+          date: new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }),
+          percentageScore: r.percentageScore,
+          subscaleScores: r.subscaleScores || {},
+        });
+      });
+    });
 
-  // Helper to extract questionnaire results from a single assessment
-  const getQuestionnaireResults = (a: any) => {
-    const results = normalizeTestResults(a.test_results);
-    return results.filter((r: any) => r.questionnaireId && r.percentageScore != null);
-  };
+    // For each questionnaire, identify the 3 worst subscales (from latest assessment)
+    const charts: {
+      name: string;
+      totalKey: string;
+      subscaleKeys: { key: string; label: string }[];
+      data: any[];
+    }[] = [];
 
-  // Helper to get anamnesis summary fields with translated values
-  const getAnamnesisFields = (a: any) => {
-    const d = a.anamnesis_data;
-    if (!d) return [];
-    const fields: { label: string; value: string }[] = [];
-    if (d.chiefComplaint) fields.push({ label: "Queixa Principal", value: translateKey(d.chiefComplaint) });
-    if (d.customComplaint) fields.push({ label: "Queixa (detalhe)", value: d.customComplaint });
-    if (d.onset) fields.push({ label: "Modo de Início", value: translateKey(d.onset) });
-    if (d.evolution) fields.push({ label: "Evolução", value: translateKey(d.evolution) });
-    if (d.painDuration) fields.push({ label: "Duração da Dor", value: translateKey(d.painDuration) });
-    if (d.painTypes?.length) fields.push({ label: "Tipos de Dor", value: d.painTypes.map((p: string) => translateKey(p)).join(", ") });
-    if (d.activityLevel) fields.push({ label: "Nível de Atividade", value: translateKey(d.activityLevel) });
-    if (d.aggravatingFactors) fields.push({ label: "Agravantes", value: d.aggravatingFactors });
-    if (d.relievingFactors) fields.push({ label: "Aliviantes", value: d.relievingFactors });
-    if (d.hasGymAccess) fields.push({ label: "Acesso a Academia", value: translateKey(d.hasGymAccess) });
-    if (d.sex) fields.push({ label: "Sexo Biológico", value: translateKey(d.sex) });
-    if (d.ageRange) fields.push({ label: "Faixa Etária", value: translateKey(d.ageRange) });
-    return fields;
-  };
+    resultsByQuestionnaire.forEach((info) => {
+      const { name, qDef, entries } = info;
+      if (entries.length === 0) return;
 
-  return (
-    <div className="space-y-5">
-      <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(null)} className="gap-1.5 -ml-2">
-        <ArrowLeft className="h-4 w-4" /> {t("pro.back_to_patients")}
-      </Button>
+      const latestEntry = entries[entries.length - 1];
+      const subscaleLabels = qDef?.subscaleLabels || {};
+      const isHigherWorse = qDef?.scoringDirection === "higher_worse";
+      const lang = document.documentElement.lang === "en" ? "en" : "pt";
 
-      <div>
-        <h3 className="text-lg font-semibold text-foreground">{patient.name}</h3>
-        <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-          <Mail className="h-3.5 w-3.5" /> {patient.email}
-          <span className="mx-1">•</span>
-          {patient.assessments.length} {t("pro.assessments_count")}
-        </p>
-      </div>
+      // Get subscale scores from latest, sort by worst
+      const subscaleEntries = Object.entries(latestEntry.subscaleScores)
+        .filter(([key]) => subscaleLabels[key])
+        .map(([key, value]) => ({
+          key,
+          label: subscaleLabels[key]?.[lang] || key,
+          score: value as number,
+        }))
+        .sort((a, b) => isHigherWorse ? b.score - a.score : a.score - b.score)
+        .slice(0, 3);
 
-      {/* ── Pain Evolution Chart ── */}
-      {painData.length > 1 ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" />
-              {t("pro.pain_evolution")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={painData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
-                  <Area type="monotone" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4 }} name="Dor" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      ) : painData.length === 1 ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" />
-              {t("pro.pain_evolution")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={painData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
-                  <Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Dor" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
+      const totalKey = `${name} (Total)`;
+      const data = entries.map((entry, i) => {
+        const point: any = {
+          index: i + 1,
+          date: entry.date,
+          [totalKey]: Math.round(entry.percentageScore),
+        };
+        subscaleEntries.forEach((sub) => {
+          const rawScore = entry.subscaleScores[sub.key];
+          if (rawScore != null) {
+            // Convert subscale to percentage based on max possible per subscale
+            const questions = qDef?.questions.filter((q) => q.subscale === sub.key) || [];
+            const maxPerQuestion = questions.length > 0
+              ? Math.max(...questions[0].options.map((o) => o.value))
+              : 4;
+            const maxSubscale = questions.length * maxPerQuestion;
+            point[sub.label] = maxSubscale > 0 ? Math.round((rawScore / maxSubscale) * 100) : rawScore;
+          }
+        });
+        return point;
+      });
 
-      {/* ── Pain Map Comparison ── */}
-      {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Stethoscope className="h-4 w-4 text-primary" />
-              Mapa de Dor — Comparativo
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {patient.assessments.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => (
-                <div key={a.id} className="text-center space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-                    {a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}
-                  </p>
-                  <PainMapView painRegions={a.pain_regions} compact />
+      charts.push({
+        name,
+        totalKey,
+        subscaleKeys: subscaleEntries.map((s) => ({ key: s.label, label: s.label })),
+        data,
+      });
+    });
+
+    return charts;
+  }, [patient.assessments]);
+
+  const SUBSCALE_COLORS = [
+    "hsl(210, 70%, 55%)",
+    "hsl(150, 60%, 45%)",
+    "hsl(35, 80%, 55%)",
+  ];
+
+      {/* ── Questionnaire Evolution Chart (Enhanced with Subscales) ── */}
+      {questionnaireEvolution.length > 0 ? (
+        questionnaireEvolution.map((chart) => (
+          <Card key={chart.name}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-primary" />
+                {t("pro.questionnaire_evolution")} — {chart.name}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Pontuação total + 3 maiores limitações funcionais (%)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {chart.data.length > 1 ? (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chart.data}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                      <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" domain={[0, 100]} />
+                      <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
+                      <Legend />
+                      {/* Total score line - bold */}
+                      <Line
+                        type="monotone"
+                        dataKey={chart.totalKey}
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={3}
+                        dot={{ r: 5 }}
+                        connectNulls
+                      />
+                      {/* Subscale lines - thinner, dashed */}
+                      {chart.subscaleKeys.map((sub, i) => (
+                        <Line
+                          key={sub.key}
+                          type="monotone"
+                          dataKey={sub.key}
+                          stroke={SUBSCALE_COLORS[i % SUBSCALE_COLORS.length]}
+                          strokeWidth={1.5}
+                          strokeDasharray="5 3"
+                          dot={{ r: 3 }}
+                          connectNulls
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Questionnaire Evolution Chart ── */}
-      {questionnaireNames.length > 0 && questionnaireData.length > 0 ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <ClipboardList className="h-4 w-4 text-primary" />
-              {t("pro.questionnaire_evolution")}
-            </CardTitle>
-            <CardDescription className="text-xs">
-              {questionnaireNames.join(", ")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={questionnaireData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" />
-                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
-                  <Legend />
-                  {questionnaireNames.map((name, i) => (
-                    <Line
-                      key={name}
-                      type="monotone"
-                      dataKey={name}
-                      stroke={CHART_COLORS[i % CHART_COLORS.length]}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      connectNulls
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+              ) : (
+                /* Single assessment: show grouped bars */
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chart.data}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                      <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" domain={[0, 100]} />
+                      <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
+                      <Legend />
+                      <Bar dataKey={chart.totalKey} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      {chart.subscaleKeys.map((sub, i) => (
+                        <Bar
+                          key={sub.key}
+                          dataKey={sub.key}
+                          fill={SUBSCALE_COLORS[i % SUBSCALE_COLORS.length]}
+                          radius={[4, 4, 0, 0]}
+                        />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))
       ) : (
         <Card className="border-dashed">
           <CardContent className="py-6 text-center">
