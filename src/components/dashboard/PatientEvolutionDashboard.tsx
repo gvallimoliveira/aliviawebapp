@@ -440,7 +440,11 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
     "hsl(35, 80%, 55%)",
   ];
 
-      {/* ── Questionnaire Evolution Chart (Enhanced with Subscales) ── */}
+  // Helper to extract questionnaire results from a single assessment
+  const getQuestionnaireResults = (a: any) => {
+    const results = normalizeTestResults(a.test_results);
+    return results.filter((r: any) => r.questionnaireId && r.percentageScore != null);
+  };
       {questionnaireEvolution.length > 0 ? (
         questionnaireEvolution.map((chart) => (
           <Card key={chart.name}>
