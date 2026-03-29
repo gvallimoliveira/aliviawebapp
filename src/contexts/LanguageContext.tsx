@@ -923,8 +923,8 @@ const translations: Record<Language, Record<string, string>> = {
     "pro.no_pdfs": "Nenhuma avaliação com diagnóstico para exportar",
 
     // Gateway
-    "gateway.badge": "Avaliação musculoesquelética com IA",
-    "gateway.title": "Avaliação musculoesquelética inteligente",
+    "gateway.badge": "Avaliação musculoesquelética com integração de IA",
+    "gateway.title": "Trate e avalie dores com raciocínio clínico especializado",
     "gateway.subtitle": "Escolha seu perfil para descobrir como a Aliv.iA pode ajudar você",
     "gateway.patient.title": "Sinto dor e quero resolver",
     "gateway.patient.desc": "Entenda sua dor com precisão clínica e receba um plano de ação personalizado.",
