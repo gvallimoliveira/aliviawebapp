@@ -66,7 +66,7 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [premiumAccess, setPremiumAccess] = useState<PremiumAccess | null>(null);
   const [premiumLoading, setPremiumLoading] = useState(true);
-  const [followUps, setFollowUps] = useState<any[]>([]);
+  
   const [professional, setProfessional] = useState<any>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>("health");
