@@ -17,7 +17,7 @@ import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import {
   Globe, LogOut, Plus, ClipboardList, Calendar, MapPin, ChevronRight,
-  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Mail, Send, AlertCircle, Users, UserPlus, Heart, Stethoscope, RotateCcw
+  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Users, UserPlus, Heart, Stethoscope, RotateCcw
 } from "lucide-react";
 import { useMemo } from "react";
 
