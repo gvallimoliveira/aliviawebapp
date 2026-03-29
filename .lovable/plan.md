@@ -1,53 +1,44 @@
 
 
-## Integrar Microsoft Clarity para Heatmaps e Análise de Comportamento
+## Duas mudanças no Dashboard
 
-### O que é
+### 1. Remover seção de Follow-up Emails do painel do paciente
 
-Microsoft Clarity é uma ferramenta gratuita que captura:
-- **Heatmaps de clique** — onde os usuários clicam na página
-- **Heatmaps de scroll** — até onde os usuários descem
-- **Gravações de sessão** — replay completo da navegação do usuário
-- **Dead clicks e rage clicks** — detecção automática de frustração
-- **Insights automáticos** — métricas de engajamento por página
+**Arquivo: `src/pages/Dashboard.tsx`**
+- Remover o bloco "Follow-up Reminders" (linhas ~385-426) que exibe os emails semanais programados
+- Remover o state `followUps` e a query que busca `follow_up_emails`
+- Remover imports não utilizados (`Mail`, `Send`, `AlertCircle`)
 
-### Como funciona
+Os emails continuam sendo enviados normalmente — apenas a exibição no painel é removida.
 
-1. Você cria uma conta gratuita em [clarity.microsoft.com](https://clarity.microsoft.com)
-2. Cria um projeto e obtém o **Tracking ID** (ex: `abc123xyz`)
-3. Eu integro o script do Clarity no `index.html` do app
-4. Todos os dados ficam disponíveis no dashboard do Clarity
+---
 
-### Como acessar os dados depois
+### 2. Gráfico detalhado de evolução dos questionários no painel profissional
 
-- Acesse [clarity.microsoft.com](https://clarity.microsoft.com) → seu projeto
-- **Dashboard**: métricas gerais (sessões, scroll depth, rage clicks)
-- **Heatmaps**: selecione qualquer página para ver mapas de calor de clique e scroll
-- **Recordings**: assista gravações reais de sessões de usuários
-- **Filtros**: filtre por dispositivo (mobile/desktop), país, página específica, etc.
+**Arquivo: `src/components/dashboard/PatientEvolutionDashboard.tsx`**
 
-### Implementação técnica
+Atualmente o gráfico de evolução de questionários mostra apenas a pontuação final (%) de cada questionário (ex: NDI 42%). A mudança é expandir para mostrar as **3 subescalas com pior pontuação** + a pontuação final, permitindo ao profissional ver a evolução das limitações funcionais específicas.
 
-**Arquivo: `index.html`**
-- Adicionar o script de tracking do Clarity no `<head>`, antes do fechamento
-- O script é um snippet padrão JavaScript fornecido pelo Clarity, com o Tracking ID do projeto
+**Lógica:**
+- Para cada questionário do paciente, extrair `subscaleScores` de `test_results`
+- Identificar as 3 subescalas com maior limitação (pior score, considerando `scoringDirection`)
+- Montar dados de série temporal: pontuação final + 3 subescalas discriminadas
+- Usar labels traduzidos dos `subscaleLabels` do `questionnaireData.ts`
 
-```html
-<script type="text/javascript">
-  (function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-  })(window, document, "clarity", "script", "SEU_TRACKING_ID");
-</script>
-```
+**Visualização:**
+- Substituir o gráfico de linha única por um gráfico com 4 linhas por questionário:
+  - Linha principal (bold): pontuação final do questionário
+  - 3 linhas secundárias (tracejadas/finas): as 3 subescalas mais limitadas
+- Cada linha com tooltip mostrando nome da subescala e valor
+- Legenda clara identificando cada métrica
+- Se houver apenas 1 avaliação, mostrar barras agrupadas comparando as subescalas
 
-### Próximo passo
+**Importação necessária:**
+- Importar `questionnaires` de `questionnaireData.ts` para acessar `subscaleLabels` e `scoringDirection`
 
-Para implementar, preciso que você:
-1. Acesse [clarity.microsoft.com](https://clarity.microsoft.com) e crie uma conta (pode usar conta Microsoft/Google)
-2. Crie um novo projeto com a URL `https://aliviawebapp.com.br`
-3. Me envie o **Tracking ID** gerado (uma string curta tipo `abc123xyz`)
-
-Com o ID em mãos, eu adiciono o script e o tracking começa automaticamente em todas as páginas.
+**Arquivos editados:**
+| Ação | Arquivo |
+|------|---------|
+| Editar | `src/pages/Dashboard.tsx` |
+| Editar | `src/components/dashboard/PatientEvolutionDashboard.tsx` |
 
