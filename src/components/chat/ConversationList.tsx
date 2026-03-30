@@ -1,0 +1,193 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Loader2, MessageCircle } from "lucide-react";
+import ChatWindow from "./ChatWindow";
+
+interface ConversationListProps {
+  mode: "patient" | "professional";
+  professionalId?: string;
+  initialConversationId?: string | null;
+}
+
+interface ConversationItem {
+  id: string;
+  patient_user_id: string;
+  professional_id: string;
+  updated_at: string;
+  other_name: string;
+  last_message?: string;
+  unread_count: number;
+}
+
+const ConversationList = ({ mode, professionalId, initialConversationId }: ConversationListProps) => {
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeConvId, setActiveConvId] = useState<string | null>(initialConversationId || null);
+  const [activeOtherName, setActiveOtherName] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    fetchConversations();
+  }, [user, mode, professionalId]);
+
+  // Open initial conversation if provided
+  useEffect(() => {
+    if (initialConversationId && conversations.length > 0) {
+      const conv = conversations.find((c) => c.id === initialConversationId);
+      if (conv) {
+        setActiveConvId(conv.id);
+        setActiveOtherName(conv.other_name);
+      }
+    }
+  }, [initialConversationId, conversations]);
+
+  const fetchConversations = async () => {
+    if (!user) return;
+    setLoading(true);
+
+    let query = (supabase.from("conversations" as any) as any).select("*");
+
+    if (mode === "patient") {
+      query = query.eq("patient_user_id", user.id);
+    } else if (professionalId) {
+      query = query.eq("professional_id", professionalId);
+    }
+
+    const { data: convs } = await query.order("updated_at", { ascending: false });
+
+    if (!convs || convs.length === 0) {
+      setConversations([]);
+      setLoading(false);
+      return;
+    }
+
+    // Enrich with other party name + last message + unread count
+    const enriched: ConversationItem[] = [];
+
+    for (const conv of convs) {
+      let otherName = "...";
+
+      if (mode === "patient") {
+        // Get professional name
+        const { data: pro } = await (supabase.from("professionals" as any) as any)
+          .select("full_name")
+          .eq("id", conv.professional_id)
+          .single();
+        otherName = pro?.full_name || "Profissional";
+      } else {
+        // Get patient name from profiles
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", conv.patient_user_id)
+          .single();
+        otherName = profile?.full_name || "Paciente";
+      }
+
+      // Last message
+      const { data: lastMsgs } = await (supabase.from("messages" as any) as any)
+        .select("content, created_at")
+        .eq("conversation_id", conv.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      // Unread count
+      const { count } = await (supabase.from("messages" as any) as any)
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", conv.id)
+        .neq("sender_user_id", user.id)
+        .is("read_at", null);
+
+      enriched.push({
+        ...conv,
+        other_name: otherName,
+        last_message: lastMsgs?.[0]?.content || "",
+        unread_count: count || 0,
+      });
+    }
+
+    setConversations(enriched);
+    setLoading(false);
+  };
+
+  if (activeConvId) {
+    return (
+      <ChatWindow
+        conversationId={activeConvId}
+        otherName={activeOtherName}
+        onBack={() => {
+          setActiveConvId(null);
+          setActiveOtherName("");
+          fetchConversations();
+        }}
+      />
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (conversations.length === 0) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="py-12 text-center">
+          <MessageCircle className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="text-muted-foreground">{t("chat.no_conversations")}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {conversations.map((conv) => (
+        <Card
+          key={conv.id}
+          className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
+          onClick={() => {
+            setActiveConvId(conv.id);
+            setActiveOtherName(conv.other_name);
+          }}
+        >
+          <CardContent className="py-3 px-4 flex items-center gap-3">
+            <Avatar className="h-10 w-10 border border-border shrink-0">
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                {conv.other_name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-foreground text-sm truncate">{conv.other_name}</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">
+                  {new Date(conv.updated_at).toLocaleDateString(undefined, { day: "2-digit", month: "short" })}
+                </span>
+              </div>
+              {conv.last_message && (
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{conv.last_message}</p>
+              )}
+            </div>
+            {conv.unread_count > 0 && (
+              <Badge className="bg-primary text-primary-foreground text-[10px] h-5 min-w-5 flex items-center justify-center rounded-full px-1.5">
+                {conv.unread_count}
+              </Badge>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
+export default ConversationList;
