@@ -19,19 +19,17 @@ const OnboardingStep = ({
   totalSteps,
   onNext,
   onSkip,
-  style,
 }: OnboardingStepProps) => {
   const { t } = useLanguage();
   const isLast = currentStep === totalSteps - 1;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.97 }}
       transition={{ duration: 0.25 }}
-      className="fixed z-[60] w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-card p-5 shadow-xl"
-      style={style}
+      className="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-card p-5 shadow-xl"
     >
       <button
         onClick={onSkip}

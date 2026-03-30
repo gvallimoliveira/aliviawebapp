@@ -30,22 +30,21 @@ const OnboardingTour = ({
       />
 
       {/* Centered step card */}
-      <AnimatePresence mode="wait">
-        <OnboardingStep
-          key={currentStep}
-          titleKey={step.titleKey}
-          descriptionKey={step.descriptionKey}
-          currentStep={currentStep}
-          totalSteps={totalSteps}
-          onNext={onNext}
-          onSkip={onSkip}
-          style={{
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
-        />
-      </AnimatePresence>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
+        <div className="pointer-events-auto">
+          <AnimatePresence mode="wait">
+            <OnboardingStep
+              key={currentStep}
+              titleKey={step.titleKey}
+              descriptionKey={step.descriptionKey}
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onNext={onNext}
+              onSkip={onSkip}
+            />
+          </AnimatePresence>
+        </div>
+      </div>
     </>
   );
 };
