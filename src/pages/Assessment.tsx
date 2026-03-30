@@ -117,6 +117,7 @@ const Assessment = () => {
           type: mode,
           status: "in_progress",
           user_id: user?.id || null,
+          patient_email: capturedEmail || null,
           payment_status: mode === "premium" ? "covered" : "pending",
           original_assessment_id: mode === "premium" ? premiumAccess?.payment_id || null : null,
         })
