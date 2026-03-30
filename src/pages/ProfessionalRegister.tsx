@@ -108,7 +108,7 @@ const ProfessionalRegister = () => {
     }));
   };
 
-  const resizeAndCropImage = (file: File, size: number): Promise<Blob> => {
+  const getCroppedImg = (imageSrc: string, pixelCrop: Area, size: number): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -116,11 +116,11 @@ const ProfessionalRegister = () => {
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext("2d")!;
-        // Center-crop to square
-        const minDim = Math.min(img.width, img.height);
-        const sx = (img.width - minDim) / 2;
-        const sy = (img.height - minDim) / 2;
-        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+        ctx.drawImage(
+          img,
+          pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
+          0, 0, size, size
+        );
         canvas.toBlob(
           (blob) => (blob ? resolve(blob) : reject(new Error("Canvas toBlob failed"))),
           "image/jpeg",
@@ -128,26 +128,40 @@ const ProfessionalRegister = () => {
         );
       };
       img.onerror = reject;
-      img.src = URL.createObjectURL(file);
+      img.src = imageSrc;
     });
   };
 
-  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "Imagem muito grande (máx. 5MB)", variant: "destructive" });
       return;
     }
+    const url = URL.createObjectURL(file);
+    setRawImageUrl(url);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCropModalOpen(true);
+  };
+
+  const handleCropConfirm = async () => {
+    if (!rawImageUrl || !croppedAreaPixels) return;
     try {
-      const croppedBlob = await resizeAndCropImage(file, 400);
+      const croppedBlob = await getCroppedImg(rawImageUrl, croppedAreaPixels, 400);
       const croppedFile = new File([croppedBlob], "profile.jpg", { type: "image/jpeg" });
       setPhotoFile(croppedFile);
       setPhotoPreview(URL.createObjectURL(croppedBlob));
     } catch {
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
+      // fallback — shouldn't happen
     }
+    setCropModalOpen(false);
+    setRawImageUrl(null);
   };
 
   const uploadPhoto = async (): Promise<string | null> => {
