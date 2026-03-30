@@ -268,6 +268,8 @@ const Dashboard = () => {
     </div>
   );
 
+  const push = usePushNotifications();
+
   const renderClientContent = () => (
     <>
       {/* Premium Access Indicator */}
