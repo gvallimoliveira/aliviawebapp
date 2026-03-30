@@ -1051,6 +1051,8 @@ const translations: Record<Language, Record<string, string>> = {
     "support.pro.tool.edit_profile.desc": "Mantenha seus dados atualizados: nome, CREFITO, especialidades, cidade, endereço da clínica e foto de perfil. Essas informações são exibidas para pacientes na busca de profissionais.",
     "support.pro.tool.lifetime_treatment.title": "Tratamento Vitalício",
     "support.pro.tool.lifetime_treatment.desc": "Com o Tratamento Vitalício, todos os planos de tratamento dos seus pacientes ficam permanentemente liberados — sem custo adicional por avaliação, a partir da data da compra. Importante: o acesso ao painel profissional continua dependendo de uma assinatura PRO ativa (mensal ou anual). O Tratamento Vitalício não substitui a assinatura do painel.",
+    "support.pro.tool.messages.title": "Mensagens com Pacientes",
+    "support.pro.tool.messages.desc": "Pacientes que encontraram você pela busca de profissionais podem enviar mensagens diretas. As conversas aparecem na aba 'Mensagens' do seu painel profissional. Responda dúvidas, combine horários e fortaleça o vínculo com seus pacientes antes mesmo da consulta presencial.",
 
     // Pro FAQ
     "support.pro.faq.rf1.q": "Meu paciente precisa criar conta na Aliv.iA?",
