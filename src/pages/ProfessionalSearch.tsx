@@ -316,6 +316,15 @@ const ProfessionalSearch = () => {
                     )}
                     <Button
                       size="sm"
+                      variant="outline"
+                      className="rounded-xl gap-1.5 text-xs"
+                      onClick={() => handleSendMessage(p.id)}
+                    >
+                      <MessageCircle className="h-3 w-3" />
+                      {t("chat.send_message")}
+                    </Button>
+                    <Button
+                      size="sm"
                       className="rounded-xl gap-1.5 text-xs"
                       disabled={referralLoading === p.id}
                       onClick={() => handleReferral(p.id)}
