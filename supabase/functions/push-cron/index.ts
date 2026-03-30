@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
       diary_reminders: 0,
       premium_reminders: 0,
       basic_invites: 0,
+      referral_coupons_applied: 0,
       errors: [] as string[],
     };
 
