@@ -72,6 +72,7 @@ const Dashboard = () => {
   const [professional, setProfessional] = useState<any>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>("health");
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const onboardingSteps = useMemo(
     () => buildOnboardingSteps(premiumAccess?.subscription_type, !!professional),
