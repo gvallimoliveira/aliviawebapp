@@ -1032,7 +1032,7 @@ const translations: Record<Language, Record<string, string>> = {
     "support.pro.tool.edit_profile.title": "Editar Perfil Profissional",
     "support.pro.tool.edit_profile.desc": "Mantenha seus dados atualizados: nome, CREFITO, especialidades, cidade, endereço da clínica e foto de perfil. Essas informações são exibidas para pacientes na busca de profissionais.",
     "support.pro.tool.lifetime_treatment.title": "Tratamento Vitalício",
-    "support.pro.tool.lifetime_treatment.desc": "A oferta de tratamento vitalício permite acesso permanente ao painel profissional com pagamento único. Verifique a disponibilidade e condições especiais no painel de assinatura.",
+    "support.pro.tool.lifetime_treatment.desc": "Com o Tratamento Vitalício, todos os planos de tratamento dos seus pacientes ficam permanentemente liberados — sem custo adicional por avaliação, a partir da data da compra. Importante: o acesso ao painel profissional continua dependendo de uma assinatura PRO ativa (mensal ou anual). O Tratamento Vitalício não substitui a assinatura do painel.",
 
     // Pro FAQ
     "support.pro.faq.rf1.q": "Meu paciente precisa criar conta na Aliv.iA?",
