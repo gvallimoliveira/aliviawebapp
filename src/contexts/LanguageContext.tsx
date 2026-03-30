@@ -455,6 +455,8 @@ const translations: Record<Language, Record<string, string>> = {
     "faq.faq4.a": "Não. A avaliação é uma ferramenta de triagem e orientação. Ela ajuda a entender sua dor e direcionar o tratamento, mas não substitui o diagnóstico médico ou fisioterapêutico presencial. Em casos graves, sempre procure atendimento profissional.",
     "faq.faq5.q": "Posso refazer a avaliação?",
     "faq.faq5.a": "Sim! Na versão premium, você pode refazer a avaliação uma vez em até 7 dias após a compra, permitindo acompanhar a evolução da sua dor e ajustar o tratamento conforme necessário.",
+    "faq.faq6.q": "E se a triagem identificar sinais de alerta (red flags)?",
+    "faq.faq6.a": "A triagem de segurança é parte integrante de toda avaliação — não uma etapa separada. Se sinais como trauma grave, perda de peso inexplicada, dor noturna incessante ou dormência progressiva forem detectados, a avaliação é concluída naquele ponto por prerrogativa de saúde. Isso significa que a avaliação é considerada realizada, e o encaminhamento a um médico para investigação presencial é indispensável. Sua segurança vem sempre em primeiro lugar.",
 
     // Follow-up
     "followup.opt_in_title": "Acompanhamento por email",
