@@ -163,7 +163,7 @@ const Header = () => {
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors text-left"
                 >
                   <LogOut className="h-4 w-4" />
-                  {t("nav.login") === "Entrar" ? "Sair" : "Sign out"}
+                  {language === "pt" ? "Sair" : language === "es" ? "Salir" : "Sign out"}
                 </button>
               </>
             ) : (
