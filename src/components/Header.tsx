@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Globe, LogOut, Menu, ShieldCheck, Stethoscope, X } from "lucide-react";
+import { Globe, HelpCircle, LogOut, Menu, ShieldCheck, Stethoscope, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
