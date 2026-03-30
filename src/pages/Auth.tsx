@@ -117,6 +117,7 @@ const Auth = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={t("auth.email_placeholder")}
                     className="pl-10"
+                    autoComplete="email"
                     required
                   />
                 </div>
