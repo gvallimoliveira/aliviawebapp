@@ -293,7 +293,10 @@ const Assessment = () => {
         )}
 
         {step === "welcome" && (
-          <WelcomeStep mode={mode as "basic" | "premium"} onContinue={() => setStep("redflags")} />
+          <WelcomeStep mode={mode as "basic" | "premium"} onContinue={(email) => {
+            if (email) setCapturedEmail(email);
+            setStep("redflags");
+          }} />
         )}
 
         {step === "payment_check" && premiumAccess !== null && !premiumAccess.has_access && (
