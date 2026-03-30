@@ -1006,7 +1006,7 @@ const translations: Record<Language, Record<string, string>> = {
     "support.patient.faq.pf5.q": "Posso cancelar minha assinatura a qualquer momento?",
     "support.patient.faq.pf5.a": "Sim. Acesse o painel, clique em 'Gerenciar assinatura' e você será redirecionado ao portal de pagamento, onde pode cancelar quando quiser. O acesso permanece ativo até o fim do período pago.",
     "support.patient.faq.pf6.q": "O que acontece se eu tiver sinais de alerta (red flags)?",
-    "support.patient.faq.pf6.a": "A triagem de sinais de alerta identifica sintomas que necessitam atenção médica urgente. Se detectados, a avaliação exibe um alerta claro com recomendação de procurar atendimento presencial imediatamente.",
+    "support.patient.faq.pf6.a": "A triagem de sinais de alerta é parte integrante de toda avaliação, não uma etapa separada. Se sintomas como trauma grave, perda de peso inexplicada, dor noturna incessante ou dormência progressiva forem detectados, a avaliação é concluída naquele ponto — e é considerada uma avaliação realizada. O encaminhamento a um médico para investigação presencial é uma prerrogativa de saúde indispensável. Sua segurança é sempre a prioridade.",
     "support.patient.faq.pf7.q": "Posso refazer uma avaliação?",
     "support.patient.faq.pf7.a": "Sim. Você pode iniciar uma nova avaliação a qualquer momento, respeitando o limite do seu plano. O histórico das avaliações anteriores permanece salvo para comparação.",
     "support.patient.faq.pf8.q": "O diário de dor é obrigatório?",
