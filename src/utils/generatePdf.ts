@@ -490,9 +490,15 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
             drawRoundedRect(doc, barX, barY, barMaxW, barH, 1.5, [230, 230, 230]);
             // Bar fill — proportional to max
             const fillW = Math.max(2, (numVal / maxVal) * barMaxW);
-            const barColor: [number, number, number] = numVal / maxVal > 0.7
-              ? COLORS.red
-              : numVal / maxVal > 0.4 ? COLORS.yellow : COLORS.green;
+            // For higher_worse: high ratio = red (bad). For higher_better: high ratio = green (good).
+            const ratio = numVal / maxVal;
+            let barColor: [number, number, number];
+            if (higherWorse) {
+              barColor = ratio > 0.7 ? COLORS.red : ratio > 0.4 ? COLORS.yellow : COLORS.green;
+            } else {
+              // higher_better: low values = worse (red), high values = better (green)
+              barColor = ratio < 0.4 ? COLORS.red : ratio < 0.7 ? COLORS.yellow : COLORS.green;
+            }
             drawRoundedRect(doc, barX, barY, fillW, barH, 1.5, barColor);
 
             // Value label at end of bar
