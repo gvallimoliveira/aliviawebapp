@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/accordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const faqKeys = ["faq1", "faq2", "faq3", "faq4", "faq5"];
+const faqKeys = ["faq1", "faq2", "faq3", "faq4", "faq5", "faq6"];
 
 const FaqSection = () => {
   const { t } = useLanguage();
