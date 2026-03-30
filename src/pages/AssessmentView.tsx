@@ -583,11 +583,16 @@ const BlurredTreatmentPreview = ({
                 )}
                 {isPt ? `Desbloquear por R$ 29,90` : `Unlock for R$ 29.90`}
               </Button>
-              <p className="text-xs text-muted-foreground mt-2">
+              <button
+                onClick={handleLifetime}
+                disabled={lifetimeLoading}
+                className="text-xs text-primary hover:underline mt-2 inline-flex items-center gap-1"
+              >
+                {lifetimeLoading && <Loader2 className="h-3 w-3 animate-spin" />}
                 {isPt
                   ? "Ou desbloqueie todos os tratamentos por R$ 149,90 — acesso permanente!"
                   : "Or unlock all treatments for R$ 149.90 — permanent access!"}
-              </p>
+              </button>
             </div>
           </div>
         </div>
