@@ -94,7 +94,8 @@ const Assessment = () => {
       if (error) throw error;
       if (data?.url) {
         if (referralCode) localStorage.removeItem("alivia_referral_code");
-        window.open(data.url, '_blank');
+        const w = window.open(data.url, '_blank');
+        if (!w) window.location.href = data.url;
       }
     } catch (err) {
       console.error("Payment error:", err);
