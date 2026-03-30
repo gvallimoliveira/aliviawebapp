@@ -1,59 +1,94 @@
 
 
-## Tabela de Questionários Validados por Região Corporal
+## Chat entre Paciente e Profissional
 
-### O que será feito
+### Conceito
 
-Criar um componente reutilizável `ValidatedQuestionnairesTable` que exibe uma tabela mapeando cada região corporal ao questionário validado utilizado na avaliação. A tabela será inserida em dois locais:
+Criar um sistema de mensagens diretas dentro do ecossistema, permitindo que pacientes que encontraram um profissional na busca (`/professionals`) possam iniciar uma conversa. O profissional vê e responde pelo Painel Profissional. Ambos acessam via nova aba "Mensagens" no Dashboard.
 
-1. **Landing Page Profissional** (`/profissionais`) — nova seção antes do FAQ, com título como "Embasamento científico por região"
-2. **Página de Suporte Profissional** (`/suporte`) — dentro do accordion ou como seção dedicada no painel profissional
+### Arquitetura do banco de dados
 
-### Dados da tabela
+**Tabela `conversations`**
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid (PK) | — |
+| patient_user_id | uuid (NOT NULL) | Quem iniciou |
+| professional_id | uuid (NOT NULL) | Ref ao `professionals.id` |
+| created_at | timestamptz | — |
+| updated_at | timestamptz | Atualizado a cada nova mensagem |
 
-Extraídos diretamente de `questionnaireData.ts`. Cada linha agrupa regiões de forma legível:
+**Tabela `messages`**
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid (PK) | — |
+| conversation_id | uuid (NOT NULL) | FK para conversations |
+| sender_user_id | uuid (NOT NULL) | auth.uid() de quem enviou |
+| content | text (NOT NULL) | Texto da mensagem (max 2000 chars) |
+| read_at | timestamptz (nullable) | Quando foi lida |
+| created_at | timestamptz | — |
 
-| Região Corporal | Questionário | Referência |
-|---|---|---|
-| Coluna lombar / Dorsal / Sacral | ODI | Fairbank & Pynsent, 2000 |
-| Ombro | SPADI | Roach et al., 1991 |
-| Joelho | KOOS | Roos et al., 1998 |
-| Quadril | HOOS | Klassbo et al., 2003 |
-| Pé / Tornozelo | FAOS | Roos et al., 2001 |
-| Tendão de Aquiles / Calcanhar | VISA-A | Robinson et al., 2001 |
-| Cotovelo / Antebraço / Mão | QuickDASH | Beaton et al., 2005 |
-| Cervical / Cabeça | NDI | Vernon & Mior, 1991 |
-| Cabeça (cefaleia) | HIT-6 | Kosinski et al., 2003 |
-| Coxa / Perna | LEFS-8 | Mehta et al., 2016 |
+**RLS:**
+- SELECT/INSERT em ambas tabelas: apenas participantes da conversa (patient_user_id = auth.uid() OU professional.user_id = auth.uid())
+- Função `is_conversation_participant(conv_id, user_id)` SECURITY DEFINER para evitar recursão
 
-### Componente
+**Realtime:**
+- `ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;` para entrega instantânea
 
-**Novo arquivo: `src/components/ValidatedQuestionnairesTable.tsx`**
-- Tabela usando componentes `Table` do shadcn/ui
-- 3 colunas: Região, Questionário (sigla + nome completo), Referência científica
-- Bilíngue via `useLanguage()` — usa `fullName_pt`/`fullName_en`
-- Estilização consistente com o webapp (rounded borders, hover states, cores do tema)
-- Badge com a sigla do questionário para destaque visual
+### Regras de negócio
 
-### Integrações
+1. **Quem inicia:** Apenas o paciente, a partir da página de busca de profissionais ou do card de encaminhamento (referral)
+2. **Uma conversa por par:** Se já existe conversa entre aquele paciente e profissional, reabre a existente
+3. **Acesso:** Somente usuários logados com acesso premium podem enviar mensagens (mesma regra do acesso à busca de profissionais)
+4. **Sem anexos na v1:** Apenas texto, para simplicidade e segurança
+5. **Indicador de não lidas:** Badge numérico na aba "Mensagens" mostrando contagem de não lidas
 
-**Editar: `src/pages/ProfessionalLanding.tsx`**
-- Adicionar nova seção "Embasamento Científico" entre "Panel Features" e "Pricing", importando o componente
-- Título e subtítulo via `t()` com novas chaves
+### Componentes e páginas
 
-**Editar: `src/pages/Support.tsx`**
-- Inserir o componente dentro da aba profissional, após os tools e antes do FAQ
-- Título contextual diferente ("Questionários utilizados na avaliação")
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/components/chat/ConversationList.tsx` | Lista de conversas com última mensagem, timestamp, badge de não lidas |
+| `src/components/chat/ChatWindow.tsx` | Área de mensagens com scroll, input de texto, indicador de leitura |
+| `src/components/chat/ChatBubble.tsx` | Bolha de mensagem (estilo diferente para enviada/recebida) |
 
-**Editar: `src/contexts/LanguageContext.tsx`**
-- Adicionar chaves PT/EN para títulos e subtítulos das seções em ambos os locais
+### Integração no Dashboard
 
-### Arquivos
+- **Aba "Minha Saúde":** Adicionar sub-aba ou seção "Mensagens" com `ConversationList` filtrando por `patient_user_id = auth.uid()`
+- **Aba "Painel Profissional":** Adicionar sub-aba "Mensagens" com `ConversationList` filtrando por `professional_id`
+- Ao clicar em uma conversa, abre o `ChatWindow` inline (sem navegar para outra página)
+
+### Ponto de entrada (iniciar conversa)
+
+- Na página `/professionals`, adicionar botão "Enviar mensagem" no card do profissional
+- Ao clicar: cria ou recupera a conversa existente e redireciona para `/dashboard?tab=messages&conv=<id>`
+
+### Riscos mitigados
+
+| Risco | Mitigação |
+|-------|-----------|
+| Spam | Rate limit: max 1 msg/segundo via validação client-side + RLS impede envio para conversas alheias |
+| Conteúdo impróprio | v1 sem moderação automática, mas limite de 2000 chars e sem anexos reduz superfície |
+| Performance | Realtime do Supabase com channel por conversation_id, não global |
+| Privacidade | RLS restrito a participantes; sem acesso admin às mensagens |
+| Complexidade | Sem grupos, sem typing indicator, sem edição/exclusão na v1 |
+
+### Traduções
+
+Novas chaves em `LanguageContext.tsx` para: título da aba, placeholder do input, "Enviar mensagem", "Sem conversas ainda", timestamps relativos, badge de não lidas.
+
+### Suporte
+
+Adicionar item na página de Suporte explicando o recurso de mensagens para ambos os perfis.
+
+### Arquivos envolvidos
 
 | Ação | Arquivo |
 |------|---------|
-| Criar | `src/components/ValidatedQuestionnairesTable.tsx` |
-| Editar | `src/pages/ProfessionalLanding.tsx` |
-| Editar | `src/pages/Support.tsx` |
-| Editar | `src/contexts/LanguageContext.tsx` |
+| Migração | Nova tabela `conversations` + `messages` + RLS + realtime |
+| Criar | `src/components/chat/ConversationList.tsx` |
+| Criar | `src/components/chat/ChatWindow.tsx` |
+| Criar | `src/components/chat/ChatBubble.tsx` |
+| Editar | `src/pages/Dashboard.tsx` (nova aba Mensagens) |
+| Editar | `src/pages/ProfessionalSearch.tsx` (botão "Enviar mensagem") |
+| Editar | `src/contexts/LanguageContext.tsx` (traduções) |
+| Editar | `src/pages/Support.tsx` (documentação do recurso) |
 
