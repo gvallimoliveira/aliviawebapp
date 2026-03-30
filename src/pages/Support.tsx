@@ -171,6 +171,17 @@ const Support = () => {
                 </Accordion>
               </div>
 
+              {/* Validated Questionnaires Table — only for professional */}
+              {profile === "professional" && (
+                <div className="mb-12">
+                  <ValidatedQuestionnairesTable
+                    compact
+                    title={t("questionnaires_table.support_title")}
+                    subtitle={t("questionnaires_table.support_subtitle")}
+                  />
+                </div>
+              )}
+
               {/* FAQ */}
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">

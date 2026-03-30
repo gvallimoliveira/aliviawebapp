@@ -209,6 +209,9 @@ const ProfessionalLanding = () => {
         </div>
       </section>
 
+      {/* Validated Questionnaires */}
+      <ValidatedQuestionnairesTable />
+
       {/* Pricing */}
       <section id="compare" className="py-16 md:py-20 bg-muted/30">
         <div className="container max-w-4xl mx-auto px-4">
