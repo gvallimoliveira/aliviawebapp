@@ -573,7 +573,6 @@ const Dashboard = () => {
               <ConversationList mode="patient" initialConversationId={convFromUrl} />
             </TabsContent>
           </Tabs>
-          </div>
         )}
       </main>
 
