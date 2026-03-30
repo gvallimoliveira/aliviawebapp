@@ -54,6 +54,37 @@ const Support = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<SupportProfile>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState<"idle" | "updated" | "current">("idle");
+
+  const handleCheckUpdate = useCallback(async () => {
+    setChecking(true);
+    setCheckResult("idle");
+    try {
+      const registrations = await navigator.serviceWorker?.getRegistrations();
+      if (registrations && registrations.length > 0) {
+        for (const reg of registrations) {
+          await reg.update();
+        }
+        // If a waiting worker exists, a new version is available
+        const hasWaiting = registrations.some((r) => r.waiting);
+        if (hasWaiting) {
+          registrations.forEach((r) => r.waiting?.postMessage({ type: "SKIP_WAITING" }));
+          setCheckResult("updated");
+        } else {
+          setCheckResult("current");
+        }
+      } else {
+        // No SW — just hard reload
+        setCheckResult("current");
+      }
+    } catch {
+      setCheckResult("current");
+    } finally {
+      setChecking(false);
+      setTimeout(() => setCheckResult("idle"), 4000);
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
