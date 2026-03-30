@@ -99,25 +99,55 @@ const ProfessionalRegister = () => {
     }));
   };
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const resizeAndCropImage = (file: File, size: number): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d")!;
+        // Center-crop to square
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error("Canvas toBlob failed"))),
+          "image/jpeg",
+          0.85
+        );
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "Imagem muito grande (máx. 5MB)", variant: "destructive" });
       return;
     }
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
+    try {
+      const croppedBlob = await resizeAndCropImage(file, 400);
+      const croppedFile = new File([croppedBlob], "profile.jpg", { type: "image/jpeg" });
+      setPhotoFile(croppedFile);
+      setPhotoPreview(URL.createObjectURL(croppedBlob));
+    } catch {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
   };
 
   const uploadPhoto = async (): Promise<string | null> => {
     if (!photoFile || !user) return null;
     setUploadingPhoto(true);
-    const ext = photoFile.name.split(".").pop();
-    const path = `${user.id}/profile.${ext}`;
+    const path = `${user.id}/profile.jpg`;
     const { error } = await supabase.storage
       .from("professional-photos")
-      .upload(path, photoFile, { upsert: true });
+      .upload(path, photoFile, { upsert: true, contentType: "image/jpeg" });
     setUploadingPhoto(false);
     if (error) {
       console.error("Upload error:", error);
@@ -126,7 +156,7 @@ const ProfessionalRegister = () => {
     const { data: urlData } = supabase.storage
       .from("professional-photos")
       .getPublicUrl(path);
-    return urlData.publicUrl;
+    return `${urlData.publicUrl}?t=${Date.now()}`;
   };
 
   const CREFITO_REGEX = /^\d{1,6}-[A-Z]$/;
