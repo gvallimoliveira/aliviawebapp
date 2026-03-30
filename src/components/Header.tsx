@@ -58,11 +58,13 @@ const Header = () => {
             <Globe className="h-4 w-4" />
             <span>{t("nav.language")}</span>
           </Button>
+          {user && (
+            <Button variant="ghost" size="icon" onClick={() => go("/suporte")} title={t("support.badge")}>
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          )}
           {user ? (
             <>
-              <Button variant="ghost" size="icon" onClick={() => go("/suporte")} title={t("support.badge")}>
-                <HelpCircle className="h-4 w-4" />
-              </Button>
               <Button variant="ghost" size="icon" onClick={() => go("/admin")} title="Admin">
                 <ShieldCheck className="h-4 w-4" />
               </Button>
