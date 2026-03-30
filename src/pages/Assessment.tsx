@@ -44,6 +44,7 @@ const Assessment = () => {
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [hasRetried, setHasRetried] = useState(false);
   const [isMonthly, setIsMonthly] = useState(true);
+  const [capturedEmail, setCapturedEmail] = useState<string | null>(null);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
 
   // Redirect premium users to auth if not logged in
@@ -117,6 +118,7 @@ const Assessment = () => {
           type: mode,
           status: "in_progress",
           user_id: user?.id || null,
+          patient_email: capturedEmail || null,
           payment_status: mode === "premium" ? "covered" : "pending",
           original_assessment_id: mode === "premium" ? premiumAccess?.payment_id || null : null,
         })
@@ -292,7 +294,10 @@ const Assessment = () => {
         )}
 
         {step === "welcome" && (
-          <WelcomeStep mode={mode as "basic" | "premium"} onContinue={() => setStep("redflags")} />
+          <WelcomeStep mode={mode as "basic" | "premium"} onContinue={(email) => {
+            if (email) setCapturedEmail(email);
+            setStep("redflags");
+          }} />
         )}
 
         {step === "payment_check" && premiumAccess !== null && !premiumAccess.has_access && (

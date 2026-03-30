@@ -1,25 +1,47 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2 } from "lucide-react";
+import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 export interface WelcomeStepProps {
   mode: "basic" | "premium" | "professional";
   professionalName?: string;
-  onContinue: () => void;
+  onContinue: (email?: string) => void;
 }
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) => {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const isPt = language === "pt";
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+
+  const needsEmail = mode === "basic" && !user;
 
   const handleContinue = () => {
+    if (needsEmail) {
+      const trimmed = email.trim();
+      if (!trimmed) {
+        setEmailError(isPt ? "Informe seu e-mail para continuar" : "Enter your email to continue");
+        return;
+      }
+      if (!EMAIL_RE.test(trimmed)) {
+        setEmailError(isPt ? "E-mail inválido" : "Invalid email");
+        return;
+      }
+      setEmailError("");
+    }
     setIsTransitioning(true);
-    setTimeout(() => onContinue(), 600);
+    setTimeout(() => onContinue(needsEmail ? email.trim() : undefined), 600);
   };
+
   const estimatedTime = mode === "premium"
     ? (isPt ? "5 a 8 minutos" : "5 to 8 minutes")
     : mode === "professional"
@@ -121,6 +143,40 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
             </motion.div>
           ))}
         </div>
+
+        {/* Email capture for basic assessments (non-logged users) */}
+        {needsEmail && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="w-full max-w-sm space-y-2"
+          >
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="email"
+                placeholder={isPt ? "Seu melhor e-mail" : "Your best email"}
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleContinue()}
+                className="pl-10"
+                autoComplete="email"
+              />
+            </div>
+            {emailError && (
+              <p className="text-xs text-destructive text-left">{emailError}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {isPt
+                ? "Enviaremos seu resultado para este e-mail. Sem spam."
+                : "We'll send your results to this email. No spam."}
+            </p>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0 }}
