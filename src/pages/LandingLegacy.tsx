@@ -34,6 +34,8 @@ const Index = () => {
       type: "website",
     });
     setLandingJsonLd();
+    setOrganizationJsonLd();
+    setMedicalBusinessJsonLd();
   }, []);
 
   return (

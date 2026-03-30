@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Accordion,
@@ -6,11 +7,20 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { setFAQPageJsonLd } from "@/lib/seo";
 
 const faqKeys = ["faq1", "faq2", "faq3", "faq4", "faq5", "faq6"];
 
 const FaqSection = () => {
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const faqs = faqKeys.map((key) => ({
+      question: t(`faq.${key}.q`),
+      answer: t(`faq.${key}.a`),
+    }));
+    setFAQPageJsonLd(faqs);
+  }, [t]);
 
   return (
     <section className="py-20 md:py-28">

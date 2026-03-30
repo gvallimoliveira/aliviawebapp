@@ -29,6 +29,7 @@ const PatientLanding = () => {
       url: "https://aliviawebapp.com.br/para-pacientes",
       type: "website",
     });
+    setOrganizationJsonLd();
   }, []);
 
   return (
