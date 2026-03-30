@@ -1032,7 +1032,7 @@ const translations: Record<Language, Record<string, string>> = {
     "support.pro.tool.edit_profile.title": "Editar Perfil Profissional",
     "support.pro.tool.edit_profile.desc": "Mantenha seus dados atualizados: nome, CREFITO, especialidades, cidade, endereço da clínica e foto de perfil. Essas informações são exibidas para pacientes na busca de profissionais.",
     "support.pro.tool.lifetime_treatment.title": "Tratamento Vitalício",
-    "support.pro.tool.lifetime_treatment.desc": "A oferta de tratamento vitalício permite acesso permanente ao painel profissional com pagamento único. Verifique a disponibilidade e condições especiais no painel de assinatura.",
+    "support.pro.tool.lifetime_treatment.desc": "Com o Tratamento Vitalício, todos os planos de tratamento dos seus pacientes ficam permanentemente liberados — sem custo adicional por avaliação, a partir da data da compra. Importante: o acesso ao painel profissional continua dependendo de uma assinatura PRO ativa (mensal ou anual). O Tratamento Vitalício não substitui a assinatura do painel.",
 
     // Pro FAQ
     "support.pro.faq.rf1.q": "Meu paciente precisa criar conta na Aliv.iA?",
@@ -2064,7 +2064,7 @@ const translations: Record<Language, Record<string, string>> = {
     "support.pro.tool.edit_profile.title": "Edit Professional Profile",
     "support.pro.tool.edit_profile.desc": "Keep your data updated: name, CREFITO, specialties, city, clinic address, and profile photo. This information is displayed to patients in the professional search.",
     "support.pro.tool.lifetime_treatment.title": "Lifetime Treatment",
-    "support.pro.tool.lifetime_treatment.desc": "The lifetime treatment offer provides permanent access to the professional panel with a single payment. Check availability and special conditions in the subscription panel.",
+    "support.pro.tool.lifetime_treatment.desc": "With Lifetime Treatment, all your patients' treatment plans are permanently unlocked — no additional cost per assessment, from the purchase date onward. Important: access to the professional panel still requires an active PRO subscription (monthly or annual). Lifetime Treatment does not replace the panel subscription.",
 
     "support.pro.faq.rf1.q": "Does my patient need to create an Aliv.iA account?",
     "support.pro.faq.rf1.a": "Not necessarily. Using your personalized link, the patient can complete the assessment and the result is linked to your panel. However, if they want to access their history later, they'll need to create an account.",
