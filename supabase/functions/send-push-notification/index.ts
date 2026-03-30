@@ -1,32 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import webpush from "https://esm.sh/web-push@3.6.7";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-// Web Push implementation using Web Crypto API (no npm dependency)
-async function sendWebPush(
-  subscription: { endpoint: string; p256dh: string; auth: string },
-  payload: string,
-  vapidPublicKey: string,
-  vapidPrivateKey: string
-): Promise<Response> {
-  // For now, use a simplified approach via fetch to the push endpoint
-  // Full VAPID + encryption requires web-push library
-  // This edge function is the foundation — full encryption will be added when VAPID keys are configured
-  
-  const response = await fetch(subscription.endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "TTL": "86400",
-    },
-    body: payload,
-  });
-  
-  return response;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -34,6 +13,22 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
+    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY");
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      return new Response(
+        JSON.stringify({ error: "VAPID keys not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    webpush.setVapidDetails(
+      "mailto:contato@aliviawebapp.com.br",
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -47,7 +42,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get push subscriptions for this user
     const { data: subscriptions, error } = await supabase
       .from("push_subscriptions")
       .select("*")
@@ -63,23 +57,47 @@ Deno.serve(async (req) => {
     const payload = JSON.stringify({ title, body, url: url || "/" });
     let sent = 0;
     const errors: string[] = [];
+    const expiredEndpoints: string[] = [];
 
     for (const sub of subscriptions) {
       try {
-        // Note: Full VAPID-signed push requires web-push library
-        // For now, log the notification intent — actual delivery requires VAPID keys setup
-        console.log(`[Push] Would send to ${sub.endpoint}: ${title}`);
+        const pushSubscription = {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.p256dh,
+            auth: sub.auth,
+          },
+        };
+
+        await webpush.sendNotification(pushSubscription, payload);
         sent++;
-      } catch (e) {
-        errors.push(`Failed for ${sub.endpoint}: ${e}`);
+        console.log(`[Push] Sent to ${sub.endpoint.slice(0, 60)}...`);
+      } catch (e: any) {
+        const statusCode = e?.statusCode;
+        if (statusCode === 404 || statusCode === 410) {
+          expiredEndpoints.push(sub.endpoint);
+          console.log(`[Push] Subscription expired, removing: ${sub.endpoint.slice(0, 60)}...`);
+        } else {
+          errors.push(`Failed (${statusCode}): ${e?.message || e}`);
+          console.error(`[Push] Error for ${sub.endpoint.slice(0, 60)}:`, e?.message);
+        }
       }
     }
 
+    // Clean up expired subscriptions
+    if (expiredEndpoints.length > 0) {
+      await supabase
+        .from("push_subscriptions")
+        .delete()
+        .in("endpoint", expiredEndpoints);
+    }
+
     return new Response(
-      JSON.stringify({ sent, errors }),
+      JSON.stringify({ sent, cleaned: expiredEndpoints.length, errors }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    console.error("[Push] Unexpected error:", err);
     return new Response(
       JSON.stringify({ error: String(err) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
