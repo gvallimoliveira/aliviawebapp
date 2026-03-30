@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3 } from "lucide-react";
+import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { setSeo } from "@/lib/seo";
