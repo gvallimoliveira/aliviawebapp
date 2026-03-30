@@ -150,6 +150,55 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 4. SAFETY NET — apply pending referral coupons to active subscribers
+    try {
+      const { data: pendingRewards } = await supabase
+        .from("referral_rewards")
+        .select("id, referrer_user_id, stripe_coupon_id")
+        .eq("status", "rewarded")
+        .not("stripe_coupon_id", "is", null);
+
+      if (pendingRewards && pendingRewards.length > 0) {
+        const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+        if (stripeKey) {
+          const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+          for (const reward of pendingRewards) {
+            try {
+              // Get referrer email
+              const { data: referrerAuth } = await supabase.auth.admin.getUserById(reward.referrer_user_id);
+              if (!referrerAuth?.user?.email) continue;
+
+              const customers = await stripe.customers.list({ email: referrerAuth.user.email, limit: 1 });
+              if (customers.data.length === 0) continue;
+
+              const subs = await stripe.subscriptions.list({
+                customer: customers.data[0].id,
+                status: "active",
+                limit: 1,
+              });
+
+              if (subs.data.length > 0) {
+                await stripe.subscriptions.update(subs.data[0].id, {
+                  coupon: reward.stripe_coupon_id,
+                });
+                await supabase
+                  .from("referral_rewards")
+                  .update({ status: "used" })
+                  .eq("id", reward.id);
+                results.referral_coupons_applied++;
+                console.log(`[push-cron] Applied coupon ${reward.stripe_coupon_id} to subscriber ${reward.referrer_user_id}`);
+              }
+            } catch (e) {
+              results.errors.push(`referral_coupon ${reward.id}: ${e}`);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      results.errors.push(`referral_safety_net: ${e}`);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
