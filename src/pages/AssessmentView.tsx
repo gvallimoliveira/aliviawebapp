@@ -569,6 +569,11 @@ const BlurredTreatmentPreview = ({
                 )}
                 {isPt ? `Desbloquear por R$ 29,90` : `Unlock for R$ 29.90`}
               </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                {isPt
+                  ? "Ou desbloqueie todos os tratamentos por R$ 149,90 — acesso permanente!"
+                  : "Or unlock all treatments for R$ 149.90 — permanent access!"}
+              </p>
             </div>
           </div>
         </div>
