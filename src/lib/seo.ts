@@ -140,4 +140,61 @@ export function setBlogPostJsonLd(post: {
   });
 }
 
+export function setOrganizationJsonLd() {
+  addJsonLd({
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE_NAME,
+    url: SITE_URL,
+    logo: `${SITE_URL}/og-image.png`,
+    sameAs: [
+      "https://www.instagram.com/aliviawebapp",
+      "https://instagram.com/gvallim.fisioterapia",
+    ],
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      availableLanguage: ["Portuguese", "English", "Spanish"],
+    },
+  });
+}
+
+export function setMedicalBusinessJsonLd() {
+  addJsonLd({
+    "@context": "https://schema.org",
+    "@type": "MedicalBusiness",
+    name: SITE_NAME,
+    url: SITE_URL,
+    logo: `${SITE_URL}/og-image.png`,
+    description:
+      "Avaliação musculoesquelética com inteligência artificial. Diagnóstico preliminar e plano de tratamento personalizado em minutos.",
+    medicalSpecialty: "Musculoskeletal",
+    availableService: {
+      "@type": "MedicalTherapy",
+      name: "Avaliação de Dor com IA",
+      description:
+        "Diagnóstico preliminar baseado em evidência científica com plano de tratamento personalizado.",
+    },
+    areaServed: {
+      "@type": "Country",
+      name: "Brazil",
+    },
+  });
+}
+
+export function setFAQPageJsonLd(faqs: { question: string; answer: string }[]) {
+  addJsonLd({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  });
+}
+
 export const SEO_CONSTANTS = { SITE_URL, SITE_NAME, DEFAULT_IMAGE };

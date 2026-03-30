@@ -12,7 +12,7 @@ import FaqSection from "@/components/FaqSection";
 import SocialSection from "@/components/SocialSection";
 import Footer from "@/components/Footer";
 import StickyCTA from "@/components/StickyCTA";
-import { setSeo } from "@/lib/seo";
+import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
 
 const PatientLanding = () => {
   const [searchParams] = useSearchParams();
@@ -29,6 +29,7 @@ const PatientLanding = () => {
       url: "https://aliviawebapp.com.br/para-pacientes",
       type: "website",
     });
+    setOrganizationJsonLd();
   }, []);
 
   return (

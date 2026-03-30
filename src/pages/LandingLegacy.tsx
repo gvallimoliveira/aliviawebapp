@@ -14,7 +14,7 @@ import FaqSection from "@/components/FaqSection";
 import SocialSection from "@/components/SocialSection";
 import Footer from "@/components/Footer";
 import StickyCTA from "@/components/StickyCTA";
-import { setSeo, setLandingJsonLd } from "@/lib/seo";
+import { setSeo, setLandingJsonLd, setOrganizationJsonLd, setMedicalBusinessJsonLd } from "@/lib/seo";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -34,6 +34,8 @@ const Index = () => {
       type: "website",
     });
     setLandingJsonLd();
+    setOrganizationJsonLd();
+    setMedicalBusinessJsonLd();
   }, []);
 
   return (
