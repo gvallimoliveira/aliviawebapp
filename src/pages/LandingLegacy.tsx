@@ -57,6 +57,7 @@ const Index = () => {
       </main>
       <Footer />
       <StickyCTA />
+      <ExitIntentPopup />
     </div>
   );
 };

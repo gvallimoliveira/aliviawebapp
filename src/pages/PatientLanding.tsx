@@ -49,6 +49,7 @@ const PatientLanding = () => {
       </main>
       <Footer />
       <StickyCTA showProfessional={false} />
+      <ExitIntentPopup />
     </div>
   );
 };
