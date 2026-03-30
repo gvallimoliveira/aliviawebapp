@@ -547,9 +547,14 @@ const Dashboard = () => {
                 <Heart className="h-4 w-4" />
                 {t("dashboard.tab_my_health")}
               </TabsTrigger>
-              <TabsTrigger value="messages" className="gap-1.5">
+              <TabsTrigger value="messages" className="gap-1.5 relative">
                 <MessageCircle className="h-4 w-4" />
                 {t("dashboard.tab_messages")}
+                {unreadCount > 0 && (
+                  <Badge className="bg-primary text-primary-foreground text-[10px] h-5 min-w-5 flex items-center justify-center rounded-full px-1.5 ml-1">
+                    {unreadCount}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="professional" className="gap-1.5" data-onboarding="pro-tab-trigger">
                 <Stethoscope className="h-4 w-4" />
