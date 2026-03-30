@@ -17,7 +17,7 @@ interface Partner {
 }
 
 interface PartnerManagementProps {
-  language: "pt" | "en";
+  language: string;
 }
 
 const PartnerManagement = ({ language }: PartnerManagementProps) => {

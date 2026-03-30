@@ -56,7 +56,7 @@ interface AnamnesisData {
 interface PdfOptions {
   diagnosis: Diagnosis;
   treatmentPlan?: TreatmentPlanData;
-  language: "pt" | "en";
+  language: string;
   userName?: string;
   anamnesisData?: AnamnesisData;
   painRegions?: string[];
