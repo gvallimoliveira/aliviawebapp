@@ -133,7 +133,8 @@ const Gateway = () => {
             {/* Professional Card */}
             <motion.div
               initial="hidden" animate="visible" variants={fadeUp} custom={4}
-              className="group rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 md:p-8 text-left hover:shadow-xl hover:border-primary/30 transition-all duration-300 flex flex-col"
+              className="group rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 md:p-8 text-left hover:shadow-xl hover:border-primary/30 transition-all duration-300 flex flex-col cursor-pointer"
+              onClick={() => navigate("/profissionais")}
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-5">
                 <Stethoscope className="h-6 w-6 text-primary" />
@@ -157,8 +158,8 @@ const Gateway = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full rounded-xl gap-2 text-base border-primary/30 text-primary hover:bg-primary/5"
-                onClick={() => navigate("/profissionais")}
+                className="w-full rounded-xl gap-2 text-base border-primary/30 text-primary hover:bg-primary/5 pointer-events-none"
+                tabIndex={-1}
               >
                 {t("gateway.pro.cta")}
                 <ArrowRight className="h-4 w-4" />
