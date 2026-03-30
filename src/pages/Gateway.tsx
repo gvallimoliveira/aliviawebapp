@@ -49,6 +49,10 @@ const Gateway = () => {
           <a href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline">
             Blog
           </a>
+          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2">
+            <Globe className="h-4 w-4" />
+            {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm">
             {t("nav.login")}
           </Button>
