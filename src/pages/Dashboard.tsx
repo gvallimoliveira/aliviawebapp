@@ -72,6 +72,7 @@ const Dashboard = () => {
   const [professional, setProfessional] = useState<any>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>("health");
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const onboardingSteps = useMemo(
     () => buildOnboardingSteps(premiumAccess?.subscription_type, !!professional),
@@ -92,6 +93,37 @@ const Dashboard = () => {
       setActiveTab("messages");
     }
   }, [tabFromUrl, professional]);
+
+  // Fetch unread messages count
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+    // Get all conversations where user is participant
+    const { data: convs } = await supabase
+      .from("conversations")
+      .select("id");
+    if (!convs || convs.length === 0) { setUnreadCount(0); return; }
+    const convIds = convs.map((c: any) => c.id);
+    const { count } = await supabase
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .in("conversation_id", convIds)
+      .neq("sender_user_id", user.id)
+      .is("read_at", null);
+    setUnreadCount(count || 0);
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    fetchUnreadCount();
+    // Subscribe to new messages for live badge updates
+    const channel = supabase
+      .channel("unread-badge")
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
+        fetchUnreadCount();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
 
   // Auto-switch tab when onboarding reaches pro steps
   useEffect(() => {
@@ -515,9 +547,14 @@ const Dashboard = () => {
                 <Heart className="h-4 w-4" />
                 {t("dashboard.tab_my_health")}
               </TabsTrigger>
-              <TabsTrigger value="messages" className="gap-1.5">
+              <TabsTrigger value="messages" className="gap-1.5 relative">
                 <MessageCircle className="h-4 w-4" />
                 {t("dashboard.tab_messages")}
+                {unreadCount > 0 && (
+                  <Badge className="bg-primary text-primary-foreground text-[10px] h-5 min-w-5 flex items-center justify-center rounded-full px-1.5 ml-1">
+                    {unreadCount}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="professional" className="gap-1.5" data-onboarding="pro-tab-trigger">
                 <Stethoscope className="h-4 w-4" />
@@ -555,9 +592,14 @@ const Dashboard = () => {
                 <Heart className="h-4 w-4" />
                 {t("dashboard.tab_my_health")}
               </TabsTrigger>
-              <TabsTrigger value="messages" className="gap-1.5">
+              <TabsTrigger value="messages" className="gap-1.5 relative">
                 <MessageCircle className="h-4 w-4" />
                 {t("dashboard.tab_messages")}
+                {unreadCount > 0 && (
+                  <Badge className="bg-primary text-primary-foreground text-[10px] h-5 min-w-5 flex items-center justify-center rounded-full px-1.5 ml-1">
+                    {unreadCount}
+                  </Badge>
+                )}
               </TabsTrigger>
             </TabsList>
 
