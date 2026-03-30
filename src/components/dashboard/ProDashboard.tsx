@@ -92,7 +92,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
-      if (data?.url) window.open(data.url, "_blank");
+      if (data?.url) window.location.href = data.url;
     } catch {
       toast({ title: "Erro", description: "Não foi possível abrir o portal de assinatura.", variant: "destructive" });
     } finally {
