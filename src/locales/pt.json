@@ -689,6 +689,8 @@
   "pro_lifetime.upsell_desc_regular": "Desbloqueie todos os planos de tratamento para sempre.",
   "pro_lifetime.days_left": "{days} dias restantes para esta oferta",
   "pro_lifetime.buy_cta": "Desbloquear Vitalício",
+  "pro_lifetime.success_title": "Acesso Vitalício aos Tratamentos ativado!",
+  "pro_lifetime.success_desc": "Agora você pode desbloquear tratamentos ilimitados sem custo adicional.",
   "blog.title": "Blog",
   "blog.subtitle": "Artigos sobre dor, fisioterapia e bem-estar",
   "blog.read_more": "Ler mais",
