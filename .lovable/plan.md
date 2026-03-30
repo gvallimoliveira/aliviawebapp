@@ -1,38 +1,34 @@
+## Dashboard Admin de Leads Capturados
 
+### Objetivo
 
-## Pop-up de Exit Intent + Lembrete de Avaliação Abandonada
-
-### 1. Pop-up de Exit Intent na Landing
-
-**Novo componente**: `src/components/ExitIntentPopup.tsx`
-
-- Detecta `mouseleave` no topo da janela (desktop) e `visibilitychange` (mobile) como sinais de saída
-- Exibe um Dialog com oferta: "Primeira avaliação básica grátis — comece agora!" + CTA para `/assessment/basic`
-- Mostra apenas 1x por sessão (`sessionStorage`) e não aparece para usuários logados
-- Delay de 5s antes de ativar (evitar disparar em scroll acidental)
-- Botão secundário "Ver planos premium" que leva à seção de comparação
-
-**Integração**: Adicionar `<ExitIntentPopup />` em `PatientLanding.tsx` e `LandingLegacy.tsx`
-
-### 2. Lembrete de Avaliação Abandonada (push-cron)
-
-**Editar**: `supabase/functions/push-cron/index.ts`
-
-Adicionar seção 5 após o safety net de cupons:
-
-- Busca avaliações com `status = 'in_progress'` criadas há mais de 1 hora e menos de 7 dias
-- Filtra apenas usuários com push subscription ativa
-- Envia push: "📋 Sua avaliação está quase pronta! Continue de onde parou."
-- URL: `/assessment/{type}` (basic ou premium conforme o tipo)
-- Limita a 1 lembrete por avaliação por dia (verifica `updated_at` para não repetir)
-- Adiciona contador `abandoned_reminders` nos resultados
+Criar um componente `LeadManagement` no painel admin para visualizar os e-mails capturados nas avaliações básicas (usuários não logados). E permita exportar esses dados fazer download ou enviar via PDF no WhatsApp 
 
 ### Alterações
 
-| Arquivo | Ação |
-|---|---|
-| `src/components/ExitIntentPopup.tsx` | Criar componente com detecção de exit intent |
-| `src/pages/PatientLanding.tsx` | Importar e renderizar `ExitIntentPopup` |
-| `src/pages/LandingLegacy.tsx` | Importar e renderizar `ExitIntentPopup` |
-| `supabase/functions/push-cron/index.ts` | Adicionar seção de lembrete de avaliação abandonada |
+**Novo arquivo: `src/components/admin/LeadManagement.tsx**`
 
+- Consulta `assessments` filtrando `type = 'basic'` e `patient_email IS NOT NULL`
+- Exibe tabela com colunas: E-mail, Data, Status da avaliação, Score de dor
+- Contador total de leads no header do card
+- Ordenação por data decrescente
+- Busca/filtro por e-mail
+- Badge colorido para status (in_progress / completed)
+- Usa o mesmo padrão visual dos outros componentes admin (Card + Table)
+
+**Editar: `src/pages/Admin.tsx**`
+
+- Importar e renderizar `<LeadManagement />` após `SupportTicketManagement`
+
+### Observação sobre acesso
+
+A query usa a service role indiretamente — o admin já é validado pelo fluxo VIP existente. As avaliações básicas com `user_id IS NULL` são acessíveis via RLS existente (`Anyone can view professional assessments`) mas para basic sem user_id precisaremos de uma edge function ou RLS adicional. A abordagem mais segura é criar uma edge function `list-leads` que usa service role para buscar esses registros, seguindo o padrão do `manage-vip-users`.
+
+### Detalhes técnicos
+
+
+| Arquivo                                        | Ação                                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `src/components/admin/LeadManagement.tsx`      | Criar componente                                                                                  |
+| `src/pages/Admin.tsx`                          | Importar e adicionar ao layout                                                                    |
+| `supabase/functions/manage-vip-users/index.ts` | Adicionar action `list_leads` que busca assessments básicos com patient_email usando service role |
