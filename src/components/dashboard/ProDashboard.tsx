@@ -493,11 +493,13 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
 
       {/* Patient list grouped by email */}
       <div data-onboarding="pro-patients">
-        <PatientEvolutionDashboard
-          assessments={patientAssessments}
-          professionalId={professional.id}
-          onDownloadPdf={handleDownloadPdf}
-        />
+        <DashboardErrorBoundary>
+          <PatientEvolutionDashboard
+            assessments={patientAssessments}
+            professionalId={professional.id}
+            onDownloadPdf={handleDownloadPdf}
+          />
+        </DashboardErrorBoundary>
       </div>
 
     </div>
