@@ -14,6 +14,10 @@ import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X 
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import Cropper from "react-easy-crop";
+import type { Area } from "react-easy-crop";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 
 const SPECIALTIES = [
   "ortopedia", "esportiva", "neurologica", "respiratoria",
