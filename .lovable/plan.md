@@ -1,94 +1,29 @@
 
 
-## Chat entre Paciente e Profissional
+## Adicionar seção "Sobre" na pré-landing (Gateway)
 
-### Conceito
+### O que será feito
 
-Criar um sistema de mensagens diretas dentro do ecossistema, permitindo que pacientes que encontraram um profissional na busca (`/professionals`) possam iniciar uma conversa. O profissional vê e responde pelo Painel Profissional. Ambos acessam via nova aba "Mensagens" no Dashboard.
+Inserir uma seção "Sobre a Aliv.iA" entre o social proof badge e o footer minimalista da página Gateway (`/`). A seção apresenta a história de origem e a missão da plataforma de forma humanizada e concisa, com texto refinado pela IA mantendo a essência descrita.
 
-### Arquitetura do banco de dados
+### Conteúdo (refinado)
 
-**Tabela `conversations`**
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid (PK) | — |
-| patient_user_id | uuid (NOT NULL) | Quem iniciou |
-| professional_id | uuid (NOT NULL) | Ref ao `professionals.id` |
-| created_at | timestamptz | — |
-| updated_at | timestamptz | Atualizado a cada nova mensagem |
+**PT:** A Aliv.iA nasceu da inquietação de Guilherme, fisioterapeuta carioca, ao observar a quantidade de orientações sem embasamento e sem qualquer triagem ou avaliação adequada circulando pela internet. Com a missão de mudar essa realidade, ele idealizou e construiu a Aliv.iA — uma plataforma que combina inteligência artificial e raciocínio clínico para ajudar duas frentes: pessoas que buscam resolver suas dores com mais segurança e base científica, e fisioterapeutas que desejam chegar mais preparados às suas avaliações, com relatórios de evolução que agregam valor real ao atendimento. Tudo isso com preço justo e acessível.
 
-**Tabela `messages`**
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid (PK) | — |
-| conversation_id | uuid (NOT NULL) | FK para conversations |
-| sender_user_id | uuid (NOT NULL) | auth.uid() de quem enviou |
-| content | text (NOT NULL) | Texto da mensagem (max 2000 chars) |
-| read_at | timestamptz (nullable) | Quando foi lida |
-| created_at | timestamptz | — |
+**EN:** Versão equivalente em inglês.
 
-**RLS:**
-- SELECT/INSERT em ambas tabelas: apenas participantes da conversa (patient_user_id = auth.uid() OU professional.user_id = auth.uid())
-- Função `is_conversation_participant(conv_id, user_id)` SECURITY DEFINER para evitar recursão
+### Design
 
-**Realtime:**
-- `ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;` para entrega instantânea
+- Ícone `Heart` ou `Sparkles` como destaque visual
+- Card sutil com borda, fundo translúcido (`bg-card/60 backdrop-blur-sm`), rounded corners
+- Título "Sobre a Aliv.iA" centralizado acima do texto
+- Largura máxima `max-w-2xl`, texto `text-sm text-muted-foreground`, alinhamento central
+- Animação `fadeUp` consistente com o resto da página
 
-### Regras de negócio
-
-1. **Quem inicia:** Apenas o paciente, a partir da página de busca de profissionais ou do card de encaminhamento (referral)
-2. **Uma conversa por par:** Se já existe conversa entre aquele paciente e profissional, reabre a existente
-3. **Acesso:** Somente usuários logados com acesso premium podem enviar mensagens (mesma regra do acesso à busca de profissionais)
-4. **Sem anexos na v1:** Apenas texto, para simplicidade e segurança
-5. **Indicador de não lidas:** Badge numérico na aba "Mensagens" mostrando contagem de não lidas
-
-### Componentes e páginas
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `src/components/chat/ConversationList.tsx` | Lista de conversas com última mensagem, timestamp, badge de não lidas |
-| `src/components/chat/ChatWindow.tsx` | Área de mensagens com scroll, input de texto, indicador de leitura |
-| `src/components/chat/ChatBubble.tsx` | Bolha de mensagem (estilo diferente para enviada/recebida) |
-
-### Integração no Dashboard
-
-- **Aba "Minha Saúde":** Adicionar sub-aba ou seção "Mensagens" com `ConversationList` filtrando por `patient_user_id = auth.uid()`
-- **Aba "Painel Profissional":** Adicionar sub-aba "Mensagens" com `ConversationList` filtrando por `professional_id`
-- Ao clicar em uma conversa, abre o `ChatWindow` inline (sem navegar para outra página)
-
-### Ponto de entrada (iniciar conversa)
-
-- Na página `/professionals`, adicionar botão "Enviar mensagem" no card do profissional
-- Ao clicar: cria ou recupera a conversa existente e redireciona para `/dashboard?tab=messages&conv=<id>`
-
-### Riscos mitigados
-
-| Risco | Mitigação |
-|-------|-----------|
-| Spam | Rate limit: max 1 msg/segundo via validação client-side + RLS impede envio para conversas alheias |
-| Conteúdo impróprio | v1 sem moderação automática, mas limite de 2000 chars e sem anexos reduz superfície |
-| Performance | Realtime do Supabase com channel por conversation_id, não global |
-| Privacidade | RLS restrito a participantes; sem acesso admin às mensagens |
-| Complexidade | Sem grupos, sem typing indicator, sem edição/exclusão na v1 |
-
-### Traduções
-
-Novas chaves em `LanguageContext.tsx` para: título da aba, placeholder do input, "Enviar mensagem", "Sem conversas ainda", timestamps relativos, badge de não lidas.
-
-### Suporte
-
-Adicionar item na página de Suporte explicando o recurso de mensagens para ambos os perfis.
-
-### Arquivos envolvidos
+### Alterações
 
 | Ação | Arquivo |
 |------|---------|
-| Migração | Nova tabela `conversations` + `messages` + RLS + realtime |
-| Criar | `src/components/chat/ConversationList.tsx` |
-| Criar | `src/components/chat/ChatWindow.tsx` |
-| Criar | `src/components/chat/ChatBubble.tsx` |
-| Editar | `src/pages/Dashboard.tsx` (nova aba Mensagens) |
-| Editar | `src/pages/ProfessionalSearch.tsx` (botão "Enviar mensagem") |
-| Editar | `src/contexts/LanguageContext.tsx` (traduções) |
-| Editar | `src/pages/Support.tsx` (documentação do recurso) |
+| Editar | `src/pages/Gateway.tsx` — adicionar seção "Sobre" antes do footer |
+| Editar | `src/contexts/LanguageContext.tsx` — chaves `gateway.about_title` e `gateway.about_text` (PT/EN) |
 
