@@ -221,18 +221,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
 
   // Find selected patient (may be null)
   const patient = selectedEmail ? patients.find((p) => p.email === selectedEmail) || null : null;
-  // Removed — see renderPatientList() below
-  // ── Evolution detail view ──
-  const patient = patients.find((p) => p.email === selectedEmail)!;
-  const painData = patient.assessments
-    .filter((a: any) => a.pain_score != null)
-    .map((a: any) => ({
-      date: new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }),
-      score: a.pain_score,
-    }));
+
+  const painData = useMemo(() => {
+    if (!patient) return [];
+    return patient.assessments
+      .filter((a: any) => a.pain_score != null)
+      .map((a: any) => ({
+        date: new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }),
+        score: a.pain_score,
+      }));
+  }, [patient]);
 
   // Build detailed questionnaire evolution data with subscales
   const questionnaireEvolution = useMemo(() => {
+    if (!patient) return [];
     const resultsByQuestionnaire = new Map<string, {
       name: string;
       qDef: typeof questionnaires[0] | undefined;
@@ -315,7 +317,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
     });
 
     return charts;
-  }, [patient.assessments]);
+  }, [patient]);
 
   const SUBSCALE_COLORS = [
     "hsl(210, 70%, 55%)",
