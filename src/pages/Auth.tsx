@@ -100,6 +100,7 @@ const Auth = () => {
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder={t("auth.name_placeholder")}
                       className="pl-10"
+                      autoComplete="name"
                       required
                     />
                   </div>
