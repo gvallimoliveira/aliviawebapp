@@ -577,9 +577,33 @@ const Dashboard = () => {
         {/* Welcome */}
         <div data-onboarding="patient-welcome" className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              {t("dashboard.welcome")}{profile?.full_name ? `, ${profile.full_name}` : ""}
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-3xl font-bold text-foreground">
+                {t("dashboard.welcome")}{profile?.full_name ? `, ${profile.full_name}` : ""}
+              </h1>
+              {(() => {
+                const isAdmin = user?.email === "gvallimoliveira@gmail.com";
+                if (isAdmin) {
+                  return <Badge className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 gap-1"><Shield className="h-3 w-3" />Admin</Badge>;
+                }
+                if (professional?.is_partner) {
+                  return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Stethoscope className="h-3 w-3" />PRO Parceiro</Badge>;
+                }
+                if (professional?.subscription_status === "active" && professional?.pro_access_expires_at) {
+                  return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Anual</Badge>;
+                }
+                if (professional?.subscription_status === "active") {
+                  return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Mensal</Badge>;
+                }
+                if (premiumAccess?.subscription_type === "monthly") {
+                  return <Badge className="bg-amber-500/90 text-white text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />Premium Mensal</Badge>;
+                }
+                if (premiumAccess?.subscription_type === "single") {
+                  return <Badge variant="outline" className="border-amber-400 text-amber-600 text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />Premium Avulso</Badge>;
+                }
+                return <Badge variant="outline" className="text-muted-foreground text-[10px] px-2 py-0.5">Básica</Badge>;
+              })()}
+            </div>
             <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
           </div>
           {!onboarding.isActive && (
