@@ -930,5 +930,6 @@
   "support.pro.faq.rf7.q": "Can I export all patient data?",
   "support.pro.faq.rf7.a": "Yes. Use the 'Export PDFs' button to generate batch reports of all assessments with completed diagnoses. Each assessment generates an individual PDF.",
   "support.pro.faq.rf8.q": "Are the notes I add visible to the patient?",
-  "support.pro.faq.rf8.a": "No. Professional notes are private and visible only to you in the panel. They are included in the exported PDF for clinical documentation purposes."
+  "support.pro.faq.rf8.a": "No. Professional notes are private and visible only to you in the panel. They are included in the exported PDF for clinical documentation purposes.",
+  "payment.includes_sub_desc": "Cancel anytime"
 }
