@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity } from "lucide-react";
+import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
@@ -169,6 +170,17 @@ const Support = () => {
                   ))}
                 </Accordion>
               </div>
+
+              {/* Validated Questionnaires Table — only for professional */}
+              {profile === "professional" && (
+                <div className="mb-12">
+                  <ValidatedQuestionnairesTable
+                    compact
+                    title={t("questionnaires_table.support_title")}
+                    subtitle={t("questionnaires_table.support_subtitle")}
+                  />
+                </div>
+              )}
 
               {/* FAQ */}
               <div>
