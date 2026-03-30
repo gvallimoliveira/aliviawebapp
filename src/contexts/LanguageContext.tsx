@@ -752,6 +752,14 @@ const translations: Record<Language, Record<string, string>> = {
     // Dashboard Tabs
     "dashboard.tab_my_health": "Minha Saúde",
     "dashboard.tab_professional": "Painel Profissional",
+    "dashboard.tab_messages": "Mensagens",
+
+    // Chat
+    "chat.no_conversations": "Nenhuma conversa ainda.",
+    "chat.no_messages": "Nenhuma mensagem ainda. Inicie a conversa!",
+    "chat.placeholder": "Digite sua mensagem...",
+    "chat.send_message": "Enviar mensagem",
+    "chat.messages_title": "Mensagens",
 
     // Professional Link Card
     "prof.assessment_link_title": "Link de Avaliação para Pacientes",
