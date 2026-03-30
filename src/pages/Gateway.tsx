@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart } from "lucide-react";
+import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { setSeo } from "@/lib/seo";
@@ -14,7 +14,7 @@ const fadeUp = {
 };
 
 const Gateway = () => {
-  const { t } = useLanguage();
+  const { t, toggleLanguage, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -49,6 +49,10 @@ const Gateway = () => {
           <a href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline">
             Blog
           </a>
+          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2">
+            <Globe className="h-4 w-4" />
+            {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm">
             {t("nav.login")}
           </Button>
