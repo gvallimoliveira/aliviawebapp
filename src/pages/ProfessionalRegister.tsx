@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -14,6 +14,10 @@ import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X 
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import Cropper from "react-easy-crop";
+import type { Area } from "react-easy-crop";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 
 const SPECIALTIES = [
   "ortopedia", "esportiva", "neurologica", "respiratoria",
@@ -40,6 +44,11 @@ const ProfessionalRegister = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [rawImageUrl, setRawImageUrl] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
   const [form, setForm] = useState({
     full_name: "",
@@ -99,7 +108,7 @@ const ProfessionalRegister = () => {
     }));
   };
 
-  const resizeAndCropImage = (file: File, size: number): Promise<Blob> => {
+  const getCroppedImg = (imageSrc: string, pixelCrop: Area, size: number): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -107,11 +116,11 @@ const ProfessionalRegister = () => {
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext("2d")!;
-        // Center-crop to square
-        const minDim = Math.min(img.width, img.height);
-        const sx = (img.width - minDim) / 2;
-        const sy = (img.height - minDim) / 2;
-        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+        ctx.drawImage(
+          img,
+          pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
+          0, 0, size, size
+        );
         canvas.toBlob(
           (blob) => (blob ? resolve(blob) : reject(new Error("Canvas toBlob failed"))),
           "image/jpeg",
@@ -119,26 +128,40 @@ const ProfessionalRegister = () => {
         );
       };
       img.onerror = reject;
-      img.src = URL.createObjectURL(file);
+      img.src = imageSrc;
     });
   };
 
-  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "Imagem muito grande (máx. 5MB)", variant: "destructive" });
       return;
     }
+    const url = URL.createObjectURL(file);
+    setRawImageUrl(url);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCropModalOpen(true);
+  };
+
+  const handleCropConfirm = async () => {
+    if (!rawImageUrl || !croppedAreaPixels) return;
     try {
-      const croppedBlob = await resizeAndCropImage(file, 400);
+      const croppedBlob = await getCroppedImg(rawImageUrl, croppedAreaPixels, 400);
       const croppedFile = new File([croppedBlob], "profile.jpg", { type: "image/jpeg" });
       setPhotoFile(croppedFile);
       setPhotoPreview(URL.createObjectURL(croppedBlob));
     } catch {
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
+      // fallback — shouldn't happen
     }
+    setCropModalOpen(false);
+    setRawImageUrl(null);
   };
 
   const uploadPhoto = async (): Promise<string | null> => {
@@ -345,6 +368,51 @@ const ProfessionalRegister = () => {
                   {photoPreview ? t("prof.change_photo") : t("prof.add_photo")}
                 </button>
               </div>
+
+              {/* Crop Modal */}
+              <Dialog open={cropModalOpen} onOpenChange={(open) => {
+                if (!open) { setCropModalOpen(false); setRawImageUrl(null); }
+              }}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>{t("prof.crop_photo") || "Ajustar foto"}</DialogTitle>
+                  </DialogHeader>
+                  <div className="relative w-full aspect-square bg-muted rounded-lg overflow-hidden">
+                    {rawImageUrl && (
+                      <Cropper
+                        image={rawImageUrl}
+                        crop={crop}
+                        zoom={zoom}
+                        aspect={1}
+                        cropShape="round"
+                        showGrid={false}
+                        onCropChange={setCrop}
+                        onZoomChange={setZoom}
+                        onCropComplete={onCropComplete}
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 px-1">
+                    <span className="text-xs text-muted-foreground shrink-0">Zoom</span>
+                    <Slider
+                      value={[zoom]}
+                      min={1}
+                      max={3}
+                      step={0.05}
+                      onValueChange={(v) => setZoom(v[0])}
+                      className="flex-1"
+                    />
+                  </div>
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="outline" onClick={() => { setCropModalOpen(false); setRawImageUrl(null); }}>
+                      {t("diagnosis.back") || "Cancelar"}
+                    </Button>
+                    <Button onClick={handleCropConfirm}>
+                      {t("prof.confirm_crop") || "Confirmar"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
