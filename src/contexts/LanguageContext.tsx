@@ -2018,6 +2018,8 @@ const translations: Record<Language, Record<string, string>> = {
     "gateway.pro.bullet3": "Patient evolution dashboard",
     "gateway.pro.cta": "Explore the professional panel",
     "gateway.social_proof": "Used by patients and physiotherapists across Brazil",
+    "gateway.about_title": "About Aliv.iA",
+    "gateway.about_text": "Aliv.iA was born from the restlessness of Guilherme, a physiotherapist from Rio de Janeiro, who grew tired of seeing baseless guidance and a complete lack of proper screening and assessment spreading across the internet. Driven to change this reality, he envisioned and built Aliv.iA — a platform that combines artificial intelligence and clinical reasoning to serve two fronts: people seeking to resolve their pain with greater safety and scientific grounding, and physiotherapists who want to arrive better prepared for their evaluations, with evolution reports that add real value to patient care. All at a fair and accessible price.",
 
     // Dual Audience Section
     "dual.title": "Who is Aliv.iA for?",

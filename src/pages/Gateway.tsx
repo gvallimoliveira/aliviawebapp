@@ -175,6 +175,20 @@ const Gateway = () => {
             <Activity className="h-4 w-4 text-primary" />
             {t("gateway.social_proof")}
           </motion.div>
+
+          {/* About section */}
+          <motion.div
+            initial="hidden" animate="visible" variants={fadeUp} custom={6}
+            className="mt-12 max-w-2xl mx-auto rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-6 md:p-8 text-center"
+          >
+            <div className="flex justify-center mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                <Heart className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+            <h2 className="text-lg font-bold text-foreground mb-3">{t("gateway.about_title")}</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">{t("gateway.about_text")}</p>
+          </motion.div>
         </div>
       </main>
 
