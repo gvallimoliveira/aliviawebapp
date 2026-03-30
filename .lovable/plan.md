@@ -1,48 +1,59 @@
 
 
-## Corrigir textos sobre Tratamento Vitalício no Suporte e no Dashboard
+## Tabela de Questionários Validados por Região Corporal
 
-### Problema
+### O que será feito
 
-Os textos atuais em vários locais descrevem incorretamente o Tratamento Vitalício como "acesso permanente ao painel profissional". Na realidade, ele concede apenas acesso permanente aos **planos de tratamento** dos pacientes, sem necessidade de pagamento avulso por tratamento. O acesso ao painel profissional continua exigindo assinatura ativa (mensal ou anual).
+Criar um componente reutilizável `ValidatedQuestionnairesTable` que exibe uma tabela mapeando cada região corporal ao questionário validado utilizado na avaliação. A tabela será inserida em dois locais:
 
-### O que já está correto no código
+1. **Landing Page Profissional** (`/profissionais`) — nova seção antes do FAQ, com título como "Embasamento científico por região"
+2. **Página de Suporte Profissional** (`/suporte`) — dentro do accordion ou como seção dedicada no painel profissional
 
-- `check-pro-subscription` — NÃO considera `lifetime_treatment` para conceder acesso ao painel (correto)
-- `create-pro-treatment-payment` — Pula o pagamento por tratamento se `lifetime_treatment = true` (correto)
-- `verify-payment` — Marca `lifetime_treatment = true` no profissional após pagamento (correto)
+### Dados da tabela
 
-### Textos que precisam ser corrigidos
+Extraídos diretamente de `questionnaireData.ts`. Cada linha agrupa regiões de forma legível:
 
-**1. Suporte — Tool "Tratamento Vitalício" (LanguageContext.tsx)**
+| Região Corporal | Questionário | Referência |
+|---|---|---|
+| Coluna lombar / Dorsal / Sacral | ODI | Fairbank & Pynsent, 2000 |
+| Ombro | SPADI | Roach et al., 1991 |
+| Joelho | KOOS | Roos et al., 1998 |
+| Quadril | HOOS | Klassbo et al., 2003 |
+| Pé / Tornozelo | FAOS | Roos et al., 2001 |
+| Tendão de Aquiles / Calcanhar | VISA-A | Robinson et al., 2001 |
+| Cotovelo / Antebraço / Mão | QuickDASH | Beaton et al., 2005 |
+| Cervical / Cabeça | NDI | Vernon & Mior, 1991 |
+| Cabeça (cefaleia) | HIT-6 | Kosinski et al., 2003 |
+| Coxa / Perna | LEFS-8 | Mehta et al., 2016 |
 
-Atual PT: *"A oferta de tratamento vitalício permite acesso permanente ao painel profissional com pagamento único."*
-Correto PT: Explicar que concede acesso permanente aos planos de tratamento de todos os pacientes, sem custo adicional por avaliação, mas que a assinatura PRO (mensal ou anual) continua necessária para acesso ao painel.
+### Componente
 
-Mesma correção no EN.
+**Novo arquivo: `src/components/ValidatedQuestionnairesTable.tsx`**
+- Tabela usando componentes `Table` do shadcn/ui
+- 3 colunas: Região, Questionário (sigla + nome completo), Referência científica
+- Bilíngue via `useLanguage()` — usa `fullName_pt`/`fullName_en`
+- Estilização consistente com o webapp (rounded borders, hover states, cores do tema)
+- Badge com a sigla do questionário para destaque visual
 
-**2. Suporte — FAQ rf5 ou rf8 (se mencionar lifetime)**
+### Integrações
 
-Verificar e corrigir qualquer FAQ que descreva incorretamente o lifetime.
+**Editar: `src/pages/ProfessionalLanding.tsx`**
+- Adicionar nova seção "Embasamento Científico" entre "Panel Features" e "Pricing", importando o componente
+- Título e subtítulo via `t()` com novas chaves
 
-**3. Dashboard — Upsell descriptions (LanguageContext.tsx)**
+**Editar: `src/pages/Support.tsx`**
+- Inserir o componente dentro da aba profissional, após os tools e antes do FAQ
+- Título contextual diferente ("Questionários utilizados na avaliação")
 
-- `pro_lifetime.upsell_desc` PT/EN — já está correto ("Desbloqueie todos os planos de tratamento para sempre. Sem custos adicionais por avaliação.")
-- `pro_lifetime.upsell_desc_regular` PT/EN — já está correto.
+**Editar: `src/contexts/LanguageContext.tsx`**
+- Adicionar chaves PT/EN para títulos e subtítulos das seções em ambos os locais
 
-Estes estão OK. Apenas o suporte precisa de correção.
-
-### Arquivo editado
+### Arquivos
 
 | Ação | Arquivo |
 |------|---------|
-| Editar | `src/contexts/LanguageContext.tsx` (corrigir textos do suporte PT e EN para `lifetime_treatment` tool e FAQs relacionadas) |
-
-### Conteúdo corrigido
-
-**PT — `support.pro.tool.lifetime_treatment.desc`:**
-"Com o Tratamento Vitalício, todos os planos de tratamento dos seus pacientes ficam permanentemente liberados — sem custo adicional por avaliação, a partir da data da compra. Importante: o acesso ao painel profissional continua dependendo de uma assinatura PRO ativa (mensal ou anual). O Tratamento Vitalício não substitui a assinatura do painel."
-
-**EN — `support.pro.tool.lifetime_treatment.desc`:**
-"With Lifetime Treatment, all your patients' treatment plans are permanently unlocked — no additional cost per assessment, from the purchase date onward. Important: access to the professional panel still requires an active PRO subscription (monthly or annual). Lifetime Treatment does not replace the panel subscription."
+| Criar | `src/components/ValidatedQuestionnairesTable.tsx` |
+| Editar | `src/pages/ProfessionalLanding.tsx` |
+| Editar | `src/pages/Support.tsx` |
+| Editar | `src/contexts/LanguageContext.tsx` |
 
