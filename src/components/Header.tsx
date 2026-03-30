@@ -88,31 +88,35 @@ const Header = () => {
           variant="ghost"
           size="icon"
           className="md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
+          onClick={() => setMobileOpen(true)}
           aria-label="Menu"
         >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <Menu className="h-5 w-5" />
         </Button>
       </div>
 
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-md animate-in slide-in-from-top-2 duration-200">
-          <nav className="container flex flex-col gap-1 py-4">
-            <a
-              href="#compare"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+      {/* Mobile side menu */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-72 p-0">
+          <SheetHeader className="p-4 border-b border-border/40">
+            <SheetTitle className="flex items-center gap-2">
+              <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
+              <span className="text-lg font-bold text-foreground">Aliv.iA</span>
+            </SheetTitle>
+          </SheetHeader>
+          <nav className="flex flex-col gap-1 p-3">
+            <button
+              onClick={() => go("#compare")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
             >
               {isProfessionalPage ? (language === "pt" ? "Planos e preços" : language === "es" ? "Planes y precios" : "Plans & pricing") : t("compare.title")}
-            </a>
-            <a
-              href="#how"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            </button>
+            <button
+              onClick={() => go("#how")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
             >
               {t("how.title")}
-            </a>
+            </button>
             <button
               onClick={() => go("/blog")}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
@@ -176,8 +180,8 @@ const Header = () => {
               </button>
             )}
           </nav>
-        </div>
-      )}
+        </SheetContent>
+      </Sheet>
     </header>
   );
 };
