@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Mail, Download, Share2, Search } from "lucide-react";
+import { Loader2, Mail, Download, Share2, Search, TrendingUp, CheckCircle, Star } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Lead {
@@ -17,16 +17,24 @@ interface Lead {
   pain_regions: string[] | null;
 }
 
+interface Metrics {
+  total_leads: number;
+  completed: number;
+  converted_premium: number;
+}
+
 interface LeadManagementProps {
   language: string;
 }
 
 const LeadManagement = ({ language }: LeadManagementProps) => {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  const t = language === "pt" ? {
+  const isPt = language === "pt";
+  const t = isPt ? {
     title: "Leads Capturados",
     desc: "E-mails coletados de avaliações básicas gratuitas",
     email: "E-mail",
@@ -40,6 +48,10 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
     search: "Buscar por e-mail...",
     inProgress: "Em andamento",
     completed: "Completa",
+    totalLeads: "Total de Leads",
+    completedAssessments: "Avaliações Completas",
+    convertedPremium: "Convertidos Premium",
+    conversionRate: "Taxa de Conversão",
   } : {
     title: "Captured Leads",
     desc: "Emails collected from free basic assessments",
@@ -54,6 +66,10 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
     search: "Search by email...",
     inProgress: "In progress",
     completed: "Completed",
+    totalLeads: "Total Leads",
+    completedAssessments: "Completed Assessments",
+    convertedPremium: "Converted to Premium",
+    conversionRate: "Conversion Rate",
   };
 
   useEffect(() => {
@@ -69,6 +85,7 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setLeads(data?.leads || []);
+      setMetrics(data?.metrics || null);
     } catch (err: any) {
       console.error("Error fetching leads:", err);
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -85,7 +102,7 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
     if (filtered.length === 0) return;
     const header = "Email,Data,Status,Score de Dor,Regiões\n";
     const rows = filtered.map((l) =>
-      `"${l.patient_email}","${new Date(l.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : "en-US")}","${l.status}","${l.pain_score ?? ""}","${(l.pain_regions || []).join("; ")}"`
+      `"${l.patient_email}","${new Date(l.created_at).toLocaleDateString(isPt ? "pt-BR" : "en-US")}","${l.status}","${l.pain_score ?? ""}","${(l.pain_regions || []).join("; ")}"`
     ).join("\n");
 
     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
@@ -106,6 +123,10 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
+  const conversionRate = metrics && metrics.total_leads > 0
+    ? ((metrics.converted_premium / metrics.total_leads) * 100).toFixed(1)
+    : "0";
+
   if (loading) {
     return (
       <Card className="mt-6">
@@ -117,77 +138,114 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
   }
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <Mail className="h-5 w-5 text-primary" />
-            <div>
-              <CardTitle className="text-lg">{t.title}</CardTitle>
-              <CardDescription>{filtered.length} lead(s) — {t.desc}</CardDescription>
+    <div className="mt-6 space-y-4">
+      {/* Metrics Cards */}
+      {metrics && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4 text-center">
+              <Mail className="h-5 w-5 text-primary mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{metrics.total_leads}</p>
+              <p className="text-xs text-muted-foreground">{t.totalLeads}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4 text-center">
+              <CheckCircle className="h-5 w-5 text-green-500 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{metrics.completed}</p>
+              <p className="text-xs text-muted-foreground">{t.completedAssessments}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4 text-center">
+              <Star className="h-5 w-5 text-yellow-500 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{metrics.converted_premium}</p>
+              <p className="text-xs text-muted-foreground">{t.convertedPremium}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4 text-center">
+              <TrendingUp className="h-5 w-5 text-primary mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{conversionRate}%</p>
+              <p className="text-xs text-muted-foreground">{t.conversionRate}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Leads Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" />
+              <div>
+                <CardTitle className="text-lg">{t.title}</CardTitle>
+                <CardDescription>{filtered.length} lead(s) — {t.desc}</CardDescription>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={exportCsv} disabled={filtered.length === 0} className="gap-1">
+                <Download className="h-4 w-4" /> {t.exportCsv}
+              </Button>
+              <Button variant="outline" size="sm" onClick={shareWhatsApp} disabled={filtered.length === 0} className="gap-1">
+                <Share2 className="h-4 w-4" /> {t.shareWa}
+              </Button>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={exportCsv} disabled={filtered.length === 0} className="gap-1">
-              <Download className="h-4 w-4" /> {t.exportCsv}
-            </Button>
-            <Button variant="outline" size="sm" onClick={shareWhatsApp} disabled={filtered.length === 0} className="gap-1">
-              <Share2 className="h-4 w-4" /> {t.shareWa}
-            </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <div className="relative max-w-xs">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t.search}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <div className="relative max-w-xs">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t.search}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-        </div>
 
-        {filtered.length === 0 ? (
-          <p className="text-muted-foreground text-center py-6">{t.noLeads}</p>
-        ) : (
-          <div className="overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t.email}</TableHead>
-                  <TableHead>{t.date}</TableHead>
-                  <TableHead>{t.status}</TableHead>
-                  <TableHead>{t.painScore}</TableHead>
-                  <TableHead>{t.regions}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((lead) => (
-                  <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.patient_email}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {new Date(lead.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : "en-US")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={lead.status === "completed" ? "default" : "secondary"}>
-                        {lead.status === "completed" ? t.completed : t.inProgress}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{lead.pain_score ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
-                      {(lead.pain_regions || []).join(", ") || "—"}
-                    </TableCell>
+          {filtered.length === 0 ? (
+            <p className="text-muted-foreground text-center py-6">{t.noLeads}</p>
+          ) : (
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t.email}</TableHead>
+                    <TableHead>{t.date}</TableHead>
+                    <TableHead>{t.status}</TableHead>
+                    <TableHead>{t.painScore}</TableHead>
+                    <TableHead>{t.regions}</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell className="font-medium">{lead.patient_email}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {new Date(lead.created_at).toLocaleDateString(isPt ? "pt-BR" : "en-US")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={lead.status === "completed" ? "default" : "secondary"}>
+                          {lead.status === "completed" ? t.completed : t.inProgress}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{lead.pain_score ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
+                        {(lead.pain_regions || []).join(", ") || "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

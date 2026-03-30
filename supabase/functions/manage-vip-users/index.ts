@@ -187,6 +187,7 @@ serve(async (req) => {
 
     // List leads (basic assessments with patient_email)
     if (action === "list_leads") {
+      // Fetch basic leads
       const { data, error } = await supabaseClient
         .from("assessments")
         .select("id, patient_email, created_at, status, pain_score, pain_regions")
@@ -196,7 +197,30 @@ serve(async (req) => {
         .limit(500);
 
       if (error) throw error;
-      return new Response(JSON.stringify({ leads: data }), {
+
+      // Conversion metrics: count premium assessments from same emails
+      const leadEmails = [...new Set((data || []).map((l: any) => l.patient_email?.toLowerCase()).filter(Boolean))];
+      let convertedCount = 0;
+      if (leadEmails.length > 0) {
+        const { count } = await supabaseClient
+          .from("assessments")
+          .select("patient_email", { count: "exact", head: true })
+          .eq("type", "premium")
+          .in("patient_email", leadEmails);
+        convertedCount = count || 0;
+      }
+
+      const totalLeads = leadEmails.length;
+      const completedLeads = (data || []).filter((l: any) => l.status === "completed").length;
+
+      return new Response(JSON.stringify({
+        leads: data,
+        metrics: {
+          total_leads: totalLeads,
+          completed: completedLeads,
+          converted_premium: convertedCount,
+        },
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
