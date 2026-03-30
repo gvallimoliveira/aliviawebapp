@@ -13,6 +13,7 @@ import PainDiary from "@/components/dashboard/PainDiary";
 import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
 import ReferralCard from "@/components/dashboard/ReferralCard";
 import ProDashboard from "@/components/dashboard/ProDashboard";
+import ConversationList from "@/components/chat/ConversationList";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import {
