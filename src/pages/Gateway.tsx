@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe } from "lucide-react";
+import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { setSeo } from "@/lib/seo";
 import logoAlivia from "@/assets/logo-alivia.png";
 import guilhermePhoto from "@/assets/guilherme-founder.jpeg";
@@ -15,8 +16,14 @@ const fadeUp = {
 
 const Gateway = () => {
   const { t, toggleLanguage, language } = useLanguage();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   useEffect(() => {
     const ref = searchParams.get("ref");
@@ -53,9 +60,21 @@ const Gateway = () => {
             <Globe className="h-4 w-4" />
             {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm">
-            {t("nav.login")}
-          </Button>
+          {user ? (
+            <>
+              <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5">
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 text-muted-foreground">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm">
+              {t("nav.login")}
+            </Button>
+          )}
         </div>
       </header>
 

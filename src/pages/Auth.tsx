@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -17,13 +17,19 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, resetPassword } = useAuth();
+  const { user, signIn, signUp, resetPassword } = useAuth();
   const { t, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = (location.state as any)?.redirectTo || "/dashboard";
   const { toast } = useToast();
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [user, navigate, redirectTo]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -94,6 +100,7 @@ const Auth = () => {
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder={t("auth.name_placeholder")}
                       className="pl-10"
+                      autoComplete="name"
                       required
                     />
                   </div>
@@ -110,6 +117,7 @@ const Auth = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={t("auth.email_placeholder")}
                     className="pl-10"
+                    autoComplete="email"
                     required
                   />
                 </div>
@@ -126,6 +134,7 @@ const Auth = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={t("auth.password_placeholder")}
                       className="pl-10"
+                      autoComplete={isLogin ? "current-password" : "new-password"}
                       minLength={6}
                       required
                     />
