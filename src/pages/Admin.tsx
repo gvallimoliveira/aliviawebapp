@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import ProfessionalManagement from "@/components/admin/ProfessionalManagement";
 import PartnerManagement from "@/components/admin/PartnerManagement";
 import BlogManagement from "@/components/admin/BlogManagement";
+import SupportTicketManagement from "@/components/admin/SupportTicketManagement";
 
 interface VipUser {
   id: string;
