@@ -455,6 +455,8 @@ const translations: Record<Language, Record<string, string>> = {
     "faq.faq4.a": "Não. A avaliação é uma ferramenta de triagem e orientação. Ela ajuda a entender sua dor e direcionar o tratamento, mas não substitui o diagnóstico médico ou fisioterapêutico presencial. Em casos graves, sempre procure atendimento profissional.",
     "faq.faq5.q": "Posso refazer a avaliação?",
     "faq.faq5.a": "Sim! Na versão premium, você pode refazer a avaliação uma vez em até 7 dias após a compra, permitindo acompanhar a evolução da sua dor e ajustar o tratamento conforme necessário.",
+    "faq.faq6.q": "E se a triagem identificar sinais de alerta (red flags)?",
+    "faq.faq6.a": "A triagem de segurança é parte integrante de toda avaliação — não uma etapa separada. Se sinais como trauma grave, perda de peso inexplicada, dor noturna incessante ou dormência progressiva forem detectados, a avaliação é concluída naquele ponto por prerrogativa de saúde. Isso significa que a avaliação é considerada realizada, e o encaminhamento a um médico para investigação presencial é indispensável. Sua segurança vem sempre em primeiro lugar.",
 
     // Follow-up
     "followup.opt_in_title": "Acompanhamento por email",
@@ -974,9 +976,9 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Patient tools
     "support.patient.tool.basic_assessment.title": "Avaliação Básica (Gratuita)",
-    "support.patient.tool.basic_assessment.desc": "A avaliação básica é gratuita e permite que você responda um questionário guiado sobre sua dor. Ao final, você recebe um resultado resumido com a pontuação do questionário. Para iniciar, acesse o painel e clique em 'Nova Avaliação' → 'Básica'. Não é necessário pagamento.",
+    "support.patient.tool.basic_assessment.desc": "A avaliação básica é gratuita e permite que você responda um questionário guiado sobre sua dor. Toda avaliação inclui uma triagem de segurança (red flags) como etapa integrada — se sinais de alerta forem detectados, a avaliação é concluída naquele ponto e o encaminhamento médico é recomendado. Ao final, você recebe um resultado resumido com a pontuação do questionário. Para iniciar, acesse o painel e clique em 'Nova Avaliação' → 'Básica'. Não é necessário pagamento.",
     "support.patient.tool.premium_assessment.title": "Avaliação Premium",
-    "support.patient.tool.premium_assessment.desc": "A avaliação premium inclui anamnese detalhada, triagem de sinais de alerta, questionários validados, mapa de dor, testes funcionais e, ao final, um diagnóstico preliminar gerado por IA com plano de tratamento personalizado. É necessário ter assinatura mensal ativa ou pagamento avulso.",
+    "support.patient.tool.premium_assessment.desc": "A avaliação premium inclui anamnese detalhada, triagem de sinais de alerta (red flags), questionários validados, mapa de dor, testes funcionais e, ao final, um diagnóstico preliminar gerado por IA com plano de tratamento personalizado. A triagem de segurança é parte integrante da avaliação — se red flags forem identificados, a avaliação é considerada realizada e o encaminhamento médico presencial é indispensável. É necessário ter assinatura mensal ativa ou pagamento avulso.",
     "support.patient.tool.premium_status.title": "Status Premium e Assinatura",
     "support.patient.tool.premium_status.desc": "No topo do painel, você vê o status da sua assinatura: dias restantes, avaliações disponíveis no mês e botão para gerenciar ou fazer upgrade. Assinantes mensais têm direito a 2 avaliações completas por mês. Pagamento avulso dá direito a 1 avaliação.",
     "support.patient.tool.pain_diary.title": "Diário de Dor",
@@ -1004,7 +1006,7 @@ const translations: Record<Language, Record<string, string>> = {
     "support.patient.faq.pf5.q": "Posso cancelar minha assinatura a qualquer momento?",
     "support.patient.faq.pf5.a": "Sim. Acesse o painel, clique em 'Gerenciar assinatura' e você será redirecionado ao portal de pagamento, onde pode cancelar quando quiser. O acesso permanece ativo até o fim do período pago.",
     "support.patient.faq.pf6.q": "O que acontece se eu tiver sinais de alerta (red flags)?",
-    "support.patient.faq.pf6.a": "A triagem de sinais de alerta identifica sintomas que necessitam atenção médica urgente. Se detectados, a avaliação exibe um alerta claro com recomendação de procurar atendimento presencial imediatamente.",
+    "support.patient.faq.pf6.a": "A triagem de sinais de alerta é parte integrante de toda avaliação, não uma etapa separada. Se sintomas como trauma grave, perda de peso inexplicada, dor noturna incessante ou dormência progressiva forem detectados, a avaliação é concluída naquele ponto — e é considerada uma avaliação realizada. O encaminhamento a um médico para investigação presencial é uma prerrogativa de saúde indispensável. Sua segurança é sempre a prioridade.",
     "support.patient.faq.pf7.q": "Posso refazer uma avaliação?",
     "support.patient.faq.pf7.a": "Sim. Você pode iniciar uma nova avaliação a qualquer momento, respeitando o limite do seu plano. O histórico das avaliações anteriores permanece salvo para comparação.",
     "support.patient.faq.pf8.q": "O diário de dor é obrigatório?",
@@ -1488,6 +1490,8 @@ const translations: Record<Language, Record<string, string>> = {
     "faq.faq4.a": "No. The assessment is a screening and guidance tool. It helps you understand your pain and directs treatment, but it does not replace in-person medical or physiotherapy diagnosis. In serious cases, always seek professional care.",
     "faq.faq5.q": "Can I redo the assessment?",
     "faq.faq5.a": "Yes! With the premium version, you can redo the assessment once within 7 days of purchase, allowing you to track your pain progress and adjust treatment as needed.",
+    "faq.faq6.q": "What if the screening detects red flags?",
+    "faq.faq6.a": "The safety screening is an integral part of every assessment — not a separate step. If signs such as severe trauma, unexplained weight loss, relentless night pain, or progressive numbness are detected, the assessment is concluded at that point as a health prerogative. This means the assessment is considered completed, and referral to a physician for in-person investigation is essential. Your safety always comes first.",
 
     // Follow-up
     "followup.opt_in_title": "Email follow-up",
@@ -2006,9 +2010,9 @@ const translations: Record<Language, Record<string, string>> = {
     "support.pro.section_title": "Support — Professional Panel",
 
     "support.patient.tool.basic_assessment.title": "Basic Assessment (Free)",
-    "support.patient.tool.basic_assessment.desc": "The basic assessment is free and allows you to complete a guided questionnaire about your pain. At the end, you receive a summary result with the questionnaire score. To start, go to the dashboard and click 'New Assessment' → 'Basic'. No payment required.",
+    "support.patient.tool.basic_assessment.desc": "The basic assessment is free and allows you to complete a guided questionnaire about your pain. Every assessment includes an integrated safety screening (red flags) — if warning signs are detected, the assessment is concluded at that point and medical referral is recommended. At the end, you receive a summary result with the questionnaire score. To start, go to the dashboard and click 'New Assessment' → 'Basic'. No payment required.",
     "support.patient.tool.premium_assessment.title": "Premium Assessment",
-    "support.patient.tool.premium_assessment.desc": "The premium assessment includes detailed anamnesis, red flag screening, validated questionnaires, pain map, functional tests, and an AI-generated preliminary diagnosis with a personalized treatment plan. Requires an active monthly subscription or single payment.",
+    "support.patient.tool.premium_assessment.desc": "The premium assessment includes detailed anamnesis, red flag screening, validated questionnaires, pain map, functional tests, and an AI-generated preliminary diagnosis with a personalized treatment plan. The safety screening is an integral part of the assessment — if red flags are identified, the assessment is considered completed and in-person medical referral is essential. Requires an active monthly subscription or single payment.",
     "support.patient.tool.premium_status.title": "Premium Status and Subscription",
     "support.patient.tool.premium_status.desc": "At the top of the dashboard, you can see your subscription status: remaining days, available assessments for the month, and a button to manage or upgrade. Monthly subscribers can perform up to 2 premium assessments per month.",
     "support.patient.tool.pain_diary.title": "Pain Diary",
@@ -2035,7 +2039,7 @@ const translations: Record<Language, Record<string, string>> = {
     "support.patient.faq.pf5.q": "Can I cancel my subscription at any time?",
     "support.patient.faq.pf5.a": "Yes. Go to the dashboard, click 'Manage subscription' and you'll be redirected to the payment portal where you can cancel anytime. Access remains active until the end of the paid period.",
     "support.patient.faq.pf6.q": "What happens if I have red flags?",
-    "support.patient.faq.pf6.a": "The red flag screening identifies symptoms requiring urgent medical attention. If detected, the assessment displays a clear alert recommending immediate in-person care.",
+    "support.patient.faq.pf6.a": "The red flag screening is an integral part of every assessment, not a separate step. If symptoms such as severe trauma, unexplained weight loss, relentless night pain, or progressive numbness are detected, the assessment is concluded at that point — and is considered a completed assessment. Referral to a physician for in-person investigation is an essential health prerogative. Your safety is always the priority.",
     "support.patient.faq.pf7.q": "Can I redo an assessment?",
     "support.patient.faq.pf7.a": "Yes. You can start a new assessment at any time within your plan limits. Previous assessment history remains saved for comparison.",
     "support.patient.faq.pf8.q": "Is the pain diary mandatory?",
