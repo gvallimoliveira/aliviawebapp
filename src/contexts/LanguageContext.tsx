@@ -1618,6 +1618,8 @@ const translations: Record<Language, Record<string, string>> = {
     "prof.spec.reumatologica": "Rheumatological",
     "prof.add_photo": "Add profile photo",
     "prof.change_photo": "Change photo",
+    "prof.crop_photo": "Adjust photo",
+    "prof.confirm_crop": "Confirm",
 
     // Approval
     "prof.pending_approval": "Pending approval",
