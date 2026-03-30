@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, MapPin, Phone, Mail, Search, UserCheck, Crown, Lock, Sparkles, Instagram } from "lucide-react";
+import { ArrowLeft, Loader2, MapPin, Phone, Mail, Search, UserCheck, Crown, Lock, Sparkles, Instagram, MessageCircle } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -86,6 +86,34 @@ const ProfessionalSearch = () => {
     } finally {
       setReferralLoading(null);
     }
+  };
+
+  const handleSendMessage = async (professionalId: string) => {
+    if (!user) return;
+    // Check if conversation already exists
+    const { data: existing } = await (supabase.from("conversations" as any) as any)
+      .select("id")
+      .eq("patient_user_id", user.id)
+      .eq("professional_id", professionalId)
+      .maybeSingle();
+
+    if (existing) {
+      navigate(`/dashboard?tab=messages&conv=${existing.id}`);
+      return;
+    }
+
+    // Create new conversation
+    const { data: newConv, error } = await (supabase.from("conversations" as any) as any)
+      .insert({ patient_user_id: user.id, professional_id: professionalId })
+      .select("id")
+      .single();
+
+    if (error || !newConv) {
+      toast({ title: t("prof.referral_error"), variant: "destructive" });
+      return;
+    }
+
+    navigate(`/dashboard?tab=messages&conv=${newConv.id}`);
   };
 
   const openWhatsApp = (phone: string) => {
@@ -286,6 +314,15 @@ const ProfessionalSearch = () => {
                         </a>
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl gap-1.5 text-xs"
+                      onClick={() => handleSendMessage(p.id)}
+                    >
+                      <MessageCircle className="h-3 w-3" />
+                      {t("chat.send_message")}
+                    </Button>
                     <Button
                       size="sm"
                       className="rounded-xl gap-1.5 text-xs"

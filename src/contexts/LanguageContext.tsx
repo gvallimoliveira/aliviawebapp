@@ -752,6 +752,14 @@ const translations: Record<Language, Record<string, string>> = {
     // Dashboard Tabs
     "dashboard.tab_my_health": "Minha Saúde",
     "dashboard.tab_professional": "Painel Profissional",
+    "dashboard.tab_messages": "Mensagens",
+
+    // Chat
+    "chat.no_conversations": "Nenhuma conversa ainda.",
+    "chat.no_messages": "Nenhuma mensagem ainda. Inicie a conversa!",
+    "chat.placeholder": "Digite sua mensagem...",
+    "chat.send_message": "Enviar mensagem",
+    "chat.messages_title": "Mensagens",
 
     // Professional Link Card
     "prof.assessment_link_title": "Link de Avaliação para Pacientes",
@@ -1001,6 +1009,8 @@ const translations: Record<Language, Record<string, string>> = {
     "support.patient.tool.referral_code.desc": "Cada usuário possui um código de indicação único. Compartilhe com amigos e, quando eles se cadastrarem e utilizarem a plataforma, vocês podem obter descontos em avaliações futuras. O código está disponível no seu painel.",
     "support.patient.tool.profile_language.title": "Perfil e Idioma",
     "support.patient.tool.profile_language.desc": "No menu superior, você pode alternar entre Português e Inglês clicando no botão de idioma. Para editar seus dados pessoais como nome, idade e sexo, acesse a seção de perfil no painel.",
+    "support.patient.tool.messages.title": "Mensagens com Profissional",
+    "support.patient.tool.messages.desc": "Após encontrar um fisioterapeuta pela busca de profissionais, você pode enviar uma mensagem direta. As conversas ficam na aba 'Mensagens' do seu painel. Use para tirar dúvidas, combinar horários ou discutir seu caso antes de uma consulta presencial.",
 
     // Patient FAQ
     "support.patient.faq.pf1.q": "Posso fazer mais de uma avaliação?",
@@ -1041,6 +1051,8 @@ const translations: Record<Language, Record<string, string>> = {
     "support.pro.tool.edit_profile.desc": "Mantenha seus dados atualizados: nome, CREFITO, especialidades, cidade, endereço da clínica e foto de perfil. Essas informações são exibidas para pacientes na busca de profissionais.",
     "support.pro.tool.lifetime_treatment.title": "Tratamento Vitalício",
     "support.pro.tool.lifetime_treatment.desc": "Com o Tratamento Vitalício, todos os planos de tratamento dos seus pacientes ficam permanentemente liberados — sem custo adicional por avaliação, a partir da data da compra. Importante: o acesso ao painel profissional continua dependendo de uma assinatura PRO ativa (mensal ou anual). O Tratamento Vitalício não substitui a assinatura do painel.",
+    "support.pro.tool.messages.title": "Mensagens com Pacientes",
+    "support.pro.tool.messages.desc": "Pacientes que encontraram você pela busca de profissionais podem enviar mensagens diretas. As conversas aparecem na aba 'Mensagens' do seu painel profissional. Responda dúvidas, combine horários e fortaleça o vínculo com seus pacientes antes mesmo da consulta presencial.",
 
     // Pro FAQ
     "support.pro.faq.rf1.q": "Meu paciente precisa criar conta na Aliv.iA?",
@@ -1795,6 +1807,14 @@ const translations: Record<Language, Record<string, string>> = {
     // Dashboard Tabs
     "dashboard.tab_my_health": "My Health",
     "dashboard.tab_professional": "Professional Panel",
+    "dashboard.tab_messages": "Messages",
+
+    // Chat
+    "chat.no_conversations": "No conversations yet.",
+    "chat.no_messages": "No messages yet. Start the conversation!",
+    "chat.placeholder": "Type your message...",
+    "chat.send_message": "Send message",
+    "chat.messages_title": "Messages",
 
     // Professional Link Card
     "prof.assessment_link_title": "Patient Assessment Link",
@@ -2043,6 +2063,8 @@ const translations: Record<Language, Record<string, string>> = {
     "support.patient.tool.referral_code.desc": "Each user has a unique referral code. Share it with friends, and when they sign up and use the platform, you may receive discounts on future assessments. Your code is available on the dashboard.",
     "support.patient.tool.profile_language.title": "Profile and Language",
     "support.patient.tool.profile_language.desc": "In the top menu, you can switch between Portuguese and English by clicking the language button. To edit personal data such as name, age, and gender, go to the profile section on the dashboard.",
+    "support.patient.tool.messages.title": "Messages with Professional",
+    "support.patient.tool.messages.desc": "After finding a physiotherapist through the professional search, you can send a direct message. Conversations are available in the 'Messages' tab on your dashboard. Use it to ask questions, schedule appointments, or discuss your case before an in-person visit.",
 
     "support.patient.faq.pf1.q": "Can I do more than one assessment?",
     "support.patient.faq.pf1.a": "Yes! Monthly subscribers can perform up to 2 premium assessments per month. Single-payment users get 1 assessment per purchase. Basic assessments are unlimited and free.",
@@ -2081,6 +2103,8 @@ const translations: Record<Language, Record<string, string>> = {
     "support.pro.tool.edit_profile.desc": "Keep your data updated: name, CREFITO, specialties, city, clinic address, and profile photo. This information is displayed to patients in the professional search.",
     "support.pro.tool.lifetime_treatment.title": "Lifetime Treatment",
     "support.pro.tool.lifetime_treatment.desc": "With Lifetime Treatment, all your patients' treatment plans are permanently unlocked — no additional cost per assessment, from the purchase date onward. Important: access to the professional panel still requires an active PRO subscription (monthly or annual). Lifetime Treatment does not replace the panel subscription.",
+    "support.pro.tool.messages.title": "Messages with Patients",
+    "support.pro.tool.messages.desc": "Patients who found you through the professional search can send direct messages. Conversations appear in the 'Messages' tab of your professional panel. Answer questions, schedule appointments, and strengthen the bond with your patients even before an in-person visit.",
 
     "support.pro.faq.rf1.q": "Does my patient need to create an Aliv.iA account?",
     "support.pro.faq.rf1.a": "Not necessarily. Using your personalized link, the patient can complete the assessment and the result is linked to your panel. However, if they want to access their history later, they'll need to create an account.",
