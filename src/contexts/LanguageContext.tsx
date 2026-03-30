@@ -1490,6 +1490,8 @@ const translations: Record<Language, Record<string, string>> = {
     "faq.faq4.a": "No. The assessment is a screening and guidance tool. It helps you understand your pain and directs treatment, but it does not replace in-person medical or physiotherapy diagnosis. In serious cases, always seek professional care.",
     "faq.faq5.q": "Can I redo the assessment?",
     "faq.faq5.a": "Yes! With the premium version, you can redo the assessment once within 7 days of purchase, allowing you to track your pain progress and adjust treatment as needed.",
+    "faq.faq6.q": "What if the screening detects red flags?",
+    "faq.faq6.a": "The safety screening is an integral part of every assessment — not a separate step. If signs such as severe trauma, unexplained weight loss, relentless night pain, or progressive numbness are detected, the assessment is concluded at that point as a health prerogative. This means the assessment is considered completed, and referral to a physician for in-person investigation is essential. Your safety always comes first.",
 
     // Follow-up
     "followup.opt_in_title": "Email follow-up",
