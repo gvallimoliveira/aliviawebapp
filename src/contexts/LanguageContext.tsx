@@ -936,7 +936,7 @@ const translations: Record<Language, Record<string, string>> = {
     "gateway.pro.desc": "Potencialize suas consultas com triagem inteligente e dados estruturados.",
     "gateway.pro.bullet1": "Anamnese e questionários prontos antes da consulta",
     "gateway.pro.bullet2": "Maior precisão clínica nas avaliações",
-    "gateway.pro.bullet3": "Dashboard de evolução do paciente",
+    "gateway.pro.bullet3": "Dashboard de evolução do paciente com relatórios em PDF",
     "gateway.pro.cta": "Conhecer o painel profissional",
     "gateway.social_proof": "Usado por pacientes e fisioterapeutas em todo o Brasil",
 
