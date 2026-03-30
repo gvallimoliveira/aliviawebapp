@@ -22,6 +22,7 @@ import {
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
+import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
@@ -327,10 +328,12 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
 
             <TabsContent value="evolution">
               <div className="opacity-60">
-                <PatientEvolutionDashboard
-                  assessments={displayAssessments as any}
-                  professionalId={professional.id}
-                />
+                <DashboardErrorBoundary>
+                  <PatientEvolutionDashboard
+                    assessments={displayAssessments as any}
+                    professionalId={professional.id}
+                  />
+                </DashboardErrorBoundary>
               </div>
             </TabsContent>
           </Tabs>
@@ -490,11 +493,13 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
 
       {/* Patient list grouped by email */}
       <div data-onboarding="pro-patients">
-        <PatientEvolutionDashboard
-          assessments={patientAssessments}
-          professionalId={professional.id}
-          onDownloadPdf={handleDownloadPdf}
-        />
+        <DashboardErrorBoundary>
+          <PatientEvolutionDashboard
+            assessments={patientAssessments}
+            professionalId={professional.id}
+            onDownloadPdf={handleDownloadPdf}
+          />
+        </DashboardErrorBoundary>
       </div>
 
     </div>
