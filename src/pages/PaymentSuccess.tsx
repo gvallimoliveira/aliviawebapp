@@ -120,28 +120,32 @@ const PaymentSuccess = () => {
                   ? (t("pro_treatment.success_title") || "Plano de tratamento desbloqueado!")
                   : isProAnnual
                     ? (t("pro_annual.success_title") || "Plano Profissional Anual ativado!")
-                    : (t("payment.success_title") || "Pagamento confirmado!")}
+                    : isProLifetime
+                      ? (t("pro_lifetime.success_title") || "Acesso Vitalício aos Tratamentos ativado!")
+                      : (t("payment.success_title") || "Pagamento confirmado!")}
               </h1>
               <p className="text-muted-foreground">
                 {isProTreatment
                   ? (t("pro_treatment.success_desc") || "O plano de tratamento foi gerado com sucesso para esta avaliação.")
                   : isProAnnual
                     ? (t("pro_annual.success_desc") || "Seu acesso profissional está ativo por 1 ano. Aproveite!")
-                    : (t("payment.success_desc") || "Sua avaliação premium está liberada.")}
+                    : isProLifetime
+                      ? (t("pro_lifetime.success_desc") || "Agora você pode desbloquear tratamentos ilimitados sem custo adicional.")
+                      : (t("payment.success_desc") || "Sua avaliação premium está liberada.")}
               </p>
               <Button
                 onClick={() =>
                   isProTreatment
                     ? navigate(`/assessment/view/${assessmentId}`)
-                    : isProAnnual
-                      ? navigate("/dashboard")
+                    : (isProAnnual || isProLifetime)
+                      ? navigate("/dashboard?tab=professional")
                       : navigate("/assessment/premium")
                 }
                 className="rounded-xl"
               >
                 {isProTreatment
                   ? (t("pro_treatment.view_plan") || "Ver Plano de Tratamento")
-                  : isProAnnual
+                  : (isProAnnual || isProLifetime)
                     ? (t("pro_annual.go_dashboard") || "Ir para o Dashboard")
                     : (t("payment.start_assessment") || "Iniciar Avaliação Premium")}
             </Button>
