@@ -369,6 +369,51 @@ const ProfessionalRegister = () => {
                 </button>
               </div>
 
+              {/* Crop Modal */}
+              <Dialog open={cropModalOpen} onOpenChange={(open) => {
+                if (!open) { setCropModalOpen(false); setRawImageUrl(null); }
+              }}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>{t("prof.crop_photo") || "Ajustar foto"}</DialogTitle>
+                  </DialogHeader>
+                  <div className="relative w-full aspect-square bg-muted rounded-lg overflow-hidden">
+                    {rawImageUrl && (
+                      <Cropper
+                        image={rawImageUrl}
+                        crop={crop}
+                        zoom={zoom}
+                        aspect={1}
+                        cropShape="round"
+                        showGrid={false}
+                        onCropChange={setCrop}
+                        onZoomChange={setZoom}
+                        onCropComplete={onCropComplete}
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 px-1">
+                    <span className="text-xs text-muted-foreground shrink-0">Zoom</span>
+                    <Slider
+                      value={[zoom]}
+                      min={1}
+                      max={3}
+                      step={0.05}
+                      onValueChange={(v) => setZoom(v[0])}
+                      className="flex-1"
+                    />
+                  </div>
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="outline" onClick={() => { setCropModalOpen(false); setRawImageUrl(null); }}>
+                      {t("diagnosis.back") || "Cancelar"}
+                    </Button>
+                    <Button onClick={handleCropConfirm}>
+                      {t("prof.confirm_crop") || "Confirmar"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>{t("prof.full_name")} *</Label>
