@@ -14,6 +14,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { setSeo } from "@/lib/seo";
 
 type SupportProfile = "patient" | "professional" | null;
