@@ -19,7 +19,7 @@ import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   Globe, HelpCircle, LogOut, Plus, ClipboardList, Calendar, MapPin, ChevronRight,
-  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Users, UserPlus, Heart, Stethoscope, RotateCcw, MessageCircle, Bell, BellOff, X
+  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Users, UserPlus, Heart, Stethoscope, RotateCcw, MessageCircle, Bell, BellOff, X, Shield
 } from "lucide-react";
 import { useMemo } from "react";
 
