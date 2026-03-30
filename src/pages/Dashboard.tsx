@@ -88,6 +88,8 @@ const Dashboard = () => {
   useEffect(() => {
     if (tabFromUrl === "professional" && professional) {
       setActiveTab("professional");
+    } else if (tabFromUrl === "messages") {
+      setActiveTab("messages");
     }
   }, [tabFromUrl, professional]);
 
