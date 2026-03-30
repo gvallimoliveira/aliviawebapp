@@ -2039,7 +2039,7 @@ const translations: Record<Language, Record<string, string>> = {
     "support.patient.faq.pf5.q": "Can I cancel my subscription at any time?",
     "support.patient.faq.pf5.a": "Yes. Go to the dashboard, click 'Manage subscription' and you'll be redirected to the payment portal where you can cancel anytime. Access remains active until the end of the paid period.",
     "support.patient.faq.pf6.q": "What happens if I have red flags?",
-    "support.patient.faq.pf6.a": "The red flag screening identifies symptoms requiring urgent medical attention. If detected, the assessment displays a clear alert recommending immediate in-person care.",
+    "support.patient.faq.pf6.a": "The red flag screening is an integral part of every assessment, not a separate step. If symptoms such as severe trauma, unexplained weight loss, relentless night pain, or progressive numbness are detected, the assessment is concluded at that point — and is considered a completed assessment. Referral to a physician for in-person investigation is an essential health prerogative. Your safety is always the priority.",
     "support.patient.faq.pf7.q": "Can I redo an assessment?",
     "support.patient.faq.pf7.a": "Yes. You can start a new assessment at any time within your plan limits. Previous assessment history remains saved for comparison.",
     "support.patient.faq.pf8.q": "Is the pain diary mandatory?",
