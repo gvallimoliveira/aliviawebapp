@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { regionsByView, type View, type ClickableRegion } from "@/components/assessment/painMapData";
+import { questionnaires } from "@/data/questionnaireData";
 
 interface Exercise {
   name: string;
