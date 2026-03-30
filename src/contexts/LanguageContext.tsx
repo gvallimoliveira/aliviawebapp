@@ -2010,9 +2010,9 @@ const translations: Record<Language, Record<string, string>> = {
     "support.pro.section_title": "Support — Professional Panel",
 
     "support.patient.tool.basic_assessment.title": "Basic Assessment (Free)",
-    "support.patient.tool.basic_assessment.desc": "The basic assessment is free and allows you to complete a guided questionnaire about your pain. At the end, you receive a summary result with the questionnaire score. To start, go to the dashboard and click 'New Assessment' → 'Basic'. No payment required.",
+    "support.patient.tool.basic_assessment.desc": "The basic assessment is free and allows you to complete a guided questionnaire about your pain. Every assessment includes an integrated safety screening (red flags) — if warning signs are detected, the assessment is concluded at that point and medical referral is recommended. At the end, you receive a summary result with the questionnaire score. To start, go to the dashboard and click 'New Assessment' → 'Basic'. No payment required.",
     "support.patient.tool.premium_assessment.title": "Premium Assessment",
-    "support.patient.tool.premium_assessment.desc": "The premium assessment includes detailed anamnesis, red flag screening, validated questionnaires, pain map, functional tests, and an AI-generated preliminary diagnosis with a personalized treatment plan. Requires an active monthly subscription or single payment.",
+    "support.patient.tool.premium_assessment.desc": "The premium assessment includes detailed anamnesis, red flag screening, validated questionnaires, pain map, functional tests, and an AI-generated preliminary diagnosis with a personalized treatment plan. The safety screening is an integral part of the assessment — if red flags are identified, the assessment is considered completed and in-person medical referral is essential. Requires an active monthly subscription or single payment.",
     "support.patient.tool.premium_status.title": "Premium Status and Subscription",
     "support.patient.tool.premium_status.desc": "At the top of the dashboard, you can see your subscription status: remaining days, available assessments for the month, and a button to manage or upgrade. Monthly subscribers can perform up to 2 premium assessments per month.",
     "support.patient.tool.pain_diary.title": "Pain Diary",
