@@ -942,7 +942,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Gateway
     "gateway.badge": "Avaliação musculoesquelética com integração de IA",
-    "gateway.title": "Trate e avalie dores com raciocínio clínico especializado",
+    "gateway.title": "Cuide de dores com assertividade e orientação especializada",
     "gateway.subtitle": "Escolha seu perfil para descobrir como a Aliv.iA pode ajudar você",
     "gateway.patient.title": "Sinto dor e quero resolver",
     "gateway.patient.desc": "Entenda sua dor com precisão clínica e receba um plano de ação personalizado.",
