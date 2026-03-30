@@ -219,19 +219,8 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
     return Array.from(map.values()).sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
   }, [assessments]);
 
-  if (patients.length === 0) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="py-8 text-center">
-          <Activity className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">{t("pro.no_patients")}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Patient list view
-  if (!selectedEmail) {
+  // Find selected patient (may be null)
+  const patient = selectedEmail ? patients.find((p) => p.email === selectedEmail) || null : null;
     return (
       <div className="space-y-3">
         <div className="mb-2 space-y-3">
