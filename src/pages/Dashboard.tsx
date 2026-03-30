@@ -94,6 +94,37 @@ const Dashboard = () => {
     }
   }, [tabFromUrl, professional]);
 
+  // Fetch unread messages count
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+    // Get all conversations where user is participant
+    const { data: convs } = await supabase
+      .from("conversations")
+      .select("id");
+    if (!convs || convs.length === 0) { setUnreadCount(0); return; }
+    const convIds = convs.map((c: any) => c.id);
+    const { count } = await supabase
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .in("conversation_id", convIds)
+      .neq("sender_user_id", user.id)
+      .is("read_at", null);
+    setUnreadCount(count || 0);
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    fetchUnreadCount();
+    // Subscribe to new messages for live badge updates
+    const channel = supabase
+      .channel("unread-badge")
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
+        fetchUnreadCount();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
   // Auto-switch tab when onboarding reaches pro steps
   useEffect(() => {
     if (!onboarding.isActive || !onboarding.step) return;
