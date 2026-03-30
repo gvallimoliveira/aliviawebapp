@@ -19,7 +19,7 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const { user, signIn, signUp, resetPassword } = useAuth();
-  const { t, toggleLanguage } = useLanguage();
+  const { t, toggleLanguage, language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = (location.state as any)?.redirectTo || "/dashboard";
