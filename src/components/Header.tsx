@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Globe, LogOut, Menu, ShieldCheck, Stethoscope, X } from "lucide-react";
+import { Globe, HelpCircle, LogOut, Menu, ShieldCheck, Stethoscope, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,6 +60,9 @@ const Header = () => {
           </Button>
           {user ? (
             <>
+              <Button variant="ghost" size="icon" onClick={() => go("/suporte")} title={t("support.badge")}>
+                <HelpCircle className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={() => go("/admin")} title="Admin">
                 <ShieldCheck className="h-4 w-4" />
               </Button>
@@ -138,6 +141,13 @@ const Header = () => {
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors text-left"
                 >
                   {t("nav.dashboard")}
+                </button>
+                <button
+                  onClick={() => go("/suporte")}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  {t("support.badge")}
                 </button>
                 <button
                   onClick={() => go("/admin")}
