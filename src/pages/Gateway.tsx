@@ -14,7 +14,7 @@ const fadeUp = {
 };
 
 const Gateway = () => {
-  const { t } = useLanguage();
+  const { t, toggleLanguage, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
