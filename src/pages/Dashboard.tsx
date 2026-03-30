@@ -16,9 +16,10 @@ import ProDashboard from "@/components/dashboard/ProDashboard";
 import ConversationList from "@/components/chat/ConversationList";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   Globe, HelpCircle, LogOut, Plus, ClipboardList, Calendar, MapPin, ChevronRight,
-  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Users, UserPlus, Heart, Stethoscope, RotateCcw, MessageCircle
+  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Users, UserPlus, Heart, Stethoscope, RotateCcw, MessageCircle, Bell, BellOff, X
 } from "lucide-react";
 import { useMemo } from "react";
 
