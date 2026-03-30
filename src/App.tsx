@@ -56,6 +56,7 @@ const App = () => (
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/profissionais" element={<ProfessionalLanding />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />
+              <Route path="/suporte" element={<Support />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
