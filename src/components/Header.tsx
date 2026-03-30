@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const Header = () => {
-  const { t, toggleLanguage } = useLanguage();
+  const { t, toggleLanguage, language } = useLanguage();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
