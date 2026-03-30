@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle } from "lucide-react";
+import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw } from "lucide-react";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { setSeo } from "@/lib/seo";
 
 type SupportProfile = "patient" | "professional" | null;
@@ -53,6 +54,37 @@ const Support = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<SupportProfile>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState<"idle" | "updated" | "current">("idle");
+
+  const handleCheckUpdate = useCallback(async () => {
+    setChecking(true);
+    setCheckResult("idle");
+    try {
+      const registrations = await navigator.serviceWorker?.getRegistrations();
+      if (registrations && registrations.length > 0) {
+        for (const reg of registrations) {
+          await reg.update();
+        }
+        // If a waiting worker exists, a new version is available
+        const hasWaiting = registrations.some((r) => r.waiting);
+        if (hasWaiting) {
+          registrations.forEach((r) => r.waiting?.postMessage({ type: "SKIP_WAITING" }));
+          setCheckResult("updated");
+        } else {
+          setCheckResult("current");
+        }
+      } else {
+        // No SW — just hard reload
+        setCheckResult("current");
+      }
+    } catch {
+      setCheckResult("current");
+    } finally {
+      setChecking(false);
+      setTimeout(() => setCheckResult("idle"), 4000);
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
@@ -206,6 +238,26 @@ const Support = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Check for updates */}
+        <div className="mt-16 flex flex-col items-center gap-3">
+          <Button
+            variant="outline"
+            size="lg"
+            className="gap-2 rounded-xl border-primary/30 text-primary hover:bg-primary/5"
+            onClick={handleCheckUpdate}
+            disabled={checking}
+          >
+            <RefreshCw className={`h-4 w-4 ${checking ? "animate-spin" : ""}`} />
+            {t("support.check_update")}
+          </Button>
+          {checkResult === "updated" && (
+            <p className="text-sm text-primary font-medium animate-in fade-in">{t("support.update_found")}</p>
+          )}
+          {checkResult === "current" && (
+            <p className="text-sm text-muted-foreground animate-in fade-in">{t("support.up_to_date")}</p>
+          )}
+        </div>
       </main>
       <Footer />
     </div>
