@@ -14,6 +14,7 @@ import FaqSection from "@/components/FaqSection";
 import SocialSection from "@/components/SocialSection";
 import Footer from "@/components/Footer";
 import StickyCTA from "@/components/StickyCTA";
+import ExitIntentPopup from "@/components/ExitIntentPopup";
 import { setSeo, setLandingJsonLd, setOrganizationJsonLd, setMedicalBusinessJsonLd } from "@/lib/seo";
 
 const Index = () => {
@@ -56,6 +57,7 @@ const Index = () => {
       </main>
       <Footer />
       <StickyCTA />
+      <ExitIntentPopup />
     </div>
   );
 };
