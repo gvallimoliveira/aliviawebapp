@@ -510,10 +510,14 @@ const Dashboard = () => {
 
         {professional ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-2">
+            <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="health" className="gap-1.5">
                 <Heart className="h-4 w-4" />
                 {t("dashboard.tab_my_health")}
+              </TabsTrigger>
+              <TabsTrigger value="messages" className="gap-1.5">
+                <MessageCircle className="h-4 w-4" />
+                {t("dashboard.tab_messages")}
               </TabsTrigger>
               <TabsTrigger value="professional" className="gap-1.5" data-onboarding="pro-tab-trigger">
                 <Stethoscope className="h-4 w-4" />
@@ -525,14 +529,50 @@ const Dashboard = () => {
               {renderClientContent()}
             </TabsContent>
 
+            <TabsContent value="messages" className="space-y-6">
+              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-muted-foreground" />
+                {t("chat.messages_title")}
+              </h2>
+              <ConversationList mode="patient" initialConversationId={convFromUrl} />
+              {professional && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-medium text-foreground mb-3">{t("dashboard.tab_professional")} — {t("chat.messages_title")}</h3>
+                  <ConversationList mode="professional" professionalId={professional.id} />
+                </div>
+              )}
+            </TabsContent>
+
             <TabsContent value="professional" className="space-y-8">
               <ProDashboard professional={professional} />
               {referrals.length > 0 && renderReferrals()}
             </TabsContent>
           </Tabs>
         ) : (
-          <div className="space-y-8">
-            {renderClientContent()}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="health" className="gap-1.5">
+                <Heart className="h-4 w-4" />
+                {t("dashboard.tab_my_health")}
+              </TabsTrigger>
+              <TabsTrigger value="messages" className="gap-1.5">
+                <MessageCircle className="h-4 w-4" />
+                {t("dashboard.tab_messages")}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="health" className="space-y-8">
+              {renderClientContent()}
+            </TabsContent>
+
+            <TabsContent value="messages" className="space-y-6">
+              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-muted-foreground" />
+                {t("chat.messages_title")}
+              </h2>
+              <ConversationList mode="patient" initialConversationId={convFromUrl} />
+            </TabsContent>
+          </Tabs>
           </div>
         )}
       </main>
