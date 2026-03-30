@@ -19,6 +19,7 @@ import {
   LayoutDashboard, Brain, User, FileBarChart, Zap,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
+import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { setSeo } from "@/lib/seo";
 import { useEffect } from "react";
 
