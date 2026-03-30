@@ -1,44 +1,27 @@
 
 
-## Duas mudanças no Dashboard
+## Corrigir centralização do card do tutorial no mobile
 
-### 1. Remover seção de Follow-up Emails do painel do paciente
+### Problema
 
-**Arquivo: `src/pages/Dashboard.tsx`**
-- Remover o bloco "Follow-up Reminders" (linhas ~385-426) que exibe os emails semanais programados
-- Remover o state `followUps` e a query que busca `follow_up_emails`
-- Remover imports não utilizados (`Mail`, `Send`, `AlertCircle`)
+O card usa `position: fixed` com `top: 50%; left: 50%; transform: translate(-50%, -50%)` via `style` prop inline. Porém, o componente `OnboardingStep` também aplica `w-[320px]` e `max-w-[calc(100vw-2rem)]` via Tailwind. O conflito entre o `transform` inline do style e possíveis overrides do framer-motion (que anima com `y`) faz o card perder a centralização vertical — a animação `y: 8 → y: 0` sobrescreve o `translateY(-50%)` do transform.
 
-Os emails continuam sendo enviados normalmente — apenas a exibição no painel é removida.
+### Solução
 
----
+Usar **flexbox no container** para centralizar, em vez de `transform` no card. Isso elimina o conflito com framer-motion.
 
-### 2. Gráfico detalhado de evolução dos questionários no painel profissional
+**Arquivo: `src/components/onboarding/OnboardingTour.tsx`**
+- Envolver o `OnboardingStep` em um `div` com `fixed inset-0 z-[60] flex items-center justify-center p-4`
+- Remover a prop `style` do `OnboardingStep`
 
-**Arquivo: `src/components/dashboard/PatientEvolutionDashboard.tsx`**
+**Arquivo: `src/components/onboarding/OnboardingStep.tsx`**
+- Remover `fixed` da className (o container pai já é fixed)
+- Manter `z-[60]` ou removê-lo (o pai controla o z-index)
+- Mudar a animação de `y: 8` para `scale: 0.97, opacity: 0` para não interferir no posicionamento
 
-Atualmente o gráfico de evolução de questionários mostra apenas a pontuação final (%) de cada questionário (ex: NDI 42%). A mudança é expandir para mostrar as **3 subescalas com pior pontuação** + a pontuação final, permitindo ao profissional ver a evolução das limitações funcionais específicas.
-
-**Lógica:**
-- Para cada questionário do paciente, extrair `subscaleScores` de `test_results`
-- Identificar as 3 subescalas com maior limitação (pior score, considerando `scoringDirection`)
-- Montar dados de série temporal: pontuação final + 3 subescalas discriminadas
-- Usar labels traduzidos dos `subscaleLabels` do `questionnaireData.ts`
-
-**Visualização:**
-- Substituir o gráfico de linha única por um gráfico com 4 linhas por questionário:
-  - Linha principal (bold): pontuação final do questionário
-  - 3 linhas secundárias (tracejadas/finas): as 3 subescalas mais limitadas
-- Cada linha com tooltip mostrando nome da subescala e valor
-- Legenda clara identificando cada métrica
-- Se houver apenas 1 avaliação, mostrar barras agrupadas comparando as subescalas
-
-**Importação necessária:**
-- Importar `questionnaires` de `questionnaireData.ts` para acessar `subscaleLabels` e `scoringDirection`
-
-**Arquivos editados:**
+### Arquivos editados
 | Ação | Arquivo |
 |------|---------|
-| Editar | `src/pages/Dashboard.tsx` |
-| Editar | `src/components/dashboard/PatientEvolutionDashboard.tsx` |
+| Editar | `src/components/onboarding/OnboardingTour.tsx` |
+| Editar | `src/components/onboarding/OnboardingStep.tsx` |
 
