@@ -476,6 +476,9 @@ const Dashboard = () => {
               <Globe className="h-4 w-4" />
               {t("nav.language")}
             </Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} title={t("support.badge")}>
+              <HelpCircle className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
               <LogOut className="h-4 w-4" />
               {t("nav.logout")}
