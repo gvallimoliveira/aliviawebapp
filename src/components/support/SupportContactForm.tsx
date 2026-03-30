@@ -67,6 +67,12 @@ export default function SupportContactForm() {
         message: message.trim(),
       });
       if (error) throw error;
+
+      // Notify admins via push notification (fire-and-forget)
+      supabase.functions.invoke("notify-admin-support", {
+        body: { subject: subject.trim() },
+      }).catch(() => {});
+
       toast({ description: t("support.contact.success") });
       setSubject("");
       setMessage("");
