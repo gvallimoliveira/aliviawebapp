@@ -25,9 +25,21 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
+        cleanupOutdatedCaches: true,
         navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,webp,woff,woff2}"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/vjrtsqgnoeehviypkqrf\.supabase\.co\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-api",
+              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+              networkTimeoutSeconds: 3,
+            },
+          },
+        ],
       },
       manifest: {
         name: "Aliv.iA - Avaliação Musculoesquelética com IA",
