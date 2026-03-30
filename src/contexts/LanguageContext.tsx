@@ -2103,6 +2103,8 @@ const translations: Record<Language, Record<string, string>> = {
     "support.pro.tool.edit_profile.desc": "Keep your data updated: name, CREFITO, specialties, city, clinic address, and profile photo. This information is displayed to patients in the professional search.",
     "support.pro.tool.lifetime_treatment.title": "Lifetime Treatment",
     "support.pro.tool.lifetime_treatment.desc": "With Lifetime Treatment, all your patients' treatment plans are permanently unlocked — no additional cost per assessment, from the purchase date onward. Important: access to the professional panel still requires an active PRO subscription (monthly or annual). Lifetime Treatment does not replace the panel subscription.",
+    "support.pro.tool.messages.title": "Messages with Patients",
+    "support.pro.tool.messages.desc": "Patients who found you through the professional search can send direct messages. Conversations appear in the 'Messages' tab of your professional panel. Answer questions, schedule appointments, and strengthen the bond with your patients even before an in-person visit.",
 
     "support.pro.faq.rf1.q": "Does my patient need to create an Aliv.iA account?",
     "support.pro.faq.rf1.a": "Not necessarily. Using your personalized link, the patient can complete the assessment and the result is linked to your panel. However, if they want to access their history later, they'll need to create an account.",
