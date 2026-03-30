@@ -688,6 +688,8 @@
   "pro_lifetime.upsell_desc_regular": "Unlock all treatment plans forever.",
   "pro_lifetime.days_left": "{days} days left for this offer",
   "pro_lifetime.buy_cta": "Unlock Lifetime",
+  "pro_lifetime.success_title": "Lifetime Treatment Access activated!",
+  "pro_lifetime.success_desc": "You can now unlock unlimited treatment plans at no additional cost.",
   "blog.title": "Blog",
   "blog.subtitle": "Articles about pain, physiotherapy and wellness",
   "blog.read_more": "Read more",
