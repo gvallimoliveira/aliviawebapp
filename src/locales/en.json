@@ -931,5 +931,20 @@
   "support.pro.faq.rf7.a": "Yes. Use the 'Export PDFs' button to generate batch reports of all assessments with completed diagnoses. Each assessment generates an individual PDF.",
   "support.pro.faq.rf8.q": "Are the notes I add visible to the patient?",
   "support.pro.faq.rf8.a": "No. Professional notes are private and visible only to you in the panel. They are included in the exported PDF for clinical documentation purposes.",
-  "payment.includes_sub_desc": "Cancel anytime"
+  "payment.includes_sub_desc": "Cancel anytime",
+  "diary.streak_day": "day",
+  "diary.streak_days": "days",
+  "diary.streak_label": "Registration streak",
+  "diary.week_progress": "Weekly progress",
+  "diary.motivation_restart": "How about starting again today? Every entry counts! 💪",
+  "diary.motivation_start": "Great start! Keep logging to build your streak.",
+  "diary.motivation_growing": "Nice pace! Your consistency is growing.",
+  "diary.motivation_strong": "Excellent consistency! Your data is increasingly complete.",
+  "diary.motivation_amazing": "Amazing dedication! You have almost a month of consecutive entries.",
+  "diary.motivation_legendary": "Impressive! Your discipline is inspiring. Keep it up! 🏆",
+  "push.opt_in_title": "Enable notifications",
+  "push.opt_in_desc": "Get pain diary reminders and updates about your assessments.",
+  "push.enable": "Enable",
+  "push.disable": "Disable",
+  "push.enabled_toast": "Notifications enabled successfully!"
 }

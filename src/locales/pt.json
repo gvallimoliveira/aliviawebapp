@@ -931,5 +931,20 @@
   "support.pro.faq.rf7.q": "Posso exportar os dados de todos os pacientes?",
   "support.pro.faq.rf7.a": "Sim. Utilize o botão 'Exportar PDFs' para gerar relatórios em lote de todas as avaliações com diagnóstico concluído. Cada avaliação gera um PDF individual.",
   "support.pro.faq.rf8.q": "As notas que eu adiciono são visíveis para o paciente?",
-  "support.pro.faq.rf8.a": "Não. As notas profissionais são privadas e visíveis apenas para você no painel. Elas são incluídas no PDF exportado para fins de documentação clínica."
+  "support.pro.faq.rf8.a": "Não. As notas profissionais são privadas e visíveis apenas para você no painel. Elas são incluídas no PDF exportado para fins de documentação clínica.",
+  "diary.streak_day": "dia",
+  "diary.streak_days": "dias",
+  "diary.streak_label": "Sequência de registros",
+  "diary.week_progress": "Progresso semanal",
+  "diary.motivation_restart": "Que tal retomar hoje? Cada registro conta! 💪",
+  "diary.motivation_start": "Bom começo! Continue registrando para construir sua sequência.",
+  "diary.motivation_growing": "Ótimo ritmo! Sua consistência está crescendo.",
+  "diary.motivation_strong": "Excelente consistência! Seus dados estão cada vez mais completos.",
+  "diary.motivation_amazing": "Incrível dedicação! Você tem quase um mês de registros consecutivos.",
+  "diary.motivation_legendary": "Impressionante! Sua disciplina é inspiradora. Continue assim! 🏆",
+  "push.opt_in_title": "Ative as notificações",
+  "push.opt_in_desc": "Receba lembretes do diário de dor e novidades sobre suas avaliações.",
+  "push.enable": "Ativar",
+  "push.disable": "Desativar",
+  "push.enabled_toast": "Notificações ativadas com sucesso!"
 }
