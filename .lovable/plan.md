@@ -1,27 +1,76 @@
 
 
-## Corrigir centralização do card do tutorial no mobile
+## Criar página de Suporte interno (logado)
 
-### Problema
+### Visão geral
 
-O card usa `position: fixed` com `top: 50%; left: 50%; transform: translate(-50%, -50%)` via `style` prop inline. Porém, o componente `OnboardingStep` também aplica `w-[320px]` e `max-w-[calc(100vw-2rem)]` via Tailwind. O conflito entre o `transform` inline do style e possíveis overrides do framer-motion (que anima com `y`) faz o card perder a centralização vertical — a animação `y: 8 → y: 0` sobrescreve o `translateY(-50%)` do transform.
+Nova página `/suporte` acessível apenas para usuários logados, com dois modos de suporte separados por cards/tabs: **Minha Saúde** e **Painel Profissional**. Cada modo lista todas as ferramentas do respectivo painel com descrição objetiva e orientações de uso. Inclui seção de FAQ gerada com perguntas relevantes.
 
-### Solução
+### Estrutura da página
 
-Usar **flexbox no container** para centralizar, em vez de `transform` no card. Isso elimina o conflito com framer-motion.
+```text
+/suporte
+├── Header (já existente)
+├── Seleção de perfil (2 cards)
+│   ├── "Suporte — Minha Saúde" (ícone Heart)
+│   └── "Suporte — Painel Profissional" (ícone Stethoscope)
+├── Conteúdo do perfil selecionado
+│   ├── Lista de ferramentas com Accordion
+│   └── FAQ (Accordion separado)
+└── Footer
+```
 
-**Arquivo: `src/components/onboarding/OnboardingTour.tsx`**
-- Envolver o `OnboardingStep` em um `div` com `fixed inset-0 z-[60] flex items-center justify-center p-4`
-- Remover a prop `style` do `OnboardingStep`
+### Conteúdo — Minha Saúde
 
-**Arquivo: `src/components/onboarding/OnboardingStep.tsx`**
-- Remover `fixed` da className (o container pai já é fixed)
-- Manter `z-[60]` ou removê-lo (o pai controla o z-index)
-- Mudar a animação de `y: 8` para `scale: 0.97, opacity: 0` para não interferir no posicionamento
+Cada item com título, ícone e texto explicativo:
 
-### Arquivos editados
+1. **Avaliação Básica** — O que é, como iniciar, o que recebe ao final
+2. **Avaliação Premium** — Diferenças, pagamento, relatório detalhado
+3. **Status Premium** — Dias restantes, avaliações disponíveis, upgrade
+4. **Diário de Dor** — Como registrar, para que serve, frequência ideal
+5. **Comparativo de Avaliações** — Como funciona a comparação antes/depois
+6. **Histórico de Avaliações** — Onde encontrar, como visualizar, PDF
+7. **Buscar Profissional** — Como funciona o encaminhamento
+8. **Código de Indicação** — Como compartilhar, desconto obtido
+9. **Perfil e Idioma** — Como editar dados pessoais
+
+### Conteúdo — Painel Profissional
+
+1. **Link Personalizado** — Como gerar, copiar e enviar ao paciente
+2. **Estatísticas** — Total de avaliações, avaliações do mês
+3. **Gráficos Analíticos** — Donut de status, barras de regiões
+4. **Lista de Pacientes** — Busca, agrupamento por email, visualização detalhada
+5. **Dashboard de Evolução** — Gráfico de subescalas, comparativo temporal
+6. **Download de PDF** — Como baixar relatório com notas profissionais
+7. **Notas Profissionais** — Como adicionar anotações clínicas
+8. **Assinatura PRO** — Planos, gerenciamento, portal de pagamento
+9. **Editar Perfil Profissional** — CREFITO, especialidades, foto
+10. **Tratamento Vitalício** — O que é a oferta lifetime
+
+### FAQ
+
+Perguntas hardcoded (sem chamada de IA em runtime) cobrindo dúvidas comuns como:
+- "Posso fazer mais de uma avaliação por vez?"
+- "Meu paciente precisa criar conta?"
+- "Como cancelo minha assinatura PRO?"
+- "Os dados dos meus pacientes são seguros?"
+- ~10 perguntas por perfil, traduzidas PT/EN
+
+### Arquivos
+
 | Ação | Arquivo |
 |------|---------|
-| Editar | `src/components/onboarding/OnboardingTour.tsx` |
-| Editar | `src/components/onboarding/OnboardingStep.tsx` |
+| Criar | `src/pages/Support.tsx` |
+| Editar | `src/App.tsx` (adicionar rota `/suporte`) |
+| Editar | `src/contexts/LanguageContext.tsx` (traduções PT/EN) |
+| Editar | `src/components/Header.tsx` (link de suporte no menu, visível apenas logado) |
+
+### Detalhes técnicos
+
+- Rota protegida: redireciona para `/auth` se não logado
+- Usa `Accordion` do shadcn para cada ferramenta e FAQ
+- Cards de seleção de perfil com estado local (`useState`)
+- Se usuário não for profissional, o card "Painel Profissional" aparece com indicação de que é para fisioterapeutas cadastrados
+- Mesmo padrão visual: `motion` para animações, gradientes sutis, ícones Lucide
+- Todas as strings via `t()` para suporte bilíngue
 
