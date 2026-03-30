@@ -112,7 +112,7 @@ export function usePushNotifications() {
   // Dismissed means user said no via our UI (stored in localStorage)
   const [dismissed, setDismissedState] = useState(() => {
     try {
-      return localStorage.getItem("push_notifications_dismissed") === "true";
+      return localStorage.getItem("push_opt_in_dismissed_v2") === "true";
     } catch {
       return false;
     }
@@ -121,7 +121,7 @@ export function usePushNotifications() {
   const dismiss = useCallback(() => {
     setDismissedState(true);
     try {
-      localStorage.setItem("push_notifications_dismissed", "true");
+      localStorage.setItem("push_opt_in_dismissed_v2", "true");
     } catch {}
   }, []);
 
