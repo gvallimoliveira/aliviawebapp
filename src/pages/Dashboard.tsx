@@ -18,6 +18,7 @@ import WelcomeSection from "@/components/dashboard/WelcomeSection";
 import QuickActions from "@/components/dashboard/QuickActions";
 import AssessmentHistory from "@/components/dashboard/AssessmentHistory";
 import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
+import PushOptInBanner from "@/components/PushOptInBanner";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
