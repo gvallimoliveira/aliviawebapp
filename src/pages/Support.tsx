@@ -238,6 +238,26 @@ const Support = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Check for updates */}
+        <div className="mt-16 flex flex-col items-center gap-3">
+          <Button
+            variant="outline"
+            size="lg"
+            className="gap-2 rounded-xl border-primary/30 text-primary hover:bg-primary/5"
+            onClick={handleCheckUpdate}
+            disabled={checking}
+          >
+            <RefreshCw className={`h-4 w-4 ${checking ? "animate-spin" : ""}`} />
+            {t("support.check_update")}
+          </Button>
+          {checkResult === "updated" && (
+            <p className="text-sm text-primary font-medium animate-in fade-in">{t("support.update_found")}</p>
+          )}
+          {checkResult === "current" && (
+            <p className="text-sm text-muted-foreground animate-in fade-in">{t("support.up_to_date")}</p>
+          )}
+        </div>
       </main>
       <Footer />
     </div>
