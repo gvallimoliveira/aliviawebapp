@@ -44,6 +44,7 @@ const Assessment = () => {
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [hasRetried, setHasRetried] = useState(false);
   const [isMonthly, setIsMonthly] = useState(true);
+  const [capturedEmail, setCapturedEmail] = useState<string | null>(null);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
 
   // Redirect premium users to auth if not logged in
