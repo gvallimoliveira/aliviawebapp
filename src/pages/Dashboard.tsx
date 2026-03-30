@@ -63,6 +63,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
+  const convFromUrl = searchParams.get("conv");
   const [assessments, setAssessments] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [premiumAccess, setPremiumAccess] = useState<PremiumAccess | null>(null);
