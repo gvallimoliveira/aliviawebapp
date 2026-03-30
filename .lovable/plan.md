@@ -1,29 +1,57 @@
 
 
-## Adicionar seção "Sobre" na pré-landing (Gateway)
+## Migração do sistema de traduções para i18next + arquivos JSON + Espanhol
+
+### Situação atual
+
+O arquivo `src/contexts/LanguageContext.tsx` contém **2.167 linhas** com todas as traduções PT e EN inline em um objeto gigante. São ~1.080 chaves por idioma. O sistema usa `useLanguage()` com `t("chave")` em **50 arquivos**. Suporta apenas 2 idiomas com toggle simples.
 
 ### O que será feito
 
-Inserir uma seção "Sobre a Aliv.iA" entre o social proof badge e o footer minimalista da página Gateway (`/`). A seção apresenta a história de origem e a missão da plataforma de forma humanizada e concisa, com texto refinado pela IA mantendo a essência descrita.
+1. **Instalar `react-i18next` + `i18next`** — biblioteca padrão da indústria para internacionalização em React
+2. **Extrair traduções para arquivos JSON separados**: `src/locales/pt.json`, `src/locales/en.json`, `src/locales/es.json`
+3. **Criar configuração i18next** em `src/i18n.ts` com detecção de idioma do navegador e fallback para PT
+4. **Reescrever `LanguageContext.tsx`** para usar i18next internamente, mantendo a mesma API `useLanguage()` / `t()` / `language` / `toggleLanguage()` — zero mudanças nos 50 arquivos consumidores
+5. **Adicionar espanhol (ES)** como terceiro idioma, com traduções completas
+6. **Atualizar o toggle de idioma** no Header para suportar 3 idiomas (PT → EN → ES → PT)
 
-### Conteúdo (refinado)
+### Abordagem de compatibilidade (baixo risco)
 
-**PT:** A Aliv.iA nasceu da inquietação de Guilherme, fisioterapeuta carioca, ao observar a quantidade de orientações sem embasamento e sem qualquer triagem ou avaliação adequada circulando pela internet. Com a missão de mudar essa realidade, ele idealizou e construiu a Aliv.iA — uma plataforma que combina inteligência artificial e raciocínio clínico para ajudar duas frentes: pessoas que buscam resolver suas dores com mais segurança e base científica, e fisioterapeutas que desejam chegar mais preparados às suas avaliações, com relatórios de evolução que agregam valor real ao atendimento. Tudo isso com preço justo e acessível.
+O `LanguageContext` continuará exportando `useLanguage()` com a mesma interface `{ language, toggleLanguage, t }`. Internamente, `t()` delegará para `i18next.t()`. Isso significa **nenhuma alteração nos 50 arquivos que consomem traduções** — a migração é transparente.
 
-**EN:** Versão equivalente em inglês.
+### Estrutura dos arquivos JSON
 
-### Design
+```text
+src/
+  locales/
+    pt.json    (~1.080 chaves extraídas do objeto atual)
+    en.json    (~1.080 chaves extraídas do objeto atual)
+    es.json    (~1.080 chaves — tradução espanhol LATAM)
+  i18n.ts      (configuração i18next)
+```
 
-- Ícone `Heart` ou `Sparkles` como destaque visual
-- Card sutil com borda, fundo translúcido (`bg-card/60 backdrop-blur-sm`), rounded corners
-- Título "Sobre a Aliv.iA" centralizado acima do texto
-- Largura máxima `max-w-2xl`, texto `text-sm text-muted-foreground`, alinhamento central
-- Animação `fadeUp` consistente com o resto da página
+### Toggle de idioma
+
+O `toggleLanguage` passará a ciclar entre 3 idiomas. O botão no Header exibirá a sigla do próximo idioma (como já faz hoje com "EN"/"PT"), agora incluindo "ES".
+
+Tipo `Language` atualizado para `"pt" | "en" | "es"`.
 
 ### Alterações
 
 | Ação | Arquivo |
 |------|---------|
-| Editar | `src/pages/Gateway.tsx` — adicionar seção "Sobre" antes do footer |
-| Editar | `src/contexts/LanguageContext.tsx` — chaves `gateway.about_title` e `gateway.about_text` (PT/EN) |
+| Instalar | `react-i18next`, `i18next` via package.json |
+| Criar | `src/locales/pt.json` — chaves extraídas do objeto PT atual |
+| Criar | `src/locales/en.json` — chaves extraídas do objeto EN atual |
+| Criar | `src/locales/es.json` — traduções espanhol LATAM |
+| Criar | `src/i18n.ts` — configuração i18next |
+| Editar | `src/contexts/LanguageContext.tsx` — reescrever para delegar ao i18next, manter API pública |
+| Editar | `src/components/Header.tsx` — toggle 3 idiomas |
+| Editar | `src/main.tsx` — importar `src/i18n.ts` |
+
+### Observações
+
+- As ~1.080 chaves de espanhol serão traduzidas com vocabulário LATAM (ustedes, avaluación, etc.)
+- Pluralização e interpolação ficam disponíveis nativamente via i18next para uso futuro
+- Nenhum arquivo consumidor (`t("chave")`) precisa ser alterado
 
