@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const Header = () => {
-  const { t, toggleLanguage } = useLanguage();
+  const { t, toggleLanguage, language } = useLanguage();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,7 +35,7 @@ const Header = () => {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-6 md:flex">
           <a href="#compare" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            {isProfessionalPage ? (t("nav.language") === "EN" ? "Planos e preços" : "Plans & pricing") : t("compare.title")}
+            {isProfessionalPage ? (language === "pt" ? "Planos e preços" : language === "es" ? "Planes y precios" : "Plans & pricing") : t("compare.title")}
           </a>
           <a href="#how" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             {t("how.title")}
@@ -56,7 +56,7 @@ const Header = () => {
         <div className="hidden md:flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2 sm:px-3">
             <Globe className="h-4 w-4" />
-            <span>{t("nav.language")}</span>
+            <span>{language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}</span>
           </Button>
           {user && (
             <Button variant="ghost" size="icon" onClick={() => go("/suporte")} title={t("support.badge")}>
@@ -103,7 +103,7 @@ const Header = () => {
               onClick={() => setMobileOpen(false)}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
-              {isProfessionalPage ? (t("nav.language") === "EN" ? "Planos e preços" : "Plans & pricing") : t("compare.title")}
+              {isProfessionalPage ? (language === "pt" ? "Planos e preços" : language === "es" ? "Planes y precios" : "Plans & pricing") : t("compare.title")}
             </a>
             <a
               href="#how"
@@ -133,7 +133,7 @@ const Header = () => {
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
             >
               <Globe className="h-4 w-4" />
-              {t("nav.language")}
+              {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
             </button>
 
             {user ? (
@@ -163,7 +163,7 @@ const Header = () => {
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors text-left"
                 >
                   <LogOut className="h-4 w-4" />
-                  {t("nav.login") === "Entrar" ? "Sair" : "Sign out"}
+                  {language === "pt" ? "Sair" : language === "es" ? "Salir" : "Sign out"}
                 </button>
               </>
             ) : (
