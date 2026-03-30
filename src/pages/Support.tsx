@@ -259,6 +259,9 @@ const Support = () => {
             <p className="text-sm text-muted-foreground animate-in fade-in">{t("support.up_to_date")}</p>
           )}
         </div>
+
+        {/* Support contact form */}
+        <SupportContactForm />
       </main>
       <Footer />
     </div>

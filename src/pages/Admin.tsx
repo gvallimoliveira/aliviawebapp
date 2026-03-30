@@ -264,6 +264,7 @@ const Admin = () => {
         <ProfessionalManagement language={language} />
         <PartnerManagement language={language} />
         <BlogManagement language={language} />
+        <SupportTicketManagement language={language} />
       </main>
       <Footer />
     </div>
