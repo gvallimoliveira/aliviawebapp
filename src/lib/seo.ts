@@ -42,11 +42,23 @@ function addJsonLd(data: Record<string, unknown>) {
 export function setSeo({ title, description, url, image, type = "website", publishedAt, author, tags }: SeoParams) {
   document.title = title;
 
+  // Canonical tag
+  const canonicalUrl = url || SITE_URL;
+  let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+  if (canonicalEl) {
+    canonicalEl.href = canonicalUrl;
+  } else {
+    canonicalEl = document.createElement("link");
+    canonicalEl.rel = "canonical";
+    canonicalEl.href = canonicalUrl;
+    document.head.appendChild(canonicalEl);
+  }
+
   setMetaTag("description", description, false);
   setMetaTag("og:title", title);
   setMetaTag("og:description", description);
   setMetaTag("og:type", type);
-  setMetaTag("og:url", url || SITE_URL);
+  setMetaTag("og:url", canonicalUrl);
   setMetaTag("og:image", image || DEFAULT_IMAGE);
   setMetaTag("og:site_name", SITE_NAME);
   setMetaTag("twitter:card", "summary_large_image", false);
