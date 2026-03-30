@@ -402,6 +402,32 @@ const Dashboard = () => {
         </Card>
       )}
 
+      {/* Push Notification Opt-in */}
+      {push.isSupported && !push.subscribed && !push.dismissed && push.permission !== "denied" && (
+        <Card className="border-primary/20 bg-primary/[0.02]">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <Bell className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">{t("push.opt_in_title")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t("push.opt_in_desc")}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button size="sm" onClick={() => push.subscribe()} disabled={push.loading} className="gap-1.5">
+                  <Bell className="h-3.5 w-3.5" />
+                  {t("push.enable")}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={push.dismiss} className="h-8 w-8">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pain Diary — only for subscribers */}
       {premiumAccess?.subscription_type !== "single" && (
         <div data-onboarding="patient-diary">
