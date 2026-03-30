@@ -26,6 +26,7 @@ const patientTools = [
   { key: "comparison", icon: BarChart3 },
   { key: "history", icon: ClipboardList },
   { key: "find_professional", icon: Search },
+  { key: "messages", icon: MessageCircle },
   { key: "referral_code", icon: Gift },
   { key: "profile_language", icon: User },
 ];
