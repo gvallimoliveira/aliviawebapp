@@ -16,6 +16,7 @@ import ProfessionalManagement from "@/components/admin/ProfessionalManagement";
 import PartnerManagement from "@/components/admin/PartnerManagement";
 import BlogManagement from "@/components/admin/BlogManagement";
 import SupportTicketManagement from "@/components/admin/SupportTicketManagement";
+import LeadManagement from "@/components/admin/LeadManagement";
 
 interface VipUser {
   id: string;
