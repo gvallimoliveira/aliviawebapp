@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { setSeo } from "@/lib/seo";
 import logoAlivia from "@/assets/logo-alivia.png";
+import guilhermePhoto from "@/assets/guilherme-founder.jpeg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -182,9 +183,11 @@ const Gateway = () => {
             className="mt-12 max-w-2xl mx-auto rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-6 md:p-8 text-center"
           >
             <div className="flex justify-center mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <Heart className="h-5 w-5 text-primary" />
-              </div>
+              <img
+                src={guilhermePhoto}
+                alt="Guilherme — Fisioterapeuta e criador da Aliv.iA"
+                className="h-20 w-20 md:h-24 md:w-24 rounded-full object-cover object-top border-2 border-primary/20 shadow-md"
+              />
             </div>
             <h2 className="text-lg font-bold text-foreground mb-3">{t("gateway.about_title")}</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">{t("gateway.about_text")}</p>
