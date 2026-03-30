@@ -199,6 +199,51 @@ Deno.serve(async (req) => {
       results.errors.push(`referral_safety_net: ${e}`);
     }
 
+    // 5. ABANDONED ASSESSMENT REMINDERS — users with in_progress assessments older than 1h
+    try {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const sevenDaysAgoStr = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: abandoned } = await supabase
+        .from("assessments")
+        .select("id, user_id, type, updated_at")
+        .eq("status", "in_progress")
+        .not("user_id", "is", null)
+        .lt("updated_at", oneHourAgo)
+        .gte("created_at", sevenDaysAgoStr);
+
+      if (abandoned && abandoned.length > 0) {
+        // Only remind users who have push subscriptions
+        const abandonedUserIds = [...new Set(abandoned.map((a: any) => a.user_id).filter(Boolean))];
+        const usersWithPush = allSubs
+          ? new Set(allSubs.map((s: any) => s.user_id))
+          : new Set<string>();
+
+        const todayStr = new Date().toISOString().split("T")[0];
+
+        for (const a of abandoned) {
+          if (!a.user_id || !usersWithPush.has(a.user_id)) continue;
+          // Limit: 1 reminder per assessment per day (check updated_at date)
+          const lastUpdate = a.updated_at ? a.updated_at.split("T")[0] : "";
+          if (lastUpdate === todayStr) continue;
+
+          try {
+            const sent = await notifyUser(
+              a.user_id,
+              "📋 Avaliação incompleta",
+              "Sua avaliação está quase pronta! Continue de onde parou.",
+              `/assessment/${a.type || "basic"}`
+            );
+            if (sent) results.abandoned_reminders++;
+          } catch (e) {
+            results.errors.push(`abandoned ${a.id}: ${e}`);
+          }
+        }
+      }
+    } catch (e) {
+      results.errors.push(`abandoned_reminders: ${e}`);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
