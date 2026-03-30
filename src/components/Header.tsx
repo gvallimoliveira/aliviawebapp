@@ -35,7 +35,7 @@ const Header = () => {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-6 md:flex">
           <a href="#compare" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            {isProfessionalPage ? (t("nav.language") === "EN" ? "Planos e preços" : "Plans & pricing") : t("compare.title")}
+            {isProfessionalPage ? (language === "pt" ? "Planos e preços" : language === "es" ? "Planes y precios" : "Plans & pricing") : t("compare.title")}
           </a>
           <a href="#how" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             {t("how.title")}
