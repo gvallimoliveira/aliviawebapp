@@ -1803,6 +1803,14 @@ const translations: Record<Language, Record<string, string>> = {
     // Dashboard Tabs
     "dashboard.tab_my_health": "My Health",
     "dashboard.tab_professional": "Professional Panel",
+    "dashboard.tab_messages": "Messages",
+
+    // Chat
+    "chat.no_conversations": "No conversations yet.",
+    "chat.no_messages": "No messages yet. Start the conversation!",
+    "chat.placeholder": "Type your message...",
+    "chat.send_message": "Send message",
+    "chat.messages_title": "Messages",
 
     // Professional Link Card
     "prof.assessment_link_title": "Patient Assessment Link",
