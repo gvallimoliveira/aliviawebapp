@@ -206,14 +206,28 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
       </div>
 
       {/* Actions */}
-      <div className="flex justify-between pt-4">
+      <div className="flex flex-wrap justify-between gap-2 pt-4">
         <Button variant="outline" onClick={onBack} className="gap-2 rounded-xl">
           <ArrowLeft className="h-4 w-4" />
           {t("diagnosis.back")}
         </Button>
-        <Button onClick={onNewAssessment} className="rounded-xl">
-          {t("diagnosis.new_assessment")}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="gap-2 rounded-xl text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+            onClick={() => {
+              const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}\n\n${diagnosis.summary}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${window.location.origin}`;
+              const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+              window.open(url, "_blank");
+            }}
+          >
+            <Share2 className="h-4 w-4" />
+            WhatsApp
+          </Button>
+          <Button onClick={onNewAssessment} className="rounded-xl">
+            {t("diagnosis.new_assessment")}
+          </Button>
+        </div>
       </div>
     </motion.div>
   );
