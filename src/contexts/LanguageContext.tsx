@@ -959,6 +959,8 @@ const translations: Record<Language, Record<string, string>> = {
     "gateway.pro.bullet3": "Dashboard de evolução do paciente com relatórios em PDF",
     "gateway.pro.cta": "Conhecer o painel profissional",
     "gateway.social_proof": "Usado por pacientes e fisioterapeutas em todo o Brasil",
+    "gateway.about_title": "Sobre a Aliv.iA",
+    "gateway.about_text": "A Aliv.iA nasceu da inquietação de Guilherme, fisioterapeuta carioca, ao observar a quantidade de orientações sem embasamento e sem qualquer triagem ou avaliação adequada circulando pela internet. Com a missão de mudar essa realidade, ele idealizou e construiu a Aliv.iA — uma plataforma que combina inteligência artificial e raciocínio clínico para ajudar duas frentes: pessoas que buscam resolver suas dores com mais segurança e base científica, e fisioterapeutas que desejam chegar mais preparados às suas avaliações, com relatórios de evolução que agregam valor real ao atendimento. Tudo isso com preço justo e acessível.",
 
     // Dual Audience Section
     "dual.title": "Para quem é a Aliv.iA?",
@@ -2016,6 +2018,8 @@ const translations: Record<Language, Record<string, string>> = {
     "gateway.pro.bullet3": "Patient evolution dashboard",
     "gateway.pro.cta": "Explore the professional panel",
     "gateway.social_proof": "Used by patients and physiotherapists across Brazil",
+    "gateway.about_title": "About Aliv.iA",
+    "gateway.about_text": "Aliv.iA was born from the restlessness of Guilherme, a physiotherapist from Rio de Janeiro, who grew tired of seeing baseless guidance and a complete lack of proper screening and assessment spreading across the internet. Driven to change this reality, he envisioned and built Aliv.iA — a platform that combines artificial intelligence and clinical reasoning to serve two fronts: people seeking to resolve their pain with greater safety and scientific grounding, and physiotherapists who want to arrive better prepared for their evaluations, with evolution reports that add real value to patient care. All at a fair and accessible price.",
 
     // Dual Audience Section
     "dual.title": "Who is Aliv.iA for?",
