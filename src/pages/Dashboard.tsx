@@ -414,8 +414,26 @@ const Dashboard = () => {
                   {t("dashboard.single_purchase_banner")}
                 </p>
               </div>
-              <Button onClick={() => navigate("/assessment/premium")} size="sm" className="gap-1.5 shrink-0">
-                <Crown className="h-3.5 w-3.5" />
+              <Button
+                onClick={async () => {
+                  setUpgradeLoading(true);
+                  try {
+                    const { data, error } = await supabase.functions.invoke("create-payment", {
+                      body: { payment_type: "monthly" },
+                    });
+                    if (error) throw error;
+                    if (data?.url) window.location.href = data.url;
+                  } catch (e) {
+                    console.error("Upgrade error:", e);
+                  } finally {
+                    setUpgradeLoading(false);
+                  }
+                }}
+                size="sm"
+                className="gap-1.5 shrink-0"
+                disabled={upgradeLoading}
+              >
+                {upgradeLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Crown className="h-3.5 w-3.5" />}
                 {t("dashboard.upgrade_to_monthly")}
               </Button>
             </div>
