@@ -432,16 +432,61 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
         y += 4;
       }
 
-      // Subscale scores
+      // Subscale scores — highlight top 3 most limited
       if (q.subscaleScores && typeof q.subscaleScores === "object") {
         const entries = Object.entries(q.subscaleScores);
         if (entries.length > 1) {
+          // Determine scoring direction from questionnaire data
+          const qDef = questionnaires.find(qd => qd.id === q.questionnaireId);
+          const higherWorse = !qDef || qDef.scoringDirection === "higher_worse";
+
+          // Sort to find top 3 most limited
+          const sorted = [...entries].sort(([, a], [, b]) => {
+            const va = typeof a === "number" ? a : parseFloat(String(a)) || 0;
+            const vb = typeof b === "number" ? b : parseFloat(String(b)) || 0;
+            return higherWorse ? vb - va : va - vb; // worst first
+          });
+          const top3Keys = new Set(sorted.slice(0, 3).map(([k]) => k));
+
+          // Render top 3 highlighted block
+          y = checkPage(doc, y, 6);
           doc.setFontSize(7);
-          for (const [key, val] of entries) {
-            y = checkPage(doc, y, 5);
-            doc.setTextColor(...COLORS.muted);
-            doc.text(`  ${key}: ${val}`, MARGIN + 4, y);
-            y += 3.5;
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...COLORS.foreground);
+          doc.text(isPt ? "Principais limitações funcionais:" : "Top functional limitations:", MARGIN + 4, y);
+          y += 4;
+
+          for (const [key, val] of sorted.slice(0, 3)) {
+            y = checkPage(doc, y, 8);
+            const label = qDef?.subscaleLabels?.[key]
+              ? (isPt ? qDef.subscaleLabels[key].pt : qDef.subscaleLabels[key].en)
+              : key;
+            const numVal = typeof val === "number" ? val : parseFloat(String(val)) || 0;
+
+            // Highlighted row with accent background
+            drawRoundedRect(doc, MARGIN + 4, y - 3, CONTENT_WIDTH - 8, 6, 1, COLORS.accent);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(7.5);
+            doc.setTextColor(...COLORS.accentDark);
+            doc.text(`▸ ${label}: ${numVal}`, MARGIN + 6, y);
+            y += 7;
+          }
+
+          // Remaining subscales (if any)
+          const remaining = entries.filter(([k]) => !top3Keys.has(k));
+          if (remaining.length > 0) {
+            y += 1;
+            doc.setFontSize(7);
+            for (const [key, val] of remaining) {
+              y = checkPage(doc, y, 5);
+              const label = qDef?.subscaleLabels?.[key]
+                ? (isPt ? qDef.subscaleLabels[key].pt : qDef.subscaleLabels[key].en)
+                : key;
+              doc.setFont("helvetica", "normal");
+              doc.setTextColor(...COLORS.muted);
+              doc.text(`  ${label}: ${val}`, MARGIN + 4, y);
+              y += 3.5;
+            }
           }
         }
       }
