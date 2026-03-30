@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import SupportContactForm from "@/components/support/SupportContactForm";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw } from "lucide-react";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
@@ -258,6 +259,9 @@ const Support = () => {
             <p className="text-sm text-muted-foreground animate-in fade-in">{t("support.up_to_date")}</p>
           )}
         </div>
+
+        {/* Support contact form */}
+        <SupportContactForm />
       </main>
       <Footer />
     </div>
