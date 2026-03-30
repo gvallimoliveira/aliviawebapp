@@ -1009,6 +1009,8 @@ const translations: Record<Language, Record<string, string>> = {
     "support.patient.tool.referral_code.desc": "Cada usuário possui um código de indicação único. Compartilhe com amigos e, quando eles se cadastrarem e utilizarem a plataforma, vocês podem obter descontos em avaliações futuras. O código está disponível no seu painel.",
     "support.patient.tool.profile_language.title": "Perfil e Idioma",
     "support.patient.tool.profile_language.desc": "No menu superior, você pode alternar entre Português e Inglês clicando no botão de idioma. Para editar seus dados pessoais como nome, idade e sexo, acesse a seção de perfil no painel.",
+    "support.patient.tool.messages.title": "Mensagens com Profissional",
+    "support.patient.tool.messages.desc": "Após encontrar um fisioterapeuta pela busca de profissionais, você pode enviar uma mensagem direta. As conversas ficam na aba 'Mensagens' do seu painel. Use para tirar dúvidas, combinar horários ou discutir seu caso antes de uma consulta presencial.",
 
     // Patient FAQ
     "support.patient.faq.pf1.q": "Posso fazer mais de uma avaliação?",
