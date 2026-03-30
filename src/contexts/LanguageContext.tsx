@@ -2063,6 +2063,8 @@ const translations: Record<Language, Record<string, string>> = {
     "support.patient.tool.referral_code.desc": "Each user has a unique referral code. Share it with friends, and when they sign up and use the platform, you may receive discounts on future assessments. Your code is available on the dashboard.",
     "support.patient.tool.profile_language.title": "Profile and Language",
     "support.patient.tool.profile_language.desc": "In the top menu, you can switch between Portuguese and English by clicking the language button. To edit personal data such as name, age, and gender, go to the profile section on the dashboard.",
+    "support.patient.tool.messages.title": "Messages with Professional",
+    "support.patient.tool.messages.desc": "After finding a physiotherapist through the professional search, you can send a direct message. Conversations are available in the 'Messages' tab on your dashboard. Use it to ask questions, schedule appointments, or discuss your case before an in-person visit.",
 
     "support.patient.faq.pf1.q": "Can I do more than one assessment?",
     "support.patient.faq.pf1.a": "Yes! Monthly subscribers can perform up to 2 premium assessments per month. Single-payment users get 1 assessment per purchase. Basic assessments are unlimited and free.",
