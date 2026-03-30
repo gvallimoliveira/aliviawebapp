@@ -488,6 +488,20 @@ const BlurredTreatmentPreview = ({
   loading: boolean;
   isPt: boolean;
 }) => {
+  const [lifetimeLoading, setLifetimeLoading] = useState(false);
+
+  const handleLifetime = async () => {
+    setLifetimeLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-pro-lifetime-treatment");
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setLifetimeLoading(false);
+    }
+  };
   const fakePhases = [
     {
       title: isPt ? "Fase 1 — Curto Prazo" : "Phase 1 — Short Term",
