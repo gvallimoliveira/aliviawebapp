@@ -328,10 +328,12 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
 
             <TabsContent value="evolution">
               <div className="opacity-60">
-                <PatientEvolutionDashboard
-                  assessments={displayAssessments as any}
-                  professionalId={professional.id}
-                />
+                <DashboardErrorBoundary>
+                  <PatientEvolutionDashboard
+                    assessments={displayAssessments as any}
+                    professionalId={professional.id}
+                  />
+                </DashboardErrorBoundary>
               </div>
             </TabsContent>
           </Tabs>
