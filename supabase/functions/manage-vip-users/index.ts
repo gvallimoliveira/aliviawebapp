@@ -185,6 +185,22 @@ serve(async (req) => {
       });
     }
 
+    // List leads (basic assessments with patient_email)
+    if (action === "list_leads") {
+      const { data, error } = await supabaseClient
+        .from("assessments")
+        .select("id, patient_email, created_at, status, pain_score, pain_regions")
+        .eq("type", "basic")
+        .not("patient_email", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      if (error) throw error;
+      return new Response(JSON.stringify({ leads: data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // List VIP users
     if (action === "list_vip" || !action) {
       const { data, error } = await supabaseClient
