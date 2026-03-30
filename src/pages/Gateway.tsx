@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { setSeo } from "@/lib/seo";
 import logoAlivia from "@/assets/logo-alivia.png";
+import guilhermePhoto from "@/assets/guilherme-founder.jpeg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
