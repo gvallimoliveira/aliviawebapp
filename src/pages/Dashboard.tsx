@@ -272,6 +272,27 @@ const Dashboard = () => {
 
   const renderClientContent = () => (
     <>
+      {/* Referral Discount Banner */}
+      {!premiumLoading && premiumAccess?.available_discount && (
+        <Card className="border-emerald-300 bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 dark:border-emerald-700/50">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 shrink-0">
+                <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                  {t("referral.banner_title")}
+                </p>
+                <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80 mt-0.5">
+                  {(t("referral.banner_desc") || "").replace("{percent}", String(premiumAccess.available_discount.discount_percent))}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Premium Access Indicator */}
       {!premiumLoading && premiumAccess?.paid_at && (
         <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/5 overflow-hidden relative">

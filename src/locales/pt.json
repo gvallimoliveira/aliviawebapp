@@ -524,6 +524,8 @@
   "referral.friends_referred": "amigos indicados",
   "referral.discount_available": "Você tem {percent}% de desconto!",
   "referral.discount_applied": "Desconto de indicação aplicado",
+  "referral.banner_title": "🎉 Você tem um desconto de indicação!",
+  "referral.banner_desc": "Seu desconto de {percent}% será aplicado automaticamente na sua próxima cobrança ou avaliação.",
   "assessment_view.title": "Detalhes da Avaliação",
   "assessment_view.back": "Voltar ao Dashboard",
   "assessment_view.no_diagnosis": "Diagnóstico ainda não gerado",
