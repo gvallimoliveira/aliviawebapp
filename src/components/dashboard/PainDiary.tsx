@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,15 +6,70 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Activity, Check, Pencil } from "lucide-react";
+import { Activity, Check, Pencil, Flame } from "lucide-react";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface DiaryEntry {
   id: string;
   pain_score: number;
   notes: string | null;
   logged_at: string;
+}
+
+function calculateStreak(entries: DiaryEntry[]): number {
+  if (entries.length === 0) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dates = new Set(entries.map((e) => e.logged_at));
+  const todayStr = today.toISOString().split("T")[0];
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+  // Streak must include today or yesterday
+  if (!dates.has(todayStr) && !dates.has(yesterdayStr)) return 0;
+
+  let streak = 0;
+  const start = dates.has(todayStr) ? today : yesterday;
+  const cursor = new Date(start);
+  while (true) {
+    const dateStr = cursor.toISOString().split("T")[0];
+    if (dates.has(dateStr)) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function getWeekProgress(entries: DiaryEntry[]): number {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0=Sun
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - ((dayOfWeek + 6) % 7)); // Monday
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const weekDates = new Set<string>();
+  for (const e of entries) {
+    const d = new Date(e.logged_at + "T00:00:00");
+    if (d >= startOfWeek) weekDates.add(e.logged_at);
+  }
+  return weekDates.size;
+}
+
+function getMotivationalKey(streak: number): string {
+  if (streak === 0) return "diary.motivation_restart";
+  if (streak < 3) return "diary.motivation_start";
+  if (streak < 7) return "diary.motivation_growing";
+  if (streak < 14) return "diary.motivation_strong";
+  if (streak < 30) return "diary.motivation_amazing";
+  return "diary.motivation_legendary";
 }
 
 const PainDiary = () => {
@@ -26,8 +81,12 @@ const PainDiary = () => {
   const [todayEntry, setTodayEntry] = useState<DiaryEntry | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
+
+  const streak = useMemo(() => calculateStreak(entries), [entries]);
+  const weekProgress = useMemo(() => getWeekProgress(entries), [entries]);
 
   const fetchEntries = async () => {
     if (!user) return;
@@ -68,6 +127,8 @@ const PainDiary = () => {
       }
       await fetchEntries();
       setEditing(false);
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 2000);
       toast.success(t("diary.saved"));
     } catch {
       toast.error(t("diary.error"));
@@ -89,12 +150,62 @@ const PainDiary = () => {
     return "text-destructive";
   };
 
+  const getStreakColor = () => {
+    if (streak >= 14) return "text-orange-500";
+    if (streak >= 7) return "text-amber-500";
+    if (streak >= 3) return "text-yellow-500";
+    return "text-muted-foreground";
+  };
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
         <Activity className="h-5 w-5 text-muted-foreground" />
         {t("diary.title")}
       </h2>
+
+      {/* Streak & Weekly Progress */}
+      <Card className="border-border/60">
+        <CardContent className="py-4">
+          <div className="flex items-center gap-4">
+            {/* Streak badge */}
+            <AnimatePresence>
+              <motion.div
+                className="flex items-center gap-2"
+                key={streak}
+                initial={justSaved ? { scale: 1.3 } : false}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+              >
+                <Flame className={`h-6 w-6 ${getStreakColor()}`} />
+                <div>
+                  <p className={`text-lg font-bold ${getStreakColor()}`}>
+                    {streak} {streak === 1 ? t("diary.streak_day") : t("diary.streak_days")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{t("diary.streak_label")}</p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Divider */}
+            <div className="h-10 w-px bg-border" />
+
+            {/* Weekly progress */}
+            <div className="flex-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                <span>{t("diary.week_progress")}</span>
+                <span className="font-medium">{weekProgress}/7</span>
+              </div>
+              <Progress value={(weekProgress / 7) * 100} className="h-2" />
+            </div>
+          </div>
+
+          {/* Motivational message */}
+          <p className="text-xs text-muted-foreground mt-3 italic">
+            {t(getMotivationalKey(streak))}
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Quick log or today's entry */}
       <Card>

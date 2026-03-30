@@ -16,9 +16,10 @@ import ProDashboard from "@/components/dashboard/ProDashboard";
 import ConversationList from "@/components/chat/ConversationList";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   Globe, HelpCircle, LogOut, Plus, ClipboardList, Calendar, MapPin, ChevronRight,
-  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Users, UserPlus, Heart, Stethoscope, RotateCcw, MessageCircle
+  Crown, Clock, CheckCircle2, Loader2, Activity, FileText, Sparkles, Users, UserPlus, Heart, Stethoscope, RotateCcw, MessageCircle, Bell, BellOff, X
 } from "lucide-react";
 import { useMemo } from "react";
 
@@ -267,6 +268,8 @@ const Dashboard = () => {
     </div>
   );
 
+  const push = usePushNotifications();
+
   const renderClientContent = () => (
     <>
       {/* Premium Access Indicator */}
@@ -394,6 +397,32 @@ const Dashboard = () => {
                 <Crown className="h-3.5 w-3.5" />
                 {t("dashboard.upgrade_to_monthly")}
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Push Notification Opt-in */}
+      {push.isSupported && !push.subscribed && !push.dismissed && push.permission !== "denied" && (
+        <Card className="border-primary/20 bg-primary/[0.02]">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <Bell className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">{t("push.opt_in_title")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t("push.opt_in_desc")}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button size="sm" onClick={() => push.subscribe()} disabled={push.loading} className="gap-1.5">
+                  <Bell className="h-3.5 w-3.5" />
+                  {t("push.enable")}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={push.dismiss} className="h-8 w-8">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
