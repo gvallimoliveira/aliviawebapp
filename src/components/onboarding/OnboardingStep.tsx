@@ -10,7 +10,6 @@ interface OnboardingStepProps {
   totalSteps: number;
   onNext: () => void;
   onSkip: () => void;
-  style?: React.CSSProperties;
 }
 
 const OnboardingStep = ({
