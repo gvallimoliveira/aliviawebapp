@@ -60,9 +60,21 @@ const Gateway = () => {
             <Globe className="h-4 w-4" />
             {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm">
-            {t("nav.login")}
-          </Button>
+          {user ? (
+            <>
+              <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5">
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 text-muted-foreground">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm">
+              {t("nav.login")}
+            </Button>
+          )}
         </div>
       </header>
 

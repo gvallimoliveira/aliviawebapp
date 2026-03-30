@@ -134,6 +134,7 @@ const Auth = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={t("auth.password_placeholder")}
                       className="pl-10"
+                      autoComplete={isLogin ? "current-password" : "new-password"}
                       minLength={6}
                       required
                     />
