@@ -16,8 +16,14 @@ const fadeUp = {
 
 const Gateway = () => {
   const { t, toggleLanguage, language } = useLanguage();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   useEffect(() => {
     const ref = searchParams.get("ref");
