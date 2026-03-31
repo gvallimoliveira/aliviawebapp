@@ -293,14 +293,22 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
             <h3 className="text-lg font-semibold">{t("anamnesis.region_detail_title")}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.region_detail_subtitle")}</p>
             <div className="grid gap-3">
-              {subAreas.map((area) => (
-                <Card key={area.id} className={`cursor-pointer transition-all ${data.painSubArea === area.id ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, painSubArea: area.id })}>
-                  <CardContent className="py-3 px-4">
-                    <span className="text-sm font-medium">{t(area.label)}</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">{t(area.desc)}</p>
-                  </CardContent>
-                </Card>
-              ))}
+              {subAreas.map((area) => {
+                const selected = data.painSubArea.includes(area.id);
+                return (
+                  <Card key={area.id} className={`cursor-pointer transition-all ${selected ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => toggleArrayItem("painSubArea", area.id)}>
+                    <CardContent className="py-3 px-4 flex items-center gap-3">
+                      <div className={`h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 ${selected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
+                        {selected && <Check className="h-3 w-3" />}
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">{t(area.label)}</span>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t(area.desc)}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
             {needsTraumaQuestion && (
               <div className="space-y-3 mt-4 p-4 bg-muted/50 rounded-xl">
