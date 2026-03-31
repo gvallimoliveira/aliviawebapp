@@ -144,7 +144,7 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : isDiagnosis ? (
-              <>{t("diagnosis.exit_intent_cta", { price: DISCOUNTED_PRICE })} <ArrowRight className="h-4 w-4" /></>
+              <>{t("diagnosis.exit_intent_cta").replace("{{price}}", DISCOUNTED_PRICE)} <ArrowRight className="h-4 w-4" /></>
             ) : (
               <>{t("landing.exit_intent_cta") || "Começar avaliação grátis"} <ArrowRight className="h-4 w-4" /></>
             )}
