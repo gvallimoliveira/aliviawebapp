@@ -211,6 +211,11 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   <p className="text-3xl font-bold text-foreground mt-1">{PREMIUM_SINGLE_PRICE_FORMATTED}</p>
                   <p className="text-xs text-muted-foreground mt-1">{t("diagnosis.single_desc") || "Pagamento único — resultado completo agora"}</p>
                 </div>
+                {/* Urgency timer */}
+                <div className={`flex items-center justify-center gap-1.5 text-sm font-semibold ${secondsLeft > 0 ? "text-amber-600 animate-pulse" : "text-muted-foreground"}`}>
+                  <Timer className="h-4 w-4" />
+                  {timerText}
+                </div>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
                   {t("diagnosis.blurred_hint")}
                 </p>
