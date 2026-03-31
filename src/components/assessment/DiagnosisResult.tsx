@@ -45,6 +45,21 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
 const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment }: DiagnosisResultProps) => {
   const { t } = useLanguage();
 
+  // 5-minute countdown timer for basic mode urgency
+  const [secondsLeft, setSecondsLeft] = useState(300);
+  useEffect(() => {
+    if (mode !== "basic") return;
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [mode]);
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
+  const timerText = secondsLeft > 0
+    ? `⏳ Oferta válida por ${minutes}:${seconds.toString().padStart(2, "0")}`
+    : "⏳ Oferta expirada";
+
   const confidenceConfig = {
     low: { color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200", icon: AlertTriangle, label: t("diagnosis.confidence.low") },
     moderate: { color: "text-primary", bg: "bg-primary/5 border-primary/20", icon: Info, label: t("diagnosis.confidence.moderate") },
