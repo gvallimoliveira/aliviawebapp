@@ -21,25 +21,36 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
   const isPt = language === "pt";
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [nameError, setNameError] = useState("");
 
   const needsEmail = mode === "basic" && !user;
 
   const handleContinue = () => {
     if (needsEmail) {
-      const trimmed = email.trim();
-      if (!trimmed) {
+      let hasError = false;
+      const trimmedName = name.trim();
+      const trimmedEmail = email.trim();
+      if (!trimmedName) {
+        setNameError(isPt ? "Informe seu nome para continuar" : "Enter your name to continue");
+        hasError = true;
+      } else {
+        setNameError("");
+      }
+      if (!trimmedEmail) {
         setEmailError(isPt ? "Informe seu e-mail para continuar" : "Enter your email to continue");
-        return;
-      }
-      if (!EMAIL_RE.test(trimmed)) {
+        hasError = true;
+      } else if (!EMAIL_RE.test(trimmedEmail)) {
         setEmailError(isPt ? "E-mail inválido" : "Invalid email");
-        return;
+        hasError = true;
+      } else {
+        setEmailError("");
       }
-      setEmailError("");
+      if (hasError) return;
     }
     setIsTransitioning(true);
-    setTimeout(() => onContinue(needsEmail ? email.trim() : undefined), 600);
+    setTimeout(() => onContinue(needsEmail ? { email: email.trim(), name: name.trim() } : undefined), 600);
   };
 
   const estimatedTime = mode === "premium"
