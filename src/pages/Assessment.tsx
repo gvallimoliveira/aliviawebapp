@@ -227,6 +227,10 @@ const Assessment = () => {
       } else {
         setStep("result");
       }
+      // Persist assessmentId so user can return after sharing via WhatsApp
+      if (id) {
+        sessionStorage.setItem("alivia-last-assessment-id", id);
+      }
     } catch (err: any) {
       console.error("Diagnosis error:", err);
       toast({
@@ -528,6 +532,8 @@ const Assessment = () => {
               onBack={() => setStep(mode === "premium" ? "functional_tests" : "anamnesis")}
               onNewAssessment={() => navigate("/")}
               onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
+              assessmentId={assessmentId}
+              patientName={capturedEmail || undefined}
             />
             {mode === "basic" && <ExitIntentPopup variant="diagnosis" />}
           </>
