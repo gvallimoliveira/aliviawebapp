@@ -261,6 +261,7 @@ ${kneeThighBlock}
 ${subAreaBlock}
 ${ottawaBlock}
 ${surgeryBlock}
+${multiComplaintBlock}
 
 IMPORTANT RULES:
 - Always respond in ${lang}.
