@@ -11,7 +11,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import PainMap from "./PainMap";
 
 export interface AnamnesisData {
-  chiefComplaint: string;
+  chiefComplaint: string; // deprecated, kept for backward compat
+  chiefComplaints: string[];
   customComplaint: string;
   onset: string;
   painRegions: string[];
