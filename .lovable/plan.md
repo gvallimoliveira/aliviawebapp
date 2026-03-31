@@ -1,34 +1,53 @@
-## Dashboard Admin de Leads Capturados
-
-### Objetivo
-
-Criar um componente `LeadManagement` no painel admin para visualizar os e-mails capturados nas avaliações básicas (usuários não logados). E permita exportar esses dados fazer download ou enviar via PDF no WhatsApp 
-
-### Alterações
-
-**Novo arquivo: `src/components/admin/LeadManagement.tsx**`
-
-- Consulta `assessments` filtrando `type = 'basic'` e `patient_email IS NOT NULL`
-- Exibe tabela com colunas: E-mail, Data, Status da avaliação, Score de dor
-- Contador total de leads no header do card
-- Ordenação por data decrescente
-- Busca/filtro por e-mail
-- Badge colorido para status (in_progress / completed)
-- Usa o mesmo padrão visual dos outros componentes admin (Card + Table)
-
-**Editar: `src/pages/Admin.tsx**`
-
-- Importar e renderizar `<LeadManagement />` após `SupportTicketManagement`
-
-### Observação sobre acesso
-
-A query usa a service role indiretamente — o admin já é validado pelo fluxo VIP existente. As avaliações básicas com `user_id IS NULL` são acessíveis via RLS existente (`Anyone can view professional assessments`) mas para basic sem user_id precisaremos de uma edge function ou RLS adicional. A abordagem mais segura é criar uma edge function `list-leads` que usa service role para buscar esses registros, seguindo o padrão do `manage-vip-users`.
-
-### Detalhes técnicos
 
 
-| Arquivo                                        | Ação                                                                                              |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `src/components/admin/LeadManagement.tsx`      | Criar componente                                                                                  |
-| `src/pages/Admin.tsx`                          | Importar e adicionar ao layout                                                                    |
-| `supabase/functions/manage-vip-users/index.ts` | Adicionar action `list_leads` que busca assessments básicos com patient_email usando service role |
+## 3 Alterações: Sub-área multi-select, CTA duplo no diagnóstico básico, Exit intent no diagnóstico
+
+### 1. Sub-área de dor: permitir seleção múltipla
+
+**Arquivo: `src/components/assessment/AnamnesisForm.tsx`**
+
+- Alterar `painSubArea` de `string` para `string[]` (array) na interface `AnamnesisData` e no estado inicial
+- No render do step `region_detail`, trocar lógica de seleção única para toggle (adicionar/remover do array)
+- Card fica destacado se `painSubAreas.includes(area.id)`
+- Validação: `data.painSubArea.length > 0` em vez de `!== ""`
+- Manter compatibilidade: onde `painSubArea` é consumido como string downstream, fazer `.join(", ")`
+
+### 2. CTA duplo no resultado do diagnóstico básico (avulso em destaque + mensal)
+
+**Arquivo: `src/components/assessment/DiagnosisResult.tsx`**
+
+Substituir o card de unlock atual (que só mostra o plano mensal R$79,90) por dois CTAs:
+
+- **CTA principal (destaque)**: Avaliação Premium Avulsa — R$109,00
+  - Botão grande, cor primária, com badge "Mais popular" ou "Recomendado"
+  - Redireciona para `/assessment/premium` (pagamento avulso)
+- **CTA secundário**: Plano Mensal — R$79,90/mês
+  - Botão outline menor abaixo
+  - Texto explicativo: "Inclui 2 avaliações/mês + diário de dor + histórico"
+  - Redireciona para `/assessment/premium` com parâmetro ou diretamente ao checkout mensal
+
+Importar `PREMIUM_SINGLE_PRICE_FORMATTED` de `@/constants/pricing`
+
+### 3. Exit intent popup na página de diagnóstico básico
+
+**Arquivo: `src/pages/Assessment.tsx`** (ou onde o DiagnosisResult é renderizado para basic)
+
+- Importar e renderizar `<ExitIntentPopup />` quando o modo é `basic` e o diagnóstico está visível
+- Ajustar o ExitIntentPopup para aceitar uma prop opcional de contexto (ex: `variant="diagnosis"`) que mude o copy para algo como "Não vá embora! Desbloqueie seu resultado completo por apenas R$109"
+- Ou: criar lógica no ExitIntentPopup que detecta se está na rota `/assessment/basic` e adapta a mensagem
+
+**Arquivo: `src/components/ExitIntentPopup.tsx`**
+
+- Aceitar prop `variant?: "landing" | "diagnosis"`
+- Quando `variant === "diagnosis"`: copy focado em desbloquear resultado, CTA vai para avaliação avulsa premium
+- Quando `variant === "landing"` (default): comportamento atual
+
+### Arquivos alterados
+
+| Arquivo | Ação |
+|---|---|
+| `src/components/assessment/AnamnesisForm.tsx` | `painSubArea` string → string[], multi-select no step region_detail |
+| `src/components/assessment/DiagnosisResult.tsx` | CTA duplo: avulso (destaque) + mensal |
+| `src/components/ExitIntentPopup.tsx` | Prop `variant` para adaptar copy ao contexto diagnóstico |
+| `src/pages/Assessment.tsx` | Renderizar ExitIntentPopup no resultado do diagnóstico básico |
+
