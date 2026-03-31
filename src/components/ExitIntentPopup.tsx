@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight, Lock, Loader2 } from "lucide-react";
 import { PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ExitIntentPopupProps {
   variant?: "landing" | "diagnosis";
