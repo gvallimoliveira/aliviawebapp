@@ -57,8 +57,8 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;
   const timerText = secondsLeft > 0
-    ? `⏳ Oferta válida por ${minutes}:${seconds.toString().padStart(2, "0")}`
-    : "⏳ Oferta expirada";
+    ? `⏳ ${t("diagnosis.timer_valid")} ${minutes}:${seconds.toString().padStart(2, "0")}`
+    : `⏳ ${t("diagnosis.timer_expired")}`;
 
   const confidenceConfig = {
     low: { color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200", icon: AlertTriangle, label: t("diagnosis.confidence.low") },

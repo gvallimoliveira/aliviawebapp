@@ -172,8 +172,8 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
             )}
             <p className="text-xs text-muted-foreground">
               {isPt
-                ? "Enviaremos seu resultado para este e-mail. Sem spam."
-                : "We'll send your results to this email. No spam."}
+                ? "Usaremos apenas para identificar seu resultado. Você poderá compartilhá-lo via WhatsApp."
+                : "We'll only use it to identify your result. You can share it via WhatsApp."}
             </p>
           </motion.div>
         )}

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight, Lock, Loader2 } from "lucide-react";
 import { PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ExitIntentPopupProps {
   variant?: "landing" | "diagnosis";
@@ -23,6 +24,7 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const storageKey = variant === "diagnosis" ? "exit-popup-diagnosis-seen" : "exit-popup-seen";
@@ -50,13 +52,25 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
       if (armed && document.visibilityState === "hidden") trigger();
     };
 
+    const handlePageHide = () => {
+      if (armed) trigger();
+    };
+
+    const handleBlur = () => {
+      if (armed) trigger();
+    };
+
     document.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("blur", handleBlur);
 
     return () => {
       clearTimeout(armTimer);
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("blur", handleBlur);
     };
   }, [user, trigger, variant]);
 
@@ -103,13 +117,13 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
           </div>
           <DialogTitle className="text-xl">
             {isDiagnosis
-              ? "Espere! Desconto exclusivo de 10% 🔥"
-              : "Espere! Sua primeira avaliação é grátis 🎉"}
+              ? t("diagnosis.exit_intent_title")
+              : t("landing.exit_intent_title") || "Espere! Sua primeira avaliação é grátis 🎉"}
           </DialogTitle>
           <DialogDescription className="text-base">
             {isDiagnosis
-              ? `Desbloqueie seu resultado completo por ${DISCOUNTED_PRICE} (de ${PREMIUM_SINGLE_PRICE_FORMATTED}). Oferta única!`
-              : "Descubra o que pode estar causando sua dor em minutos, com base em evidência científica. Sem compromisso."}
+              ? t("diagnosis.exit_intent_desc").replace("{{price}}", DISCOUNTED_PRICE).replace("{{original}}", PREMIUM_SINGLE_PRICE_FORMATTED)
+              : t("landing.exit_intent_desc") || "Descubra o que pode estar causando sua dor em minutos, com base em evidência científica. Sem compromisso."}
           </DialogDescription>
         </DialogHeader>
 
@@ -130,9 +144,9 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : isDiagnosis ? (
-              <>Desbloquear por {DISCOUNTED_PRICE} <ArrowRight className="h-4 w-4" /></>
+              <>{t("diagnosis.exit_intent_cta").replace("{{price}}", DISCOUNTED_PRICE)} <ArrowRight className="h-4 w-4" /></>
             ) : (
-              <>Começar avaliação grátis <ArrowRight className="h-4 w-4" /></>
+              <>{t("landing.exit_intent_cta") || "Começar avaliação grátis"} <ArrowRight className="h-4 w-4" /></>
             )}
           </Button>
           <Button
@@ -145,7 +159,7 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
               }
             }}
           >
-            {isDiagnosis ? "Continuar vendo o resumo" : "Ver planos premium"}
+            {isDiagnosis ? t("diagnosis.exit_intent_dismiss") : (t("landing.exit_intent_plans") || "Ver planos premium")}
           </Button>
         </div>
       </DialogContent>
