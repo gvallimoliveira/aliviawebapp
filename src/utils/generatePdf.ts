@@ -565,11 +565,13 @@ export async function generateAssessmentPdfBlob(options: PdfOptions): Promise<Bl
   return doc.output("blob");
 }
 
-// ── Basic Report PDF (for WhatsApp sharing — only hypothesis, confidence, summary, disclaimer) ──
+// ── Basic Report PDF (for WhatsApp sharing — hypothesis, confidence, summary, pain map, VAS, disclaimer) ──
 interface BasicReportOptions {
   diagnosis: Diagnosis;
   language: string;
   patientName?: string;
+  painRegions?: string[];
+  painScore?: number;
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
