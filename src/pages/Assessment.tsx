@@ -326,8 +326,9 @@ const Assessment = () => {
         )}
 
         {step === "welcome" && (
-          <WelcomeStep mode={mode as "basic" | "premium"} onContinue={(email) => {
-            if (email) setCapturedEmail(email);
+          <WelcomeStep mode={mode as "basic" | "premium"} onContinue={(data) => {
+            if (data?.email) setCapturedEmail(data.email);
+            if (data?.name) setCapturedName(data.name);
             setStep("redflags");
           }} />
         )}
