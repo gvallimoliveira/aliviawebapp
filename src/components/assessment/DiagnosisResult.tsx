@@ -50,7 +50,7 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
   </Card>
 );
 
-const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName }: DiagnosisResultProps) => {
+const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, painRegions, painScore }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [sharingPdf, setSharingPdf] = useState(false);
