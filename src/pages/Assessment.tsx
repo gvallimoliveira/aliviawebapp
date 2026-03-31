@@ -528,6 +528,8 @@ const Assessment = () => {
               onBack={() => setStep(mode === "premium" ? "functional_tests" : "anamnesis")}
               onNewAssessment={() => navigate("/")}
               onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
+              assessmentId={assessmentId}
+              patientName={capturedEmail || undefined}
             />
             {mode === "basic" && <ExitIntentPopup variant="diagnosis" />}
           </>
