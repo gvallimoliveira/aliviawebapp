@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Share2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Share2, Timer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
+import ExitIntentPopup from "@/components/ExitIntentPopup";
 
 interface Diagnosis {
   hypothesis: string;
@@ -42,6 +44,21 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
 
 const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment }: DiagnosisResultProps) => {
   const { t } = useLanguage();
+
+  // 5-minute countdown timer for basic mode urgency
+  const [secondsLeft, setSecondsLeft] = useState(300);
+  useEffect(() => {
+    if (mode !== "basic") return;
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [mode]);
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
+  const timerText = secondsLeft > 0
+    ? `⏳ Oferta válida por ${minutes}:${seconds.toString().padStart(2, "0")}`
+    : "⏳ Oferta expirada";
 
   const confidenceConfig = {
     low: { color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200", icon: AlertTriangle, label: t("diagnosis.confidence.low") },
@@ -194,6 +211,11 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   <p className="text-3xl font-bold text-foreground mt-1">{PREMIUM_SINGLE_PRICE_FORMATTED}</p>
                   <p className="text-xs text-muted-foreground mt-1">{t("diagnosis.single_desc") || "Pagamento único — resultado completo agora"}</p>
                 </div>
+                {/* Urgency timer */}
+                <div className={`flex items-center justify-center gap-1.5 text-sm font-semibold ${secondsLeft > 0 ? "text-amber-600 animate-pulse" : "text-muted-foreground"}`}>
+                  <Timer className="h-4 w-4" />
+                  {timerText}
+                </div>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
                   {t("diagnosis.blurred_hint")}
                 </p>
@@ -226,6 +248,9 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
               </CardContent>
             </Card>
           </motion.div>
+
+          {/* Exit intent popup for basic diagnosis */}
+          <ExitIntentPopup variant="diagnosis" />
         </>
       )}
 

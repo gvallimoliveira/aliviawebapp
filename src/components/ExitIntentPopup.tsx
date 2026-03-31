@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -9,15 +10,18 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowRight, Lock } from "lucide-react";
+import { Sparkles, ArrowRight, Lock, Loader2 } from "lucide-react";
 import { PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 
 interface ExitIntentPopupProps {
   variant?: "landing" | "diagnosis";
 }
 
+const DISCOUNTED_PRICE = "R$ 98,10";
+
 const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -25,6 +29,7 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
 
   const trigger = useCallback(() => {
     if (sessionStorage.getItem(storageKey) || (variant === "landing" && user)) return;
+    if (variant === "diagnosis" && sessionStorage.getItem("exit-intent-discount-used")) return;
     sessionStorage.setItem(storageKey, "true");
     setOpen(true);
   }, [user, storageKey, variant]);
@@ -59,6 +64,24 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
 
   const isDiagnosis = variant === "diagnosis";
 
+  const handleDiscountCheckout = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-payment", {
+        body: { payment_type: "single", exit_intent_discount: true },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        sessionStorage.setItem("exit-intent-discount-used", "true");
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Exit intent payment error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-md text-center">
@@ -72,12 +95,12 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
           </div>
           <DialogTitle className="text-xl">
             {isDiagnosis
-              ? "Não vá embora! Seu resultado completo está pronto 🔓"
+              ? "Espere! Desconto exclusivo de 10% 🔥"
               : "Espere! Sua primeira avaliação é grátis 🎉"}
           </DialogTitle>
           <DialogDescription className="text-base">
             {isDiagnosis
-              ? `Desbloqueie a explicação detalhada, recomendações e plano de tratamento personalizado por apenas ${PREMIUM_SINGLE_PRICE_FORMATTED}.`
+              ? `Desbloqueie seu resultado completo por ${DISCOUNTED_PRICE} (de ${PREMIUM_SINGLE_PRICE_FORMATTED}). Oferta única!`
               : "Descubra o que pode estar causando sua dor em minutos, com base em evidência científica. Sem compromisso."}
           </DialogDescription>
         </DialogHeader>
@@ -86,27 +109,29 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
           <Button
             size="lg"
             className="w-full gap-2"
+            disabled={loading}
             onClick={() => {
-              setOpen(false);
               if (isDiagnosis) {
-                navigate("/assessment/premium");
+                handleDiscountCheckout();
               } else {
+                setOpen(false);
                 navigate("/assessment/basic");
               }
             }}
           >
-            {isDiagnosis
-              ? `Desbloquear por ${PREMIUM_SINGLE_PRICE_FORMATTED}`
-              : "Começar avaliação grátis"}
-            <ArrowRight className="h-4 w-4" />
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isDiagnosis ? (
+              <>Desbloquear por {DISCOUNTED_PRICE} <ArrowRight className="h-4 w-4" /></>
+            ) : (
+              <>Começar avaliação grátis <ArrowRight className="h-4 w-4" /></>
+            )}
           </Button>
           <Button
             variant="outline"
             onClick={() => {
               setOpen(false);
-              if (isDiagnosis) {
-                // just close
-              } else {
+              if (!isDiagnosis) {
                 const el = document.getElementById("comparison");
                 if (el) el.scrollIntoView({ behavior: "smooth" });
               }

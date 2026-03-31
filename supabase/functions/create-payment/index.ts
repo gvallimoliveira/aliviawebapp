@@ -31,10 +31,12 @@ serve(async (req) => {
 
     let referralCode: string | null = null;
     let paymentType: "monthly" | "single" = "monthly";
+    let exitIntentDiscount = false;
     try {
       const body = await req.json();
       referralCode = body?.referral_code || null;
       if (body?.payment_type === "single") paymentType = "single";
+      if (body?.exit_intent_discount === true) exitIntentDiscount = true;
     } catch {
       // No body or invalid JSON
     }
@@ -158,7 +160,17 @@ serve(async (req) => {
       },
     };
 
-    if (discountCoupon) {
+    // Exit intent 10% discount for single payment (takes priority over referral if both present)
+    if (exitIntentDiscount && paymentType === "single") {
+      const exitCoupon = await stripe.coupons.create({
+        percent_off: 10,
+        duration: "once",
+        max_redemptions: 1,
+        name: `Exit Intent 10% - ${Date.now()}`,
+      });
+      sessionParams.discounts = [{ coupon: exitCoupon.id }];
+      console.log(`[create-payment] Created exit intent coupon: ${exitCoupon.id}`);
+    } else if (discountCoupon) {
       sessionParams.discounts = [{ coupon: discountCoupon }];
     }
 
