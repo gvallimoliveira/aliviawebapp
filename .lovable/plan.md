@@ -1,54 +1,59 @@
 
 
-## Relatório PDF via WhatsApp + Persistência da Página de Resultado
+## Queixa Principal Multi-Select com Combinações Válidas + Campo "Outra Queixa" Renomeado
 
-### Problema 1: WhatsApp envia texto puro
-O botão de compartilhamento monta uma string de texto e abre `wa.me/?text=...`. Precisa gerar um PDF no padrão visual do app, fazer upload para storage, e compartilhar o link do PDF via WhatsApp.
+### Contexto
 
-### Problema 2: Perda de acesso à página após compartilhar
-Ao clicar no WhatsApp no mobile, o usuário sai do app e pode perder o estado. Precisa persistir o resultado para que o usuário possa voltar e ver o diagnóstico + CTAs de compra.
+Atualmente `chiefComplaint` é uma string única. Precisa virar array (`string[]`) com validação de combinações biomecânicas permitidas.
 
----
+### Regras de Combinação
 
-### Solução
+Dois grupos mutuamente exclusivos (não pode misturar entre eles):
 
-**1. Gerar PDF básico e fazer upload**
+- **Membros superiores + cervical**: cervical, ombro, cotovelo, punho, cabeça
+- **Membros inferiores**: lombar, quadril, joelho, tornozelo, pé
 
-- Criar função `generateBasicReportPdf` em `src/utils/generatePdf.ts` — versão simplificada do relatório contendo apenas: hipótese, confiança, resumo e disclaimer (sem explanation/reasoning/recommendations que são premium)
-- Criar bucket de storage `assessment-reports` (público) para hospedar os PDFs
-- No botão WhatsApp do `DiagnosisResult.tsx`: gerar o PDF blob → upload para `assessment-reports/{assessmentId}.pdf` → compartilhar link público via WhatsApp
+Dentro de cada grupo, qualquer combinação é livre. Itens isolados que não fazem parte de nenhum grupo também são permitidos. O que **não** pode: selecionar um item de cada grupo ao mesmo tempo.
 
-**2. Persistir resultado para retorno**
+Mapeamento das queixas aos grupos:
+- **Superior**: `neck_pain`, `shoulder_pain`, `elbow_pain`, `wrist_pain`, `headache`
+- **Inferior**: `back_pain`, `hip_pain`, `knee_pain`, `ankle_pain`, `foot_pain`
 
-- Salvar `assessmentId` no `sessionStorage` quando o diagnóstico é exibido
-- Criar rota `/assessment/result/:id` (ou reutilizar `AssessmentView.tsx`) que carrega o assessment do banco e renderiza o `DiagnosisResult` com os CTAs de compra
-- O link compartilhado no WhatsApp aponta para essa rota, permitindo ao próprio usuário voltar
+### Alterações
 
-**3. Fluxo do botão WhatsApp (DiagnosisResult.tsx)**
+**1. `src/components/assessment/AnamnesisForm.tsx`**
 
-```
-Clique → loading state → gerar PDF blob → upload storage → montar mensagem WhatsApp com link do PDF → window.open(wa.me)
-```
+- `chiefComplaint: string` → `chiefComplaints: string[]` (array)
+- Step "complaint": trocar seleção única por toggle multi-select com checkboxes
+- Ao clicar numa queixa, verificar se a combinação resultante é válida (não mistura grupos). Se inválida, exibir toast/mensagem e não adicionar
+- Validação do step: `data.chiefComplaints.length > 0 || customComplaint.trim() !== ""`
+- Atualizar `isShoulderRelated()` e `getSelectedSingleRegionType()` para usar o array
+- Feedback visual: ao tentar selecionar item do grupo oposto, mostrar mensagem explicativa
 
-A mensagem no WhatsApp será:
-```
-🩺 Aliv.iA — Resultado da Avaliação
+**2. Campo "Outra queixa" → "Outra queixa / Detalhes"**
 
-📋 Hipótese: {hypothesis}
-📊 Confiança: {confidence}
+- Atualizar label e placeholder nos 3 arquivos de locale:
+  - PT: "Outra queixa ou descreva mais detalhes" / "Descreva outra queixa ou detalhe mais sua queixa..."
+  - EN: "Other complaint or describe more details" / "Describe another complaint or add more details..."
+  - ES: "Otra queja o describa más detalles" / "Describa otra queja o agregue más detalles..."
 
-📄 Relatório completo em PDF:
-{link_do_pdf}
+**3. Locales (`pt.json`, `en.json`, `es.json`)**
 
-💡 Faça sua avaliação: {origin}
-```
+- Atualizar `anamnesis.other_complaint` e `anamnesis.other_complaint_placeholder`
+- Adicionar chave `anamnesis.complaint_group_conflict` para mensagem de erro quando tenta misturar grupos
+
+**4. Impacto downstream**
+
+- `generate-diagnosis` edge function recebe `chiefComplaints` (array) em vez de `chiefComplaint` (string) — precisa ajustar para aceitar ambos formatos (backward compatible)
+- `DiagnosisResult`, `TreatmentPlan`, e outros componentes que leem `anamnesisData.chiefComplaint` precisam ser atualizados para ler o array
 
 ### Arquivos alterados
 
 | Arquivo | Ação |
 |---|---|
-| `src/utils/generatePdf.ts` | Nova função `generateBasicReportPdf` (só dados básicos) |
-| `src/components/assessment/DiagnosisResult.tsx` | Botão WhatsApp gera PDF, faz upload, compartilha link |
-| `src/pages/Assessment.tsx` | Salvar assessmentId em sessionStorage no resultado |
-| Migration SQL | Criar bucket `assessment-reports` público |
+| `src/components/assessment/AnamnesisForm.tsx` | `chiefComplaint` → `chiefComplaints[]`, multi-select com validação de grupo |
+| `src/locales/pt.json` | Atualizar labels "outra queixa", adicionar msg de conflito |
+| `src/locales/en.json` | Idem |
+| `src/locales/es.json` | Idem |
+| `supabase/functions/generate-diagnosis/index.ts` | Aceitar `chiefComplaints` array (backward compatible) |
 
