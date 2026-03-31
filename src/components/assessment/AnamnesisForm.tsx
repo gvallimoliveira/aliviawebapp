@@ -48,6 +48,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   const vasBarRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<AnamnesisData>({
     chiefComplaint: "",
+    chiefComplaints: [],
     customComplaint: "",
     onset: "",
     painRegions: [],
