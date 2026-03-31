@@ -62,7 +62,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     ageRange: "",
     hasPriorSurgery: "",
     surgeryDetails: "",
-    painSubArea: "",
+    painSubArea: [],
     hadTwist: "",
     hadSprain: "",
     hadDislocation: "",
