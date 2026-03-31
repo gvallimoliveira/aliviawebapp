@@ -567,7 +567,18 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       case "onset": return data.onset !== "";
       case "surgery": return data.hasPriorSurgery !== "";
       case "painmap": return data.painRegions.length > 0;
-      case "region_detail": return data.painSubArea.length > 0;
+      case "region_detail": {
+        if (data.painSubArea.length === 0) return false;
+        const regionType = getSelectedSingleRegionType();
+        const needsTrauma = regionType === "knee" || regionType === "ankle" || regionType === "shoulder";
+        if (needsTrauma) {
+          const traumaVal = regionType === "knee" ? data.hadTwist : regionType === "ankle" ? data.hadSprain : data.hadDislocation;
+          if (!traumaVal) return false;
+          const needsOttawa = (regionType === "knee" && data.hadTwist === "anamnesis.trauma.yes") || (regionType === "ankle" && data.hadSprain === "anamnesis.trauma.yes");
+          if (needsOttawa && !data.ottawaPositive) return false;
+        }
+        return true;
+      }
       case "sex_age": return data.sex !== "" && data.ageRange !== "";
       case "paintype": return data.painTypes.length > 0;
       case "evolution": return data.evolution !== "";
