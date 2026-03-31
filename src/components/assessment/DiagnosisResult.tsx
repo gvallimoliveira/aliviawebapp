@@ -248,6 +248,9 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
               </CardContent>
             </Card>
           </motion.div>
+
+          {/* Exit intent popup for basic diagnosis */}
+          <ExitIntentPopup variant="diagnosis" />
         </>
       )}
 
