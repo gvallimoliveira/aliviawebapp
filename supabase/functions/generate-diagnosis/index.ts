@@ -180,6 +180,43 @@ BIOMECHANICAL CONSIDERATIONS:
       ? `\nPRIOR SURGERY HISTORY (IMPORTANT — integrate into clinical reasoning):\nThe patient reports previous surgery: "${surgeryDetails}"\nConsider: post-surgical adhesions, altered biomechanics, hardware-related symptoms, adjacent segment pathology, re-injury of repaired structures, and whether current symptoms may be related to the prior surgical intervention.\n`
       : "";
 
+    // Multi-complaint kinetic chain reasoning block
+    const multiComplaintBlock = chiefComplaints.length > 1 ? `
+MULTI-SEGMENT COMPLAINT ANALYSIS (MANDATORY — patient reports pain in ${chiefComplaints.length} regions):
+The patient reports simultaneous complaints in: ${chiefComplaints.map(c => c.replace("anamnesis.complaint.", "")).join(", ")}
+
+You MUST systematically consider TWO primary clinical reasoning pathways:
+
+1. KINETIC CHAIN COMPENSATION HYPOTHESIS:
+   - One of the reported regions is likely the PRIMARY source of dysfunction
+   - The other region(s) developed SECONDARY pain due to compensatory movement patterns
+   - The body naturally adopts antalgic (pain-avoiding) postures and movement strategies that overload adjacent segments
+   - Example: A primary hip dysfunction can cause altered gait mechanics → knee overload → secondary knee pain
+   - Example: Cervical dysfunction → compensatory shoulder elevation → secondary shoulder impingement
+   - Example: Ankle instability → altered foot strike → compensatory knee valgus → knee pain
+   - In your hypothesis, clearly identify which region you believe is the PRIMARY source and which is COMPENSATORY
+   - Explain the biomechanical chain linking them (which muscles, joints, or movement patterns connect the two)
+   - Reference: Neumann — "Kinesiology of the Musculoskeletal System" on kinetic chain interdependence
+
+2. NEURAL/RADICULAR ORIGIN HYPOTHESIS:
+   - Consider whether a SINGLE neural structure could explain pain in multiple segments simultaneously
+   - Cervical radiculopathy (C5-C7) can cause neck + shoulder + arm + elbow + wrist pain along the dermatome
+   - Lumbar radiculopathy (L3-S1) can cause low back + hip + thigh + knee + ankle pain
+   - Thoracic outlet syndrome can cause cervical + shoulder + arm symptoms
+   - Peripheral nerve entrapments can cause multi-segment referred pain patterns
+   - Key indicators for neural origin: radiating pain, burning, tingling, numbness, pain that follows a dermatomal pattern
+   - Reference: Shacklock — "Clinical Neurodynamics" on neural tension and multi-segment pain
+   - If the patient reports radiating/burning/tingling pain types, STRONGLY favor this pathway
+
+CLINICAL DECISION:
+- Evaluate the patient's pain types: if radiating/burning/tingling → lean toward neural origin
+- Evaluate onset: if gradual with progressive spread → lean toward compensation
+- Evaluate onset: if sudden with simultaneous multi-region pain → lean toward neural/radicular
+- You may conclude it's a COMBINATION of both pathways
+- In your summary and explanation, clearly state your reasoning for the chosen pathway
+` : "";
+
+
     const systemPrompt = `You are an experienced musculoskeletal physiotherapist AI assistant. Based on the patient's anamnesis data and validated questionnaire results, generate a diagnostic hypothesis.
 
 PROPRIETARY MODEL — D.I.F.I. (Pain Feedback Cycle):
@@ -224,6 +261,7 @@ ${kneeThighBlock}
 ${subAreaBlock}
 ${ottawaBlock}
 ${surgeryBlock}
+${multiComplaintBlock}
 
 IMPORTANT RULES:
 - Always respond in ${lang}.
