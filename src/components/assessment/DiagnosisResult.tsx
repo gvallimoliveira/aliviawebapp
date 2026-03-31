@@ -29,6 +29,8 @@ interface DiagnosisResultProps {
   onGenerateTreatment?: () => void;
   assessmentId?: string | null;
   patientName?: string;
+  painRegions?: string[];
+  painScore?: number;
 }
 
 const BlurredPreview = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -48,7 +50,7 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
   </Card>
 );
 
-const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName }: DiagnosisResultProps) => {
+const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, painRegions, painScore }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [sharingPdf, setSharingPdf] = useState(false);
@@ -286,6 +288,8 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   diagnosis,
                   language,
                   patientName: patientName || undefined,
+                  painRegions: painRegions || undefined,
+                  painScore: painScore,
                 });
 
                 if (assessmentId) {

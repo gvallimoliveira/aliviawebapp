@@ -565,11 +565,13 @@ export async function generateAssessmentPdfBlob(options: PdfOptions): Promise<Bl
   return doc.output("blob");
 }
 
-// ── Basic Report PDF (for WhatsApp sharing — only hypothesis, confidence, summary, disclaimer) ──
+// ── Basic Report PDF (for WhatsApp sharing — hypothesis, confidence, summary, pain map, VAS, disclaimer) ──
 interface BasicReportOptions {
   diagnosis: Diagnosis;
   language: string;
   patientName?: string;
+  painRegions?: string[];
+  painScore?: number;
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
@@ -640,6 +642,80 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   // Summary
   y = renderSubSection(doc, y, isPt ? "Resumo" : "Summary", options.diagnosis.summary);
+
+  // ── Pain Score (VAS) ──
+  if (options.painScore != null) {
+    y = checkPage(doc, y, 28);
+    y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary);
+
+    const score = options.painScore;
+    const barX = MARGIN + 2;
+    const barW = CONTENT_WIDTH - 4;
+    const barH = 8;
+
+    // Gradient background bar
+    const gradientStops = [
+      { pos: 0, color: [50, 180, 100] },
+      { pos: 0.3, color: [180, 180, 50] },
+      { pos: 0.6, color: [220, 140, 40] },
+      { pos: 1, color: [200, 50, 50] },
+    ];
+    const segments = 20;
+    const segW = barW / segments;
+    for (let i = 0; i < segments; i++) {
+      const t = i / segments;
+      // Interpolate color
+      let c = gradientStops[0].color;
+      for (let s = 0; s < gradientStops.length - 1; s++) {
+        if (t >= gradientStops[s].pos && t <= gradientStops[s + 1].pos) {
+          const ratio = (t - gradientStops[s].pos) / (gradientStops[s + 1].pos - gradientStops[s].pos);
+          c = gradientStops[s].color.map((v, idx) => Math.round(v + (gradientStops[s + 1].color[idx] - v) * ratio));
+          break;
+        }
+      }
+      doc.setFillColor(c[0], c[1], c[2]);
+      doc.rect(barX + i * segW, y, segW + 0.5, barH, "F");
+    }
+
+    // Rounded border
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(barX, y, barW, barH, 2, 2, "S");
+
+    // Score marker
+    const markerX = barX + (score / 10) * barW;
+    doc.setFillColor(...COLORS.white);
+    doc.setDrawColor(...COLORS.foreground);
+    doc.setLineWidth(1);
+    doc.circle(markerX, y + barH / 2, 4, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
+    y += barH + 3;
+
+    // Labels
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(isPt ? "Sem dor" : "No pain", barX, y + 3);
+    const worstLabel = isPt ? "Pior dor" : "Worst pain";
+    doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
+
+    // Score text
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    const scoreColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
+    doc.setTextColor(...scoreColor);
+    const scoreText = `${score}/10`;
+    doc.text(scoreText, barX + barW / 2 - doc.getTextWidth(scoreText) / 2, y + 3);
+    y += 10;
+  }
+
+  // ── Pain Map ──
+  if (options.painRegions && options.painRegions.length > 0) {
+    y = await renderPainMapSection(doc, y, options.painRegions, isPt);
+  }
 
   // Premium upsell banner
   y += 6;

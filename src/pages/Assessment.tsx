@@ -534,6 +534,8 @@ const Assessment = () => {
               onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
               assessmentId={assessmentId}
               patientName={capturedEmail || undefined}
+              painRegions={anamnesisData?.painRegions}
+              painScore={anamnesisData?.painScore}
             />
             {mode === "basic" && <ExitIntentPopup variant="diagnosis" />}
           </>
