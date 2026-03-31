@@ -24,6 +24,7 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const storageKey = variant === "diagnosis" ? "exit-popup-diagnosis-seen" : "exit-popup-seen";
