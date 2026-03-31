@@ -191,7 +191,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         return type;
       }
     }
-    // Also check by chief complaint if single complaint matches
+    // Also check by chief complaints if any complaint matches
     const complaintMap: Record<string, string> = {
       "anamnesis.complaint.knee_pain": "knee",
       "anamnesis.complaint.ankle_pain": "ankle",
@@ -199,8 +199,10 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       "anamnesis.complaint.shoulder_pain": "shoulder",
       "anamnesis.complaint.neck_pain": "cervical",
     };
-    if (complaintMap[data.chiefComplaint] && regions.length <= 2) {
-      return complaintMap[data.chiefComplaint];
+    for (const cc of data.chiefComplaints) {
+      if (complaintMap[cc] && regions.length <= 2) {
+        return complaintMap[cc];
+      }
     }
     return null;
   };
