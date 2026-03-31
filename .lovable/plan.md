@@ -1,53 +1,42 @@
+## Timer de urgência + Desconto 10% no Exit Intent do diagnóstico básico
 
+### 1. Timer de urgência no CTA avulso (DiagnosisResult)
 
-## 3 Alterações: Sub-área multi-select, CTA duplo no diagnóstico básico, Exit intent no diagnóstico
+**Arquivo: `src/components/assessment/DiagnosisResult.tsx**`
 
-### 1. Sub-área de dor: permitir seleção múltipla
+- Adicionar hook `useCountdown` inline: inicia em 5 minutos (300s) ao montar o componente, decrementa a cada segundo
+- Exibir abaixo do preço: `⏳ Oferta válida por 4:59` com texto vermelho/amber pulsante
+- Quando chegar a 0, mostrar "Oferta expirada" (mas ainda permite clicar — é urgência psicológica, não bloqueio real)
 
-**Arquivo: `src/components/assessment/AnamnesisForm.tsx`**
+### 2. Desconto 10% exclusivo no Exit Intent do diagnóstico
 
-- Alterar `painSubArea` de `string` para `string[]` (array) na interface `AnamnesisData` e no estado inicial
-- No render do step `region_detail`, trocar lógica de seleção única para toggle (adicionar/remover do array)
-- Card fica destacado se `painSubAreas.includes(area.id)`
-- Validação: `data.painSubArea.length > 0` em vez de `!== ""`
-- Manter compatibilidade: onde `painSubArea` é consumido como string downstream, fazer `.join(", ")`
+**Abordagem**: Cupom Stripe único gerado on-the-fly. Mais limpo que produto separado — mantém o mesmo price_id da avulsa (R$109) mas aplica 10% off (fica ~R$98,10).
 
-### 2. CTA duplo no resultado do diagnóstico básico (avulso em destaque + mensal)
+**Arquivo: `supabase/functions/create-payment/index.ts**`
 
-**Arquivo: `src/components/assessment/DiagnosisResult.tsx`**
+- Aceitar novo campo `exit_intent_discount: true` no body
+- Quando presente e `payment_type === "single"`: criar cupom Stripe `percent_off: 10, duration: "once", max_redemptions: 1` com nome `Exit Intent 10% - {timestamp}`
+- Aplicar o cupom na session via `discounts: [{ coupon }]`
+- Não acumula com referral discount (prioriza o maior)
 
-Substituir o card de unlock atual (que só mostra o plano mensal R$79,90) por dois CTAs:
+**Arquivo: `src/components/ExitIntentPopup.tsx**`
 
-- **CTA principal (destaque)**: Avaliação Premium Avulsa — R$109,00
-  - Botão grande, cor primária, com badge "Mais popular" ou "Recomendado"
-  - Redireciona para `/assessment/premium` (pagamento avulso)
-- **CTA secundário**: Plano Mensal — R$79,90/mês
-  - Botão outline menor abaixo
-  - Texto explicativo: "Inclui 2 avaliações/mês + diário de dor + histórico"
-  - Redireciona para `/assessment/premium` com parâmetro ou diretamente ao checkout mensal
+- Quando `variant === "diagnosis"`: mudar copy para mostrar desconto de 10%
+  - Título: "Espere! Desconto exclusivo de 10% 🔥"
+  - Descrição: "Desbloqueie seu resultado completo por R$98,10 (de R$109,00). Oferta única!"
+- Botão CTA chama `supabase.functions.invoke("create-payment", { body: { payment_type: "single", exit_intent_discount: true } })` e redireciona ao checkout Stripe
+- Salvar flag `sessionStorage.setItem("exit-intent-discount-used", "true")` para não repetir
+- Adicionar estado de loading no botão
 
-Importar `PREMIUM_SINGLE_PRICE_FORMATTED` de `@/constants/pricing`
+**Arquivo: `src/components/assessment/DiagnosisResult.tsx**`
 
-### 3. Exit intent popup na página de diagnóstico básico
-
-**Arquivo: `src/pages/Assessment.tsx`** (ou onde o DiagnosisResult é renderizado para basic)
-
-- Importar e renderizar `<ExitIntentPopup />` quando o modo é `basic` e o diagnóstico está visível
-- Ajustar o ExitIntentPopup para aceitar uma prop opcional de contexto (ex: `variant="diagnosis"`) que mude o copy para algo como "Não vá embora! Desbloqueie seu resultado completo por apenas R$109"
-- Ou: criar lógica no ExitIntentPopup que detecta se está na rota `/assessment/basic` e adapta a mensagem
-
-**Arquivo: `src/components/ExitIntentPopup.tsx`**
-
-- Aceitar prop `variant?: "landing" | "diagnosis"`
-- Quando `variant === "diagnosis"`: copy focado em desbloquear resultado, CTA vai para avaliação avulsa premium
-- Quando `variant === "landing"` (default): comportamento atual
+- Importar e renderizar `<ExitIntentPopup variant="diagnosis" />` diretamente dentro do bloco `mode === "basic"` (além do que já está no Assessment.tsx, para garantir cobertura)
 
 ### Arquivos alterados
 
-| Arquivo | Ação |
-|---|---|
-| `src/components/assessment/AnamnesisForm.tsx` | `painSubArea` string → string[], multi-select no step region_detail |
-| `src/components/assessment/DiagnosisResult.tsx` | CTA duplo: avulso (destaque) + mensal |
-| `src/components/ExitIntentPopup.tsx` | Prop `variant` para adaptar copy ao contexto diagnóstico |
-| `src/pages/Assessment.tsx` | Renderizar ExitIntentPopup no resultado do diagnóstico básico |
 
+| Arquivo                                         | Ação                                                                         |
+| ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| `src/components/assessment/DiagnosisResult.tsx` | Timer countdown de 5min no CTA avulso                                        |
+| `src/components/ExitIntentPopup.tsx`            | Copy com desconto 10%, botão chama create-payment com `exit_intent_discount` |
+| `supabase/functions/create-payment/index.ts`    | Gerar cupom Stripe 10% único quando `exit_intent_discount: true`             |
