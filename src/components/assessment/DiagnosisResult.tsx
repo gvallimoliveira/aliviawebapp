@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Share2 } f
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
+import { PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 
 interface Diagnosis {
   hypothesis: string;
