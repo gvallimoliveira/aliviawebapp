@@ -41,7 +41,7 @@ interface AnamnesisFormProps {
 }
 
 const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const vasBarRef = useRef<HTMLDivElement>(null);
@@ -312,7 +312,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
             </div>
             {needsTraumaQuestion && (
               <div className="space-y-3 mt-4 p-4 bg-muted/50 rounded-xl">
-                <Label className="text-sm font-medium">{t(traumaQuestion)}</Label>
+                <Label className="text-sm font-medium">{t(traumaQuestion)} <span className="text-destructive">*</span></Label>
                 <div className="grid grid-cols-2 gap-2">
                   {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
                     <Button key={opt} variant={traumaValue === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, [traumaKey]: opt })}>
@@ -320,11 +320,14 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
                     </Button>
                   ))}
                 </div>
+                {!traumaValue && data.painSubArea.length > 0 && (
+                  <p className="text-xs text-destructive font-medium">{language === "pt" ? "⚠ Resposta obrigatória" : "⚠ Required answer"}</p>
+                )}
               </div>
             )}
             {showOttawa && (
               <div className="space-y-3 mt-2 p-4 bg-destructive/5 border border-destructive/20 rounded-xl">
-                <Label className="text-sm font-medium">{t("anamnesis.ottawa_title")}</Label>
+                <Label className="text-sm font-medium">{t("anamnesis.ottawa_title")} <span className="text-destructive">*</span></Label>
                 <p className="text-sm text-muted-foreground">{t(regionType === "knee" ? "anamnesis.ottawa_knee" : "anamnesis.ottawa_ankle")}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
@@ -333,6 +336,9 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
                     </Button>
                   ))}
                 </div>
+                {!data.ottawaPositive && (
+                  <p className="text-xs text-destructive font-medium">{language === "pt" ? "⚠ Resposta obrigatória para prosseguir" : "⚠ Required answer to proceed"}</p>
+                )}
                 {data.ottawaPositive === "anamnesis.trauma.no" && (
                   <p className="text-sm text-destructive font-medium">{t("anamnesis.ottawa_warning")}</p>
                 )}
