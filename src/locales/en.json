@@ -1,5 +1,9 @@
 {
   "nav.home": "Home",
+  "landing.exit_intent_title": "Wait! Your first assessment is free 🎉",
+  "landing.exit_intent_desc": "Discover what might be causing your pain in minutes, based on scientific evidence. No commitment.",
+  "landing.exit_intent_cta": "Start free assessment",
+  "landing.exit_intent_plans": "See premium plans",
   "nav.about": "About",
   "nav.login": "Sign In",
   "nav.signup": "Sign Up",

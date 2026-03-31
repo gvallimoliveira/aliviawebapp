@@ -1,5 +1,9 @@
 {
   "nav.home": "Inicio",
+  "landing.exit_intent_title": "¡Espere! Su primera evaluación es gratis 🎉",
+  "landing.exit_intent_desc": "Descubra qué puede estar causando su dolor en minutos, basado en evidencia científica. Sin compromiso.",
+  "landing.exit_intent_cta": "Comenzar evaluación gratis",
+  "landing.exit_intent_plans": "Ver planes premium",
   "nav.about": "Acerca de",
   "nav.login": "Ingresar",
   "nav.signup": "Registrarse",
