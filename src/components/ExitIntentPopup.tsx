@@ -122,7 +122,7 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
           </DialogTitle>
           <DialogDescription className="text-base">
             {isDiagnosis
-              ? t("diagnosis.exit_intent_desc", { price: DISCOUNTED_PRICE, original: PREMIUM_SINGLE_PRICE_FORMATTED })
+              ? t("diagnosis.exit_intent_desc").replace("{{price}}", DISCOUNTED_PRICE).replace("{{original}}", PREMIUM_SINGLE_PRICE_FORMATTED)
               : t("landing.exit_intent_desc") || "Descubra o que pode estar causando sua dor em minutos, com base em evidência científica. Sem compromisso."}
           </DialogDescription>
         </DialogHeader>
