@@ -63,9 +63,35 @@ const Assessment = () => {
   // Check premium payment status
   useEffect(() => {
     if (mode === "premium" && user && step === "payment_check") {
-      checkPremiumAccess();
+      // Check if user came from exit intent discount flow
+      const exitIntentPending = sessionStorage.getItem("exit-intent-discount-pending");
+      if (exitIntentPending) {
+        sessionStorage.removeItem("exit-intent-discount-pending");
+        handleExitIntentPayment();
+      } else {
+        checkPremiumAccess();
+      }
     }
   }, [mode, user, step]);
+
+  const handleExitIntentPayment = async () => {
+    setPaymentLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-payment", {
+        body: { payment_type: "single", exit_intent_discount: true },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        sessionStorage.setItem("exit-intent-discount-used", "true");
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Exit intent payment error:", err);
+      checkPremiumAccess(); // fallback to normal flow
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   const checkPremiumAccess = async () => {
     try {
