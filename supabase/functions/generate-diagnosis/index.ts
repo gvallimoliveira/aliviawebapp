@@ -26,11 +26,14 @@ serve(async (req) => {
     const isBasic = mode === "basic";
     const isProfessional = mode === "professional";
 
+    // Support both chiefComplaints (array) and chiefComplaint (string) for backward compat
+    const chiefComplaints: string[] = anamnesisData.chiefComplaints || (anamnesisData.chiefComplaint ? [anamnesisData.chiefComplaint] : []);
+
     // Detect shoulder-related complaint
     const shoulderComplaints = ["anamnesis.complaint.shoulder_pain"];
     const shoulderRegions = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
     const armRegions = ["right_arm", "left_arm", "arm_side"];
-    const isShoulderCase = shoulderComplaints.includes(anamnesisData.chiefComplaint) ||
+    const isShoulderCase = chiefComplaints.some(c => shoulderComplaints.includes(c)) ||
       (anamnesisData.painRegions || []).some((r: string) => shoulderRegions.includes(r));
     const hasArmComponent = (anamnesisData.painRegions || []).some((r: string) => armRegions.includes(r));
 
