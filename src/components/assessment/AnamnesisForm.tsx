@@ -123,10 +123,49 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     return "text-destructive";
   };
 
+  // Biomechanical groups for complaint validation
+  const upperGroup = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.shoulder_pain", "anamnesis.complaint.elbow_pain", "anamnesis.complaint.wrist_pain", "anamnesis.complaint.headache"];
+  const lowerGroup = ["anamnesis.complaint.back_pain", "anamnesis.complaint.hip_pain", "anamnesis.complaint.knee_pain", "anamnesis.complaint.ankle_pain", "anamnesis.complaint.foot_pain"];
+
+  const getComplaintGroup = (c: string): "upper" | "lower" | null => {
+    if (upperGroup.includes(c)) return "upper";
+    if (lowerGroup.includes(c)) return "lower";
+    return null;
+  };
+
+  const canAddComplaint = (complaint: string, current: string[]): boolean => {
+    const newGroup = getComplaintGroup(complaint);
+    if (!newGroup) return true; // items not in any group are always allowed
+    for (const c of current) {
+      const g = getComplaintGroup(c);
+      if (g && g !== newGroup) return false;
+    }
+    return true;
+  };
+
+  const [complaintConflict, setComplaintConflict] = useState(false);
+
+  const toggleComplaint = (complaint: string) => {
+    const current = data.chiefComplaints;
+    if (current.includes(complaint)) {
+      const updated = current.filter(c => c !== complaint);
+      setData({ ...data, chiefComplaints: updated, chiefComplaint: updated[0] || "" });
+      setComplaintConflict(false);
+    } else {
+      if (!canAddComplaint(complaint, current)) {
+        setComplaintConflict(true);
+        return;
+      }
+      setComplaintConflict(false);
+      const updated = [...current, complaint];
+      setData({ ...data, chiefComplaints: updated, chiefComplaint: updated[0] || "" });
+    }
+  };
+
   const isShoulderRelated = () => {
     const shoulderComplaints = ["anamnesis.complaint.shoulder_pain"];
     const shoulderRegions = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
-    return shoulderComplaints.includes(data.chiefComplaint) || data.painRegions.some(r => shoulderRegions.includes(r));
+    return data.chiefComplaints.some(c => shoulderComplaints.includes(c)) || data.painRegions.some(r => shoulderRegions.includes(r));
   };
 
   // Region detection for sub-questions
