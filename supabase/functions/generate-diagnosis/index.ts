@@ -121,11 +121,11 @@ BIOMECHANICAL CONSIDERATIONS:
         const shoulderR = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
         const cervicalR = ["neck_front", "neck_back", "neck_side"];
         const regions = anamnesisData.painRegions || [];
-        if (regions.some((r: string) => kneeR.includes(r)) || kneeComplaints.includes(anamnesisData.chiefComplaint)) return "knee";
-        if (regions.some((r: string) => ankleR.includes(r)) || anamnesisData.chiefComplaint === "anamnesis.complaint.ankle_pain") return "ankle";
-        if (regions.some((r: string) => hipR.includes(r)) || hipComplaints.includes(anamnesisData.chiefComplaint)) return "hip";
-        if (regions.some((r: string) => shoulderR.includes(r)) || anamnesisData.chiefComplaint === "anamnesis.complaint.shoulder_pain") return "shoulder";
-        if (regions.some((r: string) => cervicalR.includes(r)) || anamnesisData.chiefComplaint === "anamnesis.complaint.neck_pain") return "cervical";
+        if (regions.some((r: string) => kneeR.includes(r)) || chiefComplaints.some(c => kneeComplaints.includes(c))) return "knee";
+        if (regions.some((r: string) => ankleR.includes(r)) || chiefComplaints.includes("anamnesis.complaint.ankle_pain")) return "ankle";
+        if (regions.some((r: string) => hipR.includes(r)) || chiefComplaints.some(c => hipComplaints.includes(c))) return "hip";
+        if (regions.some((r: string) => shoulderR.includes(r)) || chiefComplaints.includes("anamnesis.complaint.shoulder_pain")) return "shoulder";
+        if (regions.some((r: string) => cervicalR.includes(r)) || chiefComplaints.includes("anamnesis.complaint.neck_pain")) return "cervical";
         return null;
       })();
 
