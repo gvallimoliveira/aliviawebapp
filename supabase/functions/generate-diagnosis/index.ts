@@ -26,11 +26,14 @@ serve(async (req) => {
     const isBasic = mode === "basic";
     const isProfessional = mode === "professional";
 
+    // Support both chiefComplaints (array) and chiefComplaint (string) for backward compat
+    const chiefComplaints: string[] = anamnesisData.chiefComplaints || (anamnesisData.chiefComplaint ? [anamnesisData.chiefComplaint] : []);
+
     // Detect shoulder-related complaint
     const shoulderComplaints = ["anamnesis.complaint.shoulder_pain"];
     const shoulderRegions = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
     const armRegions = ["right_arm", "left_arm", "arm_side"];
-    const isShoulderCase = shoulderComplaints.includes(anamnesisData.chiefComplaint) ||
+    const isShoulderCase = chiefComplaints.some(c => shoulderComplaints.includes(c)) ||
       (anamnesisData.painRegions || []).some((r: string) => shoulderRegions.includes(r));
     const hasArmComponent = (anamnesisData.painRegions || []).some((r: string) => armRegions.includes(r));
 
@@ -39,10 +42,10 @@ serve(async (req) => {
     const kneeRegions = ["right_knee", "left_knee", "right_knee_back", "left_knee_back", "knee_side"];
     const thighRegions = ["right_thigh", "left_thigh", "right_hamstring", "left_hamstring", "thigh_side"];
     const hipComplaints = ["anamnesis.complaint.hip_pain"];
-    const isKneeCase = kneeComplaints.includes(anamnesisData.chiefComplaint) ||
+    const isKneeCase = chiefComplaints.some(c => kneeComplaints.includes(c)) ||
       (anamnesisData.painRegions || []).some((r: string) => kneeRegions.includes(r));
     const isThighCase = (anamnesisData.painRegions || []).some((r: string) => thighRegions.includes(r));
-    const isHipCase = hipComplaints.includes(anamnesisData.chiefComplaint);
+    const isHipCase = chiefComplaints.some(c => hipComplaints.includes(c));
     const isKneeThighCase = isKneeCase || isThighCase;
 
     const shoulderBlock = isShoulderCase ? `
@@ -118,11 +121,11 @@ BIOMECHANICAL CONSIDERATIONS:
         const shoulderR = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
         const cervicalR = ["neck_front", "neck_back", "neck_side"];
         const regions = anamnesisData.painRegions || [];
-        if (regions.some((r: string) => kneeR.includes(r)) || kneeComplaints.includes(anamnesisData.chiefComplaint)) return "knee";
-        if (regions.some((r: string) => ankleR.includes(r)) || anamnesisData.chiefComplaint === "anamnesis.complaint.ankle_pain") return "ankle";
-        if (regions.some((r: string) => hipR.includes(r)) || hipComplaints.includes(anamnesisData.chiefComplaint)) return "hip";
-        if (regions.some((r: string) => shoulderR.includes(r)) || anamnesisData.chiefComplaint === "anamnesis.complaint.shoulder_pain") return "shoulder";
-        if (regions.some((r: string) => cervicalR.includes(r)) || anamnesisData.chiefComplaint === "anamnesis.complaint.neck_pain") return "cervical";
+        if (regions.some((r: string) => kneeR.includes(r)) || chiefComplaints.some(c => kneeComplaints.includes(c))) return "knee";
+        if (regions.some((r: string) => ankleR.includes(r)) || chiefComplaints.includes("anamnesis.complaint.ankle_pain")) return "ankle";
+        if (regions.some((r: string) => hipR.includes(r)) || chiefComplaints.some(c => hipComplaints.includes(c))) return "hip";
+        if (regions.some((r: string) => shoulderR.includes(r)) || chiefComplaints.includes("anamnesis.complaint.shoulder_pain")) return "shoulder";
+        if (regions.some((r: string) => cervicalR.includes(r)) || chiefComplaints.includes("anamnesis.complaint.neck_pain")) return "cervical";
         return null;
       })();
 
@@ -244,7 +247,7 @@ Response format (JSON):
 }`;
 
     const userPrompt = `Patient anamnesis data:
-- Chief complaint: ${anamnesisData.chiefComplaint || anamnesisData.customComplaint}
+- Chief complaints: ${chiefComplaints.join(", ") || anamnesisData.customComplaint}
 - Custom complaint details: ${anamnesisData.customComplaint || "N/A"}
 - Onset: ${anamnesisData.onset}
 - Pain regions: ${anamnesisData.painRegions?.join(", ") || "Not specified"}

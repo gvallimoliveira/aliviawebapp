@@ -11,7 +11,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import PainMap from "./PainMap";
 
 export interface AnamnesisData {
-  chiefComplaint: string;
+  chiefComplaint: string; // deprecated, kept for backward compat
+  chiefComplaints: string[];
   customComplaint: string;
   onset: string;
   painRegions: string[];
@@ -47,6 +48,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   const vasBarRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<AnamnesisData>({
     chiefComplaint: "",
+    chiefComplaints: [],
     customComplaint: "",
     onset: "",
     painRegions: [],
@@ -121,10 +123,49 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     return "text-destructive";
   };
 
+  // Biomechanical groups for complaint validation
+  const upperGroup = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.shoulder_pain", "anamnesis.complaint.elbow_pain", "anamnesis.complaint.wrist_pain", "anamnesis.complaint.headache"];
+  const lowerGroup = ["anamnesis.complaint.back_pain", "anamnesis.complaint.hip_pain", "anamnesis.complaint.knee_pain", "anamnesis.complaint.ankle_pain", "anamnesis.complaint.foot_pain"];
+
+  const getComplaintGroup = (c: string): "upper" | "lower" | null => {
+    if (upperGroup.includes(c)) return "upper";
+    if (lowerGroup.includes(c)) return "lower";
+    return null;
+  };
+
+  const canAddComplaint = (complaint: string, current: string[]): boolean => {
+    const newGroup = getComplaintGroup(complaint);
+    if (!newGroup) return true; // items not in any group are always allowed
+    for (const c of current) {
+      const g = getComplaintGroup(c);
+      if (g && g !== newGroup) return false;
+    }
+    return true;
+  };
+
+  const [complaintConflict, setComplaintConflict] = useState(false);
+
+  const toggleComplaint = (complaint: string) => {
+    const current = data.chiefComplaints;
+    if (current.includes(complaint)) {
+      const updated = current.filter(c => c !== complaint);
+      setData({ ...data, chiefComplaints: updated, chiefComplaint: updated[0] || "" });
+      setComplaintConflict(false);
+    } else {
+      if (!canAddComplaint(complaint, current)) {
+        setComplaintConflict(true);
+        return;
+      }
+      setComplaintConflict(false);
+      const updated = [...current, complaint];
+      setData({ ...data, chiefComplaints: updated, chiefComplaint: updated[0] || "" });
+    }
+  };
+
   const isShoulderRelated = () => {
     const shoulderComplaints = ["anamnesis.complaint.shoulder_pain"];
     const shoulderRegions = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
-    return shoulderComplaints.includes(data.chiefComplaint) || data.painRegions.some(r => shoulderRegions.includes(r));
+    return data.chiefComplaints.some(c => shoulderComplaints.includes(c)) || data.painRegions.some(r => shoulderRegions.includes(r));
   };
 
   // Region detection for sub-questions
@@ -150,7 +191,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         return type;
       }
     }
-    // Also check by chief complaint if single complaint matches
+    // Also check by chief complaints if any complaint matches
     const complaintMap: Record<string, string> = {
       "anamnesis.complaint.knee_pain": "knee",
       "anamnesis.complaint.ankle_pain": "ankle",
@@ -158,8 +199,10 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       "anamnesis.complaint.shoulder_pain": "shoulder",
       "anamnesis.complaint.neck_pain": "cervical",
     };
-    if (complaintMap[data.chiefComplaint] && regions.length <= 2) {
-      return complaintMap[data.chiefComplaint];
+    for (const cc of data.chiefComplaints) {
+      if (complaintMap[cc] && regions.length <= 2) {
+        return complaintMap[cc];
+      }
     }
     return null;
   };
@@ -221,13 +264,30 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">{t("anamnesis.complaint_title")}</h3>
+            <p className="text-xs text-muted-foreground">{language === "pt" ? "Selecione uma ou mais regiões relacionadas" : "Select one or more related regions"}</p>
             <div className="grid grid-cols-2 gap-2">
-              {complaints.map((c) => (
-                <Button key={c} variant={data.chiefComplaint === c ? "default" : "outline"} size="sm" className="justify-start text-left h-auto py-2.5 rounded-xl" onClick={() => setData({ ...data, chiefComplaint: c })}>
-                  {t(c)}
-                </Button>
-              ))}
+              {complaints.map((c) => {
+                const selected = data.chiefComplaints.includes(c);
+                const disabled = !selected && !canAddComplaint(c, data.chiefComplaints);
+                return (
+                  <Button
+                    key={c}
+                    variant={selected ? "default" : "outline"}
+                    size="sm"
+                    className={`justify-start text-left h-auto py-2.5 rounded-xl gap-2 ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                    onClick={() => !disabled && toggleComplaint(c)}
+                  >
+                    <div className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 ${selected ? "border-primary-foreground bg-primary-foreground/20" : "border-muted-foreground/30"}`}>
+                      {selected && <Check className="h-3 w-3" />}
+                    </div>
+                    {t(c)}
+                  </Button>
+                );
+              })}
             </div>
+            {complaintConflict && (
+              <p className="text-xs text-destructive font-medium">{t("anamnesis.complaint_group_conflict")}</p>
+            )}
             <div className="space-y-2">
               <Label>{t("anamnesis.other_complaint")}</Label>
               <Input value={data.customComplaint} onChange={(e) => setData({ ...data, customComplaint: e.target.value.slice(0, 200) })} placeholder={t("anamnesis.other_complaint_placeholder")} maxLength={200} />
@@ -569,7 +629,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
 
   const isStepValid = (id: StepId): boolean => {
     switch (id) {
-      case "complaint": return data.chiefComplaint !== "" || data.customComplaint.trim() !== "";
+      case "complaint": return data.chiefComplaints.length > 0 || data.customComplaint.trim() !== "";
       case "onset": return data.onset !== "";
       case "surgery": return data.hasPriorSurgery !== "";
       case "painmap": return data.painRegions.length > 0;

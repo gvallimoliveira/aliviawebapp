@@ -336,7 +336,8 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
     const d = a.anamnesis_data;
     if (!d) return [];
     const fields: { label: string; value: string }[] = [];
-    if (d.chiefComplaint) fields.push({ label: "Queixa Principal", value: translateKey(d.chiefComplaint) });
+    const complaints = d.chiefComplaints || (d.chiefComplaint ? [d.chiefComplaint] : []);
+    if (complaints.length > 0) fields.push({ label: "Queixa Principal", value: complaints.map((c: string) => translateKey(c)).join(", ") });
     if (d.customComplaint) fields.push({ label: "Queixa (detalhe)", value: d.customComplaint });
     if (d.onset) fields.push({ label: "Modo de Início", value: translateKey(d.onset) });
     if (d.evolution) fields.push({ label: "Evolução", value: translateKey(d.evolution) });
