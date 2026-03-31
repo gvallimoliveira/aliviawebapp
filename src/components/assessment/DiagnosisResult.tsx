@@ -171,16 +171,28 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
             <p className="text-sm text-muted-foreground leading-relaxed">{fakeTreatment}</p>
           </BlurredPreview>
 
-          {/* Unlock CTA */}
+          {/* Unlock CTA — Dual pricing */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
+            className="space-y-4"
           >
-            <Card className="rounded-xl border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 shadow-lg shadow-primary/5">
+            {/* Primary: Single assessment */}
+            <Card className="rounded-xl border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 shadow-lg shadow-primary/5 relative overflow-hidden">
+              <div className="absolute top-3 right-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2.5 py-1 rounded-full">
+                  {t("diagnosis.recommended") || "Recomendado"}
+                </span>
+              </div>
               <CardContent className="py-6 text-center space-y-4">
                 <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mx-auto">
-                  <Lock className="h-6 w-6 text-primary" />
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{t("diagnosis.single_title") || "Avaliação Premium Avulsa"}</p>
+                  <p className="text-3xl font-bold text-foreground mt-1">{PREMIUM_SINGLE_PRICE_FORMATTED}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("diagnosis.single_desc") || "Pagamento único — resultado completo agora"}</p>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
                   {t("diagnosis.blurred_hint")}
@@ -188,10 +200,28 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                 <Button
                   size="lg"
                   onClick={() => window.location.href = "/assessment/premium"}
-                  className="rounded-xl gap-2 px-8 py-6 text-base"
+                  className="rounded-xl gap-2 px-8 py-6 text-base w-full"
                 >
                   <Sparkles className="h-4 w-4" />
-                  {t("diagnosis.unlock_full")} {PREMIUM_PRICE_FORMATTED}
+                  {t("diagnosis.unlock_single") || "Desbloquear por"} {PREMIUM_SINGLE_PRICE_FORMATTED}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Secondary: Monthly plan */}
+            <Card className="rounded-xl border-border/50">
+              <CardContent className="py-4 text-center space-y-3">
+                <p className="text-sm font-medium text-foreground">{t("diagnosis.monthly_title") || "Ou assine o plano mensal"}</p>
+                <p className="text-xl font-bold text-foreground">{PREMIUM_PRICE_FORMATTED}</p>
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                  {t("diagnosis.monthly_desc") || "Inclui 2 avaliações/mês + diário de dor + histórico + comparação de métricas"}
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.href = "/assessment/premium"}
+                  className="rounded-xl gap-2"
+                >
+                  {t("diagnosis.subscribe_monthly") || "Assinar plano mensal"}
                 </Button>
               </CardContent>
             </Card>
