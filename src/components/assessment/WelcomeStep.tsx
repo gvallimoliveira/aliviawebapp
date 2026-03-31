@@ -155,32 +155,54 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
           ))}
         </div>
 
-        {/* Email capture for basic assessments (non-logged users) */}
+        {/* Name + Email capture for basic assessments (non-logged users) */}
         {needsEmail && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="w-full max-w-sm space-y-2"
+            className="w-full max-w-sm space-y-3"
           >
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="email"
-                placeholder={isPt ? "Seu melhor e-mail" : "Your best email"}
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (emailError) setEmailError("");
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleContinue()}
-                className="pl-10"
-                autoComplete="email"
-              />
+            <div className="space-y-2">
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={isPt ? "Seu nome" : "Your name"}
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (nameError) setNameError("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleContinue()}
+                  className="pl-10"
+                  autoComplete="name"
+                />
+              </div>
+              {nameError && (
+                <p className="text-xs text-destructive text-left">{nameError}</p>
+              )}
             </div>
-            {emailError && (
-              <p className="text-xs text-destructive text-left">{emailError}</p>
-            )}
+            <div className="space-y-2">
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder={isPt ? "Seu melhor e-mail" : "Your best email"}
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleContinue()}
+                  className="pl-10"
+                  autoComplete="email"
+                />
+              </div>
+              {emailError && (
+                <p className="text-xs text-destructive text-left">{emailError}</p>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
               {isPt
                 ? "Usaremos apenas para identificar seu resultado. Você poderá compartilhá-lo via WhatsApp."
