@@ -288,6 +288,8 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   diagnosis,
                   language,
                   patientName: patientName || undefined,
+                  painRegions: painRegions || undefined,
+                  painScore: painScore,
                 });
 
                 if (assessmentId) {
