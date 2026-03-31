@@ -46,6 +46,7 @@ const Assessment = () => {
   const [hasRetried, setHasRetried] = useState(false);
   const [isMonthly, setIsMonthly] = useState(true);
   const [capturedEmail, setCapturedEmail] = useState<string | null>(null);
+  const [capturedName, setCapturedName] = useState<string | null>(null);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
 
   // Redirect premium users to auth if not logged in
@@ -325,8 +326,9 @@ const Assessment = () => {
         )}
 
         {step === "welcome" && (
-          <WelcomeStep mode={mode as "basic" | "premium"} onContinue={(email) => {
-            if (email) setCapturedEmail(email);
+          <WelcomeStep mode={mode as "basic" | "premium"} onContinue={(data) => {
+            if (data?.email) setCapturedEmail(data.email);
+            if (data?.name) setCapturedName(data.name);
             setStep("redflags");
           }} />
         )}
@@ -533,7 +535,7 @@ const Assessment = () => {
               onNewAssessment={() => navigate("/")}
               onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
               assessmentId={assessmentId}
-              patientName={capturedEmail || undefined}
+              patientName={capturedName || user?.user_metadata?.full_name || undefined}
               painRegions={anamnesisData?.painRegions}
               painScore={anamnesisData?.painScore}
             />

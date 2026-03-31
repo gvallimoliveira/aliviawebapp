@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail } from "lucide-react";
+import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -10,7 +10,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 export interface WelcomeStepProps {
   mode: "basic" | "premium" | "professional";
   professionalName?: string;
-  onContinue: (email?: string) => void;
+  onContinue: (data?: { email?: string; name?: string }) => void;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -21,25 +21,36 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
   const isPt = language === "pt";
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [nameError, setNameError] = useState("");
 
   const needsEmail = mode === "basic" && !user;
 
   const handleContinue = () => {
     if (needsEmail) {
-      const trimmed = email.trim();
-      if (!trimmed) {
+      let hasError = false;
+      const trimmedName = name.trim();
+      const trimmedEmail = email.trim();
+      if (!trimmedName) {
+        setNameError(isPt ? "Informe seu nome para continuar" : "Enter your name to continue");
+        hasError = true;
+      } else {
+        setNameError("");
+      }
+      if (!trimmedEmail) {
         setEmailError(isPt ? "Informe seu e-mail para continuar" : "Enter your email to continue");
-        return;
-      }
-      if (!EMAIL_RE.test(trimmed)) {
+        hasError = true;
+      } else if (!EMAIL_RE.test(trimmedEmail)) {
         setEmailError(isPt ? "E-mail inválido" : "Invalid email");
-        return;
+        hasError = true;
+      } else {
+        setEmailError("");
       }
-      setEmailError("");
+      if (hasError) return;
     }
     setIsTransitioning(true);
-    setTimeout(() => onContinue(needsEmail ? email.trim() : undefined), 600);
+    setTimeout(() => onContinue(needsEmail ? { email: email.trim(), name: name.trim() } : undefined), 600);
   };
 
   const estimatedTime = mode === "premium"
@@ -144,32 +155,54 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
           ))}
         </div>
 
-        {/* Email capture for basic assessments (non-logged users) */}
+        {/* Name + Email capture for basic assessments (non-logged users) */}
         {needsEmail && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="w-full max-w-sm space-y-2"
+            className="w-full max-w-sm space-y-3"
           >
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="email"
-                placeholder={isPt ? "Seu melhor e-mail" : "Your best email"}
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (emailError) setEmailError("");
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleContinue()}
-                className="pl-10"
-                autoComplete="email"
-              />
+            <div className="space-y-2">
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={isPt ? "Seu nome" : "Your name"}
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (nameError) setNameError("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleContinue()}
+                  className="pl-10"
+                  autoComplete="name"
+                />
+              </div>
+              {nameError && (
+                <p className="text-xs text-destructive text-left">{nameError}</p>
+              )}
             </div>
-            {emailError && (
-              <p className="text-xs text-destructive text-left">{emailError}</p>
-            )}
+            <div className="space-y-2">
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder={isPt ? "Seu melhor e-mail" : "Your best email"}
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleContinue()}
+                  className="pl-10"
+                  autoComplete="email"
+                />
+              </div>
+              {emailError && (
+                <p className="text-xs text-destructive text-left">{emailError}</p>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
               {isPt
                 ? "Usaremos apenas para identificar seu resultado. Você poderá compartilhá-lo via WhatsApp."

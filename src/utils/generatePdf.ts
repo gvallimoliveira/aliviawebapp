@@ -694,6 +694,16 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
     y += barH + 3;
 
+    // Emoji faces below the bar
+    const emojis = ["😀", "🙂", "😐", "😟", "😣", "😫"];
+    const emojiPositions = [0, 2, 4, 6, 8, 10];
+    doc.setFontSize(10);
+    for (let i = 0; i < emojis.length; i++) {
+      const ex = barX + (emojiPositions[i] / 10) * barW;
+      doc.text(emojis[i], ex - 2, y + 4);
+    }
+    y += 8;
+
     // Labels
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
@@ -719,20 +729,50 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   // Premium upsell banner
   y += 6;
-  const upsellText = isPt
-    ? "Este é o resultado básico da sua avaliação. Para obter explicação detalhada, raciocínio clínico, recomendações personalizadas e plano de tratamento completo, desbloqueie a versão Premium no app."
-    : "This is your basic assessment result. To get detailed explanation, clinical reasoning, personalized recommendations, and a complete treatment plan, unlock the Premium version in the app.";
-  const upsellLines = doc.splitTextToSize(upsellText, CONTENT_WIDTH - 16);
-  const upsellH = upsellLines.length * 3.5 + 18;
+  y = checkPage(doc, y, 70);
+
+  const upsellTitle = isPt ? "🔓 Desbloqueie sua Avaliação Completa" : "🔓 Unlock Your Full Assessment";
+  const bulletsPt = [
+    "✅ Explicação clínica detalhada do seu quadro",
+    "✅ Raciocínio clínico baseado em evidências científicas",
+    "✅ Recomendações personalizadas para o seu caso",
+    "✅ Plano de tratamento completo em 3 fases progressivas",
+    "✅ Exercícios com séries, repetições e progressão",
+    "✅ Questionários validados (KOOS, SPADI, ODI, DASH...)",
+  ];
+  const bulletsEn = [
+    "✅ Detailed clinical explanation of your condition",
+    "✅ Evidence-based clinical reasoning",
+    "✅ Personalized recommendations for your case",
+    "✅ Complete 3-phase progressive treatment plan",
+    "✅ Exercises with sets, reps and progression",
+    "✅ Validated questionnaires (KOOS, SPADI, ODI, DASH...)",
+  ];
+  const bullets = isPt ? bulletsPt : bulletsEn;
+  const ctaText = isPt
+    ? "Acesse o app e desbloqueie agora por apenas R$ 19,90 (avulso) ou R$ 29,90/mês."
+    : "Open the app and unlock now for just R$ 19.90 (single) or R$ 29.90/month.";
+
+  const totalBulletH = bullets.length * 5;
+  const upsellH = 18 + totalBulletH + 14;
   drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFontSize(10);
   doc.setTextColor(...COLORS.primary);
-  doc.text(isPt ? "🔒 Desbloqueie o resultado completo" : "🔒 Unlock full results", MARGIN + 8, y + 10);
+  doc.text(upsellTitle, MARGIN + 8, y + 10);
+  
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
-  doc.setTextColor(...COLORS.muted);
-  doc.text(upsellLines, MARGIN + 8, y + 16);
+  doc.setTextColor(...COLORS.foreground);
+  let bulletY = y + 18;
+  for (const b of bullets) {
+    doc.text(b, MARGIN + 8, bulletY);
+    bulletY += 5;
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...COLORS.primary);
+  doc.text(ctaText, MARGIN + 8, bulletY + 4);
   y += upsellH + 8;
 
   // Disclaimer
