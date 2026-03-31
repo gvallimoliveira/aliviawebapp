@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail } from "lucide-react";
+import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -10,7 +10,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 export interface WelcomeStepProps {
   mode: "basic" | "premium" | "professional";
   professionalName?: string;
-  onContinue: (email?: string) => void;
+  onContinue: (data?: { email?: string; name?: string }) => void;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
