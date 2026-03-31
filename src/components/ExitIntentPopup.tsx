@@ -159,7 +159,7 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
               }
             }}
           >
-            {isDiagnosis ? "Continuar vendo o resumo" : "Ver planos premium"}
+            {isDiagnosis ? t("diagnosis.exit_intent_dismiss") : (t("landing.exit_intent_plans") || "Ver planos premium")}
           </Button>
         </div>
       </DialogContent>
