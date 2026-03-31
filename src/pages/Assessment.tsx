@@ -494,13 +494,16 @@ const Assessment = () => {
           </motion.div>
         )}
         {step === "result" && diagnosis && (
-          <DiagnosisResult
-            diagnosis={diagnosis}
-            mode={mode}
-            onBack={() => setStep(mode === "premium" ? "functional_tests" : "anamnesis")}
-            onNewAssessment={() => navigate("/")}
-            onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
-          />
+          <>
+            <DiagnosisResult
+              diagnosis={diagnosis}
+              mode={mode}
+              onBack={() => setStep(mode === "premium" ? "functional_tests" : "anamnesis")}
+              onNewAssessment={() => navigate("/")}
+              onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
+            />
+            {mode === "basic" && <ExitIntentPopup variant="diagnosis" />}
+          </>
         )}
         {step === "loading_treatment" && (
           <div className="text-center py-20 space-y-4">
