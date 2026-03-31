@@ -23,6 +23,7 @@ import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
+import ExitIntentPopup from "@/components/ExitIntentPopup";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
@@ -494,13 +495,16 @@ const Assessment = () => {
           </motion.div>
         )}
         {step === "result" && diagnosis && (
-          <DiagnosisResult
-            diagnosis={diagnosis}
-            mode={mode}
-            onBack={() => setStep(mode === "premium" ? "functional_tests" : "anamnesis")}
-            onNewAssessment={() => navigate("/")}
-            onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
-          />
+          <>
+            <DiagnosisResult
+              diagnosis={diagnosis}
+              mode={mode}
+              onBack={() => setStep(mode === "premium" ? "functional_tests" : "anamnesis")}
+              onNewAssessment={() => navigate("/")}
+              onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
+            />
+            {mode === "basic" && <ExitIntentPopup variant="diagnosis" />}
+          </>
         )}
         {step === "loading_treatment" && (
           <div className="text-center py-20 space-y-4">
