@@ -567,7 +567,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       case "onset": return data.onset !== "";
       case "surgery": return data.hasPriorSurgery !== "";
       case "painmap": return data.painRegions.length > 0;
-      case "region_detail": return data.painSubArea !== "";
+      case "region_detail": return data.painSubArea.length > 0;
       case "sex_age": return data.sex !== "" && data.ageRange !== "";
       case "paintype": return data.painTypes.length > 0;
       case "evolution": return data.evolution !== "";
