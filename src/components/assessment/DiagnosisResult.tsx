@@ -27,6 +27,8 @@ interface DiagnosisResultProps {
   onBack: () => void;
   onNewAssessment: () => void;
   onGenerateTreatment?: () => void;
+  assessmentId?: string | null;
+  patientName?: string;
 }
 
 const BlurredPreview = ({ title, children }: { title: string; children: React.ReactNode }) => (
