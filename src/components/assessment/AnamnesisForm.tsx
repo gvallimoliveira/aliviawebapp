@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
