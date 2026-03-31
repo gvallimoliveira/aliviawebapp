@@ -278,13 +278,59 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
           <Button
             variant="outline"
             className="gap-2 rounded-xl text-emerald-600 border-emerald-300 hover:bg-emerald-50"
-            onClick={() => {
-              const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}\n\n${diagnosis.summary}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${window.location.origin}`;
-              const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-              window.open(url, "_blank");
+            disabled={sharingPdf}
+            onClick={async () => {
+              setSharingPdf(true);
+              try {
+                const pdfBlob = await generateBasicReportPdfBlob({
+                  diagnosis,
+                  language,
+                  patientName: patientName || undefined,
+                });
+
+                if (assessmentId) {
+                  const filePath = `${assessmentId}.pdf`;
+                  const { error: uploadError } = await supabase.storage
+                    .from("assessment-reports")
+                    .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
+
+                  if (!uploadError) {
+                    const { data: urlData } = supabase.storage
+                      .from("assessment-reports")
+                      .getPublicUrl(filePath);
+
+                    const origin = getPublicOrigin();
+                    const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${urlData.publicUrl}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                  } else {
+                    throw uploadError;
+                  }
+                } else {
+                  // No assessmentId — download locally and share text
+                  const url = URL.createObjectURL(pdfBlob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `AliviA_Resultado.pdf`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  
+                  const origin = getPublicOrigin();
+                  const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
+                  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                }
+              } catch (err) {
+                console.error("PDF sharing error:", err);
+                toast({
+                  title: language === "pt" ? "Erro ao gerar PDF" : "Error generating PDF",
+                  description: language === "pt" ? "Tente novamente." : "Please try again.",
+                  variant: "destructive",
+                });
+              } finally {
+                setSharingPdf(false);
+              }
             }}
           >
-            <Share2 className="h-4 w-4" />
+            {sharingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
             WhatsApp
           </Button>
           <Button onClick={onNewAssessment} className="rounded-xl">
