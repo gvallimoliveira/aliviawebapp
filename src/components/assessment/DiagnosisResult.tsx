@@ -48,8 +48,10 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
   </Card>
 );
 
-const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment }: DiagnosisResultProps) => {
-  const { t } = useLanguage();
+const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName }: DiagnosisResultProps) => {
+  const { t, language } = useLanguage();
+  const { toast } = useToast();
+  const [sharingPdf, setSharingPdf] = useState(false);
 
   // 5-minute countdown timer for basic mode urgency
   const [secondsLeft, setSecondsLeft] = useState(300);
