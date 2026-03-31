@@ -264,13 +264,30 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">{t("anamnesis.complaint_title")}</h3>
+            <p className="text-xs text-muted-foreground">{language === "pt" ? "Selecione uma ou mais regiões relacionadas" : "Select one or more related regions"}</p>
             <div className="grid grid-cols-2 gap-2">
-              {complaints.map((c) => (
-                <Button key={c} variant={data.chiefComplaint === c ? "default" : "outline"} size="sm" className="justify-start text-left h-auto py-2.5 rounded-xl" onClick={() => setData({ ...data, chiefComplaint: c })}>
-                  {t(c)}
-                </Button>
-              ))}
+              {complaints.map((c) => {
+                const selected = data.chiefComplaints.includes(c);
+                const disabled = !selected && !canAddComplaint(c, data.chiefComplaints);
+                return (
+                  <Button
+                    key={c}
+                    variant={selected ? "default" : "outline"}
+                    size="sm"
+                    className={`justify-start text-left h-auto py-2.5 rounded-xl gap-2 ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                    onClick={() => !disabled && toggleComplaint(c)}
+                  >
+                    <div className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 ${selected ? "border-primary-foreground bg-primary-foreground/20" : "border-muted-foreground/30"}`}>
+                      {selected && <Check className="h-3 w-3" />}
+                    </div>
+                    {t(c)}
+                  </Button>
+                );
+              })}
             </div>
+            {complaintConflict && (
+              <p className="text-xs text-destructive font-medium">{t("anamnesis.complaint_group_conflict")}</p>
+            )}
             <div className="space-y-2">
               <Label>{t("anamnesis.other_complaint")}</Label>
               <Input value={data.customComplaint} onChange={(e) => setData({ ...data, customComplaint: e.target.value.slice(0, 200) })} placeholder={t("anamnesis.other_complaint_placeholder")} maxLength={200} />
