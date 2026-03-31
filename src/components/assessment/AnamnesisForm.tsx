@@ -27,7 +27,7 @@ export interface AnamnesisData {
   ageRange: string;
   hasPriorSurgery: string;
   surgeryDetails: string;
-  painSubArea: string;
+  painSubArea: string[];
   hadTwist: string;
   hadSprain: string;
   hadDislocation: string;
