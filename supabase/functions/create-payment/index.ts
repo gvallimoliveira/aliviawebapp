@@ -31,10 +31,12 @@ serve(async (req) => {
 
     let referralCode: string | null = null;
     let paymentType: "monthly" | "single" = "monthly";
+    let exitIntentDiscount = false;
     try {
       const body = await req.json();
       referralCode = body?.referral_code || null;
       if (body?.payment_type === "single") paymentType = "single";
+      if (body?.exit_intent_discount === true) exitIntentDiscount = true;
     } catch {
       // No body or invalid JSON
     }
