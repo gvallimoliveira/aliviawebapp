@@ -126,6 +126,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   // Biomechanical groups for complaint validation
   const upperGroup = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.shoulder_pain", "anamnesis.complaint.elbow_pain", "anamnesis.complaint.wrist_pain", "anamnesis.complaint.headache"];
   const lowerGroup = ["anamnesis.complaint.back_pain", "anamnesis.complaint.hip_pain", "anamnesis.complaint.knee_pain", "anamnesis.complaint.ankle_pain", "anamnesis.complaint.foot_pain"];
+  // Spinal combination: cervical + lombar are allowed together (full spine chain)
+  const spinalPair = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.back_pain"];
 
   const getComplaintGroup = (c: string): "upper" | "lower" | null => {
     if (upperGroup.includes(c)) return "upper";
@@ -138,7 +140,17 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     if (!newGroup) return true; // items not in any group are always allowed
     for (const c of current) {
       const g = getComplaintGroup(c);
-      if (g && g !== newGroup) return false;
+      if (g && g !== newGroup) {
+        // Allow spinal pair: neck_pain + back_pain
+        const combined = [...current, complaint];
+        const isOnlySpinal = combined.every(item => {
+          const grp = getComplaintGroup(item);
+          if (!grp) return true; // non-grouped items are fine
+          return spinalPair.includes(item);
+        });
+        if (isOnlySpinal) return true;
+        return false;
+      }
     }
     return true;
   };
