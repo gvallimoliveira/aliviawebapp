@@ -65,6 +65,14 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
   const isDiagnosis = variant === "diagnosis";
 
   const handleDiscountCheckout = async () => {
+    if (!user) {
+      // Not logged in — redirect to auth, then back to premium with exit intent flag
+      sessionStorage.setItem("exit-intent-discount-pending", "true");
+      setOpen(false);
+      navigate("/auth", { state: { redirectTo: "/assessment/premium" } });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-payment", {
