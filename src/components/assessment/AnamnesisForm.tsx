@@ -41,7 +41,7 @@ interface AnamnesisFormProps {
 }
 
 const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const vasBarRef = useRef<HTMLDivElement>(null);
