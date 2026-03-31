@@ -535,7 +535,7 @@ const Assessment = () => {
               onNewAssessment={() => navigate("/")}
               onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
               assessmentId={assessmentId}
-              patientName={capturedEmail || undefined}
+              patientName={capturedName || user?.user_metadata?.full_name || undefined}
               painRegions={anamnesisData?.painRegions}
               painScore={anamnesisData?.painScore}
             />
