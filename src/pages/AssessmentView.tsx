@@ -234,11 +234,11 @@ const AssessmentView = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="py-4 space-y-3">
-              {anamnesis.chiefComplaint && (
+              {(anamnesis.chiefComplaints || (anamnesis.chiefComplaint ? [anamnesis.chiefComplaint] : [])).length > 0 && (
                 <AnamnesisField
                   icon={<Heart className="h-3.5 w-3.5" />}
                   label={isPt ? "Queixa Principal" : "Chief Complaint"}
-                  value={translateKey(anamnesis.chiefComplaint, isPt)}
+                  value={(anamnesis.chiefComplaints || [anamnesis.chiefComplaint]).filter(Boolean).map((c: string) => translateKey(c, isPt)).join(", ")}
                 />
               )}
               {anamnesis.customComplaint && (

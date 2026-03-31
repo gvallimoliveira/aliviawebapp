@@ -247,7 +247,7 @@ Response format (JSON):
 }`;
 
     const userPrompt = `Patient anamnesis data:
-- Chief complaint: ${anamnesisData.chiefComplaint || anamnesisData.customComplaint}
+- Chief complaints: ${chiefComplaints.join(", ") || anamnesisData.customComplaint}
 - Custom complaint details: ${anamnesisData.customComplaint || "N/A"}
 - Onset: ${anamnesisData.onset}
 - Pain regions: ${anamnesisData.painRegions?.join(", ") || "Not specified"}

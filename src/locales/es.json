@@ -159,7 +159,7 @@
   "anamnesis.complaint.headache": "Dolor de cabeza",
   "anamnesis.other_complaint": "Otra queja o describa más detalles",
   "anamnesis.other_complaint_placeholder": "Describa otra queja o agregue más detalles...",
-  "antml:complaint_group_conflict": "⚠ No se pueden seleccionar miembros superiores e inferiores al mismo tiempo. Elija regiones del mismo segmento corporal.",
+  "anamnesis.complaint_group_conflict": "⚠ No se pueden seleccionar miembros superiores e inferiores al mismo tiempo. Elija regiones del mismo segmento corporal.",
   "anamnesis.onset_title": "¿Cómo comenzó el dolor?",
   "anamnesis.onset.sudden": "Inicio súbito (de repente)",
   "anamnesis.onset.gradual": "Inicio gradual (fue empeorando de a poco)",

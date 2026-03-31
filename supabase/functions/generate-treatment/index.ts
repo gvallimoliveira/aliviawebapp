@@ -170,7 +170,7 @@ EXERCISE GUIDELINES:
     const normalTests = testResults?.filter((t: any) => !t.painful).map((t: any) => t.testId) || [];
 
     const userPrompt = `Patient data:
-- Chief complaint: ${anamnesisData?.chiefComplaint || anamnesisData?.customComplaint}
+- Chief complaint: ${anamnesisData?.chiefComplaints?.join(", ") || anamnesisData?.chiefComplaint || anamnesisData?.customComplaint}
 - Pain regions: ${anamnesisData?.painRegions?.join(", ") || "Not specified"}
 - Pain types: ${anamnesisData?.painTypes?.join(", ") || "Not specified"}
 - Pain score: ${painScore}/10
