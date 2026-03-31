@@ -117,13 +117,13 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
           </div>
           <DialogTitle className="text-xl">
             {isDiagnosis
-              ? "Espere! Desconto exclusivo de 10% 🔥"
-              : "Espere! Sua primeira avaliação é grátis 🎉"}
+              ? t("diagnosis.exit_intent_title")
+              : t("landing.exit_intent_title") || "Espere! Sua primeira avaliação é grátis 🎉"}
           </DialogTitle>
           <DialogDescription className="text-base">
             {isDiagnosis
-              ? `Desbloqueie seu resultado completo por ${DISCOUNTED_PRICE} (de ${PREMIUM_SINGLE_PRICE_FORMATTED}). Oferta única!`
-              : "Descubra o que pode estar causando sua dor em minutos, com base em evidência científica. Sem compromisso."}
+              ? t("diagnosis.exit_intent_desc", { price: DISCOUNTED_PRICE, original: PREMIUM_SINGLE_PRICE_FORMATTED })
+              : t("landing.exit_intent_desc") || "Descubra o que pode estar causando sua dor em minutos, com base em evidência científica. Sem compromisso."}
           </DialogDescription>
         </DialogHeader>
 
