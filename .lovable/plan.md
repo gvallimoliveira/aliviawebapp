@@ -1,42 +1,54 @@
-## Timer de urgência + Desconto 10% no Exit Intent do diagnóstico básico
 
-### 1. Timer de urgência no CTA avulso (DiagnosisResult)
 
-**Arquivo: `src/components/assessment/DiagnosisResult.tsx**`
+## Relatório PDF via WhatsApp + Persistência da Página de Resultado
 
-- Adicionar hook `useCountdown` inline: inicia em 5 minutos (300s) ao montar o componente, decrementa a cada segundo
-- Exibir abaixo do preço: `⏳ Oferta válida por 4:59` com texto vermelho/amber pulsante
-- Quando chegar a 0, mostrar "Oferta expirada" (mas ainda permite clicar — é urgência psicológica, não bloqueio real)
+### Problema 1: WhatsApp envia texto puro
+O botão de compartilhamento monta uma string de texto e abre `wa.me/?text=...`. Precisa gerar um PDF no padrão visual do app, fazer upload para storage, e compartilhar o link do PDF via WhatsApp.
 
-### 2. Desconto 10% exclusivo no Exit Intent do diagnóstico
+### Problema 2: Perda de acesso à página após compartilhar
+Ao clicar no WhatsApp no mobile, o usuário sai do app e pode perder o estado. Precisa persistir o resultado para que o usuário possa voltar e ver o diagnóstico + CTAs de compra.
 
-**Abordagem**: Cupom Stripe único gerado on-the-fly. Mais limpo que produto separado — mantém o mesmo price_id da avulsa (R$109) mas aplica 10% off (fica ~R$98,10).
+---
 
-**Arquivo: `supabase/functions/create-payment/index.ts**`
+### Solução
 
-- Aceitar novo campo `exit_intent_discount: true` no body
-- Quando presente e `payment_type === "single"`: criar cupom Stripe `percent_off: 10, duration: "once", max_redemptions: 1` com nome `Exit Intent 10% - {timestamp}`
-- Aplicar o cupom na session via `discounts: [{ coupon }]`
-- Não acumula com referral discount (prioriza o maior)
+**1. Gerar PDF básico e fazer upload**
 
-**Arquivo: `src/components/ExitIntentPopup.tsx**`
+- Criar função `generateBasicReportPdf` em `src/utils/generatePdf.ts` — versão simplificada do relatório contendo apenas: hipótese, confiança, resumo e disclaimer (sem explanation/reasoning/recommendations que são premium)
+- Criar bucket de storage `assessment-reports` (público) para hospedar os PDFs
+- No botão WhatsApp do `DiagnosisResult.tsx`: gerar o PDF blob → upload para `assessment-reports/{assessmentId}.pdf` → compartilhar link público via WhatsApp
 
-- Quando `variant === "diagnosis"`: mudar copy para mostrar desconto de 10%
-  - Título: "Espere! Desconto exclusivo de 10% 🔥"
-  - Descrição: "Desbloqueie seu resultado completo por R$98,10 (de R$109,00). Oferta única!"
-- Botão CTA chama `supabase.functions.invoke("create-payment", { body: { payment_type: "single", exit_intent_discount: true } })` e redireciona ao checkout Stripe
-- Salvar flag `sessionStorage.setItem("exit-intent-discount-used", "true")` para não repetir
-- Adicionar estado de loading no botão
+**2. Persistir resultado para retorno**
 
-**Arquivo: `src/components/assessment/DiagnosisResult.tsx**`
+- Salvar `assessmentId` no `sessionStorage` quando o diagnóstico é exibido
+- Criar rota `/assessment/result/:id` (ou reutilizar `AssessmentView.tsx`) que carrega o assessment do banco e renderiza o `DiagnosisResult` com os CTAs de compra
+- O link compartilhado no WhatsApp aponta para essa rota, permitindo ao próprio usuário voltar
 
-- Importar e renderizar `<ExitIntentPopup variant="diagnosis" />` diretamente dentro do bloco `mode === "basic"` (além do que já está no Assessment.tsx, para garantir cobertura)
+**3. Fluxo do botão WhatsApp (DiagnosisResult.tsx)**
+
+```
+Clique → loading state → gerar PDF blob → upload storage → montar mensagem WhatsApp com link do PDF → window.open(wa.me)
+```
+
+A mensagem no WhatsApp será:
+```
+🩺 Aliv.iA — Resultado da Avaliação
+
+📋 Hipótese: {hypothesis}
+📊 Confiança: {confidence}
+
+📄 Relatório completo em PDF:
+{link_do_pdf}
+
+💡 Faça sua avaliação: {origin}
+```
 
 ### Arquivos alterados
 
+| Arquivo | Ação |
+|---|---|
+| `src/utils/generatePdf.ts` | Nova função `generateBasicReportPdf` (só dados básicos) |
+| `src/components/assessment/DiagnosisResult.tsx` | Botão WhatsApp gera PDF, faz upload, compartilha link |
+| `src/pages/Assessment.tsx` | Salvar assessmentId em sessionStorage no resultado |
+| Migration SQL | Criar bucket `assessment-reports` público |
 
-| Arquivo                                         | Ação                                                                         |
-| ----------------------------------------------- | ---------------------------------------------------------------------------- |
-| `src/components/assessment/DiagnosisResult.tsx` | Timer countdown de 5min no CTA avulso                                        |
-| `src/components/ExitIntentPopup.tsx`            | Copy com desconto 10%, botão chama create-payment com `exit_intent_discount` |
-| `supabase/functions/create-payment/index.ts`    | Gerar cupom Stripe 10% único quando `exit_intent_discount: true`             |
