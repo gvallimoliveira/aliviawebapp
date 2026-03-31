@@ -42,10 +42,10 @@ serve(async (req) => {
     const kneeRegions = ["right_knee", "left_knee", "right_knee_back", "left_knee_back", "knee_side"];
     const thighRegions = ["right_thigh", "left_thigh", "right_hamstring", "left_hamstring", "thigh_side"];
     const hipComplaints = ["anamnesis.complaint.hip_pain"];
-    const isKneeCase = kneeComplaints.includes(anamnesisData.chiefComplaint) ||
+    const isKneeCase = chiefComplaints.some(c => kneeComplaints.includes(c)) ||
       (anamnesisData.painRegions || []).some((r: string) => kneeRegions.includes(r));
     const isThighCase = (anamnesisData.painRegions || []).some((r: string) => thighRegions.includes(r));
-    const isHipCase = hipComplaints.includes(anamnesisData.chiefComplaint);
+    const isHipCase = chiefComplaints.some(c => hipComplaints.includes(c));
     const isKneeThighCase = isKneeCase || isThighCase;
 
     const shoulderBlock = isShoulderCase ? `
