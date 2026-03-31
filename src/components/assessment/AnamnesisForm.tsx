@@ -629,7 +629,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
 
   const isStepValid = (id: StepId): boolean => {
     switch (id) {
-      case "complaint": return data.chiefComplaint !== "" || data.customComplaint.trim() !== "";
+      case "complaint": return data.chiefComplaints.length > 0 || data.customComplaint.trim() !== "";
       case "onset": return data.onset !== "";
       case "surgery": return data.hasPriorSurgery !== "";
       case "painmap": return data.painRegions.length > 0;
