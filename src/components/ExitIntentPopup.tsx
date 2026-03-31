@@ -52,13 +52,25 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
       if (armed && document.visibilityState === "hidden") trigger();
     };
 
+    const handlePageHide = () => {
+      if (armed) trigger();
+    };
+
+    const handleBlur = () => {
+      if (armed) trigger();
+    };
+
     document.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("blur", handleBlur);
 
     return () => {
       clearTimeout(armTimer);
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("blur", handleBlur);
     };
   }, [user, trigger, variant]);
 
