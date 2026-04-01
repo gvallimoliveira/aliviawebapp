@@ -123,8 +123,9 @@ async function handleAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
 async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
   const paymentType = session.metadata?.type;
   const userId = session.metadata?.user_id;
+  const pendingAssessmentId = session.metadata?.pending_assessment_id;
 
-  log("async_payment_failed", { paymentType, userId });
+  log("async_payment_failed", { paymentType, userId, pendingAssessmentId });
 
   if (paymentType === "pro_treatment") {
     const assessmentId = session.metadata?.assessment_id;
@@ -135,6 +136,15 @@ async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
         .eq("id", assessmentId);
       log("Assessment marked as payment_failed", { assessmentId });
     }
+  }
+
+  // Mark pending premium assessment as failed
+  if (pendingAssessmentId) {
+    await supabase
+      .from("assessments")
+      .update({ payment_status: "payment_failed" })
+      .eq("id", pendingAssessmentId);
+    log("Pending assessment marked as payment_failed", { pendingAssessmentId });
   }
 
   // Send push notification to user about failed/expired boleto
@@ -231,6 +241,57 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
     case undefined: {
       // Premium single or monthly subscription checkout
       if (userId) {
+        const pendingAssessmentId = session.metadata?.pending_assessment_id;
+
+        // Check for pending assessment (boleto flow with saved basic data)
+        if (pendingAssessmentId) {
+          const { data: pendingAssessment } = await supabase
+            .from("assessments")
+            .select("id, pending_upgrade_data")
+            .eq("id", pendingAssessmentId)
+            .eq("user_id", userId)
+            .eq("payment_status", "awaiting_payment")
+            .single();
+
+          if (pendingAssessment) {
+            await supabase
+              .from("assessments")
+              .update({
+                payment_status: "paid",
+                paid_at: new Date().toISOString(),
+                pending_upgrade_data: null, // clear temporary data
+              })
+              .eq("id", pendingAssessmentId);
+            log("Pending assessment promoted to paid", { pendingAssessmentId, userId });
+            break;
+          }
+        }
+
+        // Fallback: check for any awaiting_payment assessment
+        const { data: awaitingAssessment } = await supabase
+          .from("assessments")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("type", "premium")
+          .eq("payment_status", "awaiting_payment")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (awaitingAssessment) {
+          await supabase
+            .from("assessments")
+            .update({
+              payment_status: "paid",
+              paid_at: new Date().toISOString(),
+              pending_upgrade_data: null,
+            })
+            .eq("id", awaitingAssessment.id);
+          log("Awaiting assessment promoted to paid", { assessmentId: awaitingAssessment.id, userId });
+          break;
+        }
+
+        // No pending assessment found — create new one
         const { data: existingAssessment } = await supabase
           .from("assessments")
           .select("id")

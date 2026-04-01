@@ -27,6 +27,7 @@ export type Database = {
           patient_email: string | null
           patient_name: string | null
           payment_status: string | null
+          pending_upgrade_data: Json | null
           professional_id: string | null
           red_flags: Json | null
           redo_used: boolean | null
@@ -49,6 +50,7 @@ export type Database = {
           patient_email?: string | null
           patient_name?: string | null
           payment_status?: string | null
+          pending_upgrade_data?: Json | null
           professional_id?: string | null
           red_flags?: Json | null
           redo_used?: boolean | null
@@ -71,6 +73,7 @@ export type Database = {
           patient_email?: string | null
           patient_name?: string | null
           payment_status?: string | null
+          pending_upgrade_data?: Json | null
           professional_id?: string | null
           red_flags?: Json | null
           redo_used?: boolean | null

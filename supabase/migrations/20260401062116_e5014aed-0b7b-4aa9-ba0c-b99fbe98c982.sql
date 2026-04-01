@@ -1,0 +1,1 @@
+ALTER TABLE public.assessments ADD COLUMN pending_upgrade_data jsonb DEFAULT NULL;

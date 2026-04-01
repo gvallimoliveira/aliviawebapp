@@ -33,11 +33,13 @@ serve(async (req) => {
     let referralCode: string | null = null;
     let paymentType: "monthly" | "single" = "monthly";
     let exitIntentDiscount = false;
+    let basicUpgradeData: any = null;
     try {
       const body = await req.json();
       referralCode = body?.referral_code || null;
       if (body?.payment_type === "single") paymentType = "single";
       if (body?.exit_intent_discount === true) exitIntentDiscount = true;
+      if (body?.basic_upgrade_data) basicUpgradeData = body.basic_upgrade_data;
     } catch {
       // No body or invalid JSON
     }
@@ -143,6 +145,31 @@ serve(async (req) => {
 
     const sessionMode = paymentType === "single" ? "payment" : "subscription";
 
+    // Save basic upgrade data to DB if provided (for boleto persistence)
+    let pendingAssessmentId: string | null = null;
+    if (basicUpgradeData) {
+      const { data: pendingAssessment, error: pendingError } = await supabaseAdmin
+        .from("assessments")
+        .insert({
+          user_id: user.id,
+          type: "premium",
+          status: "in_progress",
+          payment_status: "awaiting_payment",
+          pending_upgrade_data: basicUpgradeData,
+          anamnesis_data: basicUpgradeData.anamnesisData || {},
+          pain_regions: basicUpgradeData.painRegions || [],
+          pain_score: basicUpgradeData.painScore ?? null,
+          patient_name: basicUpgradeData.capturedName || null,
+          patient_email: basicUpgradeData.capturedEmail || null,
+        })
+        .select("id")
+        .single();
+      if (!pendingError && pendingAssessment) {
+        pendingAssessmentId = pendingAssessment.id;
+        console.log(`[create-payment] Created pending assessment: ${pendingAssessmentId}`);
+      }
+    }
+
     const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -159,6 +186,7 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         payment_type: paymentType,
+        ...(pendingAssessmentId ? { pending_assessment_id: pendingAssessmentId } : {}),
       },
     };
 

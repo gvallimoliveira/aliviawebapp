@@ -101,11 +101,28 @@ const Assessment = () => {
     }
   }, [mode, user, step]);
 
+  const getBasicUpgradePayload = () => {
+    const upgradeData = getUpgradeData();
+    if (!upgradeData) return null;
+    return {
+      anamnesisData: upgradeData.anamnesisData || null,
+      painRegions: upgradeData.painRegions || [],
+      painScore: upgradeData.painScore ?? null,
+      capturedName: upgradeData.capturedName || capturedName || null,
+      capturedEmail: upgradeData.capturedEmail || capturedEmail || null,
+    };
+  };
+
   const handleExitIntentPayment = async () => {
     setPaymentLoading(true);
     try {
+      const basicData = getBasicUpgradePayload();
       const { data, error } = await supabase.functions.invoke("create-payment", {
-        body: { payment_type: "single", exit_intent_discount: true },
+        body: {
+          payment_type: "single",
+          exit_intent_discount: true,
+          ...(basicData ? { basic_upgrade_data: basicData } : {}),
+        },
       });
       if (error) throw error;
       if (data?.url) {
@@ -128,7 +145,7 @@ const Assessment = () => {
       if (error) throw error;
       setPremiumAccess(data);
       if (data?.has_access) {
-        // Check for upgrade data from basic assessment
+        // Check for upgrade data: first from localStorage, then from DB (boleto flow)
         const upgradeData = getUpgradeData();
         if (upgradeData?.anamnesisData) {
           setAnamnesisData(upgradeData.anamnesisData);
@@ -137,7 +154,6 @@ const Assessment = () => {
           setIsUpgradeFlow(true);
           clearUpgradeData();
 
-          // Create assessment with restored data
           const { data: newAssessment, error: insertError } = await supabase
             .from("assessments")
             .insert({
@@ -159,6 +175,35 @@ const Assessment = () => {
           setStep("questionnaire");
           return;
         }
+
+        // Check DB for paid assessment with pending_upgrade_data (boleto confirmed)
+        if (user?.id) {
+          const { data: paidWithData } = await supabase
+            .from("assessments")
+            .select("id, pending_upgrade_data, anamnesis_data, pain_regions, pain_score, patient_name, patient_email")
+            .eq("user_id", user.id)
+            .eq("type", "premium")
+            .eq("payment_status", "paid")
+            .eq("status", "in_progress")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (paidWithData && paidWithData.anamnesis_data && Object.keys(paidWithData.anamnesis_data as any).length > 0) {
+            // Restore from DB (boleto flow — data was saved before checkout)
+            const restored = paidWithData.anamnesis_data as any;
+            if (restored.painRegions || restored.name) {
+              setAnamnesisData(restored);
+              if (paidWithData.patient_name) setCapturedName(paidWithData.patient_name);
+              if (paidWithData.patient_email) setCapturedEmail(paidWithData.patient_email);
+              setIsUpgradeFlow(true);
+              setAssessmentId(paidWithData.id);
+              setStep("questionnaire");
+              return;
+            }
+          }
+        }
+
         setStep("welcome");
       }
     } catch (err) {
@@ -171,7 +216,11 @@ const Assessment = () => {
     setPaymentLoading(true);
     try {
       const referralCode = localStorage.getItem("alivia_referral_code");
-      const body: any = { payment_type: isMonthly ? "monthly" : "single" };
+      const basicData = getBasicUpgradePayload();
+      const body: any = {
+        payment_type: isMonthly ? "monthly" : "single",
+        ...(basicData ? { basic_upgrade_data: basicData } : {}),
+      };
       if (referralCode) body.referral_code = referralCode;
 
       const { data, error } = await supabase.functions.invoke("create-payment", {
