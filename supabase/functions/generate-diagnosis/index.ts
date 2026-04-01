@@ -212,6 +212,27 @@ CLINICAL IMPACT: Presence of edema suggests an INFLAMMATORY or ACUTE component. 
 - Increase suspicion for structural lesions over purely functional/biomechanical causes
 - Guide toward imaging recommendations if symptoms persist
 ` : "";
+    // Detect lumbar + shoulder combination (fascial chain)
+    const hasLumbar = chiefComplaints.includes("anamnesis.complaint.back_pain");
+    const hasShoulder = chiefComplaints.includes("anamnesis.complaint.shoulder_pain");
+    const lumbarShoulderBlock = (hasLumbar && hasShoulder) ? `
+LUMBAR + SHOULDER FASCIAL CHAIN ANALYSIS (MANDATORY — patient reports both lumbar and shoulder pain):
+These regions are connected by continuous fascial and muscular chains (thoracolumbar fascia → latissimus dorsi → posterior shoulder). This combination is LESS COMMON but clinically significant in specific populations:
+
+CLINICAL CONTEXT:
+- Most commonly seen in athletes/individuals performing activities with significant trunk ROTATION combined with shoulder loading: surfing, tennis, golf, volleyball serving, swimming, overhead throwing sports, CrossFit
+- The thoracolumbar fascia is a critical force-transfer hub connecting the lower limb/pelvis to the upper limb through the latissimus dorsi and contralateral gluteus maximus (posterior oblique sling)
+- Dysfunction in lumbar stabilization during rotational movements can overload the posterior shoulder structures
+
+REASONING PATHWAYS:
+1. PRIMARY LUMBAR → SECONDARY SHOULDER: Lumbar instability or pain leads to compensatory overuse of latissimus dorsi and paraspinal muscles, which increases posterior shoulder tension and alters scapulothoracic mechanics → shoulder impingement or rotator cuff overload
+2. PRIMARY SHOULDER → SECONDARY LUMBAR: Shoulder pain/limitation causes compensatory trunk rotation patterns, overloading the lumbar spine during functional movements
+3. SHARED BIOMECHANICAL DEMAND: Both regions are simultaneously stressed during the same activity (e.g., surfing popup, tennis serve), and both developed symptoms from the same mechanical overload
+
+IMPORTANT: Ask about or consider the patient's sport/activity level. If the patient practices rotation-heavy sports or activities, this strongly supports a fascial chain connection rather than coincidental dual pathology.
+Reference: Myers — "Anatomy Trains" on fascial continuity; Vleeming et al. — posterior oblique sling mechanics
+` : "";
+
     // Multi-complaint kinetic chain reasoning block
     const multiComplaintBlock = chiefComplaints.length > 1 ? `
 MULTI-SEGMENT COMPLAINT ANALYSIS (MANDATORY — patient reports pain in ${chiefComplaints.length} regions):
@@ -294,6 +315,7 @@ ${subAreaBlock}
 ${ottawaBlock}
 ${surgeryBlock}
 ${edemaBlock}
+${lumbarShoulderBlock}
 ${multiComplaintBlock}
 
 IMPORTANT RULES:
