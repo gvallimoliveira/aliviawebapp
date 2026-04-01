@@ -1000,5 +1000,18 @@
   "admin.support.close": "Cerrar",
   "admin.support.reopen": "Reabrir",
   "admin.support.replied_success": "¡Respuesta enviada exitosamente!",
-  "admin.support.status_updated": "Estado actualizado."
+  "admin.support.status_updated": "Estado actualizado.",
+  "upgrade_flow.title": "De la evaluación gratuita a la premium — sin repetir nada",
+  "upgrade_flow.subtitle": "Si decides desbloquear la evaluación completa después de la básica, tus datos se conservan. Continúas donde lo dejaste.",
+  "upgrade_flow.step_label": "Paso",
+  "upgrade_flow.step1_title": "Haz la Evaluación Básica",
+  "upgrade_flow.step1_desc": "Responde la anamnesis, marca tus regiones de dolor en el mapa corporal y recibe un diagnóstico preliminar — todo gratis.",
+  "upgrade_flow.step2_title": "Crea tu cuenta",
+  "upgrade_flow.step2_desc": "Para desbloquear la versión premium, solo crea tu cuenta y realiza el pago. Toma menos de 1 minuto.",
+  "upgrade_flow.step3_title": "Continúa donde lo dejaste",
+  "upgrade_flow.step3_desc": "Tus datos de la evaluación básica se transfieren automáticamente. Vas directo a los cuestionarios y pruebas funcionales exclusivas de la premium.",
+  "upgrade_flow.highlight": "✨ Cero repetición — tus datos de la básica se aprovechan en la evaluación premium.",
+  "support.patient.faq.pf9.q": "¿Si hago la evaluación básica y luego compro la premium, necesito repetir todo?",
+  "support.patient.faq.pf9.a": "¡No! Al comprar la premium justo después de la básica, todos los datos que completaste (anamnesis, mapa de dolor, nombre y email) se transfieren automáticamente. Creas tu cuenta, realizas el pago y continúas donde lo dejaste — directo a los cuestionarios validados y pruebas funcionales exclusivas de la versión premium. Sin repetición.",
+  "support.login_to_contact": "Inicia sesión o crea una cuenta para enviar un mensaje al soporte."
 }

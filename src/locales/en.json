@@ -1000,5 +1000,18 @@
   "admin.support.close": "Close",
   "admin.support.reopen": "Reopen",
   "admin.support.replied_success": "Reply sent successfully!",
-  "admin.support.status_updated": "Status updated."
+  "admin.support.status_updated": "Status updated.",
+  "upgrade_flow.title": "From free to premium — no rework needed",
+  "upgrade_flow.subtitle": "If you decide to unlock the full assessment after the basic one, your data is preserved. You continue where you left off.",
+  "upgrade_flow.step_label": "Step",
+  "upgrade_flow.step1_title": "Take the Basic Assessment",
+  "upgrade_flow.step1_desc": "Answer the anamnesis, mark your pain regions on the body map, and receive a preliminary diagnosis — all for free.",
+  "upgrade_flow.step2_title": "Create your account",
+  "upgrade_flow.step2_desc": "To unlock the premium version, just create your account and proceed with payment. Takes less than 1 minute.",
+  "upgrade_flow.step3_title": "Continue where you left off",
+  "upgrade_flow.step3_desc": "Your basic assessment data is automatically transferred. You go straight to the exclusive questionnaires and functional tests.",
+  "upgrade_flow.highlight": "✨ Zero rework — your basic data is carried over to the premium assessment.",
+  "support.patient.faq.pf9.q": "If I take the basic assessment and then buy premium, do I need to redo everything?",
+  "support.patient.faq.pf9.a": "No! When purchasing premium right after the basic assessment, all data you filled in (anamnesis, pain map, name and email) is automatically transferred. You create your account, complete the payment, and continue where you left off — straight to the validated questionnaires and functional tests exclusive to premium. No rework.",
+  "support.login_to_contact": "Sign in or create an account to send a message to support."
 }
