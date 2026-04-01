@@ -609,6 +609,7 @@ const Assessment = () => {
               patientName={capturedName || user?.user_metadata?.full_name || undefined}
               painRegions={anamnesisData?.painRegions}
               painScore={anamnesisData?.painScore}
+              anamnesisData={anamnesisData}
             />
             {mode === "basic" && <ExitIntentPopup variant="diagnosis" />}
           </>
