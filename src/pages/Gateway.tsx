@@ -84,10 +84,19 @@ const Gateway = () => {
           )}
         </div>
 
-        {/* Mobile hamburger */}
-        <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => setMobileOpen(true)} aria-label="Menu">
-          <Menu className="h-5 w-5" />
-        </Button>
+        {/* Mobile actions */}
+        <div className="flex sm:hidden items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1 px-2">
+            <Globe className="h-4 w-4" />
+            {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm px-2">
+            {t("nav.login")}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} aria-label="Menu">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
       </header>
 
       {/* Mobile side menu */}
