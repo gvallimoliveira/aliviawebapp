@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import { regionsByView, type View, type ClickableRegion } from "@/components/assessment/painMapData";
-import { questionnaires } from "@/data/questionnaireData";
+import { questionnaires, getApplicableQuestionnaires } from "@/data/questionnaireData";
 
 interface Exercise {
   name: string;
@@ -722,28 +722,14 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   const upsellTitle = isPt ? "Desbloqueie sua Avaliação Completa" : "Unlock Your Full Assessment";
   
-  // Map pain regions to specific questionnaires
-  const regionQuestionnaireMap: Record<string, { name: string; desc_pt: string; desc_en: string }> = {
-    "anamnesis.complaint.shoulder_pain": { name: "SPADI", desc_pt: "específico para limitação e dor no ombro", desc_en: "specific for shoulder pain and disability" },
-    "anamnesis.complaint.knee_pain": { name: "KOOS", desc_pt: "específico para função e dor no joelho", desc_en: "specific for knee function and pain" },
-    "anamnesis.complaint.back_pain": { name: "ODI", desc_pt: "específico para incapacidade lombar", desc_en: "specific for lumbar disability" },
-    "anamnesis.complaint.neck_pain": { name: "NDI", desc_pt: "específico para incapacidade cervical", desc_en: "specific for neck disability" },
-    "anamnesis.complaint.hip_pain": { name: "HOOS", desc_pt: "específico para função e dor no quadril", desc_en: "specific for hip function and pain" },
-    "anamnesis.complaint.ankle_pain": { name: "FAOS", desc_pt: "específico para função do tornozelo e pé", desc_en: "specific for ankle and foot function" },
-    "anamnesis.complaint.wrist_pain": { name: "QuickDASH", desc_pt: "específico para função do membro superior", desc_en: "specific for upper limb function" },
-    "anamnesis.complaint.headache": { name: "HIT-6", desc_pt: "específico para impacto da cefaleia", desc_en: "specific for headache impact" },
-  };
-
-  // Build personalized questionnaire bullet
+  // Match pain regions to applicable questionnaires using the same logic as the assessment
   const regions = options.painRegions || [];
-  const matchedQuestionnaires = regions
-    .map((r: string) => regionQuestionnaireMap[r])
-    .filter(Boolean);
+  const applicableQuestionnaires = getApplicableQuestionnaires(regions);
   
-  const questionnaireBullet = matchedQuestionnaires.length > 0
+  const questionnaireBullet = applicableQuestionnaires.length > 0
     ? isPt
-      ? `✅ Questionário ${matchedQuestionnaires.map((q: any) => q.name).join(" + ")} — ${matchedQuestionnaires[0].desc_pt}`
-      : `✅ ${matchedQuestionnaires.map((q: any) => q.name).join(" + ")} questionnaire — ${matchedQuestionnaires[0].desc_en}`
+      ? `✅ Questionário ${applicableQuestionnaires.map(q => q.name).join(" + ")} — ${applicableQuestionnaires.map(q => q.fullName_pt.replace(/\s*\(.*\)/, '')).join(", ")}`
+      : `✅ ${applicableQuestionnaires.map(q => q.name).join(" + ")} questionnaire — ${applicableQuestionnaires.map(q => q.fullName_en.replace(/\s*\(.*\)/, '')).join(", ")}`
     : isPt
       ? "✅ Questionários validados cientificamente para sua condição"
       : "✅ Scientifically validated questionnaires for your condition";
@@ -768,30 +754,47 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   const motivationalEn = "I already have a good idea of where to start your treatment! Get the premium assessment to refine our treatment plan and receive all available guidance! Let's solve this pain together.";
   const motivational = isPt ? motivationalPt : motivationalEn;
 
-  const totalBulletH = bullets.length * 5;
-  const motivationalLines = doc.splitTextToSize(motivational, CONTENT_WIDTH - 20);
-  const motivationalH = motivationalLines.length * 3.5 + 4;
-  const upsellH = 18 + totalBulletH + motivationalH + 10;
-  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(...COLORS.primary);
-  doc.text(upsellTitle, MARGIN + 8, y + 10);
+  const totalBulletH = bullets.length * 5.5;
+  const motivationalLines = doc.splitTextToSize(motivational, CONTENT_WIDTH - 30);
+  const motivationalH = motivationalLines.length * 4 + 8;
+  const upsellH = 20 + totalBulletH + motivationalH + 14;
   
+  // Outer container with gradient-like effect
+  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
+  
+  // Title with icon
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(...COLORS.primary);
+  doc.text(`🔓 ${upsellTitle}`, MARGIN + 8, y + 11);
+  
+  // Divider line
+  doc.setDrawColor(...COLORS.primary);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN + 8, y + 14, MARGIN + CONTENT_WIDTH - 8, y + 14);
+  
+  // Bullets
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...COLORS.foreground);
-  let bulletY = y + 18;
+  let bulletY = y + 20;
   for (const b of bullets) {
-    doc.text(b, MARGIN + 8, bulletY);
-    bulletY += 5;
+    doc.text(b, MARGIN + 10, bulletY);
+    bulletY += 5.5;
   }
   
+  // Motivational message in a highlighted inner box
+  const motBoxY = bulletY + 2;
+  const motBoxH = motivationalLines.length * 4 + 6;
+  // Inner accent background
+  doc.setFillColor(39, 124, 103); // primary
+  doc.roundedRect(MARGIN + 6, motBoxY - 2, CONTENT_WIDTH - 12, motBoxH, 3, 3, "F");
+  
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.setTextColor(...COLORS.primary);
+  doc.setFontSize(7.5);
+  doc.setTextColor(255, 255, 255);
   for (let i = 0; i < motivationalLines.length; i++) {
-    doc.text(motivationalLines[i], MARGIN + 8, bulletY + 4 + i * 3.5);
+    doc.text(motivationalLines[i], MARGIN + 12, motBoxY + 4 + i * 4);
   }
   y += upsellH + 8;
 
