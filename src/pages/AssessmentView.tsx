@@ -7,7 +7,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles } from "lucide-react";
+import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2 } from "lucide-react";
 import DiagnosisResult from "@/components/assessment/DiagnosisResult";
 import TreatmentPlan from "@/components/assessment/TreatmentPlan";
 import PainMapView from "@/components/assessment/PainMapView";
