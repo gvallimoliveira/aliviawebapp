@@ -41,3 +41,9 @@ verify_jwt = false
 
 [functions.push-cron]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.create-pro-lifetime-treatment]
+verify_jwt = false
