@@ -23,6 +23,7 @@ const WelcomeSection = ({
   premiumAccess,
   onRestart,
   showRestart,
+  activeTab = "health",
 }: WelcomeSectionProps) => {
   const { t } = useLanguage();
 
