@@ -1016,5 +1016,19 @@
   "upgrade_flow.highlight": "✨ Cero repetición — tus datos de la básica se aprovechan en la evaluación premium.",
   "support.patient.faq.pf9.q": "¿Si hago la evaluación básica y luego compro la premium, necesito repetir todo?",
   "support.patient.faq.pf9.a": "¡No! Al comprar la premium justo después de la básica, todos los datos que completaste (anamnesis, mapa de dolor, nombre y email) se transfieren automáticamente. Creas tu cuenta, realizas el pago y continúas donde lo dejaste — directo a los cuestionarios validados y pruebas funcionales exclusivas de la versión premium. Sin repetición.",
-  "support.login_to_contact": "Inicia sesión o crea una cuenta para enviar un mensaje al soporte."
+  "support.login_to_contact": "Inicia sesión o crea una cuenta para enviar un mensaje al soporte.",
+  "upgrade_welcome.title": "¡Bienvenido al equipo Aliv.iA! 🎉",
+  "upgrade_welcome.subtitle": "Tu evaluación básica fue completada con éxito. Así funciona el siguiente paso para desbloquear tu evaluación premium completa.",
+  "upgrade_welcome.plan_single": "Evaluación Premium Única",
+  "upgrade_welcome.plan_monthly": "Plan Mensual Premium",
+  "upgrade_welcome.plan_discount": "Premium con 10% OFF",
+  "upgrade_welcome.step1_title": "✅ Evaluación básica completada",
+  "upgrade_welcome.step1_desc": "Tus datos (anamnesis, mapa de dolor e identificación) están guardados y serán reutilizados. Nada se perderá.",
+  "upgrade_welcome.step2_title": "🔐 Crea tu cuenta o inicia sesión",
+  "upgrade_welcome.step2_desc": "Es rápido — puedes usar email o Google. Tu cuenta garantiza el acceso a resultados e historial.",
+  "upgrade_welcome.step3_title": "🚀 Continúa directo a la evaluación premium",
+  "upgrade_welcome.step3_desc": "¡Sin repetir pasos! Vas directo a los cuestionarios validados y pruebas funcionales exclusivas.",
+  "upgrade_welcome.data_safe": "Tus datos están seguros y protegidos por 30 minutos",
+  "upgrade_welcome.cta": "Crear cuenta y continuar",
+  "upgrade_welcome.back": "Volver al resultado"
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Share2, Timer, Loader2, Download } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -55,6 +56,7 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
 const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [sharingPdf, setSharingPdf] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
@@ -246,7 +248,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                     sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-expiry", String(Date.now() + 30 * 60 * 1000));
-                    window.location.href = "/assessment/premium";
+                    navigate("/upgrade-welcome", { state: { redirectTo: "/assessment/premium", planType: "single" } });
                   }}
                   className="rounded-xl gap-2 px-8 py-6 text-base w-full"
                 >
@@ -277,7 +279,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                     sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-expiry", String(Date.now() + 30 * 60 * 1000));
-                    window.location.href = "/assessment/premium";
+                    navigate("/upgrade-welcome", { state: { redirectTo: "/assessment/premium", planType: "monthly" } });
                   }}
                   className="rounded-xl gap-2"
                 >

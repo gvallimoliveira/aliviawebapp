@@ -1016,5 +1016,19 @@
   "upgrade_flow.highlight": "✨ Zero retrabalho — seus dados da básica são aproveitados na avaliação premium.",
   "support.patient.faq.pf9.q": "Se eu fizer a avaliação básica e depois comprar a premium, preciso refazer tudo?",
   "support.patient.faq.pf9.a": "Não! Ao comprar a avaliação premium logo após a básica, todos os dados que você preencheu (anamnese, mapa de dor, nome e e-mail) são transferidos automaticamente. Você cria sua conta, realiza o pagamento e continua de onde parou — direto nos questionários validados e testes funcionais exclusivos da versão premium. Sem retrabalho.",
-  "support.login_to_contact": "Faça login ou crie uma conta para enviar uma mensagem ao suporte."
+  "support.login_to_contact": "Faça login ou crie uma conta para enviar uma mensagem ao suporte.",
+  "upgrade_welcome.title": "Bem-vindo ao time Aliv.iA! 🎉",
+  "upgrade_welcome.subtitle": "Sua avaliação básica foi concluída com sucesso. Veja como funciona o próximo passo para desbloquear sua avaliação premium completa.",
+  "upgrade_welcome.plan_single": "Avaliação Premium Avulsa",
+  "upgrade_welcome.plan_monthly": "Plano Mensal Premium",
+  "upgrade_welcome.plan_discount": "Premium com 10% OFF",
+  "upgrade_welcome.step1_title": "✅ Avaliação básica concluída",
+  "upgrade_welcome.step1_desc": "Seus dados (anamnese, mapa de dor e identificação) estão salvos e serão reutilizados. Nada será perdido.",
+  "upgrade_welcome.step2_title": "🔐 Crie sua conta ou faça login",
+  "upgrade_welcome.step2_desc": "É rápido — pode usar e-mail ou Google. Sua conta garante o acesso aos resultados e histórico.",
+  "upgrade_welcome.step3_title": "🚀 Continue direto para a avaliação premium",
+  "upgrade_welcome.step3_desc": "Sem repetir etapas! Você vai direto para os questionários validados e testes funcionais exclusivos.",
+  "upgrade_welcome.data_safe": "Seus dados estão seguros e protegidos por 30 minutos",
+  "upgrade_welcome.cta": "Criar conta e continuar",
+  "upgrade_welcome.back": "Voltar ao resultado"
 }
