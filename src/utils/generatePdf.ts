@@ -693,16 +693,6 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
     y += barH + 3;
 
-    // Emoji faces below the bar
-    const emojis = ["😀", "🙂", "😐", "😟", "😣", "😫"];
-    const emojiPositions = [0, 2, 4, 6, 8, 10];
-    doc.setFontSize(10);
-    for (let i = 0; i < emojis.length; i++) {
-      const ex = barX + (emojiPositions[i] / 10) * barW;
-      doc.text(emojis[i], ex - 2, y + 4);
-    }
-    y += 8;
-
     // Labels
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
