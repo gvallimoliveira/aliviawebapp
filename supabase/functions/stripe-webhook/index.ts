@@ -126,7 +126,6 @@ async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
 
   log("async_payment_failed", { paymentType, userId });
 
-  // Could notify user, mark assessment as payment_failed, etc.
   if (paymentType === "pro_treatment") {
     const assessmentId = session.metadata?.assessment_id;
     if (assessmentId) {
@@ -136,6 +135,44 @@ async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
         .eq("id", assessmentId);
       log("Assessment marked as payment_failed", { assessmentId });
     }
+  }
+
+  // Send push notification to user about failed/expired boleto
+  if (userId) {
+    await sendPushToUser(userId, {
+      title: "⚠️ Boleto expirado",
+      body: "Seu boleto não foi pago a tempo. Gere um novo para continuar.",
+      url: "/dashboard",
+    });
+  }
+}
+
+/**
+ * Send a push notification to a user via the send-push-notification edge function.
+ */
+async function sendPushToUser(userId: string, notification: { title: string; body: string; url: string }) {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        title: notification.title,
+        body: notification.body,
+        url: notification.url,
+      }),
+    });
+
+    const result = await response.text();
+    log("Push notification sent", { userId, result });
+  } catch (e) {
+    log("ERROR sending push notification", { userId, error: String(e) });
   }
 }
 
