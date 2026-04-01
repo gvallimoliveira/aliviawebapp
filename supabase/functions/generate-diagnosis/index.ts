@@ -315,6 +315,7 @@ ${subAreaBlock}
 ${ottawaBlock}
 ${surgeryBlock}
 ${edemaBlock}
+${lumbarShoulderBlock}
 ${multiComplaintBlock}
 
 IMPORTANT RULES:
