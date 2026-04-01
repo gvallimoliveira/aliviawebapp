@@ -718,16 +718,42 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   // Premium upsell banner
   y += 6;
-  y = checkPage(doc, y, 70);
+  y = checkPage(doc, y, 100);
 
   const upsellTitle = isPt ? "Desbloqueie sua Avaliação Completa" : "Unlock Your Full Assessment";
+  
+  // Map pain regions to specific questionnaires
+  const regionQuestionnaireMap: Record<string, { name: string; desc_pt: string; desc_en: string }> = {
+    "anamnesis.complaint.shoulder_pain": { name: "SPADI", desc_pt: "específico para limitação e dor no ombro", desc_en: "specific for shoulder pain and disability" },
+    "anamnesis.complaint.knee_pain": { name: "KOOS", desc_pt: "específico para função e dor no joelho", desc_en: "specific for knee function and pain" },
+    "anamnesis.complaint.back_pain": { name: "ODI", desc_pt: "específico para incapacidade lombar", desc_en: "specific for lumbar disability" },
+    "anamnesis.complaint.neck_pain": { name: "NDI", desc_pt: "específico para incapacidade cervical", desc_en: "specific for neck disability" },
+    "anamnesis.complaint.hip_pain": { name: "HOOS", desc_pt: "específico para função e dor no quadril", desc_en: "specific for hip function and pain" },
+    "anamnesis.complaint.ankle_pain": { name: "FAOS", desc_pt: "específico para função do tornozelo e pé", desc_en: "specific for ankle and foot function" },
+    "anamnesis.complaint.wrist_pain": { name: "QuickDASH", desc_pt: "específico para função do membro superior", desc_en: "specific for upper limb function" },
+    "anamnesis.complaint.headache": { name: "HIT-6", desc_pt: "específico para impacto da cefaleia", desc_en: "specific for headache impact" },
+  };
+
+  // Build personalized questionnaire bullet
+  const regions = options.painRegions || [];
+  const matchedQuestionnaires = regions
+    .map((r: string) => regionQuestionnaireMap[r])
+    .filter(Boolean);
+  
+  const questionnaireBullet = matchedQuestionnaires.length > 0
+    ? isPt
+      ? `✅ Questionário ${matchedQuestionnaires.map((q: any) => q.name).join(" + ")} — ${matchedQuestionnaires[0].desc_pt}`
+      : `✅ ${matchedQuestionnaires.map((q: any) => q.name).join(" + ")} questionnaire — ${matchedQuestionnaires[0].desc_en}`
+    : isPt
+      ? "✅ Questionários validados cientificamente para sua condição"
+      : "✅ Scientifically validated questionnaires for your condition";
+
   const bulletsPt = [
     "✅ Explicação clínica detalhada do seu quadro",
     "✅ Raciocínio clínico baseado em evidências científicas",
     "✅ Recomendações personalizadas para o seu caso",
     "✅ Plano de tratamento completo em 3 fases progressivas",
     "✅ Exercícios com séries, repetições e progressão",
-    "✅ Questionários validados (KOOS, SPADI, ODI, DASH...)",
   ];
   const bulletsEn = [
     "✅ Detailed clinical explanation of your condition",
@@ -735,15 +761,17 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     "✅ Personalized recommendations for your case",
     "✅ Complete 3-phase progressive treatment plan",
     "✅ Exercises with sets, reps and progression",
-    "✅ Validated questionnaires (KOOS, SPADI, ODI, DASH...)",
   ];
-  const bullets = isPt ? bulletsPt : bulletsEn;
-  const ctaText = isPt
-    ? "Acesse o app para desbloquear todos os recursos da avaliação completa."
-    : "Open the app to unlock all features of the full assessment.";
+  const bullets = [...(isPt ? bulletsPt : bulletsEn), questionnaireBullet];
+  
+  const motivationalPt = "Já tenho uma boa ideia por onde começar seu tratamento! Adquira a avaliação premium para refinar nosso plano terapêutico e receber todas as orientações disponíveis! Vamos juntos resolver essa dor.";
+  const motivationalEn = "I already have a good idea of where to start your treatment! Get the premium assessment to refine our treatment plan and receive all available guidance! Let's solve this pain together.";
+  const motivational = isPt ? motivationalPt : motivationalEn;
 
   const totalBulletH = bullets.length * 5;
-  const upsellH = 18 + totalBulletH + 12;
+  const motivationalLines = doc.splitTextToSize(motivational, CONTENT_WIDTH - 20);
+  const motivationalH = motivationalLines.length * 3.5 + 4;
+  const upsellH = 18 + totalBulletH + motivationalH + 10;
   drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -758,10 +786,13 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     doc.text(b, MARGIN + 8, bulletY);
     bulletY += 5;
   }
+  
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
+  doc.setFontSize(7);
   doc.setTextColor(...COLORS.primary);
-  doc.text(ctaText, MARGIN + 8, bulletY + 4);
+  for (let i = 0; i < motivationalLines.length; i++) {
+    doc.text(motivationalLines[i], MARGIN + 8, bulletY + 4 + i * 3.5);
+  }
   y += upsellH + 8;
 
   // Disclaimer
