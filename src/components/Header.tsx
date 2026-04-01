@@ -21,7 +21,11 @@ const Header = () => {
   };
 
   const go = (path: string) => {
-    navigate(path);
+    if (path.startsWith("#")) {
+      document.querySelector(path)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate(path);
+    }
     setMobileOpen(false);
   };
 
@@ -59,11 +63,9 @@ const Header = () => {
             <Globe className="h-4 w-4" />
             <span>{language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}</span>
           </Button>
-          {user && (
-            <Button variant="ghost" size="icon" onClick={() => go("/suporte")} title={t("support.badge")}>
-              <HelpCircle className="h-4 w-4" />
-            </Button>
-          )}
+          <Button variant="ghost" size="icon" onClick={() => go("/suporte")} title={t("support.badge")}>
+            <HelpCircle className="h-4 w-4" />
+          </Button>
           {user ? (
             <>
               <Button variant="ghost" size="icon" onClick={() => go("/admin")} title="Admin">
@@ -140,6 +142,13 @@ const Header = () => {
               <Globe className="h-4 w-4" />
               {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
             </button>
+            <button
+              onClick={() => go("/suporte")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+            >
+              <HelpCircle className="h-4 w-4" />
+              {t("support.badge")}
+            </button>
 
             {user ? (
               <>
@@ -148,13 +157,6 @@ const Header = () => {
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors text-left"
                 >
                   {t("nav.dashboard")}
-                </button>
-                <button
-                  onClick={() => go("/suporte")}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  {t("support.badge")}
                 </button>
                 <button
                   onClick={() => go("/admin")}
