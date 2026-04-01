@@ -271,7 +271,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                       painRegions: painRegions || [],
                       painScore: painScore,
                       capturedName: patientName || "",
-                      capturedEmail: "",
+                      capturedEmail: patientEmail || "",
                     });
                     sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
