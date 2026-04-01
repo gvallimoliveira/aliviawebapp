@@ -132,7 +132,19 @@ BIOMECHANICAL CONSIDERATIONS:
 
       const mappings: Record<string, Record<string, string>> = {
         knee: {
-          front: "PRIORITIZE: Condromalacia patelar / Síndrome femoropatelar, Hoffite (fat pad impingement), Tendinopatia patelar (jumper's knee). These are the most likely diagnoses for ANTERIOR knee pain.",
+          front: `PRIORITIZE for ANTERIOR knee pain — systematically differentiate these THREE conditions:
+
+1. DOR FEMOROPATELAR (Patellofemoral Pain Syndrome): Most common cause of anterior knee pain. Pain is DIFFUSE, typically near the patellar border (medial or lateral facet) or retropatellar. Aggravated by stairs, prolonged sitting (cinema sign), squatting, and multiple angles of knee flexion-extension. NO specific point tenderness on the patellar tendon. Consider VMO weakness, patellar maltracking, Q-angle.
+
+2. HOFFITE (Hoffa's Fat Pad Impingement): Pain is localized INFRAPATELLAR, on BOTH SIDES of the patellar tendon. KEY DIFFERENTIATOR: pain occurs specifically during TERMINAL KNEE EXTENSION (last 10-15°) due to mechanical compression of Hoffa's fat pad between the femoral condyles and tibial plateau. Often associated with LOCAL EDEMA/SWELLING. Hyperextension of the knee reproduces symptoms. Can follow trauma or repetitive overuse. Positive Hoffa's test (pain on palpation of fat pad with knee in 30° flexion).
+
+3. TENDINOPATIA PATELAR (Patellar Tendinopathy / Jumper's Knee): Pain is VERY FOCAL and POINT-SPECIFIC on the patellar tendon (usually inferior pole of patella). Aggravated by LOADING activities (jumping, squatting, landing). Pain increases with tendon stretch under tension. Common in jumping sports (volleyball, basketball). Gradual onset, load-dependent.
+
+CLINICAL DECISION GUIDE:
+- If pain is diffuse, near patellar borders, multiple angles → Patellofemoral Pain
+- If pain is infrapatellar, terminal extension, with swelling → Hoffite
+- If pain is point-specific on tendon, load-dependent → Patellar Tendinopathy
+- EDEMA presence strongly favors Hoffite over the other two conditions`,
           lateral: "PRIORITIZE: Síndrome da banda iliotibial (ITB), Lesão do menisco lateral, Lesão do LCL. These are the most likely diagnoses for LATERAL knee pain.",
           medial: "PRIORITIZE: Tendinopatia/bursite da pata de ganso (pes anserine), Lesão do menisco medial, Lesão do LCM. These are the most likely diagnoses for MEDIAL knee pain.",
           posterior: "PRIORITIZE: Cisto de Baker, Lesão do LCP, Tendinopatia dos isquiotibiais distais. These are the most likely diagnoses for POSTERIOR knee pain.",
