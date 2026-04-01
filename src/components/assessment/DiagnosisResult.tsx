@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Share2, Timer, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Share2, Timer, Loader2, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -56,6 +56,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [sharingPdf, setSharingPdf] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   // 5-minute countdown timer for basic mode urgency
   const [secondsLeft, setSecondsLeft] = useState(300);
@@ -362,6 +363,41 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
           >
             {sharingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
             WhatsApp
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2 rounded-xl"
+            disabled={downloadingPdf}
+            onClick={async () => {
+              setDownloadingPdf(true);
+              try {
+                const pdfBlob = await generateBasicReportPdfBlob({
+                  diagnosis,
+                  language,
+                  patientName: patientName || undefined,
+                  painRegions: painRegions || undefined,
+                  painScore: painScore,
+                });
+                const url = URL.createObjectURL(pdfBlob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `AliviA_Resultado.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch (err) {
+                console.error("PDF download error:", err);
+                toast({
+                  title: language === "pt" ? "Erro ao gerar PDF" : "Error generating PDF",
+                  description: language === "pt" ? "Tente novamente." : "Please try again.",
+                  variant: "destructive",
+                });
+              } finally {
+                setDownloadingPdf(false);
+              }
+            }}
+          >
+            {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            PDF
           </Button>
           <Button onClick={onNewAssessment} className="rounded-xl">
             {t("diagnosis.new_assessment")}
