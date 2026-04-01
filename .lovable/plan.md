@@ -1,63 +1,88 @@
 
 
-## Upgrade Básico → Premium: Continuidade sem Retrabalho
+## 3 Pontos: Diário de Dor, Fluxo Básico→Premium, e Suporte Público
 
-### Situação Atual
+### Ponto 1 — Bug Confirmado: Diário de Dor visível para usuários básicos
 
-Quando o usuário completa a avaliação básica e decide comprar a premium:
-1. É redirecionado para `/auth` → cadastro → Stripe checkout
-2. Após pagamento, entra em `/assessment/premium` → **começa do zero** (welcome → redflags → anamnese → questionários → testes → diagnóstico → tratamento)
-3. Todos os dados da avaliação básica (anamnese, regiões de dor, score EVA, red flags) são perdidos
+**Problema**: No `Dashboard.tsx` linha 179, a condição `premiumAccess?.subscription_type !== "single"` retorna `true` quando `premiumAccess` é `null` (usuário sem premium). Isso faz o Diário de Dor e a Comparação de Métricas aparecerem para todos.
 
-### Solução Proposta
-
-Usar `sessionStorage` para persistir os dados da avaliação básica e, ao entrar no fluxo premium, detectar que existe uma avaliação básica prévia e pular direto para os passos exclusivos premium (questionários → testes funcionais → diagnóstico completo → tratamento).
-
-### Fluxo do Upgrade
+**Hierarquia correta de funcionalidades**:
 
 ```text
-Básica concluída (resultado na tela)
-  ↓ clica "Comprar Premium"
-  ↓ sessionStorage salva: anamnesisData, painRegions, painScore, redFlags, assessmentId, capturedName, capturedEmail
-  ↓ /auth (cadastro/login)
-  ↓ Stripe checkout
-  ↓ /payment-success → /assessment/premium
-  ↓ Detecta dados em sessionStorage
-  ↓ Pula para step "questionnaire" (com banner: "Dados da sua avaliação básica foram aproveitados")
-  ↓ Questionários → Testes funcionais → Diagnóstico completo → Tratamento
+┌─────────────────────────────────────────────────────┐
+│ BÁSICO (sem conta ou sem pagamento)                 │
+│  • Avaliação básica gratuita (diagnóstico parcial)  │
+│  • Histórico de avaliações                          │
+│  • Buscar profissional (visualizar)                 │
+│  • Mensagens                                        │
+├─────────────────────────────────────────────────────┤
+│ PREMIUM AVULSO (R$109 single)                       │
+│  + Avaliação premium completa (1x)                  │
+│  + Diagnóstico + Plano de tratamento                │
+│  SEM: Diário de Dor, Comparação, Follow-up emails   │
+├─────────────────────────────────────────────────────┤
+│ PREMIUM MENSAL (R$79,90/mês)                        │
+│  + Tudo do avulso                                   │
+│  + 2 avaliações/mês                                 │
+│  + Diário de Dor                                    │
+│  + Comparação de Métricas                           │
+│  + Follow-up emails                                 │
+├─────────────────────────────────────────────────────┤
+│ PRO (R$49/mês ou R$418,80/ano)                      │
+│  + Painel profissional completo                     │
+│  + Link personalizado, analytics, pacientes, PDFs   │
+└─────────────────────────────────────────────────────┘
 ```
 
-### Alterações
+**Correção**: Mudar a condição de `premiumAccess?.subscription_type !== "single"` para `premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly"`. Isso garante que só assinantes mensais vejam Diário de Dor e Comparação.
 
-**1. `src/components/assessment/DiagnosisResult.tsx`**
-- Nos botões de CTA (avulso/mensal), antes de redirecionar para auth/pagamento, salvar em `sessionStorage` chave `alivia-basic-upgrade-data`:
-  ```json
-  { "anamnesisData": {...}, "painRegions": [...], "painScore": 7, "capturedName": "João", "capturedEmail": "j@x.com" }
-  ```
+**Arquivo**: `src/pages/Dashboard.tsx` (linhas 179-184)
 
-**2. `src/pages/Assessment.tsx`**
-- No `useEffect` do `payment_check`, após confirmar `has_access`, verificar se existe `alivia-basic-upgrade-data` em `sessionStorage`
-- Se existir:
-  - Restaurar `anamnesisData`, `capturedName`, `capturedEmail` nos states
-  - Criar assessment premium no banco com os dados restaurados (anamnesis_data, pain_regions, pain_score)
-  - Pular direto para step `"questionnaire"` em vez de `"welcome"`
-  - Limpar `sessionStorage` após restaurar
-- Se não existir: fluxo premium normal (welcome → redflags → anamnese...)
+---
 
-**3. Banner informativo**
-- Exibir um banner sutil no topo do step `questionnaire` quando veio de upgrade:
-  > "✅ Seus dados da avaliação básica foram aproveitados. Continue de onde parou."
+### Ponto 2 — Explicar fluxo Básico → Premium na Landing e Suporte
 
-### Detalhes Técnicos
+Adicionar uma seção clara na Landing Page de Pacientes e na página de Suporte explicando o fluxo de upgrade:
 
-- `sessionStorage` persiste enquanto a aba está aberta (sobrevive a navegação para `/auth` e redirect do Stripe se usar `window.location.href` na mesma aba)
-- Para cobrir o caso de o Stripe abrir em nova aba: duplicar os dados em `localStorage` com TTL de 30 minutos (`alivia-basic-upgrade-data` + `alivia-basic-upgrade-expiry`). Ao restaurar, verificar expiração e limpar
-- Backward compatible: se não houver dados salvos, o fluxo premium funciona normalmente do zero
+**Landing Page** (`src/pages/PatientLanding.tsx`):
+- Novo componente `UpgradeFlowSection` posicionado após `HowItWorksSection`, com 3 passos visuais:
+  1. "Faça a Avaliação Básica gratuita"
+  2. "Crie sua conta para desbloquear a Premium"
+  3. "Continue de onde parou — seus dados são preservados"
+- Texto enfatizando que não há retrabalho: os dados da básica são transferidos e o usuário continua nos questionários e testes exclusivos.
 
-### Arquivos alterados
+**Suporte** (`src/pages/Support.tsx` + locales):
+- Adicionar um FAQ extra nos `patientFaqKeys` explicando: "Se eu fizer a avaliação básica e depois comprar a premium, preciso refazer tudo?" com resposta detalhada sobre a continuidade.
+
+**Arquivos**: `src/components/UpgradeFlowSection.tsx` (novo), `src/pages/PatientLanding.tsx`, `src/locales/pt.json`, `src/locales/en.json`, `src/locales/es.json`
+
+---
+
+### Ponto 3 — Página de Suporte pública (sem login)
+
+**Recomendação**: Sim, vale tornar pública. Benefícios:
+- Reduz barreira para potenciais clientes entenderem o produto
+- FAQ e guias de ferramentas funcionam como conteúdo SEO
+- Gera confiança antes do cadastro
+
+**Implementação**:
+- Remover o redirect para `/auth` no `Support.tsx` (linhas 72-74)
+- Manter `SupportContactForm` condicionado a `user` — se não logado, exibir um CTA "Crie sua conta para enviar uma mensagem"
+- Manter seleção de perfil (paciente/profissional) e FAQ/tools visíveis para todos
+
+**Arquivo**: `src/pages/Support.tsx`
+
+---
+
+### Resumo de arquivos alterados
 
 | Arquivo | Ação |
 |---|---|
-| `src/components/assessment/DiagnosisResult.tsx` | Salvar dados da básica no storage antes do redirect de compra |
-| `src/pages/Assessment.tsx` | Detectar e restaurar dados no fluxo premium, pular para questionários |
+| `src/pages/Dashboard.tsx` | Corrigir condição do Diário de Dor (só monthly) |
+| `src/components/UpgradeFlowSection.tsx` | Novo — seção visual do fluxo básico→premium |
+| `src/pages/PatientLanding.tsx` | Incluir UpgradeFlowSection |
+| `src/pages/Support.tsx` | Remover redirect obrigatório, condicionar form a auth |
+| `src/locales/pt.json` | Textos do fluxo, FAQ novo, CTA suporte |
+| `src/locales/en.json` | Idem |
+| `src/locales/es.json` | Idem |
 
