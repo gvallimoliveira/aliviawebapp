@@ -67,14 +67,12 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://alivia.app";
 
-    const successUrl = plan === "annual"
-      ? `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&type=pro_annual`
-      : `${origin}/dashboard?subscription=success`;
+    const successUrl = `${origin}/dashboard?subscription=success`;
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      payment_method_types: sessionMode === "subscription" ? ["card"] : ["card", "boleto"],
+      payment_method_types: ["card"],
       line_items: [
         {
           price: priceId,
