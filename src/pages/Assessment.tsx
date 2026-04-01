@@ -101,11 +101,28 @@ const Assessment = () => {
     }
   }, [mode, user, step]);
 
+  const getBasicUpgradePayload = () => {
+    const upgradeData = getUpgradeData();
+    if (!upgradeData) return null;
+    return {
+      anamnesisData: upgradeData.anamnesisData || null,
+      painRegions: upgradeData.painRegions || [],
+      painScore: upgradeData.painScore ?? null,
+      capturedName: upgradeData.capturedName || capturedName || null,
+      capturedEmail: upgradeData.capturedEmail || capturedEmail || null,
+    };
+  };
+
   const handleExitIntentPayment = async () => {
     setPaymentLoading(true);
     try {
+      const basicData = getBasicUpgradePayload();
       const { data, error } = await supabase.functions.invoke("create-payment", {
-        body: { payment_type: "single", exit_intent_discount: true },
+        body: {
+          payment_type: "single",
+          exit_intent_discount: true,
+          ...(basicData ? { basic_upgrade_data: basicData } : {}),
+        },
       });
       if (error) throw error;
       if (data?.url) {

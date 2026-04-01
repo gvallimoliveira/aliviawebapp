@@ -123,8 +123,9 @@ async function handleAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
 async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
   const paymentType = session.metadata?.type;
   const userId = session.metadata?.user_id;
+  const pendingAssessmentId = session.metadata?.pending_assessment_id;
 
-  log("async_payment_failed", { paymentType, userId });
+  log("async_payment_failed", { paymentType, userId, pendingAssessmentId });
 
   if (paymentType === "pro_treatment") {
     const assessmentId = session.metadata?.assessment_id;
@@ -135,6 +136,15 @@ async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
         .eq("id", assessmentId);
       log("Assessment marked as payment_failed", { assessmentId });
     }
+  }
+
+  // Mark pending premium assessment as failed
+  if (pendingAssessmentId) {
+    await supabase
+      .from("assessments")
+      .update({ payment_status: "payment_failed" })
+      .eq("id", pendingAssessmentId);
+    log("Pending assessment marked as payment_failed", { pendingAssessmentId });
   }
 
   // Send push notification to user about failed/expired boleto
