@@ -509,12 +509,26 @@ const Assessment = () => {
           />
         )}
         {step === "questionnaire" && anamnesisData && (
-          <QuestionnaireStep
-            painRegions={anamnesisData.painRegions}
-            onComplete={handleQuestionnaireComplete}
-            onBack={() => setStep("anamnesis")}
-            onSkip={handleQuestionnaireSkip}
-          />
+          <>
+            {isUpgradeFlow && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 flex items-center gap-2 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700"
+              >
+                <CheckCircle className="h-4 w-4 shrink-0" />
+                {language === "pt"
+                  ? "Seus dados da avaliação básica foram aproveitados. Continue de onde parou."
+                  : "Your basic assessment data has been imported. Continue where you left off."}
+              </motion.div>
+            )}
+            <QuestionnaireStep
+              painRegions={anamnesisData.painRegions}
+              onComplete={handleQuestionnaireComplete}
+              onBack={() => setStep(isUpgradeFlow ? "questionnaire" : "anamnesis")}
+              onSkip={handleQuestionnaireSkip}
+            />
+          </>
         )}
         {step === "functional_tests" && anamnesisData && (
           <FunctionalTests
