@@ -245,7 +245,6 @@ CLINICAL INDICATORS:
 
     // Detect lumbar + shoulder combination (fascial chain)
     const hasShoulder = chiefComplaints.includes("anamnesis.complaint.shoulder_pain");
-    const hasShoulder = chiefComplaints.includes("anamnesis.complaint.shoulder_pain");
     const lumbarShoulderBlock = (hasLumbar && hasShoulder) ? `
 LUMBAR + SHOULDER FASCIAL CHAIN ANALYSIS (MANDATORY — patient reports both lumbar and shoulder pain):
 These regions are connected by continuous fascial and muscular chains (thoracolumbar fascia → latissimus dorsi → posterior shoulder). This combination is LESS COMMON but clinically significant in specific populations:
