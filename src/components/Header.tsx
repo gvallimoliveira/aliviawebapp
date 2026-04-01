@@ -21,7 +21,11 @@ const Header = () => {
   };
 
   const go = (path: string) => {
-    navigate(path);
+    if (path.startsWith("#")) {
+      document.querySelector(path)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate(path);
+    }
     setMobileOpen(false);
   };
 
