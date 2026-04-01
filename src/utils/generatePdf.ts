@@ -754,30 +754,47 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   const motivationalEn = "I already have a good idea of where to start your treatment! Get the premium assessment to refine our treatment plan and receive all available guidance! Let's solve this pain together.";
   const motivational = isPt ? motivationalPt : motivationalEn;
 
-  const totalBulletH = bullets.length * 5;
-  const motivationalLines = doc.splitTextToSize(motivational, CONTENT_WIDTH - 20);
-  const motivationalH = motivationalLines.length * 3.5 + 4;
-  const upsellH = 18 + totalBulletH + motivationalH + 10;
-  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(...COLORS.primary);
-  doc.text(upsellTitle, MARGIN + 8, y + 10);
+  const totalBulletH = bullets.length * 5.5;
+  const motivationalLines = doc.splitTextToSize(motivational, CONTENT_WIDTH - 30);
+  const motivationalH = motivationalLines.length * 4 + 8;
+  const upsellH = 20 + totalBulletH + motivationalH + 14;
   
+  // Outer container with gradient-like effect
+  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
+  
+  // Title with icon
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(...COLORS.primary);
+  doc.text(`🔓 ${upsellTitle}`, MARGIN + 8, y + 11);
+  
+  // Divider line
+  doc.setDrawColor(...COLORS.primary);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN + 8, y + 14, MARGIN + CONTENT_WIDTH - 8, y + 14);
+  
+  // Bullets
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...COLORS.foreground);
-  let bulletY = y + 18;
+  let bulletY = y + 20;
   for (const b of bullets) {
-    doc.text(b, MARGIN + 8, bulletY);
-    bulletY += 5;
+    doc.text(b, MARGIN + 10, bulletY);
+    bulletY += 5.5;
   }
   
+  // Motivational message in a highlighted inner box
+  const motBoxY = bulletY + 2;
+  const motBoxH = motivationalLines.length * 4 + 6;
+  // Inner accent background
+  doc.setFillColor(39, 124, 103); // primary
+  doc.roundedRect(MARGIN + 6, motBoxY - 2, CONTENT_WIDTH - 12, motBoxH, 3, 3, "F");
+  
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.setTextColor(...COLORS.primary);
+  doc.setFontSize(7.5);
+  doc.setTextColor(255, 255, 255);
   for (let i = 0; i < motivationalLines.length; i++) {
-    doc.text(motivationalLines[i], MARGIN + 8, bulletY + 4 + i * 3.5);
+    doc.text(motivationalLines[i], MARGIN + 12, motBoxY + 4 + i * 4);
   }
   y += upsellH + 8;
 
