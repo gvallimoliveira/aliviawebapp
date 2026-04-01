@@ -347,16 +347,15 @@ async function renderPainMapSection(doc: jsPDF, y: number, painRegions: string[]
   const images = await generatePainMapImages(painRegions);
   if (images.length === 0) return y;
 
-  y = checkPage(doc, y, 65);
-  y = renderSectionTitle(doc, y, isPt ? "Mapa de Dor" : "Pain Map", COLORS.primary);
-
   const mapW = 35;
   const mapH = mapW * (440 / 200); // maintain aspect ratio
   const gap = 4;
   const totalW = images.length * mapW + (images.length - 1) * gap;
   let startX = MARGIN + (CONTENT_WIDTH - totalW) / 2;
 
-  y = checkPage(doc, y, mapH + 12);
+  // Single checkPage for title + images together to prevent splitting
+  y = checkPage(doc, y, mapH + 24);
+  y = renderSectionTitle(doc, y, isPt ? "Mapa de Dor" : "Pain Map", COLORS.primary);
 
   for (const img of images) {
     try {
@@ -645,7 +644,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   // ── Pain Score (VAS) ──
   if (options.painScore != null) {
-    y = checkPage(doc, y, 28);
+    y = checkPage(doc, y, 35);
     y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary);
 
     const score = options.painScore;
@@ -694,16 +693,6 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
     y += barH + 3;
 
-    // Emoji faces below the bar
-    const emojis = ["😀", "🙂", "😐", "😟", "😣", "😫"];
-    const emojiPositions = [0, 2, 4, 6, 8, 10];
-    doc.setFontSize(10);
-    for (let i = 0; i < emojis.length; i++) {
-      const ex = barX + (emojiPositions[i] / 10) * barW;
-      doc.text(emojis[i], ex - 2, y + 4);
-    }
-    y += 8;
-
     // Labels
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
@@ -731,7 +720,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   y += 6;
   y = checkPage(doc, y, 70);
 
-  const upsellTitle = isPt ? "🔓 Desbloqueie sua Avaliação Completa" : "🔓 Unlock Your Full Assessment";
+  const upsellTitle = isPt ? "Desbloqueie sua Avaliação Completa" : "Unlock Your Full Assessment";
   const bulletsPt = [
     "✅ Explicação clínica detalhada do seu quadro",
     "✅ Raciocínio clínico baseado em evidências científicas",
@@ -750,11 +739,11 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   ];
   const bullets = isPt ? bulletsPt : bulletsEn;
   const ctaText = isPt
-    ? "Acesse o app e desbloqueie agora por apenas R$ 19,90 (avulso) ou R$ 29,90/mês."
-    : "Open the app and unlock now for just R$ 19.90 (single) or R$ 29.90/month.";
+    ? "Acesse o app para desbloquear todos os recursos da avaliação completa."
+    : "Open the app to unlock all features of the full assessment.";
 
   const totalBulletH = bullets.length * 5;
-  const upsellH = 18 + totalBulletH + 14;
+  const upsellH = 18 + totalBulletH + 12;
   drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
