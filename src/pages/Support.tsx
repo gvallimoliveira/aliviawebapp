@@ -47,7 +47,7 @@ const proTools = [
   { key: "messages", icon: MessageCircle },
 ];
 
-const patientFaqKeys = ["pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8"];
+const patientFaqKeys = ["pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9"];
 const proFaqKeys = ["rf1", "rf2", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8"];
 
 const Support = () => {
@@ -87,9 +87,7 @@ const Support = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (!loading && !user) navigate("/auth");
-  }, [user, loading, navigate]);
+  // Page is now public — no redirect needed
 
   useEffect(() => {
     setSeo({
@@ -99,7 +97,6 @@ const Support = () => {
   }, [t]);
 
   if (loading) return null;
-  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -260,8 +257,17 @@ const Support = () => {
           )}
         </div>
 
-        {/* Support contact form */}
-        <SupportContactForm />
+        {/* Support contact form — only for authenticated users */}
+        {user ? (
+          <SupportContactForm />
+        ) : (
+          <div className="mt-16 text-center">
+            <p className="text-muted-foreground mb-4">{t("support.login_to_contact")}</p>
+            <Button onClick={() => navigate("/auth")} className="gap-2">
+              {t("nav.login")}
+            </Button>
+          </div>
+        )}
       </main>
       <Footer />
     </div>

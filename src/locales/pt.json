@@ -1000,5 +1000,18 @@
   "admin.support.close": "Fechar",
   "admin.support.reopen": "Reabrir",
   "admin.support.replied_success": "Resposta enviada com sucesso!",
-  "admin.support.status_updated": "Status atualizado."
+  "admin.support.status_updated": "Status atualizado.",
+  "upgrade_flow.title": "Da avaliação gratuita à premium — sem retrabalho",
+  "upgrade_flow.subtitle": "Se você decidir desbloquear a avaliação completa após a básica, seus dados são preservados. Você continua de onde parou.",
+  "upgrade_flow.step_label": "Passo",
+  "upgrade_flow.step1_title": "Faça a Avaliação Básica",
+  "upgrade_flow.step1_desc": "Responda a anamnese, marque suas regiões de dor no mapa corporal e receba um diagnóstico preliminar — tudo gratuito.",
+  "upgrade_flow.step2_title": "Crie sua conta",
+  "upgrade_flow.step2_desc": "Para desbloquear a versão premium, basta criar sua conta e seguir com o pagamento. Leva menos de 1 minuto.",
+  "upgrade_flow.step3_title": "Continue de onde parou",
+  "upgrade_flow.step3_desc": "Seus dados da avaliação básica são transferidos automaticamente. Você segue direto para os questionários e testes exclusivos da premium.",
+  "upgrade_flow.highlight": "✨ Zero retrabalho — seus dados da básica são aproveitados na avaliação premium.",
+  "support.patient.faq.pf9.q": "Se eu fizer a avaliação básica e depois comprar a premium, preciso refazer tudo?",
+  "support.patient.faq.pf9.a": "Não! Ao comprar a avaliação premium logo após a básica, todos os dados que você preencheu (anamnese, mapa de dor, nome e e-mail) são transferidos automaticamente. Você cria sua conta, realiza o pagamento e continua de onde parou — direto nos questionários validados e testes funcionais exclusivos da versão premium. Sem retrabalho.",
+  "support.login_to_contact": "Faça login ou crie uma conta para enviar uma mensagem ao suporte."
 }
