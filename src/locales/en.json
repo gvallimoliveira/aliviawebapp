@@ -803,6 +803,8 @@
   "anamnesis.ottawa_knee": "Can you take 4 weight-bearing steps immediately after the event?",
   "anamnesis.ottawa_ankle": "Can you take 4 weight-bearing steps immediately after the event?",
   "anamnesis.ottawa_warning": "⚠️ We recommend seeking medical care to rule out fracture before continuing.",
+  "anamnesis.edema_question": "Do you notice swelling (edema) in the joint?",
+  "anamnesis.edema_subtitle": "Local swelling may indicate synovitis, acute overload, or soft tissue injury.",
   "onboarding.next": "Next",
   "onboarding.skip": "Skip tutorial",
   "onboarding.finish": "Got it!",
