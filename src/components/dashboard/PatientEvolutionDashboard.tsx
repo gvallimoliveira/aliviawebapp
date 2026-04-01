@@ -104,7 +104,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   extreme: "bg-destructive",
 };
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
