@@ -63,8 +63,8 @@ serve(async (req) => {
     // For now, the Stripe price is R$149,90 — if not first month, create a dynamic price
     // R$149,90 for first 30 days, R$249,90 after
     const priceId = isFirstMonth
-      ? "price_1T8546CBxbFcCp8IwpQN1AZD"   // R$149,90 promotional
-      : "price_1TCrvQCBxbFcCp8IlbHkAA9G";  // R$249,90 regular
+      ? "price_1TBkbu2HgVhVBE8ULWxK4UgT"   // R$149,90 promotional
+      : "price_1THGqF2HgVhVBE8UHvOgbazm";  // R$249,90 regular
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

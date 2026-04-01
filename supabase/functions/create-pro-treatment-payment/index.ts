@@ -86,7 +86,7 @@ serve(async (req) => {
       payment_method_types: ["card", "boleto"],
       line_items: [
         {
-          price: "price_1T854NCBxbFcCp8IpPdh93Qd",  // R$29,90
+          price: "price_1TBkbx2HgVhVBE8UKUTkPf6e",  // R$29,90
           quantity: 1,
         },
       ],
