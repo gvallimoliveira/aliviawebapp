@@ -60,6 +60,9 @@ const Gateway = () => {
             <Globe className="h-4 w-4" />
             {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
           </Button>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} title={t("support.badge")}>
+            <HelpCircle className="h-4 w-4" />
+          </Button>
           {user ? (
             <>
               <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5">
