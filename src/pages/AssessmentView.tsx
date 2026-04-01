@@ -294,6 +294,32 @@ const AssessmentView = () => {
                 ))}
               </div>
             )}
+
+            {/* PDF & WhatsApp actions */}
+            {assessment.diagnosis && (
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 rounded-xl"
+                  disabled={pdfLoading}
+                  onClick={handleDownloadPdf}
+                >
+                  {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 rounded-xl text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+                  disabled={whatsappLoading}
+                  onClick={handleShareWhatsApp}
+                >
+                  {whatsappLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+                  WhatsApp
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
