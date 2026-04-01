@@ -1,35 +1,63 @@
 
 
-## Correções no PDF da Avaliação Básica
+## Upgrade Básico → Premium: Continuidade sem Retrabalho
 
-### 3 Problemas Identificados no Código
+### Situação Atual
 
-**1. Recorte de seções entre páginas** (linhas 346-378, 646-723, 725-728)
-- `renderPainMapSection` faz `checkPage` para o título separado do conteúdo (linha 350 checa 65px, mas depois faz outro `checkPage` na linha 359). O título pode ficar numa página e as imagens na seguinte.
-- `renderSectionTitle` faz `checkPage(y, 14)` independente — não considera o conteúdo que vem depois.
-- **Fix**: Em `generateBasicReportPdfBlob`, antes de chamar cada seção (VAS, Pain Map, Upsell), calcular a altura total necessária (título + conteúdo) e fazer um único `checkPage` com esse valor. Para o pain map, estimar ~90mm (título + imagens). Para VAS, ~35mm.
+Quando o usuário completa a avaliação básica e decide comprar a premium:
+1. É redirecionado para `/auth` → cadastro → Stripe checkout
+2. Após pagamento, entra em `/assessment/premium` → **começa do zero** (welcome → redflags → anamnese → questionários → testes → diagnóstico → tratamento)
+3. Todos os dados da avaliação básica (anamnese, regiões de dor, score EVA, red flags) são perdidos
 
-**2. Emojis como texto** (linhas 698-704)
-- `doc.text(emojis[i], ...)` renderiza caracteres Unicode que o jsPDF não suporta visualmente — aparecem como caixas ou texto.
-- **Fix**: Remover as linhas 698-705 dos emojis. Manter apenas a barra de gradiente colorida + marcador + labels "Sem dor" / "Pior dor" que já existem e funcionam bem.
+### Solução Proposta
 
-**3. Upsell com preços errados e ícone estranho** (linhas 734, 752-754)
-- Título usa `"🔓"` que renderiza como caractere estranho no jsPDF.
-- `ctaText` mostra "R$ 19,90" e "R$ 29,90" que são valores incorretos.
-- **Fix**: Remover emoji do título, deixar apenas texto. Remover a linha `ctaText` com preços. Manter apenas os bullet points de benefícios.
+Usar `sessionStorage` para persistir os dados da avaliação básica e, ao entrar no fluxo premium, detectar que existe uma avaliação básica prévia e pular direto para os passos exclusivos premium (questionários → testes funcionais → diagnóstico completo → tratamento).
+
+### Fluxo do Upgrade
+
+```text
+Básica concluída (resultado na tela)
+  ↓ clica "Comprar Premium"
+  ↓ sessionStorage salva: anamnesisData, painRegions, painScore, redFlags, assessmentId, capturedName, capturedEmail
+  ↓ /auth (cadastro/login)
+  ↓ Stripe checkout
+  ↓ /payment-success → /assessment/premium
+  ↓ Detecta dados em sessionStorage
+  ↓ Pula para step "questionnaire" (com banner: "Dados da sua avaliação básica foram aproveitados")
+  ↓ Questionários → Testes funcionais → Diagnóstico completo → Tratamento
+```
 
 ### Alterações
 
-**Arquivo: `src/utils/generatePdf.ts`**
+**1. `src/components/assessment/DiagnosisResult.tsx`**
+- Nos botões de CTA (avulso/mensal), antes de redirecionar para auth/pagamento, salvar em `sessionStorage` chave `alivia-basic-upgrade-data`:
+  ```json
+  { "anamnesisData": {...}, "painRegions": [...], "painScore": 7, "capturedName": "João", "capturedEmail": "j@x.com" }
+  ```
 
-- **Linha 648**: Aumentar `checkPage` do VAS para 35 (título + barra + labels)
-- **Linhas 698-705**: Remover bloco de emojis
-- **Linhas 725-728**: Antes do pain map, fazer `checkPage(y, 95)` para garantir título + imagens juntos
-- **Linha 734**: Trocar `"🔓 Desbloqueie..."` por `"Desbloqueie sua Avaliação Completa"` (sem emoji)
-- **Linhas 752-754**: Remover `ctaText` e a linha que o renderiza (775). Substituir por texto sem preço, ex: "Acesse o app para desbloquear todos os recursos."
-- **Linha 757**: Recalcular `upsellH` sem a linha de preço
+**2. `src/pages/Assessment.tsx`**
+- No `useEffect` do `payment_check`, após confirmar `has_access`, verificar se existe `alivia-basic-upgrade-data` em `sessionStorage`
+- Se existir:
+  - Restaurar `anamnesisData`, `capturedName`, `capturedEmail` nos states
+  - Criar assessment premium no banco com os dados restaurados (anamnesis_data, pain_regions, pain_score)
+  - Pular direto para step `"questionnaire"` em vez de `"welcome"`
+  - Limpar `sessionStorage` após restaurar
+- Se não existir: fluxo premium normal (welcome → redflags → anamnese...)
+
+**3. Banner informativo**
+- Exibir um banner sutil no topo do step `questionnaire` quando veio de upgrade:
+  > "✅ Seus dados da avaliação básica foram aproveitados. Continue de onde parou."
+
+### Detalhes Técnicos
+
+- `sessionStorage` persiste enquanto a aba está aberta (sobrevive a navegação para `/auth` e redirect do Stripe se usar `window.location.href` na mesma aba)
+- Para cobrir o caso de o Stripe abrir em nova aba: duplicar os dados em `localStorage` com TTL de 30 minutos (`alivia-basic-upgrade-data` + `alivia-basic-upgrade-expiry`). Ao restaurar, verificar expiração e limpar
+- Backward compatible: se não houver dados salvos, o fluxo premium funciona normalmente do zero
+
+### Arquivos alterados
 
 | Arquivo | Ação |
 |---|---|
-| `src/utils/generatePdf.ts` | Remover emojis, corrigir upsell, prevenir split de seções |
+| `src/components/assessment/DiagnosisResult.tsx` | Salvar dados da básica no storage antes do redirect de compra |
+| `src/pages/Assessment.tsx` | Detectar e restaurar dados no fluxo premium, pular para questionários |
 
