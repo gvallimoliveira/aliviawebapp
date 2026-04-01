@@ -438,6 +438,18 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
                 </div>
               </div>
             )}
+            {data.painSubArea.includes("posterior") && regionType === "shoulder" && (
+              <div className="space-y-3 mt-4 p-4 bg-muted/50 rounded-xl">
+                <Label className="text-sm font-medium">{t("anamnesis.scapula_question")}</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {["anamnesis.scapula.yes", "anamnesis.scapula.no"].map((opt) => (
+                    <Button key={opt} variant={data.hasScapulaPain === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasScapulaPain: opt })}>
+                      {t(opt)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
