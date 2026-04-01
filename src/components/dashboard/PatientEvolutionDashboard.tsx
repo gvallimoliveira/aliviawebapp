@@ -78,6 +78,7 @@ interface PatientEvolutionDashboardProps {
   assessments: any[];
   professionalId: string;
   onDownloadPdf?: (assessment: any) => void;
+  onShareWhatsApp?: (assessment: any) => void;
 }
 
 interface PatientGroup {
