@@ -13,6 +13,7 @@ interface WelcomeSectionProps {
   } | null;
   onRestart: () => void;
   showRestart: boolean;
+  activeTab?: string;
 }
 
 const WelcomeSection = ({
