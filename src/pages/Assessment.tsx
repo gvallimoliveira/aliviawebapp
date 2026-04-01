@@ -525,7 +525,7 @@ const Assessment = () => {
             <QuestionnaireStep
               painRegions={anamnesisData.painRegions}
               onComplete={handleQuestionnaireComplete}
-              onBack={() => setStep(isUpgradeFlow ? "questionnaire" : "anamnesis")}
+              onBack={() => { if (!isUpgradeFlow) setStep("anamnesis"); }}
               onSkip={handleQuestionnaireSkip}
             />
           </>
@@ -607,6 +607,7 @@ const Assessment = () => {
               onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
               assessmentId={assessmentId}
               patientName={capturedName || user?.user_metadata?.full_name || undefined}
+              patientEmail={capturedEmail || user?.email || undefined}
               painRegions={anamnesisData?.painRegions}
               painScore={anamnesisData?.painScore}
               anamnesisData={anamnesisData}

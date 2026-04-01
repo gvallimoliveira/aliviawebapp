@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
-import ExitIntentPopup from "@/components/ExitIntentPopup";
+
 import { generateBasicReportPdfBlob } from "@/utils/generatePdf";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,7 @@ interface DiagnosisResultProps {
   onGenerateTreatment?: () => void;
   assessmentId?: string | null;
   patientName?: string;
+  patientEmail?: string;
   painRegions?: string[];
   painScore?: number;
   anamnesisData?: any;
@@ -51,7 +52,7 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
   </Card>
 );
 
-const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, painRegions, painScore, anamnesisData }: DiagnosisResultProps) => {
+const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [sharingPdf, setSharingPdf] = useState(false);
@@ -239,7 +240,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                       painRegions: painRegions || [],
                       painScore: painScore,
                       capturedName: patientName || "",
-                      capturedEmail: "",
+                      capturedEmail: patientEmail || "",
                     });
                     sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
@@ -270,7 +271,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                       painRegions: painRegions || [],
                       painScore: painScore,
                       capturedName: patientName || "",
-                      capturedEmail: "",
+                      capturedEmail: patientEmail || "",
                     });
                     sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
@@ -285,8 +286,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
             </Card>
           </motion.div>
 
-          {/* Exit intent popup for basic diagnosis */}
-          <ExitIntentPopup variant="diagnosis" />
+          {/* ExitIntentPopup is rendered by parent Assessment.tsx */}
         </>
       )}
 
