@@ -13,6 +13,7 @@ interface WelcomeSectionProps {
   } | null;
   onRestart: () => void;
   showRestart: boolean;
+  activeTab?: string;
 }
 
 const WelcomeSection = ({
@@ -22,6 +23,7 @@ const WelcomeSection = ({
   premiumAccess,
   onRestart,
   showRestart,
+  activeTab = "health",
 }: WelcomeSectionProps) => {
   const { t } = useLanguage();
 
@@ -30,15 +32,21 @@ const WelcomeSection = ({
     if (isAdmin) {
       return <Badge className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 gap-1"><Shield className="h-3 w-3" />Admin</Badge>;
     }
-    if (professional?.is_partner) {
-      return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Stethoscope className="h-3 w-3" />PRO Parceiro</Badge>;
+
+    // Na aba profissional, mostrar badge Pro
+    if (activeTab === "professional") {
+      if (professional?.is_partner) {
+        return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Stethoscope className="h-3 w-3" />PRO Parceiro</Badge>;
+      }
+      if (professional?.subscription_status === "active" && professional?.pro_access_expires_at) {
+        return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Anual</Badge>;
+      }
+      if (professional?.subscription_status === "active") {
+        return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Mensal</Badge>;
+      }
     }
-    if (professional?.subscription_status === "active" && professional?.pro_access_expires_at) {
-      return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Anual</Badge>;
-    }
-    if (professional?.subscription_status === "active") {
-      return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Mensal</Badge>;
-    }
+
+    // Na aba saúde/mensagens, mostrar apenas status B2C (Premium/Básico)
     if (premiumAccess?.subscription_type === "monthly") {
       return <Badge className="bg-amber-500/90 text-white text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />Premium Mensal</Badge>;
     }

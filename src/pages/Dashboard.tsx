@@ -224,6 +224,7 @@ const Dashboard = () => {
           premiumAccess={premiumAccess}
           onRestart={onboarding.restart}
           showRestart={!onboarding.isActive}
+          activeTab={activeTab}
         />
 
         {professional ? (
