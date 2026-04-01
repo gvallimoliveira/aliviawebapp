@@ -67,6 +67,55 @@ KNOWLEDGE BASE (use as clinical reference):
 - Maranhão-Filho et al. (2011): Unstable surfaces (wobble boards, BOSU) do NOT effectively train proprioception. Prefer progressive balance challenges with firm surfaces and sensory manipulation (eyes closed, head movements)
 - VISA-A Questionnaire: Use for Achilles tendon disorder severity assessment (0-100 scale); scores below 50 indicate significant functional limitation
 
+PROTOCOL — HIMA (Holding Isometric Muscle Action):
+- Definition: yielding isometric where the patient HOLDS a position against submaximal load for time (10s–45s). Different from PIMA (pushing against an immovable object).
+- Exercises by muscle group:
+  * Triceps sural: isometric calf raise hold (sustained plantarflexion at top, unilateral, 30-45s)
+  * Quadriceps: wall sit (isometric at 60-90° knee flexion, 20-45s); isometric knee extension hold at 30° flexion
+  * Glutes: glute bridge hold (sustained at top, 20-30s); single-leg bridge hold
+  * Hamstrings: Nordic hamstring isometric hold (sustained at intermediate position); prone hamstring curl hold
+  * Lumbar: prone superman hold; bird-dog hold sustained
+  * Adductors: Copenhagen adductor hold (side plank with leg on bench); squeeze ball hold between knees
+- Dosage: 3-5 sets × 10-45s, submaximal intensity (30-70% MVC)
+- EQUIPMENT ADAPTATION: All HIMA exercises are bodyweight-based. If gym available, add external load (ankle weights, dumbbells) for progression. If no gym, use body position and leverage to modulate difficulty.
+- ACTIVITY LEVEL ADAPTATION: Sedentary patients start with 10-15s holds; active patients can use 30-45s holds with higher intensity.
+- Clinical indications: acute/reactive tendinopathy (analgesic effect — Rio et al. 2015), post-injury joint stabilization, early muscle activation (Steps 1-2)
+- References: Rio et al. (BJSM 2015) — isometric contractions reduce patellar tendon pain; Thacker et al. (2019)
+
+PROTOCOL — Heavy Slow Resistance (HSR):
+- Definition: heavy load + slow tempo (3s concentric + 3s eccentric) for tendon remodeling
+- Original protocol (Kongsgaard et al. 2009 — patellar tendinopathy): decline squat, leg press, hack squat — 3x/week, 12 weeks
+- Load progression: weeks 1-2 (15RM), weeks 3-4 (12RM), weeks 5-8 (10RM), weeks 9-12 (8RM → 6RM)
+- Achilles adaptation (Beyer et al. 2015): seated + standing heel raise with progressive load
+- Applicable to: gluteus medius, proximal hamstring, and other lower limb tendinopathies
+- EQUIPMENT ADAPTATION: HSR requires PROGRESSIVE EXTERNAL LOADING. With gym: use machines (leg press, hack squat, seated calf raise). WITHOUT gym: use heavy resistance bands, loaded backpack, or single-leg progressions to approximate load. Note: pure bodyweight may be insufficient for advanced HSR phases — recommend the patient acquire at minimum heavy resistance bands.
+- ACTIVITY LEVEL ADAPTATION: Sedentary patients start at 15RM with longer adaptation (2 weeks per phase). Athletic patients can progress faster and reach 6RM. Always respect pain monitoring (≤3/10 during exercise).
+- Indications: degenerative/remodeling tendinopathies (Steps 3-5), when isolated eccentrics are insufficient
+- Relative contraindication: acute reactive tendon (use HIMA first)
+- References: Kongsgaard et al. (Scand J Med Sci Sports 2009); Beyer et al. (Knee Surg Sports Traumatol Arthrosc 2015)
+
+PROTOCOL — McKenzie Method (MDT — Mechanical Diagnosis and Therapy):
+- Definition: assessment and treatment system based on directional preference using repeated movements and sustained positions
+- Core principles: CENTRALIZATION (pain migrating from distal to proximal = good prognosis) vs PERIPHERALIZATION (contraindicates continuing in that direction)
+- Extension protocol for discogenic lumbar pain / sciatica:
+  1. Prone lying (passive prone, 5-10 min)
+  2. Prone on elbows (sustained extension on elbows, 2-3 min)
+  3. Prone press-up (active extension with arms, 10 reps every 2-3h)
+  4. Standing extension (standing with hands on lower back)
+- Flexion protocol (for spinal stenosis, facet joint pain): supine knee-to-chest, seated flexion, standing flexion
+- Clinical rule: if patient reports radiating leg pain (sciatica), test extension first; if pain CENTRALIZES (improves in leg, concentrates in lumbar) = continue extension; if it PERIPHERALIZES = stop and test flexion
+- Dosage: 10 repetitions every 2-3 hours in acute phase; reduce to 3-4x/day as improves
+- ACTIVITY LEVEL ADAPTATION: Sedentary patients benefit from more sustained positions (prone lying) before progressing to active movements. Active patients can progress faster to press-ups and standing extension.
+- Indications: lumbar disc herniation/protrusion, sciatica with centralization, mechanical low back pain (Steps 1-3)
+- References: McKenzie & May (2003) "The Lumbar Spine: Mechanical Diagnosis and Therapy"; Lam et al. (Phys Ther 2018)
+
+CONDITIONAL PROTOCOL SELECTION RULES:
+- If TENDINOPATHY + pain score ≥ 6 (high pain): Use HIMA in SHORT-TERM phase for isometric analgesia (Steps 1-2). Do NOT prescribe HSR until pain is controlled.
+- If TENDINOPATHY + medium/long-term phases: Prescribe HSR with progressive loading (Steps 3-5). Transition from HIMA → HSR as pain decreases below 4/10.
+- If LUMBAR PAIN with RADIATING pain to lower limbs (sciatica/radiculopathy): Include McKenzie extension protocol in SHORT-TERM phase. Monitor for centralization response.
+- If lumbar pain WITHOUT radiation: McKenzie may still be useful but is less critical; consider based on mechanical pain pattern.
+- ALWAYS consider activity level (${anamnesisData?.activityLevel || "not specified"}) and gym access (${hasGym ? "YES" : "NO"}) when selecting exercise difficulty and equipment.
+
 IMPORTANT RULES:
 - Always respond in ${lang}.
 - This is for educational purposes only — always include a disclaimer.
