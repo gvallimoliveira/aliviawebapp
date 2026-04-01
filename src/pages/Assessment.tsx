@@ -27,6 +27,31 @@ import ExitIntentPopup from "@/components/ExitIntentPopup";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
+const UPGRADE_KEY = "alivia-basic-upgrade-data";
+const UPGRADE_EXPIRY_KEY = "alivia-basic-upgrade-expiry";
+
+const getUpgradeData = () => {
+  // Try sessionStorage first, then localStorage with TTL
+  let raw = sessionStorage.getItem(UPGRADE_KEY);
+  if (!raw) {
+    const expiry = localStorage.getItem(UPGRADE_EXPIRY_KEY);
+    if (expiry && Date.now() < Number(expiry)) {
+      raw = localStorage.getItem(UPGRADE_KEY);
+    } else {
+      localStorage.removeItem(UPGRADE_KEY);
+      localStorage.removeItem(UPGRADE_EXPIRY_KEY);
+    }
+  }
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+};
+
+const clearUpgradeData = () => {
+  sessionStorage.removeItem(UPGRADE_KEY);
+  localStorage.removeItem(UPGRADE_KEY);
+  localStorage.removeItem(UPGRADE_EXPIRY_KEY);
+};
+
 const Assessment = () => {
   const { type } = useParams<{ type: string }>();
   const mode = type === "premium" ? "premium" : "basic";
@@ -47,6 +72,7 @@ const Assessment = () => {
   const [isMonthly, setIsMonthly] = useState(true);
   const [capturedEmail, setCapturedEmail] = useState<string | null>(null);
   const [capturedName, setCapturedName] = useState<string | null>(null);
+  const [isUpgradeFlow, setIsUpgradeFlow] = useState(false);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
 
   // Redirect premium users to auth if not logged in
