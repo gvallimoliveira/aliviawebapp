@@ -804,6 +804,8 @@
   "anamnesis.ottawa_knee": "Você consegue dar 4 passos com apoio total logo após o evento?",
   "anamnesis.ottawa_ankle": "Você consegue dar 4 passos com apoio total logo após o evento?",
   "anamnesis.ottawa_warning": "⚠️ Recomendamos procurar atendimento médico para descartar fratura antes de continuar.",
+  "anamnesis.edema_question": "Você percebe inchaço (edema) na articulação?",
+  "anamnesis.edema_subtitle": "Inchaço local pode indicar sinovite, sobrecarga aguda ou lesão de tecido mole.",
   "onboarding.next": "Próximo",
   "onboarding.skip": "Pular tutorial",
   "onboarding.finish": "Entendi!",
