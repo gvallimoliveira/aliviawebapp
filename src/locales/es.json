@@ -1030,5 +1030,6 @@
   "upgrade_welcome.step3_desc": "¡Sin repetir pasos! Vas directo a los cuestionarios validados y pruebas funcionales exclusivas.",
   "upgrade_welcome.data_safe": "Tus datos están seguros y protegidos por 30 minutos",
   "upgrade_welcome.cta": "Crear cuenta y continuar",
-  "upgrade_welcome.back": "Volver al resultado"
+  "upgrade_welcome.back": "Volver al resultado",
+  "upgrade_welcome.progress_label": "Progreso del flujo"
 }
