@@ -22,6 +22,7 @@ Deno.serve(async (req) => {
       basic_invites: 0,
       referral_coupons_applied: 0,
       abandoned_reminders: 0,
+      boleto_expiry_reminders: 0,
       errors: [] as string[],
     };
 
@@ -243,6 +244,44 @@ Deno.serve(async (req) => {
       }
     } catch (e) {
       results.errors.push(`abandoned_reminders: ${e}`);
+    }
+
+    // 6. BOLETO EXPIRY REMINDERS — notify users 2 days before boleto expires (1 day after creation)
+    try {
+      // Boletos expire in 3 business days. We notify ~1 day after creation (2 days before expiry).
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+      const { data: pendingBoletos } = await supabase
+        .from("assessments")
+        .select("id, user_id, created_at")
+        .eq("payment_status", "awaiting_payment")
+        .not("user_id", "is", null)
+        .lt("created_at", oneDayAgo.toISOString())
+        .gte("created_at", twoDaysAgo.toISOString());
+
+      if (pendingBoletos && pendingBoletos.length > 0) {
+        const usersWithPush = allSubs
+          ? new Set(allSubs.map((s: any) => s.user_id))
+          : new Set<string>();
+
+        for (const assessment of pendingBoletos) {
+          if (!assessment.user_id || !usersWithPush.has(assessment.user_id)) continue;
+          try {
+            const sent = await notifyUser(
+              assessment.user_id,
+              "⏰ Boleto expirando em breve",
+              "Seu boleto expira em 2 dias. Caso não tenha pago, gere um novo para não perder seus dados da avaliação.",
+              "/dashboard"
+            );
+            if (sent) results.boleto_expiry_reminders++;
+          } catch (e) {
+            results.errors.push(`boleto_expiry ${assessment.id}: ${e}`);
+          }
+        }
+      }
+    } catch (e) {
+      results.errors.push(`boleto_expiry_reminders: ${e}`);
     }
 
     return new Response(
