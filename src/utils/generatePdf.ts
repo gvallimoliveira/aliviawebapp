@@ -644,7 +644,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   // ── Pain Score (VAS) ──
   if (options.painScore != null) {
-    y = checkPage(doc, y, 28);
+    y = checkPage(doc, y, 35);
     y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary);
 
     const score = options.painScore;
