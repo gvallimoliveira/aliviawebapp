@@ -188,7 +188,11 @@ const Assessment = () => {
     setPaymentLoading(true);
     try {
       const referralCode = localStorage.getItem("alivia_referral_code");
-      const body: any = { payment_type: isMonthly ? "monthly" : "single" };
+      const basicData = getBasicUpgradePayload();
+      const body: any = {
+        payment_type: isMonthly ? "monthly" : "single",
+        ...(basicData ? { basic_upgrade_data: basicData } : {}),
+      };
       if (referralCode) body.referral_code = referralCode;
 
       const { data, error } = await supabase.functions.invoke("create-payment", {
