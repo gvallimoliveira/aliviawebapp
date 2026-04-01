@@ -56,6 +56,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [sharingPdf, setSharingPdf] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   // 5-minute countdown timer for basic mode urgency
   const [secondsLeft, setSecondsLeft] = useState(300);
