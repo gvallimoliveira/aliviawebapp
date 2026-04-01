@@ -146,7 +146,6 @@ serve(async (req) => {
     const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      currency: "brl",
       payment_method_types: sessionMode === "subscription" ? ["card"] : ["card", "boleto"],
       line_items: [
         {
