@@ -525,7 +525,7 @@ const Assessment = () => {
             <QuestionnaireStep
               painRegions={anamnesisData.painRegions}
               onComplete={handleQuestionnaireComplete}
-              onBack={() => setStep(isUpgradeFlow ? "questionnaire" : "anamnesis")}
+              onBack={() => { if (!isUpgradeFlow) setStep("anamnesis"); }}
               onSkip={handleQuestionnaireSkip}
             />
           </>
