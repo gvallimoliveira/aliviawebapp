@@ -19,12 +19,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
-  AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift,
+  AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
-import { generateAssessmentPdf } from "@/utils/generatePdf";
+import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface ProDashboardProps {
