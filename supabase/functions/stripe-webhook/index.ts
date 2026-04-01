@@ -100,11 +100,21 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
  * This is the confirmation that the boleto was actually paid.
  */
 async function handleAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
+  const userId = session.metadata?.user_id;
   log("async_payment_succeeded", {
     type: session.metadata?.type,
-    userId: session.metadata?.user_id,
+    userId,
   });
   await fulfillOrder(session);
+
+  // Send push notification to user about confirmed payment
+  if (userId) {
+    await sendPushToUser(userId, {
+      title: "✅ Pagamento confirmado!",
+      body: "Seu boleto foi compensado. Seu acesso já está liberado!",
+      url: "/dashboard",
+    });
+  }
 }
 
 /**
