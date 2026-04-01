@@ -72,6 +72,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     hadDislocation: "",
     ottawaPositive: "",
     hasLocalSwelling: "",
+    hasScapulaPain: "",
   });
 
   const complaints = [
