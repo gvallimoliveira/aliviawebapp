@@ -720,7 +720,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   y += 6;
   y = checkPage(doc, y, 70);
 
-  const upsellTitle = isPt ? "🔓 Desbloqueie sua Avaliação Completa" : "🔓 Unlock Your Full Assessment";
+  const upsellTitle = isPt ? "Desbloqueie sua Avaliação Completa" : "Unlock Your Full Assessment";
   const bulletsPt = [
     "✅ Explicação clínica detalhada do seu quadro",
     "✅ Raciocínio clínico baseado em evidências científicas",
