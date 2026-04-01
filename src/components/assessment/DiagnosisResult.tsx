@@ -31,6 +31,7 @@ interface DiagnosisResultProps {
   patientName?: string;
   painRegions?: string[];
   painScore?: number;
+  anamnesisData?: any;
 }
 
 const BlurredPreview = ({ title, children }: { title: string; children: React.ReactNode }) => (
