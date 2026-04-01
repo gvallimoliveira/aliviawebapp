@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE, PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 import { useParams, useNavigate } from "react-router-dom";
-import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight, Calendar, Zap, Check, CheckCircle } from "lucide-react";
+import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight, Calendar, Zap, Check, CheckCircle, Star, Activity, FileText, TrendingUp, ClipboardList, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
