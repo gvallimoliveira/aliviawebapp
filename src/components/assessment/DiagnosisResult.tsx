@@ -364,6 +364,41 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
             {sharingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
             WhatsApp
           </Button>
+          <Button
+            variant="outline"
+            className="gap-2 rounded-xl"
+            disabled={downloadingPdf}
+            onClick={async () => {
+              setDownloadingPdf(true);
+              try {
+                const pdfBlob = await generateBasicReportPdfBlob({
+                  diagnosis,
+                  language,
+                  patientName: patientName || undefined,
+                  painRegions: painRegions || undefined,
+                  painScore: painScore,
+                });
+                const url = URL.createObjectURL(pdfBlob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `AliviA_Resultado.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch (err) {
+                console.error("PDF download error:", err);
+                toast({
+                  title: language === "pt" ? "Erro ao gerar PDF" : "Error generating PDF",
+                  description: language === "pt" ? "Tente novamente." : "Please try again.",
+                  variant: "destructive",
+                });
+              } finally {
+                setDownloadingPdf(false);
+              }
+            }}
+          >
+            {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            PDF
+          </Button>
           <Button onClick={onNewAssessment} className="rounded-xl">
             {t("diagnosis.new_assessment")}
           </Button>
