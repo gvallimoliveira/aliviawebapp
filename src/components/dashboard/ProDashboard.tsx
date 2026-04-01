@@ -169,6 +169,51 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     }
   };
 
+  const handleShareWhatsApp = async (assessment: any) => {
+    if (!assessment.diagnosis) return;
+    try {
+      const lang = document.documentElement.lang === "en" ? "en" : "pt";
+      let proNote: string | undefined;
+      if (professional?.id) {
+        const { data } = await supabase
+          .from("professional_notes")
+          .select("content")
+          .eq("professional_id", professional.id)
+          .eq("assessment_id", assessment.id)
+          .maybeSingle();
+        if (data?.content) proNote = data.content;
+      }
+      const pdfBlob = await generateAssessmentPdfBlob({
+        diagnosis: assessment.diagnosis,
+        treatmentPlan: assessment.treatment_plan,
+        language: lang as "pt" | "en",
+        userName: assessment.patient_name || "Paciente",
+        anamnesisData: assessment.anamnesis_data,
+        painRegions: assessment.pain_regions,
+        testResults: assessment.test_results,
+        professionalNotes: proNote,
+      });
+
+      const filePath = `${assessment.id}_pro.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from("assessment-reports")
+        .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("assessment-reports")
+        .getPublicUrl(filePath);
+
+      const origin = getPublicOrigin();
+      const patientLabel = assessment.patient_name || "Paciente";
+      const text = `🩺 *Aliv.iA — Relatório Profissional*\n\n👤 *Paciente:* ${patientLabel}\n📋 *Hipótese:* ${assessment.diagnosis.hypothesis}\n\n📄 Relatório em PDF:\n${urlData.publicUrl}\n\n💡 ${origin}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    } catch {
+      toast({ title: "Erro ao compartilhar PDF", variant: "destructive" });
+    }
+  };
+
   const thisMonthCount = patientAssessments.filter((a) => {
     const d = new Date(a.created_at);
     const now = new Date();
