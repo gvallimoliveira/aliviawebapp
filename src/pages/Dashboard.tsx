@@ -176,10 +176,10 @@ const Dashboard = () => {
       <QuickActions hasPremiumAccess={premiumAccess?.has_access} premiumLoading={premiumLoading} hasProfessional={!!professional} />
       <ReferralCard availableDiscount={premiumAccess?.available_discount} />
 
-      {premiumAccess?.subscription_type !== "single" && (
+      {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
         <div data-onboarding="patient-diary"><PainDiary /></div>
       )}
-      {premiumAccess?.subscription_type !== "single" && (
+      {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
         <AssessmentComparison assessments={assessments} />
       )}
 

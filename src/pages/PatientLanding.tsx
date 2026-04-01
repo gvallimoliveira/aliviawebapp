@@ -44,6 +44,7 @@ const PatientLanding = () => {
         <ComparisonSection />
         <MethodologySection />
         <HowItWorksSection />
+        <UpgradeFlowSection />
         <TestimonialsSection />
         <FaqSection />
         <SocialSection />

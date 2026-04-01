@@ -257,8 +257,17 @@ const Support = () => {
           )}
         </div>
 
-        {/* Support contact form */}
-        <SupportContactForm />
+        {/* Support contact form — only for authenticated users */}
+        {user ? (
+          <SupportContactForm />
+        ) : (
+          <div className="mt-16 text-center">
+            <p className="text-muted-foreground mb-4">{t("support.login_to_contact")}</p>
+            <Button onClick={() => navigate("/auth")} className="gap-2">
+              {t("nav.login")}
+            </Button>
+          </div>
+        )}
       </main>
       <Footer />
     </div>
