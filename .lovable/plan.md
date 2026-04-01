@@ -1,24 +1,43 @@
 
 
-## Ajustes no Header: Suporte Público + Âncoras Mobile
+## Separação de Acesso: Pro ≠ Premium no painel "Minha Saúde"
 
-### Problema 1 — Link de Suporte só aparece para usuários logados
+### Problema
 
-No desktop (linha 62-66) e mobile (linha 152-158), o link de suporte está dentro de blocos condicionais `{user && ...}` ou `{user ? ...}`. Como a página de suporte agora é pública, o link precisa aparecer sempre.
+Hoje, `verify-payment` verifica apenas pagamentos B2C (Premium mensal/avulso). O profissional com plano Pro (mensal R$49 ou anual R$418,80) **não** ganha `has_access: true` via `verify-payment` — portanto o Diário de Dor e Comparação de Métricas já ficam ocultos corretamente para ele.
 
-### Problema 2 — Âncoras do menu mobile não funcionam
+Porém, há pontos onde o status de profissional "vaza" benefícios no painel de cliente:
 
-A função `go(path)` usa `navigate(path)` do React Router. Para hash links como `#compare` e `#how`, `navigate("#compare")` não faz scroll — ele tenta mudar de rota. Na landing de pacientes funciona por acaso (o componente já está na mesma página), mas na profissional falha porque o Router não resolve a âncora.
+1. **`QuickActions`** recebe `hasPremiumAccess` mas também `hasProfessional` — usado apenas para esconder o CTA de registro. Não há vazamento aqui.
 
-**Correção**: Quando o path começa com `#`, usar `document.querySelector(path)?.scrollIntoView({ behavior: "smooth" })` em vez de `navigate()`.
+2. **`UpgradeBanner`** — sem vazamento direto, depende só de `premiumAccess`.
 
-### Alterações em `src/components/Header.tsx`
+3. **`WelcomeSection`** — recebe `professional` e `premiumAccess`, pode exibir badges que confundem (ex: mostrar badge "Pro" junto com status de cliente básico sem distinção clara).
 
-1. **Função `go`**: Detectar paths que começam com `#` e fazer `scrollIntoView` + fechar menu, em vez de `navigate`
-2. **Desktop**: Mover o botão de suporte (HelpCircle) para fora do bloco `{user && ...}`, tornando-o sempre visível
-3. **Mobile**: Adicionar botão de suporte fora do bloco `{user ? ... : ...}`, junto com o botão de idioma (sempre visível)
+### Verificação real do bug
+
+O fluxo atual **já segrega corretamente** na maioria dos casos porque `verify-payment` consulta apenas o produto Premium B2C (`prod_U9PZeaM93PlMwb`) no Stripe. Um profissional com Pro (`prod_U5dB77Y8adgxGf`) **não** recebe `has_access: true`.
+
+**Mas há um cenário de vazamento**: se o profissional é VIP (está na tabela `vip_users`), recebe acesso total tanto no painel profissional quanto no cliente — isso é intencional (admin/VIP).
+
+### O que precisa ser verificado/corrigido
+
+O risco real está em: **o profissional com Pro ativo pode achar que tem Premium** por causa da UX — badges, textos. Preciso verificar `WelcomeSection` para confirmar.
+
+### Alterações
+
+**1. `src/components/dashboard/WelcomeSection.tsx`** — Garantir que o badge exibido no painel "Minha Saúde" reflita apenas o status de pagamento B2C. Se o usuário é profissional Pro mas não pagou Premium, mostrar badge "Básico" (não "Pro").
+
+**2. `src/pages/Dashboard.tsx`** — Já correto: Diário de Dor e Comparação exigem `premiumAccess?.has_access && subscription_type === "monthly"`. Nenhuma mudança necessária.
+
+**3. Revisão de `WelcomeSection`** — Separar visualmente: badge Pro aparece apenas na aba Profissional, badge Premium/Básico aparece na aba Minha Saúde.
 
 | Arquivo | Ação |
 |---|---|
-| `src/components/Header.tsx` | Suporte sempre visível + fix scroll para âncoras |
+| `src/components/dashboard/WelcomeSection.tsx` | Separar badges Pro vs Premium — Pro badge só na aba profissional |
+| `src/pages/Dashboard.tsx` | Passar flag para WelcomeSection indicando contexto (já está ok, apenas confirmar) |
+
+### Escopo mínimo
+
+A arquitetura já está correta na lógica de acesso. A correção é **cosmética/UX**: garantir que o usuário Pro não veja badges ou textos que sugiram que tem Premium no painel de cliente.
 
