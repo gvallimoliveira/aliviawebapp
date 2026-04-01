@@ -176,7 +176,7 @@ const Assessment = () => {
           return;
         }
 
-        // Check DB for paid assessment with pending_upgrade_data (boleto confirmed)
+        // Check DB for paid assessment with basic data already saved (boleto flow)
         if (user?.id) {
           const { data: paidWithData } = await supabase
             .from("assessments")
@@ -185,14 +185,16 @@ const Assessment = () => {
             .eq("type", "premium")
             .eq("payment_status", "paid")
             .eq("status", "in_progress")
+            .not("anamnesis_data", "eq", "{}")
             .order("created_at", { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
-          if (paidWithData && paidWithData.anamnesis_data && Object.keys(paidWithData.anamnesis_data as any).length > 0) {
-            // Restore from DB (boleto flow — data was saved before checkout)
+          if (paidWithData && paidWithData.anamnesis_data) {
             const restored = paidWithData.anamnesis_data as any;
-            if (restored.painRegions || restored.name) {
+            // Check if it has meaningful anamnesis data (not just empty object)
+            const hasData = restored.painRegions?.length > 0 || restored.name || restored.age || restored.painScore;
+            if (hasData) {
               setAnamnesisData(restored);
               if (paidWithData.patient_name) setCapturedName(paidWithData.patient_name);
               if (paidWithData.patient_email) setCapturedEmail(paidWithData.patient_email);

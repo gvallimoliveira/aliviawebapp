@@ -109,7 +109,61 @@ serve(async (req) => {
       }
 
       // Handle premium subscription verification
-      // For subscriptions, check_access is the primary check; session verification just confirms
+      // First check if there's already an awaiting_payment assessment to promote
+      const pendingAssessmentId = session.metadata?.pending_assessment_id;
+      
+      if (pendingAssessmentId) {
+        const { data: pendingAssessment } = await supabaseClient
+          .from("assessments")
+          .select("id")
+          .eq("id", pendingAssessmentId)
+          .eq("user_id", user.id)
+          .eq("payment_status", "awaiting_payment")
+          .maybeSingle();
+
+        if (pendingAssessment) {
+          await supabaseClient
+            .from("assessments")
+            .update({
+              payment_status: "paid",
+              paid_at: new Date().toISOString(),
+              pending_upgrade_data: null,
+            })
+            .eq("id", pendingAssessment.id);
+          
+          return new Response(JSON.stringify({ paid: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      // Fallback: check for any awaiting_payment assessment for this user
+      const { data: awaitingAssessment } = await supabaseClient
+        .from("assessments")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("type", "premium")
+        .eq("payment_status", "awaiting_payment")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (awaitingAssessment) {
+        await supabaseClient
+          .from("assessments")
+          .update({
+            payment_status: "paid",
+            paid_at: new Date().toISOString(),
+            pending_upgrade_data: null,
+          })
+          .eq("id", awaitingAssessment.id);
+
+        return new Response(JSON.stringify({ paid: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // No pending — check for existing paid in_progress
       const { data: existingAssessment } = await supabaseClient
         .from("assessments")
         .select("id")
