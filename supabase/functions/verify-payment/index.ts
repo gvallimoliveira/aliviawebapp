@@ -46,7 +46,14 @@ serve(async (req) => {
       const session = await stripe.checkout.sessions.retrieve(session_id);
 
       if (session.payment_status !== "paid") {
-        return new Response(JSON.stringify({ paid: false }), {
+        // Check if this is a pending async payment (boleto)
+        const isPending = session.payment_status === "unpaid" && session.status === "complete";
+        return new Response(JSON.stringify({ 
+          paid: false, 
+          pending: isPending,
+          payment_method: isPending ? "boleto" : null,
+          type: session.metadata?.type || null,
+        }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

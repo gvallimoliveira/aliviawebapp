@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, Clock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -11,6 +11,7 @@ const PaymentSuccess = () => {
   const { t, language } = useLanguage();
   const [verifying, setVerifying] = useState(true);
   const [verified, setVerified] = useState(false);
+  const [pending, setPending] = useState(false);
   const [generatingTreatment, setGeneratingTreatment] = useState(false);
   const [treatmentDone, setTreatmentDone] = useState(false);
 
@@ -30,7 +31,11 @@ const PaymentSuccess = () => {
     supabase.functions
       .invoke("verify-payment", { body: { session_id: sessionId } })
       .then(({ data }) => {
-        setVerified(data?.paid === true);
+        if (data?.paid === true) {
+          setVerified(true);
+        } else if (data?.pending === true) {
+          setPending(true);
+        }
         setVerifying(false);
       })
       .catch(() => setVerifying(false));
@@ -43,7 +48,6 @@ const PaymentSuccess = () => {
     const generateTreatment = async () => {
       setGeneratingTreatment(true);
       try {
-        // Fetch assessment data
         const { data: assessment } = await supabase
           .from("assessments")
           .select("*")
@@ -65,7 +69,6 @@ const PaymentSuccess = () => {
 
         if (error) throw error;
 
-        // Save treatment plan to assessment
         await supabase
           .from("assessments")
           .update({
@@ -91,6 +94,77 @@ const PaymentSuccess = () => {
         <div className="text-center space-y-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
           <p className="text-muted-foreground">{t("payment.verifying") || "Verificando pagamento..."}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Boleto pending state
+  if (pending) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center space-y-6 max-w-lg">
+          <div className="relative mx-auto w-20 h-20">
+            <div className="absolute inset-0 rounded-full bg-amber-100 dark:bg-amber-900/30 animate-pulse" />
+            <Clock className="h-12 w-12 text-amber-500 absolute inset-0 m-auto" />
+          </div>
+
+          <h1 className="text-2xl font-bold text-foreground">
+            Aguardando pagamento do boleto
+          </h1>
+
+          <div className="bg-muted/50 rounded-xl p-6 space-y-4 text-left">
+            <div className="flex items-start gap-3">
+              <FileText className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">Boleto gerado com sucesso</p>
+                <p className="text-sm text-muted-foreground">
+                  O boleto foi enviado para seu e-mail. Você também pode acessá-lo pelo link do Stripe.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Clock className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">Prazo de pagamento</p>
+                <p className="text-sm text-muted-foreground">
+                  O boleto tem validade de até <strong>3 dias úteis</strong>. Após o vencimento, será necessário gerar um novo.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">Liberação automática</p>
+                <p className="text-sm text-muted-foreground">
+                  Assim que o pagamento do boleto for confirmado pelo sistema bancário, seu acesso será 
+                  <strong> liberado automaticamente</strong>. Você receberá uma notificação quando isso acontecer.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground/70">
+            A confirmação bancária pode levar até 2 dias úteis após o pagamento.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/dashboard")}
+              className="rounded-xl"
+            >
+              Ir para o Dashboard
+            </Button>
+            <Button
+              onClick={() => navigate("/")}
+              className="rounded-xl"
+            >
+              Voltar ao início
+            </Button>
+          </div>
         </div>
       </div>
     );
