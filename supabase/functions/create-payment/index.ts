@@ -33,11 +33,13 @@ serve(async (req) => {
     let referralCode: string | null = null;
     let paymentType: "monthly" | "single" = "monthly";
     let exitIntentDiscount = false;
+    let basicUpgradeData: any = null;
     try {
       const body = await req.json();
       referralCode = body?.referral_code || null;
       if (body?.payment_type === "single") paymentType = "single";
       if (body?.exit_intent_discount === true) exitIntentDiscount = true;
+      if (body?.basic_upgrade_data) basicUpgradeData = body.basic_upgrade_data;
     } catch {
       // No body or invalid JSON
     }
