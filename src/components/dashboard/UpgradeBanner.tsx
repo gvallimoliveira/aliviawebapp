@@ -20,6 +20,7 @@ interface PremiumAccess {
 interface UpgradeBannerProps {
   premiumAccess: PremiumAccess | null;
   premiumLoading: boolean;
+  professional?: any;
   push: {
     isSupported: boolean;
     subscribed: boolean;
