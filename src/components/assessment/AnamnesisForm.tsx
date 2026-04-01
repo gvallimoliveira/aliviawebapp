@@ -33,6 +33,7 @@ export interface AnamnesisData {
   hadSprain: string;
   hadDislocation: string;
   ottawaPositive: string;
+  hasLocalSwelling: string;
 }
 
 interface AnamnesisFormProps {
@@ -69,6 +70,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     hadSprain: "",
     hadDislocation: "",
     ottawaPositive: "",
+    hasLocalSwelling: "",
   });
 
   const complaints = [
@@ -355,6 +357,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         if (!regionType) return null;
         const subAreas = getSubAreasForRegion(regionType);
         const needsTraumaQuestion = regionType === "knee" || regionType === "ankle" || regionType === "shoulder";
+        const needsEdemaQuestion = regionType === "knee" || regionType === "ankle" || regionType === "wrist";
         const traumaKey = regionType === "knee" ? "hadTwist" : regionType === "ankle" ? "hadSprain" : "hadDislocation";
         const traumaQuestion = regionType === "knee" ? "anamnesis.knee_twist" : regionType === "ankle" ? "anamnesis.ankle_sprain" : "anamnesis.shoulder_dislocation";
         const traumaValue = regionType === "knee" ? data.hadTwist : regionType === "ankle" ? data.hadSprain : data.hadDislocation;
@@ -416,8 +419,22 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
                 )}
               </div>
             )}
+            {needsEdemaQuestion && (
+              <div className="space-y-3 mt-4 p-4 bg-muted/50 rounded-xl">
+                <Label className="text-sm font-medium">{t("anamnesis.edema_question")}</Label>
+                <p className="text-xs text-muted-foreground">{t("anamnesis.edema_subtitle")}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                    <Button key={opt} variant={data.hasLocalSwelling === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasLocalSwelling: opt })}>
+                      {t(opt)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
+
       }
       case "sex_age":
         return (

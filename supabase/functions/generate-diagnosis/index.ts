@@ -21,6 +21,7 @@ serve(async (req) => {
     const ottawaPositive = anamnesisData.ottawaPositive || "";
     const hasPriorSurgery = anamnesisData.hasPriorSurgery || "";
     const surgeryDetails = anamnesisData.surgeryDetails || "";
+    const hasLocalSwelling = anamnesisData.hasLocalSwelling || "";
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
@@ -131,7 +132,19 @@ BIOMECHANICAL CONSIDERATIONS:
 
       const mappings: Record<string, Record<string, string>> = {
         knee: {
-          front: "PRIORITIZE: Condromalacia patelar / Síndrome femoropatelar, Hoffite (fat pad impingement), Tendinopatia patelar (jumper's knee). These are the most likely diagnoses for ANTERIOR knee pain.",
+          front: `PRIORITIZE for ANTERIOR knee pain — systematically differentiate these THREE conditions:
+
+1. DOR FEMOROPATELAR (Patellofemoral Pain Syndrome): Most common cause of anterior knee pain. Pain is DIFFUSE, typically near the patellar border (medial or lateral facet) or retropatellar. Aggravated by stairs, prolonged sitting (cinema sign), squatting, and multiple angles of knee flexion-extension. NO specific point tenderness on the patellar tendon. Consider VMO weakness, patellar maltracking, Q-angle.
+
+2. HOFFITE (Hoffa's Fat Pad Impingement): Pain is localized INFRAPATELLAR, on BOTH SIDES of the patellar tendon. KEY DIFFERENTIATOR: pain occurs specifically during TERMINAL KNEE EXTENSION (last 10-15°) due to mechanical compression of Hoffa's fat pad between the femoral condyles and tibial plateau. Often associated with LOCAL EDEMA/SWELLING. Hyperextension of the knee reproduces symptoms. Can follow trauma or repetitive overuse. Positive Hoffa's test (pain on palpation of fat pad with knee in 30° flexion).
+
+3. TENDINOPATIA PATELAR (Patellar Tendinopathy / Jumper's Knee): Pain is VERY FOCAL and POINT-SPECIFIC on the patellar tendon (usually inferior pole of patella). Aggravated by LOADING activities (jumping, squatting, landing). Pain increases with tendon stretch under tension. Common in jumping sports (volleyball, basketball). Gradual onset, load-dependent.
+
+CLINICAL DECISION GUIDE:
+- If pain is diffuse, near patellar borders, multiple angles → Patellofemoral Pain
+- If pain is infrapatellar, terminal extension, with swelling → Hoffite
+- If pain is point-specific on tendon, load-dependent → Patellar Tendinopathy
+- EDEMA presence strongly favors Hoffite over the other two conditions`,
           lateral: "PRIORITIZE: Síndrome da banda iliotibial (ITB), Lesão do menisco lateral, Lesão do LCL. These are the most likely diagnoses for LATERAL knee pain.",
           medial: "PRIORITIZE: Tendinopatia/bursite da pata de ganso (pes anserine), Lesão do menisco medial, Lesão do LCM. These are the most likely diagnoses for MEDIAL knee pain.",
           posterior: "PRIORITIZE: Cisto de Baker, Lesão do LCP, Tendinopatia dos isquiotibiais distais. These are the most likely diagnoses for POSTERIOR knee pain.",
@@ -180,6 +193,25 @@ BIOMECHANICAL CONSIDERATIONS:
       ? `\nPRIOR SURGERY HISTORY (IMPORTANT — integrate into clinical reasoning):\nThe patient reports previous surgery: "${surgeryDetails}"\nConsider: post-surgical adhesions, altered biomechanics, hardware-related symptoms, adjacent segment pathology, re-injury of repaired structures, and whether current symptoms may be related to the prior surgical intervention.\n`
       : "";
 
+    // Edema / swelling clinical reasoning block
+    const edemaBlock = hasLocalSwelling === "anamnesis.trauma.yes" ? `
+EDEMA/SWELLING REPORTED (MANDATORY — integrate into clinical reasoning):
+The patient reports LOCAL SWELLING (edema) in the affected joint. This is a critical clinical sign that MUST influence your diagnostic hypothesis:
+
+POSSIBLE IMPLICATIONS:
+1. SYNOVITIS (joint effusion): Inflammatory process within the synovial membrane. Can be caused by overuse, autoimmune conditions, crystal arthropathy, or early OA. Consider: warmth, diffuse joint swelling, morning stiffness.
+2. ACUTE SOFT TISSUE INJURY (Grade 1-2): Ligament sprain, tendon strain, or muscle tear with associated inflammatory response. Grade 1 = microscopic tears, mild swelling. Grade 2 = partial tear, moderate swelling, functional limitation.
+3. ARTICULAR LESION: Meniscal tear (knee), labral tear, chondral defect — can cause reactive effusion.
+4. TENDON SHEATH INFLAMMATION (tenosynovitis): Especially relevant for wrist/ankle. Swelling along the tendon path.
+5. BURSITIS: Localized swelling over a bursa (prepatellar, infrapatellar, retrocalcaneal).
+
+${isKneeCase && (Array.isArray(painSubArea) ? painSubArea.includes("front") : painSubArea === "front") ? "⚠️ ANTERIOR KNEE + EDEMA: Strongly consider HOFFITE (Hoffa's fat pad impingement). Edema is a hallmark sign of fat pad inflammation. Also consider prepatellar bursitis and infrapatellar bursitis." : ""}
+
+CLINICAL IMPACT: Presence of edema suggests an INFLAMMATORY or ACUTE component. This should:
+- Influence treatment recommendations (consider PRICE protocol for acute, anti-inflammatory strategies)
+- Increase suspicion for structural lesions over purely functional/biomechanical causes
+- Guide toward imaging recommendations if symptoms persist
+` : "";
     // Multi-complaint kinetic chain reasoning block
     const multiComplaintBlock = chiefComplaints.length > 1 ? `
 MULTI-SEGMENT COMPLAINT ANALYSIS (MANDATORY — patient reports pain in ${chiefComplaints.length} regions):
@@ -261,6 +293,7 @@ ${kneeThighBlock}
 ${subAreaBlock}
 ${ottawaBlock}
 ${surgeryBlock}
+${edemaBlock}
 ${multiComplaintBlock}
 
 IMPORTANT RULES:
@@ -304,6 +337,7 @@ Response format (JSON):
 - Ankle sprain: ${hadSprain || "N/A"}
 - Shoulder dislocation history: ${hadDislocation || "N/A"}
 - Ottawa rules (weight-bearing): ${ottawaPositive || "N/A"}
+- Local swelling/edema: ${hasLocalSwelling === "anamnesis.trauma.yes" ? "YES — patient reports joint swelling" : hasLocalSwelling === "anamnesis.trauma.no" ? "No swelling reported" : "N/A"}
 
 ${additionalInfo ? `Additional information provided by the patient (USE THIS to refine your hypothesis and potentially increase confidence):
 ${additionalInfo}` : ""}

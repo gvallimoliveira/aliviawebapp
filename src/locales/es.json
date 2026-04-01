@@ -804,6 +804,8 @@
   "anamnesis.ottawa_knee": "¿Puede dar 4 pasos con apoyo total inmediatamente después del evento?",
   "anamnesis.ottawa_ankle": "¿Puede dar 4 pasos con apoyo total inmediatamente después del evento?",
   "anamnesis.ottawa_warning": "⚠️ Recomendamos buscar atención médica para descartar fractura antes de continuar.",
+  "anamnesis.edema_question": "¿Nota hinchazón (edema) en la articulación?",
+  "anamnesis.edema_subtitle": "La hinchazón local puede indicar sinovitis, sobrecarga aguda o lesión de tejido blando.",
   "onboarding.next": "Siguiente",
   "onboarding.skip": "Saltar tutorial",
   "onboarding.finish": "¡Entendido!",
