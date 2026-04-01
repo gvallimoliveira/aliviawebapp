@@ -248,7 +248,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                     sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-expiry", String(Date.now() + 30 * 60 * 1000));
-                    window.location.href = "/assessment/premium";
+                    navigate("/upgrade-welcome", { state: { redirectTo: "/assessment/premium", planType: "single" } });
                   }}
                   className="rounded-xl gap-2 px-8 py-6 text-base w-full"
                 >
