@@ -722,28 +722,14 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   const upsellTitle = isPt ? "Desbloqueie sua Avaliação Completa" : "Unlock Your Full Assessment";
   
-  // Map pain regions to specific questionnaires
-  const regionQuestionnaireMap: Record<string, { name: string; desc_pt: string; desc_en: string }> = {
-    "anamnesis.complaint.shoulder_pain": { name: "SPADI", desc_pt: "específico para limitação e dor no ombro", desc_en: "specific for shoulder pain and disability" },
-    "anamnesis.complaint.knee_pain": { name: "KOOS", desc_pt: "específico para função e dor no joelho", desc_en: "specific for knee function and pain" },
-    "anamnesis.complaint.back_pain": { name: "ODI", desc_pt: "específico para incapacidade lombar", desc_en: "specific for lumbar disability" },
-    "anamnesis.complaint.neck_pain": { name: "NDI", desc_pt: "específico para incapacidade cervical", desc_en: "specific for neck disability" },
-    "anamnesis.complaint.hip_pain": { name: "HOOS", desc_pt: "específico para função e dor no quadril", desc_en: "specific for hip function and pain" },
-    "anamnesis.complaint.ankle_pain": { name: "FAOS", desc_pt: "específico para função do tornozelo e pé", desc_en: "specific for ankle and foot function" },
-    "anamnesis.complaint.wrist_pain": { name: "QuickDASH", desc_pt: "específico para função do membro superior", desc_en: "specific for upper limb function" },
-    "anamnesis.complaint.headache": { name: "HIT-6", desc_pt: "específico para impacto da cefaleia", desc_en: "specific for headache impact" },
-  };
-
-  // Build personalized questionnaire bullet
+  // Match pain regions to applicable questionnaires using the same logic as the assessment
   const regions = options.painRegions || [];
-  const matchedQuestionnaires = regions
-    .map((r: string) => regionQuestionnaireMap[r])
-    .filter(Boolean);
+  const applicableQuestionnaires = getApplicableQuestionnaires(regions);
   
-  const questionnaireBullet = matchedQuestionnaires.length > 0
+  const questionnaireBullet = applicableQuestionnaires.length > 0
     ? isPt
-      ? `✅ Questionário ${matchedQuestionnaires.map((q: any) => q.name).join(" + ")} — ${matchedQuestionnaires[0].desc_pt}`
-      : `✅ ${matchedQuestionnaires.map((q: any) => q.name).join(" + ")} questionnaire — ${matchedQuestionnaires[0].desc_en}`
+      ? `✅ Questionário ${applicableQuestionnaires.map(q => q.name).join(" + ")} — ${applicableQuestionnaires.map(q => q.fullName_pt.replace(/\s*\(.*\)/, '')).join(", ")}`
+      : `✅ ${applicableQuestionnaires.map(q => q.name).join(" + ")} questionnaire — ${applicableQuestionnaires.map(q => q.fullName_en.replace(/\s*\(.*\)/, '')).join(", ")}`
     : isPt
       ? "✅ Questionários validados cientificamente para sua condição"
       : "✅ Scientifically validated questionnaires for your condition";
