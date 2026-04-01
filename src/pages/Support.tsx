@@ -87,9 +87,7 @@ const Support = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (!loading && !user) navigate("/auth");
-  }, [user, loading, navigate]);
+  // Page is now public — no redirect needed
 
   useEffect(() => {
     setSeo({
