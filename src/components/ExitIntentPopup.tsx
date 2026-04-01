@@ -147,10 +147,9 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
 
   const handleDiscountCheckout = async () => {
     if (!user) {
-      // Not logged in — redirect to auth, then back to premium with exit intent flag
-      sessionStorage.setItem("exit-intent-discount-pending", "true");
+      // Not logged in — redirect to upgrade welcome page for context
       setOpen(false);
-      navigate("/auth", { state: { redirectTo: "/assessment/premium" } });
+      navigate("/upgrade-welcome", { state: { redirectTo: "/assessment/premium", planType: "exit-discount" } });
       return;
     }
 

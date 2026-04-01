@@ -58,6 +58,7 @@ const App = () => (
               <Route path="/profissionais" element={<ProfessionalLanding />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/suporte" element={<Support />} />
+              <Route path="/upgrade-welcome" element={<UpgradeWelcome />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
