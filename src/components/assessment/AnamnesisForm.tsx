@@ -419,7 +419,19 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
                 )}
               </div>
             )}
-          </div>
+            {needsEdemaQuestion && (
+              <div className="space-y-3 mt-4 p-4 bg-muted/50 rounded-xl">
+                <Label className="text-sm font-medium">{t("anamnesis.edema_question")}</Label>
+                <p className="text-xs text-muted-foreground">{t("anamnesis.edema_subtitle")}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                    <Button key={opt} variant={data.hasLocalSwelling === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasLocalSwelling: opt })}>
+                      {t(opt)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
         );
       }
       case "sex_age":
