@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE, PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 import { useParams, useNavigate } from "react-router-dom";
-import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight, Calendar, Zap, Check, CheckCircle } from "lucide-react";
+import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight, Calendar, Zap, Check, CheckCircle, Star, Activity, FileText, TrendingUp, ClipboardList, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -440,100 +440,164 @@ const Assessment = () => {
         )}
 
         {step === "payment_check" && premiumAccess !== null && !premiumAccess.has_access && (
-          <div className="space-y-6 text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              <Sparkles className="h-4 w-4" />
-              {t("payment.premium_title") || "Avaliação Premium"}
-            </div>
-            <h2 className="text-2xl font-bold text-foreground">
-              {premiumAccess.assessments_used && premiumAccess.assessments_used >= 2
-                ? (t("payment.limit_reached_title") || "Limite de avaliações atingido")
-                : (t("payment.unlock_title") || "Desbloqueie sua avaliação completa")}
-            </h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {premiumAccess.assessments_used && premiumAccess.assessments_used >= 2
-                ? (t("payment.limit_reached_desc") || "Você já realizou 2 avaliações neste período. Faça um novo pagamento para continuar.")
-                : (t("payment.unlock_desc") || "Inclui anamnese completa, testes funcionais, diagnóstico detalhado com explicação e plano de tratamento personalizado por fases.")}
-            </p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-8"
+          >
+            {/* Hero section */}
+            <div className="text-center space-y-4">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 mx-auto"
+              >
+                <Sparkles className="h-8 w-8 text-primary" />
+              </motion.div>
 
-            {/* Switch toggle */}
-            <div className="flex items-center justify-center gap-3 py-2">
-              <span className={`text-sm font-medium transition-colors ${isMonthly ? "text-primary" : "text-muted-foreground"}`}>
-                <Calendar className="inline h-3.5 w-3.5 mr-1" />
-                {t("compare.toggle.monthly")}
-              </span>
-              <Switch
-                checked={!isMonthly}
-                onCheckedChange={(checked) => setIsMonthly(!checked)}
-              />
-              <span className={`text-sm font-medium transition-colors ${!isMonthly ? "text-primary" : "text-muted-foreground"}`}>
-                <Zap className="inline h-3.5 w-3.5 mr-1" />
-                {t("compare.toggle.single")}
-              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+                {premiumAccess.assessments_used && premiumAccess.assessments_used >= 2
+                  ? (t("payment.limit_reached_title") || "Limite de avaliações atingido")
+                  : (t("payment.unlock_title") || "Desbloqueie sua avaliação completa")}
+              </h2>
+              <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                {premiumAccess.assessments_used && premiumAccess.assessments_used >= 2
+                  ? (t("payment.limit_reached_desc") || "Você já realizou 2 avaliações neste período. Faça um novo pagamento para continuar.")
+                  : (t("payment.unlock_desc") || "Inclui anamnese completa, testes funcionais, diagnóstico detalhado com explicação e plano de tratamento personalizado por fases.")}
+              </p>
             </div>
 
-            <Card className="rounded-xl border-primary/30 max-w-sm mx-auto">
-              <CardContent className="py-6 space-y-4">
-                {premiumAccess.available_discount ? (
-                  <div className="space-y-1">
-                    <div className="text-2xl text-muted-foreground line-through">{currentPriceFormatted}</div>
-                    <div className="text-4xl font-bold text-foreground">
-                      R$ {Math.round(currentPrice * (1 - premiumAccess.available_discount.discount_percent / 100))}
-                    </div>
-                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-xs">
-                      {t("referral.discount_applied")}
-                    </Badge>
-                  </div>
-                ) : (
-                  <div className="text-4xl font-bold text-foreground">{currentPriceFormatted}</div>
-                )}
-
-                {isMonthly && (
-                  <Badge variant="outline" className="border-primary/30 text-primary text-xs">
-                    {t("compare.monthly.best_value")}
-                  </Badge>
-                )}
-
-                <p className="text-sm text-muted-foreground">
-                  {isMonthly
-                    ? (t("payment.includes_redo") || "Assinatura mensal — 2 avaliações por ciclo")
-                    : (t("payment.single_desc") || "Pagamento único — 1 avaliação completa")}
-                </p>
-
-                <ul className="text-sm text-left space-y-2 text-muted-foreground">
-                  <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_1") || "Testes funcionais guiados por vídeo"}</li>
-                  <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_2") || "Diagnóstico com explicação detalhada"}</li>
-                  <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_3") || "Plano de tratamento em 3 fases"}</li>
-                  <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_4") || "Exercícios com vídeos do YouTube"}</li>
-                  <li className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary shrink-0" /> {t("payment.feature_5") || "Questionários validados (KOOS, SPADI, ODI)"}</li>
-                </ul>
-
-                {isMonthly && (
-                  <div className="rounded-lg bg-primary/5 p-3 text-xs text-left text-muted-foreground space-y-1">
-                    <p className="font-medium text-primary text-sm">{t("compare.monthly.benefits_title")}</p>
-                    <p className="flex items-start gap-1.5"><Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> {t("compare.monthly.benefit_1")}</p>
-                    <p className="flex items-start gap-1.5"><Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> {t("compare.monthly.benefit_2")}</p>
-                    <p className="flex items-start gap-1.5"><Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> {t("compare.monthly.benefit_3")}</p>
-                    <p className="flex items-start gap-1.5"><Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> {t("compare.monthly.benefit_4")}</p>
-                  </div>
-                )}
-
-                <Button
-                  onClick={handlePayment}
-                  disabled={paymentLoading}
-                  className="w-full rounded-xl gap-2"
-                  size="lg"
+            {/* Features grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { icon: ClipboardList, label: t("payment.feature_5") || "Questionários validados (KOOS, SPADI, ODI)", color: "text-primary" },
+                { icon: Activity, label: t("payment.feature_1") || "Testes funcionais guiados por vídeo", color: "text-primary" },
+                { icon: FileText, label: t("payment.feature_2") || "Diagnóstico com explicação detalhada", color: "text-primary" },
+                { icon: TrendingUp, label: t("payment.feature_3") || "Plano de tratamento em 3 fases", color: "text-primary" },
+                { icon: Star, label: t("payment.feature_4") || "Exercícios com vídeos do YouTube", color: "text-primary" },
+                { icon: Shield, label: language === "pt" ? "Dados seguros e criptografados" : language === "es" ? "Datos seguros y encriptados" : "Secure & encrypted data", color: "text-primary" },
+              ].map((feature, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + i * 0.08 }}
+                  className="flex items-center gap-3 rounded-xl bg-card border border-border/50 p-3"
                 >
-                  {paymentLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CreditCard className="h-4 w-4" />
+                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 shrink-0">
+                    <feature.icon className={`h-4 w-4 ${feature.color}`} />
+                  </div>
+                  <span className="text-sm text-foreground font-medium">{feature.label}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Plan toggle */}
+            <div className="flex items-center justify-center gap-4 py-1">
+              <button
+                onClick={() => setIsMonthly(true)}
+                className={`relative px-4 py-2 rounded-xl text-sm font-semibold transition-all ${isMonthly ? "bg-primary text-primary-foreground shadow-md" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+              >
+                <Calendar className="inline h-3.5 w-3.5 mr-1.5" />
+                {t("compare.toggle.monthly")}
+                {isMonthly && (
+                  <span className="absolute -top-2 -right-2 text-[10px] font-bold bg-accent text-accent-foreground px-1.5 py-0.5 rounded-full">
+                    {language === "pt" ? "Popular" : "Best"}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setIsMonthly(false)}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${!isMonthly ? "bg-primary text-primary-foreground shadow-md" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+              >
+                <Zap className="inline h-3.5 w-3.5 mr-1.5" />
+                {t("compare.toggle.single")}
+              </button>
+            </div>
+
+            {/* Pricing card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Card className="rounded-2xl border-primary/20 overflow-hidden max-w-md mx-auto shadow-lg shadow-primary/5">
+                <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 border-b border-primary/10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-primary uppercase tracking-wider">
+                        {isMonthly ? (language === "pt" ? "Plano Mensal" : "Monthly Plan") : (language === "pt" ? "Pagamento Único" : "One-time")}
+                      </p>
+                      {premiumAccess.available_discount ? (
+                        <div className="flex items-baseline gap-2 mt-1">
+                          <span className="text-lg text-muted-foreground line-through">{currentPriceFormatted}</span>
+                          <span className="text-3xl font-bold text-foreground">
+                            R$ {Math.round(currentPrice * (1 - premiumAccess.available_discount.discount_percent / 100))}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-3xl font-bold text-foreground mt-1">{currentPriceFormatted}</p>
+                      )}
+                    </div>
+                    {premiumAccess.available_discount && (
+                      <Badge className="bg-accent/10 text-accent-foreground border-accent/20 text-xs">
+                        -{premiumAccess.available_discount.discount_percent}%
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <CardContent className="p-5 space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    {isMonthly
+                      ? (t("payment.includes_redo") || "Assinatura mensal — 2 avaliações por ciclo")
+                      : (t("payment.single_desc") || "Pagamento único — 1 avaliação completa")}
+                  </p>
+
+                  {isMonthly && (
+                    <div className="rounded-xl bg-primary/5 border border-primary/10 p-3.5 space-y-2">
+                      <p className="font-semibold text-primary text-sm flex items-center gap-1.5">
+                        <Star className="h-4 w-4" />
+                        {t("compare.monthly.benefits_title")}
+                      </p>
+                      {[
+                        t("compare.monthly.benefit_1"),
+                        t("compare.monthly.benefit_2"),
+                        t("compare.monthly.benefit_3"),
+                        t("compare.monthly.benefit_4"),
+                      ].map((b, i) => (
+                        <p key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                          <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                          {b}
+                        </p>
+                      ))}
+                    </div>
                   )}
-                  {t("payment.pay_now") || "Pagar e começar"}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+
+                  <Button
+                    onClick={handlePayment}
+                    disabled={paymentLoading}
+                    className="w-full rounded-xl gap-2 h-12 text-base font-semibold shadow-md hover:shadow-lg transition-shadow"
+                    size="lg"
+                  >
+                    {paymentLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <CreditCard className="h-5 w-5" />
+                    )}
+                    {t("payment.pay_now") || "Pagar e começar"}
+                  </Button>
+
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
+                    <Lock className="h-3 w-3" />
+                    {language === "pt" ? "Pagamento seguro via Stripe" : language === "es" ? "Pago seguro con Stripe" : "Secure payment via Stripe"}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
         )}
 
         {step === "payment_check" && premiumAccess === null && (
