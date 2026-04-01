@@ -293,6 +293,7 @@ ${kneeThighBlock}
 ${subAreaBlock}
 ${ottawaBlock}
 ${surgeryBlock}
+${edemaBlock}
 ${multiComplaintBlock}
 
 IMPORTANT RULES:
