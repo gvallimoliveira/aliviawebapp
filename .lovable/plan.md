@@ -1,66 +1,75 @@
+# Integrar HIMA, Heavy Slow Resistance e McKenzie na base de conhecimento da IA
 
+## Objetivo
 
-# Persistir dados da avaliação básica para pagamentos via boleto
-
-## Problema
-
-Os dados da avaliação básica são armazenados em `sessionStorage` (morre ao fechar aba) e `localStorage` com TTL de 30 minutos. Para boletos, o pagamento pode levar até 3 dias úteis. Quando o webhook confirma o pagamento, o sistema cria uma avaliação premium nova, mas **sem os dados da avaliação básica** (anamnese, regiões de dor, etc.) — o usuário precisaria refazer tudo.
-
-## Solução
-
-Salvar os dados da avaliação básica **no banco de dados** (tabela `assessments`) no momento do checkout, vinculando ao `user_id`. Quando o webhook confirmar o boleto, restaurar esses dados na nova avaliação premium.
-
-## Fluxo proposto
-
-```text
-Usuário completa avaliação básica
-  ↓
-Clica upgrade → UpgradeWelcome → Auth (login/cadastro)
-  ↓
-Assessment Premium → Paywall → create-payment
-  ↓
-create-payment salva basic_assessment_data no metadata do Stripe session
-  ↓
-  ├─ Cartão: paga na hora → fulfillOrder cria assessment premium COM dados básicos
-  └─ Boleto: pending → webhook async_payment_succeeded → fulfillOrder cria assessment COM dados
-```
+Enriquecer os prompts das Edge Functions `generate-treatment` e `generate-diagnosis` com três protocolos clínicos baseados em evidência, permitindo que a IA sugira exercícios e abordagens mais específicas e atualizadas. com discernimento entre exercicios mais ou menos avançados , lembrando do nivel de atividade fisica e disponibilidade de estrutura de academia ou nao pelo usuario. 
 
 ## Alterações
 
-### 1. Edge Function `create-payment/index.ts`
-- Receber campo opcional `basic_upgrade_data` no body da requisição (JSON com anamnese, pain regions, etc.)
-- Salvar esse dado no `metadata` da sessão Stripe (campo `basic_data` — truncado se necessário, Stripe aceita até 500 chars por valor)
-- **Alternativa melhor**: Como os dados podem ser grandes demais para metadata do Stripe (limite de 500 chars por campo), salvar os dados numa coluna `pending_upgrade_data` na tabela assessments ou criar um registro temporário
+### 1. `generate-treatment/index.ts` — Expandir KNOWLEDGE BASE
 
-### 2. Migração: adicionar coluna `pending_upgrade_data` na tabela `assessments`
-- `pending_upgrade_data jsonb DEFAULT NULL` — armazena temporariamente os dados da básica até o pagamento ser confirmado
-- Sem necessidade de nova tabela
+Adicionar 3 novos blocos ao system prompt, após as referências existentes:
 
-### 3. Edge Function `create-payment/index.ts` (ajuste)
-- Antes de criar a sessão Stripe, salvar um registro de assessment premium com `payment_status = 'awaiting_payment'` e `pending_upgrade_data = { anamnesis, painRegions, painScore, capturedEmail, capturedName }`
-- Incluir o `assessment_id` no metadata da sessão Stripe
+**HIMA (Holding Isometric Muscle Action):**
 
-### 4. Edge Function `stripe-webhook/index.ts`
-- No `fulfillOrder` para `premium_single`/`undefined`: em vez de criar nova assessment do zero, verificar se já existe uma com `payment_status = 'awaiting_payment'` para aquele user
-- Se existir, fazer UPDATE para `payment_status = 'paid'` e mover `pending_upgrade_data` para os campos corretos (`anamnesis_data`, `pain_regions`, `pain_score`, etc.)
-- Na falha do boleto (`async_payment_failed`): marcar como `payment_failed` ou deletar o registro temporário
+- Definição: isometria de manutenção (yielding) onde o paciente sustenta uma posição contra carga submáxima por tempo (10s–45s)
+- Diferença entre HIMA (manter posição) e PIMA (pushing — empurrar contra objeto imóvel)
+- Exercícios específicos por grupo muscular:
+  - Tríceps sural: isometric calf raise hold (plantiflexão sustentada no topo, unilateral, 30-45s)
+  - Quadríceps: wall sit (isometria em 60-90° de flexão de joelho, 20-45s); isometric knee extension hold em 30° flexão
+  - Glúteos: glute bridge hold (ponte sustentada no topo, 20-30s); single-leg bridge hold
+  - Posteriores de coxa: Nordic hamstring isometric hold (posição intermediária sustentada); prone hamstring curl hold
+  - Lombar: prone superman hold; bird-dog hold sustentado
+  - Adutores: Copenhagen adductor hold (side plank com perna no banco); squeeze ball hold entre joelhos
+- Dosagem: 3-5 séries × 10-45s, intensidade submáxima (30-70% contração máxima voluntária)
+- Indicações clínicas: dor tendinopática aguda/reativa (efeito analgésico de isometria — Rio et al. 2015), estabilização articular pós-lesão, ativação muscular precoce, fases iniciais (Steps 1-2)
+- Referência: Rio et al. (BJSM 2015) — isometric contractions reduce patellar tendon pain; Thacker et al. (2019)
 
-### 5. Frontend `src/pages/Assessment.tsx`
-- Na função de checkout (paywall), enviar os dados de upgrade junto com a requisição para `create-payment`
-- Ao carregar premium com `payment_check`, verificar se existe assessment com `awaiting_payment` que já tem `pending_upgrade_data` e restaurar de lá (em vez de só do localStorage)
+**Heavy Slow Resistance (HSR):**
 
-### 6. `src/components/assessment/DiagnosisResult.tsx`
-- Continuar salvando no localStorage/sessionStorage (para fluxo imediato com cartão)
-- Sem mudança nesse arquivo
+- Definição: protocolo de fortalecimento com carga pesada e velocidade lenta (3s concêntrico + 3s excêntrico) para remodelação tendínea
+- Protocolo original (Kongsgaard et al. 2009 — tendinopatia patelar): squat no decline board, leg press, hack squat — 3x/semana, 12 semanas
+- Progressão de carga: semanas 1-2 (15RM), semanas 3-4 (12RM), semanas 5-8 (10RM), semanas 9-12 (8RM → 6RM)
+- Adaptação para tendão de Aquiles (Beyer et al. 2015): heel raise com carga progressiva (seated + standing)
+- Aplicação para outras tendinopatias de MMII: glúteo médio, posteriores de coxa proximal
+- Indicações: tendinopatias em fase degenerativa ou de remodelação (Steps 3-5), quando excêntricos isolados não são suficientes
+- Contraindicação relativa: tendão reativo agudo (preferir isometria HIMA primeiro)
+- Referências: Kongsgaard et al. (Scand J Med Sci Sports 2009); Beyer et al. (Knee Surg Sports Traumatol Arthrosc 2015)
+
+**Método McKenzie (MDT — Mechanical Diagnosis and Therapy):**
+
+- Definição: sistema de avaliação e tratamento baseado em preferência direcional, usando movimentos repetidos e posições sustentadas
+- Princípios: centralização (dor migrando de distal para proximal = bom prognóstico), periferização (contraindicação para continuar na direção)
+- Protocolo de extensão para dor lombar discogênica / ciatalgia:
+  1. Prone lying (decúbito ventral passivo, 5-10 min)
+  2. Prone on elbows (extensão sobre cotovelos, sustentada 2-3 min)
+  3. Prone press-up (extensão ativa com braços, 10 reps a cada 2-3h)
+  4. Standing extension (extensão em pé com mãos na lombar)
+- Protocolo de flexão (para estenose espinal, dor facetária): flexão em decúbito dorsal (joelhos ao peito), flexão sentado, flexão em pé
+- Regra clínica: se paciente relata dor irradiada para MMII (ciático), testar extensão; se a dor centraliza (melhora na perna e se concentra na lombar) = continuar extensão; se periferiza = parar e testar flexão
+- Dosagem: 10 repetições a cada 2-3 horas na fase aguda; reduzir para 3-4x/dia conforme melhora
+- Indicações: herniação/protrusão discal lombar, ciatalgia com centralização, dor lombar mecânica (Steps 1-3)
+- Referências: McKenzie & May (2003) "The Lumbar Spine: Mechanical Diagnosis and Therapy"; Lam et al. (Phys Ther 2018) — eficácia do MDT para dor lombar
+
+### 2. `generate-treatment/index.ts` — Regras condicionais
+
+Adicionar lógica no prompt para a IA usar os protocolos no contexto certo:
+
+- Se tendinopatia + dor alta (≥6): usar HIMA na fase curto prazo (analgesia isométrica)
+- Se tendinopatia + fase médio/longo prazo: prescrever HSR com progressão de carga
+- Se dor lombar com irradiação / ciatalgia / radiculopatia: incluir protocolo McKenzie na fase curto prazo
+
+### 3. `generate-diagnosis/index.ts` — Enriquecer knowledge base
+
+Adicionar as mesmas referências bibliográficas à seção de KNOWLEDGE BASE do diagnóstico para que a IA conheça esses protocolos ao formular recomendações.
+
+### 4. Criar bloco condicional para lombar/radiculopatia no `generate-diagnosis`
+
+Detectar quando há queixa lombar com dor irradiada (pain types incluindo "radiating" ou regiões de perna + lombar) e adicionar bloco de raciocínio clínico mencionando McKenzie e centralização como critério de triagem.
 
 ## Detalhes técnicos
 
-- **Coluna nova**: `pending_upgrade_data jsonb DEFAULT NULL` em `assessments`
-- **Estados de payment_status**: adicionar `'awaiting_payment'` ao fluxo existente (`pending` → `awaiting_payment` → `paid` / `payment_failed`)
-- **Limpeza**: o registro `awaiting_payment` que nunca é pago pode ser limpo por um cron futuro (baixa prioridade)
-- **Tamanho dos dados**: anamnese + pain regions é tipicamente < 10KB, sem problema para jsonb
-
-## Resultado
-
-O usuário que paga via boleto terá seus dados da avaliação básica preservados por tempo indeterminado no banco. Quando o boleto compensar (1-3 dias), o webhook restaura tudo automaticamente e o usuário continua de onde parou nos questionários premium.
-
+- Todas as alterações são nos system prompts das Edge Functions (strings de texto)
+- Nenhuma migração de banco necessária
+- Nenhuma alteração no frontend
+- Os prompts ficam maiores (~2KB adicionais), dentro do limite aceitável
