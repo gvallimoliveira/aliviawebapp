@@ -1144,18 +1144,27 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
   doc.setTextColor(100, 80, 80);
   doc.text(discLines, MARGIN + 6, y + 14);
 
-  // ── Footer on every page ──
+  // ── Footer on every page with logo ──
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
+    doc.setDrawColor(...COLORS.primary);
+    doc.setLineWidth(1.5);
+    doc.line(MARGIN, 284, PAGE_WIDTH - MARGIN, 284);
+
+    const footerLogoSize = 8;
+    let footerTextX = MARGIN;
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, "PNG", MARGIN, 285.5, footerLogoSize, footerLogoSize);
+        footerTextX = MARGIN + footerLogoSize + 2;
+      } catch { /* fallback */ }
+    }
     doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...COLORS.muted);
-    doc.text(`Aliv.iA — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`, MARGIN, 290);
+    doc.text(`Aliv.iA — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`, footerTextX, 290);
     doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - 8, 290);
-    doc.setDrawColor(...COLORS.primary);
-    doc.setLineWidth(1.5);
-    doc.line(MARGIN, 287, PAGE_WIDTH - MARGIN, 287);
   }
 
   return doc;

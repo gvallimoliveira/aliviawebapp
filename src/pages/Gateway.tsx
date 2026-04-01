@@ -272,7 +272,9 @@ const Gateway = () => {
               <img
                 src={guilhermePhoto}
                 alt="Guilherme — Fisioterapeuta e criador da Aliv.iA"
-                className="h-20 w-20 md:h-24 md:w-24 rounded-full object-cover object-top border-2 border-primary/20 shadow-md"
+                className="h-20 w-20 md:h-24 md:w-24 rounded-full object-cover object-top border-2 border-primary/20 shadow-md pointer-events-none select-none"
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
               />
             </div>
             <h2 className="text-lg font-bold text-foreground mb-3">{t("gateway.about_title")}</h2>
