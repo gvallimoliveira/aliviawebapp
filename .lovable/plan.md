@@ -1,43 +1,58 @@
+# Página de Transição "Bem-vindo ao Premium" — antes do login
 
+## Problema
 
-## Separação de Acesso: Pro ≠ Premium no painel "Minha Saúde"
+Quando o usuário clica nos CTAs de upgrade (avulso, mensal ou exit intent com desconto) no resultado da avaliação básica, ele é redirecionado bruscamente para `/auth`. Não há contexto sobre por que precisa fazer login, o que vai acontecer com seus dados, nem qual é o próximo passo. Parece um erro.
 
-### Problema
+## Solução
 
-Hoje, `verify-payment` verifica apenas pagamentos B2C (Premium mensal/avulso). O profissional com plano Pro (mensal R$49 ou anual R$418,80) **não** ganha `has_access: true` via `verify-payment` — portanto o Diário de Dor e Comparação de Métricas já ficam ocultos corretamente para ele.
+Criar uma **página intermediária `/upgrade-welcome**` que é exibida entre o clique no CTA e o redirecionamento para `/auth`. Essa página:
 
-Porém, há pontos onde o status de profissional "vaza" benefícios no painel de cliente:
+1. **Parabeniza** o usuário pela avaliação básica concluída
+2. **Explica o fluxo** em 3 passos visuais (similar ao UpgradeFlowSection):
+  - ✅ Avaliação básica concluída — seus dados estão salvos
+  - 🔐 Crie sua conta ou faça login (rápido, com Google)
+  - 🚀 Continue direto para questionários e testes premium (sem repetir etapas)
+3. **Mostra o produto escolhido** (avulso R$109 / mensal R$79,90 / avulso com desconto)
+4. **Botão principal** "Criar conta e continuar" → redireciona para `/auth` com o `state` preservado  
+5. continua o fluxo de compra no stripe 
 
-1. **`QuickActions`** recebe `hasPremiumAccess` mas também `hasProfessional` — usado apenas para esconder o CTA de registro. Não há vazamento aqui.
+## Arquivos a criar/editar
 
-2. **`UpgradeBanner`** — sem vazamento direto, depende só de `premiumAccess`.
+### 1. Criar `src/pages/UpgradeWelcome.tsx`
 
-3. **`WelcomeSection`** — recebe `professional` e `premiumAccess`, pode exibir badges que confundem (ex: mostrar badge "Pro" junto com status de cliente básico sem distinção clara).
+- Página com layout similar ao WelcomeStep (logo, animações framer-motion)
+- Recebe via `location.state`: `redirectTo`, `planType` (single/monthly/exit-discount)
+- Exibe os 3 passos visuais com ícones
+- Destaca que os dados da avaliação básica estão preservados (30min)
+- Botão CTA → `navigate("/auth", { state: { redirectTo } })`
+- Botão secundário "Voltar ao resultado"
+- Suporte i18n (PT/EN/ES)
 
-### Verificação real do bug
+### 2. Editar `src/App.tsx`
 
-O fluxo atual **já segrega corretamente** na maioria dos casos porque `verify-payment` consulta apenas o produto Premium B2C (`prod_U9PZeaM93PlMwb`) no Stripe. Um profissional com Pro (`prod_U5dB77Y8adgxGf`) **não** recebe `has_access: true`.
+- Adicionar rota `/upgrade-welcome` → `<UpgradeWelcome />`
 
-**Mas há um cenário de vazamento**: se o profissional é VIP (está na tabela `vip_users`), recebe acesso total tanto no painel profissional quanto no cliente — isso é intencional (admin/VIP).
+### 3. Editar `src/components/assessment/DiagnosisResult.tsx`
 
-### O que precisa ser verificado/corrigido
+- Nos dois botões de upgrade (avulso e mensal), trocar `window.location.href = "/assessment/premium"` por `navigate("/upgrade-welcome", { state: { redirectTo: "/assessment/premium", planType: "single" | "monthly" } })`
 
-O risco real está em: **o profissional com Pro ativo pode achar que tem Premium** por causa da UX — badges, textos. Preciso verificar `WelcomeSection` para confirmar.
+### 4. Editar `src/components/ExitIntentPopup.tsx`
 
-### Alterações
+- No `handleDiscountCheckout` quando `!user`, redirecionar para `/upgrade-welcome` com `planType: "exit-discount"` em vez de ir direto para `/auth`
 
-**1. `src/components/dashboard/WelcomeSection.tsx`** — Garantir que o badge exibido no painel "Minha Saúde" reflita apenas o status de pagamento B2C. Se o usuário é profissional Pro mas não pagou Premium, mostrar badge "Básico" (não "Pro").
+### 5. Adicionar traduções em `src/locales/pt.json`, `en.json`, `es.json`
 
-**2. `src/pages/Dashboard.tsx`** — Já correto: Diário de Dor e Comparação exigem `premiumAccess?.has_access && subscription_type === "monthly"`. Nenhuma mudança necessária.
+- Chaves para título, subtítulo, passos e botões da página de transição
 
-**3. Revisão de `WelcomeSection`** — Separar visualmente: badge Pro aparece apenas na aba Profissional, badge Premium/Básico aparece na aba Minha Saúde.
+## Fluxo atualizado
 
-| Arquivo | Ação |
-|---|---|
-| `src/components/dashboard/WelcomeSection.tsx` | Separar badges Pro vs Premium — Pro badge só na aba profissional |
-| `src/pages/Dashboard.tsx` | Passar flag para WelcomeSection indicando contexto (já está ok, apenas confirmar) |
-
-### Escopo mínimo
-
-A arquitetura já está correta na lógica de acesso. A correção é **cosmética/UX**: garantir que o usuário Pro não veja badges ou textos que sugiram que tem Premium no painel de cliente.
-
+```text
+Resultado Básico
+  ↓ clique CTA upgrade
+UpgradeWelcome (NOVA)
+  ↓ "Criar conta e continuar"
+Auth (login/cadastro)
+  ↓ redirect
+Assessment Premium (dados restaurados)
+```
