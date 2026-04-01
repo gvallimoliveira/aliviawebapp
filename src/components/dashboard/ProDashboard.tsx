@@ -19,12 +19,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
-  AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift,
+  AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
-import { generateAssessmentPdf } from "@/utils/generatePdf";
+import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface ProDashboardProps {
@@ -166,6 +166,51 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       toast({ title: t("pro.download_pdf") });
     } catch {
       toast({ title: "Erro ao gerar PDF", variant: "destructive" });
+    }
+  };
+
+  const handleShareWhatsApp = async (assessment: any) => {
+    if (!assessment.diagnosis) return;
+    try {
+      const lang = document.documentElement.lang === "en" ? "en" : "pt";
+      let proNote: string | undefined;
+      if (professional?.id) {
+        const { data } = await supabase
+          .from("professional_notes")
+          .select("content")
+          .eq("professional_id", professional.id)
+          .eq("assessment_id", assessment.id)
+          .maybeSingle();
+        if (data?.content) proNote = data.content;
+      }
+      const pdfBlob = await generateAssessmentPdfBlob({
+        diagnosis: assessment.diagnosis,
+        treatmentPlan: assessment.treatment_plan,
+        language: lang as "pt" | "en",
+        userName: assessment.patient_name || "Paciente",
+        anamnesisData: assessment.anamnesis_data,
+        painRegions: assessment.pain_regions,
+        testResults: assessment.test_results,
+        professionalNotes: proNote,
+      });
+
+      const filePath = `${assessment.id}_pro.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from("assessment-reports")
+        .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("assessment-reports")
+        .getPublicUrl(filePath);
+
+      const origin = getPublicOrigin();
+      const patientLabel = assessment.patient_name || "Paciente";
+      const text = `🩺 *Aliv.iA — Relatório Profissional*\n\n👤 *Paciente:* ${patientLabel}\n📋 *Hipótese:* ${assessment.diagnosis.hypothesis}\n\n📄 Relatório em PDF:\n${urlData.publicUrl}\n\n💡 ${origin}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    } catch {
+      toast({ title: "Erro ao compartilhar PDF", variant: "destructive" });
     }
   };
 
@@ -498,6 +543,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             assessments={patientAssessments}
             professionalId={professional.id}
             onDownloadPdf={handleDownloadPdf}
+            onShareWhatsApp={handleShareWhatsApp}
           />
         </DashboardErrorBoundary>
       </div>

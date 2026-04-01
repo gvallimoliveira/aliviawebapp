@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
-  FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2,
+  FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
@@ -78,6 +78,7 @@ interface PatientEvolutionDashboardProps {
   assessments: any[];
   professionalId: string;
   onDownloadPdf?: (assessment: any) => void;
+  onShareWhatsApp?: (assessment: any) => void;
 }
 
 interface PatientGroup {
@@ -103,7 +104,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   extreme: "bg-destructive",
 };
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -659,6 +660,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf 
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
+                      {a.diagnosis && onShareWhatsApp && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="WhatsApp"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onShareWhatsApp(a);
+                          }}
+                        >
+                          <Share2 className="h-4 w-4 text-emerald-600" />
+                        </Button>
+                      )}
                       {a.diagnosis && onDownloadPdf && (
                         <Button
                           variant="ghost"
