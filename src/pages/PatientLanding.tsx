@@ -7,6 +7,7 @@ import HighlightsSection from "@/components/HighlightsSection";
 import MethodologySection from "@/components/MethodologySection";
 import ComparisonSection from "@/components/ComparisonSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
+import UpgradeFlowSection from "@/components/UpgradeFlowSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import FaqSection from "@/components/FaqSection";
 import SocialSection from "@/components/SocialSection";
