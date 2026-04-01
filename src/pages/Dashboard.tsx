@@ -172,7 +172,7 @@ const Dashboard = () => {
 
   const renderClientContent = () => (
     <>
-      <UpgradeBanner premiumAccess={premiumAccess} premiumLoading={premiumLoading} push={push} />
+      <UpgradeBanner premiumAccess={premiumAccess} premiumLoading={premiumLoading} professional={professional} push={push} />
       <QuickActions hasPremiumAccess={premiumAccess?.has_access} premiumLoading={premiumLoading} hasProfessional={!!professional} />
       <ReferralCard availableDiscount={premiumAccess?.available_discount} />
 
