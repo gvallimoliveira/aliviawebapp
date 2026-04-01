@@ -352,6 +352,7 @@ ${ottawaBlock}
 ${surgeryBlock}
 ${edemaBlock}
 ${lumbarShoulderBlock}
+${radiculopathyBlock}
 ${multiComplaintBlock}
 
 IMPORTANT RULES:
