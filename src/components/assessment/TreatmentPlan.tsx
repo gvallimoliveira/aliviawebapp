@@ -19,6 +19,8 @@ import {
   ExternalLink,
   FileDown,
   Mail,
+  Share2,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
