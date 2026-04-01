@@ -22,6 +22,7 @@ Deno.serve(async (req) => {
       basic_invites: 0,
       referral_coupons_applied: 0,
       abandoned_reminders: 0,
+      boleto_expiry_reminders: 0,
       errors: [] as string[],
     };
 
