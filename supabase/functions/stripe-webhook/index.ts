@@ -231,6 +231,57 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
     case undefined: {
       // Premium single or monthly subscription checkout
       if (userId) {
+        const pendingAssessmentId = session.metadata?.pending_assessment_id;
+
+        // Check for pending assessment (boleto flow with saved basic data)
+        if (pendingAssessmentId) {
+          const { data: pendingAssessment } = await supabase
+            .from("assessments")
+            .select("id, pending_upgrade_data")
+            .eq("id", pendingAssessmentId)
+            .eq("user_id", userId)
+            .eq("payment_status", "awaiting_payment")
+            .single();
+
+          if (pendingAssessment) {
+            await supabase
+              .from("assessments")
+              .update({
+                payment_status: "paid",
+                paid_at: new Date().toISOString(),
+                pending_upgrade_data: null, // clear temporary data
+              })
+              .eq("id", pendingAssessmentId);
+            log("Pending assessment promoted to paid", { pendingAssessmentId, userId });
+            break;
+          }
+        }
+
+        // Fallback: check for any awaiting_payment assessment
+        const { data: awaitingAssessment } = await supabase
+          .from("assessments")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("type", "premium")
+          .eq("payment_status", "awaiting_payment")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (awaitingAssessment) {
+          await supabase
+            .from("assessments")
+            .update({
+              payment_status: "paid",
+              paid_at: new Date().toISOString(),
+              pending_upgrade_data: null,
+            })
+            .eq("id", awaitingAssessment.id);
+          log("Awaiting assessment promoted to paid", { assessmentId: awaitingAssessment.id, userId });
+          break;
+        }
+
+        // No pending assessment found — create new one
         const { data: existingAssessment } = await supabase
           .from("assessments")
           .select("id")
