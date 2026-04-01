@@ -543,6 +543,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             assessments={patientAssessments}
             professionalId={professional.id}
             onDownloadPdf={handleDownloadPdf}
+            onShareWhatsApp={handleShareWhatsApp}
           />
         </DashboardErrorBoundary>
       </div>
