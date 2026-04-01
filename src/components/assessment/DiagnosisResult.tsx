@@ -266,7 +266,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   variant="outline"
                   onClick={() => {
                     const upgradeData = JSON.stringify({
-                      anamnesisData: null,
+                      anamnesisData: anamnesisData || null,
                       painRegions: painRegions || [],
                       painScore: painScore,
                       capturedName: patientName || "",
