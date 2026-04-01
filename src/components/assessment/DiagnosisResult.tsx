@@ -231,7 +231,20 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                 </p>
                 <Button
                   size="lg"
-                  onClick={() => window.location.href = "/assessment/premium"}
+                  onClick={() => {
+                    // Save basic assessment data for upgrade continuity
+                    const upgradeData = JSON.stringify({
+                      anamnesisData: null, // will be set from parent props
+                      painRegions: painRegions || [],
+                      painScore: painScore,
+                      capturedName: patientName || "",
+                      capturedEmail: "",
+                    });
+                    sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
+                    localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
+                    localStorage.setItem("alivia-basic-upgrade-expiry", String(Date.now() + 30 * 60 * 1000));
+                    window.location.href = "/assessment/premium";
+                  }}
                   className="rounded-xl gap-2 px-8 py-6 text-base w-full"
                 >
                   <Sparkles className="h-4 w-4" />
