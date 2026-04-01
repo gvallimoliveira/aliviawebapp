@@ -85,7 +85,95 @@ const AssessmentView = () => {
   const [loading, setLoading] = useState(true);
   const [showTreatment, setShowTreatment] = useState(false);
   const [unlockLoading, setUnlockLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
   const isPt = language === "pt";
+
+  const handleDownloadPdf = async () => {
+    if (!assessment?.diagnosis) return;
+    setPdfLoading(true);
+    try {
+      const { generateAssessmentPdf, generateBasicReportPdfBlob } = await import("@/utils/generatePdf");
+      if (assessment.type === "basic") {
+        const pdfBlob = await generateBasicReportPdfBlob({
+          diagnosis: assessment.diagnosis,
+          language,
+          patientName: assessment.patient_name || undefined,
+          painRegions: assessment.pain_regions || undefined,
+          painScore: assessment.pain_score,
+        });
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `AliviA_Resultado.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        await generateAssessmentPdf({
+          diagnosis: assessment.diagnosis,
+          treatmentPlan: assessment.treatment_plan,
+          language,
+          userName: assessment.patient_name || user?.user_metadata?.full_name || "",
+          anamnesisData: assessment.anamnesis_data,
+          painRegions: assessment.pain_regions,
+          testResults: assessment.test_results,
+        });
+      }
+    } catch {
+      toast({ title: isPt ? "Erro ao gerar PDF" : "Error generating PDF", variant: "destructive" });
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handleShareWhatsApp = async () => {
+    if (!assessment?.diagnosis) return;
+    setWhatsappLoading(true);
+    try {
+      const { generateAssessmentPdfBlob, generateBasicReportPdfBlob } = await import("@/utils/generatePdf");
+      const { getPublicOrigin } = await import("@/lib/getPublicOrigin");
+      let pdfBlob: Blob;
+      if (assessment.type === "basic") {
+        pdfBlob = await generateBasicReportPdfBlob({
+          diagnosis: assessment.diagnosis,
+          language,
+          patientName: assessment.patient_name || undefined,
+          painRegions: assessment.pain_regions || undefined,
+          painScore: assessment.pain_score,
+        });
+      } else {
+        pdfBlob = await generateAssessmentPdfBlob({
+          diagnosis: assessment.diagnosis,
+          treatmentPlan: assessment.treatment_plan,
+          language,
+          userName: assessment.patient_name || user?.user_metadata?.full_name || "",
+          anamnesisData: assessment.anamnesis_data,
+          painRegions: assessment.pain_regions,
+          testResults: assessment.test_results,
+        });
+      }
+
+      const filePath = `${assessment.id}_view.pdf`;
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error: uploadError } = await supabase.storage
+        .from("assessment-reports")
+        .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("assessment-reports")
+        .getPublicUrl(filePath);
+
+      const origin = getPublicOrigin();
+      const text = `🩺 *Aliv.iA — ${isPt ? "Relatório de Avaliação" : "Assessment Report"}*\n\n📋 *${isPt ? "Hipótese" : "Hypothesis"}:* ${assessment.diagnosis.hypothesis}\n\n📄 ${isPt ? "Relatório em PDF" : "PDF Report"}:\n${urlData.publicUrl}\n\n💡 ${origin}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    } catch {
+      toast({ title: isPt ? "Erro ao compartilhar" : "Error sharing", variant: "destructive" });
+    } finally {
+      setWhatsappLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
