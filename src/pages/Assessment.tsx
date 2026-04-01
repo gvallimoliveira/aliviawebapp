@@ -128,6 +128,37 @@ const Assessment = () => {
       if (error) throw error;
       setPremiumAccess(data);
       if (data?.has_access) {
+        // Check for upgrade data from basic assessment
+        const upgradeData = getUpgradeData();
+        if (upgradeData?.anamnesisData) {
+          setAnamnesisData(upgradeData.anamnesisData);
+          if (upgradeData.capturedName) setCapturedName(upgradeData.capturedName);
+          if (upgradeData.capturedEmail) setCapturedEmail(upgradeData.capturedEmail);
+          setIsUpgradeFlow(true);
+          clearUpgradeData();
+
+          // Create assessment with restored data
+          const { data: newAssessment, error: insertError } = await supabase
+            .from("assessments")
+            .insert({
+              type: "premium",
+              status: "in_progress",
+              user_id: user?.id || null,
+              payment_status: "covered",
+              anamnesis_data: upgradeData.anamnesisData as any,
+              pain_regions: upgradeData.painRegions || [],
+              pain_score: upgradeData.painScore ?? null,
+              patient_name: upgradeData.capturedName || null,
+              patient_email: upgradeData.capturedEmail || null,
+            })
+            .select("id")
+            .single();
+          if (!insertError && newAssessment) {
+            setAssessmentId(newAssessment.id);
+          }
+          setStep("questionnaire");
+          return;
+        }
         setStep("welcome");
       }
     } catch (err) {
