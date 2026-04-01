@@ -212,8 +212,39 @@ CLINICAL IMPACT: Presence of edema suggests an INFLAMMATORY or ACUTE component. 
 - Increase suspicion for structural lesions over purely functional/biomechanical causes
 - Guide toward imaging recommendations if symptoms persist
 ` : "";
-    // Detect lumbar + shoulder combination (fascial chain)
+    // Detect lumbar with radiating pain (sciatica / radiculopathy) — McKenzie reasoning
+    const lumbarRegions = ["lower_back", "lower_back_left", "lower_back_right", "lumbar"];
+    const legRegions = ["right_thigh", "left_thigh", "right_hamstring", "left_hamstring", "right_knee", "left_knee", "right_calf", "left_calf", "right_ankle", "left_ankle"];
     const hasLumbar = chiefComplaints.includes("anamnesis.complaint.back_pain");
+    const hasLegPain = (anamnesisData.painRegions || []).some((r: string) => legRegions.includes(r));
+    const hasRadiatingPain = (anamnesisData.painTypes || []).some((t: string) => t.includes("radiating") || t.includes("irradiada") || t.includes("shooting") || t.includes("burning") || t.includes("tingling"));
+    const isRadiculopathyCase = hasLumbar && (hasLegPain || hasRadiatingPain);
+
+    const radiculopathyBlock = isRadiculopathyCase ? `
+LUMBAR RADICULOPATHY / SCIATICA CLINICAL REASONING (MANDATORY — patient reports lumbar pain with leg radiation):
+The combination of lumbar pain with radiating symptoms to the lower limb(s) strongly suggests a NEURAL component. You MUST consider:
+
+DIFFERENTIAL DIAGNOSIS:
+1. DISC HERNIATION / PROTRUSION: Most common cause of sciatica in patients <50. Dermatomal pain distribution (L4: anterior thigh/medial leg; L5: lateral leg/dorsum of foot; S1: posterior calf/lateral foot). Worsened by flexion, sitting, Valsalva maneuver.
+2. SPINAL STENOSIS: More common in patients >50. Neurogenic claudication (bilateral symptoms worsened by standing/walking, relieved by sitting/flexion). Shopping cart sign positive.
+3. PIRIFORMIS SYNDROME: Deep buttock pain with sciatic distribution. No true dermatomal pattern. Sitting on hard surfaces aggravates. Consider when lumbar imaging is negative.
+4. SPONDYLOLISTHESIS: Segmental instability, worse with extension, may cause bilateral symptoms.
+
+McKENZIE DIRECTIONAL PREFERENCE ASSESSMENT:
+- If symptoms CENTRALIZE with extension movements (pain retreats from leg toward lumbar) → suggests disc herniation responsive to extension protocol — GOOD PROGNOSIS
+- If symptoms PERIPHERALIZE with extension → stop extension, test flexion (may indicate stenosis or posterior element pathology)
+- Centralization is the single best prognostic indicator for mechanical lumbar pain (McKenzie & May 2003)
+- Include this reasoning in your diagnostic hypothesis and recommendations
+
+CLINICAL INDICATORS:
+- Pain types reported: ${(anamnesisData.painTypes || []).join(", ")}
+- Leg regions affected: ${(anamnesisData.painRegions || []).filter((r: string) => legRegions.includes(r)).join(", ")}
+- If burning/tingling/numbness present → strongly favors neural origin over pure muscular
+- Reference: McKenzie & May (2003); Lam et al. (Phys Ther 2018); Shacklock — Clinical Neurodynamics
+` : "";
+
+    // Detect lumbar + shoulder combination (fascial chain)
+    const hasShoulder = chiefComplaints.includes("anamnesis.complaint.shoulder_pain");
     const hasShoulder = chiefComplaints.includes("anamnesis.complaint.shoulder_pain");
     const lumbarShoulderBlock = (hasLumbar && hasShoulder) ? `
 LUMBAR + SHOULDER FASCIAL CHAIN ANALYSIS (MANDATORY — patient reports both lumbar and shoulder pain):
