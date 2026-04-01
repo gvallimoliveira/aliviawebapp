@@ -130,6 +130,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   const lowerGroup = ["anamnesis.complaint.back_pain", "anamnesis.complaint.hip_pain", "anamnesis.complaint.knee_pain", "anamnesis.complaint.ankle_pain", "anamnesis.complaint.foot_pain"];
   // Spinal combination: cervical + lombar are allowed together (full spine chain)
   const spinalPair = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.back_pain"];
+  // Cross-group exception: lombar + ombro (fascial/muscular chains in rotation sports)
+  const lumbarShoulderPair = ["anamnesis.complaint.back_pain", "anamnesis.complaint.shoulder_pain"];
 
   const getComplaintGroup = (c: string): "upper" | "lower" | null => {
     if (upperGroup.includes(c)) return "upper";
@@ -143,14 +145,15 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     for (const c of current) {
       const g = getComplaintGroup(c);
       if (g && g !== newGroup) {
-        // Allow spinal pair: neck_pain + back_pain
+        // Check allowed cross-group exceptions
         const combined = [...current, complaint];
-        const isOnlySpinal = combined.every(item => {
-          const grp = getComplaintGroup(item);
-          if (!grp) return true; // non-grouped items are fine
-          return spinalPair.includes(item);
-        });
+        const groupedItems = combined.filter(item => getComplaintGroup(item) !== null);
+        // Allow spinal pair: neck_pain + back_pain
+        const isOnlySpinal = groupedItems.every(item => spinalPair.includes(item));
         if (isOnlySpinal) return true;
+        // Allow lumbar + shoulder pair
+        const isOnlyLumbarShoulder = groupedItems.every(item => lumbarShoulderPair.includes(item));
+        if (isOnlyLumbarShoulder) return true;
         return false;
       }
     }
