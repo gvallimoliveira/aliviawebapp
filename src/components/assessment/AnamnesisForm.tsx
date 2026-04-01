@@ -357,6 +357,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         if (!regionType) return null;
         const subAreas = getSubAreasForRegion(regionType);
         const needsTraumaQuestion = regionType === "knee" || regionType === "ankle" || regionType === "shoulder";
+        const needsEdemaQuestion = regionType === "knee" || regionType === "ankle" || regionType === "wrist";
         const traumaKey = regionType === "knee" ? "hadTwist" : regionType === "ankle" ? "hadSprain" : "hadDislocation";
         const traumaQuestion = regionType === "knee" ? "anamnesis.knee_twist" : regionType === "ankle" ? "anamnesis.ankle_sprain" : "anamnesis.shoulder_dislocation";
         const traumaValue = regionType === "knee" ? data.hadTwist : regionType === "ankle" ? data.hadSprain : data.hadDislocation;
