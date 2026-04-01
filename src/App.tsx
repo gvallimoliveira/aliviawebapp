@@ -26,6 +26,7 @@ import BlogPost from "./pages/BlogPost";
 import ProfessionalLanding from "./pages/ProfessionalLanding";
 import CompleteProfile from "./pages/CompleteProfile";
 import Support from "./pages/Support";
+import UpgradeWelcome from "./pages/UpgradeWelcome";
 
 const queryClient = new QueryClient();
 
