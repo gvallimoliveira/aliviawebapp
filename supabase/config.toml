@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.create-pro-lifetime-treatment]
 verify_jwt = false
+
+[functions.cleanup-pending-assessments]
+verify_jwt = false
