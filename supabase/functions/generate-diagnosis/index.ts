@@ -337,6 +337,7 @@ Response format (JSON):
 - Ankle sprain: ${hadSprain || "N/A"}
 - Shoulder dislocation history: ${hadDislocation || "N/A"}
 - Ottawa rules (weight-bearing): ${ottawaPositive || "N/A"}
+- Local swelling/edema: ${hasLocalSwelling === "anamnesis.trauma.yes" ? "YES — patient reports joint swelling" : hasLocalSwelling === "anamnesis.trauma.no" ? "No swelling reported" : "N/A"}
 
 ${additionalInfo ? `Additional information provided by the patient (USE THIS to refine your hypothesis and potentially increase confidence):
 ${additionalInfo}` : ""}
