@@ -32,7 +32,7 @@ interface UpgradeBannerProps {
   };
 }
 
-const UpgradeBanner = ({ premiumAccess, premiumLoading, push }: UpgradeBannerProps) => {
+const UpgradeBanner = ({ premiumAccess, premiumLoading, professional, push }: UpgradeBannerProps) => {
   const { t } = useLanguage();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
