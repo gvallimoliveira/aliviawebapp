@@ -263,7 +263,19 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                 </p>
                 <Button
                   variant="outline"
-                  onClick={() => window.location.href = "/assessment/premium"}
+                  onClick={() => {
+                    const upgradeData = JSON.stringify({
+                      anamnesisData: null,
+                      painRegions: painRegions || [],
+                      painScore: painScore,
+                      capturedName: patientName || "",
+                      capturedEmail: "",
+                    });
+                    sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
+                    localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
+                    localStorage.setItem("alivia-basic-upgrade-expiry", String(Date.now() + 30 * 60 * 1000));
+                    window.location.href = "/assessment/premium";
+                  }}
                   className="rounded-xl gap-2"
                 >
                   {t("diagnosis.subscribe_monthly") || "Assinar plano mensal"}
