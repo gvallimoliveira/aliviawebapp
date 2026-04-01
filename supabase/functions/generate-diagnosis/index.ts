@@ -21,6 +21,7 @@ serve(async (req) => {
     const ottawaPositive = anamnesisData.ottawaPositive || "";
     const hasPriorSurgery = anamnesisData.hasPriorSurgery || "";
     const surgeryDetails = anamnesisData.surgeryDetails || "";
+    const hasLocalSwelling = anamnesisData.hasLocalSwelling || "";
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
