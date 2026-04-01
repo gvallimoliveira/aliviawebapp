@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE, PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 import { useParams, useNavigate } from "react-router-dom";
-import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight, Calendar, Zap, Check } from "lucide-react";
+import { Globe, ArrowLeft, Loader2, CreditCard, Shield, Sparkles, MessageCircle, Send, ChevronRight, Calendar, Zap, Check, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,31 @@ import ExitIntentPopup from "@/components/ExitIntentPopup";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
+const UPGRADE_KEY = "alivia-basic-upgrade-data";
+const UPGRADE_EXPIRY_KEY = "alivia-basic-upgrade-expiry";
+
+const getUpgradeData = () => {
+  // Try sessionStorage first, then localStorage with TTL
+  let raw = sessionStorage.getItem(UPGRADE_KEY);
+  if (!raw) {
+    const expiry = localStorage.getItem(UPGRADE_EXPIRY_KEY);
+    if (expiry && Date.now() < Number(expiry)) {
+      raw = localStorage.getItem(UPGRADE_KEY);
+    } else {
+      localStorage.removeItem(UPGRADE_KEY);
+      localStorage.removeItem(UPGRADE_EXPIRY_KEY);
+    }
+  }
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+};
+
+const clearUpgradeData = () => {
+  sessionStorage.removeItem(UPGRADE_KEY);
+  localStorage.removeItem(UPGRADE_KEY);
+  localStorage.removeItem(UPGRADE_EXPIRY_KEY);
+};
+
 const Assessment = () => {
   const { type } = useParams<{ type: string }>();
   const mode = type === "premium" ? "premium" : "basic";
@@ -47,6 +72,7 @@ const Assessment = () => {
   const [isMonthly, setIsMonthly] = useState(true);
   const [capturedEmail, setCapturedEmail] = useState<string | null>(null);
   const [capturedName, setCapturedName] = useState<string | null>(null);
+  const [isUpgradeFlow, setIsUpgradeFlow] = useState(false);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
 
   // Redirect premium users to auth if not logged in
@@ -102,6 +128,37 @@ const Assessment = () => {
       if (error) throw error;
       setPremiumAccess(data);
       if (data?.has_access) {
+        // Check for upgrade data from basic assessment
+        const upgradeData = getUpgradeData();
+        if (upgradeData?.anamnesisData) {
+          setAnamnesisData(upgradeData.anamnesisData);
+          if (upgradeData.capturedName) setCapturedName(upgradeData.capturedName);
+          if (upgradeData.capturedEmail) setCapturedEmail(upgradeData.capturedEmail);
+          setIsUpgradeFlow(true);
+          clearUpgradeData();
+
+          // Create assessment with restored data
+          const { data: newAssessment, error: insertError } = await supabase
+            .from("assessments")
+            .insert({
+              type: "premium",
+              status: "in_progress",
+              user_id: user?.id || null,
+              payment_status: "covered",
+              anamnesis_data: upgradeData.anamnesisData as any,
+              pain_regions: upgradeData.painRegions || [],
+              pain_score: upgradeData.painScore ?? null,
+              patient_name: upgradeData.capturedName || null,
+              patient_email: upgradeData.capturedEmail || null,
+            })
+            .select("id")
+            .single();
+          if (!insertError && newAssessment) {
+            setAssessmentId(newAssessment.id);
+          }
+          setStep("questionnaire");
+          return;
+        }
         setStep("welcome");
       }
     } catch (err) {
@@ -452,12 +509,26 @@ const Assessment = () => {
           />
         )}
         {step === "questionnaire" && anamnesisData && (
-          <QuestionnaireStep
-            painRegions={anamnesisData.painRegions}
-            onComplete={handleQuestionnaireComplete}
-            onBack={() => setStep("anamnesis")}
-            onSkip={handleQuestionnaireSkip}
-          />
+          <>
+            {isUpgradeFlow && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 flex items-center gap-2 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700"
+              >
+                <CheckCircle className="h-4 w-4 shrink-0" />
+                {language === "pt"
+                  ? "Seus dados da avaliação básica foram aproveitados. Continue de onde parou."
+                  : "Your basic assessment data has been imported. Continue where you left off."}
+              </motion.div>
+            )}
+            <QuestionnaireStep
+              painRegions={anamnesisData.painRegions}
+              onComplete={handleQuestionnaireComplete}
+              onBack={() => setStep(isUpgradeFlow ? "questionnaire" : "anamnesis")}
+              onSkip={handleQuestionnaireSkip}
+            />
+          </>
         )}
         {step === "functional_tests" && anamnesisData && (
           <FunctionalTests
@@ -538,6 +609,7 @@ const Assessment = () => {
               patientName={capturedName || user?.user_metadata?.full_name || undefined}
               painRegions={anamnesisData?.painRegions}
               painScore={anamnesisData?.painScore}
+              anamnesisData={anamnesisData}
             />
             {mode === "basic" && <ExitIntentPopup variant="diagnosis" />}
           </>

@@ -31,6 +31,7 @@ interface DiagnosisResultProps {
   patientName?: string;
   painRegions?: string[];
   painScore?: number;
+  anamnesisData?: any;
 }
 
 const BlurredPreview = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -50,7 +51,7 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
   </Card>
 );
 
-const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, painRegions, painScore }: DiagnosisResultProps) => {
+const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, painRegions, painScore, anamnesisData }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [sharingPdf, setSharingPdf] = useState(false);
@@ -231,7 +232,20 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                 </p>
                 <Button
                   size="lg"
-                  onClick={() => window.location.href = "/assessment/premium"}
+                  onClick={() => {
+                    // Save basic assessment data for upgrade continuity
+                    const upgradeData = JSON.stringify({
+                      anamnesisData: anamnesisData || null,
+                      painRegions: painRegions || [],
+                      painScore: painScore,
+                      capturedName: patientName || "",
+                      capturedEmail: "",
+                    });
+                    sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
+                    localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
+                    localStorage.setItem("alivia-basic-upgrade-expiry", String(Date.now() + 30 * 60 * 1000));
+                    window.location.href = "/assessment/premium";
+                  }}
                   className="rounded-xl gap-2 px-8 py-6 text-base w-full"
                 >
                   <Sparkles className="h-4 w-4" />
@@ -250,7 +264,19 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                 </p>
                 <Button
                   variant="outline"
-                  onClick={() => window.location.href = "/assessment/premium"}
+                  onClick={() => {
+                    const upgradeData = JSON.stringify({
+                      anamnesisData: anamnesisData || null,
+                      painRegions: painRegions || [],
+                      painScore: painScore,
+                      capturedName: patientName || "",
+                      capturedEmail: "",
+                    });
+                    sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
+                    localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
+                    localStorage.setItem("alivia-basic-upgrade-expiry", String(Date.now() + 30 * 60 * 1000));
+                    window.location.href = "/assessment/premium";
+                  }}
                   className="rounded-xl gap-2"
                 >
                   {t("diagnosis.subscribe_monthly") || "Assinar plano mensal"}
