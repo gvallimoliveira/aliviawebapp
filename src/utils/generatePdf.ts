@@ -347,16 +347,15 @@ async function renderPainMapSection(doc: jsPDF, y: number, painRegions: string[]
   const images = await generatePainMapImages(painRegions);
   if (images.length === 0) return y;
 
-  y = checkPage(doc, y, 65);
-  y = renderSectionTitle(doc, y, isPt ? "Mapa de Dor" : "Pain Map", COLORS.primary);
-
   const mapW = 35;
   const mapH = mapW * (440 / 200); // maintain aspect ratio
   const gap = 4;
   const totalW = images.length * mapW + (images.length - 1) * gap;
   let startX = MARGIN + (CONTENT_WIDTH - totalW) / 2;
 
-  y = checkPage(doc, y, mapH + 12);
+  // Single checkPage for title + images together to prevent splitting
+  y = checkPage(doc, y, mapH + 24);
+  y = renderSectionTitle(doc, y, isPt ? "Mapa de Dor" : "Pain Map", COLORS.primary);
 
   for (const img of images) {
     try {
