@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Crown, Clock, Sparkles, Bell, X, Loader2 } from "lucide-react";
+import { Crown, Clock, Sparkles, Bell, X, Loader2, Stethoscope } from "lucide-react";
 
 interface PremiumAccess {
   has_access: boolean;
