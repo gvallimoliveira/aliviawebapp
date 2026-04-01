@@ -98,6 +98,8 @@
   "auth.error": "Error",
   "auth.check_email": "Check your email",
   "auth.check_email_desc": "We sent a confirmation link to your email.",
+  "auth.welcome": "Welcome!",
+  "auth.account_created": "Your account has been created successfully.",
   "dashboard.welcome": "Hello",
   "dashboard.subtitle": "Manage your pain assessments",
   "dashboard.new_basic": "Basic Assessment",

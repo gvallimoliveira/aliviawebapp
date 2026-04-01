@@ -98,6 +98,8 @@
   "auth.error": "Erro",
   "auth.check_email": "Verifique seu e-mail",
   "auth.check_email_desc": "Enviamos um link de confirmação para o seu e-mail.",
+  "auth.welcome": "Bem-vindo!",
+  "auth.account_created": "Sua conta foi criada com sucesso.",
   "dashboard.welcome": "Olá",
   "dashboard.subtitle": "Gerencie suas avaliações de dor",
   "dashboard.new_basic": "Avaliação Básica",

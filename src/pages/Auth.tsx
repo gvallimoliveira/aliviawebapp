@@ -55,7 +55,9 @@ const Auth = () => {
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
       } else {
-        toast({ title: t("auth.check_email"), description: t("auth.check_email_desc") });
+        // Auto-confirm enabled: user is immediately authenticated, redirect
+        toast({ title: t("auth.welcome"), description: t("auth.account_created") });
+        navigate(redirectTo);
       }
     }
     setLoading(false);
