@@ -138,8 +138,8 @@ serve(async (req) => {
 
     // Choose price and mode based on payment type
     const priceId = paymentType === "single"
-      ? "price_1TB6kPCBxbFcCp8IUAo03Qeu"  // Pay-per-use R$109
-      : "price_1TB6k8CBxbFcCp8I4piuJ3Dm";  // Monthly R$79,90/mês
+      ? "price_1TBkbt2HgVhVBE8Uu2a9zsjb"  // Pay-per-use R$109
+      : "price_1TBkbt2HgVhVBE8UWGL7zPGZ";  // Monthly R$79,90/mês
 
     const sessionMode = paymentType === "single" ? "payment" : "subscription";
 

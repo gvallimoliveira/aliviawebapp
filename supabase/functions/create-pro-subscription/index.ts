@@ -45,11 +45,11 @@ serve(async (req) => {
     }
 
     const priceId = plan === "annual"
-      ? "price_1TCruvCBxbFcCp8IAjlnnNTO"  // Annual R$418,80 (one-time payment)
-      : "price_1T7Rv6CBxbFcCp8I1Tsv0WwS";  // Monthly R$49/month
+      ? "price_1TBkc72HgVhVBE8UmxiIVoJV"  // Annual R$418,80/year (subscription)
+      : "price_1TBkbt2HgVhVBE8U4UvTqFpY";  // Monthly R$49/month
 
-    // Annual = payment (one-time), Monthly = subscription
-    const sessionMode = plan === "annual" ? "payment" : "subscription";
+    // Both are now subscriptions (monthly or yearly)
+    const sessionMode = "subscription";
 
     logStep("Plan selected", { plan, priceId, sessionMode });
 
