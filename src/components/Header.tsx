@@ -142,6 +142,13 @@ const Header = () => {
               <Globe className="h-4 w-4" />
               {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
             </button>
+            <button
+              onClick={() => go("/suporte")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+            >
+              <HelpCircle className="h-4 w-4" />
+              {t("support.badge")}
+            </button>
 
             {user ? (
               <>
@@ -150,13 +157,6 @@ const Header = () => {
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors text-left"
                 >
                   {t("nav.dashboard")}
-                </button>
-                <button
-                  onClick={() => go("/suporte")}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  {t("support.badge")}
                 </button>
                 <button
                   onClick={() => go("/admin")}
