@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
-  FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2,
+  FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
