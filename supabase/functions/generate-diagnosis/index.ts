@@ -308,6 +308,11 @@ KNOWLEDGE BASE (use as clinical reference):
 - Cook & Purdam (BJSM 2009): Continuum model of tendon pathology
 - Malliaras et al. (Sports Med 2015): Patellar tendinopathy load management
 - Thorborg et al. (BJSM 2017): Hip and groin injury classification
+- Rio et al. (BJSM 2015): Isometric contractions (HIMA) reduce patellar tendon pain — analgesic effect for reactive tendinopathy
+- Kongsgaard et al. (Scand J Med Sci Sports 2009): Heavy Slow Resistance (HSR) protocol for patellar tendinopathy remodeling
+- Beyer et al. (Knee Surg Sports Traumatol Arthrosc 2015): HSR adaptation for Achilles tendinopathy
+- McKenzie & May (2003): Mechanical Diagnosis and Therapy — directional preference for lumbar disc pathology and sciatica (centralization principle)
+- Lam et al. (Phys Ther 2018): Efficacy of McKenzie method for low back pain
 
 ${shoulderBlock}
 ${kneeThighBlock}
