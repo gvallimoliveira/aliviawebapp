@@ -249,7 +249,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       case "shoulder": return [
         { id: "anterior", label: "anamnesis.subarea.front", desc: "anamnesis.shoulder.anterior_desc" },
         { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.shoulder.lateral_desc" },
-        { id: "superior", label: "anamnesis.subarea.superior", desc: "anamnesis.shoulder.superior_desc" },
+        { id: "superior", label: "anamnesis.subarea.superior_shoulder", desc: "anamnesis.shoulder.superior_desc" },
+        { id: "posterior", label: "anamnesis.subarea.posterior_shoulder", desc: "anamnesis.shoulder.posterior_desc" },
       ];
       case "cervical": return [
         { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.cervical.posterior_desc" },
