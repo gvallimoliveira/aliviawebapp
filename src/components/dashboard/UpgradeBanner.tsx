@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Crown, Clock, Sparkles, Bell, X, Loader2 } from "lucide-react";
+import { Crown, Clock, Sparkles, Bell, X, Loader2, Stethoscope } from "lucide-react";
 
 interface PremiumAccess {
   has_access: boolean;
@@ -20,6 +20,7 @@ interface PremiumAccess {
 interface UpgradeBannerProps {
   premiumAccess: PremiumAccess | null;
   premiumLoading: boolean;
+  professional?: any;
   push: {
     isSupported: boolean;
     subscribed: boolean;
@@ -31,7 +32,7 @@ interface UpgradeBannerProps {
   };
 }
 
-const UpgradeBanner = ({ premiumAccess, premiumLoading, push }: UpgradeBannerProps) => {
+const UpgradeBanner = ({ premiumAccess, premiumLoading, professional, push }: UpgradeBannerProps) => {
   const { t } = useLanguage();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
@@ -55,8 +56,53 @@ const UpgradeBanner = ({ premiumAccess, premiumLoading, push }: UpgradeBannerPro
   const remaining = Math.max(0, maxCount - usedCount);
   const daysLeft = getDaysRemaining();
 
+  const isProWithoutPremium = professional?.subscription_status === "active" && !premiumAccess?.has_access;
+
   return (
     <>
+      {/* Pro without Premium — subtle personal upgrade hint */}
+      {!premiumLoading && isProWithoutPremium && (
+        <Card className="border-border/60 bg-muted/30">
+          <CardContent className="py-4">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 shrink-0 mt-0.5 sm:mt-0">
+                <Stethoscope className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-foreground font-medium">
+                  {t("dashboard.pro_personal_title") || "Você é PRO! E como paciente?"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t("dashboard.pro_personal_desc") || "Seu plano profissional cobre a gestão de pacientes. Para avaliações premium pessoais, diário de dor e acompanhamento, conheça o plano Premium."}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5 text-xs"
+                onClick={async () => {
+                  setUpgradeLoading(true);
+                  try {
+                    const { data, error } = await supabase.functions.invoke("create-payment", {
+                      body: { payment_type: "monthly" },
+                    });
+                    if (error) throw error;
+                    if (data?.url) window.location.href = data.url;
+                  } catch (e) {
+                    console.error("Premium upgrade error:", e);
+                  } finally {
+                    setUpgradeLoading(false);
+                  }
+                }}
+                disabled={upgradeLoading}
+              >
+                {upgradeLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Crown className="h-3.5 w-3.5" />}
+                {t("dashboard.see_premium") || "Ver Premium"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {/* Referral Discount Banner */}
       {!premiumLoading && premiumAccess?.available_discount && (
         <Card className="border-emerald-300 bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 dark:border-emerald-700/50">
