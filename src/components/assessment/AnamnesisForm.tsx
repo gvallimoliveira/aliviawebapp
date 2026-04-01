@@ -432,7 +432,9 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
                 </div>
               </div>
             )}
+          </div>
         );
+
       }
       case "sex_age":
         return (
