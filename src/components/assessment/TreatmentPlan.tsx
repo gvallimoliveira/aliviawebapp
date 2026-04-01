@@ -437,10 +437,21 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
         <Card className="rounded-xl border-primary/30 bg-primary/5">
           <CardContent className="py-4 text-center space-y-3">
             <p className="text-sm font-medium text-foreground">{t("pdf.cta_text")}</p>
-            <Button onClick={handleExportPdf} disabled={pdfLoading} className="rounded-xl gap-2">
-              <FileDown className="h-4 w-4" />
-              {pdfLoading ? t("pdf.generating") : t("pdf.download")}
-            </Button>
+            <div className="flex justify-center gap-2">
+              <Button onClick={handleExportPdf} disabled={pdfLoading} className="rounded-xl gap-2">
+                <FileDown className="h-4 w-4" />
+                {pdfLoading ? t("pdf.generating") : t("pdf.download")}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleShareWhatsApp}
+                disabled={whatsappLoading}
+                className="rounded-xl gap-2 text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+              >
+                {whatsappLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+                WhatsApp
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
