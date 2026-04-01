@@ -56,6 +56,7 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
 const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [sharingPdf, setSharingPdf] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
