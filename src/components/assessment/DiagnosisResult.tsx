@@ -235,7 +235,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   onClick={() => {
                     // Save basic assessment data for upgrade continuity
                     const upgradeData = JSON.stringify({
-                      anamnesisData: null, // will be set from parent props
+                      anamnesisData: anamnesisData || null,
                       painRegions: painRegions || [],
                       painScore: painScore,
                       capturedName: patientName || "",
