@@ -739,11 +739,11 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   ];
   const bullets = isPt ? bulletsPt : bulletsEn;
   const ctaText = isPt
-    ? "Acesse o app e desbloqueie agora por apenas R$ 19,90 (avulso) ou R$ 29,90/mês."
-    : "Open the app and unlock now for just R$ 19.90 (single) or R$ 29.90/month.";
+    ? "Acesse o app para desbloquear todos os recursos da avaliação completa."
+    : "Open the app to unlock all features of the full assessment.";
 
   const totalBulletH = bullets.length * 5;
-  const upsellH = 18 + totalBulletH + 14;
+  const upsellH = 18 + totalBulletH + 12;
   drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
