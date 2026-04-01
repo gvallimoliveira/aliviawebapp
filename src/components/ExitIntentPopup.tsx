@@ -19,6 +19,8 @@ interface ExitIntentPopupProps {
 }
 
 const DISCOUNTED_PRICE = "R$ 98,10";
+const MOBILE_RETURN_WINDOW_MS = 90_000;
+const MOBILE_ACTION_GRACE_MS = 1_200;
 
 const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
   const [open, setOpen] = useState(false);
@@ -28,51 +30,116 @@ const ExitIntentPopup = ({ variant = "landing" }: ExitIntentPopupProps) => {
   const navigate = useNavigate();
 
   const storageKey = variant === "diagnosis" ? "exit-popup-diagnosis-seen" : "exit-popup-seen";
+  const pendingKey = `${storageKey}-pending`;
+  const pendingAtKey = `${storageKey}-pending-at`;
+
+  const canTrigger = useCallback(() => {
+    if (open) return false;
+    if (sessionStorage.getItem(storageKey)) return false;
+    if (variant === "landing" && user) return false;
+    if (variant === "diagnosis" && sessionStorage.getItem("exit-intent-discount-used")) return false;
+    return true;
+  }, [open, storageKey, user, variant]);
 
   const trigger = useCallback(() => {
-    if (sessionStorage.getItem(storageKey) || (variant === "landing" && user)) return;
-    if (variant === "diagnosis" && sessionStorage.getItem("exit-intent-discount-used")) return;
+    if (!canTrigger()) return;
+    sessionStorage.removeItem(pendingKey);
+    sessionStorage.removeItem(pendingAtKey);
     sessionStorage.setItem(storageKey, "true");
     setOpen(true);
-  }, [user, storageKey, variant]);
+  }, [canTrigger, pendingAtKey, pendingKey, storageKey]);
+
+  const queueMobileTrigger = useCallback(() => {
+    if (!canTrigger()) return;
+    sessionStorage.setItem(pendingKey, "true");
+    sessionStorage.setItem(pendingAtKey, String(Date.now()));
+  }, [canTrigger, pendingAtKey, pendingKey]);
+
+  const consumePendingTrigger = useCallback(() => {
+    const pending = sessionStorage.getItem(pendingKey);
+    const pendingAt = Number(sessionStorage.getItem(pendingAtKey) || 0);
+
+    if (!pending || !pendingAt) return;
+
+    sessionStorage.removeItem(pendingKey);
+    sessionStorage.removeItem(pendingAtKey);
+
+    if (!canTrigger()) return;
+    if (document.visibilityState !== "visible") return;
+    if (Date.now() - pendingAt > MOBILE_RETURN_WINDOW_MS) return;
+
+    window.setTimeout(() => {
+      trigger();
+    }, 120);
+  }, [canTrigger, pendingAtKey, pendingKey, trigger]);
 
   useEffect(() => {
     if (variant === "landing" && user) return;
 
     let armed = false;
-    const armTimer = setTimeout(() => {
+    let lastPointerAt = 0;
+
+    const armTimer = window.setTimeout(() => {
       armed = true;
     }, variant === "diagnosis" ? 3000 : 5000);
+
+    const queueIfEligible = () => {
+      if (!armed) return;
+      if (Date.now() - lastPointerAt < MOBILE_ACTION_GRACE_MS) return;
+      queueMobileTrigger();
+    };
+
+    const handlePointerStart = () => {
+      lastPointerAt = Date.now();
+    };
 
     const handleMouseLeave = (e: MouseEvent) => {
       if (armed && e.clientY <= 0) trigger();
     };
 
     const handleVisibility = () => {
-      if (armed && document.visibilityState === "hidden") trigger();
+      if (document.visibilityState === "hidden") {
+        queueIfEligible();
+        return;
+      }
+      consumePendingTrigger();
     };
 
     const handlePageHide = () => {
-      if (armed) trigger();
+      queueIfEligible();
     };
 
     const handleBlur = () => {
-      if (armed) trigger();
+      queueIfEligible();
     };
 
+    const handleReturn = () => {
+      consumePendingTrigger();
+    };
+
+    document.addEventListener("pointerdown", handlePointerStart, true);
+    document.addEventListener("touchstart", handlePointerStart, true);
     document.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("pagehide", handlePageHide);
     window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleReturn);
+    window.addEventListener("pageshow", handleReturn);
 
     return () => {
-      clearTimeout(armTimer);
+      window.clearTimeout(armTimer);
+      sessionStorage.removeItem(pendingKey);
+      sessionStorage.removeItem(pendingAtKey);
+      document.removeEventListener("pointerdown", handlePointerStart, true);
+      document.removeEventListener("touchstart", handlePointerStart, true);
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("pagehide", handlePageHide);
       window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleReturn);
+      window.removeEventListener("pageshow", handleReturn);
     };
-  }, [user, trigger, variant]);
+  }, [consumePendingTrigger, pendingAtKey, pendingKey, queueMobileTrigger, trigger, user, variant]);
 
   if (variant === "landing" && user) return null;
 
