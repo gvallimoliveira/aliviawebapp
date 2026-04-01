@@ -29,6 +29,7 @@ interface DiagnosisResultProps {
   onGenerateTreatment?: () => void;
   assessmentId?: string | null;
   patientName?: string;
+  patientEmail?: string;
   painRegions?: string[];
   painScore?: number;
   anamnesisData?: any;
