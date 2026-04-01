@@ -34,6 +34,7 @@ export interface AnamnesisData {
   hadDislocation: string;
   ottawaPositive: string;
   hasLocalSwelling: string;
+  hasScapulaPain: string;
 }
 
 interface AnamnesisFormProps {
@@ -71,6 +72,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     hadDislocation: "",
     ottawaPositive: "",
     hasLocalSwelling: "",
+    hasScapulaPain: "",
   });
 
   const complaints = [
@@ -247,7 +249,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       case "shoulder": return [
         { id: "anterior", label: "anamnesis.subarea.front", desc: "anamnesis.shoulder.anterior_desc" },
         { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.shoulder.lateral_desc" },
-        { id: "superior", label: "anamnesis.subarea.superior", desc: "anamnesis.shoulder.superior_desc" },
+        { id: "superior", label: "anamnesis.subarea.superior_shoulder", desc: "anamnesis.shoulder.superior_desc" },
+        { id: "posterior", label: "anamnesis.subarea.posterior_shoulder", desc: "anamnesis.shoulder.posterior_desc" },
       ];
       case "cervical": return [
         { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.cervical.posterior_desc" },
@@ -429,6 +432,18 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
                 <div className="grid grid-cols-2 gap-2">
                   {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
                     <Button key={opt} variant={data.hasLocalSwelling === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasLocalSwelling: opt })}>
+                      {t(opt)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {data.painSubArea.includes("posterior") && regionType === "shoulder" && (
+              <div className="space-y-3 mt-4 p-4 bg-muted/50 rounded-xl">
+                <Label className="text-sm font-medium">{t("anamnesis.scapula_question")}</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {["anamnesis.scapula.yes", "anamnesis.scapula.no"].map((opt) => (
+                    <Button key={opt} variant={data.hasScapulaPain === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasScapulaPain: opt })}>
                       {t(opt)}
                     </Button>
                   ))}
