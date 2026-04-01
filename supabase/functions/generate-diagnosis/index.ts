@@ -193,6 +193,25 @@ CLINICAL DECISION GUIDE:
       ? `\nPRIOR SURGERY HISTORY (IMPORTANT — integrate into clinical reasoning):\nThe patient reports previous surgery: "${surgeryDetails}"\nConsider: post-surgical adhesions, altered biomechanics, hardware-related symptoms, adjacent segment pathology, re-injury of repaired structures, and whether current symptoms may be related to the prior surgical intervention.\n`
       : "";
 
+    // Edema / swelling clinical reasoning block
+    const edemaBlock = hasLocalSwelling === "anamnesis.trauma.yes" ? `
+EDEMA/SWELLING REPORTED (MANDATORY — integrate into clinical reasoning):
+The patient reports LOCAL SWELLING (edema) in the affected joint. This is a critical clinical sign that MUST influence your diagnostic hypothesis:
+
+POSSIBLE IMPLICATIONS:
+1. SYNOVITIS (joint effusion): Inflammatory process within the synovial membrane. Can be caused by overuse, autoimmune conditions, crystal arthropathy, or early OA. Consider: warmth, diffuse joint swelling, morning stiffness.
+2. ACUTE SOFT TISSUE INJURY (Grade 1-2): Ligament sprain, tendon strain, or muscle tear with associated inflammatory response. Grade 1 = microscopic tears, mild swelling. Grade 2 = partial tear, moderate swelling, functional limitation.
+3. ARTICULAR LESION: Meniscal tear (knee), labral tear, chondral defect — can cause reactive effusion.
+4. TENDON SHEATH INFLAMMATION (tenosynovitis): Especially relevant for wrist/ankle. Swelling along the tendon path.
+5. BURSITIS: Localized swelling over a bursa (prepatellar, infrapatellar, retrocalcaneal).
+
+${isKneeCase && (Array.isArray(painSubArea) ? painSubArea.includes("front") : painSubArea === "front") ? "⚠️ ANTERIOR KNEE + EDEMA: Strongly consider HOFFITE (Hoffa's fat pad impingement). Edema is a hallmark sign of fat pad inflammation. Also consider prepatellar bursitis and infrapatellar bursitis." : ""}
+
+CLINICAL IMPACT: Presence of edema suggests an INFLAMMATORY or ACUTE component. This should:
+- Influence treatment recommendations (consider PRICE protocol for acute, anti-inflammatory strategies)
+- Increase suspicion for structural lesions over purely functional/biomechanical causes
+- Guide toward imaging recommendations if symptoms persist
+` : "";
     // Multi-complaint kinetic chain reasoning block
     const multiComplaintBlock = chiefComplaints.length > 1 ? `
 MULTI-SEGMENT COMPLAINT ANALYSIS (MANDATORY — patient reports pain in ${chiefComplaints.length} regions):
