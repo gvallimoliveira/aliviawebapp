@@ -34,6 +34,7 @@ export interface AnamnesisData {
   hadDislocation: string;
   ottawaPositive: string;
   hasLocalSwelling: string;
+  hasScapulaPain: string;
 }
 
 interface AnamnesisFormProps {
