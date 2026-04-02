@@ -98,6 +98,9 @@ const ProfessionalRegister = () => {
           if (data.profile_photo_url) {
             setPhotoPreview(data.profile_photo_url);
           }
+          if (data.logo_url) {
+            setLogoPreview(data.logo_url);
+          }
         }
         setLoadingProfile(false);
       });
