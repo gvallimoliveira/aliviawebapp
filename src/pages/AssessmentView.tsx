@@ -80,7 +80,10 @@ const AssessmentView = () => {
   const { t, language, toggleLanguage } = useLanguage();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const backUrl = searchParams.get("from") === "professional" ? "/dashboard?tab=professional" : "/dashboard";
+  const patientParam = searchParams.get("patient");
+  const backUrl = searchParams.get("from") === "professional"
+    ? `/dashboard?tab=professional${patientParam ? `&patient=${encodeURIComponent(patientParam)}` : ""}`
+    : "/dashboard";
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showTreatment, setShowTreatment] = useState(false);

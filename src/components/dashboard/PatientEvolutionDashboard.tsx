@@ -791,7 +791,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   <Button
                     variant="outline"
                     className="w-full justify-between text-sm"
-                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
+                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
                   >
                     <span className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
@@ -824,7 +824,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                           variant="ghost"
                           size="sm"
                           className="h-7 text-xs gap-1 text-primary"
-                          onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
+                          onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
                         >
                           {t("pro.view_treatment")}
                           <ChevronRight className="h-3 w-3" />
