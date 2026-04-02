@@ -771,9 +771,10 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   const motivational = isPt ? motivationalPt : motivationalEn;
 
   const totalBulletH = bullets.length * 5.5;
-  const motivationalLines = doc.splitTextToSize(motivational, CONTENT_WIDTH - 30);
-  const motivationalH = motivationalLines.length * 4 + 8;
-  const upsellH = 20 + totalBulletH + motivationalH + 14;
+  const motInnerW = CONTENT_WIDTH - 24; // 12px padding each side of the inner box
+  const motivationalLines = doc.splitTextToSize(motivational, motInnerW - 8);
+  const motivationalH = motivationalLines.length * 4 + 10;
+  const upsellH = 20 + totalBulletH + motivationalH + 16;
   
   // Outer container with gradient-like effect
   drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
@@ -801,7 +802,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   
   // Motivational message in a highlighted inner box
   const motBoxY = bulletY + 2;
-  const motBoxH = motivationalLines.length * 4 + 6;
+  const motBoxH = motivationalLines.length * 4 + 8;
   // Inner accent background
   doc.setFillColor(39, 124, 103); // primary
   doc.roundedRect(MARGIN + 6, motBoxY - 2, CONTENT_WIDTH - 12, motBoxH, 3, 3, "F");
@@ -810,7 +811,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
   for (let i = 0; i < motivationalLines.length; i++) {
-    doc.text(motivationalLines[i], MARGIN + 12, motBoxY + 4 + i * 4);
+    doc.text(motivationalLines[i], MARGIN + 12, motBoxY + 5 + i * 4);
   }
   y += upsellH + 8;
 
