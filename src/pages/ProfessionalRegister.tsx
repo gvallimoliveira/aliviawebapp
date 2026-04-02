@@ -50,6 +50,10 @@ const ProfessionalRegister = () => {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState({
     full_name: "",
     crefito: "",
@@ -93,6 +97,9 @@ const ProfessionalRegister = () => {
           });
           if (data.profile_photo_url) {
             setPhotoPreview(data.profile_photo_url);
+          }
+          if (data.logo_url) {
+            setLogoPreview(data.logo_url);
           }
         }
         setLoadingProfile(false);
@@ -182,6 +189,51 @@ const ProfessionalRegister = () => {
     return `${urlData.publicUrl}?t=${Date.now()}`;
   };
 
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagem muito grande (máx. 5MB)", variant: "destructive" });
+      return;
+    }
+    // Resize to max 200x200 on client
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const maxSize = 200;
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const resizedFile = new File([blob], "logo.png", { type: "image/png" });
+        setLogoFile(resizedFile);
+        setLogoPreview(URL.createObjectURL(blob));
+      }, "image/png");
+    };
+    img.src = url;
+  };
+
+  const uploadLogo = async (): Promise<string | null> => {
+    if (!logoFile || !user) return null;
+    const path = `logos/${user.id}/logo.png`;
+    const { error } = await supabase.storage
+      .from("professional-photos")
+      .upload(path, logoFile, { upsert: true, contentType: "image/png" });
+    if (error) {
+      console.error("Logo upload error:", error);
+      return null;
+    }
+    const { data: urlData } = supabase.storage
+      .from("professional-photos")
+      .getPublicUrl(path);
+    return `${urlData.publicUrl}?t=${Date.now()}`;
+  };
+
   const CREFITO_REGEX = /^\d{1,6}-[A-Z]$/;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -220,10 +272,17 @@ const ProfessionalRegister = () => {
       if (photoFile) {
         photoUrl = await uploadPhoto();
       }
+      let logoUrl: string | null = null;
+      if (logoFile) {
+        logoUrl = await uploadLogo();
+      }
 
       const payload: any = { ...form, crefito: normalizedCrefito, user_id: user.id };
       if (photoUrl) {
         payload.profile_photo_url = photoUrl;
+      }
+      if (logoUrl) {
+        payload.logo_url = logoUrl;
       }
 
       if (existing) {
@@ -413,6 +472,44 @@ const ProfessionalRegister = () => {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+
+              {/* Logo Upload */}
+              <div className="flex flex-col items-center gap-3 pt-2 border-t border-border/40">
+                <Label className="text-sm font-medium text-foreground">{t("prof.logo_label") || "Logo da Clínica / Empresa"}</Label>
+                <div className="relative group">
+                  <div className="h-20 w-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-muted/20 overflow-hidden">
+                    {logoPreview ? (
+                      <img src={logoPreview} alt="Logo" className="h-full w-full object-contain" />
+                    ) : (
+                      <span className="text-xs text-muted-foreground text-center px-1">Logo</span>
+                    )}
+                  </div>
+                  {logoPreview && (
+                    <button
+                      type="button"
+                      onClick={() => { setLogoFile(null); setLogoPreview(null); }}
+                      className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  className="hidden"
+                  onChange={handleLogoSelect}
+                />
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {logoPreview ? (t("prof.change_logo") || "Alterar logo") : (t("prof.add_logo") || "Adicionar logo")}
+                </button>
+                <p className="text-xs text-muted-foreground text-center max-w-xs">{t("prof.logo_hint") || "A logo será exibida nos relatórios PDF gerados para seus pacientes."}</p>
+              </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">

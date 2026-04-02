@@ -62,6 +62,7 @@ interface PdfOptions {
   painRegions?: string[];
   testResults?: any;
   professionalNotes?: string;
+  professionalLogoUrl?: string;
 }
 
 // Design tokens from webapp (HSL converted to RGB)
@@ -129,6 +130,21 @@ async function loadLogoBase64(): Promise<string | null> {
   try {
     const { default: logoUrl } = await import("@/assets/logo-alivia.png");
     const response = await fetch(logoUrl);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function loadExternalImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
     const blob = await response.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -755,9 +771,10 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   const motivational = isPt ? motivationalPt : motivationalEn;
 
   const totalBulletH = bullets.length * 5.5;
-  const motivationalLines = doc.splitTextToSize(motivational, CONTENT_WIDTH - 30);
-  const motivationalH = motivationalLines.length * 4 + 8;
-  const upsellH = 20 + totalBulletH + motivationalH + 14;
+  const motInnerW = CONTENT_WIDTH - 24; // 12px padding each side of the inner box
+  const motivationalLines = doc.splitTextToSize(motivational, motInnerW - 8);
+  const motivationalH = motivationalLines.length * 4 + 10;
+  const upsellH = 20 + totalBulletH + motivationalH + 16;
   
   // Outer container with gradient-like effect
   drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
@@ -785,7 +802,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   
   // Motivational message in a highlighted inner box
   const motBoxY = bulletY + 2;
-  const motBoxH = motivationalLines.length * 4 + 6;
+  const motBoxH = motivationalLines.length * 4 + 8;
   // Inner accent background
   doc.setFillColor(39, 124, 103); // primary
   doc.roundedRect(MARGIN + 6, motBoxY - 2, CONTENT_WIDTH - 12, motBoxH, 3, 3, "F");
@@ -794,7 +811,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
   for (let i = 0; i < motivationalLines.length; i++) {
-    doc.text(motivationalLines[i], MARGIN + 12, motBoxY + 4 + i * 4);
+    doc.text(motivationalLines[i], MARGIN + 12, motBoxY + 5 + i * 4);
   }
   y += upsellH + 8;
 
@@ -846,13 +863,14 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl }: PdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPt = language === "pt";
   let y = MARGIN;
 
-  // Load logo
+  // Load logos
   const logoBase64 = await loadLogoBase64();
+  const proLogoBase64 = professionalLogoUrl ? await loadExternalImageAsBase64(professionalLogoUrl) : null;
 
   // ── Header Band ──
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
@@ -881,6 +899,14 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     year: "numeric", month: "long", day: "numeric",
   });
   doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
+
+  // Professional logo in top-right of header
+  if (proLogoBase64) {
+    try {
+      doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - logoW, logoY, logoW, logoH);
+    } catch { /* fallback */ }
+  }
+
   y = 48;
 
   // ── Patient Info ──
@@ -997,7 +1023,8 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
 
     for (const phase of treatmentPlan.phases) {
       const pc = phaseConfig[phase.id] || phaseConfig.short_term;
-      y = checkPage(doc, y, 30);
+      // Phase header + goal/focus should stay together (min ~45mm)
+      y = checkPage(doc, y, 45);
 
       // Phase header bar
       drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 3, pc.bg, pc.color);
@@ -1164,7 +1191,15 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...COLORS.muted);
     doc.text(`Aliv.iA — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`, footerTextX, 290);
-    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - 8, 290);
+
+    // Professional logo on footer right side
+    if (proLogoBase64) {
+      try {
+        doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - footerLogoSize, 285.5, footerLogoSize, footerLogoSize);
+      } catch { /* fallback */ }
+    }
+
+    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - (proLogoBase64 ? footerLogoSize + 10 : 8), 290);
   }
 
   return doc;
@@ -1186,7 +1221,12 @@ function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number
 
 // ── Helper: Sub-section with body text ──
 function renderSubSection(doc: jsPDF, y: number, title: string, body: string): number {
-  y = checkPage(doc, y, 20);
+  // Calculate minimum needed: title + at least 3 lines of body
+  doc.setFontSize(8);
+  const lines = doc.splitTextToSize(body, CONTENT_WIDTH);
+  const minBodyLines = Math.min(lines.length, 3);
+  const neededForGroup = 5 + minBodyLines * 3.5 + 6;
+  y = checkPage(doc, y, neededForGroup);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.foreground);
@@ -1195,7 +1235,6 @@ function renderSubSection(doc: jsPDF, y: number, title: string, body: string): n
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
-  const lines = doc.splitTextToSize(body, CONTENT_WIDTH);
   y = checkPage(doc, y, lines.length * 3.5);
   doc.text(lines, MARGIN, y);
   y += lines.length * 3.5 + 6;

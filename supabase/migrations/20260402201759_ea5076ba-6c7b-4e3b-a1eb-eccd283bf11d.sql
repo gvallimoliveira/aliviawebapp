@@ -1,0 +1,1 @@
+ALTER TABLE public.professionals ADD COLUMN logo_url text DEFAULT NULL;

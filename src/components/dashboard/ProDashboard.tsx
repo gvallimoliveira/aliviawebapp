@@ -162,6 +162,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         painRegions: assessment.pain_regions,
         testResults: assessment.test_results,
         professionalNotes: proNote,
+        professionalLogoUrl: professional?.logo_url || undefined,
       });
       toast({ title: t("pro.download_pdf") });
     } catch {
@@ -192,6 +193,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         painRegions: assessment.pain_regions,
         testResults: assessment.test_results,
         professionalNotes: proNote,
+        professionalLogoUrl: professional?.logo_url || undefined,
       });
 
       const filePath = `${assessment.id}_pro.pdf`;
