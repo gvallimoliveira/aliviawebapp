@@ -863,13 +863,14 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl }: PdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPt = language === "pt";
   let y = MARGIN;
 
-  // Load logo
+  // Load logos
   const logoBase64 = await loadLogoBase64();
+  const proLogoBase64 = professionalLogoUrl ? await loadExternalImageAsBase64(professionalLogoUrl) : null;
 
   // ── Header Band ──
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
