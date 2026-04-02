@@ -62,6 +62,7 @@ interface PdfOptions {
   painRegions?: string[];
   testResults?: any;
   professionalNotes?: string;
+  professionalLogoUrl?: string;
 }
 
 // Design tokens from webapp (HSL converted to RGB)
