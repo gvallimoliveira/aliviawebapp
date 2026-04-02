@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { questionnaires } from "@/data/questionnaireData";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -173,7 +173,9 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const initialPatient = searchParams.get("patient");
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(initialPatient);
   const [searchQuery, setSearchQuery] = useState("");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [noteSaving, setNoteSaving] = useState<Record<string, boolean>>({});
@@ -789,7 +791,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   <Button
                     variant="outline"
                     className="w-full justify-between text-sm"
-                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
+                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
                   >
                     <span className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
@@ -822,7 +824,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                           variant="ghost"
                           size="sm"
                           className="h-7 text-xs gap-1 text-primary"
-                          onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
+                          onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
                         >
                           {t("pro.view_treatment")}
                           <ChevronRight className="h-3 w-3" />
