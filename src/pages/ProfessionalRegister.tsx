@@ -189,6 +189,51 @@ const ProfessionalRegister = () => {
     return `${urlData.publicUrl}?t=${Date.now()}`;
   };
 
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagem muito grande (máx. 5MB)", variant: "destructive" });
+      return;
+    }
+    // Resize to max 200x200 on client
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const maxSize = 200;
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const resizedFile = new File([blob], "logo.png", { type: "image/png" });
+        setLogoFile(resizedFile);
+        setLogoPreview(URL.createObjectURL(blob));
+      }, "image/png");
+    };
+    img.src = url;
+  };
+
+  const uploadLogo = async (): Promise<string | null> => {
+    if (!logoFile || !user) return null;
+    const path = `logos/${user.id}/logo.png`;
+    const { error } = await supabase.storage
+      .from("professional-photos")
+      .upload(path, logoFile, { upsert: true, contentType: "image/png" });
+    if (error) {
+      console.error("Logo upload error:", error);
+      return null;
+    }
+    const { data: urlData } = supabase.storage
+      .from("professional-photos")
+      .getPublicUrl(path);
+    return `${urlData.publicUrl}?t=${Date.now()}`;
+  };
+
   const CREFITO_REGEX = /^\d{1,6}-[A-Z]$/;
 
   const handleSubmit = async (e: React.FormEvent) => {
