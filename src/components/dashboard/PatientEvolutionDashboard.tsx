@@ -785,6 +785,19 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     </div>
                   )}
 
+                  {/* View full assessment button */}
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between text-sm"
+                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      {t("pro.view_full_assessment")}
+                    </span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+
                   {/* Treatment Plan CTA */}
                   {a.diagnosis && !a.treatment_plan && (
                     <TreatmentUnlockCTA
