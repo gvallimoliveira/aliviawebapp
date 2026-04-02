@@ -125,13 +125,34 @@ const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, onUnlocked }: {
       if (error) throw error;
 
       if (data?.free) {
-        // Lifetime treatment — generate treatment directly
+        // Lifetime treatment — fetch assessment data then generate treatment
+        const { data: assessment } = await supabase
+          .from("assessments")
+          .select("*")
+          .eq("id", assessmentId)
+          .single();
+
+        if (!assessment) throw new Error("Assessment not found");
+
         const { data: genData, error: genError } = await supabase.functions.invoke("generate-treatment", {
-          body: { assessment_id: assessmentId },
+          body: {
+            anamnesisData: assessment.anamnesis_data,
+            testResults: assessment.test_results,
+            questionnaireResults: Array.isArray(assessment.test_results) ? assessment.test_results : [],
+            diagnosis: assessment.diagnosis,
+            mode: "professional",
+            language: document.documentElement.lang === "en" ? "en" : "pt",
+          },
         });
         if (genError) throw genError;
-        toast({ title: t("pro.treatment_generated") });
-        onUnlocked(genData?.treatment_plan || true);
+
+        await supabase
+          .from("assessments")
+          .update({ treatment_plan: genData.treatmentPlan, payment_status: "treatment_paid" })
+          .eq("id", assessmentId);
+
+        toast({ title: t("pro.treatment_generated") || "Plano de tratamento gerado!" });
+        onUnlocked(genData?.treatmentPlan || true);
       } else if (data?.url) {
         window.location.href = data.url;
       }
@@ -874,7 +895,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   </Button>
 
                   {/* Treatment Plan CTA */}
-                  {a.diagnosis && !a.treatment_plan && a.payment_status !== "treatment_paid" && (
+                  {a.diagnosis && !a.treatment_plan && a.payment_status !== "treatment_paid" && a.payment_status !== "treatment_generating" && (
                     <TreatmentUnlockCTA
                       assessmentId={a.id}
                       lifetimeTreatment={lifetimeTreatment}
@@ -885,7 +906,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       }}
                     />
                   )}
-                  {a.diagnosis && !a.treatment_plan && a.payment_status === "treatment_paid" && (
+                  {a.diagnosis && !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating") && (
                     <TreatmentPaidRetry
                       assessmentId={a.id}
                       onGenerated={(treatmentPlan) => {
