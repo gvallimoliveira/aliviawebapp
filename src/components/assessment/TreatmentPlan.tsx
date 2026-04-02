@@ -67,6 +67,7 @@ interface TreatmentPlanProps {
   anamnesisData?: any;
   painRegions?: string[];
   testResults?: any;
+  professionalLogoUrl?: string;
   onBack: () => void;
   onNewAssessment: () => void;
 }
