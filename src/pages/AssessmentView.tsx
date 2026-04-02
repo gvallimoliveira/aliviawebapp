@@ -196,7 +196,7 @@ const AssessmentView = () => {
             navigate(backUrl);
           } else {
             setAssessment(data);
-            if (data.treatment_plan && !data.diagnosis) {
+            if (data.treatment_plan) {
               setShowTreatment(true);
             }
           }
