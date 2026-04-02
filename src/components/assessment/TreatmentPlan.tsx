@@ -87,7 +87,7 @@ const phaseConfig: Record<string, { colorClass: string; bgClass: string }> = {
   long_term: { colorClass: "text-green-600", bgClass: "bg-green-50 border-green-200" },
 };
 
-const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegions, testResults, onBack, onNewAssessment }: TreatmentPlanProps) => {
+const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegions, testResults, professionalLogoUrl, onBack, onNewAssessment }: TreatmentPlanProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
