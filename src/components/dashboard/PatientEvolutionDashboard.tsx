@@ -801,14 +801,22 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   </Button>
 
                   {/* Treatment Plan CTA */}
-                  {a.diagnosis && !a.treatment_plan && (
+                  {a.diagnosis && !a.treatment_plan && a.payment_status !== "treatment_paid" && (
                     <TreatmentUnlockCTA
                       assessmentId={a.id}
                       lifetimeTreatment={lifetimeTreatment}
                       onUnlocked={(treatmentPlan) => {
-                        // Update local state to reflect unlocked treatment
                         a.treatment_plan = treatmentPlan;
-                        // Force re-render
+                        a.payment_status = "treatment_paid";
+                        setNotes((prev) => ({ ...prev }));
+                      }}
+                    />
+                  )}
+                  {a.diagnosis && !a.treatment_plan && a.payment_status === "treatment_paid" && (
+                    <TreatmentPaidRetry
+                      assessmentId={a.id}
+                      onGenerated={(treatmentPlan) => {
+                        a.treatment_plan = treatmentPlan;
                         setNotes((prev) => ({ ...prev }));
                       }}
                     />
