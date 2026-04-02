@@ -1,52 +1,53 @@
 
 
-# Ajustar sub-áreas do ombro + Personalizar upsell no PDF básico
+# Logo do profissional no PDF + Correções de layout
 
-## 1. Corrigir sub-áreas do ombro na anamnese
+## 1. Banco de dados — nova coluna `logo_url` na tabela `professionals`
 
-**Arquivo:** `src/components/assessment/AnamnesisForm.tsx` (linhas 247-251)
+Migração SQL para adicionar `logo_url text` na tabela professionals (nullable, default null).
 
-Substituir as 3 opções atuais por 4 opções clinicamente corretas:
+## 2. Upload da logo no cadastro profissional
 
-| Atual | Novo |
-|-------|------|
-| Anterior | Anterior (mantém) |
-| Lateral | Lateral (mantém) |
-| Superior / Medial ❌ | **Superior (acrômio / trapézio)** |
-| — | **Posterior** (nova opção) |
+**Arquivo:** `src/pages/ProfessionalRegister.tsx`
 
-Quando "posterior" for selecionado, exibir **pergunta condicional**: "Você sente dor próximo da escápula também?" (sim/não). Armazenar resposta em um novo campo `hasScapulaPain` no `AnamnesisData`.
+- Adicionar campo de upload de logo (JPG/PNG) similar ao campo de foto de perfil existente
+- Upload para o bucket `professional-photos` com path `logos/{professionalId}.png`
+- Preview da logo no formulário
+- Salvar URL pública no campo `logo_url`
+- Sem necessidade de crop (logo já deve vir formatada), mas limitar tamanho e redimensionar para max 200x200px no client
 
-**Arquivos de tradução** (`pt.json`, `en.json`, `es.json`):
-- Renomear `anamnesis.subarea.superior` → "Superior (acrômio / trapézio)" / "Superior (acromion / trapezius)" / "Superior (acromion / trapecio)"
-- Atualizar `anamnesis.shoulder.superior_desc` → descrição sobre região do acrômio e trapézio superior
-- Adicionar `anamnesis.subarea.posterior_shoulder` com descrição
-- Adicionar `anamnesis.scapula_question`, `anamnesis.scapula.yes`, `anamnesis.scapula.no`
+## 3. Passar logo do profissional para o PDF
 
-**Interface `AnamnesisData`**: adicionar campo `hasScapulaPain: string` (default `""`)
+**Arquivo:** `src/utils/generatePdf.ts`
 
-## 2. Personalizar upsell no PDF da avaliação básica
+- Adicionar `professionalLogoUrl?: string` em `PdfOptions`
+- Na função `_buildPdfDoc`: se `professionalLogoUrl` existir, fazer fetch da imagem, converter para base64, e renderizar no **canto superior direito** do header (mesma altura/tamanho proporcional ao logo Aliv.iA no canto esquerdo)
+- No footer de cada página: adicionar a logo do profissional no lado direito (espelhando o Aliv.iA no lado esquerdo)
 
-**Arquivo:** `src/utils/generatePdf.ts` (linhas 719-765)
+**Arquivos chamadores** (`ProDashboard.tsx`, `TreatmentPlan.tsx`, `PatientEvolutionDashboard.tsx`, `AssessmentView.tsx`):
+- Buscar `logo_url` do profissional e passá-lo como `professionalLogoUrl` nas opções do PDF
 
-Usar `painRegions` (já disponível em `options`) para identificar qual questionário validado seria aplicado na avaliação premium e personalizar os bullets:
+## 4. Corrigir frase motivacional no PDF básico
 
-- Mapear `painRegions` → questionário correspondente usando a mesma lógica de `getQuestionnairesForRegions` de `questionnaireData.ts`
-- Substituir o bullet genérico "Questionários validados (KOOS, SPADI, ODI, DASH...)" por um específico:
-  - Ex ombro: "Questionário SPADI — específico para limitação e dor no ombro"
-  - Ex joelho: "Questionário KOOS — específico para função e dor no joelho"
-  - Fallback genérico se não houver mapeamento
+**Arquivo:** `src/utils/generatePdf.ts` (linhas ~753-798)
 
-- Adicionar mensagem motivacional após os bullets:
-  - PT: *"Já tenho uma boa ideia por onde começar seu tratamento! Adquira a avaliação premium para refinar nosso plano terapêutico e receber todas as orientações disponíveis! Vamos juntos resolver essa dor."*
-  - EN: *"I already have a good idea of where to start your treatment! Get the premium assessment to refine our treatment plan and receive all available guidance! Let's solve this pain together."*
-  - ES: *"¡Ya tengo una buena idea de por dónde empezar tu tratamiento! Adquiere la evaluación premium para refinar nuestro plan terapéutico y recibir todas las orientaciones disponibles. ¡Vamos juntos a resolver ese dolor!"*
+- O `splitTextToSize` está usando `CONTENT_WIDTH - 30` mas o texto é renderizado em uma caixa de largura `CONTENT_WIDTH - 12`. Corrigir para usar a largura interna real da caixa (padding de 12 de cada lado → `CONTENT_WIDTH - 24` para o split e alinhar o texto com margem interna adequada)
+- Recalcular `motBoxH` para acomodar o texto corretamente
 
-## Resumo de arquivos alterados
+## 5. Títulos e conteúdo na mesma página (PDF premium)
 
-1. `src/components/assessment/AnamnesisForm.tsx` — sub-áreas do ombro + campo escápula
-2. `src/locales/pt.json` — traduções novas/atualizadas
-3. `src/locales/en.json` — traduções novas/atualizadas
-4. `src/locales/es.json` — traduções novas/atualizadas
-5. `src/utils/generatePdf.ts` — upsell personalizado por região
+**Arquivo:** `src/utils/generatePdf.ts`
+
+- Na função `renderSubSection`: antes de renderizar título + corpo, calcular o espaço total necessário (título + pelo menos 2-3 linhas do corpo) e fazer `checkPage` com esse valor mínimo para evitar que um título fique sozinho no fim de uma página
+- Aplicar a mesma lógica nos blocos de fase do tratamento (phase header + goal/focus devem ficar juntos)
+
+## Resumo de arquivos
+
+1. **Migração SQL** — `logo_url` na tabela `professionals`
+2. `src/pages/ProfessionalRegister.tsx` — campo upload de logo
+3. `src/utils/generatePdf.ts` — logo no header/footer do PDF, fix motivacional, títulos agrupados
+4. `src/components/dashboard/ProDashboard.tsx` — passar `professionalLogoUrl`
+5. `src/components/assessment/TreatmentPlan.tsx` — passar `professionalLogoUrl`
+6. `src/components/dashboard/PatientEvolutionDashboard.tsx` — passar `professionalLogoUrl`
+7. `src/pages/AssessmentView.tsx` — passar `professionalLogoUrl`
 
