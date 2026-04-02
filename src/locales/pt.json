@@ -848,6 +848,7 @@
   "pro.view_treatment": "Ver plano",
   "pro.treatment_generated": "Plano de tratamento gerado com sucesso!",
   "pro.export_pdfs": "Exportar PDFs",
+  "pro.view_full_assessment": "Ver avaliação completa",
   "pro.exporting_pdfs": "Exportando...",
   "pro.export_done": "PDFs exportados com sucesso!",
   "pro.export_error": "Erro ao exportar PDFs",
