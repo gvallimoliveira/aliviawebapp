@@ -508,7 +508,10 @@ const ProfessionalRegister = () => {
                 >
                   {logoPreview ? (t("prof.change_logo") || "Alterar logo") : (t("prof.add_logo") || "Adicionar logo")}
                 </button>
-                <p className="text-xs text-muted-foreground text-center max-w-xs">{t("prof.logo_hint") || "A logo será exibida nos relatórios PDF gerados para seus pacientes."}</p>
+                <div className="flex items-start gap-2 bg-primary/5 border border-primary/20 rounded-lg p-2.5 max-w-xs">
+                  <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground">{t("prof.logo_hint") || "Esta logo aparecerá no cabeçalho e rodapé dos relatórios PDF gerados para seus pacientes, ao lado da marca Aliv.iA."}</p>
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
