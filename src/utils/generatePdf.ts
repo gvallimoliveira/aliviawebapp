@@ -1023,7 +1023,8 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
 
     for (const phase of treatmentPlan.phases) {
       const pc = phaseConfig[phase.id] || phaseConfig.short_term;
-      y = checkPage(doc, y, 30);
+      // Phase header + goal/focus should stay together (min ~45mm)
+      y = checkPage(doc, y, 45);
 
       // Phase header bar
       drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 3, pc.bg, pc.color);
