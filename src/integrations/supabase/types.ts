@@ -403,6 +403,7 @@ export type Database = {
           id: string
           is_partner: boolean
           lifetime_treatment: boolean
+          logo_url: string | null
           phone: string | null
           pro_access_expires_at: string | null
           profile_photo_url: string | null
@@ -428,6 +429,7 @@ export type Database = {
           id?: string
           is_partner?: boolean
           lifetime_treatment?: boolean
+          logo_url?: string | null
           phone?: string | null
           pro_access_expires_at?: string | null
           profile_photo_url?: string | null
@@ -453,6 +455,7 @@ export type Database = {
           id?: string
           is_partner?: boolean
           lifetime_treatment?: boolean
+          logo_url?: string | null
           phone?: string | null
           pro_access_expires_at?: string | null
           profile_photo_url?: string | null
