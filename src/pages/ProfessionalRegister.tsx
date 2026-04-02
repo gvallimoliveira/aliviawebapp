@@ -507,14 +507,8 @@ const ProfessionalRegister = () => {
                   onClick={() => logoInputRef.current?.click()}
                   className="text-sm text-primary hover:underline"
                 >
-                  {logoPreview ? (t("prof.change_logo") || "Alterar logo") : (t("prof.add_logo") || "Clique para adicionar sua logo pessoal ou da sua empresa")}
+                  {logoPreview ? "Alterar logo" : "Adicionar logo profissional"}
                 </button>
-                <div className="flex items-start gap-2.5 bg-primary/10 border border-primary/30 rounded-lg p-3 max-w-sm shadow-sm">
-                  <span className="text-lg shrink-0">📄</span>
-                  <p className="text-xs leading-relaxed text-foreground/80 font-medium">
-                    {t("prof.logo_hint") || "Esta logo aparecerá no cabeçalho e rodapé dos relatórios PDF gerados para seus pacientes, ao lado da marca Aliv.iA."}
-                  </p>
-                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
