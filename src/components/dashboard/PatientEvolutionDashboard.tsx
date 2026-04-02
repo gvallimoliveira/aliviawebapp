@@ -168,6 +168,7 @@ const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, onUnlocked }: {
   );
 };
 
+const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
 
   const { t } = useLanguage();
   const navigate = useNavigate();
