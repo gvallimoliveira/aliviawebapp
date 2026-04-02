@@ -272,10 +272,17 @@ const ProfessionalRegister = () => {
       if (photoFile) {
         photoUrl = await uploadPhoto();
       }
+      let logoUrl: string | null = null;
+      if (logoFile) {
+        logoUrl = await uploadLogo();
+      }
 
       const payload: any = { ...form, crefito: normalizedCrefito, user_id: user.id };
       if (photoUrl) {
         payload.profile_photo_url = photoUrl;
+      }
+      if (logoUrl) {
+        payload.logo_url = logoUrl;
       }
 
       if (existing) {
