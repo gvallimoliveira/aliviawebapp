@@ -168,6 +168,79 @@ const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, onUnlocked }: {
   );
 };
 
+// Retry component for paid-but-not-generated treatments
+const TreatmentPaidRetry = ({ assessmentId, onGenerated }: {
+  assessmentId: string;
+  onGenerated: (treatmentPlan: any) => void;
+}) => {
+  const { t, language } = useLanguage();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const handleRetry = async () => {
+    setLoading(true);
+    try {
+      const { data: assessment } = await supabase
+        .from("assessments")
+        .select("*")
+        .eq("id", assessmentId)
+        .single();
+
+      if (!assessment) throw new Error("Assessment not found");
+
+      const { data: treatmentData, error } = await supabase.functions.invoke("generate-treatment", {
+        body: {
+          anamnesisData: assessment.anamnesis_data,
+          testResults: assessment.test_results,
+          questionnaireResults: Array.isArray(assessment.test_results) ? assessment.test_results : [],
+          diagnosis: assessment.diagnosis,
+          mode: "professional",
+          language,
+        },
+      });
+
+      if (error) throw error;
+
+      await supabase
+        .from("assessments")
+        .update({ treatment_plan: treatmentData.treatmentPlan })
+        .eq("id", assessmentId);
+
+      toast({ title: t("pro.treatment_generated") || "Plano de tratamento gerado!" });
+      onGenerated(treatmentData.treatmentPlan);
+    } catch (err: any) {
+      toast({ title: "Erro ao gerar tratamento", description: err?.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="border-t border-primary/20 pt-3">
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 shrink-0">
+            <FileCheck className="h-4 w-4 text-emerald-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-foreground">Pagamento confirmado!</p>
+            <p className="text-[10px] text-muted-foreground">Clique para gerar o plano de tratamento.</p>
+          </div>
+        </div>
+        <Button
+          onClick={handleRetry}
+          disabled={loading}
+          size="sm"
+          className="w-full rounded-xl gap-1.5 text-xs"
+        >
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          {loading ? "Gerando tratamento..." : "Gerar Plano de Tratamento"}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
 
   const { t } = useLanguage();
@@ -801,14 +874,22 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   </Button>
 
                   {/* Treatment Plan CTA */}
-                  {a.diagnosis && !a.treatment_plan && (
+                  {a.diagnosis && !a.treatment_plan && a.payment_status !== "treatment_paid" && (
                     <TreatmentUnlockCTA
                       assessmentId={a.id}
                       lifetimeTreatment={lifetimeTreatment}
                       onUnlocked={(treatmentPlan) => {
-                        // Update local state to reflect unlocked treatment
                         a.treatment_plan = treatmentPlan;
-                        // Force re-render
+                        a.payment_status = "treatment_paid";
+                        setNotes((prev) => ({ ...prev }));
+                      }}
+                    />
+                  )}
+                  {a.diagnosis && !a.treatment_plan && a.payment_status === "treatment_paid" && (
+                    <TreatmentPaidRetry
+                      assessmentId={a.id}
+                      onGenerated={(treatmentPlan) => {
+                        a.treatment_plan = treatmentPlan;
                         setNotes((prev) => ({ ...prev }));
                       }}
                     />
