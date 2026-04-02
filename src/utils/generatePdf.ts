@@ -899,6 +899,14 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     year: "numeric", month: "long", day: "numeric",
   });
   doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
+
+  // Professional logo in top-right of header
+  if (proLogoBase64) {
+    try {
+      doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - logoW, logoY, logoW, logoH);
+    } catch { /* fallback */ }
+  }
+
   y = 48;
 
   // ── Patient Info ──
