@@ -142,6 +142,21 @@ async function loadLogoBase64(): Promise<string | null> {
   }
 }
 
+async function loadExternalImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 async function loadImageAsBase64(importFn: () => Promise<{ default: string }>): Promise<string | null> {
   try {
     const { default: url } = await importFn();
