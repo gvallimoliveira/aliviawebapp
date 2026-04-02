@@ -59,7 +59,7 @@ serve(async (req) => {
 
     const { data: assessment } = await supabaseClient
       .from("assessments")
-      .select("id, professional_id, type, treatment_plan")
+      .select("id, professional_id, type, treatment_plan, payment_status")
       .eq("id", assessment_id)
       .eq("professional_id", professional.id)
       .eq("type", "professional")
@@ -67,6 +67,14 @@ serve(async (req) => {
 
     if (!assessment) throw new Error("Assessment not found or not yours");
     if (assessment.treatment_plan) throw new Error("Treatment plan already unlocked");
+
+    // If already paid (e.g. Stripe completed but treatment generation failed), return free access
+    if (assessment.payment_status === "treatment_paid") {
+      return new Response(JSON.stringify({ free: true, assessment_id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
