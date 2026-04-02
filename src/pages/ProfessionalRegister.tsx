@@ -507,7 +507,7 @@ const ProfessionalRegister = () => {
                   onClick={() => logoInputRef.current?.click()}
                   className="text-sm text-primary hover:underline"
                 >
-                  {logoPreview ? (t("prof.change_logo") || "Alterar logo") : (t("prof.add_logo") || "Adicionar logo")}
+                  {logoPreview ? (t("prof.change_logo") || "Alterar logo") : (t("prof.add_logo") || "Clique para adicionar sua logo pessoal ou da sua empresa")}
                 </button>
                 <div className="flex items-start gap-2.5 bg-primary/10 border border-primary/30 rounded-lg p-3 max-w-sm shadow-sm">
                   <span className="text-lg shrink-0">📄</span>
