@@ -473,6 +473,44 @@ const ProfessionalRegister = () => {
                 </DialogContent>
               </Dialog>
 
+              {/* Logo Upload */}
+              <div className="flex flex-col items-center gap-3 pt-2 border-t border-border/40">
+                <Label className="text-sm font-medium text-foreground">{t("prof.logo_label") || "Logo da Clínica / Empresa"}</Label>
+                <div className="relative group">
+                  <div className="h-20 w-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-muted/20 overflow-hidden">
+                    {logoPreview ? (
+                      <img src={logoPreview} alt="Logo" className="h-full w-full object-contain" />
+                    ) : (
+                      <span className="text-xs text-muted-foreground text-center px-1">Logo</span>
+                    )}
+                  </div>
+                  {logoPreview && (
+                    <button
+                      type="button"
+                      onClick={() => { setLogoFile(null); setLogoPreview(null); }}
+                      className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  className="hidden"
+                  onChange={handleLogoSelect}
+                />
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {logoPreview ? (t("prof.change_logo") || "Alterar logo") : (t("prof.add_logo") || "Adicionar logo")}
+                </button>
+                <p className="text-xs text-muted-foreground text-center max-w-xs">{t("prof.logo_hint") || "A logo será exibida nos relatórios PDF gerados para seus pacientes."}</p>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>{t("prof.full_name")} *</Label>
