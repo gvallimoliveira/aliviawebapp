@@ -709,10 +709,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             return (
               <Card key={a.id} className="overflow-hidden">
                 <CardContent className="py-4 px-4 space-y-3">
-                  <div
-                    className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
-                  >
+                  <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <p className="text-sm font-semibold text-foreground">
                         {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
@@ -731,10 +728,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                           size="icon"
                           className="h-8 w-8"
                           title="WhatsApp"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onShareWhatsApp(a);
-                          }}
+                          onClick={() => onShareWhatsApp(a)}
                         >
                           <Share2 className="h-4 w-4 text-emerald-600" />
                         </Button>
@@ -745,15 +739,11 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                           size="icon"
                           className="h-8 w-8"
                           title="PDF"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDownloadPdf(a);
-                          }}
+                          onClick={() => onDownloadPdf(a)}
                         >
                           <FileText className="h-4 w-4 text-primary" />
                         </Button>
                       )}
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
 
