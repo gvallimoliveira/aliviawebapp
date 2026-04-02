@@ -1,53 +1,45 @@
 
 
-# Logo do profissional no PDF + Correções de layout
+# Adicionar CTA de Plano de Tratamento no Painel Profissional
 
-## 1. Banco de dados — nova coluna `logo_url` na tabela `professionals`
+## Problema
 
-Migração SQL para adicionar `logo_url text` na tabela professionals (nullable, default null).
+Hoje, o profissional só vê a opção de desbloquear o plano de tratamento de um paciente se clicar no card e navegar para a página de detalhe da avaliação (`/assessment/view/:id`). Isso não é intuitivo nem ideal para conversão. O CTA precisa estar visível diretamente na lista de avaliações do painel, antes do campo de notas privadas.
 
-## 2. Upload da logo no cadastro profissional
+## Solução
 
-**Arquivo:** `src/pages/ProfessionalRegister.tsx`
+Inserir um bloco de CTA compacto dentro de cada card de avaliação no `PatientEvolutionDashboard.tsx`, posicionado entre a seção de anamnese e a seção de notas privadas. O bloco aparece **somente** quando a avaliação tem diagnóstico mas **não** tem `treatment_plan`.
 
-- Adicionar campo de upload de logo (JPG/PNG) similar ao campo de foto de perfil existente
-- Upload para o bucket `professional-photos` com path `logos/{professionalId}.png`
-- Preview da logo no formulário
-- Salvar URL pública no campo `logo_url`
-- Sem necessidade de crop (logo já deve vir formatada), mas limitar tamanho e redimensionar para max 200x200px no client
+## Alterações
 
-## 3. Passar logo do profissional para o PDF
+### 1. `src/components/dashboard/PatientEvolutionDashboard.tsx` (linhas ~731-733)
 
-**Arquivo:** `src/utils/generatePdf.ts`
+Antes da `div` de notas privadas, inserir um novo bloco condicional:
 
-- Adicionar `professionalLogoUrl?: string` em `PdfOptions`
-- Na função `_buildPdfDoc`: se `professionalLogoUrl` existir, fazer fetch da imagem, converter para base64, e renderizar no **canto superior direito** do header (mesma altura/tamanho proporcional ao logo Aliv.iA no canto esquerdo)
-- No footer de cada página: adicionar a logo do profissional no lado direito (espelhando o Aliv.iA no lado esquerdo)
+- **Condição**: `a.diagnosis && !a.treatment_plan`
+- **Visual**: Card compacto com borda primária, ícone de Sparkles/Lock, texto curto explicando o benefício e botão "Desbloquear Plano de Tratamento"
+- **Lógica do botão**: Invocar `create-pro-treatment-payment` (mesma lógica que já existe no `AssessmentView.tsx` — BlurredTreatmentPreview). Se o profissional tem `lifetime_treatment`, gerar tratamento direto; se não, redirecionar ao checkout Stripe.
+- **Se já tem `treatment_plan`**: Mostrar badge verde "Plano desbloqueado" com botão para ver detalhes (navega para `/assessment/view/:id?from=professional`)
 
-**Arquivos chamadores** (`ProDashboard.tsx`, `TreatmentPlan.tsx`, `PatientEvolutionDashboard.tsx`, `AssessmentView.tsx`):
-- Buscar `logo_url` do profissional e passá-lo como `professionalLogoUrl` nas opções do PDF
+### 2. Props necessários
 
-## 4. Corrigir frase motivacional no PDF básico
+- Passar `professional.lifetime_treatment` como prop ao `PatientEvolutionDashboard` para decidir se mostra "Desbloquear por R$29,90" ou gera direto
+- Adicionar estado local para loading por assessment (similar ao `noteSaving` pattern)
 
-**Arquivo:** `src/utils/generatePdf.ts` (linhas ~753-798)
+### 3. Traduções (`pt.json`, `en.json`, `es.json`)
 
-- O `splitTextToSize` está usando `CONTENT_WIDTH - 30` mas o texto é renderizado em uma caixa de largura `CONTENT_WIDTH - 12`. Corrigir para usar a largura interna real da caixa (padding de 12 de cada lado → `CONTENT_WIDTH - 24` para o split e alinhar o texto com margem interna adequada)
-- Recalcular `motBoxH` para acomodar o texto corretamente
+- `pro.unlock_treatment_cta`: "Desbloquear Plano de Tratamento" / "Unlock Treatment Plan" / "Desbloquear Plan de Tratamiento"
+- `pro.unlock_treatment_desc`: "Gere exercícios personalizados em 3 fases com base nesta avaliação" / equivalentes
+- `pro.treatment_unlocked`: "Plano desbloqueado" / "Plan unlocked" / "Plan desbloqueado"
+- `pro.view_treatment`: "Ver plano" / "View plan" / "Ver plan"
 
-## 5. Títulos e conteúdo na mesma página (PDF premium)
+### 4. Atualizar estado após desbloqueio
 
-**Arquivo:** `src/utils/generatePdf.ts`
-
-- Na função `renderSubSection`: antes de renderizar título + corpo, calcular o espaço total necessário (título + pelo menos 2-3 linhas do corpo) e fazer `checkPage` com esse valor mínimo para evitar que um título fique sozinho no fim de uma página
-- Aplicar a mesma lógica nos blocos de fase do tratamento (phase header + goal/focus devem ficar juntos)
+Após sucesso do pagamento ou geração gratuita (lifetime), atualizar o assessment local no state para refletir o `treatment_plan` sem reload da página.
 
 ## Resumo de arquivos
 
-1. **Migração SQL** — `logo_url` na tabela `professionals`
-2. `src/pages/ProfessionalRegister.tsx` — campo upload de logo
-3. `src/utils/generatePdf.ts` — logo no header/footer do PDF, fix motivacional, títulos agrupados
-4. `src/components/dashboard/ProDashboard.tsx` — passar `professionalLogoUrl`
-5. `src/components/assessment/TreatmentPlan.tsx` — passar `professionalLogoUrl`
-6. `src/components/dashboard/PatientEvolutionDashboard.tsx` — passar `professionalLogoUrl`
-7. `src/pages/AssessmentView.tsx` — passar `professionalLogoUrl`
+1. `src/components/dashboard/PatientEvolutionDashboard.tsx` — CTA inline por avaliação
+2. `src/components/dashboard/ProDashboard.tsx` — passar `lifetimeTreatment` prop
+3. `src/locales/pt.json`, `en.json`, `es.json` — traduções novas
 
