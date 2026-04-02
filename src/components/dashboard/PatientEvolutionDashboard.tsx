@@ -16,7 +16,9 @@ import {
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
+  Sparkles, FileCheck, Lock,
 } from "lucide-react";
+import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
 import JSZip from "jszip";
@@ -77,6 +79,7 @@ function normalizeTestResults(tr: any): any[] {
 interface PatientEvolutionDashboardProps {
   assessments: any[];
   professionalId: string;
+  lifetimeTreatment?: boolean;
   onDownloadPdf?: (assessment: any) => void;
   onShareWhatsApp?: (assessment: any) => void;
 }
@@ -103,8 +106,70 @@ const SEVERITY_COLORS: Record<string, string> = {
   severe: "bg-destructive",
   extreme: "bg-destructive",
 };
+// Inline CTA component for unlocking treatment plans
+const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, onUnlocked }: {
+  assessmentId: string;
+  lifetimeTreatment?: boolean;
+  onUnlocked: (treatmentPlan: any) => void;
+}) => {
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
+  const handleUnlock = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-pro-treatment-payment", {
+        body: { assessment_id: assessmentId },
+      });
+      if (error) throw error;
+
+      if (data?.free) {
+        // Lifetime treatment — generate treatment directly
+        const { data: genData, error: genError } = await supabase.functions.invoke("generate-treatment", {
+          body: { assessment_id: assessmentId },
+        });
+        if (genError) throw genError;
+        toast({ title: t("pro.treatment_generated") });
+        onUnlocked(genData?.treatment_plan || true);
+      } else if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      toast({ title: t("payment.error_title"), description: err?.message || t("payment.error_desc"), variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="border-t border-primary/20 pt-3">
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+            <Sparkles className="h-4 w-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-foreground">{t("pro.unlock_treatment_cta")}</p>
+            <p className="text-[10px] text-muted-foreground">{t("pro.unlock_treatment_desc")}</p>
+          </div>
+        </div>
+        <Button
+          onClick={handleUnlock}
+          disabled={loading}
+          size="sm"
+          className="w-full rounded-xl gap-1.5 text-xs"
+        >
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Lock className="h-3.5 w-3.5" />}
+          {lifetimeTreatment ? t("pro.unlock_treatment_cta") : `${t("pro.unlock_treatment_cta")} — ${PRO_TREATMENT_PRICE_FORMATTED}`}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
+
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -726,6 +791,39 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf,
                             <span className="text-foreground">{f.value}</span>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Treatment Plan CTA */}
+                  {a.diagnosis && !a.treatment_plan && (
+                    <TreatmentUnlockCTA
+                      assessmentId={a.id}
+                      lifetimeTreatment={lifetimeTreatment}
+                      onUnlocked={(treatmentPlan) => {
+                        // Update local state to reflect unlocked treatment
+                        a.treatment_plan = treatmentPlan;
+                        // Force re-render
+                        setNotes((prev) => ({ ...prev }));
+                      }}
+                    />
+                  )}
+                  {a.treatment_plan && (
+                    <div className="border-t border-border pt-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <FileCheck className="h-3.5 w-3.5 text-emerald-600" />
+                          <span className="text-xs font-semibold text-emerald-600">{t("pro.treatment_unlocked")}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs gap-1 text-primary"
+                          onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
+                        >
+                          {t("pro.view_treatment")}
+                          <ChevronRight className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
                   )}
