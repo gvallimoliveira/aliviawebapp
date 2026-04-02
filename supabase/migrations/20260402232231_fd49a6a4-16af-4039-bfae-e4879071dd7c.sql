@@ -1,0 +1,3 @@
+ALTER TABLE assessments DROP CONSTRAINT assessments_payment_status_check;
+ALTER TABLE assessments ADD CONSTRAINT assessments_payment_status_check CHECK (payment_status = ANY (ARRAY['pending'::text, 'paid'::text, 'covered'::text, 'failed'::text, 'treatment_paid'::text, 'awaiting_payment'::text, 'payment_failed'::text]));
+UPDATE assessments SET payment_status = 'treatment_paid' WHERE id = '39ea3eab-b4c0-45a3-93d9-b38c3d0b23db' AND payment_status = 'covered' AND treatment_plan IS NULL;
