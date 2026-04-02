@@ -1191,7 +1191,15 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...COLORS.muted);
     doc.text(`Aliv.iA — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`, footerTextX, 290);
-    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - 8, 290);
+
+    // Professional logo on footer right side
+    if (proLogoBase64) {
+      try {
+        doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - footerLogoSize, 285.5, footerLogoSize, footerLogoSize);
+      } catch { /* fallback */ }
+    }
+
+    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - (proLogoBase64 ? footerLogoSize + 10 : 8), 290);
   }
 
   return doc;
