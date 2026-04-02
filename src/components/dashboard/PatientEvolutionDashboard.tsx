@@ -16,7 +16,9 @@ import {
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
+  Sparkles, FileCheck, Lock,
 } from "lucide-react";
+import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
 import JSZip from "jszip";
@@ -77,6 +79,7 @@ function normalizeTestResults(tr: any): any[] {
 interface PatientEvolutionDashboardProps {
   assessments: any[];
   professionalId: string;
+  lifetimeTreatment?: boolean;
   onDownloadPdf?: (assessment: any) => void;
   onShareWhatsApp?: (assessment: any) => void;
 }
@@ -104,7 +107,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   extreme: "bg-destructive",
 };
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -726,6 +729,39 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, onDownloadPdf,
                             <span className="text-foreground">{f.value}</span>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Treatment Plan CTA */}
+                  {a.diagnosis && !a.treatment_plan && (
+                    <TreatmentUnlockCTA
+                      assessmentId={a.id}
+                      lifetimeTreatment={lifetimeTreatment}
+                      onUnlocked={(treatmentPlan) => {
+                        // Update local state to reflect unlocked treatment
+                        a.treatment_plan = treatmentPlan;
+                        // Force re-render
+                        setNotes((prev) => ({ ...prev }));
+                      }}
+                    />
+                  )}
+                  {a.treatment_plan && (
+                    <div className="border-t border-border pt-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <FileCheck className="h-3.5 w-3.5 text-emerald-600" />
+                          <span className="text-xs font-semibold text-emerald-600">{t("pro.treatment_unlocked")}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs gap-1 text-primary"
+                          onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
+                        >
+                          {t("pro.view_treatment")}
+                          <ChevronRight className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
                   )}
