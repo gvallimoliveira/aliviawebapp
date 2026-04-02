@@ -119,7 +119,7 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
     setWhatsappLoading(true);
     try {
       const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
-      const pdfBlob = await generateAssessmentPdfBlob({ diagnosis, treatmentPlan: plan, language, userName: user?.user_metadata?.full_name || "", anamnesisData, painRegions, testResults });
+      const pdfBlob = await generateAssessmentPdfBlob({ diagnosis, treatmentPlan: plan, language, userName: user?.user_metadata?.full_name || "", anamnesisData, painRegions, testResults, professionalLogoUrl });
 
       const fileId = assessmentId || crypto.randomUUID();
       const filePath = `${fileId}_premium.pdf`;
