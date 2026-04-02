@@ -544,6 +544,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
           <PatientEvolutionDashboard
             assessments={patientAssessments}
             professionalId={professional.id}
+            lifetimeTreatment={professional.lifetime_treatment}
             onDownloadPdf={handleDownloadPdf}
             onShareWhatsApp={handleShareWhatsApp}
           />
