@@ -1203,7 +1203,12 @@ function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number
 
 // ── Helper: Sub-section with body text ──
 function renderSubSection(doc: jsPDF, y: number, title: string, body: string): number {
-  y = checkPage(doc, y, 20);
+  // Calculate minimum needed: title + at least 3 lines of body
+  doc.setFontSize(8);
+  const lines = doc.splitTextToSize(body, CONTENT_WIDTH);
+  const minBodyLines = Math.min(lines.length, 3);
+  const neededForGroup = 5 + minBodyLines * 3.5 + 6;
+  y = checkPage(doc, y, neededForGroup);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.foreground);
@@ -1212,7 +1217,6 @@ function renderSubSection(doc: jsPDF, y: number, title: string, body: string): n
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
-  const lines = doc.splitTextToSize(body, CONTENT_WIDTH);
   y = checkPage(doc, y, lines.length * 3.5);
   doc.text(lines, MARGIN, y);
   y += lines.length * 3.5 + 6;
