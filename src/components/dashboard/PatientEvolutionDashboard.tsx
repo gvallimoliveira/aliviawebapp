@@ -874,7 +874,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   </Button>
 
                   {/* Treatment Plan CTA */}
-                  {a.diagnosis && !a.treatment_plan && a.payment_status !== "treatment_paid" && (
+                  {a.diagnosis && !a.treatment_plan && a.payment_status !== "treatment_paid" && a.payment_status !== "treatment_generating" && (
                     <TreatmentUnlockCTA
                       assessmentId={a.id}
                       lifetimeTreatment={lifetimeTreatment}
@@ -885,7 +885,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       }}
                     />
                   )}
-                  {a.diagnosis && !a.treatment_plan && a.payment_status === "treatment_paid" && (
+                  {a.diagnosis && !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating") && (
                     <TreatmentPaidRetry
                       assessmentId={a.id}
                       onGenerated={(treatmentPlan) => {
