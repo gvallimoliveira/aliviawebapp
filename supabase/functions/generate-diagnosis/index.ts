@@ -456,6 +456,15 @@ Response format (JSON):
 - Shoulder dislocation history: ${hadDislocation || "N/A"}
 - Ottawa rules (weight-bearing): ${ottawaPositive || "N/A"}
 - Local swelling/edema: ${hasLocalSwelling === "anamnesis.trauma.yes" ? "YES — patient reports joint swelling" : hasLocalSwelling === "anamnesis.trauma.no" ? "No swelling reported" : "N/A"}
+- Pain pattern: ${painPattern || "Not specified"}
+- Weekly frequency: ${painWeeklyFrequency || "N/A"}
+- Night waking: ${painNightWaking || "N/A"}
+- Photophobia: ${hasPhotophobia || "N/A"}
+- Visual aura: ${hasVisualAura || "N/A"}
+- Nausea during crises: ${hasNausea || "N/A"}
+- Headache crisis frequency: ${headacheCrisisFrequency || "N/A"}
+- Pain score mode: ${painScoreMode}
+${painScoreMode === "per_region" && Object.keys(painScoresPerRegion).length > 0 ? `- Pain scores per region: ${Object.entries(painScoresPerRegion).map(([k, v]) => `${k}: ${v}/10`).join(", ")}` : ""}
 
 ${additionalInfo ? `Additional information provided by the patient (USE THIS to refine your hypothesis and potentially increase confidence):
 ${additionalInfo}` : ""}
