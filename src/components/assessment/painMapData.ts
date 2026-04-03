@@ -29,7 +29,7 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
     { id: "left_shoulder", label_pt: "Ombro Esquerdo", label_en: "Left Shoulder",
       d: "M135,80 L140,77 C140,72 150,76 158,105 L138,107 C140,80 131,78 131,77 L125,78 Z" },
     { id: "chest", label_pt: "Tórax / Peitoral", label_en: "Chest",
-      d: "M88,60 L112,60 L126,66 L132,80 L133,127 L67,125 L68,80 L74,66 Z" },
+      d: "M84,76 L104,81 L122,81 L132,80 L129,146 L69,141 L68,80 L78,78 Z" },
     { id: "right_arm", label_pt: "Braço Direito", label_en: "Right Arm",
       d: "M44,108 L58,105 L55,155 L41,150 Z" },
     { id: "left_arm", label_pt: "Braço Esquerdo", label_en: "Left Arm",
