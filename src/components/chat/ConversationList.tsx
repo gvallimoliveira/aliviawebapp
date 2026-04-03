@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, MessageCircle, Trash2 } from "lucide-react";
+import { Loader2, MessageCircle, Trash2, Maximize2 } from "lucide-react";
 import ChatWindow from "./ChatWindow";
 
 interface ConversationListProps {
