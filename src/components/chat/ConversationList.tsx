@@ -6,14 +6,16 @@ import { useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, MessageCircle, Trash2, Maximize2 } from "lucide-react";
+import { Loader2, MessageCircle, Trash2, Maximize2, Search } from "lucide-react";
 import ChatWindow from "./ChatWindow";
 
 interface ConversationListProps {
   mode: "patient" | "professional";
   professionalId?: string;
   initialConversationId?: string | null;
+  searchQuery?: string;
 }
 
 interface ConversationItem {
@@ -26,7 +28,7 @@ interface ConversationItem {
   unread_count: number;
 }
 
-const ConversationList = ({ mode, professionalId, initialConversationId }: ConversationListProps) => {
+const ConversationList = ({ mode, professionalId, initialConversationId, searchQuery = "" }: ConversationListProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -41,6 +43,29 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
     () => conversations.find((conversation) => conversation.id === activeConvId) ?? null,
     [activeConvId, conversations]
   );
+
+  const filteredConversations = useMemo(() => {
+    let list = [...conversations];
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (c) =>
+          c.other_name.toLowerCase().includes(q) ||
+          (c.last_message && c.last_message.toLowerCase().includes(q))
+      );
+    }
+
+    // Sort: unread first, then by updated_at desc
+    list.sort((a, b) => {
+      if (a.unread_count > 0 && b.unread_count === 0) return -1;
+      if (a.unread_count === 0 && b.unread_count > 0) return 1;
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    });
+
+    return list;
+  }, [conversations, searchQuery]);
 
   useEffect(() => {
     if (!user) return;
@@ -197,16 +222,21 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
-      ) : conversations.length === 0 ? (
+      ) : filteredConversations.length === 0 && conversations.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
             <MessageCircle className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-muted-foreground">{t("chat.no_conversations")}</p>
           </CardContent>
         </Card>
+      ) : filteredConversations.length === 0 ? (
+        <div className="py-8 text-center">
+          <Search className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">{t("chat.no_results")}</p>
+        </div>
       ) : (
         <div className="space-y-2">
-          {conversations.map((conv) => {
+          {filteredConversations.map((conv) => {
             const isActive = conv.id === activeConvId;
 
             return (
