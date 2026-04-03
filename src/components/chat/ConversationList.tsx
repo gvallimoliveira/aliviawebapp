@@ -137,6 +137,23 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
     }
   };
 
+  if (activeConvId && minimized) {
+    return (
+      <Card
+        className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
+        onClick={() => setMinimized(false)}
+      >
+        <CardContent className="py-3 px-4 flex items-center gap-3">
+          <MessageCircle className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-sm font-medium text-foreground truncate flex-1">{activeOtherName}</span>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" title={t("chat.maximize")}>
+            <Maximize2 className="h-4 w-4" />
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (activeConvId) {
     return (
       <ChatWindow
@@ -145,8 +162,10 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
         onBack={() => {
           setActiveConvId(null);
           setActiveOtherName("");
+          setMinimized(false);
           fetchConversations();
         }}
+        onMinimize={() => setMinimized(true)}
       />
     );
   }
