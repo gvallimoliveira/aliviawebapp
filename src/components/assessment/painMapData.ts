@@ -79,7 +79,7 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
   // ═══════════════════════════════════════════════════════════════════════════
   back: [
     { id: "head_back", label_pt: "Cabeça (post.)", label_en: "Head (post.)",
-      d: "M100,6 C86,6 78,14 78,22 C78,30 84,36 92,38 L108,38 C116,36 122,30 122,22 C122,14 114,6 100,6Z" },
+      d: "M97,14 C86,14 78,14 78,22 C74,41 78,51 89,57 L111,52 C116,36 116,32 111,27 C113,20 108,17 100,15 Z" },
     { id: "cervical", label_pt: "Cervical", label_en: "Cervical",
       d: "M81,53 L109,55 L114,82 L79,82 Z" },
     { id: "left_shoulder_back", label_pt: "Ombro Esq. (post.)", label_en: "L. Shoulder (post.)",
