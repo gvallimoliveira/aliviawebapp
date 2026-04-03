@@ -50,10 +50,11 @@ const ReferralCard = ({ availableDiscount }: ReferralCardProps) => {
       }
     }
 
-    // Count friends referred
+    // Count friends referred (only confirmed rewards)
     const { count } = await (supabase.from("referral_rewards" as any) as any)
       .select("id", { count: "exact" })
-      .eq("referrer_user_id", user.id);
+      .eq("referrer_user_id", user.id)
+      .in("status", ["rewarded", "used"]);
     setFriendsCount(count ?? 0);
 
     setLoading(false);

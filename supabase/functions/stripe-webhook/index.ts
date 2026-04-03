@@ -68,12 +68,6 @@ serve(async (req) => {
   });
 });
 
-/**
- * checkout.session.completed fires for all completed checkouts.
- * For card payments, payment_status = "paid" immediately.
- * For boleto/pix async, payment_status = "unpaid" (awaiting payment).
- * For subscriptions, payment_status = "paid" on successful first charge.
- */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const paymentType = session.metadata?.type;
   const userId = session.metadata?.user_id;
@@ -85,20 +79,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     mode: session.mode,
   });
 
-  // If payment is already paid (card), fulfill immediately
   if (session.payment_status === "paid") {
     await fulfillOrder(session);
   } else {
-    // Async payment (boleto) — mark as pending
     log("Async payment pending", { paymentType, userId });
-    // Optionally store a pending record for tracking
   }
 }
 
-/**
- * Fires when an async payment (boleto) succeeds.
- * This is the confirmation that the boleto was actually paid.
- */
 async function handleAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.user_id;
   log("async_payment_succeeded", {
@@ -107,7 +94,6 @@ async function handleAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
   });
   await fulfillOrder(session);
 
-  // Send push notification to user about confirmed payment
   if (userId) {
     await sendPushToUser(userId, {
       title: "✅ Pagamento confirmado!",
@@ -117,9 +103,6 @@ async function handleAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
   }
 }
 
-/**
- * Fires when an async payment (boleto) fails or expires.
- */
 async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
   const paymentType = session.metadata?.type;
   const userId = session.metadata?.user_id;
@@ -138,7 +121,6 @@ async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
     }
   }
 
-  // Mark pending premium assessment as failed
   if (pendingAssessmentId) {
     await supabase
       .from("assessments")
@@ -147,7 +129,6 @@ async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
     log("Pending assessment marked as payment_failed", { pendingAssessmentId });
   }
 
-  // Send push notification to user about failed/expired boleto
   if (userId) {
     await sendPushToUser(userId, {
       title: "⚠️ Boleto expirado",
@@ -157,9 +138,6 @@ async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
   }
 }
 
-/**
- * Send a push notification to a user via the send-push-notification edge function.
- */
 async function sendPushToUser(userId: string, notification: { title: string; body: string; url: string }) {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -187,6 +165,121 @@ async function sendPushToUser(userId: string, notification: { title: string; bod
 }
 
 /**
+ * Process referral code ONLY after confirmed payment.
+ * Creates reward, coupon, applies to active subscription, sends push.
+ */
+async function processReferral(session: Stripe.Checkout.Session) {
+  const referralCode = session.metadata?.referral_code;
+  const userId = session.metadata?.user_id;
+  if (!referralCode || !userId) return;
+
+  log("Processing referral", { referralCode, userId });
+
+  // Look up the referral code
+  const { data: codeData } = await supabase
+    .from("referral_codes")
+    .select("id, user_id, code")
+    .eq("code", referralCode)
+    .single();
+
+  if (!codeData || codeData.user_id === userId) {
+    log("Invalid referral code or self-referral", { referralCode });
+    return;
+  }
+
+  // Check if this referred user already has a reward (prevent duplicates)
+  const { data: existingReward } = await supabase
+    .from("referral_rewards")
+    .select("id")
+    .eq("referred_user_id", userId)
+    .limit(1)
+    .single();
+
+  if (existingReward) {
+    log("Referral reward already exists for this user", { userId });
+    return;
+  }
+
+  // Create the reward record
+  await supabase.from("referral_rewards").insert({
+    referrer_user_id: codeData.user_id,
+    referred_user_id: userId,
+    referral_code_id: codeData.id,
+    status: "pending",
+    discount_percent: 20,
+  });
+
+  // Create Stripe coupon for the referrer
+  const coupon = await stripe.coupons.create({
+    percent_off: 20,
+    duration: "once",
+    name: `Referral discount for ${codeData.code}`,
+  });
+
+  // Update reward to rewarded with coupon
+  await supabase
+    .from("referral_rewards")
+    .update({
+      status: "rewarded",
+      stripe_coupon_id: coupon.id,
+      rewarded_at: new Date().toISOString(),
+    })
+    .eq("referrer_user_id", codeData.user_id)
+    .eq("referred_user_id", userId)
+    .eq("status", "pending");
+
+  log("Referral reward created", { referrerUserId: codeData.user_id, couponId: coupon.id });
+
+  // Apply coupon to referrer's active subscription if they have one
+  try {
+    await applyReferralToSubscriber(codeData.user_id, coupon.id);
+  } catch (e) {
+    log("Error applying coupon to subscriber", { error: String(e) });
+  }
+
+  // Send push notification to referrer
+  try {
+    await sendPushToUser(codeData.user_id, {
+      title: "🎉 Você ganhou desconto!",
+      body: "Um amigo usou seu link! Você ganhou 20% de desconto na próxima cobrança.",
+      url: "/dashboard",
+    });
+  } catch (e) {
+    log("Error sending referral push", { error: String(e) });
+  }
+}
+
+/**
+ * If the referrer has an active Stripe subscription, apply the coupon directly.
+ */
+async function applyReferralToSubscriber(referrerUserId: string, couponId: string) {
+  const { data: referrerAuth } = await supabase.auth.admin.getUserById(referrerUserId);
+  if (!referrerAuth?.user?.email) return;
+
+  const customers = await stripe.customers.list({ email: referrerAuth.user.email, limit: 1 });
+  if (customers.data.length === 0) return;
+
+  const customerId = customers.data[0].id;
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "active",
+    limit: 1,
+  });
+
+  if (subscriptions.data.length > 0) {
+    const subscription = subscriptions.data[0];
+    log(`Applying coupon ${couponId} to subscription ${subscription.id}`);
+    await stripe.subscriptions.update(subscription.id, { coupon: couponId });
+
+    await supabase
+      .from("referral_rewards")
+      .update({ status: "used" })
+      .eq("referrer_user_id", referrerUserId)
+      .eq("stripe_coupon_id", couponId);
+  }
+}
+
+/**
  * Fulfill the order based on the payment type stored in session metadata.
  */
 async function fulfillOrder(session: Stripe.Checkout.Session) {
@@ -194,6 +287,13 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.user_id;
 
   log("Fulfilling order", { paymentType, userId });
+
+  // Process referral ONLY on confirmed payment
+  try {
+    await processReferral(session);
+  } catch (e) {
+    log("ERROR processing referral (non-blocking)", { error: String(e) });
+  }
 
   switch (paymentType) {
     case "pro_treatment": {
@@ -217,7 +317,6 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
           .eq("id", professionalId);
         log("Pro lifetime treatment fulfilled", { professionalId });
       } else if (userId) {
-        // Fallback: find professional by user_id
         await supabase
           .from("professionals")
           .update({ lifetime_treatment: true })
@@ -228,7 +327,6 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
     }
 
     case "pro_subscription": {
-      // Monthly pro subscription — activate professional access
       if (userId) {
         await supabase
           .from("professionals")
@@ -243,11 +341,9 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
     }
 
     case "pro_annual": {
-      // Annual pro subscription — activate with expiry from Stripe
       if (userId) {
         let expiresAt: string;
         
-        // If it's a subscription mode, get current_period_end from Stripe
         if (session.subscription) {
           try {
             const subscription = await stripe.subscriptions.retrieve(
@@ -256,7 +352,6 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
             expiresAt = new Date(subscription.current_period_end * 1000).toISOString();
             log("Got expiry from Stripe subscription", { expiresAt });
           } catch (err) {
-            // Fallback to +1 year if Stripe retrieval fails
             const fallback = new Date();
             fallback.setFullYear(fallback.getFullYear() + 1);
             expiresAt = fallback.toISOString();
@@ -283,11 +378,9 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
 
     case "premium_single":
     case undefined: {
-      // Premium single or monthly subscription checkout
       if (userId) {
         const pendingAssessmentId = session.metadata?.pending_assessment_id;
 
-        // Check for pending assessment (boleto flow with saved basic data)
         if (pendingAssessmentId) {
           const { data: pendingAssessment } = await supabase
             .from("assessments")
@@ -311,7 +404,6 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
           }
         }
 
-        // Fallback: check for any awaiting_payment assessment
         const { data: awaitingAssessment } = await supabase
           .from("assessments")
           .select("id")
@@ -335,7 +427,6 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
           break;
         }
 
-        // No pending assessment found — create new one
         const { data: existingAssessment } = await supabase
           .from("assessments")
           .select("id")
