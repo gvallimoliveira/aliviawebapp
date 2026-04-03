@@ -520,6 +520,7 @@ const AssessmentView = () => {
             anamnesisData={anamnesis}
             painRegions={painRegions}
             testResults={assessment.test_results}
+            mode={assessment.type === "professional" ? "professional" : undefined}
             onBack={() => setShowTreatment(false)}
             onNewAssessment={() => navigate("/assessment/premium")}
           />

@@ -21,6 +21,7 @@ import {
   Mail,
   Share2,
   Loader2,
+  Stethoscope,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,12 +53,24 @@ interface Phase {
   exercises: Exercise[];
 }
 
+interface ProfessionalTechnique {
+  name: string;
+  indication: string;
+  notes?: string;
+}
+
+interface ProfessionalGuidelineCategory {
+  category: string;
+  techniques: ProfessionalTechnique[];
+}
+
 interface TreatmentPlanData {
   phases: Phase[];
   generalGuidelines: string[];
   progressionCriteria: string;
   disclaimer: string;
   difiContext?: string;
+  professionalGuidelines?: ProfessionalGuidelineCategory[];
 }
 
 interface TreatmentPlanProps {
@@ -68,6 +81,7 @@ interface TreatmentPlanProps {
   painRegions?: string[];
   testResults?: any;
   professionalLogoUrl?: string;
+  mode?: string;
   onBack: () => void;
   onNewAssessment: () => void;
 }
@@ -87,7 +101,7 @@ const phaseConfig: Record<string, { colorClass: string; bgClass: string }> = {
   long_term: { colorClass: "text-green-600", bgClass: "bg-green-50 border-green-200" },
 };
 
-const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegions, testResults, professionalLogoUrl, onBack, onNewAssessment }: TreatmentPlanProps) => {
+const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegions, testResults, professionalLogoUrl, mode, onBack, onNewAssessment }: TreatmentPlanProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -388,7 +402,38 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
         </Card>
       )}
 
-      {/* Disclaimer */}
+      {/* Professional Guidelines (only for professional mode) */}
+      {mode === "professional" && plan.professionalGuidelines && plan.professionalGuidelines.length > 0 && (
+        <Card className="rounded-xl border-blue-500/30 bg-blue-500/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Stethoscope className="h-5 w-5 text-blue-600" />
+              {t("treatment.pro_guidelines.title")}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">{t("treatment.pro_guidelines.subtitle")}</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {plan.professionalGuidelines.map((cat, catIdx) => (
+              <div key={catIdx} className="space-y-2">
+                <h4 className="text-sm font-semibold text-foreground">{cat.category}</h4>
+                <div className="space-y-2">
+                  {cat.techniques.map((tech, techIdx) => (
+                    <div key={techIdx} className="p-3 rounded-lg border border-blue-200/50 bg-background space-y-1">
+                      <p className="text-sm font-medium text-foreground">{tech.name}</p>
+                      <p className="text-xs text-muted-foreground">{tech.indication}</p>
+                      {tech.notes && (
+                        <p className="text-xs text-blue-600/80 italic">{tech.notes}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+
       <div className="flex items-start gap-2 p-4 rounded-xl bg-muted/50 border border-border/50">
         <AlertTriangle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
         <p className="text-xs text-muted-foreground">{plan.disclaimer}</p>
