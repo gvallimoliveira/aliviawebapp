@@ -44,7 +44,10 @@ const StickyCTA = ({ showProfessional = true }: { showProfessional?: boolean }) 
               <Button
                 size="sm"
                 className="rounded-xl gap-1 flex-1 sm:flex-none"
-                onClick={() => navigate("/assessment/premium")}
+                onClick={() => {
+                  const hasReferral = !!localStorage.getItem("alivia_referral_code");
+                  navigate("/upgrade-welcome", { state: { redirectTo: "/assessment/premium", planType: hasReferral ? "referral" : "direct-premium" } });
+                }}
               >
                 {t("hero.cta.premium")}
                 <ArrowRight className="h-3 w-3" />
