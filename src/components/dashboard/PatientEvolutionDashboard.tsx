@@ -718,7 +718,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                 className="pl-9"
               />
             </div>
-            {hiddenEmails.size > 0 && (
+            {hiddenKeys.size > 0 && (
               <Button
                 variant={showHidden ? "secondary" : "outline"}
                 size="sm"
@@ -726,14 +726,14 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                 onClick={() => setShowHidden(!showHidden)}
               >
                 {showHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                {showHidden ? "Ocultar arquivados" : `Arquivados (${hiddenEmails.size})`}
+                {showHidden ? "Ocultar arquivados" : `Arquivados (${hiddenKeys.size})`}
               </Button>
             )}
           </div>
         </div>
         {patients
           .filter((p) => {
-            const isHidden = hiddenEmails.has(p.email);
+            const isHidden = hiddenKeys.has((p as any).groupKey);
             if (isHidden && !showHidden) return false;
             if (!searchQuery.trim()) return true;
             const q = searchQuery.toLowerCase();
@@ -746,13 +746,13 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             ? lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable"
             : null;
 
-          const isHidden = hiddenEmails.has(p.email);
+          const isHidden = hiddenKeys.has((p as any).groupKey);
 
           return (
             <Card
-              key={p.email}
+              key={(p as any).groupKey}
               className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group ${isHidden ? "opacity-50" : ""}`}
-              onClick={() => setSelectedEmail(p.email)}
+              onClick={() => setSelectedEmail(p.email || (p as any).groupKey)}
             >
               <CardContent className="py-3 px-4">
                 <div className="flex items-center justify-between gap-3">
