@@ -1,0 +1,1 @@
+DELETE FROM public.professional_hidden_patients WHERE patient_email = '' OR patient_email IS NULL;
