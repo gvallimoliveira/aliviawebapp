@@ -802,7 +802,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   
   // Motivational message in a highlighted inner box
   const motBoxY = bulletY + 2;
-  const motBoxH = motivationalLines.length * 4 + 8;
+  const motBoxH = motivationalLines.length * 5 + 8;
   // Inner accent background
   doc.setFillColor(39, 124, 103); // primary
   doc.roundedRect(MARGIN + 6, motBoxY - 2, CONTENT_WIDTH - 12, motBoxH, 3, 3, "F");
