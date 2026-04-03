@@ -1,58 +1,90 @@
 
 
-# Análise das Indicações + Impressão Clínica na Landing/Suporte
+# Otimizar Indicações Profissionais + Integração com Mensagens
 
-## Sobre as Indicações Recebidas
+## Situação Atual
 
-**Como funciona hoje:**
-1. Na página `/buscar-profissional`, pacientes com avaliação premium podem clicar "Solicitar Indicação" em um profissional
-2. Isso insere um registro na tabela `professional_referrals` com `patient_user_id` e `professional_id`
-3. No Dashboard do profissional (aba Profissional), se há referrals, renderiza `renderReferrals()` — uma lista de cards simples mostrando status
+**Indicações:** O profissional vê apenas "Indicação de paciente" + badge de status genérico. Sem nome, sem data, sem ação.
 
-**Está funcional?** A mecânica está implementada mas é bastante básica:
-- O card mostra apenas "Indicação de paciente" + badge de status, sem nome do paciente nem data
-- Não há notificação ao profissional quando recebe uma indicação
-- O profissional não pode aceitar/recusar — apenas visualiza
-- Poucos pacientes devem encontrar essa funcionalidade (requer acesso premium + busca de profissional)
+**Mensagens:** Pacientes podem iniciar conversa com qualquer profissional via `/buscar-profissional`. Profissionais não podem iniciar contato — nem com pacientes indicados.
 
-**Na página de suporte:** NÃO há menção à Impressão Clínica nas ferramentas profissionais do suporte. As ferramentas documentadas são: Link Personalizado, Estatísticas, Gráficos, Lista de Pacientes, Dashboard de Evolução, PDF, Notas, Assinatura, Perfil, Tratamento Vitalício e Mensagens.
-
----
+**Regra de negócio desejada:**
+- Via regra geral: só o paciente inicia conversa (pela lista de profissionais) ✅ já funciona
+- Exceção: se o paciente está na lista de indicações do profissional, o profissional pode iniciar o contato
 
 ## Plano de Implementação
 
-### 1. Landing Page Profissional — adicionar Impressão Clínica como feature
+### 1. Enriquecer a seção de Indicações Recebidas no Dashboard
 
-**Arquivo:** `src/pages/ProfessionalLanding.tsx` (linha 67-74)
+**Arquivo:** `src/pages/Dashboard.tsx` (renderReferrals) + `src/components/dashboard/ProDashboard.tsx`
 
-Adicionar um novo item ao array `features`:
+Mover a seção de referrals para dentro do `ProDashboard` para acesso aos dados de pacientes. Cada card de indicação mostrará:
+- Nome do paciente (via join com profiles usando `patient_user_id`)
+- Data da indicação formatada
+- Badge de status (pending/accepted/declined)
+- Botão "Aceitar" / "Recusar" para gerenciar indicações
+- Botão "Enviar Mensagem" — cria conversa com o paciente indicado
+
+### 2. Permitir profissional iniciar conversa com pacientes indicados
+
+**Arquivo:** `src/components/dashboard/ProDashboard.tsx`
+
+No botão "Enviar Mensagem" de cada indicação:
+1. Verificar se já existe conversa entre o `professional_id` e o `patient_user_id`
+2. Se sim, navegar para `?tab=messages&conv={id}`
+3. Se não, criar nova conversa e navegar
+
+**Tabela `conversations`:** A RLS de INSERT só permite `auth.uid() = patient_user_id`. Precisamos adicionar uma policy que permita profissionais criarem conversas quando existe uma indicação pendente/aceita para aquele paciente.
+
+### 3. Migration — Nova RLS policy para conversations
+
+```sql
+CREATE POLICY "Professionals can create conversations with referred patients"
+ON public.conversations
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.professionals p
+    WHERE p.id = professional_id AND p.user_id = auth.uid()
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.professional_referrals pr
+    WHERE pr.professional_id = professional_id
+    AND pr.patient_user_id = patient_user_id
+  )
+);
 ```
-{ icon: Brain, key: "b2b.feature_7" }
+
+### 4. Enriquecer os cards de indicação
+
+**Buscar dados do paciente:** Para cada referral, fazer lookup em `profiles` usando `patient_user_id` para obter `full_name`.
+
+Layout do card:
+```text
+┌──────────────────────────────────────────┐
+│ 👤 João Silva          12 Mar 2026       │
+│ Status: [Pendente]                       │
+│ [✓ Aceitar] [✗ Recusar] [💬 Mensagem]   │
+└──────────────────────────────────────────┘
 ```
 
-**Traduções (pt/en/es):** Adicionar `b2b.feature_7`:
-- PT: "Impressão clínica integrada gerada por IA"
-- EN: "AI-generated integrated clinical impression"
-- ES: "Impresión clínica integrada generada por IA"
+### 5. Ações de aceitar/recusar indicação
 
-Opcionalmente, trocar o `b2b.feature_5` ("Resumo clínico preliminar") pela impressão clínica, já que ela é a versão evoluída disso. Ou manter ambas.
+A tabela `professional_referrals` já tem RLS de UPDATE para profissionais. Basta atualizar o `status` para `accepted` ou `declined`.
 
-### 2. Suporte Profissional — adicionar ferramenta "Impressão Clínica"
+### 6. Traduções (pt/en/es)
 
-**Arquivo:** `src/pages/Support.tsx` (linha 36-48)
+Novas chaves:
+- `prof.referral_accept` / `prof.referral_decline`
+- `prof.referral_status_pending` / `accepted` / `declined`
+- `prof.referral_send_message`
+- `prof.referral_patient_name`
 
-Adicionar ao array `proTools`:
-```
-{ key: "clinical_impression", icon: Brain }
-```
+## Arquivos a alterar
 
-**Traduções (pt/en/es):** Adicionar:
-- `support.pro.tool.clinical_impression.title`: "Impressão Clínica (IA)"
-- `support.pro.tool.clinical_impression.desc`: "No detalhe de cada paciente, clique em 'Gerar Impressão Clínica' para obter uma visão integrativa do quadro clínico gerada por inteligência artificial. A IA interpreta a anamnese, regiões de dor, questionários e diagnóstico para entregar um resumo interpretativo e dois objetivos terapêuticos principais (ex: controle álgico, mobilidade, fortalecimento). Essa impressão é salva na avaliação e incluída automaticamente no relatório PDF profissional."
-
-### 3. Arquivos a alterar
-
-1. `src/pages/ProfessionalLanding.tsx` — adicionar feature_7 (Brain)
-2. `src/pages/Support.tsx` — adicionar clinical_impression ao proTools
-3. `src/locales/pt.json`, `en.json`, `es.json` — novas chaves de tradução
+1. **Migration** — nova RLS policy em `conversations` para profissionais com indicações
+2. `src/pages/Dashboard.tsx` — remover `renderReferrals()` e `referrals` state (mover para ProDashboard)
+3. `src/components/dashboard/ProDashboard.tsx` — seção de indicações enriquecida com nome, data, ações e botão de mensagem
+4. `src/locales/pt.json`, `en.json`, `es.json` — novas chaves de tradução
 
