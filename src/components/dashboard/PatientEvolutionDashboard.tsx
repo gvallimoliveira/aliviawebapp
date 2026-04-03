@@ -531,7 +531,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   }, [assessments]);
 
   // Find selected patient (may be null)
-  const patient = selectedEmail ? patients.find((p) => p.email === selectedEmail) || null : null;
+  const patient = selectedEmail ? patients.find((p) => p.email === selectedEmail || (p as any).groupKey === selectedEmail) || null : null;
 
   const painData = useMemo(() => {
     if (!patient) return [];
