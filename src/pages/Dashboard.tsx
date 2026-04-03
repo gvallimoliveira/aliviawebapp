@@ -22,7 +22,7 @@ import PushOptInBanner from "@/components/PushOptInBanner";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
-  Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Users,
+  Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle,
 } from "lucide-react";
 
 interface PremiumAccess {
@@ -67,7 +67,7 @@ const Dashboard = () => {
   const [premiumAccess, setPremiumAccess] = useState<PremiumAccess | null>(null);
   const [premiumLoading, setPremiumLoading] = useState(true);
   const [professional, setProfessional] = useState<any>(null);
-  const [referrals, setReferrals] = useState<any[]>([]);
+  
   const [activeTab, setActiveTab] = useState<string>("health");
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -137,7 +137,6 @@ const Dashboard = () => {
           return;
         }
         setProfessional(data);
-        (supabase.from("professional_referrals" as any) as any).select("*").eq("professional_id", data.id).order("created_at", { ascending: false }).then(({ data: refs }: any) => setReferrals(refs || []));
       } else if (tabFromUrl === "professional") {
         navigate("/professional/register", { replace: true });
       }
@@ -154,24 +153,6 @@ const Dashboard = () => {
 
   const handleSignOut = async () => { await signOut(); navigate("/"); };
 
-  const renderReferrals = () => (
-    <div>
-      <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-        <Users className="h-5 w-5 text-muted-foreground" />
-        {t("prof.referrals_title")}
-      </h2>
-      <div className="space-y-2">
-        {referrals.map((r: any) => (
-          <Card key={r.id} className="border-border/60">
-            <CardContent className="py-3 px-4 flex items-center justify-between">
-              <div className="text-sm text-foreground">{t("prof.referral_from_patient")}</div>
-              <Badge variant="outline" className="text-[10px] px-2 py-0.5">{r.status}</Badge>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
 
   const renderClientContent = () => (
     <>
@@ -256,7 +237,6 @@ const Dashboard = () => {
             </TabsContent>
             <TabsContent value="professional" className="space-y-8">
               <ProDashboard professional={professional} />
-              {referrals.length > 0 && renderReferrals()}
             </TabsContent>
           </Tabs>
         ) : (
