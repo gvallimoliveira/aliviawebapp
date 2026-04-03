@@ -136,6 +136,14 @@ const ChatWindow = ({ conversationId, otherName, onBack }: ChatWindowProps) => {
         <div ref={bottomRef} />
       </div>
 
+      {/* Disclaimer */}
+      <div className="px-4 py-1.5 bg-muted/40 border-t border-border">
+        <p className="text-[10px] text-muted-foreground flex items-start gap-1">
+          <AlertTriangle className="h-3 w-3 shrink-0 mt-px" />
+          {t("chat.disclaimer")}
+        </p>
+      </div>
+
       {/* Input area */}
       <div className="flex items-end gap-2 px-4 py-3 border-t border-border bg-muted/20">
         <Textarea
