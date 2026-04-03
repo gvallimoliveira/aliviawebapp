@@ -159,14 +159,33 @@ const UpgradeWelcome = () => {
           </motion.p>
         </div>
 
-        {/* Plan chip */}
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, type: "spring" }} className="flex justify-center">
-          <span className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-primary/10 text-primary text-sm font-semibold shadow-sm ring-1 ring-primary/20">
-            {planLabel} — {isReferral && (
-              <span className="line-through text-muted-foreground mr-1">{PREMIUM_SINGLE_PRICE_FORMATTED}</span>
-            )}
-            {planPrice}
-          </span>
+        {/* Plan toggle + chip */}
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, type: "spring" }} className="space-y-3">
+          {/* Toggle mensal/avulso */}
+          {isDirectFlow && (
+            <div className="flex items-center justify-center gap-3">
+              <span className={`text-sm font-medium transition-colors ${isMonthly ? "text-primary" : "text-muted-foreground"}`}>
+                <Calendar className="inline h-3.5 w-3.5 mr-1" />
+                {t("upgrade_welcome.toggle_monthly")}
+              </span>
+              <Switch
+                checked={!isMonthly}
+                onCheckedChange={(checked) => setSelectedPayment(checked ? "single" : "monthly")}
+              />
+              <span className={`text-sm font-medium transition-colors ${!isMonthly ? "text-primary" : "text-muted-foreground"}`}>
+                <Zap className="inline h-3.5 w-3.5 mr-1" />
+                {t("upgrade_welcome.toggle_single")}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-center">
+            <span className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-primary/10 text-primary text-sm font-semibold shadow-sm ring-1 ring-primary/20">
+              {planLabel} — {isReferral && !isMonthly && (
+                <span className="line-through text-muted-foreground mr-1">{PREMIUM_SINGLE_PRICE_FORMATTED}</span>
+              )}
+              {planPrice}
+            </span>
+          </div>
         </motion.div>
 
         {/* Steps */}
