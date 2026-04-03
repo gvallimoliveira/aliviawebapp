@@ -1,39 +1,83 @@
 
 
-# Desconto de 10% para indicados + regras de não-cumulatividade
+# Disclaimer de referral + páginas de boas-vindas para Premium direto
 
-## Resposta à dúvida
+## Resumo dos 3 pedidos
 
-Os 20% do indicador atualmente valem para **ambos**: se o indicador tem assinatura mensal ativa, o desconto é aplicado automaticamente na próxima cobrança via Stripe; se compra avulso, é aplicado no checkout. Cada indicação gera 1 cupom, e apenas 1 cupom é consumido por compra (já funciona assim — não acumula 2 descontos em 1 compra). **Isso já está correto no código.**
+1. **Banner sutil de indicação** — quando `alivia_referral_code` existe no localStorage, exibir um banner fixo e discreto nas landing pages informando que o usuário tem uma condição especial.
+2. **Página de boas-vindas para indicados** — ao clicar em "Avaliação Premium" com referral ativo, redirecionar para uma versão adaptada da UpgradeWelcome mencionando o desconto de 10%.
+3. **Página de boas-vindas para Premium direto** — ao clicar em "Avaliação Premium" na landing page convencional (sem referral), redirecionar para uma versão da UpgradeWelcome adaptada para quem ainda não fez avaliação básica.
 
-## O que será implementado
+## Implementação
 
-### 1. Desconto de 10% para o indicado (premium avulso apenas)
+### 1. Componente `ReferralBanner` (novo)
 
-**`create-payment/index.ts`**: Quando o indicado envia `referral_code` e o `paymentType === "single"`, criar um cupom Stripe de 10% e aplicar ao checkout session. Se `paymentType === "monthly"`, o referral_code é passado no metadata para recompensar o indicador, mas o indicado NÃO recebe desconto.
+**Arquivo:** `src/components/ReferralBanner.tsx`
 
-Prioridade: exit_intent (10%) > referral indicado (10%) > referral indicador (20%). Não acumula.
+- Lê `localStorage("alivia_referral_code")` no mount
+- Se existir, renderiza um banner fixo no topo (abaixo do header), estilo slim:
+  - Ícone de presente + texto: *"Você foi indicado! 🎉 10% de desconto na sua primeira avaliação premium avulsa"*
+  - Botão de fechar (dismiss por sessão via sessionStorage)
+- Posição: `sticky top-0 z-40`, bg sutil `bg-amber-50 border-b border-amber-200`
+- Responsivo: texto compacto em mobile
 
-### 2. Informar regras no ReferralCard
+**Onde inserir:** `PatientLanding.tsx` e `Gateway.tsx`, logo após o `<Header />`.
 
-**`src/components/dashboard/ReferralCard.tsx`**: Adicionar texto pequeno abaixo dos botões explicando as regras:
-- "Você ganha 20% de desconto (1 uso por compra). Seu amigo ganha 10% na primeira avaliação avulsa."
-- "Descontos não são cumulativos."
+### 2. Adaptar UpgradeWelcome para múltiplos contextos
 
-### 3. Informar regras na página de Suporte
+**Arquivo:** `src/pages/UpgradeWelcome.tsx`
 
-**`src/pages/Support.tsx`**: Adicionar um item FAQ sobre o programa de indicação com as regras completas.
+Adicionar suporte a novos `planType` via location state:
+
+- `planType: "referral"` — indicado clicando Premium
+- `planType: "direct-premium"` — usuário comum clicando Premium na landing
+
+Para cada contexto, ajustar:
+- **Título**: "referral" → *"Você foi indicado! Bem-vindo ao Aliv.iA 🎉"* / "direct-premium" → *"Avaliação Premium Completa"*
+- **Subtítulo**: "referral" → mencionar 10% de desconto / "direct-premium" → explicar o que a avaliação premium inclui
+- **Steps**: Para "direct-premium" e "referral" (sem avaliação básica prévia), o step 1 muda de "Avaliação básica concluída ✅" para "Escolha sua avaliação" (não done). O progresso fica 0/3.
+- **Chip do plano**: "referral" → *"Premium Avulso — R$ 109,00 → com 10% OFF"* / "direct-premium" → chip normal com preço
+
+### 3. Redirecionar HeroSection e StickyCTA para UpgradeWelcome
+
+**Arquivos:** `src/components/HeroSection.tsx`, `src/components/StickyCTA.tsx`
+
+Atualmente, clicar "Avaliação Premium" navega direto para `/assessment/premium`. Alterar para:
+
+```
+const hasReferral = !!localStorage.getItem("alivia_referral_code");
+navigate("/upgrade-welcome", {
+  state: {
+    redirectTo: "/assessment/premium",
+    planType: hasReferral ? "referral" : "direct-premium"
+  }
+});
+```
+
+Manter o botão "Avaliação Gratuita" navegando direto para `/assessment/basic` (sem intermediário).
 
 ### 4. Traduções
 
-Novas chaves em `pt.json`, `en.json`, `es.json`:
-- `referral.rules`: "Você ganha 20% na próxima compra (avulsa ou mensalidade). Seu amigo ganha 10% na primeira avaliação avulsa. Descontos não cumulativos: 1 desconto por compra."
-- FAQ de suporte sobre indicação
+**Arquivos:** `pt.json`, `en.json`, `es.json`
 
-## Arquivos a alterar
+Novas chaves:
+- `referral_banner.text` — "Você foi indicado! 10% de desconto na primeira avaliação premium avulsa"
+- `upgrade_welcome.title_referral` — "Você foi indicado! Bem-vindo ao Aliv.iA 🎉"
+- `upgrade_welcome.subtitle_referral` — "Um amigo te indicou e você tem 10% de desconto na sua primeira avaliação premium avulsa. Veja como funciona:"
+- `upgrade_welcome.title_direct` — "Avaliação Premium Completa"
+- `upgrade_welcome.subtitle_direct` — "Diagnóstico preciso + plano de tratamento personalizado. Conheça o que está incluso e comece agora."
+- `upgrade_welcome.step1_title_new` — "📋 Escolha feita: Avaliação Premium"
+- `upgrade_welcome.step1_desc_new` — "Você terá acesso a anamnese completa, questionários validados, testes funcionais e plano de tratamento."
+- `upgrade_welcome.plan_referral` — "Premium Avulso com 10% OFF"
+- `upgrade_welcome.referral_price` — exibir preço original riscado + preço com desconto
 
-1. `supabase/functions/create-payment/index.ts` — aplicar 10% ao indicado (single only)
-2. `src/components/dashboard/ReferralCard.tsx` — texto de regras
-3. `src/pages/Support.tsx` — FAQ de indicação
-4. `src/locales/pt.json`, `en.json`, `es.json` — novas chaves
+## Arquivos alterados
+
+1. `src/components/ReferralBanner.tsx` — novo componente
+2. `src/pages/PatientLanding.tsx` — inserir ReferralBanner
+3. `src/pages/Gateway.tsx` — inserir ReferralBanner
+4. `src/pages/UpgradeWelcome.tsx` — adaptar para contextos referral/direct-premium
+5. `src/components/HeroSection.tsx` — redirecionar Premium para UpgradeWelcome
+6. `src/components/StickyCTA.tsx` — redirecionar Premium para UpgradeWelcome
+7. `src/locales/pt.json`, `en.json`, `es.json` — novas chaves
 
