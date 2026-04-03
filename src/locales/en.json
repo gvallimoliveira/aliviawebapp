@@ -551,6 +551,7 @@
   "referral.discount_applied": "Referral discount applied",
   "referral.banner_title": "🎉 You have a referral discount!",
   "referral.banner_desc": "Your {percent}% discount will be applied automatically on your next billing or assessment.",
+  "referral.rules": "You earn 20% off your next purchase (single or monthly). Your friend gets 10% off their first single assessment. Non-cumulative: 1 discount per purchase.",
   "assessment_view.title": "Assessment Details",
   "assessment_view.back": "Back to Dashboard",
   "assessment_view.no_diagnosis": "Diagnosis not generated yet",

@@ -552,6 +552,7 @@
   "referral.discount_applied": "Descuento por referencia aplicado",
   "referral.banner_title": "🎉 ¡Tiene un descuento por referencia!",
   "referral.banner_desc": "Su descuento de {percent}% se aplicará automáticamente en su próximo cobro o evaluación.",
+  "referral.rules": "Usted gana 20% en su próxima compra (avulsa o mensual). Su amigo gana 10% en su primera evaluación avulsa. No acumulable: 1 descuento por compra.",
   "assessment_view.title": "Detalles de la Evaluación",
   "assessment_view.back": "Volver al Panel",
   "assessment_view.no_diagnosis": "Diagnóstico aún no generado",
