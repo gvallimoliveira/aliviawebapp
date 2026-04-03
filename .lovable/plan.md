@@ -1,57 +1,76 @@
+# Reorganizar página de detalhe do paciente — fluxo clínico + venda de tratamento
 
+## Problema atual
 
-# Impressão Clínica gerada por IA no detalhe do paciente + PDF
+A ordem atual é: Gráfico de Dor → Impressão Clínica → Mapa de Dor → Questionários → Histórico (com diagnóstico, anamnese e CTA de tratamento enterrados dentro de cada card individual). O profissional precisa rolar até o final para ver o diagnóstico e o CTA de tratamento fica perdido.
 
-## Visão Geral
+## Nova ordenação proposta
 
-Criar uma seção "Impressão Clínica" na página de detalhe do paciente (dentro do dashboard profissional) que usa IA para interpretar os dados da avaliação mais recente e entregar uma visão integrativa do quadro do paciente — sem abordar tratamento específico. Inclui até 2 objetivos terapêuticos principais. Essa impressão também será incluída no relatório PDF profissional.
-
-## 1. Edge Function — `generate-clinical-impression`
-
-Nova edge function que recebe os dados da avaliação (anamnese, regiões de dor, score, questionários, diagnóstico) e retorna:
-
-```json
-{
-  "clinicalImpression": {
-    "overview": "Texto interpretativo em 3-5 linhas sobre o quadro clínico integrado...",
-    "therapeuticObjectives": ["Controle do quadro álgico", "Exposição gradativa à carga"]
-  }
-}
+```text
+┌─────────────────────────────────────────┐
+│ 1. HEADER (nome, badges, botões)        │ ← mantém
+├─────────────────────────────────────────┤
+│ 2. DIAGNÓSTICO (hipótese principal)     │ ← NOVO card destacado
+│    Extraído da avaliação mais recente   │
+├─────────────────────────────────────────┤
+│ 3. IMPRESSÃO CLÍNICA (IA)              │ ← sobe (já existe)
+├─────────────────────────────────────────┤
+│ 4. CTA PLANO DE TRATAMENTO             │ ← NOVO card destacado
+│    Se não tem tratamento: CTA de venda  │
+│    Se tem: badge "Tratamento Liberado"  │
+├─────────────────────────────────────────┤
+│ 5. EVOLUÇÃO DA DOR (gráfico)           │ ← desce
+├─────────────────────────────────────────┤
+│ 6. MAPA DE DOR COMPARATIVO             │ ← mantém posição relativa
+├─────────────────────────────────────────┤
+│ 7. QUESTIONÁRIOS (evolução)            │ ← mantém
+├─────────────────────────────────────────┤
+│ 8. ANAMNESE (card resumo da última)     │ ← NOVO card independente
+├─────────────────────────────────────────┤
+│ 9. HISTÓRICO DETALHADO (accordion)      │ ← simplificado, colapsável
+│    Cada avaliação: data, score, notas   │
+│    PDF/WhatsApp buttons                 │
+└─────────────────────────────────────────┘
 ```
 
-**Prompt da IA:**
-- Interpretar o contexto clínico (anamnese, queixa, duração, regiões, score VAS, questionários, diagnóstico)
-- Gerar visão integrativa breve (3-5 linhas) sem mencionar exercícios ou abordagens de tratamento
-- Fornecer exatamente 2 objetivos terapêuticos principais (escolher entre: controle do quadro álgico, reequilibrar tensões miofasciais, exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar, modulação da dor)
-- Idioma baseado no parâmetro `language`
+no caso prefiro que o card de anamnese que esta como item 8, suba para item 5. o item 5 assim vira o 6 e assim por diante.  
+  
+Mudanças técnicas
 
-Usa `LOVABLE_API_KEY` + Lovable AI Gateway, modelo `google/gemini-3-flash-preview`, com tool calling para saída estruturada.
+### Em `src/components/dashboard/PatientEvolutionDashboard.tsx`
 
-## 2. UI — Seção no PatientEvolutionDashboard
+**2. Card de Diagnóstico** (novo, ~linhas 876-920):
 
-No detalhe do paciente, entre o gráfico de evolução de dor e o mapa de dor comparativo (~linha 822), adicionar um card "Impressão Clínica":
+- Extrair `latestWithDiagnosis` (já calculado em vários pontos — centralizar)
+- Card com ícone `Stethoscope`, título "Hipótese Diagnóstica", texto `diagnosis.hypothesis`
+- Subtexto: confiança (`diagnosis.confidence`) e reasoning em texto menor
+- Se não tem diagnóstico, não renderiza
 
-- Ícone `Brain` + título "Impressão Clínica"
-- Badge "IA" no canto
-- Botão "Gerar" que chama a edge function passando dados da avaliação mais recente com diagnóstico
-- Uma vez gerado, exibe o texto `overview` e os 2 objetivos como badges/chips
-- Estado salvo no `professional_notes` ou em campo local (via localStorage por assessment ID) para não regenerar toda vez
-- Botão "Regenerar" para refazer
+**3. Impressão Clínica** — apenas mover para logo após o diagnóstico (sem mudança funcional)
 
-**Persistência:** Salvar a impressão clínica no campo `diagnosis` da avaliação (como subcampo `clinicalImpression`) via update no assessment, para que o PDF possa acessar depois.
+**4. Card CTA de Tratamento** (novo, destacado):
 
-## 3. PDF — Incluir Impressão Clínica
+- Se última avaliação tem diagnóstico mas SEM tratamento: card com fundo gradient sutil, ícone `Sparkles`, título "Plano de Tratamento Personalizado", descrição curta sobre as 3 fases + STEPS, e o componente `TreatmentUnlockCTA` já existente
+- Se TEM tratamento: card verde compacto com "Tratamento Liberado" e botão para visualizar
+- Se pagamento pendente: `TreatmentPaidRetry`
+- Remove esses CTAs de dentro dos cards individuais do histórico
 
-No `generatePdf.ts`, no fluxo profissional, após o bloco de diagnóstico e antes da anamnese:
+**5-7.** Gráficos e mapa mantêm lógica atual, apenas reposicionados.
 
-- Seção "Impressão Clínica" com fundo suave (primaryLight)
-- Texto do overview em itálico
-- Dois chips/bullets com os objetivos terapêuticos
-- Condicionado a `diagnosis?.clinicalImpression` existir
+**8. Card de Anamnese** (novo, independente):
 
-## Arquivos a criar/alterar
+- Usar `getAnamnesisFields()` da avaliação mais recente
+- Card com ícone `ClipboardList`, título "Anamnese — Última Avaliação"
+- Grid 2 colunas com os campos
+- Remove a anamnese de dentro dos cards individuais do histórico
 
-1. `supabase/functions/generate-clinical-impression/index.ts` — nova edge function
-2. `src/components/dashboard/PatientEvolutionDashboard.tsx` — seção de impressão clínica no detalhe do paciente
-3. `src/utils/generatePdf.ts` — renderizar impressão clínica no PDF profissional
+**9. Histórico simplificado:**
 
+- Cada card mostra: data, score de dor, hipótese (1 linha), botões PDF/WhatsApp/Ver avaliação
+- Notas privadas mantidas
+- Questionários individuais mantidos (são por avaliação)
+- Usar `Collapsible` para expandir detalhes sob demanda
+
+## Arquivo a alterar
+
+1. `src/components/dashboard/PatientEvolutionDashboard.tsx` — reordenar seções, criar cards de diagnóstico e CTA de tratamento, extrair anamnese, simplificar histórico
