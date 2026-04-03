@@ -312,7 +312,6 @@ const ClinicalImpressionCard = ({ assessment, existingImpression }: {
             Impressão Clínica
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">IA</Badge>
             {impression && (
               <Button variant="ghost" size="sm" onClick={generate} disabled={loading} className="h-7 px-2 text-xs gap-1">
                 <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
