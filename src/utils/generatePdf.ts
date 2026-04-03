@@ -224,6 +224,21 @@ function translateKey(key: string, isPt: boolean): string {
     "anamnesis.age.35_44": ["35–44 anos", "35–44"],
     "anamnesis.age.45_55": ["45–55 anos", "45–55"],
     "anamnesis.age.over_55": ["Mais de 55 anos", "Over 55"],
+    "anamnesis.pain_pattern.continuous": ["Contínua (24h)", "Continuous (24h)"],
+    "anamnesis.pain_pattern.intermittent": ["Intermitente", "Intermittent"],
+    "anamnesis.weekly_freq.daily": ["Todos os dias", "Every day"],
+    "anamnesis.weekly_freq.4_6": ["4-6x/semana", "4-6x/week"],
+    "anamnesis.weekly_freq.2_3": ["2-3x/semana", "2-3x/week"],
+    "anamnesis.weekly_freq.1_or_less": ["1x/semana ou menos", "Once a week or less"],
+    "anamnesis.night_waking.frequent": ["Sim, frequentemente", "Yes, frequently"],
+    "anamnesis.night_waking.sometimes": ["Às vezes", "Sometimes"],
+    "anamnesis.night_waking.no": ["Não", "No"],
+    "anamnesis.migraine_freq.daily": ["Diariamente", "Daily"],
+    "anamnesis.migraine_freq.weekly": ["Semanalmente", "Weekly"],
+    "anamnesis.migraine_freq.monthly": ["Mensalmente", "Monthly"],
+    "anamnesis.migraine_freq.sporadic": ["Esporádica", "Sporadic"],
+    "anamnesis.trauma.yes": ["Sim", "Yes"],
+    "anamnesis.trauma.no": ["Não", "No"],
   };
   const entry = map[key];
   if (entry) return isPt ? entry[0] : entry[1];
