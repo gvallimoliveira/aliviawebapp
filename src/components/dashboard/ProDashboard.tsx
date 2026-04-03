@@ -85,7 +85,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     if (!refs || refs.length === 0) { setReferrals([]); return; }
     setReferrals(refs);
     // Fetch patient names
-    const userIds: string[] = [...new Set(refs.map((r: any) => r.patient_user_id as string))];
+    const userIds: string[] = Array.from(new Set(refs.map((r: any) => String(r.patient_user_id))));
     const profiles: Record<string, string> = {};
     for (const uid of userIds) {
       const { data: profile } = await supabase
