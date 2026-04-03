@@ -38,6 +38,7 @@ const PatientLanding = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <ReferralBanner />
       <main>
         <HeroSection showProfessionalCTA={false} />
         <StatsSection />
