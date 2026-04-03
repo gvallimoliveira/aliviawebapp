@@ -405,8 +405,8 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
 
   // Render validated questionnaire results
   if (questionnaireItems.length > 0) {
-    y = checkPage(doc, y, 16);
-    y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary);
+    y = checkPage(doc, y, 44);
+    y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary, 30);
 
     for (const q of questionnaireItems) {
       y = checkPage(doc, y, 22);
@@ -922,33 +922,8 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     y += 20;
   }
 
-  // ── Anamnesis Section ──
-  if (anamnesisData) {
-    y = renderAnamnesisSection(doc, y, anamnesisData, isPt);
-  }
-
-  // ── Pain Map ──
-  const regions = painRegions || anamnesisData?.painRegions;
-  if (regions && regions.length > 0) {
-    y = await renderPainMapSection(doc, y, regions, isPt);
-  }
-
-  // ── Test Results ──
-  if (testResults) {
-    y = renderTestResultsSection(doc, y, testResults, isPt);
-  }
-
-  // ── Separator before diagnosis ──
-  if (anamnesisData || (regions && regions.length > 0)) {
-    y = checkPage(doc, y, 10);
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.3);
-    doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
-    y += 8;
-  }
-
-  // ── Diagnosis Section ──
-  y = renderSectionTitle(doc, y, isPt ? "Hipótese Diagnóstica" : "Diagnostic Hypothesis", COLORS.primary);
+  // ── Diagnosis Section (FIRST after patient info) ──
+  y = renderSectionTitle(doc, y, isPt ? "Hipótese Diagnóstica" : "Diagnostic Hypothesis", COLORS.primary, 30);
 
   // Hypothesis card
   const hypoLines = doc.splitTextToSize(diagnosis.hypothesis, CONTENT_WIDTH - 16);
@@ -988,6 +963,94 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
   // Reasoning
   if (diagnosis.reasoning) {
     y = renderSubSection(doc, y, isPt ? "Raciocínio Clínico" : "Clinical Reasoning", diagnosis.reasoning);
+  }
+
+  // ── Separator ──
+  y = checkPage(doc, y, 10);
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
+  y += 8;
+
+  // ── Anamnesis Section ──
+  if (anamnesisData) {
+    y = renderAnamnesisSection(doc, y, anamnesisData, isPt);
+  }
+
+  // ── Pain Map ──
+  const regions = painRegions || anamnesisData?.painRegions;
+  if (regions && regions.length > 0) {
+    y = await renderPainMapSection(doc, y, regions, isPt);
+  }
+
+  // ── Pain Score (VAS) ──
+  const vasScore = anamnesisData?.painScore ?? (painRegions ? undefined : undefined);
+  if (vasScore != null) {
+    y = checkPage(doc, y, 35);
+    y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary, 25);
+
+    const score = vasScore;
+    const barX = MARGIN + 2;
+    const barW = CONTENT_WIDTH - 4;
+    const barH = 8;
+
+    // Gradient background bar
+    const gradientStops = [
+      { pos: 0, color: [50, 180, 100] },
+      { pos: 0.3, color: [180, 180, 50] },
+      { pos: 0.6, color: [220, 140, 40] },
+      { pos: 1, color: [200, 50, 50] },
+    ];
+    const segments = 20;
+    const segW = barW / segments;
+    for (let i = 0; i < segments; i++) {
+      const t = i / segments;
+      let c = gradientStops[0].color;
+      for (let s = 0; s < gradientStops.length - 1; s++) {
+        if (t >= gradientStops[s].pos && t <= gradientStops[s + 1].pos) {
+          const ratio = (t - gradientStops[s].pos) / (gradientStops[s + 1].pos - gradientStops[s].pos);
+          c = gradientStops[s].color.map((v, idx) => Math.round(v + (gradientStops[s + 1].color[idx] - v) * ratio));
+          break;
+        }
+      }
+      doc.setFillColor(c[0], c[1], c[2]);
+      doc.rect(barX + i * segW, y, segW + 0.5, barH, "F");
+    }
+
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(barX, y, barW, barH, 2, 2, "S");
+
+    const markerX = barX + (score / 10) * barW;
+    doc.setFillColor(...COLORS.white);
+    doc.setDrawColor(...COLORS.foreground);
+    doc.setLineWidth(1);
+    doc.circle(markerX, y + barH / 2, 4, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
+    y += barH + 3;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(isPt ? "Sem dor" : "No pain", barX, y + 3);
+    const worstLabel = isPt ? "Pior dor" : "Worst pain";
+    doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    const scoreColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
+    doc.setTextColor(...scoreColor);
+    const scoreText = `${score}/10`;
+    doc.text(scoreText, barX + barW / 2 - doc.getTextWidth(scoreText) / 2, y + 3);
+    y += 10;
+  }
+
+  // ── Test Results (Questionnaires) ──
+  if (testResults) {
+    y = renderTestResultsSection(doc, y, testResults, isPt);
   }
 
   // ── Treatment Plan ──
@@ -1114,7 +1177,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
       doc.setTextColor(...COLORS.muted);
       for (const g of treatmentPlan.generalGuidelines) {
         y = checkPage(doc, y, 8);
-        const gLines = doc.splitTextToSize(`✓ ${g}`, CONTENT_WIDTH - 6);
+        const gLines = doc.splitTextToSize(`✓ ${g}`, CONTENT_WIDTH - 10);
         doc.text(gLines, MARGIN + 4, y);
         y += gLines.length * 3.5 + 2;
       }
@@ -1206,8 +1269,8 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
 }
 
 // ── Helper: Section Title ──
-function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number, number, number]): number {
-  y = checkPage(doc, y, 14);
+function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number, number, number], extraContentHeight: number = 0): number {
+  y = checkPage(doc, y, 14 + extraContentHeight);
   doc.setDrawColor(...color);
   doc.setLineWidth(2);
   doc.line(MARGIN, y, MARGIN + 12, y);
