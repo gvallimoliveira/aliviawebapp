@@ -802,10 +802,17 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   
   // Motivational message in a highlighted inner box
   const motBoxY = bulletY + 2;
+  const logoMotSize = 10;
+  const motTextW = motInnerW - 28; // leave space for logo on right
   const motBoxH = motivationalLines.length * 5 + 8;
   // Inner accent background
   doc.setFillColor(39, 124, 103); // primary
   doc.roundedRect(MARGIN + 6, motBoxY - 2, CONTENT_WIDTH - 12, motBoxH, 3, 3, "F");
+  
+  // Logo in the right side of the green box
+  if (logoBase64) {
+    doc.addImage(logoBase64, "PNG", MARGIN + CONTENT_WIDTH - 6 - logoMotSize - 2, motBoxY, logoMotSize, logoMotSize);
+  }
   
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
