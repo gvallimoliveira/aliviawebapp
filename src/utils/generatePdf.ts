@@ -405,8 +405,8 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
 
   // Render validated questionnaire results
   if (questionnaireItems.length > 0) {
-    y = checkPage(doc, y, 16);
-    y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary);
+    y = checkPage(doc, y, 44);
+    y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary, 30);
 
     for (const q of questionnaireItems) {
       y = checkPage(doc, y, 22);
