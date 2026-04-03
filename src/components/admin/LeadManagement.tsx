@@ -233,6 +233,7 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
                     <TableHead>{t.status}</TableHead>
                     <TableHead>{t.painScore}</TableHead>
                     <TableHead>{t.regions}</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
