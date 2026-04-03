@@ -1055,5 +1055,11 @@
   "upgrade_welcome.step1_desc_new": "You'll have access to full anamnesis, validated questionnaires, functional tests, and a treatment plan.",
   "upgrade_welcome.plan_referral": "Single Premium with 10% OFF",
   "referral_banner.text": "You've been referred! 🎉 10% off your first single premium assessment",
+  "upgrade_welcome.step1_title_direct": "📋 Full assessment",
+  "upgrade_welcome.step1_desc_direct": "Anamnesis, pain map, validated questionnaires, and guided functional tests.",
+  "upgrade_welcome.step3_title_direct": "🎯 Diagnosis + Treatment",
+  "upgrade_welcome.step3_desc_direct": "Detailed diagnosis and personalized treatment plan in 3 phases.",
+  "upgrade_welcome.back_generic": "Back",
+  "upgrade_welcome.data_safe_direct": "Secure payment and protected data",
   "brand.slogan": "Aliv.iA is not just an app — it's a clinical reasoning system with the soul of a real physiotherapist."
 }
