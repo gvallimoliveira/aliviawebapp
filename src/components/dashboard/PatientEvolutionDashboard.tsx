@@ -375,29 +375,29 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [noteSaving, setNoteSaving] = useState<Record<string, boolean>>({});
   const [batchExporting, setBatchExporting] = useState(false);
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
-  const [hiddenEmails, setHiddenEmails] = useState<Set<string>>(new Set());
+  const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(new Set());
   const [showHidden, setShowHidden] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
 
-  // Load hidden patients
+  // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
     if (!professionalId) return;
     (supabase.from("professional_hidden_patients" as any) as any)
       .select("patient_email")
       .eq("professional_id", professionalId)
       .then(({ data }: any) => {
-        if (data) setHiddenEmails(new Set(data.map((d: any) => d.patient_email)));
+        if (data) setHiddenKeys(new Set(data.map((d: any) => d.patient_email)));
       });
   }, [professionalId]);
 
-  const handleArchivePatient = async (email: string, e?: React.MouseEvent) => {
+  const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!professionalId || archiving) return;
-    setArchiving(email);
+    if (!professionalId || archiving || !groupKey) return;
+    setArchiving(groupKey);
     try {
       await (supabase.from("professional_hidden_patients" as any) as any)
-        .insert({ professional_id: professionalId, patient_email: email });
-      setHiddenEmails((prev) => new Set([...prev, email]));
+        .insert({ professional_id: professionalId, patient_email: groupKey });
+      setHiddenKeys((prev) => new Set([...prev, groupKey]));
       toast({ title: "Paciente arquivado" });
     } catch (err: any) {
       toast({ title: "Erro ao arquivar", variant: "destructive" });
@@ -406,16 +406,16 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     }
   };
 
-  const handleRestorePatient = async (email: string, e?: React.MouseEvent) => {
+  const handleRestorePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!professionalId || archiving) return;
-    setArchiving(email);
+    if (!professionalId || archiving || !groupKey) return;
+    setArchiving(groupKey);
     try {
       await (supabase.from("professional_hidden_patients" as any) as any)
         .delete()
         .eq("professional_id", professionalId)
-        .eq("patient_email", email);
-      setHiddenEmails((prev) => { const s = new Set(prev); s.delete(email); return s; });
+        .eq("patient_email", groupKey);
+      setHiddenKeys((prev) => { const s = new Set(prev); s.delete(groupKey); return s; });
       toast({ title: "Paciente restaurado" });
     } catch (err: any) {
       toast({ title: "Erro ao restaurar", variant: "destructive" });
@@ -503,19 +503,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     }
   }, [notes, onDownloadPdf, t, toast]);
 
-  // Group assessments by patient_email (fallback to patient_name)
+  // Group assessments by patient_email (fallback to patient_name, then id)
   const patients = useMemo(() => {
-    const map = new Map<string, PatientGroup>();
+    const map = new Map<string, PatientGroup & { groupKey: string }>();
     assessments.forEach((a) => {
       const email = (a as any).patient_email;
       const name = (a as any).patient_name;
-      const key = email || name || a.id; // fallback to id if both null
+      const key = email || name || a.id; // unique grouping key
       if (!map.has(key)) {
         map.set(key, {
           email: email || "",
           name: name || email || "Sem nome",
           assessments: [],
           lastDate: a.created_at,
+          groupKey: key, // stable unique identifier
         });
       }
       const group = map.get(key)!;
@@ -530,7 +531,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   }, [assessments]);
 
   // Find selected patient (may be null)
-  const patient = selectedEmail ? patients.find((p) => p.email === selectedEmail) || null : null;
+  const patient = selectedEmail ? patients.find((p) => p.email === selectedEmail || (p as any).groupKey === selectedEmail) || null : null;
 
   const painData = useMemo(() => {
     if (!patient) return [];
@@ -717,7 +718,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                 className="pl-9"
               />
             </div>
-            {hiddenEmails.size > 0 && (
+            {hiddenKeys.size > 0 && (
               <Button
                 variant={showHidden ? "secondary" : "outline"}
                 size="sm"
@@ -725,14 +726,14 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                 onClick={() => setShowHidden(!showHidden)}
               >
                 {showHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                {showHidden ? "Ocultar arquivados" : `Arquivados (${hiddenEmails.size})`}
+                {showHidden ? "Ocultar arquivados" : `Arquivados (${hiddenKeys.size})`}
               </Button>
             )}
           </div>
         </div>
         {patients
           .filter((p) => {
-            const isHidden = hiddenEmails.has(p.email);
+            const isHidden = hiddenKeys.has((p as any).groupKey);
             if (isHidden && !showHidden) return false;
             if (!searchQuery.trim()) return true;
             const q = searchQuery.toLowerCase();
@@ -745,13 +746,13 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             ? lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable"
             : null;
 
-          const isHidden = hiddenEmails.has(p.email);
+          const isHidden = hiddenKeys.has((p as any).groupKey);
 
           return (
             <Card
-              key={p.email}
+              key={(p as any).groupKey}
               className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group ${isHidden ? "opacity-50" : ""}`}
-              onClick={() => setSelectedEmail(p.email)}
+              onClick={() => setSelectedEmail(p.email || (p as any).groupKey)}
             >
               <CardContent className="py-3 px-4">
                 <div className="flex items-center justify-between gap-3">
@@ -811,10 +812,10 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         size="icon"
                         className="h-8 w-8"
                         title="Restaurar paciente"
-                        disabled={archiving === p.email}
-                        onClick={(e) => handleRestorePatient(p.email, e)}
+                        disabled={archiving === (p as any).groupKey}
+                        onClick={(e) => handleRestorePatient((p as any).groupKey, e)}
                       >
-                        {archiving === p.email ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-muted-foreground" />}
+                        {archiving === (p as any).groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-muted-foreground" />}
                       </Button>
                     ) : (
                       <Button
@@ -822,10 +823,10 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         size="icon"
                         className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Arquivar paciente"
-                        disabled={archiving === p.email}
-                        onClick={(e) => handleArchivePatient(p.email, e)}
+                        disabled={archiving === (p as any).groupKey}
+                        onClick={(e) => handleArchivePatient((p as any).groupKey, e)}
                       >
-                        {archiving === p.email ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
+                        {archiving === (p as any).groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
                       </Button>
                     )}
                     <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
