@@ -110,7 +110,12 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
         <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h3 className="font-semibold text-foreground truncate">{otherName}</h3>
+        <h3 className="font-semibold text-foreground truncate flex-1">{otherName}</h3>
+        {onMinimize && (
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onMinimize} title={t("chat.minimize")}>
+            <Minimize2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* Messages area */}
