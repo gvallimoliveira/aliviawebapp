@@ -772,7 +772,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   const totalBulletH = bullets.length * 5.5;
   const motInnerW = CONTENT_WIDTH - 24; // 12px padding each side of the inner box
-  const motivationalLines = doc.splitTextToSize(motivational, motInnerW - 16);
+  const motivationalLines = doc.splitTextToSize(motivational, motInnerW - 28);
   const motivationalH = motivationalLines.length * 5 + 10;
   const upsellH = 20 + totalBulletH + motivationalH + 16;
   
