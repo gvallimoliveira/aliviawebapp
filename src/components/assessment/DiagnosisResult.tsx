@@ -380,6 +380,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   patientName: patientName || undefined,
                   painRegions: painRegions || undefined,
                   painScore: painScore,
+                  anamnesisData: anamnesisData || undefined,
                 });
                 const url = URL.createObjectURL(pdfBlob);
                 const a = document.createElement("a");
