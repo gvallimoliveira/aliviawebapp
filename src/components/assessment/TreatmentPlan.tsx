@@ -81,6 +81,7 @@ interface TreatmentPlanProps {
   painRegions?: string[];
   testResults?: any;
   professionalLogoUrl?: string;
+  mode?: string;
   onBack: () => void;
   onNewAssessment: () => void;
 }
