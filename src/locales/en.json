@@ -701,6 +701,8 @@
   "dashboard.tab_professional": "Professional Panel",
   "dashboard.tab_messages": "Messages",
   "chat.no_conversations": "No conversations yet.",
+  "chat.delete_conversation": "Delete conversation",
+  "chat.delete_confirm": "Are you sure you want to delete this conversation? It will be removed from your list.",
   "chat.no_messages": "No messages yet. Start the conversation!",
   "chat.placeholder": "Type your message...",
   "chat.send_message": "Send message",
