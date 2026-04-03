@@ -22,7 +22,7 @@ import PushOptInBanner from "@/components/PushOptInBanner";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
-  Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Users,
+  Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle,
 } from "lucide-react";
 
 interface PremiumAccess {
