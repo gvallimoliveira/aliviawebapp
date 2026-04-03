@@ -26,6 +26,7 @@ const WelcomeSection = ({
   showRestart,
   activeTab = "health",
 }: WelcomeSectionProps) => {
+  const navigate = useNavigate();
   const { t } = useLanguage();
 
   const renderBadge = () => {
