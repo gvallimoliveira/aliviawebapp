@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { MessageSquare, Loader2, Clock, Reply, CheckCircle2, RotateCcw } from "lucide-react";
+import { MessageSquare, Loader2, Clock, Reply, CheckCircle2, RotateCcw, Archive } from "lucide-react";
 
 interface Ticket {
   id: string;
@@ -16,6 +17,7 @@ interface Ticket {
   admin_reply: string | null;
   created_at: string;
   updated_at: string;
+  archived_at: string | null;
 }
 
 const statusIcon = { open: Clock, replied: Reply, closed: CheckCircle2 };
@@ -30,6 +32,7 @@ export default function SupportTicketManagement({ language }: { language: string
   const [loading, setLoading] = useState(true);
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const t = (key: string) => {
     const map: Record<string, Record<string, string>> = {
@@ -45,6 +48,11 @@ export default function SupportTicketManagement({ language }: { language: string
       open: { pt: "Aberto", en: "Open", es: "Abierto" },
       replied: { pt: "Respondido", en: "Replied", es: "Respondido" },
       closed: { pt: "Fechado", en: "Closed", es: "Cerrado" },
+      archive: { pt: "Arquivar", en: "Archive", es: "Archivar" },
+      archived: { pt: "Arquivado", en: "Archived", es: "Archivado" },
+      show_archived: { pt: "Mostrar arquivados", en: "Show archived", es: "Mostrar archivados" },
+      archive_confirm: { pt: "Arquivar este ticket? O registro será preservado como backup.", en: "Archive this ticket? The record will be preserved as backup.", es: "¿Archivar este ticket? El registro se preservará como respaldo." },
+      archive_success: { pt: "Ticket arquivado com sucesso.", en: "Ticket archived successfully.", es: "Ticket archivado exitosamente." },
     };
     const lang = language === "pt" ? "pt" : language === "es" ? "es" : "en";
     return map[key]?.[lang] || key;
@@ -52,16 +60,22 @@ export default function SupportTicketManagement({ language }: { language: string
 
   const fetchTickets = async () => {
     setLoading(true);
-    const { data } = await (supabase.from("support_tickets" as any) as any)
+    let query = (supabase.from("support_tickets" as any) as any)
       .select("*")
       .order("created_at", { ascending: false });
+
+    if (!showArchived) {
+      query = query.is("archived_at", null);
+    }
+
+    const { data } = await query;
     setTickets((data as Ticket[]) || []);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchTickets();
-  }, []);
+  }, [showArchived]);
 
   const handleReply = async (ticketId: string) => {
     const reply = replyTexts[ticketId]?.trim();
@@ -88,6 +102,19 @@ export default function SupportTicketManagement({ language }: { language: string
     setSubmitting(null);
   };
 
+  const handleArchive = async (ticketId: string) => {
+    if (!confirm(t("archive_confirm"))) return;
+    setSubmitting(ticketId);
+    const { error } = await supabase.functions.invoke("manage-vip-users", {
+      body: { action: "archive_ticket", id: ticketId },
+    });
+    if (!error) {
+      toast({ description: t("archive_success") });
+      fetchTickets();
+    }
+    setSubmitting(null);
+  };
+
   if (loading) {
     return (
       <Card className="mt-8">
@@ -101,13 +128,21 @@ export default function SupportTicketManagement({ language }: { language: string
   return (
     <Card className="mt-8">
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-primary" />
-          {t("title")}
-        </CardTitle>
-        <CardDescription>
-          {tickets.length} {t("desc").toLowerCase().includes("manage") ? "ticket(s)" : "solicitação(ões)"}
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              {t("title")}
+            </CardTitle>
+            <CardDescription>
+              {tickets.length} {t("desc").toLowerCase().includes("manage") ? "ticket(s)" : "solicitação(ões)"}
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{t("show_archived")}</span>
+            <Switch checked={showArchived} onCheckedChange={setShowArchived} />
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {tickets.length === 0 ? (
@@ -115,9 +150,13 @@ export default function SupportTicketManagement({ language }: { language: string
         ) : (
           <div className="space-y-4">
             {tickets.map((ticket) => {
+              const isArchived = !!ticket.archived_at;
               const StatusIcon = statusIcon[ticket.status as keyof typeof statusIcon] || Clock;
               return (
-                <div key={ticket.id} className="border rounded-lg p-4 space-y-3">
+                <div
+                  key={ticket.id}
+                  className={`border rounded-lg p-4 space-y-3 transition-opacity ${isArchived ? "opacity-50" : ""}`}
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-foreground text-sm">{ticket.subject}</h4>
@@ -126,10 +165,18 @@ export default function SupportTicketManagement({ language }: { language: string
                         {new Date(ticket.created_at).toLocaleString()} • {ticket.user_id.slice(0, 8)}...
                       </p>
                     </div>
-                    <Badge variant={statusVariant[ticket.status] || "default"} className="gap-1 text-xs shrink-0">
-                      <StatusIcon className="h-3 w-3" />
-                      {t(ticket.status)}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isArchived && (
+                        <Badge variant="outline" className="gap-1 text-xs">
+                          <Archive className="h-3 w-3" />
+                          {t("archived")}
+                        </Badge>
+                      )}
+                      <Badge variant={statusVariant[ticket.status] || "default"} className="gap-1 text-xs">
+                        <StatusIcon className="h-3 w-3" />
+                        {t(ticket.status)}
+                      </Badge>
+                    </div>
                   </div>
 
                   {ticket.admin_reply && (
@@ -139,55 +186,69 @@ export default function SupportTicketManagement({ language }: { language: string
                     </div>
                   )}
 
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Textarea
-                      value={replyTexts[ticket.id] || ""}
-                      onChange={(e) =>
-                        setReplyTexts((prev) => ({ ...prev, [ticket.id]: e.target.value }))
-                      }
-                      placeholder={t("reply_placeholder")}
-                      rows={2}
-                      className="flex-1 text-sm"
-                    />
-                    <div className="flex sm:flex-col gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleReply(ticket.id)}
-                        disabled={!replyTexts[ticket.id]?.trim() || submitting === ticket.id}
-                        className="gap-1"
-                      >
-                        {submitting === ticket.id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
+                  {!isArchived && (
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Textarea
+                        value={replyTexts[ticket.id] || ""}
+                        onChange={(e) =>
+                          setReplyTexts((prev) => ({ ...prev, [ticket.id]: e.target.value }))
+                        }
+                        placeholder={t("reply_placeholder")}
+                        rows={2}
+                        className="flex-1 text-sm"
+                      />
+                      <div className="flex sm:flex-col gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleReply(ticket.id)}
+                          disabled={!replyTexts[ticket.id]?.trim() || submitting === ticket.id}
+                          className="gap-1"
+                        >
+                          {submitting === ticket.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Reply className="h-3 w-3" />
+                          )}
+                          {t("reply")}
+                        </Button>
+                        {ticket.status !== "closed" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusChange(ticket.id, "closed")}
+                            disabled={submitting === ticket.id}
+                            className="gap-1"
+                          >
+                            <CheckCircle2 className="h-3 w-3" />
+                            {t("close")}
+                          </Button>
                         ) : (
-                          <Reply className="h-3 w-3" />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusChange(ticket.id, "open")}
+                            disabled={submitting === ticket.id}
+                            className="gap-1"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            {t("reopen")}
+                          </Button>
                         )}
-                        {t("reply")}
-                      </Button>
-                      {ticket.status !== "closed" ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleStatusChange(ticket.id, "closed")}
-                          disabled={submitting === ticket.id}
-                          className="gap-1"
-                        >
-                          <CheckCircle2 className="h-3 w-3" />
-                          {t("close")}
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleStatusChange(ticket.id, "open")}
-                          disabled={submitting === ticket.id}
-                          className="gap-1"
-                        >
-                          <RotateCcw className="h-3 w-3" />
-                          {t("reopen")}
-                        </Button>
-                      )}
+                        {(ticket.status === "closed" || ticket.status === "replied") && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleArchive(ticket.id)}
+                            disabled={submitting === ticket.id}
+                            className="gap-1 text-muted-foreground hover:text-foreground"
+                          >
+                            <Archive className="h-3 w-3" />
+                            {t("archive")}
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}

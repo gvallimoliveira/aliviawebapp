@@ -225,6 +225,60 @@ serve(async (req) => {
       });
     }
 
+    // Archive a support ticket (soft delete + backup copy)
+    if (action === "archive_ticket") {
+      const { id } = body;
+      if (!id) {
+        return new Response(JSON.stringify({ error: "Ticket ID is required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Fetch the ticket
+      const { data: ticket, error: fetchErr } = await supabaseClient
+        .from("support_tickets")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchErr || !ticket) {
+        return new Response(JSON.stringify({ error: "Ticket not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Insert backup copy
+      const { error: archiveErr } = await supabaseClient
+        .from("support_tickets_archive")
+        .insert({
+          original_ticket_id: ticket.id,
+          user_id: ticket.user_id,
+          subject: ticket.subject,
+          message: ticket.message,
+          status: ticket.status,
+          admin_reply: ticket.admin_reply,
+          created_at: ticket.created_at,
+          updated_at: ticket.updated_at,
+          archived_by: user.id,
+        });
+
+      if (archiveErr) throw archiveErr;
+
+      // Soft delete: set archived_at
+      const { error: updateErr } = await supabaseClient
+        .from("support_tickets")
+        .update({ archived_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (updateErr) throw updateErr;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Delete a lead (assessment)
     if (action === "delete_lead") {
       const { id } = body;
