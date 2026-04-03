@@ -216,23 +216,67 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
           .update({ lifetime_treatment: true })
           .eq("id", professionalId);
         log("Pro lifetime treatment fulfilled", { professionalId });
+      } else if (userId) {
+        // Fallback: find professional by user_id
+        await supabase
+          .from("professionals")
+          .update({ lifetime_treatment: true })
+          .eq("user_id", userId);
+        log("Pro lifetime treatment fulfilled via user_id fallback", { userId });
       }
       break;
     }
 
-    case "pro_annual": {
+    case "pro_subscription": {
+      // Monthly pro subscription — activate professional access
       if (userId) {
-        const expiresAt = new Date();
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
         await supabase
           .from("professionals")
           .update({
             subscription_status: "active",
             approved: true,
-            pro_access_expires_at: expiresAt.toISOString(),
           })
           .eq("user_id", userId);
-        log("Pro annual fulfilled", { userId, expiresAt: expiresAt.toISOString() });
+        log("Pro subscription fulfilled", { userId });
+      }
+      break;
+    }
+
+    case "pro_annual": {
+      // Annual pro subscription — activate with expiry from Stripe
+      if (userId) {
+        let expiresAt: string;
+        
+        // If it's a subscription mode, get current_period_end from Stripe
+        if (session.subscription) {
+          try {
+            const subscription = await stripe.subscriptions.retrieve(
+              session.subscription as string
+            );
+            expiresAt = new Date(subscription.current_period_end * 1000).toISOString();
+            log("Got expiry from Stripe subscription", { expiresAt });
+          } catch (err) {
+            // Fallback to +1 year if Stripe retrieval fails
+            const fallback = new Date();
+            fallback.setFullYear(fallback.getFullYear() + 1);
+            expiresAt = fallback.toISOString();
+            log("Fallback expiry +1 year", { expiresAt, error: String(err) });
+          }
+        } else {
+          const fallback = new Date();
+          fallback.setFullYear(fallback.getFullYear() + 1);
+          expiresAt = fallback.toISOString();
+        }
+
+        await supabase
+          .from("professionals")
+          .update({
+            subscription_status: "active",
+            approved: true,
+            pro_access_expires_at: expiresAt,
+          })
+          .eq("user_id", userId);
+        log("Pro annual fulfilled", { userId, expiresAt });
       }
       break;
     }
@@ -259,7 +303,7 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
               .update({
                 payment_status: "paid",
                 paid_at: new Date().toISOString(),
-                pending_upgrade_data: null, // clear temporary data
+                pending_upgrade_data: null,
               })
               .eq("id", pendingAssessmentId);
             log("Pending assessment promoted to paid", { pendingAssessmentId, userId });
