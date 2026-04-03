@@ -59,18 +59,22 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
     [view]
   );
 
-  const exportPaths = useCallback(() => {
-    // Export only the current view to avoid console truncation
+  const exportPaths = useCallback(async () => {
     const regs = editedRegions[view];
-    let ts = `\n  // ${view.toUpperCase()}\n  ${view}: [\n`;
-    for (const r of regs) {
-      ts += `    { id: "${r.id}", label_pt: "${r.label_pt}", label_en: "${r.label_en}",\n      d: "${r.d}" },\n`;
+    try {
+      const { error } = await supabase
+        .from("pain_map_paths" as any)
+        .upsert(
+          { view_name: view, regions: JSON.parse(JSON.stringify(regs)), updated_at: new Date().toISOString(), updated_by: user?.id } as any,
+          { onConflict: "view_name" }
+        );
+      if (error) throw error;
+      toast.success(`Vista "${view}" salva com sucesso! Peça ao Lovable para atualizar o painMapData.ts.`);
+    } catch (err: any) {
+      console.error("Erro ao salvar paths:", err);
+      toast.error("Erro ao salvar: " + err.message);
     }
-    ts += "  ],\n";
-    console.log(`=== EXPORTED ${view.toUpperCase()} VIEW ===`);
-    console.log(ts);
-    toast.success(`Paths da vista "${view}" exportados no Console (F12 → Console)`);
-  }, [editedRegions, view]);
+  }, [editedRegions, view, user?.id]);
 
   const getLabel = (region: { label_pt: string; label_en: string }) =>
     language === "pt" ? region.label_pt : region.label_en;
