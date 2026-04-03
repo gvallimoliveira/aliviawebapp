@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Send, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2 } from "lucide-react";
 import ChatBubble from "./ChatBubble";
 
 interface ChatWindowProps {
