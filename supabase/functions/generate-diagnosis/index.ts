@@ -457,19 +457,35 @@ Generate the diagnostic hypothesis in valid JSON format.`;
     const aiResult = await response.json();
     const content = aiResult.choices[0].message.content;
 
-    // Extract JSON from response (handle markdown code blocks)
+    // Extract JSON from response — robust multi-layer parsing
     let jsonStr = content.trim();
-    // Remove markdown code fences if present
+    // Layer 1: Remove markdown code fences
     jsonStr = jsonStr.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
-    // If still not starting with { or [, try to find JSON object
+    // Layer 2: Find first { and match to last }
     if (!jsonStr.startsWith('{') && !jsonStr.startsWith('[')) {
       const braceStart = jsonStr.indexOf('{');
       if (braceStart !== -1) {
         jsonStr = jsonStr.slice(braceStart);
       }
     }
+    // Layer 3: Trim trailing content after last closing brace
+    const lastBrace = jsonStr.lastIndexOf('}');
+    if (lastBrace !== -1 && lastBrace < jsonStr.length - 1) {
+      jsonStr = jsonStr.slice(0, lastBrace + 1);
+    }
 
-    const diagnosis = JSON.parse(jsonStr);
+    let diagnosis: any;
+    try {
+      diagnosis = JSON.parse(jsonStr);
+    } catch (parseErr) {
+      // Layer 4: Try to fix common JSON issues (trailing commas, unescaped newlines in strings)
+      console.error("Initial JSON parse failed, attempting cleanup:", parseErr);
+      const cleaned = jsonStr
+        .replace(/,\s*}/g, '}')
+        .replace(/,\s*]/g, ']')
+        .replace(/[\x00-\x1F\x7F]/g, (ch: string) => ch === '\n' || ch === '\r' || ch === '\t' ? ch : '');
+      diagnosis = JSON.parse(cleaned);
+    }
 
     return new Response(JSON.stringify({ diagnosis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
