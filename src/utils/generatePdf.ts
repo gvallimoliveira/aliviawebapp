@@ -783,7 +783,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(...COLORS.primary);
-  doc.text(`🔓 ${upsellTitle}`, MARGIN + 8, y + 11);
+  doc.text(upsellTitle, MARGIN + 8, y + 11);
   
   // Divider line
   doc.setDrawColor(...COLORS.primary);
