@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,12 +29,18 @@ interface ConversationItem {
 const ConversationList = ({ mode, professionalId, initialConversationId }: ConversationListProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeConvId, setActiveConvId] = useState<string | null>(initialConversationId || null);
+  const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [activeOtherName, setActiveOtherName] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [minimized, setMinimized] = useState(false);
+  const [minimized, setMinimized] = useState(true);
+
+  const activeConversation = useMemo(
+    () => conversations.find((conversation) => conversation.id === activeConvId) ?? null,
+    [activeConvId, conversations]
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -44,12 +51,42 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
   useEffect(() => {
     if (initialConversationId && conversations.length > 0) {
       const conv = conversations.find((c) => c.id === initialConversationId);
-      if (conv) {
+      if (conv && activeConvId !== conv.id) {
         setActiveConvId(conv.id);
         setActiveOtherName(conv.other_name);
+        setMinimized(true);
       }
     }
-  }, [initialConversationId, conversations]);
+  }, [activeConvId, initialConversationId, conversations]);
+
+  useEffect(() => {
+    if (!activeConvId || activeConversation) return;
+    setActiveConvId(null);
+    setActiveOtherName("");
+    setMinimized(true);
+
+    const currentConv = searchParams.get("conv");
+    if (currentConv === activeConvId) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("conv");
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [activeConvId, activeConversation, searchParams, setSearchParams]);
+
+  const syncConversationParam = (convId: string | null) => {
+    const currentConv = searchParams.get("conv");
+    if (currentConv === convId || (!convId && !currentConv)) return;
+
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (convId) {
+      nextParams.set("conv", convId);
+    } else {
+      nextParams.delete("conv");
+    }
+
+    setSearchParams(nextParams, { replace: true });
+  };
 
   const fetchConversations = async () => {
     if (!user) return;
@@ -129,6 +166,8 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
       if (activeConvId === convId) {
         setActiveConvId(null);
         setActiveOtherName("");
+        setMinimized(true);
+        syncConversationParam(null);
       }
     } catch {
       // silent
@@ -137,108 +176,105 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
     }
   };
 
-  if (activeConvId && minimized) {
-    return (
-      <Card
-        className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
-        onClick={() => setMinimized(false)}
-      >
-        <CardContent className="py-3 px-4 flex items-center gap-3">
-          <MessageCircle className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-sm font-medium text-foreground truncate flex-1">{activeOtherName}</span>
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" title={t("chat.maximize")}>
-            <Maximize2 className="h-4 w-4" />
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (activeConvId) {
-    return (
-      <ChatWindow
-        conversationId={activeConvId}
-        otherName={activeOtherName}
-        onBack={() => {
-          setActiveConvId(null);
-          setActiveOtherName("");
-          setMinimized(false);
-          fetchConversations();
-        }}
-        onMinimize={() => setMinimized(true)}
-      />
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (conversations.length === 0) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="py-12 text-center">
-          <MessageCircle className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-muted-foreground">{t("chat.no_conversations")}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-2">
-      {conversations.map((conv) => (
+    <div className="space-y-4">
+      {activeConvId && minimized && activeConversation && (
         <Card
-          key={conv.id}
           className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
-          onClick={() => {
-            setActiveConvId(conv.id);
-            setActiveOtherName(conv.other_name);
-          }}
+          onClick={() => setMinimized(false)}
         >
           <CardContent className="py-3 px-4 flex items-center gap-3">
-            <Avatar className="h-10 w-10 border border-border shrink-0">
-              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
-                {conv.other_name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-foreground text-sm truncate">{conv.other_name}</span>
-                <span className="text-[10px] text-muted-foreground shrink-0">
-                  {new Date(conv.updated_at).toLocaleDateString(undefined, { day: "2-digit", month: "short" })}
-                </span>
-              </div>
-              {conv.last_message && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">{conv.last_message}</p>
-              )}
-            </div>
-            {conv.unread_count > 0 && (
-              <Badge className="bg-primary text-primary-foreground text-[10px] h-5 min-w-5 flex items-center justify-center rounded-full px-1.5">
-                {conv.unread_count}
-              </Badge>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-              onClick={(e) => handleDeleteConversation(e, conv.id)}
-              disabled={deletingId === conv.id}
-              title={t("chat.delete_conversation")}
-            >
-              {deletingId === conv.id ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Trash2 className="h-3.5 w-3.5" />
-              )}
+            <MessageCircle className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-sm font-medium text-foreground truncate flex-1">{activeOtherName}</span>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" title={t("chat.maximize")}>
+              <Maximize2 className="h-4 w-4" />
             </Button>
           </CardContent>
         </Card>
-      ))}
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      ) : conversations.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center">
+            <MessageCircle className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-muted-foreground">{t("chat.no_conversations")}</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {conversations.map((conv) => {
+            const isActive = conv.id === activeConvId;
+
+            return (
+              <Card
+                key={conv.id}
+                className={`cursor-pointer transition-all ${
+                  isActive
+                    ? "border-primary/40 bg-muted/30 shadow-sm"
+                    : "hover:shadow-md hover:border-primary/30"
+                }`}
+                onClick={() => {
+                  setActiveConvId(conv.id);
+                  setActiveOtherName(conv.other_name);
+                  setMinimized(false);
+                  syncConversationParam(conv.id);
+                }}
+              >
+                <CardContent className="py-3 px-4 flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border border-border shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                      {conv.other_name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-foreground text-sm truncate">{conv.other_name}</span>
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        {new Date(conv.updated_at).toLocaleDateString(undefined, { day: "2-digit", month: "short" })}
+                      </span>
+                    </div>
+                    {conv.last_message && (
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">{conv.last_message}</p>
+                    )}
+                  </div>
+                  {conv.unread_count > 0 && (
+                    <Badge className="bg-primary text-primary-foreground text-[10px] h-5 min-w-5 flex items-center justify-center rounded-full px-1.5">
+                      {conv.unread_count}
+                    </Badge>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => handleDeleteConversation(e, conv.id)}
+                    disabled={deletingId === conv.id}
+                    title={t("chat.delete_conversation")}
+                  >
+                    {deletingId === conv.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {activeConvId && !minimized && activeConversation && (
+        <ChatWindow
+          conversationId={activeConvId}
+          otherName={activeOtherName}
+          onBack={() => setMinimized(true)}
+          onMinimize={() => setMinimized(true)}
+        />
+      )}
     </div>
   );
 };

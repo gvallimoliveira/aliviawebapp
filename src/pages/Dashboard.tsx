@@ -231,7 +231,7 @@ const Dashboard = () => {
               {professional && (
                 <div className="mt-6">
                   <h3 className="text-lg font-medium text-foreground mb-3">{t("dashboard.tab_professional")} — {t("chat.messages_title")}</h3>
-                  <ConversationList mode="professional" professionalId={professional.id} />
+                  <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} />
                 </div>
               )}
             </TabsContent>
