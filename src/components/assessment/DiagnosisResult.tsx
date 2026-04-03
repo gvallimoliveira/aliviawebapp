@@ -319,6 +319,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   patientName: patientName || undefined,
                   painRegions: painRegions || undefined,
                   painScore: painScore,
+                  anamnesisData: anamnesisData || undefined,
                 });
 
                 if (assessmentId) {
