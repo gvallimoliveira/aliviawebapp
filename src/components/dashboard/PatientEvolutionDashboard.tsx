@@ -831,8 +831,18 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   }
 
   // ── Evolution detail view ──
+
+  // Centralize latestWithDiagnosis
+  const latestWithDiagnosis = useMemo(() => {
+    return [...patient.assessments].reverse().find((a: any) => a.diagnosis) || null;
+  }, [patient.assessments]);
+
+  const latestAssessment = patient.assessments[patient.assessments.length - 1];
+  const latestAnamnesisFields = latestAssessment ? getAnamnesisFields(latestAssessment) : [];
+
   return (
     <div className="space-y-5">
+      {/* ── 1. HEADER ── */}
       <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(null)} className="gap-1.5 -ml-2">
         <ArrowLeft className="h-4 w-4" /> {t("pro.back_to_patients")}
       </Button>
@@ -857,23 +867,155 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             {patient.assessments.length} {t("pro.assessments_count")}
           </p>
         </div>
-        {(() => {
-          const latestWithDiagnosis = [...patient.assessments].reverse().find((a: any) => a.diagnosis);
-          if (!latestWithDiagnosis) return null;
-          return (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 shrink-0"
-              onClick={() => navigate(`/assessment/view/${latestWithDiagnosis.id}?from=professional&patient=${encodeURIComponent(patient.email)}`)}
-            >
-              <FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}
-            </Button>
-          );
-        })()}
+        {latestWithDiagnosis && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 shrink-0"
+            onClick={() => navigate(`/assessment/view/${latestWithDiagnosis.id}?from=professional&patient=${encodeURIComponent(patient.email)}`)}
+          >
+            <FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}
+          </Button>
+        )}
       </div>
 
-      {/* ── Pain Evolution Chart ── */}
+      {/* ── 2. DIAGNÓSTICO (Hipótese Principal) ── */}
+      {latestWithDiagnosis?.diagnosis?.hypothesis && (
+        <Card className="border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Stethoscope className="h-4 w-4 text-primary" />
+              Hipótese Diagnóstica
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-sm font-medium text-foreground leading-relaxed">
+              {latestWithDiagnosis.diagnosis.hypothesis}
+            </p>
+            {latestWithDiagnosis.diagnosis.confidence && (
+              <Badge variant="outline" className="text-[10px] capitalize">
+                Confiança: {latestWithDiagnosis.diagnosis.confidence}
+              </Badge>
+            )}
+            {latestWithDiagnosis.diagnosis.reasoning && (
+              <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                {latestWithDiagnosis.diagnosis.reasoning}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── 3. IMPRESSÃO CLÍNICA (IA) ── */}
+      {latestWithDiagnosis && (
+        <ClinicalImpressionCard
+          assessment={latestWithDiagnosis}
+          existingImpression={latestWithDiagnosis.diagnosis?.clinicalImpression}
+        />
+      )}
+
+      {/* ── 4. CTA PLANO DE TRATAMENTO ── */}
+      {latestWithDiagnosis && (() => {
+        const a = latestWithDiagnosis;
+        const hasTreatment = a.treatment_plan;
+        const isPaidPending = !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating");
+        const needsUnlock = a.diagnosis && !a.treatment_plan && !isPaidPending;
+
+        if (hasTreatment) {
+          return (
+            <Card className="border-emerald-200 bg-emerald-500/5">
+              <CardContent className="py-4 px-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileCheck className="h-5 w-5 text-emerald-600" />
+                    <div>
+                      <p className="text-sm font-semibold text-emerald-700">{t("pro.treatment_unlocked")}</p>
+                      <p className="text-xs text-muted-foreground">Plano de tratamento disponível para este paciente.</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
+                  >
+                    {t("pro.view_treatment")}
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        }
+
+        if (isPaidPending) {
+          return (
+            <TreatmentPaidRetry
+              assessmentId={a.id}
+              onGenerated={(treatmentPlan) => {
+                a.treatment_plan = treatmentPlan;
+                setNotes((prev) => ({ ...prev }));
+              }}
+            />
+          );
+        }
+
+        if (needsUnlock) {
+          return (
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <CardContent className="py-5 px-5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">Plano de Tratamento Personalizado</p>
+                    <p className="text-xs text-muted-foreground">Programa completo em 3 fases com exercícios progressivos, metas semanais e critérios de alta.</p>
+                  </div>
+                </div>
+                <TreatmentUnlockCTA
+                  assessmentId={a.id}
+                  lifetimeTreatment={lifetimeTreatment}
+                  onUnlocked={(treatmentPlan) => {
+                    a.treatment_plan = treatmentPlan;
+                    a.payment_status = "treatment_paid";
+                    setNotes((prev) => ({ ...prev }));
+                  }}
+                />
+              </CardContent>
+            </Card>
+          );
+        }
+
+        return null;
+      })()}
+
+      {/* ── 5. ANAMNESE (Última Avaliação) ── */}
+      {latestAnamnesisFields.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-primary" />
+              Anamnese — Última Avaliação
+            </CardTitle>
+            <CardDescription className="text-xs">
+              {new Date(latestAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              {latestAnamnesisFields.map((f, i) => (
+                <div key={i} className="space-y-0.5">
+                  <span className="text-muted-foreground font-medium">{f.label}</span>
+                  <p className="text-foreground">{f.value}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── 6. EVOLUÇÃO DA DOR (Gráfico) ── */}
       {painData.length > 1 ? (
         <Card>
           <CardHeader className="pb-2">
@@ -920,20 +1062,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         </Card>
       ) : null}
 
-      {/* ── Clinical Impression (AI) ── */}
-      {(() => {
-        const latestWithDiag = [...patient.assessments].reverse().find((a: any) => a.diagnosis);
-        if (!latestWithDiag) return null;
-        const existingImpression = (latestWithDiag as any).diagnosis?.clinicalImpression;
-        return (
-          <ClinicalImpressionCard
-            assessment={latestWithDiag}
-            existingImpression={existingImpression}
-          />
-        );
-      })()}
-
-      {/* ── Pain Map Comparison ── */}
+      {/* ── 7. MAPA DE DOR COMPARATIVO ── */}
       {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && (
         <Card>
           <CardHeader className="pb-2">
@@ -958,7 +1087,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         </Card>
       )}
 
-      {/* ── Questionnaire Evolution Chart (Enhanced with Subscales) ── */}
+      {/* ── 8. QUESTIONÁRIOS (Evolução) ── */}
       {questionnaireEvolution.length > 0 ? (
         questionnaireEvolution.map((chart) => (
           <Card key={chart.name}>
@@ -1039,16 +1168,15 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         </Card>
       )}
 
-      {/* ── Per-assessment details ── */}
+      {/* ── 9. HISTÓRICO DETALHADO (Simplificado) ── */}
       <div>
         <h4 className="text-sm font-semibold text-foreground mb-3">{t("dashboard.history")}</h4>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {patient.assessments.map((a: any) => {
             const qResults = getQuestionnaireResults(a);
-            const anamnesisFields = getAnamnesisFields(a);
             return (
               <Card key={a.id} className="overflow-hidden">
-                <CardContent className="py-4 px-4 space-y-3">
+                <CardContent className="py-3 px-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <p className="text-sm font-semibold text-foreground">
@@ -1063,25 +1191,24 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       {a.diagnosis && onShareWhatsApp && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          title="WhatsApp"
-                          onClick={() => onShareWhatsApp(a)}
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="WhatsApp" onClick={() => onShareWhatsApp(a)}>
                           <Share2 className="h-4 w-4 text-emerald-600" />
                         </Button>
                       )}
                       {a.diagnosis && onDownloadPdf && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="PDF" onClick={() => onDownloadPdf(a)}>
+                          <FileText className="h-4 w-4 text-primary" />
+                        </Button>
+                      )}
+                      {a.diagnosis && (
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          title="PDF"
-                          onClick={() => onDownloadPdf(a)}
+                          title={t("pro.view_full_assessment")}
+                          onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
                         >
-                          <FileText className="h-4 w-4 text-primary" />
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       )}
                     </div>
@@ -1108,74 +1235,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                           <Progress value={r.percentageScore} className="h-1.5" />
                         </div>
                       ))}
-                    </div>
-                  )}
-
-                  {anamnesisFields.length > 0 && (
-                    <div className="border-t border-border pt-3">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Anamnese</p>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                        {anamnesisFields.map((f, i) => (
-                          <div key={i}>
-                            <span className="text-muted-foreground">{f.label}: </span>
-                            <span className="text-foreground">{f.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* View full assessment button */}
-                  <Button
-                    variant="outline"
-                    className="w-full justify-between text-sm"
-                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
-                  >
-                    <span className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      {t("pro.view_full_assessment")}
-                    </span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-
-                  {/* Treatment Plan CTA */}
-                  {a.diagnosis && !a.treatment_plan && a.payment_status !== "treatment_paid" && a.payment_status !== "treatment_generating" && (
-                    <TreatmentUnlockCTA
-                      assessmentId={a.id}
-                      lifetimeTreatment={lifetimeTreatment}
-                      onUnlocked={(treatmentPlan) => {
-                        a.treatment_plan = treatmentPlan;
-                        a.payment_status = "treatment_paid";
-                        setNotes((prev) => ({ ...prev }));
-                      }}
-                    />
-                  )}
-                  {a.diagnosis && !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating") && (
-                    <TreatmentPaidRetry
-                      assessmentId={a.id}
-                      onGenerated={(treatmentPlan) => {
-                        a.treatment_plan = treatmentPlan;
-                        setNotes((prev) => ({ ...prev }));
-                      }}
-                    />
-                  )}
-                  {a.treatment_plan && (
-                    <div className="border-t border-border pt-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <FileCheck className="h-3.5 w-3.5 text-emerald-600" />
-                          <span className="text-xs font-semibold text-emerald-600">{t("pro.treatment_unlocked")}</span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs gap-1 text-primary"
-                          onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
-                        >
-                          {t("pro.view_treatment")}
-                          <ChevronRight className="h-3 w-3" />
-                        </Button>
-                      </div>
                     </div>
                   )}
 
