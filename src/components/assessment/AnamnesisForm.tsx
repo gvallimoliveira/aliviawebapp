@@ -493,6 +493,57 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         );
 
       }
+      case "migraine_screening":
+        return (
+          <div className="space-y-5">
+            <h3 className="text-lg font-semibold">{t("anamnesis.migraine_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.migraine_subtitle")}</p>
+
+            <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+              <Label className="text-sm font-medium">{t("anamnesis.migraine_photophobia")}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                  <Button key={opt} variant={data.hasPhotophobia === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasPhotophobia: opt })}>
+                    {t(opt)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+              <Label className="text-sm font-medium">{t("anamnesis.migraine_aura")}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                  <Button key={opt} variant={data.hasVisualAura === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasVisualAura: opt })}>
+                    {t(opt)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+              <Label className="text-sm font-medium">{t("anamnesis.migraine_nausea")}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                  <Button key={opt} variant={data.hasNausea === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasNausea: opt })}>
+                    {t(opt)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+              <Label className="text-sm font-medium">{t("anamnesis.migraine_frequency")}</Label>
+              <div className="grid gap-2">
+                {["anamnesis.migraine_freq.daily", "anamnesis.migraine_freq.weekly", "anamnesis.migraine_freq.monthly", "anamnesis.migraine_freq.sporadic"].map((opt) => (
+                  <Card key={opt} className={`cursor-pointer transition-all ${data.headacheCrisisFrequency === opt ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, headacheCrisisFrequency: opt })}>
+                    <CardContent className="py-3 px-4"><span className="text-sm font-medium">{t(opt)}</span></CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
       case "sex_age":
         return (
           <div className="space-y-5">
