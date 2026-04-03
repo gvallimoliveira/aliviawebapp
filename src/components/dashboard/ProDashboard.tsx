@@ -603,6 +603,82 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       {/* Analytics Charts */}
       <ProAnalyticsCharts assessments={patientAssessments} />
 
+      {/* Referrals Section */}
+      {referrals.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-primary" />
+              {t("prof.referrals_title")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {referrals.map((r: any) => {
+              const patientName = referralProfiles[r.patient_user_id] || t("prof.referral_from_patient");
+              const date = new Date(r.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+              const isPending = r.status === "pending";
+              const isAccepted = r.status === "accepted";
+              const statusBadge = isPending
+                ? <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-yellow-300 text-yellow-700 bg-yellow-50">{t("prof.referral_status_pending")}</Badge>
+                : isAccepted
+                ? <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-emerald-300 text-emerald-700 bg-emerald-50">{t("prof.referral_status_accepted")}</Badge>
+                : <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-red-300 text-red-600 bg-red-50">{t("prof.referral_status_declined")}</Badge>;
+
+              return (
+                <div key={r.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border/60 bg-muted/20">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-foreground">{patientName}</span>
+                      {statusBadge}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />{date}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {isPending && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2 rounded-lg gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                          disabled={referralActionLoading === r.id}
+                          onClick={() => handleReferralAction(r.id, "accepted")}
+                        >
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline text-xs">{t("prof.referral_accept")}</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2 rounded-lg gap-1 text-red-500 border-red-200 hover:bg-red-50"
+                          disabled={referralActionLoading === r.id}
+                          onClick={() => handleReferralAction(r.id, "declined")}
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline text-xs">{t("prof.referral_decline")}</span>
+                        </Button>
+                      </>
+                    )}
+                    {(isPending || isAccepted) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-2 rounded-lg gap-1"
+                        onClick={() => handleReferralMessage(r.patient_user_id)}
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline text-xs">{t("prof.referral_send_message")}</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Patient list grouped by email */}
       <div data-onboarding="pro-patients">
         <DashboardErrorBoundary>
