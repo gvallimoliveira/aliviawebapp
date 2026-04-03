@@ -151,38 +151,44 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   };
 
   // Biomechanical groups for complaint validation
-  const upperGroup = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.shoulder_pain", "anamnesis.complaint.elbow_pain", "anamnesis.complaint.wrist_pain", "anamnesis.complaint.headache"];
+  const upperGroup = ["anamnesis.complaint.shoulder_pain", "anamnesis.complaint.elbow_pain", "anamnesis.complaint.wrist_pain"];
   const lowerGroup = ["anamnesis.complaint.back_pain", "anamnesis.complaint.hip_pain", "anamnesis.complaint.knee_pain", "anamnesis.complaint.ankle_pain", "anamnesis.complaint.foot_pain"];
-  // Spinal combination: cervical + lombar are allowed together (full spine chain)
-  const spinalPair = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.back_pain"];
+  // Spinal + head group: cervical, costas, lombar and headache are allowed together (full spine chain + cervicogenic headache)
+  const spinalHeadGroup = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.back_pain", "anamnesis.complaint.headache"];
   // Cross-group exception: lombar + ombro (fascial/muscular chains in rotation sports)
   const lumbarShoulderPair = ["anamnesis.complaint.back_pain", "anamnesis.complaint.shoulder_pain"];
 
-  const getComplaintGroup = (c: string): "upper" | "lower" | null => {
+  const getComplaintGroup = (c: string): "upper" | "lower" | "spinal_head" | null => {
+    if (spinalHeadGroup.includes(c)) return "spinal_head";
     if (upperGroup.includes(c)) return "upper";
     if (lowerGroup.includes(c)) return "lower";
     return null;
   };
 
   const canAddComplaint = (complaint: string, current: string[]): boolean => {
-    const newGroup = getComplaintGroup(complaint);
-    if (!newGroup) return true; // items not in any group are always allowed
-    for (const c of current) {
-      const g = getComplaintGroup(c);
-      if (g && g !== newGroup) {
-        // Check allowed cross-group exceptions
-        const combined = [...current, complaint];
-        const groupedItems = combined.filter(item => getComplaintGroup(item) !== null);
-        // Allow spinal pair: neck_pain + back_pain
-        const isOnlySpinal = groupedItems.every(item => spinalPair.includes(item));
-        if (isOnlySpinal) return true;
-        // Allow lumbar + shoulder pair
-        const isOnlyLumbarShoulder = groupedItems.every(item => lumbarShoulderPair.includes(item));
-        if (isOnlyLumbarShoulder) return true;
-        return false;
-      }
-    }
-    return true;
+    const combined = [...current, complaint];
+    const groupedItems = combined.filter(item => getComplaintGroup(item) !== null);
+    if (groupedItems.length <= 1) return true;
+
+    // All spinal_head group items can combine freely
+    const isOnlySpinalHead = groupedItems.every(item => spinalHeadGroup.includes(item));
+    if (isOnlySpinalHead) return true;
+
+    // Allow lumbar + shoulder pair
+    const isOnlyLumbarShoulder = groupedItems.every(item => lumbarShoulderPair.includes(item));
+    if (isOnlyLumbarShoulder) return true;
+
+    // All items must be in the same group (upper or lower)
+    const groups = new Set(groupedItems.map(item => getComplaintGroup(item)));
+    if (groups.size === 1) return true;
+
+    // Allow spinal_head items combined with lower group (back_pain is in both)
+    const hasSpinal = groupedItems.some(i => spinalHeadGroup.includes(i));
+    const hasLower = groupedItems.some(i => lowerGroup.includes(i) && !spinalHeadGroup.includes(i));
+    const hasUpper = groupedItems.some(i => upperGroup.includes(i));
+    if (hasSpinal && hasLower && !hasUpper) return true;
+
+    return false;
   };
 
   const [complaintConflict, setComplaintConflict] = useState(false);
