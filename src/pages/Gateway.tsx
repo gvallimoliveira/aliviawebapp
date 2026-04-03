@@ -99,6 +99,7 @@ const Gateway = () => {
           </Button>
         </div>
       </header>
+      <ReferralBanner />
 
       {/* Mobile side menu */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
