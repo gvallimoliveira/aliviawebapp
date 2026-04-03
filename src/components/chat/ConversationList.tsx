@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, MessageCircle } from "lucide-react";
+import { Loader2, MessageCircle, Trash2 } from "lucide-react";
 import ChatWindow from "./ChatWindow";
 
 interface ConversationListProps {
@@ -31,6 +32,7 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
   const [loading, setLoading] = useState(true);
   const [activeConvId, setActiveConvId] = useState<string | null>(initialConversationId || null);
   const [activeOtherName, setActiveOtherName] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -55,9 +57,9 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
     let query = (supabase.from("conversations" as any) as any).select("*");
 
     if (mode === "patient") {
-      query = query.eq("patient_user_id", user.id);
+      query = query.eq("patient_user_id", user.id).eq("hidden_by_patient", false);
     } else if (professionalId) {
-      query = query.eq("professional_id", professionalId);
+      query = query.eq("professional_id", professionalId).eq("hidden_by_professional", false);
     }
 
     const { data: convs } = await query.order("updated_at", { ascending: false });
@@ -75,14 +77,12 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
       let otherName = "...";
 
       if (mode === "patient") {
-        // Get professional name
         const { data: pro } = await (supabase.from("professionals" as any) as any)
           .select("full_name")
           .eq("id", conv.professional_id)
           .single();
         otherName = pro?.full_name || "Profissional";
       } else {
-        // Get patient name from profiles
         const { data: profile } = await supabase
           .from("profiles")
           .select("full_name")
@@ -91,14 +91,12 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
         otherName = profile?.full_name || "Paciente";
       }
 
-      // Last message
       const { data: lastMsgs } = await (supabase.from("messages" as any) as any)
         .select("content, created_at")
         .eq("conversation_id", conv.id)
         .order("created_at", { ascending: false })
         .limit(1);
 
-      // Unread count
       const { count } = await (supabase.from("messages" as any) as any)
         .select("id", { count: "exact", head: true })
         .eq("conversation_id", conv.id)
@@ -115,6 +113,23 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
 
     setConversations(enriched);
     setLoading(false);
+  };
+
+  const handleDeleteConversation = async (e: React.MouseEvent, convId: string) => {
+    e.stopPropagation();
+    if (!confirm(t("chat.delete_confirm"))) return;
+    setDeletingId(convId);
+    try {
+      const field = mode === "patient" ? "hidden_by_patient" : "hidden_by_professional";
+      await (supabase.from("conversations" as any) as any)
+        .update({ [field]: true })
+        .eq("id", convId);
+      setConversations((prev) => prev.filter((c) => c.id !== convId));
+    } catch {
+      // silent
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (activeConvId) {
@@ -183,6 +198,20 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
                 {conv.unread_count}
               </Badge>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={(e) => handleDeleteConversation(e, conv.id)}
+              disabled={deletingId === conv.id}
+              title={t("chat.delete_conversation")}
+            >
+              {deletingId === conv.id ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5" />
+              )}
+            </Button>
           </CardContent>
         </Card>
       ))}
