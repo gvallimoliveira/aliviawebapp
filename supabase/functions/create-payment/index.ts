@@ -129,7 +129,8 @@ serve(async (req) => {
       },
     };
 
-    // Exit intent 10% discount for single payment (takes priority over referral if both present)
+    // Discount priority: exit_intent (10%) > referral for referred user (10%) > referral for referrer (20%)
+    // Only one discount per checkout — non-cumulative
     if (exitIntentDiscount && paymentType === "single") {
       const exitCoupon = await stripe.coupons.create({
         percent_off: 10,
@@ -139,6 +140,16 @@ serve(async (req) => {
       });
       sessionParams.discounts = [{ coupon: exitCoupon.id }];
       console.log(`[create-payment] Created exit intent coupon: ${exitCoupon.id}`);
+    } else if (referralCode && paymentType === "single") {
+      // Referred user gets 10% on their first single premium assessment
+      const referredCoupon = await stripe.coupons.create({
+        percent_off: 10,
+        duration: "once",
+        max_redemptions: 1,
+        name: `Referred User 10% - ${Date.now()}`,
+      });
+      sessionParams.discounts = [{ coupon: referredCoupon.id }];
+      console.log(`[create-payment] Created referred user coupon: ${referredCoupon.id}`);
     } else if (discountCoupon) {
       sessionParams.discounts = [{ coupon: discountCoupon }];
     }

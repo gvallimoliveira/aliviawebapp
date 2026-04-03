@@ -140,6 +140,10 @@ const ReferralCard = ({ availableDiscount }: ReferralCardProps) => {
           <Users className="h-4 w-4" />
           <span>{friendsCount} {t("referral.friends_referred")}</span>
         </div>
+
+        <p className="text-xs text-muted-foreground/80 leading-relaxed border-t pt-3 mt-1">
+          {t("referral.rules")}
+        </p>
       </CardContent>
     </Card>
   );
