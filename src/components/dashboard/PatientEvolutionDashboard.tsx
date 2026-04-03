@@ -973,30 +973,15 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     <p className="text-xs text-muted-foreground">Programa completo em 3 fases com exercícios progressivos, metas semanais e critérios de alta.</p>
                   </div>
                 </div>
-                <Button
-                  onClick={async () => {
-                    const cta = document.getElementById("treatment-cta-trigger");
-                    if (cta) cta.click();
+                <TreatmentUnlockCTA
+                  assessmentId={a.id}
+                  lifetimeTreatment={lifetimeTreatment}
+                  onUnlocked={(treatmentPlan) => {
+                    a.treatment_plan = treatmentPlan;
+                    a.payment_status = "treatment_paid";
+                    setNotes((prev) => ({ ...prev }));
                   }}
-                  size="sm"
-                  className="w-full rounded-xl gap-1.5"
-                >
-                  <Lock className="h-3.5 w-3.5" />
-                  {lifetimeTreatment ? t("pro.unlock_treatment_cta") : `${t("pro.unlock_treatment_cta")} — ${PRO_TREATMENT_PRICE_FORMATTED}`}
-                </Button>
-                <div className="hidden">
-                  <div id="treatment-cta-trigger">
-                    <TreatmentUnlockCTA
-                      assessmentId={a.id}
-                      lifetimeTreatment={lifetimeTreatment}
-                      onUnlocked={(treatmentPlan) => {
-                        a.treatment_plan = treatmentPlan;
-                        a.payment_status = "treatment_paid";
-                        setNotes((prev) => ({ ...prev }));
-                      }}
-                    />
-                  </div>
-                </div>
+                />
               </CardContent>
             </Card>
           );
