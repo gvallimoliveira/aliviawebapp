@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, MessageCircle, Trash2 } from "lucide-react";
+import { Loader2, MessageCircle, Trash2, Maximize2 } from "lucide-react";
 import ChatWindow from "./ChatWindow";
 
 interface ConversationListProps {
@@ -33,6 +33,7 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
   const [activeConvId, setActiveConvId] = useState<string | null>(initialConversationId || null);
   const [activeOtherName, setActiveOtherName] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [minimized, setMinimized] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -136,6 +137,23 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
     }
   };
 
+  if (activeConvId && minimized) {
+    return (
+      <Card
+        className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
+        onClick={() => setMinimized(false)}
+      >
+        <CardContent className="py-3 px-4 flex items-center gap-3">
+          <MessageCircle className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-sm font-medium text-foreground truncate flex-1">{activeOtherName}</span>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" title={t("chat.maximize")}>
+            <Maximize2 className="h-4 w-4" />
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (activeConvId) {
     return (
       <ChatWindow
@@ -144,8 +162,10 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
         onBack={() => {
           setActiveConvId(null);
           setActiveOtherName("");
+          setMinimized(false);
           fetchConversations();
         }}
+        onMinimize={() => setMinimized(true)}
       />
     );
   }

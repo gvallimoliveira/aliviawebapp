@@ -4,16 +4,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Send, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2 } from "lucide-react";
 import ChatBubble from "./ChatBubble";
 
 interface ChatWindowProps {
   conversationId: string;
   otherName: string;
   onBack: () => void;
+  onMinimize?: () => void;
 }
 
-const ChatWindow = ({ conversationId, otherName, onBack }: ChatWindowProps) => {
+const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindowProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [messages, setMessages] = useState<any[]>([]);
@@ -109,7 +110,12 @@ const ChatWindow = ({ conversationId, otherName, onBack }: ChatWindowProps) => {
         <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h3 className="font-semibold text-foreground truncate">{otherName}</h3>
+        <h3 className="font-semibold text-foreground truncate flex-1">{otherName}</h3>
+        {onMinimize && (
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onMinimize} title={t("chat.minimize")}>
+            <Minimize2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* Messages area */}

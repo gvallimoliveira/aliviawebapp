@@ -705,6 +705,8 @@
   "chat.delete_conversation": "Eliminar conversación",
   "chat.delete_confirm": "¿Está seguro de que desea eliminar esta conversación? Se eliminará de su lista.",
   "chat.disclaimer": "Aliv.iA no se responsabiliza por datos personales, citas o acuerdos realizados a través de mensajes.",
+  "chat.minimize": "Minimizar conversación",
+  "chat.maximize": "Expandir conversación",
   "chat.no_messages": "Ningún mensaje aún. ¡Inicie la conversación!",
   "chat.placeholder": "Escriba su mensaje...",
   "chat.send_message": "Enviar mensaje",
