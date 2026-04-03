@@ -637,6 +637,118 @@ export async function generateAssessmentPdfBlob(options: PdfOptions): Promise<Bl
   return doc.output("blob");
 }
 
+// ── Shared VAS Renderer (one bar per region or single bar) ──
+function renderVasBar(doc: jsPDF, barX: number, y: number, barW: number, barH: number, score: number, label?: string, isPt?: boolean): number {
+  // Label above bar if provided
+  if (label) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(label, barX, y);
+    y += 4;
+  }
+
+  // Gradient background bar
+  const gradientStops = [
+    { pos: 0, color: [50, 180, 100] },
+    { pos: 0.3, color: [180, 180, 50] },
+    { pos: 0.6, color: [220, 140, 40] },
+    { pos: 1, color: [200, 50, 50] },
+  ];
+  const segments = 20;
+  const segW = barW / segments;
+  for (let i = 0; i < segments; i++) {
+    const t = i / segments;
+    let c = gradientStops[0].color;
+    for (let s = 0; s < gradientStops.length - 1; s++) {
+      if (t >= gradientStops[s].pos && t <= gradientStops[s + 1].pos) {
+        const ratio = (t - gradientStops[s].pos) / (gradientStops[s + 1].pos - gradientStops[s].pos);
+        c = gradientStops[s].color.map((v, idx) => Math.round(v + (gradientStops[s + 1].color[idx] - v) * ratio));
+        break;
+      }
+    }
+    doc.setFillColor(c[0], c[1], c[2]);
+    doc.rect(barX + i * segW, y, segW + 0.5, barH, "F");
+  }
+
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(barX, y, barW, barH, 2, 2, "S");
+
+  // Score marker
+  const markerX = barX + (score / 10) * barW;
+  doc.setFillColor(...COLORS.white);
+  doc.setDrawColor(...COLORS.foreground);
+  doc.setLineWidth(1);
+  doc.circle(markerX, y + barH / 2, 4, "FD");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.foreground);
+  doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
+  y += barH + 3;
+
+  // End labels
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(...COLORS.muted);
+  const noPainLabel = isPt ? "Sem dor" : "No pain";
+  const worstLabel = isPt ? "Pior dor" : "Worst pain";
+  doc.text(noPainLabel, barX, y + 3);
+  doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
+
+  // Score text centered
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  const scoreColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
+  doc.setTextColor(...scoreColor);
+  const scoreText = `${score}/10`;
+  doc.text(scoreText, barX + barW / 2 - doc.getTextWidth(scoreText) / 2, y + 3);
+  y += 10;
+
+  return y;
+}
+
+function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: number | undefined, anamnesisData?: AnamnesisData | any): number {
+  const hasPerRegion = anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0;
+  const score = painScore ?? anamnesisData?.painScore;
+  if (score == null && !hasPerRegion) return y;
+
+  const barX = MARGIN + 2;
+  const barW = CONTENT_WIDTH - 4;
+  const barH = 8;
+
+  if (hasPerRegion) {
+    const entries = Object.entries(anamnesisData!.painScoresPerRegion!) as [string, number][];
+    const neededHeight = 20 + entries.length * 28;
+    y = checkPage(doc, y, neededHeight);
+    y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary, 25);
+
+    for (const [key, regionScore] of entries) {
+      y = checkPage(doc, y, 26);
+      const label = `${translateKey(key, isPt)} — ${regionScore}/10`;
+      y = renderVasBar(doc, barX, y, barW, barH, regionScore, label, isPt);
+      y += 2;
+    }
+
+    // Average
+    if (score != null) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      const avgColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
+      doc.setTextColor(...avgColor);
+      const avgText = isPt ? `Média geral: ${score}/10` : `Overall average: ${score}/10`;
+      doc.text(avgText, barX + barW / 2 - doc.getTextWidth(avgText) / 2, y);
+      y += 8;
+    }
+  } else if (score != null) {
+    y = checkPage(doc, y, 35);
+    y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary, 25);
+    y = renderVasBar(doc, barX, y, barW, barH, score, undefined, isPt);
+  }
+
+  return y;
+}
+
 // ── Basic Report PDF (for WhatsApp sharing — hypothesis, confidence, summary, pain map, VAS, disclaimer) ──
 interface BasicReportOptions {
   diagnosis: Diagnosis;
@@ -644,6 +756,7 @@ interface BasicReportOptions {
   patientName?: string;
   painRegions?: string[];
   painScore?: number;
+  anamnesisData?: any;
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
@@ -715,74 +828,8 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   // Summary
   y = renderSubSection(doc, y, isPt ? "Resumo" : "Summary", options.diagnosis.summary);
 
-  // ── Pain Score (VAS) ──
-  if (options.painScore != null) {
-    y = checkPage(doc, y, 35);
-    y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary);
-
-    const score = options.painScore;
-    const barX = MARGIN + 2;
-    const barW = CONTENT_WIDTH - 4;
-    const barH = 8;
-
-    // Gradient background bar
-    const gradientStops = [
-      { pos: 0, color: [50, 180, 100] },
-      { pos: 0.3, color: [180, 180, 50] },
-      { pos: 0.6, color: [220, 140, 40] },
-      { pos: 1, color: [200, 50, 50] },
-    ];
-    const segments = 20;
-    const segW = barW / segments;
-    for (let i = 0; i < segments; i++) {
-      const t = i / segments;
-      // Interpolate color
-      let c = gradientStops[0].color;
-      for (let s = 0; s < gradientStops.length - 1; s++) {
-        if (t >= gradientStops[s].pos && t <= gradientStops[s + 1].pos) {
-          const ratio = (t - gradientStops[s].pos) / (gradientStops[s + 1].pos - gradientStops[s].pos);
-          c = gradientStops[s].color.map((v, idx) => Math.round(v + (gradientStops[s + 1].color[idx] - v) * ratio));
-          break;
-        }
-      }
-      doc.setFillColor(c[0], c[1], c[2]);
-      doc.rect(barX + i * segW, y, segW + 0.5, barH, "F");
-    }
-
-    // Rounded border
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(barX, y, barW, barH, 2, 2, "S");
-
-    // Score marker
-    const markerX = barX + (score / 10) * barW;
-    doc.setFillColor(...COLORS.white);
-    doc.setDrawColor(...COLORS.foreground);
-    doc.setLineWidth(1);
-    doc.circle(markerX, y + barH / 2, 4, "FD");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(...COLORS.foreground);
-    doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
-    y += barH + 3;
-
-    // Labels
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.setTextColor(...COLORS.muted);
-    doc.text(isPt ? "Sem dor" : "No pain", barX, y + 3);
-    const worstLabel = isPt ? "Pior dor" : "Worst pain";
-    doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
-
-    // Score text
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    const scoreColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
-    doc.setTextColor(...scoreColor);
-    const scoreText = `${score}/10`;
-    doc.text(scoreText, barX + barW / 2 - doc.getTextWidth(scoreText) / 2, y + 3);
-    y += 10;
-  }
+  // ── Pain Score (VAS) — uses shared renderer ──
+  y = renderVasSection(doc, y, isPt, options.painScore, options.anamnesisData);
 
   // ── Pain Map ──
   if (options.painRegions && options.painRegions.length > 0) {
@@ -1091,130 +1138,9 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     y = await renderPainMapSection(doc, y, regions, isPt);
   }
 
-  // ── Pain Score (VAS) ──
-  const vasScore = anamnesisData?.painScore ?? (painRegions ? undefined : undefined);
-  const hasPerRegion = anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0;
-
-  if (vasScore != null) {
-    const neededHeight = hasPerRegion ? 55 + Object.keys(anamnesisData!.painScoresPerRegion!).length * 5 : 35;
-    y = checkPage(doc, y, neededHeight);
-    y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary, 25);
-
-    const barX = MARGIN + 2;
-    const barW = CONTENT_WIDTH - 4;
-    const barH = 8;
-
-    // Gradient background bar
-    const gradientStops = [
-      { pos: 0, color: [50, 180, 100] },
-      { pos: 0.3, color: [180, 180, 50] },
-      { pos: 0.6, color: [220, 140, 40] },
-      { pos: 1, color: [200, 50, 50] },
-    ];
-    const segments = 20;
-    const segW = barW / segments;
-    for (let i = 0; i < segments; i++) {
-      const t = i / segments;
-      let c = gradientStops[0].color;
-      for (let s = 0; s < gradientStops.length - 1; s++) {
-        if (t >= gradientStops[s].pos && t <= gradientStops[s + 1].pos) {
-          const ratio = (t - gradientStops[s].pos) / (gradientStops[s + 1].pos - gradientStops[s].pos);
-          c = gradientStops[s].color.map((v, idx) => Math.round(v + (gradientStops[s + 1].color[idx] - v) * ratio));
-          break;
-        }
-      }
-      doc.setFillColor(c[0], c[1], c[2]);
-      doc.rect(barX + i * segW, y, segW + 0.5, barH, "F");
-    }
-
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(barX, y, barW, barH, 2, 2, "S");
-
-    if (hasPerRegion) {
-      // Per-region markers with distinct colors
-      const regionColors: [number, number, number][] = [
-        [59, 130, 246],   // blue
-        [168, 85, 247],   // purple
-        [234, 179, 8],    // amber
-        [239, 68, 68],    // red
-        [16, 185, 129],   // emerald
-        [249, 115, 22],   // orange
-      ];
-      const entries = Object.entries(anamnesisData!.painScoresPerRegion!);
-      entries.forEach(([_key, score], idx) => {
-        const markerX = barX + (score / 10) * barW;
-        const color = regionColors[idx % regionColors.length];
-        doc.setFillColor(color[0], color[1], color[2]);
-        doc.setDrawColor(...COLORS.white);
-        doc.setLineWidth(1.2);
-        doc.circle(markerX, y + barH / 2, 4, "FD");
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(7);
-        doc.setTextColor(...COLORS.white);
-        doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.2), y + barH / 2 + 2);
-      });
-      y += barH + 3;
-
-      // Labels
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(...COLORS.muted);
-      doc.text(isPt ? "Sem dor" : "No pain", barX, y + 3);
-      const worstLabel = isPt ? "Pior dor" : "Worst pain";
-      doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
-      y += 8;
-
-      // Legend table
-      entries.forEach(([key, score], idx) => {
-        const color = regionColors[idx % regionColors.length];
-        doc.setFillColor(color[0], color[1], color[2]);
-        doc.circle(barX + 3, y + 1, 1.8, "F");
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7.5);
-        doc.setTextColor(...COLORS.foreground);
-        doc.text(`${translateKey(key, isPt)}: ${score}/10`, barX + 8, y + 2.5);
-        y += 5;
-      });
-
-      // Average
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      const scoreColor: [number, number, number] = vasScore <= 3 ? COLORS.green : vasScore <= 6 ? COLORS.yellow : COLORS.red;
-      doc.setTextColor(...scoreColor);
-      const avgText = isPt ? `Média: ${vasScore}/10` : `Average: ${vasScore}/10`;
-      doc.text(avgText, barX + barW / 2 - doc.getTextWidth(avgText) / 2, y + 3);
-      y += 10;
-    } else {
-      // Single marker (general mode)
-      const score = vasScore;
-      const markerX = barX + (score / 10) * barW;
-      doc.setFillColor(...COLORS.white);
-      doc.setDrawColor(...COLORS.foreground);
-      doc.setLineWidth(1);
-      doc.circle(markerX, y + barH / 2, 4, "FD");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.setTextColor(...COLORS.foreground);
-      doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
-      y += barH + 3;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(...COLORS.muted);
-      doc.text(isPt ? "Sem dor" : "No pain", barX, y + 3);
-      const worstLabel = isPt ? "Pior dor" : "Worst pain";
-      doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      const scoreColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
-      doc.setTextColor(...scoreColor);
-      const scoreText = `${score}/10`;
-      doc.text(scoreText, barX + barW / 2 - doc.getTextWidth(scoreText) / 2, y + 3);
-      y += 10;
-    }
-  }
+  // ── Pain Score (VAS) — uses shared renderer ──
+  const vasScore = anamnesisData?.painScore ?? undefined;
+  y = renderVasSection(doc, y, isPt, vasScore, anamnesisData);
 
   // ── Test Results (Questionnaires) ──
   if (testResults) {
