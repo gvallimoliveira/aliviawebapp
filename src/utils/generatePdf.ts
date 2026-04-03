@@ -742,13 +742,13 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   const regions = options.painRegions || [];
   const applicableQuestionnaires = getApplicableQuestionnaires(regions);
   
-  const questionnaireBullet = applicableQuestionnaires.length > 0
-    ? isPt
-      ? `✅ Questionário ${applicableQuestionnaires.map(q => q.name).join(" + ")} — ${applicableQuestionnaires.map(q => q.fullName_pt.replace(/\s*\(.*\)/, '')).join(", ")}`
-      : `✅ ${applicableQuestionnaires.map(q => q.name).join(" + ")} questionnaire — ${applicableQuestionnaires.map(q => q.fullName_en.replace(/\s*\(.*\)/, '')).join(", ")}`
-    : isPt
-      ? "✅ Questionários validados cientificamente para sua condição"
-      : "✅ Scientifically validated questionnaires for your condition";
+  const questionnaireBullets: string[] = applicableQuestionnaires.length > 0
+    ? applicableQuestionnaires.map(q => isPt
+        ? `✅ Questionário ${q.name} — ${q.fullName_pt.replace(/\s*\(.*\)/, '')}`
+        : `✅ ${q.name} questionnaire — ${q.fullName_en.replace(/\s*\(.*\)/, '')}`)
+    : [isPt
+        ? "✅ Questionários validados cientificamente para sua condição"
+        : "✅ Scientifically validated questionnaires for your condition"];
 
   const bulletsPt = [
     "✅ Explicação clínica detalhada do seu quadro",
@@ -764,7 +764,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     "✅ Complete 3-phase progressive treatment plan",
     "✅ Exercises with sets, reps and progression",
   ];
-  const bullets = [...(isPt ? bulletsPt : bulletsEn), questionnaireBullet];
+  const bullets = [...(isPt ? bulletsPt : bulletsEn), ...questionnaireBullets];
   
   const motivationalPt = "Já tenho uma boa ideia por onde começar seu tratamento!\nAdquira a avaliação premium para refinar nosso plano terapêutico\ne receber todas as orientações disponíveis! Vamos juntos resolver essa dor.";
   const motivationalEn = "I already have a good idea of where to start your treatment!\nGet the premium assessment to refine our treatment plan\nand receive all available guidance! Let's solve this pain together.";
@@ -772,7 +772,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   const totalBulletH = bullets.length * 5.5;
   const motInnerW = CONTENT_WIDTH - 24; // 12px padding each side of the inner box
-  const motivationalLines = doc.splitTextToSize(motivational, motInnerW - 16);
+  const motivationalLines = doc.splitTextToSize(motivational, motInnerW - 28);
   const motivationalH = motivationalLines.length * 5 + 10;
   const upsellH = 20 + totalBulletH + motivationalH + 16;
   
@@ -802,10 +802,17 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   
   // Motivational message in a highlighted inner box
   const motBoxY = bulletY + 2;
+  const logoMotSize = 10;
+  const motTextW = motInnerW - 28; // leave space for logo on right
   const motBoxH = motivationalLines.length * 5 + 8;
   // Inner accent background
   doc.setFillColor(39, 124, 103); // primary
   doc.roundedRect(MARGIN + 6, motBoxY - 2, CONTENT_WIDTH - 12, motBoxH, 3, 3, "F");
+  
+  // Logo in the right side of the green box
+  if (logoBase64) {
+    doc.addImage(logoBase64, "PNG", MARGIN + CONTENT_WIDTH - 6 - logoMotSize - 2, motBoxY, logoMotSize, logoMotSize);
+  }
   
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
