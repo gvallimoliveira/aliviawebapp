@@ -268,10 +268,15 @@ Generate a personalized 3-phase treatment plan in valid JSON format. Focus exerc
     const aiResult = await response.json();
     const content = aiResult.choices[0].message.content;
 
-    let jsonStr = content;
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1].trim();
+    let jsonStr = content.trim();
+    // Remove markdown code fences if present
+    jsonStr = jsonStr.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+    // If still not starting with { or [, try to find JSON object
+    if (!jsonStr.startsWith('{') && !jsonStr.startsWith('[')) {
+      const braceStart = jsonStr.indexOf('{');
+      if (braceStart !== -1) {
+        jsonStr = jsonStr.slice(braceStart);
+      }
     }
 
     const treatmentPlan = JSON.parse(jsonStr);
