@@ -85,7 +85,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     if (!refs || refs.length === 0) { setReferrals([]); return; }
     setReferrals(refs);
     // Fetch patient names
-    const userIds = [...new Set(refs.map((r: any) => r.patient_user_id))];
+    const userIds: string[] = [...new Set(refs.map((r: any) => r.patient_user_id as string))];
     const profiles: Record<string, string> = {};
     for (const uid of userIds) {
       const { data: profile } = await supabase
@@ -93,7 +93,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         .select("full_name")
         .eq("user_id", uid)
         .maybeSingle();
-      if (profile?.full_name) profiles[uid as string] = profile.full_name;
+      if (profile?.full_name) profiles[uid] = profile.full_name;
     }
     setReferralProfiles(profiles);
   };
