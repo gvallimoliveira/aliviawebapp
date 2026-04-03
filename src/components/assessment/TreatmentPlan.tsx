@@ -53,12 +53,24 @@ interface Phase {
   exercises: Exercise[];
 }
 
+interface ProfessionalTechnique {
+  name: string;
+  indication: string;
+  notes?: string;
+}
+
+interface ProfessionalGuidelineCategory {
+  category: string;
+  techniques: ProfessionalTechnique[];
+}
+
 interface TreatmentPlanData {
   phases: Phase[];
   generalGuidelines: string[];
   progressionCriteria: string;
   disclaimer: string;
   difiContext?: string;
+  professionalGuidelines?: ProfessionalGuidelineCategory[];
 }
 
 interface TreatmentPlanProps {
