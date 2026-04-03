@@ -16,7 +16,7 @@ import {
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
-  Sparkles, FileCheck, Lock,
+  Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
