@@ -262,6 +262,106 @@ const TreatmentPaidRetry = ({ assessmentId, onGenerated }: {
   );
 };
 
+// Clinical Impression card (AI-generated)
+const ClinicalImpressionCard = ({ assessment, existingImpression }: {
+  assessment: any;
+  existingImpression?: { overview: string; therapeuticObjectives: string[] } | null;
+}) => {
+  const { t, language } = useLanguage();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [impression, setImpression] = useState<{ overview: string; therapeuticObjectives: string[] } | null>(
+    existingImpression || null
+  );
+
+  const generate = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
+        body: {
+          anamnesisData: assessment.anamnesis_data,
+          painRegions: assessment.pain_regions,
+          painScore: assessment.pain_score,
+          questionnaireResults: assessment.test_results,
+          diagnosis: assessment.diagnosis,
+          language,
+        },
+      });
+      if (error) throw error;
+      const ci = data?.clinicalImpression;
+      if (!ci?.overview) throw new Error("Empty response");
+      setImpression(ci);
+
+      // Persist into diagnosis.clinicalImpression
+      const updatedDiagnosis = { ...(assessment.diagnosis || {}), clinicalImpression: ci };
+      await supabase.from("assessments").update({ diagnosis: updatedDiagnosis as any }).eq("id", assessment.id);
+    } catch (err: any) {
+      console.error("Clinical impression error:", err);
+      toast({ title: "Erro", description: "Não foi possível gerar a impressão clínica.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Brain className="h-4 w-4 text-primary" />
+            Impressão Clínica
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">IA</Badge>
+            {impression && (
+              <Button variant="ghost" size="sm" onClick={generate} disabled={loading} className="h-7 px-2 text-xs gap-1">
+                <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+                Regenerar
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {!impression && !loading && (
+          <div className="text-center py-4 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Gere uma visão integrativa do quadro clínico baseada nos dados da avaliação.
+            </p>
+            <Button onClick={generate} size="sm" className="rounded-xl gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" />
+              Gerar Impressão Clínica
+            </Button>
+          </div>
+        )}
+        {loading && !impression && (
+          <div className="flex items-center justify-center py-6 gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">Analisando dados clínicos...</span>
+          </div>
+        )}
+        {impression && (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground italic leading-relaxed">{impression.overview}</p>
+            {impression.therapeuticObjectives?.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-foreground">Objetivos Terapêuticos Principais:</p>
+                <div className="flex flex-wrap gap-2">
+                  {impression.therapeuticObjectives.map((obj, i) => (
+                    <Badge key={i} variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                      {obj}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+
 const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
 
   const { t } = useLanguage();
