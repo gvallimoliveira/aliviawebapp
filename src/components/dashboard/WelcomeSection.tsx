@@ -32,7 +32,7 @@ const WelcomeSection = ({
   const renderBadge = () => {
     const isAdmin = userEmail === "gvallimoliveira@gmail.com";
     if (isAdmin) {
-      return <Badge className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 gap-1"><Shield className="h-3 w-3" />Admin</Badge>;
+      return <Badge className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 gap-1 cursor-pointer hover:bg-destructive/80 transition-colors" onClick={() => navigate("/admin")}><Shield className="h-3 w-3" />Admin</Badge>;
     }
 
     // Na aba profissional, mostrar badge Pro
