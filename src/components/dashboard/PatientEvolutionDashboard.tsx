@@ -662,6 +662,15 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     return fields;
   };
 
+  // Centralize latestWithDiagnosis — must be before early returns (hooks rule)
+  const latestWithDiagnosis = useMemo(() => {
+    if (!patient) return null;
+    return [...patient.assessments].reverse().find((a: any) => a.diagnosis) || null;
+  }, [patient]);
+
+  const latestAssessment = patient ? patient.assessments[patient.assessments.length - 1] : null;
+  const latestAnamnesisFields = latestAssessment ? getAnamnesisFields(latestAssessment) : [];
+
   // Empty state
   if (patients.length === 0) {
     return (
