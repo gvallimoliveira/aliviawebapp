@@ -22,6 +22,16 @@ serve(async (req) => {
     const hasPriorSurgery = anamnesisData.hasPriorSurgery || "";
     const surgeryDetails = anamnesisData.surgeryDetails || "";
     const hasLocalSwelling = anamnesisData.hasLocalSwelling || "";
+    // New fields: migraine screening + pain frequency
+    const hasPhotophobia = anamnesisData.hasPhotophobia || "";
+    const hasVisualAura = anamnesisData.hasVisualAura || "";
+    const hasNausea = anamnesisData.hasNausea || "";
+    const headacheCrisisFrequency = anamnesisData.headacheCrisisFrequency || "";
+    const painPattern = anamnesisData.painPattern || "";
+    const painWeeklyFrequency = anamnesisData.painWeeklyFrequency || "";
+    const painNightWaking = anamnesisData.painNightWaking || "";
+    const painScoreMode = anamnesisData.painScoreMode || "general";
+    const painScoresPerRegion = anamnesisData.painScoresPerRegion || {};
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
