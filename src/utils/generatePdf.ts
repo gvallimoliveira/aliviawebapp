@@ -351,6 +351,31 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Faixa Etária" : "Age Range", value: translateKey(anamnesis.ageRange, isPt) });
   }
 
+  // New fields: pain pattern, frequency, night waking
+  if (anamnesis.painPattern) {
+    fields.push({ label: isPt ? "Padrão da Dor" : "Pain Pattern", value: translateKey(anamnesis.painPattern, isPt) });
+  }
+  if (anamnesis.painWeeklyFrequency) {
+    fields.push({ label: isPt ? "Frequência Semanal" : "Weekly Frequency", value: translateKey(anamnesis.painWeeklyFrequency, isPt) });
+  }
+  if (anamnesis.painNightWaking) {
+    fields.push({ label: isPt ? "Dor Noturna (Acorda)" : "Night Pain (Waking)", value: translateKey(anamnesis.painNightWaking, isPt) });
+  }
+
+  // Migraine screening
+  if (anamnesis.hasPhotophobia) {
+    fields.push({ label: isPt ? "Fotofobia" : "Photophobia", value: translateKey(anamnesis.hasPhotophobia, isPt) });
+  }
+  if (anamnesis.hasVisualAura) {
+    fields.push({ label: isPt ? "Aura Visual" : "Visual Aura", value: translateKey(anamnesis.hasVisualAura, isPt) });
+  }
+  if (anamnesis.hasNausea) {
+    fields.push({ label: isPt ? "Náusea nas Crises" : "Nausea During Episodes", value: translateKey(anamnesis.hasNausea, isPt) });
+  }
+  if (anamnesis.headacheCrisisFrequency) {
+    fields.push({ label: isPt ? "Frequência de Crises" : "Crisis Frequency", value: translateKey(anamnesis.headacheCrisisFrequency, isPt) });
+  }
+
   // Pain regions as text
   if (anamnesis.painRegions?.length) {
     const regionLabels = anamnesis.painRegions.map(id => {
@@ -361,6 +386,14 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
       return id;
     });
     fields.push({ label: isPt ? "Regiões de Dor" : "Pain Regions", value: regionLabels.join(", ") });
+  }
+
+  // Per-region pain scores
+  if (anamnesis.painScoreMode === "per_region" && anamnesis.painScoresPerRegion && Object.keys(anamnesis.painScoresPerRegion).length > 0) {
+    const regionScores = Object.entries(anamnesis.painScoresPerRegion)
+      .map(([key, score]) => `${translateKey(key, isPt)}: ${score}/10`)
+      .join(", ");
+    fields.push({ label: isPt ? "Dor por Região" : "Pain by Region", value: regionScores });
   }
 
   for (const field of fields) {
