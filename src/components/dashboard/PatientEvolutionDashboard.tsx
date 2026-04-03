@@ -598,18 +598,33 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               {t("pro.export_pdfs")}
             </Button>
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome ou email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            {hiddenEmails.size > 0 && (
+              <Button
+                variant={showHidden ? "secondary" : "outline"}
+                size="sm"
+                className="gap-1.5 shrink-0 text-xs"
+                onClick={() => setShowHidden(!showHidden)}
+              >
+                {showHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                {showHidden ? "Ocultar arquivados" : `Arquivados (${hiddenEmails.size})`}
+              </Button>
+            )}
           </div>
         </div>
         {patients
           .filter((p) => {
+            const isHidden = hiddenEmails.has(p.email);
+            if (isHidden && !showHidden) return false;
             if (!searchQuery.trim()) return true;
             const q = searchQuery.toLowerCase();
             return p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q);
