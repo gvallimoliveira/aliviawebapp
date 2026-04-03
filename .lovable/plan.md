@@ -1,28 +1,42 @@
+# Corrigir PDF profissional: ordem das seções, blocos indivisíveis e margem das orientações e revisar para confirmar ter abordado da maneira mais eficiente possivel para evitar ajustes adicionais, principalmente de margens. 
 
+## Problemas identificados
 
-# Tornar acesso à página de detalhe da avaliação mais intuitivo
+1. **Ordem errada** — Hoje: Anamnese → Mapa de Dor → Questionários → Diagnóstico → Tratamento. Correto: **Diagnóstico+Resumo → Anamnese → Mapa de Dor → Escala de Dor → Questionários → Tratamento**.
+2. **Subtítulo órfão** — `renderSectionTitle` faz `checkPage` com apenas 14mm, insuficiente para garantir que o conteúdo seguinte (ex: questionários) fique na mesma página. O título pode ficar no final de uma página e o conteúdo na seguinte.
+3. **Orientações Gerais ultrapassando margem** — O `splitTextToSize` usa `CONTENT_WIDTH - 6` mas o texto é impresso em `MARGIN + 4`, causando overflow no lado direito.
 
-## Problema
+## Arquivo alterado
 
-Atualmente, o profissional precisa clicar na linha do header do card de avaliação (data + hipótese) para ir à página de detalhe. A única indicação visual é um `ChevronRight` cinza pequeno — não é intuitivo.
+`src/utils/generatePdf.ts`
 
-## Solução
+### 1. Reordenar seções em `_buildPdfDoc` (linhas 925-948)
 
-Adicionar um botão explícito "Ver avaliação completa" em cada card de avaliação no `PatientEvolutionDashboard.tsx`, e remover o comportamento de clique invisível no header.
+Mover o bloco de Diagnóstico (linhas 950-991) para **antes** da Anamnese, logo após o Patient Info. Adicionar renderização da Escala de Dor (VAS) como seção separada entre Mapa de Dor e Questionários (extrair do `anamnesisData.painScore`). Nova ordem:
 
-## Alterações
+```
+Patient Info
+→ Hipótese Diagnóstica + Resumo + Explicação + Raciocínio
+→ Separador
+→ Anamnese
+→ Mapa de Dor
+→ Escala de Dor (VAS) — extraída do painScore
+→ Questionários Funcionais
+→ Plano de Tratamento
+→ Notas do Profissional
+→ Disclaimer
+```
 
-### `src/components/dashboard/PatientEvolutionDashboard.tsx`
+### 2. Tornar subtítulo + conteúdo bloco indivisível
 
-1. **Remover** o `onClick` e `cursor-pointer` do `div` do header do card (linhas 712-714) — manter apenas como display estático
-2. **Adicionar** um botão visível `"Ver avaliação completa"` com ícone `FileText` + `ChevronRight`, posicionado logo após a seção de anamnese (antes do CTA de tratamento), com estilo `variant="outline"` e largura total para ser impossível de ignorar
-3. Mover os botões de WhatsApp e PDF para ficarem ao lado do novo botão (linha de ações)
+- Em `renderTestResultsSection`: antes de renderizar o título "Questionários Funcionais", estimar a altura do primeiro questionário (~30mm) e usar `checkPage(doc, y, 30 + 14)` para garantir que título + primeiro item fiquem juntos.
+- Em `renderSectionTitle`: aumentar o `needed` mínimo de 14 para receber um parâmetro opcional `contentHeight` que força espaço para o conteúdo seguinte.
+- Ajustar `renderSubSection` para calcular a altura total (título + todas as linhas) e fazer um único `checkPage` com esse valor, se couber na página. Se não couber, pelo menos garantir título + 3 primeiras linhas juntos (já faz isso, mas o cálculo atual de `neededForGroup` não inclui o padding correto).
 
-### Traduções (`pt.json`, `en.json`, `es.json`)
+### 3. Corrigir margem das Orientações Gerais (linhas 1104-1121)
 
-- `pro.view_full_assessment`: "Ver avaliação completa" / "View full assessment" / "Ver evaluación completa"
+Alterar `splitTextToSize` de `CONTENT_WIDTH - 6` para `CONTENT_WIDTH - 10` para compensar o offset `MARGIN + 4` e manter texto dentro das margens.
 
-## Resultado
+### 4. Adicionar seção VAS no relatório profissional
 
-O profissional terá um botão claro e destacado em cada avaliação para acessar a página de detalhe, sem perder a visão consolidada do dashboard de evolução.
-
+Extrair `painScore` de `anamnesisData` e renderizar a barra VAS (mesma lógica usada no relatório básico, linhas 662-728) como seção própria entre Mapa de Dor e Questionários.
