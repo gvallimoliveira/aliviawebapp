@@ -642,13 +642,40 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         <ArrowLeft className="h-4 w-4" /> {t("pro.back_to_patients")}
       </Button>
 
-      <div>
-        <h3 className="text-lg font-semibold text-foreground">{patient.name}</h3>
-        <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-          <Mail className="h-3.5 w-3.5" /> {patient.email}
-          <span className="mx-1">•</span>
-          {patient.assessments.length} {t("pro.assessments_count")}
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-lg font-semibold text-foreground">{patient.name}</h3>
+            {patient.assessments.some((a: any) => a.treatment_plan) ? (
+              <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1">
+                <FileCheck className="h-3 w-3" /> Tratamento Liberado
+              </Badge>
+            ) : patient.assessments.some((a: any) => a.diagnosis) ? (
+              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1">
+                <Lock className="h-3 w-3" /> Adquirir Tratamento
+              </Badge>
+            ) : null}
+          </div>
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <Mail className="h-3.5 w-3.5" /> {patient.email}
+            <span className="mx-1">•</span>
+            {patient.assessments.length} {t("pro.assessments_count")}
+          </p>
+        </div>
+        {(() => {
+          const latestWithDiagnosis = [...patient.assessments].reverse().find((a: any) => a.diagnosis);
+          if (!latestWithDiagnosis) return null;
+          return (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 shrink-0"
+              onClick={() => navigate(`/assessment/view/${latestWithDiagnosis.id}?from=professional&patient=${encodeURIComponent(patient.email)}`)}
+            >
+              <FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}
+            </Button>
+          );
+        })()}
       </div>
 
       {/* ── Pain Evolution Chart ── */}
