@@ -829,7 +829,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           <ClinicalImpressionCard
             assessment={latestWithDiag}
             existingImpression={existingImpression}
-            language={language}
           />
         );
       })()}
