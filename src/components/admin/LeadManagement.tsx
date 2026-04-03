@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Mail, Download, Share2, Search, TrendingUp, CheckCircle, Star } from "lucide-react";
+import { Loader2, Mail, Download, Share2, Search, TrendingUp, CheckCircle, Star, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Lead {
@@ -114,6 +114,20 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
     URL.revokeObjectURL(url);
   };
 
+  const deleteLead = async (id: string) => {
+    if (!confirm(isPt ? "Excluir este lead?" : "Delete this lead?")) return;
+    try {
+      const { error } = await supabase.functions.invoke("manage-vip-users", {
+        body: { action: "delete_lead", id },
+      });
+      if (error) throw error;
+      setLeads((prev) => prev.filter((l) => l.id !== id));
+      toast({ title: isPt ? "Lead excluído" : "Lead deleted" });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  };
+
   const shareWhatsApp = () => {
     if (filtered.length === 0) return;
     const lines = filtered.slice(0, 50).map((l, i) =>
@@ -219,6 +233,7 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
                     <TableHead>{t.status}</TableHead>
                     <TableHead>{t.painScore}</TableHead>
                     <TableHead>{t.regions}</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -236,6 +251,11 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
                       <TableCell>{lead.pain_score ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
                         {(lead.pain_regions || []).join(", ") || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" onClick={() => deleteLead(lead.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
