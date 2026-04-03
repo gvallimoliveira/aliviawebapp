@@ -137,7 +137,6 @@ const Dashboard = () => {
           return;
         }
         setProfessional(data);
-        (supabase.from("professional_referrals" as any) as any).select("*").eq("professional_id", data.id).order("created_at", { ascending: false }).then(({ data: refs }: any) => setReferrals(refs || []));
       } else if (tabFromUrl === "professional") {
         navigate("/professional/register", { replace: true });
       }
