@@ -1043,5 +1043,6 @@
   "upgrade_welcome.data_safe": "Your data is safe and protected for 30 minutes",
   "upgrade_welcome.cta": "Create account and continue",
   "upgrade_welcome.back": "Back to results",
-  "upgrade_welcome.progress_label": "Flow progress"
+  "upgrade_welcome.progress_label": "Flow progress",
+  "brand.slogan": "Aliv.iA is not just an app — it's a clinical reasoning system with the soul of a real physiotherapist."
 }
