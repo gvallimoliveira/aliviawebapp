@@ -385,6 +385,8 @@
   "treatment.search_video": "Buscar video en YouTube",
   "treatment.progression": "Criterios de Progresión",
   "treatment.guidelines": "Orientaciones Generales",
+  "treatment.pro_guidelines.title": "Directrices para el Profesional",
+  "treatment.pro_guidelines.subtitle": "Sugerencias de recursos terapéuticos — sin parámetros específicos. El fisioterapeuta debe ajustar según el caso clínico.",
   "treatment.back_to_diagnosis": "Volver al Diagnóstico",
   "treatment.new_assessment": "Nueva Evaluación",
   "treatment.processing": "Generando su plan de tratamiento...",

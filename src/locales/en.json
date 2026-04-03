@@ -384,6 +384,8 @@
   "treatment.search_video": "Search video on YouTube",
   "treatment.progression": "Progression Criteria",
   "treatment.guidelines": "General Guidelines",
+  "treatment.pro_guidelines.title": "Professional Guidelines",
+  "treatment.pro_guidelines.subtitle": "Therapeutic resource suggestions — no specific parameters. The physiotherapist should adjust according to the clinical case.",
   "treatment.back_to_diagnosis": "Back to Diagnosis",
   "treatment.new_assessment": "New Assessment",
   "treatment.processing": "Generating your treatment plan...",
