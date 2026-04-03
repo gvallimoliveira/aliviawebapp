@@ -282,7 +282,32 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
                   </div>
                 </div>
 
-                {/* Exercises */}
+              {/* Professional Guidelines inside short_term phase */}
+              {phase.id === "short_term" && mode === "professional" && plan.professionalGuidelines && plan.professionalGuidelines.length > 0 && (
+                <div className="p-4 rounded-lg border border-blue-500/30 bg-blue-500/5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Stethoscope className="h-5 w-5 text-blue-600" />
+                    <h4 className="text-sm font-semibold text-foreground">{t("treatment.pro_guidelines.title")}</h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t("treatment.pro_guidelines.subtitle")}</p>
+                  {plan.professionalGuidelines.map((cat, catIdx) => (
+                    <div key={catIdx} className="space-y-2">
+                      <h5 className="text-xs font-semibold text-foreground">{cat.category}</h5>
+                      {cat.techniques.map((tech, techIdx) => (
+                        <div key={techIdx} className="p-3 rounded-lg border border-blue-200/50 bg-background space-y-1">
+                          <p className="text-sm font-medium text-foreground">{tech.name}</p>
+                          <p className="text-xs text-muted-foreground">{tech.indication}</p>
+                          {tech.notes && (
+                            <p className="text-xs text-blue-600/80 italic">{tech.notes}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Exercises */}
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-foreground">{t("treatment.exercises")}</h4>
                   {phase.exercises.map((exercise, exIdx) => {
