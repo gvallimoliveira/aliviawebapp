@@ -1047,5 +1047,13 @@
   "upgrade_welcome.cta": "Criar conta e continuar",
   "upgrade_welcome.back": "Voltar ao resultado",
   "upgrade_welcome.progress_label": "Progresso do fluxo",
+  "upgrade_welcome.title_referral": "Você foi indicado! Bem-vindo ao Aliv.iA 🎉",
+  "upgrade_welcome.subtitle_referral": "Um amigo te indicou e você tem 10% de desconto na sua primeira avaliação premium avulsa. Veja como funciona:",
+  "upgrade_welcome.title_direct": "Avaliação Premium Completa",
+  "upgrade_welcome.subtitle_direct": "Diagnóstico preciso + plano de tratamento personalizado. Conheça o que está incluso e comece agora.",
+  "upgrade_welcome.step1_title_new": "📋 Escolha feita: Avaliação Premium",
+  "upgrade_welcome.step1_desc_new": "Você terá acesso a anamnese completa, questionários validados, testes funcionais e plano de tratamento.",
+  "upgrade_welcome.plan_referral": "Premium Avulso com 10% OFF",
+  "referral_banner.text": "Você foi indicado! 🎉 10% de desconto na primeira avaliação premium avulsa",
   "brand.slogan": "O Aliv.iA não é só um app — é um sistema de raciocínio clínico com alma de fisioterapeuta de verdade."
 }
