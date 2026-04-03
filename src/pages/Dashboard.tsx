@@ -24,6 +24,8 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search, User, Stethoscope as StethoscopeIcon } from "lucide-react";
 
 interface PremiumAccess {
   has_access: boolean;
@@ -70,6 +72,8 @@ const Dashboard = () => {
   
   const [activeTab, setActiveTab] = useState<string>("health");
   const [unreadCount, setUnreadCount] = useState(0);
+  const [msgSearch, setMsgSearch] = useState("");
+  const [msgFilter, setMsgFilter] = useState<"all" | "patient" | "professional">("all");
 
   const push = usePushNotifications();
 
@@ -227,12 +231,48 @@ const Dashboard = () => {
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
               </h2>
-              <ConversationList mode="patient" initialConversationId={convFromUrl} />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={msgSearch}
+                  onChange={(e) => setMsgSearch(e.target.value)}
+                  placeholder={t("chat.search_placeholder")}
+                  className="pl-9 rounded-xl"
+                />
+              </div>
               {professional && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-medium text-foreground mb-3">{t("dashboard.tab_professional")} — {t("chat.messages_title")}</h3>
-                  <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} />
+                <div className="flex gap-2">
+                  <Button
+                    variant={msgFilter === "all" ? "default" : "outline"}
+                    size="sm"
+                    className="rounded-full text-xs"
+                    onClick={() => setMsgFilter("all")}
+                  >
+                    {t("chat.filter_all")}
+                  </Button>
+                  <Button
+                    variant={msgFilter === "patient" ? "default" : "outline"}
+                    size="sm"
+                    className="rounded-full text-xs gap-1"
+                    onClick={() => setMsgFilter("patient")}
+                  >
+                    <User className="h-3 w-3" />{t("chat.filter_patient")}
+                  </Button>
+                  <Button
+                    variant={msgFilter === "professional" ? "default" : "outline"}
+                    size="sm"
+                    className="rounded-full text-xs gap-1"
+                    onClick={() => setMsgFilter("professional")}
+                  >
+                    <StethoscopeIcon className="h-3 w-3" />{t("chat.filter_professional")}
+                  </Button>
                 </div>
+              )}
+              {(msgFilter === "all" || msgFilter === "patient") && (
+                <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />
+              )}
+              {professional && (msgFilter === "all" || msgFilter === "professional") && (
+                <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} />
               )}
             </TabsContent>
             <TabsContent value="professional" className="space-y-8">
@@ -252,7 +292,16 @@ const Dashboard = () => {
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
               </h2>
-              <ConversationList mode="patient" initialConversationId={convFromUrl} />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={msgSearch}
+                  onChange={(e) => setMsgSearch(e.target.value)}
+                  placeholder={t("chat.search_placeholder")}
+                  className="pl-9 rounded-xl"
+                />
+              </div>
+              <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />
             </TabsContent>
           </Tabs>
         )}
