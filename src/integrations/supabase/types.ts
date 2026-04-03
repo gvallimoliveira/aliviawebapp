@@ -600,6 +600,7 @@ export type Database = {
       support_tickets: {
         Row: {
           admin_reply: string | null
+          archived_at: string | null
           created_at: string
           id: string
           message: string
@@ -610,6 +611,7 @@ export type Database = {
         }
         Insert: {
           admin_reply?: string | null
+          archived_at?: string | null
           created_at?: string
           id?: string
           message: string
@@ -620,9 +622,52 @@ export type Database = {
         }
         Update: {
           admin_reply?: string | null
+          archived_at?: string | null
           created_at?: string
           id?: string
           message?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      support_tickets_archive: {
+        Row: {
+          admin_reply: string | null
+          archived_at: string
+          archived_by: string
+          created_at: string
+          id: string
+          message: string
+          original_ticket_id: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_reply?: string | null
+          archived_at?: string
+          archived_by: string
+          created_at: string
+          id?: string
+          message: string
+          original_ticket_id: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Update: {
+          admin_reply?: string | null
+          archived_at?: string
+          archived_by?: string
+          created_at?: string
+          id?: string
+          message?: string
+          original_ticket_id?: string
           status?: string
           subject?: string
           updated_at?: string
