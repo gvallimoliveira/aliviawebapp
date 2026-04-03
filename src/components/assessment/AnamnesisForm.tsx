@@ -35,6 +35,18 @@ export interface AnamnesisData {
   ottawaPositive: string;
   hasLocalSwelling: string;
   hasScapulaPain: string;
+  // Migraine screening (cervical + headache)
+  hasPhotophobia?: string;
+  hasVisualAura?: string;
+  hasNausea?: string;
+  headacheCrisisFrequency?: string;
+  // Pain frequency (SINSS - Mulligan)
+  painPattern?: string;
+  painWeeklyFrequency?: string;
+  painNightWaking?: string;
+  // Per-region pain scores
+  painScoreMode?: "general" | "per_region";
+  painScoresPerRegion?: Record<string, number>;
 }
 
 interface AnamnesisFormProps {
@@ -47,7 +59,9 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeDragRegion, setActiveDragRegion] = useState<string | null>(null);
   const vasBarRef = useRef<HTMLDivElement>(null);
+  const vasBarRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [data, setData] = useState<AnamnesisData>({
     chiefComplaint: "",
     chiefComplaints: [],
@@ -73,6 +87,15 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     ottawaPositive: "",
     hasLocalSwelling: "",
     hasScapulaPain: "",
+    hasPhotophobia: "",
+    hasVisualAura: "",
+    hasNausea: "",
+    headacheCrisisFrequency: "",
+    painPattern: "",
+    painWeeklyFrequency: "",
+    painNightWaking: "",
+    painScoreMode: "general",
+    painScoresPerRegion: {},
   });
 
   const complaints = [
