@@ -114,6 +114,20 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
     URL.revokeObjectURL(url);
   };
 
+  const deleteLead = async (id: string) => {
+    if (!confirm(isPt ? "Excluir este lead?" : "Delete this lead?")) return;
+    try {
+      const { error } = await supabase.functions.invoke("manage-vip-users", {
+        body: { action: "delete_lead", id },
+      });
+      if (error) throw error;
+      setLeads((prev) => prev.filter((l) => l.id !== id));
+      toast({ title: isPt ? "Lead excluído" : "Lead deleted" });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  };
+
   const shareWhatsApp = () => {
     if (filtered.length === 0) return;
     const lines = filtered.slice(0, 50).map((l, i) =>
