@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, Stethoscope, Crown, RotateCcw } from "lucide-react";
 
+
 interface WelcomeSectionProps {
   profileName?: string | null;
   userEmail?: string;
