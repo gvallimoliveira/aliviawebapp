@@ -605,6 +605,15 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                           Estável
                         </Badge>
                       )}
+                      {p.assessments.some((a: any) => a.treatment_plan) ? (
+                        <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1">
+                          <FileCheck className="h-3 w-3" /> Tratamento Liberado
+                        </Badge>
+                      ) : p.assessments.some((a: any) => a.diagnosis) ? (
+                        <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1">
+                          <Lock className="h-3 w-3" /> Adquirir Tratamento
+                        </Badge>
+                      ) : null}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
