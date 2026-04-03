@@ -1177,7 +1177,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
       doc.setTextColor(...COLORS.muted);
       for (const g of treatmentPlan.generalGuidelines) {
         y = checkPage(doc, y, 8);
-        const gLines = doc.splitTextToSize(`✓ ${g}`, CONTENT_WIDTH - 6);
+        const gLines = doc.splitTextToSize(`✓ ${g}`, CONTENT_WIDTH - 10);
         doc.text(gLines, MARGIN + 4, y);
         y += gLines.length * 3.5 + 2;
       }
