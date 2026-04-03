@@ -35,6 +35,8 @@ Rules:
 - Pain regions: ${(painRegions || []).join(", ") || "N/A"}
 - Pain types: ${(anamnesisData?.painTypes || []).join(", ") || "N/A"}
 - Pain score (VAS): ${painScore ?? "N/A"}/10
+- Pain score mode: ${anamnesisData?.painScoreMode || "general"}
+${anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion ? `- Pain scores per region: ${Object.entries(anamnesisData.painScoresPerRegion).map(([k, v]) => `${k}: ${v}/10`).join(", ")}` : ""}
 - Evolution: ${anamnesisData?.evolution || "N/A"}
 - Aggravating factors: ${anamnesisData?.aggravatingFactors || "N/A"}
 - Relieving factors: ${anamnesisData?.relievingFactors || "N/A"}
@@ -42,6 +44,13 @@ Rules:
 - Previous treatments: ${anamnesisData?.previousTreatments || "N/A"}
 - Has edema: ${anamnesisData?.hasEdema ?? "N/A"}
 - Had twist/sprain: ${anamnesisData?.hadTwist ?? "N/A"}
+- Pain pattern: ${anamnesisData?.painPattern || "N/A"}
+- Weekly frequency: ${anamnesisData?.painWeeklyFrequency || "N/A"}
+- Night waking: ${anamnesisData?.painNightWaking || "N/A"}
+- Photophobia: ${anamnesisData?.hasPhotophobia || "N/A"}
+- Visual aura: ${anamnesisData?.hasVisualAura || "N/A"}
+- Nausea: ${anamnesisData?.hasNausea || "N/A"}
+- Headache crisis frequency: ${anamnesisData?.headacheCrisisFrequency || "N/A"}
 - Diagnostic hypothesis: ${diagnosis?.hypothesis || "N/A"}
 - Diagnostic summary: ${diagnosis?.summary || "N/A"}
 - Questionnaire results: ${JSON.stringify(questionnaireResults || [])}

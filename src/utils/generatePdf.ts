@@ -51,6 +51,15 @@ interface AnamnesisData {
   painDuration: string;
   sex: string;
   ageRange: string;
+  painPattern?: string;
+  painWeeklyFrequency?: string;
+  painNightWaking?: string;
+  hasPhotophobia?: string;
+  hasVisualAura?: string;
+  hasNausea?: string;
+  headacheCrisisFrequency?: string;
+  painScoreMode?: string;
+  painScoresPerRegion?: Record<string, number>;
 }
 
 interface PdfOptions {
@@ -215,6 +224,21 @@ function translateKey(key: string, isPt: boolean): string {
     "anamnesis.age.35_44": ["35–44 anos", "35–44"],
     "anamnesis.age.45_55": ["45–55 anos", "45–55"],
     "anamnesis.age.over_55": ["Mais de 55 anos", "Over 55"],
+    "anamnesis.pain_pattern.continuous": ["Contínua (24h)", "Continuous (24h)"],
+    "anamnesis.pain_pattern.intermittent": ["Intermitente", "Intermittent"],
+    "anamnesis.weekly_freq.daily": ["Todos os dias", "Every day"],
+    "anamnesis.weekly_freq.4_6": ["4-6x/semana", "4-6x/week"],
+    "anamnesis.weekly_freq.2_3": ["2-3x/semana", "2-3x/week"],
+    "anamnesis.weekly_freq.1_or_less": ["1x/semana ou menos", "Once a week or less"],
+    "anamnesis.night_waking.frequent": ["Sim, frequentemente", "Yes, frequently"],
+    "anamnesis.night_waking.sometimes": ["Às vezes", "Sometimes"],
+    "anamnesis.night_waking.no": ["Não", "No"],
+    "anamnesis.migraine_freq.daily": ["Diariamente", "Daily"],
+    "anamnesis.migraine_freq.weekly": ["Semanalmente", "Weekly"],
+    "anamnesis.migraine_freq.monthly": ["Mensalmente", "Monthly"],
+    "anamnesis.migraine_freq.sporadic": ["Esporádica", "Sporadic"],
+    "anamnesis.trauma.yes": ["Sim", "Yes"],
+    "anamnesis.trauma.no": ["Não", "No"],
   };
   const entry = map[key];
   if (entry) return isPt ? entry[0] : entry[1];
@@ -327,6 +351,31 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Faixa Etária" : "Age Range", value: translateKey(anamnesis.ageRange, isPt) });
   }
 
+  // New fields: pain pattern, frequency, night waking
+  if (anamnesis.painPattern) {
+    fields.push({ label: isPt ? "Padrão da Dor" : "Pain Pattern", value: translateKey(anamnesis.painPattern, isPt) });
+  }
+  if (anamnesis.painWeeklyFrequency) {
+    fields.push({ label: isPt ? "Frequência Semanal" : "Weekly Frequency", value: translateKey(anamnesis.painWeeklyFrequency, isPt) });
+  }
+  if (anamnesis.painNightWaking) {
+    fields.push({ label: isPt ? "Dor Noturna (Acorda)" : "Night Pain (Waking)", value: translateKey(anamnesis.painNightWaking, isPt) });
+  }
+
+  // Migraine screening
+  if (anamnesis.hasPhotophobia) {
+    fields.push({ label: isPt ? "Fotofobia" : "Photophobia", value: translateKey(anamnesis.hasPhotophobia, isPt) });
+  }
+  if (anamnesis.hasVisualAura) {
+    fields.push({ label: isPt ? "Aura Visual" : "Visual Aura", value: translateKey(anamnesis.hasVisualAura, isPt) });
+  }
+  if (anamnesis.hasNausea) {
+    fields.push({ label: isPt ? "Náusea nas Crises" : "Nausea During Episodes", value: translateKey(anamnesis.hasNausea, isPt) });
+  }
+  if (anamnesis.headacheCrisisFrequency) {
+    fields.push({ label: isPt ? "Frequência de Crises" : "Crisis Frequency", value: translateKey(anamnesis.headacheCrisisFrequency, isPt) });
+  }
+
   // Pain regions as text
   if (anamnesis.painRegions?.length) {
     const regionLabels = anamnesis.painRegions.map(id => {
@@ -337,6 +386,14 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
       return id;
     });
     fields.push({ label: isPt ? "Regiões de Dor" : "Pain Regions", value: regionLabels.join(", ") });
+  }
+
+  // Per-region pain scores
+  if (anamnesis.painScoreMode === "per_region" && anamnesis.painScoresPerRegion && Object.keys(anamnesis.painScoresPerRegion).length > 0) {
+    const regionScores = Object.entries(anamnesis.painScoresPerRegion)
+      .map(([key, score]) => `${translateKey(key, isPt)}: ${score}/10`)
+      .join(", ");
+    fields.push({ label: isPt ? "Dor por Região" : "Pain by Region", value: regionScores });
   }
 
   for (const field of fields) {

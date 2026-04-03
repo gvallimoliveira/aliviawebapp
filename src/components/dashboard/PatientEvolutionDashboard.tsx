@@ -65,6 +65,21 @@ function translateKey(key: string): string {
     "anamnesis.age.35_44": "35–44 anos",
     "anamnesis.age.45_55": "45–55 anos",
     "anamnesis.age.over_55": "Mais de 55 anos",
+    "anamnesis.pain_pattern.continuous": "Contínua (24h)",
+    "anamnesis.pain_pattern.intermittent": "Intermitente",
+    "anamnesis.weekly_freq.daily": "Todos os dias",
+    "anamnesis.weekly_freq.4_6": "4-6x/semana",
+    "anamnesis.weekly_freq.2_3": "2-3x/semana",
+    "anamnesis.weekly_freq.1_or_less": "1x/semana ou menos",
+    "anamnesis.night_waking.frequent": "Sim, frequentemente",
+    "anamnesis.night_waking.sometimes": "Às vezes",
+    "anamnesis.night_waking.no": "Não",
+    "anamnesis.migraine_freq.daily": "Diariamente",
+    "anamnesis.migraine_freq.weekly": "Semanalmente",
+    "anamnesis.migraine_freq.monthly": "Mensalmente",
+    "anamnesis.migraine_freq.sporadic": "Esporádica",
+    "anamnesis.trauma.yes": "Sim",
+    "anamnesis.trauma.no": "Não",
   };
   return map[key] || key;
 }
@@ -660,6 +675,17 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     if (d.hasGymAccess) fields.push({ label: "Acesso a Academia", value: translateKey(d.hasGymAccess) });
     if (d.sex) fields.push({ label: "Sexo Biológico", value: translateKey(d.sex) });
     if (d.ageRange) fields.push({ label: "Faixa Etária", value: translateKey(d.ageRange) });
+    if (d.painPattern) fields.push({ label: "Padrão da Dor", value: translateKey(d.painPattern) });
+    if (d.painWeeklyFrequency) fields.push({ label: "Frequência Semanal", value: translateKey(d.painWeeklyFrequency) });
+    if (d.painNightWaking) fields.push({ label: "Dor Noturna (Acorda)", value: translateKey(d.painNightWaking) });
+    if (d.hasPhotophobia) fields.push({ label: "Fotofobia", value: translateKey(d.hasPhotophobia) });
+    if (d.hasVisualAura) fields.push({ label: "Aura Visual", value: translateKey(d.hasVisualAura) });
+    if (d.hasNausea) fields.push({ label: "Náusea nas Crises", value: translateKey(d.hasNausea) });
+    if (d.headacheCrisisFrequency) fields.push({ label: "Frequência de Crises", value: translateKey(d.headacheCrisisFrequency) });
+    if (d.painScoreMode === "per_region" && d.painScoresPerRegion) {
+      const scores = Object.entries(d.painScoresPerRegion).map(([k, v]) => `${translateKey(k)}: ${v}/10`).join(", ");
+      fields.push({ label: "Dor por Região", value: scores });
+    }
     return fields;
   };
 

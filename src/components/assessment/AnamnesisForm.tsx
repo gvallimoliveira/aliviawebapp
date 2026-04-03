@@ -35,6 +35,18 @@ export interface AnamnesisData {
   ottawaPositive: string;
   hasLocalSwelling: string;
   hasScapulaPain: string;
+  // Migraine screening (cervical + headache)
+  hasPhotophobia?: string;
+  hasVisualAura?: string;
+  hasNausea?: string;
+  headacheCrisisFrequency?: string;
+  // Pain frequency (SINSS - Mulligan)
+  painPattern?: string;
+  painWeeklyFrequency?: string;
+  painNightWaking?: string;
+  // Per-region pain scores
+  painScoreMode?: "general" | "per_region";
+  painScoresPerRegion?: Record<string, number>;
 }
 
 interface AnamnesisFormProps {
@@ -47,7 +59,9 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeDragRegion, setActiveDragRegion] = useState<string | null>(null);
   const vasBarRef = useRef<HTMLDivElement>(null);
+  const vasBarRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [data, setData] = useState<AnamnesisData>({
     chiefComplaint: "",
     chiefComplaints: [],
@@ -73,6 +87,15 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     ottawaPositive: "",
     hasLocalSwelling: "",
     hasScapulaPain: "",
+    hasPhotophobia: "",
+    hasVisualAura: "",
+    hasNausea: "",
+    headacheCrisisFrequency: "",
+    painPattern: "",
+    painWeeklyFrequency: "",
+    painNightWaking: "",
+    painScoreMode: "general",
+    painScoresPerRegion: {},
   });
 
   const complaints = [
@@ -128,38 +151,44 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   };
 
   // Biomechanical groups for complaint validation
-  const upperGroup = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.shoulder_pain", "anamnesis.complaint.elbow_pain", "anamnesis.complaint.wrist_pain", "anamnesis.complaint.headache"];
+  const upperGroup = ["anamnesis.complaint.shoulder_pain", "anamnesis.complaint.elbow_pain", "anamnesis.complaint.wrist_pain"];
   const lowerGroup = ["anamnesis.complaint.back_pain", "anamnesis.complaint.hip_pain", "anamnesis.complaint.knee_pain", "anamnesis.complaint.ankle_pain", "anamnesis.complaint.foot_pain"];
-  // Spinal combination: cervical + lombar are allowed together (full spine chain)
-  const spinalPair = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.back_pain"];
+  // Spinal + head group: cervical, costas, lombar and headache are allowed together (full spine chain + cervicogenic headache)
+  const spinalHeadGroup = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.back_pain", "anamnesis.complaint.headache"];
   // Cross-group exception: lombar + ombro (fascial/muscular chains in rotation sports)
   const lumbarShoulderPair = ["anamnesis.complaint.back_pain", "anamnesis.complaint.shoulder_pain"];
 
-  const getComplaintGroup = (c: string): "upper" | "lower" | null => {
+  const getComplaintGroup = (c: string): "upper" | "lower" | "spinal_head" | null => {
+    if (spinalHeadGroup.includes(c)) return "spinal_head";
     if (upperGroup.includes(c)) return "upper";
     if (lowerGroup.includes(c)) return "lower";
     return null;
   };
 
   const canAddComplaint = (complaint: string, current: string[]): boolean => {
-    const newGroup = getComplaintGroup(complaint);
-    if (!newGroup) return true; // items not in any group are always allowed
-    for (const c of current) {
-      const g = getComplaintGroup(c);
-      if (g && g !== newGroup) {
-        // Check allowed cross-group exceptions
-        const combined = [...current, complaint];
-        const groupedItems = combined.filter(item => getComplaintGroup(item) !== null);
-        // Allow spinal pair: neck_pain + back_pain
-        const isOnlySpinal = groupedItems.every(item => spinalPair.includes(item));
-        if (isOnlySpinal) return true;
-        // Allow lumbar + shoulder pair
-        const isOnlyLumbarShoulder = groupedItems.every(item => lumbarShoulderPair.includes(item));
-        if (isOnlyLumbarShoulder) return true;
-        return false;
-      }
-    }
-    return true;
+    const combined = [...current, complaint];
+    const groupedItems = combined.filter(item => getComplaintGroup(item) !== null);
+    if (groupedItems.length <= 1) return true;
+
+    // All spinal_head group items can combine freely
+    const isOnlySpinalHead = groupedItems.every(item => spinalHeadGroup.includes(item));
+    if (isOnlySpinalHead) return true;
+
+    // Allow lumbar + shoulder pair
+    const isOnlyLumbarShoulder = groupedItems.every(item => lumbarShoulderPair.includes(item));
+    if (isOnlyLumbarShoulder) return true;
+
+    // All items must be in the same group (upper or lower)
+    const groups = new Set(groupedItems.map(item => getComplaintGroup(item)));
+    if (groups.size === 1) return true;
+
+    // Allow spinal_head items combined with lower group (back_pain is in both)
+    const hasSpinal = groupedItems.some(i => spinalHeadGroup.includes(i));
+    const hasLower = groupedItems.some(i => lowerGroup.includes(i) && !spinalHeadGroup.includes(i));
+    const hasUpper = groupedItems.some(i => upperGroup.includes(i));
+    if (hasSpinal && hasLower && !hasUpper) return true;
+
+    return false;
   };
 
   const [complaintConflict, setComplaintConflict] = useState(false);
@@ -261,7 +290,12 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   };
 
   // Define step IDs for clarity
-  type StepId = "complaint" | "onset" | "surgery" | "painmap" | "region_detail" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "gym" | "painscore";
+  type StepId = "complaint" | "onset" | "surgery" | "painmap" | "region_detail" | "migraine_screening" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "pain_frequency" | "gym" | "painscore";
+
+  // Check if migraine screening should show
+  const needsMigraineScreening = () => {
+    return data.chiefComplaints.includes("anamnesis.complaint.headache") && data.chiefComplaints.includes("anamnesis.complaint.neck_pain");
+  };
 
   const buildStepSequence = (): StepId[] => {
     const base: StepId[] = ["complaint", "onset", "surgery", "painmap"];
@@ -269,10 +303,14 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     if (needsRegionDetail()) {
       base.push("region_detail");
     }
+    // Add migraine screening if cervical + headache
+    if (needsMigraineScreening()) {
+      base.push("migraine_screening");
+    }
     if (isShoulderRelated()) {
       base.push("sex_age");
     }
-    base.push("paintype", "evolution", "factors", "duration", "gym", "painscore");
+    base.push("paintype", "evolution", "factors", "duration", "pain_frequency", "gym", "painscore");
     return base;
   };
 
@@ -332,6 +370,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">{t("anamnesis.surgery_title")}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.surgery_subtitle")}</p>
+            <p className="text-xs text-muted-foreground/80 italic">{t("anamnesis.surgery_disclaimer")}</p>
             <div className="grid grid-cols-2 gap-3">
               {["anamnesis.surgery.yes", "anamnesis.surgery.no"].map((option) => (
                 <Card key={option} className={`cursor-pointer transition-all ${data.hasPriorSurgery === option ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, hasPriorSurgery: option, ...(option.includes("no") ? { surgeryDetails: "" } : {}) })}>
@@ -454,6 +493,57 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         );
 
       }
+      case "migraine_screening":
+        return (
+          <div className="space-y-5">
+            <h3 className="text-lg font-semibold">{t("anamnesis.migraine_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.migraine_subtitle")}</p>
+
+            <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+              <Label className="text-sm font-medium">{t("anamnesis.migraine_photophobia")}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                  <Button key={opt} variant={data.hasPhotophobia === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasPhotophobia: opt })}>
+                    {t(opt)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+              <Label className="text-sm font-medium">{t("anamnesis.migraine_aura")}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                  <Button key={opt} variant={data.hasVisualAura === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasVisualAura: opt })}>
+                    {t(opt)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+              <Label className="text-sm font-medium">{t("anamnesis.migraine_nausea")}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {["anamnesis.trauma.yes", "anamnesis.trauma.no"].map((opt) => (
+                  <Button key={opt} variant={data.hasNausea === opt ? "default" : "outline"} size="sm" className="rounded-xl" onClick={() => setData({ ...data, hasNausea: opt })}>
+                    {t(opt)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+              <Label className="text-sm font-medium">{t("anamnesis.migraine_frequency")}</Label>
+              <div className="grid gap-2">
+                {["anamnesis.migraine_freq.daily", "anamnesis.migraine_freq.weekly", "anamnesis.migraine_freq.monthly", "anamnesis.migraine_freq.sporadic"].map((opt) => (
+                  <Card key={opt} className={`cursor-pointer transition-all ${data.headacheCrisisFrequency === opt ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, headacheCrisisFrequency: opt })}>
+                    <CardContent className="py-3 px-4"><span className="text-sm font-medium">{t(opt)}</span></CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
       case "sex_age":
         return (
           <div className="space-y-5">
@@ -550,6 +640,53 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
             </div>
           </div>
         );
+      case "pain_frequency":
+        return (
+          <div className="space-y-5">
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_frequency_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.pain_frequency_subtitle")}</p>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">{t("anamnesis.pain_pattern_label")}</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {["anamnesis.pain_pattern.continuous", "anamnesis.pain_pattern.intermittent"].map((opt) => (
+                  <Card key={opt} className={`cursor-pointer transition-all ${data.painPattern === opt ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, painPattern: opt, ...(opt.includes("continuous") ? { painWeeklyFrequency: "" } : {}) })}>
+                    <CardContent className="py-4 px-4 text-center">
+                      <span className="text-2xl block mb-1">{opt.includes("continuous") ? "🔄" : "⚡"}</span>
+                      <span className="text-sm font-medium">{t(opt)}</span>
+                      <p className="text-xs text-muted-foreground mt-1">{t(`${opt}_desc`)}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {data.painPattern === "anamnesis.pain_pattern.intermittent" && (
+              <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+                <Label className="text-sm font-medium">{t("anamnesis.weekly_frequency_label")}</Label>
+                <div className="grid gap-2">
+                  {["anamnesis.weekly_freq.daily", "anamnesis.weekly_freq.4_6", "anamnesis.weekly_freq.2_3", "anamnesis.weekly_freq.1_or_less"].map((opt) => (
+                    <Card key={opt} className={`cursor-pointer transition-all ${data.painWeeklyFrequency === opt ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, painWeeklyFrequency: opt })}>
+                      <CardContent className="py-3 px-4"><span className="text-sm font-medium">{t(opt)}</span></CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+              <Label className="text-sm font-medium">{t("anamnesis.night_waking_label")}</Label>
+              <p className="text-xs text-muted-foreground">{t("anamnesis.night_waking_subtitle")}</p>
+              <div className="grid gap-2">
+                {["anamnesis.night_waking.frequent", "anamnesis.night_waking.sometimes", "anamnesis.night_waking.no"].map((opt) => (
+                  <Card key={opt} className={`cursor-pointer transition-all ${data.painNightWaking === opt ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, painNightWaking: opt })}>
+                    <CardContent className="py-3 px-4"><span className="text-sm font-medium">{t(opt)}</span></CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
       case "gym":
         return (
           <div className="space-y-4">
@@ -585,89 +722,144 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
           "hsl(0, 75%, 48%)",
           "hsl(0, 85%, 40%)",
         ];
+        const regionColors = [
+          "hsl(200, 70%, 50%)", "hsl(30, 80%, 50%)", "hsl(280, 60%, 50%)",
+          "hsl(340, 70%, 50%)", "hsl(160, 60%, 45%)", "hsl(60, 70%, 45%)",
+        ];
+        const hasMultipleRegions = data.chiefComplaints.length > 1;
+        const regionLabels = data.chiefComplaints.map(c => t(c));
+
+        const renderVasBar = (score: number, onScoreChange: (s: number) => void, refKey?: string) => (
+          <div className="px-2 space-y-3">
+            <div
+              ref={refKey ? (el) => { vasBarRefs.current[refKey] = el; } : vasBarRef}
+              className="relative h-5 rounded-full overflow-visible border border-border/60 shadow-inner cursor-pointer touch-none select-none"
+              style={{ background: `linear-gradient(to right, ${gradientColors.join(", ")})`, borderRadius: "9999px" }}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                setIsDragging(true);
+                if (refKey) setActiveDragRegion(refKey);
+                const rect = e.currentTarget.getBoundingClientRect();
+                const s = Math.round(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 10);
+                onScoreChange(s);
+              }}
+              onPointerMove={(e) => {
+                if (!isDragging) return;
+                if (refKey && activeDragRegion !== refKey) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const s = Math.round(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 10);
+                onScoreChange(s);
+              }}
+              onPointerUp={() => { setIsDragging(false); setActiveDragRegion(null); }}
+              onPointerCancel={() => { setIsDragging(false); setActiveDragRegion(null); }}
+            >
+              <motion.div
+                className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-[3px] shadow-lg z-10 pointer-events-none"
+                style={{ borderColor: gradientColors[score] }}
+                animate={{ left: `calc(${(score / 10) * 100}% - 12px)` }}
+                transition={isDragging ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 25 }}
+              />
+            </div>
+            <div className="flex justify-between">
+              {Array.from({ length: 11 }, (_, i) => (
+                <button key={i} type="button" onClick={() => onScoreChange(i)} className="flex flex-col items-center cursor-pointer">
+                  <span className="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition-all duration-200"
+                    style={{ backgroundColor: score === i ? gradientColors[i] : "transparent", color: score === i ? "white" : "hsl(var(--muted-foreground))" }}
+                  >{i}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{t("anamnesis.no_pain")}</span>
+              <span>{t("anamnesis.worst_pain")}</span>
+            </div>
+          </div>
+        );
+
         return (
           <div className="space-y-6">
             <h3 className="text-lg font-semibold">{t("anamnesis.pain_score_title")}</h3>
 
-            {/* Face + Number */}
-            <div className="text-center space-y-1">
-              <motion.span
-                key={data.painScore}
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="text-5xl inline-block"
-              >
-                {faces[data.painScore]}
-              </motion.span>
-              <div
-                className="text-5xl font-black tabular-nums transition-colors duration-300"
-                style={{ color: gradientColors[data.painScore] }}
-              >
-                {data.painScore}
-              </div>
-              <p className="text-sm text-muted-foreground">{t("anamnesis.pain_score_desc")}</p>
-            </div>
-
-            {/* VAS gradient bar with drag + click */}
-            <div className="px-2 space-y-3">
-              <div
-                ref={vasBarRef}
-                className="relative h-5 rounded-full overflow-visible border border-border/60 shadow-inner cursor-pointer touch-none select-none"
-                style={{ background: `linear-gradient(to right, ${gradientColors.join(", ")})`, borderRadius: "9999px" }}
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-                  setIsDragging(true);
-                  if (vasBarRef.current) {
-                    const rect = vasBarRef.current.getBoundingClientRect();
-                    const score = Math.round(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 10);
-                    setData((prev) => ({ ...prev, painScore: score }));
-                  }
-                }}
-                onPointerMove={(e) => {
-                  if (!isDragging || !vasBarRef.current) return;
-                  const rect = vasBarRef.current.getBoundingClientRect();
-                  const score = Math.round(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 10);
-                  setData((prev) => ({ ...prev, painScore: score }));
-                }}
-                onPointerUp={() => setIsDragging(false)}
-                onPointerCancel={() => setIsDragging(false)}
-              >
-                <motion.div
-                  className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-[3px] shadow-lg z-10 pointer-events-none"
-                  style={{ borderColor: gradientColors[data.painScore] }}
-                  animate={{ left: `calc(${(data.painScore / 10) * 100}% - 12px)` }}
-                  transition={isDragging ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 25 }}
-                />
-              </div>
-
-              {/* Clickable number row */}
-              <div className="flex justify-between">
-                {Array.from({ length: 11 }, (_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setData({ ...data, painScore: i })}
-                    className="flex flex-col items-center cursor-pointer"
+            {/* Mode selector for multiple regions */}
+            {hasMultipleRegions && (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">{t("anamnesis.pain_score_mode_question")}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={data.painScoreMode === "general" ? "default" : "outline"}
+                    size="sm" className="rounded-xl h-auto py-2.5"
+                    onClick={() => setData({ ...data, painScoreMode: "general" })}
                   >
-                    <span
-                      className="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition-all duration-200"
-                      style={{
-                        backgroundColor: data.painScore === i ? gradientColors[i] : "transparent",
-                        color: data.painScore === i ? "white" : "hsl(var(--muted-foreground))",
-                      }}
-                    >
-                      {i}
-                    </span>
-                  </button>
-                ))}
+                    {t("anamnesis.pain_score_mode_general")}
+                  </Button>
+                  <Button
+                    variant={data.painScoreMode === "per_region" ? "default" : "outline"}
+                    size="sm" className="rounded-xl h-auto py-2.5"
+                    onClick={() => {
+                      const initial: Record<string, number> = {};
+                      data.chiefComplaints.forEach(c => { if (!data.painScoresPerRegion?.[c]) initial[c] = 5; });
+                      setData({ ...data, painScoreMode: "per_region", painScoresPerRegion: { ...initial, ...data.painScoresPerRegion } });
+                    }}
+                  >
+                    {t("anamnesis.pain_score_mode_per_region")}
+                  </Button>
+                </div>
               </div>
+            )}
 
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{t("anamnesis.no_pain")}</span>
-                <span>{t("anamnesis.worst_pain")}</span>
+            {/* General mode or single region */}
+            {(data.painScoreMode === "general" || !hasMultipleRegions) && (
+              <>
+                <div className="text-center space-y-1">
+                  <motion.span key={data.painScore} initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-5xl inline-block">
+                    {faces[data.painScore]}
+                  </motion.span>
+                  <div className="text-5xl font-black tabular-nums transition-colors duration-300" style={{ color: gradientColors[data.painScore] }}>
+                    {data.painScore}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t("anamnesis.pain_score_desc")}</p>
+                </div>
+                {renderVasBar(data.painScore, (s) => setData(prev => ({ ...prev, painScore: s })))}
+              </>
+            )}
+
+            {/* Per-region mode */}
+            {data.painScoreMode === "per_region" && hasMultipleRegions && (
+              <div className="space-y-6">
+                {data.chiefComplaints.map((complaint, idx) => {
+                  const score = data.painScoresPerRegion?.[complaint] ?? 5;
+                  const color = regionColors[idx % regionColors.length];
+                  return (
+                    <div key={complaint} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                        <span className="text-sm font-semibold">{t(complaint)}</span>
+                        <span className="text-lg font-black ml-auto" style={{ color: gradientColors[score] }}>{score}</span>
+                        <span className="text-xl">{faces[score]}</span>
+                      </div>
+                      {renderVasBar(score, (s) => {
+                        const updated = { ...data.painScoresPerRegion, [complaint]: s };
+                        const avg = Math.round(Object.values(updated).reduce((a, b) => a + b, 0) / Object.values(updated).length);
+                        setData(prev => ({ ...prev, painScoresPerRegion: updated, painScore: avg }));
+                      }, complaint)}
+                    </div>
+                  );
+                })}
+                {/* Legend */}
+                <div className="flex flex-wrap gap-3 p-3 bg-muted/50 rounded-xl">
+                  {data.chiefComplaints.map((c, idx) => (
+                    <div key={c} className="flex items-center gap-1.5 text-xs">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: regionColors[idx % regionColors.length] }} />
+                      <span>{t(c)}: <strong>{data.painScoresPerRegion?.[c] ?? 5}</strong></span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-auto">
+                    <span>{t("anamnesis.pain_score_average")}: <strong>{data.painScore}</strong></span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         );
       }
@@ -692,11 +884,13 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         }
         return true;
       }
+      case "migraine_screening": return !!data.hasPhotophobia && !!data.hasNausea && !!data.headacheCrisisFrequency;
       case "sex_age": return data.sex !== "" && data.ageRange !== "";
       case "paintype": return data.painTypes.length > 0;
       case "evolution": return data.evolution !== "";
       case "factors": return data.activityLevel !== "";
       case "duration": return data.painDuration !== "";
+      case "pain_frequency": return !!data.painPattern && !!data.painNightWaking && (data.painPattern !== "anamnesis.pain_pattern.intermittent" || !!data.painWeeklyFrequency);
       case "gym": return data.hasGymAccess !== "";
       case "painscore": return true;
     }
