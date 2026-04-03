@@ -51,6 +51,15 @@ interface AnamnesisData {
   painDuration: string;
   sex: string;
   ageRange: string;
+  painPattern?: string;
+  painWeeklyFrequency?: string;
+  painNightWaking?: string;
+  hasPhotophobia?: string;
+  hasVisualAura?: string;
+  hasNausea?: string;
+  headacheCrisisFrequency?: string;
+  painScoreMode?: string;
+  painScoresPerRegion?: Record<string, number>;
 }
 
 interface PdfOptions {
