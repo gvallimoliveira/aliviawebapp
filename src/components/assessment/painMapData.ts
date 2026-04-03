@@ -137,9 +137,9 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
   // ═══════════════════════════════════════════════════════════════════════════
   left: [
     { id: "head_left", label_pt: "Cabeça (lat. esq.)", label_en: "Head (left)",
-      d: "M100,5 C86,5 76,12 74,22 C72,32 76,38 82,42 L122,42 C128,38 132,30 130,22 C128,12 118,5 100,5Z" },
+      d: "M81,16 C81,19 76,12 52,24 C53,43 64,45 80,52 L97,52 C109,46 115,35 110,24 C98,21 91,18 89,16 Z" },
     { id: "cervical_left", label_pt: "Cervical (lat. esq.)", label_en: "Cervical (left)",
-      d: "M82,42 L122,42 L124,55 L80,55Z" },
+      d: "M69,58 L100,55 L95,74 L65,80 Z" },
     { id: "shoulder_left", label_pt: "Ombro Esquerdo (lat.)", label_en: "Left Shoulder (lat.)",
       d: "M103,74 L115,82 L118,94 L121,111 L96,115 L67,118 L72,90 L77,78 Z" },
     { id: "arm_left", label_pt: "Braço (lat. esq.)", label_en: "Arm (left lat.)",
