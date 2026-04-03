@@ -902,6 +902,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   const handleNext = () => {
     if (step < totalSteps - 1) {
       setStep(step + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       onComplete(data);
     }
