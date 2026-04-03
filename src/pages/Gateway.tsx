@@ -35,7 +35,7 @@ const Gateway = () => {
   useEffect(() => {
     setSeo({
       title: "Aliv.iA — Avaliação Musculoesquelética Inteligente",
-      description: "Plataforma de avaliação musculoesquelética com IA para pacientes com dor e fisioterapeutas. Diagnóstico preliminar e plano de tratamento personalizado.",
+      description: "O Aliv.iA não é só um app — é um sistema de raciocínio clínico com alma de fisioterapeuta de verdade. Avaliação musculoesquelética com IA, diagnóstico preliminar e plano de tratamento personalizado.",
       url: "https://aliviawebapp.com.br",
       type: "website",
     });
