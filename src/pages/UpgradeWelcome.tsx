@@ -75,8 +75,8 @@ const UpgradeWelcome = () => {
           icon: Shield,
           color: "text-primary",
           bg: "bg-primary/5 border-primary/20",
-          titleKey: "upgrade_welcome.step2_title",
-          descKey: "upgrade_welcome.step2_desc",
+          titleKey: "upgrade_welcome.step2_title_direct",
+          descKey: "upgrade_welcome.step2_desc_direct",
           done: false,
         },
         {

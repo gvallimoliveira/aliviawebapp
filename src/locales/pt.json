@@ -1057,6 +1057,8 @@
   "referral_banner.text": "Você foi indicado! 🎉 10% de desconto na primeira avaliação premium avulsa",
   "upgrade_welcome.step1_title_direct": "🔐 Crie sua conta",
   "upgrade_welcome.step1_desc_direct": "É rápido. Sua conta garante acesso aos resultados e histórico.",
+  "upgrade_welcome.step2_title_direct": "💳 Pagamento seguro",
+  "upgrade_welcome.step2_desc_direct": "Escolha entre avulso ou mensal. Processamento seguro via Stripe.",
   "upgrade_welcome.step3_title_direct": "🎯 Avaliação + Diagnóstico e Tratamento",
   "upgrade_welcome.step3_desc_direct": "Anamnese completa, questionários validados, testes funcionais, diagnóstico detalhado e plano personalizado em 3 fases.",
   "upgrade_welcome.back_generic": "Voltar",

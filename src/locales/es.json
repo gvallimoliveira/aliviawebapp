@@ -1057,6 +1057,8 @@
   "referral_banner.text": "¡Fuiste referido! 🎉 10% de descuento en tu primera evaluación premium individual",
   "upgrade_welcome.step1_title_direct": "🔐 Crea tu cuenta",
   "upgrade_welcome.step1_desc_direct": "Es rápido. Tu cuenta garantiza acceso a tus resultados e historial.",
+  "upgrade_welcome.step2_title_direct": "💳 Pago seguro",
+  "upgrade_welcome.step2_desc_direct": "Elige entre individual o mensual. Procesamiento seguro vía Stripe.",
   "upgrade_welcome.step3_title_direct": "🎯 Evaluación + Diagnóstico y Tratamiento",
   "upgrade_welcome.step3_desc_direct": "Anamnesis completa, cuestionarios validados, pruebas funcionales, diagnóstico detallado y plan personalizado en 3 fases.",
   "upgrade_welcome.back_generic": "Volver",
