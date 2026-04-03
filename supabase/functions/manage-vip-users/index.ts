@@ -225,6 +225,28 @@ serve(async (req) => {
       });
     }
 
+    // Delete a lead (assessment)
+    if (action === "delete_lead") {
+      const { id } = body;
+      if (!id) {
+        return new Response(JSON.stringify({ error: "ID is required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error } = await supabaseClient
+        .from("assessments")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // List VIP users
     if (action === "list_vip" || !action) {
       const { data, error } = await supabaseClient

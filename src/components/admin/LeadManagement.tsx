@@ -252,6 +252,11 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
                       <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
                         {(lead.pain_regions || []).join(", ") || "—"}
                       </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" onClick={() => deleteLead(lead.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
