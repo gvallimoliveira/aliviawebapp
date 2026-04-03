@@ -1,65 +1,31 @@
 
 
-# Arquivamento de tickets de suporte + tabela de backup
+# Badges de tratamento + botão "Ver avaliação" na listagem e detalhe do paciente
 
-## Abordagem
+## Mudanças em `src/components/dashboard/PatientEvolutionDashboard.tsx`
 
-Não deletar tickets — usar **soft delete** via campo `archived_at`. Tickets arquivados saem da listagem principal mas continuam no banco. Além disso, criar uma tabela `support_tickets_archive` como backup permanente: antes de arquivar, copiar o ticket inteiro para lá.
+### 1. Badge de tratamento na listagem de pacientes (linhas 576-623)
 
-## 1. Migration — adicionar campo + tabela de backup
+Ao lado do badge "Melhorando/Piorando/Estável", adicionar um badge que indica o status do plano de tratamento do paciente:
+- **Se alguma avaliação do grupo tem `treatment_plan`** → Badge verde: "Tratamento Liberado" (ícone FileCheck)
+- **Se nenhuma tem tratamento mas alguma tem `diagnosis`** → Badge amarelo/outline: "Adquirir Tratamento" (ícone Lock)
+- **Se nenhuma tem diagnóstico** → Sem badge
 
-```sql
--- Campo de arquivamento (soft delete)
-ALTER TABLE public.support_tickets ADD COLUMN archived_at timestamptz DEFAULT NULL;
+Lógica: verificar `p.assessments.some(a => a.treatment_plan)` e `p.assessments.some(a => a.diagnosis && !a.treatment_plan)`.
 
--- Tabela de backup permanente
-CREATE TABLE public.support_tickets_archive (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  original_ticket_id uuid NOT NULL,
-  user_id uuid NOT NULL,
-  subject text NOT NULL,
-  message text NOT NULL,
-  status text NOT NULL,
-  admin_reply text,
-  created_at timestamptz NOT NULL,
-  updated_at timestamptz NOT NULL,
-  archived_at timestamptz NOT NULL DEFAULT now(),
-  archived_by uuid NOT NULL
-);
+### 2. Botão "Ver avaliação completa" + badge de tratamento no header do detalhe do paciente (linhas 636-643)
 
--- RLS: apenas admins podem ver/inserir no archive
-ALTER TABLE public.support_tickets_archive ENABLE ROW LEVEL SECURITY;
+Na view de detalhe do paciente, ao lado do nome (`patient.name`):
+- Adicionar badge de tratamento (mesmo critério da listagem)
+- Adicionar botão compacto "Ver avaliação" que navega para a última avaliação com diagnóstico (`/assessment/view/{id}?from=professional&patient=...`)
 
-CREATE POLICY "Admins can manage archive"
-  ON public.support_tickets_archive FOR ALL
-  TO authenticated
-  USING (public.is_admin(auth.uid()))
-  WITH CHECK (public.is_admin(auth.uid()));
-```
+Layout: nome na esquerda, badge + botão na direita, mesma linha.
 
-## 2. Edge function — ação `archive_ticket`
+### 3. Imports
 
-No `manage-vip-users/index.ts`, adicionar action `archive_ticket` que:
-1. Busca o ticket pelo ID (service role)
-2. Insere cópia na `support_tickets_archive` com `archived_by = user.id`
-3. Atualiza o ticket original com `archived_at = now()`
-
-## 3. UI — botão de arquivar + filtro
-
-No `SupportTicketManagement.tsx`:
-- Adicionar botão `Archive` (ícone Archive) nos tickets com status `closed` ou `replied`
-- Filtro padrão: ocultar tickets com `archived_at` preenchido (query `.is("archived_at", null)`)
-- Toggle "Mostrar arquivados" para ver histórico completo
-- Tickets arquivados aparecem com visual diferenciado (opacity reduzida) e badge "Arquivado"
-- Confirmação antes de arquivar
-
-## 4. Traduções no mapa interno do componente
-
-Chaves: `archive`, `archived`, `show_archived`, `archive_confirm`, `archive_success`
+Adicionar `FileCheck` (já importado) e verificar que `Lock` (já importado) está disponível.
 
 ## Arquivos a alterar
 
-1. **Migration** — `archived_at` na `support_tickets` + tabela `support_tickets_archive` com RLS
-2. `supabase/functions/manage-vip-users/index.ts` — action `archive_ticket`
-3. `src/components/admin/SupportTicketManagement.tsx` — botão arquivar, filtro, toggle
+1. `src/components/dashboard/PatientEvolutionDashboard.tsx` — badges na listagem + header do detalhe
 
