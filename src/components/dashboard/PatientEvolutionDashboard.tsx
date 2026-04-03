@@ -503,19 +503,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     }
   }, [notes, onDownloadPdf, t, toast]);
 
-  // Group assessments by patient_email (fallback to patient_name)
+  // Group assessments by patient_email (fallback to patient_name, then id)
   const patients = useMemo(() => {
-    const map = new Map<string, PatientGroup>();
+    const map = new Map<string, PatientGroup & { groupKey: string }>();
     assessments.forEach((a) => {
       const email = (a as any).patient_email;
       const name = (a as any).patient_name;
-      const key = email || name || a.id; // fallback to id if both null
+      const key = email || name || a.id; // unique grouping key
       if (!map.has(key)) {
         map.set(key, {
           email: email || "",
           name: name || email || "Sem nome",
           assessments: [],
           lastDate: a.created_at,
+          groupKey: key, // stable unique identifier
         });
       }
       const group = map.get(key)!;
