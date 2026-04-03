@@ -119,10 +119,10 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
       {debugMode && (
         <div className="flex justify-center gap-2">
           <Button size="sm" variant="outline" onClick={exportPaths} className="rounded-xl text-xs">
-            📋 Export to Console
+            💾 Salvar Vista ({view})
           </Button>
           <p className="text-xs text-muted-foreground self-center">
-            Clique numa região → arraste os pontos amarelos
+            Clique numa região → arraste os pontos → salve
           </p>
         </div>
       )}
