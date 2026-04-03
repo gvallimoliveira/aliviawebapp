@@ -304,6 +304,27 @@ export type Database = {
           },
         ]
       }
+      professional_hidden_patients: {
+        Row: {
+          hidden_at: string
+          id: string
+          patient_email: string
+          professional_id: string
+        }
+        Insert: {
+          hidden_at?: string
+          id?: string
+          patient_email: string
+          professional_id: string
+        }
+        Update: {
+          hidden_at?: string
+          id?: string
+          patient_email?: string
+          professional_id?: string
+        }
+        Relationships: []
+      }
       professional_notes: {
         Row: {
           assessment_id: string
