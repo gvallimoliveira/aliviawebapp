@@ -64,7 +64,7 @@ const UpgradeWelcome = () => {
   const steps = isDirectFlow
     ? [
         {
-          icon: ClipboardList,
+          icon: Lock,
           color: "text-primary",
           bg: "bg-primary/5 border-primary/20",
           titleKey: "upgrade_welcome.step1_title_direct",
@@ -72,7 +72,7 @@ const UpgradeWelcome = () => {
           done: false,
         },
         {
-          icon: Lock,
+          icon: Shield,
           color: "text-primary",
           bg: "bg-primary/5 border-primary/20",
           titleKey: "upgrade_welcome.step2_title",
