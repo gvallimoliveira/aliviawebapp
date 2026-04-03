@@ -20,6 +20,7 @@ import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
+  MessageCircle, CheckCircle, XCircle, UserCheck,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
