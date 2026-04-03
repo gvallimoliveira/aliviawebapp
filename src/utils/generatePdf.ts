@@ -972,7 +972,51 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     y = renderSubSection(doc, y, isPt ? "Raciocínio Clínico" : "Clinical Reasoning", diagnosis.reasoning);
   }
 
-  // ── Separator ──
+  // ── Clinical Impression (if available) ──
+  const clinicalImpression = (diagnosis as any)?.clinicalImpression;
+  if (clinicalImpression?.overview) {
+    y = checkPage(doc, y, 50);
+    y += 4;
+    const ciTitle = isPt ? "Impressão Clínica" : "Clinical Impression";
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...COLORS.primary);
+    doc.text(ciTitle, MARGIN, y);
+    // IA badge
+    const titleW = doc.getTextWidth(ciTitle);
+    drawBadge(doc, "IA", MARGIN + titleW + 4, y - 3, COLORS.primary, COLORS.white);
+    y += 6;
+
+    // Overview in rounded box
+    const overviewLines = doc.splitTextToSize(clinicalImpression.overview, CONTENT_WIDTH - 16);
+    const overviewH = overviewLines.length * 4.5 + 12;
+    y = checkPage(doc, y, overviewH + 20);
+    drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, overviewH, 4, COLORS.primaryLight, COLORS.primary);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(overviewLines, MARGIN + 8, y + 8);
+    y += overviewH + 4;
+
+    // Therapeutic objectives
+    if (clinicalImpression.therapeuticObjectives?.length > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(...COLORS.foreground);
+      const objLabel = isPt ? "Objetivos Terapêuticos:" : "Therapeutic Objectives:";
+      doc.text(objLabel, MARGIN, y + 4);
+      y += 8;
+
+      clinicalImpression.therapeuticObjectives.forEach((obj: string) => {
+        y = checkPage(doc, y, 8);
+        drawBadge(doc, obj, MARGIN + 4, y, COLORS.primary, COLORS.white);
+        y += 8;
+      });
+      y += 2;
+    }
+    y += 4;
+  }
+
   y = checkPage(doc, y, 10);
   doc.setDrawColor(...COLORS.border);
   doc.setLineWidth(0.3);
