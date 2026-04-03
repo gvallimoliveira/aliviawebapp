@@ -54,6 +54,8 @@ const ProfessionalRegister = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [showCustomSpecialty, setShowCustomSpecialty] = useState(false);
+  const [customSpecialtyInput, setCustomSpecialtyInput] = useState("");
 
   const [form, setForm] = useState({
     full_name: "",
