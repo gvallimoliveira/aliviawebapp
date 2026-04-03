@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle, UserPlus, Rocket, ArrowRight, ArrowLeft, Shield, Sparkles, Gift, ClipboardList } from "lucide-react";
+import { CheckCircle, UserPlus, Rocket, ArrowRight, ArrowLeft, Shield, Sparkles, Gift, ClipboardList, Target, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -20,7 +20,8 @@ const UpgradeWelcome = () => {
 
   const isReferral = planType === "referral";
   const isDirectPremium = planType === "direct-premium";
-  const isFromBasic = !isReferral && !isDirectPremium;
+  const isDirectFlow = isReferral || isDirectPremium;
+  const isFromBasic = !isDirectFlow;
 
   // Title & subtitle
   const title = isReferral
@@ -53,49 +54,63 @@ const UpgradeWelcome = () => {
     : PREMIUM_SINGLE_PRICE_FORMATTED;
 
   // Steps vary by context
-  const step1 = isFromBasic
-    ? {
-        icon: CheckCircle,
-        color: "text-green-600",
-        bg: "bg-green-50 border-green-200",
-        titleKey: "upgrade_welcome.step1_title",
-        descKey: "upgrade_welcome.step1_desc",
-        done: true,
-      }
-    : {
-        icon: ClipboardList,
-        color: "text-primary",
-        bg: "bg-primary/5 border-primary/20",
-        titleKey: "upgrade_welcome.step1_title_new",
-        descKey: "upgrade_welcome.step1_desc_new",
-        done: false,
-      };
-
-  const steps = [
-    step1,
-    {
-      icon: UserPlus,
-      color: "text-primary",
-      bg: "bg-primary/5 border-primary/20",
-      titleKey: "upgrade_welcome.step2_title",
-      descKey: "upgrade_welcome.step2_desc",
-      done: false,
-    },
-    {
-      icon: Rocket,
-      color: "text-amber-600",
-      bg: "bg-accent border-accent",
-      titleKey: "upgrade_welcome.step3_title",
-      descKey: "upgrade_welcome.step3_desc",
-      done: false,
-    },
-  ];
-
-  const currentFlowStep = isFromBasic ? 1 : 0;
-  const totalFlowSteps = 3;
-  const progressPercent = (currentFlowStep / totalFlowSteps) * 100;
+  const steps = isDirectFlow
+    ? [
+        {
+          icon: ClipboardList,
+          color: "text-primary",
+          bg: "bg-primary/5 border-primary/20",
+          titleKey: "upgrade_welcome.step1_title_direct",
+          descKey: "upgrade_welcome.step1_desc_direct",
+          done: false,
+        },
+        {
+          icon: Lock,
+          color: "text-primary",
+          bg: "bg-primary/5 border-primary/20",
+          titleKey: "upgrade_welcome.step2_title",
+          descKey: "upgrade_welcome.step2_desc",
+          done: false,
+        },
+        {
+          icon: Target,
+          color: "text-amber-600",
+          bg: "bg-accent border-accent",
+          titleKey: "upgrade_welcome.step3_title_direct",
+          descKey: "upgrade_welcome.step3_desc_direct",
+          done: false,
+        },
+      ]
+    : [
+        {
+          icon: CheckCircle,
+          color: "text-green-600",
+          bg: "bg-green-50 border-green-200",
+          titleKey: "upgrade_welcome.step1_title",
+          descKey: "upgrade_welcome.step1_desc",
+          done: true,
+        },
+        {
+          icon: UserPlus,
+          color: "text-primary",
+          bg: "bg-primary/5 border-primary/20",
+          titleKey: "upgrade_welcome.step2_title",
+          descKey: "upgrade_welcome.step2_desc",
+          done: false,
+        },
+        {
+          icon: Rocket,
+          color: "text-amber-600",
+          bg: "bg-accent border-accent",
+          titleKey: "upgrade_welcome.step3_title",
+          descKey: "upgrade_welcome.step3_desc",
+          done: false,
+        },
+      ];
 
   const headerIcon = isReferral ? Gift : Rocket;
+  const dataSafeText = isDirectFlow ? t("upgrade_welcome.data_safe_direct") : t("upgrade_welcome.data_safe");
+  const backLabel = isDirectFlow ? t("upgrade_welcome.back_generic") : t("upgrade_welcome.back");
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background flex items-center justify-center p-4">
@@ -105,14 +120,16 @@ const UpgradeWelcome = () => {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="w-full max-w-lg space-y-6"
       >
-        {/* Progress */}
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="font-medium">{t("upgrade_welcome.progress_label")}</span>
-            <span>{currentFlowStep}/{totalFlowSteps}</span>
-          </div>
-          <Progress value={progressPercent} className="h-2" />
-        </motion.div>
+        {/* Progress — only for upgrade from basic */}
+        {isFromBasic && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-medium">{t("upgrade_welcome.progress_label")}</span>
+              <span>1/3</span>
+            </div>
+            <Progress value={33} className="h-2" />
+          </motion.div>
+        )}
 
         {/* Header */}
         <div className="text-center space-y-3">
@@ -177,7 +194,7 @@ const UpgradeWelcome = () => {
         {/* Security */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }} className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Shield className="h-3.5 w-3.5" />
-          {t("upgrade_welcome.data_safe")}
+          {dataSafeText}
         </motion.div>
 
         {/* Brand slogan */}
@@ -204,7 +221,7 @@ const UpgradeWelcome = () => {
           </Button>
           <Button variant="ghost" className="w-full gap-2 text-muted-foreground" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
-            {t("upgrade_welcome.back")}
+            {backLabel}
           </Button>
         </motion.div>
       </motion.div>
