@@ -65,6 +65,21 @@ function translateKey(key: string): string {
     "anamnesis.age.35_44": "35–44 anos",
     "anamnesis.age.45_55": "45–55 anos",
     "anamnesis.age.over_55": "Mais de 55 anos",
+    "anamnesis.pain_pattern.continuous": "Contínua (24h)",
+    "anamnesis.pain_pattern.intermittent": "Intermitente",
+    "anamnesis.weekly_freq.daily": "Todos os dias",
+    "anamnesis.weekly_freq.4_6": "4-6x/semana",
+    "anamnesis.weekly_freq.2_3": "2-3x/semana",
+    "anamnesis.weekly_freq.1_or_less": "1x/semana ou menos",
+    "anamnesis.night_waking.frequent": "Sim, frequentemente",
+    "anamnesis.night_waking.sometimes": "Às vezes",
+    "anamnesis.night_waking.no": "Não",
+    "anamnesis.migraine_freq.daily": "Diariamente",
+    "anamnesis.migraine_freq.weekly": "Semanalmente",
+    "anamnesis.migraine_freq.monthly": "Mensalmente",
+    "anamnesis.migraine_freq.sporadic": "Esporádica",
+    "anamnesis.trauma.yes": "Sim",
+    "anamnesis.trauma.no": "Não",
   };
   return map[key] || key;
 }
