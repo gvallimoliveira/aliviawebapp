@@ -18,6 +18,9 @@ serve(async (req) => {
     const painScore = anamnesisData?.painScore ?? 5;
     const isHighPain = painScore >= 6;
     const hasGym = anamnesisData?.hasGymAccess?.includes("yes") ?? false;
+    const isProfessional = mode === "professional";
+    const hasEdema = anamnesisData?.painTypes?.includes("anamnesis.pain_type.edema") || anamnesisData?.painTypes?.includes("edema") || anamnesisData?.chiefComplaints?.some((c: string) => c.toLowerCase().includes("edema")) || false;
+    const needsProfGuidelines = isProfessional && (isHighPain || hasEdema);
 
     const equipmentContext = hasGym
       ? "The patient HAS ACCESS to a gym with free weights, resistance machines, and standard gym equipment. You can prescribe exercises using barbells, dumbbells, cable machines, leg press, etc."
