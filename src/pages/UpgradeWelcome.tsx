@@ -239,6 +239,7 @@ const UpgradeWelcome = () => {
               if (planType === "exit-discount") {
                 sessionStorage.setItem("exit-intent-discount-pending", "true");
               }
+              sessionStorage.setItem("premium_payment_type", selectedPayment);
               navigate("/auth", { state: { redirectTo } });
             }}
           >
