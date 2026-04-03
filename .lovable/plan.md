@@ -1,67 +1,39 @@
 
 
-# Auditoria do Sistema de Indicação ("Indique e Ganhe 20%")
+# Desconto de 10% para indicados + regras de não-cumulatividade
 
-## Fluxo Completo Analisado
+## Resposta à dúvida
 
-1. **Captura do código** — Gateway/PatientLanding/LandingLegacy capturam `?ref=CODE` da URL e salvam em `localStorage("alivia_referral_code")`
-2. **Envio no checkout** — Assessment.tsx envia `referral_code` no body do `create-payment`
-3. **Processamento** — `create-payment` valida o código, cria reward + coupon Stripe, aplica a assinante ativo, envia push
-4. **Desconto do indicador** — Na próxima compra do indicador, `create-payment` busca reward com status `"rewarded"` e aplica como discount no checkout
-5. **Safety net** — `push-cron` reaplica cupons pendentes a assinantes ativos
-6. **UI** — ReferralCard exibe código, contagem de amigos, badge de desconto disponível
+Os 20% do indicador atualmente valem para **ambos**: se o indicador tem assinatura mensal ativa, o desconto é aplicado automaticamente na próxima cobrança via Stripe; se compra avulso, é aplicado no checkout. Cada indicação gera 1 cupom, e apenas 1 cupom é consumido por compra (já funciona assim — não acumula 2 descontos em 1 compra). **Isso já está correto no código.**
 
-## Problemas Encontrados
+## O que será implementado
 
-### BUG 1 — Referral reward criada ANTES do pagamento ser confirmado (CRÍTICO)
+### 1. Desconto de 10% para o indicado (premium avulso apenas)
 
-O `create-payment` cria o `referral_reward` e o coupon Stripe no momento da **criação do checkout session**, não após o pagamento. Se o indicado abandona o checkout ou o pagamento falha, o indicador já recebeu o reward (status `"rewarded"`) e o coupon Stripe já foi criado e possivelmente aplicado à subscription.
+**`create-payment/index.ts`**: Quando o indicado envia `referral_code` e o `paymentType === "single"`, criar um cupom Stripe de 10% e aplicar ao checkout session. Se `paymentType === "monthly"`, o referral_code é passado no metadata para recompensar o indicador, mas o indicado NÃO recebe desconto.
 
-**Impacto:** O indicador ganha desconto mesmo que o amigo nunca pague. Perda de receita.
+Prioridade: exit_intent (10%) > referral indicado (10%) > referral indicador (20%). Não acumula.
 
-**Correção:** Mover a lógica de referral para o `stripe-webhook` (evento `checkout.session.completed` com `payment_status === "paid"`). No `create-payment`, apenas salvar o `referral_code` no metadata da session para processamento posterior.
+### 2. Informar regras no ReferralCard
 
-### BUG 2 — Coupon não aplicado ao indicado no checkout
+**`src/components/dashboard/ReferralCard.tsx`**: Adicionar texto pequeno abaixo dos botões explicando as regras:
+- "Você ganha 20% de desconto (1 uso por compra). Seu amigo ganha 10% na primeira avaliação avulsa."
+- "Descontos não são cumulativos."
 
-O fluxo atual aplica o coupon ao **indicador** (quem compartilhou o link). Porém, o **indicado** (quem usou o link) não recebe nenhum desconto na sua primeira compra. Isso reduz o incentivo para usar o link. Se a intenção é que o indicado também ganhe desconto, isso está faltando.
+### 3. Informar regras na página de Suporte
 
-**Avaliação:** Isso pode ser intencional (só o indicador ganha). Preciso confirmar com o usuário.
+**`src/pages/Support.tsx`**: Adicionar um item FAQ sobre o programa de indicação com as regras completas.
 
-### BUG 3 — `referralCodeRecord` é declarado mas nunca usado
+### 4. Traduções
 
-Na linha 60-70 do `create-payment`, `referralCodeRecord` é atribuído mas nunca referenciado novamente. Código morto, sem impacto funcional.
-
-### BUG 4 — Risco de conflito entre exit intent discount e referral discount
-
-Se o indicado tem `exit_intent_discount: true` e também envia `referral_code`, o exit intent discount tem prioridade (linhas 193-205). O referral reward do indicador é criado e o coupon Stripe é gerado, mas o desconto do indicador NÃO é aplicado ao checkout do indicado (que recebe o exit intent). Isso é correto para o indicado, mas o indicador recebe o reward independentemente.
-
-### BUG 5 — `count` do ReferralCard pode ser impreciso
-
-O ReferralCard conta `referral_rewards` com `referrer_user_id = user.id`, incluindo rewards com status `"pending"`, `"rewarded"` e `"used"`. Porém, conforme Bug 1, rewards podem existir sem pagamento confirmado. A contagem de "amigos indicados" pode estar inflada.
-
-## Plano de Correção
-
-### 1. Mover processamento de referral para o webhook (correção do Bug 1)
-
-**`create-payment/index.ts`**: Em vez de processar o referral imediatamente, apenas incluir `referral_code` no metadata do checkout session. Remover toda a lógica de criação de reward/coupon/push do `create-payment`.
-
-**`stripe-webhook/index.ts`**: Adicionar lógica no `fulfillOrder` para processar o referral code quando `session.metadata.referral_code` existir e `payment_status === "paid"`. Criar o reward, coupon, aplicar a subscription e enviar push apenas nesse momento.
-
-### 2. Limpar código morto
-
-Remover `referralCodeRecord` não utilizado do `create-payment`.
-
-### 3. Ajustar contagem no ReferralCard
-
-Filtrar `referral_rewards` por `status` in `("rewarded", "used")` para não contar rewards pendentes ou de pagamentos abandonados.
-
-### 4. Manter lógica de desconto do indicador no `create-payment`
-
-A parte que busca `available_discount` (linhas 122-139) para aplicar ao indicador na sua próxima compra permanece no `create-payment`, pois é executada no momento correto (quando o indicador está fazendo checkout).
+Novas chaves em `pt.json`, `en.json`, `es.json`:
+- `referral.rules`: "Você ganha 20% na próxima compra (avulsa ou mensalidade). Seu amigo ganha 10% na primeira avaliação avulsa. Descontos não cumulativos: 1 desconto por compra."
+- FAQ de suporte sobre indicação
 
 ## Arquivos a alterar
 
-1. `supabase/functions/create-payment/index.ts` — simplificar: apenas passar `referral_code` no metadata
-2. `supabase/functions/stripe-webhook/index.ts` — adicionar processamento de referral no fulfillment
-3. `src/components/dashboard/ReferralCard.tsx` — filtrar contagem por status
+1. `supabase/functions/create-payment/index.ts` — aplicar 10% ao indicado (single only)
+2. `src/components/dashboard/ReferralCard.tsx` — texto de regras
+3. `src/pages/Support.tsx` — FAQ de indicação
+4. `src/locales/pt.json`, `en.json`, `es.json` — novas chaves
 
