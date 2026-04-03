@@ -189,6 +189,18 @@ const UpgradeWelcome = () => {
           {t("upgrade_welcome.data_safe")}
         </motion.div>
 
+        {/* Brand slogan */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.15 }}
+          className="bg-primary/5 rounded-xl p-4 text-center"
+        >
+          <p className="text-sm italic text-primary/80 leading-relaxed">
+            {t("brand.slogan")}
+          </p>
+        </motion.div>
+
         {/* CTAs */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}

@@ -279,6 +279,9 @@ const Gateway = () => {
             </div>
             <h2 className="text-lg font-bold text-foreground mb-3">{t("gateway.about_title")}</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">{t("gateway.about_text")}</p>
+            <p className="mt-4 border-l-4 border-primary pl-4 text-sm italic text-primary leading-relaxed">
+              {t("brand.slogan")}
+            </p>
           </motion.div>
         </div>
       </main>
