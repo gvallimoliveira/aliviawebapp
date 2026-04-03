@@ -42,6 +42,9 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   const [subLoading, setSubLoading] = useState(true);
   const [linkCopied, setLinkCopied] = useState(false);
   const [patientAssessments, setPatientAssessments] = useState<any[]>([]);
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [referralProfiles, setReferralProfiles] = useState<Record<string, string>>({});
+  const [referralActionLoading, setReferralActionLoading] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [lifetimeLoading, setLifetimeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
