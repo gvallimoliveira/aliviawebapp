@@ -123,15 +123,13 @@ const Dashboard = () => {
     if (!user) return;
     supabase.from("profiles").select("*").eq("user_id", user.id).single().then(({ data }) => setProfile(data));
     supabase.from("assessments").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setAssessments(data || []));
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.access_token) { setPremiumLoading(false); return; }
       supabase.functions.invoke("verify-payment", { body: { check_access: true } }).then(({ data, error }) => {
         setPremiumAccess(!error && !data?.error ? data : null);
         setPremiumLoading(false);
       }).catch(() => setPremiumLoading(false));
-    } else {
-      setPremiumLoading(false);
-    }
+    });
     (supabase.from("professionals" as any) as any).select("*").eq("user_id", user.id).maybeSingle().then(({ data }: any) => {
       if (data) {
         if (data.is_partner && (data.crefito === "000000-X" || data.city === "A definir")) {
