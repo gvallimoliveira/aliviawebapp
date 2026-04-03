@@ -812,10 +812,10 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         size="icon"
                         className="h-8 w-8"
                         title="Restaurar paciente"
-                        disabled={archiving === p.email}
-                        onClick={(e) => handleRestorePatient(p.email, e)}
+                        disabled={archiving === (p as any).groupKey}
+                        onClick={(e) => handleRestorePatient((p as any).groupKey, e)}
                       >
-                        {archiving === p.email ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-muted-foreground" />}
+                        {archiving === (p as any).groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-muted-foreground" />}
                       </Button>
                     ) : (
                       <Button
@@ -823,10 +823,10 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         size="icon"
                         className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Arquivar paciente"
-                        disabled={archiving === p.email}
-                        onClick={(e) => handleArchivePatient(p.email, e)}
+                        disabled={archiving === (p as any).groupKey}
+                        onClick={(e) => handleArchivePatient((p as any).groupKey, e)}
                       >
-                        {archiving === p.email ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
+                        {archiving === (p as any).groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
                       </Button>
                     )}
                     <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
