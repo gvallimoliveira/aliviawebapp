@@ -69,7 +69,7 @@ const ProfessionalLanding = () => {
     { icon: LayoutDashboard, key: "b2b.feature_2" },
     { icon: User, key: "b2b.feature_3" },
     { icon: Brain, key: "b2b.feature_4" },
-    { icon: FileBarChart, key: "b2b.feature_5" },
+    { icon: Stethoscope, key: "b2b.feature_5" },
     { icon: Zap, key: "b2b.feature_6" },
   ];
 
