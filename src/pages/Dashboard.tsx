@@ -153,24 +153,6 @@ const Dashboard = () => {
 
   const handleSignOut = async () => { await signOut(); navigate("/"); };
 
-  const renderReferrals = () => (
-    <div>
-      <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-        <Users className="h-5 w-5 text-muted-foreground" />
-        {t("prof.referrals_title")}
-      </h2>
-      <div className="space-y-2">
-        {referrals.map((r: any) => (
-          <Card key={r.id} className="border-border/60">
-            <CardContent className="py-3 px-4 flex items-center justify-between">
-              <div className="text-sm text-foreground">{t("prof.referral_from_patient")}</div>
-              <Badge variant="outline" className="text-[10px] px-2 py-0.5">{r.status}</Badge>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
 
   const renderClientContent = () => (
     <>
