@@ -766,14 +766,14 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   ];
   const bullets = [...(isPt ? bulletsPt : bulletsEn), questionnaireBullet];
   
-  const motivationalPt = "Já tenho uma boa ideia por onde começar seu tratamento! Adquira a avaliação premium para refinar nosso plano terapêutico e receber todas as orientações disponíveis! Vamos juntos resolver essa dor.";
-  const motivationalEn = "I already have a good idea of where to start your treatment! Get the premium assessment to refine our treatment plan and receive all available guidance! Let's solve this pain together.";
+  const motivationalPt = "Já tenho uma boa ideia por onde começar seu tratamento!\nAdquira a avaliação premium para refinar nosso plano terapêutico\ne receber todas as orientações disponíveis! Vamos juntos resolver essa dor.";
+  const motivationalEn = "I already have a good idea of where to start your treatment!\nGet the premium assessment to refine our treatment plan\nand receive all available guidance! Let's solve this pain together.";
   const motivational = isPt ? motivationalPt : motivationalEn;
 
   const totalBulletH = bullets.length * 5.5;
   const motInnerW = CONTENT_WIDTH - 24; // 12px padding each side of the inner box
-  const motivationalLines = doc.splitTextToSize(motivational, motInnerW - 8);
-  const motivationalH = motivationalLines.length * 4 + 10;
+  const motivationalLines = doc.splitTextToSize(motivational, motInnerW - 16);
+  const motivationalH = motivationalLines.length * 5 + 10;
   const upsellH = 20 + totalBulletH + motivationalH + 16;
   
   // Outer container with gradient-like effect
