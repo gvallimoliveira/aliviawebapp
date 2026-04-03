@@ -675,6 +675,17 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     if (d.hasGymAccess) fields.push({ label: "Acesso a Academia", value: translateKey(d.hasGymAccess) });
     if (d.sex) fields.push({ label: "Sexo Biológico", value: translateKey(d.sex) });
     if (d.ageRange) fields.push({ label: "Faixa Etária", value: translateKey(d.ageRange) });
+    if (d.painPattern) fields.push({ label: "Padrão da Dor", value: translateKey(d.painPattern) });
+    if (d.painWeeklyFrequency) fields.push({ label: "Frequência Semanal", value: translateKey(d.painWeeklyFrequency) });
+    if (d.painNightWaking) fields.push({ label: "Dor Noturna (Acorda)", value: translateKey(d.painNightWaking) });
+    if (d.hasPhotophobia) fields.push({ label: "Fotofobia", value: translateKey(d.hasPhotophobia) });
+    if (d.hasVisualAura) fields.push({ label: "Aura Visual", value: translateKey(d.hasVisualAura) });
+    if (d.hasNausea) fields.push({ label: "Náusea nas Crises", value: translateKey(d.hasNausea) });
+    if (d.headacheCrisisFrequency) fields.push({ label: "Frequência de Crises", value: translateKey(d.headacheCrisisFrequency) });
+    if (d.painScoreMode === "per_region" && d.painScoresPerRegion) {
+      const scores = Object.entries(d.painScoresPerRegion).map(([k, v]) => `${translateKey(k)}: ${v}/10`).join(", ");
+      fields.push({ label: "Dor por Região", value: scores });
+    }
     return fields;
   };
 
