@@ -114,27 +114,17 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   };
 
   const handleReferralMessage = async (patientUserId: string) => {
-    // Check existing conversation
-    const { data: existingConvs } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("professional_id", professional.id)
-      .eq("patient_user_id", patientUserId);
-    if (existingConvs && existingConvs.length > 0) {
-      navigate(`/dashboard?tab=messages&conv=${existingConvs[0].id}`);
-      return;
-    }
-    // Create new conversation
-    const { data: newConv, error } = await supabase
-      .from("conversations")
-      .insert({ professional_id: professional.id, patient_user_id: patientUserId })
-      .select("id")
-      .single();
-    if (error) {
+    try {
+      const { data, error } = await supabase.rpc("create_conversation_for_referral" as any, {
+        _professional_id: professional.id,
+        _patient_user_id: patientUserId,
+      });
+      if (error) throw error;
+      navigate(`/dashboard?tab=messages&conv=${data}`);
+    } catch (err) {
+      console.error("Error creating conversation:", err);
       toast({ title: t("prof.referral_message_error"), variant: "destructive" });
-      return;
     }
-    navigate(`/dashboard?tab=messages&conv=${newConv.id}`);
   };
 
   const handleSubscribe = async (plan: "monthly" | "annual" = "monthly") => {
