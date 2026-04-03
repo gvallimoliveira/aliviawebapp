@@ -979,7 +979,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                       <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" domain={[0, 100]} />
-                      <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
+                      <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} formatter={(value: any, name: string) => [`${value}%`, name]} />
                       <Legend />
                       <Line
                         type="monotone"
