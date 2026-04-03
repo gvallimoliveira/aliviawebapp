@@ -513,6 +513,8 @@
   "prof.spec.aquatica": "Acuática",
   "prof.spec.uroginecologica": "Uroginecológica",
   "prof.spec.reumatologica": "Reumatológica",
+  "prof.spec.other": "Otra",
+  "prof.spec.other_placeholder": "Escriba la especialidad",
   "prof.add_photo": "Agregar foto de perfil",
   "prof.change_photo": "Cambiar foto",
   "prof.crop_photo": "Ajustar foto",
