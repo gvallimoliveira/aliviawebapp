@@ -375,29 +375,29 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [noteSaving, setNoteSaving] = useState<Record<string, boolean>>({});
   const [batchExporting, setBatchExporting] = useState(false);
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
-  const [hiddenEmails, setHiddenEmails] = useState<Set<string>>(new Set());
+  const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(new Set());
   const [showHidden, setShowHidden] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
 
-  // Load hidden patients
+  // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
     if (!professionalId) return;
     (supabase.from("professional_hidden_patients" as any) as any)
       .select("patient_email")
       .eq("professional_id", professionalId)
       .then(({ data }: any) => {
-        if (data) setHiddenEmails(new Set(data.map((d: any) => d.patient_email)));
+        if (data) setHiddenKeys(new Set(data.map((d: any) => d.patient_email)));
       });
   }, [professionalId]);
 
-  const handleArchivePatient = async (email: string, e?: React.MouseEvent) => {
+  const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!professionalId || archiving) return;
-    setArchiving(email);
+    if (!professionalId || archiving || !groupKey) return;
+    setArchiving(groupKey);
     try {
       await (supabase.from("professional_hidden_patients" as any) as any)
-        .insert({ professional_id: professionalId, patient_email: email });
-      setHiddenEmails((prev) => new Set([...prev, email]));
+        .insert({ professional_id: professionalId, patient_email: groupKey });
+      setHiddenKeys((prev) => new Set([...prev, groupKey]));
       toast({ title: "Paciente arquivado" });
     } catch (err: any) {
       toast({ title: "Erro ao arquivar", variant: "destructive" });
@@ -406,16 +406,16 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     }
   };
 
-  const handleRestorePatient = async (email: string, e?: React.MouseEvent) => {
+  const handleRestorePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!professionalId || archiving) return;
-    setArchiving(email);
+    if (!professionalId || archiving || !groupKey) return;
+    setArchiving(groupKey);
     try {
       await (supabase.from("professional_hidden_patients" as any) as any)
         .delete()
         .eq("professional_id", professionalId)
-        .eq("patient_email", email);
-      setHiddenEmails((prev) => { const s = new Set(prev); s.delete(email); return s; });
+        .eq("patient_email", groupKey);
+      setHiddenKeys((prev) => { const s = new Set(prev); s.delete(groupKey); return s; });
       toast({ title: "Paciente restaurado" });
     } catch (err: any) {
       toast({ title: "Erro ao restaurar", variant: "destructive" });
