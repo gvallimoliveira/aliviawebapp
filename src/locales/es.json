@@ -936,7 +936,7 @@
   "support.patient.tool.profile_language.title": "Perfil e Idioma",
   "support.patient.tool.profile_language.desc": "En el menú superior puede cambiar entre portugués, inglés y español haciendo clic en el botón de idioma. Para editar datos personales como nombre, edad y género, vaya a la sección de perfil en el panel.",
   "support.patient.tool.messages.title": "Mensajes con el Profesional",
-  "support.patient.tool.messages.desc": "Después de encontrar un fisioterapeuta a través de la búsqueda profesional, puede enviarle un mensaje directo. Las conversaciones están disponibles en la pestaña \"Mensajes\" de su panel. Úselo para hacer preguntas, agendar citas o conversar sobre su caso antes de una visita presencial.",
+  "support.patient.tool.messages.desc": "Después de encontrar un fisioterapeuta a través de la búsqueda profesional, puede enviarle un mensaje directo. Las conversaciones están disponibles en la pestaña 'Mensajes' de su panel. ⚠️ Importante: Aliv.iA no se responsabiliza por datos personales compartidos, citas, acuerdos financieros o cualquier arreglo hecho a través de mensajes en la plataforma. La función de mensajería se ofrece como herramienta auxiliar de comunicación.",
   "support.patient.faq.pf1.q": "¿Puedo realizar más de una evaluación?",
   "support.patient.faq.pf1.a": "¡Sí! Los suscriptores mensuales pueden realizar hasta 2 evaluaciones premium por mes. Los usuarios de pago único obtienen 1 evaluación por compra. Las evaluaciones básicas son ilimitadas y gratuitas.",
   "support.patient.faq.pf2.q": "¿Mis datos están seguros?",
