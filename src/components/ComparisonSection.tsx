@@ -215,7 +215,16 @@ const ComparisonSection = () => {
               <CardFooter>
                 <Button
                   className="w-full rounded-xl py-5 gap-2"
-                  onClick={() => navigate("/assessment/premium")}
+                  onClick={() => {
+                    const hasReferral = !!localStorage.getItem("alivia_referral_code");
+                    navigate("/upgrade-welcome", {
+                      state: {
+                        redirectTo: "/assessment/premium",
+                        planType: hasReferral ? "referral" : "direct-premium",
+                        paymentType: isMonthly ? "monthly" : "single",
+                      },
+                    });
+                  }}
                 >
                   {t("compare.start.premium")}
                   <ArrowRight className="h-4 w-4" />
