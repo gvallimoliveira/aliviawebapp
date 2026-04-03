@@ -360,6 +360,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression }: {
       </CardContent>
     </Card>
   );
+};
 
 
 const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
