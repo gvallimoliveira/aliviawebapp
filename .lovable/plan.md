@@ -1,83 +1,42 @@
 
 
-# Disclaimer de referral + páginas de boas-vindas para Premium direto
+# Ajustar UpgradeWelcome por contexto + bypass para usuários logados
 
-## Resumo dos 3 pedidos
+## Problema
 
-1. **Banner sutil de indicação** — quando `alivia_referral_code` existe no localStorage, exibir um banner fixo e discreto nas landing pages informando que o usuário tem uma condição especial.
-2. **Página de boas-vindas para indicados** — ao clicar em "Avaliação Premium" com referral ativo, redirecionar para uma versão adaptada da UpgradeWelcome mencionando o desconto de 10%.
-3. **Página de boas-vindas para Premium direto** — ao clicar em "Avaliação Premium" na landing page convencional (sem referral), redirecionar para uma versão da UpgradeWelcome adaptada para quem ainda não fez avaliação básica.
+1. **UpgradeWelcome "direct-premium" e "referral"** — Mostra steps que mencionam "dados salvos" e "sem repetir etapas" (relevante apenas para upgrade da básica). O botão "Voltar ao resultado" não faz sentido pois não há resultado anterior.
+2. **Usuários logados acessando premium pelo dashboard** — O `QuickActions.tsx` já navega direto para `/assessment/premium` (sem passar pela UpgradeWelcome), o que está correto. Porém, o Assessment.tsx já lida com isso: verifica pagamento e redireciona para welcome/payment_check. Não precisa de mudança aqui.
 
-## Implementação
+## Plano de Correção
 
-### 1. Componente `ReferralBanner` (novo)
+### 1. Ajustar steps e textos na UpgradeWelcome para direct-premium e referral
 
-**Arquivo:** `src/components/ReferralBanner.tsx`
+**`src/pages/UpgradeWelcome.tsx`**:
 
-- Lê `localStorage("alivia_referral_code")` no mount
-- Se existir, renderiza um banner fixo no topo (abaixo do header), estilo slim:
-  - Ícone de presente + texto: *"Você foi indicado! 🎉 10% de desconto na sua primeira avaliação premium avulsa"*
-  - Botão de fechar (dismiss por sessão via sessionStorage)
-- Posição: `sticky top-0 z-40`, bg sutil `bg-amber-50 border-b border-amber-200`
-- Responsivo: texto compacto em mobile
+- **Steps**: Para `isDirectPremium` e `isReferral`, substituir os 3 steps por conteúdo adequado:
+  - Step 1: "📋 Avaliação completa" — "Anamnese, mapa de dor, questionários validados e testes funcionais guiados."
+  - Step 2: "🔐 Crie sua conta" — "É rápido. Sua conta garante acesso aos resultados e histórico."
+  - Step 3: "🎯 Diagnóstico + Tratamento" — "Receba diagnóstico detalhado e plano de tratamento personalizado em 3 fases."
+- **Botão "Voltar"**: Para `isDirectPremium` e `isReferral`, trocar texto de "Voltar ao resultado" para "Voltar" e usar `navigate(-1)` (já usa, só mudar o label).
+- **Segurança texto**: Trocar "dados protegidos por 30 minutos" para "Pagamento seguro e dados protegidos" quando `isDirectPremium` ou `isReferral`.
+- **Progress bar**: Remover para `isDirectPremium` e `isReferral` (não faz sentido mostrar 0/3 sem etapa anterior).
 
-**Onde inserir:** `PatientLanding.tsx` e `Gateway.tsx`, logo após o `<Header />`.
+### 2. Traduções
 
-### 2. Adaptar UpgradeWelcome para múltiplos contextos
+**`pt.json`, `en.json`, `es.json`** — Novas chaves:
+- `upgrade_welcome.step1_title_direct`: "📋 Avaliação completa"
+- `upgrade_welcome.step1_desc_direct`: "Anamnese, mapa de dor, questionários validados e testes funcionais guiados."
+- `upgrade_welcome.step3_title_direct`: "🎯 Diagnóstico + Tratamento"
+- `upgrade_welcome.step3_desc_direct`: "Diagnóstico detalhado e plano de tratamento personalizado em 3 fases."
+- `upgrade_welcome.back_generic`: "Voltar"
+- `upgrade_welcome.data_safe_direct`: "Pagamento seguro e dados protegidos"
 
-**Arquivo:** `src/pages/UpgradeWelcome.tsx`
+### 3. Confirmar que dashboard já bypassa UpgradeWelcome
 
-Adicionar suporte a novos `planType` via location state:
+`QuickActions.tsx` já navega para `/assessment/premium` direto — correto. `Assessment.tsx` já verifica acesso premium e mostra tela de pagamento ou inicia avaliação. Nenhuma mudança necessária aqui.
 
-- `planType: "referral"` — indicado clicando Premium
-- `planType: "direct-premium"` — usuário comum clicando Premium na landing
+## Arquivos a alterar
 
-Para cada contexto, ajustar:
-- **Título**: "referral" → *"Você foi indicado! Bem-vindo ao Aliv.iA 🎉"* / "direct-premium" → *"Avaliação Premium Completa"*
-- **Subtítulo**: "referral" → mencionar 10% de desconto / "direct-premium" → explicar o que a avaliação premium inclui
-- **Steps**: Para "direct-premium" e "referral" (sem avaliação básica prévia), o step 1 muda de "Avaliação básica concluída ✅" para "Escolha sua avaliação" (não done). O progresso fica 0/3.
-- **Chip do plano**: "referral" → *"Premium Avulso — R$ 109,00 → com 10% OFF"* / "direct-premium" → chip normal com preço
-
-### 3. Redirecionar HeroSection e StickyCTA para UpgradeWelcome
-
-**Arquivos:** `src/components/HeroSection.tsx`, `src/components/StickyCTA.tsx`
-
-Atualmente, clicar "Avaliação Premium" navega direto para `/assessment/premium`. Alterar para:
-
-```
-const hasReferral = !!localStorage.getItem("alivia_referral_code");
-navigate("/upgrade-welcome", {
-  state: {
-    redirectTo: "/assessment/premium",
-    planType: hasReferral ? "referral" : "direct-premium"
-  }
-});
-```
-
-Manter o botão "Avaliação Gratuita" navegando direto para `/assessment/basic` (sem intermediário).
-
-### 4. Traduções
-
-**Arquivos:** `pt.json`, `en.json`, `es.json`
-
-Novas chaves:
-- `referral_banner.text` — "Você foi indicado! 10% de desconto na primeira avaliação premium avulsa"
-- `upgrade_welcome.title_referral` — "Você foi indicado! Bem-vindo ao Aliv.iA 🎉"
-- `upgrade_welcome.subtitle_referral` — "Um amigo te indicou e você tem 10% de desconto na sua primeira avaliação premium avulsa. Veja como funciona:"
-- `upgrade_welcome.title_direct` — "Avaliação Premium Completa"
-- `upgrade_welcome.subtitle_direct` — "Diagnóstico preciso + plano de tratamento personalizado. Conheça o que está incluso e comece agora."
-- `upgrade_welcome.step1_title_new` — "📋 Escolha feita: Avaliação Premium"
-- `upgrade_welcome.step1_desc_new` — "Você terá acesso a anamnese completa, questionários validados, testes funcionais e plano de tratamento."
-- `upgrade_welcome.plan_referral` — "Premium Avulso com 10% OFF"
-- `upgrade_welcome.referral_price` — exibir preço original riscado + preço com desconto
-
-## Arquivos alterados
-
-1. `src/components/ReferralBanner.tsx` — novo componente
-2. `src/pages/PatientLanding.tsx` — inserir ReferralBanner
-3. `src/pages/Gateway.tsx` — inserir ReferralBanner
-4. `src/pages/UpgradeWelcome.tsx` — adaptar para contextos referral/direct-premium
-5. `src/components/HeroSection.tsx` — redirecionar Premium para UpgradeWelcome
-6. `src/components/StickyCTA.tsx` — redirecionar Premium para UpgradeWelcome
-7. `src/locales/pt.json`, `en.json`, `es.json` — novas chaves
+1. `src/pages/UpgradeWelcome.tsx` — condicionar steps, progress bar, label do botão voltar e texto de segurança
+2. `src/locales/pt.json`, `en.json`, `es.json` — novas chaves de tradução
 
