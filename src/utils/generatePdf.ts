@@ -742,13 +742,13 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   const regions = options.painRegions || [];
   const applicableQuestionnaires = getApplicableQuestionnaires(regions);
   
-  const questionnaireBullet = applicableQuestionnaires.length > 0
-    ? isPt
-      ? `✅ Questionário ${applicableQuestionnaires.map(q => q.name).join(" + ")} — ${applicableQuestionnaires.map(q => q.fullName_pt.replace(/\s*\(.*\)/, '')).join(", ")}`
-      : `✅ ${applicableQuestionnaires.map(q => q.name).join(" + ")} questionnaire — ${applicableQuestionnaires.map(q => q.fullName_en.replace(/\s*\(.*\)/, '')).join(", ")}`
-    : isPt
-      ? "✅ Questionários validados cientificamente para sua condição"
-      : "✅ Scientifically validated questionnaires for your condition";
+  const questionnaireBullets: string[] = applicableQuestionnaires.length > 0
+    ? applicableQuestionnaires.map(q => isPt
+        ? `✅ Questionário ${q.name} — ${q.fullName_pt.replace(/\s*\(.*\)/, '')}`
+        : `✅ ${q.name} questionnaire — ${q.fullName_en.replace(/\s*\(.*\)/, '')}`)
+    : [isPt
+        ? "✅ Questionários validados cientificamente para sua condição"
+        : "✅ Scientifically validated questionnaires for your condition"];
 
   const bulletsPt = [
     "✅ Explicação clínica detalhada do seu quadro",
