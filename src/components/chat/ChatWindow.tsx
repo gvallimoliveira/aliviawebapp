@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Send } from "lucide-react";
+import { ArrowLeft, Loader2, Send, AlertTriangle } from "lucide-react";
 import ChatBubble from "./ChatBubble";
 
 interface ChatWindowProps {
@@ -134,6 +134,14 @@ const ChatWindow = ({ conversationId, otherName, onBack }: ChatWindowProps) => {
           ))
         )}
         <div ref={bottomRef} />
+      </div>
+
+      {/* Disclaimer */}
+      <div className="px-4 py-1.5 bg-muted/40 border-t border-border">
+        <p className="text-[10px] text-muted-foreground flex items-start gap-1">
+          <AlertTriangle className="h-3 w-3 shrink-0 mt-px" />
+          {t("chat.disclaimer")}
+        </p>
       </div>
 
       {/* Input area */}
