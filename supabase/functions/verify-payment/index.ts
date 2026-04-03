@@ -77,11 +77,18 @@ serve(async (req) => {
       // Handle pro_lifetime_treatment payment
       if (paymentType === "pro_lifetime_treatment") {
         const professionalId = session.metadata?.professional_id;
+        const metaUserId = session.metadata?.user_id;
         if (professionalId) {
           await supabaseClient
             .from("professionals")
             .update({ lifetime_treatment: true })
             .eq("id", professionalId);
+        } else if (metaUserId) {
+          // Fallback: find professional by user_id
+          await supabaseClient
+            .from("professionals")
+            .update({ lifetime_treatment: true })
+            .eq("user_id", metaUserId);
         }
         return new Response(JSON.stringify({ paid: true, type: "pro_lifetime_treatment" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
