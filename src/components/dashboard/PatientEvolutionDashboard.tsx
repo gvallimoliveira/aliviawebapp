@@ -16,7 +16,7 @@ import {
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
-  Sparkles, FileCheck, Lock,
+  Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
@@ -275,6 +275,54 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [noteSaving, setNoteSaving] = useState<Record<string, boolean>>({});
   const [batchExporting, setBatchExporting] = useState(false);
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
+  const [hiddenEmails, setHiddenEmails] = useState<Set<string>>(new Set());
+  const [showHidden, setShowHidden] = useState(false);
+  const [archiving, setArchiving] = useState<string | null>(null);
+
+  // Load hidden patients
+  useEffect(() => {
+    if (!professionalId) return;
+    (supabase.from("professional_hidden_patients" as any) as any)
+      .select("patient_email")
+      .eq("professional_id", professionalId)
+      .then(({ data }: any) => {
+        if (data) setHiddenEmails(new Set(data.map((d: any) => d.patient_email)));
+      });
+  }, [professionalId]);
+
+  const handleArchivePatient = async (email: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!professionalId || archiving) return;
+    setArchiving(email);
+    try {
+      await (supabase.from("professional_hidden_patients" as any) as any)
+        .insert({ professional_id: professionalId, patient_email: email });
+      setHiddenEmails((prev) => new Set([...prev, email]));
+      toast({ title: "Paciente arquivado" });
+    } catch (err: any) {
+      toast({ title: "Erro ao arquivar", variant: "destructive" });
+    } finally {
+      setArchiving(null);
+    }
+  };
+
+  const handleRestorePatient = async (email: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!professionalId || archiving) return;
+    setArchiving(email);
+    try {
+      await (supabase.from("professional_hidden_patients" as any) as any)
+        .delete()
+        .eq("professional_id", professionalId)
+        .eq("patient_email", email);
+      setHiddenEmails((prev) => { const s = new Set(prev); s.delete(email); return s; });
+      toast({ title: "Paciente restaurado" });
+    } catch (err: any) {
+      toast({ title: "Erro ao restaurar", variant: "destructive" });
+    } finally {
+      setArchiving(null);
+    }
+  };
 
   // Load notes for all assessments
   useEffect(() => {
@@ -550,18 +598,33 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               {t("pro.export_pdfs")}
             </Button>
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome ou email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            {hiddenEmails.size > 0 && (
+              <Button
+                variant={showHidden ? "secondary" : "outline"}
+                size="sm"
+                className="gap-1.5 shrink-0 text-xs"
+                onClick={() => setShowHidden(!showHidden)}
+              >
+                {showHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                {showHidden ? "Ocultar arquivados" : `Arquivados (${hiddenEmails.size})`}
+              </Button>
+            )}
           </div>
         </div>
         {patients
           .filter((p) => {
+            const isHidden = hiddenEmails.has(p.email);
+            if (isHidden && !showHidden) return false;
             if (!searchQuery.trim()) return true;
             const q = searchQuery.toLowerCase();
             return p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q);
@@ -573,10 +636,12 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             ? lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable"
             : null;
 
+          const isHidden = hiddenEmails.has(p.email);
+
           return (
             <Card
               key={p.email}
-              className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group"
+              className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group ${isHidden ? "opacity-50" : ""}`}
               onClick={() => setSelectedEmail(p.email)}
             >
               <CardContent className="py-3 px-4">
@@ -587,6 +652,11 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         <User className="h-3.5 w-3.5 text-muted-foreground" />
                         {p.name}
                       </p>
+                      {isHidden && (
+                        <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">
+                          Arquivado
+                        </Badge>
+                      )}
                       <Badge variant="outline" className="text-[10px]">
                         {p.assessments.length} {t("pro.assessments_count")}
                       </Badge>
@@ -625,7 +695,32 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isHidden ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Restaurar paciente"
+                        disabled={archiving === p.email}
+                        onClick={(e) => handleRestorePatient(p.email, e)}
+                      >
+                        {archiving === p.email ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-muted-foreground" />}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Arquivar paciente"
+                        disabled={archiving === p.email}
+                        onClick={(e) => handleArchivePatient(p.email, e)}
+                      >
+                        {archiving === p.email ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
+                      </Button>
+                    )}
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
