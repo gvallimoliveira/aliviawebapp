@@ -902,6 +902,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   const handleNext = () => {
     if (step < totalSteps - 1) {
       setStep(step + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       onComplete(data);
     }
@@ -943,7 +944,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
       <div className="flex justify-between pt-4">
         <Button
           variant="outline"
-          onClick={step === 0 ? onBack : () => setStep(step - 1)}
+          onClick={step === 0 ? onBack : () => { setStep(step - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
           className="gap-2 rounded-xl"
         >
           <ChevronLeft className="h-4 w-4" />
