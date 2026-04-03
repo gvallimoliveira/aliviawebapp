@@ -45,6 +45,7 @@ const proTools = [
   { key: "edit_profile", icon: UserCog },
   { key: "lifetime_treatment", icon: Infinity },
   { key: "messages", icon: MessageCircle },
+  { key: "clinical_impression", icon: Brain },
 ];
 
 const patientFaqKeys = ["pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10"];
