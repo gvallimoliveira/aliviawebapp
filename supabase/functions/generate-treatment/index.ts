@@ -184,7 +184,19 @@ Response format (JSON):
   "progressionCriteria": "When to progress to the next phase",
   "difiContext": "Patient-facing explanation of the D.I.F.I. cycle and how this plan breaks it (ONLY if applicable — chronic pain or EVA ≥ 5). If not applicable, omit this field.",
   "disclaimer": "Medical disclaimer",
-  "references": ["Reference 1", "Reference 2"]
+  "references": ["Reference 1", "Reference 2"]${mode === "professional" ? `,
+  "professionalGuidelines": [
+    {
+      "category": "Category name (e.g. Manual Therapy, Electrotherapy)",
+      "techniques": [
+        {
+          "name": "Technique name",
+          "indication": "When to use",
+          "notes": "Additional clinical notes"
+        }
+      ]
+    }
+  ]` : ""}
 }
 
 THERMOTHERAPY AND INJURY PROTOCOL GUIDELINES:
