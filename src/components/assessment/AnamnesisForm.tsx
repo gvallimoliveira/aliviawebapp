@@ -722,89 +722,144 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
           "hsl(0, 75%, 48%)",
           "hsl(0, 85%, 40%)",
         ];
+        const regionColors = [
+          "hsl(200, 70%, 50%)", "hsl(30, 80%, 50%)", "hsl(280, 60%, 50%)",
+          "hsl(340, 70%, 50%)", "hsl(160, 60%, 45%)", "hsl(60, 70%, 45%)",
+        ];
+        const hasMultipleRegions = data.chiefComplaints.length > 1;
+        const regionLabels = data.chiefComplaints.map(c => t(c));
+
+        const renderVasBar = (score: number, onScoreChange: (s: number) => void, refKey?: string) => (
+          <div className="px-2 space-y-3">
+            <div
+              ref={refKey ? (el) => { vasBarRefs.current[refKey] = el; } : vasBarRef}
+              className="relative h-5 rounded-full overflow-visible border border-border/60 shadow-inner cursor-pointer touch-none select-none"
+              style={{ background: `linear-gradient(to right, ${gradientColors.join(", ")})`, borderRadius: "9999px" }}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                setIsDragging(true);
+                if (refKey) setActiveDragRegion(refKey);
+                const rect = e.currentTarget.getBoundingClientRect();
+                const s = Math.round(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 10);
+                onScoreChange(s);
+              }}
+              onPointerMove={(e) => {
+                if (!isDragging) return;
+                if (refKey && activeDragRegion !== refKey) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const s = Math.round(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 10);
+                onScoreChange(s);
+              }}
+              onPointerUp={() => { setIsDragging(false); setActiveDragRegion(null); }}
+              onPointerCancel={() => { setIsDragging(false); setActiveDragRegion(null); }}
+            >
+              <motion.div
+                className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-[3px] shadow-lg z-10 pointer-events-none"
+                style={{ borderColor: gradientColors[score] }}
+                animate={{ left: `calc(${(score / 10) * 100}% - 12px)` }}
+                transition={isDragging ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 25 }}
+              />
+            </div>
+            <div className="flex justify-between">
+              {Array.from({ length: 11 }, (_, i) => (
+                <button key={i} type="button" onClick={() => onScoreChange(i)} className="flex flex-col items-center cursor-pointer">
+                  <span className="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition-all duration-200"
+                    style={{ backgroundColor: score === i ? gradientColors[i] : "transparent", color: score === i ? "white" : "hsl(var(--muted-foreground))" }}
+                  >{i}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{t("anamnesis.no_pain")}</span>
+              <span>{t("anamnesis.worst_pain")}</span>
+            </div>
+          </div>
+        );
+
         return (
           <div className="space-y-6">
             <h3 className="text-lg font-semibold">{t("anamnesis.pain_score_title")}</h3>
 
-            {/* Face + Number */}
-            <div className="text-center space-y-1">
-              <motion.span
-                key={data.painScore}
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="text-5xl inline-block"
-              >
-                {faces[data.painScore]}
-              </motion.span>
-              <div
-                className="text-5xl font-black tabular-nums transition-colors duration-300"
-                style={{ color: gradientColors[data.painScore] }}
-              >
-                {data.painScore}
-              </div>
-              <p className="text-sm text-muted-foreground">{t("anamnesis.pain_score_desc")}</p>
-            </div>
-
-            {/* VAS gradient bar with drag + click */}
-            <div className="px-2 space-y-3">
-              <div
-                ref={vasBarRef}
-                className="relative h-5 rounded-full overflow-visible border border-border/60 shadow-inner cursor-pointer touch-none select-none"
-                style={{ background: `linear-gradient(to right, ${gradientColors.join(", ")})`, borderRadius: "9999px" }}
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-                  setIsDragging(true);
-                  if (vasBarRef.current) {
-                    const rect = vasBarRef.current.getBoundingClientRect();
-                    const score = Math.round(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 10);
-                    setData((prev) => ({ ...prev, painScore: score }));
-                  }
-                }}
-                onPointerMove={(e) => {
-                  if (!isDragging || !vasBarRef.current) return;
-                  const rect = vasBarRef.current.getBoundingClientRect();
-                  const score = Math.round(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 10);
-                  setData((prev) => ({ ...prev, painScore: score }));
-                }}
-                onPointerUp={() => setIsDragging(false)}
-                onPointerCancel={() => setIsDragging(false)}
-              >
-                <motion.div
-                  className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-[3px] shadow-lg z-10 pointer-events-none"
-                  style={{ borderColor: gradientColors[data.painScore] }}
-                  animate={{ left: `calc(${(data.painScore / 10) * 100}% - 12px)` }}
-                  transition={isDragging ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 25 }}
-                />
-              </div>
-
-              {/* Clickable number row */}
-              <div className="flex justify-between">
-                {Array.from({ length: 11 }, (_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setData({ ...data, painScore: i })}
-                    className="flex flex-col items-center cursor-pointer"
+            {/* Mode selector for multiple regions */}
+            {hasMultipleRegions && (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">{t("anamnesis.pain_score_mode_question")}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={data.painScoreMode === "general" ? "default" : "outline"}
+                    size="sm" className="rounded-xl h-auto py-2.5"
+                    onClick={() => setData({ ...data, painScoreMode: "general" })}
                   >
-                    <span
-                      className="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition-all duration-200"
-                      style={{
-                        backgroundColor: data.painScore === i ? gradientColors[i] : "transparent",
-                        color: data.painScore === i ? "white" : "hsl(var(--muted-foreground))",
-                      }}
-                    >
-                      {i}
-                    </span>
-                  </button>
-                ))}
+                    {t("anamnesis.pain_score_mode_general")}
+                  </Button>
+                  <Button
+                    variant={data.painScoreMode === "per_region" ? "default" : "outline"}
+                    size="sm" className="rounded-xl h-auto py-2.5"
+                    onClick={() => {
+                      const initial: Record<string, number> = {};
+                      data.chiefComplaints.forEach(c => { if (!data.painScoresPerRegion?.[c]) initial[c] = 5; });
+                      setData({ ...data, painScoreMode: "per_region", painScoresPerRegion: { ...initial, ...data.painScoresPerRegion } });
+                    }}
+                  >
+                    {t("anamnesis.pain_score_mode_per_region")}
+                  </Button>
+                </div>
               </div>
+            )}
 
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{t("anamnesis.no_pain")}</span>
-                <span>{t("anamnesis.worst_pain")}</span>
+            {/* General mode or single region */}
+            {(data.painScoreMode === "general" || !hasMultipleRegions) && (
+              <>
+                <div className="text-center space-y-1">
+                  <motion.span key={data.painScore} initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-5xl inline-block">
+                    {faces[data.painScore]}
+                  </motion.span>
+                  <div className="text-5xl font-black tabular-nums transition-colors duration-300" style={{ color: gradientColors[data.painScore] }}>
+                    {data.painScore}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t("anamnesis.pain_score_desc")}</p>
+                </div>
+                {renderVasBar(data.painScore, (s) => setData(prev => ({ ...prev, painScore: s })))}
+              </>
+            )}
+
+            {/* Per-region mode */}
+            {data.painScoreMode === "per_region" && hasMultipleRegions && (
+              <div className="space-y-6">
+                {data.chiefComplaints.map((complaint, idx) => {
+                  const score = data.painScoresPerRegion?.[complaint] ?? 5;
+                  const color = regionColors[idx % regionColors.length];
+                  return (
+                    <div key={complaint} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                        <span className="text-sm font-semibold">{t(complaint)}</span>
+                        <span className="text-lg font-black ml-auto" style={{ color: gradientColors[score] }}>{score}</span>
+                        <span className="text-xl">{faces[score]}</span>
+                      </div>
+                      {renderVasBar(score, (s) => {
+                        const updated = { ...data.painScoresPerRegion, [complaint]: s };
+                        const avg = Math.round(Object.values(updated).reduce((a, b) => a + b, 0) / Object.values(updated).length);
+                        setData(prev => ({ ...prev, painScoresPerRegion: updated, painScore: avg }));
+                      }, complaint)}
+                    </div>
+                  );
+                })}
+                {/* Legend */}
+                <div className="flex flex-wrap gap-3 p-3 bg-muted/50 rounded-xl">
+                  {data.chiefComplaints.map((c, idx) => (
+                    <div key={c} className="flex items-center gap-1.5 text-xs">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: regionColors[idx % regionColors.length] }} />
+                      <span>{t(c)}: <strong>{data.painScoresPerRegion?.[c] ?? 5}</strong></span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-auto">
+                    <span>{t("anamnesis.pain_score_average")}: <strong>{data.painScore}</strong></span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         );
       }
