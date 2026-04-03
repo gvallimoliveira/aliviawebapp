@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
+import ReferralBanner from "@/components/ReferralBanner";
 import HeroSection from "@/components/HeroSection";
 import StatsSection from "@/components/StatsSection";
 import HighlightsSection from "@/components/HighlightsSection";
@@ -37,6 +38,7 @@ const PatientLanding = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <ReferralBanner />
       <main>
         <HeroSection showProfessionalCTA={false} />
         <StatsSection />

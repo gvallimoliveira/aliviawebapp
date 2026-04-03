@@ -66,10 +66,14 @@ const HeroSection = ({ showProfessionalCTA = true }: { showProfessionalCTA?: boo
             <Button size="lg" variant="outline" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto" onClick={() => navigate("/assessment/basic")}>
               {t("hero.cta.basic")}
             </Button>
-            <Button size="lg" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto gap-2" onClick={() => navigate("/assessment/premium")}>
+            <Button size="lg" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto gap-2" onClick={() => {
+                const hasReferral = !!localStorage.getItem("alivia_referral_code");
+                navigate("/upgrade-welcome", { state: { redirectTo: "/assessment/premium", planType: hasReferral ? "referral" : "direct-premium" } });
+              }}>
               {t("hero.cta.premium")}
               <ArrowRight className="h-4 w-4" />
             </Button>
+
             {showProfessionalCTA && (
               <Button size="lg" variant="outline" className="w-full rounded-xl px-8 py-6 text-base sm:w-auto gap-2 border-primary/30 text-primary hover:bg-primary/5" onClick={() => navigate("/profissionais")}>
                 <Stethoscope className="h-4 w-4" />

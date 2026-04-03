@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import ReferralBanner from "@/components/ReferralBanner";
 import { motion } from "framer-motion";
 import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -98,6 +99,7 @@ const Gateway = () => {
           </Button>
         </div>
       </header>
+      <ReferralBanner />
 
       {/* Mobile side menu */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
