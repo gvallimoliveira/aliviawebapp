@@ -170,8 +170,29 @@ CLINICAL DECISION GUIDE:
         },
       };
 
-      const mapping = regionType && mappings[regionType]?.[painSubArea];
-      return mapping ? `\nSUB-AREA SPECIFIC GUIDANCE (MANDATORY — patient specified exact pain location):\n${mapping}\n` : "";
+      // Handle painSubArea as array (multiple sub-areas selected) or single string
+      const subAreas: string[] = Array.isArray(painSubArea) ? painSubArea : [painSubArea];
+      const regionMappings = regionType ? mappings[regionType] : null;
+      if (!regionMappings) return "";
+
+      const matchedGuidance = subAreas
+        .map((area: string) => regionMappings[area])
+        .filter(Boolean);
+
+      if (matchedGuidance.length === 0) return "";
+
+      if (matchedGuidance.length > 1) {
+        return `\nMULTI-AREA PAIN REPORTED (patient selected ${subAreas.length} sub-areas: ${subAreas.join(", ")}):
+The patient reports pain in MULTIPLE sub-regions simultaneously. This is clinically significant — consider:
+- Diffuse pathology affecting the entire joint (e.g., generalized OA, synovitis, post-surgical inflammation)
+- Post-surgical complications if surgery history is present (adhesions, altered biomechanics, diffuse sensitization)
+- Central sensitization if chronic pain with widespread distribution
+- Each sub-area guidance below should be considered but weighted against the overall clinical picture:
+
+${matchedGuidance.map((g: string, i: number) => `--- Sub-area ${i + 1}: ${subAreas[i]} ---\n${g}`).join("\n\n")}\n`;
+      }
+
+      return `\nSUB-AREA SPECIFIC GUIDANCE (MANDATORY — patient specified exact pain location: ${subAreas[0]}):\n${matchedGuidance[0]}\n`;
     })() : "";
 
     // Ottawa rules block
