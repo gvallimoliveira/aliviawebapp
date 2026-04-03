@@ -14,7 +14,7 @@ interface ChatWindowProps {
   onMinimize?: () => void;
 }
 
-const ChatWindow = ({ conversationId, otherName, onBack }: ChatWindowProps) => {
+const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindowProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [messages, setMessages] = useState<any[]>([]);
