@@ -722,6 +722,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_conversation_for_referral: {
+        Args: { _patient_user_id: string; _professional_id: string }
+        Returns: string
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
