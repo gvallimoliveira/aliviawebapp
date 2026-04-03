@@ -228,7 +228,41 @@ EXERCISE GUIDELINES:
 - Each exercise MUST have "searchQueryPro" and "searchQueryShorts" fields (NOT videoUrls or searchQuery)
 - Adapt exercises based on equipment availability: ${hasGym ? "gym equipment available" : "bodyweight and resistance bands only"}
 - Adapt intensity based on activity level: ${anamnesisData?.activityLevel || "not specified"}
-- Include references from the knowledge base sources listed above`;
+- Include references from the knowledge base sources listed above
+
+${needsProfGuidelines ? `
+PROFESSIONAL GUIDELINES (ONLY for professional mode — B2B):
+Since this is a PROFESSIONAL assessment (mode=professional) and the patient has ${isHighPain ? `high pain (${painScore}/10 ≥ 6)` : ""}${isHighPain && hasEdema ? " and " : ""}${hasEdema ? "presence of edema" : ""}, you MUST include a "professionalGuidelines" array in the JSON response.
+
+These are clinical suggestions directed at the treating physiotherapist (NOT the patient). No specific dosage parameters — the professional will adjust.
+
+Include the following categories and techniques as relevant to the case:
+
+${isHighPain ? `**Analgesic & Anti-inflammatory Resources (Pain ≥ 6):**
+- TENS (conventional mode for acute analgesia; burst mode for chronic pain)
+- Thermotherapy by addition (superficial heat) or Tecartherapy (deep heat) for muscle relaxation and blood flow
+- Myofascial release of the affected region
+- Maitland joint mobilization grades 1-2 of the painful region (oscillatory, within pain-free range)
+- Mulligan mobilization with movement (MWM) or SNAG when applicable to the affected joint
+- Phonophoresis with therapeutic ultrasound
+- Combined therapy (TENS + therapeutic ultrasound)
+- Low-level laser therapy with high energy delivery (inhibition spectrum — Arndt-Schultz Law)` : ""}
+
+${hasEdema ? `**Edema Management:**
+- Manual lymphatic drainage of the affected region
+- Lower limb edema drainage associated with TENS at 2Hz with lower limb elevation` : ""}
+
+Format for professionalGuidelines:
+"professionalGuidelines": [
+  {
+    "category": "Category name",
+    "techniques": [
+      { "name": "Technique name", "indication": "When/why to use", "notes": "Clinical notes" }
+    ]
+  }
+]
+` : ""}`;
+
 
     const painfulTests = testResults?.filter((t: any) => t.painful).map((t: any) => t.testId) || [];
     const normalTests = testResults?.filter((t: any) => !t.painful).map((t: any) => t.testId) || [];
