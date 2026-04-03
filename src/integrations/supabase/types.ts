@@ -310,6 +310,30 @@ export type Database = {
           },
         ]
       }
+      pain_map_paths: {
+        Row: {
+          id: string
+          regions: Json
+          updated_at: string
+          updated_by: string | null
+          view_name: string
+        }
+        Insert: {
+          id?: string
+          regions: Json
+          updated_at?: string
+          updated_by?: string | null
+          view_name: string
+        }
+        Update: {
+          id?: string
+          regions?: Json
+          updated_at?: string
+          updated_by?: string | null
+          view_name?: string
+        }
+        Relationships: []
+      }
       professional_hidden_patients: {
         Row: {
           hidden_at: string
