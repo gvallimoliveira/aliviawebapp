@@ -1061,5 +1061,7 @@
   "upgrade_welcome.step3_desc_direct": "Diagnóstico detalhado e plano de tratamento personalizado em 3 fases.",
   "upgrade_welcome.back_generic": "Voltar",
   "upgrade_welcome.data_safe_direct": "Pagamento seguro e dados protegidos",
-  "brand.slogan": "O Aliv.iA não é só um app — é um sistema de raciocínio clínico com alma de fisioterapeuta de verdade."
+  "brand.slogan": "O Aliv.iA não é só um app — é um sistema de raciocínio clínico com alma de fisioterapeuta de verdade.",
+  "upgrade_welcome.toggle_monthly": "Mensal",
+  "upgrade_welcome.toggle_single": "Avulso"
 }
