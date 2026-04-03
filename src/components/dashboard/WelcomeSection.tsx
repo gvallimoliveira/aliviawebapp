@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, Stethoscope, Crown, RotateCcw } from "lucide-react";
 
+
 interface WelcomeSectionProps {
   profileName?: string | null;
   userEmail?: string;
@@ -25,12 +26,13 @@ const WelcomeSection = ({
   showRestart,
   activeTab = "health",
 }: WelcomeSectionProps) => {
+  const navigate = useNavigate();
   const { t } = useLanguage();
 
   const renderBadge = () => {
     const isAdmin = userEmail === "gvallimoliveira@gmail.com";
     if (isAdmin) {
-      return <Badge className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 gap-1"><Shield className="h-3 w-3" />Admin</Badge>;
+      return <Badge className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 gap-1 cursor-pointer hover:bg-destructive/80 transition-colors" onClick={() => navigate("/admin")}><Shield className="h-3 w-3" />Admin</Badge>;
     }
 
     // Na aba profissional, mostrar badge Pro
