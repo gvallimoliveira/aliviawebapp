@@ -237,7 +237,6 @@ const Dashboard = () => {
             </TabsContent>
             <TabsContent value="professional" className="space-y-8">
               <ProDashboard professional={professional} />
-              {referrals.length > 0 && renderReferrals()}
             </TabsContent>
           </Tabs>
         ) : (
