@@ -79,7 +79,7 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
   // ═══════════════════════════════════════════════════════════════════════════
   back: [
     { id: "head_back", label_pt: "Cabeça (post.)", label_en: "Head (post.)",
-      d: "M100,6 C86,6 78,14 78,22 C78,30 84,36 92,38 L108,38 C116,36 122,30 122,22 C122,14 114,6 100,6Z" },
+      d: "M97,14 C86,14 78,14 78,22 C74,41 78,51 89,57 L111,52 C116,36 116,32 111,27 C113,20 108,17 100,15 Z" },
     { id: "cervical", label_pt: "Cervical", label_en: "Cervical",
       d: "M81,53 L109,55 L114,82 L79,82 Z" },
     { id: "left_shoulder_back", label_pt: "Ombro Esq. (post.)", label_en: "L. Shoulder (post.)",
@@ -137,9 +137,9 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
   // ═══════════════════════════════════════════════════════════════════════════
   left: [
     { id: "head_left", label_pt: "Cabeça (lat. esq.)", label_en: "Head (left)",
-      d: "M100,5 C86,5 76,12 74,22 C72,32 76,38 82,42 L122,42 C128,38 132,30 130,22 C128,12 118,5 100,5Z" },
+      d: "M81,16 C81,19 76,12 52,24 C53,43 64,45 80,52 L97,52 C109,46 115,35 110,24 C98,21 91,18 89,16 Z" },
     { id: "cervical_left", label_pt: "Cervical (lat. esq.)", label_en: "Cervical (left)",
-      d: "M82,42 L122,42 L124,55 L80,55Z" },
+      d: "M69,58 L100,55 L95,74 L65,80 Z" },
     { id: "shoulder_left", label_pt: "Ombro Esquerdo (lat.)", label_en: "Left Shoulder (lat.)",
       d: "M103,74 L115,82 L118,94 L121,111 L96,115 L67,118 L72,90 L77,78 Z" },
     { id: "arm_left", label_pt: "Braço (lat. esq.)", label_en: "Arm (left lat.)",
@@ -173,9 +173,9 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
   // ═══════════════════════════════════════════════════════════════════════════
   right: [
     { id: "head_right", label_pt: "Cabeça (lat. dir.)", label_en: "Head (right)",
-      d: "M105,5 C90,5 78,12 76,22 C74,32 78,38 84,42 L124,42 C130,38 134,30 132,22 C130,12 120,5 105,5Z" },
+      d: "M98,24 C91,24 80,25 76,22 C74,32 68,43 75,54 L124,42 C130,38 134,30 132,22 C124,26 119,23 105,21 Z" },
     { id: "cervical_right", label_pt: "Cervical (lat. dir.)", label_en: "Cervical (right)",
-      d: "M84,42 L124,42 L126,55 L82,55Z" },
+      d: "M82,59 L106,65 L102,84 L81,75 Z" },
     { id: "shoulder_right", label_pt: "Ombro Direito (lat.)", label_en: "Right Shoulder (lat.)",
       d: "M80,80 L95,92 L109,99 L103,118 L82,130 L54,118 L59,101 L65,88 Z" },
     { id: "arm_right", label_pt: "Braço (lat. dir.)", label_en: "Arm (right lat.)",
