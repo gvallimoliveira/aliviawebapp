@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle, UserPlus, Rocket, ArrowRight, ArrowLeft, Shield, Sparkles, Gift, ClipboardList, Target, Lock } from "lucide-react";
+import { CheckCircle, UserPlus, Rocket, ArrowRight, ArrowLeft, Shield, Sparkles, Gift, ClipboardList, Target, Lock, Calendar, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PREMIUM_SINGLE_PRICE_FORMATTED, PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
 
@@ -14,9 +16,12 @@ const UpgradeWelcome = () => {
   const location = useLocation();
   const { t } = useLanguage();
 
-  const state = (location.state as { redirectTo?: string; planType?: string }) || {};
+  const state = (location.state as { redirectTo?: string; planType?: string; paymentType?: string }) || {};
   const planType = state.planType || "single";
   const redirectTo = state.redirectTo || "/assessment/premium";
+  const [selectedPayment, setSelectedPayment] = useState<"monthly" | "single">(
+    (state.paymentType as "monthly" | "single") || "single"
+  );
 
   const isReferral = planType === "referral";
   const isDirectPremium = planType === "direct-premium";
