@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X } from "lucide-react";
+import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X, Plus } from "lucide-react";
 
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -54,6 +54,8 @@ const ProfessionalRegister = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [showCustomSpecialty, setShowCustomSpecialty] = useState(false);
+  const [customSpecialtyInput, setCustomSpecialtyInput] = useState("");
 
   const [form, setForm] = useState({
     full_name: "",
@@ -556,7 +558,59 @@ const ProfessionalRegister = () => {
                       {t(`prof.spec.${s}`)}
                     </Badge>
                   ))}
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer gap-1"
+                    onClick={() => setShowCustomSpecialty(true)}
+                  >
+                    <Plus className="h-3 w-3" />
+                    {t("prof.spec.other")}
+                  </Badge>
                 </div>
+                {showCustomSpecialty && (
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      value={customSpecialtyInput}
+                      onChange={(e) => setCustomSpecialtyInput(e.target.value)}
+                      placeholder={t("prof.spec.other_placeholder")}
+                      className="max-w-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const val = customSpecialtyInput.trim();
+                          if (val && !form.specialties.includes(val)) {
+                            setForm({ ...form, specialties: [...form.specialties, val] });
+                          }
+                          setCustomSpecialtyInput("");
+                          setShowCustomSpecialty(false);
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        const val = customSpecialtyInput.trim();
+                        if (val && !form.specialties.includes(val)) {
+                          setForm({ ...form, specialties: [...form.specialties, val] });
+                        }
+                        setCustomSpecialtyInput("");
+                        setShowCustomSpecialty(false);
+                      }}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                {form.specialties.filter(s => !SPECIALTIES.includes(s)).length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {form.specialties.filter(s => !SPECIALTIES.includes(s)).map(s => (
+                      <Badge key={s} variant="default" className="cursor-pointer gap-1" onClick={() => toggleSpecialty(s)}>
+                        {s} <X className="h-3 w-3" />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">

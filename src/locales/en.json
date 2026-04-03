@@ -512,6 +512,8 @@
   "prof.spec.aquatica": "Aquatic",
   "prof.spec.uroginecologica": "Urogynecological",
   "prof.spec.reumatologica": "Rheumatological",
+  "prof.spec.other": "Other",
+  "prof.spec.other_placeholder": "Type the specialty",
   "prof.add_photo": "Add profile photo",
   "prof.change_photo": "Change photo",
   "prof.crop_photo": "Adjust photo",
