@@ -820,6 +820,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         </Card>
       ) : null}
 
+      {/* ── Clinical Impression (AI) ── */}
+      {(() => {
+        const latestWithDiag = [...patient.assessments].reverse().find((a: any) => a.diagnosis);
+        if (!latestWithDiag) return null;
+        const existingImpression = (latestWithDiag as any).diagnosis?.clinicalImpression;
+        return (
+          <ClinicalImpressionCard
+            assessment={latestWithDiag}
+            existingImpression={existingImpression}
+            language={language}
+          />
+        );
+      })()}
+
       {/* ── Pain Map Comparison ── */}
       {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && (
         <Card>
