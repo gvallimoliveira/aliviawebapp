@@ -1093,11 +1093,13 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
 
   // ── Pain Score (VAS) ──
   const vasScore = anamnesisData?.painScore ?? (painRegions ? undefined : undefined);
+  const hasPerRegion = anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0;
+
   if (vasScore != null) {
-    y = checkPage(doc, y, 35);
+    const neededHeight = hasPerRegion ? 55 + Object.keys(anamnesisData!.painScoresPerRegion!).length * 5 : 35;
+    y = checkPage(doc, y, neededHeight);
     y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary, 25);
 
-    const score = vasScore;
     const barX = MARGIN + 2;
     const barW = CONTENT_WIDTH - 4;
     const barH = 8;
@@ -1129,31 +1131,89 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     doc.setLineWidth(0.3);
     doc.roundedRect(barX, y, barW, barH, 2, 2, "S");
 
-    const markerX = barX + (score / 10) * barW;
-    doc.setFillColor(...COLORS.white);
-    doc.setDrawColor(...COLORS.foreground);
-    doc.setLineWidth(1);
-    doc.circle(markerX, y + barH / 2, 4, "FD");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(...COLORS.foreground);
-    doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
-    y += barH + 3;
+    if (hasPerRegion) {
+      // Per-region markers with distinct colors
+      const regionColors: [number, number, number][] = [
+        [59, 130, 246],   // blue
+        [168, 85, 247],   // purple
+        [234, 179, 8],    // amber
+        [239, 68, 68],    // red
+        [16, 185, 129],   // emerald
+        [249, 115, 22],   // orange
+      ];
+      const entries = Object.entries(anamnesisData!.painScoresPerRegion!);
+      entries.forEach(([_key, score], idx) => {
+        const markerX = barX + (score / 10) * barW;
+        const color = regionColors[idx % regionColors.length];
+        doc.setFillColor(color[0], color[1], color[2]);
+        doc.setDrawColor(...COLORS.white);
+        doc.setLineWidth(1.2);
+        doc.circle(markerX, y + barH / 2, 4, "FD");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7);
+        doc.setTextColor(...COLORS.white);
+        doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.2), y + barH / 2 + 2);
+      });
+      y += barH + 3;
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.setTextColor(...COLORS.muted);
-    doc.text(isPt ? "Sem dor" : "No pain", barX, y + 3);
-    const worstLabel = isPt ? "Pior dor" : "Worst pain";
-    doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
+      // Labels
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(...COLORS.muted);
+      doc.text(isPt ? "Sem dor" : "No pain", barX, y + 3);
+      const worstLabel = isPt ? "Pior dor" : "Worst pain";
+      doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
+      y += 8;
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    const scoreColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
-    doc.setTextColor(...scoreColor);
-    const scoreText = `${score}/10`;
-    doc.text(scoreText, barX + barW / 2 - doc.getTextWidth(scoreText) / 2, y + 3);
-    y += 10;
+      // Legend table
+      entries.forEach(([key, score], idx) => {
+        const color = regionColors[idx % regionColors.length];
+        doc.setFillColor(color[0], color[1], color[2]);
+        doc.circle(barX + 3, y + 1, 1.8, "F");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(...COLORS.foreground);
+        doc.text(`${translateKey(key, isPt)}: ${score}/10`, barX + 8, y + 2.5);
+        y += 5;
+      });
+
+      // Average
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      const scoreColor: [number, number, number] = vasScore <= 3 ? COLORS.green : vasScore <= 6 ? COLORS.yellow : COLORS.red;
+      doc.setTextColor(...scoreColor);
+      const avgText = isPt ? `Média: ${vasScore}/10` : `Average: ${vasScore}/10`;
+      doc.text(avgText, barX + barW / 2 - doc.getTextWidth(avgText) / 2, y + 3);
+      y += 10;
+    } else {
+      // Single marker (general mode)
+      const score = vasScore;
+      const markerX = barX + (score / 10) * barW;
+      doc.setFillColor(...COLORS.white);
+      doc.setDrawColor(...COLORS.foreground);
+      doc.setLineWidth(1);
+      doc.circle(markerX, y + barH / 2, 4, "FD");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.foreground);
+      doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
+      y += barH + 3;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(...COLORS.muted);
+      doc.text(isPt ? "Sem dor" : "No pain", barX, y + 3);
+      const worstLabel = isPt ? "Pior dor" : "Worst pain";
+      doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      const scoreColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
+      doc.setTextColor(...scoreColor);
+      const scoreText = `${score}/10`;
+      doc.text(scoreText, barX + barW / 2 - doc.getTextWidth(scoreText) / 2, y + 3);
+      y += 10;
+    }
   }
 
   // ── Test Results (Questionnaires) ──
