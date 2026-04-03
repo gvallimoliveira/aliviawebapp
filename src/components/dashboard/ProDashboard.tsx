@@ -77,6 +77,66 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     setPatientAssessments(data || []);
   };
 
+  const loadReferrals = async () => {
+    const { data: refs } = await (supabase.from("professional_referrals" as any) as any)
+      .select("*")
+      .eq("professional_id", professional.id)
+      .order("created_at", { ascending: false });
+    if (!refs || refs.length === 0) { setReferrals([]); return; }
+    setReferrals(refs);
+    // Fetch patient names
+    const userIds = [...new Set(refs.map((r: any) => r.patient_user_id))];
+    const profiles: Record<string, string> = {};
+    for (const uid of userIds) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", uid)
+        .maybeSingle();
+      if (profile?.full_name) profiles[uid as string] = profile.full_name;
+    }
+    setReferralProfiles(profiles);
+  };
+
+  const handleReferralAction = async (referralId: string, status: "accepted" | "declined") => {
+    setReferralActionLoading(referralId);
+    try {
+      await (supabase.from("professional_referrals" as any) as any)
+        .update({ status })
+        .eq("id", referralId);
+      setReferrals(prev => prev.map(r => r.id === referralId ? { ...r, status } : r));
+      toast({ title: status === "accepted" ? t("prof.referral_accepted") : t("prof.referral_declined") });
+    } catch {
+      toast({ title: "Erro", variant: "destructive" });
+    } finally {
+      setReferralActionLoading(null);
+    }
+  };
+
+  const handleReferralMessage = async (patientUserId: string) => {
+    // Check existing conversation
+    const { data: existingConvs } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("professional_id", professional.id)
+      .eq("patient_user_id", patientUserId);
+    if (existingConvs && existingConvs.length > 0) {
+      navigate(`/dashboard?tab=messages&conv=${existingConvs[0].id}`);
+      return;
+    }
+    // Create new conversation
+    const { data: newConv, error } = await supabase
+      .from("conversations")
+      .insert({ professional_id: professional.id, patient_user_id: patientUserId })
+      .select("id")
+      .single();
+    if (error) {
+      toast({ title: t("prof.referral_message_error"), variant: "destructive" });
+      return;
+    }
+    navigate(`/dashboard?tab=messages&conv=${newConv.id}`);
+  };
+
   const handleSubscribe = async (plan: "monthly" | "annual" = "monthly") => {
     setCheckoutLoading(true);
     try {
