@@ -832,14 +832,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
   // ── Evolution detail view ──
 
-  // Centralize latestWithDiagnosis
-  const latestWithDiagnosis = useMemo(() => {
-    return [...patient.assessments].reverse().find((a: any) => a.diagnosis) || null;
-  }, [patient.assessments]);
-
-  const latestAssessment = patient.assessments[patient.assessments.length - 1];
-  const latestAnamnesisFields = latestAssessment ? getAnamnesisFields(latestAssessment) : [];
-
   return (
     <div className="space-y-5">
       {/* ── 1. HEADER ── */}
