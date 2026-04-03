@@ -53,6 +53,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   useEffect(() => {
     checkSubscription();
     loadPatientAssessments();
+    loadReferrals();
   }, []);
 
   const checkSubscription = async () => {
