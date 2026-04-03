@@ -11,6 +11,7 @@ interface ChatWindowProps {
   conversationId: string;
   otherName: string;
   onBack: () => void;
+  onMinimize?: () => void;
 }
 
 const ChatWindow = ({ conversationId, otherName, onBack }: ChatWindowProps) => {
