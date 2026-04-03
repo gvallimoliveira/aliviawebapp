@@ -125,6 +125,10 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
         .update({ [field]: true })
         .eq("id", convId);
       setConversations((prev) => prev.filter((c) => c.id !== convId));
+      if (activeConvId === convId) {
+        setActiveConvId(null);
+        setActiveOtherName("");
+      }
     } catch {
       // silent
     } finally {
