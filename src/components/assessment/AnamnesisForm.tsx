@@ -884,11 +884,13 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
         }
         return true;
       }
+      case "migraine_screening": return !!data.hasPhotophobia && !!data.hasNausea && !!data.headacheCrisisFrequency;
       case "sex_age": return data.sex !== "" && data.ageRange !== "";
       case "paintype": return data.painTypes.length > 0;
       case "evolution": return data.evolution !== "";
       case "factors": return data.activityLevel !== "";
       case "duration": return data.painDuration !== "";
+      case "pain_frequency": return !!data.painPattern && !!data.painNightWaking && (data.painPattern !== "anamnesis.pain_pattern.intermittent" || !!data.painWeeklyFrequency);
       case "gym": return data.hasGymAccess !== "";
       case "painscore": return true;
     }
