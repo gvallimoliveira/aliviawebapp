@@ -158,6 +158,8 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
+          hidden_by_patient: boolean
+          hidden_by_professional: boolean
           id: string
           patient_user_id: string
           professional_id: string
@@ -165,6 +167,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          hidden_by_patient?: boolean
+          hidden_by_professional?: boolean
           id?: string
           patient_user_id: string
           professional_id: string
@@ -172,6 +176,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          hidden_by_patient?: boolean
+          hidden_by_professional?: boolean
           id?: string
           patient_user_id?: string
           professional_id?: string
