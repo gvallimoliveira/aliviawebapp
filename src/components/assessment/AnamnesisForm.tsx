@@ -370,6 +370,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">{t("anamnesis.surgery_title")}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.surgery_subtitle")}</p>
+            <p className="text-xs text-muted-foreground/80 italic">{t("anamnesis.surgery_disclaimer")}</p>
             <div className="grid grid-cols-2 gap-3">
               {["anamnesis.surgery.yes", "anamnesis.surgery.no"].map((option) => (
                 <Card key={option} className={`cursor-pointer transition-all ${data.hasPriorSurgery === option ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, hasPriorSurgery: option, ...(option.includes("no") ? { surgeryDetails: "" } : {}) })}>
