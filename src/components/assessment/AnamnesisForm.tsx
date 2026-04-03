@@ -290,7 +290,12 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
   };
 
   // Define step IDs for clarity
-  type StepId = "complaint" | "onset" | "surgery" | "painmap" | "region_detail" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "gym" | "painscore";
+  type StepId = "complaint" | "onset" | "surgery" | "painmap" | "region_detail" | "migraine_screening" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "pain_frequency" | "gym" | "painscore";
+
+  // Check if migraine screening should show
+  const needsMigraineScreening = () => {
+    return data.chiefComplaints.includes("anamnesis.complaint.headache") && data.chiefComplaints.includes("anamnesis.complaint.neck_pain");
+  };
 
   const buildStepSequence = (): StepId[] => {
     const base: StepId[] = ["complaint", "onset", "surgery", "painmap"];
@@ -298,10 +303,14 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     if (needsRegionDetail()) {
       base.push("region_detail");
     }
+    // Add migraine screening if cervical + headache
+    if (needsMigraineScreening()) {
+      base.push("migraine_screening");
+    }
     if (isShoulderRelated()) {
       base.push("sex_age");
     }
-    base.push("paintype", "evolution", "factors", "duration", "gym", "painscore");
+    base.push("paintype", "evolution", "factors", "duration", "pain_frequency", "gym", "painscore");
     return base;
   };
 
