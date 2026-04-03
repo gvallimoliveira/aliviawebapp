@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Mail, Download, Share2, Search, TrendingUp, CheckCircle, Star } from "lucide-react";
+import { Loader2, Mail, Download, Share2, Search, TrendingUp, CheckCircle, Star, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Lead {
