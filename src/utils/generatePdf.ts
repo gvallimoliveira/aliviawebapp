@@ -811,7 +811,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
   for (let i = 0; i < motivationalLines.length; i++) {
-    doc.text(motivationalLines[i], MARGIN + 12, motBoxY + 5 + i * 4);
+    doc.text(motivationalLines[i], MARGIN + 12, motBoxY + 5 + i * 5);
   }
   y += upsellH + 8;
 
