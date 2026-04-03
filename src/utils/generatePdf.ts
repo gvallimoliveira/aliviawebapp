@@ -1269,8 +1269,8 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
 }
 
 // ── Helper: Section Title ──
-function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number, number, number]): number {
-  y = checkPage(doc, y, 14);
+function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number, number, number], extraContentHeight: number = 0): number {
+  y = checkPage(doc, y, 14 + extraContentHeight);
   doc.setDrawColor(...color);
   doc.setLineWidth(2);
   doc.line(MARGIN, y, MARGIN + 12, y);
