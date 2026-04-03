@@ -636,10 +636,12 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             ? lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable"
             : null;
 
+          const isHidden = hiddenEmails.has(p.email);
+
           return (
             <Card
               key={p.email}
-              className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group"
+              className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group ${isHidden ? "opacity-50" : ""}`}
               onClick={() => setSelectedEmail(p.email)}
             >
               <CardContent className="py-3 px-4">
@@ -650,6 +652,11 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         <User className="h-3.5 w-3.5 text-muted-foreground" />
                         {p.name}
                       </p>
+                      {isHidden && (
+                        <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">
+                          Arquivado
+                        </Badge>
+                      )}
                       <Badge variant="outline" className="text-[10px]">
                         {p.assessments.length} {t("pro.assessments_count")}
                       </Badge>
@@ -688,7 +695,32 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isHidden ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Restaurar paciente"
+                        disabled={archiving === p.email}
+                        onClick={(e) => handleRestorePatient(p.email, e)}
+                      >
+                        {archiving === p.email ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-muted-foreground" />}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Arquivar paciente"
+                        disabled={archiving === p.email}
+                        onClick={(e) => handleArchivePatient(p.email, e)}
+                      >
+                        {archiving === p.email ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
+                      </Button>
+                    )}
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
