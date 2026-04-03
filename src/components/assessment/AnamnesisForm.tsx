@@ -640,6 +640,53 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
             </div>
           </div>
         );
+      case "pain_frequency":
+        return (
+          <div className="space-y-5">
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_frequency_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("anamnesis.pain_frequency_subtitle")}</p>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">{t("anamnesis.pain_pattern_label")}</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {["anamnesis.pain_pattern.continuous", "anamnesis.pain_pattern.intermittent"].map((opt) => (
+                  <Card key={opt} className={`cursor-pointer transition-all ${data.painPattern === opt ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, painPattern: opt, ...(opt.includes("continuous") ? { painWeeklyFrequency: "" } : {}) })}>
+                    <CardContent className="py-4 px-4 text-center">
+                      <span className="text-2xl block mb-1">{opt.includes("continuous") ? "🔄" : "⚡"}</span>
+                      <span className="text-sm font-medium">{t(opt)}</span>
+                      <p className="text-xs text-muted-foreground mt-1">{t(`${opt}_desc`)}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {data.painPattern === "anamnesis.pain_pattern.intermittent" && (
+              <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+                <Label className="text-sm font-medium">{t("anamnesis.weekly_frequency_label")}</Label>
+                <div className="grid gap-2">
+                  {["anamnesis.weekly_freq.daily", "anamnesis.weekly_freq.4_6", "anamnesis.weekly_freq.2_3", "anamnesis.weekly_freq.1_or_less"].map((opt) => (
+                    <Card key={opt} className={`cursor-pointer transition-all ${data.painWeeklyFrequency === opt ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, painWeeklyFrequency: opt })}>
+                      <CardContent className="py-3 px-4"><span className="text-sm font-medium">{t(opt)}</span></CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
+              <Label className="text-sm font-medium">{t("anamnesis.night_waking_label")}</Label>
+              <p className="text-xs text-muted-foreground">{t("anamnesis.night_waking_subtitle")}</p>
+              <div className="grid gap-2">
+                {["anamnesis.night_waking.frequent", "anamnesis.night_waking.sometimes", "anamnesis.night_waking.no"].map((opt) => (
+                  <Card key={opt} className={`cursor-pointer transition-all ${data.painNightWaking === opt ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, painNightWaking: opt })}>
+                    <CardContent className="py-3 px-4"><span className="text-sm font-medium">{t(opt)}</span></CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
       case "gym":
         return (
           <div className="space-y-4">
