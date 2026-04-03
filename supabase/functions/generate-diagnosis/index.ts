@@ -170,8 +170,29 @@ CLINICAL DECISION GUIDE:
         },
       };
 
-      const mapping = regionType && mappings[regionType]?.[painSubArea];
-      return mapping ? `\nSUB-AREA SPECIFIC GUIDANCE (MANDATORY — patient specified exact pain location):\n${mapping}\n` : "";
+      // Handle painSubArea as array (multiple sub-areas selected) or single string
+      const subAreas: string[] = Array.isArray(painSubArea) ? painSubArea : [painSubArea];
+      const regionMappings = regionType ? mappings[regionType] : null;
+      if (!regionMappings) return "";
+
+      const matchedGuidance = subAreas
+        .map((area: string) => regionMappings[area])
+        .filter(Boolean);
+
+      if (matchedGuidance.length === 0) return "";
+
+      if (matchedGuidance.length > 1) {
+        return `\nMULTI-AREA PAIN REPORTED (patient selected ${subAreas.length} sub-areas: ${subAreas.join(", ")}):
+The patient reports pain in MULTIPLE sub-regions simultaneously. This is clinically significant — consider:
+- Diffuse pathology affecting the entire joint (e.g., generalized OA, synovitis, post-surgical inflammation)
+- Post-surgical complications if surgery history is present (adhesions, altered biomechanics, diffuse sensitization)
+- Central sensitization if chronic pain with widespread distribution
+- Each sub-area guidance below should be considered but weighted against the overall clinical picture:
+
+${matchedGuidance.map((g: string, i: number) => `--- Sub-area ${i + 1}: ${subAreas[i]} ---\n${g}`).join("\n\n")}\n`;
+      }
+
+      return `\nSUB-AREA SPECIFIC GUIDANCE (MANDATORY — patient specified exact pain location: ${subAreas[0]}):\n${matchedGuidance[0]}\n`;
     })() : "";
 
     // Ottawa rules block
@@ -436,19 +457,35 @@ Generate the diagnostic hypothesis in valid JSON format.`;
     const aiResult = await response.json();
     const content = aiResult.choices[0].message.content;
 
-    // Extract JSON from response (handle markdown code blocks)
+    // Extract JSON from response — robust multi-layer parsing
     let jsonStr = content.trim();
-    // Remove markdown code fences if present
+    // Layer 1: Remove markdown code fences
     jsonStr = jsonStr.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
-    // If still not starting with { or [, try to find JSON object
+    // Layer 2: Find first { and match to last }
     if (!jsonStr.startsWith('{') && !jsonStr.startsWith('[')) {
       const braceStart = jsonStr.indexOf('{');
       if (braceStart !== -1) {
         jsonStr = jsonStr.slice(braceStart);
       }
     }
+    // Layer 3: Trim trailing content after last closing brace
+    const lastBrace = jsonStr.lastIndexOf('}');
+    if (lastBrace !== -1 && lastBrace < jsonStr.length - 1) {
+      jsonStr = jsonStr.slice(0, lastBrace + 1);
+    }
 
-    const diagnosis = JSON.parse(jsonStr);
+    let diagnosis: any;
+    try {
+      diagnosis = JSON.parse(jsonStr);
+    } catch (parseErr) {
+      // Layer 4: Try to fix common JSON issues (trailing commas, unescaped newlines in strings)
+      console.error("Initial JSON parse failed, attempting cleanup:", parseErr);
+      const cleaned = jsonStr
+        .replace(/,\s*}/g, '}')
+        .replace(/,\s*]/g, ']')
+        .replace(/[\x00-\x1F\x7F]/g, (ch: string) => ch === '\n' || ch === '\r' || ch === '\t' ? ch : '');
+      diagnosis = JSON.parse(cleaned);
+    }
 
     return new Response(JSON.stringify({ diagnosis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
