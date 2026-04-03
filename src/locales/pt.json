@@ -702,6 +702,8 @@
   "dashboard.tab_professional": "Painel Profissional",
   "dashboard.tab_messages": "Mensagens",
   "chat.no_conversations": "Nenhuma conversa ainda.",
+  "chat.delete_conversation": "Apagar conversa",
+  "chat.delete_confirm": "Tem certeza que deseja apagar esta conversa? Ela será removida da sua lista.",
   "chat.no_messages": "Nenhuma mensagem ainda. Inicie a conversa!",
   "chat.placeholder": "Digite sua mensagem...",
   "chat.send_message": "Enviar mensagem",
