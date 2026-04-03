@@ -637,6 +637,118 @@ export async function generateAssessmentPdfBlob(options: PdfOptions): Promise<Bl
   return doc.output("blob");
 }
 
+// ── Shared VAS Renderer (one bar per region or single bar) ──
+function renderVasBar(doc: jsPDF, barX: number, y: number, barW: number, barH: number, score: number, label?: string, isPt?: boolean): number {
+  // Label above bar if provided
+  if (label) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(label, barX, y);
+    y += 4;
+  }
+
+  // Gradient background bar
+  const gradientStops = [
+    { pos: 0, color: [50, 180, 100] },
+    { pos: 0.3, color: [180, 180, 50] },
+    { pos: 0.6, color: [220, 140, 40] },
+    { pos: 1, color: [200, 50, 50] },
+  ];
+  const segments = 20;
+  const segW = barW / segments;
+  for (let i = 0; i < segments; i++) {
+    const t = i / segments;
+    let c = gradientStops[0].color;
+    for (let s = 0; s < gradientStops.length - 1; s++) {
+      if (t >= gradientStops[s].pos && t <= gradientStops[s + 1].pos) {
+        const ratio = (t - gradientStops[s].pos) / (gradientStops[s + 1].pos - gradientStops[s].pos);
+        c = gradientStops[s].color.map((v, idx) => Math.round(v + (gradientStops[s + 1].color[idx] - v) * ratio));
+        break;
+      }
+    }
+    doc.setFillColor(c[0], c[1], c[2]);
+    doc.rect(barX + i * segW, y, segW + 0.5, barH, "F");
+  }
+
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(barX, y, barW, barH, 2, 2, "S");
+
+  // Score marker
+  const markerX = barX + (score / 10) * barW;
+  doc.setFillColor(...COLORS.white);
+  doc.setDrawColor(...COLORS.foreground);
+  doc.setLineWidth(1);
+  doc.circle(markerX, y + barH / 2, 4, "FD");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.foreground);
+  doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
+  y += barH + 3;
+
+  // End labels
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(...COLORS.muted);
+  const noPainLabel = isPt ? "Sem dor" : "No pain";
+  const worstLabel = isPt ? "Pior dor" : "Worst pain";
+  doc.text(noPainLabel, barX, y + 3);
+  doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
+
+  // Score text centered
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  const scoreColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
+  doc.setTextColor(...scoreColor);
+  const scoreText = `${score}/10`;
+  doc.text(scoreText, barX + barW / 2 - doc.getTextWidth(scoreText) / 2, y + 3);
+  y += 10;
+
+  return y;
+}
+
+function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: number | undefined, anamnesisData?: AnamnesisData | any): number {
+  const hasPerRegion = anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0;
+  const score = painScore ?? anamnesisData?.painScore;
+  if (score == null && !hasPerRegion) return y;
+
+  const barX = MARGIN + 2;
+  const barW = CONTENT_WIDTH - 4;
+  const barH = 8;
+
+  if (hasPerRegion) {
+    const entries = Object.entries(anamnesisData!.painScoresPerRegion!) as [string, number][];
+    const neededHeight = 20 + entries.length * 28;
+    y = checkPage(doc, y, neededHeight);
+    y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary, 25);
+
+    for (const [key, regionScore] of entries) {
+      y = checkPage(doc, y, 26);
+      const label = `${translateKey(key, isPt)} — ${regionScore}/10`;
+      y = renderVasBar(doc, barX, y, barW, barH, regionScore, label, isPt);
+      y += 2;
+    }
+
+    // Average
+    if (score != null) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      const avgColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
+      doc.setTextColor(...avgColor);
+      const avgText = isPt ? `Média geral: ${score}/10` : `Overall average: ${score}/10`;
+      doc.text(avgText, barX + barW / 2 - doc.getTextWidth(avgText) / 2, y);
+      y += 8;
+    }
+  } else if (score != null) {
+    y = checkPage(doc, y, 35);
+    y = renderSectionTitle(doc, y, isPt ? "Escala Visual de Dor (EVA)" : "Visual Analog Scale (VAS)", COLORS.primary, 25);
+    y = renderVasBar(doc, barX, y, barW, barH, score, undefined, isPt);
+  }
+
+  return y;
+}
+
 // ── Basic Report PDF (for WhatsApp sharing — hypothesis, confidence, summary, pain map, VAS, disclaimer) ──
 interface BasicReportOptions {
   diagnosis: Diagnosis;
@@ -644,6 +756,7 @@ interface BasicReportOptions {
   patientName?: string;
   painRegions?: string[];
   painScore?: number;
+  anamnesisData?: any;
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
