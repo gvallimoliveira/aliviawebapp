@@ -385,6 +385,35 @@ ${lumbarShoulderBlock}
 ${radiculopathyBlock}
 ${multiComplaintBlock}
 
+${hasPhotophobia || hasVisualAura || hasNausea || headacheCrisisFrequency ? `
+MIGRAINE/CERVICOGENIC HEADACHE SCREENING DATA (MANDATORY — integrate into clinical reasoning):
+Based on ICHD-3 criteria for migraine without aura:
+- Photophobia: ${hasPhotophobia === "anamnesis.trauma.yes" ? "YES" : "No"}
+- Visual aura: ${hasVisualAura === "anamnesis.trauma.yes" ? "YES — suggests migraine WITH aura" : "No"}
+- Nausea during episodes: ${hasNausea === "anamnesis.trauma.yes" ? "YES" : "No"}
+- Headache crisis frequency: ${headacheCrisisFrequency || "Not specified"}
+
+CLINICAL REASONING:
+- If photophobia + nausea + unilateral pulsating headache → strongly suspect MIGRAINE
+- If NO migraine features + posterior cervical pain + headache → suspect CERVICOGENIC HEADACHE (cervical origin)
+- If visual aura present → classify as MIGRAINE WITH AURA — recommend neurological evaluation
+- Cervicogenic headache originates from C1-C3 facet joints, suboccipital muscles — treat cervical dysfunction
+- Reference: ICHD-3 (International Classification of Headache Disorders, 3rd edition)
+` : ""}
+
+${painPattern ? `
+PAIN PATTERN & FREQUENCY (SINSS concept — Mulligan):
+- Pain pattern: ${painPattern.includes("continuous") ? "CONTINUOUS (24h)" : "INTERMITTENT"}
+${painWeeklyFrequency ? `- Weekly frequency: ${painWeeklyFrequency}` : ""}
+- Night pain waking: ${painNightWaking === "anamnesis.night_waking.frequent" ? "YES, FREQUENTLY — HIGH IRRITABILITY indicator" : painNightWaking === "anamnesis.night_waking.sometimes" ? "Sometimes" : "No"}
+
+SINSS STAGING (Symptom Irritability Neurodynamic Severity Staging):
+- Continuous pain + frequent night waking → HIGH IRRITABILITY stage — prioritize pain modulation, avoid heavy loading
+- Intermittent pain + no night waking → LOW IRRITABILITY — can tolerate progressive loading
+- Night waking is a KEY prognostic indicator: frequent night pain suggests inflammatory or neurogenic component
+- Reference: Mulligan B. — Manual Therapy: NAGS, SNAGS, MWMS; Maitland et al. — severity/irritability concept
+` : ""}
+
 IMPORTANT RULES:
 - Always respond in ${lang}.
 - This is NOT a definitive diagnosis — always clarify it's a hypothesis for educational purposes.
