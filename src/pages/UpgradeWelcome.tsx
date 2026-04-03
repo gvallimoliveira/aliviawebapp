@@ -41,19 +41,21 @@ const UpgradeWelcome = () => {
     ? t("upgrade_welcome.subtitle_direct")
     : t("upgrade_welcome.subtitle");
 
-  // Plan label & price
+  // Plan label & price — driven by selectedPayment toggle
+  const isMonthly = selectedPayment === "monthly";
+
   const planLabel = isReferral
-    ? t("upgrade_welcome.plan_referral")
-    : planType === "monthly"
+    ? (isMonthly ? t("upgrade_welcome.plan_monthly") : t("upgrade_welcome.plan_referral"))
+    : isMonthly
     ? t("upgrade_welcome.plan_monthly")
     : planType === "exit-discount"
     ? t("upgrade_welcome.plan_discount")
     : t("upgrade_welcome.plan_single");
 
-  const planPrice = isReferral
-    ? DISCOUNTED_PRICE
-    : planType === "monthly"
+  const planPrice = isMonthly
     ? PREMIUM_PRICE_FORMATTED
+    : isReferral
+    ? DISCOUNTED_PRICE
     : planType === "exit-discount"
     ? DISCOUNTED_PRICE
     : PREMIUM_SINGLE_PRICE_FORMATTED;
