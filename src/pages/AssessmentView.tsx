@@ -104,6 +104,7 @@ const AssessmentView = () => {
           patientName: assessment.patient_name || undefined,
           painRegions: assessment.pain_regions || undefined,
           painScore: assessment.pain_score,
+          anamnesisData: assessment.anamnesis_data || undefined,
         });
         const url = URL.createObjectURL(pdfBlob);
         const a = document.createElement("a");
