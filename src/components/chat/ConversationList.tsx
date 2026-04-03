@@ -33,6 +33,7 @@ const ConversationList = ({ mode, professionalId, initialConversationId }: Conve
   const [activeConvId, setActiveConvId] = useState<string | null>(initialConversationId || null);
   const [activeOtherName, setActiveOtherName] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [minimized, setMinimized] = useState(false);
 
   useEffect(() => {
     if (!user) return;
