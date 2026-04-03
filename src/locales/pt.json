@@ -552,6 +552,7 @@
   "referral.discount_applied": "Desconto de indicação aplicado",
   "referral.banner_title": "🎉 Você tem um desconto de indicação!",
   "referral.banner_desc": "Seu desconto de {percent}% será aplicado automaticamente na sua próxima cobrança ou avaliação.",
+  "referral.rules": "Você ganha 20% na próxima compra (avulsa ou mensalidade). Seu amigo ganha 10% na primeira avaliação avulsa. Descontos não cumulativos: 1 desconto por compra.",
   "assessment_view.title": "Detalhes da Avaliação",
   "assessment_view.back": "Voltar ao Dashboard",
   "assessment_view.no_diagnosis": "Diagnóstico ainda não gerado",
