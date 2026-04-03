@@ -764,7 +764,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     "✅ Complete 3-phase progressive treatment plan",
     "✅ Exercises with sets, reps and progression",
   ];
-  const bullets = [...(isPt ? bulletsPt : bulletsEn), questionnaireBullet];
+  const bullets = [...(isPt ? bulletsPt : bulletsEn), ...questionnaireBullets];
   
   const motivationalPt = "Já tenho uma boa ideia por onde começar seu tratamento!\nAdquira a avaliação premium para refinar nosso plano terapêutico\ne receber todas as orientações disponíveis! Vamos juntos resolver essa dor.";
   const motivationalEn = "I already have a good idea of where to start your treatment!\nGet the premium assessment to refine our treatment plan\nand receive all available guidance! Let's solve this pain together.";
