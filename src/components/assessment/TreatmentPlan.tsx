@@ -457,8 +457,8 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
         <p className="text-xs text-muted-foreground">{plan.disclaimer}</p>
       </div>
 
-      {/* Follow-up Opt-in */}
-      {user && assessmentId && (
+      {/* Follow-up Opt-in — hidden for now, kept for future reactivation */}
+      {/* {user && assessmentId && (
         <Card className="rounded-xl border-primary/30 bg-primary/5">
           <CardContent className="py-4 space-y-3">
             <div className="flex items-center gap-2">
@@ -484,7 +484,7 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
             )}
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       {/* Professional CTA */}
       <Card className="rounded-xl border-primary/30 bg-primary/5">
