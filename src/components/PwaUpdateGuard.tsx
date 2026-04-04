@@ -21,7 +21,16 @@ function isSafeRoute(pathname: string): boolean {
   );
 }
 
-function showBannerAndReload() {
+function activateWaitingSW(): boolean {
+  const reg = (window as any).__pwaRegistration as ServiceWorkerRegistration | undefined;
+  if (reg?.waiting) {
+    reg.waiting.postMessage({ type: "SKIP_WAITING" });
+    return true;
+  }
+  return false;
+}
+
+function showBanner() {
   const banner = document.createElement("div");
   banner.textContent = "✨ Nova versão disponível! Atualizando...";
   Object.assign(banner.style, {
@@ -39,31 +48,35 @@ function showBannerAndReload() {
     boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
   });
   document.body.appendChild(banner);
-  setTimeout(() => window.location.reload(), 600);
 }
 
 const PwaUpdateGuard = () => {
   const location = useLocation();
-  const reloading = useRef(false);
+  const activating = useRef(false);
 
-  useEffect(() => {
-    if (reloading.current) return;
-    if ((window as any).__pwaUpdatePending && isSafeRoute(location.pathname)) {
-      reloading.current = true;
-      (window as any).__pwaUpdatePending = false;
-      showBannerAndReload();
+  const tryActivate = () => {
+    if (activating.current) return;
+    if (!(window as any).__pwaUpdatePending) return;
+    if (!isSafeRoute(window.location.pathname)) return;
+
+    activating.current = true;
+    (window as any).__pwaUpdatePending = false;
+    showBanner();
+    // Send SKIP_WAITING — controllerchange in main.tsx will reload
+    if (!activateWaitingSW()) {
+      // SW already activated or no waiting worker — force reload as fallback
+      setTimeout(() => window.location.reload(), 600);
     }
+  };
+
+  // Check on route change
+  useEffect(() => {
+    tryActivate();
   }, [location.pathname]);
 
+  // Check when event fires (may already be on safe route)
   useEffect(() => {
-    const handler = () => {
-      if (reloading.current) return;
-      if (isSafeRoute(window.location.pathname)) {
-        reloading.current = true;
-        (window as any).__pwaUpdatePending = false;
-        showBannerAndReload();
-      }
-    };
+    const handler = () => tryActivate();
     window.addEventListener("pwa-update-ready", handler);
     return () => window.removeEventListener("pwa-update-ready", handler);
   }, []);
