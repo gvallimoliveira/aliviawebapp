@@ -101,6 +101,13 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions }: Anamnes
     painScoresPerRegion: {},
   });
 
+  // Pre-fill pain regions from reassessment
+  useEffect(() => {
+    if (initialPainRegions?.length) {
+      setData((prev) => ({ ...prev, painRegions: initialPainRegions }));
+    }
+  }, [initialPainRegions]);
+
   const complaints = [
     "anamnesis.complaint.neck_pain",
     "anamnesis.complaint.back_pain",

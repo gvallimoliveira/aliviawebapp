@@ -17,12 +17,13 @@ import {
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
-  Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw,
+  Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
 import JSZip from "jszip";
+import CreateExerciseProgramModal from "@/components/dashboard/CreateExerciseProgramModal";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
