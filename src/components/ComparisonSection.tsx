@@ -75,13 +75,15 @@ const ComparisonSection = () => {
           </p>
         </motion.div>
 
-        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide md:grid md:grid-cols-2 md:overflow-visible md:snap-none md:pb-0 md:gap-6">
           {/* Basic Card */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
+            className="snap-start shrink-0 w-[85%] md:w-auto md:shrink"
           >
             <Card className="h-full rounded-2xl border-border/60">
               <CardHeader className="pb-2 text-center">
@@ -128,6 +130,7 @@ const ComparisonSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
+            className="snap-start shrink-0 w-[85%] md:w-auto md:shrink"
           >
             <Card className="relative h-full rounded-2xl border-primary/30 bg-primary/[0.02] shadow-lg shadow-primary/5">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -232,6 +235,7 @@ const ComparisonSection = () => {
               </CardFooter>
             </Card>
           </motion.div>
+          </div>
         </div>
 
         <motion.p
