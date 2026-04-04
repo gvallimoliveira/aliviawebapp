@@ -39,9 +39,15 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between overflow-visible">
-        <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => go(user ? "/dashboard" : "/")}>
+        <div className="flex items-center gap-2 cursor-pointer shrink-0 relative" onClick={() => go(user ? "/dashboard" : "/")}>
           <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
           <span className="hidden sm:inline text-xl font-bold text-foreground">Aliv.iA</span>
+          {updatePending && (
+            <span className="absolute -top-0.5 -right-1.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
+            </span>
+          )}
         </div>
 
         {/* Desktop nav */}
