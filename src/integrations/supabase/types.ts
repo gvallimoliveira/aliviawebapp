@@ -193,6 +193,150 @@ export type Database = {
           },
         ]
       }
+      exercise_library: {
+        Row: {
+          body_region: string
+          category: string
+          created_at: string
+          description_en: string
+          description_es: string
+          description_pt: string
+          difficulty: string
+          id: string
+          name_en: string
+          name_es: string
+          name_pt: string
+          thumbnail_url: string | null
+          video_url: string | null
+        }
+        Insert: {
+          body_region?: string
+          category?: string
+          created_at?: string
+          description_en?: string
+          description_es?: string
+          description_pt?: string
+          difficulty?: string
+          id?: string
+          name_en?: string
+          name_es?: string
+          name_pt: string
+          thumbnail_url?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          body_region?: string
+          category?: string
+          created_at?: string
+          description_en?: string
+          description_es?: string
+          description_pt?: string
+          difficulty?: string
+          id?: string
+          name_en?: string
+          name_es?: string
+          name_pt?: string
+          thumbnail_url?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      exercise_program_items: {
+        Row: {
+          exercise_id: string
+          frequency: string
+          id: string
+          observations: string | null
+          program_id: string
+          reps: string
+          sets: string
+          sort_order: number
+        }
+        Insert: {
+          exercise_id: string
+          frequency?: string
+          id?: string
+          observations?: string | null
+          program_id: string
+          reps?: string
+          sets?: string
+          sort_order?: number
+        }
+        Update: {
+          exercise_id?: string
+          frequency?: string
+          id?: string
+          observations?: string | null
+          program_id?: string
+          reps?: string
+          sets?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_program_items_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_program_items_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercise_programs: {
+        Row: {
+          assessment_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          notes: string | null
+          patient_name: string
+          professional_id: string
+          token: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          notes?: string | null
+          patient_name?: string
+          professional_id: string
+          token?: string
+        }
+        Update: {
+          assessment_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          notes?: string | null
+          patient_name?: string
+          professional_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_programs_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_programs_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follow_up_emails: {
         Row: {
           assessment_id: string
