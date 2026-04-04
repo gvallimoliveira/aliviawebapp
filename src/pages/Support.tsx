@@ -46,6 +46,9 @@ const proTools = [
   { key: "lifetime_treatment", icon: Infinity },
   { key: "messages", icon: MessageCircle },
   { key: "clinical_impression", icon: Brain },
+  { key: "hep", icon: Dumbbell },
+  { key: "reassessment", icon: RefreshCw },
+  { key: "white_label", icon: Palette },
 ];
 
 const patientFaqKeys = ["pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11"];
