@@ -1222,23 +1222,22 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
         const catLabel = ex.category.replace(/_/g, " ");
-        const catBadgeText = ` [${catLabel}]`;
-        const exNameFull = `• ${ex.name}`;
+        const catBadgeText = `[${catLabel}]`;
+        const exNameFull = `- ${ex.name}`;
         const exNameW = doc.getTextWidth(exNameFull + "  " + catBadgeText);
-        if (exNameW > TEXT_MAX_WIDTH - 6) {
-          // Name too long — wrap name, put badge on next line
-          const nameLines = doc.splitTextToSize(exNameFull, TEXT_MAX_WIDTH - 6);
-          doc.text(nameLines, MARGIN + 6, y);
+        if (exNameW > LIST_TEXT_W) {
+          const nameLines = doc.splitTextToSize(exNameFull, LIST_TEXT_W);
+          doc.text(nameLines, LIST_X, y);
           y += nameLines.length * 3.5;
           doc.setFontSize(6);
           doc.setTextColor(...COLORS.muted);
-          doc.text(catBadgeText.trim(), MARGIN + 10, y);
+          doc.text(catBadgeText, LIST_X + 4, y);
           y += 3;
         } else {
-          doc.text(exNameFull, MARGIN + 6, y);
+          doc.text(exNameFull, LIST_X, y);
           doc.setFontSize(6);
           doc.setTextColor(...COLORS.muted);
-          doc.text(catBadgeText.trim(), MARGIN + 6 + doc.getTextWidth(exNameFull + "  "), y);
+          doc.text(catBadgeText, LIST_X + doc.getTextWidth(exNameFull + "  "), y);
           y += 4;
         }
 
@@ -1246,17 +1245,17 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         doc.setFont("helvetica", "normal");
         doc.setFontSize(7.5);
         doc.setTextColor(...COLORS.muted);
-        const descLines = doc.splitTextToSize(ex.description, CONTENT_WIDTH - 14);
+        const descLines = doc.splitTextToSize(ex.description, LIST_TEXT_W - 4);
         y = checkPage(doc, y, descLines.length * 3.5);
-        doc.text(descLines, MARGIN + 10, y);
+        doc.text(descLines, LIST_X + 4, y);
         y += descLines.length * 3.5 + 2;
 
         // Sets / Reps / Frequency
         doc.setFontSize(7);
         doc.setTextColor(...COLORS.foreground);
-        const setsRepsText = `${ex.sets} × ${ex.reps}  |  ${ex.frequency}`;
-        const srLines = doc.splitTextToSize(setsRepsText, TEXT_MAX_WIDTH - 10);
-        doc.text(srLines, MARGIN + 10, y);
+        const setsRepsText = `${ex.sets} x ${ex.reps}  |  ${ex.frequency}`;
+        const srLines = doc.splitTextToSize(setsRepsText, LIST_TEXT_W - 4);
+        doc.text(srLines, LIST_X + 4, y);
         y += srLines.length * 3.5 + 2.5;
       }
 
@@ -1265,19 +1264,20 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
 
     // General Guidelines
     if (treatmentPlan.generalGuidelines && treatmentPlan.generalGuidelines.length > 0) {
-      y = checkPage(doc, y, 20);
+      // Keep title + first guideline together
+      y = checkPage(doc, y, 26);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...COLORS.foreground);
-      doc.text(isPt ? "Orientações Gerais" : "General Guidelines", MARGIN, y);
+      doc.text(isPt ? "Orientacoes Gerais" : "General Guidelines", SECTION_X, y);
       y += 6;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...COLORS.muted);
       for (const g of treatmentPlan.generalGuidelines) {
         y = checkPage(doc, y, 8);
-        const gLines = doc.splitTextToSize(`✓ ${g}`, TEXT_MAX_WIDTH);
-        doc.text(gLines, MARGIN + 4, y);
+        const gLines = doc.splitTextToSize(`- ${g}`, LIST_TEXT_W);
+        doc.text(gLines, LIST_X, y);
         y += gLines.length * 3.5 + 2;
       }
       y += 4;
@@ -1286,7 +1286,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     // Progression Criteria
     if (treatmentPlan.progressionCriteria) {
       y = checkPage(doc, y, 20);
-      y = renderSubSection(doc, y, isPt ? "Critérios de Progressão" : "Progression Criteria", treatmentPlan.progressionCriteria);
+      y = renderSubSection(doc, y, isPt ? "Criterios de Progressao" : "Progression Criteria", treatmentPlan.progressionCriteria);
     }
   } // end if (treatmentPlan)
 
