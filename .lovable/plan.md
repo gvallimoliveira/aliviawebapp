@@ -1,59 +1,41 @@
-# Diretrizes Profissionais para Dor Crítica (≥6) no Plano de Tratamento
+# Correções: WhatsApp Premium, Scroll nas Fases, Remover Follow-up por Email mas nao excluir a funçao, futuramente posso reativar
 
-## Resumo
+## 1. Erro ao compartilhar relatório premium via WhatsApp
 
-Adicionar ao prompt do `generate-treatment` um bloco condicional ativado quando `mode === "professional"` que inclui orientações de terapia manual e recursos físicos para pacientes com dor ≥ 6 ou presença de edema. O bloco instruirá a IA a gerar uma seção extra `professionalGuidelines` no JSON de resposta, que será renderizada apenas no componente `TreatmentPlan` quando o modo for profissional.
+**Problema:** O compartilhamento WhatsApp no `DiagnosisResult.tsx` (modo premium) e no `TreatmentPlan.tsx` pode falhar no upload ao storage ou na geração do PDF.
 
-## Conteúdo clínico a incluir (apenas modo profissional)
+**Investigação:** O `handleShareWhatsApp` no `TreatmentPlan.tsx` (linhas 131-158) usa `generateAssessmentPdfBlob` e faz upload para `assessment-reports`. Preciso verificar se o erro é no blob generation ou no upload. Vou adicionar tratamento de erro mais granular e garantir que o `assessmentId` está disponível.
 
-**Para dor ≥ 6:**
+**Correção:**
 
-- TENS (convencional e burst)
-- Termoterapia por adição (calor superficial) ou Tecarterapia (calor profundo)
-- Liberação miofascial
-- Mobilização articular Maitland graus 1-2 da região queixosa
-- Manobras de mobilização articular de Mulligan (MWM/SNAG quando aplicável)
-- Fonoforese com ultrassom terapêutico
-- Terapia combinada (TENS + ultrassom)
-- Laser de baixa intensidade com entrega de energia alta (espectro de inibição — Lei de Arndt-Schultz)
+- No `TreatmentPlan.tsx`, melhorar o `handleShareWhatsApp` para tratar o caso onde `assessmentId` é undefined (usar `crypto.randomUUID()` como fallback — já faz isso)
+- Adicionar log de erro mais detalhado e fallback: se o upload falhar, fazer download local do PDF e abrir WhatsApp só com texto (mesmo padrão do `DiagnosisResult.tsx` básico)
+- Verificar se `generateAssessmentPdfBlob` está exportada corretamente em `generatePdf.ts`
 
-**Para presença de edema:**
+**Arquivo:** `src/components/assessment/TreatmentPlan.tsx`, `src/utils/generatePdf.ts`
 
-- Drenagem manual linfática
-- Drenagem de edema em articulações de MMII associada a TENS 2Hz com elevação de membros inferiores
+## 2. Scroll para o topo ao expandir fase de médio/longo prazo
 
-**Observação:** Sem parâmetros específicos — cabe ao fisioterapeuta ajustar. São diretrizes e sugestões.
+**Problema:** Ao clicar no card de médio ou longo prazo, a fase expande mas o usuário vê o final dos exercícios e precisa dar scroll up.
 
-## Alterações técnicas
+**Correção:** No `togglePhase`, após expandir uma fase, usar `scrollIntoView` com `behavior: 'smooth'` no elemento do card da fase clicada. Adicionar `useRef` ou `id` dinâmico nos cards de fase para fazer o scroll.
 
-### 1. Edge Function `generate-treatment/index.ts`
+**Arquivo:** `src/components/assessment/TreatmentPlan.tsx`
 
-- Detectar `mode === "professional"` e `painScore >= 7` ou presença de edema na anamnese
-- Adicionar bloco de instruções no `systemPrompt` para gerar campo `professionalGuidelines` (array de objetos com `category`, `technique`, `indication`, `notes`)
-- Incluir no JSON schema de resposta o campo opcional `professionalGuidelines`
+- Adicionar `id={`phase-${phase.id}`}` ao `Card` de cada fase
+- No `togglePhase`, após o `setExpandedPhase`, usar `setTimeout` + `document.getElementById(`phase-${phaseId}`).scrollIntoView({ behavior: 'smooth', block: 'start' })`
 
-### 2. Componente `TreatmentPlan.tsx`
+## 3. Remover opção de acompanhamento por email
 
-- Adicionar prop `mode?: string`
-- Renderizar seção "Diretrizes para o Profissional" quando `plan.professionalGuidelines` existir e `mode === "professional"`
-- Card com ícone diferenciado (Stethoscope), fundo distinto, listando as técnicas sugeridas
+**Problema:** No final da avaliação premium, aparece o card "Ativar acompanhamento por email" (linhas 435-462 do `TreatmentPlan.tsx`).
 
-### 3. Componente `TreatmentPlanData` interface
+**Correção:** Remover o bloco inteiro do Follow-up Opt-in (linhas 435-462), incluindo o state `followUpOptedIn`, `followUpLoading` e a função `handleFollowUpOptIn`. Limpar os imports de `Mail` se não for usado em outro lugar.
 
-- Adicionar `professionalGuidelines?: ProfessionalGuideline[]` à interface
+**Arquivo:** `src/components/assessment/TreatmentPlan.tsx`
 
-### 4. Chamadores do componente
-
-- `ProfessionalAssessment.tsx` e `AssessmentView.tsx` — passar `mode="professional"` ao `TreatmentPlan`
-
-### 5. Traduções (pt/en/es)
-
-- Chaves para título da seção e categorias das técnicas
+---
 
 ## Arquivos a alterar
 
-1. `supabase/functions/generate-treatment/index.ts`
-2. `src/components/assessment/TreatmentPlan.tsx`
-3. `src/pages/ProfessionalAssessment.tsx` — passar mode
-4. `src/pages/AssessmentView.tsx` — passar mode
-5. `src/locales/pt.json`, `en.json`, `es.json`
+1. `**src/components/assessment/TreatmentPlan.tsx**` — scroll nas fases, remover follow-up, melhorar WhatsApp
+2. `**src/utils/generatePdf.ts**` — verificar export de `generateAssessmentPdfBlob` (se necessário)
