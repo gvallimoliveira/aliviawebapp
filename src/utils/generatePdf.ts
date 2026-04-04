@@ -625,8 +625,9 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
         const lw = doc.getTextWidth(`${name}: `);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
-        doc.text(String(result), MARGIN + 2 + lw, y);
-        y += 5;
+        const resultLines = doc.splitTextToSize(String(result), TEXT_MAX_WIDTH - lw);
+        doc.text(resultLines, MARGIN + 2 + lw, y);
+        y += resultLines.length * 3.5 + 1.5;
       }
     }
     y += 4;
