@@ -111,6 +111,10 @@ const Gateway = () => {
             </SheetTitle>
           </SheetHeader>
           <nav className="flex flex-col gap-1 p-3">
+            <button onClick={() => { document.getElementById("about")?.scrollIntoView({ behavior: "smooth" }); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left">
+              <Info className="h-4 w-4" />
+              {language === "pt" ? "Sobre" : language === "es" ? "Acerca de" : "About"}
+            </button>
             <button onClick={() => { navigate("/blog"); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left">
               Blog
             </button>
