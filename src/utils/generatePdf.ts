@@ -93,6 +93,7 @@ const COLORS = {
 const MARGIN = 20;
 const PAGE_WIDTH = 210;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
+const TEXT_MAX_WIDTH = CONTENT_WIDTH - 12; // Max text width matching patient name box inner padding (6mm each side)
 
 function checkPage(doc: jsPDF, y: number, needed: number = 20): number {
   if (y + needed > 275) {
@@ -500,8 +501,10 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
       if (interpretation) {
         doc.setFontSize(7);
         doc.setTextColor(...COLORS.muted);
-        doc.text(`${isPt ? "Interpretação" : "Interpretation"}: ${interpretation}`, MARGIN + 2, y);
-        y += 4;
+        const interpText = `${isPt ? "Interpretação" : "Interpretation"}: ${interpretation}`;
+        const interpLines = doc.splitTextToSize(interpText, TEXT_MAX_WIDTH);
+        doc.text(interpLines, MARGIN + 2, y);
+        y += interpLines.length * 3.5;
       }
 
       // Subscale scores — highlight top 3 most limited
@@ -594,8 +597,9 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
                 : key;
               doc.setFont("helvetica", "normal");
               doc.setTextColor(...COLORS.muted);
-              doc.text(`  ${label}: ${val}`, MARGIN + 4, y);
-              y += 3.5;
+              const subLines = doc.splitTextToSize(`  ${label}: ${val}`, TEXT_MAX_WIDTH);
+              doc.text(subLines, MARGIN + 4, y);
+              y += subLines.length * 3.5;
             }
           }
         }
@@ -622,8 +626,9 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
         const lw = doc.getTextWidth(`${name}: `);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
-        doc.text(String(result), MARGIN + 2 + lw, y);
-        y += 5;
+        const resultLines = doc.splitTextToSize(String(result), TEXT_MAX_WIDTH - lw);
+        doc.text(resultLines, MARGIN + 2 + lw, y);
+        y += resultLines.length * 3.5 + 1.5;
       }
     }
     y += 4;
@@ -900,8 +905,9 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.setTextColor(...COLORS.foreground);
   let bulletY = y + 20;
   for (const b of bullets) {
-    doc.text(b, MARGIN + 10, bulletY);
-    bulletY += 5.5;
+    const bLines = doc.splitTextToSize(b, TEXT_MAX_WIDTH - 4);
+    doc.text(bLines, MARGIN + 10, bulletY);
+    bulletY += bLines.length * 3.5 + 2;
   }
   
   // Motivational message in a highlighted inner box
@@ -1112,9 +1118,20 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
       y += 8;
 
       clinicalImpression.therapeuticObjectives.forEach((obj: string) => {
-        y = checkPage(doc, y, 8);
-        drawBadge(doc, obj, MARGIN + 4, y, COLORS.primary, COLORS.white);
-        y += 8;
+        y = checkPage(doc, y, 10);
+        // If objective text is too long for a badge, wrap it
+        doc.setFontSize(7);
+        const objW = doc.getTextWidth(obj) + 8; // badge padding
+        if (objW > TEXT_MAX_WIDTH) {
+          const objLines = doc.splitTextToSize(obj, TEXT_MAX_WIDTH - 12);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...COLORS.primary);
+          doc.text(objLines, MARGIN + 6, y);
+          y += objLines.length * 3.5 + 2;
+        } else {
+          drawBadge(doc, obj, MARGIN + 4, y, COLORS.primary, COLORS.white);
+          y += 8;
+        }
       });
       y += 2;
     }
@@ -1226,18 +1243,30 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
       for (const ex of phase.exercises) {
         y = checkPage(doc, y, 25);
 
-        // Exercise name
+        // Exercise name with wrapping
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(`• ${ex.name}`, MARGIN + 6, y);
-
-        // Category badge
-        doc.setFontSize(6);
-        doc.setTextColor(...COLORS.muted);
         const catLabel = ex.category.replace(/_/g, " ");
-        doc.text(`[${catLabel}]`, MARGIN + 6 + doc.getTextWidth(`• ${ex.name}  `), y);
-        y += 4;
+        const catBadgeText = ` [${catLabel}]`;
+        const exNameFull = `• ${ex.name}`;
+        const exNameW = doc.getTextWidth(exNameFull + "  " + catBadgeText);
+        if (exNameW > TEXT_MAX_WIDTH - 6) {
+          // Name too long — wrap name, put badge on next line
+          const nameLines = doc.splitTextToSize(exNameFull, TEXT_MAX_WIDTH - 6);
+          doc.text(nameLines, MARGIN + 6, y);
+          y += nameLines.length * 3.5;
+          doc.setFontSize(6);
+          doc.setTextColor(...COLORS.muted);
+          doc.text(catBadgeText.trim(), MARGIN + 10, y);
+          y += 3;
+        } else {
+          doc.text(exNameFull, MARGIN + 6, y);
+          doc.setFontSize(6);
+          doc.setTextColor(...COLORS.muted);
+          doc.text(catBadgeText.trim(), MARGIN + 6 + doc.getTextWidth(exNameFull + "  "), y);
+          y += 4;
+        }
 
         // Description
         doc.setFont("helvetica", "normal");
@@ -1251,8 +1280,10 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         // Sets / Reps / Frequency
         doc.setFontSize(7);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(`${ex.sets} × ${ex.reps}  |  ${ex.frequency}`, MARGIN + 10, y);
-        y += 6;
+        const setsRepsText = `${ex.sets} × ${ex.reps}  |  ${ex.frequency}`;
+        const srLines = doc.splitTextToSize(setsRepsText, TEXT_MAX_WIDTH - 10);
+        doc.text(srLines, MARGIN + 10, y);
+        y += srLines.length * 3.5 + 2.5;
       }
 
       y += 4;
@@ -1271,7 +1302,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
       doc.setTextColor(...COLORS.muted);
       for (const g of treatmentPlan.generalGuidelines) {
         y = checkPage(doc, y, 8);
-        const gLines = doc.splitTextToSize(`✓ ${g}`, CONTENT_WIDTH - 10);
+        const gLines = doc.splitTextToSize(`✓ ${g}`, TEXT_MAX_WIDTH);
         doc.text(gLines, MARGIN + 4, y);
         y += gLines.length * 3.5 + 2;
       }
@@ -1380,7 +1411,7 @@ function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number
 function renderSubSection(doc: jsPDF, y: number, title: string, body: string): number {
   // Calculate minimum needed: title + at least 3 lines of body
   doc.setFontSize(8);
-  const lines = doc.splitTextToSize(body, CONTENT_WIDTH);
+  const lines = doc.splitTextToSize(body, TEXT_MAX_WIDTH);
   const minBodyLines = Math.min(lines.length, 3);
   const neededForGroup = 5 + minBodyLines * 3.5 + 6;
   y = checkPage(doc, y, neededForGroup);
