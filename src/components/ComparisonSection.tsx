@@ -75,7 +75,8 @@ const ComparisonSection = () => {
           </p>
         </motion.div>
 
-        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide md:grid md:grid-cols-2 md:overflow-visible md:snap-none md:pb-0 md:gap-6">
           {/* Basic Card */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}

@@ -25,34 +25,37 @@ const TestimonialsSection = () => {
           {t("testimonials.title")}
         </motion.h2>
 
-        <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
-          {testimonials.map((item, i) => (
-            <motion.div
-              key={item.key}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.12 }}
-            >
-              <Card className="h-full rounded-2xl border-border/50">
-                <CardContent className="flex flex-col gap-4 p-6">
-                  <Quote className="h-6 w-6 text-primary/40" />
-                  <p className="flex-1 text-sm italic leading-relaxed text-muted-foreground">
-                    "{t(`testimonials.${item.key}.text`)}"
-                  </p>
-                  <div className="flex items-center gap-3 pt-2">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback className={item.color}>{item.initials}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{t(`testimonials.${item.key}.name`)}</p>
-                      <p className="text-xs text-muted-foreground">{t(`testimonials.${item.key}.role`)}</p>
+        <div className="mx-auto max-w-5xl">
+          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide md:grid md:grid-cols-3 md:overflow-visible md:snap-none md:pb-0 md:gap-6">
+            {testimonials.map((item, i) => (
+              <motion.div
+                key={item.key}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.12 }}
+                className="snap-start shrink-0 w-[75%] sm:w-[60%] md:w-auto md:shrink"
+              >
+                <Card className="h-full rounded-2xl border-border/50">
+                  <CardContent className="flex flex-col gap-4 p-6">
+                    <Quote className="h-6 w-6 text-primary/40" />
+                    <p className="flex-1 text-sm italic leading-relaxed text-muted-foreground">
+                      "{t(`testimonials.${item.key}.text`)}"
+                    </p>
+                    <div className="flex items-center gap-3 pt-2">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback className={item.color}>{item.initials}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{t(`testimonials.${item.key}.name`)}</p>
+                        <p className="text-xs text-muted-foreground">{t(`testimonials.${item.key}.role`)}</p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
