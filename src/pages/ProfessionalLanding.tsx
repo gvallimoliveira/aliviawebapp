@@ -78,6 +78,7 @@ const ProfessionalLanding = () => {
     { icon: RefreshCw, key: "b2b.feature_7" },
     { icon: Dumbbell, key: "b2b.feature_8" },
     { icon: Palette, key: "b2b.feature_9" },
+    { icon: TrendingUp, key: "b2b.feature_10" },
   ];
 
   const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3", "b2b.faq4", "b2b.faq5"];
