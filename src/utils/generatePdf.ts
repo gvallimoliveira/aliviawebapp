@@ -1242,18 +1242,30 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
       for (const ex of phase.exercises) {
         y = checkPage(doc, y, 25);
 
-        // Exercise name
+        // Exercise name with wrapping
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(`• ${ex.name}`, MARGIN + 6, y);
-
-        // Category badge
-        doc.setFontSize(6);
-        doc.setTextColor(...COLORS.muted);
         const catLabel = ex.category.replace(/_/g, " ");
-        doc.text(`[${catLabel}]`, MARGIN + 6 + doc.getTextWidth(`• ${ex.name}  `), y);
-        y += 4;
+        const catBadgeText = ` [${catLabel}]`;
+        const exNameFull = `• ${ex.name}`;
+        const exNameW = doc.getTextWidth(exNameFull + "  " + catBadgeText);
+        if (exNameW > TEXT_MAX_WIDTH - 6) {
+          // Name too long — wrap name, put badge on next line
+          const nameLines = doc.splitTextToSize(exNameFull, TEXT_MAX_WIDTH - 6);
+          doc.text(nameLines, MARGIN + 6, y);
+          y += nameLines.length * 3.5;
+          doc.setFontSize(6);
+          doc.setTextColor(...COLORS.muted);
+          doc.text(catBadgeText.trim(), MARGIN + 10, y);
+          y += 3;
+        } else {
+          doc.text(exNameFull, MARGIN + 6, y);
+          doc.setFontSize(6);
+          doc.setTextColor(...COLORS.muted);
+          doc.text(catBadgeText.trim(), MARGIN + 6 + doc.getTextWidth(exNameFull + "  "), y);
+          y += 4;
+        }
 
         // Description
         doc.setFont("helvetica", "normal");
