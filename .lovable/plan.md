@@ -1,33 +1,55 @@
-# Disclaimer sobre Cadeias Cinéticas e Separação de Avaliações
 
-## O que será feito
 
-### 1. Disclaimer na etapa de Queixa Principal (Anamnese)
+# Correção Definitiva: PWA Não Deve Ativar SW Novo em Rotas Inseguras
 
-Adicionar um bloco informativo (Alert com ícone de info) logo abaixo do subtítulo "Selecione uma ou mais regiões relacionadas", antes do grid de botões, explicando:
+## Causa raiz
 
-- O sistema analisa cadeias cinéticas de estruturas relacionadas
-- Combinações de regiões do mesmo segmento são permitidas porque estão biomecanicamente conectadas
-- Se não for possível selecionar uma combinação (ex: pé + cervical), é porque o ideal é separar em 2 avaliações distintas para melhor precisão
+O problema **não é apenas o reload** — é o `SKIP_WAITING`. Hoje o código em `main.tsx` envia `postMessage({ type: "SKIP_WAITING" })` **imediatamente** quando um novo service worker é instalado (linhas 30 e 37). Isso força o novo SW a assumir o controle, disparando `controllerchange`. Mesmo que o `PwaUpdateGuard` adie o `reload()`, o novo SW já está ativo e servindo assets da nova versão, o que pode causar:
 
-Também melhorar a mensagem de conflito existente (`complaint_group_conflict`) para reforçar essa explicação.
+- Erros de módulo (imports que mudaram entre versões)
+- Chunks inexistentes (hash diferente)
+- Comportamento inconsistente sem reload visível
 
-### 2. Nova FAQ na Landing Page do Paciente e no suporte do paciente 
+**A solução correta**: adiar o `SKIP_WAITING` até que o usuário esteja numa rota segura. O novo SW fica em estado `waiting` sem interferir até ser seguro ativá-lo.
 
-Adicionar uma FAQ 7: "Por que não consigo selecionar todas as regiões que quero?" com resposta explicando o raciocínio de cadeias cinéticas e a recomendação de avaliações separadas.
+## Plano
 
-Atualizar `faqKeys` no `FaqSection.tsx` para incluir `faq7`.
+### 1. `src/main.tsx` — Não enviar SKIP_WAITING automaticamente
 
-### 3. Traduções (pt/en/es)
+- Remover os dois `postMessage({ type: "SKIP_WAITING" })` (linhas 30 e 37)
+- Em vez disso, quando detectar um SW waiting/installed, apenas setar `window.__pwaUpdatePending = true` e disparar o evento `pwa-update-ready`
+- Guardar referência ao registration globalmente: `window.__pwaRegistration = registration`
+- **Não** fazer nada no `controllerchange` além de reload (que agora só será chamado após SKIP_WAITING controlado)
 
-Adicionar chaves:
+### 2. `src/components/PwaUpdateGuard.tsx` — Controlar SKIP_WAITING + reload
 
-- `anamnesis.kinetic_chain_disclaimer` — texto do disclaimer na anamnese
-- `anamnesis.complaint_group_conflict` — reescrever com mais contexto
-- `faq.faq7.q` / `faq.faq7.a` — nova FAQ
+- Quando detectar update pendente **E** rota segura:
+  1. Enviar `SKIP_WAITING` ao SW waiting via `window.__pwaRegistration?.waiting?.postMessage({ type: "SKIP_WAITING" })`
+  2. O `controllerchange` fará o reload
+- Manter a lógica de adiamento: se rota insegura, não faz nada até navegar para rota segura
+
+### 3. `src/main.tsx` — Simplificar `controllerchange`
+
+- No `controllerchange`, simplesmente fazer reload direto (já estamos garantidos numa rota segura porque o SKIP_WAITING só foi enviado pelo guard)
+- Manter o flag `refreshing` para evitar reload duplo
+
+### Fluxo corrigido
+
+```text
+Nova versão detectada (SW installed)
+  → Setar flag __pwaUpdatePending = true
+  → Disparar evento "pwa-update-ready"
+  → NÃO enviar SKIP_WAITING
+
+Usuário navega para rota segura (ou já está numa)
+  → PwaUpdateGuard detecta flag + rota segura
+  → Envia SKIP_WAITING ao SW waiting
+  → controllerchange dispara
+  → Reload imediato
+```
 
 ## Arquivos a alterar
 
-1. `**src/locales/pt.json**`, `**en.json**`, `**es.json**` — novas chaves + reescrita do conflito
-2. `**src/components/assessment/AnamnesisForm.tsx**` — inserir Alert informativo na etapa complaint
-3. `**src/components/FaqSection.tsx**` — adicionar `faq7` ao array de keys
+1. **`src/main.tsx`** — remover SKIP_WAITING automático, expor registration globalmente, simplificar controllerchange
+2. **`src/components/PwaUpdateGuard.tsx`** — assumir responsabilidade de enviar SKIP_WAITING quando seguro
+
