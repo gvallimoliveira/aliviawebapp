@@ -596,12 +596,13 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(`${name}: `, MARGIN + 2, y);
+        doc.text(`${name}: `, SECTION_X, y);
         const lw = doc.getTextWidth(`${name}: `);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
-        const resultLines = doc.splitTextToSize(String(result), TEXT_MAX_WIDTH - lw);
-        doc.text(resultLines, MARGIN + 2 + lw, y);
+        const availW = SECTION_TEXT_W - lw;
+        const resultLines = doc.splitTextToSize(String(result), availW > 30 ? availW : SECTION_TEXT_W);
+        doc.text(resultLines, SECTION_X + lw, y);
         y += resultLines.length * 3.5 + 1.5;
       }
     }
