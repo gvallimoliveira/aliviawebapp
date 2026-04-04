@@ -81,7 +81,7 @@ const ProfessionalLanding = () => {
     { icon: TrendingUp, key: "b2b.feature_10" },
   ];
 
-  const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3", "b2b.faq4", "b2b.faq5"];
+  const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3", "b2b.faq4", "b2b.faq5", "b2b.faq6"];
 
   const pricingIncludes = [
     "b2b.pricing_inc_1",
