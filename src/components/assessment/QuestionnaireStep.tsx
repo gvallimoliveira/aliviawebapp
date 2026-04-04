@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ChevronRight, ChevronLeft, ClipboardCheck, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   getApplicableQuestionnaires,

@@ -13,7 +13,7 @@ import TreatmentPlan from "@/components/assessment/TreatmentPlan";
 import PainMapView from "@/components/assessment/PainMapView";
 import { regionsByView } from "@/components/assessment/painMapData";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
-import { Progress } from "@/components/ui/progress";
+import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
 
