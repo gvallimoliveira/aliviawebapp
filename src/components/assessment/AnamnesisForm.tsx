@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
+import { Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
