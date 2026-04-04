@@ -15,6 +15,8 @@ interface ExerciseItem {
   frequency: string;
   observations: string | null;
   sort_order: number;
+  custom_name: string | null;
+  custom_video_url: string | null;
   exercise: {
     name_pt: string;
     name_en: string;
@@ -26,7 +28,7 @@ interface ExerciseItem {
     category: string;
     video_url: string | null;
     difficulty: string;
-  };
+  } | null;
 }
 
 interface Program {
@@ -90,7 +92,7 @@ const ExerciseProgram = () => {
 
       const { data: exerciseItems } = await (supabase as any)
         .from("exercise_program_items")
-        .select("id, sets, reps, frequency, observations, sort_order, exercise:exercise_library(name_pt, name_en, name_es, description_pt, description_en, description_es, body_region, category, video_url, difficulty)")
+        .select("id, sets, reps, frequency, observations, sort_order, custom_name, custom_video_url, exercise:exercise_library(name_pt, name_en, name_es, description_pt, description_en, description_es, body_region, category, video_url, difficulty)")
         .eq("program_id", prog.id)
         .order("sort_order", { ascending: true });
 
@@ -149,7 +151,7 @@ const ExerciseProgram = () => {
 
   // Group items by category
   const grouped = items.reduce<Record<string, ExerciseItem[]>>((acc, item) => {
-    const cat = item.exercise?.category || "other";
+    const cat = item.exercise?.category || "custom";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
     return acc;
@@ -202,22 +204,31 @@ const ExerciseProgram = () => {
           <div key={category} className="space-y-3">
             <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-              {categoryLabels[category]?.[language] || category}
+              {category === "custom"
+                ? (language === "en" ? "Custom Exercises" : language === "es" ? "Ejercicios Personalizados" : "Exercícios Personalizados")
+                : (categoryLabels[category]?.[language] || category)}
             </h2>
             {catItems.map((item) => {
-              const embedUrl = item.exercise?.video_url ? getYouTubeEmbedUrl(item.exercise.video_url) : null;
+              const isCustom = !item.exercise;
+              const itemName = isCustom ? (item.custom_name || "Exercício") : getName(item.exercise!);
+              const videoUrl = isCustom ? item.custom_video_url : item.exercise?.video_url;
+              const embedUrl = videoUrl ? getYouTubeEmbedUrl(videoUrl) : null;
               const isExpanded = expandedVideo === item.id;
               return (
                 <Card key={item.id} className="overflow-hidden">
                   <CardContent className="py-3 px-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground">{getName(item.exercise)}</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{getDesc(item.exercise)}</p>
+                        <p className="text-sm font-semibold text-foreground">{itemName}</p>
+                        {!isCustom && (
+                          <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{getDesc(item.exercise!)}</p>
+                        )}
                       </div>
-                      <Badge variant="outline" className="text-[10px] shrink-0">
-                        {difficultyLabels[item.exercise?.difficulty]?.[language] || item.exercise?.difficulty}
-                      </Badge>
+                      {!isCustom && item.exercise?.difficulty && (
+                        <Badge variant="outline" className="text-[10px] shrink-0">
+                          {difficultyLabels[item.exercise.difficulty]?.[language] || item.exercise.difficulty}
+                        </Badge>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-3 text-xs">
@@ -250,7 +261,7 @@ const ExerciseProgram = () => {
                               className="w-full h-full"
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                               allowFullScreen
-                              title={getName(item.exercise)}
+                              title={itemName}
                             />
                           </div>
                         )}

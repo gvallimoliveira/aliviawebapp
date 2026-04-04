@@ -243,7 +243,9 @@ export type Database = {
       }
       exercise_program_items: {
         Row: {
-          exercise_id: string
+          custom_name: string | null
+          custom_video_url: string | null
+          exercise_id: string | null
           frequency: string
           id: string
           observations: string | null
@@ -253,7 +255,9 @@ export type Database = {
           sort_order: number
         }
         Insert: {
-          exercise_id: string
+          custom_name?: string | null
+          custom_video_url?: string | null
+          exercise_id?: string | null
           frequency?: string
           id?: string
           observations?: string | null
@@ -263,7 +267,9 @@ export type Database = {
           sort_order?: number
         }
         Update: {
-          exercise_id?: string
+          custom_name?: string | null
+          custom_video_url?: string | null
+          exercise_id?: string | null
           frequency?: string
           id?: string
           observations?: string | null
