@@ -51,49 +51,46 @@ const HowItWorksSection = () => {
         </motion.p>
 
         {/* 6-step grid — phone mockup cards */}
-        {/* Horizontal scroll on mobile, grid on desktop */}
-        <div className="mx-auto max-w-6xl">
-          <div className="flex gap-5 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide sm:grid sm:grid-cols-2 sm:overflow-visible sm:snap-none sm:pb-0 lg:grid-cols-3 sm:gap-8">
-            {steps.map((step, i) => (
-              <motion.div
-                key={step.key}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.5 }}
-                className="group flex flex-col items-center text-center snap-start shrink-0 w-[calc(40%-0.625rem)] sm:w-auto sm:shrink"
-              >
-                {/* Step badge + title */}
-                <div className="mb-4 flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md">
-                    {i + 1}
-                  </div>
-                  <h3 className="text-sm font-semibold text-foreground md:text-base">
-                    {t(`how.${step.key}.title`)}
-                  </h3>
+        <div className="mx-auto grid max-w-6xl gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {steps.map((step, i) => (
+            <motion.div
+              key={step.key}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08, duration: 0.5 }}
+              className="group flex flex-col items-center text-center"
+            >
+              {/* Step badge + title */}
+              <div className="mb-4 flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md">
+                  {i + 1}
                 </div>
+                <h3 className="text-sm font-semibold text-foreground md:text-base">
+                  {t(`how.${step.key}.title`)}
+                </h3>
+              </div>
 
-                <p className="text-xs leading-relaxed text-muted-foreground mb-4 max-w-[260px] md:text-sm">
-                  {t(`how.${step.key}.desc`)}
-                </p>
+              <p className="text-xs leading-relaxed text-muted-foreground mb-4 max-w-[260px] md:text-sm">
+                {t(`how.${step.key}.desc`)}
+              </p>
 
-                {/* Phone mockup frame */}
-                <div className="relative w-full max-w-[280px] mx-auto">
-                  <div className="rounded-[24px] border-[3px] border-foreground/10 bg-background shadow-2xl shadow-foreground/5 overflow-hidden transition-shadow duration-300 group-hover:shadow-primary/10 group-hover:border-primary/20">
-                    <div className="h-6 bg-muted/50 flex items-center justify-center">
-                      <div className="w-16 h-1 rounded-full bg-foreground/10" />
-                    </div>
-                    <img
-                      src={step.image}
-                      alt={t(`how.${step.key}.title`)}
-                      className="w-full h-auto block"
-                      loading="lazy"
-                    />
+              {/* Phone mockup frame */}
+              <div className="relative w-full max-w-[280px] mx-auto">
+                <div className="rounded-[24px] border-[3px] border-foreground/10 bg-background shadow-2xl shadow-foreground/5 overflow-hidden transition-shadow duration-300 group-hover:shadow-primary/10 group-hover:border-primary/20">
+                  <div className="h-6 bg-muted/50 flex items-center justify-center">
+                    <div className="w-16 h-1 rounded-full bg-foreground/10" />
                   </div>
+                  <img
+                    src={step.image}
+                    alt={t(`how.${step.key}.title`)}
+                    className="w-full h-auto block"
+                    loading="lazy"
+                  />
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
 
         {/* Bonus Premium section */}
