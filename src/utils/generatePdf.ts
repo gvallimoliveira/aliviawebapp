@@ -92,11 +92,17 @@ const COLORS = {
 
 const MARGIN = 20;
 const PAGE_WIDTH = 210;
-const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
-const TEXT_MAX_WIDTH = CONTENT_WIDTH - 12; // Max text width matching patient name box inner padding (6mm each side)
+const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2; // 170mm
+// Unified inner padding: all text content uses the same inset as the patient name box (6mm each side)
+const SECTION_X = MARGIN + 6;            // left edge for all body text
+const SECTION_TEXT_W = CONTENT_WIDTH - 12; // 158mm — max text width for ALL dynamic content
+const TEXT_MAX_WIDTH = SECTION_TEXT_W;      // alias kept for backward compat
+const LIST_X = MARGIN + 10;               // indented lists / bullets
+const LIST_TEXT_W = CONTENT_WIDTH - 16;    // text width for indented items
+const PAGE_BOTTOM = 275;                   // max y before forced page break
 
 function checkPage(doc: jsPDF, y: number, needed: number = 20): number {
-  if (y + needed > 275) {
+  if (y + needed > PAGE_BOTTOM) {
     doc.addPage();
     return MARGIN;
   }
