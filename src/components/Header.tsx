@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Globe, HelpCircle, LogOut, Menu, ShieldCheck, Stethoscope } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Globe, HelpCircle, LogOut, Menu, ShieldCheck, Stethoscope, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -13,7 +13,14 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [updatePending, setUpdatePending] = useState(() => !!(window as any).__pwaUpdatePending);
   const isProfessionalPage = location.pathname === "/profissionais";
+
+  useEffect(() => {
+    const handler = () => setUpdatePending(true);
+    window.addEventListener("pwa-update-ready", handler);
+    return () => window.removeEventListener("pwa-update-ready", handler);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
