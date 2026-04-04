@@ -48,16 +48,8 @@ if (isPreviewHost || isInIframe) {
     navigator.serviceWorker?.addEventListener("controllerchange", () => {
       if (refreshing) return;
       refreshing = true;
-      const banner = document.createElement("div");
-      banner.textContent = "✨ Nova versão disponível! Atualizando...";
-      Object.assign(banner.style, {
-        position: "fixed", bottom: "24px", left: "50%", transform: "translateX(-50%)",
-        background: "#3a9e8e", color: "#fff", padding: "12px 24px",
-        borderRadius: "8px", fontSize: "14px", fontWeight: "500",
-        zIndex: "99999", boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-      });
-      document.body.appendChild(banner);
-      setTimeout(() => window.location.reload(), 600);
+      (window as any).__pwaUpdatePending = true;
+      window.dispatchEvent(new Event("pwa-update-ready"));
     });
   });
 }
