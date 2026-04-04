@@ -93,6 +93,7 @@ const COLORS = {
 const MARGIN = 20;
 const PAGE_WIDTH = 210;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
+const TEXT_MAX_WIDTH = CONTENT_WIDTH - 12; // Max text width matching patient name box inner padding (6mm each side)
 
 function checkPage(doc: jsPDF, y: number, needed: number = 20): number {
   if (y + needed > 275) {
