@@ -17,12 +17,13 @@ import {
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
-  Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw,
+  Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
 import JSZip from "jszip";
+import CreateExerciseProgramModal from "@/components/dashboard/CreateExerciseProgramModal";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
@@ -394,6 +395,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(new Set());
   const [showHidden, setShowHidden] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
+  const [hepModalOpen, setHepModalOpen] = useState(false);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
@@ -896,17 +898,50 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             {patient.assessments.length} {t("pro.assessments_count")}
           </p>
         </div>
-        {latestWithDiagnosis && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {latestWithDiagnosis && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 shrink-0"
+              onClick={() => navigate(`/assessment/view/${latestWithDiagnosis.id}?from=professional&patient=${encodeURIComponent(patient.email)}`)}
+            >
+              <FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}
+            </Button>
+          )}
+          {latestWithDiagnosis && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 shrink-0"
+              onClick={() => {
+                const link = `${window.location.origin}/assessment/professional/${professionalId}?reassessment=${latestWithDiagnosis.id}`;
+                navigator.clipboard.writeText(link);
+                toast({ title: "Link de reavaliação copiado!" });
+              }}
+            >
+              <RotateCcw className="h-4 w-4" /> Reavaliação
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
             className="gap-1.5 shrink-0"
-            onClick={() => navigate(`/assessment/view/${latestWithDiagnosis.id}?from=professional&patient=${encodeURIComponent(patient.email)}`)}
+            onClick={() => setHepModalOpen(true)}
           >
-            <FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}
+            <Dumbbell className="h-4 w-4" /> Exercícios
           </Button>
-        )}
+        </div>
       </div>
+
+      {/* HEP Modal */}
+      <CreateExerciseProgramModal
+        open={hepModalOpen}
+        onOpenChange={setHepModalOpen}
+        professionalId={professionalId}
+        patientName={patient.name}
+        assessmentId={latestWithDiagnosis?.id}
+      />
 
       {/* ── 2. DIAGNÓSTICO (Hipótese Principal) ── */}
       {latestWithDiagnosis?.diagnosis?.hypothesis && (

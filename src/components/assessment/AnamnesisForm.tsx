@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -55,9 +55,10 @@ interface AnamnesisFormProps {
   mode: "basic" | "premium" | "professional";
   onComplete: (data: AnamnesisData) => void;
   onBack: () => void;
+  initialPainRegions?: string[];
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -99,6 +100,13 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
     painScoreMode: "general",
     painScoresPerRegion: {},
   });
+
+  // Pre-fill pain regions from reassessment
+  useEffect(() => {
+    if (initialPainRegions?.length) {
+      setData((prev) => ({ ...prev, painRegions: initialPainRegions }));
+    }
+  }, [initialPainRegions]);
 
   const complaints = [
     "anamnesis.complaint.neck_pain",
