@@ -40,6 +40,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
+            <PwaUpdateGuard />
             <Routes>
               <Route path="/" element={<Gateway />} />
               <Route path="/para-pacientes" element={<PatientLanding />} />
