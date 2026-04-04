@@ -1059,6 +1059,8 @@
   "support.patient.faq.pf9.a": "¡No! Al comprar la premium justo después de la básica, todos los datos que completaste (anamnesis, mapa de dolor, nombre y email) se transfieren automáticamente. Creas tu cuenta, realizas el pago y continúas donde lo dejaste — directo a los cuestionarios validados y pruebas funcionales exclusivas de la versión premium. Sin repetición.",
   "support.patient.faq.pf10.q": "¿Cómo funciona el programa 'Refiera y Gane'?",
   "support.patient.faq.pf10.a": "Al referir a un amigo con su enlace exclusivo, usted gana 20% de descuento en su próxima compra (evaluación individual o mensualidad). Su amigo gana 10% en su primera evaluación premium individual. Los descuentos no son acumulables: solo 1 descuento por compra, incluso con múltiples referencias.",
+  "support.patient.faq.pf11.q": "¿Por qué no puedo seleccionar todas las regiones del cuerpo que quiero?",
+  "support.patient.faq.pf11.a": "El sistema utiliza razonamiento clínico basado en cadenas cinéticas — estructuras conectadas biomecánicamente. Regiones del mismo segmento corporal (ej: hombro y codo) pueden evaluarse juntas porque se influyen mutuamente. Regiones de segmentos distintos (ej: pie y cervical) requieren evaluaciones separadas para garantizar precisión diagnóstica. Si tiene quejas en segmentos diferentes, realice dos evaluaciones separadas para obtener los mejores resultados.",
   "support.login_to_contact": "Inicia sesión o crea una cuenta para enviar un mensaje al soporte.",
   "upgrade_welcome.title": "¡Bienvenido al equipo Aliv.iA! 🎉",
   "upgrade_welcome.subtitle": "Tu evaluación básica fue completada con éxito. Así funciona el siguiente paso para desbloquear tu evaluación premium completa.",
