@@ -413,6 +413,19 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
       });
   }, [professionalId]);
 
+  // Load HEP history for selected patient
+  useEffect(() => {
+    if (!professionalId || !selectedEmail) { setHepHistory([]); return; }
+    setHepHistoryLoading(true);
+    (supabase.from("exercise_programs") as any)
+      .select("id, token, patient_name, created_at, expires_at, notes, assessment_id")
+      .eq("professional_id", professionalId)
+      .order("created_at", { ascending: false })
+      .then(({ data }: any) => {
+        setHepHistory(data || []);
+        setHepHistoryLoading(false);
+      });
+  }, [professionalId, selectedEmail, hepModalOpen]);
   const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!professionalId || archiving || !groupKey) return;
