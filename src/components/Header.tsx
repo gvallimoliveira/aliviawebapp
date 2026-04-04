@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Globe, HelpCircle, LogOut, Menu, ShieldCheck, Stethoscope, RefreshCw } from "lucide-react";
+import { Globe, HelpCircle, Info, LogOut, Menu, ShieldCheck, Stethoscope, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
