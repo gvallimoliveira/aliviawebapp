@@ -1279,8 +1279,10 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         // Sets / Reps / Frequency
         doc.setFontSize(7);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(`${ex.sets} × ${ex.reps}  |  ${ex.frequency}`, MARGIN + 10, y);
-        y += 6;
+        const setsRepsText = `${ex.sets} × ${ex.reps}  |  ${ex.frequency}`;
+        const srLines = doc.splitTextToSize(setsRepsText, TEXT_MAX_WIDTH - 10);
+        doc.text(srLines, MARGIN + 10, y);
+        y += srLines.length * 3.5 + 2.5;
       }
 
       y += 4;
