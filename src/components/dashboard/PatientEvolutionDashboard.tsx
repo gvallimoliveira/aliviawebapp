@@ -979,7 +979,11 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   };
 
                   const { data: summary, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
-                  if (error || summary?.error) throw new Error(summary?.error || "AI error");
+                  if (error) throw new Error(error?.message || "Erro ao conectar com o servidor de IA");
+                  if (!summary || summary?.error) throw new Error(summary?.error || "Resposta inválida da IA");
+                  if (!summary.narrative || !summary.conclusion || !summary.recommendation) {
+                    throw new Error("Resumo incompleto gerado pela IA. Tente novamente.");
+                  }
 
                   const blob = await generateEvolutionPdfBlob({
                     patientName: patient.name,
