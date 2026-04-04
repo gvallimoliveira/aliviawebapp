@@ -53,6 +53,8 @@
   "compare.treatment.phases": "Curto, médio e longo prazo",
   "compare.exercises": "Exercícios com Vídeos (YouTube)",
   "compare.pdf_export": "Relatório em PDF",
+  "compare.pdf_export.basic": "Relatório Básico",
+  "compare.pdf_export.premium": "Relatório Completo",
   "compare.history": "Histórico de Avaliações",
   "compare.redo": "Refazer em 7 dias",
   "compare.login": "Login necessário",

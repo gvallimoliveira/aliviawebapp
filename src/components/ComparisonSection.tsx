@@ -38,7 +38,7 @@ const ComparisonSection = () => {
     { key: "before_after", basic: false, premium: isMonthly },
     { key: "professional_referral", basic: false, premium: true },
     { key: "history", basic: false, premium: isMonthly },
-    { key: "pdf_export", basic: false, premium: true },
+    { key: "pdf_export", basic: t("compare.pdf_export.basic"), premium: t("compare.pdf_export.premium") },
     { key: "redo", basic: false, premium: isMonthly },
     { key: "login", basic: false, premium: true },
   ];
