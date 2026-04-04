@@ -7,8 +7,6 @@ import stepQuestionnaires from "@/assets/step-questionnaires.jpg";
 import stepTests from "@/assets/step-tests.jpg";
 import stepDiagnosis from "@/assets/step-diagnosis.jpg";
 import stepTreatment from "@/assets/step-treatment.jpg";
-import stepReport from "@/assets/step-report.jpg";
-import stepDiary from "@/assets/step-diary.jpg";
 
 const steps = [
   { icon: ClipboardList, key: "step1", image: stepAnamnesis },
@@ -17,11 +15,6 @@ const steps = [
   { icon: Activity, key: "step4", image: stepTests },
   { icon: Stethoscope, key: "step5", image: stepDiagnosis },
   { icon: CalendarCheck, key: "step6", image: stepTreatment },
-];
-
-const bonusItems = [
-  { key: "report", image: stepReport },
-  { key: "diary", image: stepDiary },
 ];
 
 const HowItWorksSection = () => {
