@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { questionnaires, type QuestionnaireResult, type QuestionnaireDefinition } from "@/data/questionnaireData";
+import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 
 interface QuestionnaireResultCardProps {
   result: QuestionnaireResult;

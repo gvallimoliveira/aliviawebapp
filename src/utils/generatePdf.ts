@@ -473,21 +473,17 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
       const pct = Math.round(q.percentageScore);
       const severity = q.severity || "";
       const interpretation = isPt ? (q.interpretation_pt || severity) : (q.interpretation_en || severity);
-      const higherWorse = !qDef || qDef.scoringDirection === "higher_worse";
       const entries = q.subscaleScores && typeof q.subscaleScores === "object" ? Object.entries(q.subscaleScores) : [];
       const hasSubscales = entries.length > 1;
 
-      // Estimate card height
+      // Pre-compute text lines for accurate height estimation
       const interpLines = interpretation ? doc.splitTextToSize(interpretation, TEXT_MAX_WIDTH - 8) : [];
+      const fullNameLines = fullName ? doc.splitTextToSize(fullName, TEXT_MAX_WIDTH - 40) : [];
       const subscaleRows = hasSubscales ? Math.ceil(entries.length / 2) : 0;
-      const cardH = 18 + (fullName ? 4 : 0) + (interpLines.length * 3.5) + (subscaleRows * 5) + (qDef ? 5 : 0) + 4;
+      const cardH = 12 + (fullNameLines.length * 3.5) + (interpLines.length * 3.5 + 1) + (subscaleRows * 4.5 + (hasSubscales ? 1 : 0)) + (qDef ? 4 : 0) + 6;
       y = checkPage(doc, y, cardH + 4);
 
-      // Card border box
-      const cardX = MARGIN;
-      const cardY = y - 2;
-      // We'll draw the card background after calculating final height
-      const cardStartY = y;
+      const cardStartY = y - 2;
 
       // Abbreviated name (bold, larger)
       doc.setFont("helvetica", "bold");
@@ -509,17 +505,16 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
       y += 6;
 
       // Full name (muted, smaller)
-      if (fullName) {
+      if (fullNameLines.length > 0) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(7);
         doc.setTextColor(...COLORS.muted);
-        const fnLines = doc.splitTextToSize(fullName, TEXT_MAX_WIDTH - 40);
-        doc.text(fnLines, MARGIN + 5, y);
-        y += fnLines.length * 3.5;
+        doc.text(fullNameLines, MARGIN + 5, y);
+        y += fullNameLines.length * 3.5;
       }
 
       // Interpretation (colored)
-      if (interpretation) {
+      if (interpLines.length > 0) {
         y += 1;
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
@@ -528,13 +523,12 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
         y += interpLines.length * 3.5;
       }
 
-      // Subscale scores — 2-column grid
+      // Subscale scores — 2-column grid (no page break inside card)
       if (hasSubscales) {
         y += 1;
         doc.setFontSize(7);
         const colW = (TEXT_MAX_WIDTH - 8) / 2;
         for (let i = 0; i < entries.length; i += 2) {
-          y = checkPage(doc, y, 5);
           for (let col = 0; col < 2 && i + col < entries.length; col++) {
             const [key, score] = entries[i + col];
             const label = qDef?.subscaleLabels?.[key]
@@ -569,14 +563,11 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
         y += 3;
       }
 
-      // Draw the card border around everything
-      const cardFinalH = y - cardStartY + 4;
+      // Draw card border (stroke only, no fill to avoid covering text)
+      const cardFinalH = y - (cardStartY) + 2;
       doc.setDrawColor(...COLORS.border);
       doc.setLineWidth(0.3);
-      doc.setFillColor(...COLORS.white);
-      // Draw behind — we need to draw first then re-render text, but jsPDF doesn't support z-index.
-      // Instead draw border only (no fill) on top
-      doc.roundedRect(cardX, cardY, CONTENT_WIDTH, cardFinalH, 2, 2, "S");
+      doc.roundedRect(MARGIN, cardStartY, CONTENT_WIDTH, cardFinalH, 2, 2, "S");
 
       y += 5;
     }
