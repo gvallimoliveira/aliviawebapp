@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => ({
         enabled: false,
       },
       workbox: {
-        skipWaiting: true,
+        skipWaiting: false,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         navigateFallbackDenylist: [/^\/~oauth/],
