@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import ReferralBanner from "@/components/ReferralBanner";
 import { motion } from "framer-motion";
-import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Menu } from "lucide-react";
+import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -111,6 +111,10 @@ const Gateway = () => {
             </SheetTitle>
           </SheetHeader>
           <nav className="flex flex-col gap-1 p-3">
+            <button onClick={() => { document.getElementById("about")?.scrollIntoView({ behavior: "smooth" }); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left">
+              <Info className="h-4 w-4" />
+              {language === "pt" ? "Sobre" : language === "es" ? "Acerca de" : "About"}
+            </button>
             <button onClick={() => { navigate("/blog"); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left">
               Blog
             </button>
@@ -267,6 +271,7 @@ const Gateway = () => {
 
           {/* About section */}
           <motion.div
+            id="about"
             initial="hidden" animate="visible" variants={fadeUp} custom={6}
             className="mt-12 max-w-2xl mx-auto rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-6 md:p-8 text-center"
           >
