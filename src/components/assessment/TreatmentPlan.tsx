@@ -207,7 +207,13 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
   };
 
   const togglePhase = (phaseId: string) => {
-    setExpandedPhase((prev) => (prev === phaseId ? "" : phaseId));
+    const isCollapsing = expandedPhase === phaseId;
+    setExpandedPhase(isCollapsing ? "" : phaseId);
+    if (!isCollapsing) {
+      setTimeout(() => {
+        document.getElementById(`phase-${phaseId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
   };
 
   return (
