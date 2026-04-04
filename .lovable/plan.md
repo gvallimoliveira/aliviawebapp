@@ -1,50 +1,33 @@
+# Disclaimer sobre Cadeias Cinéticas e Separação de Avaliações
 
+## O que será feito
 
-# Restringir Auto-Reload do PWA a Páginas Seguras
+### 1. Disclaimer na etapa de Queixa Principal (Anamnese)
 
-## Problema
-Quando o service worker detecta uma nova versão, o app recarrega automaticamente (`window.location.reload()`) independentemente da página atual. Se o usuário estiver no meio de uma avaliação ou lendo um diagnóstico, perde os dados.
+Adicionar um bloco informativo (Alert com ícone de info) logo abaixo do subtítulo "Selecione uma ou mais regiões relacionadas", antes do grid de botões, explicando:
 
-## Solução
-No listener `controllerchange` em `src/main.tsx`, verificar a rota atual antes de recarregar. Se estiver em uma página segura, recarregar imediatamente. Caso contrário, armazenar o flag de "pendente" e só recarregar quando o usuário navegar para uma página segura.
+- O sistema analisa cadeias cinéticas de estruturas relacionadas
+- Combinações de regiões do mesmo segmento são permitidas porque estão biomecanicamente conectadas
+- Se não for possível selecionar uma combinação (ex: pé + cervical), é porque o ideal é separar em 2 avaliações distintas para melhor precisão
 
-### Páginas seguras para reload
-- `/` (Gateway)
-- `/para-pacientes`
-- `/profissionais`
-- `/landing-legacy`
-- `/dashboard` (somente a raiz)
-- `/suporte`
-- `/blog` (listagem)
+Também melhorar a mensagem de conflito existente (`complaint_group_conflict`) para reforçar essa explicação.
 
-### Páginas bloqueadas (nunca reload automático)
-- `/assessment/*`
-- `/assessment/view/*`
-- `/payment-success`
-- Qualquer outra rota não listada acima
+### 2. Nova FAQ na Landing Page do Paciente e no suporte do paciente 
 
-### Implementação em `src/main.tsx`
+Adicionar uma FAQ 7: "Por que não consigo selecionar todas as regiões que quero?" com resposta explicando o raciocínio de cadeias cinéticas e a recomendação de avaliações separadas.
 
-1. Definir lista de prefixos seguros: `["/", "/para-pacientes", "/profissionais", "/landing-legacy", "/suporte", "/blog", "/dashboard"]`
-2. Criar função `isSafeRoute()` que verifica se `window.location.pathname` corresponde exatamente a uma rota segura (não permite prefixos parciais como `/dashboard/xxx`)
-3. No `controllerchange`:
-   - Se `isSafeRoute()` → mostrar banner e recarregar (comportamento atual)
-   - Se não → setar `window.__pwaUpdatePending = true` sem recarregar
-4. Adicionar listener `popstate` + override de `history.pushState` para detectar navegação e, quando o usuário chegar a uma rota segura com update pendente, executar o reload
+Atualizar `faqKeys` no `FaqSection.tsx` para incluir `faq7`.
 
-### Alternativa mais limpa (preferida)
-Usar um event customizado + um componente React que escuta mudanças de rota:
+### 3. Traduções (pt/en/es)
 
-1. No `controllerchange` do `main.tsx`: em vez de reload direto, disparar `window.dispatchEvent(new Event("pwa-update-ready"))` e setar flag global
-2. Criar um pequeno componente `PwaUpdateGuard.tsx` montado no `App.tsx` que:
-   - Escuta o evento `pwa-update-ready`
-   - Usa `useLocation()` do React Router para monitorar a rota
-   - Quando a rota muda para uma segura E há update pendente → mostra banner e recarrega
-   - Em rotas seguras quando o evento chega → recarrega imediatamente
+Adicionar chaves:
+
+- `anamnesis.kinetic_chain_disclaimer` — texto do disclaimer na anamnese
+- `anamnesis.complaint_group_conflict` — reescrever com mais contexto
+- `faq.faq7.q` / `faq.faq7.a` — nova FAQ
 
 ## Arquivos a alterar
 
-1. **`src/main.tsx`** — remover reload direto no `controllerchange`, substituir por flag + evento customizado
-2. **`src/components/PwaUpdateGuard.tsx`** — novo componente com lógica de rota segura
-3. **`src/App.tsx`** — montar `PwaUpdateGuard` dentro do `BrowserRouter`
-
+1. `**src/locales/pt.json**`, `**en.json**`, `**es.json**` — novas chaves + reescrita do conflito
+2. `**src/components/assessment/AnamnesisForm.tsx**` — inserir Alert informativo na etapa complaint
+3. `**src/components/FaqSection.tsx**` — adicionar `faq7` ao array de keys
