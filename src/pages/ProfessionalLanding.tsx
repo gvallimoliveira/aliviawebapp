@@ -58,6 +58,7 @@ const ProfessionalLanding = () => {
     { icon: Target, titleKey: "b2b.benefit_4_title", descKey: "b2b.benefit_4_desc" },
     { icon: Palette, titleKey: "b2b.benefit_5_title", descKey: "b2b.benefit_5_desc" },
     { icon: Activity, titleKey: "b2b.benefit_6_title", descKey: "b2b.benefit_6_desc" },
+    { icon: TrendingUp, titleKey: "b2b.benefit_7_title", descKey: "b2b.benefit_7_desc" },
   ];
 
   const steps = [
