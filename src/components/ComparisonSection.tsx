@@ -235,6 +235,7 @@ const ComparisonSection = () => {
               </CardFooter>
             </Card>
           </motion.div>
+          </div>
         </div>
 
         <motion.p
