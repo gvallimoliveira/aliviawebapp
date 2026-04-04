@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { questionnaires } from "@/data/questionnaireData";
+import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -379,7 +380,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression }: {
 
 const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
 
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -1248,20 +1249,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         <ClipboardList className="h-3 w-3" /> Questionários
                       </p>
                       {qResults.map((r: any, idx: number) => (
-                        <div key={idx} className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-medium text-foreground">{r.questionnaireName || r.questionnaireId}</span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-muted-foreground">{Math.round(r.percentageScore)}%</span>
-                              {r.severity && (
-                                <Badge variant="outline" className="text-[9px] py-0 px-1.5 capitalize">
-                                  {r.interpretation_pt || r.severity}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <Progress value={r.percentageScore} className="h-1.5" />
-                        </div>
+                        <QuestionnaireResultCard key={idx} result={r} language={language} compact />
                       ))}
                     </div>
                   )}

@@ -13,7 +13,7 @@ import TreatmentPlan from "@/components/assessment/TreatmentPlan";
 import PainMapView from "@/components/assessment/PainMapView";
 import { regionsByView } from "@/components/assessment/painMapData";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
-import { Progress } from "@/components/ui/progress";
+import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
 
@@ -443,57 +443,9 @@ const AssessmentView = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="py-4 space-y-4">
-              {(assessment.test_results as any[]).filter((r: any) => r.questionnaireId).map((r: QuestionnaireResult) => {
-                const qDef = questionnaires.find((q) => q.id === r.questionnaireId);
-                const severityColor =
-                  r.severity === "minimal" ? "text-primary" :
-                  r.severity === "mild" ? "text-blue-500" :
-                  r.severity === "moderate" ? "text-yellow-600" : "text-destructive";
-                const severityBg =
-                  r.severity === "minimal" ? "bg-primary" :
-                  r.severity === "mild" ? "bg-blue-500" :
-                  r.severity === "moderate" ? "bg-yellow-500" : "bg-destructive";
-                return (
-                  <div key={r.questionnaireId} className="space-y-2 p-3 rounded-lg bg-muted/30 border border-border/50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-sm">{r.questionnaireName}</p>
-                        {qDef && (
-                          <p className="text-xs text-muted-foreground">
-                            {isPt ? qDef.fullName_pt : qDef.fullName_en}
-                          </p>
-                        )}
-                      </div>
-                      <p className={`text-2xl font-bold ${severityColor}`}>{r.percentageScore}%</p>
-                    </div>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${severityBg}`} style={{ width: `${r.percentageScore}%` }} />
-                    </div>
-                    <p className={`text-xs font-medium ${severityColor}`}>
-                      {isPt ? r.interpretation_pt : r.interpretation_en}
-                    </p>
-                    {r.subscaleScores && Object.keys(r.subscaleScores).length > 1 && (
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1">
-                        {Object.entries(r.subscaleScores).map(([key, score]) => (
-                          <div key={key} className="text-xs flex items-center justify-between">
-                            <span className="text-muted-foreground">
-                              {qDef?.subscaleLabels[key]?.[isPt ? "pt" : "en"] || key}
-                            </span>
-                            <span className="font-medium">{score}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {qDef && (
-                      <p className="text-[10px] text-muted-foreground/60 italic">
-                        {qDef.scoringDirection === "higher_better"
-                          ? (isPt ? "Escala: 100% = melhor | 0% = pior" : "Scale: 100% = best | 0% = worst")
-                          : (isPt ? "Escala: 0% = melhor | 100% = pior" : "Scale: 0% = best | 100% = worst")}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+              {(assessment.test_results as any[]).filter((r: any) => r.questionnaireId).map((r: QuestionnaireResult) => (
+                <QuestionnaireResultCard key={r.questionnaireId} result={r} language={language} />
+              ))}
             </CardContent>
           </Card>
         )}
