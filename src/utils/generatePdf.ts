@@ -827,25 +827,25 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   
   const questionnaireBullets: string[] = applicableQuestionnaires.length > 0
     ? applicableQuestionnaires.map(q => isPt
-        ? `✅ Questionário ${q.name} — ${q.fullName_pt.replace(/\s*\(.*\)/, '')}`
-        : `✅ ${q.name} questionnaire — ${q.fullName_en.replace(/\s*\(.*\)/, '')}`)
+        ? `+ Questionario ${q.name} - ${q.fullName_pt.replace(/\s*\(.*\)/, '')}`
+        : `+ ${q.name} questionnaire - ${q.fullName_en.replace(/\s*\(.*\)/, '')}`)
     : [isPt
-        ? "✅ Questionários validados cientificamente para sua condição"
-        : "✅ Scientifically validated questionnaires for your condition"];
+        ? "+ Questionarios validados cientificamente para sua condicao"
+        : "+ Scientifically validated questionnaires for your condition"];
 
   const bulletsPt = [
-    "✅ Explicação clínica detalhada do seu quadro",
-    "✅ Raciocínio clínico baseado em evidências científicas",
-    "✅ Recomendações personalizadas para o seu caso",
-    "✅ Plano de tratamento completo em 3 fases progressivas",
-    "✅ Exercícios com séries, repetições e progressão",
+    "+ Explicacao clinica detalhada do seu quadro",
+    "+ Raciocinio clinico baseado em evidencias cientificas",
+    "+ Recomendacoes personalizadas para o seu caso",
+    "+ Plano de tratamento completo em 3 fases progressivas",
+    "+ Exercicios com series, repeticoes e progressao",
   ];
   const bulletsEn = [
-    "✅ Detailed clinical explanation of your condition",
-    "✅ Evidence-based clinical reasoning",
-    "✅ Personalized recommendations for your case",
-    "✅ Complete 3-phase progressive treatment plan",
-    "✅ Exercises with sets, reps and progression",
+    "+ Detailed clinical explanation of your condition",
+    "+ Evidence-based clinical reasoning",
+    "+ Personalized recommendations for your case",
+    "+ Complete 3-phase progressive treatment plan",
+    "+ Exercises with sets, reps and progression",
   ];
   const bullets = [...(isPt ? bulletsPt : bulletsEn), ...questionnaireBullets];
   
