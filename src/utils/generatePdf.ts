@@ -1117,9 +1117,20 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
       y += 8;
 
       clinicalImpression.therapeuticObjectives.forEach((obj: string) => {
-        y = checkPage(doc, y, 8);
-        drawBadge(doc, obj, MARGIN + 4, y, COLORS.primary, COLORS.white);
-        y += 8;
+        y = checkPage(doc, y, 10);
+        // If objective text is too long for a badge, wrap it
+        doc.setFontSize(7);
+        const objW = doc.getTextWidth(obj) + 8; // badge padding
+        if (objW > TEXT_MAX_WIDTH) {
+          const objLines = doc.splitTextToSize(obj, TEXT_MAX_WIDTH - 12);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...COLORS.primary);
+          doc.text(objLines, MARGIN + 6, y);
+          y += objLines.length * 3.5 + 2;
+        } else {
+          drawBadge(doc, obj, MARGIN + 4, y, COLORS.primary, COLORS.white);
+          y += 8;
+        }
       });
       y += 2;
     }
