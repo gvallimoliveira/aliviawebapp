@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Globe, Loader2, ChevronRight, Stethoscope, AlertTriangle, User, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ const ProfessionalAssessment = () => {
   const { t, language, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const reassessmentId = searchParams.get("reassessment");
 
   const [step, setStep] = useState<ProfStep>("loading_check");
   const [professional, setProfessional] = useState<any>(null);
@@ -34,6 +36,8 @@ const ProfessionalAssessment = () => {
   const [patientName, setPatientName] = useState("");
   const [patientEmail, setPatientEmail] = useState("");
   const [redFlagData, setRedFlagData] = useState<Record<string, boolean> | null>(null);
+  const [originalAssessment, setOriginalAssessment] = useState<any>(null);
+  const [prefilledRegions, setPrefilledRegions] = useState<string[] | undefined>(undefined);
 
   // Validate professional exists and has active subscription
   useEffect(() => {
@@ -41,7 +45,7 @@ const ProfessionalAssessment = () => {
     const checkProfessional = async () => {
       const { data, error } = await supabase
         .from("professionals")
-        .select("id, full_name, subscription_status, approved, active")
+        .select("id, full_name, subscription_status, approved, active, logo_url, user_id")
         .eq("id", professionalId)
         .maybeSingle();
 
@@ -50,10 +54,30 @@ const ProfessionalAssessment = () => {
         return;
       }
       setProfessional(data);
+
+      // If reassessment, load original assessment data
+      if (reassessmentId) {
+        const { data: orig } = await supabase
+          .from("assessments")
+          .select("patient_name, patient_email, pain_regions, anamnesis_data")
+          .eq("id", reassessmentId)
+          .eq("professional_id", professionalId)
+          .maybeSingle();
+
+        if (orig) {
+          setOriginalAssessment(orig);
+          setPatientName(orig.patient_name || "");
+          setPatientEmail(orig.patient_email || "");
+          if (orig.pain_regions?.length) {
+            setPrefilledRegions(orig.pain_regions);
+          }
+        }
+      }
+
       setStep("welcome");
     };
     checkProfessional();
-  }, [professionalId]);
+  }, [professionalId, reassessmentId]);
 
   const createAssessment = async () => {
     try {
@@ -67,6 +91,7 @@ const ProfessionalAssessment = () => {
           payment_status: "covered",
           patient_name: patientName || null,
           patient_email: patientEmail || null,
+          original_assessment_id: reassessmentId || null,
         } as any)
         .select("id")
         .single();
@@ -88,9 +113,27 @@ const ProfessionalAssessment = () => {
     }
   };
 
+  // Send push notification to professional
+  const notifyProfessional = async () => {
+    if (!professional?.user_id) return;
+    try {
+      await supabase.functions.invoke("send-push-notification", {
+        body: {
+          user_id: professional.user_id,
+          title: language === "en" ? "Assessment completed" : "Avaliação concluída",
+          body: language === "en"
+            ? `Patient ${patientName || "Unknown"} completed the assessment`
+            : `O paciente ${patientName || "Sem nome"} completou a avaliação`,
+          url: "/dashboard",
+        },
+      });
+    } catch (err) {
+      console.error("Push notification error:", err);
+    }
+  };
+
   const handleRedFlagged = async (flaggedItems: Record<string, boolean>) => {
     setRedFlagData(flaggedItems);
-    // Create assessment with red_flagged status so professional sees it
     const id = await createAssessment();
     if (id) {
       await updateAssessment(id, {
@@ -116,7 +159,6 @@ const ProfessionalAssessment = () => {
 
   const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
     setQuestionnaireResults(results);
-    // Persist questionnaire results to DB
     if (assessmentId && results.length > 0) {
       await updateAssessment(assessmentId, { test_results: results as any });
     }
@@ -140,6 +182,9 @@ const ProfessionalAssessment = () => {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "completed" });
       }
 
+      // Push notification to professional
+      notifyProfessional();
+
       setStep("thank_you");
     } catch (err: any) {
       console.error("Diagnosis error:", err);
@@ -148,6 +193,14 @@ const ProfessionalAssessment = () => {
     }
   };
 
+  // For reassessment, skip red flags and go straight to anamnesis
+  const handlePatientInfoContinue = () => {
+    if (reassessmentId && originalAssessment) {
+      setStep("anamnesis");
+    } else {
+      setStep("redflags");
+    }
+  };
 
   if (step === "loading_check") {
     return (
@@ -183,6 +236,14 @@ const ProfessionalAssessment = () => {
             <span className="text-xl font-bold text-foreground">Aliv.iA</span>
           </div>
           <div className="flex items-center gap-3">
+            {/* Professional logo (white-label) */}
+            {professional?.logo_url && (
+              <img
+                src={professional.logo_url}
+                alt={professional.full_name}
+                className="h-9 w-9 rounded-full object-cover border border-border"
+              />
+            )}
             <span className="text-xs font-medium px-3 py-1 rounded-full bg-blue-500/10 text-blue-600">
               <Stethoscope className="h-3 w-3 inline mr-1" />
               {t("pro.badge_professional")}
@@ -220,6 +281,11 @@ const ProfessionalAssessment = () => {
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
                 {t("patient_info.desc").replace("{name}", professional.full_name)}
               </p>
+              {reassessmentId && (
+                <p className="text-xs text-primary font-medium">
+                  Reavaliação — dados pré-preenchidos da avaliação anterior
+                </p>
+              )}
             </div>
 
             <Card className="rounded-xl">
@@ -256,7 +322,7 @@ const ProfessionalAssessment = () => {
             </Card>
 
             <Button
-              onClick={() => setStep("redflags")}
+              onClick={handlePatientInfoContinue}
               disabled={!patientName.trim()}
               className="w-full rounded-xl gap-2"
               size="lg"
@@ -286,7 +352,8 @@ const ProfessionalAssessment = () => {
           <AnamnesisForm
             mode="professional"
             onComplete={handleAnamnesisComplete}
-            onBack={() => setStep("redflags")}
+            onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
+            initialPainRegions={prefilledRegions}
           />
         )}
 
