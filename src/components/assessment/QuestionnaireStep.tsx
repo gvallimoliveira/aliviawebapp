@@ -118,42 +118,9 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip }: Question
           </p>
         </div>
         <div className="space-y-4">
-          {results.map((r) => {
-            const qDef = applicableQuestionnaires.find((q) => q.id === r.questionnaireId)!;
-            const severityColor =
-              r.severity === "minimal" ? "text-primary" :
-              r.severity === "mild" ? "text-blue-500" :
-              r.severity === "moderate" ? "text-yellow-600" : "text-destructive";
-            return (
-              <Card key={r.questionnaireId} className="rounded-xl">
-                <CardContent className="py-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-sm">{qDef.name}</p>
-                      <p className="text-xs text-muted-foreground">{language === "pt" ? qDef.fullName_pt : qDef.fullName_en}</p>
-                    </div>
-                    <p className={`text-2xl font-bold ${severityColor}`}>{r.percentageScore}%</p>
-                  </div>
-                  <p className={`text-sm font-medium ${severityColor}`}>
-                    {language === "pt" ? r.interpretation_pt : r.interpretation_en}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    {Object.entries(r.subscaleScores).map(([key, score]) => (
-                      <div key={key} className="text-xs">
-                        <span className="text-muted-foreground">{qDef.subscaleLabels[key]?.[language === "pt" ? "pt" : "en"] || key}:</span>{" "}
-                        <span className="font-medium">{score}%</span>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground/60 italic">
-                    {qDef.scoringDirection === "higher_better"
-                      ? tl("Escala: 100% = melhor | 0% = pior", "Scale: 100% = best | 0% = worst")
-                      : tl("Escala: 0% = melhor | 100% = pior", "Scale: 0% = best | 100% = worst")}
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {results.map((r) => (
+            <QuestionnaireResultCard key={r.questionnaireId} result={r} language={language} />
+          ))}
         </div>
         <div className="flex justify-between pt-4">
           <Button variant="outline" onClick={() => setShowResults(false)} className="gap-2 rounded-xl">
