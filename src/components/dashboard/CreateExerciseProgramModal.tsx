@@ -15,7 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2,
+  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2,
 } from "lucide-react";
 
 interface Exercise {
@@ -35,6 +35,16 @@ interface SelectedExercise {
   reps: string;
   frequency: string;
   observations: string;
+}
+
+interface CustomExercise {
+  tempId: string;
+  name: string;
+  sets: string;
+  reps: string;
+  frequency: string;
+  observations: string;
+  videoUrl: string;
 }
 
 interface Props {
@@ -75,6 +85,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const [regionFilter, setRegionFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selected, setSelected] = useState<SelectedExercise[]>([]);
+  const [customExercises, setCustomExercises] = useState<CustomExercise[]>([]);
   const [notes, setNotes] = useState("");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -122,8 +133,30 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     setSelected(selected.map((s) => s.exercise.id === id ? { ...s, [field]: value } : s));
   };
 
+  const addCustomExercise = () => {
+    setCustomExercises([...customExercises, {
+      tempId: crypto.randomUUID(),
+      name: "",
+      sets: "3",
+      reps: "10",
+      frequency: "3x/semana",
+      observations: "",
+      videoUrl: "",
+    }]);
+  };
+
+  const updateCustom = (tempId: string, field: keyof CustomExercise, value: string) => {
+    setCustomExercises(customExercises.map((c) => c.tempId === tempId ? { ...c, [field]: value } : c));
+  };
+
+  const removeCustom = (tempId: string) => {
+    setCustomExercises(customExercises.filter((c) => c.tempId !== tempId));
+  };
+
+  const totalCount = selected.length + customExercises.filter(c => c.name.trim()).length;
+
   const handleCreate = async () => {
-    if (selected.length === 0) return;
+    if (totalCount === 0) return;
     setCreating(true);
     try {
       const { data: program, error } = await (supabase as any)
@@ -139,21 +172,44 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
       if (error) throw error;
 
-      const items = selected.map((s, i) => ({
-        program_id: program.id,
-        exercise_id: s.exercise.id,
-        sets: s.sets,
-        reps: s.reps,
-        frequency: s.frequency,
-        observations: s.observations || null,
-        sort_order: i,
-      }));
+      const items: any[] = [];
+      let sortOrder = 0;
 
-      const { error: itemsError } = await (supabase as any)
-        .from("exercise_program_items")
-        .insert(items);
+      // Library exercises
+      selected.forEach((s) => {
+        items.push({
+          program_id: program.id,
+          exercise_id: s.exercise.id,
+          sets: s.sets,
+          reps: s.reps,
+          frequency: s.frequency,
+          observations: s.observations || null,
+          sort_order: sortOrder++,
+        });
+      });
 
-      if (itemsError) throw itemsError;
+      // Custom exercises
+      customExercises.forEach((c) => {
+        if (!c.name.trim()) return;
+        items.push({
+          program_id: program.id,
+          exercise_id: null,
+          custom_name: c.name.trim(),
+          custom_video_url: c.videoUrl.trim() || null,
+          sets: c.sets,
+          reps: c.reps,
+          frequency: c.frequency,
+          observations: c.observations || null,
+          sort_order: sortOrder++,
+        });
+      });
+
+      if (items.length > 0) {
+        const { error: itemsError } = await (supabase as any)
+          .from("exercise_program_items")
+          .insert(items);
+        if (itemsError) throw itemsError;
+      }
 
       const link = `${window.location.origin}/hep/${program.token}`;
       setGeneratedLink(link);
@@ -182,6 +238,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const handleClose = () => {
     setGeneratedLink(null);
     setSelected([]);
+    setCustomExercises([]);
     setNotes("");
     setSearchQuery("");
     setRegionFilter("all");
@@ -189,7 +246,6 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     onOpenChange(false);
   };
 
-  // Show generated link view
   if (generatedLink) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
@@ -235,7 +291,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
             Criar Programa de Exercícios
           </DialogTitle>
           <DialogDescription>
-            Selecione exercícios do banco para <span className="font-semibold">{patientName}</span>
+            Selecione exercícios do banco ou adicione manualmente para <span className="font-semibold">{patientName}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -310,10 +366,69 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
             </div>
           )}
 
-          {/* Selected exercises config */}
+          {/* Add custom exercise button */}
+          <Button variant="outline" size="sm" onClick={addCustomExercise} className="w-full gap-1.5 rounded-xl">
+            <PenLine className="h-4 w-4" />
+            Adicionar exercício manual
+          </Button>
+
+          {/* Custom exercises */}
+          {customExercises.length > 0 && (
+            <div className="space-y-3 border-t pt-3">
+              <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                <PenLine className="h-3.5 w-3.5" />
+                Exercícios manuais
+              </p>
+              {customExercises.map((c) => (
+                <Card key={c.tempId} className="overflow-hidden border-dashed">
+                  <CardContent className="py-2.5 px-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Nome do exercício *"
+                        value={c.name}
+                        onChange={(e) => updateCustom(c.tempId, "name", e.target.value)}
+                        className="h-8 text-xs flex-1"
+                      />
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={() => removeCustom(c.tempId)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label className="text-[10px]">Séries</Label>
+                        <Input value={c.sets} onChange={(e) => updateCustom(c.tempId, "sets", e.target.value)} className="h-8 text-xs" />
+                      </div>
+                      <div>
+                        <Label className="text-[10px]">Repetições</Label>
+                        <Input value={c.reps} onChange={(e) => updateCustom(c.tempId, "reps", e.target.value)} className="h-8 text-xs" />
+                      </div>
+                      <div>
+                        <Label className="text-[10px]">Frequência</Label>
+                        <Input value={c.frequency} onChange={(e) => updateCustom(c.tempId, "frequency", e.target.value)} className="h-8 text-xs" />
+                      </div>
+                    </div>
+                    <Input
+                      placeholder="Link de vídeo (opcional)"
+                      value={c.videoUrl}
+                      onChange={(e) => updateCustom(c.tempId, "videoUrl", e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                    <Input
+                      placeholder="Observações (opcional)"
+                      value={c.observations}
+                      onChange={(e) => updateCustom(c.tempId, "observations", e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Selected library exercises config */}
           {selected.length > 0 && (
             <div className="space-y-3 border-t pt-3">
-              <p className="text-sm font-semibold text-foreground">{selected.length} exercício(s) selecionado(s)</p>
+              <p className="text-sm font-semibold text-foreground">{selected.length} exercício(s) do banco selecionado(s)</p>
               {selected.map((s) => (
                 <Card key={s.exercise.id} className="overflow-hidden">
                   <CardContent className="py-2.5 px-3 space-y-2">
@@ -357,11 +472,11 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
           <Button
             onClick={handleCreate}
-            disabled={selected.length === 0 || creating}
+            disabled={totalCount === 0 || creating}
             className="w-full rounded-xl gap-1.5"
           >
             {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Dumbbell className="h-4 w-4" />}
-            {creating ? "Criando..." : "Gerar Link do Programa"}
+            {creating ? "Criando..." : `Gerar Link do Programa (${totalCount})`}
           </Button>
         </div>
       </DialogContent>

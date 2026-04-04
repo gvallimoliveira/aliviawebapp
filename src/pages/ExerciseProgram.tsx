@@ -15,6 +15,8 @@ interface ExerciseItem {
   frequency: string;
   observations: string | null;
   sort_order: number;
+  custom_name: string | null;
+  custom_video_url: string | null;
   exercise: {
     name_pt: string;
     name_en: string;
@@ -26,7 +28,7 @@ interface ExerciseItem {
     category: string;
     video_url: string | null;
     difficulty: string;
-  };
+  } | null;
 }
 
 interface Program {
