@@ -298,8 +298,12 @@ const Assessment = () => {
     }
   };
 
-  const handleQuestionnaireComplete = (results: QuestionnaireResult[]) => {
+  const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
     setQuestionnaireResults(results);
+    // Persist questionnaire results immediately so they're available for PDF/diagnosis
+    if (assessmentId && results.length > 0) {
+      await updateAssessment(assessmentId, { test_results: results as any });
+    }
     setStep("functional_tests");
   };
 
@@ -309,8 +313,10 @@ const Assessment = () => {
 
   const handleTestsComplete = async (results: TestResult[]) => {
     setTestResults(results);
+    // Combine questionnaire results + functional test results into a single array
+    const combinedResults = [...questionnaireResults, ...results];
     if (assessmentId) {
-      await updateAssessment(assessmentId, { test_results: results as any });
+      await updateAssessment(assessmentId, { test_results: combinedResults as any });
     }
     generateDiagnosis(anamnesisData!, results, assessmentId);
   };

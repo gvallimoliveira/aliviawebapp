@@ -92,11 +92,17 @@ const COLORS = {
 
 const MARGIN = 20;
 const PAGE_WIDTH = 210;
-const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
-const TEXT_MAX_WIDTH = CONTENT_WIDTH - 12; // Max text width matching patient name box inner padding (6mm each side)
+const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2; // 170mm
+// Unified inner padding: all text content uses the same inset as the patient name box (6mm each side)
+const SECTION_X = MARGIN + 6;            // left edge for all body text
+const SECTION_TEXT_W = CONTENT_WIDTH - 12; // 158mm — max text width for ALL dynamic content
+const TEXT_MAX_WIDTH = SECTION_TEXT_W;      // alias kept for backward compat
+const LIST_X = MARGIN + 10;               // indented lists / bullets
+const LIST_TEXT_W = CONTENT_WIDTH - 16;    // text width for indented items
+const PAGE_BOTTOM = 275;                   // max y before forced page break
 
 function checkPage(doc: jsPDF, y: number, needed: number = 20): number {
-  if (y + needed > 275) {
+  if (y + needed > PAGE_BOTTOM) {
     doc.addPage();
     return MARGIN;
   }
@@ -308,8 +314,6 @@ function svgToDataUrl(svgStr: string, w: number, h: number): Promise<string> {
 
 // ── Render Anamnesis Section ──
 function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData, isPt: boolean): number {
-  y = renderSectionTitle(doc, y, isPt ? "Anamnese" : "Anamnesis", COLORS.primary);
-
   const fields: { label: string; value: string }[] = [];
 
   if (anamnesis.chiefComplaint) {
@@ -319,19 +323,19 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Queixa Adicional" : "Additional Complaint", value: anamnesis.customComplaint });
   }
   if (anamnesis.onset) {
-    fields.push({ label: isPt ? "Modo de Início" : "Onset", value: translateKey(anamnesis.onset, isPt) });
+    fields.push({ label: isPt ? "Modo de Inicio" : "Onset", value: translateKey(anamnesis.onset, isPt) });
   }
   if (anamnesis.painScore != null) {
-    fields.push({ label: isPt ? "Nível de Dor (EVA)" : "Pain Level (VAS)", value: `${anamnesis.painScore}/10` });
+    fields.push({ label: isPt ? "Nivel de Dor (EVA)" : "Pain Level (VAS)", value: `${anamnesis.painScore}/10` });
   }
   if (anamnesis.painTypes?.length) {
     fields.push({ label: isPt ? "Tipos de Dor" : "Pain Types", value: anamnesis.painTypes.map(p => translateKey(p, isPt)).join(", ") });
   }
   if (anamnesis.evolution) {
-    fields.push({ label: isPt ? "Evolução" : "Evolution", value: translateKey(anamnesis.evolution, isPt) });
+    fields.push({ label: isPt ? "Evolucao" : "Evolution", value: translateKey(anamnesis.evolution, isPt) });
   }
   if (anamnesis.painDuration) {
-    fields.push({ label: isPt ? "Duração da Dor" : "Pain Duration", value: translateKey(anamnesis.painDuration, isPt) });
+    fields.push({ label: isPt ? "Duracao da Dor" : "Pain Duration", value: translateKey(anamnesis.painDuration, isPt) });
   }
   if (anamnesis.aggravatingFactors) {
     fields.push({ label: isPt ? "Fatores Agravantes" : "Aggravating Factors", value: anamnesis.aggravatingFactors });
@@ -340,30 +344,26 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Fatores Aliviantes" : "Relieving Factors", value: anamnesis.relievingFactors });
   }
   if (anamnesis.activityLevel) {
-    fields.push({ label: isPt ? "Nível de Atividade" : "Activity Level", value: translateKey(anamnesis.activityLevel, isPt) });
+    fields.push({ label: isPt ? "Nivel de Atividade" : "Activity Level", value: translateKey(anamnesis.activityLevel, isPt) });
   }
   if (anamnesis.hasGymAccess) {
     fields.push({ label: isPt ? "Acesso a Academia" : "Gym Access", value: translateKey(anamnesis.hasGymAccess, isPt) });
   }
   if (anamnesis.sex) {
-    fields.push({ label: isPt ? "Sexo Biológico" : "Biological Sex", value: translateKey(anamnesis.sex, isPt) });
+    fields.push({ label: isPt ? "Sexo Biologico" : "Biological Sex", value: translateKey(anamnesis.sex, isPt) });
   }
   if (anamnesis.ageRange) {
-    fields.push({ label: isPt ? "Faixa Etária" : "Age Range", value: translateKey(anamnesis.ageRange, isPt) });
+    fields.push({ label: isPt ? "Faixa Etaria" : "Age Range", value: translateKey(anamnesis.ageRange, isPt) });
   }
-
-  // New fields: pain pattern, frequency, night waking
   if (anamnesis.painPattern) {
-    fields.push({ label: isPt ? "Padrão da Dor" : "Pain Pattern", value: translateKey(anamnesis.painPattern, isPt) });
+    fields.push({ label: isPt ? "Padrao da Dor" : "Pain Pattern", value: translateKey(anamnesis.painPattern, isPt) });
   }
   if (anamnesis.painWeeklyFrequency) {
-    fields.push({ label: isPt ? "Frequência Semanal" : "Weekly Frequency", value: translateKey(anamnesis.painWeeklyFrequency, isPt) });
+    fields.push({ label: isPt ? "Frequencia Semanal" : "Weekly Frequency", value: translateKey(anamnesis.painWeeklyFrequency, isPt) });
   }
   if (anamnesis.painNightWaking) {
     fields.push({ label: isPt ? "Dor Noturna (Acorda)" : "Night Pain (Waking)", value: translateKey(anamnesis.painNightWaking, isPt) });
   }
-
-  // Migraine screening
   if (anamnesis.hasPhotophobia) {
     fields.push({ label: isPt ? "Fotofobia" : "Photophobia", value: translateKey(anamnesis.hasPhotophobia, isPt) });
   }
@@ -371,13 +371,11 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Aura Visual" : "Visual Aura", value: translateKey(anamnesis.hasVisualAura, isPt) });
   }
   if (anamnesis.hasNausea) {
-    fields.push({ label: isPt ? "Náusea nas Crises" : "Nausea During Episodes", value: translateKey(anamnesis.hasNausea, isPt) });
+    fields.push({ label: isPt ? "Nausea nas Crises" : "Nausea During Episodes", value: translateKey(anamnesis.hasNausea, isPt) });
   }
   if (anamnesis.headacheCrisisFrequency) {
-    fields.push({ label: isPt ? "Frequência de Crises" : "Crisis Frequency", value: translateKey(anamnesis.headacheCrisisFrequency, isPt) });
+    fields.push({ label: isPt ? "Frequencia de Crises" : "Crisis Frequency", value: translateKey(anamnesis.headacheCrisisFrequency, isPt) });
   }
-
-  // Pain regions as text
   if (anamnesis.painRegions?.length) {
     const regionLabels = anamnesis.painRegions.map(id => {
       for (const view of Object.values(regionsByView)) {
@@ -386,16 +384,21 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
       }
       return id;
     });
-    fields.push({ label: isPt ? "Regiões de Dor" : "Pain Regions", value: regionLabels.join(", ") });
+    fields.push({ label: isPt ? "Regioes de Dor" : "Pain Regions", value: regionLabels.join(", ") });
   }
-
-  // Per-region pain scores
   if (anamnesis.painScoreMode === "per_region" && anamnesis.painScoresPerRegion && Object.keys(anamnesis.painScoresPerRegion).length > 0) {
     const regionScores = Object.entries(anamnesis.painScoresPerRegion)
       .map(([key, score]) => `${translateKey(key, isPt)}: ${score}/10`)
       .join(", ");
-    fields.push({ label: isPt ? "Dor por Região" : "Pain by Region", value: regionScores });
+    fields.push({ label: isPt ? "Dor por Regiao" : "Pain by Region", value: regionScores });
   }
+
+  if (fields.length === 0) return y;
+
+  // Keep title + first 2 fields together to avoid orphan
+  const firstFieldsH = Math.min(fields.length, 2) * 12;
+  y = checkPage(doc, y, 14 + firstFieldsH);
+  y = renderSectionTitle(doc, y, isPt ? "Anamnese" : "Anamnesis", COLORS.primary);
 
   for (const field of fields) {
     y = checkPage(doc, y, 10);
@@ -403,12 +406,18 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     doc.setFontSize(8);
     doc.setTextColor(...COLORS.foreground);
     const labelText = `${field.label}: `;
-    doc.text(labelText, MARGIN + 2, y);
+    doc.text(labelText, SECTION_X, y);
     const labelW = doc.getTextWidth(labelText);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...COLORS.muted);
-    const valueLines = doc.splitTextToSize(field.value, CONTENT_WIDTH - 4 - labelW);
-    doc.text(valueLines, MARGIN + 2 + labelW, y);
+    const availW = SECTION_TEXT_W - labelW;
+    const valueLines = doc.splitTextToSize(field.value, availW > 30 ? availW : SECTION_TEXT_W);
+    if (availW > 30) {
+      doc.text(valueLines, SECTION_X + labelW, y);
+    } else {
+      y += 3.5;
+      doc.text(valueLines, SECTION_X + 4, y);
+    }
     y += valueLines.length * 3.5 + 2;
   }
 
@@ -587,12 +596,13 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(`${name}: `, MARGIN + 2, y);
+        doc.text(`${name}: `, SECTION_X, y);
         const lw = doc.getTextWidth(`${name}: `);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
-        const resultLines = doc.splitTextToSize(String(result), TEXT_MAX_WIDTH - lw);
-        doc.text(resultLines, MARGIN + 2 + lw, y);
+        const availW = SECTION_TEXT_W - lw;
+        const resultLines = doc.splitTextToSize(String(result), availW > 30 ? availW : SECTION_TEXT_W);
+        doc.text(resultLines, SECTION_X + lw, y);
         y += resultLines.length * 3.5 + 1.5;
       }
     }
@@ -818,25 +828,25 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   
   const questionnaireBullets: string[] = applicableQuestionnaires.length > 0
     ? applicableQuestionnaires.map(q => isPt
-        ? `✅ Questionário ${q.name} — ${q.fullName_pt.replace(/\s*\(.*\)/, '')}`
-        : `✅ ${q.name} questionnaire — ${q.fullName_en.replace(/\s*\(.*\)/, '')}`)
+        ? `+ Questionario ${q.name} - ${q.fullName_pt.replace(/\s*\(.*\)/, '')}`
+        : `+ ${q.name} questionnaire - ${q.fullName_en.replace(/\s*\(.*\)/, '')}`)
     : [isPt
-        ? "✅ Questionários validados cientificamente para sua condição"
-        : "✅ Scientifically validated questionnaires for your condition"];
+        ? "+ Questionarios validados cientificamente para sua condicao"
+        : "+ Scientifically validated questionnaires for your condition"];
 
   const bulletsPt = [
-    "✅ Explicação clínica detalhada do seu quadro",
-    "✅ Raciocínio clínico baseado em evidências científicas",
-    "✅ Recomendações personalizadas para o seu caso",
-    "✅ Plano de tratamento completo em 3 fases progressivas",
-    "✅ Exercícios com séries, repetições e progressão",
+    "+ Explicacao clinica detalhada do seu quadro",
+    "+ Raciocinio clinico baseado em evidencias cientificas",
+    "+ Recomendacoes personalizadas para o seu caso",
+    "+ Plano de tratamento completo em 3 fases progressivas",
+    "+ Exercicios com series, repeticoes e progressao",
   ];
   const bulletsEn = [
-    "✅ Detailed clinical explanation of your condition",
-    "✅ Evidence-based clinical reasoning",
-    "✅ Personalized recommendations for your case",
-    "✅ Complete 3-phase progressive treatment plan",
-    "✅ Exercises with sets, reps and progression",
+    "+ Detailed clinical explanation of your condition",
+    "+ Evidence-based clinical reasoning",
+    "+ Personalized recommendations for your case",
+    "+ Complete 3-phase progressive treatment plan",
+    "+ Exercises with sets, reps and progression",
   ];
   const bullets = [...(isPt ? bulletsPt : bulletsEn), ...questionnaireBullets];
   
@@ -1183,11 +1193,11 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(isPt ? "Objetivo:" : "Goal:", MARGIN + 4, y);
+        doc.text(isPt ? "Objetivo:" : "Goal:", SECTION_X, y);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
-        const goalLines = doc.splitTextToSize(phase.goal, CONTENT_WIDTH - 30);
-        doc.text(goalLines, MARGIN + 28, y);
+        const goalLines = doc.splitTextToSize(phase.goal, SECTION_TEXT_W - 24);
+        doc.text(goalLines, SECTION_X + 22, y);
         y += goalLines.length * 3.5 + 4;
       }
 
@@ -1196,11 +1206,11 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(isPt ? "Foco:" : "Focus:", MARGIN + 4, y);
+        doc.text(isPt ? "Foco:" : "Focus:", SECTION_X, y);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
-        const focusLines = doc.splitTextToSize(phase.focus, CONTENT_WIDTH - 30);
-        doc.text(focusLines, MARGIN + 28, y);
+        const focusLines = doc.splitTextToSize(phase.focus, SECTION_TEXT_W - 24);
+        doc.text(focusLines, SECTION_X + 22, y);
         y += focusLines.length * 3.5 + 4;
       }
 
@@ -1213,23 +1223,22 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
         const catLabel = ex.category.replace(/_/g, " ");
-        const catBadgeText = ` [${catLabel}]`;
-        const exNameFull = `• ${ex.name}`;
+        const catBadgeText = `[${catLabel}]`;
+        const exNameFull = `- ${ex.name}`;
         const exNameW = doc.getTextWidth(exNameFull + "  " + catBadgeText);
-        if (exNameW > TEXT_MAX_WIDTH - 6) {
-          // Name too long — wrap name, put badge on next line
-          const nameLines = doc.splitTextToSize(exNameFull, TEXT_MAX_WIDTH - 6);
-          doc.text(nameLines, MARGIN + 6, y);
+        if (exNameW > LIST_TEXT_W) {
+          const nameLines = doc.splitTextToSize(exNameFull, LIST_TEXT_W);
+          doc.text(nameLines, LIST_X, y);
           y += nameLines.length * 3.5;
           doc.setFontSize(6);
           doc.setTextColor(...COLORS.muted);
-          doc.text(catBadgeText.trim(), MARGIN + 10, y);
+          doc.text(catBadgeText, LIST_X + 4, y);
           y += 3;
         } else {
-          doc.text(exNameFull, MARGIN + 6, y);
+          doc.text(exNameFull, LIST_X, y);
           doc.setFontSize(6);
           doc.setTextColor(...COLORS.muted);
-          doc.text(catBadgeText.trim(), MARGIN + 6 + doc.getTextWidth(exNameFull + "  "), y);
+          doc.text(catBadgeText, LIST_X + doc.getTextWidth(exNameFull + "  "), y);
           y += 4;
         }
 
@@ -1237,17 +1246,17 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         doc.setFont("helvetica", "normal");
         doc.setFontSize(7.5);
         doc.setTextColor(...COLORS.muted);
-        const descLines = doc.splitTextToSize(ex.description, CONTENT_WIDTH - 14);
+        const descLines = doc.splitTextToSize(ex.description, LIST_TEXT_W - 4);
         y = checkPage(doc, y, descLines.length * 3.5);
-        doc.text(descLines, MARGIN + 10, y);
+        doc.text(descLines, LIST_X + 4, y);
         y += descLines.length * 3.5 + 2;
 
         // Sets / Reps / Frequency
         doc.setFontSize(7);
         doc.setTextColor(...COLORS.foreground);
-        const setsRepsText = `${ex.sets} × ${ex.reps}  |  ${ex.frequency}`;
-        const srLines = doc.splitTextToSize(setsRepsText, TEXT_MAX_WIDTH - 10);
-        doc.text(srLines, MARGIN + 10, y);
+        const setsRepsText = `${ex.sets} x ${ex.reps}  |  ${ex.frequency}`;
+        const srLines = doc.splitTextToSize(setsRepsText, LIST_TEXT_W - 4);
+        doc.text(srLines, LIST_X + 4, y);
         y += srLines.length * 3.5 + 2.5;
       }
 
@@ -1256,19 +1265,20 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
 
     // General Guidelines
     if (treatmentPlan.generalGuidelines && treatmentPlan.generalGuidelines.length > 0) {
-      y = checkPage(doc, y, 20);
+      // Keep title + first guideline together
+      y = checkPage(doc, y, 26);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...COLORS.foreground);
-      doc.text(isPt ? "Orientações Gerais" : "General Guidelines", MARGIN, y);
+      doc.text(isPt ? "Orientacoes Gerais" : "General Guidelines", SECTION_X, y);
       y += 6;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...COLORS.muted);
       for (const g of treatmentPlan.generalGuidelines) {
         y = checkPage(doc, y, 8);
-        const gLines = doc.splitTextToSize(`✓ ${g}`, TEXT_MAX_WIDTH);
-        doc.text(gLines, MARGIN + 4, y);
+        const gLines = doc.splitTextToSize(`- ${g}`, LIST_TEXT_W);
+        doc.text(gLines, LIST_X, y);
         y += gLines.length * 3.5 + 2;
       }
       y += 4;
@@ -1277,7 +1287,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     // Progression Criteria
     if (treatmentPlan.progressionCriteria) {
       y = checkPage(doc, y, 20);
-      y = renderSubSection(doc, y, isPt ? "Critérios de Progressão" : "Progression Criteria", treatmentPlan.progressionCriteria);
+      y = renderSubSection(doc, y, isPt ? "Criterios de Progressao" : "Progression Criteria", treatmentPlan.progressionCriteria);
     }
   } // end if (treatmentPlan)
 
@@ -1374,22 +1384,21 @@ function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number
 
 // ── Helper: Sub-section with body text ──
 function renderSubSection(doc: jsPDF, y: number, title: string, body: string): number {
-  // Calculate minimum needed: title + at least 3 lines of body
   doc.setFontSize(8);
-  const lines = doc.splitTextToSize(body, TEXT_MAX_WIDTH);
+  const lines = doc.splitTextToSize(body, SECTION_TEXT_W);
   const minBodyLines = Math.min(lines.length, 3);
   const neededForGroup = 5 + minBodyLines * 3.5 + 6;
   y = checkPage(doc, y, neededForGroup);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.foreground);
-  doc.text(title, MARGIN, y);
+  doc.text(title, SECTION_X, y);
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
   y = checkPage(doc, y, lines.length * 3.5);
-  doc.text(lines, MARGIN, y);
+  doc.text(lines, SECTION_X, y);
   y += lines.length * 3.5 + 6;
   return y;
 }
