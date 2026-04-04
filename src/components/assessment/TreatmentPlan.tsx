@@ -253,7 +253,7 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
         const isExpanded = expandedPhase === phase.id;
 
         return (
-          <Card key={phase.id} className="rounded-xl overflow-hidden">
+          <Card key={phase.id} id={`phase-${phase.id}`} className="rounded-xl overflow-hidden">
             <button
               onClick={() => togglePhase(phase.id)}
               className="w-full text-left"
