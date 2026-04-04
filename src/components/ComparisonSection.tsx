@@ -130,6 +130,7 @@ const ComparisonSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
+            className="snap-start shrink-0 w-[85%] md:w-auto md:shrink"
           >
             <Card className="relative h-full rounded-2xl border-primary/30 bg-primary/[0.02] shadow-lg shadow-primary/5">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
