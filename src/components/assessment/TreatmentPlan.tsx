@@ -137,21 +137,40 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
 
       const fileId = assessmentId || crypto.randomUUID();
       const filePath = `${fileId}_premium.pdf`;
-      const { error: uploadError } = await supabase.storage
-        .from("assessment-reports")
-        .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
 
-      if (uploadError) throw uploadError;
+      let publicUrl: string | null = null;
+      try {
+        const { error: uploadError } = await supabase.storage
+          .from("assessment-reports")
+          .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
 
-      const { data: urlData } = supabase.storage
-        .from("assessment-reports")
-        .getPublicUrl(filePath);
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from("assessment-reports")
+          .getPublicUrl(filePath);
+        publicUrl = urlData.publicUrl;
+      } catch (uploadErr) {
+        console.warn("Upload to storage failed, falling back to local download", uploadErr);
+        // Fallback: download PDF locally
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `alivia_assessment_${fileId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({ title: t("pdf.success") });
+      }
 
       const { getPublicOrigin } = await import("@/lib/getPublicOrigin");
       const origin = getPublicOrigin();
-      const text = `🩺 *Aliv.iA — ${language === "pt" ? "Avaliação Premium Completa" : "Complete Premium Assessment"}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${urlData.publicUrl}\n\n💡 ${language === "pt" ? "Faça sua avaliação" : "Start your assessment"}:\n${origin}`;
+      const pdfLine = publicUrl
+        ? `\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${publicUrl}`
+        : "";
+      const text = `🩺 *Aliv.iA — ${language === "pt" ? "Avaliação Premium Completa" : "Complete Premium Assessment"}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${pdfLine}\n\n💡 ${language === "pt" ? "Faça sua avaliação" : "Start your assessment"}:\n${origin}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-    } catch {
+    } catch (err) {
+      console.error("WhatsApp share error:", err);
       toast({ title: t("pdf.error"), variant: "destructive" });
     } finally {
       setWhatsappLoading(false);
