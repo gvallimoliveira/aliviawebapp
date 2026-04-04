@@ -634,6 +634,8 @@
   "b2b.benefit_5_desc": "Add your logo to PDFs and the patient assessment screen. Reinforce your professional identity in every delivery.",
   "b2b.benefit_6_title": "Evolutionary Metrics Dashboard",
   "b2b.benefit_6_desc": "Track your patient's pain level and functional questionnaire scores over time. Periodic reapplication to monitor progress.",
+  "b2b.benefit_7_title": "Evolution / Discharge Report",
+  "b2b.benefit_7_desc": "Generate an automatic comparative PDF between assessments. AI summarizes clinical evolution with pain and questionnaire variations plus a discharge or continuation recommendation.",
   "b2b.benefit_4_desc": "Track your patient's pain level and functional questionnaire scores over time. Periodic reapplication to monitor progress.",
   "b2b.cta_desc": "All of this for just",
   "b2b.cta_cancel": "Cancel anytime. No commitment.",
