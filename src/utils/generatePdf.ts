@@ -467,144 +467,118 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
     y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary, 30);
 
     for (const q of questionnaireItems) {
-      y = checkPage(doc, y, 22);
+      const qDef = questionnaires.find(qd => qd.id === q.questionnaireId);
       const qName = q.questionnaireName || q.questionnaireId.toUpperCase();
+      const fullName = qDef ? (isPt ? qDef.fullName_pt : qDef.fullName_en) : "";
       const pct = Math.round(q.percentageScore);
       const severity = q.severity || "";
       const interpretation = isPt ? (q.interpretation_pt || severity) : (q.interpretation_en || severity);
+      const higherWorse = !qDef || qDef.scoringDirection === "higher_worse";
+      const entries = q.subscaleScores && typeof q.subscaleScores === "object" ? Object.entries(q.subscaleScores) : [];
+      const hasSubscales = entries.length > 1;
 
-      // Name + score
+      // Estimate card height
+      const interpLines = interpretation ? doc.splitTextToSize(interpretation, TEXT_MAX_WIDTH - 8) : [];
+      const subscaleRows = hasSubscales ? Math.ceil(entries.length / 2) : 0;
+      const cardH = 18 + (fullName ? 4 : 0) + (interpLines.length * 3.5) + (subscaleRows * 5) + (qDef ? 5 : 0) + 4;
+      y = checkPage(doc, y, cardH + 4);
+
+      // Card border box
+      const cardX = MARGIN;
+      const cardY = y - 2;
+      // We'll draw the card background after calculating final height
+      const cardStartY = y;
+
+      // Abbreviated name (bold, larger)
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
+      doc.setFontSize(10);
       doc.setTextColor(...COLORS.foreground);
-      doc.text(qName, MARGIN + 2, y);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(...COLORS.muted);
-      doc.text(`${pct}%`, MARGIN + 2 + doc.getTextWidth(qName + "  "), y);
-      y += 4;
+      doc.text(qName, MARGIN + 5, y + 2);
 
-      // Progress bar
-      const barW = CONTENT_WIDTH - 4;
-      const barH = 3;
-      drawRoundedRect(doc, MARGIN + 2, y, barW, barH, 1, [230, 230, 230]);
-      const filledW = (pct / 100) * barW;
-      const barColor: [number, number, number] = severity === "minimal" || severity === "mild"
-        ? COLORS.green
-        : severity === "moderate" ? COLORS.yellow : COLORS.red;
-      if (filledW > 0) {
-        drawRoundedRect(doc, MARGIN + 2, y, filledW, barH, 1, barColor);
-      }
-      y += 5;
+      // Percentage on the right, large and colored
+      const sevColor: [number, number, number] =
+        severity === "minimal" ? COLORS.green :
+        severity === "mild" ? [60, 130, 200] as [number, number, number] :
+        severity === "moderate" ? COLORS.yellow : COLORS.red;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(...sevColor);
+      const pctText = `${pct}%`;
+      const pctW = doc.getTextWidth(pctText);
+      doc.text(pctText, MARGIN + CONTENT_WIDTH - 5 - pctW, y + 3);
+      y += 6;
 
-      // Interpretation label
-      if (interpretation) {
+      // Full name (muted, smaller)
+      if (fullName) {
+        doc.setFont("helvetica", "normal");
         doc.setFontSize(7);
         doc.setTextColor(...COLORS.muted);
-        const interpText = `${isPt ? "Interpretação" : "Interpretation"}: ${interpretation}`;
-        const interpLines = doc.splitTextToSize(interpText, TEXT_MAX_WIDTH);
-        doc.text(interpLines, MARGIN + 2, y);
+        const fnLines = doc.splitTextToSize(fullName, TEXT_MAX_WIDTH - 40);
+        doc.text(fnLines, MARGIN + 5, y);
+        y += fnLines.length * 3.5;
+      }
+
+      // Interpretation (colored)
+      if (interpretation) {
+        y += 1;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(...sevColor);
+        doc.text(interpLines, MARGIN + 5, y);
         y += interpLines.length * 3.5;
       }
 
-      // Subscale scores — highlight top 3 most limited
-      if (q.subscaleScores && typeof q.subscaleScores === "object") {
-        const entries = Object.entries(q.subscaleScores);
-        if (entries.length > 1) {
-          // Determine scoring direction from questionnaire data
-          const qDef = questionnaires.find(qd => qd.id === q.questionnaireId);
-          const higherWorse = !qDef || qDef.scoringDirection === "higher_worse";
-
-          // Sort to find top 3 most limited
-          const sorted = [...entries].sort(([, a], [, b]) => {
-            const va = typeof a === "number" ? a : parseFloat(String(a)) || 0;
-            const vb = typeof b === "number" ? b : parseFloat(String(b)) || 0;
-            return higherWorse ? vb - va : va - vb; // worst first
-          });
-          const top3Keys = new Set(sorted.slice(0, 3).map(([k]) => k));
-
-          // Render top 3 highlighted block
-          y = checkPage(doc, y, 6);
-          doc.setFontSize(7);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(...COLORS.foreground);
-          doc.text(isPt ? "Principais limitações funcionais:" : "Top functional limitations:", MARGIN + 4, y);
-          y += 4;
-
-          // Determine max value for bar scaling
-          const top3 = sorted.slice(0, 3);
-          const allVals = entries.map(([, v]) => typeof v === "number" ? v : parseFloat(String(v)) || 0);
-          const maxVal = Math.max(...allVals, 1);
-
-          const barMaxW = 55; // max bar width in mm
-          const labelColW = CONTENT_WIDTH - 8 - barMaxW - 14; // space for label
-          const rowH = 8;
-
-          for (const [key, val] of top3) {
-            y = checkPage(doc, y, rowH + 2);
+      // Subscale scores — 2-column grid
+      if (hasSubscales) {
+        y += 1;
+        doc.setFontSize(7);
+        const colW = (TEXT_MAX_WIDTH - 8) / 2;
+        for (let i = 0; i < entries.length; i += 2) {
+          y = checkPage(doc, y, 5);
+          for (let col = 0; col < 2 && i + col < entries.length; col++) {
+            const [key, score] = entries[i + col];
             const label = qDef?.subscaleLabels?.[key]
               ? (isPt ? qDef.subscaleLabels[key].pt : qDef.subscaleLabels[key].en)
               : key;
-            const numVal = typeof val === "number" ? val : parseFloat(String(val)) || 0;
-
-            // Row background
-            drawRoundedRect(doc, MARGIN + 4, y - 3.5, CONTENT_WIDTH - 8, rowH, 1.5, COLORS.accent);
-
-            // Label text
+            const xPos = MARGIN + 5 + col * colW;
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(...COLORS.muted);
+            const labelText = label + ":";
+            const truncLabel = doc.getTextWidth(labelText) > colW - 12
+              ? labelText.substring(0, 18) + "…:"
+              : labelText;
+            doc.text(truncLabel, xPos, y);
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(7.5);
-            doc.setTextColor(...COLORS.accentDark);
-            const truncLabel = label.length > 22 ? label.substring(0, 20) + "…" : label;
-            doc.text(`▸ ${truncLabel}`, MARGIN + 6, y);
-
-            // Mini horizontal bar
-            const barX = MARGIN + 6 + labelColW;
-            const barY = y - 2.5;
-            const barH = 4;
-            // Bar track (light gray)
-            drawRoundedRect(doc, barX, barY, barMaxW, barH, 1.5, [230, 230, 230]);
-            // Bar fill — proportional to max
-            const fillW = Math.max(2, (numVal / maxVal) * barMaxW);
-            // For higher_worse: high ratio = red (bad). For higher_better: high ratio = green (good).
-            const ratio = numVal / maxVal;
-            let barColor: [number, number, number];
-            if (higherWorse) {
-              barColor = ratio > 0.7 ? COLORS.red : ratio > 0.4 ? COLORS.yellow : COLORS.green;
-            } else {
-              // higher_better: low values = worse (red), high values = better (green)
-              barColor = ratio < 0.4 ? COLORS.red : ratio < 0.7 ? COLORS.yellow : COLORS.green;
-            }
-            drawRoundedRect(doc, barX, barY, fillW, barH, 1.5, barColor);
-
-            // Value label at end of bar
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(7);
             doc.setTextColor(...COLORS.foreground);
-            doc.text(String(numVal), barX + barMaxW + 2, y);
-
-            y += rowH + 1;
+            doc.text(`${score}%`, xPos + colW - 12, y);
           }
-
-          // Remaining subscales (if any)
-          const remaining = entries.filter(([k]) => !top3Keys.has(k));
-          if (remaining.length > 0) {
-            y += 1;
-            doc.setFontSize(7);
-            for (const [key, val] of remaining) {
-              y = checkPage(doc, y, 5);
-              const label = qDef?.subscaleLabels?.[key]
-                ? (isPt ? qDef.subscaleLabels[key].pt : qDef.subscaleLabels[key].en)
-                : key;
-              doc.setFont("helvetica", "normal");
-              doc.setTextColor(...COLORS.muted);
-              const subLines = doc.splitTextToSize(`  ${label}: ${val}`, TEXT_MAX_WIDTH);
-              doc.text(subLines, MARGIN + 4, y);
-              y += subLines.length * 3.5;
-            }
-          }
+          y += 4.5;
         }
       }
-      y += 3;
+
+      // Scale note (italic, muted)
+      if (qDef) {
+        y += 0.5;
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(6);
+        doc.setTextColor(160, 155, 148);
+        const scaleNote = qDef.scoringDirection === "higher_better"
+          ? (isPt ? "Escala: 100% = melhor | 0% = pior" : "Scale: 100% = best | 0% = worst")
+          : (isPt ? "Escala: 0% = melhor | 100% = pior" : "Scale: 0% = best | 100% = worst");
+        doc.text(scaleNote, MARGIN + 5, y);
+        y += 3;
+      }
+
+      // Draw the card border around everything
+      const cardFinalH = y - cardStartY + 4;
+      doc.setDrawColor(...COLORS.border);
+      doc.setLineWidth(0.3);
+      doc.setFillColor(...COLORS.white);
+      // Draw behind — we need to draw first then re-render text, but jsPDF doesn't support z-index.
+      // Instead draw border only (no fill) on top
+      doc.roundedRect(cardX, cardY, CONTENT_WIDTH, cardFinalH, 2, 2, "S");
+
+      y += 5;
     }
     y += 2;
   }
