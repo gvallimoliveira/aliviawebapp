@@ -98,6 +98,7 @@ interface PatientEvolutionDashboardProps {
   assessments: any[];
   professionalId: string;
   lifetimeTreatment?: boolean;
+  professionalLogoUrl?: string;
   onDownloadPdf?: (assessment: any) => void;
   onShareWhatsApp?: (assessment: any) => void;
 }

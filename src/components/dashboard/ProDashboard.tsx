@@ -676,6 +676,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             assessments={patientAssessments}
             professionalId={professional.id}
             lifetimeTreatment={professional.lifetime_treatment}
+            professionalLogoUrl={professional.logo_url}
             onDownloadPdf={handleDownloadPdf}
             onShareWhatsApp={handleShareWhatsApp}
           />
