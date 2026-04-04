@@ -1192,7 +1192,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(isPt ? "Objetivo:" : "Goal:", MARGIN + 4, y);
+        doc.text(isPt ? "Objetivo:" : "Goal:", SECTION_X, y);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
         const goalLines = doc.splitTextToSize(phase.goal, SECTION_TEXT_W - 24);
