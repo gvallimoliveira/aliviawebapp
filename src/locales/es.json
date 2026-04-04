@@ -426,6 +426,8 @@
   "faq.faq5.a": "¡Sí! En la versión premium, puede repetir la evaluación una vez en hasta 7 días después de la compra.",
   "faq.faq6.q": "¿Y si el triaje identifica señales de alerta (banderas rojas)?",
   "faq.faq6.a": "El triaje de seguridad es parte integral de toda evaluación. Si se detectan señales como trauma grave, pérdida de peso inexplicada o entumecimiento progresivo, la evaluación se concluye en ese punto y se recomienda evaluación médica presencial.",
+  "faq.faq7.q": "¿Por qué no puedo seleccionar todas las regiones que quiero?",
+  "faq.faq7.a": "El sistema utiliza razonamiento clínico basado en cadenas cinéticas — estructuras conectadas biomecánicamente. Regiones del mismo segmento corporal (ej: hombro y codo) pueden evaluarse juntas porque se influyen mutuamente. Regiones de segmentos distintos (ej: pie y cervical) requieren evaluaciones separadas para garantizar precisión diagnóstica y un plan de tratamiento adecuado.",
   "followup.opt_in_title": "Seguimiento por correo",
   "followup.opt_in_desc": "Reciba recordatorios en las semanas 1, 2, 4 y 6 sobre cómo va y reforzando los ejercicios de cada fase.",
   "followup.opt_in_button": "Quiero recibir recordatorios",
