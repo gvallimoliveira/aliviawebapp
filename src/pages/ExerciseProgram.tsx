@@ -151,7 +151,7 @@ const ExerciseProgram = () => {
 
   // Group items by category
   const grouped = items.reduce<Record<string, ExerciseItem[]>>((acc, item) => {
-    const cat = item.exercise?.category || "other";
+    const cat = item.exercise?.category || "custom";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
     return acc;
