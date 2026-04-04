@@ -1,104 +1,66 @@
 
 
-# Implementação: HEP, White-label, Reavaliação Expressa e Notificação Push
+# Posicionar HEP, White-label e Reavaliação Expressa como argumentos de venda
 
-## Visão geral
+## Análise de impacto (perspectiva do fisioterapeuta)
 
-Quatro funcionalidades novas para o fluxo profissional:
-1. **HEP** — Programa de Exercícios Domiciliares com banco pré-cadastrado e link público
-2. **White-label** — Logo do profissional na tela de avaliação e nos PDFs
-3. **Reavaliação Expressa** — Botão no painel que gera link pré-preenchido
-4. **Notificação Push** — Alerta ao profissional quando paciente completa avaliação
+Reorganizando por relevância para o profissional:
 
----
+1. **Economia de tempo / Eficiência clínica** (já existe) — argumento #1 universal
+2. **Reavaliação Expressa** (NOVO, alto impacto) — demonstra continuidade do cuidado, agiliza retornos, é diferencial competitivo direto
+3. **Programa de Exercícios (HEP)** (NOVO, alto impacto) — prescrição digital com vídeos é desejo constante do fisioterapeuta, substitui papel/WhatsApp informal
+4. **White-label / Marca própria** (NOVO, impacto médio-alto) — profissionalismo percebido, diferencial para clínicas
+5. **Avaliações assertivas com dados estruturados** (já existe)
+6. **Questionários + Relatórios PDF** (já existe)
+7. **Dashboard de Métricas Evolutivas** (já existe)
 
-## 1. HEP — Programa de Exercícios Domiciliares
+## Mudanças na Landing Page Profissional
 
-### Banco de dados
-- Nova tabela `exercise_library`: `id`, `name_pt`, `name_en`, `name_es`, `description_pt/en/es`, `body_region` (text), `category` (text: "strengthening", "stretching", "mobility", "proprioception"), `video_url` (text, YouTube/Instagram embed), `thumbnail_url` (text), `difficulty` ("beginner"/"intermediate"/"advanced"), `created_at`
-- Nova tabela `exercise_programs`: `id`, `professional_id` (uuid), `assessment_id` (uuid, nullable), `patient_name` (text), `token` (text unique, gerado via `gen_random_uuid()`), `notes` (text), `created_at`, `expires_at` (timestamp, default 90 dias)
-- Nova tabela `exercise_program_items`: `id`, `program_id` (uuid FK → exercise_programs), `exercise_id` (uuid FK → exercise_library), `sets` (text), `reps` (text), `frequency` (text), `observations` (text), `sort_order` (int)
-- RLS: profissionais leem/criam seus programas; leitura pública por token (anon SELECT com filtro por token)
-- Seed inicial: ~30 exercícios comuns (fortalecimento de quadril, alongamento de isquiotibiais, mobilidade de ombro, etc.) com links de vídeo do YouTube de canais públicos de fisioterapia
+### Seção Benefits (grid 2x3 em vez de 2x2)
+Reordenar e expandir de 4 para 6 cards:
+1. Economize tempo (mantém)
+2. **Reavaliação Expressa** (NOVO) — ícone RefreshCw — "Reavalie com 1 clique. Dados pré-preenchidos, sem retrabalho."
+3. **Programa de Exercícios (HEP)** (NOVO) — ícone Dumbbell — "Prescreva exercícios com vídeo e envie via link. Sem papel, sem confusão."
+4. Avaliações assertivas (mantém)
+5. **Sua marca nos relatórios** (NOVO, substitui o antigo benefit_3 de questionários) — ícone Palette — "Logo e identidade visual nos PDFs e na tela de avaliação do paciente."
+6. Dashboard evolutivo (mantém)
 
-### Frontend
-- Nova rota `/hep/:token` — página pública, mobile-friendly, sem login. Mostra nome do paciente, lista de exercícios agrupados por categoria, com embed de vídeo, séries/reps e observações
-- No `PatientEvolutionDashboard.tsx` (detalhes do paciente): botão "Criar Programa de Exercícios" que abre um modal/drawer
-- Modal de criação: barra de busca no banco de exercícios, filtros por região/categoria, seleção múltipla, campos de séries/reps/frequência por exercício, campo de observações gerais, botão "Gerar Link"
-- Após criar: exibe link copiável e botão "Enviar via WhatsApp"
+### Seção Features ("O que você recebe no painel")
+Expandir de 6 para 9 itens, incluindo:
+- Reavaliação expressa com pré-preenchimento
+- Programa de exercícios com banco de 70+ exercícios e vídeos
+- Relatórios PDF com sua marca (white-label)
 
-### Arquivos novos
-- `src/pages/ExerciseProgram.tsx` — página pública /hep/:token
-- `src/components/dashboard/CreateExerciseProgramModal.tsx` — modal de criação
+### Seção Pricing (includes)
+Adicionar às listas de ambos os planos:
+- Programa de Exercícios com vídeos
+- Reavaliação expressa
+- Relatórios com sua marca
 
-### Arquivos alterados
-- `src/App.tsx` — nova rota `/hep/:token`
-- `src/components/dashboard/PatientEvolutionDashboard.tsx` — botão "Criar Programa"
+### Seção FAQ
+Adicionar 2 FAQs:
+- "Como funciona o Programa de Exercícios?" → Explica banco de 70+ exercícios, vídeos, link público, validade 90 dias
+- "Posso usar minha marca nos relatórios?" → Explica upload de logo e white-label
 
----
+## Mudanças na Página de Suporte
 
-## 2. White-label — Logo na Avaliação e PDFs
+### Pro Tools (accordion)
+Adicionar 3 novas entradas ao array `proTools`:
+- `{ key: "hep", icon: Dumbbell }` — "Programa de Exercícios (HEP)"
+- `{ key: "reassessment", icon: RefreshCw }` — "Reavaliação Expressa"
+- `{ key: "white_label", icon: Palette }` — "Marca nos Relatórios (White-label)"
 
-### Tela de avaliação (`ProfessionalAssessment.tsx`)
-- No `useEffect` de verificação do profissional, incluir `logo_url` no SELECT
-- No header da página, se `professional.logo_url` existir, exibir a logo do profissional ao lado ou no lugar da logo Aliv.iA (lado direito do header, espelhando a posição do PDF)
-- Manter a logo Aliv.iA à esquerda, adicionar logo do profissional à direita
+Com descrições detalhadas de como usar cada funcionalidade.
 
-### PDFs (já parcialmente implementado)
-- Verificar se `professionalLogoUrl` já está sendo usado no `generatePdf.ts` — conforme memória, já existe no cabeçalho e rodapé do PDF profissional
-- Garantir consistência: logo no header (canto superior direito) e footer (canto inferior direito)
+## Arquivos a alterar
 
-### Arquivos alterados
-- `src/pages/ProfessionalAssessment.tsx` — SELECT inclui `logo_url`, header exibe logo
-- `src/utils/generatePdf.ts` — confirmar/ajustar posicionamento (se necessário)
+1. **`src/locales/pt.json`**, **`en.json`**, **`es.json`** — novas chaves b2b.benefit_5/6, b2b.feature_7/8/9, b2b.pricing_inc_6/7/8, b2b.faq4/5, support.pro.tool.hep/reassessment/white_label
+2. **`src/pages/ProfessionalLanding.tsx`** — expandir arrays benefits (6 items, grid 2x3), features (9 items), pricingIncludes (8 items), faqKeys (5 items); importar novos ícones
+3. **`src/pages/Support.tsx`** — adicionar 3 entradas ao `proTools` array; importar ícones Dumbbell, Palette
 
----
+## Detalhes técnicos
 
-## 3. Reavaliação Expressa
-
-### Lógica
-- Na página de detalhes do paciente (`PatientEvolutionDashboard.tsx`), adicionar botão "Reavaliação Expressa"
-- Ao clicar, gera um link de avaliação profissional com query param `?reassessment=<assessmentId>`
-- Na `ProfessionalAssessment.tsx`, se `reassessment` param existir:
-  - Buscar a avaliação original no DB
-  - Pré-preencher `patientName`, `patientEmail`
-  - Pular etapa de Red Flags (assumir que já foi triado)
-  - Pré-selecionar regiões de dor na anamnese (usuário pode ajustar)
-  - Setar `original_assessment_id` na nova avaliação (campo já existe na tabela)
-
-### Arquivos alterados
-- `src/pages/ProfessionalAssessment.tsx` — ler query param, carregar dados originais, pular red flags, pré-preencher
-- `src/components/dashboard/PatientEvolutionDashboard.tsx` — botão "Reavaliação Expressa" que gera link
-- `src/components/assessment/AnamnesisForm.tsx` — aceitar props de pré-preenchimento (regiões, queixa)
-
----
-
-## 4. Notificação Push ao Profissional
-
-### Lógica
-- Quando o paciente completa a avaliação via link profissional (`ProfessionalAssessment.tsx`, step `thank_you`), fazer uma chamada à edge function `send-push-notification`
-- Precisa do `user_id` do profissional (buscar via `professionals.user_id` usando `professional_id`)
-- Payload: título "Avaliação concluída", body "O paciente {nome} completou a avaliação", url "/dashboard"
-
-### Implementação
-- Na `ProfessionalAssessment.tsx`, após `updateAssessment` com `status: "completed"`, invocar `send-push-notification` com o `user_id` do profissional
-- O profissional precisa ter ativado push notifications (já tem o sistema de opt-in no dashboard)
-
-### Arquivos alterados
-- `src/pages/ProfessionalAssessment.tsx` — chamar `send-push-notification` após completion
-
----
-
-## Resumo de migrações DB
-
-1. Tabela `exercise_library` + seed de ~30 exercícios
-2. Tabela `exercise_programs` com RLS
-3. Tabela `exercise_program_items` com RLS
-
-## Ordem de implementação sugerida
-
-1. **Notificação Push** (menor esforço, alto valor imediato)
-2. **White-label** (menor esforço, alto valor percebido)
-3. **Reavaliação Expressa** (esforço médio, alto valor clínico)
-4. **HEP** (maior esforço, requer seed de exercícios + UI complexa)
+- Grid de benefits muda de `grid-cols-1 sm:grid-cols-2` para `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+- Features grid já é 3 colunas, apenas adicionar 3 items
+- Nenhuma mudança de DB ou lógica — apenas conteúdo e layout
 
