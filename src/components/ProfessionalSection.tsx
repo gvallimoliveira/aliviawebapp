@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Target, FileText, Activity, Stethoscope, ArrowRight, RefreshCw, Dumbbell, Palette } from "lucide-react";
+import { Clock, Target, FileText, Activity, Stethoscope, ArrowRight, RefreshCw, Dumbbell, Palette, TrendingUp } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 
 const ProfessionalSection = () => {
@@ -18,6 +18,7 @@ const ProfessionalSection = () => {
     { icon: Target, titleKey: "b2b.benefit_4_title", descKey: "b2b.benefit_4_desc" },
     { icon: Palette, titleKey: "b2b.benefit_5_title", descKey: "b2b.benefit_5_desc" },
     { icon: Activity, titleKey: "b2b.benefit_6_title", descKey: "b2b.benefit_6_desc" },
+    { icon: TrendingUp, titleKey: "b2b.benefit_7_title", descKey: "b2b.benefit_7_desc" },
   ];
 
   const price = billing === "monthly" ? PRO_PLAN_PRICE : PRO_PLAN_ANNUAL_PRICE;

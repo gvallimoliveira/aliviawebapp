@@ -17,7 +17,7 @@ import {
   Clock, Target, FileText, Activity, Stethoscope, ArrowRight,
   UserPlus, Link2, Send, ClipboardCheck, Check,
   LayoutDashboard, Brain, User, FileBarChart, Zap,
-  RefreshCw, Dumbbell, Palette,
+  RefreshCw, Dumbbell, Palette, TrendingUp,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
@@ -58,6 +58,7 @@ const ProfessionalLanding = () => {
     { icon: Target, titleKey: "b2b.benefit_4_title", descKey: "b2b.benefit_4_desc" },
     { icon: Palette, titleKey: "b2b.benefit_5_title", descKey: "b2b.benefit_5_desc" },
     { icon: Activity, titleKey: "b2b.benefit_6_title", descKey: "b2b.benefit_6_desc" },
+    { icon: TrendingUp, titleKey: "b2b.benefit_7_title", descKey: "b2b.benefit_7_desc" },
   ];
 
   const steps = [
@@ -77,9 +78,10 @@ const ProfessionalLanding = () => {
     { icon: RefreshCw, key: "b2b.feature_7" },
     { icon: Dumbbell, key: "b2b.feature_8" },
     { icon: Palette, key: "b2b.feature_9" },
+    { icon: TrendingUp, key: "b2b.feature_10" },
   ];
 
-  const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3", "b2b.faq4", "b2b.faq5"];
+  const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3", "b2b.faq4", "b2b.faq5", "b2b.faq6"];
 
   const pricingIncludes = [
     "b2b.pricing_inc_1",
@@ -90,6 +92,7 @@ const ProfessionalLanding = () => {
     "b2b.pricing_inc_6",
     "b2b.pricing_inc_7",
     "b2b.pricing_inc_8",
+    "b2b.pricing_inc_9",
   ];
 
   return (
