@@ -1,55 +1,58 @@
 
 
-# Correção de Margens e Quebra de Linha em Todos os PDFs
+# Padronizar Exibição dos Questionários: Layout Idêntico ao da Imagem
 
-## Problema
-Textos longos (orientações gerais, recomendações, nomes de exercícios, bullets do upsell, etc.) ultrapassam a margem direita do PDF. A referência de largura máxima é a caixa do nome do paciente: `CONTENT_WIDTH` (170mm), com texto começando em `MARGIN + 6` e terminando em `MARGIN + CONTENT_WIDTH - 6` — largura útil de ~158mm.
+## Contexto
 
-## Causa raiz
-Vários locais usam `doc.text()` direto sem `splitTextToSize`, ou usam `CONTENT_WIDTH` como largura mas posicionam o texto com padding, fazendo o texto exceder a margem direita.
+A imagem mostra o layout dos resultados dos questionários no `QuestionnaireStep.tsx` (tela de resultados ao finalizar os questionários). Este é o layout de referência:
+- Card com borda arredondada
+- Nome abreviado (bold) + nome completo (muted) à esquerda, percentual grande e colorido à direita
+- Interpretação de severidade colorida
+- Grid 2 colunas com subscale scores (label: **valor%**)
+- Nota de escala no rodapé (italic, muted)
 
-## Correções no arquivo `src/utils/generatePdf.ts`
+## Locais que precisam ser modificados
 
-### 1. Definir constante de largura útil máxima
-Criar `const TEXT_MAX_WIDTH = CONTENT_WIDTH - 12` (equivalente ao espaço interno da caixa do paciente: 6mm de padding em cada lado). Usar essa constante como referência máxima para todo `splitTextToSize`.
+### 1. Página de detalhes da avaliação (`src/pages/AssessmentView.tsx`, linhas ~440-498)
+**Atual:** Cards com fundo `bg-muted/30`, progress bar horizontal, sem grid de subscales bonito.
+**Alvo:** Substituir pelo mesmo layout do `QuestionnaireStep.tsx` — Card com `rounded-xl`, percentual grande à direita, interpretação colorida, grid 2 colunas de subscales, nota de escala.
 
-### 2. Locais específicos a corrigir
+### 2. Página do paciente no painel profissional (`src/components/dashboard/PatientEvolutionDashboard.tsx`, linhas ~1245-1266)
+**Atual:** Layout compacto com progress bar `h-1.5`, badge de severidade pequeno, sem subscales visíveis.
+**Alvo:** Substituir pelo mesmo card layout — porém levemente mais compacto para caber na lista de avaliações. Manter o nome abreviado + full name, percentual grande, interpretação, grid de subscales e nota de escala.
 
-**a) `renderSubSection`** (linha 1383):
-- Mudar `splitTextToSize(body, CONTENT_WIDTH)` → `splitTextToSize(body, TEXT_MAX_WIDTH)`
+### 3. PDFs Premium e Profissional (`src/utils/generatePdf.ts`, linhas ~469-607)
+**Atual:** Layout simples com nome + porcentagem na mesma linha, progress bar fina, apenas top 3 limitações.
+**Alvo:** Redesenhar para espelhar o card visual:
+- Caixa arredondada com borda fina para cada questionário
+- Nome abreviado (bold, maior) + nome completo abaixo
+- Percentual grande no canto superior direito da caixa
+- Interpretação de severidade com cor
+- Grid 2 colunas com TODOS os subscale scores (não apenas top 3)
+- Nota de escala no rodapé da caixa
 
-**b) Upsell bullets** (linhas 902-904):
-- Aplicar `splitTextToSize` nos bullets que hoje são renderizados com `doc.text(b, ...)` sem quebra
+## Componente reutilizável (UI)
 
-**c) Exercise name + category badge** (linhas 1233-1239):
-- O nome do exercício + badge pode exceder a margem. Aplicar `splitTextToSize` no nome e posicionar o badge na linha seguinte ou truncar se necessário
-
-**d) Sets/Reps/Frequency** (linha 1254):
-- Aplicar `splitTextToSize` na string concatenada `${ex.sets} × ${ex.reps} | ${ex.frequency}`
-
-**e) Questionnaire interpretation** (linha 503):
-- Aplicar `splitTextToSize` no texto de interpretação
-
-**f) Test results name:value** (linhas 621-625):
-- Aplicar `splitTextToSize` no valor do resultado
-
-**g) Clinical impression therapeutic objectives** (linhas 1114-1118):
-- Os badges de objetivos podem exceder a largura — já são badges curtos, mas validar
-
-**h) Professional Notes** (linha 1296):
-- Já usa `splitTextToSize` com `CONTENT_WIDTH - 12` — OK, manter
-
-**i) Disclaimer** — já usa `splitTextToSize` com `CONTENT_WIDTH - 12` — OK
-
-**j) General Guidelines** (linha 1274):
-- Já usa `splitTextToSize` com `CONTENT_WIDTH - 10` — ajustar para `TEXT_MAX_WIDTH`
-
-### 3. Auditoria completa
-Fazer um pass por TODAS as chamadas `doc.text()` no arquivo para garantir que nenhuma use texto sem `splitTextToSize` quando o conteúdo pode ser longo (frases, nomes, descrições). Campos curtos e controlados (labels fixos, números, datas) não precisam.
+Criar um componente `QuestionnaireResultCard.tsx` em `src/components/assessment/` para evitar duplicação entre `QuestionnaireStep.tsx`, `AssessmentView.tsx` e `PatientEvolutionDashboard.tsx`. Props:
+- `result: QuestionnaireResult`
+- `questionnaireDef: QuestionnaireDefinition`
+- `language: string`
+- `compact?: boolean` (para uso no dashboard profissional)
 
 ## Arquivos a alterar
-1. **`src/utils/generatePdf.ts`** — único arquivo, todas as correções acima
 
-## Resultado esperado
-Todo texto nos PDFs (básico, premium, profissional) respeitará as margens laterais, usando a largura da caixa do nome do paciente como referência máxima de preenchimento.
+1. **`src/components/assessment/QuestionnaireResultCard.tsx`** — novo componente reutilizável
+2. **`src/components/assessment/QuestionnaireStep.tsx`** — usar o novo componente
+3. **`src/pages/AssessmentView.tsx`** — substituir bloco de questionários pelo novo componente
+4. **`src/components/dashboard/PatientEvolutionDashboard.tsx`** — substituir bloco compacto pelo novo componente (com `compact`)
+5. **`src/utils/generatePdf.ts`** — redesenhar seção de questionários no PDF para espelhar o card visual com caixa, grid completo de subscales e nota de escala
+
+## Ordem de execução
+
+1. Criar `QuestionnaireResultCard.tsx`
+2. Refatorar `QuestionnaireStep.tsx` para usá-lo
+3. Aplicar em `AssessmentView.tsx`
+4. Aplicar em `PatientEvolutionDashboard.tsx`
+5. Redesenhar no `generatePdf.ts`
+6. Revisar visualmente todos os pontos de uso
 
