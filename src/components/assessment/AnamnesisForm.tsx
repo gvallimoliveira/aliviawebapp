@@ -55,9 +55,10 @@ interface AnamnesisFormProps {
   mode: "basic" | "premium" | "professional";
   onComplete: (data: AnamnesisData) => void;
   onBack: () => void;
+  initialPainRegions?: string[];
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
