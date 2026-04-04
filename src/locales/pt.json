@@ -1014,6 +1014,8 @@
   "support.pro.tool.reassessment.desc": "No painel de evolução do paciente, clique em 'Reavaliação Expressa'. Um link de avaliação é gerado com os dados da avaliação anterior já pré-preenchidos (nome, e-mail, regiões de dor). A etapa de red flags é pulada automaticamente. Ideal para retornos e acompanhamentos periódicos.",
   "support.pro.tool.white_label.title": "Marca nos Relatórios (White-label)",
   "support.pro.tool.white_label.desc": "No seu perfil profissional, faça upload da sua logo. Ela aparecerá automaticamente nos PDFs exportados (cabeçalho e rodapé) e na tela de avaliação quando o paciente preencher pelo seu link personalizado. Reforce sua identidade profissional em cada entrega.",
+  "support.pro.tool.evolution_report.title": "Relatório de Evolução / Alta",
+  "support.pro.tool.evolution_report.desc": "No painel de evolução do paciente, quando houver 2 ou mais avaliações concluídas, clique em 'Relatório de Evolução'. O sistema compara automaticamente a primeira e última avaliação: scores de dor (EVA), resultados de questionários funcionais e regiões de queixa. A IA gera um resumo narrativo clínico com variações percentuais e uma recomendação (Alta, Continuar ou Reavaliar). O PDF é exportado com sua marca e pode ser compartilhado via WhatsApp — ideal para justificar alta, renovar guias de convênio ou demonstrar resultados ao paciente.",
   "support.pro.faq.rf1.q": "Meu paciente precisa criar conta na Aliv.iA?",
   "support.pro.faq.rf1.a": "Não obrigatoriamente. Ao usar o link personalizado, o paciente pode preencher a avaliação e o resultado é vinculado ao seu painel. Porém, se ele quiser acessar o histórico depois, precisará criar uma conta.",
   "support.pro.faq.rf2.q": "Como cancelo minha assinatura PRO?",
