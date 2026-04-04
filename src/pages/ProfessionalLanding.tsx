@@ -17,6 +17,7 @@ import {
   Clock, Target, FileText, Activity, Stethoscope, ArrowRight,
   UserPlus, Link2, Send, ClipboardCheck, Check,
   LayoutDashboard, Brain, User, FileBarChart, Zap,
+  RefreshCw, Dumbbell, Palette,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
