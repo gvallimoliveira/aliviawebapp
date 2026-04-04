@@ -93,51 +93,7 @@ const HowItWorksSection = () => {
           </div>
         </div>
 
-        {/* Bonus Premium section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-20"
-        >
-          <p className="text-center text-sm font-medium text-muted-foreground mb-8 tracking-wide uppercase">
-            {t("how.bonus.see_inside")}
-          </p>
 
-          <div className="mx-auto grid max-w-4xl gap-8 grid-cols-1 sm:grid-cols-2">
-            {bonusItems.map((item, i) => (
-              <motion.div
-                key={item.key}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-                className="group relative flex flex-col items-center text-center"
-              >
-                {/* Premium label */}
-                <div className="absolute -top-3 z-10 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3.5 py-1 text-xs font-semibold text-primary-foreground whitespace-nowrap shadow-lg shadow-primary/20">
-                    <Star className="h-3 w-3" />
-                    {t("how.bonus.premium_label")}
-                  </span>
-                </div>
-
-                {/* Card frame */}
-                <div className="w-full rounded-[20px] border-2 border-primary/20 bg-background shadow-xl shadow-primary/5 overflow-hidden pt-5 transition-all duration-300 group-hover:border-primary/30 group-hover:shadow-primary/10">
-                  <p className="text-sm font-semibold text-foreground mb-3 px-4">
-                    {t(`how.bonus.${item.key}`)}
-                  </p>
-                  <img
-                    src={item.image}
-                    alt={t(`how.bonus.${item.key}`)}
-                    className="w-full h-auto block"
-                    loading="lazy"
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
       </div>
     </section>
   );

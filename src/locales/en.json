@@ -53,6 +53,8 @@
   "compare.treatment.phases": "Short, medium and long term",
   "compare.exercises": "Exercises with Videos (YouTube)",
   "compare.pdf_export": "PDF Report",
+  "compare.pdf_export.basic": "Basic Report",
+  "compare.pdf_export.premium": "Full Report",
   "compare.history": "Assessment History",
   "compare.redo": "Redo within 7 days",
   "compare.login": "Login required",
