@@ -634,6 +634,8 @@
   "b2b.benefit_5_desc": "Adicione sua logo aos PDFs e à tela de avaliação do paciente. Reforce sua identidade profissional em cada entrega.",
   "b2b.benefit_6_title": "Dashboard de Métricas Evolutivas",
   "b2b.benefit_6_desc": "Acompanhe a evolução do nível de dor e dos questionários funcionais do paciente ao longo do tempo. Reaplicação periódica para monitorar progresso.",
+  "b2b.benefit_7_title": "Relatório de Evolução / Alta",
+  "b2b.benefit_7_desc": "Gere um PDF comparativo automático entre avaliações. A IA resume a evolução clínica com variações de dor, questionários e recomendação de alta ou continuidade.",
   "b2b.cta_desc": "Tudo isso por apenas",
   "b2b.cta_cancel": "Cancele quando quiser. Sem fidelidade.",
   "b2b.cta_button": "Assinar Plano Profissional",
