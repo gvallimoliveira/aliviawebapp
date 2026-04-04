@@ -397,6 +397,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [showHidden, setShowHidden] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
   const [hepModalOpen, setHepModalOpen] = useState(false);
+  const [evolutionLoading, setEvolutionLoading] = useState(false);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
