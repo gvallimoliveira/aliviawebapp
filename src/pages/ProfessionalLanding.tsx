@@ -17,6 +17,7 @@ import {
   Clock, Target, FileText, Activity, Stethoscope, ArrowRight,
   UserPlus, Link2, Send, ClipboardCheck, Check,
   LayoutDashboard, Brain, User, FileBarChart, Zap,
+  RefreshCw, Dumbbell, Palette,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
@@ -52,9 +53,11 @@ const ProfessionalLanding = () => {
 
   const benefits = [
     { icon: Clock, titleKey: "b2b.benefit_1_title", descKey: "b2b.benefit_1_desc" },
-    { icon: Target, titleKey: "b2b.benefit_2_title", descKey: "b2b.benefit_2_desc" },
-    { icon: FileText, titleKey: "b2b.benefit_3_title", descKey: "b2b.benefit_3_desc" },
-    { icon: Activity, titleKey: "b2b.benefit_4_title", descKey: "b2b.benefit_4_desc" },
+    { icon: RefreshCw, titleKey: "b2b.benefit_2_title", descKey: "b2b.benefit_2_desc" },
+    { icon: Dumbbell, titleKey: "b2b.benefit_3_title", descKey: "b2b.benefit_3_desc" },
+    { icon: Target, titleKey: "b2b.benefit_4_title", descKey: "b2b.benefit_4_desc" },
+    { icon: Palette, titleKey: "b2b.benefit_5_title", descKey: "b2b.benefit_5_desc" },
+    { icon: Activity, titleKey: "b2b.benefit_6_title", descKey: "b2b.benefit_6_desc" },
   ];
 
   const steps = [
@@ -71,9 +74,12 @@ const ProfessionalLanding = () => {
     { icon: Brain, key: "b2b.feature_4" },
     { icon: Stethoscope, key: "b2b.feature_5" },
     { icon: Zap, key: "b2b.feature_6" },
+    { icon: RefreshCw, key: "b2b.feature_7" },
+    { icon: Dumbbell, key: "b2b.feature_8" },
+    { icon: Palette, key: "b2b.feature_9" },
   ];
 
-  const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3"];
+  const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3", "b2b.faq4", "b2b.faq5"];
 
   const pricingIncludes = [
     "b2b.pricing_inc_1",
@@ -81,6 +87,9 @@ const ProfessionalLanding = () => {
     "b2b.pricing_inc_3",
     "b2b.pricing_inc_4",
     "b2b.pricing_inc_5",
+    "b2b.pricing_inc_6",
+    "b2b.pricing_inc_7",
+    "b2b.pricing_inc_8",
   ];
 
   return (
@@ -137,7 +146,7 @@ const ProfessionalLanding = () => {
           >
             {t("b2b.benefits_title")}
           </motion.h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {benefits.map((b, i) => (
               <motion.div
                 key={i}

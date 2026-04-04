@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SupportContactForm from "@/components/support/SupportContactForm";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain } from "lucide-react";
+import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette } from "lucide-react";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,6 +46,9 @@ const proTools = [
   { key: "lifetime_treatment", icon: Infinity },
   { key: "messages", icon: MessageCircle },
   { key: "clinical_impression", icon: Brain },
+  { key: "hep", icon: Dumbbell },
+  { key: "reassessment", icon: RefreshCw },
+  { key: "white_label", icon: Palette },
 ];
 
 const patientFaqKeys = ["pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11"];
