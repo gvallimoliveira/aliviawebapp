@@ -119,6 +119,12 @@ const Header = () => {
               <span className="text-lg font-bold text-foreground">Aliv.iA</span>
             </SheetTitle>
           </SheetHeader>
+          {updatePending && (
+            <div className="mx-3 mt-3 flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary">
+              <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+              {language === "pt" ? "Atualização disponível — volte à tela inicial" : language === "es" ? "Actualización disponible — vuelve al inicio" : "Update available — return to home"}
+            </div>
+          )}
           <nav className="flex flex-col gap-1 p-3">
             <button
               onClick={() => go("#compare")}
