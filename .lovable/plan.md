@@ -1,66 +1,63 @@
 
 
-# Posicionar HEP, White-label e Reavaliação Expressa como argumentos de venda
+# Relatório de Evolução / Alta com Comparativo Automático
 
-## Análise de impacto (perspectiva do fisioterapeuta)
+## Visão geral
 
-Reorganizando por relevância para o profissional:
+Botão "Relatório de Evolução" no header do detalhe do paciente (PatientEvolutionDashboard), visível quando o paciente tem 2+ avaliações com diagnóstico. Ao clicar:
+1. Coleta dados comparativos (dor, questionários, regiões) da primeira e última avaliação
+2. Envia para edge function que gera resumo narrativo via IA
+3. Renderiza PDF de evolução usando o pipeline existente (jsPDF, mesmas margens/tokens visuais)
 
-1. **Economia de tempo / Eficiência clínica** (já existe) — argumento #1 universal
-2. **Reavaliação Expressa** (NOVO, alto impacto) — demonstra continuidade do cuidado, agiliza retornos, é diferencial competitivo direto
-3. **Programa de Exercícios (HEP)** (NOVO, alto impacto) — prescrição digital com vídeos é desejo constante do fisioterapeuta, substitui papel/WhatsApp informal
-4. **White-label / Marca própria** (NOVO, impacto médio-alto) — profissionalismo percebido, diferencial para clínicas
-5. **Avaliações assertivas com dados estruturados** (já existe)
-6. **Questionários + Relatórios PDF** (já existe)
-7. **Dashboard de Métricas Evolutivas** (já existe)
+## Componentes
 
-## Mudanças na Landing Page Profissional
+### 1. Edge Function `generate-evolution-summary`
+- Recebe: array de assessments resumidos (datas, pain_score, diagnosis.hypothesis, test_results com questionários, pain_regions)
+- Prompt de IA (Lovable AI, gemini-3-flash-preview): "Gere um resumo narrativo de evolução clínica comparando a primeira e última avaliação. Inclua variações percentuais de scores, mudanças nas regiões, e uma conclusão sobre a progressão do quadro."
+- Tool calling para output estruturado: `{ narrative: string, painChange: string, questionnaireChanges: { name, firstScore, lastScore, changePercent }[], conclusion: string, recommendation: "discharge" | "continue" | "reassess" }`
+- Usa `LOVABLE_API_KEY`, sem JWT
 
-### Seção Benefits (grid 2x3 em vez de 2x2)
-Reordenar e expandir de 4 para 6 cards:
-1. Economize tempo (mantém)
-2. **Reavaliação Expressa** (NOVO) — ícone RefreshCw — "Reavalie com 1 clique. Dados pré-preenchidos, sem retrabalho."
-3. **Programa de Exercícios (HEP)** (NOVO) — ícone Dumbbell — "Prescreva exercícios com vídeo e envie via link. Sem papel, sem confusão."
-4. Avaliações assertivas (mantém)
-5. **Sua marca nos relatórios** (NOVO, substitui o antigo benefit_3 de questionários) — ícone Palette — "Logo e identidade visual nos PDFs e na tela de avaliação do paciente."
-6. Dashboard evolutivo (mantém)
+### 2. Função `generateEvolutionPdf` em `src/utils/generatePdf.ts`
+Nova função exportada que gera o PDF de evolução:
+- **Header**: Logo Aliv.iA + logo profissional (white-label) + título "Relatório de Evolução"
+- **Dados do paciente**: Nome, período (data primeira → data última avaliação)
+- **Seção Comparativo de Dor**: Tabela lado a lado (primeira vs última) com scores EVA, indicador visual de melhora/piora
+- **Seção Questionários**: Para cada questionário presente em ambas, mostrar score inicial → final com % de variação
+- **Seção Regiões de Dor**: Listar regiões da primeira e última, destacar removidas (melhora) e adicionadas
+- **Resumo Narrativo (IA)**: Bloco com o texto narrativo gerado
+- **Conclusão e Recomendação**: Badge visual (Alta / Continuar / Reavaliar)
+- Disclaimer de IA no rodapé
+- Mesmos tokens visuais (COLORS, MARGIN, SECTION_X, TEXT_MAX_WIDTH, checkPage, renderSectionTitle)
 
-### Seção Features ("O que você recebe no painel")
-Expandir de 6 para 9 itens, incluindo:
-- Reavaliação expressa com pré-preenchimento
-- Programa de exercícios com banco de 70+ exercícios e vídeos
-- Relatórios PDF com sua marca (white-label)
+### 3. UI — Botão no PatientEvolutionDashboard
+- No header do detalhe do paciente (linha ~901-934), adicionar botão "Relatório de Evolução" com ícone `TrendingUp`
+- Visível apenas quando `patient.assessments.filter(a => a.diagnosis).length >= 2`
+- Estado de loading durante geração (IA + PDF)
+- Fluxo: clique → chama edge function → recebe resumo → gera PDF → download automático
 
-### Seção Pricing (includes)
-Adicionar às listas de ambos os planos:
-- Programa de Exercícios com vídeos
-- Reavaliação expressa
-- Relatórios com sua marca
+### 4. Compartilhamento WhatsApp
+- Após gerar, fazer upload do PDF no bucket `assessment-reports` e oferecer compartilhamento via WhatsApp (mesmo padrão existente)
 
-### Seção FAQ
-Adicionar 2 FAQs:
-- "Como funciona o Programa de Exercícios?" → Explica banco de 70+ exercícios, vídeos, link público, validade 90 dias
-- "Posso usar minha marca nos relatórios?" → Explica upload de logo e white-label
+## Arquivos a criar/alterar
 
-## Mudanças na Página de Suporte
+1. **`supabase/functions/generate-evolution-summary/index.ts`** — nova edge function
+2. **`supabase/config.toml`** — adicionar `[functions.generate-evolution-summary]` com `verify_jwt = false`
+3. **`src/utils/generatePdf.ts`** — adicionar `generateEvolutionPdf` e `generateEvolutionPdfBlob`
+4. **`src/components/dashboard/PatientEvolutionDashboard.tsx`** — botão + lógica de geração
+5. **`src/locales/pt.json`**, **`en.json`**, **`es.json`** — chaves para labels do relatório
 
-### Pro Tools (accordion)
-Adicionar 3 novas entradas ao array `proTools`:
-- `{ key: "hep", icon: Dumbbell }` — "Programa de Exercícios (HEP)"
-- `{ key: "reassessment", icon: RefreshCw }` — "Reavaliação Expressa"
-- `{ key: "white_label", icon: Palette }` — "Marca nos Relatórios (White-label)"
+## Riscos identificados e mitigações
 
-Com descrições detalhadas de como usar cada funcionalidade.
+- **Paciente com questionários diferentes entre avaliações**: A comparação só lista questionários presentes em AMBAS as avaliações. Os exclusivos de uma são listados separadamente como "aplicado apenas na avaliação X".
+- **Dados de test_results inconsistentes**: Usar `normalizeTestResults()` já existente para uniformizar array vs objeto.
+- **PDF muito longo**: O comparativo é enxuto por natureza (tabelas, não texto corrido), exceto o resumo narrativo que é limitado pelo prompt (máx 6 linhas).
+- **Prompt IA com dados insuficientes**: Se não houver questionários, o resumo foca apenas em dor e regiões. O prompt instrui a IA a trabalhar com o que tiver.
 
-## Arquivos a alterar
+## Ordem de execução
 
-1. **`src/locales/pt.json`**, **`en.json`**, **`es.json`** — novas chaves b2b.benefit_5/6, b2b.feature_7/8/9, b2b.pricing_inc_6/7/8, b2b.faq4/5, support.pro.tool.hep/reassessment/white_label
-2. **`src/pages/ProfessionalLanding.tsx`** — expandir arrays benefits (6 items, grid 2x3), features (9 items), pricingIncludes (8 items), faqKeys (5 items); importar novos ícones
-3. **`src/pages/Support.tsx`** — adicionar 3 entradas ao `proTools` array; importar ícones Dumbbell, Palette
-
-## Detalhes técnicos
-
-- Grid de benefits muda de `grid-cols-1 sm:grid-cols-2` para `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
-- Features grid já é 3 colunas, apenas adicionar 3 items
-- Nenhuma mudança de DB ou lógica — apenas conteúdo e layout
+1. Criar edge function `generate-evolution-summary`
+2. Atualizar `config.toml`
+3. Implementar `generateEvolutionPdf` no pipeline de PDF
+4. Adicionar botão e lógica no PatientEvolutionDashboard
+5. Adicionar strings de localização
 
