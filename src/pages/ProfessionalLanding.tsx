@@ -92,6 +92,7 @@ const ProfessionalLanding = () => {
     "b2b.pricing_inc_6",
     "b2b.pricing_inc_7",
     "b2b.pricing_inc_8",
+    "b2b.pricing_inc_9",
   ];
 
   return (
