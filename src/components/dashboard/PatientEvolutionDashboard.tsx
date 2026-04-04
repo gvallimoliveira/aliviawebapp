@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
 import JSZip from "jszip";
 import CreateExerciseProgramModal from "@/components/dashboard/CreateExerciseProgramModal";
+import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
