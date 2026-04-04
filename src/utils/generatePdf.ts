@@ -314,8 +314,6 @@ function svgToDataUrl(svgStr: string, w: number, h: number): Promise<string> {
 
 // ── Render Anamnesis Section ──
 function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData, isPt: boolean): number {
-  y = renderSectionTitle(doc, y, isPt ? "Anamnese" : "Anamnesis", COLORS.primary);
-
   const fields: { label: string; value: string }[] = [];
 
   if (anamnesis.chiefComplaint) {
@@ -325,19 +323,19 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Queixa Adicional" : "Additional Complaint", value: anamnesis.customComplaint });
   }
   if (anamnesis.onset) {
-    fields.push({ label: isPt ? "Modo de Início" : "Onset", value: translateKey(anamnesis.onset, isPt) });
+    fields.push({ label: isPt ? "Modo de Inicio" : "Onset", value: translateKey(anamnesis.onset, isPt) });
   }
   if (anamnesis.painScore != null) {
-    fields.push({ label: isPt ? "Nível de Dor (EVA)" : "Pain Level (VAS)", value: `${anamnesis.painScore}/10` });
+    fields.push({ label: isPt ? "Nivel de Dor (EVA)" : "Pain Level (VAS)", value: `${anamnesis.painScore}/10` });
   }
   if (anamnesis.painTypes?.length) {
     fields.push({ label: isPt ? "Tipos de Dor" : "Pain Types", value: anamnesis.painTypes.map(p => translateKey(p, isPt)).join(", ") });
   }
   if (anamnesis.evolution) {
-    fields.push({ label: isPt ? "Evolução" : "Evolution", value: translateKey(anamnesis.evolution, isPt) });
+    fields.push({ label: isPt ? "Evolucao" : "Evolution", value: translateKey(anamnesis.evolution, isPt) });
   }
   if (anamnesis.painDuration) {
-    fields.push({ label: isPt ? "Duração da Dor" : "Pain Duration", value: translateKey(anamnesis.painDuration, isPt) });
+    fields.push({ label: isPt ? "Duracao da Dor" : "Pain Duration", value: translateKey(anamnesis.painDuration, isPt) });
   }
   if (anamnesis.aggravatingFactors) {
     fields.push({ label: isPt ? "Fatores Agravantes" : "Aggravating Factors", value: anamnesis.aggravatingFactors });
@@ -346,30 +344,26 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Fatores Aliviantes" : "Relieving Factors", value: anamnesis.relievingFactors });
   }
   if (anamnesis.activityLevel) {
-    fields.push({ label: isPt ? "Nível de Atividade" : "Activity Level", value: translateKey(anamnesis.activityLevel, isPt) });
+    fields.push({ label: isPt ? "Nivel de Atividade" : "Activity Level", value: translateKey(anamnesis.activityLevel, isPt) });
   }
   if (anamnesis.hasGymAccess) {
     fields.push({ label: isPt ? "Acesso a Academia" : "Gym Access", value: translateKey(anamnesis.hasGymAccess, isPt) });
   }
   if (anamnesis.sex) {
-    fields.push({ label: isPt ? "Sexo Biológico" : "Biological Sex", value: translateKey(anamnesis.sex, isPt) });
+    fields.push({ label: isPt ? "Sexo Biologico" : "Biological Sex", value: translateKey(anamnesis.sex, isPt) });
   }
   if (anamnesis.ageRange) {
-    fields.push({ label: isPt ? "Faixa Etária" : "Age Range", value: translateKey(anamnesis.ageRange, isPt) });
+    fields.push({ label: isPt ? "Faixa Etaria" : "Age Range", value: translateKey(anamnesis.ageRange, isPt) });
   }
-
-  // New fields: pain pattern, frequency, night waking
   if (anamnesis.painPattern) {
-    fields.push({ label: isPt ? "Padrão da Dor" : "Pain Pattern", value: translateKey(anamnesis.painPattern, isPt) });
+    fields.push({ label: isPt ? "Padrao da Dor" : "Pain Pattern", value: translateKey(anamnesis.painPattern, isPt) });
   }
   if (anamnesis.painWeeklyFrequency) {
-    fields.push({ label: isPt ? "Frequência Semanal" : "Weekly Frequency", value: translateKey(anamnesis.painWeeklyFrequency, isPt) });
+    fields.push({ label: isPt ? "Frequencia Semanal" : "Weekly Frequency", value: translateKey(anamnesis.painWeeklyFrequency, isPt) });
   }
   if (anamnesis.painNightWaking) {
     fields.push({ label: isPt ? "Dor Noturna (Acorda)" : "Night Pain (Waking)", value: translateKey(anamnesis.painNightWaking, isPt) });
   }
-
-  // Migraine screening
   if (anamnesis.hasPhotophobia) {
     fields.push({ label: isPt ? "Fotofobia" : "Photophobia", value: translateKey(anamnesis.hasPhotophobia, isPt) });
   }
@@ -377,13 +371,11 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Aura Visual" : "Visual Aura", value: translateKey(anamnesis.hasVisualAura, isPt) });
   }
   if (anamnesis.hasNausea) {
-    fields.push({ label: isPt ? "Náusea nas Crises" : "Nausea During Episodes", value: translateKey(anamnesis.hasNausea, isPt) });
+    fields.push({ label: isPt ? "Nausea nas Crises" : "Nausea During Episodes", value: translateKey(anamnesis.hasNausea, isPt) });
   }
   if (anamnesis.headacheCrisisFrequency) {
-    fields.push({ label: isPt ? "Frequência de Crises" : "Crisis Frequency", value: translateKey(anamnesis.headacheCrisisFrequency, isPt) });
+    fields.push({ label: isPt ? "Frequencia de Crises" : "Crisis Frequency", value: translateKey(anamnesis.headacheCrisisFrequency, isPt) });
   }
-
-  // Pain regions as text
   if (anamnesis.painRegions?.length) {
     const regionLabels = anamnesis.painRegions.map(id => {
       for (const view of Object.values(regionsByView)) {
@@ -392,16 +384,21 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
       }
       return id;
     });
-    fields.push({ label: isPt ? "Regiões de Dor" : "Pain Regions", value: regionLabels.join(", ") });
+    fields.push({ label: isPt ? "Regioes de Dor" : "Pain Regions", value: regionLabels.join(", ") });
   }
-
-  // Per-region pain scores
   if (anamnesis.painScoreMode === "per_region" && anamnesis.painScoresPerRegion && Object.keys(anamnesis.painScoresPerRegion).length > 0) {
     const regionScores = Object.entries(anamnesis.painScoresPerRegion)
       .map(([key, score]) => `${translateKey(key, isPt)}: ${score}/10`)
       .join(", ");
-    fields.push({ label: isPt ? "Dor por Região" : "Pain by Region", value: regionScores });
+    fields.push({ label: isPt ? "Dor por Regiao" : "Pain by Region", value: regionScores });
   }
+
+  if (fields.length === 0) return y;
+
+  // Keep title + first 2 fields together to avoid orphan
+  const firstFieldsH = Math.min(fields.length, 2) * 12;
+  y = checkPage(doc, y, 14 + firstFieldsH);
+  y = renderSectionTitle(doc, y, isPt ? "Anamnese" : "Anamnesis", COLORS.primary);
 
   for (const field of fields) {
     y = checkPage(doc, y, 10);
@@ -409,12 +406,18 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     doc.setFontSize(8);
     doc.setTextColor(...COLORS.foreground);
     const labelText = `${field.label}: `;
-    doc.text(labelText, MARGIN + 2, y);
+    doc.text(labelText, SECTION_X, y);
     const labelW = doc.getTextWidth(labelText);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...COLORS.muted);
-    const valueLines = doc.splitTextToSize(field.value, CONTENT_WIDTH - 4 - labelW);
-    doc.text(valueLines, MARGIN + 2 + labelW, y);
+    const availW = SECTION_TEXT_W - labelW;
+    const valueLines = doc.splitTextToSize(field.value, availW > 30 ? availW : SECTION_TEXT_W);
+    if (availW > 30) {
+      doc.text(valueLines, SECTION_X + labelW, y);
+    } else {
+      y += 3.5;
+      doc.text(valueLines, SECTION_X + 4, y);
+    }
     y += valueLines.length * 3.5 + 2;
   }
 
