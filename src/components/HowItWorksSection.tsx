@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ClipboardList, MapPin, FileText, Activity, Stethoscope, CalendarCheck, Star } from "lucide-react";
+import { ClipboardList, MapPin, FileText, Activity, Stethoscope, CalendarCheck } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import stepAnamnesis from "@/assets/step-anamnesis.jpg";
 import stepPainmap from "@/assets/step-painmap.jpg";
