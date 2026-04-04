@@ -18,6 +18,7 @@ import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
   Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw, TrendingUp,
+  Copy, ExternalLink,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
@@ -399,6 +400,8 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [archiving, setArchiving] = useState<string | null>(null);
   const [hepModalOpen, setHepModalOpen] = useState(false);
   const [evolutionLoading, setEvolutionLoading] = useState(false);
+  const [hepHistory, setHepHistory] = useState<any[]>([]);
+  const [hepHistoryLoading, setHepHistoryLoading] = useState(false);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
@@ -411,6 +414,19 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
       });
   }, [professionalId]);
 
+  // Load HEP history for selected patient
+  useEffect(() => {
+    if (!professionalId || !selectedEmail) { setHepHistory([]); return; }
+    setHepHistoryLoading(true);
+    (supabase.from("exercise_programs") as any)
+      .select("id, token, patient_name, created_at, expires_at, notes, assessment_id")
+      .eq("professional_id", professionalId)
+      .order("created_at", { ascending: false })
+      .then(({ data }: any) => {
+        setHepHistory(data || []);
+        setHepHistoryLoading(false);
+      });
+  }, [professionalId, selectedEmail, hepModalOpen]);
   const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!professionalId || archiving || !groupKey) return;
@@ -1021,6 +1037,73 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         assessmentId={latestWithDiagnosis?.id}
       />
 
+      {/* ── HEP History ── */}
+      {(() => {
+        const patientHeps = hepHistory.filter(
+          (h: any) => (h.patient_name || "").toLowerCase().trim() === (patient.name || "").toLowerCase().trim()
+        );
+        if (patientHeps.length === 0) return null;
+        const origin = window.location.origin;
+        return (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Dumbbell className="h-4 w-4 text-primary" /> Programas de Exercícios Enviados
+              </CardTitle>
+              <CardDescription className="text-xs">{patientHeps.length} programa(s) criado(s)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {patientHeps.map((hep: any) => {
+                const link = `${origin}/hep/${hep.token}`;
+                const isExpired = new Date(hep.expires_at) < new Date();
+                return (
+                  <div key={hep.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg border bg-muted/30">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-foreground truncate">
+                        {new Date(hep.created_at).toLocaleDateString("pt-BR")}
+                        {hep.notes && <span className="text-muted-foreground ml-2">— {hep.notes}</span>}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground truncate">{link}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isExpired && (
+                        <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30">Expirado</Badge>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Copiar link"
+                        onClick={() => { navigator.clipboard.writeText(link); toast({ title: "Link copiado!" }); }}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Abrir link"
+                        onClick={() => window.open(link, "_blank")}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Enviar via WhatsApp"
+                        onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Seu programa de exercícios: ${link}`)}`, "_blank")}
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+      })()}
       {/* ── 2. DIAGNÓSTICO (Hipótese Principal) ── */}
       {latestWithDiagnosis?.diagnosis?.hypothesis && (
         <Card className="border-primary/20">
