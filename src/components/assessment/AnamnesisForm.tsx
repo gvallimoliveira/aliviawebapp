@@ -325,6 +325,12 @@ const AnamnesisForm = ({ mode, onComplete, onBack }: AnamnesisFormProps) => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">{t("anamnesis.complaint_title")}</h3>
             <p className="text-xs text-muted-foreground">{language === "pt" ? "Selecione uma ou mais regiões relacionadas" : "Select one or more related regions"}</p>
+            <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800">
+              <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                {t("anamnesis.kinetic_chain_disclaimer")}
+              </AlertDescription>
+            </Alert>
             <div className="grid grid-cols-2 gap-2">
               {complaints.map((c) => {
                 const selected = data.chiefComplaints.includes(c);
