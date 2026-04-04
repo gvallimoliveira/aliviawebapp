@@ -63,7 +63,7 @@ const MethodologySection = () => {
           </motion.h3>
 
           <div className="mx-auto max-w-4xl">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide sm:grid sm:grid-cols-3 sm:overflow-visible sm:snap-none sm:pb-0 md:grid-cols-6">
               {steps.map((step, i) => {
                 const Icon = step.icon;
                 return (
@@ -73,12 +73,12 @@ const MethodologySection = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.08 }}
-                    className="relative flex flex-col items-center">
+                    className="relative flex flex-col items-center snap-start shrink-0 w-[calc(40%-0.375rem)] sm:w-auto sm:shrink">
                     
                     {/* Step card */}
                     <div
                       className="flex flex-col items-center rounded-2xl border border-border/60 bg-card p-4 text-center shadow-sm transition-all hover:border-primary/40 hover:shadow-md w-full"
-                      style={{ marginTop: `${(5 - i) * 8}px` }}>
+                      style={{ marginTop: window.innerWidth >= 768 ? `${(5 - i) * 8}px` : '0px' }}>
                       
                       <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                         <Icon className="h-5 w-5 text-primary" />
@@ -90,7 +90,7 @@ const MethodologySection = () => {
                         {t(`methodology.steps.${step.key}.title`)}
                       </span>
                     </div>
-                    {/* Arrow connector (hidden on last) */}
+                    {/* Arrow connector (hidden on mobile) */}
                     {i < 5 &&
                     <ArrowRight className="absolute -right-2 top-1/2 hidden h-4 w-4 text-muted-foreground/40 md:block" />
                     }
