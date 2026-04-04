@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.cleanup-pending-assessments]
 verify_jwt = false
+
+[functions.generate-evolution-summary]
+verify_jwt = false

@@ -17,13 +17,14 @@ import {
 import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
-  Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw,
+  Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw, TrendingUp,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
 import JSZip from "jszip";
 import CreateExerciseProgramModal from "@/components/dashboard/CreateExerciseProgramModal";
+import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
@@ -97,6 +98,7 @@ interface PatientEvolutionDashboardProps {
   assessments: any[];
   professionalId: string;
   lifetimeTreatment?: boolean;
+  professionalLogoUrl?: string;
   onDownloadPdf?: (assessment: any) => void;
   onShareWhatsApp?: (assessment: any) => void;
 }
@@ -379,7 +381,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression }: {
 };
 
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
 
   const { t, language } = useLanguage();
   const navigate = useNavigate();
@@ -396,6 +398,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [showHidden, setShowHidden] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
   const [hepModalOpen, setHepModalOpen] = useState(false);
+  const [evolutionLoading, setEvolutionLoading] = useState(false);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
@@ -931,6 +934,81 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           >
             <Dumbbell className="h-4 w-4" /> Exercícios
           </Button>
+          {patient.assessments.filter((a: any) => a.diagnosis).length >= 2 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 shrink-0"
+              disabled={evolutionLoading}
+              onClick={async () => {
+                setEvolutionLoading(true);
+                try {
+                  const withDiagnosis = patient.assessments
+                    .filter((a: any) => a.diagnosis)
+                    .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                  const firstA = withDiagnosis[0];
+                  const lastA = withDiagnosis[withDiagnosis.length - 1];
+
+                  const normalizeQ = (tr: any) => {
+                    if (Array.isArray(tr)) return tr.filter((t: any) => t.questionnaireId && t.percentageScore != null).map((t: any) => ({ id: t.questionnaireId, name: t.questionnaireName || t.questionnaireId, score: Math.round(t.percentageScore) }));
+                    return [];
+                  };
+
+                  const payload = {
+                    assessments: [
+                      { date: firstA.created_at, pain_score: firstA.pain_score, hypothesis: firstA.diagnosis?.hypothesis, pain_regions: firstA.pain_regions || [], questionnaires: normalizeQ(firstA.test_results) },
+                      { date: lastA.created_at, pain_score: lastA.pain_score, hypothesis: lastA.diagnosis?.hypothesis, pain_regions: lastA.pain_regions || [], questionnaires: normalizeQ(lastA.test_results) },
+                    ],
+                    language,
+                  };
+
+                  const { data: summary, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
+                  if (error || summary?.error) throw new Error(summary?.error || "AI error");
+
+                  const blob = await generateEvolutionPdfBlob({
+                    patientName: patient.name,
+                    firstAssessment: { date: firstA.created_at, pain_score: firstA.pain_score, pain_regions: firstA.pain_regions || [], test_results: firstA.test_results, hypothesis: firstA.diagnosis?.hypothesis },
+                    lastAssessment: { date: lastA.created_at, pain_score: lastA.pain_score, pain_regions: lastA.pain_regions || [], test_results: lastA.test_results, hypothesis: lastA.diagnosis?.hypothesis },
+                    totalAssessments: withDiagnosis.length,
+                    summary: summary as EvolutionSummary,
+                    language,
+                    professionalLogoUrl,
+                  });
+
+                  // Upload to bucket for sharing
+                  const fileName = `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
+                  const { error: uploadError } = await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
+
+                  // Download
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `AliviA_Evolucao_${patient.name.replace(/\s/g, "_")}.pdf`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+
+                  // WhatsApp share option
+                  if (!uploadError) {
+                    const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
+                    if (publicUrl?.publicUrl) {
+                      const whatsappText = encodeURIComponent(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`);
+                      window.open(`https://wa.me/?text=${whatsappText}`, "_blank");
+                    }
+                  }
+
+                  toast({ title: t("evolution.success") });
+                } catch (err: any) {
+                  console.error("Evolution report error:", err);
+                  toast({ title: t("evolution.error"), description: err?.message, variant: "destructive" });
+                } finally {
+                  setEvolutionLoading(false);
+                }
+              }}
+            >
+              {evolutionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <TrendingUp className="h-4 w-4" />}
+              {t("evolution.title")}
+            </Button>
+          )}
         </div>
       </div>
 

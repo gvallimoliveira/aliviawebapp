@@ -1148,5 +1148,11 @@
   "anamnesis.pain_score_mode_question": "Do you want to assign a general score or different scores per region?",
   "anamnesis.pain_score_mode_general": "General score",
   "anamnesis.pain_score_mode_per_region": "Scores per region",
-  "anamnesis.pain_score_average": "Average"
+  "anamnesis.pain_score_average": "Average",
+  "evolution.title": "Evolution Report",
+  "evolution.generating": "Generating evolution report...",
+  "evolution.success": "Evolution report generated!",
+  "evolution.error": "Error generating evolution report",
+  "evolution.min_assessments": "Requires 2+ assessments with diagnosis",
+  "evolution.share_whatsapp": "Share via WhatsApp"
 }
