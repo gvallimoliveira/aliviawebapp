@@ -1059,6 +1059,8 @@
   "support.patient.faq.pf9.a": "No! When purchasing premium right after the basic assessment, all data you filled in (anamnesis, pain map, name and email) is automatically transferred. You create your account, complete the payment, and continue where you left off — straight to the validated questionnaires and functional tests exclusive to premium. No rework.",
   "support.patient.faq.pf10.q": "How does the 'Refer & Earn' program work?",
   "support.patient.faq.pf10.a": "When you refer a friend using your exclusive link, you earn 20% off your next purchase (single assessment or monthly subscription). Your friend gets 10% off their first single premium assessment. Discounts are non-cumulative: only 1 discount is applied per purchase, even if you have multiple referrals.",
+  "support.patient.faq.pf11.q": "Why can't I select all the body regions I want?",
+  "support.patient.faq.pf11.a": "The system uses clinical reasoning based on kinetic chains — biomechanically connected structures. Regions from the same body segment (e.g., shoulder and elbow) can be assessed together because they influence each other. Regions from different segments (e.g., foot and neck) require separate assessments to ensure diagnostic accuracy. If you have complaints in different segments, perform two separate assessments for the best results.",
   "support.login_to_contact": "Sign in or create an account to send a message to support.",
   "upgrade_welcome.title": "Welcome to team Aliv.iA! 🎉",
   "upgrade_welcome.subtitle": "Your basic assessment is complete. Here's how the next step works to unlock your full premium assessment.",

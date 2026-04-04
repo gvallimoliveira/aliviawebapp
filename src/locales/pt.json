@@ -1058,6 +1058,8 @@
   "support.patient.faq.pf9.a": "Não! Ao comprar a avaliação premium logo após a básica, todos os dados que você preencheu (anamnese, mapa de dor, nome e e-mail) são transferidos automaticamente. Você cria sua conta, realiza o pagamento e continua de onde parou — direto nos questionários validados e testes funcionais exclusivos da versão premium. Sem retrabalho.",
   "support.patient.faq.pf10.q": "Como funciona o programa 'Indique e Ganhe'?",
   "support.patient.faq.pf10.a": "Ao indicar um amigo pelo seu link exclusivo, você ganha 20% de desconto na sua próxima compra (avaliação avulsa ou mensalidade). Seu amigo ganha 10% de desconto na primeira avaliação premium avulsa. Os descontos não são cumulativos: apenas 1 desconto é aplicado por compra, mesmo que você tenha múltiplas indicações.",
+  "support.patient.faq.pf11.q": "Por que não consigo selecionar todas as regiões do corpo que quero?",
+  "support.patient.faq.pf11.a": "O sistema utiliza raciocínio clínico baseado em cadeias cinéticas — estruturas que se conectam biomecanicamente. Regiões do mesmo segmento corporal (ex: ombro e cotovelo) podem ser avaliadas juntas, pois influenciam uma à outra. Já regiões de segmentos distintos (ex: pé e cervical) precisam de avaliações separadas para garantir precisão no diagnóstico e no plano de tratamento. Se você tem queixas em segmentos diferentes, realize duas avaliações separadas para obter o melhor resultado.",
   "support.login_to_contact": "Faça login ou crie uma conta para enviar uma mensagem ao suporte.",
   "upgrade_welcome.title": "Bem-vindo ao time Aliv.iA! 🎉",
   "upgrade_welcome.subtitle": "Sua avaliação básica foi concluída com sucesso. Veja como funciona o próximo passo para desbloquear sua avaliação premium completa.",
