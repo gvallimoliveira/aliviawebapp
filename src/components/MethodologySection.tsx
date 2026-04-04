@@ -77,8 +77,8 @@ const MethodologySection = () => {
                     
                     {/* Step card */}
                     <div
-                      className="flex flex-col items-center rounded-2xl border border-border/60 bg-card p-4 text-center shadow-sm transition-all hover:border-primary/40 hover:shadow-md w-full"
-                      style={{ marginTop: window.innerWidth >= 768 ? `${(5 - i) * 8}px` : '0px' }}>
+                      className="flex flex-col items-center rounded-2xl border border-border/60 bg-card p-4 text-center shadow-sm transition-all hover:border-primary/40 hover:shadow-md w-full">
+                      
                       
                       <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                         <Icon className="h-5 w-5 text-primary" />
