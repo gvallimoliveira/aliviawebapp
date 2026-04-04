@@ -693,6 +693,8 @@
   "b2b.faq4.a": "Você seleciona exercícios do banco com 70+ opções (domiciliares e de academia), define séries, repetições e frequência, e gera um link público. O paciente acessa pelo celular com vídeos instrucionais, sem precisar de login. Cada programa tem validade de 90 dias.",
   "b2b.faq5.q": "Posso usar minha marca nos relatórios?",
   "b2b.faq5.a": "Sim! No seu perfil profissional, faça upload da sua logo. Ela aparecerá automaticamente nos PDFs exportados e na tela de avaliação quando o paciente preencher pelo seu link.",
+  "b2b.faq6.q": "Como funciona o Relatório de Evolução?",
+  "b2b.faq6.a": "Quando o paciente tem 2 ou mais avaliações concluídas, um botão 'Relatório de Evolução' aparece no painel. Ao clicar, o sistema compara automaticamente a primeira e a última avaliação — scores de dor, questionários funcionais e regiões de queixa — e a IA gera um resumo narrativo com variações percentuais e recomendação de alta, continuidade ou reavaliação. O PDF é gerado com sua marca.",
   "b2b.plan_monthly": "Mensal",
   "b2b.plan_annual": "Anual",
   "b2b.best_value": "Melhor valor",
