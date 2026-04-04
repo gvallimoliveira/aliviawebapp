@@ -55,6 +55,7 @@ const App = () => (
               <Route path="/professional/register" element={<ProfessionalRegister />} />
               <Route path="/professionals" element={<ProfessionalSearch />} />
               <Route path="/assessment/professional/:professionalId" element={<ProfessionalAssessment />} />
+              <Route path="/hep/:token" element={<ExerciseProgram />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
