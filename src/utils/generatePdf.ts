@@ -1195,8 +1195,8 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         doc.text(isPt ? "Objetivo:" : "Goal:", MARGIN + 4, y);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
-        const goalLines = doc.splitTextToSize(phase.goal, CONTENT_WIDTH - 30);
-        doc.text(goalLines, MARGIN + 28, y);
+        const goalLines = doc.splitTextToSize(phase.goal, SECTION_TEXT_W - 24);
+        doc.text(goalLines, SECTION_X + 22, y);
         y += goalLines.length * 3.5 + 4;
       }
 
@@ -1205,11 +1205,11 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(isPt ? "Foco:" : "Focus:", MARGIN + 4, y);
+        doc.text(isPt ? "Foco:" : "Focus:", SECTION_X, y);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
-        const focusLines = doc.splitTextToSize(phase.focus, CONTENT_WIDTH - 30);
-        doc.text(focusLines, MARGIN + 28, y);
+        const focusLines = doc.splitTextToSize(phase.focus, SECTION_TEXT_W - 24);
+        doc.text(focusLines, SECTION_X + 22, y);
         y += focusLines.length * 3.5 + 4;
       }
 
