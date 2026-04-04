@@ -92,7 +92,7 @@ const ExerciseProgram = () => {
 
       const { data: exerciseItems } = await (supabase as any)
         .from("exercise_program_items")
-        .select("id, sets, reps, frequency, observations, sort_order, exercise:exercise_library(name_pt, name_en, name_es, description_pt, description_en, description_es, body_region, category, video_url, difficulty)")
+        .select("id, sets, reps, frequency, observations, sort_order, custom_name, custom_video_url, exercise:exercise_library(name_pt, name_en, name_es, description_pt, description_en, description_es, body_region, category, video_url, difficulty)")
         .eq("program_id", prog.id)
         .order("sort_order", { ascending: true });
 
