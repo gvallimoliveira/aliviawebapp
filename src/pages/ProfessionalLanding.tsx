@@ -74,9 +74,12 @@ const ProfessionalLanding = () => {
     { icon: Brain, key: "b2b.feature_4" },
     { icon: Stethoscope, key: "b2b.feature_5" },
     { icon: Zap, key: "b2b.feature_6" },
+    { icon: RefreshCw, key: "b2b.feature_7" },
+    { icon: Dumbbell, key: "b2b.feature_8" },
+    { icon: Palette, key: "b2b.feature_9" },
   ];
 
-  const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3"];
+  const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3", "b2b.faq4", "b2b.faq5"];
 
   const pricingIncludes = [
     "b2b.pricing_inc_1",
