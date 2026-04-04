@@ -381,7 +381,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression }: {
 };
 
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
 
   const { t, language } = useLanguage();
   const navigate = useNavigate();
