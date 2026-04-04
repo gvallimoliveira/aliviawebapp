@@ -904,8 +904,9 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.setTextColor(...COLORS.foreground);
   let bulletY = y + 20;
   for (const b of bullets) {
-    doc.text(b, MARGIN + 10, bulletY);
-    bulletY += 5.5;
+    const bLines = doc.splitTextToSize(b, TEXT_MAX_WIDTH - 4);
+    doc.text(bLines, MARGIN + 10, bulletY);
+    bulletY += bLines.length * 3.5 + 2;
   }
   
   // Motivational message in a highlighted inner box
