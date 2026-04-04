@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Target, FileText, Activity, Stethoscope, ArrowRight } from "lucide-react";
+import { Clock, Target, FileText, Activity, Stethoscope, ArrowRight, RefreshCw, Dumbbell, Palette } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 
 const ProfessionalSection = () => {
