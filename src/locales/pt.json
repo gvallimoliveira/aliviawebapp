@@ -1146,5 +1146,11 @@
   "anamnesis.pain_score_mode_question": "Deseja atribuir uma nota geral ou notas diferentes por região?",
   "anamnesis.pain_score_mode_general": "Nota geral",
   "anamnesis.pain_score_mode_per_region": "Notas por região",
-  "anamnesis.pain_score_average": "Média"
+  "anamnesis.pain_score_average": "Média",
+  "evolution.title": "Relatório de Evolução",
+  "evolution.generating": "Gerando relatório de evolução...",
+  "evolution.success": "Relatório de evolução gerado!",
+  "evolution.error": "Erro ao gerar relatório de evolução",
+  "evolution.min_assessments": "Necessário 2+ avaliações com diagnóstico",
+  "evolution.share_whatsapp": "Compartilhar via WhatsApp"
 }

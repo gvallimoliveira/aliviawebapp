@@ -1402,3 +1402,423 @@ function renderSubSection(doc: jsPDF, y: number, title: string, body: string): n
   y += lines.length * 3.5 + 6;
   return y;
 }
+
+// ── Evolution Report PDF ──
+export interface EvolutionSummary {
+  narrative: string;
+  painChange: string;
+  questionnaireChanges?: { name: string; firstScore: number; lastScore: number; changePercent: number }[];
+  conclusion: string;
+  recommendation: "discharge" | "continue" | "reassess";
+}
+
+export interface EvolutionPdfOptions {
+  patientName: string;
+  firstAssessment: {
+    date: string;
+    pain_score: number | null;
+    pain_regions: string[];
+    test_results: any;
+    hypothesis?: string;
+  };
+  lastAssessment: {
+    date: string;
+    pain_score: number | null;
+    pain_regions: string[];
+    test_results: any;
+    hypothesis?: string;
+  };
+  totalAssessments: number;
+  summary: EvolutionSummary;
+  language: string;
+  professionalLogoUrl?: string;
+}
+
+export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Promise<Blob> {
+  const doc = new jsPDF();
+  const isPt = options.language === "pt";
+  const isEs = options.language === "es";
+  let y = MARGIN;
+
+  const logoBase64 = await loadLogoBase64();
+  const proLogoBase64 = options.professionalLogoUrl ? await loadExternalImageAsBase64(options.professionalLogoUrl) : null;
+
+  // ── Header Band ──
+  drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
+  const logoH = 14;
+  const logoW = 14;
+  const logoY = (38 - logoH) / 2;
+  let textStartX = MARGIN;
+  if (logoBase64) {
+    try {
+      doc.addImage(logoBase64, "PNG", MARGIN, logoY, logoW, logoH);
+      textStartX = MARGIN + logoW + 3;
+    } catch { /* fallback */ }
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(...COLORS.white);
+  const titleY = logoY + logoH / 2 + 2;
+  doc.text("Aliv.iA", textStartX, titleY);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  const reportTitle = isPt ? "Relatório de Evolução" : isEs ? "Informe de Evolución" : "Evolution Report";
+  doc.text(reportTitle, textStartX, titleY + 9);
+  doc.setFontSize(8);
+  const dateStr = new Date().toLocaleDateString(isPt ? "pt-BR" : isEs ? "es-ES" : "en-US", { year: "numeric", month: "long", day: "numeric" });
+  doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
+
+  if (proLogoBase64) {
+    try {
+      doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - logoW, logoY, logoW, logoH);
+    } catch { /* fallback */ }
+  }
+  y = 48;
+
+  // ── Patient Info + Period ──
+  const firstDate = new Date(options.firstAssessment.date).toLocaleDateString(isPt ? "pt-BR" : "en-US", { day: "2-digit", month: "short", year: "numeric" });
+  const lastDate = new Date(options.lastAssessment.date).toLocaleDateString(isPt ? "pt-BR" : "en-US", { day: "2-digit", month: "short", year: "numeric" });
+  const periodText = `${firstDate} → ${lastDate} (${options.totalAssessments} ${isPt ? "avaliações" : isEs ? "evaluaciones" : "assessments"})`;
+
+  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 20, 4, COLORS.background, COLORS.border);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.foreground);
+  const pLabel = isPt ? "Paciente: " : "Patient: ";
+  doc.text(pLabel, MARGIN + 6, y + 8);
+  doc.setFont("helvetica", "normal");
+  doc.text(options.patientName, MARGIN + 6 + doc.getTextWidth(pLabel), y + 8);
+  doc.setFontSize(7);
+  doc.setTextColor(...COLORS.muted);
+  doc.text(periodText, MARGIN + 6, y + 15);
+  y += 26;
+
+  // ── Pain Score Comparison ──
+  const firstScore = options.firstAssessment.pain_score;
+  const lastScore = options.lastAssessment.pain_score;
+  if (firstScore != null && lastScore != null) {
+    y = renderSectionTitle(doc, y, isPt ? "Comparativo de Dor (EVA)" : "Pain Comparison (VAS)", COLORS.primary);
+
+    const colW = CONTENT_WIDTH / 2 - 4;
+    const boxH = 28;
+
+    // First assessment box
+    drawRoundedRect(doc, MARGIN, y, colW, boxH, 4, COLORS.background, COLORS.border);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(isPt ? "1ª Avaliação" : "1st Assessment", MARGIN + 6, y + 8);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    const firstColor: [number, number, number] = firstScore <= 3 ? COLORS.green : firstScore <= 6 ? COLORS.yellow : COLORS.red;
+    doc.setTextColor(...firstColor);
+    doc.text(`${firstScore}/10`, MARGIN + 6, y + 22);
+
+    // Last assessment box
+    const lastX = MARGIN + colW + 8;
+    drawRoundedRect(doc, lastX, y, colW, boxH, 4, COLORS.background, COLORS.border);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(isPt ? "Última Avaliação" : "Last Assessment", lastX + 6, y + 8);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    const lastColor: [number, number, number] = lastScore <= 3 ? COLORS.green : lastScore <= 6 ? COLORS.yellow : COLORS.red;
+    doc.setTextColor(...lastColor);
+    doc.text(`${lastScore}/10`, lastX + 6, y + 22);
+
+    y += boxH + 4;
+
+    // Change indicator
+    const diff = firstScore - lastScore;
+    const improved = diff > 0;
+    const worsened = diff < 0;
+    const changeBg: [number, number, number] = improved ? [230, 250, 235] : worsened ? [255, 235, 235] : [245, 243, 240];
+    const changeFg: [number, number, number] = improved ? COLORS.green : worsened ? COLORS.red : COLORS.muted;
+    const changeText = improved
+      ? (isPt ? `↓ Melhora de ${diff} pontos` : `↓ Improvement of ${diff} points`)
+      : worsened
+      ? (isPt ? `↑ Piora de ${Math.abs(diff)} pontos` : `↑ Worsening of ${Math.abs(diff)} points`)
+      : (isPt ? "— Estável" : "— Stable");
+
+    drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 10, 3, changeBg);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...changeFg);
+    doc.text(changeText, MARGIN + 6, y + 7);
+    y += 16;
+  }
+
+  // ── Questionnaire Comparison ──
+  const firstTests = normalizeTestResults(options.firstAssessment.test_results);
+  const lastTests = normalizeTestResults(options.lastAssessment.test_results);
+  const firstQ = firstTests.filter((t: any) => t.questionnaireId && t.percentageScore != null);
+  const lastQ = lastTests.filter((t: any) => t.questionnaireId && t.percentageScore != null);
+
+  if (firstQ.length > 0 || lastQ.length > 0) {
+    y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary);
+
+    // Find questionnaires present in both
+    const matched: { name: string; firstPct: number; lastPct: number; change: number }[] = [];
+    const onlyFirst: string[] = [];
+    const onlyLast: string[] = [];
+
+    for (const fq of firstQ) {
+      const lq = lastQ.find((l: any) => l.questionnaireId === fq.questionnaireId);
+      if (lq) {
+        const fp = Math.round(fq.percentageScore);
+        const lp = Math.round(lq.percentageScore);
+        matched.push({ name: fq.questionnaireName || fq.questionnaireId.toUpperCase(), firstPct: fp, lastPct: lp, change: lp - fp });
+      } else {
+        onlyFirst.push(fq.questionnaireName || fq.questionnaireId.toUpperCase());
+      }
+    }
+    for (const lq of lastQ) {
+      if (!firstQ.find((f: any) => f.questionnaireId === lq.questionnaireId)) {
+        onlyLast.push(lq.questionnaireName || lq.questionnaireId.toUpperCase());
+      }
+    }
+
+    // Render matched questionnaires table
+    if (matched.length > 0) {
+      const headerLabels = [
+        isPt ? "Questionário" : "Questionnaire",
+        isPt ? "1ª Aval." : "1st",
+        isPt ? "Última" : "Last",
+        isPt ? "Variação" : "Change",
+      ];
+      const colWidths = [CONTENT_WIDTH * 0.4, CONTENT_WIDTH * 0.18, CONTENT_WIDTH * 0.18, CONTENT_WIDTH * 0.24];
+
+      // Table header
+      y = checkPage(doc, y, 10 + matched.length * 8);
+      drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 8, 2, COLORS.primary);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(...COLORS.white);
+      let cx = MARGIN + 4;
+      for (let i = 0; i < headerLabels.length; i++) {
+        doc.text(headerLabels[i], cx, y + 5.5);
+        cx += colWidths[i];
+      }
+      y += 9;
+
+      // Table rows
+      for (const row of matched) {
+        y = checkPage(doc, y, 8);
+        const rowBg: [number, number, number] = matched.indexOf(row) % 2 === 0 ? COLORS.background : COLORS.white;
+        drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 7, 0, rowBg);
+
+        cx = MARGIN + 4;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7);
+        doc.setTextColor(...COLORS.foreground);
+        doc.text(row.name, cx, y + 5);
+        cx += colWidths[0];
+
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...COLORS.muted);
+        doc.text(`${row.firstPct}%`, cx, y + 5);
+        cx += colWidths[1];
+        doc.text(`${row.lastPct}%`, cx, y + 5);
+        cx += colWidths[2];
+
+        const changeColor: [number, number, number] = row.change < 0 ? COLORS.green : row.change > 0 ? COLORS.red : COLORS.muted;
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...changeColor);
+        const sign = row.change > 0 ? "+" : "";
+        doc.text(`${sign}${row.change}%`, cx, y + 5);
+
+        y += 7;
+      }
+      y += 4;
+    }
+
+    // Exclusive questionnaires
+    if (onlyFirst.length > 0 || onlyLast.length > 0) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7);
+      doc.setTextColor(...COLORS.muted);
+      if (onlyFirst.length > 0) {
+        const text = `${isPt ? "Aplicado apenas na 1ª avaliação" : "Applied only in 1st assessment"}: ${onlyFirst.join(", ")}`;
+        y = checkPage(doc, y, 5);
+        doc.text(text, SECTION_X, y);
+        y += 5;
+      }
+      if (onlyLast.length > 0) {
+        const text = `${isPt ? "Aplicado apenas na última avaliação" : "Applied only in last assessment"}: ${onlyLast.join(", ")}`;
+        y = checkPage(doc, y, 5);
+        doc.text(text, SECTION_X, y);
+        y += 5;
+      }
+      y += 4;
+    }
+  }
+
+  // ── Pain Regions Comparison ──
+  const firstRegions = options.firstAssessment.pain_regions || [];
+  const lastRegions = options.lastAssessment.pain_regions || [];
+  if (firstRegions.length > 0 || lastRegions.length > 0) {
+    y = renderSectionTitle(doc, y, isPt ? "Regiões de Dor" : "Pain Regions", COLORS.primary);
+
+    const resolved = firstRegions.filter(r => !lastRegions.includes(r));
+    const newRegions = lastRegions.filter(r => !firstRegions.includes(r));
+    const persistent = firstRegions.filter(r => lastRegions.includes(r));
+
+    const regionLabel = (id: string) => {
+      for (const view of Object.values(regionsByView)) {
+        const r = view.find(reg => reg.id === id);
+        if (r) return isPt ? r.label_pt : r.label_en;
+      }
+      return id;
+    };
+
+    if (resolved.length > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.green);
+      doc.text(isPt ? "✓ Resolvidas:" : "✓ Resolved:", SECTION_X, y);
+      y += 4;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      const resolvedText = resolved.map(regionLabel).join(", ");
+      const resolvedLines = doc.splitTextToSize(resolvedText, TEXT_MAX_WIDTH);
+      doc.text(resolvedLines, SECTION_X + 4, y);
+      y += resolvedLines.length * 3.5 + 3;
+    }
+
+    if (newRegions.length > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.red);
+      doc.text(isPt ? "✗ Novas:" : "✗ New:", SECTION_X, y);
+      y += 4;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(...COLORS.muted);
+      const newText = newRegions.map(regionLabel).join(", ");
+      const newLines = doc.splitTextToSize(newText, TEXT_MAX_WIDTH);
+      doc.text(newLines, SECTION_X + 4, y);
+      y += newLines.length * 3.5 + 3;
+    }
+
+    if (persistent.length > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.muted);
+      doc.text(isPt ? "— Mantidas:" : "— Persistent:", SECTION_X, y);
+      y += 4;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      const persistText = persistent.map(regionLabel).join(", ");
+      const persistLines = doc.splitTextToSize(persistText, TEXT_MAX_WIDTH);
+      doc.text(persistLines, SECTION_X + 4, y);
+      y += persistLines.length * 3.5 + 3;
+    }
+
+    y += 4;
+  }
+
+  // ── AI Narrative Summary ──
+  y = renderSectionTitle(doc, y, isPt ? "Resumo Narrativo (IA)" : "AI Narrative Summary", COLORS.primary);
+  const narrativeLines = doc.splitTextToSize(options.summary.narrative, TEXT_MAX_WIDTH);
+  const narrativeH = narrativeLines.length * 3.5 + 12;
+  y = checkPage(doc, y, narrativeH);
+  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, narrativeH, 4, COLORS.primaryLight, COLORS.primary);
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.foreground);
+  doc.text(narrativeLines, MARGIN + 6, y + 8);
+  y += narrativeH + 6;
+
+  // ── Conclusion + Recommendation Badge ──
+  y = renderSectionTitle(doc, y, isPt ? "Conclusão" : "Conclusion", COLORS.primary);
+  const conclusionLines = doc.splitTextToSize(options.summary.conclusion, TEXT_MAX_WIDTH);
+  y = checkPage(doc, y, conclusionLines.length * 3.5 + 16);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.muted);
+  doc.text(conclusionLines, SECTION_X, y);
+  y += conclusionLines.length * 3.5 + 6;
+
+  // Recommendation badge
+  const recMap: Record<string, { label: string; bg: [number, number, number]; fg: [number, number, number] }> = {
+    discharge: {
+      label: isPt ? "RECOMENDAÇÃO: ALTA" : "RECOMMENDATION: DISCHARGE",
+      bg: COLORS.green,
+      fg: COLORS.white,
+    },
+    continue: {
+      label: isPt ? "RECOMENDAÇÃO: CONTINUAR TRATAMENTO" : "RECOMMENDATION: CONTINUE TREATMENT",
+      bg: COLORS.yellow,
+      fg: COLORS.white,
+    },
+    reassess: {
+      label: isPt ? "RECOMENDAÇÃO: REAVALIAR" : "RECOMMENDATION: REASSESS",
+      bg: [60, 130, 200] as [number, number, number],
+      fg: COLORS.white,
+    },
+  };
+  const rec = recMap[options.summary.recommendation] || recMap.continue;
+  drawBadge(doc, rec.label, MARGIN, y + 4, rec.bg, rec.fg);
+  y += 16;
+
+  // ── Disclaimer ──
+  y = checkPage(doc, y, 40);
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
+  y += 6;
+  const disclaimerText = isPt
+    ? "Este relatório de evolução foi gerado por inteligência artificial com base nos dados das avaliações realizadas. Tem caráter informativo e educacional, não substituindo avaliação presencial. As conclusões devem ser validadas por um profissional habilitado."
+    : "This evolution report was generated by artificial intelligence based on assessment data. It is for informational and educational purposes only, and does not replace in-person evaluation. Conclusions must be validated by a qualified professional.";
+  const discLines = doc.splitTextToSize(disclaimerText, CONTENT_WIDTH - 12);
+  const discH = discLines.length * 3.5 + 14;
+  y = checkPage(doc, y, discH);
+  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, discH, 4, [255, 245, 245], COLORS.red);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.red);
+  doc.text(isPt ? "⚠  AVISO IMPORTANTE" : "⚠  IMPORTANT DISCLAIMER", MARGIN + 6, y + 8);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(100, 80, 80);
+  doc.text(discLines, MARGIN + 6, y + 14);
+
+  // ── Footer ──
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(...COLORS.primary);
+    doc.setLineWidth(1.5);
+    doc.line(MARGIN, 284, PAGE_WIDTH - MARGIN, 284);
+
+    const footerLogoSize = 8;
+    let footerTextX = MARGIN;
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, "PNG", MARGIN, 285.5, footerLogoSize, footerLogoSize);
+        footerTextX = MARGIN + footerLogoSize + 2;
+      } catch { /* fallback */ }
+    }
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLORS.muted);
+    doc.text(`Aliv.iA — ${isPt ? "Relatório de Evolução" : "Evolution Report"}`, footerTextX, 290);
+
+    if (proLogoBase64) {
+      try {
+        doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - footerLogoSize, 285.5, footerLogoSize, footerLogoSize);
+      } catch { /* fallback */ }
+    }
+    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - (proLogoBase64 ? footerLogoSize + 10 : 8), 290);
+  }
+
+  return doc.output("blob");
+}
+
+// Helper normalize for evolution PDF
+function normalizeTestResults(tr: any): any[] {
+  if (Array.isArray(tr)) return tr;
+  if (tr && typeof tr === "object" && Object.keys(tr).length > 0) return [tr];
+  return [];
+}
