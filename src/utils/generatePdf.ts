@@ -501,8 +501,10 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
       if (interpretation) {
         doc.setFontSize(7);
         doc.setTextColor(...COLORS.muted);
-        doc.text(`${isPt ? "Interpretação" : "Interpretation"}: ${interpretation}`, MARGIN + 2, y);
-        y += 4;
+        const interpText = `${isPt ? "Interpretação" : "Interpretation"}: ${interpretation}`;
+        const interpLines = doc.splitTextToSize(interpText, TEXT_MAX_WIDTH);
+        doc.text(interpLines, MARGIN + 2, y);
+        y += interpLines.length * 3.5;
       }
 
       // Subscale scores — highlight top 3 most limited
