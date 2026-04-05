@@ -384,6 +384,11 @@ const ProfessionalAssessment = () => {
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
             initialPainRegions={prefilledRegions}
             initialChiefComplaints={prefilledComplaints}
+            initialOnset={prefilledOnset}
+            initialHasPriorSurgery={prefilledSurgery}
+            initialSurgeryDetails={prefilledSurgeryDetails}
+            initialActivityLevel={prefilledActivityLevel}
+            initialHasGymAccess={prefilledGymAccess}
           />
         )}
 
@@ -393,6 +398,7 @@ const ProfessionalAssessment = () => {
             onComplete={handleQuestionnaireComplete}
             onBack={() => setStep("anamnesis")}
             onSkip={handleQuestionnaireSkip}
+            previousAnswers={previousQuestionnaireAnswers}
           />
         )}
 
