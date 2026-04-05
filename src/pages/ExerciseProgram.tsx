@@ -59,6 +59,7 @@ const difficultyLabels: Record<string, Record<string, string>> = {
 
 const ExerciseProgram = () => {
   const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
   const { language, toggleLanguage } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [program, setProgram] = useState<Program | null>(null);
