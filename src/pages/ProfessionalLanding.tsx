@@ -20,7 +20,7 @@ import {
   LayoutDashboard, Brain, User, FileBarChart, Zap,
   RefreshCw, Dumbbell, Palette, TrendingUp,
 } from "lucide-react";
-import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE, PRO_PLAN_ANNUAL_TOTAL } from "@/constants/pricing";
+import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { setSeo } from "@/lib/seo";
 import { useEffect } from "react";
