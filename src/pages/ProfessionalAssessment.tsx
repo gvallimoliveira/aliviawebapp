@@ -39,6 +39,12 @@ const ProfessionalAssessment = () => {
   const [originalAssessment, setOriginalAssessment] = useState<any>(null);
   const [prefilledRegions, setPrefilledRegions] = useState<string[] | undefined>(undefined);
   const [prefilledComplaints, setPrefilledComplaints] = useState<string[] | undefined>(undefined);
+  const [prefilledOnset, setPrefilledOnset] = useState<string | undefined>(undefined);
+  const [prefilledSurgery, setPrefilledSurgery] = useState<string | undefined>(undefined);
+  const [prefilledSurgeryDetails, setPrefilledSurgeryDetails] = useState<string | undefined>(undefined);
+  const [prefilledActivityLevel, setPrefilledActivityLevel] = useState<string | undefined>(undefined);
+  const [prefilledGymAccess, setPrefilledGymAccess] = useState<string | undefined>(undefined);
+  const [previousQuestionnaireAnswers, setPreviousQuestionnaireAnswers] = useState<Record<string, Record<string, number>> | undefined>(undefined);
 
   // Validate professional exists and has active subscription
   useEffect(() => {
@@ -60,7 +66,7 @@ const ProfessionalAssessment = () => {
       if (reassessmentId) {
         const { data: orig } = await supabase
           .from("assessments")
-          .select("patient_name, patient_email, pain_regions, anamnesis_data")
+          .select("patient_name, patient_email, pain_regions, anamnesis_data, test_results")
           .eq("id", reassessmentId)
           .eq("professional_id", professionalId)
           .maybeSingle();
@@ -74,8 +80,25 @@ const ProfessionalAssessment = () => {
           }
           const anam = orig.anamnesis_data as any;
           const complaints = anam?.chiefComplaints || (anam?.chiefComplaint ? [anam.chiefComplaint] : []);
-          if (complaints.length > 0) {
-            setPrefilledComplaints(complaints);
+          if (complaints.length > 0) setPrefilledComplaints(complaints);
+          if (anam?.onset) setPrefilledOnset(anam.onset);
+          if (anam?.hasPriorSurgery) setPrefilledSurgery(anam.hasPriorSurgery);
+          if (anam?.surgeryDetails) setPrefilledSurgeryDetails(anam.surgeryDetails);
+          if (anam?.activityLevel) setPrefilledActivityLevel(anam.activityLevel);
+          if (anam?.hasGymAccess) setPrefilledGymAccess(anam.hasGymAccess);
+
+          // Extract previous questionnaire answers for highlighting
+          const testResults = orig.test_results as any;
+          if (Array.isArray(testResults) && testResults.length > 0) {
+            const prevAnswers: Record<string, Record<string, number>> = {};
+            for (const r of testResults) {
+              if (r.questionnaireId && r.answers) {
+                prevAnswers[r.questionnaireId] = r.answers;
+              }
+            }
+            if (Object.keys(prevAnswers).length > 0) {
+              setPreviousQuestionnaireAnswers(prevAnswers);
+            }
           }
         }
       }
@@ -361,6 +384,11 @@ const ProfessionalAssessment = () => {
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
             initialPainRegions={prefilledRegions}
             initialChiefComplaints={prefilledComplaints}
+            initialOnset={prefilledOnset}
+            initialHasPriorSurgery={prefilledSurgery}
+            initialSurgeryDetails={prefilledSurgeryDetails}
+            initialActivityLevel={prefilledActivityLevel}
+            initialHasGymAccess={prefilledGymAccess}
           />
         )}
 
@@ -370,6 +398,7 @@ const ProfessionalAssessment = () => {
             onComplete={handleQuestionnaireComplete}
             onBack={() => setStep("anamnesis")}
             onSkip={handleQuestionnaireSkip}
+            previousAnswers={previousQuestionnaireAnswers}
           />
         )}
 

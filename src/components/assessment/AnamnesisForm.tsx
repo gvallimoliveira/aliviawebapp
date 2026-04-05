@@ -57,9 +57,14 @@ interface AnamnesisFormProps {
   onBack: () => void;
   initialPainRegions?: string[];
   initialChiefComplaints?: string[];
+  initialOnset?: string;
+  initialHasPriorSurgery?: string;
+  initialSurgeryDetails?: string;
+  initialActivityLevel?: string;
+  initialHasGymAccess?: string;
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -102,23 +107,23 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     painScoresPerRegion: {},
   });
 
-  // Pre-fill pain regions from reassessment
+  // Pre-fill all reassessment fields
   useEffect(() => {
-    if (initialPainRegions?.length) {
-      setData((prev) => ({ ...prev, painRegions: initialPainRegions }));
-    }
-  }, [initialPainRegions]);
-
-  // Pre-fill chief complaints from reassessment
-  useEffect(() => {
-    if (initialChiefComplaints?.length) {
-      setData((prev) => ({
-        ...prev,
-        chiefComplaints: initialChiefComplaints,
-        chiefComplaint: initialChiefComplaints[0] || "",
-      }));
-    }
-  }, [initialChiefComplaints]);
+    setData((prev) => {
+      const updates: Partial<AnamnesisData> = {};
+      if (initialPainRegions?.length) updates.painRegions = initialPainRegions;
+      if (initialChiefComplaints?.length) {
+        updates.chiefComplaints = initialChiefComplaints;
+        updates.chiefComplaint = initialChiefComplaints[0] || "";
+      }
+      if (initialOnset) updates.onset = initialOnset;
+      if (initialHasPriorSurgery) updates.hasPriorSurgery = initialHasPriorSurgery;
+      if (initialSurgeryDetails) updates.surgeryDetails = initialSurgeryDetails;
+      if (initialActivityLevel) updates.activityLevel = initialActivityLevel;
+      if (initialHasGymAccess) updates.hasGymAccess = initialHasGymAccess;
+      return { ...prev, ...updates };
+    });
+  }, [initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess]);
 
   const complaints = [
     "anamnesis.complaint.neck_pain",

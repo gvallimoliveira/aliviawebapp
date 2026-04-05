@@ -17,9 +17,10 @@ interface QuestionnaireStepProps {
   onComplete: (results: QuestionnaireResult[]) => void;
   onBack: () => void;
   onSkip: () => void;
+  previousAnswers?: Record<string, Record<string, number>>;
 }
 
-const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip }: QuestionnaireStepProps) => {
+const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAnswers }: QuestionnaireStepProps) => {
   const { language } = useLanguage();
   const tl = (pt: string, en: string) => (language === "pt" ? pt : en);
 
@@ -164,41 +165,59 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip }: Question
         <p className="text-xs text-muted-foreground">{tl("Seção", "Section")} {currentSubscaleIndex + 1}/{totalSubscales}</p>
       </div>
 
+      {/* Previous answer legend */}
+      {previousAnswers && previousAnswers[currentQ.id] && (
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/40 rounded-lg px-3 py-1.5">
+          <div className="w-3 h-3 rounded border-2 border-dashed border-amber-400/70 bg-amber-50 dark:bg-amber-900/20 shrink-0" />
+          <span>{tl("= Resposta da avaliação anterior", "= Previous assessment answer")}</span>
+        </div>
+      )}
+
       {/* Questions */}
       <motion.div key={`${currentQ.id}-${currentSubscale}`} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="space-y-4">
         {subscaleQuestions.map((question) => {
           const isODILike = currentQ.id === "odi" || currentQ.id === "ndi";
           const isSPADI = currentQ.id === "spadi";
           const selectedValue = currentAnswers[question.id];
+          const prevValue = previousAnswers?.[currentQ.id]?.[question.id];
 
           return (
             <div key={question.id} className="space-y-2">
               <p className="text-sm font-medium">{language === "pt" ? question.text_pt : question.text_en}</p>
               {isODILike ? (
                 <div className="space-y-1.5">
-                  {question.options.map((opt) => (
-                    <Card key={opt.value} className={`cursor-pointer transition-all ${selectedValue === opt.value ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => handleAnswer(question.id, opt.value)}>
-                      <CardContent className="py-2 px-3">
-                        <span className="text-xs">{language === "pt" ? opt.label_pt : opt.label_en}</span>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {question.options.map((opt) => {
+                    const isPrev = prevValue !== undefined && prevValue === opt.value && selectedValue !== opt.value;
+                    return (
+                      <Card key={opt.value} className={`cursor-pointer transition-all ${selectedValue === opt.value ? "border-primary bg-primary/5" : isPrev ? "border-dashed border-amber-400/70 bg-amber-50/40 dark:bg-amber-900/10" : "border-border/50 hover:border-primary/30"}`} onClick={() => handleAnswer(question.id, opt.value)}>
+                        <CardContent className="py-2 px-3">
+                          <span className="text-xs">{language === "pt" ? opt.label_pt : opt.label_en}</span>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               ) : isSPADI ? (
                 <div className="flex flex-wrap gap-1.5">
-                  {question.options.map((opt) => (
-                    <Button key={opt.value} variant={selectedValue === opt.value ? "default" : "outline"} size="sm" className="w-9 h-9 p-0 rounded-lg text-xs" onClick={() => handleAnswer(question.id, opt.value)}>
-                      {opt.value}
-                    </Button>
-                  ))}
+                  {question.options.map((opt) => {
+                    const isPrev = prevValue !== undefined && prevValue === opt.value && selectedValue !== opt.value;
+                    return (
+                      <Button key={opt.value} variant={selectedValue === opt.value ? "default" : "outline"} size="sm" className={`w-9 h-9 p-0 rounded-lg text-xs ${isPrev ? "border-dashed border-amber-400/70 bg-amber-50/40 dark:bg-amber-900/10" : ""}`} onClick={() => handleAnswer(question.id, opt.value)}>
+                        {opt.value}
+                      </Button>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
-                  {question.options.map((opt) => (
-                    <Button key={opt.value} variant={selectedValue === opt.value ? "default" : "outline"} size="sm" className="rounded-lg text-xs h-auto py-1.5 px-2.5 flex-1 min-w-[60px]" onClick={() => handleAnswer(question.id, opt.value)}>
-                      {language === "pt" ? opt.label_pt : opt.label_en}
-                    </Button>
-                  ))}
+                  {question.options.map((opt) => {
+                    const isPrev = prevValue !== undefined && prevValue === opt.value && selectedValue !== opt.value;
+                    return (
+                      <Button key={opt.value} variant={selectedValue === opt.value ? "default" : "outline"} size="sm" className={`rounded-lg text-xs h-auto py-1.5 px-2.5 flex-1 min-w-[60px] ${isPrev ? "border-dashed border-amber-400/70 bg-amber-50/40 dark:bg-amber-900/10" : ""}`} onClick={() => handleAnswer(question.id, opt.value)}>
+                        {language === "pt" ? opt.label_pt : opt.label_en}
+                      </Button>
+                    );
+                  })}
                 </div>
               )}
             </div>
