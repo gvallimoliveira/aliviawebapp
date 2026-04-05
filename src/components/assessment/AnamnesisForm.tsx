@@ -109,6 +109,17 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     }
   }, [initialPainRegions]);
 
+  // Pre-fill chief complaints from reassessment
+  useEffect(() => {
+    if (initialChiefComplaints?.length) {
+      setData((prev) => ({
+        ...prev,
+        chiefComplaints: initialChiefComplaints,
+        chiefComplaint: initialChiefComplaints[0] || "",
+      }));
+    }
+  }, [initialChiefComplaints]);
+
   const complaints = [
     "anamnesis.complaint.neck_pain",
     "anamnesis.complaint.back_pain",
