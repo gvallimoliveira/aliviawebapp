@@ -72,6 +72,10 @@ const ProfessionalAssessment = () => {
           if (orig.pain_regions?.length) {
             setPrefilledRegions(orig.pain_regions);
           }
+          const complaints = orig.anamnesis_data?.chiefComplaints || (orig.anamnesis_data?.chiefComplaint ? [orig.anamnesis_data.chiefComplaint] : []);
+          if (complaints.length > 0) {
+            setPrefilledComplaints(complaints);
+          }
         }
       }
 
@@ -355,6 +359,7 @@ const ProfessionalAssessment = () => {
             onComplete={handleAnamnesisComplete}
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
             initialPainRegions={prefilledRegions}
+            initialChiefComplaints={prefilledComplaints}
           />
         )}
 
