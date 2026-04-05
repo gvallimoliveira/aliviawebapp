@@ -1159,6 +1159,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         <ClinicalImpressionCard
           assessment={latestWithDiagnosis}
           existingImpression={latestWithDiagnosis.diagnosis?.clinicalImpression}
+          allAssessments={patient?.assessments}
         />
       )}
 
