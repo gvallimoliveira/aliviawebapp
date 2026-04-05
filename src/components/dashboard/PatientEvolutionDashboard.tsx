@@ -643,14 +643,10 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           [totalKey]: Math.round(entry.percentageScore),
         };
         subscaleEntries.forEach((sub) => {
-          const rawScore = entry.subscaleScores[sub.key];
-          if (rawScore != null) {
-            const questions = qDef?.questions.filter((q) => q.subscale === sub.key) || [];
-            const maxPerQuestion = questions.length > 0
-              ? Math.max(...questions[0].options.map((o) => o.value))
-              : 4;
-            const maxSubscale = questions.length * maxPerQuestion;
-            point[sub.label] = maxSubscale > 0 ? Math.round((rawScore / maxSubscale) * 100) : rawScore;
+          const subscaleValue = entry.subscaleScores[sub.key];
+          if (subscaleValue != null) {
+            // subscaleScores are already stored as percentages (0-100)
+            point[sub.label] = Math.round(subscaleValue);
           }
         });
         return point;
