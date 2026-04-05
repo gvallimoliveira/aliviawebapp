@@ -283,9 +283,10 @@ const TreatmentPaidRetry = ({ assessmentId, onGenerated }: {
 };
 
 // Clinical Impression card (AI-generated)
-const ClinicalImpressionCard = ({ assessment, existingImpression }: {
+const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments }: {
   assessment: any;
   existingImpression?: { overview: string; therapeuticObjectives: string[] } | null;
+  allAssessments?: any[];
 }) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
@@ -293,6 +294,27 @@ const ClinicalImpressionCard = ({ assessment, existingImpression }: {
   const [impression, setImpression] = useState<{ overview: string; therapeuticObjectives: string[] } | null>(
     existingImpression || null
   );
+
+  const buildTimeline = () => {
+    if (!allAssessments || allAssessments.length === 0) return undefined;
+    const withDiagnosis = allAssessments
+      .filter((a: any) => a.diagnosis)
+      .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    if (withDiagnosis.length === 0) return undefined;
+    return withDiagnosis.map((a: any) => {
+      const results = normalizeTestResults(a.test_results);
+      const questionnaires = results
+        .filter((r: any) => r.questionnaireId && r.percentageScore != null)
+        .map((r: any) => ({ name: r.questionnaireId, score: `${Math.round(r.percentageScore)}%` }));
+      return {
+        date: new Date(a.created_at).toLocaleDateString("pt-BR"),
+        pain_score: a.pain_score,
+        pain_regions: a.pain_regions || [],
+        hypothesis: a.diagnosis?.hypothesis || null,
+        questionnaires,
+      };
+    });
+  };
 
   const generate = async () => {
     setLoading(true);
@@ -305,6 +327,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression }: {
           questionnaireResults: assessment.test_results,
           diagnosis: assessment.diagnosis,
           language,
+          assessmentTimeline: buildTimeline(),
         },
       });
       if (error) throw error;
