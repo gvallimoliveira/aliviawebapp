@@ -38,6 +38,7 @@ const ProfessionalAssessment = () => {
   const [redFlagData, setRedFlagData] = useState<Record<string, boolean> | null>(null);
   const [originalAssessment, setOriginalAssessment] = useState<any>(null);
   const [prefilledRegions, setPrefilledRegions] = useState<string[] | undefined>(undefined);
+  const [prefilledComplaints, setPrefilledComplaints] = useState<string[] | undefined>(undefined);
 
   // Validate professional exists and has active subscription
   useEffect(() => {
