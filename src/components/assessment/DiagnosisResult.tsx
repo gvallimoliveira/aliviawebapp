@@ -336,7 +336,8 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                       .getPublicUrl(filePath);
 
                     const origin = getPublicOrigin();
-                    const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${urlData.publicUrl}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
+                    const confidenceLine = diagnosis.confidence === "high" ? `\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}` : "";
+                    const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${confidenceLine}\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${urlData.publicUrl}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
                     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
                   } else {
                     throw uploadError;
@@ -351,7 +352,8 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   URL.revokeObjectURL(url);
                   
                   const origin = getPublicOrigin();
-                  const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
+                  const confidenceLine2 = diagnosis.confidence === "high" ? `\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}` : "";
+                  const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${confidenceLine2}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
                   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
                 }
               } catch (err) {
