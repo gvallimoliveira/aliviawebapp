@@ -109,13 +109,15 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         <h2 className="text-2xl font-bold text-foreground">{diagnosis.hypothesis}</h2>
       </div>
 
-      {/* Confidence Badge */}
-      <div className={`flex items-center gap-2 px-4 py-3 rounded-xl border ${conf.bg}`}>
-        <ConfIcon className={`h-5 w-5 ${conf.color}`} />
-        <span className={`text-sm font-medium ${conf.color}`}>
-          {t("diagnosis.confidence_label")}: {conf.label}
-        </span>
-      </div>
+      {/* Confidence Badge — only show for high confidence */}
+      {diagnosis.confidence === "high" && (
+        <div className={`flex items-center gap-2 px-4 py-3 rounded-xl border ${conf.bg}`}>
+          <ConfIcon className={`h-5 w-5 ${conf.color}`} />
+          <span className={`text-sm font-medium ${conf.color}`}>
+            {t("diagnosis.confidence_label")}: {conf.label}
+          </span>
+        </div>
+      )}
 
       {/* Summary */}
       <Card className="rounded-xl">
@@ -334,7 +336,8 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                       .getPublicUrl(filePath);
 
                     const origin = getPublicOrigin();
-                    const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${urlData.publicUrl}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
+                    const confidenceLine = diagnosis.confidence === "high" ? `\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}` : "";
+                    const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${confidenceLine}\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${urlData.publicUrl}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
                     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
                   } else {
                     throw uploadError;
@@ -349,7 +352,8 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   URL.revokeObjectURL(url);
                   
                   const origin = getPublicOrigin();
-                  const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
+                  const confidenceLine2 = diagnosis.confidence === "high" ? `\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}` : "";
+                  const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${confidenceLine2}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
                   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
                 }
               } catch (err) {
