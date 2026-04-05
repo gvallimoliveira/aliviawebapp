@@ -17,9 +17,10 @@ interface QuestionnaireStepProps {
   onComplete: (results: QuestionnaireResult[]) => void;
   onBack: () => void;
   onSkip: () => void;
+  previousAnswers?: Record<string, Record<string, number>>;
 }
 
-const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip }: QuestionnaireStepProps) => {
+const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAnswers }: QuestionnaireStepProps) => {
   const { language } = useLanguage();
   const tl = (pt: string, en: string) => (language === "pt" ? pt : en);
 
