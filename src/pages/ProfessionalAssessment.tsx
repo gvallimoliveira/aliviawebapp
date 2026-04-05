@@ -38,6 +38,7 @@ const ProfessionalAssessment = () => {
   const [redFlagData, setRedFlagData] = useState<Record<string, boolean> | null>(null);
   const [originalAssessment, setOriginalAssessment] = useState<any>(null);
   const [prefilledRegions, setPrefilledRegions] = useState<string[] | undefined>(undefined);
+  const [prefilledComplaints, setPrefilledComplaints] = useState<string[] | undefined>(undefined);
 
   // Validate professional exists and has active subscription
   useEffect(() => {
@@ -70,6 +71,11 @@ const ProfessionalAssessment = () => {
           setPatientEmail(orig.patient_email || "");
           if (orig.pain_regions?.length) {
             setPrefilledRegions(orig.pain_regions);
+          }
+          const anam = orig.anamnesis_data as any;
+          const complaints = anam?.chiefComplaints || (anam?.chiefComplaint ? [anam.chiefComplaint] : []);
+          if (complaints.length > 0) {
+            setPrefilledComplaints(complaints);
           }
         }
       }
@@ -354,6 +360,7 @@ const ProfessionalAssessment = () => {
             onComplete={handleAnamnesisComplete}
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
             initialPainRegions={prefilledRegions}
+            initialChiefComplaints={prefilledComplaints}
           />
         )}
 

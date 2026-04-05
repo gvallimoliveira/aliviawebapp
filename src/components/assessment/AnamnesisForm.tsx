@@ -56,9 +56,10 @@ interface AnamnesisFormProps {
   onComplete: (data: AnamnesisData) => void;
   onBack: () => void;
   initialPainRegions?: string[];
+  initialChiefComplaints?: string[];
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -107,6 +108,17 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions }: Anamnes
       setData((prev) => ({ ...prev, painRegions: initialPainRegions }));
     }
   }, [initialPainRegions]);
+
+  // Pre-fill chief complaints from reassessment
+  useEffect(() => {
+    if (initialChiefComplaints?.length) {
+      setData((prev) => ({
+        ...prev,
+        chiefComplaints: initialChiefComplaints,
+        chiefComplaint: initialChiefComplaints[0] || "",
+      }));
+    }
+  }, [initialChiefComplaints]);
 
   const complaints = [
     "anamnesis.complaint.neck_pain",
