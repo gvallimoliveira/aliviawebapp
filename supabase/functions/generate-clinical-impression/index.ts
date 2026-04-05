@@ -13,22 +13,41 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language } = await req.json();
+    const { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline } = await req.json();
     const isPt = language === "pt";
     const isEs = language === "es";
 
     const langLabel = isEs ? "español" : isPt ? "português brasileiro" : "English";
 
+    const hasTimeline = Array.isArray(assessmentTimeline) && assessmentTimeline.length > 0;
+    const multiAssessment = hasTimeline && assessmentTimeline.length > 1;
+
+    const timelineBlock = hasTimeline
+      ? `\n\n--- PATIENT ASSESSMENT TIMELINE (${assessmentTimeline.length} assessments, oldest first) ---\n` +
+        assessmentTimeline.map((a: any, i: number) => {
+          const qResults = Array.isArray(a.questionnaires) ? a.questionnaires.map((q: any) => `${q.name}: ${q.score}`).join(", ") : "N/A";
+          return `[${i + 1}] Date: ${a.date} | Pain: ${a.pain_score ?? "N/A"}/10 | Regions: ${(a.pain_regions || []).join(", ") || "N/A"} | Hypothesis: ${a.hypothesis || "N/A"} | Questionnaires: ${qResults}`;
+        }).join("\n")
+      : "";
+
+    const timelineInstruction = multiAssessment
+      ? isPt
+        ? `\nIMPORTANTE: O paciente possui ${assessmentTimeline.length} avaliações ao longo do tempo. Analise a LINHA DO TEMPO completa para identificar padrões de evolução, melhora ou piora progressiva, e dê um panorama clínico que reflita toda a trajetória do paciente — não apenas a avaliação mais recente.`
+        : isEs
+        ? `\nIMPORTANTE: El paciente tiene ${assessmentTimeline.length} evaluaciones a lo largo del tiempo. Analiza la LÍNEA DE TIEMPO completa para identificar patrones de evolución y da un panorama clínico que refleje toda la trayectoria del paciente.`
+        : `\nIMPORTANT: The patient has ${assessmentTimeline.length} assessments over time. Analyze the FULL TIMELINE to identify evolution patterns, progressive improvement or worsening, and provide a clinical overview reflecting the patient's entire trajectory — not just the latest assessment.`
+      : "";
+
     const systemPrompt = `You are a clinical physiotherapy expert. Your task is to produce a brief integrative clinical impression based on assessment data. 
 
 Rules:
-- Write a concise overview (3-5 lines) integrating the clinical context: chief complaint, onset, pain characteristics, duration, functional questionnaire scores, and diagnostic hypothesis.
+- Write a concise overview (3-5 lines) integrating the clinical context: chief complaint, onset, pain characteristics, duration, functional questionnaire scores, and diagnostic hypothesis.${multiAssessment ? "\n- When multiple assessments exist, describe the clinical trajectory over time: whether the patient improved, worsened, or remained stable, referencing specific score changes." : ""}
 - Do NOT mention specific exercises, treatment techniques, or therapeutic approaches.
 - Select exactly 2 main therapeutic objectives from this list ONLY: controle do quadro álgico, reequilibrar tensões miofasciais, exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar, modulação da dor.
 - Respond in ${langLabel}.
-- Use the tool provided to return the structured output.`;
+- Use the tool provided to return the structured output.${timelineInstruction}`;
 
-    const userPrompt = `Assessment data:
+    const userPrompt = `Current assessment data:
 - Chief complaint: ${anamnesisData?.chiefComplaint || "N/A"}
 - Custom complaint: ${anamnesisData?.customComplaint || "N/A"}
 - Onset: ${anamnesisData?.onset || "N/A"}
@@ -53,7 +72,7 @@ ${anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerR
 - Headache crisis frequency: ${anamnesisData?.headacheCrisisFrequency || "N/A"}
 - Diagnostic hypothesis: ${diagnosis?.hypothesis || "N/A"}
 - Diagnostic summary: ${diagnosis?.summary || "N/A"}
-- Questionnaire results: ${JSON.stringify(questionnaireResults || [])}
+- Questionnaire results: ${JSON.stringify(questionnaireResults || [])}${timelineBlock}
 
 Generate the clinical impression now.`;
 
@@ -68,7 +87,7 @@ Generate the clinical impression now.`;
             properties: {
               overview: {
                 type: "string",
-                description: "Integrative clinical overview in 3-5 lines",
+                description: "Integrative clinical overview in 3-5 lines, incorporating timeline perspective when multiple assessments exist",
               },
               therapeuticObjectives: {
                 type: "array",
@@ -134,7 +153,6 @@ Generate the clinical impression now.`;
         therapeuticObjectives: (args.therapeuticObjectives || []).slice(0, 2),
       };
     } else {
-      // Fallback: try to parse from content
       const content = result.choices?.[0]?.message?.content || "";
       try {
         const parsed = JSON.parse(content);
