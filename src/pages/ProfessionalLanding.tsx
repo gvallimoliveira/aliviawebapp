@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,12 +15,12 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import {
-  Clock, Target, FileText, Activity, Stethoscope, ArrowRight,
+  Clock, Target, FileText, Activity, Stethoscope, ArrowRight, ArrowDown,
   UserPlus, Link2, Send, ClipboardCheck, Check,
   LayoutDashboard, Brain, User, FileBarChart, Zap,
   RefreshCw, Dumbbell, Palette, TrendingUp,
 } from "lucide-react";
-import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
+import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE, PRO_PLAN_ANNUAL_TOTAL } from "@/constants/pricing";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { setSeo } from "@/lib/seo";
 import { useEffect } from "react";
@@ -33,6 +34,7 @@ const ProfessionalLanding = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
+  const [billing, setBilling] = useState<"monthly" | "annual">("annual");
 
   useEffect(() => {
     setSeo({
@@ -49,6 +51,10 @@ const ProfessionalLanding = () => {
     } else {
       navigate("/auth", { state: { redirectTo: "/dashboard?tab=professional" } });
     }
+  };
+
+  const scrollToPricing = () => {
+    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const benefits = [
@@ -95,6 +101,11 @@ const ProfessionalLanding = () => {
     "b2b.pricing_inc_9",
   ];
 
+  const price = billing === "monthly" ? PRO_PLAN_PRICE : PRO_PLAN_ANNUAL_PRICE;
+  const priceFormatted = billing === "monthly"
+    ? `R$${PRO_PLAN_PRICE}`
+    : `R$${PRO_PLAN_ANNUAL_PRICE.toFixed(2).replace(".", ",")}`;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -136,6 +147,69 @@ const ProfessionalLanding = () => {
             }}>
               {t("b2b.hero_login")}
             </Button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Early CTA — pricing teaser */}
+      <section className="py-10 md:py-14">
+        <div className="container max-w-lg mx-auto px-4">
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
+            className="rounded-2xl border border-primary/20 bg-card/90 backdrop-blur-sm p-6 md:p-8 text-center shadow-sm"
+          >
+            <p className="text-sm font-medium text-muted-foreground mb-3">
+              {t("b2b.early_cta_desc")}
+            </p>
+
+            {/* Toggle mensal / anual */}
+            <div className="inline-flex items-center rounded-full border border-border bg-muted/50 p-1 mb-4">
+              <button
+                onClick={() => setBilling("monthly")}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+                  billing === "monthly"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t("b2b.plan_monthly")}
+              </button>
+              <button
+                onClick={() => setBilling("annual")}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  billing === "annual"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t("b2b.plan_annual")}
+                <Badge className={`text-[10px] px-1.5 py-0 ${
+                  billing === "annual"
+                    ? "bg-white/20 text-white border-white/30"
+                    : "bg-emerald-500/10 text-emerald-600 border-emerald-200"
+                }`}>
+                  {t("b2b.save_30")}
+                </Badge>
+              </button>
+            </div>
+
+            <div className="text-3xl font-bold text-foreground mb-1">
+              {priceFormatted}<span className="text-lg font-normal text-muted-foreground">/{t("b2b.per_month")}</span>
+            </div>
+            {billing === "annual" && (
+              <p className="text-xs text-muted-foreground mb-1">{t("b2b.billed_annually")}</p>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
+              <Button onClick={handleCTA} size="lg" className="rounded-xl gap-2 px-8">
+                {t("b2b.hero_cta")}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="lg" className="rounded-xl gap-2 text-muted-foreground" onClick={scrollToPricing}>
+                {t("b2b.see_plans")}
+                <ArrowDown className="h-4 w-4" />
+              </Button>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -224,9 +298,9 @@ const ProfessionalLanding = () => {
       {/* Validated Questionnaires */}
       <ValidatedQuestionnairesTable />
 
-      {/* Pricing */}
-      <section id="compare" className="py-16 md:py-20 bg-muted/30">
-        <div className="container max-w-4xl mx-auto px-4">
+      {/* Pricing — unified single card with toggle */}
+      <section id="pricing" className="py-16 md:py-20 bg-muted/30">
+        <div className="container max-w-xl mx-auto px-4">
           <motion.h2
             initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
             className="text-3xl md:text-4xl font-bold text-foreground text-center mb-12"
@@ -234,70 +308,72 @@ const ProfessionalLanding = () => {
             {t("b2b.pricing_title")}
           </motion.h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {/* Monthly Plan */}
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
-              <Card className="border-border/60 h-full">
-                <div className="px-6 py-4 text-center border-b border-border/40">
-                  <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">{t("b2b.plan_monthly")}</p>
-                </div>
-                <CardContent className="p-6 text-center">
-                  <div className="text-4xl font-bold text-foreground mb-1">
-                    R${PRO_PLAN_PRICE}<span className="text-lg font-normal text-muted-foreground">/{t("b2b.per_month")}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-6">{t("b2b.cta_cancel")}</p>
-                  <ul className="text-left space-y-3 mb-8">
-                    {pricingIncludes.map((key, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                        <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                        {t(key)}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button onClick={handleCTA} variant="outline" size="lg" className="w-full rounded-xl gap-2 text-base">
-                    {t("b2b.hero_cta")}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>
+            <Card className="border-primary/30 shadow-lg relative bg-primary/[0.02]">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                  {t("b2b.early_cta_desc")}
+                </span>
+              </div>
 
-            {/* Annual Plan — highlighted */}
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>
-              <Card className="border-primary/30 shadow-lg relative h-full bg-primary/[0.02]">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                    {t("b2b.best_value")}
-                  </span>
+              <CardContent className="p-6 md:p-8 pt-8 text-center">
+                {/* Toggle */}
+                <div className="inline-flex items-center rounded-full border border-border bg-muted/50 p-1 mb-5">
+                  <button
+                    onClick={() => setBilling("monthly")}
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+                      billing === "monthly"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {t("b2b.plan_monthly")}
+                  </button>
+                  <button
+                    onClick={() => setBilling("annual")}
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all flex items-center gap-1.5 ${
+                      billing === "annual"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {t("b2b.plan_annual")}
+                    <Badge className={`text-[10px] px-1.5 py-0 ${
+                      billing === "annual"
+                        ? "bg-white/20 text-white border-white/30"
+                        : "bg-emerald-500/10 text-emerald-600 border-emerald-200"
+                    }`}>
+                      {t("b2b.save_30")}
+                    </Badge>
+                  </button>
                 </div>
-                <div className="px-6 py-4 pt-6 text-center border-b border-primary/10 bg-primary/5">
-                  <p className="text-sm font-medium uppercase tracking-wider text-primary">{t("b2b.plan_annual")}</p>
+
+                <div className="text-4xl font-bold text-foreground mb-1">
+                  {priceFormatted}<span className="text-lg font-normal text-muted-foreground">/{t("b2b.per_month")}</span>
                 </div>
-                <CardContent className="p-6 text-center">
-                  <div className="text-4xl font-bold text-foreground mb-1">
-                    R${PRO_PLAN_ANNUAL_PRICE.toFixed(2).replace(".", ",")}<span className="text-lg font-normal text-muted-foreground">/{t("b2b.per_month")}</span>
-                  </div>
+                {billing === "annual" && (
                   <p className="text-xs text-muted-foreground mb-1">{t("b2b.billed_annually")}</p>
-                  <p className="text-xs text-muted-foreground mb-1">{t("b2b.annual_no_refund")}</p>
-                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-xs mb-4">
-                    {t("b2b.save_30")}
-                  </Badge>
-                  <ul className="text-left space-y-3 mb-8">
-                    {pricingIncludes.map((key, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                        <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                        {t(key)}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button onClick={handleCTA} size="lg" className="w-full rounded-xl gap-2 text-base">
-                    {t("b2b.hero_cta")}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
+                )}
+                <p className="text-xs text-muted-foreground mb-6">
+                  {billing === "monthly" ? t("b2b.cta_cancel") : t("b2b.annual_no_refund")}
+                </p>
+
+                <ul className="text-left space-y-3 mb-8">
+                  {pricingIncludes.map((key, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      {t(key)}
+                    </li>
+                  ))}
+                </ul>
+
+                <Button onClick={handleCTA} size="lg" className="w-full rounded-xl gap-2 text-base">
+                  {t("b2b.hero_cta")}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </section>
 
