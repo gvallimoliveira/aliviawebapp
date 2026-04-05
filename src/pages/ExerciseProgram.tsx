@@ -163,6 +163,11 @@ const ExerciseProgram = () => {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-2">
+            {window.history.length > 1 && (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
             {program?.professional?.logo_url ? (
               <img src={program.professional.logo_url} alt="" className="h-8 w-8 rounded-full object-cover" />
             ) : (
