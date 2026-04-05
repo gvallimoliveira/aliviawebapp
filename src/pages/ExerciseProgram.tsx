@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Dumbbell, Play, Clock, ChevronDown, ChevronUp, Globe } from "lucide-react";
+import { Loader2, Dumbbell, Play, Clock, ChevronDown, ChevronUp, Globe, ArrowLeft } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 interface ExerciseItem {
@@ -59,6 +59,7 @@ const difficultyLabels: Record<string, Record<string, string>> = {
 
 const ExerciseProgram = () => {
   const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
   const { language, toggleLanguage } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [program, setProgram] = useState<Program | null>(null);
@@ -162,6 +163,11 @@ const ExerciseProgram = () => {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-2">
+            {window.history.length > 1 && (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
             {program?.professional?.logo_url ? (
               <img src={program.professional.logo_url} alt="" className="h-8 w-8 rounded-full object-cover" />
             ) : (
