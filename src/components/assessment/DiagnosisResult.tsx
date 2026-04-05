@@ -109,13 +109,15 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         <h2 className="text-2xl font-bold text-foreground">{diagnosis.hypothesis}</h2>
       </div>
 
-      {/* Confidence Badge */}
-      <div className={`flex items-center gap-2 px-4 py-3 rounded-xl border ${conf.bg}`}>
-        <ConfIcon className={`h-5 w-5 ${conf.color}`} />
-        <span className={`text-sm font-medium ${conf.color}`}>
-          {t("diagnosis.confidence_label")}: {conf.label}
-        </span>
-      </div>
+      {/* Confidence Badge — only show for high confidence */}
+      {diagnosis.confidence === "high" && (
+        <div className={`flex items-center gap-2 px-4 py-3 rounded-xl border ${conf.bg}`}>
+          <ConfIcon className={`h-5 w-5 ${conf.color}`} />
+          <span className={`text-sm font-medium ${conf.color}`}>
+            {t("diagnosis.confidence_label")}: {conf.label}
+          </span>
+        </div>
+      )}
 
       {/* Summary */}
       <Card className="rounded-xl">

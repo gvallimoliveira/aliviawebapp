@@ -1140,7 +1140,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             <p className="text-sm font-medium text-foreground leading-relaxed">
               {latestWithDiagnosis.diagnosis.hypothesis}
             </p>
-            {latestWithDiagnosis.diagnosis.confidence && (
+            {latestWithDiagnosis.diagnosis.confidence === "high" && (
               <Badge variant="outline" className="text-[10px] capitalize">
                 Confiança: {latestWithDiagnosis.diagnosis.confidence}
               </Badge>

@@ -797,13 +797,12 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.text(hypoLines, MARGIN + 8, y + 9);
   y += hypoH + 4;
 
-  // Confidence badge
-  const confidenceMap: Record<string, { label: string; color: [number, number, number] }> = isPt
-    ? { low: { label: "Confiança: Baixa", color: COLORS.yellow }, moderate: { label: "Confiança: Moderada", color: COLORS.primary }, high: { label: "Confiança: Alta", color: COLORS.green } }
-    : { low: { label: "Confidence: Low", color: COLORS.yellow }, moderate: { label: "Confidence: Moderate", color: COLORS.primary }, high: { label: "Confidence: High", color: COLORS.green } };
-  const conf = confidenceMap[options.diagnosis.confidence] || confidenceMap.moderate;
-  drawBadge(doc, conf.label.toUpperCase(), MARGIN, y + 4, conf.color, COLORS.white);
-  y += 12;
+  // Confidence badge — only show for high confidence
+  if (options.diagnosis.confidence === "high") {
+    const confLabel = isPt ? "Confiança: Alta" : "Confidence: High";
+    drawBadge(doc, confLabel.toUpperCase(), MARGIN, y + 4, COLORS.green, COLORS.white);
+    y += 12;
+  }
 
   // Summary
   y = renderSubSection(doc, y, isPt ? "Resumo" : "Summary", options.diagnosis.summary);
@@ -1028,21 +1027,12 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
   doc.text(hypoLines, MARGIN + 8, y + 9);
   y += hypoH + 4;
 
-  // Confidence badge
-  const confidenceMap: Record<string, { label: string; color: [number, number, number] }> = isPt
-    ? {
-        low: { label: "Confiança: Baixa", color: COLORS.yellow },
-        moderate: { label: "Confiança: Moderada", color: COLORS.primary },
-        high: { label: "Confiança: Alta", color: COLORS.green },
-      }
-    : {
-        low: { label: "Confidence: Low", color: COLORS.yellow },
-        moderate: { label: "Confidence: Moderate", color: COLORS.primary },
-        high: { label: "Confidence: High", color: COLORS.green },
-      };
-  const conf = confidenceMap[diagnosis.confidence] || confidenceMap.moderate;
-  drawBadge(doc, conf.label.toUpperCase(), MARGIN, y + 4, conf.color, COLORS.white);
-  y += 12;
+  // Confidence badge — only show for high confidence
+  if (diagnosis.confidence === "high") {
+    const confLabel = isPt ? "Confiança: Alta" : "Confidence: High";
+    drawBadge(doc, confLabel.toUpperCase(), MARGIN, y + 4, COLORS.green, COLORS.white);
+    y += 12;
+  }
 
   // Summary
   y = renderSubSection(doc, y, isPt ? "Resumo" : "Summary", diagnosis.summary);
