@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Dumbbell, Play, Clock, ChevronDown, ChevronUp, Globe } from "lucide-react";
+import { Loader2, Dumbbell, Play, Clock, ChevronDown, ChevronUp, Globe, ArrowLeft } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 interface ExerciseItem {
