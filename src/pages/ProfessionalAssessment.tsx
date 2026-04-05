@@ -72,7 +72,8 @@ const ProfessionalAssessment = () => {
           if (orig.pain_regions?.length) {
             setPrefilledRegions(orig.pain_regions);
           }
-          const complaints = orig.anamnesis_data?.chiefComplaints || (orig.anamnesis_data?.chiefComplaint ? [orig.anamnesis_data.chiefComplaint] : []);
+          const anam = orig.anamnesis_data as any;
+          const complaints = anam?.chiefComplaints || (anam?.chiefComplaint ? [anam.chiefComplaint] : []);
           if (complaints.length > 0) {
             setPrefilledComplaints(complaints);
           }
