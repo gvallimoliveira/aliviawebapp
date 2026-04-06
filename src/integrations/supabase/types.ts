@@ -193,6 +193,48 @@ export type Database = {
           },
         ]
       }
+      exercise_completions: {
+        Row: {
+          completed_at: string
+          created_at: string
+          exercise_item_id: string
+          id: string
+          program_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          exercise_item_id: string
+          id?: string
+          program_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          exercise_item_id?: string
+          id?: string
+          program_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_completions_exercise_item_id_fkey"
+            columns: ["exercise_item_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_program_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_completions_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_library: {
         Row: {
           body_region: string
