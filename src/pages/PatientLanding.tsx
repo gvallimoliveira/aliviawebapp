@@ -4,7 +4,6 @@ import Header from "@/components/Header";
 import ReferralBanner from "@/components/ReferralBanner";
 import HeroSection from "@/components/HeroSection";
 import HighlightsSection from "@/components/HighlightsSection";
-import HighlightsSection from "@/components/HighlightsSection";
 import MethodologySection from "@/components/MethodologySection";
 import ComparisonSection from "@/components/ComparisonSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
