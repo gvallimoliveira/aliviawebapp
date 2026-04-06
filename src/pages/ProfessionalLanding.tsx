@@ -18,7 +18,8 @@ import {
   Clock, Target, FileText, Activity, Stethoscope, ArrowRight, ArrowDown,
   UserPlus, Link2, Send, ClipboardCheck, Check,
   LayoutDashboard, Brain, User, FileBarChart, Zap,
-  RefreshCw, Dumbbell, Palette, TrendingUp,
+  RefreshCw, Dumbbell, Palette, TrendingUp, GraduationCap,
+  BarChart3, ListChecks,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
@@ -65,6 +66,7 @@ const ProfessionalLanding = () => {
     { icon: Palette, titleKey: "b2b.benefit_5_title", descKey: "b2b.benefit_5_desc" },
     { icon: Activity, titleKey: "b2b.benefit_6_title", descKey: "b2b.benefit_6_desc" },
     { icon: TrendingUp, titleKey: "b2b.benefit_7_title", descKey: "b2b.benefit_7_desc" },
+    { icon: Brain, titleKey: "b2b.benefit_8_title", descKey: "b2b.benefit_8_desc" },
   ];
 
   const steps = [
@@ -72,6 +74,9 @@ const ProfessionalLanding = () => {
     { icon: Link2, titleKey: "b2b.step_2_title", descKey: "b2b.step_2_desc" },
     { icon: Send, titleKey: "b2b.step_3_title", descKey: "b2b.step_3_desc" },
     { icon: ClipboardCheck, titleKey: "b2b.step_4_title", descKey: "b2b.step_4_desc" },
+    { icon: Brain, titleKey: "b2b.step_5_title", descKey: "b2b.step_5_desc" },
+    { icon: Dumbbell, titleKey: "b2b.step_6_title", descKey: "b2b.step_6_desc" },
+    { icon: BarChart3, titleKey: "b2b.step_7_title", descKey: "b2b.step_7_desc" },
   ];
 
   const features = [
