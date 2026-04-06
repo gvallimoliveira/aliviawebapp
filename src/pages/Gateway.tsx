@@ -238,10 +238,15 @@ const Gateway = () => {
             {/* Professional Card */}
             <motion.div
               initial="hidden" animate="visible" variants={fadeUp} custom={4}
-              className="group rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 md:p-8 text-left hover:shadow-xl hover:border-primary/30 transition-all duration-300 flex flex-col cursor-pointer"
+              className="group rounded-2xl border-2 border-primary/30 bg-primary/[0.03] backdrop-blur-sm p-6 md:p-8 text-left hover:shadow-xl hover:shadow-primary/10 hover:border-primary/50 transition-all duration-300 flex flex-col cursor-pointer relative"
               onClick={() => navigate("/profissionais")}
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-5">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                  <Stethoscope className="h-3 w-3" /> PRO
+                </span>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 mb-5">
                 <Stethoscope className="h-6 w-6 text-primary" />
               </div>
               <h2 className="text-xl font-bold text-foreground mb-2">{t("gateway.pro.title")}</h2>
