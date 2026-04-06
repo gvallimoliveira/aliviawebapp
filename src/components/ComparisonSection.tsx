@@ -245,7 +245,7 @@ const ComparisonSection = () => {
           transition={{ delay: 0.3 }}
           className="mt-10 text-center italic text-xl text-primary font-semibold"
         >
-          "Unimos a visão do especialista com a precisão e agilidade da IA."
+          {t("compare.quote")}
         </motion.p>
       </div>
     </section>

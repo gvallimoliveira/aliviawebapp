@@ -926,7 +926,7 @@
   "gateway.patient.bullet5": "PDF assessment report generation",
   "gateway.patient.bullet6": "Connection with qualified professionals",
   "gateway.patient.cta": "Start my assessment",
-  "gateway.pro.title": "I'm a physiotherapist",
+  "gateway.pro.title": "I'm a physiotherapist and want to optimize my consultations",
   "gateway.pro.desc": "Supercharge your consultations with smart triage and structured data.",
   "gateway.pro.bullet1": "Anamnesis and questionnaires ready before consultation",
   "gateway.pro.bullet2": "AI-powered integrated clinical impression",
