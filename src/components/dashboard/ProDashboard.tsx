@@ -268,17 +268,31 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         professionalNotes: proNote,
         professionalLogoUrl: professional?.logo_url || undefined,
       });
-      const filePath = `${assessment.id}_pro.pdf`;
+      const filePath = `${assessment.id}_pro_${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from("assessment-reports")
         .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage
-        .from("assessment-reports")
-        .getPublicUrl(filePath);
+      
+      let pdfUrl = "";
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("assessment-reports")
+          .getPublicUrl(filePath);
+        pdfUrl = urlData.publicUrl;
+      } else {
+        console.warn("PDF upload failed, falling back to local download:", uploadError);
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `AliviA_Relatorio_Profissional.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
       const origin = getPublicOrigin();
       const patientLabel = assessment.patient_name || "Paciente";
-      const text = `🩺 *Aliv.iA — Relatório Profissional*\n\n👤 *Paciente:* ${patientLabel}\n📋 *Hipótese:* ${assessment.diagnosis.hypothesis}\n\n📄 Relatório em PDF:\n${urlData.publicUrl}\n\n💡 ${origin}`;
+      const pdfLine = pdfUrl ? `\n\n📄 Relatório em PDF:\n${pdfUrl}` : "";
+      const text = `🩺 *Aliv.iA — Relatório Profissional*\n\n👤 *Paciente:* ${patientLabel}\n📋 *Hipótese:* ${assessment.diagnosis.hypothesis}${pdfLine}\n\n💡 ${origin}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
     } catch {
       toast({ title: "Erro ao compartilhar PDF", variant: "destructive" });

@@ -324,8 +324,12 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   anamnesisData: anamnesisData || undefined,
                 });
 
+                const origin = getPublicOrigin();
+                const confidenceLine = diagnosis.confidence === "high" ? `\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}` : "";
+                let pdfUrl = "";
+
                 if (assessmentId) {
-                  const filePath = `${assessmentId}.pdf`;
+                  const filePath = `${assessmentId}_${Date.now()}.pdf`;
                   const { error: uploadError } = await supabase.storage
                     .from("assessment-reports")
                     .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
@@ -334,28 +338,25 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                     const { data: urlData } = supabase.storage
                       .from("assessment-reports")
                       .getPublicUrl(filePath);
-
-                    const origin = getPublicOrigin();
-                    const confidenceLine = diagnosis.confidence === "high" ? `\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}` : "";
-                    const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${confidenceLine}\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${urlData.publicUrl}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
-                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                    pdfUrl = urlData.publicUrl;
                   } else {
-                    throw uploadError;
+                    console.warn("PDF upload failed, falling back to local download:", uploadError);
                   }
-                } else {
-                  // No assessmentId — download locally and share text
+                }
+
+                // If upload failed or no assessmentId, download locally
+                if (!pdfUrl) {
                   const url = URL.createObjectURL(pdfBlob);
                   const a = document.createElement("a");
                   a.href = url;
                   a.download = `AliviA_Resultado.pdf`;
                   a.click();
                   URL.revokeObjectURL(url);
-                  
-                  const origin = getPublicOrigin();
-                  const confidenceLine2 = diagnosis.confidence === "high" ? `\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}` : "";
-                  const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${confidenceLine2}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
-                  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
                 }
+
+                const pdfLine = pdfUrl ? `\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${pdfUrl}` : "";
+                const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${confidenceLine}${pdfLine}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
               } catch (err) {
                 console.error("PDF sharing error:", err);
                 toast({

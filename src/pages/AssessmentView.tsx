@@ -158,20 +158,31 @@ const AssessmentView = () => {
         });
       }
 
-      const filePath = `${assessment.id}_view.pdf`;
+      const filePath = `${assessment.id}_view_${Date.now()}.pdf`;
       const { supabase } = await import("@/integrations/supabase/client");
       const { error: uploadError } = await supabase.storage
         .from("assessment-reports")
         .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
 
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from("assessment-reports")
-        .getPublicUrl(filePath);
+      let pdfUrl = "";
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("assessment-reports")
+          .getPublicUrl(filePath);
+        pdfUrl = urlData.publicUrl;
+      } else {
+        console.warn("PDF upload failed, falling back to local download:", uploadError);
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `AliviA_Resultado.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
 
       const origin = getPublicOrigin();
-      const text = `🩺 *Aliv.iA — ${isPt ? "Relatório de Avaliação" : "Assessment Report"}*\n\n📋 *${isPt ? "Hipótese" : "Hypothesis"}:* ${assessment.diagnosis.hypothesis}\n\n📄 ${isPt ? "Relatório em PDF" : "PDF Report"}:\n${urlData.publicUrl}\n\n💡 ${origin}`;
+      const pdfLine = pdfUrl ? `\n\n📄 ${isPt ? "Relatório em PDF" : "PDF Report"}:\n${pdfUrl}` : "";
+      const text = `🩺 *Aliv.iA — ${isPt ? "Relatório de Avaliação" : "Assessment Report"}*\n\n📋 *${isPt ? "Hipótese" : "Hypothesis"}:* ${assessment.diagnosis.hypothesis}${pdfLine}\n\n💡 ${origin}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
     } catch {
       toast({ title: isPt ? "Erro ao compartilhar" : "Error sharing", variant: "destructive" });
