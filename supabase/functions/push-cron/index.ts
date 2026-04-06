@@ -23,6 +23,9 @@ Deno.serve(async (req) => {
       referral_coupons_applied: 0,
       abandoned_reminders: 0,
       boleto_expiry_reminders: 0,
+      exercise_reminders: 0,
+      pain_spike_alerts: 0,
+      inactivity_alerts: 0,
       errors: [] as string[],
     };
 
