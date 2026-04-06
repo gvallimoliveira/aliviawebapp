@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Sparkles, Users, UserPlus, Crown } from "lucide-react";
+import { ClipboardList, Sparkles, Users, Crown } from "lucide-react";
 
 interface QuickActionsProps {
   hasPremiumAccess?: boolean;
