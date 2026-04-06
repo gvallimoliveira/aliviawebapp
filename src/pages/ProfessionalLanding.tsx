@@ -243,6 +243,19 @@ const ProfessionalLanding = () => {
               </motion.div>
             ))}
           </div>
+
+          {/* Grad CTA */}
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={benefits.length}
+            className="mt-10 mx-auto max-w-2xl text-center"
+          >
+            <div className="inline-flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-6 py-4">
+              <GraduationCap className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+              <p className="text-sm text-muted-foreground leading-relaxed italic">
+                {t("b2b.grad_cta")}
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -255,7 +268,7 @@ const ProfessionalLanding = () => {
           >
             {t("b2b.how_title")}
           </motion.h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {steps.map((s, i) => (
               <motion.div
                 key={i}
