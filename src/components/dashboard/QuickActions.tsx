@@ -43,7 +43,7 @@ const QuickActions = ({ hasPremiumAccess, premiumLoading, hasProfessional }: Qui
       </div>
 
       {/* Find Professional / Register CTA */}
-      <div data-onboarding="patient-find-pro" className="grid gap-4 sm:grid-cols-2">
+      <div data-onboarding="patient-find-pro">
         <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group relative" onClick={() => navigate("/professionals")}>
           {!premiumLoading && !hasPremiumAccess && (
             <Badge variant="outline" className="absolute top-3 right-3 bg-primary/10 text-primary border-primary/20 text-[10px] gap-1">
@@ -61,19 +61,6 @@ const QuickActions = ({ hasPremiumAccess, premiumLoading, hasProfessional }: Qui
             <CardDescription className="text-sm">{t("prof.cta_text")}</CardDescription>
           </CardHeader>
         </Card>
-        {!hasProfessional && (
-          <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group" onClick={() => navigate("/professional/register")}>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary group-hover:bg-primary/10 transition-colors">
-                  <UserPlus className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-                {t("prof.register_cta")}
-              </CardTitle>
-              <CardDescription className="text-sm">{t("prof.register_cta_desc")}</CardDescription>
-            </CardHeader>
-          </Card>
-        )}
       </div>
     </>
   );
