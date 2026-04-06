@@ -920,7 +920,7 @@
   "gateway.patient.title": "Siento dolor y quiero resolverlo",
   "gateway.patient.desc": "Comprenda su dolor con precisión clínica y reciba un plan de acción personalizado.",
   "gateway.patient.bullet1": "Evaluación guiada sin salir de casa",
-  "gateway.patient.bullet2": "Diagnóstico preliminar en minutos",
+  "gateway.patient.bullet2": "Diagnóstico sobre su dolor en minutos",
   "gateway.patient.bullet3": "Plan de tratamiento personalizado",
   "gateway.patient.bullet4": "Cuestionarios validados científicamente",
   "gateway.patient.bullet5": "Generación de informe PDF de la evaluación",
