@@ -26,6 +26,7 @@ import PainMapView from "@/components/assessment/PainMapView";
 import JSZip from "jszip";
 import CreateExerciseProgramModal from "@/components/dashboard/CreateExerciseProgramModal";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
+import { mockClinicalImpressions, mockEvolutionSummary } from "@/data/mockPatientData";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
@@ -102,6 +103,7 @@ interface PatientEvolutionDashboardProps {
   professionalLogoUrl?: string;
   onDownloadPdf?: (assessment: any) => void;
   onShareWhatsApp?: (assessment: any) => void;
+  isDemo?: boolean;
 }
 
 interface PatientGroup {
@@ -283,10 +285,11 @@ const TreatmentPaidRetry = ({ assessmentId, onGenerated }: {
 };
 
 // Clinical Impression card (AI-generated)
-const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments }: {
+const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments, isDemo }: {
   assessment: any;
   existingImpression?: { overview: string; therapeuticObjectives: string[] } | null;
   allAssessments?: any[];
+  isDemo?: boolean;
 }) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
@@ -319,25 +322,39 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
   const generate = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
-        body: {
-          anamnesisData: assessment.anamnesis_data,
-          painRegions: assessment.pain_regions,
-          painScore: assessment.pain_score,
-          questionnaireResults: assessment.test_results,
-          diagnosis: assessment.diagnosis,
-          language,
-          assessmentTimeline: buildTimeline(),
-        },
-      });
-      if (error) throw error;
-      const ci = data?.clinicalImpression;
-      if (!ci?.overview) throw new Error("Empty response");
-      setImpression(ci);
+      if (isDemo) {
+        // Use mock clinical impression data
+        await new Promise((r) => setTimeout(r, 1200)); // Simulate delay
+        const mockCI = mockClinicalImpressions[assessment.id];
+        if (mockCI) {
+          setImpression(mockCI);
+        } else {
+          setImpression({
+            overview: "Impressão clínica simulada para demonstração. Em dados reais, a IA analisará todos os dados clínicos do paciente.",
+            therapeuticObjectives: ["Objetivo terapêutico simulado 1", "Objetivo terapêutico simulado 2"],
+          });
+        }
+      } else {
+        const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
+          body: {
+            anamnesisData: assessment.anamnesis_data,
+            painRegions: assessment.pain_regions,
+            painScore: assessment.pain_score,
+            questionnaireResults: assessment.test_results,
+            diagnosis: assessment.diagnosis,
+            language,
+            assessmentTimeline: buildTimeline(),
+          },
+        });
+        if (error) throw error;
+        const ci = data?.clinicalImpression;
+        if (!ci?.overview) throw new Error("Empty response");
+        setImpression(ci);
 
-      // Persist into diagnosis.clinicalImpression
-      const updatedDiagnosis = { ...(assessment.diagnosis || {}), clinicalImpression: ci };
-      await supabase.from("assessments").update({ diagnosis: updatedDiagnosis as any }).eq("id", assessment.id);
+        // Persist into diagnosis.clinicalImpression
+        const updatedDiagnosis = { ...(assessment.diagnosis || {}), clinicalImpression: ci };
+        await supabase.from("assessments").update({ diagnosis: updatedDiagnosis as any }).eq("id", assessment.id);
+      }
     } catch (err: any) {
       console.error("Clinical impression error:", err);
       toast({ title: "Erro", description: "Não foi possível gerar a impressão clínica.", variant: "destructive" });
@@ -405,7 +422,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
 };
 
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, onDownloadPdf, onShareWhatsApp, isDemo }: PatientEvolutionDashboardProps) => {
 
   const { t, language } = useLanguage();
   const navigate = useNavigate();
@@ -428,18 +445,18 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
-    if (!professionalId) return;
+    if (!professionalId || isDemo) return;
     (supabase.from("professional_hidden_patients" as any) as any)
       .select("patient_email")
       .eq("professional_id", professionalId)
       .then(({ data }: any) => {
         if (data) setHiddenKeys(new Set(data.map((d: any) => d.patient_email)));
       });
-  }, [professionalId]);
+  }, [professionalId, isDemo]);
 
   // Load HEP history for selected patient
   useEffect(() => {
-    if (!professionalId || !selectedEmail) { setHepHistory([]); return; }
+    if (!professionalId || !selectedEmail || isDemo) { setHepHistory([]); return; }
     setHepHistoryLoading(true);
     (supabase.from("exercise_programs") as any)
       .select("id, token, patient_name, created_at, expires_at, notes, assessment_id")
@@ -449,7 +466,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         setHepHistory(data || []);
         setHepHistoryLoading(false);
       });
-  }, [professionalId, selectedEmail, hepModalOpen]);
+  }, [professionalId, selectedEmail, hepModalOpen, isDemo]);
   const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!professionalId || archiving || !groupKey) return;
@@ -486,7 +503,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
   // Load notes for all assessments
   useEffect(() => {
-    if (!professionalId || assessments.length === 0) return;
+    if (!professionalId || assessments.length === 0 || isDemo) return;
     const assessmentIds = assessments.map((a) => a.id);
     supabase
       .from("professional_notes")
@@ -500,7 +517,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           setNotes(map);
         }
       });
-  }, [professionalId, assessments]);
+  }, [professionalId, assessments, isDemo]);
 
   const saveNote = useCallback((assessmentId: string, content: string) => {
     if (!professionalId) return;
@@ -984,24 +1001,33 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   const firstA = withDiagnosis[0];
                   const lastA = withDiagnosis[withDiagnosis.length - 1];
 
-                  const normalizeQ = (tr: any) => {
-                    if (Array.isArray(tr)) return tr.filter((t: any) => t.questionnaireId && t.percentageScore != null).map((t: any) => ({ id: t.questionnaireId, name: t.questionnaireName || t.questionnaireId, score: Math.round(t.percentageScore) }));
-                    return [];
-                  };
+                  let summary: any;
 
-                  const payload = {
-                    assessments: [
-                      { date: firstA.created_at, pain_score: firstA.pain_score, hypothesis: firstA.diagnosis?.hypothesis, pain_regions: firstA.pain_regions || [], questionnaires: normalizeQ(firstA.test_results) },
-                      { date: lastA.created_at, pain_score: lastA.pain_score, hypothesis: lastA.diagnosis?.hypothesis, pain_regions: lastA.pain_regions || [], questionnaires: normalizeQ(lastA.test_results) },
-                    ],
-                    language,
-                  };
+                  if (isDemo) {
+                    // Use mock evolution summary
+                    await new Promise((r) => setTimeout(r, 1500));
+                    summary = mockEvolutionSummary;
+                  } else {
+                    const normalizeQ = (tr: any) => {
+                      if (Array.isArray(tr)) return tr.filter((t: any) => t.questionnaireId && t.percentageScore != null).map((t: any) => ({ id: t.questionnaireId, name: t.questionnaireName || t.questionnaireId, score: Math.round(t.percentageScore) }));
+                      return [];
+                    };
 
-                  const { data: summary, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
-                  if (error) throw new Error(error?.message || "Erro ao conectar com o servidor de IA");
-                  if (!summary || summary?.error) throw new Error(summary?.error || "Resposta inválida da IA");
-                  if (!summary.narrative || !summary.conclusion || !summary.recommendation) {
-                    throw new Error("Resumo incompleto gerado pela IA. Tente novamente.");
+                    const payload = {
+                      assessments: [
+                        { date: firstA.created_at, pain_score: firstA.pain_score, hypothesis: firstA.diagnosis?.hypothesis, pain_regions: firstA.pain_regions || [], questionnaires: normalizeQ(firstA.test_results) },
+                        { date: lastA.created_at, pain_score: lastA.pain_score, hypothesis: lastA.diagnosis?.hypothesis, pain_regions: lastA.pain_regions || [], questionnaires: normalizeQ(lastA.test_results) },
+                      ],
+                      language,
+                    };
+
+                    const { data: summaryData, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
+                    if (error) throw new Error(error?.message || "Erro ao conectar com o servidor de IA");
+                    if (!summaryData || summaryData?.error) throw new Error(summaryData?.error || "Resposta inválida da IA");
+                    if (!summaryData.narrative || !summaryData.conclusion || !summaryData.recommendation) {
+                      throw new Error("Resumo incompleto gerado pela IA. Tente novamente.");
+                    }
+                    summary = summaryData;
                   }
 
                   const blob = await generateEvolutionPdfBlob({
@@ -1014,10 +1040,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     professionalLogoUrl,
                   });
 
-                  // Upload to bucket for sharing
-                  const fileName = `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
-                  const { error: uploadError } = await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
-
                   // Download
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
@@ -1026,12 +1048,18 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   a.click();
                   URL.revokeObjectURL(url);
 
-                  // WhatsApp share option
-                  if (!uploadError) {
-                    const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
-                    if (publicUrl?.publicUrl) {
-                      const whatsappText = encodeURIComponent(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`);
-                      window.open(`https://wa.me/?text=${whatsappText}`, "_blank");
+                  if (!isDemo) {
+                    // Upload to bucket for sharing (real mode only)
+                    const fileName = `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
+                    const { error: uploadError } = await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
+
+                    // WhatsApp share option
+                    if (!uploadError) {
+                      const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
+                      if (publicUrl?.publicUrl) {
+                        const whatsappText = encodeURIComponent(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`);
+                        window.open(`https://wa.me/?text=${whatsappText}`, "_blank");
+                      }
                     }
                   }
 
@@ -1160,6 +1188,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           assessment={latestWithDiagnosis}
           existingImpression={latestWithDiagnosis.diagnosis?.clinicalImpression}
           allAssessments={patient?.assessments}
+          isDemo={isDemo}
         />
       )}
 
