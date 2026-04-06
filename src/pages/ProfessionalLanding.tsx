@@ -81,16 +81,16 @@ const ProfessionalLanding = () => {
   ];
 
   const features = [
-    { icon: Link2, key: "b2b.feature_1" },
-    { icon: LayoutDashboard, key: "b2b.feature_2" },
-    { icon: User, key: "b2b.feature_3" },
-    { icon: Brain, key: "b2b.feature_4" },
-    { icon: Stethoscope, key: "b2b.feature_5" },
-    { icon: Zap, key: "b2b.feature_6" },
-    { icon: RefreshCw, key: "b2b.feature_7" },
-    { icon: Dumbbell, key: "b2b.feature_8" },
-    { icon: Palette, key: "b2b.feature_9" },
-    { icon: TrendingUp, key: "b2b.feature_10" },
+    { icon: Link2, key: "b2b.feature_1", descKey: "b2b.feature_1_desc" },
+    { icon: LayoutDashboard, key: "b2b.feature_2", descKey: "b2b.feature_2_desc" },
+    { icon: User, key: "b2b.feature_3", descKey: "b2b.feature_3_desc" },
+    { icon: Brain, key: "b2b.feature_4", descKey: "b2b.feature_4_desc" },
+    { icon: Stethoscope, key: "b2b.feature_5", descKey: "b2b.feature_5_desc" },
+    { icon: Zap, key: "b2b.feature_6", descKey: "b2b.feature_6_desc" },
+    { icon: RefreshCw, key: "b2b.feature_7", descKey: "b2b.feature_7_desc" },
+    { icon: Dumbbell, key: "b2b.feature_8", descKey: "b2b.feature_8_desc" },
+    { icon: Palette, key: "b2b.feature_9", descKey: "b2b.feature_9_desc" },
+    { icon: TrendingUp, key: "b2b.feature_10", descKey: "b2b.feature_10_desc" },
   ];
 
   const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3", "b2b.faq4", "b2b.faq5", "b2b.faq6"];
@@ -310,7 +310,7 @@ const ProfessionalLanding = () => {
         </div>
       </section>
 
-      {/* Panel Features */}
+      {/* Panel Features with hover details */}
       <section className="py-16 md:py-20">
         <div className="container max-w-4xl mx-auto px-4">
           <motion.h2
@@ -319,18 +319,88 @@ const ProfessionalLanding = () => {
           >
             {t("b2b.features_title")}
           </motion.h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {features.map((f, i) => (
+          <TooltipProvider delayDuration={200}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {features.map((f, i) => (
+                <Tooltip key={i}>
+                  <TooltipTrigger asChild>
+                    <motion.div
+                      initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i}
+                      className="flex items-start gap-3 rounded-lg border border-border/50 bg-card/60 p-4 cursor-default hover:border-primary/30 hover:shadow-md hover:bg-card/90 transition-all duration-200"
+                    >
+                      <f.icon className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                      <span className="text-sm text-foreground">{t(f.key)}</span>
+                    </motion.div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs text-xs">
+                    {t(f.descKey)}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
+        </div>
+      </section>
+
+      {/* LGPD / Security Badge */}
+      <section className="py-10 md:py-14">
+        <div className="container max-w-3xl mx-auto px-4">
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
+            className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6 md:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-center sm:text-left"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 shrink-0">
+              <ShieldCheck className="h-7 w-7 text-primary" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 justify-center sm:justify-start mb-1">
+                <h3 className="font-semibold text-foreground">{t("b2b.lgpd_title")}</h3>
+                <Badge variant="outline" className="border-primary/30 text-primary text-[10px] px-2">
+                  {t("b2b.lgpd_badge")}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">{t("b2b.lgpd_desc")}</p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ROI Section */}
+      <section className="py-16 md:py-20 bg-muted/30">
+        <div className="container max-w-4xl mx-auto px-4">
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
+            className="text-center mb-10"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">{t("b2b.roi_title")}</h2>
+            <p className="text-muted-foreground text-base md:text-lg">{t("b2b.roi_subtitle")}</p>
+          </motion.div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+            {[
+              { icon: Timer, title: "b2b.roi_time_saved", desc: "b2b.roi_time_desc" },
+              { icon: Users, title: "b2b.roi_patients", desc: "b2b.roi_patients_desc" },
+              { icon: DollarSign, title: "b2b.roi_revenue", desc: "b2b.roi_revenue_desc" },
+              { icon: TrendingUp, title: "b2b.roi_monthly", desc: "b2b.roi_monthly_desc" },
+            ].map((item, i) => (
               <motion.div
                 key={i}
                 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i}
-                className="flex items-start gap-3 rounded-lg border border-border/50 bg-card/60 p-4"
+                className="rounded-xl border border-border/60 bg-card/80 p-5 text-center"
               >
-                <f.icon className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                <span className="text-sm text-foreground">{t(f.key)}</span>
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 mb-3">
+                  <item.icon className="h-5 w-5 text-primary" />
+                </div>
+                <p className="font-bold text-foreground text-lg mb-1">{t(item.title)}</p>
+                <p className="text-sm text-muted-foreground">{t(item.desc)}</p>
               </motion.div>
             ))}
           </div>
+          <motion.p
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={4}
+            className="text-center text-sm font-medium text-primary italic"
+          >
+            {t("b2b.roi_conclusion")}
+          </motion.p>
         </div>
       </section>
 
