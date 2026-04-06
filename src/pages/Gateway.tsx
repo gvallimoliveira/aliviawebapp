@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import ReferralBanner from "@/components/ReferralBanner";
 import { motion } from "framer-motion";
-import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain } from "lucide-react";
+import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -220,6 +220,10 @@ const Gateway = () => {
                   <FileText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.patient.bullet5")}
                 </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground">
+                  <Users className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  {t("gateway.patient.bullet6")}
+                </li>
               </ul>
               <Button
                 size="lg"
@@ -248,20 +252,24 @@ const Gateway = () => {
                   {t("gateway.pro.bullet1")}
                 </li>
                 <li className="flex items-start gap-2.5 text-sm text-foreground">
-                  <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <Brain className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.pro.bullet2")}
                 </li>
                 <li className="flex items-start gap-2.5 text-sm text-foreground">
-                  <BarChart3 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.pro.bullet3")}
                 </li>
                 <li className="flex items-start gap-2.5 text-sm text-foreground">
-                  <Activity className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <BarChart3 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.pro.bullet4")}
                 </li>
                 <li className="flex items-start gap-2.5 text-sm text-foreground">
-                  <Brain className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <Activity className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.pro.bullet5")}
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground">
+                  <Users className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  {t("gateway.pro.bullet6")}
                 </li>
               </ul>
               <Button
