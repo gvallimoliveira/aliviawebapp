@@ -324,7 +324,7 @@ const Gateway = () => {
           <motion.div
             id="about"
             initial="hidden" animate="visible" variants={fadeUp} custom={6}
-            className="mt-12 max-w-2xl mx-auto rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-6 md:p-8 text-center"
+            className="hidden md:block mt-12 max-w-2xl mx-auto rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-6 md:p-8 text-center"
           >
             <div className="flex justify-center mb-4">
               <img
