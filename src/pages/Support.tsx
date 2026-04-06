@@ -108,6 +108,12 @@ const Support = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container py-12 md:py-20">
+        {user && (
+          <Button variant="ghost" size="sm" className="gap-2 mb-4" onClick={() => navigate("/dashboard")}>
+            <Heart className="h-4 w-4" />
+            {language === "pt" ? "Meu Painel" : language === "es" ? "Mi Panel" : "My Dashboard"}
+          </Button>
+        )}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
