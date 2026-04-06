@@ -45,8 +45,8 @@ serve(async (req) => {
     }
 
     const priceId = plan === "annual"
-      ? "price_1TBkc72HgVhVBE8UmxiIVoJV"  // Annual R$418,80/year (subscription)
-      : "price_1TBkbt2HgVhVBE8U4UvTqFpY";  // Monthly R$49/month
+      ? "price_1TJ42L2HgVhVBE8U2fhXuqYT"  // Annual R$804/year (subscription)
+      : "price_1TJ4252HgVhVBE8URcx5fMZB";  // Monthly R$97/month
 
     // Both are now subscriptions (monthly or yearly)
     const sessionMode = "subscription";
