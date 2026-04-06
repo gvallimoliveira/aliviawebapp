@@ -3,6 +3,13 @@ import App from "./App.tsx";
 import "./i18n";
 import "./index.css";
 
+const rootElement = document.getElementById("root");
+
+function renderApp() {
+  if (!rootElement) return;
+  createRoot(rootElement).render(<App />);
+}
+
 // PWA: Register service worker — defer SKIP_WAITING to PwaUpdateGuard
 const isInIframe = (() => {
   try { return window.self !== window.top; } catch { return true; }
@@ -11,11 +18,42 @@ const isPreviewHost =
   window.location.hostname.includes("id-preview--") ||
   window.location.hostname.includes("lovableproject.com");
 
-if (isPreviewHost || isInIframe) {
-  navigator.serviceWorker?.getRegistrations().then((regs) =>
-    regs.forEach((r) => r.unregister())
-  );
-} else {
+const PREVIEW_SW_RESET_KEY = "__previewSwResetDone";
+
+async function clearPreviewCaches() {
+  if (!("caches" in window)) return;
+  const cacheKeys = await caches.keys();
+  await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
+}
+
+async function preparePreviewEnvironment() {
+  const registrations = (await navigator.serviceWorker?.getRegistrations?.()) ?? [];
+
+  await Promise.all(registrations.map((registration) => registration.unregister()));
+  await clearPreviewCaches();
+
+  const needsOneTimeReload =
+    (registrations.length > 0 || Boolean(navigator.serviceWorker?.controller)) &&
+    sessionStorage.getItem(PREVIEW_SW_RESET_KEY) !== "true";
+
+  if (needsOneTimeReload) {
+    sessionStorage.setItem(PREVIEW_SW_RESET_KEY, "true");
+    window.location.reload();
+    return false;
+  }
+
+  sessionStorage.removeItem(PREVIEW_SW_RESET_KEY);
+  return true;
+}
+
+async function bootstrap() {
+  if (isPreviewHost || isInIframe) {
+    const canRender = await preparePreviewEnvironment();
+    if (!canRender) return;
+    renderApp();
+    return;
+  }
+
   import("virtual:pwa-register").then(({ registerSW }) => {
     registerSW({
       immediate: true,
@@ -63,6 +101,8 @@ if (isPreviewHost || isInIframe) {
       window.location.reload();
     });
   });
+
+  renderApp();
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+void bootstrap();
