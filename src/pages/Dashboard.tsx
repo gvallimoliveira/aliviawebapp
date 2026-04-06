@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PainDiary from "@/components/dashboard/PainDiary";
 import ExerciseChecklist from "@/components/dashboard/ExerciseChecklist";
 import EvolutionSummary from "@/components/dashboard/EvolutionSummary";
+import AdaptiveProgressionCard from "@/components/dashboard/AdaptiveProgressionCard";
 import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
 import ReferralCard from "@/components/dashboard/ReferralCard";
 import ProDashboard from "@/components/dashboard/ProDashboard";
@@ -172,6 +173,9 @@ const Dashboard = () => {
 
       {/* Exercise Checklist */}
       <ExerciseChecklist />
+
+      {/* AI Adaptive Progression - only for self-service premium */}
+      <AdaptiveProgressionCard premiumAccess={premiumAccess} assessments={assessments} />
 
       {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
         <div data-onboarding="patient-diary"><PainDiary /></div>
