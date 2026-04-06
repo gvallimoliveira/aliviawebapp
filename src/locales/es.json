@@ -922,6 +922,8 @@
   "gateway.patient.bullet1": "Evaluación guiada sin salir de casa",
   "gateway.patient.bullet2": "Diagnóstico preliminar en minutos",
   "gateway.patient.bullet3": "Plan de tratamiento personalizado",
+  "gateway.patient.bullet4": "Cuestionarios validados científicamente",
+  "gateway.patient.bullet5": "Generación de informe PDF de la evaluación",
   "gateway.patient.cta": "Comenzar mi evaluación",
   "gateway.pro.title": "Soy fisioterapeuta",
   "gateway.pro.desc": "Potencie sus consultas con triaje inteligente y datos estructurados.",

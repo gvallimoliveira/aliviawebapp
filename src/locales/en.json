@@ -922,6 +922,8 @@
   "gateway.patient.bullet1": "Guided assessment from home",
   "gateway.patient.bullet2": "Preliminary diagnosis in minutes",
   "gateway.patient.bullet3": "Personalized treatment plan",
+  "gateway.patient.bullet4": "Scientifically validated questionnaires",
+  "gateway.patient.bullet5": "PDF assessment report generation",
   "gateway.patient.cta": "Start my assessment",
   "gateway.pro.title": "I'm a physiotherapist",
   "gateway.pro.desc": "Supercharge your consultations with smart triage and structured data.",
