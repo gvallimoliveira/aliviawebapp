@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   PRO_PLAN_PRICE_FORMATTED,
+  PRO_PLAN_ANNUAL_PRICE_FORMATTED,
+  PRO_PLAN_ANNUAL_TOTAL,
   PRO_LIFETIME_TREATMENT_PRICE_FORMATTED,
   PRO_LIFETIME_TREATMENT_ORIGINAL_FORMATTED,
 } from "@/constants/pricing";
@@ -16,11 +18,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
-  MessageCircle, CheckCircle, XCircle, UserCheck,
+  MessageCircle, CheckCircle, XCircle, UserCheck, Play, ToggleLeft,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
@@ -37,6 +40,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean } | null>(null);
   const [subLoading, setSubLoading] = useState(true);
@@ -48,7 +52,16 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [lifetimeLoading, setLifetimeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  // Tour is now managed by Dashboard.tsx unified onboarding
+  const [isSimulated, setIsSimulated] = useState(false);
+  const [billingAnnual, setBillingAnnual] = useState(true);
+
+  // Welcome card for new subscribers
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return localStorage.getItem("pro_onboarding_completed") !== "true";
+  });
+
+  // Check if this is a new registration requiring subscription
+  const isSubscribeFlow = searchParams.get("subscribe") === "true";
 
   useEffect(() => {
     checkSubscription();
@@ -84,7 +97,6 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       .order("created_at", { ascending: false });
     if (!refs || refs.length === 0) { setReferrals([]); return; }
     setReferrals(refs);
-    // Fetch patient names
     const userIds: string[] = Array.from(new Set(refs.map((r: any) => String(r.patient_user_id))));
     const profiles: Record<string, string> = {};
     for (const uid of userIds) {
@@ -168,7 +180,6 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     }
   };
 
-  // Check if professional registered within last 30 days for urgency pricing
   const isWithinFirstMonth = useMemo(() => {
     if (!professional?.created_at) return false;
     const created = new Date(professional.created_at);
@@ -194,10 +205,13 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   };
 
   const handleDownloadPdf = async (assessment: any) => {
+    if (isSimulated) {
+      toast({ title: "📋 Disponível apenas com dados reais", description: "No modo simulado, a geração de PDF é demonstrativa." });
+      return;
+    }
     if (!assessment.diagnosis) return;
     try {
       const lang = document.documentElement.lang === "en" ? "en" : "pt";
-      // Fetch professional note for this assessment
       let proNote: string | undefined;
       if (professional?.id) {
         const { data } = await supabase
@@ -226,6 +240,10 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   };
 
   const handleShareWhatsApp = async (assessment: any) => {
+    if (isSimulated) {
+      toast({ title: "📋 Disponível apenas com dados reais", description: "No modo simulado, o compartilhamento é demonstrativo." });
+      return;
+    }
     if (!assessment.diagnosis) return;
     try {
       const lang = document.documentElement.lang === "en" ? "en" : "pt";
@@ -250,18 +268,14 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         professionalNotes: proNote,
         professionalLogoUrl: professional?.logo_url || undefined,
       });
-
       const filePath = `${assessment.id}_pro.pdf`;
       const { error: uploadError } = await supabase.storage
         .from("assessment-reports")
         .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
-
       if (uploadError) throw uploadError;
-
       const { data: urlData } = supabase.storage
         .from("assessment-reports")
         .getPublicUrl(filePath);
-
       const origin = getPublicOrigin();
       const patientLabel = assessment.patient_name || "Paciente";
       const text = `🩺 *Aliv.iA — Relatório Profissional*\n\n👤 *Paciente:* ${patientLabel}\n📋 *Hipótese:* ${assessment.diagnosis.hypothesis}\n\n📄 Relatório em PDF:\n${urlData.publicUrl}\n\n💡 ${origin}`;
@@ -291,164 +305,128 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     );
   }
 
-  // Use mock data for demo when not subscribed
-  const displayAssessments = subscription?.subscribed ? patientAssessments : mockPatientAssessments;
-  const displayThisMonthCount = subscription?.subscribed ? thisMonthCount : 2;
-  const displayTotalCount = subscription?.subscribed ? patientAssessments.length : mockPatientAssessments.length;
-
-  const renderBlurOverlay = () => (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-xl">
-      <div className="text-center max-w-sm px-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mx-auto mb-4">
-          <Lock className="h-7 w-7 text-primary" />
-        </div>
-        <h3 className="text-lg font-bold text-foreground mb-2">{t("pro.paywall_title")}</h3>
-        <p className="text-sm text-muted-foreground mb-4">{t("pro.paywall_desc")}</p>
-        <div className="text-2xl font-bold text-foreground mb-4">{PRO_PLAN_PRICE_FORMATTED}</div>
-        <Button
-          onClick={() => handleSubscribe()}
-          disabled={checkoutLoading}
-          className="w-full rounded-xl gap-2"
-          size="lg"
-        >
-          {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-          {t("pro.subscribe_cta")}
-        </Button>
-      </div>
-    </div>
-  );
-
-  // Paywall — professional not subscribed: show blurred preview
-  if (!subscription?.subscribed) {
+  // ── Plan Selection Screen (mandatory for new registrants without subscription) ──
+  if (!subscription?.subscribed && (isSubscribeFlow || professional.subscription_status === "inactive")) {
     return (
-      <div className="space-y-6">
-        {/* Demo badge */}
-        <Card data-onboarding="pro-welcome" className="border-primary/20 bg-primary/5">
-          <CardContent className="py-3 px-5 flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-primary shrink-0" />
-            <p className="text-sm text-foreground">
-              {t("pro.demo_notice")}
-            </p>
+      <div className="space-y-6 max-w-lg mx-auto py-4">
+        <div className="text-center space-y-2">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-3">
+            <Crown className="h-7 w-7 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground">Escolha seu plano</h2>
+          <p className="text-sm text-muted-foreground">
+            Para acessar o painel profissional com pacientes reais, escolha uma assinatura.
+          </p>
+        </div>
+
+        {/* Billing toggle */}
+        <div className="flex items-center justify-center gap-3">
+          <span className={`text-sm font-medium ${!billingAnnual ? "text-foreground" : "text-muted-foreground"}`}>Mensal</span>
+          <Switch checked={billingAnnual} onCheckedChange={setBillingAnnual} />
+          <span className={`text-sm font-medium ${billingAnnual ? "text-foreground" : "text-muted-foreground"}`}>
+            Anual
+            <Badge variant="outline" className="ml-1.5 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200">
+              -31%
+            </Badge>
+          </span>
+        </div>
+
+        {/* Plan card */}
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10">
+          <CardContent className="py-6 space-y-4">
+            <div className="text-center">
+              <p className="text-sm font-medium text-muted-foreground mb-1">Plano Profissional</p>
+              <p className="text-4xl font-bold text-foreground">
+                {billingAnnual ? PRO_PLAN_ANNUAL_PRICE_FORMATTED : PRO_PLAN_PRICE_FORMATTED}
+              </p>
+              {billingAnnual && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cobrado R$ {PRO_PLAN_ANNUAL_TOTAL}/ano • ~R$ 2,30/dia
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2 text-sm">
+              {[
+                "Link de triagem personalizado",
+                "Painel completo de pacientes",
+                "Diagnóstico e impressão clínica com IA",
+                "Relatórios evolutivos em PDF",
+                "Programas de exercícios (HEP)",
+                "Marketplace de profissionais",
+              ].map((feat) => (
+                <div key={feat} className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span className="text-foreground">{feat}</span>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              onClick={() => handleSubscribe(billingAnnual ? "annual" : "monthly")}
+              disabled={checkoutLoading}
+              className="w-full rounded-xl gap-2"
+              size="lg"
+            >
+              {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+              {billingAnnual ? "Assinar plano anual" : "Assinar plano mensal"}
+            </Button>
           </CardContent>
         </Card>
-
-        {/* Blurred Generate Link */}
-        <div data-onboarding="pro-link" className="relative">
-          <Card className="border-primary/20 opacity-60">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Link2 className="h-4 w-4 text-primary" />
-                {t("pro.generate_link_title")}
-              </CardTitle>
-              <CardDescription className="text-sm">{t("pro.generate_link_desc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-                  {getPublicOrigin()}/assessment/professional/seu-id
-                </code>
-                <Button variant="outline" className="gap-1.5 rounded-xl shrink-0" disabled>
-                  <Copy className="h-4 w-4" />
-                  {t("referral.copy_link")}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          {renderBlurOverlay()}
-        </div>
-
-        {/* Stats with mock */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="py-4 text-center">
-              <p className="text-3xl font-bold text-foreground">{displayTotalCount}</p>
-              <p className="text-xs text-muted-foreground mt-1">{t("pro.total_assessments")}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="py-4 text-center">
-              <p className="text-3xl font-bold text-primary">{displayThisMonthCount}</p>
-              <p className="text-xs text-muted-foreground mt-1">{t("pro.this_month")}</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Analytics Charts (demo) */}
-        <div className="opacity-60">
-          <ProAnalyticsCharts assessments={displayAssessments} />
-        </div>
-
-        {/* Blurred patient list & dashboard */}
-        <div data-onboarding="pro-patients" className="relative min-h-[300px]">
-          <Tabs data-onboarding="pro-subscription" defaultValue="assessments" className="w-full">
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="assessments" className="gap-1.5">
-                <Users className="h-4 w-4" />
-                {t("pro.patient_assessments")}
-              </TabsTrigger>
-              <TabsTrigger value="evolution" className="gap-1.5">
-                <Activity className="h-4 w-4" />
-                {t("pro.patients_title")}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="assessments">
-              <div className="space-y-2 opacity-60">
-                {displayAssessments.map((a: any) => {
-                  const regions = (a.pain_regions || []).map((r: string) => painRegionLabels[r] || r).slice(0, 3);
-                  return (
-                    <Card key={a.id} className="border-border/60">
-                      <CardContent className="py-3 px-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex-1 space-y-1.5 min-w-0">
-                            <p className="text-sm font-semibold text-foreground">{a.patient_name}</p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Calendar className="h-3 w-3" />
-                              {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-                              {a.pain_score != null && <span>• Dor: {a.pain_score}/10</span>}
-                            </div>
-                            {a.diagnosis?.hypothesis && (
-                              <p className="text-sm font-medium text-foreground line-clamp-1">{a.diagnosis.hypothesis}</p>
-                            )}
-                            {regions.length > 0 && (
-                              <div className="flex items-center gap-1 flex-wrap">
-                                <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-                                {regions.map((r: string, i: number) => (
-                                  <span key={i} className="text-[10px] bg-muted/60 text-muted-foreground px-1.5 py-0.5 rounded-full">{r}</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="evolution">
-              <div className="opacity-60">
-                <DashboardErrorBoundary>
-                  <PatientEvolutionDashboard
-                    assessments={displayAssessments as any}
-                    professionalId={professional.id}
-                  />
-                </DashboardErrorBoundary>
-              </div>
-            </TabsContent>
-          </Tabs>
-          {renderBlurOverlay()}
-        </div>
-
       </div>
     );
   }
 
+  // Decide which data to show based on toggle
+  const showingSimulated = isSimulated || (!subscription?.subscribed);
+  const displayAssessments = showingSimulated ? mockPatientAssessments : patientAssessments;
+  const displayThisMonthCount = showingSimulated ? 2 : thisMonthCount;
+  const displayTotalCount = showingSimulated ? mockPatientAssessments.length : patientAssessments.length;
+
+  // ── Welcome card handler ──
+  const handleStartSimulated = () => {
+    setIsSimulated(true);
+    setShowWelcome(false);
+    localStorage.setItem("pro_onboarding_completed", "true");
+  };
+
+  const handleDismissWelcome = () => {
+    setShowWelcome(false);
+    localStorage.setItem("pro_onboarding_completed", "true");
+  };
+
   // Active subscriber dashboard
   return (
     <div className="space-y-6">
+      {/* Welcome card for new subscribers */}
+      {showWelcome && subscription?.subscribed && (
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <CardContent className="py-6 space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 shrink-0">
+                <Sparkles className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 space-y-2">
+                <h3 className="text-lg font-bold text-foreground">Bem-vindo ao Painel Profissional! 🎉</h3>
+                <p className="text-sm text-muted-foreground">
+                  Sua assinatura está ativa. Como você ainda não tem pacientes cadastrados, que tal conhecer o ambiente com dados simulados?
+                </p>
+                <div className="flex items-center gap-3 pt-1">
+                  <Button onClick={handleStartSimulated} className="rounded-xl gap-2">
+                    <Play className="h-4 w-4" />
+                    Conhecer ambiente simulado
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleDismissWelcome}>
+                    Pular
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Status bar */}
       <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
         <CardContent className="py-4 px-5 flex items-center justify-between flex-wrap gap-3">
@@ -472,6 +450,17 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Simulated toggle */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {isSimulated ? "Painel Simulado" : "Painel Pro"}
+              </span>
+              <Switch
+                checked={isSimulated}
+                onCheckedChange={setIsSimulated}
+                className="scale-90"
+              />
+            </div>
             <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl">
               <Settings className="h-3.5 w-3.5" />
               {t("pro.edit_profile")}
@@ -486,8 +475,20 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </CardContent>
       </Card>
 
+      {/* Simulated mode banner */}
+      {isSimulated && (
+        <Card className="border-amber-200 bg-amber-500/5">
+          <CardContent className="py-3 px-5 flex items-center gap-3">
+            <ToggleLeft className="h-5 w-5 text-amber-600 shrink-0" />
+            <p className="text-sm text-amber-800">
+              <span className="font-semibold">Modo simulado ativo.</span> Você está visualizando dados fictícios para conhecer a plataforma. Desative o toggle para ver seus dados reais.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Lifetime Treatment Upsell — only for non-lifetime pros */}
-      {!professional.lifetime_treatment && (isWithinFirstMonth ? (
+      {!isSimulated && !professional.lifetime_treatment && (isWithinFirstMonth ? (
         <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardContent className="py-5">
@@ -553,48 +554,50 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       ))}
 
       {/* Generate Link */}
-      <Card data-onboarding="pro-link" className="border-primary/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Link2 className="h-4 w-4 text-primary" />
-            {t("pro.generate_link_title")}
-          </CardTitle>
-          <CardDescription className="text-sm">{t("pro.generate_link_desc")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-              {getPublicOrigin()}/assessment/professional/{professional.id}
-            </code>
-            <Button onClick={copyLink} variant="outline" className="gap-1.5 rounded-xl shrink-0">
-              {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-              {linkCopied ? t("referral.copied") : t("referral.copy_link")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {!isSimulated && (
+        <Card data-onboarding="pro-link" className="border-primary/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Link2 className="h-4 w-4 text-primary" />
+              {t("pro.generate_link_title")}
+            </CardTitle>
+            <CardDescription className="text-sm">{t("pro.generate_link_desc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
+                {getPublicOrigin()}/assessment/professional/{professional.id}
+              </code>
+              <Button onClick={copyLink} variant="outline" className="gap-1.5 rounded-xl shrink-0">
+                {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                {linkCopied ? t("referral.copied") : t("referral.copy_link")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="py-4 text-center">
-            <p className="text-3xl font-bold text-foreground">{patientAssessments.length}</p>
+            <p className="text-3xl font-bold text-foreground">{displayTotalCount}</p>
             <p className="text-xs text-muted-foreground mt-1">{t("pro.total_assessments")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="py-4 text-center">
-            <p className="text-3xl font-bold text-primary">{thisMonthCount}</p>
+            <p className="text-3xl font-bold text-primary">{displayThisMonthCount}</p>
             <p className="text-xs text-muted-foreground mt-1">{t("pro.this_month")}</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Analytics Charts */}
-      <ProAnalyticsCharts assessments={patientAssessments} />
+      <ProAnalyticsCharts assessments={displayAssessments} />
 
-      {/* Referrals Section */}
-      {referrals.length > 0 && (
+      {/* Referrals Section — only in real mode */}
+      {!isSimulated && referrals.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -673,12 +676,13 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       <div data-onboarding="pro-patients">
         <DashboardErrorBoundary>
           <PatientEvolutionDashboard
-            assessments={patientAssessments}
+            assessments={displayAssessments as any}
             professionalId={professional.id}
             lifetimeTreatment={professional.lifetime_treatment}
             professionalLogoUrl={professional.logo_url}
             onDownloadPdf={handleDownloadPdf}
             onShareWhatsApp={handleShareWhatsApp}
+            isDemo={showingSimulated}
           />
         </DashboardErrorBoundary>
       </div>
