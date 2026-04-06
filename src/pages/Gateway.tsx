@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { setSeo } from "@/lib/seo";
+import LgpdBadge from "@/components/LgpdBadge";
 import logoAlivia from "@/assets/logo-alivia.png";
 import guilhermePhoto from "@/assets/guilherme-founder.jpeg";
 
@@ -343,6 +344,8 @@ const Gateway = () => {
           </motion.div>
         </div>
       </main>
+
+      <LgpdBadge />
 
       {/* Footer minimal */}
       <footer className="relative z-10 border-t border-border/40 bg-muted/20 py-6">
