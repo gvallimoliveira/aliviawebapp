@@ -406,7 +406,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
 };
 
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, onDownloadPdf, onShareWhatsApp }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, onDownloadPdf, onShareWhatsApp, isDemo }: PatientEvolutionDashboardProps) => {
 
   const { t, language } = useLanguage();
   const navigate = useNavigate();
