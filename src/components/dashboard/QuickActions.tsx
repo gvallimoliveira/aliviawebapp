@@ -7,10 +7,9 @@ import { ClipboardList, Sparkles, Users, Crown } from "lucide-react";
 interface QuickActionsProps {
   hasPremiumAccess?: boolean;
   premiumLoading: boolean;
-  hasProfessional: boolean;
 }
 
-const QuickActions = ({ hasPremiumAccess, premiumLoading, hasProfessional }: QuickActionsProps) => {
+const QuickActions = ({ hasPremiumAccess, premiumLoading }: QuickActionsProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
