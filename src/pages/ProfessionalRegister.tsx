@@ -290,16 +290,14 @@ const ProfessionalRegister = () => {
 
       if (existing) {
         await (supabase.from("professionals" as any) as any).update(payload).eq("id", existing.id);
+        toast({ title: t("prof.saved") });
+        navigate("/dashboard?tab=professional");
       } else {
         await (supabase.from("professionals" as any) as any).insert(payload);
-      }
-      toast({ title: existing ? t("prof.saved") : t("prof.submitted_for_review") });
-      if (!existing) {
-        const { data: newData } = await (supabase.from("professionals" as any) as any)
-          .select("*").eq("user_id", user.id).maybeSingle();
-        if (newData) setExisting(newData);
-      } else {
-        navigate("/dashboard");
+        toast({ title: t("prof.submitted_for_review") });
+        // After new registration, redirect to dashboard with subscribe flag
+        // so the plan selection screen is shown immediately
+        navigate("/dashboard?tab=professional&subscribe=true");
       }
     } catch {
       toast({ title: t("prof.error"), variant: "destructive" });
