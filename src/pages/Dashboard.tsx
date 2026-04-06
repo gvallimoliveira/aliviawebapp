@@ -161,7 +161,7 @@ const Dashboard = () => {
   const renderClientContent = () => (
     <>
       <UpgradeBanner premiumAccess={premiumAccess} premiumLoading={premiumLoading} professional={professional} push={push} />
-      <QuickActions hasPremiumAccess={premiumAccess?.has_access} premiumLoading={premiumLoading} hasProfessional={!!professional} />
+      <QuickActions hasPremiumAccess={premiumAccess?.has_access} premiumLoading={premiumLoading} />
       <ReferralCard availableDiscount={premiumAccess?.available_discount} />
 
       {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
