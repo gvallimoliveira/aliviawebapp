@@ -332,7 +332,7 @@ Deno.serve(async (req) => {
 
     // 8. SMART ALERTS — notify professionals on pain spikes or patient inactivity
     try {
-      // 8a. Pain spike: latest diary entry 3+ above patient's average
+      // 8a. Pain spike: latest diary entry 2+ above patient's average
       const { data: recentDiary } = await supabase
         .from("pain_diary_entries")
         .select("user_id, pain_score, logged_at")
@@ -354,7 +354,7 @@ Deno.serve(async (req) => {
         for (const [userId, data] of userEntries) {
           if (data.scores.length < 3) continue;
           const avg = data.scores.slice(1).reduce((a, b) => a + b, 0) / (data.scores.length - 1);
-          if (data.latest >= avg + 3 && data.latestDate >= threeDaysAgoStr) spikeUsers.push(userId);
+          if (data.latest >= avg + 2 && data.latestDate >= threeDaysAgoStr) spikeUsers.push(userId);
         }
 
         if (spikeUsers.length > 0) {
