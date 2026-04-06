@@ -429,18 +429,18 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
-    if (!professionalId) return;
+    if (!professionalId || isDemo) return;
     (supabase.from("professional_hidden_patients" as any) as any)
       .select("patient_email")
       .eq("professional_id", professionalId)
       .then(({ data }: any) => {
         if (data) setHiddenKeys(new Set(data.map((d: any) => d.patient_email)));
       });
-  }, [professionalId]);
+  }, [professionalId, isDemo]);
 
   // Load HEP history for selected patient
   useEffect(() => {
-    if (!professionalId || !selectedEmail) { setHepHistory([]); return; }
+    if (!professionalId || !selectedEmail || isDemo) { setHepHistory([]); return; }
     setHepHistoryLoading(true);
     (supabase.from("exercise_programs") as any)
       .select("id, token, patient_name, created_at, expires_at, notes, assessment_id")
@@ -450,7 +450,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         setHepHistory(data || []);
         setHepHistoryLoading(false);
       });
-  }, [professionalId, selectedEmail, hepModalOpen]);
+  }, [professionalId, selectedEmail, hepModalOpen, isDemo]);
   const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!professionalId || archiving || !groupKey) return;
@@ -487,7 +487,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
   // Load notes for all assessments
   useEffect(() => {
-    if (!professionalId || assessments.length === 0) return;
+    if (!professionalId || assessments.length === 0 || isDemo) return;
     const assessmentIds = assessments.map((a) => a.id);
     supabase
       .from("professional_notes")
@@ -501,7 +501,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           setNotes(map);
         }
       });
-  }, [professionalId, assessments]);
+  }, [professionalId, assessments, isDemo]);
 
   const saveNote = useCallback((assessmentId: string, content: string) => {
     if (!professionalId) return;
