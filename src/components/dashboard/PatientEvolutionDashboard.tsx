@@ -322,25 +322,39 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
   const generate = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
-        body: {
-          anamnesisData: assessment.anamnesis_data,
-          painRegions: assessment.pain_regions,
-          painScore: assessment.pain_score,
-          questionnaireResults: assessment.test_results,
-          diagnosis: assessment.diagnosis,
-          language,
-          assessmentTimeline: buildTimeline(),
-        },
-      });
-      if (error) throw error;
-      const ci = data?.clinicalImpression;
-      if (!ci?.overview) throw new Error("Empty response");
-      setImpression(ci);
+      if (isDemo) {
+        // Use mock clinical impression data
+        await new Promise((r) => setTimeout(r, 1200)); // Simulate delay
+        const mockCI = mockClinicalImpressions[assessment.id];
+        if (mockCI) {
+          setImpression(mockCI);
+        } else {
+          setImpression({
+            overview: "Impressão clínica simulada para demonstração. Em dados reais, a IA analisará todos os dados clínicos do paciente.",
+            therapeuticObjectives: ["Objetivo terapêutico simulado 1", "Objetivo terapêutico simulado 2"],
+          });
+        }
+      } else {
+        const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
+          body: {
+            anamnesisData: assessment.anamnesis_data,
+            painRegions: assessment.pain_regions,
+            painScore: assessment.pain_score,
+            questionnaireResults: assessment.test_results,
+            diagnosis: assessment.diagnosis,
+            language,
+            assessmentTimeline: buildTimeline(),
+          },
+        });
+        if (error) throw error;
+        const ci = data?.clinicalImpression;
+        if (!ci?.overview) throw new Error("Empty response");
+        setImpression(ci);
 
-      // Persist into diagnosis.clinicalImpression
-      const updatedDiagnosis = { ...(assessment.diagnosis || {}), clinicalImpression: ci };
-      await supabase.from("assessments").update({ diagnosis: updatedDiagnosis as any }).eq("id", assessment.id);
+        // Persist into diagnosis.clinicalImpression
+        const updatedDiagnosis = { ...(assessment.diagnosis || {}), clinicalImpression: ci };
+        await supabase.from("assessments").update({ diagnosis: updatedDiagnosis as any }).eq("id", assessment.id);
+      }
     } catch (err: any) {
       console.error("Clinical impression error:", err);
       toast({ title: "Erro", description: "Não foi possível gerar a impressão clínica.", variant: "destructive" });
