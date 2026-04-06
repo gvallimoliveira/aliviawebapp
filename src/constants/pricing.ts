@@ -17,22 +17,22 @@ export const PREMIUM_SINGLE_STRIPE = {
 };
 
 // Pro Mensal — B2B
-export const PRO_PLAN_PRICE = 49;
-export const PRO_PLAN_PRICE_FORMATTED = "R$ 49/mês";
+export const PRO_PLAN_PRICE = 97;
+export const PRO_PLAN_PRICE_FORMATTED = "R$ 97/mês";
 
 export const PRO_PLAN_STRIPE = {
-  product_id: "prod_U5dB77Y8adgxGf",
-  price_id: "price_1TBkbt2HgVhVBE8U4UvTqFpY",
+  product_id: "prod_UHdISwfBcfWftS",
+  price_id: "price_1TJ4252HgVhVBE8URcx5fMZB",
 };
 
-// Pro Anual — B2B (assinatura recorrente anual R$418,80)
-export const PRO_PLAN_ANNUAL_PRICE = 34.90;
-export const PRO_PLAN_ANNUAL_PRICE_FORMATTED = "R$ 34,90/mês";
-export const PRO_PLAN_ANNUAL_TOTAL = 418.80;
+// Pro Anual — B2B (assinatura recorrente anual R$804)
+export const PRO_PLAN_ANNUAL_PRICE = 67;
+export const PRO_PLAN_ANNUAL_PRICE_FORMATTED = "R$ 67/mês";
+export const PRO_PLAN_ANNUAL_TOTAL = 804;
 
 export const PRO_PLAN_ANNUAL_STRIPE = {
-  product_id: "prod_UBENhRLOTa0bHS",
-  price_id: "price_1TBkc72HgVhVBE8UmxiIVoJV",
+  product_id: "prod_UA4lNoezZmPwvs",
+  price_id: "price_1TJ42L2HgVhVBE8U2fhXuqYT",
 };
 
 // Pro Treatment avulso — R$29,90

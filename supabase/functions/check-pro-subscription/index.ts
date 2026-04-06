@@ -110,9 +110,10 @@ serve(async (req) => {
       limit: 10,
     });
 
-    // Filter only Pro subscriptions (prod_U5dB77Y8adgxGf)
+    // Filter only Pro subscriptions (monthly or annual product)
+    const proProductIds = ["prod_UHdISwfBcfWftS", "prod_UA4lNoezZmPwvs"];
     const proSub = subscriptions.data.find(sub =>
-      sub.items.data.some(item => item.price.product === "prod_U5dB77Y8adgxGf")
+      sub.items.data.some(item => proProductIds.includes(item.price.product as string))
     );
     const hasActiveSub = !!proSub;
     let subscriptionEnd = null;
