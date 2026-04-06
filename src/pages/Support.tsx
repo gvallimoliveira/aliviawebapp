@@ -57,7 +57,7 @@ const patientFaqKeys = ["pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", 
 const proFaqKeys = ["rf1", "rf2", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9"];
 
 const Support = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<SupportProfile>(null);
