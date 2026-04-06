@@ -1214,5 +1214,19 @@
   "b2b.feature_7_desc": "Dados da avaliação anterior pré-preenchidos para acompanhamento ágil",
   "b2b.feature_8_desc": "Banco com 70+ exercícios com vídeos instrucionais para prescrição via link",
   "b2b.feature_9_desc": "Logo e identidade visual do profissional nos PDFs e tela de avaliação",
-  "b2b.feature_10_desc": "Comparativo automático entre avaliações com resumo narrativo da IA"
+  "b2b.feature_10_desc": "Comparativo automático entre avaliações com resumo narrativo da IA",
+
+  "exercise_checklist.title": "Exercícios do Dia",
+  "exercise_checklist.progress": "Progresso de hoje",
+  "exercise_checklist.all_done": "Parabéns! Todos os exercícios concluídos hoje! 🎉",
+  "exercise_checklist.completed_msg": "Todos os exercícios concluídos! Continue assim!",
+  "exercise_checklist.exercise": "exercício",
+  "exercise_checklist.exercises": "exercícios",
+
+  "evolution.pain_reduced": "Dor reduzida",
+  "evolution.pain_increased": "Dor aumentou",
+  "evolution.pain_stable": "Dor estável",
+  "evolution.keep_going": "Continue assim! Sua evolução mostra que o tratamento está funcionando.",
+  "evolution.consider_pro": "Considere consultar um profissional para ajustar seu tratamento.",
+  "evolution.stable_msg": "Sua dor está estável. Continue seguindo o plano de tratamento."
 }

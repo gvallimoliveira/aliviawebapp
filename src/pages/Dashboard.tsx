@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PainDiary from "@/components/dashboard/PainDiary";
+import ExerciseChecklist from "@/components/dashboard/ExerciseChecklist";
+import EvolutionSummary from "@/components/dashboard/EvolutionSummary";
 import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
 import ReferralCard from "@/components/dashboard/ReferralCard";
 import ProDashboard from "@/components/dashboard/ProDashboard";
@@ -161,8 +163,15 @@ const Dashboard = () => {
   const renderClientContent = () => (
     <>
       <UpgradeBanner premiumAccess={premiumAccess} premiumLoading={premiumLoading} professional={professional} push={push} />
+      
+      {/* Evolution Summary Card */}
+      <EvolutionSummary assessments={assessments} />
+      
       <QuickActions hasPremiumAccess={premiumAccess?.has_access} premiumLoading={premiumLoading} />
       <ReferralCard availableDiscount={premiumAccess?.available_discount} />
+
+      {/* Exercise Checklist */}
+      <ExerciseChecklist />
 
       {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
         <div data-onboarding="patient-diary"><PainDiary /></div>
