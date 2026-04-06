@@ -269,8 +269,8 @@ const ProfessionalLanding = () => {
           >
             {t("b2b.how_title")}
           </motion.h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {steps.map((s, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {steps.slice(0, 6).map((s, i) => (
               <motion.div
                 key={i}
                 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i}
@@ -287,6 +287,22 @@ const ProfessionalLanding = () => {
               </motion.div>
             ))}
           </div>
+          {/* Step 7 centered */}
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={6}
+            className="mt-6 flex justify-center"
+          >
+            <div className="text-center max-w-xs">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-4 relative">
+                <steps[6].icon className="h-6 w-6 text-primary" />
+                <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                  7
+                </span>
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">{t(steps[6].titleKey)}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{t(steps[6].descKey)}</p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
