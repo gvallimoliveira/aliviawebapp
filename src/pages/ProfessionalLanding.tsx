@@ -287,22 +287,26 @@ const ProfessionalLanding = () => {
               </motion.div>
             ))}
           </div>
-          {/* Step 7 centered */}
-          <motion.div
-            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={6}
-            className="mt-6 flex justify-center"
-          >
-            <div className="text-center max-w-xs">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-4 relative">
-                <steps[6].icon className="h-6 w-6 text-primary" />
-                <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                  7
-                </span>
-              </div>
-              <h3 className="font-semibold text-foreground mb-1">{t(steps[6].titleKey)}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{t(steps[6].descKey)}</p>
-            </div>
-          </motion.div>
+          {(() => {
+            const LastIcon = steps[6].icon;
+            return (
+              <motion.div
+                initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={6}
+                className="mt-6 flex justify-center"
+              >
+                <div className="text-center max-w-xs">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-4 relative">
+                    <LastIcon className="h-6 w-6 text-primary" />
+                    <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                      7
+                    </span>
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-1">{t(steps[6].titleKey)}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{t(steps[6].descKey)}</p>
+                </div>
+              </motion.div>
+            );
+          })()}
         </div>
       </section>
 
