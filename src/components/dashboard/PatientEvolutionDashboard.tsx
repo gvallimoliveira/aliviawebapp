@@ -102,6 +102,7 @@ interface PatientEvolutionDashboardProps {
   professionalLogoUrl?: string;
   onDownloadPdf?: (assessment: any) => void;
   onShareWhatsApp?: (assessment: any) => void;
+  isDemo?: boolean;
 }
 
 interface PatientGroup {
