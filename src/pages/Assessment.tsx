@@ -415,7 +415,7 @@ const Assessment = () => {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate(user ? "/dashboard" : "/")}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
