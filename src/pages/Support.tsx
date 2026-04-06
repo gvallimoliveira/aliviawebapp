@@ -57,7 +57,7 @@ const patientFaqKeys = ["pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", 
 const proFaqKeys = ["rf1", "rf2", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9"];
 
 const Support = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<SupportProfile>(null);
@@ -108,6 +108,12 @@ const Support = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container py-12 md:py-20">
+        {user && (
+          <Button variant="ghost" size="sm" className="gap-2 mb-4" onClick={() => navigate("/dashboard")}>
+            <Heart className="h-4 w-4" />
+            {language === "pt" ? "Voltar ao Painel" : language === "es" ? "Volver al Panel" : "Back to Dashboard"}
+          </Button>
+        )}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
