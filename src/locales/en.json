@@ -1216,5 +1216,19 @@
   "b2b.feature_7_desc": "Previous assessment data pre-filled for agile follow-up",
   "b2b.feature_8_desc": "Library with 70+ exercises with instructional videos for prescription via link",
   "b2b.feature_9_desc": "Professional logo and visual identity on PDFs and assessment screen",
-  "b2b.feature_10_desc": "Automatic comparison between assessments with AI narrative summary"
+  "b2b.feature_10_desc": "Automatic comparison between assessments with AI narrative summary",
+
+  "exercise_checklist.title": "Today's Exercises",
+  "exercise_checklist.progress": "Today's progress",
+  "exercise_checklist.all_done": "Congratulations! All exercises completed today! 🎉",
+  "exercise_checklist.completed_msg": "All exercises completed! Keep it up!",
+  "exercise_checklist.exercise": "exercise",
+  "exercise_checklist.exercises": "exercises",
+
+  "evolution.pain_reduced": "Pain reduced",
+  "evolution.pain_increased": "Pain increased",
+  "evolution.pain_stable": "Pain stable",
+  "evolution.keep_going": "Keep going! Your progress shows the treatment is working.",
+  "evolution.consider_pro": "Consider consulting a professional to adjust your treatment.",
+  "evolution.stable_msg": "Your pain is stable. Keep following the treatment plan."
 }
