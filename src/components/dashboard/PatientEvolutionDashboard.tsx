@@ -1001,24 +1001,33 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   const firstA = withDiagnosis[0];
                   const lastA = withDiagnosis[withDiagnosis.length - 1];
 
-                  const normalizeQ = (tr: any) => {
-                    if (Array.isArray(tr)) return tr.filter((t: any) => t.questionnaireId && t.percentageScore != null).map((t: any) => ({ id: t.questionnaireId, name: t.questionnaireName || t.questionnaireId, score: Math.round(t.percentageScore) }));
-                    return [];
-                  };
+                  let summary: any;
 
-                  const payload = {
-                    assessments: [
-                      { date: firstA.created_at, pain_score: firstA.pain_score, hypothesis: firstA.diagnosis?.hypothesis, pain_regions: firstA.pain_regions || [], questionnaires: normalizeQ(firstA.test_results) },
-                      { date: lastA.created_at, pain_score: lastA.pain_score, hypothesis: lastA.diagnosis?.hypothesis, pain_regions: lastA.pain_regions || [], questionnaires: normalizeQ(lastA.test_results) },
-                    ],
-                    language,
-                  };
+                  if (isDemo) {
+                    // Use mock evolution summary
+                    await new Promise((r) => setTimeout(r, 1500));
+                    summary = mockEvolutionSummary;
+                  } else {
+                    const normalizeQ = (tr: any) => {
+                      if (Array.isArray(tr)) return tr.filter((t: any) => t.questionnaireId && t.percentageScore != null).map((t: any) => ({ id: t.questionnaireId, name: t.questionnaireName || t.questionnaireId, score: Math.round(t.percentageScore) }));
+                      return [];
+                    };
 
-                  const { data: summary, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
-                  if (error) throw new Error(error?.message || "Erro ao conectar com o servidor de IA");
-                  if (!summary || summary?.error) throw new Error(summary?.error || "Resposta inválida da IA");
-                  if (!summary.narrative || !summary.conclusion || !summary.recommendation) {
-                    throw new Error("Resumo incompleto gerado pela IA. Tente novamente.");
+                    const payload = {
+                      assessments: [
+                        { date: firstA.created_at, pain_score: firstA.pain_score, hypothesis: firstA.diagnosis?.hypothesis, pain_regions: firstA.pain_regions || [], questionnaires: normalizeQ(firstA.test_results) },
+                        { date: lastA.created_at, pain_score: lastA.pain_score, hypothesis: lastA.diagnosis?.hypothesis, pain_regions: lastA.pain_regions || [], questionnaires: normalizeQ(lastA.test_results) },
+                      ],
+                      language,
+                    };
+
+                    const { data: summaryData, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
+                    if (error) throw new Error(error?.message || "Erro ao conectar com o servidor de IA");
+                    if (!summaryData || summaryData?.error) throw new Error(summaryData?.error || "Resposta inválida da IA");
+                    if (!summaryData.narrative || !summaryData.conclusion || !summaryData.recommendation) {
+                      throw new Error("Resumo incompleto gerado pela IA. Tente novamente.");
+                    }
+                    summary = summaryData;
                   }
 
                   const blob = await generateEvolutionPdfBlob({
