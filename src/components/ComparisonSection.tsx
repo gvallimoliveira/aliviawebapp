@@ -71,7 +71,7 @@ const ComparisonSection = () => {
           </p>
           <p className="mt-4 text-base font-medium text-primary">
             {t("compare.anchor")}{" "}
-            <span className="font-bold">{PREMIUM_PRICE_FORMATTED}</span>.
+            <span className="font-bold">{PREMIUM_SINGLE_PRICE_FORMATTED}</span>.
           </p>
         </motion.div>
 
