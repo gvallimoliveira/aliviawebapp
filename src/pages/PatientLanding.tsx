@@ -14,6 +14,7 @@ import SocialSection from "@/components/SocialSection";
 import Footer from "@/components/Footer";
 import StickyCTA from "@/components/StickyCTA";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
+import LgpdBadge from "@/components/LgpdBadge";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
 
 const PatientLanding = () => {
@@ -48,6 +49,7 @@ const PatientLanding = () => {
         <TestimonialsSection />
         <FaqSection />
         <SocialSection />
+        <LgpdBadge />
       </main>
       <Footer />
       <StickyCTA showProfessional={false} />
