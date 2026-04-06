@@ -15,7 +15,7 @@ import {
 const ComparisonSection = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [isMonthly, setIsMonthly] = useState(true);
+  const [isMonthly, setIsMonthly] = useState(false);
 
   const features = [
     { key: "redflags", basic: true, premium: true },
