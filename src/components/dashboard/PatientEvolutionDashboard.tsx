@@ -26,6 +26,7 @@ import PainMapView from "@/components/assessment/PainMapView";
 import JSZip from "jszip";
 import CreateExerciseProgramModal from "@/components/dashboard/CreateExerciseProgramModal";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
+import { mockClinicalImpressions, mockEvolutionSummary } from "@/data/mockPatientData";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
