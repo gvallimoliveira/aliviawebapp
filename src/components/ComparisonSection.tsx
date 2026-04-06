@@ -15,7 +15,7 @@ import {
 const ComparisonSection = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [isMonthly, setIsMonthly] = useState(true);
+  const [isMonthly, setIsMonthly] = useState(false);
 
   const features = [
     { key: "redflags", basic: true, premium: true },
@@ -71,7 +71,7 @@ const ComparisonSection = () => {
           </p>
           <p className="mt-4 text-base font-medium text-primary">
             {t("compare.anchor")}{" "}
-            <span className="font-bold">{PREMIUM_PRICE_FORMATTED}</span>.
+            <span className="font-bold">{PREMIUM_SINGLE_PRICE_FORMATTED}</span>.
           </p>
         </motion.div>
 
@@ -148,20 +148,6 @@ const ComparisonSection = () => {
                 <div className="flex items-center justify-center gap-3 py-3">
                   <span
                     className={`text-sm font-medium transition-colors ${
-                      isMonthly
-                        ? "text-primary"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    <Calendar className="inline h-3.5 w-3.5 mr-1" />
-                    {t("compare.toggle.monthly")}
-                  </span>
-                  <Switch
-                    checked={!isMonthly}
-                    onCheckedChange={(checked) => setIsMonthly(!checked)}
-                  />
-                  <span
-                    className={`text-sm font-medium transition-colors ${
                       !isMonthly
                         ? "text-primary"
                         : "text-muted-foreground"
@@ -170,15 +156,29 @@ const ComparisonSection = () => {
                     <Zap className="inline h-3.5 w-3.5 mr-1" />
                     {t("compare.toggle.single")}
                   </span>
+                  <Switch
+                    checked={isMonthly}
+                    onCheckedChange={(checked) => setIsMonthly(checked)}
+                  />
+                  <span
+                    className={`text-sm font-medium transition-colors ${
+                      isMonthly
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    <Calendar className="inline h-3.5 w-3.5 mr-1" />
+                    {t("compare.toggle.monthly")}
+                  </span>
                 </div>
 
                 <p className="text-3xl font-bold text-foreground">
                   {isMonthly ? PREMIUM_PRICE_FORMATTED : PREMIUM_SINGLE_PRICE_FORMATTED}
                 </p>
 
-                {isMonthly && (
+                {!isMonthly && (
                   <Badge variant="outline" className="mx-auto mt-1 border-primary/30 text-primary text-xs">
-                    {t("compare.monthly.best_value")}
+                    {t("compare.single.recommended")}
                   </Badge>
                 )}
 
