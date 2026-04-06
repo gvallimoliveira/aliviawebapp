@@ -1040,10 +1040,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     professionalLogoUrl,
                   });
 
-                  // Upload to bucket for sharing
-                  const fileName = `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
-                  const { error: uploadError } = await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
-
                   // Download
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
@@ -1052,12 +1048,18 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   a.click();
                   URL.revokeObjectURL(url);
 
-                  // WhatsApp share option
-                  if (!uploadError) {
-                    const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
-                    if (publicUrl?.publicUrl) {
-                      const whatsappText = encodeURIComponent(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`);
-                      window.open(`https://wa.me/?text=${whatsappText}`, "_blank");
+                  if (!isDemo) {
+                    // Upload to bucket for sharing (real mode only)
+                    const fileName = `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
+                    const { error: uploadError } = await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
+
+                    // WhatsApp share option
+                    if (!uploadError) {
+                      const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
+                      if (publicUrl?.publicUrl) {
+                        const whatsappText = encodeURIComponent(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`);
+                        window.open(`https://wa.me/?text=${whatsappText}`, "_blank");
+                      }
                     }
                   }
 
