@@ -13,6 +13,8 @@ const DualAudienceSection = () => {
     t("dual.patient.bullet2"),
     t("dual.patient.bullet3"),
     t("dual.patient.bullet4"),
+    t("dual.patient.bullet5"),
+    t("dual.patient.bullet6"),
   ];
 
   const proBullets = [
@@ -20,6 +22,8 @@ const DualAudienceSection = () => {
     t("dual.pro.bullet2"),
     t("dual.pro.bullet3"),
     t("dual.pro.bullet4"),
+    t("dual.pro.bullet5"),
+    t("dual.pro.bullet6"),
   ];
 
   return (

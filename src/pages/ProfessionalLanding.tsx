@@ -18,7 +18,8 @@ import {
   Clock, Target, FileText, Activity, Stethoscope, ArrowRight, ArrowDown,
   UserPlus, Link2, Send, ClipboardCheck, Check,
   LayoutDashboard, Brain, User, FileBarChart, Zap,
-  RefreshCw, Dumbbell, Palette, TrendingUp,
+  RefreshCw, Dumbbell, Palette, TrendingUp, GraduationCap,
+  BarChart3, ListChecks,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
@@ -65,6 +66,7 @@ const ProfessionalLanding = () => {
     { icon: Palette, titleKey: "b2b.benefit_5_title", descKey: "b2b.benefit_5_desc" },
     { icon: Activity, titleKey: "b2b.benefit_6_title", descKey: "b2b.benefit_6_desc" },
     { icon: TrendingUp, titleKey: "b2b.benefit_7_title", descKey: "b2b.benefit_7_desc" },
+    { icon: Brain, titleKey: "b2b.benefit_8_title", descKey: "b2b.benefit_8_desc" },
   ];
 
   const steps = [
@@ -72,6 +74,9 @@ const ProfessionalLanding = () => {
     { icon: Link2, titleKey: "b2b.step_2_title", descKey: "b2b.step_2_desc" },
     { icon: Send, titleKey: "b2b.step_3_title", descKey: "b2b.step_3_desc" },
     { icon: ClipboardCheck, titleKey: "b2b.step_4_title", descKey: "b2b.step_4_desc" },
+    { icon: Brain, titleKey: "b2b.step_5_title", descKey: "b2b.step_5_desc" },
+    { icon: Dumbbell, titleKey: "b2b.step_6_title", descKey: "b2b.step_6_desc" },
+    { icon: BarChart3, titleKey: "b2b.step_7_title", descKey: "b2b.step_7_desc" },
   ];
 
   const features = [
@@ -238,6 +243,19 @@ const ProfessionalLanding = () => {
               </motion.div>
             ))}
           </div>
+
+          {/* Grad CTA */}
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={benefits.length}
+            className="mt-10 mx-auto max-w-2xl text-center"
+          >
+            <div className="inline-flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-6 py-4">
+              <GraduationCap className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+              <p className="text-sm text-muted-foreground leading-relaxed italic">
+                {t("b2b.grad_cta")}
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -250,7 +268,7 @@ const ProfessionalLanding = () => {
           >
             {t("b2b.how_title")}
           </motion.h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {steps.map((s, i) => (
               <motion.div
                 key={i}
