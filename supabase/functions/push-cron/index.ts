@@ -287,6 +287,128 @@ Deno.serve(async (req) => {
       results.errors.push(`boleto_expiry_reminders: ${e}`);
     }
 
+    // 7. EXERCISE REMINDERS — users with active exercise programs who haven't completed today
+    try {
+      const { data: activePrograms } = await supabase
+        .from("exercise_programs")
+        .select("id, patient_name, assessment_id")
+        .gt("expires_at", new Date().toISOString());
+
+      if (activePrograms && activePrograms.length > 0) {
+        const assessmentIds = activePrograms.map((p: any) => p.assessment_id).filter(Boolean);
+        if (assessmentIds.length > 0) {
+          const { data: assessmentUsers } = await supabase
+            .from("assessments")
+            .select("id, user_id")
+            .in("id", assessmentIds)
+            .not("user_id", "is", null);
+
+          const assessmentToUser = new Map(
+            (assessmentUsers || []).map((a: any) => [a.id, a.user_id])
+          );
+          const usersWithPush = allSubs ? new Set(allSubs.map((s: any) => s.user_id)) : new Set<string>();
+
+          const { data: todayCompletions } = await supabase
+            .from("exercise_completions")
+            .select("user_id")
+            .eq("completed_at", today);
+
+          const usersCompletedToday = new Set((todayCompletions || []).map((c: any) => c.user_id));
+          const notifiedUsers = new Set<string>();
+
+          for (const prog of activePrograms) {
+            if (!prog.assessment_id) continue;
+            const userId = assessmentToUser.get(prog.assessment_id);
+            if (!userId || notifiedUsers.has(userId) || !usersWithPush.has(userId) || usersCompletedToday.has(userId)) continue;
+
+            try {
+              const sent = await notifyUser(userId, "💪 Hora dos exercícios!", "Seus exercícios de hoje estão te esperando. Marque cada um ao concluir!", "/dashboard");
+              if (sent) { results.exercise_reminders++; notifiedUsers.add(userId); }
+            } catch (e) { results.errors.push(`exercise_reminder ${userId}: ${e}`); }
+          }
+        }
+      }
+    } catch (e) { results.errors.push(`exercise_reminders: ${e}`); }
+
+    // 8. SMART ALERTS — notify professionals on pain spikes or patient inactivity
+    try {
+      // 8a. Pain spike: latest diary entry 3+ above patient's average
+      const { data: recentDiary } = await supabase
+        .from("pain_diary_entries")
+        .select("user_id, pain_score, logged_at")
+        .gte("logged_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
+        .order("logged_at", { ascending: false });
+
+      if (recentDiary && recentDiary.length > 0) {
+        const userEntries = new Map<string, { scores: number[]; latest: number; latestDate: string }>();
+        for (const entry of recentDiary) {
+          if (!entry.user_id) continue;
+          const existing = userEntries.get(entry.user_id);
+          if (!existing) {
+            userEntries.set(entry.user_id, { scores: [entry.pain_score], latest: entry.pain_score, latestDate: entry.logged_at });
+          } else { existing.scores.push(entry.pain_score); }
+        }
+
+        const threeDaysAgoStr = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+        const spikeUsers: string[] = [];
+        for (const [userId, data] of userEntries) {
+          if (data.scores.length < 3) continue;
+          const avg = data.scores.slice(1).reduce((a, b) => a + b, 0) / (data.scores.length - 1);
+          if (data.latest >= avg + 3 && data.latestDate >= threeDaysAgoStr) spikeUsers.push(userId);
+        }
+
+        if (spikeUsers.length > 0) {
+          const { data: refs } = await supabase.from("professional_referrals").select("professional_id, patient_user_id").in("patient_user_id", spikeUsers).in("status", ["pending", "accepted"]);
+          if (refs && refs.length > 0) {
+            const proIds = [...new Set(refs.map((r: any) => r.professional_id))];
+            const { data: pros } = await supabase.from("professionals").select("id, user_id").in("id", proIds);
+            const proUserMap = new Map((pros || []).map((p: any) => [p.id, p.user_id]));
+
+            for (const ref of refs) {
+              const proUserId = proUserMap.get(ref.professional_id);
+              if (!proUserId) continue;
+              const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", ref.patient_user_id).maybeSingle();
+              const name = profile?.full_name || "Paciente";
+              try {
+                const sent = await notifyUser(proUserId, "⚠️ Alerta: Piora de dor", `${name} registrou aumento significativo de dor. Considere entrar em contato.`, "/dashboard?tab=professional");
+                if (sent) results.pain_spike_alerts++;
+              } catch (e) { results.errors.push(`pain_spike ${proUserId}: ${e}`); }
+            }
+          }
+        }
+      }
+
+      // 8b. Inactivity: patient hasn't logged diary for 7+ days (weekly check)
+      if (dayOfMonth % 7 === 0) {
+        const sevenDaysAgoDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+        const { data: allRefs } = await supabase.from("professional_referrals").select("professional_id, patient_user_id").in("status", ["pending", "accepted"]);
+        if (allRefs && allRefs.length > 0) {
+          const patientIds = [...new Set(allRefs.map((r: any) => r.patient_user_id))];
+          const { data: lastEntries } = await supabase.from("pain_diary_entries").select("user_id, logged_at").in("user_id", patientIds).order("logged_at", { ascending: false });
+          const lastEntryMap = new Map<string, string>();
+          for (const entry of (lastEntries || [])) { if (!lastEntryMap.has(entry.user_id)) lastEntryMap.set(entry.user_id, entry.logged_at); }
+          const inactivePatients = patientIds.filter((id) => { const last = lastEntryMap.get(id); return !last || last < sevenDaysAgoDate; });
+
+          if (inactivePatients.length > 0) {
+            const proIds = [...new Set(allRefs.filter((r: any) => inactivePatients.includes(r.patient_user_id)).map((r: any) => r.professional_id))];
+            const { data: pros } = await supabase.from("professionals").select("id, user_id").in("id", proIds);
+            const proUserMap = new Map((pros || []).map((p: any) => [p.id, p.user_id]));
+            const notifiedPros = new Set<string>();
+
+            for (const proId of proIds) {
+              const proUserId = proUserMap.get(proId);
+              if (!proUserId || notifiedPros.has(proUserId)) continue;
+              const count = allRefs.filter((r: any) => r.professional_id === proId && inactivePatients.includes(r.patient_user_id)).length;
+              try {
+                const sent = await notifyUser(proUserId, "📊 Pacientes inativos", `${count} paciente(s) não registram dados há mais de 7 dias.`, "/dashboard?tab=professional");
+                if (sent) { results.inactivity_alerts++; notifiedPros.add(proUserId); }
+              } catch (e) { results.errors.push(`inactivity ${proUserId}: ${e}`); }
+            }
+          }
+        }
+      }
+    } catch (e) { results.errors.push(`smart_alerts: ${e}`); }
+
     return new Response(
       JSON.stringify({
         success: true,
