@@ -1060,6 +1060,8 @@
   "support.pro.faq.rf7.a": "Sí. Use el botón \"Exportar PDFs\" para generar informes por lote de todas las evaluaciones de un paciente, o descargue individualmente desde la vista de cada evaluación.",
   "support.pro.faq.rf8.q": "¿Las notas que agrego son visibles para el paciente?",
   "support.pro.faq.rf8.a": "No. Las notas profesionales son privadas y visibles solo para usted en el panel. Son una herramienta de registro clínico interno.",
+  "support.pro.faq.rf9.q": "¿Qué es el Ambiente Simulado y cómo funciona?",
+  "support.pro.faq.rf9.a": "El Ambiente Simulado es un modo de demostración disponible para todos los suscriptores PRO. Presenta 5 pacientes ficticios con datos clínicos completos y realistas — incluyendo cuestionarios validados (Oswestry, NDI, DASH, LEFS, SPADI), diagnósticos, planes de tratamiento e impresiones clínicas de IA. Puede navegar por evaluaciones, generar informes evolutivos y probar todas las funcionalidades sin afectar datos reales. Para activarlo, use el toggle 'Panel Pro / Panel Simulado' en la parte superior del panel profesional. Es ideal para familiarizarse con la plataforma antes de recibir sus primeros pacientes.",
   "diary.streak_day": "día",
   "diary.streak_days": "días",
   "diary.streak_label": "Racha de registros",

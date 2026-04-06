@@ -1060,6 +1060,8 @@
   "support.pro.faq.rf7.a": "Yes. Use the 'Export PDFs' button to generate batch reports of all assessments with completed diagnoses. Each assessment generates an individual PDF.",
   "support.pro.faq.rf8.q": "Are the notes I add visible to the patient?",
   "support.pro.faq.rf8.a": "No. Professional notes are private and visible only to you in the panel. They are included in the exported PDF for clinical documentation purposes.",
+  "support.pro.faq.rf9.q": "What is the Simulated Environment and how does it work?",
+  "support.pro.faq.rf9.a": "The Simulated Environment is a demo mode available to all PRO subscribers. It features 5 fictional patients with complete, realistic clinical data — including validated questionnaires (Oswestry, NDI, DASH, LEFS, SPADI), diagnoses, treatment plans, and AI clinical impressions. You can browse assessments, generate evolution reports, and test all features without affecting real data. To activate it, use the 'Pro Panel / Simulated Panel' toggle at the top of the professional panel. It's ideal for getting familiar with the platform before receiving your first patients.",
   "payment.includes_sub_desc": "Cancel anytime",
   "diary.streak_day": "day",
   "diary.streak_days": "days",
