@@ -285,10 +285,11 @@ const TreatmentPaidRetry = ({ assessmentId, onGenerated }: {
 };
 
 // Clinical Impression card (AI-generated)
-const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments }: {
+const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments, isDemo }: {
   assessment: any;
   existingImpression?: { overview: string; therapeuticObjectives: string[] } | null;
   allAssessments?: any[];
+  isDemo?: boolean;
 }) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
