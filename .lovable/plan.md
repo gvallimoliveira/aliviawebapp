@@ -1,63 +1,90 @@
 
 
-# Relatório de Evolução / Alta com Comparativo Automático
+# Plano: Atualização de Precificação Pro para R$97/mês e R$67/mês (anual)
 
-## Visão geral
+## Contexto
+Os preços atuais do Plano Profissional são R$49/mês e R$34,90/mês (anual = R$418,80/ano). A nova precificação será R$97/mês e R$67/mês (anual = R$804/ano). Isso exige mudanças coordenadas em **Stripe (novos preços)**, **código front-end**, **edge functions** e **textos de localização**.
 
-Botão "Relatório de Evolução" no header do detalhe do paciente (PatientEvolutionDashboard), visível quando o paciente tem 2+ avaliações com diagnóstico. Ao clicar:
-1. Coleta dados comparativos (dor, questionários, regiões) da primeira e última avaliação
-2. Envia para edge function que gera resumo narrativo via IA
-3. Renderiza PDF de evolução usando o pipeline existente (jsPDF, mesmas margens/tokens visuais)
+---
 
-## Componentes
+## Impacto e Arquitetura
 
-### 1. Edge Function `generate-evolution-summary`
-- Recebe: array de assessments resumidos (datas, pain_score, diagnosis.hypothesis, test_results com questionários, pain_regions)
-- Prompt de IA (Lovable AI, gemini-3-flash-preview): "Gere um resumo narrativo de evolução clínica comparando a primeira e última avaliação. Inclua variações percentuais de scores, mudanças nas regiões, e uma conclusão sobre a progressão do quadro."
-- Tool calling para output estruturado: `{ narrative: string, painChange: string, questionnaireChanges: { name, firstScore, lastScore, changePercent }[], conclusion: string, recommendation: "discharge" | "continue" | "reassess" }`
-- Usa `LOVABLE_API_KEY`, sem JWT
+```text
+┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
+│  pricing.ts     │────▶│  Landing Pages       │────▶│  Edge Functions     │
+│  (valores +     │     │  (ProfessionalSection │     │  create-pro-sub     │
+│   price_ids)    │     │   ProfessionalLanding │     │  check-pro-sub      │
+│                 │     │   ProDashboard)       │     │  stripe-webhook     │
+└─────────────────┘     └──────────────────────┘     └─────────────────────┘
+        │                                                     │
+        └──── Stripe Products & Prices (novos price_ids) ─────┘
+```
 
-### 2. Função `generateEvolutionPdf` em `src/utils/generatePdf.ts`
-Nova função exportada que gera o PDF de evolução:
-- **Header**: Logo Aliv.iA + logo profissional (white-label) + título "Relatório de Evolução"
-- **Dados do paciente**: Nome, período (data primeira → data última avaliação)
-- **Seção Comparativo de Dor**: Tabela lado a lado (primeira vs última) com scores EVA, indicador visual de melhora/piora
-- **Seção Questionários**: Para cada questionário presente em ambas, mostrar score inicial → final com % de variação
-- **Seção Regiões de Dor**: Listar regiões da primeira e última, destacar removidas (melhora) e adicionadas
-- **Resumo Narrativo (IA)**: Bloco com o texto narrativo gerado
-- **Conclusão e Recomendação**: Badge visual (Alta / Continuar / Reavaliar)
-- Disclaimer de IA no rodapé
-- Mesmos tokens visuais (COLORS, MARGIN, SECTION_X, TEXT_MAX_WIDTH, checkPage, renderSectionTitle)
+---
 
-### 3. UI — Botão no PatientEvolutionDashboard
-- No header do detalhe do paciente (linha ~901-934), adicionar botão "Relatório de Evolução" com ícone `TrendingUp`
-- Visível apenas quando `patient.assessments.filter(a => a.diagnosis).length >= 2`
-- Estado de loading durante geração (IA + PDF)
-- Fluxo: clique → chama edge function → recebe resumo → gera PDF → download automático
+## Passos de Implementação
 
-### 4. Compartilhamento WhatsApp
-- Após gerar, fazer upload do PDF no bucket `assessment-reports` e oferecer compartilhamento via WhatsApp (mesmo padrão existente)
+### 1. Criar novos preços no Stripe
+Usando as ferramentas do Stripe, criar **2 novos Price objects** nos produtos existentes:
+- **Produto `prod_U5dB77Y8adgxGf`** (Pro Monthly): novo Price de R$97/mês (9700 centavos BRL, recurring monthly)
+- **Produto `prod_UBENhRLOTa0bHS`** (Pro Annual): novo Price de R$804/ano (80400 centavos BRL, recurring yearly)
 
-## Arquivos a criar/alterar
+Os preços antigos serão mantidos no Stripe (para assinantes atuais) mas não referenciados no código.
 
-1. **`supabase/functions/generate-evolution-summary/index.ts`** — nova edge function
-2. **`supabase/config.toml`** — adicionar `[functions.generate-evolution-summary]` com `verify_jwt = false`
-3. **`src/utils/generatePdf.ts`** — adicionar `generateEvolutionPdf` e `generateEvolutionPdfBlob`
-4. **`src/components/dashboard/PatientEvolutionDashboard.tsx`** — botão + lógica de geração
-5. **`src/locales/pt.json`**, **`en.json`**, **`es.json`** — chaves para labels do relatório
+### 2. Atualizar `src/constants/pricing.ts`
+- `PRO_PLAN_PRICE` → `97`
+- `PRO_PLAN_PRICE_FORMATTED` → `"R$ 97/mês"`
+- `PRO_PLAN_ANNUAL_PRICE` → `67`
+- `PRO_PLAN_ANNUAL_PRICE_FORMATTED` → `"R$ 67/mês"`
+- `PRO_PLAN_ANNUAL_TOTAL` → `804`
+- Atualizar os `price_id` em `PRO_PLAN_STRIPE` e `PRO_PLAN_ANNUAL_STRIPE` com os novos IDs gerados
 
-## Riscos identificados e mitigações
+### 3. Atualizar Edge Function `create-pro-subscription/index.ts`
+- Substituir os dois `price_id` hardcoded (mensal e anual) pelos novos IDs
+- Atualizar os comentários com os novos valores
 
-- **Paciente com questionários diferentes entre avaliações**: A comparação só lista questionários presentes em AMBAS as avaliações. Os exclusivos de uma são listados separadamente como "aplicado apenas na avaliação X".
-- **Dados de test_results inconsistentes**: Usar `normalizeTestResults()` já existente para uniformizar array vs objeto.
-- **PDF muito longo**: O comparativo é enxuto por natureza (tabelas, não texto corrido), exceto o resumo narrativo que é limitado pelo prompt (máx 6 linhas).
-- **Prompt IA com dados insuficientes**: Se não houver questionários, o resumo foca apenas em dor e regiões. O prompt instrui a IA a trabalhar com o que tiver.
+### 4. Atualizar Edge Function `check-pro-subscription/index.ts`
+- O filtro `prod_U5dB77Y8adgxGf` permanece igual (mesmo produto, preço novo)
+- O produto anual `prod_UBENhRLOTa0bHS` também permanece (usa `pro_access_expires_at`)
+- **Nenhuma mudança necessária** nesta função
 
-## Ordem de execução
+### 5. Atualizar Edge Function `stripe-webhook/index.ts`
+- **Nenhuma mudança necessária** — o webhook usa `metadata.type` (`pro_subscription`, `pro_annual`) para fulfillment, não price IDs
+- Os novos preços nos mesmos produtos continuarão funcionando
 
-1. Criar edge function `generate-evolution-summary`
-2. Atualizar `config.toml`
-3. Implementar `generateEvolutionPdf` no pipeline de PDF
-4. Adicionar botão e lógica no PatientEvolutionDashboard
-5. Adicionar strings de localização
+### 6. Atualizar textos de localização (pt.json, en.json, es.json)
+- `b2b.billed_annually`: `R$ 418,80/ano` → `R$ 804/ano`
+- `b2b.save_30` → `b2b.save_31` ou manter "Economize 31%" (economia real: (97-67)/97 = 30.9%)
+- `b2b.roi_conclusion`: `R$ 1,20/dia` → `R$ 2,23/dia` (R$67/30) para o plano anual, ou `R$ 3,23/dia` para mensal
+
+### 7. Atualizar seção ROI na landing profissional
+- A conclusão de ROI que diz "Por menos de R$ 1,20/dia" precisa ser recalculada:
+  - Mensal: R$97/30 = ~R$3,23/dia
+  - Anual: R$67/30 = ~R$2,23/dia
+  - Usar o valor anual como referência: "Por menos de R$ 2,30/dia"
+
+### 8. Componentes front-end que já usam as constantes
+- `ProfessionalSection.tsx` — usa `PRO_PLAN_PRICE` e `PRO_PLAN_ANNUAL_PRICE` (atualiza automaticamente)
+- `ProfessionalLanding.tsx` — idem
+- `ProDashboard.tsx` — usa `PRO_PLAN_PRICE_FORMATTED` (atualiza automaticamente)
+
+---
+
+## Detalhes Técnicos Importantes
+
+- **Assinantes existentes** não são afetados — continuam no preço antigo até cancelarem
+- **Boleto**: O Pro subscription usa `payment_method_types: ["card"]` (sem boleto), então não há impacto em fluxos de boleto
+- **Filtro de produto no check-pro-subscription**: Continua usando o mesmo `product_id`, apenas o `price_id` muda — sem impacto
+- **Webhook**: Roteia por `metadata.type`, não por preço — sem impacto
+- **Economia anual**: (97-67)/97 ≈ 31% — manter o badge "Economize 30%" ou ajustar para "~31%"
+
+---
+
+## Arquivos Modificados
+1. **Stripe** — 2 novos Prices (via ferramenta Stripe)
+2. `src/constants/pricing.ts` — valores e price_ids
+3. `supabase/functions/create-pro-subscription/index.ts` — price_ids
+4. `src/locales/pt.json` — textos de billing e ROI
+5. `src/locales/en.json` — idem
+6. `src/locales/es.json` — idem
 
