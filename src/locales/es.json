@@ -1229,5 +1229,14 @@
   "evolution.pain_stable": "Dolor estable",
   "evolution.keep_going": "¡Sigue así! Tu progreso muestra que el tratamiento está funcionando.",
   "evolution.consider_pro": "Considera consultar a un profesional para ajustar tu tratamiento.",
-  "evolution.stable_msg": "Tu dolor está estable. Sigue el plan de tratamiento."
+  "evolution.stable_msg": "Tu dolor está estable. Sigue el plan de tratamiento.",
+
+  "progression.title": "Sugerencia de Progresión",
+  "progression.phase_progress": "Progresar",
+  "progression.phase_maintain": "Mantener",
+  "progression.phase_reduce": "Reducir",
+  "progression.analyzing": "Analizando tus datos...",
+  "progression.show_tips": "Ver consejos",
+  "progression.hide_tips": "Ocultar consejos",
+  "progression.disclaimer": "Sugerencia generada por IA basada en tus datos. Consulta a un profesional antes de cambios significativos."
 }

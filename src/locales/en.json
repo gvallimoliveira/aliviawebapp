@@ -1230,5 +1230,14 @@
   "evolution.pain_stable": "Pain stable",
   "evolution.keep_going": "Keep going! Your progress shows the treatment is working.",
   "evolution.consider_pro": "Consider consulting a professional to adjust your treatment.",
-  "evolution.stable_msg": "Your pain is stable. Keep following the treatment plan."
+  "evolution.stable_msg": "Your pain is stable. Keep following the treatment plan.",
+
+  "progression.title": "Progression Suggestion",
+  "progression.phase_progress": "Progress",
+  "progression.phase_maintain": "Maintain",
+  "progression.phase_reduce": "Reduce",
+  "progression.analyzing": "Analyzing your data...",
+  "progression.show_tips": "View tips",
+  "progression.hide_tips": "Hide tips",
+  "progression.disclaimer": "AI-generated suggestion based on your data. Consult a professional before significant changes."
 }
