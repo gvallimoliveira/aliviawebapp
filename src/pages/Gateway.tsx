@@ -186,6 +186,28 @@ const Gateway = () => {
             {t("gateway.subtitle")}
           </motion.p>
 
+          {/* About section — shown before cards on mobile for trust building */}
+          <motion.div
+            id="about"
+            initial="hidden" animate="visible" variants={fadeUp} custom={3}
+            className="md:hidden mb-10 max-w-2xl mx-auto rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-6 text-center"
+          >
+            <div className="flex justify-center mb-4">
+              <img
+                src={guilhermePhoto}
+                alt="Guilherme — Fisioterapeuta e criador da Aliv.iA"
+                className="h-20 w-20 rounded-full object-cover object-top border-2 border-primary/20 shadow-md pointer-events-none select-none"
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+              />
+            </div>
+            <h2 className="text-lg font-bold text-foreground mb-3">{t("gateway.about_title")}</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">{t("gateway.about_text")}</p>
+            <p className="mt-4 border-l-4 border-primary pl-4 text-sm italic text-primary leading-relaxed">
+              {t("brand.slogan")}
+            </p>
+          </motion.div>
+
           {/* Two cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {/* Patient Card */}
