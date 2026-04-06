@@ -1,90 +1,75 @@
+## Resposta: Estado Atual dos Dados Mockados
 
+**Hoje, os dados mockados NÃO permitem acesso completo.** A situação atual:
 
-# Plano: Atualização de Precificação Pro para R$97/mês e R$67/mês (anual)
-
-## Contexto
-Os preços atuais do Plano Profissional são R$49/mês e R$34,90/mês (anual = R$418,80/ano). A nova precificação será R$97/mês e R$67/mês (anual = R$804/ano). Isso exige mudanças coordenadas em **Stripe (novos preços)**, **código front-end**, **edge functions** e **textos de localização**.
+- Os 3 pacientes fictícios (Maria, João, Ana) aparecem apenas como **cards na listagem**, com blur/paywall por cima
+- **Nenhum deles** é clicável para abrir uma página de detalhe fictícia -- o click navega para a rota real (`/assessment/:id`) que tenta buscar do banco e falha
+- **Não há** dados de questionário fictícios (test_results está vazio nos mocks)
+- **Não há** paciente com 2+ avaliações para simular relatório evolutivo
+- **Não há** simulação de impressão clínica IA, HEP, ou geração de PDF
 
 ---
 
-## Impacto e Arquitetura
+## Plano: Registro Profissional com Paywall + Ambiente Simulado Completo
+
+### Parte 1 — Registro só após pagamento
+
+1. **Modificar `ProfessionalRegister.tsx**`: Após preencher o formulário, em vez de salvar direto, redirecionar para checkout Stripe (mensal ou anual) passando os dados do perfil como metadata
+2. **Modificar `create-pro-subscription` Edge Function**: Receber dados do perfil profissional via metadata e, no `stripe-webhook`, criar o registro na tabela `professionals` somente após confirmação do pagamento
+3. **Alternativa mais simples ( dê preferencia a esta )**: Manter o fluxo atual de criar o perfil primeiro, mas marcar `subscription_status = 'pending'` e redirecionar automaticamente para escolha de plano. O profissional só acessa o painel após pagamento confirmado. Esta abordagem é mais resiliente (evita perda de dados se o pagamento falhar).
+
+### Parte 2 — Card de Boas-Vindas pós-pagamento
+
+4. **Criar flag `pro_onboarding_completed**` no localStorage
+5. **Adicionar card de boas-vindas** no `ProDashboard` para novos assinantes com botão "Conhecer ambiente simulado"
+6. Se o profissional pular, pode acessar depois via toggle
+
+### Parte 3 — Toggle "Painel Pro x Painel Simulado"
+
+7. **Adicionar Switch/Toggle** discreto no header do `ProDashboard` para alternar entre dados reais e dados simulados
+8. Quando ativado, o dashboard usa `mockPatientAssessments` em vez dos dados reais
+
+### Parte 4 — Dados Mockados Completos + Navegação Simulada
+
+9. **Expandir `mockPatientData.ts**` significativamente:
+  - Adicionar `test_results` com respostas fictícias de questionários (DASH, Oswestry, etc.)
+  - Criar 2 avaliações para "Ana Oliveira" (para simular relatório evolutivo)
+  - Adicionar `treatment_plan` completo para pelo menos 2 pacientes
+  - Incluir `clinical_impression` fictícia
+  - Adicionar paciente com red flags para demonstrar o alerta
+10. **Criar página de detalhe simulada** ou adaptar `PatientEvolutionDashboard` para reconhecer IDs "demo-*":
+  - Quando o ID começa com "demo-", usar dados do mock em vez de buscar no banco
+    - Permitir "gerar impressão clínica" que retorna texto fictício pré-definido (sem chamar a IA real)
+    - Permitir visualizar tratamento fictício
+    - Permitir simular geração de relatório evolutivo (com dados pré-calculados)
+    - Bloquear ações reais (PDF real, WhatsApp) com toast "Disponível apenas com dados reais"
+
+### Parte 5 — Fluxo Completo
 
 ```text
-┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
-│  pricing.ts     │────▶│  Landing Pages       │────▶│  Edge Functions     │
-│  (valores +     │     │  (ProfessionalSection │     │  create-pro-sub     │
-│   price_ids)    │     │   ProfessionalLanding │     │  check-pro-sub      │
-│                 │     │   ProDashboard)       │     │  stripe-webhook     │
-└─────────────────┘     └──────────────────────┘     └─────────────────────┘
-        │                                                     │
-        └──── Stripe Products & Prices (novos price_ids) ─────┘
+Landing /profissionais
+  → CTA "Começar agora"
+  → /auth (login/signup)
+  → /professional/register (formulário perfil)
+  → Escolha plano (mensal/anual) → Stripe Checkout
+  → Pagamento confirmado → /dashboard?tab=professional
+  → Card boas-vindas com "Conhecer simulado"
+  → Toggle discreto para alternar simulado/real
 ```
 
----
+### Arquivos a modificar/criar
 
-## Passos de Implementação
 
-### 1. Criar novos preços no Stripe
-Usando as ferramentas do Stripe, criar **2 novos Price objects** nos produtos existentes:
-- **Produto `prod_U5dB77Y8adgxGf`** (Pro Monthly): novo Price de R$97/mês (9700 centavos BRL, recurring monthly)
-- **Produto `prod_UBENhRLOTa0bHS`** (Pro Annual): novo Price de R$804/ano (80400 centavos BRL, recurring yearly)
+| Arquivo                                                  | Ação                                        |
+| -------------------------------------------------------- | ------------------------------------------- |
+| `src/data/mockPatientData.ts`                            | Expandir com dados completos                |
+| `src/components/dashboard/ProDashboard.tsx`              | Adicionar toggle simulado, card boas-vindas |
+| `src/components/dashboard/PatientEvolutionDashboard.tsx` | Suporte a dados demo                        |
+| `src/pages/ProfessionalRegister.tsx`                     | Redirecionar para checkout após formulário  |
+| `supabase/functions/create-pro-subscription/index.ts`    | Aceitar metadata de perfil                  |
+| `supabase/functions/stripe-webhook/index.ts`             | Criar perfil profissional no fulfillment    |
 
-Os preços antigos serão mantidos no Stripe (para assinantes atuais) mas não referenciados no código.
 
-### 2. Atualizar `src/constants/pricing.ts`
-- `PRO_PLAN_PRICE` → `97`
-- `PRO_PLAN_PRICE_FORMATTED` → `"R$ 97/mês"`
-- `PRO_PLAN_ANNUAL_PRICE` → `67`
-- `PRO_PLAN_ANNUAL_PRICE_FORMATTED` → `"R$ 67/mês"`
-- `PRO_PLAN_ANNUAL_TOTAL` → `804`
-- Atualizar os `price_id` em `PRO_PLAN_STRIPE` e `PRO_PLAN_ANNUAL_STRIPE` com os novos IDs gerados
+### Consideração técnica
 
-### 3. Atualizar Edge Function `create-pro-subscription/index.ts`
-- Substituir os dois `price_id` hardcoded (mensal e anual) pelos novos IDs
-- Atualizar os comentários com os novos valores
-
-### 4. Atualizar Edge Function `check-pro-subscription/index.ts`
-- O filtro `prod_U5dB77Y8adgxGf` permanece igual (mesmo produto, preço novo)
-- O produto anual `prod_UBENhRLOTa0bHS` também permanece (usa `pro_access_expires_at`)
-- **Nenhuma mudança necessária** nesta função
-
-### 5. Atualizar Edge Function `stripe-webhook/index.ts`
-- **Nenhuma mudança necessária** — o webhook usa `metadata.type` (`pro_subscription`, `pro_annual`) para fulfillment, não price IDs
-- Os novos preços nos mesmos produtos continuarão funcionando
-
-### 6. Atualizar textos de localização (pt.json, en.json, es.json)
-- `b2b.billed_annually`: `R$ 418,80/ano` → `R$ 804/ano`
-- `b2b.save_30` → `b2b.save_31` ou manter "Economize 31%" (economia real: (97-67)/97 = 30.9%)
-- `b2b.roi_conclusion`: `R$ 1,20/dia` → `R$ 2,23/dia` (R$67/30) para o plano anual, ou `R$ 3,23/dia` para mensal
-
-### 7. Atualizar seção ROI na landing profissional
-- A conclusão de ROI que diz "Por menos de R$ 1,20/dia" precisa ser recalculada:
-  - Mensal: R$97/30 = ~R$3,23/dia
-  - Anual: R$67/30 = ~R$2,23/dia
-  - Usar o valor anual como referência: "Por menos de R$ 2,30/dia"
-
-### 8. Componentes front-end que já usam as constantes
-- `ProfessionalSection.tsx` — usa `PRO_PLAN_PRICE` e `PRO_PLAN_ANNUAL_PRICE` (atualiza automaticamente)
-- `ProfessionalLanding.tsx` — idem
-- `ProDashboard.tsx` — usa `PRO_PLAN_PRICE_FORMATTED` (atualiza automaticamente)
-
----
-
-## Detalhes Técnicos Importantes
-
-- **Assinantes existentes** não são afetados — continuam no preço antigo até cancelarem
-- **Boleto**: O Pro subscription usa `payment_method_types: ["card"]` (sem boleto), então não há impacto em fluxos de boleto
-- **Filtro de produto no check-pro-subscription**: Continua usando o mesmo `product_id`, apenas o `price_id` muda — sem impacto
-- **Webhook**: Roteia por `metadata.type`, não por preço — sem impacto
-- **Economia anual**: (97-67)/97 ≈ 31% — manter o badge "Economize 30%" ou ajustar para "~31%"
-
----
-
-## Arquivos Modificados
-1. **Stripe** — 2 novos Prices (via ferramenta Stripe)
-2. `src/constants/pricing.ts` — valores e price_ids
-3. `supabase/functions/create-pro-subscription/index.ts` — price_ids
-4. `src/locales/pt.json` — textos de billing e ROI
-5. `src/locales/en.json` — idem
-6. `src/locales/es.json` — idem
-
+A abordagem recomendada para o registro é a **alternativa simples** (Parte 1, item 3): criar o perfil com status pendente e forçar pagamento antes do acesso. Isso evita complexidade no webhook e garante que os dados do formulário não se percam se o pagamento falhar ou demorar (boleto).
