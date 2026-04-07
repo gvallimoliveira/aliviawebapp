@@ -44,60 +44,62 @@ const Gateway = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-background relative overflow-x-hidden flex flex-col">
       {/* Background blobs */}
       <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/10 blur-3xl" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl" />
 
       {/* Header minimal */}
-      <header className="relative z-10 container flex items-center justify-between py-4">
-        <div className="flex items-center gap-2">
-          <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
-          <span className="text-lg font-bold text-foreground">Aliv.iA</span>
-        </div>
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
+        <div className="container flex items-center justify-between py-4">
+          <div className="flex items-center gap-2">
+            <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
+            <span className="text-lg font-bold text-foreground">Aliv.iA</span>
+          </div>
 
-        {/* Desktop actions */}
-        <div className="hidden sm:flex items-center gap-3">
-          <a href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Blog
-          </a>
-          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2">
-            <Globe className="h-4 w-4" />
-            {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} title={t("support.badge")}>
-            <HelpCircle className="h-4 w-4" />
-          </Button>
-          {user ? (
-            <>
-              <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5">
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
+          {/* Desktop actions */}
+          <div className="hidden sm:flex items-center gap-3">
+            <a href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Blog
+            </a>
+            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2">
+              <Globe className="h-4 w-4" />
+              {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} title={t("support.badge")}>
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+            {user ? (
+              <>
+                <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 text-muted-foreground">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm">
+                {t("nav.login")}
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 text-muted-foreground">
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm">
+            )}
+          </div>
+
+          {/* Mobile actions */}
+          <div className="flex sm:hidden items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1 px-2">
+              <Globe className="h-4 w-4" />
+              {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm px-2">
               {t("nav.login")}
             </Button>
-          )}
-        </div>
-
-        {/* Mobile actions */}
-        <div className="flex sm:hidden items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1 px-2">
-            <Globe className="h-4 w-4" />
-            {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm px-2">
-            {t("nav.login")}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} aria-label="Menu">
-            <Menu className="h-5 w-5" />
-          </Button>
+            <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} aria-label="Menu">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </header>
       <ReferralBanner />
