@@ -221,6 +221,18 @@ const ProfessionalLanding = () => {
         </div>
       </section>
 
+      {/* Complemento quote */}
+      <section className="py-10 md:py-14 bg-primary/10">
+        <div className="container max-w-3xl mx-auto px-4 text-center">
+          <motion.p
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
+            className="text-lg md:text-xl font-semibold text-primary italic"
+          >
+            "O Aliv.iA não compete com o fisioterapeuta — nós o complementamos."
+          </motion.p>
+        </div>
+      </section>
+
       {/* Benefits */}
       <section className="py-16 md:py-20">
         <div className="container max-w-5xl mx-auto px-4">
