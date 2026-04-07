@@ -51,7 +51,7 @@ const Gateway = () => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl" />
 
       {/* Header minimal */}
-      <header className="relative z-10 container flex items-center justify-between py-4">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
           <span className="text-lg font-bold text-foreground">Aliv.iA</span>
