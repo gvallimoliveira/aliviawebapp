@@ -1193,6 +1193,7 @@
   "evolution.min_assessments": "Requires 2+ assessments with diagnosis",
   "evolution.share_whatsapp": "Share via WhatsApp",
   "compare.quote": "\"We unite the specialist's vision with the precision and agility of AI.\"",
+  "compare.disclaimer": "⚠️ The assessment provided by Aliv.iA is for informational and guidance purposes only. It does not replace an in-person consultation with a qualified healthcare professional.",
   "b2b.lgpd_title": "Security & Compliance",
   "b2b.lgpd_desc": "Data protected with encryption, secure hosting, and LGPD compliance. Your clinical data and your patients' data are safe.",
   "b2b.lgpd_badge": "LGPD Compliant",

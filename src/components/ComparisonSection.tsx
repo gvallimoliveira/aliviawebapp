@@ -247,6 +247,16 @@ const ComparisonSection = () => {
         >
           {t("compare.quote")}
         </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5 }}
+          className="mt-4 text-center text-xs text-muted-foreground max-w-xl mx-auto"
+        >
+          {t("compare.disclaimer")}
+        </motion.p>
       </div>
     </section>
   );

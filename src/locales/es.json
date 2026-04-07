@@ -1192,6 +1192,7 @@
   "evolution.min_assessments": "Se necesitan 2+ evaluaciones con diagnóstico",
   "evolution.share_whatsapp": "Compartir por WhatsApp",
   "compare.quote": "\"Unimos la visión del especialista con la precisión y agilidad de la IA.\"",
+  "compare.disclaimer": "⚠️ La evaluación ofrecida por Aliv.iA tiene carácter informativo y de orientación. No sustituye una consulta presencial con un profesional de salud calificado.",
   "b2b.lgpd_title": "Seguridad y Conformidad",
   "b2b.lgpd_desc": "Datos protegidos con encriptación, hospedaje seguro y en conformidad con la LGPD. Sus datos clínicos y los de sus pacientes están seguros.",
   "b2b.lgpd_badge": "Conforme con la LGPD",
