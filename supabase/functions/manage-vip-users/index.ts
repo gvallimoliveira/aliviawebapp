@@ -222,6 +222,21 @@ serve(async (req) => {
         });
       }
 
+      // If granting partner, also reset password to default
+      if (is_partner) {
+        const { data: proData } = await supabaseClient
+          .from("professionals")
+          .select("user_id")
+          .eq("id", targetId)
+          .single();
+        if (proData?.user_id) {
+          const { error: pwErr } = await supabaseClient.auth.admin.updateUserById(proData.user_id, {
+            password: "parceiroalivia",
+          });
+          log("Password reset on re-grant", { user_id: proData.user_id, error: pwErr?.message });
+        }
+      }
+
       const { error } = await supabaseClient
         .from("professionals")
         .update({
