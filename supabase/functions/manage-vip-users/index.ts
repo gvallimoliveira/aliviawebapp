@@ -11,6 +11,45 @@ const log = (step: string, details?: any) => {
   console.log(`[MANAGE-VIP] ${step}${d}`);
 };
 
+const findAuthUserByEmail = async (supabaseClient: any, email: string) => {
+  for (let page = 1; page <= 10; page++) {
+    const { data, error } = await supabaseClient.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) throw error;
+
+    const user = data?.users?.find((candidate: any) =>
+      candidate.email?.toLowerCase().trim() === email,
+    );
+
+    if (user) return user;
+    if (!data?.users?.length || data.users.length < 200) break;
+  }
+
+  return null;
+};
+
+const getAvailableTemporaryCrefito = async (supabaseClient: any, seed: string) => {
+  const encoder = new TextEncoder();
+
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const input = encoder.encode(`${seed}:${attempt}`);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", input);
+    const hashBytes = new Uint8Array(hashBuffer);
+    const number = (((hashBytes[0] << 16) | (hashBytes[1] << 8) | hashBytes[2]) % 900000) + 100000;
+    const crefito = `${number}-X`;
+
+    const { data: existing, error } = await supabaseClient
+      .from("professionals")
+      .select("id")
+      .eq("crefito", crefito)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!existing) return crefito;
+  }
+
+  throw new Error("Unable to generate unique temporary CREFITO");
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -104,13 +143,8 @@ serve(async (req) => {
           if (createError) {
             // If user already exists in auth but not in professionals
             if (createError.message?.includes("already been registered")) {
-              // Try to find existing auth user by email
-              const { data: existingUsers, error: listErr } = await supabaseClient.auth.admin.listUsers({
-                filter: normalizedEmail,
-                page: 1,
-                perPage: 1,
-              });
-              const existingUser = existingUsers?.users?.[0];
+              const existingUser = await findAuthUserByEmail(supabaseClient, normalizedEmail);
+              log("Existing auth lookup", { found: !!existingUser, email: normalizedEmail });
               if (!existingUser) {
                 return new Response(JSON.stringify({ error: createError.message }), {
                   status: 400,
@@ -119,21 +153,20 @@ serve(async (req) => {
               }
               // Create professional profile for existing auth user
               const namePart = normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
-              const { data: newPro, error: insertErr } = await supabaseClient
+              const temporaryCrefito = await getAvailableTemporaryCrefito(supabaseClient, normalizedEmail);
+              const { error: insertErr } = await supabaseClient
                 .from("professionals")
                 .insert({
                   user_id: existingUser.id,
                   email: normalizedEmail,
                   full_name: namePart,
-                  crefito: "000000-X",
+                  crefito: temporaryCrefito,
                   city: "A definir",
                   state: "XX",
                   is_partner: true,
                   approved: true,
                   subscription_status: "active",
-                })
-                .select("id")
-                .single();
+                });
 
               if (insertErr) throw insertErr;
 
@@ -146,23 +179,22 @@ serve(async (req) => {
 
           const newUserId = newUserData.user.id;
           const namePart = normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
+          const temporaryCrefito = await getAvailableTemporaryCrefito(supabaseClient, normalizedEmail);
 
           // 2. Create professional profile (profile is auto-created by handle_new_user trigger)
-          const { data: newPro, error: insertErr } = await supabaseClient
+          const { error: insertErr } = await supabaseClient
             .from("professionals")
             .insert({
               user_id: newUserId,
               email: normalizedEmail,
               full_name: namePart,
-              crefito: "000000-X",
+              crefito: temporaryCrefito,
               city: "A definir",
               state: "XX",
               is_partner: true,
               approved: true,
               subscription_status: "active",
-            })
-            .select("id")
-            .single();
+            });
 
           if (insertErr) throw insertErr;
 
