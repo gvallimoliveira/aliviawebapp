@@ -6,12 +6,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const log = (step: string, details?: any) => {
+  const d = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[MANAGE-VIP] ${step}${d}`);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    log("Request received", { method: req.method });
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -69,17 +75,20 @@ serve(async (req) => {
     // Set partner status
     if (action === "set_partner") {
       const { email, professional_id, is_partner } = body;
+      log("set_partner", { email, professional_id, is_partner });
 
       let targetId = professional_id;
 
       if (!targetId && email) {
         const normalizedEmail = email.toLowerCase().trim();
 
-        const { data: pro } = await supabaseClient
+        const { data: pro, error: proErr } = await supabaseClient
           .from("professionals")
           .select("id")
           .eq("email", normalizedEmail)
           .maybeSingle();
+
+        log("Professional lookup", { found: !!pro, error: proErr?.message });
 
         if (pro) {
           targetId = pro.id;
@@ -95,9 +104,13 @@ serve(async (req) => {
           if (createError) {
             // If user already exists in auth but not in professionals
             if (createError.message?.includes("already been registered")) {
-              // Try to find existing auth user
-              const { data: { users }, error: listErr } = await supabaseClient.auth.admin.listUsers();
-              const existingUser = users?.find((u: any) => u.email === normalizedEmail);
+              // Try to find existing auth user by email
+              const { data: existingUsers, error: listErr } = await supabaseClient.auth.admin.listUsers({
+                filter: normalizedEmail,
+                page: 1,
+                perPage: 1,
+              });
+              const existingUser = existingUsers?.users?.[0];
               if (!existingUser) {
                 return new Response(JSON.stringify({ error: createError.message }), {
                   status: 400,
@@ -373,6 +386,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
+    log("ERROR", { message: error.message, stack: error.stack });
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
