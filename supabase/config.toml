@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.generate-evolution-summary]
 verify_jwt = false
+
+[functions.reset-partner-pw]
+verify_jwt = false
