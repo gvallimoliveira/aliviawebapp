@@ -95,9 +95,13 @@ serve(async (req) => {
           if (createError) {
             // If user already exists in auth but not in professionals
             if (createError.message?.includes("already been registered")) {
-              // Try to find existing auth user
-              const { data: { users }, error: listErr } = await supabaseClient.auth.admin.listUsers();
-              const existingUser = users?.find((u: any) => u.email === normalizedEmail);
+              // Try to find existing auth user by email
+              const { data: existingUsers, error: listErr } = await supabaseClient.auth.admin.listUsers({
+                filter: normalizedEmail,
+                page: 1,
+                perPage: 1,
+              });
+              const existingUser = existingUsers?.users?.[0];
               if (!existingUser) {
                 return new Response(JSON.stringify({ error: createError.message }), {
                   status: 400,
