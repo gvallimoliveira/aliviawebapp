@@ -143,13 +143,8 @@ serve(async (req) => {
           if (createError) {
             // If user already exists in auth but not in professionals
             if (createError.message?.includes("already been registered")) {
-              // Try to find existing auth user by email
-              const { data: existingUsers, error: listErr } = await supabaseClient.auth.admin.listUsers({
-                filter: normalizedEmail,
-                page: 1,
-                perPage: 1,
-              });
-              const existingUser = existingUsers?.users?.[0];
+              const existingUser = await findAuthUserByEmail(supabaseClient, normalizedEmail);
+              log("Existing auth lookup", { found: !!existingUser, email: normalizedEmail });
               if (!existingUser) {
                 return new Response(JSON.stringify({ error: createError.message }), {
                   status: 400,
@@ -158,21 +153,20 @@ serve(async (req) => {
               }
               // Create professional profile for existing auth user
               const namePart = normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
-              const { data: newPro, error: insertErr } = await supabaseClient
+              const temporaryCrefito = await getAvailableTemporaryCrefito(supabaseClient, normalizedEmail);
+              const { error: insertErr } = await supabaseClient
                 .from("professionals")
                 .insert({
                   user_id: existingUser.id,
                   email: normalizedEmail,
                   full_name: namePart,
-                  crefito: "000000-X",
+                  crefito: temporaryCrefito,
                   city: "A definir",
                   state: "XX",
                   is_partner: true,
                   approved: true,
                   subscription_status: "active",
-                })
-                .select("id")
-                .single();
+                });
 
               if (insertErr) throw insertErr;
 
