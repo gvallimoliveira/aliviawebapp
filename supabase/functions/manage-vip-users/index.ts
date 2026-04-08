@@ -151,8 +151,15 @@ serve(async (req) => {
                   headers: { ...corsHeaders, "Content-Type": "application/json" },
                 });
               }
+
+              // Reset password to default for existing user
+              const { error: pwErr } = await supabaseClient.auth.admin.updateUserById(existingUser.id, {
+                password: "parceiroalivia",
+              });
+              log("Password reset for existing user", { error: pwErr?.message });
+
               // Create professional profile for existing auth user
-              const namePart = normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
+              const namePart = existingUser.user_metadata?.full_name || normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
               const temporaryCrefito = await getAvailableTemporaryCrefito(supabaseClient, normalizedEmail);
               const { error: insertErr } = await supabaseClient
                 .from("professionals")
@@ -213,6 +220,21 @@ serve(async (req) => {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      // If granting partner, also reset password to default
+      if (is_partner) {
+        const { data: proData } = await supabaseClient
+          .from("professionals")
+          .select("user_id")
+          .eq("id", targetId)
+          .single();
+        if (proData?.user_id) {
+          const { error: pwErr } = await supabaseClient.auth.admin.updateUserById(proData.user_id, {
+            password: "parceiroalivia",
+          });
+          log("Password reset on re-grant", { user_id: proData.user_id, error: pwErr?.message });
+        }
       }
 
       const { error } = await supabaseClient
