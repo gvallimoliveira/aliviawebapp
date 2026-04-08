@@ -11,6 +11,45 @@ const log = (step: string, details?: any) => {
   console.log(`[MANAGE-VIP] ${step}${d}`);
 };
 
+const findAuthUserByEmail = async (supabaseClient: any, email: string) => {
+  for (let page = 1; page <= 10; page++) {
+    const { data, error } = await supabaseClient.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) throw error;
+
+    const user = data?.users?.find((candidate: any) =>
+      candidate.email?.toLowerCase().trim() === email,
+    );
+
+    if (user) return user;
+    if (!data?.users?.length || data.users.length < 200) break;
+  }
+
+  return null;
+};
+
+const getAvailableTemporaryCrefito = async (supabaseClient: any, seed: string) => {
+  const encoder = new TextEncoder();
+
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const input = encoder.encode(`${seed}:${attempt}`);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", input);
+    const hashBytes = new Uint8Array(hashBuffer);
+    const number = (((hashBytes[0] << 16) | (hashBytes[1] << 8) | hashBytes[2]) % 900000) + 100000;
+    const crefito = `${number}-X`;
+
+    const { data: existing, error } = await supabaseClient
+      .from("professionals")
+      .select("id")
+      .eq("crefito", crefito)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!existing) return crefito;
+  }
+
+  throw new Error("Unable to generate unique temporary CREFITO");
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
