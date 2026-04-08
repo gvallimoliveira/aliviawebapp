@@ -75,17 +75,20 @@ serve(async (req) => {
     // Set partner status
     if (action === "set_partner") {
       const { email, professional_id, is_partner } = body;
+      log("set_partner", { email, professional_id, is_partner });
 
       let targetId = professional_id;
 
       if (!targetId && email) {
         const normalizedEmail = email.toLowerCase().trim();
 
-        const { data: pro } = await supabaseClient
+        const { data: pro, error: proErr } = await supabaseClient
           .from("professionals")
           .select("id")
           .eq("email", normalizedEmail)
           .maybeSingle();
+
+        log("Professional lookup", { found: !!pro, error: proErr?.message });
 
         if (pro) {
           targetId = pro.id;
