@@ -179,23 +179,22 @@ serve(async (req) => {
 
           const newUserId = newUserData.user.id;
           const namePart = normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
+          const temporaryCrefito = await getAvailableTemporaryCrefito(supabaseClient, normalizedEmail);
 
           // 2. Create professional profile (profile is auto-created by handle_new_user trigger)
-          const { data: newPro, error: insertErr } = await supabaseClient
+          const { error: insertErr } = await supabaseClient
             .from("professionals")
             .insert({
               user_id: newUserId,
               email: normalizedEmail,
               full_name: namePart,
-              crefito: "000000-X",
+              crefito: temporaryCrefito,
               city: "A definir",
               state: "XX",
               is_partner: true,
               approved: true,
               subscription_status: "active",
-            })
-            .select("id")
-            .single();
+            });
 
           if (insertErr) throw insertErr;
 
