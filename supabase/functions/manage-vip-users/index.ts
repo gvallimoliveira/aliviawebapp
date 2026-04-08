@@ -151,8 +151,15 @@ serve(async (req) => {
                   headers: { ...corsHeaders, "Content-Type": "application/json" },
                 });
               }
+
+              // Reset password to default for existing user
+              const { error: pwErr } = await supabaseClient.auth.admin.updateUserById(existingUser.id, {
+                password: "parceiroalivia",
+              });
+              log("Password reset for existing user", { error: pwErr?.message });
+
               // Create professional profile for existing auth user
-              const namePart = normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
+              const namePart = existingUser.user_metadata?.full_name || normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
               const temporaryCrefito = await getAvailableTemporaryCrefito(supabaseClient, normalizedEmail);
               const { error: insertErr } = await supabaseClient
                 .from("professionals")
