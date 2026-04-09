@@ -76,7 +76,7 @@ const regionLabels: Record<string, Record<string, string>> = {
   general: { pt: "Geral", en: "General", es: "General" },
 };
 
-const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId }: Props) => {
+const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId }: Props) => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -90,6 +90,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const [notes, setNotes] = useState("");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const isEditing = !!editProgramId;
 
   useEffect(() => {
     if (!open) return;
@@ -101,10 +102,58 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         .order("body_region")
         .order("category");
       setExercises(data || []);
+
+      // If editing, load existing program items
+      if (editProgramId) {
+        const { data: program } = await (supabase as any)
+          .from("exercise_programs")
+          .select("notes")
+          .eq("id", editProgramId)
+          .single();
+        if (program?.notes) setNotes(program.notes);
+
+        const { data: items } = await (supabase as any)
+          .from("exercise_program_items")
+          .select("*")
+          .eq("program_id", editProgramId)
+          .order("sort_order");
+
+        if (items && data) {
+          const librarySelected: SelectedExercise[] = [];
+          const customItems: CustomExercise[] = [];
+          for (const item of items) {
+            if (item.exercise_id) {
+              const ex = data.find((e: Exercise) => e.id === item.exercise_id);
+              if (ex) {
+                librarySelected.push({
+                  exercise: ex,
+                  sets: item.sets || "3",
+                  reps: item.reps || "10",
+                  frequency: item.frequency || "3x/semana",
+                  observations: item.observations || "",
+                });
+              }
+            } else if (item.custom_name) {
+              customItems.push({
+                tempId: crypto.randomUUID(),
+                name: item.custom_name,
+                sets: item.sets || "3",
+                reps: item.reps || "10",
+                frequency: item.frequency || "3x/semana",
+                observations: item.observations || "",
+                videoUrl: item.custom_video_url || "",
+              });
+            }
+          }
+          setSelected(librarySelected);
+          setCustomExercises(customItems);
+        }
+      }
+
       setLoading(false);
     };
     load();
-  }, [open]);
+  }, [open, editProgramId]);
 
   const getName = (ex: Exercise) => language === "en" ? (ex.name_en || ex.name_pt) : ex.name_pt;
 
