@@ -205,6 +205,10 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
 
   return (
     <div className="space-y-4">
+      {/* Global video call listener */}
+      {ENABLE_VIDEO_CALL && (
+        <VideoCallListener conversationIds={conversations.map((c) => c.id)} />
+      )}
       {activeConvId && minimized && activeConversation && (
         <Card
           className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
