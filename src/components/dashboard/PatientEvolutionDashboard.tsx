@@ -18,7 +18,7 @@ import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
   Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw, TrendingUp,
-  Copy, ExternalLink,
+  Copy, ExternalLink, Trash2, Pencil,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
@@ -439,9 +439,11 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [showHidden, setShowHidden] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
   const [hepModalOpen, setHepModalOpen] = useState(false);
+  const [editingHepId, setEditingHepId] = useState<string | null>(null);
   const [evolutionLoading, setEvolutionLoading] = useState(false);
   const [hepHistory, setHepHistory] = useState<any[]>([]);
   const [hepHistoryLoading, setHepHistoryLoading] = useState(false);
+  const [deletingHepId, setDeletingHepId] = useState<string | null>(null);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
