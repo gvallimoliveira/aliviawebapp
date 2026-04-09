@@ -4,8 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2 } from "lucide-react";
+import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2, Video as VideoIcon } from "lucide-react";
 import ChatBubble from "./ChatBubble";
+import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
+import { useVideoCall } from "@/hooks/useVideoCall";
+import VideoCallOverlay from "./VideoCallOverlay";
 
 interface ChatWindowProps {
   conversationId: string;
