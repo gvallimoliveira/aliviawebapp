@@ -1307,5 +1307,15 @@
   "session_notes.collapse": "Ver menos",
   "session_notes.delete_title": "Excluir sessão",
   "session_notes.delete_desc": "Tem certeza que deseja excluir esta sessão do prontuário?",
-  "session_notes.confirm_delete": "Excluir"
+  "session_notes.confirm_delete": "Excluir",
+
+  "pro.add_patient": "Adicionar paciente",
+  "pro.add_patient_desc": "Cadastre um paciente externo com dados básicos para diferenciação.",
+  "pro.patient_name_label": "Nome completo",
+  "pro.patient_name_ph": "Nome do paciente",
+  "pro.patient_email_label": "E-mail (opcional)",
+  "pro.patient_phone_label": "Telefone (opcional)",
+  "pro.add_patient_save": "Adicionar paciente",
+  "pro.patient_added": "Paciente adicionado com sucesso!",
+  "pro.patient_add_error": "Erro ao adicionar paciente"
 }

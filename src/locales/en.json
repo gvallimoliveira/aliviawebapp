@@ -1309,5 +1309,15 @@
   "session_notes.collapse": "Show less",
   "session_notes.delete_title": "Delete session",
   "session_notes.delete_desc": "Are you sure you want to delete this session note?",
-  "session_notes.confirm_delete": "Delete"
+  "session_notes.confirm_delete": "Delete",
+
+  "pro.add_patient": "Add patient",
+  "pro.add_patient_desc": "Register an external patient with basic info for identification.",
+  "pro.patient_name_label": "Full name",
+  "pro.patient_name_ph": "Patient name",
+  "pro.patient_email_label": "Email (optional)",
+  "pro.patient_phone_label": "Phone (optional)",
+  "pro.add_patient_save": "Add patient",
+  "pro.patient_added": "Patient added successfully!",
+  "pro.patient_add_error": "Error adding patient"
 }
