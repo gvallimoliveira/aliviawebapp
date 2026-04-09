@@ -1,75 +1,110 @@
-## Resposta: Estado Atual dos Dados Mockados
 
-**Hoje, os dados mockados NÃO permitem acesso completo.** A situação atual:
 
-- Os 3 pacientes fictícios (Maria, João, Ana) aparecem apenas como **cards na listagem**, com blur/paywall por cima
-- **Nenhum deles** é clicável para abrir uma página de detalhe fictícia -- o click navega para a rota real (`/assessment/:id`) que tenta buscar do banco e falha
-- **Não há** dados de questionário fictícios (test_results está vazio nos mocks)
-- **Não há** paciente com 2+ avaliações para simular relatório evolutivo
-- **Não há** simulação de impressão clínica IA, HEP, ou geração de PDF
+# Plano: Videochamada no Chat (com feature flag desativada)
 
----
+## Visão Geral
 
-## Plano: Registro Profissional com Paywall + Ambiente Simulado Completo
+Adicionar um botão de videochamada no header do ChatWindow que permite chamadas de vídeo P2P entre paciente e fisioterapeuta usando WebRTC. A funcionalidade ficará completamente implementada mas escondida atrás de uma feature flag (`ENABLE_VIDEO_CALL = false`).
 
-### Parte 1 — Registro só após pagamento
-
-1. **Modificar `ProfessionalRegister.tsx**`: Após preencher o formulário, em vez de salvar direto, redirecionar para checkout Stripe (mensal ou anual) passando os dados do perfil como metadata
-2. **Modificar `create-pro-subscription` Edge Function**: Receber dados do perfil profissional via metadata e, no `stripe-webhook`, criar o registro na tabela `professionals` somente após confirmação do pagamento
-3. **Alternativa mais simples ( dê preferencia a esta )**: Manter o fluxo atual de criar o perfil primeiro, mas marcar `subscription_status = 'pending'` e redirecionar automaticamente para escolha de plano. O profissional só acessa o painel após pagamento confirmado. Esta abordagem é mais resiliente (evita perda de dados se o pagamento falhar).
-
-### Parte 2 — Card de Boas-Vindas pós-pagamento
-
-4. **Criar flag `pro_onboarding_completed**` no localStorage
-5. **Adicionar card de boas-vindas** no `ProDashboard` para novos assinantes com botão "Conhecer ambiente simulado"
-6. Se o profissional pular, pode acessar depois via toggle
-
-### Parte 3 — Toggle "Painel Pro x Painel Simulado"
-
-7. **Adicionar Switch/Toggle** discreto no header do `ProDashboard` para alternar entre dados reais e dados simulados
-8. Quando ativado, o dashboard usa `mockPatientAssessments` em vez dos dados reais
-
-### Parte 4 — Dados Mockados Completos + Navegação Simulada
-
-9. **Expandir `mockPatientData.ts**` significativamente:
-  - Adicionar `test_results` com respostas fictícias de questionários (DASH, Oswestry, etc.)
-  - Criar 2 avaliações para "Ana Oliveira" (para simular relatório evolutivo)
-  - Adicionar `treatment_plan` completo para pelo menos 2 pacientes
-  - Incluir `clinical_impression` fictícia
-  - Adicionar paciente com red flags para demonstrar o alerta
-10. **Criar página de detalhe simulada** ou adaptar `PatientEvolutionDashboard` para reconhecer IDs "demo-*":
-  - Quando o ID começa com "demo-", usar dados do mock em vez de buscar no banco
-    - Permitir "gerar impressão clínica" que retorna texto fictício pré-definido (sem chamar a IA real)
-    - Permitir visualizar tratamento fictício
-    - Permitir simular geração de relatório evolutivo (com dados pré-calculados)
-    - Bloquear ações reais (PDF real, WhatsApp) com toast "Disponível apenas com dados reais"
-
-### Parte 5 — Fluxo Completo
+## Arquitetura Técnica
 
 ```text
-Landing /profissionais
-  → CTA "Começar agora"
-  → /auth (login/signup)
-  → /professional/register (formulário perfil)
-  → Escolha plano (mensal/anual) → Stripe Checkout
-  → Pagamento confirmado → /dashboard?tab=professional
-  → Card boas-vindas com "Conhecer simulado"
-  → Toggle discreto para alternar simulado/real
+┌─────────────┐     Supabase Realtime     ┌─────────────┐
+│  Usuário A   │◄──── (signaling channel) ────►│  Usuário B   │
+│  (browser)   │                               │  (browser)   │
+│              │◄──── WebRTC P2P stream ──────►│              │
+└─────────────┘      (video + audio)           └─────────────┘
 ```
 
-### Arquivos a modificar/criar
+**Sinalização via Supabase Realtime Broadcast** — sem necessidade de servidor TURN/STUN próprio. Usaremos servidores STUN públicos do Google (`stun:stun.l.google.com:19302`) + um TURN gratuito de fallback (Metered.ca free tier ou similar configurável).
 
+## Componentes e Arquivos
 
-| Arquivo                                                  | Ação                                        |
-| -------------------------------------------------------- | ------------------------------------------- |
-| `src/data/mockPatientData.ts`                            | Expandir com dados completos                |
-| `src/components/dashboard/ProDashboard.tsx`              | Adicionar toggle simulado, card boas-vindas |
-| `src/components/dashboard/PatientEvolutionDashboard.tsx` | Suporte a dados demo                        |
-| `src/pages/ProfessionalRegister.tsx`                     | Redirecionar para checkout após formulário  |
-| `supabase/functions/create-pro-subscription/index.ts`    | Aceitar metadata de perfil                  |
-| `supabase/functions/stripe-webhook/index.ts`             | Criar perfil profissional no fulfillment    |
+### 1. Feature Flag
+- **`src/lib/featureFlags.ts`** — arquivo simples com `export const ENABLE_VIDEO_CALL = false;`
+- Todos os pontos de entrada da UI verificam esse flag antes de renderizar
 
+### 2. Hook `useVideoCall`
+- **`src/hooks/useVideoCall.ts`**
+- Gerencia todo o ciclo WebRTC: criar offer, receber answer, trocar ICE candidates
+- Sinalização via `supabase.channel(`video-${conversationId}`).send()` (Broadcast)
+- Estados: `idle` → `calling` → `ringing` → `connected` → `ended`
+- Controles: `startCall()`, `acceptCall()`, `rejectCall()`, `endCall()`, `toggleMute()`, `toggleCamera()`
+- Cleanup automático ao desmontar (fecha streams, remove peer connection)
+- Timeout de 60s para chamada sem resposta (auto-cancela)
 
-### Consideração técnica
+### 3. Componente `VideoCallOverlay`
+- **`src/components/chat/VideoCallOverlay.tsx`**
+- Overlay fullscreen (mobile-first) com:
+  - Vídeo remoto em tela cheia
+  - Vídeo local em PiP (picture-in-picture, canto inferior direito, arrastável)
+  - Barra de controles: mute microfone, ligar/desligar câmera, encerrar chamada
+  - Timer de duração da chamada
+  - Indicador de estado (chamando, tocando, conectado)
 
-A abordagem recomendada para o registro é a **alternativa simples** (Parte 1, item 3): criar o perfil com status pendente e forçar pagamento antes do acesso. Isso evita complexidade no webhook e garante que os dados do formulário não se percam se o pagamento falhar ou demorar (boleto).
+### 4. Componente `IncomingCallModal`
+- **`src/components/chat/IncomingCallModal.tsx`**
+- Dialog modal quando recebe chamada: nome do outro, botões Aceitar (verde) e Recusar (vermelho)
+- Vibração do dispositivo (Navigator.vibrate) se disponível
+- Som de toque via Web Audio API (tom simples, sem arquivo externo)
+
+### 5. Integração no `ChatWindow`
+- Botão de vídeo (ícone `Video`) no header, ao lado do nome, condicionado ao feature flag
+- Ao clicar, inicia o fluxo de chamada via `useVideoCall`
+
+### 6. Listener global de chamadas recebidas
+- **`src/components/chat/VideoCallListener.tsx`**
+- Montado no `ConversationList` — escuta broadcast em todas as conversas ativas
+- Exibe `IncomingCallModal` quando recebe sinal de chamada
+
+### 7. Traduções
+- Chaves adicionadas em `pt.json`, `en.json`, `es.json`:
+  - `chat.video_call`, `chat.video_calling`, `chat.video_ringing`, `chat.video_connected`
+  - `chat.video_ended`, `chat.video_accept`, `chat.video_reject`, `chat.video_end`
+  - `chat.video_mute`, `chat.video_unmute`, `chat.video_camera_on`, `chat.video_camera_off`
+  - `chat.video_no_answer`, `chat.video_busy`, `chat.video_permission_denied`
+
+## Detalhes de Implementação
+
+### Sinalização (sem tabela extra)
+Usaremos **Supabase Realtime Broadcast** (ephemeral, sem persistência) para trocar SDP offers/answers e ICE candidates. Não precisa de tabela nova nem migration.
+
+```typescript
+// Enviar sinal
+channel.send({ type: "broadcast", event: "webrtc-signal", payload: { type: "offer", sdp, from: userId } });
+
+// Receber sinal
+channel.on("broadcast", { event: "webrtc-signal" }, (payload) => { ... });
+```
+
+### Permissões de mídia
+- Solicitar `getUserMedia({ video: true, audio: true })` apenas ao iniciar/aceitar chamada
+- Tratar erros de permissão com mensagem amigável (toast)
+- Fallback: se câmera negada, permitir chamada só com áudio
+
+### Compatibilidade mobile
+- Funciona em Safari iOS 14.5+, Chrome Android, navegadores modernos
+- Layout responsivo: overlay adapta para viewport pequeno
+- Prevenir scroll do body durante chamada ativa
+
+### Segurança
+- Broadcast só funciona para participantes autenticados no channel
+- Verificação de `is_conversation_participant` implícita pelo contexto (usuário já está no chat)
+- Nenhum dado de vídeo passa pelo servidor — é P2P direto
+
+## O que NÃO será feito
+- Gravação de chamadas
+- Chamadas em grupo
+- Compartilhamento de tela
+- TURN server próprio (usa STUN público por enquanto)
+
+## Ordem de Implementação
+1. Criar `featureFlags.ts`
+2. Criar hook `useVideoCall`
+3. Criar `IncomingCallModal`
+4. Criar `VideoCallOverlay`
+5. Criar `VideoCallListener`
+6. Integrar botão no `ChatWindow`
+7. Montar listener no `ConversationList`
+8. Adicionar traduções (pt, en, es)
+
