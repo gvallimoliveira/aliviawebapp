@@ -352,7 +352,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Dumbbell className="h-5 w-5 text-primary" />
-            Criar Programa de Exercícios
+            {isEditing ? "Editar Programa de Exercícios" : "Criar Programa de Exercícios"}
           </DialogTitle>
           <DialogDescription>
             Selecione exercícios do banco ou adicione manualmente para <span className="font-semibold">{patientName}</span>
