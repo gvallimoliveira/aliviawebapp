@@ -127,31 +127,48 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
-  // Fetch known patients from assessments linked to this professional
+  // Fetch known patients from BOTH assessments AND appointments
   useEffect(() => {
     const fetchPatients = async () => {
-      const { data } = await supabase
+      const map = new Map<string, KnownPatient>();
+      // From assessments
+      const { data: assessData } = await supabase
         .from("assessments")
         .select("patient_name, patient_email")
         .eq("professional_id", professionalId)
         .not("patient_email", "is", null);
-      if (data) {
-        const map = new Map<string, KnownPatient>();
-        data.forEach((a) => {
+      if (assessData) {
+        assessData.forEach((a) => {
           if (a.patient_email && a.patient_name) {
             map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
           }
         });
-        setKnownPatients(Array.from(map.values()));
       }
+      // From appointments (catches patients created directly in agenda)
+      const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
+        .select("patient_name, patient_email")
+        .eq("professional_id", professionalId)
+        .not("patient_email", "is", null);
+      if (aptData) {
+        (aptData as any[]).forEach((a) => {
+          if (a.patient_email && a.patient_name && !map.has(a.patient_email)) {
+            map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+          }
+        });
+      }
+      setKnownPatients(Array.from(map.values()));
     };
     fetchPatients();
   }, [professionalId]);
+
+  // Show email required warning
+  const [emailWarning, setEmailWarning] = useState(false);
 
   const navigate = (dir: number) => setStartDate((prev) => addDays(prev, dir * daysToShow));
 
   const handleSelectPatient = (key: string) => {
     setSelectedPatientKey(key);
+    setEmailWarning(false);
     if (key === "__new__") {
       setFormName("");
       setFormEmail("");
@@ -194,12 +211,18 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
 
   const handleSave = async () => {
     if (!formName.trim()) return;
+    // For new patients, email is mandatory
+    if (selectedPatientKey === "__new__" && !formEmail.trim()) {
+      setEmailWarning(true);
+      return;
+    }
     setSaving(true);
     try {
+      const trimmedEmail = formEmail.trim();
       const payload = {
         professional_id: professionalId,
-        patient_name: formName,
-        patient_email: formEmail || null,
+        patient_name: formName.trim(),
+        patient_email: trimmedEmail || null,
         appointment_date: format(formDate, "yyyy-MM-dd"),
         appointment_time: formTime,
         duration_minutes: parseInt(formDuration) || 50,
@@ -212,9 +235,43 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
           .eq("id", editingApt.id);
       } else {
         await (supabase.from("professional_appointments" as any) as any).insert(payload);
+        // If new patient (not in known list), auto-create in patient list via placeholder assessment
+        if (selectedPatientKey === "__new__" && trimmedEmail) {
+          const { data: existing } = await supabase
+            .from("assessments")
+            .select("id")
+            .eq("professional_id", professionalId)
+            .eq("patient_email", trimmedEmail)
+            .limit(1);
+          if (!existing || existing.length === 0) {
+            await supabase.from("assessments").insert({
+              type: "professional",
+              status: "completed",
+              professional_id: professionalId,
+              patient_name: formName.trim(),
+              patient_email: trimmedEmail,
+              anamnesis_data: { externalPatient: true },
+            });
+            // Refresh patient list in parent
+            window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+            // Suggest sending pre-assessment link
+            toast({
+              title: t("schedule.patient_created"),
+              description: t("schedule.suggest_pre_assessment"),
+              duration: 8000,
+            });
+          }
+        }
       }
       toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
       setModalOpen(false);
+      // Refresh known patients list
+      setKnownPatients((prev) => {
+        if (trimmedEmail && !prev.find((p) => p.email === trimmedEmail)) {
+          return [...prev, { name: formName.trim(), email: trimmedEmail }];
+        }
+        return prev;
+      });
       fetchAppointments();
     } catch {
       toast({ title: t("schedule.error"), variant: "destructive" });
@@ -407,27 +464,25 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
                 <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
               </div>
             </div>
-            {/* Patient selector */}
-            {knownPatients.length > 0 && (
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
-                <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
-                  <SelectTrigger className="mt-1 text-xs h-9">
-                    <SelectValue placeholder={t("schedule.select_patient_ph")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
-                    {knownPatients.map((p) => (
-                      <SelectItem key={p.email} value={p.email}>
-                        {p.name} ({p.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Patient selector — always visible */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_name")}</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
+              <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
+                <SelectTrigger className="mt-1 text-xs h-9">
+                  <SelectValue placeholder={t("schedule.select_patient_ph")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
+                  {knownPatients.map((p) => (
+                    <SelectItem key={p.email} value={p.email}>
+                      {p.name} ({p.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_name")} *</label>
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
@@ -437,14 +492,19 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_email")}</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                {t("schedule.patient_email")} {selectedPatientKey === "__new__" && "*"}
+              </label>
               <Input
                 value={formEmail}
-                onChange={(e) => setFormEmail(e.target.value)}
+                onChange={(e) => { setFormEmail(e.target.value); setEmailWarning(false); }}
                 placeholder={t("schedule.patient_email_ph")}
-                className="mt-1 text-xs h-9"
+                className={cn("mt-1 text-xs h-9", emailWarning && "border-destructive")}
                 disabled={selectedPatientKey !== "__new__"}
               />
+              {emailWarning && (
+                <p className="text-[10px] text-destructive mt-1">{t("schedule.email_required")}</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
