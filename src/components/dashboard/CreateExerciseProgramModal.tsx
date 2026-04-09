@@ -540,7 +540,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
             className="w-full rounded-xl gap-1.5"
           >
             {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Dumbbell className="h-4 w-4" />}
-            {creating ? "Criando..." : `Gerar Link do Programa (${totalCount})`}
+            {creating ? (isEditing ? "Salvando..." : "Criando...") : (isEditing ? `Salvar Alterações (${totalCount})` : `Gerar Link do Programa (${totalCount})`)}
           </Button>
         </div>
       </DialogContent>
