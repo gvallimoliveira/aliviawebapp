@@ -18,7 +18,7 @@ import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
   Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw, TrendingUp,
-  Copy, ExternalLink,
+  Copy, ExternalLink, Trash2, Pencil,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
@@ -439,9 +439,11 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [showHidden, setShowHidden] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
   const [hepModalOpen, setHepModalOpen] = useState(false);
+  const [editingHepId, setEditingHepId] = useState<string | null>(null);
   const [evolutionLoading, setEvolutionLoading] = useState(false);
   const [hepHistory, setHepHistory] = useState<any[]>([]);
   const [hepHistoryLoading, setHepHistoryLoading] = useState(false);
+  const [deletingHepId, setDeletingHepId] = useState<string | null>(null);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
@@ -467,7 +469,28 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         setHepHistoryLoading(false);
       });
   }, [professionalId, selectedEmail, hepModalOpen, isDemo]);
-  const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
+
+  const handleDeleteHep = async (hepId: string) => {
+    if (deletingHepId) return;
+    setDeletingHepId(hepId);
+    try {
+      // Delete items first, then program
+      await (supabase as any).from("exercise_program_items").delete().eq("program_id", hepId);
+      await (supabase as any).from("exercise_programs").delete().eq("id", hepId);
+      setHepHistory((prev) => prev.filter((h: any) => h.id !== hepId));
+      toast({ title: "Programa excluído com sucesso!" });
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir programa", variant: "destructive" });
+    } finally {
+      setDeletingHepId(null);
+    }
+  };
+
+  const handleEditHep = (hepId: string) => {
+    setEditingHepId(hepId);
+    setHepModalOpen(true);
+  };
+
     if (e) e.stopPropagation();
     if (!professionalId || archiving || !groupKey) return;
     setArchiving(groupKey);
@@ -982,10 +1005,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             variant="outline"
             size="sm"
             className="gap-1.5 shrink-0"
-            onClick={() => setHepModalOpen(true)}
+            onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}
           >
             <Dumbbell className="h-4 w-4" /> Exercícios
           </Button>
+          {latestWithDiagnosis && onShareWhatsApp && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 shrink-0 text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+              onClick={() => onShareWhatsApp(latestWithDiagnosis)}
+            >
+              <Share2 className="h-4 w-4" /> WhatsApp
+            </Button>
+          )}
           {patient.assessments.filter((a: any) => a.diagnosis).length >= 2 && (
             <Button
               variant="outline"
@@ -1082,10 +1115,11 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
       {/* HEP Modal */}
       <CreateExerciseProgramModal
         open={hepModalOpen}
-        onOpenChange={setHepModalOpen}
+        onOpenChange={(open) => { setHepModalOpen(open); if (!open) setEditingHepId(null); }}
         professionalId={professionalId}
         patientName={patient.name}
         assessmentId={latestWithDiagnosis?.id}
+        editProgramId={editingHepId}
       />
 
       {/* ── HEP History ── */}
@@ -1124,6 +1158,15 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
+                        title="Editar programa"
+                        onClick={() => handleEditHep(hep.id)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
                         title="Copiar link"
                         onClick={() => { navigator.clipboard.writeText(link); toast({ title: "Link copiado!" }); }}
                       >
@@ -1146,6 +1189,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Seu programa de exercícios: ${link}`)}`, "_blank")}
                       >
                         <Share2 className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        title="Excluir programa"
+                        disabled={deletingHepId === hep.id}
+                        onClick={() => {
+                          if (confirm("Tem certeza que deseja excluir este programa de exercícios?")) {
+                            handleDeleteHep(hep.id);
+                          }
+                        }}
+                      >
+                        {deletingHepId === hep.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                       </Button>
                     </div>
                   </div>
