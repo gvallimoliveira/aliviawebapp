@@ -65,6 +65,11 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
+interface KnownPatient {
+  name: string;
+  email: string;
+}
+
 const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProScheduleProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
@@ -84,6 +89,10 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Known patients from assessments
+  const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
+  const [selectedPatientKey, setSelectedPatientKey] = useState<string>("__new__");
 
   // Form state
   const [formDate, setFormDate] = useState<Date>(new Date());
@@ -118,7 +127,42 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
+  // Fetch known patients from assessments linked to this professional
+  useEffect(() => {
+    const fetchPatients = async () => {
+      const { data } = await supabase
+        .from("assessments")
+        .select("patient_name, patient_email")
+        .eq("professional_id", professionalId)
+        .not("patient_email", "is", null);
+      if (data) {
+        const map = new Map<string, KnownPatient>();
+        data.forEach((a) => {
+          if (a.patient_email && a.patient_name) {
+            map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+          }
+        });
+        setKnownPatients(Array.from(map.values()));
+      }
+    };
+    fetchPatients();
+  }, [professionalId]);
+
   const navigate = (dir: number) => setStartDate((prev) => addDays(prev, dir * daysToShow));
+
+  const handleSelectPatient = (key: string) => {
+    setSelectedPatientKey(key);
+    if (key === "__new__") {
+      setFormName("");
+      setFormEmail("");
+    } else {
+      const patient = knownPatients.find((p) => p.email === key);
+      if (patient) {
+        setFormName(patient.name);
+        setFormEmail(patient.email);
+      }
+    }
+  };
 
   const openNew = (date?: Date) => {
     setEditingApt(null);
@@ -129,6 +173,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     setFormEmail("");
     setFormType("in_person");
     setFormNotes("");
+    setSelectedPatientKey("__new__");
     setModalOpen(true);
   };
 
@@ -141,6 +186,9 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     setFormEmail(apt.patient_email || "");
     setFormType(apt.type);
     setFormNotes(apt.notes || "");
+    // Try to match known patient
+    const match = knownPatients.find((p) => p.email === apt.patient_email);
+    setSelectedPatientKey(match ? match.email : "__new__");
     setModalOpen(true);
   };
 
@@ -359,13 +407,44 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
                 <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
               </div>
             </div>
+            {/* Patient selector */}
+            {knownPatients.length > 0 && (
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
+                <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
+                  <SelectTrigger className="mt-1 text-xs h-9">
+                    <SelectValue placeholder={t("schedule.select_patient_ph")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
+                    {knownPatients.map((p) => (
+                      <SelectItem key={p.email} value={p.email}>
+                        {p.name} ({p.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_name")}</label>
-              <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t("schedule.patient_name_ph")} className="mt-1 text-xs h-9" />
+              <Input
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder={t("schedule.patient_name_ph")}
+                className="mt-1 text-xs h-9"
+                disabled={selectedPatientKey !== "__new__"}
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_email")}</label>
-              <Input value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder={t("schedule.patient_email_ph")} className="mt-1 text-xs h-9" />
+              <Input
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder={t("schedule.patient_email_ph")}
+                className="mt-1 text-xs h-9"
+                disabled={selectedPatientKey !== "__new__"}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
