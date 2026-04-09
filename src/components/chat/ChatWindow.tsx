@@ -29,7 +29,6 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
 
   // Video call (only active when feature flag is on)
   const vc = useVideoCall(conversationId);
-  const lastSentRef = useRef(0);
 
   useEffect(() => {
     if (!conversationId || !user) return;
