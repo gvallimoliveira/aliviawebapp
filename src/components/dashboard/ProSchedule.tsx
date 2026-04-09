@@ -65,6 +65,11 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
+interface KnownPatient {
+  name: string;
+  email: string;
+}
+
 const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProScheduleProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
@@ -84,6 +89,10 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Known patients from assessments
+  const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
+  const [selectedPatientKey, setSelectedPatientKey] = useState<string>("__new__");
 
   // Form state
   const [formDate, setFormDate] = useState<Date>(new Date());
