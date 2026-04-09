@@ -1292,6 +1292,9 @@
   "schedule.confirm_delete": "Eliminar",
   "schedule.mark_complete": "Completado",
   "schedule.view_patient": "Ver paciente",
+  "schedule.email_required": "El correo es obligatorio para identificar al paciente en el sistema",
+  "schedule.patient_created": "¡Paciente agregado a la lista!",
+  "schedule.suggest_pre_assessment": "Envíe el enlace de pre-evaluación al paciente para recopilar datos clínicos completos.",
 
   "session_notes.title": "Historial de Evolución",
   "session_notes.add": "Registrar sesión",

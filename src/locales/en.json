@@ -1293,6 +1293,9 @@
   "schedule.confirm_delete": "Delete",
   "schedule.mark_complete": "Completed",
   "schedule.view_patient": "View patient",
+  "schedule.email_required": "Email is required to identify the patient in the system",
+  "schedule.patient_created": "Patient added to your list!",
+  "schedule.suggest_pre_assessment": "Send the pre-assessment link to the patient to collect complete clinical data.",
 
   "session_notes.title": "Session Notes",
   "session_notes.add": "Record session",
