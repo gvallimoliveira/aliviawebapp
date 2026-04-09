@@ -187,6 +187,22 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>
+
+      {/* Video call overlay */}
+      {ENABLE_VIDEO_CALL && (vc.state === "connected" || vc.state === "calling" || vc.state === "ended") && (
+        <VideoCallOverlay
+          state={vc.state}
+          isMuted={vc.isMuted}
+          isCameraOff={vc.isCameraOff}
+          callDuration={vc.callDuration}
+          otherName={otherName}
+          attachLocalStream={vc.attachLocalStream}
+          attachRemoteStream={vc.attachRemoteStream}
+          onToggleMute={vc.toggleMute}
+          onToggleCamera={vc.toggleCamera}
+          onEndCall={vc.endCall}
+        />
+      )}
     </div>
   );
 };

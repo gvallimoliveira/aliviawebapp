@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Loader2, MessageCircle, Trash2, Maximize2, Search } from "lucide-react";
 import ChatWindow from "./ChatWindow";
+import VideoCallListener from "./VideoCallListener";
+import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 
 interface ConversationListProps {
   mode: "patient" | "professional";
