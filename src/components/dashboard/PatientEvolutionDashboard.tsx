@@ -1020,10 +1020,25 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
   return (
     <div className="space-y-5">
-      {/* ── 1. HEADER ── */}
-      <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(null)} className="gap-1.5 -ml-2">
-        <ArrowLeft className="h-4 w-4" /> {t("pro.back_to_patients")}
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(null)} className="gap-1.5 -ml-2">
+          <ArrowLeft className="h-4 w-4" /> {t("pro.back_to_patients")}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+          disabled={!!deletingPatient}
+          onClick={() => setDeleteConfirmPatient({
+            groupKey: (patient as any).groupKey,
+            name: patient.name,
+            assessmentIds: patient.assessments.map((a: any) => a.id),
+          })}
+        >
+          {deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          Excluir paciente
+        </Button>
+      </div>
 
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
