@@ -27,6 +27,10 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastSentRef = useRef(0);
 
+  // Video call (only active when feature flag is on)
+  const vc = useVideoCall(conversationId);
+  const lastSentRef = useRef(0);
+
   useEffect(() => {
     if (!conversationId || !user) return;
 
@@ -114,6 +118,18 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h3 className="font-semibold text-foreground truncate flex-1">{otherName}</h3>
+        {ENABLE_VIDEO_CALL && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0 text-primary"
+            onClick={() => vc.startCall(otherName)}
+            disabled={vc.state !== "idle"}
+            title={t("chat.video_call")}
+          >
+            <VideoIcon className="h-4 w-4" />
+          </Button>
+        )}
         {onMinimize && (
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onMinimize} title={t("chat.minimize")}>
             <Minimize2 className="h-4 w-4" />
