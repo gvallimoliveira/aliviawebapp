@@ -407,13 +407,44 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
                 <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
               </div>
             </div>
+            {/* Patient selector */}
+            {knownPatients.length > 0 && (
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
+                <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
+                  <SelectTrigger className="mt-1 text-xs h-9">
+                    <SelectValue placeholder={t("schedule.select_patient_ph")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
+                    {knownPatients.map((p) => (
+                      <SelectItem key={p.email} value={p.email}>
+                        {p.name} ({p.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_name")}</label>
-              <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t("schedule.patient_name_ph")} className="mt-1 text-xs h-9" />
+              <Input
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder={t("schedule.patient_name_ph")}
+                className="mt-1 text-xs h-9"
+                disabled={selectedPatientKey !== "__new__"}
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_email")}</label>
-              <Input value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder={t("schedule.patient_email_ph")} className="mt-1 text-xs h-9" />
+              <Input
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder={t("schedule.patient_email_ph")}
+                className="mt-1 text-xs h-9"
+                disabled={selectedPatientKey !== "__new__"}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
