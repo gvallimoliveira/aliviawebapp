@@ -1,110 +1,131 @@
 
 
-# Plano: Videochamada no Chat (com feature flag desativada)
+# Plano: Agenda Profissional + Prontuário de Evolução
 
 ## Visão Geral
 
-Adicionar um botão de videochamada no header do ChatWindow que permite chamadas de vídeo P2P entre paciente e fisioterapeuta usando WebRTC. A funcionalidade ficará completamente implementada mas escondida atrás de uma feature flag (`ENABLE_VIDEO_CALL = false`).
+Duas funcionalidades interligadas: (1) uma agenda de compromissos no painel profissional para organizar atendimentos, e (2) um prontuário de evolução por sessão na página de detalhes do paciente, acessível também via long-press na agenda.
 
-## Arquitetura Técnica
+## Arquitetura
 
 ```text
-┌─────────────┐     Supabase Realtime     ┌─────────────┐
-│  Usuário A   │◄──── (signaling channel) ────►│  Usuário B   │
-│  (browser)   │                               │  (browser)   │
-│              │◄──── WebRTC P2P stream ──────►│              │
-└─────────────┘      (video + audio)           └─────────────┘
+┌─────────────────────────────────────┐
+│        ProDashboard.tsx             │
+│  ┌───────────────────────────┐      │
+│  │ Card "Agenda do Dia"      │      │  ← lista scrollável dos compromissos de hoje
+│  │  → clique: /dashboard?    │      │
+│  │    tab=agenda              │      │
+│  └───────────────────────────┘      │
+└─────────────────────────────────────┘
+         │ (clique no card)
+         ▼
+┌─────────────────────────────────────┐
+│  ProSchedule.tsx (página agenda)    │
+│  Mobile: 3 colunas dias, setas ±3  │
+│  Desktop: 7 colunas semana, ±7     │
+│  → CRUD de agendamentos            │
+│  → clique paciente → detalhe       │
+│  → long-press → popup evolução     │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│  PatientEvolutionDashboard.tsx      │
+│  Nova seção: "Prontuário de        │
+│  Evolução" com lista por data      │
+│  + botão adicionar sessão           │
+└─────────────────────────────────────┘
 ```
 
-**Sinalização via Supabase Realtime Broadcast** — sem necessidade de servidor TURN/STUN próprio. Usaremos servidores STUN públicos do Google (`stun:stun.l.google.com:19302`) + um TURN gratuito de fallback (Metered.ca free tier ou similar configurável).
+## Banco de Dados — 2 novas tabelas
 
-## Componentes e Arquivos
+### `professional_appointments`
+| Coluna | Tipo | Notas |
+|--------|------|-------|
+| id | uuid PK | |
+| professional_id | uuid | ref professionals.id |
+| patient_email | text | nullable (compromissos externos) |
+| patient_name | text | |
+| appointment_date | date | |
+| appointment_time | time | |
+| duration_minutes | int | default 50 |
+| notes | text | nullable |
+| type | text | 'video_call', 'in_person', 'external' |
+| status | text | 'scheduled', 'completed', 'cancelled' |
+| assessment_id | uuid | nullable, link opcional |
+| created_at | timestamptz | |
 
-### 1. Feature Flag
-- **`src/lib/featureFlags.ts`** — arquivo simples com `export const ENABLE_VIDEO_CALL = false;`
-- Todos os pontos de entrada da UI verificam esse flag antes de renderizar
+RLS: profissionais só veem/gerenciam seus próprios agendamentos.
 
-### 2. Hook `useVideoCall`
-- **`src/hooks/useVideoCall.ts`**
-- Gerencia todo o ciclo WebRTC: criar offer, receber answer, trocar ICE candidates
-- Sinalização via `supabase.channel(`video-${conversationId}`).send()` (Broadcast)
-- Estados: `idle` → `calling` → `ringing` → `connected` → `ended`
-- Controles: `startCall()`, `acceptCall()`, `rejectCall()`, `endCall()`, `toggleMute()`, `toggleCamera()`
-- Cleanup automático ao desmontar (fecha streams, remove peer connection)
-- Timeout de 60s para chamada sem resposta (auto-cancela)
+### `session_notes` (prontuário de evolução)
+| Coluna | Tipo | Notas |
+|--------|------|-------|
+| id | uuid PK | |
+| professional_id | uuid | |
+| patient_email | text | chave de agrupamento do paciente |
+| appointment_id | uuid | nullable, link opcional |
+| session_date | date | |
+| content | text | descrição da sessão |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
 
-### 3. Componente `VideoCallOverlay`
-- **`src/components/chat/VideoCallOverlay.tsx`**
-- Overlay fullscreen (mobile-first) com:
-  - Vídeo remoto em tela cheia
-  - Vídeo local em PiP (picture-in-picture, canto inferior direito, arrastável)
-  - Barra de controles: mute microfone, ligar/desligar câmera, encerrar chamada
-  - Timer de duração da chamada
-  - Indicador de estado (chamando, tocando, conectado)
+RLS: profissionais só veem/gerenciam seus próprios registros.
 
-### 4. Componente `IncomingCallModal`
-- **`src/components/chat/IncomingCallModal.tsx`**
-- Dialog modal quando recebe chamada: nome do outro, botões Aceitar (verde) e Recusar (vermelho)
-- Vibração do dispositivo (Navigator.vibrate) se disponível
-- Som de toque via Web Audio API (tom simples, sem arquivo externo)
+## Componentes Novos
 
-### 5. Integração no `ChatWindow`
-- Botão de vídeo (ícone `Video`) no header, ao lado do nome, condicionado ao feature flag
-- Ao clicar, inicia o fluxo de chamada via `useVideoCall`
+### 1. `ProScheduleCard.tsx` — Card resumo no ProDashboard
+- Posicionado logo após o card "Link de Avaliação"
+- Ícone Calendar, título "Agenda do Dia"
+- Lista scrollável (max-h com overflow-y-auto) dos compromissos de hoje
+- Cada item: horário + nome paciente + badge tipo (vídeo/presencial)
+- Se vazio: "Nenhum compromisso hoje"
+- Clique no card → navega para tab agenda
 
-### 6. Listener global de chamadas recebidas
-- **`src/components/chat/VideoCallListener.tsx`**
-- Montado no `ConversationList` — escuta broadcast em todas as conversas ativas
-- Exibe `IncomingCallModal` quando recebe sinal de chamada
+### 2. `ProSchedule.tsx` — Página completa da agenda
+- Renderizado como conteúdo da tab "agenda" no Dashboard (nova tab)
+- **Mobile (< 768px)**: 3 colunas de dias, setas ← → avançam 3 dias
+- **Desktop (≥ 768px)**: 7 colunas (semana), setas ← → avançam 1 semana
+- Cada coluna: header com dia/data, lista vertical de compromissos
+- Compromisso: card compacto com horário, nome, badge de tipo, indicador de evolução registrada
+- **Ações**: botão "+" flutuante ou no header para novo agendamento
+- **Modal de agendamento**: data, hora, duração, paciente (autocomplete da lista existente ou nome livre), tipo, notas
+- **Edição**: clique no compromisso abre modal preenchido
+- **Exclusão**: botão dentro do modal de edição
+- **Clique no nome do paciente**: navega para detalhe do paciente
+- **Long-press no card**: popup com scroll mostrando evolução daquele dia (session_notes)
 
-### 7. Traduções
-- Chaves adicionadas em `pt.json`, `en.json`, `es.json`:
-  - `chat.video_call`, `chat.video_calling`, `chat.video_ringing`, `chat.video_connected`
-  - `chat.video_ended`, `chat.video_accept`, `chat.video_reject`, `chat.video_end`
-  - `chat.video_mute`, `chat.video_unmute`, `chat.video_camera_on`, `chat.video_camera_off`
-  - `chat.video_no_answer`, `chat.video_busy`, `chat.video_permission_denied`
+### 3. `SessionNotesSection.tsx` — Seção na página do paciente
+- Adicionada no PatientEvolutionDashboard, na área de detalhes do paciente
+- Lista de sessões ordenada por data mais recente
+- Cada item: data, conteúdo resumido, botão expandir
+- Botão "Registrar sessão" abre modal com campo de data e textarea
+- Edição e exclusão de sessões existentes
 
-## Detalhes de Implementação
+## Integração
 
-### Sinalização (sem tabela extra)
-Usaremos **Supabase Realtime Broadcast** (ephemeral, sem persistência) para trocar SDP offers/answers e ICE candidates. Não precisa de tabela nova nem migration.
+### ProDashboard.tsx
+- Inserir `ProScheduleCard` entre o card de link e os stats cards
+- Adicionar nova tab "Agenda" no sistema de tabs do Dashboard
 
-```typescript
-// Enviar sinal
-channel.send({ type: "broadcast", event: "webrtc-signal", payload: { type: "offer", sdp, from: userId } });
+### Dashboard.tsx
+- Adicionar suporte ao parâmetro `tab=agenda` para profissionais
 
-// Receber sinal
-channel.on("broadcast", { event: "webrtc-signal" }, (payload) => { ... });
-```
+### PatientEvolutionDashboard.tsx
+- Adicionar seção `SessionNotesSection` na view de detalhes do paciente (quando `selectedEmail` está ativo)
 
-### Permissões de mídia
-- Solicitar `getUserMedia({ video: true, audio: true })` apenas ao iniciar/aceitar chamada
-- Tratar erros de permissão com mensagem amigável (toast)
-- Fallback: se câmera negada, permitir chamada só com áudio
+## UX Mobile
+- Agenda em 3 colunas com scroll horizontal implícito dentro de cada coluna
+- Cards de compromisso compactos (horário em destaque, nome em 1 linha truncada)
+- FAB (floating action button) no canto inferior para "+" novo agendamento
+- Long-press com feedback visual (scale animation) antes do popup
 
-### Compatibilidade mobile
-- Funciona em Safari iOS 14.5+, Chrome Android, navegadores modernos
-- Layout responsivo: overlay adapta para viewport pequeno
-- Prevenir scroll do body durante chamada ativa
-
-### Segurança
-- Broadcast só funciona para participantes autenticados no channel
-- Verificação de `is_conversation_participant` implícita pelo contexto (usuário já está no chat)
-- Nenhum dado de vídeo passa pelo servidor — é P2P direto
-
-## O que NÃO será feito
-- Gravação de chamadas
-- Chamadas em grupo
-- Compartilhamento de tela
-- TURN server próprio (usa STUN público por enquanto)
+## Traduções
+- Chaves em pt/en/es para todos os textos da agenda e prontuário
 
 ## Ordem de Implementação
-1. Criar `featureFlags.ts`
-2. Criar hook `useVideoCall`
-3. Criar `IncomingCallModal`
-4. Criar `VideoCallOverlay`
-5. Criar `VideoCallListener`
-6. Integrar botão no `ChatWindow`
-7. Montar listener no `ConversationList`
-8. Adicionar traduções (pt, en, es)
+1. Migration: criar tabelas `professional_appointments` e `session_notes` com RLS
+2. Criar `ProScheduleCard.tsx` (card resumo)
+3. Criar `ProSchedule.tsx` (página completa)
+4. Criar `SessionNotesSection.tsx` (prontuário na página do paciente)
+5. Integrar no `ProDashboard.tsx` e `Dashboard.tsx`
+6. Adicionar traduções
 
