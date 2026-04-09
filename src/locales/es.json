@@ -1308,5 +1308,15 @@
   "session_notes.collapse": "Ver menos",
   "session_notes.delete_title": "Eliminar sesión",
   "session_notes.delete_desc": "¿Está seguro que desea eliminar esta sesión del historial?",
-  "session_notes.confirm_delete": "Eliminar"
+  "session_notes.confirm_delete": "Eliminar",
+
+  "pro.add_patient": "Agregar paciente",
+  "pro.add_patient_desc": "Registre un paciente externo con datos básicos para identificación.",
+  "pro.patient_name_label": "Nombre completo",
+  "pro.patient_name_ph": "Nombre del paciente",
+  "pro.patient_email_label": "E-mail (opcional)",
+  "pro.patient_phone_label": "Teléfono (opcional)",
+  "pro.add_patient_save": "Agregar paciente",
+  "pro.patient_added": "¡Paciente agregado exitosamente!",
+  "pro.patient_add_error": "Error al agregar paciente"
 }

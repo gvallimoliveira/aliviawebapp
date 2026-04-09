@@ -11,6 +11,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -20,7 +23,7 @@ import {
   BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import {
-  ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
+  ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, Plus, Phone,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
   Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw, TrendingUp,
   Copy, ExternalLink, Trash2, Pencil,
@@ -453,6 +456,12 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [deletingPatient, setDeletingPatient] = useState<string | null>(null);
   const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<{ groupKey: string; name: string; assessmentIds: string[] } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressFiredRef = useRef(false);
+  const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const [newPatientName, setNewPatientName] = useState("");
+  const [newPatientEmail, setNewPatientEmail] = useState("");
+  const [newPatientPhone, setNewPatientPhone] = useState("");
+  const [addingPatient, setAddingPatient] = useState(false);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
@@ -535,8 +544,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
       setSelectedEmail(null);
       toast({ title: "Paciente e dados excluídos permanentemente" });
-      // Trigger reload by navigating
-      window.location.reload();
     } catch (err: any) {
       console.error("Delete patient error:", err);
       toast({ title: "Erro ao excluir paciente", description: err?.message, variant: "destructive" });
@@ -580,7 +587,35 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     }
   };
 
-  // Load notes for all assessments
+  const handleAddExternalPatient = async () => {
+    if (!newPatientName.trim() || !professionalId) return;
+    setAddingPatient(true);
+    try {
+      // Create a placeholder assessment so the patient appears in the list
+      const email = newPatientEmail.trim() || `external_${Date.now()}@manual.alivia`;
+      await supabase.from("assessments").insert({
+        type: "professional",
+        status: "completed",
+        professional_id: professionalId,
+        patient_name: newPatientName.trim(),
+        patient_email: email,
+        anamnesis_data: { externalPatient: true, phone: newPatientPhone.trim() || undefined },
+      });
+      toast({ title: t("pro.patient_added") });
+      setAddPatientOpen(false);
+      setNewPatientName("");
+      setNewPatientEmail("");
+      setNewPatientPhone("");
+      // Trigger parent reload
+      window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+    } catch (err: any) {
+      toast({ title: t("pro.patient_add_error"), variant: "destructive" });
+    } finally {
+      setAddingPatient(false);
+    }
+  };
+
+
   useEffect(() => {
     if (!professionalId || assessments.length === 0 || isDemo) return;
     const assessmentIds = assessments.map((a) => a.id);
@@ -860,16 +895,27 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               </h3>
               <p className="text-sm text-muted-foreground">{t("pro.patients_desc")}</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 rounded-xl shrink-0"
-              disabled={batchExporting}
-              onClick={() => handleBatchExport(assessments)}
-            >
-              {batchExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-              {t("pro.export_pdfs")}
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-xl"
+                onClick={() => setAddPatientOpen(true)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("pro.add_patient")}</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-xl"
+                disabled={batchExporting}
+                onClick={() => handleBatchExport(assessments)}
+              >
+                {batchExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                <span className="hidden sm:inline">{t("pro.export_pdfs")}</span>
+              </Button>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -913,10 +959,12 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
           const groupKey = (p as any).groupKey;
           const startLongPress = () => {
+            longPressFiredRef.current = false;
             longPressTimerRef.current = setTimeout(() => {
               longPressTimerRef.current = null;
+              longPressFiredRef.current = true;
               setLongPressPatient({ groupKey, name: p.name });
-            }, 600);
+            }, 400);
           };
           const cancelLongPress = () => {
             if (longPressTimerRef.current) {
@@ -930,6 +978,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               key={groupKey}
               className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
               onClick={() => {
+                if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
                 setSelectedEmail(p.email || groupKey);
               }}
               onTouchStart={startLongPress}
@@ -1021,6 +1070,122 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             </Card>
           );
         })}
+
+        {/* Add External Patient Dialog */}
+        <Dialog open={addPatientOpen} onOpenChange={setAddPatientOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t("pro.add_patient")}</DialogTitle>
+              <DialogDescription>{t("pro.add_patient_desc")}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_name_label")} *</label>
+                <Input value={newPatientName} onChange={(e) => setNewPatientName(e.target.value)} placeholder={t("pro.patient_name_ph")} className="mt-1 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_email_label")}</label>
+                <div className="relative mt-1">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input value={newPatientEmail} onChange={(e) => setNewPatientEmail(e.target.value)} placeholder="email@exemplo.com" className="pl-9 text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_phone_label")}</label>
+                <div className="relative mt-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input value={newPatientPhone} onChange={(e) => setNewPatientPhone(e.target.value)} placeholder="(11) 99999-9999" className="pl-9 text-sm" />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button size="sm" className="gap-1.5 rounded-xl" onClick={handleAddExternalPatient} disabled={addingPatient || !newPatientName.trim()}>
+                {addingPatient ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                {t("pro.add_patient_save")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Long-press popup */}
+        <AlertDialog open={!!longPressPatient} onOpenChange={(open) => { if (!open) setLongPressPatient(null); }}>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{longPressPatient?.name}</AlertDialogTitle>
+              <AlertDialogDescription>
+                O que deseja fazer com este paciente?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+              <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel>
+              <Button
+                variant="outline"
+                className="gap-1.5"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (longPressPatient) {
+                    handleArchivePatient(longPressPatient.groupKey);
+                    setLongPressPatient(null);
+                  }
+                }}
+              >
+                <Archive className="h-4 w-4" />
+                Arquivar
+              </Button>
+              <Button
+                variant="destructive"
+                className="gap-1.5"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (longPressPatient) {
+                    const p = patients.find((pat) => (pat as any).groupKey === longPressPatient.groupKey);
+                    if (p) {
+                      setDeleteConfirmPatient({
+                        groupKey: longPressPatient.groupKey,
+                        name: longPressPatient.name,
+                        assessmentIds: p.assessments.map((a: any) => a.id),
+                      });
+                    }
+                    setLongPressPatient(null);
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir permanentemente
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete confirmation dialog */}
+        <AlertDialog open={!!deleteConfirmPatient} onOpenChange={(open) => { if (!open) setDeleteConfirmPatient(null); }}>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão permanente</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir <span className="font-semibold">{deleteConfirmPatient?.name}</span> e todas as suas {deleteConfirmPatient?.assessmentIds.length} avaliação(ões)?
+                <br /><br />
+                <span className="text-destructive font-medium">Esta ação é irreversível. Todos os dados de avaliações, planos de tratamento, exercícios e notas serão permanentemente apagados.</span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={!!deletingPatient} onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5"
+                disabled={!!deletingPatient}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (deleteConfirmPatient) {
+                    handleDeletePatient(deleteConfirmPatient.groupKey, deleteConfirmPatient.assessmentIds);
+                  }
+                }}
+              >
+                {deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                Excluir permanentemente
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
@@ -1682,57 +1847,9 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         </div>
       </div>
 
-      {/* Long-press popup */}
-      <AlertDialog open={!!longPressPatient} onOpenChange={(open) => { if (!open) setLongPressPatient(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{longPressPatient?.name}</AlertDialogTitle>
-            <AlertDialogDescription>
-              O que deseja fazer com este paciente?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <Button
-              variant="outline"
-              className="gap-1.5"
-              onClick={() => {
-                if (longPressPatient) {
-                  handleArchivePatient(longPressPatient.groupKey);
-                  setLongPressPatient(null);
-                }
-              }}
-            >
-              <Archive className="h-4 w-4" />
-              Arquivar
-            </Button>
-            <Button
-              variant="destructive"
-              className="gap-1.5"
-              onClick={() => {
-                if (longPressPatient) {
-                  const p = patients.find((pat) => (pat as any).groupKey === longPressPatient.groupKey);
-                  if (p) {
-                    setDeleteConfirmPatient({
-                      groupKey: longPressPatient.groupKey,
-                      name: longPressPatient.name,
-                      assessmentIds: p.assessments.map((a: any) => a.id),
-                    });
-                  }
-                  setLongPressPatient(null);
-                }
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-              Excluir permanentemente
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete confirmation dialog */}
+      {/* Delete confirmation dialog (detail view) */}
       <AlertDialog open={!!deleteConfirmPatient} onOpenChange={(open) => { if (!open) setDeleteConfirmPatient(null); }}>
-        <AlertDialogContent>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão permanente</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1742,11 +1859,12 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={!!deletingPatient}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={!!deletingPatient} onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5"
               disabled={!!deletingPatient}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if (deleteConfirmPatient) {
                   handleDeletePatient(deleteConfirmPatient.groupKey, deleteConfirmPatient.assessmentIds);
                 }
