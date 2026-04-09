@@ -910,25 +910,32 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
           const isHidden = hiddenKeys.has((p as any).groupKey);
 
+          const groupKey = (p as any).groupKey;
+          const startLongPress = () => {
+            longPressTimerRef.current = setTimeout(() => {
+              longPressTimerRef.current = null;
+              setLongPressPatient({ groupKey, name: p.name });
+            }, 600);
+          };
+          const cancelLongPress = () => {
+            if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+          };
+
           return (
             <Card
-              key={(p as any).groupKey}
+              key={groupKey}
               className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
-              onClick={() => setSelectedEmail(p.email || (p as any).groupKey)}
-              onTouchStart={() => {
-                longPressTimerRef.current = setTimeout(() => {
-                  setLongPressPatient({ groupKey: (p as any).groupKey, name: p.name });
-                }, 600);
+              onClick={(e) => {
+                // If longPressPatient just opened, don't navigate
+                if (longPressPatient) { e.preventDefault(); return; }
+                setSelectedEmail(p.email || groupKey);
               }}
-              onTouchEnd={() => { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); }}
-              onTouchMove={() => { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); }}
-              onMouseDown={() => {
-                longPressTimerRef.current = setTimeout(() => {
-                  setLongPressPatient({ groupKey: (p as any).groupKey, name: p.name });
-                }, 600);
-              }}
-              onMouseUp={() => { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); }}
-              onMouseLeave={() => { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); }}
+              onTouchStart={startLongPress}
+              onTouchEnd={cancelLongPress}
+              onTouchMove={cancelLongPress}
+              onMouseDown={startLongPress}
+              onMouseUp={cancelLongPress}
+              onMouseLeave={cancelLongPress}
             >
               <CardContent className="py-3 px-4">
                 <div className="flex items-center justify-between gap-3">
