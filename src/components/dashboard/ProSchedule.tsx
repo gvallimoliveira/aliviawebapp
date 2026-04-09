@@ -127,7 +127,42 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
+  // Fetch known patients from assessments linked to this professional
+  useEffect(() => {
+    const fetchPatients = async () => {
+      const { data } = await supabase
+        .from("assessments")
+        .select("patient_name, patient_email")
+        .eq("professional_id", professionalId)
+        .not("patient_email", "is", null);
+      if (data) {
+        const map = new Map<string, KnownPatient>();
+        data.forEach((a) => {
+          if (a.patient_email && a.patient_name) {
+            map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+          }
+        });
+        setKnownPatients(Array.from(map.values()));
+      }
+    };
+    fetchPatients();
+  }, [professionalId]);
+
   const navigate = (dir: number) => setStartDate((prev) => addDays(prev, dir * daysToShow));
+
+  const handleSelectPatient = (key: string) => {
+    setSelectedPatientKey(key);
+    if (key === "__new__") {
+      setFormName("");
+      setFormEmail("");
+    } else {
+      const patient = knownPatients.find((p) => p.email === key);
+      if (patient) {
+        setFormName(patient.name);
+        setFormEmail(patient.email);
+      }
+    }
+  };
 
   const openNew = (date?: Date) => {
     setEditingApt(null);
@@ -138,6 +173,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     setFormEmail("");
     setFormType("in_person");
     setFormNotes("");
+    setSelectedPatientKey("__new__");
     setModalOpen(true);
   };
 
@@ -150,6 +186,9 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     setFormEmail(apt.patient_email || "");
     setFormType(apt.type);
     setFormNotes(apt.notes || "");
+    // Try to match known patient
+    const match = knownPatients.find((p) => p.email === apt.patient_email);
+    setSelectedPatientKey(match ? match.email : "__new__");
     setModalOpen(true);
   };
 
