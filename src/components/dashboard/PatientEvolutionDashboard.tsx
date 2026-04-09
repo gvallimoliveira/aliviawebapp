@@ -469,7 +469,28 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         setHepHistoryLoading(false);
       });
   }, [professionalId, selectedEmail, hepModalOpen, isDemo]);
-  const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
+
+  const handleDeleteHep = async (hepId: string) => {
+    if (deletingHepId) return;
+    setDeletingHepId(hepId);
+    try {
+      // Delete items first, then program
+      await (supabase as any).from("exercise_program_items").delete().eq("program_id", hepId);
+      await (supabase as any).from("exercise_programs").delete().eq("id", hepId);
+      setHepHistory((prev) => prev.filter((h: any) => h.id !== hepId));
+      toast({ title: "Programa excluído com sucesso!" });
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir programa", variant: "destructive" });
+    } finally {
+      setDeletingHepId(null);
+    }
+  };
+
+  const handleEditHep = (hepId: string) => {
+    setEditingHepId(hepId);
+    setHepModalOpen(true);
+  };
+
     if (e) e.stopPropagation();
     if (!professionalId || archiving || !groupKey) return;
     setArchiving(groupKey);
