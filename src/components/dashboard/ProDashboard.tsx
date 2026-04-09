@@ -28,6 +28,7 @@ import {
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
+import ProScheduleCard from "./ProScheduleCard";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
@@ -589,6 +590,14 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Schedule Card */}
+      {!isSimulated && (
+        <ProScheduleCard
+          professionalId={professional.id}
+          onNavigateToSchedule={() => navigate("/dashboard?tab=agenda")}
+        />
       )}
 
       {/* Stats Cards */}

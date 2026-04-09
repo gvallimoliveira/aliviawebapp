@@ -25,10 +25,11 @@ import PushOptInBanner from "@/components/PushOptInBanner";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
-  Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle,
+  Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Search, User, Stethoscope as StethoscopeIcon } from "lucide-react";
+import ProSchedule from "@/components/dashboard/ProSchedule";
 
 interface PremiumAccess {
   has_access: boolean;
@@ -93,6 +94,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (tabFromUrl === "professional" && professional) setActiveTab("professional");
     else if (tabFromUrl === "messages") setActiveTab("messages");
+    else if (tabFromUrl === "agenda" && professional) setActiveTab("agenda");
   }, [tabFromUrl, professional]);
 
   const fetchUnreadCount = async () => {
@@ -230,13 +232,16 @@ const Dashboard = () => {
 
         {professional ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-3">
-              <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>
-              <TabsTrigger value="messages" className="gap-1.5 relative">
-                <MessageCircle className="h-4 w-4" />{t("dashboard.tab_messages")}{unreadBadge}
+            <TabsList className="w-full grid grid-cols-4">
+              <TabsTrigger value="health" className="gap-1.5 text-xs"><Heart className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_my_health")}</span></TabsTrigger>
+              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
+                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
-              <TabsTrigger value="professional" className="gap-1.5" data-onboarding="pro-tab-trigger">
-                <Stethoscope className="h-4 w-4" />{t("dashboard.tab_professional")}
+              <TabsTrigger value="agenda" className="gap-1.5 text-xs">
+                <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
+              </TabsTrigger>
+              <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
+                <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
               </TabsTrigger>
             </TabsList>
             <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
@@ -287,6 +292,9 @@ const Dashboard = () => {
               {professional && (msgFilter === "all" || msgFilter === "professional") && (
                 <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} />
               )}
+            </TabsContent>
+            <TabsContent value="agenda" className="space-y-6">
+              <ProSchedule professionalId={professional.id} />
             </TabsContent>
             <TabsContent value="professional" className="space-y-8">
               <ProDashboard professional={professional} />
