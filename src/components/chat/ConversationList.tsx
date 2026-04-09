@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Loader2, MessageCircle, Trash2, Maximize2, Search } from "lucide-react";
 import ChatWindow from "./ChatWindow";
+import VideoCallListener from "./VideoCallListener";
+import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 
 interface ConversationListProps {
   mode: "patient" | "professional";
@@ -203,6 +205,10 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
 
   return (
     <div className="space-y-4">
+      {/* Global video call listener */}
+      {ENABLE_VIDEO_CALL && (
+        <VideoCallListener conversationIds={conversations.map((c) => c.id)} />
+      )}
       {activeConvId && minimized && activeConversation && (
         <Card
           className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"

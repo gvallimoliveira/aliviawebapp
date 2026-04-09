@@ -4,8 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2 } from "lucide-react";
+import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2, Video as VideoIcon } from "lucide-react";
 import ChatBubble from "./ChatBubble";
+import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
+import { useVideoCall } from "@/hooks/useVideoCall";
+import VideoCallOverlay from "./VideoCallOverlay";
 
 interface ChatWindowProps {
   conversationId: string;
@@ -23,6 +26,9 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastSentRef = useRef(0);
+
+  // Video call (only active when feature flag is on)
+  const vc = useVideoCall(conversationId);
 
   useEffect(() => {
     if (!conversationId || !user) return;
@@ -111,6 +117,18 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h3 className="font-semibold text-foreground truncate flex-1">{otherName}</h3>
+        {ENABLE_VIDEO_CALL && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0 text-primary"
+            onClick={() => vc.startCall(otherName)}
+            disabled={vc.state !== "idle"}
+            title={t("chat.video_call")}
+          >
+            <VideoIcon className="h-4 w-4" />
+          </Button>
+        )}
         {onMinimize && (
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onMinimize} title={t("chat.minimize")}>
             <Minimize2 className="h-4 w-4" />
@@ -169,6 +187,22 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>
+
+      {/* Video call overlay */}
+      {ENABLE_VIDEO_CALL && (vc.state === "connected" || vc.state === "calling" || vc.state === "ended") && (
+        <VideoCallOverlay
+          state={vc.state}
+          isMuted={vc.isMuted}
+          isCameraOff={vc.isCameraOff}
+          callDuration={vc.callDuration}
+          otherName={otherName}
+          attachLocalStream={vc.attachLocalStream}
+          attachRemoteStream={vc.attachRemoteStream}
+          onToggleMute={vc.toggleMute}
+          onToggleCamera={vc.toggleCamera}
+          onEndCall={vc.endCall}
+        />
+      )}
     </div>
   );
 };
