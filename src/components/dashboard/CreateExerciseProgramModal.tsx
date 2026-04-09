@@ -53,6 +53,7 @@ interface Props {
   professionalId: string;
   patientName: string;
   assessmentId?: string;
+  editProgramId?: string | null;
 }
 
 const categoryLabels: Record<string, Record<string, string>> = {
