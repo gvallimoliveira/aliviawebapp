@@ -526,6 +526,66 @@ export type Database = {
         }
         Relationships: []
       }
+      professional_appointments: {
+        Row: {
+          appointment_date: string
+          appointment_time: string
+          assessment_id: string | null
+          created_at: string
+          duration_minutes: number
+          id: string
+          notes: string | null
+          patient_email: string | null
+          patient_name: string
+          professional_id: string
+          status: string
+          type: string
+        }
+        Insert: {
+          appointment_date: string
+          appointment_time: string
+          assessment_id?: string | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          patient_email?: string | null
+          patient_name?: string
+          professional_id: string
+          status?: string
+          type?: string
+        }
+        Update: {
+          appointment_date?: string
+          appointment_time?: string
+          assessment_id?: string | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          patient_email?: string | null
+          patient_name?: string
+          professional_id?: string
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_appointments_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_appointments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_hidden_patients: {
         Row: {
           hidden_at: string
@@ -836,6 +896,54 @@ export type Database = {
             columns: ["referral_code_id"]
             isOneToOne: false
             referencedRelation: "referral_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_notes: {
+        Row: {
+          appointment_id: string | null
+          content: string
+          created_at: string
+          id: string
+          patient_email: string
+          professional_id: string
+          session_date: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          patient_email: string
+          professional_id: string
+          session_date?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          patient_email?: string
+          professional_id?: string
+          session_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_notes_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "professional_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_notes_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
         ]
