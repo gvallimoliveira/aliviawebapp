@@ -453,6 +453,12 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [deletingPatient, setDeletingPatient] = useState<string | null>(null);
   const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<{ groupKey: string; name: string; assessmentIds: string[] } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressFiredRef = useRef(false);
+  const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const [newPatientName, setNewPatientName] = useState("");
+  const [newPatientEmail, setNewPatientEmail] = useState("");
+  const [newPatientPhone, setNewPatientPhone] = useState("");
+  const [addingPatient, setAddingPatient] = useState(false);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
@@ -535,8 +541,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
       setSelectedEmail(null);
       toast({ title: "Paciente e dados excluídos permanentemente" });
-      // Trigger reload by navigating
-      window.location.reload();
     } catch (err: any) {
       console.error("Delete patient error:", err);
       toast({ title: "Erro ao excluir paciente", description: err?.message, variant: "destructive" });
@@ -913,10 +917,12 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
           const groupKey = (p as any).groupKey;
           const startLongPress = () => {
+            longPressFiredRef.current = false;
             longPressTimerRef.current = setTimeout(() => {
               longPressTimerRef.current = null;
+              longPressFiredRef.current = true;
               setLongPressPatient({ groupKey, name: p.name });
-            }, 600);
+            }, 400);
           };
           const cancelLongPress = () => {
             if (longPressTimerRef.current) {
@@ -930,6 +936,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               key={groupKey}
               className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
               onClick={() => {
+                if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
                 setSelectedEmail(p.email || groupKey);
               }}
               onTouchStart={startLongPress}
