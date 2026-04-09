@@ -918,16 +918,17 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             }, 600);
           };
           const cancelLongPress = () => {
-            if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+            if (longPressTimerRef.current) {
+              clearTimeout(longPressTimerRef.current);
+              longPressTimerRef.current = null;
+            }
           };
 
           return (
             <Card
               key={groupKey}
               className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
-              onClick={(e) => {
-                // If longPressPatient just opened, don't navigate
-                if (longPressPatient) { e.preventDefault(); return; }
+              onClick={() => {
                 setSelectedEmail(p.email || groupKey);
               }}
               onTouchStart={startLongPress}
