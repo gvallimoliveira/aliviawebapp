@@ -6,6 +6,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -444,6 +448,10 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [hepHistory, setHepHistory] = useState<any[]>([]);
   const [hepHistoryLoading, setHepHistoryLoading] = useState(false);
   const [deletingHepId, setDeletingHepId] = useState<string | null>(null);
+  const [longPressPatient, setLongPressPatient] = useState<{ groupKey: string; name: string } | null>(null);
+  const [deletingPatient, setDeletingPatient] = useState<string | null>(null);
+  const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<{ groupKey: string; name: string; assessmentIds: string[] } | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
@@ -491,6 +499,53 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     setHepModalOpen(true);
   };
 
+  const handleDeletePatient = async (groupKey: string, assessmentIds: string[]) => {
+    setDeletingPatient(groupKey);
+    try {
+      // Delete related data for each assessment
+      for (const aid of assessmentIds) {
+        // Delete exercise program items & programs
+        const { data: programs } = await (supabase as any)
+          .from("exercise_programs")
+          .select("id")
+          .eq("professional_id", professionalId)
+          .eq("assessment_id", aid);
+        if (programs) {
+          for (const prog of programs) {
+            await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
+            await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
+          }
+        }
+        // Delete notes, referrals, follow-ups
+        await supabase.from("professional_notes").delete().eq("professional_id", professionalId).eq("assessment_id", aid);
+        await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", aid);
+      }
+
+      // Delete all assessments for this patient
+      for (const aid of assessmentIds) {
+        await supabase.from("assessments").delete().eq("id", aid);
+      }
+
+      // Also remove from hidden if applicable
+      await (supabase.from("professional_hidden_patients" as any) as any)
+        .delete()
+        .eq("professional_id", professionalId)
+        .eq("patient_email", groupKey);
+
+      setSelectedEmail(null);
+      toast({ title: "Paciente e dados excluídos permanentemente" });
+      // Trigger reload by navigating
+      window.location.reload();
+    } catch (err: any) {
+      console.error("Delete patient error:", err);
+      toast({ title: "Erro ao excluir paciente", description: err?.message, variant: "destructive" });
+    } finally {
+      setDeletingPatient(null);
+      setDeleteConfirmPatient(null);
+    }
+  };
+
+  const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!professionalId || archiving || !groupKey) return;
     setArchiving(groupKey);
@@ -855,11 +910,32 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
           const isHidden = hiddenKeys.has((p as any).groupKey);
 
+          const groupKey = (p as any).groupKey;
+          const startLongPress = () => {
+            longPressTimerRef.current = setTimeout(() => {
+              longPressTimerRef.current = null;
+              setLongPressPatient({ groupKey, name: p.name });
+            }, 600);
+          };
+          const cancelLongPress = () => {
+            if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+          };
+
           return (
             <Card
-              key={(p as any).groupKey}
-              className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group ${isHidden ? "opacity-50" : ""}`}
-              onClick={() => setSelectedEmail(p.email || (p as any).groupKey)}
+              key={groupKey}
+              className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
+              onClick={(e) => {
+                // If longPressPatient just opened, don't navigate
+                if (longPressPatient) { e.preventDefault(); return; }
+                setSelectedEmail(p.email || groupKey);
+              }}
+              onTouchStart={startLongPress}
+              onTouchEnd={cancelLongPress}
+              onTouchMove={cancelLongPress}
+              onMouseDown={startLongPress}
+              onMouseUp={cancelLongPress}
+              onMouseLeave={cancelLongPress}
             >
               <CardContent className="py-3 px-4">
                 <div className="flex items-center justify-between gap-3">
@@ -951,10 +1027,25 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
 
   return (
     <div className="space-y-5">
-      {/* ── 1. HEADER ── */}
-      <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(null)} className="gap-1.5 -ml-2">
-        <ArrowLeft className="h-4 w-4" /> {t("pro.back_to_patients")}
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(null)} className="gap-1.5 -ml-2">
+          <ArrowLeft className="h-4 w-4" /> {t("pro.back_to_patients")}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+          disabled={!!deletingPatient}
+          onClick={() => setDeleteConfirmPatient({
+            groupKey: (patient as any).groupKey,
+            name: patient.name,
+            assessmentIds: patient.assessments.map((a: any) => a.id),
+          })}
+        >
+          {deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          Excluir paciente
+        </Button>
+      </div>
 
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
@@ -1580,6 +1671,83 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           })}
         </div>
       </div>
+
+      {/* Long-press popup */}
+      <AlertDialog open={!!longPressPatient} onOpenChange={(open) => { if (!open) setLongPressPatient(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{longPressPatient?.name}</AlertDialogTitle>
+            <AlertDialogDescription>
+              O que deseja fazer com este paciente?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => {
+                if (longPressPatient) {
+                  handleArchivePatient(longPressPatient.groupKey);
+                  setLongPressPatient(null);
+                }
+              }}
+            >
+              <Archive className="h-4 w-4" />
+              Arquivar
+            </Button>
+            <Button
+              variant="destructive"
+              className="gap-1.5"
+              onClick={() => {
+                if (longPressPatient) {
+                  const p = patients.find((pat) => (pat as any).groupKey === longPressPatient.groupKey);
+                  if (p) {
+                    setDeleteConfirmPatient({
+                      groupKey: longPressPatient.groupKey,
+                      name: longPressPatient.name,
+                      assessmentIds: p.assessments.map((a: any) => a.id),
+                    });
+                  }
+                  setLongPressPatient(null);
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+              Excluir permanentemente
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteConfirmPatient} onOpenChange={(open) => { if (!open) setDeleteConfirmPatient(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão permanente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <span className="font-semibold">{deleteConfirmPatient?.name}</span> e todas as suas {deleteConfirmPatient?.assessmentIds.length} avaliação(ões)?
+              <br /><br />
+              <span className="text-destructive font-medium">Esta ação é irreversível. Todos os dados de avaliações, planos de tratamento, exercícios e notas serão permanentemente apagados.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!deletingPatient}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5"
+              disabled={!!deletingPatient}
+              onClick={() => {
+                if (deleteConfirmPatient) {
+                  handleDeletePatient(deleteConfirmPatient.groupKey, deleteConfirmPatient.assessmentIds);
+                }
+              }}
+            >
+              {deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
