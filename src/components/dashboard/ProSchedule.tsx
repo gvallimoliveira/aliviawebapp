@@ -127,31 +127,48 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
-  // Fetch known patients from assessments linked to this professional
+  // Fetch known patients from BOTH assessments AND appointments
   useEffect(() => {
     const fetchPatients = async () => {
-      const { data } = await supabase
+      const map = new Map<string, KnownPatient>();
+      // From assessments
+      const { data: assessData } = await supabase
         .from("assessments")
         .select("patient_name, patient_email")
         .eq("professional_id", professionalId)
         .not("patient_email", "is", null);
-      if (data) {
-        const map = new Map<string, KnownPatient>();
-        data.forEach((a) => {
+      if (assessData) {
+        assessData.forEach((a) => {
           if (a.patient_email && a.patient_name) {
             map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
           }
         });
-        setKnownPatients(Array.from(map.values()));
       }
+      // From appointments (catches patients created directly in agenda)
+      const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
+        .select("patient_name, patient_email")
+        .eq("professional_id", professionalId)
+        .not("patient_email", "is", null);
+      if (aptData) {
+        (aptData as any[]).forEach((a) => {
+          if (a.patient_email && a.patient_name && !map.has(a.patient_email)) {
+            map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+          }
+        });
+      }
+      setKnownPatients(Array.from(map.values()));
     };
     fetchPatients();
   }, [professionalId]);
+
+  // Show email required warning
+  const [emailWarning, setEmailWarning] = useState(false);
 
   const navigate = (dir: number) => setStartDate((prev) => addDays(prev, dir * daysToShow));
 
   const handleSelectPatient = (key: string) => {
     setSelectedPatientKey(key);
+    setEmailWarning(false);
     if (key === "__new__") {
       setFormName("");
       setFormEmail("");
@@ -194,12 +211,18 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
 
   const handleSave = async () => {
     if (!formName.trim()) return;
+    // For new patients, email is mandatory
+    if (selectedPatientKey === "__new__" && !formEmail.trim()) {
+      setEmailWarning(true);
+      return;
+    }
     setSaving(true);
     try {
+      const trimmedEmail = formEmail.trim();
       const payload = {
         professional_id: professionalId,
-        patient_name: formName,
-        patient_email: formEmail || null,
+        patient_name: formName.trim(),
+        patient_email: trimmedEmail || null,
         appointment_date: format(formDate, "yyyy-MM-dd"),
         appointment_time: formTime,
         duration_minutes: parseInt(formDuration) || 50,
@@ -212,9 +235,43 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
           .eq("id", editingApt.id);
       } else {
         await (supabase.from("professional_appointments" as any) as any).insert(payload);
+        // If new patient (not in known list), auto-create in patient list via placeholder assessment
+        if (selectedPatientKey === "__new__" && trimmedEmail) {
+          const { data: existing } = await supabase
+            .from("assessments")
+            .select("id")
+            .eq("professional_id", professionalId)
+            .eq("patient_email", trimmedEmail)
+            .limit(1);
+          if (!existing || existing.length === 0) {
+            await supabase.from("assessments").insert({
+              type: "professional",
+              status: "completed",
+              professional_id: professionalId,
+              patient_name: formName.trim(),
+              patient_email: trimmedEmail,
+              anamnesis_data: { externalPatient: true },
+            });
+            // Refresh patient list in parent
+            window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+            // Suggest sending pre-assessment link
+            toast({
+              title: t("schedule.patient_created"),
+              description: t("schedule.suggest_pre_assessment"),
+              duration: 8000,
+            });
+          }
+        }
       }
       toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
       setModalOpen(false);
+      // Refresh known patients list
+      setKnownPatients((prev) => {
+        if (trimmedEmail && !prev.find((p) => p.email === trimmedEmail)) {
+          return [...prev, { name: formName.trim(), email: trimmedEmail }];
+        }
+        return prev;
+      });
       fetchAppointments();
     } catch {
       toast({ title: t("schedule.error"), variant: "destructive" });
