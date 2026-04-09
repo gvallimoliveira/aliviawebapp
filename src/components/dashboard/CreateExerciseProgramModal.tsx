@@ -209,26 +209,41 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     if (totalCount === 0) return;
     setCreating(true);
     try {
-      const { data: program, error } = await (supabase as any)
-        .from("exercise_programs")
-        .insert({
-          professional_id: professionalId,
-          assessment_id: assessmentId || null,
-          patient_name: patientName,
-          notes: notes || null,
-        })
-        .select("id, token")
-        .single();
+      let programId: string;
+      let programToken: string;
 
-      if (error) throw error;
+      if (isEditing && editProgramId) {
+        // Update existing program
+        programId = editProgramId;
+        await (supabase as any).from("exercise_programs").update({ notes: notes || null }).eq("id", editProgramId);
+        // Delete old items and re-insert
+        await (supabase as any).from("exercise_program_items").delete().eq("program_id", editProgramId);
+        // Get token
+        const { data: prog } = await (supabase as any).from("exercise_programs").select("token").eq("id", editProgramId).single();
+        programToken = prog?.token || editProgramId;
+      } else {
+        // Create new program
+        const { data: program, error } = await (supabase as any)
+          .from("exercise_programs")
+          .insert({
+            professional_id: professionalId,
+            assessment_id: assessmentId || null,
+            patient_name: patientName,
+            notes: notes || null,
+          })
+          .select("id, token")
+          .single();
+        if (error) throw error;
+        programId = program.id;
+        programToken = program.token;
+      }
 
       const items: any[] = [];
       let sortOrder = 0;
 
-      // Library exercises
       selected.forEach((s) => {
         items.push({
-          program_id: program.id,
+          program_id: programId,
           exercise_id: s.exercise.id,
           sets: s.sets,
           reps: s.reps,
@@ -238,11 +253,10 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         });
       });
 
-      // Custom exercises
       customExercises.forEach((c) => {
         if (!c.name.trim()) return;
         items.push({
-          program_id: program.id,
+          program_id: programId,
           exercise_id: null,
           custom_name: c.name.trim(),
           custom_video_url: c.videoUrl.trim() || null,
@@ -261,9 +275,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         if (itemsError) throw itemsError;
       }
 
-      const link = `${window.location.origin}/hep/${program.token}`;
+      const link = `${window.location.origin}/hep/${programToken}`;
       setGeneratedLink(link);
-      toast({ title: "Programa criado com sucesso!" });
+      toast({ title: isEditing ? "Programa atualizado com sucesso!" : "Programa criado com sucesso!" });
     } catch (err: any) {
       console.error(err);
       toast({ title: "Erro ao criar programa", description: err?.message, variant: "destructive" });
