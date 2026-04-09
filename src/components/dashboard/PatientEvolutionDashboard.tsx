@@ -895,16 +895,27 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               </h3>
               <p className="text-sm text-muted-foreground">{t("pro.patients_desc")}</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 rounded-xl shrink-0"
-              disabled={batchExporting}
-              onClick={() => handleBatchExport(assessments)}
-            >
-              {batchExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-              {t("pro.export_pdfs")}
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-xl"
+                onClick={() => setAddPatientOpen(true)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("pro.add_patient")}</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-xl"
+                disabled={batchExporting}
+                onClick={() => handleBatchExport(assessments)}
+              >
+                {batchExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                <span className="hidden sm:inline">{t("pro.export_pdfs")}</span>
+              </Button>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
