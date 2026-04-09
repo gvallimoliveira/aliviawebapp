@@ -913,8 +913,22 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           return (
             <Card
               key={(p as any).groupKey}
-              className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group ${isHidden ? "opacity-50" : ""}`}
+              className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
               onClick={() => setSelectedEmail(p.email || (p as any).groupKey)}
+              onTouchStart={() => {
+                longPressTimerRef.current = setTimeout(() => {
+                  setLongPressPatient({ groupKey: (p as any).groupKey, name: p.name });
+                }, 600);
+              }}
+              onTouchEnd={() => { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); }}
+              onTouchMove={() => { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); }}
+              onMouseDown={() => {
+                longPressTimerRef.current = setTimeout(() => {
+                  setLongPressPatient({ groupKey: (p as any).groupKey, name: p.name });
+                }, 600);
+              }}
+              onMouseUp={() => { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); }}
+              onMouseLeave={() => { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); }}
             >
               <CardContent className="py-3 px-4">
                 <div className="flex items-center justify-between gap-3">
