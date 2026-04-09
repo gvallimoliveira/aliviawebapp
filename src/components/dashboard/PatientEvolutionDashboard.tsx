@@ -448,6 +448,10 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [hepHistory, setHepHistory] = useState<any[]>([]);
   const [hepHistoryLoading, setHepHistoryLoading] = useState(false);
   const [deletingHepId, setDeletingHepId] = useState<string | null>(null);
+  const [longPressPatient, setLongPressPatient] = useState<{ groupKey: string; name: string } | null>(null);
+  const [deletingPatient, setDeletingPatient] = useState<string | null>(null);
+  const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<{ groupKey: string; name: string; assessmentIds: string[] } | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
