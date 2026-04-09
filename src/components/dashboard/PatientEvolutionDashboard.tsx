@@ -1070,6 +1070,122 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             </Card>
           );
         })}
+
+        {/* Add External Patient Dialog */}
+        <Dialog open={addPatientOpen} onOpenChange={setAddPatientOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t("pro.add_patient")}</DialogTitle>
+              <DialogDescription>{t("pro.add_patient_desc")}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_name_label")} *</label>
+                <Input value={newPatientName} onChange={(e) => setNewPatientName(e.target.value)} placeholder={t("pro.patient_name_ph")} className="mt-1 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_email_label")}</label>
+                <div className="relative mt-1">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input value={newPatientEmail} onChange={(e) => setNewPatientEmail(e.target.value)} placeholder="email@exemplo.com" className="pl-9 text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_phone_label")}</label>
+                <div className="relative mt-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input value={newPatientPhone} onChange={(e) => setNewPatientPhone(e.target.value)} placeholder="(11) 99999-9999" className="pl-9 text-sm" />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button size="sm" className="gap-1.5 rounded-xl" onClick={handleAddExternalPatient} disabled={addingPatient || !newPatientName.trim()}>
+                {addingPatient ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                {t("pro.add_patient_save")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Long-press popup */}
+        <AlertDialog open={!!longPressPatient} onOpenChange={(open) => { if (!open) setLongPressPatient(null); }}>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{longPressPatient?.name}</AlertDialogTitle>
+              <AlertDialogDescription>
+                O que deseja fazer com este paciente?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+              <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel>
+              <Button
+                variant="outline"
+                className="gap-1.5"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (longPressPatient) {
+                    handleArchivePatient(longPressPatient.groupKey);
+                    setLongPressPatient(null);
+                  }
+                }}
+              >
+                <Archive className="h-4 w-4" />
+                Arquivar
+              </Button>
+              <Button
+                variant="destructive"
+                className="gap-1.5"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (longPressPatient) {
+                    const p = patients.find((pat) => (pat as any).groupKey === longPressPatient.groupKey);
+                    if (p) {
+                      setDeleteConfirmPatient({
+                        groupKey: longPressPatient.groupKey,
+                        name: longPressPatient.name,
+                        assessmentIds: p.assessments.map((a: any) => a.id),
+                      });
+                    }
+                    setLongPressPatient(null);
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir permanentemente
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete confirmation dialog */}
+        <AlertDialog open={!!deleteConfirmPatient} onOpenChange={(open) => { if (!open) setDeleteConfirmPatient(null); }}>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão permanente</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir <span className="font-semibold">{deleteConfirmPatient?.name}</span> e todas as suas {deleteConfirmPatient?.assessmentIds.length} avaliação(ões)?
+                <br /><br />
+                <span className="text-destructive font-medium">Esta ação é irreversível. Todos os dados de avaliações, planos de tratamento, exercícios e notas serão permanentemente apagados.</span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={!!deletingPatient} onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5"
+                disabled={!!deletingPatient}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (deleteConfirmPatient) {
+                    handleDeletePatient(deleteConfirmPatient.groupKey, deleteConfirmPatient.assessmentIds);
+                  }
+                }}
+              >
+                {deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                Excluir permanentemente
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
