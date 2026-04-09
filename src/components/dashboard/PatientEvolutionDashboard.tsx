@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import SessionNotesSection from "./SessionNotesSection";
 import { questionnaires } from "@/data/questionnaireData";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -1593,6 +1594,14 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             <p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p>
           </CardContent>
         </Card>
+      )}
+
+      {/* ── 8.5. PRONTUÁRIO DE EVOLUÇÃO ── */}
+      {selectedEmail && (
+        <SessionNotesSection
+          professionalId={professionalId}
+          patientEmail={selectedEmail}
+        />
       )}
 
       {/* ── 9. HISTÓRICO DETALHADO (Simplificado) ── */}
