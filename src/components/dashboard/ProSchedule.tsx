@@ -464,27 +464,25 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
                 <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
               </div>
             </div>
-            {/* Patient selector */}
-            {knownPatients.length > 0 && (
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
-                <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
-                  <SelectTrigger className="mt-1 text-xs h-9">
-                    <SelectValue placeholder={t("schedule.select_patient_ph")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
-                    {knownPatients.map((p) => (
-                      <SelectItem key={p.email} value={p.email}>
-                        {p.name} ({p.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Patient selector — always visible */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_name")}</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
+              <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
+                <SelectTrigger className="mt-1 text-xs h-9">
+                  <SelectValue placeholder={t("schedule.select_patient_ph")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
+                  {knownPatients.map((p) => (
+                    <SelectItem key={p.email} value={p.email}>
+                      {p.name} ({p.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_name")} *</label>
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
@@ -494,14 +492,19 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_email")}</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                {t("schedule.patient_email")} {selectedPatientKey === "__new__" && "*"}
+              </label>
               <Input
                 value={formEmail}
-                onChange={(e) => setFormEmail(e.target.value)}
+                onChange={(e) => { setFormEmail(e.target.value); setEmailWarning(false); }}
                 placeholder={t("schedule.patient_email_ph")}
-                className="mt-1 text-xs h-9"
+                className={cn("mt-1 text-xs h-9", emailWarning && "border-destructive")}
                 disabled={selectedPatientKey !== "__new__"}
               />
+              {emailWarning && (
+                <p className="text-[10px] text-destructive mt-1">{t("schedule.email_required")}</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
