@@ -11,6 +11,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -20,7 +23,7 @@ import {
   BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import {
-  ArrowLeft, Activity, Calendar, Mail, User, ChevronRight,
+  ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, Plus, Phone,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
   Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw, TrendingUp,
   Copy, ExternalLink, Trash2, Pencil,
