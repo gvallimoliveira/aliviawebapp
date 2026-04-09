@@ -587,7 +587,35 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     }
   };
 
-  // Load notes for all assessments
+  const handleAddExternalPatient = async () => {
+    if (!newPatientName.trim() || !professionalId) return;
+    setAddingPatient(true);
+    try {
+      // Create a placeholder assessment so the patient appears in the list
+      const email = newPatientEmail.trim() || `external_${Date.now()}@manual.alivia`;
+      await supabase.from("assessments").insert({
+        type: "professional",
+        status: "completed",
+        professional_id: professionalId,
+        patient_name: newPatientName.trim(),
+        patient_email: email,
+        anamnesis_data: { externalPatient: true, phone: newPatientPhone.trim() || undefined },
+      });
+      toast({ title: t("pro.patient_added") });
+      setAddPatientOpen(false);
+      setNewPatientName("");
+      setNewPatientEmail("");
+      setNewPatientPhone("");
+      // Trigger parent reload
+      window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+    } catch (err: any) {
+      toast({ title: t("pro.patient_add_error"), variant: "destructive" });
+    } finally {
+      setAddingPatient(false);
+    }
+  };
+
+
   useEffect(() => {
     if (!professionalId || assessments.length === 0 || isDemo) return;
     const assessmentIds = assessments.map((a) => a.id);
