@@ -911,12 +911,9 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           const isHidden = hiddenKeys.has((p as any).groupKey);
 
           const groupKey = (p as any).groupKey;
-          const longPressTriggeredRef_local = useRef(false);
-          const startLongPress = (e: React.TouchEvent | React.MouseEvent) => {
-            longPressTriggeredRef_local.current = false;
+          const startLongPress = () => {
             longPressTimerRef.current = setTimeout(() => {
               longPressTimerRef.current = null;
-              longPressTriggeredRef_local.current = true;
               setLongPressPatient({ groupKey, name: p.name });
             }, 600);
           };
@@ -932,11 +929,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               key={groupKey}
               className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
               onClick={() => {
-                // Don't navigate if long press just triggered
-                if (longPressTriggeredRef_local.current) {
-                  longPressTriggeredRef_local.current = false;
-                  return;
-                }
                 setSelectedEmail(p.email || groupKey);
               }}
               onTouchStart={startLongPress}
