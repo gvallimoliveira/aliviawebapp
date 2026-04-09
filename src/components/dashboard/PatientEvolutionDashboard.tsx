@@ -499,6 +499,53 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     setHepModalOpen(true);
   };
 
+  const handleDeletePatient = async (groupKey: string, assessmentIds: string[]) => {
+    setDeletingPatient(groupKey);
+    try {
+      // Delete related data for each assessment
+      for (const aid of assessmentIds) {
+        // Delete exercise program items & programs
+        const { data: programs } = await (supabase as any)
+          .from("exercise_programs")
+          .select("id")
+          .eq("professional_id", professionalId)
+          .eq("assessment_id", aid);
+        if (programs) {
+          for (const prog of programs) {
+            await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
+            await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
+          }
+        }
+        // Delete notes, referrals, follow-ups
+        await supabase.from("professional_notes").delete().eq("professional_id", professionalId).eq("assessment_id", aid);
+        await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", aid);
+      }
+
+      // Delete all assessments for this patient
+      for (const aid of assessmentIds) {
+        await supabase.from("assessments").delete().eq("id", aid);
+      }
+
+      // Also remove from hidden if applicable
+      await (supabase.from("professional_hidden_patients" as any) as any)
+        .delete()
+        .eq("professional_id", professionalId)
+        .eq("patient_email", groupKey);
+
+      setSelectedEmail(null);
+      toast({ title: "Paciente e dados excluídos permanentemente" });
+      // Trigger reload by navigating
+      window.location.reload();
+    } catch (err: any) {
+      console.error("Delete patient error:", err);
+      toast({ title: "Erro ao excluir paciente", description: err?.message, variant: "destructive" });
+    } finally {
+      setDeletingPatient(null);
+      setDeleteConfirmPatient(null);
+    }
+  };
+
+  const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!professionalId || archiving || !groupKey) return;
     setArchiving(groupKey);
