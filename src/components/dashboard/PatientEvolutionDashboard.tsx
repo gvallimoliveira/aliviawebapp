@@ -1664,6 +1664,83 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           })}
         </div>
       </div>
+
+      {/* Long-press popup */}
+      <AlertDialog open={!!longPressPatient} onOpenChange={(open) => { if (!open) setLongPressPatient(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{longPressPatient?.name}</AlertDialogTitle>
+            <AlertDialogDescription>
+              O que deseja fazer com este paciente?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => {
+                if (longPressPatient) {
+                  handleArchivePatient(longPressPatient.groupKey);
+                  setLongPressPatient(null);
+                }
+              }}
+            >
+              <Archive className="h-4 w-4" />
+              Arquivar
+            </Button>
+            <Button
+              variant="destructive"
+              className="gap-1.5"
+              onClick={() => {
+                if (longPressPatient) {
+                  const p = patients.find((pat) => (pat as any).groupKey === longPressPatient.groupKey);
+                  if (p) {
+                    setDeleteConfirmPatient({
+                      groupKey: longPressPatient.groupKey,
+                      name: longPressPatient.name,
+                      assessmentIds: p.assessments.map((a: any) => a.id),
+                    });
+                  }
+                  setLongPressPatient(null);
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+              Excluir permanentemente
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteConfirmPatient} onOpenChange={(open) => { if (!open) setDeleteConfirmPatient(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão permanente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <span className="font-semibold">{deleteConfirmPatient?.name}</span> e todas as suas {deleteConfirmPatient?.assessmentIds.length} avaliação(ões)?
+              <br /><br />
+              <span className="text-destructive font-medium">Esta ação é irreversível. Todos os dados de avaliações, planos de tratamento, exercícios e notas serão permanentemente apagados.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!deletingPatient}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5"
+              disabled={!!deletingPatient}
+              onClick={() => {
+                if (deleteConfirmPatient) {
+                  handleDeletePatient(deleteConfirmPatient.groupKey, deleteConfirmPatient.assessmentIds);
+                }
+              }}
+            >
+              {deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
