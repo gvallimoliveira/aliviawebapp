@@ -237,8 +237,8 @@ const Dashboard = () => {
 
         {professional ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-4">
-              <TabsTrigger value="health" className="gap-1.5 text-xs"><Heart className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_my_health")}</span></TabsTrigger>
+            <TabsList className={`w-full grid ${isClinicMode ? 'grid-cols-5' : 'grid-cols-4'}`}>
+              {!isClinicMode && <TabsTrigger value="health" className="gap-1.5 text-xs"><Heart className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_my_health")}</span></TabsTrigger>}
               <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                 <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
@@ -248,8 +248,13 @@ const Dashboard = () => {
               <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
                 <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
               </TabsTrigger>
+              {isClinicMode && (
+                <TabsTrigger value="clinic" className="gap-1.5 text-xs">
+                  <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
+                </TabsTrigger>
+              )}
             </TabsList>
-            <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
+            {!isClinicMode && <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>}
             <TabsContent value="messages" className="space-y-6">
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
@@ -304,6 +309,11 @@ const Dashboard = () => {
             <TabsContent value="professional" className="space-y-8">
               <ProDashboard professional={professional} />
             </TabsContent>
+            {isClinicMode && (
+              <TabsContent value="clinic" className="space-y-8">
+                <ClinicTeamManagement />
+              </TabsContent>
+            )}
           </Tabs>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
