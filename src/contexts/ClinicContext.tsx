@@ -77,11 +77,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => { fetchMemberships(); }, [fetchMemberships]);
 
-  const handleSetClinicId = (id: string | null) => {
-    setActiveClinicId(id);
-    if (id) localStorage.setItem("activeClinicId", id);
-    else localStorage.removeItem("activeClinicId");
-  };
 
   const activeClinic = memberships.find((m) => m.clinic_id === activeClinicId) || null;
 
