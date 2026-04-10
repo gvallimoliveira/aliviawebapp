@@ -29,6 +29,7 @@ import ProfessionalLanding from "./pages/ProfessionalLanding";
 import CompleteProfile from "./pages/CompleteProfile";
 import Support from "./pages/Support";
 import UpgradeWelcome from "./pages/UpgradeWelcome";
+import ClinicLanding from "./pages/ClinicLanding";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/suporte" element={<Support />} />
               <Route path="/upgrade-welcome" element={<UpgradeWelcome />} />
+              <Route path="/clinica" element={<ClinicLanding />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

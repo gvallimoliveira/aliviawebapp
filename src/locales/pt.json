@@ -1325,5 +1325,8 @@
   "pro.patient_phone_label": "Telefone (opcional)",
   "pro.add_patient_save": "Adicionar paciente",
   "pro.patient_added": "Paciente adicionado com sucesso!",
-  "pro.patient_add_error": "Erro ao adicionar paciente"
+  "pro.patient_add_error": "Erro ao adicionar paciente",
+  "gateway.clinic.title": "Quero o Aliv.iA na minha clínica",
+  "gateway.clinic.desc": "Sistema completo para clínicas e consultórios com equipe multi-profissional, agenda compartilhada e gestão integrada.",
+  "gateway.clinic.cta": "Conhecer o Aliv.iA Clinic"
 }

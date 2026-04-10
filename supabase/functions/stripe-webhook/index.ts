@@ -454,6 +454,63 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
       break;
     }
 
+    case "clinic_subscription": {
+      if (userId) {
+        const clinicName = session.metadata?.clinic_name || "Minha Clínica";
+        const maxMembers = parseInt(session.metadata?.max_members || "3", 10);
+        const subscriptionId = session.subscription as string || null;
+
+        // Check if user already has a clinic
+        const { data: existingClinic } = await supabase
+          .from("clinics")
+          .select("id")
+          .eq("owner_user_id", userId)
+          .limit(1)
+          .single();
+
+        if (existingClinic) {
+          // Update existing clinic
+          await supabase
+            .from("clinics")
+            .update({
+              subscription_status: "active",
+              subscription_stripe_id: subscriptionId,
+              max_members: maxMembers,
+            })
+            .eq("id", existingClinic.id);
+          log("Clinic subscription updated", { clinicId: existingClinic.id });
+        } else {
+          // Create new clinic and add owner as member
+          const { data: newClinic } = await supabase
+            .from("clinics")
+            .insert({
+              name: clinicName,
+              owner_user_id: userId,
+              subscription_status: "active",
+              subscription_stripe_id: subscriptionId,
+              max_members: maxMembers,
+            })
+            .select("id")
+            .single();
+
+          if (newClinic) {
+            await supabase
+              .from("clinic_members")
+              .insert({
+                clinic_id: newClinic.id,
+                user_id: userId,
+                role: "owner",
+                invited_by: userId,
+                accepted_at: new Date().toISOString(),
+                status: "active",
+              });
+            log("Clinic created with owner", { clinicId: newClinic.id, userId });
+          }
+        }
+      }
+      break;
+    }
+
     default:
       log("Unknown payment type, skipping fulfillment", { paymentType });
   }
