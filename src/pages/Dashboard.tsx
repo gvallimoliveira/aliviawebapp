@@ -313,8 +313,9 @@ const Dashboard = () => {
             <TabsContent value="professional" className="space-y-8">
               <ProDashboard professional={professional} />
             </TabsContent>
-            {isClinicMode && (
+            {isClinicMode && activeClinic && (
               <TabsContent value="clinic" className="space-y-8">
+                <ProSchedule professionalId={professional.id} clinicId={activeClinic.clinic_id} />
                 <ClinicTeamManagement />
               </TabsContent>
             )}

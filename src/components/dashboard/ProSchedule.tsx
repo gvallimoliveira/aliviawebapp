@@ -31,6 +31,7 @@ import {
 interface Appointment {
   id: string;
   professional_id: string;
+  clinic_id?: string | null;
   patient_email: string | null;
   patient_name: string;
   appointment_date: string;
@@ -44,6 +45,7 @@ interface Appointment {
 
 interface ProScheduleProps {
   professionalId: string;
+  clinicId?: string | null;
   patientEmails?: string[];
   onViewPatient?: (email: string) => void;
 }
@@ -99,7 +101,7 @@ function getAptsForSlot(apts: Appointment[], slotHour: string): Appointment[] {
   });
 }
 
-const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProScheduleProps) => {
+const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }: ProScheduleProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -142,15 +144,20 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
-    const { data } = await (supabase.from("professional_appointments" as any) as any)
+    let query = (supabase.from("professional_appointments" as any) as any)
       .select("*")
-      .eq("professional_id", professionalId)
       .gte("appointment_date", rangeStart)
       .lte("appointment_date", rangeEnd)
       .order("appointment_time", { ascending: true });
+    if (clinicId) {
+      query = query.eq("clinic_id", clinicId);
+    } else {
+      query = query.eq("professional_id", professionalId);
+    }
+    const { data } = await query;
     setAppointments((data as Appointment[]) || []);
     setLoading(false);
-  }, [professionalId, rangeStart, rangeEnd]);
+  }, [professionalId, clinicId, rangeStart, rangeEnd]);
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
@@ -238,7 +245,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     setSaving(true);
     try {
       const trimmedEmail = formEmail.trim();
-      const payload = {
+      const payload: any = {
         professional_id: professionalId,
         patient_name: formName.trim(),
         patient_email: trimmedEmail || null,
@@ -248,6 +255,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
         type: formType,
         notes: formNotes || null,
       };
+      if (clinicId) payload.clinic_id = clinicId;
       if (editingApt) {
         await (supabase.from("professional_appointments" as any) as any)
           .update(payload)
