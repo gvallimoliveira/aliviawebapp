@@ -20,6 +20,8 @@ interface ClinicContextType {
   isClinicMode: boolean;
   loading: boolean;
   refetch: () => Promise<void>;
+  needsContextSelection: boolean;
+  dismissContextSelection: () => void;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
