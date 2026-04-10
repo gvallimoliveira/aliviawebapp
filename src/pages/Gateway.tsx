@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import ReferralBanner from "@/components/ReferralBanner";
 import { motion } from "framer-motion";
-import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users, Building2 } from "lucide-react";
+import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users, Building2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -348,7 +348,14 @@ const Gateway = () => {
 
       {/* Footer minimal */}
       <footer className="relative z-10 border-t border-border/40 bg-muted/20 py-6">
-        <div className="container text-center">
+        <div className="container text-center space-y-2">
+          <a
+            href="mailto:aliviawebapp@gmail.com"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            Contato
+          </a>
           <p className="text-xs text-muted-foreground/60">
             © {new Date().getFullYear()} Aliv.iA. {t("footer.rights")}
           </p>

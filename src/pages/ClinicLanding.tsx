@@ -14,7 +14,7 @@ import {
   Building2, ArrowRight, Check, Globe, LogOut, LayoutDashboard,
   ClipboardList, Video, Calendar, FileText, Users, MessageCircle,
   Shield, BarChart3, Stethoscope, Activity, Star, Menu, HelpCircle,
-  Zap, Clock, Gift,
+  Zap, Clock, Gift, Mail,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { CLINIC_SMALL, CLINIC_MEDIUM, CLINIC_LARGE } from "@/constants/clinicPricing";
@@ -369,7 +369,14 @@ const ClinicLanding = () => {
       <LgpdBadge />
 
       <footer className="relative z-10 border-t border-border/40 bg-muted/20 py-6">
-        <div className="container text-center">
+        <div className="container text-center space-y-2">
+          <a
+            href="mailto:aliviawebapp@gmail.com"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            Contato
+          </a>
           <p className="text-xs text-muted-foreground/60">
             © {new Date().getFullYear()} Aliv.iA. Todos os direitos reservados.
           </p>

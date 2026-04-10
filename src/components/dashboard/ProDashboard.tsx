@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -39,6 +40,7 @@ interface ProDashboardProps {
 const ProDashboard = ({ professional }: ProDashboardProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { activeClinic, isClinicMode } = useClinic();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -233,6 +235,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         testResults: assessment.test_results,
         professionalNotes: proNote,
         professionalLogoUrl: professional?.logo_url || undefined,
+        clinicLogoUrl: isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined,
+        clinicName: isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined,
       });
       toast({ title: t("pro.download_pdf") });
     } catch {
@@ -268,6 +272,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         testResults: assessment.test_results,
         professionalNotes: proNote,
         professionalLogoUrl: professional?.logo_url || undefined,
+        clinicLogoUrl: isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined,
+        clinicName: isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined,
       });
       const filePath = `${assessment.id}_pro_${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
@@ -703,6 +709,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             professionalId={professional.id}
             lifetimeTreatment={professional.lifetime_treatment}
             professionalLogoUrl={professional.logo_url}
+            clinicLogoUrl={isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined}
+            clinicName={isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined}
             onDownloadPdf={handleDownloadPdf}
             onShareWhatsApp={handleShareWhatsApp}
             isDemo={showingSimulated}

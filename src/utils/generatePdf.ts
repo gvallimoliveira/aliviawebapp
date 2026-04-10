@@ -72,6 +72,8 @@ interface PdfOptions {
   testResults?: any;
   professionalNotes?: string;
   professionalLogoUrl?: string;
+  clinicLogoUrl?: string;
+  clinicName?: string;
 }
 
 // Design tokens from webapp (HSL converted to RGB)
@@ -954,14 +956,15 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName }: PdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPt = language === "pt";
   let y = MARGIN;
 
-  // Load logos
-  const logoBase64 = await loadLogoBase64();
-  const proLogoBase64 = professionalLogoUrl ? await loadExternalImageAsBase64(professionalLogoUrl) : null;
+  // Load logos — clinic logo replaces Aliv.iA logo when present
+  const isClinicBranded = !!clinicLogoUrl;
+  const logoBase64 = isClinicBranded ? await loadExternalImageAsBase64(clinicLogoUrl) : await loadLogoBase64();
+  const proLogoBase64 = (!isClinicBranded && professionalLogoUrl) ? await loadExternalImageAsBase64(professionalLogoUrl) : null;
 
   // ── Header Band ──
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
@@ -981,7 +984,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
-  doc.text("Aliv.iA", textStartX, titleY);
+  doc.text(isClinicBranded && clinicName ? clinicName : "Aliv.iA", textStartX, titleY);
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
   doc.text(isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report", textStartX, titleY + 9);
@@ -991,7 +994,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
   });
   doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
 
-  // Professional logo in top-right of header
+  // Professional logo in top-right of header (only if NOT clinic-branded)
   if (proLogoBase64) {
     try {
       doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - logoW, logoY, logoW, logoH);
@@ -1422,6 +1425,8 @@ export interface EvolutionPdfOptions {
   summary: EvolutionSummary;
   language: string;
   professionalLogoUrl?: string;
+  clinicLogoUrl?: string;
+  clinicName?: string;
 }
 
 export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Promise<Blob> {
@@ -1430,8 +1435,10 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   const isEs = options.language === "es";
   let y = MARGIN;
 
-  const logoBase64 = await loadLogoBase64();
-  const proLogoBase64 = options.professionalLogoUrl ? await loadExternalImageAsBase64(options.professionalLogoUrl) : null;
+  // Load logos — clinic logo replaces Aliv.iA logo when present
+  const isClinicBranded = !!options.clinicLogoUrl;
+  const logoBase64 = isClinicBranded ? await loadExternalImageAsBase64(options.clinicLogoUrl!) : await loadLogoBase64();
+  const proLogoBase64 = (!isClinicBranded && options.professionalLogoUrl) ? await loadExternalImageAsBase64(options.professionalLogoUrl) : null;
 
   // ── Header Band ──
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
@@ -1449,7 +1456,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
-  doc.text("Aliv.iA", textStartX, titleY);
+  doc.text(isClinicBranded && options.clinicName ? options.clinicName : "Aliv.iA", textStartX, titleY);
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
   const reportTitle = isPt ? "Relatório de Evolução" : isEs ? "Informe de Evolución" : "Evolution Report";
