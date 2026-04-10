@@ -17,6 +17,7 @@ export type Database = {
       assessments: {
         Row: {
           anamnesis_data: Json | null
+          clinic_id: string | null
           created_at: string
           diagnosis: Json | null
           id: string
@@ -40,6 +41,7 @@ export type Database = {
         }
         Insert: {
           anamnesis_data?: Json | null
+          clinic_id?: string | null
           created_at?: string
           diagnosis?: Json | null
           id?: string
@@ -63,6 +65,7 @@ export type Database = {
         }
         Update: {
           anamnesis_data?: Json | null
+          clinic_id?: string | null
           created_at?: string
           diagnosis?: Json | null
           id?: string
@@ -85,6 +88,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "assessments_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "assessments_original_assessment_id_fkey"
             columns: ["original_assessment_id"]
@@ -152,6 +162,133 @@ export type Database = {
           title_en?: string | null
           title_pt?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      clinic_invitations: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["clinic_role"]
+          token: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["clinic_role"]
+          token?: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["clinic_role"]
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_invitations_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinic_members: {
+        Row: {
+          accepted_at: string | null
+          clinic_id: string
+          created_at: string
+          id: string
+          invited_at: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["clinic_role"]
+          status: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          clinic_id: string
+          created_at?: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["clinic_role"]
+          status?: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["clinic_role"]
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_members_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinics: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          max_members: number
+          name: string
+          owner_user_id: string
+          phone: string | null
+          subscription_status: string
+          subscription_stripe_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          max_members?: number
+          name: string
+          owner_user_id: string
+          phone?: string | null
+          subscription_status?: string
+          subscription_stripe_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          max_members?: number
+          name?: string
+          owner_user_id?: string
+          phone?: string | null
+          subscription_status?: string
+          subscription_stripe_id?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -531,6 +668,7 @@ export type Database = {
           appointment_date: string
           appointment_time: string
           assessment_id: string | null
+          clinic_id: string | null
           created_at: string
           duration_minutes: number
           id: string
@@ -545,6 +683,7 @@ export type Database = {
           appointment_date: string
           appointment_time: string
           assessment_id?: string | null
+          clinic_id?: string | null
           created_at?: string
           duration_minutes?: number
           id?: string
@@ -559,6 +698,7 @@ export type Database = {
           appointment_date?: string
           appointment_time?: string
           assessment_id?: string | null
+          clinic_id?: string | null
           created_at?: string
           duration_minutes?: number
           id?: string
@@ -575,6 +715,13 @@ export type Database = {
             columns: ["assessment_id"]
             isOneToOne: false
             referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_appointments_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
             referencedColumns: ["id"]
           },
           {
@@ -906,6 +1053,7 @@ export type Database = {
       session_notes: {
         Row: {
           appointment_id: string | null
+          clinic_id: string | null
           content: string
           created_at: string
           id: string
@@ -916,6 +1064,7 @@ export type Database = {
         }
         Insert: {
           appointment_id?: string | null
+          clinic_id?: string | null
           content?: string
           created_at?: string
           id?: string
@@ -926,6 +1075,7 @@ export type Database = {
         }
         Update: {
           appointment_id?: string | null
+          clinic_id?: string | null
           content?: string
           created_at?: string
           id?: string
@@ -940,6 +1090,13 @@ export type Database = {
             columns: ["appointment_id"]
             isOneToOne: false
             referencedRelation: "professional_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_notes_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
             referencedColumns: ["id"]
           },
           {
@@ -1055,18 +1212,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_clinic: {
+        Args: { _clinic_id: string; _user_id: string }
+        Returns: boolean
+      }
       create_conversation_for_referral: {
         Args: { _patient_user_id: string; _professional_id: string }
         Returns: string
       }
+      get_clinic_role: {
+        Args: { _clinic_id: string; _user_id: string }
+        Returns: Database["public"]["Enums"]["clinic_role"]
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_clinic_member: {
+        Args: { _clinic_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
     }
     Enums: {
-      [_ in never]: never
+      clinic_role: "owner" | "therapist" | "secretary"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1193,6 +1362,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      clinic_role: ["owner", "therapist", "secretary"],
+    },
   },
 } as const
