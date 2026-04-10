@@ -3,6 +3,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,10 +23,12 @@ import QuickActions from "@/components/dashboard/QuickActions";
 import AssessmentHistory from "@/components/dashboard/AssessmentHistory";
 import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import PushOptInBanner from "@/components/PushOptInBanner";
+import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
+import ClinicTeamManagement from "@/components/dashboard/ClinicTeamManagement";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
-  Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon,
+  Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon, Building2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Search, User, Stethoscope as StethoscopeIcon } from "lucide-react";
@@ -64,6 +67,7 @@ function buildOnboardingSteps(subscriptionType?: "monthly" | "single" | null, is
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { t, toggleLanguage } = useLanguage();
+  const { memberships, activeClinic, isClinicMode } = useClinic();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
@@ -95,7 +99,9 @@ const Dashboard = () => {
     if (tabFromUrl === "professional" && professional) setActiveTab("professional");
     else if (tabFromUrl === "messages") setActiveTab("messages");
     else if (tabFromUrl === "agenda" && professional) setActiveTab("agenda");
-  }, [tabFromUrl, professional]);
+    else if (tabFromUrl === "clinic" && isClinicMode) setActiveTab("clinic");
+    else if (isClinicMode && !tabFromUrl) setActiveTab("professional");
+  }, [tabFromUrl, professional, isClinicMode]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
@@ -219,6 +225,7 @@ const Dashboard = () => {
       </header>
 
       <main className="container max-w-4xl py-8 px-4 space-y-8">
+        {memberships.length > 0 && <ClinicContextSelector />}
         <PushOptInBanner />
         <WelcomeSection
           profileName={profile?.full_name}
@@ -232,8 +239,8 @@ const Dashboard = () => {
 
         {professional ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-4">
-              <TabsTrigger value="health" className="gap-1.5 text-xs"><Heart className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_my_health")}</span></TabsTrigger>
+            <TabsList className={`w-full grid ${isClinicMode ? 'grid-cols-5' : 'grid-cols-4'}`}>
+              {!isClinicMode && <TabsTrigger value="health" className="gap-1.5 text-xs"><Heart className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_my_health")}</span></TabsTrigger>}
               <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                 <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
@@ -243,8 +250,13 @@ const Dashboard = () => {
               <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
                 <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
               </TabsTrigger>
+              {isClinicMode && (
+                <TabsTrigger value="clinic" className="gap-1.5 text-xs">
+                  <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
+                </TabsTrigger>
+              )}
             </TabsList>
-            <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
+            {!isClinicMode && <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>}
             <TabsContent value="messages" className="space-y-6">
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
@@ -299,16 +311,26 @@ const Dashboard = () => {
             <TabsContent value="professional" className="space-y-8">
               <ProDashboard professional={professional} />
             </TabsContent>
+            {isClinicMode && (
+              <TabsContent value="clinic" className="space-y-8">
+                <ClinicTeamManagement />
+              </TabsContent>
+            )}
           </Tabs>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>
+            <TabsList className={`w-full grid ${isClinicMode ? 'grid-cols-3' : 'grid-cols-2'}`}>
+              {!isClinicMode && <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>}
               <TabsTrigger value="messages" className="gap-1.5 relative">
                 <MessageCircle className="h-4 w-4" />{t("dashboard.tab_messages")}{unreadBadge}
               </TabsTrigger>
+              {isClinicMode && (
+                <TabsTrigger value="clinic" className="gap-1.5">
+                  <Building2 className="h-4 w-4" />Equipe
+                </TabsTrigger>
+              )}
             </TabsList>
-            <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
+            {!isClinicMode && <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>}
             <TabsContent value="messages" className="space-y-6">
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
@@ -324,6 +346,11 @@ const Dashboard = () => {
               </div>
               <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />
             </TabsContent>
+            {isClinicMode && (
+              <TabsContent value="clinic" className="space-y-8">
+                <ClinicTeamManagement />
+              </TabsContent>
+            )}
           </Tabs>
         )}
       </main>

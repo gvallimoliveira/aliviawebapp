@@ -7,6 +7,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import PwaUpdateGuard from "@/components/PwaUpdateGuard";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ClinicProvider } from "@/contexts/ClinicContext";
 import Gateway from "./pages/Gateway";
 import PatientLanding from "./pages/PatientLanding";
 import LandingLegacy from "./pages/LandingLegacy";
@@ -30,6 +31,7 @@ import CompleteProfile from "./pages/CompleteProfile";
 import Support from "./pages/Support";
 import UpgradeWelcome from "./pages/UpgradeWelcome";
 import ClinicLanding from "./pages/ClinicLanding";
+import AcceptInvite from "./pages/AcceptInvite";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
+        <ClinicProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -65,10 +68,12 @@ const App = () => (
               <Route path="/suporte" element={<Support />} />
               <Route path="/upgrade-welcome" element={<UpgradeWelcome />} />
               <Route path="/clinica" element={<ClinicLanding />} />
+              <Route path="/aceitar-convite" element={<AcceptInvite />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
+        </ClinicProvider>
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
