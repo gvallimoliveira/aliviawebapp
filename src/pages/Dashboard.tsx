@@ -25,6 +25,7 @@ import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import PushOptInBanner from "@/components/PushOptInBanner";
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
 import ClinicTeamManagement from "@/components/dashboard/ClinicTeamManagement";
+import ContextSelectionModal from "@/components/dashboard/ContextSelectionModal";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
