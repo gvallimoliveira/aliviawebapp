@@ -129,6 +129,9 @@ const ClinicTeamManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Clinic settings */}
+      <ClinicSettingsCard />
+
       {/* Team members */}
       <Card>
         <CardHeader>
