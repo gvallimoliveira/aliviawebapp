@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Users, UserPlus, Mail, Trash2, Crown, Stethoscope as StethIcon, ClipboardList } from "lucide-react";
+import ClinicSettingsCard from "./ClinicSettingsCard";
 import type { Database } from "@/integrations/supabase/types";
 
 type ClinicRole = Database["public"]["Enums"]["clinic_role"];
@@ -128,6 +129,9 @@ const ClinicTeamManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Clinic settings */}
+      <ClinicSettingsCard />
+
       {/* Team members */}
       <Card>
         <CardHeader>
