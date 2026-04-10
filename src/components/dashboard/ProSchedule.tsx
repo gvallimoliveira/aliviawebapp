@@ -78,9 +78,29 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
 
   const daysToShow = isMobile ? 3 : 7;
   const [startDate, setStartDate] = useState(() => {
-    if (isMobile) return new Date();
-    return startOfWeek(new Date(), { weekStartsOn: 1 });
+    const today = new Date();
+    if (isMobile) return today;
+    // Start from Monday of the current week so today is always visible
+    return startOfWeek(today, { weekStartsOn: 1 });
   });
+
+  // Ensure the view always includes today on first render
+  const [hasAutoScrolled, setHasAutoScrolled] = useState(false);
+  useEffect(() => {
+    if (hasAutoScrolled) return;
+    const today = new Date();
+    const currentStart = startDate;
+    const currentEnd = addDays(currentStart, daysToShow - 1);
+    // If today is outside current range, reset to include today
+    if (today < currentStart || today > currentEnd) {
+      if (isMobile) {
+        setStartDate(today);
+      } else {
+        setStartDate(startOfWeek(today, { weekStartsOn: 1 }));
+      }
+    }
+    setHasAutoScrolled(true);
+  }, []);
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);

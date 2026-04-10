@@ -217,11 +217,11 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       if (professional?.id) {
         const { data } = await supabase
           .from("professional_notes")
-          .select("content")
+          .select("content, include_in_pdf")
           .eq("professional_id", professional.id)
           .eq("assessment_id", assessment.id)
           .maybeSingle();
-        if (data?.content) proNote = data.content;
+        if (data?.content && (data as any).include_in_pdf) proNote = data.content;
       }
       await generateAssessmentPdf({
         diagnosis: assessment.diagnosis,
@@ -252,11 +252,11 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
       if (professional?.id) {
         const { data } = await supabase
           .from("professional_notes")
-          .select("content")
+          .select("content, include_in_pdf")
           .eq("professional_id", professional.id)
           .eq("assessment_id", assessment.id)
           .maybeSingle();
-        if (data?.content) proNote = data.content;
+        if (data?.content && (data as any).include_in_pdf) proNote = data.content;
       }
       const pdfBlob = await generateAssessmentPdfBlob({
         diagnosis: assessment.diagnosis,

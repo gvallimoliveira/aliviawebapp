@@ -1,0 +1,1 @@
+ALTER TABLE public.professional_notes ADD COLUMN include_in_pdf boolean NOT NULL DEFAULT false;

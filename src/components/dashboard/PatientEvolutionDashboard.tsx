@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, AreaChart, Area,
@@ -440,6 +441,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [selectedEmail, setSelectedEmail] = useState<string | null>(initialPatient);
   const [searchQuery, setSearchQuery] = useState("");
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [noteIncludeInPdf, setNoteIncludeInPdf] = useState<Record<string, boolean>>({});
   const [noteSaving, setNoteSaving] = useState<Record<string, boolean>>({});
   const [batchExporting, setBatchExporting] = useState(false);
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
@@ -621,14 +623,16 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     const assessmentIds = assessments.map((a) => a.id);
     supabase
       .from("professional_notes")
-      .select("assessment_id, content")
+      .select("assessment_id, content, include_in_pdf")
       .eq("professional_id", professionalId)
       .in("assessment_id", assessmentIds)
       .then(({ data }) => {
         if (data) {
           const map: Record<string, string> = {};
-          data.forEach((n: any) => { map[n.assessment_id] = n.content; });
+          const pdfMap: Record<string, boolean> = {};
+          data.forEach((n: any) => { map[n.assessment_id] = n.content; pdfMap[n.assessment_id] = !!n.include_in_pdf; });
           setNotes(map);
+          setNoteIncludeInPdf(pdfMap);
         }
       });
   }, [professionalId, assessments, isDemo]);
@@ -646,6 +650,15 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
       setNoteSaving((prev) => ({ ...prev, [assessmentId]: false }));
     }, 1000);
   }, [professionalId]);
+
+  const toggleNoteInPdf = useCallback(async (assessmentId: string, include: boolean) => {
+    if (!professionalId) return;
+    setNoteIncludeInPdf((prev) => ({ ...prev, [assessmentId]: include }));
+    await supabase.from("professional_notes").upsert(
+      { professional_id: professionalId, assessment_id: assessmentId, include_in_pdf: include, content: notes[assessmentId] || "", updated_at: new Date().toISOString() },
+      { onConflict: "professional_id,assessment_id" }
+    );
+  }, [professionalId, notes]);
 
   const handleBatchExport = useCallback(async (targetAssessments: any[]) => {
     const withDiagnosis = targetAssessments.filter((a) => a.diagnosis);
@@ -671,7 +684,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             anamnesisData: a.anamnesis_data,
             painRegions: a.pain_regions,
             testResults: a.test_results,
-            professionalNotes: notes[a.id] || undefined,
+            professionalNotes: noteIncludeInPdf[a.id] ? (notes[a.id] || undefined) : undefined,
           });
           const date = new Date(a.created_at).toISOString().slice(0, 10);
           const name = (a.patient_name || "paciente").replace(/\s+/g, "_");
@@ -1839,6 +1852,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       onChange={(e) => saveNote(a.id, e.target.value)}
                       className="text-xs min-h-[60px] resize-y"
                     />
+                    <label className="flex items-center gap-2 mt-2 cursor-pointer group">
+                      <Checkbox
+                        checked={!!noteIncludeInPdf[a.id]}
+                        onCheckedChange={(checked) => toggleNoteInPdf(a.id, !!checked)}
+                      />
+                      <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
+                        {t("pro.include_notes_in_pdf")}
+                      </span>
+                      {noteIncludeInPdf[a.id] && (
+                        <Badge variant="outline" className="text-[9px] py-0 px-1.5 border-amber-300 text-amber-600 bg-amber-50">
+                          {t("pro.notes_will_appear_in_pdf")}
+                        </Badge>
+                      )}
+                    </label>
                   </div>
                 </CardContent>
               </Card>

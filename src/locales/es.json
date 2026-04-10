@@ -917,6 +917,8 @@
   "pro.private_notes": "Notas privadas",
   "pro.private_notes_placeholder": "Agregue observaciones clínicas privadas sobre esta evaluación...",
   "pro.notes_saved": "Guardado",
+  "pro.include_notes_in_pdf": "Incluir esta nota en el informe PDF",
+  "pro.notes_will_appear_in_pdf": "Visible en PDF",
   "pro.unlock_treatment_cta": "Desbloquear Plan de Tratamiento",
   "pro.unlock_treatment_desc": "Genere ejercicios personalizados en 3 fases basados en esta evaluación",
   "pro.treatment_unlocked": "Plan desbloqueado",
