@@ -22,11 +22,6 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
-
   const supabaseAdmin = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -35,30 +30,78 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Auth error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated");
-    logStep("User authenticated", { email: user.email });
-
     const body = await req.json();
-    const { tier } = body;
+    const { tier, email, phone } = body;
 
     if (!tier || !["small", "medium", "large"].includes(tier)) {
       throw new Error("Invalid tier. Must be small, medium, or large");
+    }
+    if (!email || typeof email !== "string") {
+      throw new Error("Email is required");
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedPhone = phone?.trim() || null;
+
+    logStep("Trial request", { email: normalizedEmail, tier, phone: normalizedPhone });
+
+    // Check if user already exists in auth
+    let userId: string;
+    let isNewUser = false;
+
+    // Try to find existing user by email
+    let existingUser = null;
+    for (let page = 1; page <= 5; page++) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+      if (error) throw error;
+      const found = data?.users?.find((u: any) => u.email?.toLowerCase().trim() === normalizedEmail);
+      if (found) { existingUser = found; break; }
+      if (!data?.users?.length || data.users.length < 200) break;
+    }
+
+    if (existingUser) {
+      userId = existingUser.id;
+      logStep("Existing user found", { userId });
+    } else {
+      // Create new user with a random password (user will set via reset password)
+      const tempPassword = crypto.randomUUID();
+      const { data: newUserData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { full_name: normalizedEmail.split("@")[0].replace(/[._-]/g, " ") },
+      });
+
+      if (createError) throw new Error(`Failed to create user: ${createError.message}`);
+      userId = newUserData.user.id;
+      isNewUser = true;
+      logStep("New user created", { userId });
+    }
+
+    // Update profile phone if provided
+    if (normalizedPhone) {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (profile) {
+        // Profile exists — we don't have a phone column on profiles yet,
+        // so store in user metadata
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          user_metadata: { phone: normalizedPhone },
+        });
+      }
     }
 
     // Check if user already has a clinic
     const { data: existingClinic } = await supabaseAdmin
       .from("clinics")
       .select("id")
-      .eq("owner_user_id", user.id)
+      .eq("owner_user_id", userId)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (existingClinic) {
       logStep("User already has a clinic", { clinicId: existingClinic.id });
@@ -75,9 +118,10 @@ serve(async (req) => {
       .from("clinics")
       .insert({
         name: "Minha Clínica",
-        owner_user_id: user.id,
+        owner_user_id: userId,
         subscription_status: "trialing",
         max_members: maxMembers,
+        phone: normalizedPhone,
       })
       .select("id")
       .single();
@@ -89,18 +133,29 @@ serve(async (req) => {
       .from("clinic_members")
       .insert({
         clinic_id: newClinic.id,
-        user_id: user.id,
+        user_id: userId,
         role: "owner",
-        invited_by: user.id,
+        invited_by: userId,
         accepted_at: new Date().toISOString(),
         status: "active",
       });
 
     if (memberError) throw new Error(`Failed to add owner: ${memberError.message}`);
 
-    logStep("Clinic created with trial", { clinicId: newClinic.id, tier, maxMembers });
+    // Send password reset email so user can set their password and log in
+    if (isNewUser) {
+      const origin = req.headers.get("origin") || "https://alivia.app";
+      await supabaseAdmin.auth.admin.generateLink({
+        type: "recovery",
+        email: normalizedEmail,
+        options: { redirectTo: `${origin}/reset-password` },
+      });
+      logStep("Password reset link generated for new user");
+    }
 
-    return new Response(JSON.stringify({ success: true, clinic_id: newClinic.id }), {
+    logStep("Clinic created with trial", { clinicId: newClinic.id, tier, maxMembers, isNewUser });
+
+    return new Response(JSON.stringify({ success: true, clinic_id: newClinic.id, is_new_user: isNewUser }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

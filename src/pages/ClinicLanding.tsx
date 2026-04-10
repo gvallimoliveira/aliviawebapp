@@ -14,7 +14,7 @@ import {
   Building2, ArrowRight, Check, Globe, LogOut, LayoutDashboard,
   ClipboardList, Video, Calendar, FileText, Users, MessageCircle,
   Shield, BarChart3, Stethoscope, Activity, Star, Menu, HelpCircle,
-  Zap, Clock, Gift, Mail,
+  Zap, Clock, Gift, Mail, Phone, CreditCard,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { CLINIC_SMALL, CLINIC_MEDIUM, CLINIC_LARGE } from "@/constants/clinicPricing";
@@ -31,6 +31,12 @@ const ClinicLanding = () => {
   const navigate = useNavigate();
   const [billingAnnual, setBillingAnnual] = useState(true);
   const [loading, setLoading] = useState<string | null>(null);
+  const [subscribeLoading, setSubscribeLoading] = useState<string | null>(null);
+
+  // Trial form state per tier
+  const [trialForm, setTrialForm] = useState<string | null>(null);
+  const [trialEmail, setTrialEmail] = useState("");
+  const [trialPhone, setTrialPhone] = useState("");
 
   useEffect(() => {
     setSeo({
@@ -41,25 +47,68 @@ const ClinicLanding = () => {
     });
   }, []);
 
+  // Pre-fill email if user is logged in
+  useEffect(() => {
+    if (user?.email) setTrialEmail(user.email);
+  }, [user]);
+
   const handleStartTrial = async (tier: "small" | "medium" | "large") => {
-    if (!user) {
-      navigate("/auth?redirect=/clinica");
+    if (!trialEmail.trim()) {
+      toast.error("Informe seu e-mail");
       return;
     }
+    if (!trialPhone.trim()) {
+      toast.error("Informe seu WhatsApp");
+      return;
+    }
+
     setLoading(tier);
     try {
       const { data, error } = await supabase.functions.invoke("start-clinic-trial", {
-        body: { tier },
+        body: { tier, email: trialEmail.trim(), phone: trialPhone.trim() },
       });
       if (error) throw error;
       if (data?.success) {
-        toast.success(language === "pt" ? "Seu trial de 15 dias começou! Configure sua clínica no painel." : "Your 15-day trial has started!");
-        navigate("/dashboard?clinic=trial");
+        if (data.is_new_user) {
+          toast.success(
+            "Trial de 15 dias ativado! Enviamos um link para definir sua senha e acessar o painel.",
+            { duration: 8000 }
+          );
+        } else if (data.already_exists) {
+          toast.info("Você já possui uma clínica! Faça login para acessar o painel.");
+          navigate("/auth?redirect=/dashboard");
+        } else {
+          toast.success("Trial de 15 dias ativado! Faça login para acessar o painel.");
+          navigate("/auth?redirect=/dashboard");
+        }
+        setTrialForm(null);
       }
     } catch (e: any) {
       toast.error(e.message || "Erro ao processar");
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handleSubscribe = async (tier: "small" | "medium" | "large") => {
+    if (!user) {
+      navigate("/auth?redirect=/clinica");
+      return;
+    }
+    setSubscribeLoading(tier);
+    try {
+      const plan = billingAnnual ? "annual" : "monthly";
+      const { data, error } = await supabase.functions.invoke("create-clinic-subscription", {
+        body: { tier, plan, clinic_name: "Minha Clínica" },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao processar");
+    } finally {
+      setSubscribeLoading(null);
     }
   };
 
@@ -286,12 +335,10 @@ const ClinicLanding = () => {
               </p>
             </motion.div>
 
-
-
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {tiers.map((tier, i) => {
                 const pricing = billingAnnual ? tier.data.annual : tier.data.monthly;
+                const isTrialFormOpen = trialForm === tier.key;
                 return (
                   <motion.div key={tier.key} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i}>
                     <Card className={`relative h-full ${tier.popular ? "border-2 border-primary shadow-lg" : "border-border/60"}`}>
@@ -330,18 +377,75 @@ const ClinicLanding = () => {
                             </li>
                           ))}
                         </ul>
-                        <Button
-                          onClick={() => handleStartTrial(tier.key)}
-                          disabled={loading !== null}
-                          className={`w-full rounded-xl ${tier.popular ? "" : "variant-outline"}`}
-                          variant={tier.popular ? "default" : "outline"}
-                        >
-                          {loading === tier.key ? "Processando..." : "Começar 15 dias grátis"}
-                          <ArrowRight className="h-4 w-4 ml-2" />
-                        </Button>
-                        <p className="text-center text-xs text-muted-foreground mt-2">
+
+                        {/* Trial form */}
+                        {isTrialFormOpen ? (
+                          <div className="space-y-3 mb-3">
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="email"
+                                placeholder="Seu e-mail"
+                                value={trialEmail}
+                                onChange={(e) => setTrialEmail(e.target.value)}
+                                className="pl-9"
+                              />
+                            </div>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="tel"
+                                placeholder="WhatsApp (ex: 11999999999)"
+                                value={trialPhone}
+                                onChange={(e) => setTrialPhone(e.target.value)}
+                                className="pl-9"
+                              />
+                            </div>
+                            <Button
+                              onClick={() => handleStartTrial(tier.key)}
+                              disabled={loading !== null}
+                              className="w-full rounded-xl"
+                            >
+                              {loading === tier.key ? "Processando..." : "Ativar trial grátis"}
+                              <ArrowRight className="h-4 w-4 ml-2" />
+                            </Button>
+                            <button
+                              onClick={() => setTrialForm(null)}
+                              className="text-xs text-muted-foreground hover:text-foreground w-full text-center"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={() => {
+                              setTrialForm(tier.key);
+                              if (user?.email) setTrialEmail(user.email);
+                            }}
+                            disabled={loading !== null}
+                            className={`w-full rounded-xl ${tier.popular ? "" : ""}`}
+                            variant={tier.popular ? "default" : "outline"}
+                          >
+                            Começar 15 dias grátis
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        )}
+
+                        <p className="text-center text-xs text-muted-foreground mt-2 mb-3">
                           Sem cartão de crédito • Sem compromisso
                         </p>
+
+                        {/* Subscribe now button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSubscribe(tier.key)}
+                          disabled={subscribeLoading !== null}
+                          className="w-full text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                        >
+                          <CreditCard className="h-3.5 w-3.5" />
+                          {subscribeLoading === tier.key ? "Redirecionando..." : "Assinar agora"}
+                        </Button>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -350,7 +454,7 @@ const ClinicLanding = () => {
             </div>
 
             <p className="text-center text-xs text-muted-foreground mt-6">
-              Apenas email para começar. Sem cartão de crédito durante o trial.
+              Apenas e-mail e WhatsApp para começar. Sem cartão de crédito durante o trial.
             </p>
           </div>
         </section>
