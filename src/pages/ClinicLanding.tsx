@@ -14,7 +14,7 @@ import {
   Building2, ArrowRight, Check, Globe, LogOut, LayoutDashboard,
   ClipboardList, Video, Calendar, FileText, Users, MessageCircle,
   Shield, BarChart3, Stethoscope, Activity, Star, Menu, HelpCircle,
-  Zap, Clock, Gift,
+  Zap, Clock, Gift, Mail,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { CLINIC_SMALL, CLINIC_MEDIUM, CLINIC_LARGE } from "@/constants/clinicPricing";
