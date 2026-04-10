@@ -235,6 +235,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         testResults: assessment.test_results,
         professionalNotes: proNote,
         professionalLogoUrl: professional?.logo_url || undefined,
+        clinicLogoUrl: isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined,
+        clinicName: isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined,
       });
       toast({ title: t("pro.download_pdf") });
     } catch {
@@ -270,6 +272,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         testResults: assessment.test_results,
         professionalNotes: proNote,
         professionalLogoUrl: professional?.logo_url || undefined,
+        clinicLogoUrl: isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined,
+        clinicName: isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined,
       });
       const filePath = `${assessment.id}_pro_${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
