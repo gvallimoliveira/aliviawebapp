@@ -350,7 +350,7 @@ const ClinicLanding = () => {
             </div>
 
             <p className="text-center text-xs text-muted-foreground mt-6">
-              Pagamento seguro via Stripe. Cancele quando quiser. Sem fidelidade.
+              Apenas email para começar. Sem cartão de crédito durante o trial.
             </p>
           </div>
         </section>
