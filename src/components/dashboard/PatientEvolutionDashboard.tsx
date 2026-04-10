@@ -1852,6 +1852,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       onChange={(e) => saveNote(a.id, e.target.value)}
                       className="text-xs min-h-[60px] resize-y"
                     />
+                    <label className="flex items-center gap-2 mt-2 cursor-pointer group">
+                      <Checkbox
+                        checked={!!noteIncludeInPdf[a.id]}
+                        onCheckedChange={(checked) => toggleNoteInPdf(a.id, !!checked)}
+                      />
+                      <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
+                        {t("pro.include_notes_in_pdf")}
+                      </span>
+                      {noteIncludeInPdf[a.id] && (
+                        <Badge variant="outline" className="text-[9px] py-0 px-1.5 border-amber-300 text-amber-600 bg-amber-50">
+                          {t("pro.notes_will_appear_in_pdf")}
+                        </Badge>
+                      )}
+                    </label>
                   </div>
                 </CardContent>
               </Card>
