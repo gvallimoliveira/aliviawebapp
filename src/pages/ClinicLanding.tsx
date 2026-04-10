@@ -292,9 +292,9 @@ const ClinicLanding = () => {
                           <span className="text-3xl font-bold text-foreground">R$ {pricing.price}</span>
                           <span className="text-muted-foreground">/mês</span>
                         </div>
-                        {billingAnnual && (
+                        {billingAnnual && "total" in pricing && (
                           <p className="text-xs text-muted-foreground mb-4">
-                            R$ {"total" in pricing ? pricing.total.toLocaleString("pt-BR") : ""}/ano
+                            R$ {(pricing as any).total.toLocaleString("pt-BR")}/ano
                           </p>
                         )}
                         <Badge variant="outline" className="w-fit mb-4 text-xs">{tier.members}</Badge>
