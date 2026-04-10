@@ -236,7 +236,9 @@ const AssessmentView = () => {
     }
   }, [user, id, navigate]);
 
-  if (authLoading || loading) {
+  const isDemo = id?.startsWith("demo-") ?? false;
+
+  if ((authLoading && !isDemo) || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
