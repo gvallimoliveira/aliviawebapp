@@ -719,8 +719,11 @@ const BlurredTreatmentPreview = ({
                 ) : (
                   <Lock className="h-4 w-4" />
                 )}
-                {isPt ? `Desbloquear por R$ 29,90` : `Unlock for R$ 29.90`}
+                {isDemo
+                  ? (isPt ? "Desbloquear (Demonstração)" : "Unlock (Demo)")
+                  : (isPt ? `Desbloquear por R$ 29,90` : `Unlock for R$ 29.90`)}
               </Button>
+              {!isDemo && (
               <button
                 onClick={handleLifetime}
                 disabled={lifetimeLoading}
