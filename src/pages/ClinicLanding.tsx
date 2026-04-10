@@ -437,11 +437,11 @@ const ClinicLanding = () => {
 
                         {/* Subscribe now button */}
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleSubscribe(tier.key)}
                           disabled={subscribeLoading !== null}
-                          className="w-full text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                          className="w-full text-sm gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
                         >
                           <CreditCard className="h-3.5 w-3.5" />
                           {subscribeLoading === tier.key ? "Redirecionando..." : "Assinar agora"}
