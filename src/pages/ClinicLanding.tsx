@@ -65,7 +65,7 @@ const ClinicLanding = () => {
   };
 
   const features = [
-    { icon: ClipboardList, title: "Avaliação remota completa", desc: "Triagem, anamnese, testes funcionais e questionários validados à distância" },
+    { icon: ClipboardList, title: "Avaliação completa", desc: "Triagem, anamnese, testes funcionais e questionários validados à distância" },
     { icon: BarChart3, title: "Relatórios inteligentes", desc: "Impressão clínica com IA, relatórios comparativos e evolução do paciente" },
     { icon: FileText, title: "Programa de exercícios", desc: "HEP personalizado com vídeos, enviado diretamente ao paciente" },
     { icon: MessageCircle, title: "Chat integrado", desc: "Comunicação direta com pacientes dentro da plataforma" },
@@ -153,7 +153,7 @@ const ClinicLanding = () => {
 
             <motion.p initial="hidden" animate="visible" variants={fadeUp} custom={2}
               className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Da avaliação remota ao prontuário de evolução. Agenda compartilhada, 
+              Da pré-avaliação remota ao prontuário de evolução. Agenda compartilhada, 
               relatórios com IA, videochamada e gestão de equipe — tudo integrado.
             </motion.p>
 
