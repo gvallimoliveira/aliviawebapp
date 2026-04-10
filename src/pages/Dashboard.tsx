@@ -25,6 +25,7 @@ import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import PushOptInBanner from "@/components/PushOptInBanner";
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
 import ClinicTeamManagement from "@/components/dashboard/ClinicTeamManagement";
+import ClinicTrialBanner, { ClinicTrialBlockOverlay, useClinicTrial } from "@/components/dashboard/ClinicTrialBanner";
 import ContextSelectionModal from "@/components/dashboard/ContextSelectionModal";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -315,8 +316,12 @@ const Dashboard = () => {
             </TabsContent>
             {isClinicMode && activeClinic && (
               <TabsContent value="clinic" className="space-y-8">
-                <ProSchedule professionalId={professional.id} clinicId={activeClinic.clinic_id} />
-                <ClinicTeamManagement />
+                <ClinicTrialBanner />
+                <div className="relative">
+                  <ProSchedule professionalId={professional.id} clinicId={activeClinic.clinic_id} />
+                  <ClinicTeamManagement />
+                  <ClinicTrialBlockOverlay />
+                </div>
               </TabsContent>
             )}
           </Tabs>
@@ -351,7 +356,11 @@ const Dashboard = () => {
             </TabsContent>
             {isClinicMode && (
               <TabsContent value="clinic" className="space-y-8">
-                <ClinicTeamManagement />
+                <ClinicTrialBanner />
+                <div className="relative">
+                  <ClinicTeamManagement />
+                  <ClinicTrialBlockOverlay />
+                </div>
               </TabsContent>
             )}
           </Tabs>
