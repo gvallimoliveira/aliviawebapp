@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { mockPatientAssessments } from "@/data/mockPatientData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -192,13 +193,30 @@ const AssessmentView = () => {
   };
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && !id?.startsWith("demo-")) {
       navigate("/auth");
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, id]);
 
   useEffect(() => {
-    if (user && id) {
+    if (!id) return;
+
+    // Handle demo/simulated assessments
+    if (id.startsWith("demo-")) {
+      const mockAssessment = mockPatientAssessments.find(a => a.id === id);
+      if (mockAssessment) {
+        setAssessment(mockAssessment);
+        if (mockAssessment.treatment_plan) {
+          setShowTreatment(true);
+        }
+      } else {
+        navigate(backUrl);
+      }
+      setLoading(false);
+      return;
+    }
+
+    if (user) {
       supabase
         .from("assessments")
         .select("*")
@@ -218,7 +236,9 @@ const AssessmentView = () => {
     }
   }, [user, id, navigate]);
 
-  if (authLoading || loading) {
+  const isDemo = id?.startsWith("demo-") ?? false;
+
+  if ((authLoading && !isDemo) || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -248,6 +268,13 @@ const AssessmentView = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4 space-y-6">
+        {isDemo && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-center">
+            <span className="text-xs font-medium text-amber-700">
+              {isPt ? "🎓 Modo Demonstração — dados simulados" : "🎓 Demo Mode — simulated data"}
+            </span>
+          </div>
+        )}
         {/* Back button */}
         <Button variant="ghost" onClick={() => navigate(backUrl)} className="gap-2 -ml-2">
           <ArrowLeft className="h-4 w-4" />
@@ -495,13 +522,45 @@ const AssessmentView = () => {
             onUnlock={async () => {
               setUnlockLoading(true);
               try {
+                if (isDemo) {
+                  // Simulate treatment generation for demo
+                  await new Promise(r => setTimeout(r, 1500));
+                  const mockTreatment = {
+                    phases: [
+                      {
+                        id: "1", duration: "Semanas 1-3", goal: "Alívio sintomático",
+                        focus: "Controle da dor e educação terapêutica",
+                        exercises: [
+                          { name: "Mobilização articular", sets: "2", reps: "10", frequency: "Diário" },
+                          { name: "Alongamento local", sets: "3", reps: "30s", frequency: "Diário" },
+                        ],
+                      },
+                      {
+                        id: "2", duration: "Semanas 4-8", goal: "Fortalecimento progressivo",
+                        focus: "Estabilização e ganho de força",
+                        exercises: [
+                          { name: "Fortalecimento isométrico", sets: "3", reps: "10x10s", frequency: "3x/semana" },
+                          { name: "Exercícios de controle motor", sets: "3", reps: "12", frequency: "3x/semana" },
+                        ],
+                      },
+                    ],
+                    generalGuidelines: [
+                      "Evitar posturas prolongadas (>45 min)",
+                      "Pausas ativas frequentes",
+                      "Manter hidratação adequada",
+                    ],
+                    progressionCriteria: "Redução de 50% na dor e melhora funcional",
+                    disclaimer: "Plano gerado por IA (modo demonstração). Consulte seu fisioterapeuta.",
+                  };
+                  setAssessment({ ...assessment, treatment_plan: mockTreatment });
+                  setShowTreatment(true);
+                  return;
+                }
                 const { data, error } = await supabase.functions.invoke("create-pro-treatment-payment", {
                   body: { assessment_id: assessment.id },
                 });
                 if (error) throw error;
-                // If professional has lifetime treatment, the function returns { free: true }
                 if (data?.free) {
-                  // Directly generate treatment
                   const { data: treatmentResult, error: treatmentError } = await supabase.functions.invoke("generate-treatment", {
                     body: {
                       anamnesisData: assessment.anamnesis_data,
@@ -533,6 +592,7 @@ const AssessmentView = () => {
             }}
             loading={unlockLoading}
             isPt={isPt}
+            isDemo={isDemo}
           />
         )}
 
@@ -566,10 +626,12 @@ const BlurredTreatmentPreview = ({
   onUnlock,
   loading,
   isPt,
+  isDemo,
 }: {
   onUnlock: () => void;
   loading: boolean;
   isPt: boolean;
+  isDemo?: boolean;
 }) => {
   const [lifetimeLoading, setLifetimeLoading] = useState(false);
 
@@ -664,18 +726,22 @@ const BlurredTreatmentPreview = ({
                 ) : (
                   <Lock className="h-4 w-4" />
                 )}
-                {isPt ? `Desbloquear por R$ 29,90` : `Unlock for R$ 29.90`}
+                {isDemo
+                  ? (isPt ? "Desbloquear (Demonstração)" : "Unlock (Demo)")
+                  : (isPt ? `Desbloquear por R$ 29,90` : `Unlock for R$ 29.90`)}
               </Button>
-              <button
-                onClick={handleLifetime}
-                disabled={lifetimeLoading}
-                className="text-xs text-primary hover:underline mt-2 inline-flex items-center gap-1"
-              >
-                {lifetimeLoading && <Loader2 className="h-3 w-3 animate-spin" />}
-                {isPt
-                  ? "Ou desbloqueie todos os tratamentos por R$ 149,90 — acesso permanente!"
-                  : "Or unlock all treatments for R$ 149.90 — permanent access!"}
-              </button>
+              {!isDemo && (
+                <button
+                  onClick={handleLifetime}
+                  disabled={lifetimeLoading}
+                  className="text-xs text-primary hover:underline mt-2 inline-flex items-center gap-1"
+                >
+                  {lifetimeLoading && <Loader2 className="h-3 w-3 animate-spin" />}
+                  {isPt
+                    ? "Ou desbloqueie todos os tratamentos por R$ 149,90 — acesso permanente!"
+                    : "Or unlock all treatments for R$ 149.90 — permanent access!"}
+                </button>
+              )}
             </div>
           </div>
         </div>
