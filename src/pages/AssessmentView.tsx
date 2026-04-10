@@ -268,6 +268,13 @@ const AssessmentView = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4 space-y-6">
+        {isDemo && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-center">
+            <span className="text-xs font-medium text-amber-700">
+              {isPt ? "🎓 Modo Demonstração — dados simulados" : "🎓 Demo Mode — simulated data"}
+            </span>
+          </div>
+        )}
         {/* Back button */}
         <Button variant="ghost" onClick={() => navigate(backUrl)} className="gap-2 -ml-2">
           <ArrowLeft className="h-4 w-4" />
