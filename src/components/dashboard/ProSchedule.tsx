@@ -77,30 +77,8 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
   const locale = language === "en" ? enUS : language === "es" ? es : ptBR;
 
   const daysToShow = isMobile ? 3 : 7;
-  const [startDate, setStartDate] = useState(() => {
-    const today = new Date();
-    if (isMobile) return today;
-    // Start from Monday of the current week so today is always visible
-    return startOfWeek(today, { weekStartsOn: 1 });
-  });
-
-  // Ensure the view always includes today on first render
-  const [hasAutoScrolled, setHasAutoScrolled] = useState(false);
-  useEffect(() => {
-    if (hasAutoScrolled) return;
-    const today = new Date();
-    const currentStart = startDate;
-    const currentEnd = addDays(currentStart, daysToShow - 1);
-    // If today is outside current range, reset to include today
-    if (today < currentStart || today > currentEnd) {
-      if (isMobile) {
-        setStartDate(today);
-      } else {
-        setStartDate(startOfWeek(today, { weekStartsOn: 1 }));
-      }
-    }
-    setHasAutoScrolled(true);
-  }, []);
+  const [viewDate, setViewDate] = useState(() => new Date());
+  const startDate = isMobile ? viewDate : startOfWeek(viewDate, { weekStartsOn: 1 });
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,7 +162,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
   // Show email required warning
   const [emailWarning, setEmailWarning] = useState(false);
 
-  const navigate = (dir: number) => setStartDate((prev) => addDays(prev, dir * daysToShow));
+  const navigate = (dir: number) => setViewDate((prev) => addDays(prev, dir * daysToShow));
 
   const handleSelectPatient = (key: string) => {
     setSelectedPatientKey(key);
@@ -368,9 +346,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
             variant="outline"
             size="sm"
             className="text-xs"
-            onClick={() => {
-              setStartDate(isMobile ? new Date() : startOfWeek(new Date(), { weekStartsOn: 1 }));
-            }}
+              onClick={() => setViewDate(new Date())}
           >
             {t("schedule.today")}
           </Button>
