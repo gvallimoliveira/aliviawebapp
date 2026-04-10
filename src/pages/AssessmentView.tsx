@@ -193,10 +193,10 @@ const AssessmentView = () => {
   };
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && !id?.startsWith("demo-")) {
       navigate("/auth");
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, id]);
 
   useEffect(() => {
     if (!id) return;
