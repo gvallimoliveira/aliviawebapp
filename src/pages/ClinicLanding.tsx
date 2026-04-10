@@ -172,7 +172,7 @@ const ClinicLanding = () => {
               Tudo que sua clínica precisa
             </h2>
             <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-              Substitua planilhas, WhatsApp e sistemas separados por uma solução completa e integrada.
+              Substitua planilhas e sistemas separados por uma solução completa e integrada.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {features.map((f, i) => (
