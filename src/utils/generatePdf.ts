@@ -72,6 +72,8 @@ interface PdfOptions {
   testResults?: any;
   professionalNotes?: string;
   professionalLogoUrl?: string;
+  clinicLogoUrl?: string;
+  clinicName?: string;
 }
 
 // Design tokens from webapp (HSL converted to RGB)
