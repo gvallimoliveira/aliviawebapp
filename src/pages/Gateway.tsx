@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import ReferralBanner from "@/components/ReferralBanner";
 import { motion } from "framer-motion";
-import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users } from "lucide-react";
+import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -294,6 +294,23 @@ const Gateway = () => {
             </motion.div>
           </div>
 
+          {/* Clinic Card */}
+          <motion.div
+            initial="hidden" animate="visible" variants={fadeUp} custom={5}
+            className="max-w-lg mx-auto mt-8 group rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 text-center hover:shadow-xl hover:border-primary/30 transition-all duration-300 cursor-pointer"
+            onClick={() => navigate("/clinica")}
+          >
+            <div className="flex justify-center mb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            <h2 className="text-lg font-bold text-foreground mb-2">{t("gateway.clinic.title")}</h2>
+            <p className="text-sm text-muted-foreground mb-4">{t("gateway.clinic.desc")}</p>
+            <Button variant="outline" size="sm" className="rounded-xl gap-2 border-primary/30 text-primary hover:bg-primary/5 pointer-events-none" tabIndex={-1}>
+              {t("gateway.clinic.cta")} <ArrowRight className="h-4 w-4" />
+            </Button>
+          </motion.div>
           {/* Social proof badge */}
           <motion.div
             initial="hidden" animate="visible" variants={fadeUp} custom={5}
