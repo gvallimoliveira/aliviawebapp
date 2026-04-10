@@ -245,7 +245,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
     setSaving(true);
     try {
       const trimmedEmail = formEmail.trim();
-      const payload = {
+      const payload: any = {
         professional_id: professionalId,
         patient_name: formName.trim(),
         patient_email: trimmedEmail || null,
@@ -255,6 +255,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
         type: formType,
         notes: formNotes || null,
       };
+      if (clinicId) payload.clinic_id = clinicId;
       if (editingApt) {
         await (supabase.from("professional_appointments" as any) as any)
           .update(payload)
