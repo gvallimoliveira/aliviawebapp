@@ -31,6 +31,8 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [memberships, setMemberships] = useState<ClinicMembership[]>([]);
   const [activeClinicId, setActiveClinicId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [contextDismissed, setContextDismissed] = useState(false);
+  const [hasRestoredFromStorage, setHasRestoredFromStorage] = useState(false);
 
   const fetchMemberships = useCallback(async () => {
     if (!user) { setMemberships([]); setLoading(false); return; }
@@ -54,14 +56,24 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const stored = localStorage.getItem("activeClinicId");
       if (stored && mapped.some((m) => m.clinic_id === stored)) {
         setActiveClinicId(stored);
+        setHasRestoredFromStorage(true);
       } else if (mapped.length === 1) {
-        setActiveClinicId(mapped[0].clinic_id);
+        // Only one clinic and no stored preference — show selector
+        setHasRestoredFromStorage(false);
+      } else {
+        setHasRestoredFromStorage(false);
       }
     } catch {
       setMemberships([]);
     }
     setLoading(false);
   }, [user]);
+
+  // Reset dismissed state on user change (new login)
+  useEffect(() => {
+    setContextDismissed(false);
+    setHasRestoredFromStorage(false);
+  }, [user?.id]);
 
   useEffect(() => { fetchMemberships(); }, [fetchMemberships]);
 
