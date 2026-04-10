@@ -515,13 +515,45 @@ const AssessmentView = () => {
             onUnlock={async () => {
               setUnlockLoading(true);
               try {
+                if (isDemo) {
+                  // Simulate treatment generation for demo
+                  await new Promise(r => setTimeout(r, 1500));
+                  const mockTreatment = {
+                    phases: [
+                      {
+                        id: "1", duration: "Semanas 1-3", goal: "Alívio sintomático",
+                        focus: "Controle da dor e educação terapêutica",
+                        exercises: [
+                          { name: "Mobilização articular", sets: "2", reps: "10", frequency: "Diário" },
+                          { name: "Alongamento local", sets: "3", reps: "30s", frequency: "Diário" },
+                        ],
+                      },
+                      {
+                        id: "2", duration: "Semanas 4-8", goal: "Fortalecimento progressivo",
+                        focus: "Estabilização e ganho de força",
+                        exercises: [
+                          { name: "Fortalecimento isométrico", sets: "3", reps: "10x10s", frequency: "3x/semana" },
+                          { name: "Exercícios de controle motor", sets: "3", reps: "12", frequency: "3x/semana" },
+                        ],
+                      },
+                    ],
+                    generalGuidelines: [
+                      "Evitar posturas prolongadas (>45 min)",
+                      "Pausas ativas frequentes",
+                      "Manter hidratação adequada",
+                    ],
+                    progressionCriteria: "Redução de 50% na dor e melhora funcional",
+                    disclaimer: "Plano gerado por IA (modo demonstração). Consulte seu fisioterapeuta.",
+                  };
+                  setAssessment({ ...assessment, treatment_plan: mockTreatment });
+                  setShowTreatment(true);
+                  return;
+                }
                 const { data, error } = await supabase.functions.invoke("create-pro-treatment-payment", {
                   body: { assessment_id: assessment.id },
                 });
                 if (error) throw error;
-                // If professional has lifetime treatment, the function returns { free: true }
                 if (data?.free) {
-                  // Directly generate treatment
                   const { data: treatmentResult, error: treatmentError } = await supabase.functions.invoke("generate-treatment", {
                     body: {
                       anamnesisData: assessment.anamnesis_data,
@@ -553,6 +585,7 @@ const AssessmentView = () => {
             }}
             loading={unlockLoading}
             isPt={isPt}
+            isDemo={isDemo}
           />
         )}
 
