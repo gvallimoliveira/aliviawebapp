@@ -25,6 +25,7 @@ import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import PushOptInBanner from "@/components/PushOptInBanner";
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
 import ClinicTeamManagement from "@/components/dashboard/ClinicTeamManagement";
+import ContextSelectionModal from "@/components/dashboard/ContextSelectionModal";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
@@ -204,6 +205,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <ContextSelectionModal />
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <button onClick={() => navigate("/")} className="flex items-center gap-2">

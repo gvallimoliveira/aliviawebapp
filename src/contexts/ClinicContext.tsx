@@ -20,6 +20,8 @@ interface ClinicContextType {
   isClinicMode: boolean;
   loading: boolean;
   refetch: () => Promise<void>;
+  needsContextSelection: boolean;
+  dismissContextSelection: () => void;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
@@ -29,6 +31,8 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [memberships, setMemberships] = useState<ClinicMembership[]>([]);
   const [activeClinicId, setActiveClinicId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [contextDismissed, setContextDismissed] = useState(false);
+  const [hasRestoredFromStorage, setHasRestoredFromStorage] = useState(false);
 
   const fetchMemberships = useCallback(async () => {
     if (!user) { setMemberships([]); setLoading(false); return; }
@@ -52,8 +56,12 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const stored = localStorage.getItem("activeClinicId");
       if (stored && mapped.some((m) => m.clinic_id === stored)) {
         setActiveClinicId(stored);
+        setHasRestoredFromStorage(true);
       } else if (mapped.length === 1) {
-        setActiveClinicId(mapped[0].clinic_id);
+        // Only one clinic and no stored preference — show selector
+        setHasRestoredFromStorage(false);
+      } else {
+        setHasRestoredFromStorage(false);
       }
     } catch {
       setMemberships([]);
@@ -61,15 +69,29 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setLoading(false);
   }, [user]);
 
+  // Reset dismissed state on user change (new login)
+  useEffect(() => {
+    setContextDismissed(false);
+    setHasRestoredFromStorage(false);
+  }, [user?.id]);
+
   useEffect(() => { fetchMemberships(); }, [fetchMemberships]);
+
+
+  const activeClinic = memberships.find((m) => m.clinic_id === activeClinicId) || null;
+
+  // Show context selection when user has clinics, hasn't chosen yet, and hasn't dismissed
+  const needsContextSelection = !loading && memberships.length > 0 && !hasRestoredFromStorage && !contextDismissed;
+
+  const dismissContextSelection = () => setContextDismissed(true);
 
   const handleSetClinicId = (id: string | null) => {
     setActiveClinicId(id);
+    setContextDismissed(true);
+    setHasRestoredFromStorage(true);
     if (id) localStorage.setItem("activeClinicId", id);
     else localStorage.removeItem("activeClinicId");
   };
-
-  const activeClinic = memberships.find((m) => m.clinic_id === activeClinicId) || null;
 
   return (
     <ClinicContext.Provider
@@ -80,6 +102,8 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isClinicMode: !!activeClinic,
         loading,
         refetch: fetchMemberships,
+        needsContextSelection,
+        dismissContextSelection,
       }}
     >
       {children}
