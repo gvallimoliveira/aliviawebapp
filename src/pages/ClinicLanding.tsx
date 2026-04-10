@@ -41,18 +41,21 @@ const ClinicLanding = () => {
     });
   }, []);
 
-  const handleSubscribe = async (tier: "small" | "medium" | "large") => {
+  const handleStartTrial = async (tier: "small" | "medium" | "large") => {
     if (!user) {
       navigate("/auth?redirect=/clinica");
       return;
     }
     setLoading(tier);
     try {
-      const { data, error } = await supabase.functions.invoke("create-clinic-subscription", {
-        body: { tier, plan: billingAnnual ? "annual" : "monthly", clinic_name: "Minha Clínica" },
+      const { data, error } = await supabase.functions.invoke("start-clinic-trial", {
+        body: { tier },
       });
       if (error) throw error;
-      if (data?.url) window.location.href = data.url;
+      if (data?.success) {
+        toast.success(language === "pt" ? "Seu trial de 15 dias começou! Configure sua clínica no painel." : "Your 15-day trial has started!");
+        navigate("/dashboard?clinic=trial");
+      }
     } catch (e: any) {
       toast.error(e.message || "Erro ao processar");
     } finally {
@@ -328,16 +331,16 @@ const ClinicLanding = () => {
                           ))}
                         </ul>
                         <Button
-                          onClick={() => handleSubscribe(tier.key)}
+                          onClick={() => handleStartTrial(tier.key)}
                           disabled={loading !== null}
                           className={`w-full rounded-xl ${tier.popular ? "" : "variant-outline"}`}
                           variant={tier.popular ? "default" : "outline"}
                         >
-                          {loading === tier.key ? "Processando..." : "Iniciar 15 dias grátis"}
+                          {loading === tier.key ? "Processando..." : "Começar 15 dias grátis"}
                           <ArrowRight className="h-4 w-4 ml-2" />
                         </Button>
                         <p className="text-center text-xs text-muted-foreground mt-2">
-                          Sem cartão • Cancele quando quiser
+                          Sem cartão de crédito • Sem compromisso
                         </p>
                       </CardContent>
                     </Card>
@@ -347,7 +350,7 @@ const ClinicLanding = () => {
             </div>
 
             <p className="text-center text-xs text-muted-foreground mt-6">
-              Pagamento seguro via Stripe. Cancele quando quiser. Sem fidelidade.
+              Apenas email para começar. Sem cartão de crédito durante o trial.
             </p>
           </div>
         </section>
