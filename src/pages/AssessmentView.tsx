@@ -199,7 +199,24 @@ const AssessmentView = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (user && id) {
+    if (!id) return;
+
+    // Handle demo/simulated assessments
+    if (id.startsWith("demo-")) {
+      const mockAssessment = mockPatientAssessments.find(a => a.id === id);
+      if (mockAssessment) {
+        setAssessment(mockAssessment);
+        if (mockAssessment.treatment_plan) {
+          setShowTreatment(true);
+        }
+      } else {
+        navigate(backUrl);
+      }
+      setLoading(false);
+      return;
+    }
+
+    if (user) {
       supabase
         .from("assessments")
         .select("*")
