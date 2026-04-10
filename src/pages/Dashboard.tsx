@@ -316,8 +316,12 @@ const Dashboard = () => {
             </TabsContent>
             {isClinicMode && activeClinic && (
               <TabsContent value="clinic" className="space-y-8">
-                <ProSchedule professionalId={professional.id} clinicId={activeClinic.clinic_id} />
-                <ClinicTeamManagement />
+                <ClinicTrialBanner />
+                <div className="relative">
+                  <ProSchedule professionalId={professional.id} clinicId={activeClinic.clinic_id} />
+                  <ClinicTeamManagement />
+                  <ClinicTrialBlockOverlay />
+                </div>
               </TabsContent>
             )}
           </Tabs>
@@ -352,7 +356,11 @@ const Dashboard = () => {
             </TabsContent>
             {isClinicMode && (
               <TabsContent value="clinic" className="space-y-8">
-                <ClinicTeamManagement />
+                <ClinicTrialBanner />
+                <div className="relative">
+                  <ClinicTeamManagement />
+                  <ClinicTrialBlockOverlay />
+                </div>
               </TabsContent>
             )}
           </Tabs>
