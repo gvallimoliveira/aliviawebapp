@@ -709,6 +709,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             professionalId={professional.id}
             lifetimeTreatment={professional.lifetime_treatment}
             professionalLogoUrl={professional.logo_url}
+            clinicLogoUrl={isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined}
+            clinicName={isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined}
             onDownloadPdf={handleDownloadPdf}
             onShareWhatsApp={handleShareWhatsApp}
             isDemo={showingSimulated}
