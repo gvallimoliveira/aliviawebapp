@@ -683,7 +683,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             anamnesisData: a.anamnesis_data,
             painRegions: a.pain_regions,
             testResults: a.test_results,
-            professionalNotes: notes[a.id] || undefined,
+            professionalNotes: noteIncludeInPdf[a.id] ? (notes[a.id] || undefined) : undefined,
           });
           const date = new Date(a.created_at).toISOString().slice(0, 10);
           const name = (a.patient_name || "paciente").replace(/\s+/g, "_");
