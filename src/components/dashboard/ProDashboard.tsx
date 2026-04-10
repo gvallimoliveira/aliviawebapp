@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -39,6 +40,7 @@ interface ProDashboardProps {
 const ProDashboard = ({ professional }: ProDashboardProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { activeClinic, isClinicMode } = useClinic();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
