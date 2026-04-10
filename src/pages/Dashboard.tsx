@@ -205,6 +205,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <ContextSelectionModal />
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <button onClick={() => navigate("/")} className="flex items-center gap-2">
