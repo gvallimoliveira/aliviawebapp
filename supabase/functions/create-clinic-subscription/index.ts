@@ -93,6 +93,9 @@ serve(async (req) => {
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
+      subscription_data: {
+        trial_period_days: 15,
+      },
       success_url: `${origin}/dashboard?clinic=success`,
       cancel_url: `${origin}/clinica?subscription=cancelled`,
       metadata: {
