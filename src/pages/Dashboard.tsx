@@ -223,6 +223,7 @@ const Dashboard = () => {
       </header>
 
       <main className="container max-w-4xl py-8 px-4 space-y-8">
+        {memberships.length > 0 && <ClinicContextSelector />}
         <PushOptInBanner />
         <WelcomeSection
           profileName={profile?.full_name}
