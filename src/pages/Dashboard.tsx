@@ -99,7 +99,9 @@ const Dashboard = () => {
     if (tabFromUrl === "professional" && professional) setActiveTab("professional");
     else if (tabFromUrl === "messages") setActiveTab("messages");
     else if (tabFromUrl === "agenda" && professional) setActiveTab("agenda");
-  }, [tabFromUrl, professional]);
+    else if (tabFromUrl === "clinic" && isClinicMode) setActiveTab("clinic");
+    else if (isClinicMode && !tabFromUrl) setActiveTab("professional");
+  }, [tabFromUrl, professional, isClinicMode]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
