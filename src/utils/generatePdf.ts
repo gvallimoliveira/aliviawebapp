@@ -1435,8 +1435,10 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   const isEs = options.language === "es";
   let y = MARGIN;
 
-  const logoBase64 = await loadLogoBase64();
-  const proLogoBase64 = options.professionalLogoUrl ? await loadExternalImageAsBase64(options.professionalLogoUrl) : null;
+  // Load logos — clinic logo replaces Aliv.iA logo when present
+  const isClinicBranded = !!options.clinicLogoUrl;
+  const logoBase64 = isClinicBranded ? await loadExternalImageAsBase64(options.clinicLogoUrl!) : await loadLogoBase64();
+  const proLogoBase64 = (!isClinicBranded && options.professionalLogoUrl) ? await loadExternalImageAsBase64(options.professionalLogoUrl) : null;
 
   // ── Header Band ──
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
@@ -1454,7 +1456,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
-  doc.text("Aliv.iA", textStartX, titleY);
+  doc.text(isClinicBranded && options.clinicName ? options.clinicName : "Aliv.iA", textStartX, titleY);
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
   const reportTitle = isPt ? "Relatório de Evolução" : isEs ? "Informe de Evolución" : "Evolution Report";
