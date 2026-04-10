@@ -40,7 +40,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       const { data: members } = await supabase
         .from("clinic_members")
-        .select("clinic_id, role, clinics(name, subscription_status, max_members)")
+        .select("clinic_id, role, clinics(name, subscription_status, max_members, created_at)")
         .eq("user_id", user.id)
         .eq("status", "active");
 
@@ -50,6 +50,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         role: m.role,
         subscription_status: m.clinics?.subscription_status || "inactive",
         max_members: m.clinics?.max_members || 3,
+        created_at: m.clinics?.created_at || new Date().toISOString(),
       }));
       setMemberships(mapped);
 
