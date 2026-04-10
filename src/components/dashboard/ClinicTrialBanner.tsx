@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useClinic } from "@/contexts/ClinicContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { AlertTriangle, Clock, Crown, Loader2, Lock, Sparkles } from "lucide-react";
+import { AlertTriangle, Clock, Crown, Lock, Sparkles } from "lucide-react";
 
 const TRIAL_DAYS = 15;
 
@@ -17,6 +17,9 @@ export const useClinicTrial = () => {
 
     const hasSubscription = activeClinic.subscription_status === "active";
     if (hasSubscription) return { daysLeft: TRIAL_DAYS, daysUsed: 0, isTrialActive: false, isTrialExpired: false, hasSubscription: true };
+
+    const isTrialing = activeClinic.subscription_status === "trialing";
+    if (!isTrialing) return { daysLeft: 0, daysUsed: 0, isTrialActive: false, isTrialExpired: false, hasSubscription: false };
 
     const created = new Date(activeClinic.created_at);
     const now = new Date();
@@ -33,23 +36,12 @@ export const useClinicTrial = () => {
 const ClinicTrialBanner = () => {
   const { activeClinic } = useClinic();
   const { daysLeft, daysUsed, isTrialActive, isTrialExpired, hasSubscription } = useClinicTrial();
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   if (!activeClinic || hasSubscription) return null;
 
-  const handleSubscribe = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-clinic-subscription", {
-        body: { clinic_id: activeClinic.clinic_id },
-      });
-      if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-    } catch (e) {
-      console.error("Clinic subscription error:", e);
-    } finally {
-      setLoading(false);
-    }
+  const handleSubscribe = () => {
+    navigate("/clinica#planos");
   };
 
   const progressPercent = Math.min(100, (daysUsed / TRIAL_DAYS) * 100);
@@ -73,8 +65,8 @@ const ClinicTrialBanner = () => {
               </p>
             </div>
           </div>
-          <Button onClick={handleSubscribe} disabled={loading} className="w-full gap-2 rounded-xl" size="lg">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+          <Button onClick={handleSubscribe} className="w-full gap-2 rounded-xl" size="lg">
+            <Crown className="h-4 w-4" />
             Assinar Aliv.iA Clinic agora
           </Button>
         </CardContent>
@@ -82,7 +74,8 @@ const ClinicTrialBanner = () => {
     );
   }
 
-  // Active trial
+  if (!isTrialActive) return null;
+
   return (
     <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
       <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -124,8 +117,8 @@ const ClinicTrialBanner = () => {
           </div>
         )}
 
-        <Button onClick={handleSubscribe} disabled={loading} variant={daysLeft <= 5 ? "default" : "outline"} className="w-full gap-2 rounded-xl" size="sm">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+        <Button onClick={handleSubscribe} variant={daysLeft <= 5 ? "default" : "outline"} className="w-full gap-2 rounded-xl" size="sm">
+          <Crown className="h-4 w-4" />
           {daysLeft <= 5 ? "Assinar agora — não perca o acesso" : "Assinar Aliv.iA Clinic"}
         </Button>
       </CardContent>
@@ -137,24 +130,9 @@ const ClinicTrialBanner = () => {
 export const ClinicTrialBlockOverlay = () => {
   const { isTrialExpired, hasSubscription } = useClinicTrial();
   const { activeClinic } = useClinic();
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   if (!activeClinic || hasSubscription || !isTrialExpired) return null;
-
-  const handleSubscribe = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-clinic-subscription", {
-        body: { clinic_id: activeClinic.clinic_id },
-      });
-      if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-    } catch (e) {
-      console.error("Clinic subscription error:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="relative">
@@ -167,8 +145,8 @@ export const ClinicTrialBlockOverlay = () => {
           <p className="text-sm text-muted-foreground">
             O período de teste de {TRIAL_DAYS} dias terminou. Assine para desbloquear todas as funcionalidades.
           </p>
-          <Button onClick={handleSubscribe} disabled={loading} className="gap-2 rounded-xl">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+          <Button onClick={() => navigate("/clinica#planos")} className="gap-2 rounded-xl">
+            <Crown className="h-4 w-4" />
             Assinar agora
           </Button>
         </div>
