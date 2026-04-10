@@ -1,131 +1,123 @@
+# Plano: Aliv.ia Clinic
 
+## Resumo
 
-# Plano: Agenda Profissional + Prontuário de Evolução
+Criar um terceiro nicho de produto (Aliv.ia Clinic) para clínicas e consultórios com equipe de profissionais e secretária, incluindo hierarquia de permissoes, landing page dedicada, precificacao por faixas e coexistencia com contas individuais.
 
-## Visão Geral
+---
 
-Duas funcionalidades interligadas: (1) uma agenda de compromissos no painel profissional para organizar atendimentos, e (2) um prontuário de evolução por sessão na página de detalhes do paciente, acessível também via long-press na agenda.
+## Arquitetura de Dados
 
-## Arquitetura
+### Novas tabelas
+
+`**clinics**` -- Representa a clinica/consultorio
+
+- `id`, `name`, `owner_user_id`, `subscription_status`, `subscription_stripe_id`, `logo_url`, `phone`, `address`, `created_at`
+
+`**clinic_members**` -- Vincula usuarios a uma clinica com papel
+
+- `id`, `clinic_id` (FK clinics), `user_id`, `role` (enum: `owner`, `therapist`, `secretary`), `invited_by`, `invited_at`, `accepted_at`, `status` (pending/active/removed)
+
+`**clinic_invitations**` -- Convites pendentes por email
+
+- `id`, `clinic_id`, `email`, `role`, `invited_by`, `token`, `expires_at`, `created_at`
+
+### Regras de negocio no banco
+
+- Enum `clinic_role` com valores `owner`, `therapist`, `secretary`
+- Funcao `get_clinic_role(user_id, clinic_id)` SECURITY DEFINER para uso em RLS
+- RLS em `clinic_members`: membros veem sua propria clinica; owner e secretary gerenciam membros
+- Avaliações da clinica: um `clinic_id` sera adicionado a tabela `assessments` e `professional_appointments` para que todos os membros vejam os mesmos pacientes
+- Link de avaliacao compartilhado: assessments criados com `clinic_id` sao visiveis para todos os membros. O owner tera tambem um link pessoal (sem `clinic_id`, apenas `professional_id`)
+
+### Matriz de permissoes
 
 ```text
-┌─────────────────────────────────────┐
-│        ProDashboard.tsx             │
-│  ┌───────────────────────────┐      │
-│  │ Card "Agenda do Dia"      │      │  ← lista scrollável dos compromissos de hoje
-│  │  → clique: /dashboard?    │      │
-│  │    tab=agenda              │      │
-│  └───────────────────────────┘      │
-└─────────────────────────────────────┘
-         │ (clique no card)
-         ▼
-┌─────────────────────────────────────┐
-│  ProSchedule.tsx (página agenda)    │
-│  Mobile: 3 colunas dias, setas ±3  │
-│  Desktop: 7 colunas semana, ±7     │
-│  → CRUD de agendamentos            │
-│  → clique paciente → detalhe       │
-│  → long-press → popup evolução     │
-└─────────────────────────────────────┘
-
-┌─────────────────────────────────────┐
-│  PatientEvolutionDashboard.tsx      │
-│  Nova seção: "Prontuário de        │
-│  Evolução" com lista por data      │
-│  + botão adicionar sessão           │
-└─────────────────────────────────────┘
+Funcionalidade          | Owner  | Therapist | Secretary
+------------------------|--------|-----------|----------
+Agenda - visualizar     |   ✓    |     ✓     |    ✓
+Agenda - editar         |   ✓    |     ✗     |    ✓
+Avaliacoes - visualizar |   ✓    |     ✓     |    ✓
+Avaliacoes - editar     |   ✓    |     ✓     |    ✗
+Emitir PDFs             |   ✓    |     ✓     |    ✓
+Chat com pacientes      |   ✓    |     ✓     |    ✓
+Videochamada            |   ✓    |     ✓     |    ✓
+Gerenciar equipe        |   ✓    |     ✗     |    ✓
+Painel "Minha Saude"    |   ✗    |     ✗     |    ✗
 ```
 
-## Banco de Dados — 2 novas tabelas
+---
 
-### `professional_appointments`
-| Coluna | Tipo | Notas |
-|--------|------|-------|
-| id | uuid PK | |
-| professional_id | uuid | ref professionals.id |
-| patient_email | text | nullable (compromissos externos) |
-| patient_name | text | |
-| appointment_date | date | |
-| appointment_time | time | |
-| duration_minutes | int | default 50 |
-| notes | text | nullable |
-| type | text | 'video_call', 'in_person', 'external' |
-| status | text | 'scheduled', 'completed', 'cancelled' |
-| assessment_id | uuid | nullable, link opcional |
-| created_at | timestamptz | |
+## Precificacao por Faixas
 
-RLS: profissionais só veem/gerenciam seus próprios agendamentos.
+Tres faixas a definir (valores sugeridos, voce confirma):
 
-### `session_notes` (prontuário de evolução)
-| Coluna | Tipo | Notas |
-|--------|------|-------|
-| id | uuid PK | |
-| professional_id | uuid | |
-| patient_email | text | chave de agrupamento do paciente |
-| appointment_id | uuid | nullable, link opcional |
-| session_date | date | |
-| content | text | descrição da sessão |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+- **Ate 3 membros**: R$ 197/mes
+- **4 a 8 membros**: R$ 347/mes
+- **9+ membros**: R$ 497/mes
 
-RLS: profissionais só veem/gerenciam seus próprios registros.
+Cada faixa sera um produto/preco separado no Stripe. O sistema verificara a quantidade de membros ativos e bloqueara novos convites se o limite da faixa for atingido (com sugestao de upgrade).
 
-## Componentes Novos
+---
 
-### 1. `ProScheduleCard.tsx` — Card resumo no ProDashboard
-- Posicionado logo após o card "Link de Avaliação"
-- Ícone Calendar, título "Agenda do Dia"
-- Lista scrollável (max-h com overflow-y-auto) dos compromissos de hoje
-- Cada item: horário + nome paciente + badge tipo (vídeo/presencial)
-- Se vazio: "Nenhum compromisso hoje"
-- Clique no card → navega para tab agenda
+## Frontend
 
-### 2. `ProSchedule.tsx` — Página completa da agenda
-- Renderizado como conteúdo da tab "agenda" no Dashboard (nova tab)
-- **Mobile (< 768px)**: 3 colunas de dias, setas ← → avançam 3 dias
-- **Desktop (≥ 768px)**: 7 colunas (semana), setas ← → avançam 1 semana
-- Cada coluna: header com dia/data, lista vertical de compromissos
-- Compromisso: card compacto com horário, nome, badge de tipo, indicador de evolução registrada
-- **Ações**: botão "+" flutuante ou no header para novo agendamento
-- **Modal de agendamento**: data, hora, duração, paciente (autocomplete da lista existente ou nome livre), tipo, notas
-- **Edição**: clique no compromisso abre modal preenchido
-- **Exclusão**: botão dentro do modal de edição
-- **Clique no nome do paciente**: navega para detalhe do paciente
-- **Long-press no card**: popup com scroll mostrando evolução daquele dia (session_notes)
+### 1. Gateway (pagina inicial)
 
-### 3. `SessionNotesSection.tsx` — Seção na página do paciente
-- Adicionada no PatientEvolutionDashboard, na área de detalhes do paciente
-- Lista de sessões ordenada por data mais recente
-- Cada item: data, conteúdo resumido, botão expandir
-- Botão "Registrar sessão" abre modal com campo de data e textarea
-- Edição e exclusão de sessões existentes
+- Novo card centralizado abaixo dos dois cards existentes: "Quero o Aliv.ia na minha clinica" com icone Building2, direcionando para `/clinica`
 
-## Integração
+### 2. Landing Page `/clinica`
 
-### ProDashboard.tsx
-- Inserir `ProScheduleCard` entre o card de link e os stats cards
-- Adicionar nova tab "Agenda" no sistema de tabs do Dashboard
+- Pagina de vendas completa com argumentos: avaliacao remota, triagem, anamnese, testes funcionais, relatorios, HEP, chat, videochamada, agenda multi-profissional
+- Comparativo visual das faixas de preco
+- CTA para registro/compra
 
-### Dashboard.tsx
-- Adicionar suporte ao parâmetro `tab=agenda` para profissionais
+### 3. Dashboard Clinic
 
-### PatientEvolutionDashboard.tsx
-- Adicionar seção `SessionNotesSection` na view de detalhes do paciente (quando `selectedEmail` está ativo)
+- Reutiliza o `Dashboard.tsx` existente com adaptacoes:
+  - Sem aba "Minha Saude" -- apenas paineis profissionais
+  - Header mostra nome/logo da clinica
+  - Aba "Equipe" para owner/secretary gerenciarem membros (convidar por email, remover, alterar papel)
+  - Agenda e listagem de pacientes compartilhados entre todos os membros
+  - Componentes de edicao de avaliacoes desabilitados para secretary (view-only + botao PDF habilitado)
 
-## UX Mobile
-- Agenda em 3 colunas com scroll horizontal implícito dentro de cada coluna
-- Cards de compromisso compactos (horário em destaque, nome em 1 linha truncada)
-- FAB (floating action button) no canto inferior para "+" novo agendamento
-- Long-press com feedback visual (scale animation) antes do popup
+### 4. Seletor de contexto
 
-## Traduções
-- Chaves em pt/en/es para todos os textos da agenda e prontuário
+- Ao logar, se o usuario pertence a uma clinica E tem perfil autonomo, exibir um seletor: "Acessar como Autonomo" ou "Acessar Clinica X"
+- Armazenado em estado global (context) para filtrar dados corretamente
 
-## Ordem de Implementação
-1. Migration: criar tabelas `professional_appointments` e `session_notes` com RLS
-2. Criar `ProScheduleCard.tsx` (card resumo)
-3. Criar `ProSchedule.tsx` (página completa)
-4. Criar `SessionNotesSection.tsx` (prontuário na página do paciente)
-5. Integrar no `ProDashboard.tsx` e `Dashboard.tsx`
-6. Adicionar traduções
+### 5. Convites
 
+- Owner/Secretary acessam "Gerenciar Equipe" > "Convidar membro"
+- Insere email + papel. Sistema envia email com link de convite
+- Ao clicar no link, usuario faz login/cadastro e e vinculado automaticamente a clinica
+
+---
+
+## Backend (Edge Functions)
+
+- `**create-clinic-subscription**`: Checkout Stripe para faixa selecionada
+- `**check-clinic-subscription**`: Verifica status da assinatura da clinica
+- `**invite-clinic-member**`: Gera convite e envia email
+- `**accept-clinic-invite**`: Vincula usuario a clinica apos aceite
+
+---
+
+## Plano de execucao (etapas)
+
+1. **Migracoes de banco**: criar tabelas `clinics`, `clinic_members`, `clinic_invitations`, enum, funcoes RLS, adicionar `clinic_id` em `assessments` e `professional_appointments`
+2. **Produtos Stripe**: criar 3 produtos/precos para as faixas
+3. **Edge Functions**: subscription, convites, verificacao
+4. **Landing page** `/clinica` com marketing e checkout
+5. **Gateway**: adicionar card "Clinica"
+6. **Dashboard adaptado**: context de clinica, seletor de contexto, aba equipe, permissoes no frontend
+7. **Convites por email**: fluxo de envio e aceite
+8. **Testes e ajustes**: verificar RLS, permissoes, fluxo completo
+
+---
+
+## Pontos que preciso da sua confirmacao
+
+- Os valores sugeridos por faixa (R$ 197 / R$ 347 / R$ 497) estao adequados? sim
+- Devemos oferecer tambem plano anual para clinicas (com desconto similar ao Pro)? sim
+- Limite maximo de membros na faixa 9+? Ou ilimitado? ilimitado
