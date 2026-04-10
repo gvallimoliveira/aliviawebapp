@@ -317,13 +317,18 @@ const Dashboard = () => {
           </Tabs>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>
+            <TabsList className={`w-full grid ${isClinicMode ? 'grid-cols-3' : 'grid-cols-2'}`}>
+              {!isClinicMode && <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>}
               <TabsTrigger value="messages" className="gap-1.5 relative">
                 <MessageCircle className="h-4 w-4" />{t("dashboard.tab_messages")}{unreadBadge}
               </TabsTrigger>
+              {isClinicMode && (
+                <TabsTrigger value="clinic" className="gap-1.5">
+                  <Building2 className="h-4 w-4" />Equipe
+                </TabsTrigger>
+              )}
             </TabsList>
-            <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
+            {!isClinicMode && <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>}
             <TabsContent value="messages" className="space-y-6">
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
@@ -339,6 +344,11 @@ const Dashboard = () => {
               </div>
               <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />
             </TabsContent>
+            {isClinicMode && (
+              <TabsContent value="clinic" className="space-y-8">
+                <ClinicTeamManagement />
+              </TabsContent>
+            )}
           </Tabs>
         )}
       </main>
