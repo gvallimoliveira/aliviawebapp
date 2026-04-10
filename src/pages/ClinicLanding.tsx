@@ -67,8 +67,8 @@ const ClinicLanding = () => {
   const features = [
     { icon: ClipboardList, title: "Avaliação completa", desc: "Triagem, anamnese, testes funcionais e questionários validados à distância" },
     { icon: BarChart3, title: "Relatórios inteligentes", desc: "Impressão clínica com IA, relatórios comparativos e evolução do paciente" },
-    { icon: FileText, title: "Programa de exercícios", desc: "HEP personalizado com vídeos, enviado diretamente ao paciente" },
-    { icon: MessageCircle, title: "Chat integrado", desc: "Comunicação direta com pacientes dentro da plataforma" },
+    { icon: FileText, title: "Programa de exercícios", desc: "Exercícios domiciliares personalizado com vídeos, enviado diretamente ao paciente" },
+    { icon: MessageCircle, title: "Chat integrado", desc: "Possibilidade de comunicação direta com pacientes dentro da plataforma" },
     { icon: Video, title: "Videochamada", desc: "Atendimentos por teleconsulta com um clique, direto no chat" },
     { icon: Calendar, title: "Agenda multi-profissional", desc: "Agenda compartilhada com drag-and-drop, visível para toda a equipe" },
     { icon: Users, title: "Gestão de equipe", desc: "Convide fisioterapeutas e secretárias com permissões diferenciadas" },
