@@ -30,7 +30,6 @@ const ClinicLanding = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [billingAnnual, setBillingAnnual] = useState(true);
-  const [clinicName, setClinicName] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,14 +46,10 @@ const ClinicLanding = () => {
       navigate("/auth?redirect=/clinica");
       return;
     }
-    if (!clinicName.trim()) {
-      toast.error(language === "pt" ? "Informe o nome da sua clínica" : "Enter your clinic name");
-      return;
-    }
     setLoading(tier);
     try {
       const { data, error } = await supabase.functions.invoke("create-clinic-subscription", {
-        body: { tier, plan: billingAnnual ? "annual" : "monthly", clinic_name: clinicName.trim() },
+        body: { tier, plan: billingAnnual ? "annual" : "monthly", clinic_name: "Minha Clínica" },
       });
       if (error) throw error;
       if (data?.url) window.location.href = data.url;
@@ -288,16 +283,8 @@ const ClinicLanding = () => {
               </p>
             </motion.div>
 
-            {/* Clinic name input */}
-            <div className="max-w-md mx-auto mb-10">
-              <label className="block text-sm font-medium text-foreground mb-2">Nome da sua clínica / consultório</label>
-              <Input
-                value={clinicName}
-                onChange={(e) => setClinicName(e.target.value)}
-                placeholder="Ex: Clínica FisioVida"
-                className="rounded-xl"
-              />
-            </div>
+
+
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {tiers.map((tier, i) => {
