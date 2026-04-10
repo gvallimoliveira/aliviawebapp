@@ -458,6 +458,89 @@ const ClinicLanding = () => {
             </p>
           </div>
         </section>
+
+        {/* FAQ */}
+        <section className="py-16 px-4">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-4">
+              Perguntas frequentes
+            </h2>
+            <p className="text-center text-muted-foreground mb-10">
+              Tire suas dúvidas sobre o Aliv.iA Clinic e funcionalidades da plataforma.
+            </p>
+
+            <div className="space-y-4">
+              {[
+                {
+                  q: "O que é o Aliv.iA Clinic?",
+                  a: "É uma plataforma completa para gestão de clínicas de fisioterapia. Reúne avaliação remota com IA, agenda compartilhada, prontuário de evolução, chat, videochamada, programa de exercícios e relatórios inteligentes — tudo em um só lugar.",
+                },
+                {
+                  q: "O trial de 15 dias é realmente gratuito? Preciso cadastrar cartão?",
+                  a: "Sim, é 100% gratuito e sem compromisso. Você não precisa cadastrar cartão de crédito. Basta informar seu e-mail e WhatsApp para começar a usar todas as funcionalidades imediatamente.",
+                },
+                {
+                  q: "Posso adicionar minha secretária e outros fisioterapeutas?",
+                  a: "Sim! Dependendo do plano, você pode adicionar até 3, 8 ou membros ilimitados. Cada membro tem permissões específicas: proprietários e secretárias gerenciam a equipe e agenda, enquanto fisioterapeutas focam em avaliações e atendimentos.",
+                },
+                {
+                  q: "Os dados dos pacientes estão seguros? A plataforma é compatível com a LGPD?",
+                  a: "Absolutamente. Utilizamos criptografia de ponta a ponta, servidores seguros e políticas rigorosas de acesso por função (RBAC). A plataforma foi projetada em conformidade com a LGPD e as melhores práticas de segurança de dados em saúde.",
+                },
+                {
+                  q: "É possível personalizar a plataforma com a marca da minha clínica?",
+                  a: "Sim! O modo white-label permite que você adicione o logotipo, nome, telefone e endereço da sua clínica. A identidade visual aparece no painel e nos relatórios enviados aos pacientes.",
+                },
+                {
+                  q: "Como funciona a avaliação remota com IA?",
+                  a: "O paciente preenche um formulário de triagem, anamnese e testes funcionais validados, tudo à distância. A IA gera uma impressão clínica inicial com diagnóstico diferencial, que o fisioterapeuta pode revisar, ajustar e complementar.",
+                },
+                {
+                  q: "Posso usar a plataforma em consultórios individuais ou só em clínicas?",
+                  a: "Os dois! O plano Essencial (até 3 membros) é ideal para consultórios individuais ou com um assistente. Você pode começar pequeno e migrar para planos maiores conforme sua equipe crescer.",
+                },
+                {
+                  q: "A agenda funciona em dispositivos móveis?",
+                  a: "Sim. A agenda é responsiva e se adapta automaticamente: exibe 3 dias no celular e 7 dias no desktop, com drag-and-drop para remanejamento rápido de horários.",
+                },
+                {
+                  q: "O que acontece quando o trial de 15 dias termina?",
+                  a: "Após os 15 dias, você pode assinar um dos planos para continuar usando. Seus dados e configurações são preservados. Não há cobrança automática — você decide se quer continuar.",
+                },
+                {
+                  q: "Posso emitir relatórios PDF para os pacientes?",
+                  a: "Sim! Todos os membros da equipe podem gerar relatórios profissionais em PDF com diagnóstico, plano de tratamento, evolução e programa de exercícios. No modo Clínica, os relatórios exibem a marca da sua clínica.",
+                },
+                {
+                  q: "Existe suporte técnico?",
+                  a: "Sim. Oferecemos suporte via e-mail (aliviawebapp@gmail.com) e uma central de suporte integrada com guias, tutoriais e sistema de tickets dentro da plataforma.",
+                },
+                {
+                  q: "Posso trocar de plano depois?",
+                  a: "Sim! Você pode fazer upgrade ou downgrade a qualquer momento. A mudança é proporcional ao período restante da sua assinatura.",
+                },
+              ].map((item, i) => (
+                <motion.details
+                  key={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  custom={i * 0.5}
+                  className="group rounded-xl border border-border/60 bg-card overflow-hidden"
+                >
+                  <summary className="flex items-center justify-between cursor-pointer px-5 py-4 text-sm font-medium text-foreground hover:bg-muted/50 transition-colors list-none">
+                    <span>{item.q}</span>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground shrink-0 ml-3 group-open:text-primary transition-colors" />
+                  </summary>
+                  <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">
+                    {item.a}
+                  </div>
+                </motion.details>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
 
       <LgpdBadge />
