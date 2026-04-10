@@ -619,10 +619,12 @@ const BlurredTreatmentPreview = ({
   onUnlock,
   loading,
   isPt,
+  isDemo,
 }: {
   onUnlock: () => void;
   loading: boolean;
   isPt: boolean;
+  isDemo?: boolean;
 }) => {
   const [lifetimeLoading, setLifetimeLoading] = useState(false);
 
