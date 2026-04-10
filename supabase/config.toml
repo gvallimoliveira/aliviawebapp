@@ -53,3 +53,12 @@ verify_jwt = false
 
 [functions.generate-evolution-summary]
 verify_jwt = false
+
+[functions.create-clinic-subscription]
+verify_jwt = false
+
+[functions.check-clinic-subscription]
+verify_jwt = false
+
+[functions.accept-clinic-invite]
+verify_jwt = false
