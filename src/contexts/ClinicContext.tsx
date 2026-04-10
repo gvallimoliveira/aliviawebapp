@@ -11,6 +11,7 @@ interface ClinicMembership {
   role: ClinicRole;
   subscription_status: string;
   max_members: number;
+  created_at: string;
 }
 
 interface ClinicContextType {
