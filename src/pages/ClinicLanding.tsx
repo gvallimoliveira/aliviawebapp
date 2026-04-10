@@ -14,6 +14,7 @@ import {
   Building2, ArrowRight, Check, Globe, LogOut, LayoutDashboard,
   ClipboardList, Video, Calendar, FileText, Users, MessageCircle,
   Shield, BarChart3, Stethoscope, Activity, Star, Menu, HelpCircle,
+  Zap, Clock, Gift,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { CLINIC_SMALL, CLINIC_MEDIUM, CLINIC_LARGE } from "@/constants/clinicPricing";
@@ -152,15 +153,23 @@ const ClinicLanding = () => {
             </motion.h1>
 
             <motion.p initial="hidden" animate="visible" variants={fadeUp} custom={2}
-              className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+              className="text-lg text-muted-foreground mb-4 max-w-2xl mx-auto">
               Da pré-avaliação remota ao prontuário de evolução. Agenda compartilhada, 
               relatórios com IA, videochamada e gestão de equipe — tudo integrado.
             </motion.p>
 
-            <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={3}>
+            <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={2.5}
+              className="mb-8">
+              <Badge className="bg-green-500/10 text-green-600 border-green-500/30 text-sm px-4 py-1.5 gap-2">
+                <Gift className="h-4 w-4" /> 15 dias grátis — sem compromisso, sem cartão
+              </Badge>
+            </motion.div>
+
+            <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={3} className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button size="lg" className="rounded-xl gap-2 text-base" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
-                Ver planos <ArrowRight className="h-4 w-4" />
+                Começar teste grátis <ArrowRight className="h-4 w-4" />
               </Button>
+              <p className="text-xs text-muted-foreground">Vagas limitadas por região</p>
             </motion.div>
           </div>
         </section>
@@ -248,18 +257,36 @@ const ClinicLanding = () => {
             </p>
 
             {/* Billing toggle */}
-            <div className="flex items-center justify-center gap-3 mb-10">
+            <div className="flex items-center justify-center gap-4 mb-4">
               <span className={`text-sm font-medium ${!billingAnnual ? "text-foreground" : "text-muted-foreground"}`}>Mensal</span>
               <button
                 onClick={() => setBillingAnnual(!billingAnnual)}
-                className={`relative h-7 w-14 rounded-full transition-colors ${billingAnnual ? "bg-primary" : "bg-muted-foreground/30"}`}
+                className={`relative inline-flex h-7 w-14 shrink-0 rounded-full transition-colors ${billingAnnual ? "bg-primary" : "bg-muted-foreground/30"}`}
               >
-                <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${billingAnnual ? "translate-x-7" : "translate-x-0.5"}`} />
+                <span className={`pointer-events-none absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${billingAnnual ? "translate-x-7" : "translate-x-0.5"}`} />
               </button>
               <span className={`text-sm font-medium ${billingAnnual ? "text-foreground" : "text-muted-foreground"}`}>
-                Anual <Badge className="ml-1 text-xs bg-primary/10 text-primary border-primary/20">~31% OFF</Badge>
+                Anual
               </span>
+              {billingAnnual && (
+                <Badge className="text-xs bg-primary/10 text-primary border-primary/20">~31% OFF</Badge>
+              )}
             </div>
+
+            {/* Trial banner */}
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
+              className="max-w-2xl mx-auto mb-10 rounded-2xl border-2 border-green-500/30 bg-green-500/5 p-5 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Zap className="h-5 w-5 text-green-600" />
+                <span className="text-lg font-bold text-foreground">Teste grátis por 15 dias</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-1">
+                Acesso completo a todas as funcionalidades. Sem cartão de crédito. Cancele a qualquer momento.
+              </p>
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                <Clock className="h-3 w-3" /> Oferta por tempo limitado — restam poucas vagas na sua região
+              </p>
+            </motion.div>
 
             {/* Clinic name input */}
             <div className="max-w-md mx-auto mb-10">
@@ -319,9 +346,12 @@ const ClinicLanding = () => {
                           className={`w-full rounded-xl ${tier.popular ? "" : "variant-outline"}`}
                           variant={tier.popular ? "default" : "outline"}
                         >
-                          {loading === tier.key ? "Processando..." : "Assinar agora"}
+                          {loading === tier.key ? "Processando..." : "Iniciar 15 dias grátis"}
                           <ArrowRight className="h-4 w-4 ml-2" />
                         </Button>
+                        <p className="text-center text-xs text-muted-foreground mt-2">
+                          Sem cartão • Cancele quando quiser
+                        </p>
                       </CardContent>
                     </Card>
                   </motion.div>
