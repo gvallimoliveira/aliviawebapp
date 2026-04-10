@@ -85,6 +85,19 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const activeClinic = memberships.find((m) => m.clinic_id === activeClinicId) || null;
 
+  // Show context selection when user has clinics, hasn't chosen yet, and hasn't dismissed
+  const needsContextSelection = !loading && memberships.length > 0 && !hasRestoredFromStorage && !contextDismissed;
+
+  const dismissContextSelection = () => setContextDismissed(true);
+
+  const handleSetClinicId = (id: string | null) => {
+    setActiveClinicId(id);
+    setContextDismissed(true);
+    setHasRestoredFromStorage(true);
+    if (id) localStorage.setItem("activeClinicId", id);
+    else localStorage.removeItem("activeClinicId");
+  };
+
   return (
     <ClinicContext.Provider
       value={{
@@ -94,6 +107,8 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isClinicMode: !!activeClinic,
         loading,
         refetch: fetchMemberships,
+        needsContextSelection,
+        dismissContextSelection,
       }}
     >
       {children}
