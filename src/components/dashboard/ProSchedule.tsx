@@ -1,13 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
+import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR, enUS, es } from "date-fns/locale";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
@@ -27,7 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Plus, CalendarIcon, Clock, Video, MapPin, ExternalLink,
-  Loader2, Trash2, Pencil, NotebookPen, GripVertical,
+  Loader2, Trash2, GripVertical,
 } from "lucide-react";
 
 interface Appointment {
@@ -73,22 +71,32 @@ interface KnownPatient {
   email: string;
 }
 
-/** Group appointments by time slot for side-by-side rendering */
-function groupByTimeSlot(apts: Appointment[]): Appointment[][] {
-  if (apts.length === 0) return [];
-  const sorted = [...apts].sort((a, b) => a.appointment_time.localeCompare(b.appointment_time));
-  const groups: Appointment[][] = [];
-  let currentGroup: Appointment[] = [sorted[0]];
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i].appointment_time.slice(0, 5) === sorted[i - 1].appointment_time.slice(0, 5)) {
-      currentGroup.push(sorted[i]);
-    } else {
-      groups.push(currentGroup);
-      currentGroup = [sorted[i]];
-    }
+// Default time range 07:00-20:00, expanded if appointments exist outside
+const DEFAULT_START_HOUR = 7;
+const DEFAULT_END_HOUR = 20;
+
+function getTimeRange(apts: Appointment[]): string[] {
+  let minH = DEFAULT_START_HOUR;
+  let maxH = DEFAULT_END_HOUR;
+  for (const a of apts) {
+    const h = parseInt(a.appointment_time?.slice(0, 2) || "9", 10);
+    if (h < minH) minH = h;
+    const endH = h + Math.ceil(a.duration_minutes / 60);
+    if (endH > maxH) maxH = endH;
   }
-  groups.push(currentGroup);
-  return groups;
+  const slots: string[] = [];
+  for (let h = minH; h <= maxH; h++) {
+    slots.push(`${String(h).padStart(2, "0")}:00`);
+  }
+  return slots;
+}
+
+function getAptsForSlot(apts: Appointment[], slotHour: string): Appointment[] {
+  const h = parseInt(slotHour.slice(0, 2), 10);
+  return apts.filter((a) => {
+    const ah = parseInt(a.appointment_time?.slice(0, 2) || "0", 10);
+    return ah === h;
+  });
 }
 
 const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProScheduleProps) => {
@@ -96,6 +104,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const locale = language === "en" ? enUS : language === "es" ? es : ptBR;
+  const isPt = language === "pt";
 
   const daysToShow = isMobile ? 3 : 7;
   const [viewDate, setViewDate] = useState(() => new Date());
@@ -109,11 +118,9 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Known patients from assessments
   const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
   const [selectedPatientKey, setSelectedPatientKey] = useState<string>("__new__");
 
-  // Form state
   const [formDate, setFormDate] = useState<Date>(new Date());
   const [formTime, setFormTime] = useState("09:00");
   const [formDuration, setFormDuration] = useState("50");
@@ -121,20 +128,17 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
   const [formEmail, setFormEmail] = useState("");
   const [formType, setFormType] = useState("in_person");
   const [formNotes, setFormNotes] = useState("");
+  const [emailWarning, setEmailWarning] = useState(false);
 
-  // Long-press state for session notes popup
-  const [longPressApt, setLongPressApt] = useState<Appointment | null>(null);
-  const [longPressNotes, setLongPressNotes] = useState<any[]>([]);
-  const [longPressLoading, setLongPressLoading] = useState(false);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Drag-and-drop state
+  // Drag state
   const [draggedApt, setDraggedApt] = useState<Appointment | null>(null);
-  const [dropTargetDate, setDropTargetDate] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ date: string; hour?: string } | null>(null);
 
   const days = Array.from({ length: daysToShow }, (_, i) => addDays(startDate, i));
   const rangeStart = format(days[0], "yyyy-MM-dd");
   const rangeEnd = format(days[days.length - 1], "yyyy-MM-dd");
+
+  const timeSlots = getTimeRange(appointments);
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
@@ -150,7 +154,6 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
-  // Fetch known patients from BOTH assessments AND appointments
   useEffect(() => {
     const fetchPatients = async () => {
       const map = new Map<string, KnownPatient>();
@@ -182,8 +185,6 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     fetchPatients();
   }, [professionalId]);
 
-  const [emailWarning, setEmailWarning] = useState(false);
-
   const navigateWeek = (dir: number) => setViewDate((prev) => addDays(prev, dir * daysToShow));
 
   const handleSelectPatient = (key: string) => {
@@ -201,10 +202,10 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     }
   };
 
-  const openNew = (date?: Date) => {
+  const openNew = (date?: Date, time?: string) => {
     setEditingApt(null);
     setFormDate(date || new Date());
-    setFormTime("09:00");
+    setFormTime(time || "09:00");
     setFormDuration("50");
     setFormName("");
     setFormEmail("");
@@ -281,9 +282,9 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
       toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
       setModalOpen(false);
       setKnownPatients((prev) => {
-        const trimmedEmail = formEmail.trim();
-        if (trimmedEmail && !prev.find((p) => p.email === trimmedEmail)) {
-          return [...prev, { name: formName.trim(), email: trimmedEmail }];
+        const te = formEmail.trim();
+        if (te && !prev.find((p) => p.email === te)) {
+          return [...prev, { name: formName.trim(), email: te }];
         }
         return prev;
       });
@@ -318,14 +319,13 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     fetchAppointments();
   };
 
-  // --- Drag & Drop handlers ---
+  // --- Drag & Drop ---
   const handleDragStart = (e: React.DragEvent, apt: Appointment) => {
     setDraggedApt(apt);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", apt.id);
-    // Make ghost semi-transparent
     if (e.currentTarget instanceof HTMLElement) {
-      e.currentTarget.style.opacity = "0.5";
+      e.currentTarget.style.opacity = "0.4";
     }
   };
 
@@ -334,75 +334,48 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
       e.currentTarget.style.opacity = "1";
     }
     setDraggedApt(null);
-    setDropTargetDate(null);
+    setDropTarget(null);
   };
 
-  const handleDragOver = (e: React.DragEvent, dateStr: string) => {
+  const handleCellDragOver = (e: React.DragEvent, dateStr: string, slotHour: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    setDropTargetDate(dateStr);
+    setDropTarget({ date: dateStr, hour: slotHour });
   };
 
-  const handleDragLeave = () => {
-    setDropTargetDate(null);
+  const handleCellDragLeave = () => {
+    setDropTarget(null);
   };
 
-  const handleDrop = async (e: React.DragEvent, dateStr: string) => {
+  const handleCellDrop = async (e: React.DragEvent, dateStr: string, slotHour: string) => {
     e.preventDefault();
-    setDropTargetDate(null);
-    if (!draggedApt || draggedApt.appointment_date === dateStr) {
-      setDraggedApt(null);
-      return;
-    }
+    setDropTarget(null);
+    if (!draggedApt) return;
+
+    const newTime = slotHour.slice(0, 2) + ":" + (draggedApt.appointment_time?.slice(3, 5) || "00");
+    const sameDate = draggedApt.appointment_date === dateStr;
+    const sameTime = draggedApt.appointment_time?.slice(0, 2) === slotHour.slice(0, 2);
+    if (sameDate && sameTime) { setDraggedApt(null); return; }
+
     // Optimistic update
     setAppointments((prev) =>
-      prev.map((a) => (a.id === draggedApt.id ? { ...a, appointment_date: dateStr } : a))
+      prev.map((a) => (a.id === draggedApt.id ? { ...a, appointment_date: dateStr, appointment_time: newTime } : a))
     );
     try {
       await (supabase.from("professional_appointments" as any) as any)
-        .update({ appointment_date: dateStr })
+        .update({ appointment_date: dateStr, appointment_time: newTime })
         .eq("id", draggedApt.id);
-      toast({
-        title: language === "pt" ? "Agendamento movido" : language === "es" ? "Cita movida" : "Appointment moved",
-      });
+      toast({ title: isPt ? "Agendamento movido" : "Appointment moved" });
     } catch {
-      // Revert on error
       fetchAppointments();
       toast({ title: t("schedule.error"), variant: "destructive" });
     }
     setDraggedApt(null);
   };
 
-  // Long press handlers
-  const startLongPress = (apt: Appointment) => {
-    longPressTimer.current = setTimeout(async () => {
-      setLongPressApt(apt);
-      if (apt.patient_email) {
-        setLongPressLoading(true);
-        const { data } = await (supabase.from("session_notes" as any) as any)
-          .select("*")
-          .eq("professional_id", professionalId)
-          .eq("patient_email", apt.patient_email)
-          .eq("session_date", apt.appointment_date)
-          .order("created_at", { ascending: false });
-        setLongPressNotes(data || []);
-        setLongPressLoading(false);
-      }
-    }, 600);
-  };
-
-  const cancelLongPress = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  };
-
-  const isPt = language === "pt";
-
   return (
-    <div className="space-y-4">
-      {/* Header with navigation */}
+    <div className="space-y-3">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateWeek(-1)}>
@@ -416,12 +389,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            onClick={() => setViewDate(new Date())}
-          >
+          <Button variant="outline" size="sm" className="text-xs" onClick={() => setViewDate(new Date())}>
             {t("schedule.today")}
           </Button>
           <Button size="sm" className="gap-1.5 rounded-xl text-xs" onClick={() => openNew()}>
@@ -431,185 +399,206 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
         </div>
       </div>
 
-      {/* Drag hint */}
       {!isMobile && (
         <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
           <GripVertical className="h-3 w-3" />
-          {isPt ? "Arraste os cards para reagendar" : language === "es" ? "Arrastra las tarjetas para reprogramar" : "Drag cards to reschedule"}
+          {isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule"}
         </p>
       )}
 
-      {/* Calendar Grid */}
-      <div className={cn("grid gap-3", isMobile ? "grid-cols-3" : "grid-cols-7")}>
-        {days.map((day) => {
-          const dateStr = format(day, "yyyy-MM-dd");
-          const isToday = isSameDay(day, new Date());
-          const dayApts = appointments.filter((a) => a.appointment_date === dateStr);
-          const timeGroups = groupByTimeSlot(dayApts);
-          const isDragOver = dropTargetDate === dateStr;
+      {/* Time-slot grid */}
+      <ScrollArea className="h-[420px] rounded-lg border border-border/40">
+        <div className="min-w-0">
+          {/* Day headers — sticky */}
+          <div className={cn("grid sticky top-0 z-10 bg-background border-b border-border/40", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}>
+            <div className="py-2 px-1" /> {/* time gutter */}
+            {days.map((day) => {
+              const isToday = isSameDay(day, new Date());
+              return (
+                <div
+                  key={format(day, "yyyy-MM-dd")}
+                  className={cn(
+                    "text-center py-2 border-l border-border/30",
+                    isToday && "bg-primary/10"
+                  )}
+                >
+                  <p className="text-[10px] uppercase text-muted-foreground font-medium">
+                    {format(day, "EEE", { locale })}
+                  </p>
+                  <p className={cn("text-sm font-bold", isToday ? "text-primary" : "text-foreground")}>
+                    {format(day, "dd")}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
 
-          return (
-            <div
-              key={dateStr}
-              className={cn("space-y-1.5 transition-colors rounded-lg", isDragOver && "bg-primary/5 ring-2 ring-primary/30")}
-              onDragOver={(e) => handleDragOver(e, dateStr)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, dateStr)}
-            >
-              {/* Day header */}
-              <div
-                className={cn(
-                  "text-center py-1.5 rounded-lg cursor-pointer hover:bg-primary/5 transition-colors",
-                  isToday && "bg-primary/10 border border-primary/30"
-                )}
-                onClick={() => openNew(day)}
-              >
-                <p className="text-[10px] uppercase text-muted-foreground font-medium">
-                  {format(day, "EEE", { locale })}
-                </p>
-                <p className={cn("text-sm font-bold", isToday ? "text-primary" : "text-foreground")}>
-                  {format(day, "dd")}
-                </p>
-              </div>
-
-              {/* Appointments */}
-              <div className="space-y-1 min-h-[60px]">
-                {loading ? (
-                  <div className="flex justify-center py-2">
-                    <div className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />
-                  </div>
-                ) : dayApts.length === 0 ? (
-                  <p className="text-[10px] text-muted-foreground/40 text-center py-2">—</p>
-                ) : (
-                  timeGroups.map((group, gi) => {
-                    const isConcurrent = group.length > 1;
-                    return (
-                      <div key={gi} className={cn(isConcurrent ? "flex gap-0.5" : "")}>
-                        {group.map((apt) => (
-                          <AppointmentCard
-                            key={apt.id}
-                            apt={apt}
-                            isConcurrent={isConcurrent}
-                            concurrentCount={group.length}
-                            onEdit={openEdit}
-                            onDragStart={handleDragStart}
-                            onDragEnd={handleDragEnd}
-                            onLongPressStart={startLongPress}
-                            onLongPressCancel={cancelLongPress}
-                            isMobile={isMobile}
-                          />
-                        ))}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+          {/* Time rows */}
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
             </div>
-          );
-        })}
-      </div>
+          ) : (
+            timeSlots.map((slot) => (
+              <div
+                key={slot}
+                className={cn("grid border-b border-border/20", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}
+              >
+                {/* Time label */}
+                <div className="py-2 px-1 text-[10px] text-muted-foreground font-medium text-right pr-2 tabular-nums border-r border-border/30">
+                  {slot}
+                </div>
 
-      {/* Appointment Modal */}
+                {/* Day cells */}
+                {days.map((day) => {
+                  const dateStr = format(day, "yyyy-MM-dd");
+                  const cellApts = getAptsForSlot(
+                    appointments.filter((a) => a.appointment_date === dateStr),
+                    slot
+                  );
+                  const isOver = dropTarget?.date === dateStr && dropTarget?.hour === slot;
+
+                  return (
+                    <div
+                      key={`${dateStr}-${slot}`}
+                      className={cn(
+                        "border-l border-border/20 min-h-[40px] p-0.5 transition-colors cursor-pointer hover:bg-muted/30",
+                        isOver && "bg-primary/10 ring-1 ring-primary/40"
+                      )}
+                      onClick={() => {
+                        if (cellApts.length === 0) openNew(day, slot);
+                      }}
+                      onDragOver={(e) => handleCellDragOver(e, dateStr, slot)}
+                      onDragLeave={handleCellDragLeave}
+                      onDrop={(e) => handleCellDrop(e, dateStr, slot)}
+                    >
+                      {cellApts.length > 0 && (
+                        <div className={cn("flex gap-0.5", cellApts.length > 1 ? "flex-row" : "")}>
+                          {cellApts.map((apt) => (
+                            <AppointmentCard
+                              key={apt.id}
+                              apt={apt}
+                              isConcurrent={cellApts.length > 1}
+                              onEdit={openEdit}
+                              onDragStart={handleDragStart}
+                              onDragEnd={handleDragEnd}
+                              isMobile={isMobile}
+                              isPt={isPt}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Appointment Modal — scrollable */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingApt ? t("schedule.edit") : t("schedule.new")}</DialogTitle>
             <DialogDescription>{t("schedule.form_desc")}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.date")}</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-full justify-start text-xs gap-1.5 mt-1">
-                      <CalendarIcon className="h-3.5 w-3.5" />
-                      {format(formDate, "dd/MM/yyyy")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formDate}
-                      onSelect={(d) => d && setFormDate(d)}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+          <ScrollArea className="flex-1 -mx-6 px-6">
+            <div className="space-y-3 pb-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.date")}</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-full justify-start text-xs gap-1.5 mt-1">
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        {format(formDate, "dd/MM/yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formDate}
+                        onSelect={(d) => d && setFormDate(d)}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.time")}</label>
+                  <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
+                </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.time")}</label>
-                <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
-              </div>
-            </div>
-            {/* Patient selector */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
-              <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
-                <SelectTrigger className="mt-1 text-xs h-9">
-                  <SelectValue placeholder={t("schedule.select_patient_ph")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
-                  {knownPatients.map((p) => (
-                    <SelectItem key={p.email} value={p.email}>
-                      {p.name} ({p.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_name")} *</label>
-              <Input
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder={t("schedule.patient_name_ph")}
-                className="mt-1 text-xs h-9"
-                disabled={selectedPatientKey !== "__new__"}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">
-                {t("schedule.patient_email")} {selectedPatientKey === "__new__" && "*"}
-              </label>
-              <Input
-                value={formEmail}
-                onChange={(e) => { setFormEmail(e.target.value); setEmailWarning(false); }}
-                placeholder={t("schedule.patient_email_ph")}
-                className={cn("mt-1 text-xs h-9", emailWarning && "border-destructive")}
-                disabled={selectedPatientKey !== "__new__"}
-              />
-              {emailWarning && (
-                <p className="text-[10px] text-destructive mt-1">{t("schedule.email_required")}</p>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.type")}</label>
-                <Select value={formType} onValueChange={setFormType}>
+                <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
+                <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
                   <SelectTrigger className="mt-1 text-xs h-9">
-                    <SelectValue />
+                    <SelectValue placeholder={t("schedule.select_patient_ph")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="in_person">{t("schedule.type_in_person")}</SelectItem>
-                    <SelectItem value="video_call">{t("schedule.type_video_call")}</SelectItem>
-                    <SelectItem value="external">{t("schedule.type_external")}</SelectItem>
+                    <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
+                    {knownPatients.map((p) => (
+                      <SelectItem key={p.email} value={p.email}>
+                        {p.name} ({p.email})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
-                <Input type="number" value={formDuration} onChange={(e) => setFormDuration(e.target.value)} className="mt-1 text-xs h-9" min="15" max="180" />
+                <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_name")} *</label>
+                <Input
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder={t("schedule.patient_name_ph")}
+                  className="mt-1 text-xs h-9"
+                  disabled={selectedPatientKey !== "__new__"}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t("schedule.patient_email")} {selectedPatientKey === "__new__" && "*"}
+                </label>
+                <Input
+                  value={formEmail}
+                  onChange={(e) => { setFormEmail(e.target.value); setEmailWarning(false); }}
+                  placeholder={t("schedule.patient_email_ph")}
+                  className={cn("mt-1 text-xs h-9", emailWarning && "border-destructive")}
+                  disabled={selectedPatientKey !== "__new__"}
+                />
+                {emailWarning && (
+                  <p className="text-[10px] text-destructive mt-1">{t("schedule.email_required")}</p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.type")}</label>
+                  <Select value={formType} onValueChange={setFormType}>
+                    <SelectTrigger className="mt-1 text-xs h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="in_person">{t("schedule.type_in_person")}</SelectItem>
+                      <SelectItem value="video_call">{t("schedule.type_video_call")}</SelectItem>
+                      <SelectItem value="external">{t("schedule.type_external")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
+                  <Input type="number" value={formDuration} onChange={(e) => setFormDuration(e.target.value)} className="mt-1 text-xs h-9" min="15" max="180" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
+                <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("schedule.notes_ph")} className="mt-1 text-xs min-h-[60px]" />
               </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
-              <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("schedule.notes_ph")} className="mt-1 text-xs min-h-[60px]" />
-            </div>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          </ScrollArea>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-border/40">
             {editingApt && (
               <div className="flex gap-2 mr-auto">
                 <Button
@@ -669,141 +658,77 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Long-press session notes popup */}
-      <Dialog open={!!longPressApt} onOpenChange={(open) => { if (!open) setLongPressApt(null); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-sm">
-              <NotebookPen className="h-4 w-4 text-primary" />
-              {t("session_notes.title")} — {longPressApt?.patient_name}
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              {longPressApt && format(new Date(longPressApt.appointment_date + "T12:00:00"), "dd/MM/yyyy")}
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[300px]">
-            {longPressLoading ? (
-              <div className="flex justify-center py-6">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              </div>
-            ) : longPressNotes.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-6">{t("session_notes.empty_day")}</p>
-            ) : (
-              <div className="space-y-2">
-                {longPressNotes.map((n: any) => (
-                  <div key={n.id} className="rounded-lg border p-2.5 space-y-1">
-                    <p className="text-[10px] text-muted-foreground">
-                      {new Date(n.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                    <p className="text-xs text-foreground whitespace-pre-wrap">{n.content}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
 
-/** Individual appointment card with drag support and concurrent tooltip */
+/** Appointment card with drag + tooltip for concurrent */
 const AppointmentCard = ({
-  apt,
-  isConcurrent,
-  concurrentCount,
-  onEdit,
-  onDragStart,
-  onDragEnd,
-  onLongPressStart,
-  onLongPressCancel,
-  isMobile,
+  apt, isConcurrent, onEdit, onDragStart, onDragEnd, isMobile, isPt,
 }: {
   apt: Appointment;
   isConcurrent: boolean;
-  concurrentCount: number;
   onEdit: (apt: Appointment) => void;
   onDragStart: (e: React.DragEvent, apt: Appointment) => void;
   onDragEnd: (e: React.DragEvent) => void;
-  onLongPressStart: (apt: Appointment) => void;
-  onLongPressCancel: () => void;
   isMobile: boolean;
+  isPt: boolean;
 }) => {
   const Icon = TYPE_ICONS[apt.type] || MapPin;
   const statusColor = STATUS_COLORS[apt.status] || STATUS_COLORS.scheduled;
   const typeLabel = apt.type === "video_call" ? "Videochamada" : apt.type === "in_person" ? "Presencial" : "Externo";
 
-  const cardContent = (
+  const card = (
     <div
       className={cn(
-        "rounded-lg border cursor-pointer transition-all hover:shadow-sm active:scale-[0.97]",
+        "rounded-md border cursor-pointer transition-all hover:shadow-sm active:scale-[0.97]",
         statusColor,
         apt.status === "cancelled" && "opacity-50",
-        isConcurrent ? "p-1 flex-1 min-w-0" : "p-1.5"
+        isConcurrent ? "p-0.5 flex-1 min-w-0" : "p-1"
       )}
       draggable={!isMobile}
-      onDragStart={(e) => onDragStart(e, apt)}
+      onDragStart={(e) => { e.stopPropagation(); onDragStart(e, apt); }}
       onDragEnd={onDragEnd}
-      onClick={() => onEdit(apt)}
-      onTouchStart={() => onLongPressStart(apt)}
-      onTouchEnd={onLongPressCancel}
-      onTouchCancel={onLongPressCancel}
-      onMouseDown={() => onLongPressStart(apt)}
-      onMouseUp={onLongPressCancel}
-      onMouseLeave={onLongPressCancel}
+      onClick={(e) => { e.stopPropagation(); onEdit(apt); }}
     >
-      <div className="flex items-center gap-1">
-        <Clock className="h-2.5 w-2.5 shrink-0" />
-        <span className="text-[10px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
-        {!isMobile && !isConcurrent && <GripVertical className="h-2.5 w-2.5 ml-auto text-muted-foreground/40" />}
+      <div className="flex items-center gap-0.5">
+        <span className="text-[9px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
+        {!isMobile && !isConcurrent && <GripVertical className="h-2 w-2 ml-auto text-muted-foreground/40" />}
       </div>
       {isConcurrent ? (
-        // Minimized: only show first name + icon
         <div className="flex items-center gap-0.5 mt-0.5">
-          <Icon className="h-2.5 w-2.5 shrink-0" />
-          <p className="text-[9px] font-medium truncate leading-tight">
-            {apt.patient_name.split(" ")[0]}
-          </p>
+          <Icon className="h-2 w-2 shrink-0" />
+          <p className="text-[8px] font-medium truncate leading-tight">{apt.patient_name.split(" ")[0]}</p>
         </div>
       ) : (
         <>
-          <p className="text-[10px] font-medium truncate leading-tight mt-0.5">{apt.patient_name}</p>
-          <Icon className="h-2.5 w-2.5 mt-0.5" />
+          <p className="text-[9px] font-medium truncate leading-tight mt-0.5">{apt.patient_name}</p>
+          <Icon className="h-2 w-2 mt-0.5" />
         </>
       )}
     </div>
   );
 
-  // Wrap concurrent cards in a Tooltip for full details on hover
   if (isConcurrent && !isMobile) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          {cardContent}
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{card}</TooltipTrigger>
         <TooltipContent side="top" className="max-w-[200px] space-y-1">
           <p className="text-xs font-semibold">{apt.patient_name}</p>
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            {apt.appointment_time?.slice(0, 5)} — {apt.duration_minutes}min
+            <Clock className="h-3 w-3" /> {apt.appointment_time?.slice(0, 5)} — {apt.duration_minutes}min
           </div>
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Icon className="h-3 w-3" />
-            {typeLabel}
+            <Icon className="h-3 w-3" /> {typeLabel}
           </div>
-          {apt.patient_email && (
-            <p className="text-[10px] text-muted-foreground truncate">{apt.patient_email}</p>
-          )}
-          {apt.notes && (
-            <p className="text-[10px] text-muted-foreground italic line-clamp-2">{apt.notes}</p>
-          )}
+          {apt.patient_email && <p className="text-[10px] text-muted-foreground truncate">{apt.patient_email}</p>}
+          {apt.notes && <p className="text-[10px] text-muted-foreground italic line-clamp-2">{apt.notes}</p>}
         </TooltipContent>
       </Tooltip>
     );
   }
 
-  return cardContent;
+  return card;
 };
 
 export default ProSchedule;
