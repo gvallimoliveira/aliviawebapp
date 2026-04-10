@@ -67,6 +67,7 @@ function buildOnboardingSteps(subscriptionType?: "monthly" | "single" | null, is
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { t, toggleLanguage } = useLanguage();
+  const { memberships, activeClinic, isClinicMode } = useClinic();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
