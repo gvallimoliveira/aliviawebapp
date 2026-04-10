@@ -650,6 +650,15 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     }, 1000);
   }, [professionalId]);
 
+  const toggleNoteInPdf = useCallback(async (assessmentId: string, include: boolean) => {
+    if (!professionalId) return;
+    setNoteIncludeInPdf((prev) => ({ ...prev, [assessmentId]: include }));
+    await supabase.from("professional_notes").upsert(
+      { professional_id: professionalId, assessment_id: assessmentId, include_in_pdf: include, content: notes[assessmentId] || "", updated_at: new Date().toISOString() },
+      { onConflict: "professional_id,assessment_id" }
+    );
+  }, [professionalId, notes]);
+
   const handleBatchExport = useCallback(async (targetAssessments: any[]) => {
     const withDiagnosis = targetAssessments.filter((a) => a.diagnosis);
     if (withDiagnosis.length === 0) {
