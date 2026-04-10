@@ -21,10 +21,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip, TooltipContent, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Plus, CalendarIcon, Clock, Video, MapPin, ExternalLink,
-  Loader2, Trash2, Pencil, NotebookPen,
+  Loader2, Trash2, Pencil, NotebookPen, GripVertical,
 } from "lucide-react";
 
 interface Appointment {
@@ -70,6 +73,24 @@ interface KnownPatient {
   email: string;
 }
 
+/** Group appointments by time slot for side-by-side rendering */
+function groupByTimeSlot(apts: Appointment[]): Appointment[][] {
+  if (apts.length === 0) return [];
+  const sorted = [...apts].sort((a, b) => a.appointment_time.localeCompare(b.appointment_time));
+  const groups: Appointment[][] = [];
+  let currentGroup: Appointment[] = [sorted[0]];
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i].appointment_time.slice(0, 5) === sorted[i - 1].appointment_time.slice(0, 5)) {
+      currentGroup.push(sorted[i]);
+    } else {
+      groups.push(currentGroup);
+      currentGroup = [sorted[i]];
+    }
+  }
+  groups.push(currentGroup);
+  return groups;
+}
+
 const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProScheduleProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
@@ -107,6 +128,10 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
   const [longPressLoading, setLongPressLoading] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Drag-and-drop state
+  const [draggedApt, setDraggedApt] = useState<Appointment | null>(null);
+  const [dropTargetDate, setDropTargetDate] = useState<string | null>(null);
+
   const days = Array.from({ length: daysToShow }, (_, i) => addDays(startDate, i));
   const rangeStart = format(days[0], "yyyy-MM-dd");
   const rangeEnd = format(days[days.length - 1], "yyyy-MM-dd");
@@ -129,7 +154,6 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
   useEffect(() => {
     const fetchPatients = async () => {
       const map = new Map<string, KnownPatient>();
-      // From assessments
       const { data: assessData } = await supabase
         .from("assessments")
         .select("patient_name, patient_email")
@@ -142,7 +166,6 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
           }
         });
       }
-      // From appointments (catches patients created directly in agenda)
       const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
         .select("patient_name, patient_email")
         .eq("professional_id", professionalId)
@@ -159,10 +182,9 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     fetchPatients();
   }, [professionalId]);
 
-  // Show email required warning
   const [emailWarning, setEmailWarning] = useState(false);
 
-  const navigate = (dir: number) => setViewDate((prev) => addDays(prev, dir * daysToShow));
+  const navigateWeek = (dir: number) => setViewDate((prev) => addDays(prev, dir * daysToShow));
 
   const handleSelectPatient = (key: string) => {
     setSelectedPatientKey(key);
@@ -201,7 +223,6 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     setFormEmail(apt.patient_email || "");
     setFormType(apt.type);
     setFormNotes(apt.notes || "");
-    // Try to match known patient
     const match = knownPatients.find((p) => p.email === apt.patient_email);
     setSelectedPatientKey(match ? match.email : "__new__");
     setModalOpen(true);
@@ -209,7 +230,6 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
 
   const handleSave = async () => {
     if (!formName.trim()) return;
-    // For new patients, email is mandatory
     if (selectedPatientKey === "__new__" && !formEmail.trim()) {
       setEmailWarning(true);
       return;
@@ -233,7 +253,6 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
           .eq("id", editingApt.id);
       } else {
         await (supabase.from("professional_appointments" as any) as any).insert(payload);
-        // If new patient (not in known list), auto-create in patient list via placeholder assessment
         if (selectedPatientKey === "__new__" && trimmedEmail) {
           const { data: existing } = await supabase
             .from("assessments")
@@ -250,9 +269,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
               patient_email: trimmedEmail,
               anamnesis_data: { externalPatient: true },
             });
-            // Refresh patient list in parent
             window.dispatchEvent(new CustomEvent("reload-pro-patients"));
-            // Suggest sending pre-assessment link
             toast({
               title: t("schedule.patient_created"),
               description: t("schedule.suggest_pre_assessment"),
@@ -263,8 +280,8 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
       }
       toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
       setModalOpen(false);
-      // Refresh known patients list
       setKnownPatients((prev) => {
+        const trimmedEmail = formEmail.trim();
         if (trimmedEmail && !prev.find((p) => p.email === trimmedEmail)) {
           return [...prev, { name: formName.trim(), email: trimmedEmail }];
         }
@@ -301,6 +318,61 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     fetchAppointments();
   };
 
+  // --- Drag & Drop handlers ---
+  const handleDragStart = (e: React.DragEvent, apt: Appointment) => {
+    setDraggedApt(apt);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", apt.id);
+    // Make ghost semi-transparent
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = "0.5";
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = "1";
+    }
+    setDraggedApt(null);
+    setDropTargetDate(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, dateStr: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDropTargetDate(dateStr);
+  };
+
+  const handleDragLeave = () => {
+    setDropTargetDate(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dateStr: string) => {
+    e.preventDefault();
+    setDropTargetDate(null);
+    if (!draggedApt || draggedApt.appointment_date === dateStr) {
+      setDraggedApt(null);
+      return;
+    }
+    // Optimistic update
+    setAppointments((prev) =>
+      prev.map((a) => (a.id === draggedApt.id ? { ...a, appointment_date: dateStr } : a))
+    );
+    try {
+      await (supabase.from("professional_appointments" as any) as any)
+        .update({ appointment_date: dateStr })
+        .eq("id", draggedApt.id);
+      toast({
+        title: language === "pt" ? "Agendamento movido" : language === "es" ? "Cita movida" : "Appointment moved",
+      });
+    } catch {
+      // Revert on error
+      fetchAppointments();
+      toast({ title: t("schedule.error"), variant: "destructive" });
+    }
+    setDraggedApt(null);
+  };
+
   // Long press handlers
   const startLongPress = (apt: Appointment) => {
     longPressTimer.current = setTimeout(async () => {
@@ -326,18 +398,20 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
     }
   };
 
+  const isPt = language === "pt";
+
   return (
     <div className="space-y-4">
       {/* Header with navigation */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateWeek(-1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <h3 className="text-sm font-semibold text-foreground">
             {format(days[0], "dd MMM", { locale })} — {format(days[days.length - 1], "dd MMM yyyy", { locale })}
           </h3>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(1)}>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateWeek(1)}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -346,7 +420,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
             variant="outline"
             size="sm"
             className="text-xs"
-              onClick={() => setViewDate(new Date())}
+            onClick={() => setViewDate(new Date())}
           >
             {t("schedule.today")}
           </Button>
@@ -357,15 +431,31 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
         </div>
       </div>
 
+      {/* Drag hint */}
+      {!isMobile && (
+        <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
+          <GripVertical className="h-3 w-3" />
+          {isPt ? "Arraste os cards para reagendar" : language === "es" ? "Arrastra las tarjetas para reprogramar" : "Drag cards to reschedule"}
+        </p>
+      )}
+
       {/* Calendar Grid */}
       <div className={cn("grid gap-3", isMobile ? "grid-cols-3" : "grid-cols-7")}>
         {days.map((day) => {
           const dateStr = format(day, "yyyy-MM-dd");
           const isToday = isSameDay(day, new Date());
           const dayApts = appointments.filter((a) => a.appointment_date === dateStr);
+          const timeGroups = groupByTimeSlot(dayApts);
+          const isDragOver = dropTargetDate === dateStr;
 
           return (
-            <div key={dateStr} className="space-y-1.5">
+            <div
+              key={dateStr}
+              className={cn("space-y-1.5 transition-colors rounded-lg", isDragOver && "bg-primary/5 ring-2 ring-primary/30")}
+              onDragOver={(e) => handleDragOver(e, dateStr)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, dateStr)}
+            >
               {/* Day header */}
               <div
                 className={cn(
@@ -391,31 +481,24 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
                 ) : dayApts.length === 0 ? (
                   <p className="text-[10px] text-muted-foreground/40 text-center py-2">—</p>
                 ) : (
-                  dayApts.map((apt) => {
-                    const Icon = TYPE_ICONS[apt.type] || MapPin;
-                    const statusColor = STATUS_COLORS[apt.status] || STATUS_COLORS.scheduled;
+                  timeGroups.map((group, gi) => {
+                    const isConcurrent = group.length > 1;
                     return (
-                      <div
-                        key={apt.id}
-                        className={cn(
-                          "rounded-lg p-1.5 border cursor-pointer transition-all hover:shadow-sm active:scale-[0.97]",
-                          statusColor,
-                          apt.status === "cancelled" && "opacity-50"
-                        )}
-                        onClick={() => openEdit(apt)}
-                        onTouchStart={() => startLongPress(apt)}
-                        onTouchEnd={cancelLongPress}
-                        onTouchCancel={cancelLongPress}
-                        onMouseDown={() => startLongPress(apt)}
-                        onMouseUp={cancelLongPress}
-                        onMouseLeave={cancelLongPress}
-                      >
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-2.5 w-2.5 shrink-0" />
-                          <span className="text-[10px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
-                        </div>
-                        <p className="text-[10px] font-medium truncate leading-tight mt-0.5">{apt.patient_name}</p>
-                        <Icon className="h-2.5 w-2.5 mt-0.5" />
+                      <div key={gi} className={cn(isConcurrent ? "flex gap-0.5" : "")}>
+                        {group.map((apt) => (
+                          <AppointmentCard
+                            key={apt.id}
+                            apt={apt}
+                            isConcurrent={isConcurrent}
+                            concurrentCount={group.length}
+                            onEdit={openEdit}
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                            onLongPressStart={startLongPress}
+                            onLongPressCancel={cancelLongPress}
+                            isMobile={isMobile}
+                          />
+                        ))}
                       </div>
                     );
                   })
@@ -460,7 +543,7 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
                 <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
               </div>
             </div>
-            {/* Patient selector — always visible */}
+            {/* Patient selector */}
             <div>
               <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
               <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
@@ -623,6 +706,104 @@ const ProSchedule = ({ professionalId, patientEmails, onViewPatient }: ProSchedu
       </Dialog>
     </div>
   );
+};
+
+/** Individual appointment card with drag support and concurrent tooltip */
+const AppointmentCard = ({
+  apt,
+  isConcurrent,
+  concurrentCount,
+  onEdit,
+  onDragStart,
+  onDragEnd,
+  onLongPressStart,
+  onLongPressCancel,
+  isMobile,
+}: {
+  apt: Appointment;
+  isConcurrent: boolean;
+  concurrentCount: number;
+  onEdit: (apt: Appointment) => void;
+  onDragStart: (e: React.DragEvent, apt: Appointment) => void;
+  onDragEnd: (e: React.DragEvent) => void;
+  onLongPressStart: (apt: Appointment) => void;
+  onLongPressCancel: () => void;
+  isMobile: boolean;
+}) => {
+  const Icon = TYPE_ICONS[apt.type] || MapPin;
+  const statusColor = STATUS_COLORS[apt.status] || STATUS_COLORS.scheduled;
+  const typeLabel = apt.type === "video_call" ? "Videochamada" : apt.type === "in_person" ? "Presencial" : "Externo";
+
+  const cardContent = (
+    <div
+      className={cn(
+        "rounded-lg border cursor-pointer transition-all hover:shadow-sm active:scale-[0.97]",
+        statusColor,
+        apt.status === "cancelled" && "opacity-50",
+        isConcurrent ? "p-1 flex-1 min-w-0" : "p-1.5"
+      )}
+      draggable={!isMobile}
+      onDragStart={(e) => onDragStart(e, apt)}
+      onDragEnd={onDragEnd}
+      onClick={() => onEdit(apt)}
+      onTouchStart={() => onLongPressStart(apt)}
+      onTouchEnd={onLongPressCancel}
+      onTouchCancel={onLongPressCancel}
+      onMouseDown={() => onLongPressStart(apt)}
+      onMouseUp={onLongPressCancel}
+      onMouseLeave={onLongPressCancel}
+    >
+      <div className="flex items-center gap-1">
+        <Clock className="h-2.5 w-2.5 shrink-0" />
+        <span className="text-[10px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
+        {!isMobile && !isConcurrent && <GripVertical className="h-2.5 w-2.5 ml-auto text-muted-foreground/40" />}
+      </div>
+      {isConcurrent ? (
+        // Minimized: only show first name + icon
+        <div className="flex items-center gap-0.5 mt-0.5">
+          <Icon className="h-2.5 w-2.5 shrink-0" />
+          <p className="text-[9px] font-medium truncate leading-tight">
+            {apt.patient_name.split(" ")[0]}
+          </p>
+        </div>
+      ) : (
+        <>
+          <p className="text-[10px] font-medium truncate leading-tight mt-0.5">{apt.patient_name}</p>
+          <Icon className="h-2.5 w-2.5 mt-0.5" />
+        </>
+      )}
+    </div>
+  );
+
+  // Wrap concurrent cards in a Tooltip for full details on hover
+  if (isConcurrent && !isMobile) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {cardContent}
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[200px] space-y-1">
+          <p className="text-xs font-semibold">{apt.patient_name}</p>
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            {apt.appointment_time?.slice(0, 5)} — {apt.duration_minutes}min
+          </div>
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <Icon className="h-3 w-3" />
+            {typeLabel}
+          </div>
+          {apt.patient_email && (
+            <p className="text-[10px] text-muted-foreground truncate">{apt.patient_email}</p>
+          )}
+          {apt.notes && (
+            <p className="text-[10px] text-muted-foreground italic line-clamp-2">{apt.notes}</p>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return cardContent;
 };
 
 export default ProSchedule;
