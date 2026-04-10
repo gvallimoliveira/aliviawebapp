@@ -1425,6 +1425,8 @@ export interface EvolutionPdfOptions {
   summary: EvolutionSummary;
   language: string;
   professionalLogoUrl?: string;
+  clinicLogoUrl?: string;
+  clinicName?: string;
 }
 
 export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Promise<Blob> {
