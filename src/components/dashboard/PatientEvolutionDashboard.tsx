@@ -440,6 +440,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [selectedEmail, setSelectedEmail] = useState<string | null>(initialPatient);
   const [searchQuery, setSearchQuery] = useState("");
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [noteIncludeInPdf, setNoteIncludeInPdf] = useState<Record<string, boolean>>({});
   const [noteSaving, setNoteSaving] = useState<Record<string, boolean>>({});
   const [batchExporting, setBatchExporting] = useState(false);
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
@@ -621,14 +622,16 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     const assessmentIds = assessments.map((a) => a.id);
     supabase
       .from("professional_notes")
-      .select("assessment_id, content")
+      .select("assessment_id, content, include_in_pdf")
       .eq("professional_id", professionalId)
       .in("assessment_id", assessmentIds)
       .then(({ data }) => {
         if (data) {
           const map: Record<string, string> = {};
-          data.forEach((n: any) => { map[n.assessment_id] = n.content; });
+          const pdfMap: Record<string, boolean> = {};
+          data.forEach((n: any) => { map[n.assessment_id] = n.content; pdfMap[n.assessment_id] = !!n.include_in_pdf; });
           setNotes(map);
+          setNoteIncludeInPdf(pdfMap);
         }
       });
   }, [professionalId, assessments, isDemo]);
