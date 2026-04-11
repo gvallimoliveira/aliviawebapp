@@ -140,7 +140,15 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const isClinicOnlyMode = !professionalId && !!clinicId;
 
   useEffect(() => {
-    if (!clinicId) return;
+    if (!clinicId || isSimulated) {
+      if (isSimulated) {
+        const simPros = DEMO_TEAM.filter(t => t.role === "owner" || t.role === "therapist")
+          .map(t => ({ id: t.id, full_name: t.full_name }));
+        setClinicProfessionals(simPros);
+        if (simPros.length > 0 && !professionalId) setFormProfessionalId(simPros[0].id);
+      }
+      return;
+    }
     const fetchClinicPros = async () => {
       const { data: members } = await supabase
         .from("clinic_members")
@@ -160,7 +168,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       }
     };
     fetchClinicPros();
-  }, [clinicId, professionalId]);
+  }, [clinicId, professionalId, isSimulated]);
 
   // Drag state
   const [draggedApt, setDraggedApt] = useState<Appointment | null>(null);
