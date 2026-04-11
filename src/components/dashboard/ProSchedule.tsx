@@ -48,6 +48,7 @@ interface ProScheduleProps {
   clinicId?: string | null;
   patientEmails?: string[];
   onViewPatient?: (email: string) => void;
+  isSimulated?: boolean;
 }
 
 const TYPE_ICONS: Record<string, typeof Video> = {
