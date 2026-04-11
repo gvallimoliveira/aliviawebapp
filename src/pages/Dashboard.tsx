@@ -103,14 +103,21 @@ const Dashboard = () => {
 
   // Reset tab on context change or URL params
   useEffect(() => {
-    if (tabFromUrl === "professional" && professional) setActiveTab("professional");
-    else if (tabFromUrl === "messages") setActiveTab("messages");
-    else if (tabFromUrl === "agenda") setActiveTab("agenda");
-    else if (tabFromUrl === "patients" && isClinicMode) setActiveTab("patients");
-    else if (tabFromUrl === "clinic" && isClinicMode) setActiveTab("clinic");
-    else if (isClinicMode && !tabFromUrl && professional) setActiveTab("professional");
-    else if (isClinicMode && !tabFromUrl && !professional) setActiveTab("agenda");
-    else if (!isClinicMode && !tabFromUrl) setActiveTab("health");
+    if (isClinicMode) {
+      // Clinic mode: 5 tabs (agenda, patients, team, link, messages)
+      if (tabFromUrl === "messages") setActiveTab("messages");
+      else if (tabFromUrl === "agenda") setActiveTab("agenda");
+      else if (tabFromUrl === "patients") setActiveTab("patients");
+      else if (tabFromUrl === "team" || tabFromUrl === "clinic") setActiveTab("team");
+      else if (tabFromUrl === "link") setActiveTab("link");
+      else setActiveTab("agenda");
+    } else {
+      // Personal mode
+      if (tabFromUrl === "professional" && professional) setActiveTab("professional");
+      else if (tabFromUrl === "messages") setActiveTab("messages");
+      else if (tabFromUrl === "agenda") setActiveTab("agenda");
+      else if (!tabFromUrl) setActiveTab("health");
+    }
   }, [tabFromUrl, professional, isClinicMode, activeClinic?.clinic_id]);
 
   const fetchUnreadCount = async () => {
