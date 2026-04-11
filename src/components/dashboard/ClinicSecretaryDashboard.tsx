@@ -63,6 +63,17 @@ const ClinicSecretaryDashboard = () => {
 
     setTherapists(pros || []);
 
+    // Find owner's professional ID for assessment link
+    const ownerMember = members.find((m) => m.role === "owner");
+    if (ownerMember) {
+      const { data: ownerPro } = await supabase
+        .from("professionals")
+        .select("id")
+        .eq("user_id", ownerMember.user_id)
+        .maybeSingle();
+      setOwnerProfessionalId(ownerPro?.id || null);
+    }
+
     // Get all assessments linked to the clinic
     const { data: assessData } = await supabase
       .from("assessments")
