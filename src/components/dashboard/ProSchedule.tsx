@@ -164,33 +164,60 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
   useEffect(() => {
     const fetchPatients = async () => {
       const map = new Map<string, KnownPatient>();
-      const { data: assessData } = await supabase
-        .from("assessments")
-        .select("patient_name, patient_email")
-        .eq("professional_id", professionalId)
-        .not("patient_email", "is", null);
-      if (assessData) {
-        assessData.forEach((a) => {
-          if (a.patient_email && a.patient_name) {
-            map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
-          }
-        });
-      }
-      const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
-        .select("patient_name, patient_email")
-        .eq("professional_id", professionalId)
-        .not("patient_email", "is", null);
-      if (aptData) {
-        (aptData as any[]).forEach((a) => {
-          if (a.patient_email && a.patient_name && !map.has(a.patient_email)) {
-            map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
-          }
-        });
+      if (clinicId) {
+        // Fetch patients from clinic assessments
+        const { data: assessData } = await supabase
+          .from("assessments")
+          .select("patient_name, patient_email")
+          .eq("clinic_id", clinicId)
+          .not("patient_email", "is", null);
+        if (assessData) {
+          assessData.forEach((a) => {
+            if (a.patient_email && a.patient_name) {
+              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+            }
+          });
+        }
+        const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
+          .select("patient_name, patient_email")
+          .eq("clinic_id", clinicId)
+          .not("patient_email", "is", null);
+        if (aptData) {
+          (aptData as any[]).forEach((a) => {
+            if (a.patient_email && a.patient_name && !map.has(a.patient_email)) {
+              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+            }
+          });
+        }
+      } else if (professionalId) {
+        const { data: assessData } = await supabase
+          .from("assessments")
+          .select("patient_name, patient_email")
+          .eq("professional_id", professionalId)
+          .not("patient_email", "is", null);
+        if (assessData) {
+          assessData.forEach((a) => {
+            if (a.patient_email && a.patient_name) {
+              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+            }
+          });
+        }
+        const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
+          .select("patient_name, patient_email")
+          .eq("professional_id", professionalId)
+          .not("patient_email", "is", null);
+        if (aptData) {
+          (aptData as any[]).forEach((a) => {
+            if (a.patient_email && a.patient_name && !map.has(a.patient_email)) {
+              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+            }
+          });
+        }
       }
       setKnownPatients(Array.from(map.values()));
     };
     fetchPatients();
-  }, [professionalId]);
+  }, [professionalId, clinicId]);
 
   const navigateWeek = (dir: number) => setViewDate((prev) => addDays(prev, dir * daysToShow));
 
