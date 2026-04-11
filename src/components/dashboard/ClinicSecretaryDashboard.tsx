@@ -4,17 +4,16 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
-  Users, Stethoscope, Activity, Calendar, Mail, User,
-  ChevronRight, FileText, Eye, Lock, Loader2,
+  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2,
 } from "lucide-react";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
 import { useToast } from "@/hooks/use-toast";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 /**
  * Read-only combined view of all clinic therapists' patients/assessments
@@ -30,6 +29,8 @@ const ClinicSecretaryDashboard = () => {
   const [allAssessments, setAllAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTherapistId, setSelectedTherapistId] = useState<string>("all");
+  const [ownerProfessionalId, setOwnerProfessionalId] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     if (!activeClinic) return;
@@ -62,6 +63,17 @@ const ClinicSecretaryDashboard = () => {
 
     setTherapists(pros || []);
 
+    // Find owner's professional ID for assessment link
+    const ownerMember = members.find((m) => m.role === "owner");
+    if (ownerMember) {
+      const { data: ownerPro } = await supabase
+        .from("professionals")
+        .select("id")
+        .eq("user_id", ownerMember.user_id)
+        .maybeSingle();
+      setOwnerProfessionalId(ownerPro?.id || null);
+    }
+
     // Get all assessments linked to the clinic
     const { data: assessData } = await supabase
       .from("assessments")
@@ -73,14 +85,23 @@ const ClinicSecretaryDashboard = () => {
     setLoading(false);
   };
 
+  const copyAssessmentLink = () => {
+    if (!ownerProfessionalId) return;
+    const link = `${getPublicOrigin()}/assessment/professional/${ownerProfessionalId}`;
+    navigator.clipboard.writeText(link);
+    setLinkCopied(true);
+    toast({ title: lang === "pt" ? "Link copiado!" : "Link copied!" });
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
   const handleDownloadPdf = async (assessment: any) => {
     if (!assessment.diagnosis) return;
     try {
-      const lang = document.documentElement.lang === "en" ? "en" : "pt";
+      const pdfLang = document.documentElement.lang === "en" ? "en" : "pt";
       await generateAssessmentPdf({
         diagnosis: assessment.diagnosis,
         treatmentPlan: assessment.treatment_plan,
-        language: lang as "pt" | "en",
+        language: pdfLang as "pt" | "en",
         userName: assessment.patient_name || "Paciente",
         anamnesisData: assessment.anamnesis_data,
         painRegions: assessment.pain_regions,
@@ -88,7 +109,7 @@ const ClinicSecretaryDashboard = () => {
         clinicLogoUrl: activeClinic?.logo_url || undefined,
         clinicName: activeClinic?.clinic_name || undefined,
       });
-      toast({ title: lang === "pt" ? "PDF gerado!" : "PDF generated!" });
+      toast({ title: pdfLang === "pt" ? "PDF gerado!" : "PDF generated!" });
     } catch {
       toast({ title: "Erro ao gerar PDF", variant: "destructive" });
     }
@@ -126,7 +147,34 @@ const ClinicSecretaryDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Therapist filter */}
+      {/* Pre-assessment link */}
+      {ownerProfessionalId && (
+        <Card>
+          <CardContent className="py-4 px-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Link2 className="h-4 w-4 text-primary" />
+              <span className="font-semibold text-sm">
+                {lang === "pt" ? "Link de pré-avaliação" : "Pre-assessment link"}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              {lang === "pt"
+                ? "Envie este link para pacientes. As avaliações serão integradas ao perfil da clínica e do profissional principal."
+                : "Send this link to patients. Assessments will be linked to the clinic and main professional profile."}
+            </p>
+            <div className="flex gap-2">
+              <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
+                {getPublicOrigin()}/assessment/professional/{ownerProfessionalId}
+              </code>
+              <Button onClick={copyAssessmentLink} variant="outline" size="sm" className="gap-1.5 shrink-0">
+                {linkCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {linkCopied ? (lang === "pt" ? "Copiado" : "Copied") : (lang === "pt" ? "Copiar" : "Copy")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {therapists.length > 1 && (
         <div className="flex items-center gap-2 flex-wrap">
           <Badge
