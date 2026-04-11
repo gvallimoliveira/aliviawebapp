@@ -114,7 +114,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [viewDate, setViewDate] = useState(() => new Date());
   const startDate = isMobile ? viewDate : startOfWeek(viewDate, { weekStartsOn: 1 });
 
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>(isSimulated ? (DEMO_APPOINTMENTS as Appointment[]) : []);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingApt, setEditingApt] = useState<Appointment | null>(null);
