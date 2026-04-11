@@ -317,6 +317,7 @@ const Dashboard = () => {
               <ProSchedule professionalId={professional.id} />
             </TabsContent>
             <TabsContent value="professional" className="space-y-8">
+              {isClinicMode && <ClinicTrialBanner />}
               <ProDashboard professional={professional} />
             </TabsContent>
             {isClinicMode && activeClinic && (
