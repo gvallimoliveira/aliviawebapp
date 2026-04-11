@@ -91,18 +91,28 @@ const ClinicTeamManagement = () => {
     if (!activeClinic || !user || !inviteEmail.trim()) return;
     setSending(true);
     try {
-      const { error } = await supabase.from("clinic_invitations").insert({
-        clinic_id: activeClinic.clinic_id,
-        email: inviteEmail.trim().toLowerCase(),
-        role: inviteRole,
-        invited_by: user.id,
+      const { data, error } = await supabase.rpc("try_direct_clinic_add", {
+        _clinic_id: activeClinic.clinic_id,
+        _email: inviteEmail.trim().toLowerCase(),
+        _role: inviteRole,
+        _invited_by: user.id,
       });
       if (error) throw error;
-      toast({ title: lang === "pt" ? "Convite enviado!" : lang === "es" ? "Invitación enviada!" : "Invite sent!" });
+
+      const wasAdded = data === "added";
+      toast({
+        title: wasAdded
+          ? (lang === "pt" ? "Membro adicionado!" : lang === "es" ? "Miembro añadido!" : "Member added!")
+          : (lang === "pt" ? "Convite criado!" : lang === "es" ? "Invitación creada!" : "Invite created!"),
+        description: wasAdded
+          ? (lang === "pt" ? "O usuário já tinha cadastro e foi adicionado diretamente." : "User already had an account and was added directly.")
+          : (lang === "pt" ? "Quando este e-mail criar cadastro no Aliv.iA, será associado automaticamente à clínica." : "When this email signs up, they will be automatically associated with the clinic."),
+      });
       setInviteEmail("");
       fetchTeam();
+      refetch();
     } catch (err: any) {
-      toast({ title: lang === "pt" ? "Erro ao convidar" : "Error", description: err.message, variant: "destructive" });
+      toast({ title: lang === "pt" ? "Erro ao adicionar" : "Error", description: err.message, variant: "destructive" });
     }
     setSending(false);
   };
