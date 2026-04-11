@@ -91,18 +91,28 @@ const ClinicTeamManagement = () => {
     if (!activeClinic || !user || !inviteEmail.trim()) return;
     setSending(true);
     try {
-      const { error } = await supabase.from("clinic_invitations").insert({
-        clinic_id: activeClinic.clinic_id,
-        email: inviteEmail.trim().toLowerCase(),
-        role: inviteRole,
-        invited_by: user.id,
+      const { data, error } = await supabase.rpc("try_direct_clinic_add", {
+        _clinic_id: activeClinic.clinic_id,
+        _email: inviteEmail.trim().toLowerCase(),
+        _role: inviteRole,
+        _invited_by: user.id,
       });
       if (error) throw error;
-      toast({ title: lang === "pt" ? "Convite enviado!" : lang === "es" ? "Invitación enviada!" : "Invite sent!" });
+
+      const wasAdded = data === "added";
+      toast({
+        title: wasAdded
+          ? (lang === "pt" ? "Membro adicionado!" : lang === "es" ? "Miembro añadido!" : "Member added!")
+          : (lang === "pt" ? "Convite criado!" : lang === "es" ? "Invitación creada!" : "Invite created!"),
+        description: wasAdded
+          ? (lang === "pt" ? "O usuário já tinha cadastro e foi adicionado diretamente." : "User already had an account and was added directly.")
+          : (lang === "pt" ? "Quando este e-mail criar cadastro no Aliv.iA, será associado automaticamente à clínica." : "When this email signs up, they will be automatically associated with the clinic."),
+      });
       setInviteEmail("");
       fetchTeam();
+      refetch();
     } catch (err: any) {
-      toast({ title: lang === "pt" ? "Erro ao convidar" : "Error", description: err.message, variant: "destructive" });
+      toast({ title: lang === "pt" ? "Erro ao adicionar" : "Error", description: err.message, variant: "destructive" });
     }
     setSending(false);
   };
@@ -202,43 +212,43 @@ const ClinicTeamManagement = () => {
       {canManage && members.length < activeClinic.max_members && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <UserPlus className="h-5 w-5" />
-              {lang === "pt" ? "Convidar membro" : lang === "es" ? "Invitar miembro" : "Invite member"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>{lang === "pt" ? "E-mail do convidado" : "Invitee email"}</Label>
-              <Input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="email@exemplo.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{lang === "pt" ? "Papel" : "Role"}</Label>
-              <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as ClinicRole)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
-                  <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={handleInvite} disabled={sending || !inviteEmail.trim()} className="w-full">
-              {sending
-                ? (lang === "pt" ? "Enviando..." : "Sending...")
-                : (lang === "pt" ? "Enviar convite" : "Send invite")}
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              {lang === "pt"
-                ? "O convidado receberá um link para aceitar. O link expira em 7 dias."
-                : "The invitee will receive a link to accept. Link expires in 7 days."}
-            </p>
+             <CardTitle className="flex items-center gap-2 text-lg">
+               <UserPlus className="h-5 w-5" />
+               {lang === "pt" ? "Adicionar membro" : lang === "es" ? "Añadir miembro" : "Add member"}
+             </CardTitle>
+           </CardHeader>
+           <CardContent className="space-y-4">
+             <div className="space-y-2">
+               <Label>{lang === "pt" ? "Papel" : "Role"}</Label>
+               <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as ClinicRole)}>
+                 <SelectTrigger>
+                   <SelectValue />
+                 </SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
+                   <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
+                 </SelectContent>
+               </Select>
+             </div>
+             <div className="space-y-2">
+               <Label>{lang === "pt" ? "E-mail do membro" : "Member email"}</Label>
+               <Input
+                 type="email"
+                 value={inviteEmail}
+                 onChange={(e) => setInviteEmail(e.target.value)}
+                 placeholder="email@exemplo.com"
+               />
+             </div>
+             <Button onClick={handleInvite} disabled={sending || !inviteEmail.trim()} className="w-full">
+               {sending
+                 ? (lang === "pt" ? "Adicionando..." : "Adding...")
+                 : (lang === "pt" ? "Adicionar à equipe" : "Add to team")}
+             </Button>
+             <p className="text-xs text-muted-foreground text-center">
+               {lang === "pt"
+                 ? "Se o e-mail já tiver cadastro, será adicionado diretamente. Caso contrário, será vinculado automaticamente quando criar conta."
+                 : "If the email already has an account, they'll be added directly. Otherwise, they'll be linked automatically upon signup."}
+             </p>
           </CardContent>
         </Card>
       )}
