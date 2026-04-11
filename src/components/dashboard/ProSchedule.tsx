@@ -299,9 +299,15 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
     }
     setSaving(true);
     try {
+      const effectiveProfId = professionalId || formProfessionalId;
+      if (!effectiveProfId) {
+        toast({ title: isPt ? "Selecione um profissional" : "Select a professional", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
       const trimmedEmail = formEmail.trim();
       const payload: any = {
-        professional_id: professionalId,
+        professional_id: effectiveProfId,
         patient_name: formName.trim(),
         patient_email: trimmedEmail || null,
         appointment_date: format(formDate, "yyyy-MM-dd"),
