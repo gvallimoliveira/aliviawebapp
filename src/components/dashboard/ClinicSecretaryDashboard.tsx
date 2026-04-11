@@ -29,6 +29,8 @@ const ClinicSecretaryDashboard = () => {
   const [allAssessments, setAllAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTherapistId, setSelectedTherapistId] = useState<string>("all");
+  const [ownerProfessionalId, setOwnerProfessionalId] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     if (!activeClinic) return;
