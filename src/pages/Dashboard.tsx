@@ -88,6 +88,7 @@ const Dashboard = () => {
   const [msgSearch, setMsgSearch] = useState("");
   const [msgFilter, setMsgFilter] = useState<"all" | "patient" | "professional">("all");
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
+  const [isSimulated, setIsSimulated] = useState(false);
 
   const push = usePushNotifications();
 
@@ -283,6 +284,7 @@ const Dashboard = () => {
                 <ProSchedule
                   professionalId={professional?.id}
                   clinicId={activeClinic.clinic_id}
+                  isSimulated={isSimulated}
                 />
                 <ClinicTrialBlockOverlay />
               </div>
@@ -293,7 +295,7 @@ const Dashboard = () => {
               <ClinicTrialBanner />
               <div className="relative">
                 {professional ? (
-                  <ProDashboard professional={professional} hideForClinicTabs />
+                  <ProDashboard professional={professional} hideForClinicTabs isSimulated={isSimulated} onSimulatedChange={setIsSimulated} />
                 ) : (
                   <ClinicSecretaryDashboard />
                 )}

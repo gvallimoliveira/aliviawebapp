@@ -38,9 +38,11 @@ import { getPublicOrigin } from "@/lib/getPublicOrigin";
 interface ProDashboardProps {
   professional: any;
   hideForClinicTabs?: boolean;
+  isSimulated?: boolean;
+  onSimulatedChange?: (val: boolean) => void;
 }
 
-const ProDashboard = ({ professional, hideForClinicTabs = false }: ProDashboardProps) => {
+const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: isSimulatedProp, onSimulatedChange }: ProDashboardProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { activeClinic, isClinicMode } = useClinic();
@@ -58,7 +60,12 @@ const ProDashboard = ({ professional, hideForClinicTabs = false }: ProDashboardP
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [lifetimeLoading, setLifetimeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [isSimulated, setIsSimulated] = useState(false);
+  const [isSimulatedInternal, setIsSimulatedInternal] = useState(false);
+  const isSimulated = isSimulatedProp !== undefined ? isSimulatedProp : isSimulatedInternal;
+  const setIsSimulated = (val: boolean) => {
+    if (onSimulatedChange) onSimulatedChange(val);
+    else setIsSimulatedInternal(val);
+  };
   const [billingAnnual, setBillingAnnual] = useState(true);
 
   // Welcome card for new subscribers

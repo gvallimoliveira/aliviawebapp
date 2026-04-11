@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { DEMO_APPOINTMENTS, DEMO_TEAM } from "@/data/mockClinicData";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
@@ -48,6 +49,7 @@ interface ProScheduleProps {
   clinicId?: string | null;
   patientEmails?: string[];
   onViewPatient?: (email: string) => void;
+  isSimulated?: boolean;
 }
 
 const TYPE_ICONS: Record<string, typeof Video> = {
@@ -101,7 +103,7 @@ function getAptsForSlot(apts: Appointment[], slotHour: string): Appointment[] {
   });
 }
 
-const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }: ProScheduleProps) => {
+const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, isSimulated = false }: ProScheduleProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -112,7 +114,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
   const [viewDate, setViewDate] = useState(() => new Date());
   const startDate = isMobile ? viewDate : startOfWeek(viewDate, { weekStartsOn: 1 });
 
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>(isSimulated ? (DEMO_APPOINTMENTS as Appointment[]) : []);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingApt, setEditingApt] = useState<Appointment | null>(null);
@@ -138,7 +140,15 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
   const isClinicOnlyMode = !professionalId && !!clinicId;
 
   useEffect(() => {
-    if (!clinicId) return;
+    if (!clinicId || isSimulated) {
+      if (isSimulated) {
+        const simPros = DEMO_TEAM.filter(t => t.role === "owner" || t.role === "therapist")
+          .map(t => ({ id: t.id, full_name: t.full_name }));
+        setClinicProfessionals(simPros);
+        if (simPros.length > 0 && !professionalId) setFormProfessionalId(simPros[0].id);
+      }
+      return;
+    }
     const fetchClinicPros = async () => {
       const { data: members } = await supabase
         .from("clinic_members")
@@ -158,7 +168,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
       }
     };
     fetchClinicPros();
-  }, [clinicId, professionalId]);
+  }, [clinicId, professionalId, isSimulated]);
 
   // Drag state
   const [draggedApt, setDraggedApt] = useState<Appointment | null>(null);
@@ -171,6 +181,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
   const timeSlots = getTimeRange(appointments);
 
   const fetchAppointments = useCallback(async () => {
+    if (isSimulated) { setLoading(false); return; }
     setLoading(true);
     let query = (supabase.from("professional_appointments" as any) as any)
       .select("*")
@@ -185,11 +196,12 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
     const { data } = await query;
     setAppointments((data as Appointment[]) || []);
     setLoading(false);
-  }, [professionalId, clinicId, rangeStart, rangeEnd]);
+  }, [professionalId, clinicId, rangeStart, rangeEnd, isSimulated]);
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
   useEffect(() => {
+    if (isSimulated) return;
     const fetchPatients = async () => {
       const map = new Map<string, KnownPatient>();
       if (clinicId) {
@@ -317,6 +329,20 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
         notes: formNotes || null,
       };
       if (clinicId) payload.clinic_id = clinicId;
+
+      if (isSimulated) {
+        if (editingApt) {
+          setAppointments(prev => prev.map(a => a.id === editingApt.id ? { ...a, ...payload } : a));
+        } else {
+          const newApt: Appointment = { id: `sim-${Date.now()}`, ...payload, status: "scheduled", created_at: new Date().toISOString() };
+          setAppointments(prev => [...prev, newApt]);
+        }
+        toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
+        setModalOpen(false);
+        setSaving(false);
+        return;
+      }
+
       if (editingApt) {
         await (supabase.from("professional_appointments" as any) as any)
           .update(payload)
@@ -368,6 +394,14 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
+    if (isSimulated) {
+      setAppointments(prev => prev.filter(a => a.id !== deleteId));
+      toast({ title: t("schedule.deleted") });
+      setDeleteId(null);
+      setModalOpen(false);
+      setDeleting(false);
+      return;
+    }
     try {
       await (supabase.from("professional_appointments" as any) as any).delete().eq("id", deleteId);
       toast({ title: t("schedule.deleted") });
@@ -382,6 +416,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
   };
 
   const handleMarkComplete = async (id: string) => {
+    if (isSimulated) {
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "completed" } : a));
+      return;
+    }
     await (supabase.from("professional_appointments" as any) as any)
       .update({ status: "completed" })
       .eq("id", id);
@@ -430,6 +468,11 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
     setAppointments((prev) =>
       prev.map((a) => (a.id === draggedApt.id ? { ...a, appointment_date: dateStr, appointment_time: newTime } : a))
     );
+    if (isSimulated) {
+      toast({ title: isPt ? "Agendamento movido" : "Appointment moved" });
+      setDraggedApt(null);
+      return;
+    }
     try {
       await (supabase.from("professional_appointments" as any) as any)
         .update({ appointment_date: dateStr, appointment_time: newTime })
