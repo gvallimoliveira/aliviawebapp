@@ -1233,6 +1233,15 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      try_direct_clinic_add: {
+        Args: {
+          _clinic_id: string
+          _email: string
+          _invited_by: string
+          _role: Database["public"]["Enums"]["clinic_role"]
+        }
+        Returns: string
+      }
     }
     Enums: {
       clinic_role: "owner" | "therapist" | "secretary"
