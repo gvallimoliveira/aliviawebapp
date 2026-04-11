@@ -62,6 +62,16 @@ serve(async (req) => {
           .update({ payment_status: "treatment_paid" })
           .eq("id", assessment_id);
 
+        // Audit log
+        await supabaseClient
+          .from("clinic_assessment_logs")
+          .insert({
+            clinic_id: assessmentCheck.clinic_id,
+            assessment_id,
+            action: "treatment_generated_free",
+            actor_user_id: user.id,
+          });
+
         return new Response(JSON.stringify({ free: true, assessment_id }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,

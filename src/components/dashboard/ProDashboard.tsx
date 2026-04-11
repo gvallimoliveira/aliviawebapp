@@ -30,6 +30,8 @@ import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import ProScheduleCard from "./ProScheduleCard";
+import ClinicVolumeAlert from "./ClinicVolumeAlert";
+import SoloUpgradeBanner from "./SoloUpgradeBanner";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
@@ -419,6 +421,15 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   // Active subscriber dashboard
   return (
     <div className="space-y-6">
+      {/* Solo upgrade banner — therapist without own Pro subscription */}
+      {!isClinicMode && (
+        <SoloUpgradeBanner hasActiveProSubscription={professional.subscription_status === "active"} />
+      )}
+
+      {/* Clinic volume alert — only for owner in clinic mode */}
+      {isClinicMode && activeClinic && (
+        <ClinicVolumeAlert clinicId={activeClinic.clinic_id} />
+      )}
       {/* Welcome card for new subscribers */}
       {showWelcome && subscription?.subscribed && (
         <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">

@@ -165,6 +165,51 @@ export type Database = {
         }
         Relationships: []
       }
+      clinic_assessment_logs: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          assessment_id: string | null
+          clinic_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          assessment_id?: string | null
+          clinic_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          assessment_id?: string | null
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_assessment_logs_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinic_assessment_logs_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_invitations: {
         Row: {
           clinic_id: string
