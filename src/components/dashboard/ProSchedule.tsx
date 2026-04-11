@@ -416,6 +416,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   };
 
   const handleMarkComplete = async (id: string) => {
+    if (isSimulated) {
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "completed" } : a));
+      return;
+    }
     await (supabase.from("professional_appointments" as any) as any)
       .update({ status: "completed" })
       .eq("id", id);
