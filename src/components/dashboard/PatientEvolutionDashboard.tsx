@@ -999,12 +999,12 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                 if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
                 setSelectedEmail(p.email || groupKey);
               }}
-              onTouchStart={startLongPress}
-              onTouchEnd={cancelLongPress}
-              onTouchMove={cancelLongPress}
-              onMouseDown={startLongPress}
-              onMouseUp={cancelLongPress}
-              onMouseLeave={cancelLongPress}
+              onTouchStart={readOnly ? undefined : startLongPress}
+              onTouchEnd={readOnly ? undefined : cancelLongPress}
+              onTouchMove={readOnly ? undefined : cancelLongPress}
+              onMouseDown={readOnly ? undefined : startLongPress}
+              onMouseUp={readOnly ? undefined : cancelLongPress}
+              onMouseLeave={readOnly ? undefined : cancelLongPress}
             >
               <CardContent className="py-3 px-4">
                 <div className="flex items-center justify-between gap-3">
