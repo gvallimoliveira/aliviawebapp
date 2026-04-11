@@ -286,6 +286,7 @@ const Dashboard = () => {
                   clinicId={activeClinic.clinic_id}
                   isSimulated={isSimulated}
                 />
+                <ClinicTrialBlockOverlay />
               </div>
             </TabsContent>
 
