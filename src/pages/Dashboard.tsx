@@ -294,7 +294,7 @@ const Dashboard = () => {
               <ClinicTrialBanner />
               <div className="relative">
                 {professional ? (
-                  <ProDashboard professional={professional} hideForClinicTabs />
+                  <ProDashboard professional={professional} hideForClinicTabs isSimulated={isSimulated} onSimulatedChange={setIsSimulated} />
                 ) : (
                   <ClinicSecretaryDashboard />
                 )}
