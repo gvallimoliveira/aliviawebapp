@@ -405,7 +405,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   }
 
   // Decide which data to show based on toggle
-  const showingSimulated = isSimulated || (!subscription?.subscribed);
+  const showingSimulated = isSimulated || (!subscription?.subscribed && !clinicCoversAccess);
   const displayAssessments = showingSimulated ? mockPatientAssessments : patientAssessments;
   const displayThisMonthCount = showingSimulated ? 2 : thisMonthCount;
   const displayTotalCount = showingSimulated ? mockPatientAssessments.length : patientAssessments.length;
@@ -589,22 +589,36 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </Card>
       ))}
 
-      {/* Generate Link */}
+      {/* Generate Link — show clinic link in clinic mode, personal link otherwise */}
       {!isSimulated && (
         <Card data-onboarding="pro-link" className="border-primary/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Link2 className="h-4 w-4 text-primary" />
-              {t("pro.generate_link_title")}
+              {isClinicMode ? "Link de pré-avaliação da clínica" : t("pro.generate_link_title")}
             </CardTitle>
-            <CardDescription className="text-sm">{t("pro.generate_link_desc")}</CardDescription>
+            <CardDescription className="text-sm">
+              {isClinicMode
+                ? "Compartilhe este link com pacientes da clínica. As avaliações ficarão visíveis para toda a equipe."
+                : t("pro.generate_link_desc")}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
               <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-                {getPublicOrigin()}/assessment/professional/{professional.id}
+                {isClinicMode && activeClinic
+                  ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
+                  : `${getPublicOrigin()}/assessment/professional/${professional.id}`}
               </code>
-              <Button onClick={copyLink} variant="outline" className="gap-1.5 rounded-xl shrink-0">
+              <Button onClick={() => {
+                const link = isClinicMode && activeClinic
+                  ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
+                  : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
+                navigator.clipboard.writeText(link);
+                setLinkCopied(true);
+                toast({ title: t("referral.copied") });
+                setTimeout(() => setLinkCopied(false), 2000);
+              }} variant="outline" className="gap-1.5 rounded-xl shrink-0">
                 {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
                 {linkCopied ? t("referral.copied") : t("referral.copy_link")}
               </Button>
