@@ -37,9 +37,10 @@ import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface ProDashboardProps {
   professional: any;
+  hideForClinicTabs?: boolean;
 }
 
-const ProDashboard = ({ professional }: ProDashboardProps) => {
+const ProDashboard = ({ professional, hideForClinicTabs = false }: ProDashboardProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { activeClinic, isClinicMode } = useClinic();
@@ -591,8 +592,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </Card>
       ))}
 
-      {/* Generate Link — show clinic link in clinic mode, personal link otherwise */}
-      {!isSimulated && (
+      {/* Generate Link — hidden when in clinic tab layout (has own tab) */}
+      {!isSimulated && !hideForClinicTabs && (
         <Card data-onboarding="pro-link" className="border-primary/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -629,8 +630,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </Card>
       )}
 
-      {/* Schedule Card */}
-      {!isSimulated && (
+      {/* Schedule Card — hidden when in clinic tab layout (has own tab) */}
+      {!isSimulated && !hideForClinicTabs && (
         <ProScheduleCard
           professionalId={professional.id}
           onNavigateToSchedule={() => navigate("/dashboard?tab=agenda")}
