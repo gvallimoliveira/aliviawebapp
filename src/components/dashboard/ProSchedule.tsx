@@ -442,6 +442,11 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setAppointments((prev) =>
       prev.map((a) => (a.id === draggedApt.id ? { ...a, appointment_date: dateStr, appointment_time: newTime } : a))
     );
+    if (isSimulated) {
+      toast({ title: isPt ? "Agendamento movido" : "Appointment moved" });
+      setDraggedApt(null);
+      return;
+    }
     try {
       await (supabase.from("professional_appointments" as any) as any)
         .update({ appointment_date: dateStr, appointment_time: newTime })
