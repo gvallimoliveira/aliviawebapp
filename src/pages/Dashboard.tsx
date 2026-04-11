@@ -328,15 +328,23 @@ const Dashboard = () => {
           </Tabs>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className={`w-full grid ${isClinicMode ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            <TabsList className={`w-full grid ${isClinicMode ? 'grid-cols-4' : 'grid-cols-2'}`}>
               {!isClinicMode && <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>}
-              <TabsTrigger value="messages" className="gap-1.5 relative">
-                <MessageCircle className="h-4 w-4" />{t("dashboard.tab_messages")}{unreadBadge}
+              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
+                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
               {isClinicMode && (
-                <TabsTrigger value="clinic" className="gap-1.5">
-                  <Building2 className="h-4 w-4" />Equipe
-                </TabsTrigger>
+                <>
+                  <TabsTrigger value="agenda" className="gap-1.5 text-xs">
+                    <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="patients" className="gap-1.5 text-xs">
+                    <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">Pacientes</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="clinic" className="gap-1.5 text-xs">
+                    <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
+                  </TabsTrigger>
+                </>
               )}
             </TabsList>
             {!isClinicMode && <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>}
@@ -355,14 +363,30 @@ const Dashboard = () => {
               </div>
               <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />
             </TabsContent>
-            {isClinicMode && (
-              <TabsContent value="clinic" className="space-y-8">
-                <ClinicTrialBanner />
-                <div className="relative">
-                  <ClinicTeamManagement />
-                  <ClinicTrialBlockOverlay />
-                </div>
-              </TabsContent>
+            {isClinicMode && activeClinic && (
+              <>
+                <TabsContent value="agenda" className="space-y-6">
+                  <ClinicTrialBanner />
+                  <div className="relative">
+                    <ProSchedule clinicId={activeClinic.clinic_id} />
+                    <ClinicTrialBlockOverlay />
+                  </div>
+                </TabsContent>
+                <TabsContent value="patients" className="space-y-6">
+                  <ClinicTrialBanner />
+                  <div className="relative">
+                    <ClinicSecretaryDashboard />
+                    <ClinicTrialBlockOverlay />
+                  </div>
+                </TabsContent>
+                <TabsContent value="clinic" className="space-y-8">
+                  <ClinicTrialBanner />
+                  <div className="relative">
+                    <ClinicTeamManagement />
+                    <ClinicTrialBlockOverlay />
+                  </div>
+                </TabsContent>
+              </>
             )}
           </Tabs>
         )}
