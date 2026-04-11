@@ -85,14 +85,23 @@ const ClinicSecretaryDashboard = () => {
     setLoading(false);
   };
 
+  const copyAssessmentLink = () => {
+    if (!ownerProfessionalId) return;
+    const link = `${getPublicOrigin()}/assessment/professional/${ownerProfessionalId}`;
+    navigator.clipboard.writeText(link);
+    setLinkCopied(true);
+    toast({ title: lang === "pt" ? "Link copiado!" : "Link copied!" });
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
   const handleDownloadPdf = async (assessment: any) => {
     if (!assessment.diagnosis) return;
     try {
-      const lang = document.documentElement.lang === "en" ? "en" : "pt";
+      const pdfLang = document.documentElement.lang === "en" ? "en" : "pt";
       await generateAssessmentPdf({
         diagnosis: assessment.diagnosis,
         treatmentPlan: assessment.treatment_plan,
-        language: lang as "pt" | "en",
+        language: pdfLang as "pt" | "en",
         userName: assessment.patient_name || "Paciente",
         anamnesisData: assessment.anamnesis_data,
         painRegions: assessment.pain_regions,
@@ -100,7 +109,7 @@ const ClinicSecretaryDashboard = () => {
         clinicLogoUrl: activeClinic?.logo_url || undefined,
         clinicName: activeClinic?.clinic_name || undefined,
       });
-      toast({ title: lang === "pt" ? "PDF gerado!" : "PDF generated!" });
+      toast({ title: pdfLang === "pt" ? "PDF gerado!" : "PDF generated!" });
     } catch {
       toast({ title: "Erro ao gerar PDF", variant: "destructive" });
     }
