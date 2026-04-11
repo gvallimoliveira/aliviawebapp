@@ -328,8 +328,12 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     );
   }
 
+  // In clinic mode with active/trialing clinic subscription, skip personal subscription gate
+  const clinicCoversAccess = isClinicMode && activeClinic &&
+    (activeClinic.subscription_status === "active" || activeClinic.subscription_status === "trialing");
+
   // ── Plan Selection Screen (mandatory for new registrants without subscription) ──
-  if (!subscription?.subscribed && (isSubscribeFlow || professional.subscription_status === "inactive")) {
+  if (!clinicCoversAccess && !subscription?.subscribed && (isSubscribeFlow || professional.subscription_status === "inactive")) {
     return (
       <div className="space-y-6 max-w-lg mx-auto py-4">
         <div className="text-center space-y-2">
