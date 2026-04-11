@@ -32,10 +32,12 @@ import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon, Building2,
+  Link2, Copy, Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Search, User, Stethoscope as StethoscopeIcon } from "lucide-react";
 import ProSchedule from "@/components/dashboard/ProSchedule";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface PremiumAccess {
   has_access: boolean;
