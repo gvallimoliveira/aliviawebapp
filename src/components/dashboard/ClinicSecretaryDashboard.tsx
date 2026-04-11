@@ -240,7 +240,7 @@ const ClinicSecretaryDashboard = () => {
         <DashboardErrorBoundary>
           <PatientEvolutionDashboard
             assessments={filteredAssessments}
-            professionalId={selectedTherapistId === "all" ? therapists[0]?.id : selectedTherapistId}
+            professionalId={ownerProfessionalId || (selectedTherapistId === "all" ? therapists[0]?.id : selectedTherapistId)}
             onDownloadPdf={handleDownloadPdf}
             isDemo={false}
             readOnly
