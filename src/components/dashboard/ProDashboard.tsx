@@ -707,7 +707,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
           <PatientEvolutionDashboard
             assessments={displayAssessments as any}
             professionalId={professional.id}
-            lifetimeTreatment={professional.lifetime_treatment}
+            lifetimeTreatment={professional.lifetime_treatment || (isClinicMode && (activeClinic?.subscription_status === 'active' || activeClinic?.subscription_status === 'trialing'))}
             professionalLogoUrl={professional.logo_url}
             clinicLogoUrl={isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined}
             clinicName={isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined}
