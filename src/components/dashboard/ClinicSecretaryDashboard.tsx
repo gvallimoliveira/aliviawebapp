@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2, UserPlus,
 } from "lucide-react";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
@@ -15,10 +18,6 @@ import { generateAssessmentPdf } from "@/utils/generatePdf";
 import { useToast } from "@/hooks/use-toast";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
-/**
- * Read-only combined view of all clinic therapists' patients/assessments
- * for the secretary role.
- */
 const ClinicSecretaryDashboard = () => {
   const { activeClinic } = useClinic();
   const { language } = useLanguage();
@@ -29,8 +28,10 @@ const ClinicSecretaryDashboard = () => {
   const [allAssessments, setAllAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTherapistId, setSelectedTherapistId] = useState<string>("all");
-  const [ownerProfessionalId, setOwnerProfessionalId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  // Assignment state
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [assignTarget, setAssignTarget] = useState<string>("");
 
   useEffect(() => {
     if (!activeClinic) return;
@@ -41,7 +42,6 @@ const ClinicSecretaryDashboard = () => {
     if (!activeClinic) return;
     setLoading(true);
 
-    // Get all clinic members who are therapists or owners
     const { data: members } = await supabase
       .from("clinic_members")
       .select("user_id, role")
@@ -54,7 +54,6 @@ const ClinicSecretaryDashboard = () => {
       return;
     }
 
-    // Get professional profiles for these users
     const userIds = members.map((m) => m.user_id);
     const { data: pros } = await supabase
       .from("professionals")
@@ -63,18 +62,6 @@ const ClinicSecretaryDashboard = () => {
 
     setTherapists(pros || []);
 
-    // Find owner's professional ID for assessment link
-    const ownerMember = members.find((m) => m.role === "owner");
-    if (ownerMember) {
-      const { data: ownerPro } = await supabase
-        .from("professionals")
-        .select("id")
-        .eq("user_id", ownerMember.user_id)
-        .maybeSingle();
-      setOwnerProfessionalId(ownerPro?.id || null);
-    }
-
-    // Get all assessments linked to the clinic
     const { data: assessData } = await supabase
       .from("assessments")
       .select("*")
@@ -85,13 +72,29 @@ const ClinicSecretaryDashboard = () => {
     setLoading(false);
   };
 
-  const copyAssessmentLink = () => {
-    if (!ownerProfessionalId) return;
-    const link = `${getPublicOrigin()}/assessment/professional/${ownerProfessionalId}`;
+  const copyClinicLink = () => {
+    if (!activeClinic) return;
+    const link = `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`;
     navigator.clipboard.writeText(link);
     setLinkCopied(true);
     toast({ title: lang === "pt" ? "Link copiado!" : "Link copied!" });
     setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const handleAssignProfessional = async (assessmentId: string, professionalId: string) => {
+    const { error } = await supabase
+      .from("assessments")
+      .update({ professional_id: professionalId })
+      .eq("id", assessmentId);
+
+    if (error) {
+      toast({ title: lang === "pt" ? "Erro ao atribuir" : "Assignment error", variant: "destructive" });
+      return;
+    }
+    toast({ title: lang === "pt" ? "Profissional atribuído!" : "Professional assigned!" });
+    setAssigningId(null);
+    setAssignTarget("");
+    loadData();
   };
 
   const handleDownloadPdf = async (assessment: any) => {
@@ -117,7 +120,11 @@ const ClinicSecretaryDashboard = () => {
 
   const filteredAssessments = selectedTherapistId === "all"
     ? allAssessments
+    : selectedTherapistId === "unassigned"
+    ? allAssessments.filter((a) => !a.professional_id)
     : allAssessments.filter((a) => a.professional_id === selectedTherapistId);
+
+  const unassignedCount = allAssessments.filter((a) => !a.professional_id).length;
 
   const getTherapistName = (proId: string) =>
     therapists.find((t) => t.id === proId)?.full_name || "—";
@@ -147,59 +154,151 @@ const ClinicSecretaryDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Pre-assessment link */}
-      {ownerProfessionalId && (
-        <Card>
-          <CardContent className="py-4 px-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Link2 className="h-4 w-4 text-primary" />
-              <span className="font-semibold text-sm">
-                {lang === "pt" ? "Link de pré-avaliação" : "Pre-assessment link"}
-              </span>
+      {/* Clinic assessment link */}
+      <Card>
+        <CardContent className="py-4 px-5">
+          <div className="flex items-center gap-2 mb-2">
+            <Link2 className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-sm">
+              {lang === "pt" ? "Link de pré-avaliação da clínica" : "Clinic pre-assessment link"}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            {lang === "pt"
+              ? "Envie este link para pacientes. As avaliações serão integradas ao perfil da clínica."
+              : "Send this link to patients. Assessments will be linked to the clinic profile."}
+          </p>
+          <div className="flex gap-2">
+            <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
+              {getPublicOrigin()}/assessment/clinic/{activeClinic?.clinic_id}
+            </code>
+            <Button onClick={copyClinicLink} variant="outline" size="sm" className="gap-1.5 shrink-0">
+              {linkCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {linkCopied ? (lang === "pt" ? "Copiado" : "Copied") : (lang === "pt" ? "Copiar" : "Copy")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Unassigned assessments alert */}
+      {unassignedCount > 0 && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="py-3 px-5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <UserPlus className="h-5 w-5 text-amber-600 shrink-0" />
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-amber-700">
+                  {unassignedCount} {lang === "pt" ? "avaliação(ões) sem profissional atribuído" : "unassigned assessment(s)"}
+                </span>
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mb-3">
-              {lang === "pt"
-                ? "Envie este link para pacientes. As avaliações serão integradas ao perfil da clínica e do profissional principal."
-                : "Send this link to patients. Assessments will be linked to the clinic and main professional profile."}
-            </p>
-            <div className="flex gap-2">
-              <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-                {getPublicOrigin()}/assessment/professional/{ownerProfessionalId}
-              </code>
-              <Button onClick={copyAssessmentLink} variant="outline" size="sm" className="gap-1.5 shrink-0">
-                {linkCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                {linkCopied ? (lang === "pt" ? "Copiado" : "Copied") : (lang === "pt" ? "Copiar" : "Copy")}
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedTherapistId("unassigned")}
+              className="shrink-0 text-xs"
+            >
+              {lang === "pt" ? "Ver" : "View"}
+            </Button>
           </CardContent>
         </Card>
       )}
 
-      {therapists.length > 1 && (
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Filter by therapist */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Badge
+          variant={selectedTherapistId === "all" ? "default" : "outline"}
+          className="cursor-pointer px-3 py-1.5 text-xs"
+          onClick={() => setSelectedTherapistId("all")}
+        >
+          <Users className="h-3 w-3 mr-1" />
+          {lang === "pt" ? "Todos" : "All"} ({allAssessments.length})
+        </Badge>
+        {unassignedCount > 0 && (
           <Badge
-            variant={selectedTherapistId === "all" ? "default" : "outline"}
+            variant={selectedTherapistId === "unassigned" ? "default" : "outline"}
             className="cursor-pointer px-3 py-1.5 text-xs"
-            onClick={() => setSelectedTherapistId("all")}
+            onClick={() => setSelectedTherapistId("unassigned")}
           >
-            <Users className="h-3 w-3 mr-1" />
-            {lang === "pt" ? "Todos" : "All"} ({allAssessments.length})
+            <UserPlus className="h-3 w-3 mr-1" />
+            {lang === "pt" ? "Sem profissional" : "Unassigned"} ({unassignedCount})
           </Badge>
-          {therapists.map((t) => {
-            const count = allAssessments.filter((a) => a.professional_id === t.id).length;
-            return (
-              <Badge
-                key={t.id}
-                variant={selectedTherapistId === t.id ? "default" : "outline"}
-                className="cursor-pointer px-3 py-1.5 text-xs"
-                onClick={() => setSelectedTherapistId(t.id)}
-              >
-                <Stethoscope className="h-3 w-3 mr-1" />
-                {t.full_name} ({count})
-              </Badge>
-            );
-          })}
-        </div>
+        )}
+        {therapists.map((t) => {
+          const count = allAssessments.filter((a) => a.professional_id === t.id).length;
+          return (
+            <Badge
+              key={t.id}
+              variant={selectedTherapistId === t.id ? "default" : "outline"}
+              className="cursor-pointer px-3 py-1.5 text-xs"
+              onClick={() => setSelectedTherapistId(t.id)}
+            >
+              <Stethoscope className="h-3 w-3 mr-1" />
+              {t.full_name} ({count})
+            </Badge>
+          );
+        })}
+      </div>
+
+      {/* Assignment UI for unassigned assessments */}
+      {selectedTherapistId === "unassigned" && filteredAssessments.length > 0 && (
+        <Card>
+          <CardContent className="py-4 space-y-3">
+            <h3 className="text-sm font-semibold">
+              {lang === "pt" ? "Atribuir profissional" : "Assign professional"}
+            </h3>
+            {filteredAssessments.map((a) => (
+              <div key={a.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{a.patient_name || "—"}</p>
+                  <p className="text-xs text-muted-foreground">{a.patient_email || "—"}</p>
+                </div>
+                {assigningId === a.id ? (
+                  <div className="flex items-center gap-2">
+                    <Select value={assignTarget} onValueChange={setAssignTarget}>
+                      <SelectTrigger className="w-[180px] h-8 text-xs">
+                        <SelectValue placeholder={lang === "pt" ? "Selecionar..." : "Select..."} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {therapists.map((t) => (
+                          <SelectItem key={t.id} value={t.id} className="text-xs">
+                            {t.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      disabled={!assignTarget}
+                      onClick={() => handleAssignProfessional(a.id, assignTarget)}
+                      className="h-8 text-xs"
+                    >
+                      {lang === "pt" ? "Atribuir" : "Assign"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => { setAssigningId(null); setAssignTarget(""); }}
+                      className="h-8 text-xs"
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setAssigningId(a.id)}
+                    className="h-8 text-xs gap-1"
+                  >
+                    <UserPlus className="h-3 w-3" />
+                    {lang === "pt" ? "Atribuir" : "Assign"}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       {/* Stats */}
@@ -235,12 +334,12 @@ const ClinicSecretaryDashboard = () => {
       {/* Analytics */}
       <ProAnalyticsCharts assessments={filteredAssessments} />
 
-      {/* Patient list — read-only (no edit actions) */}
+      {/* Patient list — read-only */}
       {therapists.length > 0 && (
         <DashboardErrorBoundary>
           <PatientEvolutionDashboard
-            assessments={filteredAssessments}
-            professionalId={ownerProfessionalId || (selectedTherapistId === "all" ? therapists[0]?.id : selectedTherapistId)}
+            assessments={filteredAssessments.filter((a) => a.professional_id)}
+            professionalId={selectedTherapistId === "all" || selectedTherapistId === "unassigned" ? therapists[0]?.id : selectedTherapistId}
             onDownloadPdf={handleDownloadPdf}
             isDemo={false}
             readOnly
