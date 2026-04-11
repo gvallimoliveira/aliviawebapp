@@ -911,6 +911,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               </h3>
               <p className="text-sm text-muted-foreground">{t("pro.patients_desc")}</p>
             </div>
+            {!readOnly && (
             <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="outline"
@@ -932,6 +933,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                 <span className="hidden sm:inline">{t("pro.export_pdfs")}</span>
               </Button>
             </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
