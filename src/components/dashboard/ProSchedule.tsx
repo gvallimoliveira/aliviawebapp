@@ -601,7 +601,21 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
                   <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
                 </div>
               </div>
-              <div>
+              {isClinicOnlyMode && clinicProfessionals.length > 0 && (
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">{isPt ? "Profissional" : "Professional"} *</label>
+                  <Select value={formProfessionalId} onValueChange={setFormProfessionalId}>
+                    <SelectTrigger className="mt-1 text-xs h-9">
+                      <SelectValue placeholder={isPt ? "Selecione o profissional" : "Select professional"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clinicProfessionals.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
                 <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
                 <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
                   <SelectTrigger className="mt-1 text-xs h-9">
