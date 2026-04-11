@@ -103,7 +103,7 @@ function getAptsForSlot(apts: Appointment[], slotHour: string): Appointment[] {
   });
 }
 
-const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }: ProScheduleProps) => {
+const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, isSimulated = false }: ProScheduleProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const isMobile = useIsMobile();
