@@ -112,10 +112,10 @@ const ClinicSecretaryDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Read-only notice */}
-      <Card className="border-amber-200 bg-amber-500/5">
+      <Card className="border-primary/20 bg-primary/5">
         <CardContent className="py-3 px-5 flex items-center gap-3">
-          <Eye className="h-5 w-5 text-amber-600 shrink-0" />
-          <p className="text-sm text-amber-800">
+          <Eye className="h-5 w-5 text-primary shrink-0" />
+          <p className="text-sm text-muted-foreground">
             <span className="font-semibold">
               {lang === "pt" ? "Modo visualização." : "View mode."}
             </span>{" "}
