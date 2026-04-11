@@ -32,6 +32,7 @@ import Support from "./pages/Support";
 import UpgradeWelcome from "./pages/UpgradeWelcome";
 import ClinicLanding from "./pages/ClinicLanding";
 import AcceptInvite from "./pages/AcceptInvite";
+import ClinicAssessment from "./pages/ClinicAssessment";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/suporte" element={<Support />} />
               <Route path="/upgrade-welcome" element={<UpgradeWelcome />} />
               <Route path="/clinica" element={<ClinicLanding />} />
+              <Route path="/assessment/clinic/:clinicId" element={<ClinicAssessment />} />
               <Route path="/aceitar-convite" element={<AcceptInvite />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
