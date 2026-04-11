@@ -101,9 +101,11 @@ const Dashboard = () => {
   useEffect(() => {
     if (tabFromUrl === "professional" && professional) setActiveTab("professional");
     else if (tabFromUrl === "messages") setActiveTab("messages");
-    else if (tabFromUrl === "agenda" && professional) setActiveTab("agenda");
+    else if (tabFromUrl === "agenda") setActiveTab("agenda");
+    else if (tabFromUrl === "patients" && isClinicMode) setActiveTab("patients");
     else if (tabFromUrl === "clinic" && isClinicMode) setActiveTab("clinic");
-    else if (isClinicMode && !tabFromUrl) setActiveTab("professional");
+    else if (isClinicMode && !tabFromUrl && professional) setActiveTab("professional");
+    else if (isClinicMode && !tabFromUrl && !professional) setActiveTab("agenda");
   }, [tabFromUrl, professional, isClinicMode]);
 
   const fetchUnreadCount = async () => {
