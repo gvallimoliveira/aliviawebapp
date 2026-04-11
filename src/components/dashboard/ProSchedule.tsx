@@ -327,14 +327,14 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
           const { data: existing } = await supabase
             .from("assessments")
             .select("id")
-            .eq("professional_id", professionalId)
+            .eq("professional_id", effectiveProfId)
             .eq("patient_email", trimmedEmail)
             .limit(1);
           if (!existing || existing.length === 0) {
             await supabase.from("assessments").insert({
               type: "professional",
               status: "completed",
-              professional_id: professionalId,
+              professional_id: effectiveProfId,
               patient_name: formName.trim(),
               patient_email: trimmedEmail,
               anamnesis_data: { externalPatient: true },
