@@ -328,8 +328,12 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
     );
   }
 
+  // In clinic mode with active/trialing clinic subscription, skip personal subscription gate
+  const clinicCoversAccess = isClinicMode && activeClinic &&
+    (activeClinic.subscription_status === "active" || activeClinic.subscription_status === "trialing");
+
   // ── Plan Selection Screen (mandatory for new registrants without subscription) ──
-  if (!subscription?.subscribed && (isSubscribeFlow || professional.subscription_status === "inactive")) {
+  if (!clinicCoversAccess && !subscription?.subscribed && (isSubscribeFlow || professional.subscription_status === "inactive")) {
     return (
       <div className="space-y-6 max-w-lg mx-auto py-4">
         <div className="text-center space-y-2">
@@ -401,7 +405,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
   }
 
   // Decide which data to show based on toggle
-  const showingSimulated = isSimulated || (!subscription?.subscribed);
+  const showingSimulated = isSimulated || (!subscription?.subscribed && !clinicCoversAccess);
   const displayAssessments = showingSimulated ? mockPatientAssessments : patientAssessments;
   const displayThisMonthCount = showingSimulated ? 2 : thisMonthCount;
   const displayTotalCount = showingSimulated ? mockPatientAssessments.length : patientAssessments.length;
@@ -468,12 +472,14 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             </div>
             <div>
               <p className="font-semibold text-foreground flex items-center gap-2">
-                {t("pro.plan_title")}
+                {clinicCoversAccess ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}` : t("pro.plan_title")}
                 <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
-                  {subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
+                  {clinicCoversAccess
+                    ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
+                    : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
                 </Badge>
               </p>
-              {!subscription?.is_partner && subscription?.subscription_end && (
+              {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
@@ -497,7 +503,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
               <Settings className="h-3.5 w-3.5" />
               {t("pro.edit_profile")}
             </Button>
-            {!subscription?.is_partner && (
+            {!clinicCoversAccess && !subscription?.is_partner && (
               <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl">
                 {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
                 {t("pro.manage_subscription")}
@@ -519,8 +525,8 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </Card>
       )}
 
-      {/* Lifetime Treatment Upsell — only for non-lifetime pros */}
-      {!isSimulated && !professional.lifetime_treatment && (isWithinFirstMonth ? (
+      {/* Lifetime Treatment Upsell — only for non-lifetime pros, not in clinic mode */}
+      {!isSimulated && !clinicCoversAccess && !professional.lifetime_treatment && (isWithinFirstMonth ? (
         <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardContent className="py-5">
@@ -585,22 +591,36 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
         </Card>
       ))}
 
-      {/* Generate Link */}
+      {/* Generate Link — show clinic link in clinic mode, personal link otherwise */}
       {!isSimulated && (
         <Card data-onboarding="pro-link" className="border-primary/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Link2 className="h-4 w-4 text-primary" />
-              {t("pro.generate_link_title")}
+              {isClinicMode ? "Link de pré-avaliação da clínica" : t("pro.generate_link_title")}
             </CardTitle>
-            <CardDescription className="text-sm">{t("pro.generate_link_desc")}</CardDescription>
+            <CardDescription className="text-sm">
+              {isClinicMode
+                ? "Compartilhe este link com pacientes da clínica. As avaliações ficarão visíveis para toda a equipe."
+                : t("pro.generate_link_desc")}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
               <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-                {getPublicOrigin()}/assessment/professional/{professional.id}
+                {isClinicMode && activeClinic
+                  ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
+                  : `${getPublicOrigin()}/assessment/professional/${professional.id}`}
               </code>
-              <Button onClick={copyLink} variant="outline" className="gap-1.5 rounded-xl shrink-0">
+              <Button onClick={() => {
+                const link = isClinicMode && activeClinic
+                  ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
+                  : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
+                navigator.clipboard.writeText(link);
+                setLinkCopied(true);
+                toast({ title: t("referral.copied") });
+                setTimeout(() => setLinkCopied(false), 2000);
+              }} variant="outline" className="gap-1.5 rounded-xl shrink-0">
                 {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
                 {linkCopied ? t("referral.copied") : t("referral.copy_link")}
               </Button>
