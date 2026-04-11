@@ -104,6 +104,19 @@ const ClinicAssessment = () => {
     checkClinic();
   }, [clinicId, reassessmentId]);
 
+  const logClinicAction = async (action: string, assessmentId?: string, meta?: Record<string, any>) => {
+    try {
+      await supabase.from("clinic_assessment_logs" as any).insert({
+        clinic_id: clinicId,
+        assessment_id: assessmentId || null,
+        action,
+        metadata: meta || {},
+      } as any);
+    } catch (e) {
+      console.warn("Audit log failed:", e);
+    }
+  };
+
   const createAssessment = async () => {
     try {
       const { data, error } = await supabase
@@ -123,6 +136,10 @@ const ClinicAssessment = () => {
         .single();
       if (error) throw error;
       setAssessmentId(data.id);
+      await logClinicAction("assessment_created", data.id, {
+        patient_name: patientName || null,
+        is_reassessment: !!reassessmentId,
+      });
       return data.id;
     } catch (err) {
       console.error("Error creating clinic assessment:", err);
