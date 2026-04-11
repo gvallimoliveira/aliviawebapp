@@ -38,9 +38,11 @@ import { getPublicOrigin } from "@/lib/getPublicOrigin";
 interface ProDashboardProps {
   professional: any;
   hideForClinicTabs?: boolean;
+  isSimulated?: boolean;
+  onSimulatedChange?: (val: boolean) => void;
 }
 
-const ProDashboard = ({ professional, hideForClinicTabs = false }: ProDashboardProps) => {
+const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: isSimulatedProp, onSimulatedChange }: ProDashboardProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { activeClinic, isClinicMode } = useClinic();
