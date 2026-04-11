@@ -44,7 +44,7 @@ interface Appointment {
 }
 
 interface ProScheduleProps {
-  professionalId: string;
+  professionalId?: string;
   clinicId?: string | null;
   patientEmails?: string[];
   onViewPatient?: (email: string) => void;
