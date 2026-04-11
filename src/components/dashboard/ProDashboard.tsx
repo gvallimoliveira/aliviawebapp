@@ -60,7 +60,12 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [lifetimeLoading, setLifetimeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [isSimulated, setIsSimulated] = useState(false);
+  const [isSimulatedInternal, setIsSimulatedInternal] = useState(false);
+  const isSimulated = isSimulatedProp !== undefined ? isSimulatedProp : isSimulatedInternal;
+  const setIsSimulated = (val: boolean) => {
+    if (onSimulatedChange) onSimulatedChange(val);
+    else setIsSimulatedInternal(val);
+  };
   const [billingAnnual, setBillingAnnual] = useState(true);
 
   // Welcome card for new subscribers
