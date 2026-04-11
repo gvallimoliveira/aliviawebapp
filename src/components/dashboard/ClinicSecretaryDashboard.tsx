@@ -4,17 +4,16 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
-  Users, Stethoscope, Activity, Calendar, Mail, User,
-  ChevronRight, FileText, Eye, Lock, Loader2,
+  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2,
 } from "lucide-react";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
 import { useToast } from "@/hooks/use-toast";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 /**
  * Read-only combined view of all clinic therapists' patients/assessments
