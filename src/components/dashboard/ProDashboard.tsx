@@ -592,8 +592,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false }: ProDashboardP
         </Card>
       ))}
 
-      {/* Generate Link — show clinic link in clinic mode, personal link otherwise */}
-      {!isSimulated && (
+      {/* Generate Link — hidden when in clinic tab layout (has own tab) */}
+      {!isSimulated && !hideForClinicTabs && (
         <Card data-onboarding="pro-link" className="border-primary/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -630,8 +630,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false }: ProDashboardP
         </Card>
       )}
 
-      {/* Schedule Card */}
-      {!isSimulated && (
+      {/* Schedule Card — hidden when in clinic tab layout (has own tab) */}
+      {!isSimulated && !hideForClinicTabs && (
         <ProScheduleCard
           professionalId={professional.id}
           onNavigateToSchedule={() => navigate("/dashboard?tab=agenda")}
