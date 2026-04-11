@@ -329,6 +329,20 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         notes: formNotes || null,
       };
       if (clinicId) payload.clinic_id = clinicId;
+
+      if (isSimulated) {
+        if (editingApt) {
+          setAppointments(prev => prev.map(a => a.id === editingApt.id ? { ...a, ...payload } : a));
+        } else {
+          const newApt: Appointment = { id: `sim-${Date.now()}`, ...payload, status: "scheduled", created_at: new Date().toISOString() };
+          setAppointments(prev => [...prev, newApt]);
+        }
+        toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
+        setModalOpen(false);
+        setSaving(false);
+        return;
+      }
+
       if (editingApt) {
         await (supabase.from("professional_appointments" as any) as any)
           .update(payload)
@@ -380,6 +394,14 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
+    if (isSimulated) {
+      setAppointments(prev => prev.filter(a => a.id !== deleteId));
+      toast({ title: t("schedule.deleted") });
+      setDeleteId(null);
+      setModalOpen(false);
+      setDeleting(false);
+      return;
+    }
     try {
       await (supabase.from("professional_appointments" as any) as any).delete().eq("id", deleteId);
       toast({ title: t("schedule.deleted") });
