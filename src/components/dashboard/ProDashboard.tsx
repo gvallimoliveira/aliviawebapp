@@ -37,9 +37,10 @@ import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface ProDashboardProps {
   professional: any;
+  hideForClinicTabs?: boolean;
 }
 
-const ProDashboard = ({ professional }: ProDashboardProps) => {
+const ProDashboard = ({ professional, hideForClinicTabs = false }: ProDashboardProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { activeClinic, isClinicMode } = useClinic();
