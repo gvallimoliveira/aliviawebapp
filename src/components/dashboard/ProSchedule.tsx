@@ -616,6 +616,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
                   </Select>
                 </div>
               )}
+              <div>
                 <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
                 <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
                   <SelectTrigger className="mt-1 text-xs h-9">
