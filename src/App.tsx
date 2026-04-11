@@ -69,6 +69,7 @@ const App = () => (
               <Route path="/suporte" element={<Support />} />
               <Route path="/upgrade-welcome" element={<UpgradeWelcome />} />
               <Route path="/clinica" element={<ClinicLanding />} />
+              <Route path="/assessment/clinic/:clinicId" element={<ClinicAssessment />} />
               <Route path="/aceitar-convite" element={<AcceptInvite />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
