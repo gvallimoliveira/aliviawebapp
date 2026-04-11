@@ -42,6 +42,33 @@ serve(async (req) => {
 
     if (!professional) throw new Error("Not a registered professional");
 
+    // Check if assessment belongs to an active clinic — treatment is included in clinic subscription
+    const { data: assessmentCheck } = await supabaseClient
+      .from("assessments")
+      .select("id, clinic_id")
+      .eq("id", assessment_id)
+      .single();
+
+    if (assessmentCheck?.clinic_id) {
+      const { data: clinic } = await supabaseClient
+        .from("clinics")
+        .select("subscription_status")
+        .eq("id", assessmentCheck.clinic_id)
+        .single();
+
+      if (clinic && (clinic.subscription_status === "active" || clinic.subscription_status === "trialing")) {
+        await supabaseClient
+          .from("assessments")
+          .update({ payment_status: "treatment_paid" })
+          .eq("id", assessment_id);
+
+        return new Response(JSON.stringify({ free: true, assessment_id }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+    }
+
     // If professional has lifetime treatment, skip payment — return free access
     if (professional.lifetime_treatment) {
       // Mark assessment for treatment generation
