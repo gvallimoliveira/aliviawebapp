@@ -284,8 +284,8 @@ const Dashboard = () => {
                 <ProSchedule
                   professionalId={professional?.id}
                   clinicId={activeClinic.clinic_id}
+                  isSimulated={isSimulated}
                 />
-                <ClinicTrialBlockOverlay />
               </div>
             </TabsContent>
 
