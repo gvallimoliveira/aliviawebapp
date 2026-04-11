@@ -1058,7 +1058,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {isHidden ? (
+                    {!readOnly && (isHidden ? (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -1080,7 +1080,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       >
                         {archiving === (p as any).groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
                       </Button>
-                    )}
+                    ))}
                     <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                 </div>
