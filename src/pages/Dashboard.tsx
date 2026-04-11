@@ -255,26 +255,119 @@ const Dashboard = () => {
           activeTab={activeTab}
         />
 
-        {professional ? (
+        {isClinicMode && activeClinic ? (
+          /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className={`w-full grid ${isClinicMode ? 'grid-cols-5' : 'grid-cols-4'}`}>
-              {!isClinicMode && <TabsTrigger value="health" className="gap-1.5 text-xs"><Heart className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_my_health")}</span></TabsTrigger>}
-              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
-                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
-              </TabsTrigger>
+            <TabsList className="w-full grid grid-cols-5">
               <TabsTrigger value="agenda" className="gap-1.5 text-xs">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
-              <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
-                <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
+              <TabsTrigger value="patients" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
+                <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">Pacientes</span>
               </TabsTrigger>
-              {isClinicMode && (
-                <TabsTrigger value="clinic" className="gap-1.5 text-xs">
-                  <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
-                </TabsTrigger>
-              )}
+              <TabsTrigger value="team" className="gap-1.5 text-xs">
+                <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
+              </TabsTrigger>
+              <TabsTrigger value="link" className="gap-1.5 text-xs">
+                <Link2 className="h-4 w-4" /><span className="hidden sm:inline">Link</span>
+              </TabsTrigger>
+              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
+                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
+              </TabsTrigger>
             </TabsList>
-            {!isClinicMode && <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>}
+
+            {/* Agenda */}
+            <TabsContent value="agenda" className="space-y-6">
+              <ClinicTrialBanner />
+              <div className="relative">
+                <ProSchedule
+                  professionalId={professional?.id}
+                  clinicId={activeClinic.clinic_id}
+                />
+                <ClinicTrialBlockOverlay />
+              </div>
+            </TabsContent>
+
+            {/* Pacientes */}
+            <TabsContent value="patients" className="space-y-6">
+              <ClinicTrialBanner />
+              <div className="relative">
+                {professional ? (
+                  <ProDashboard professional={professional} hideForClinicTabs />
+                ) : (
+                  <ClinicSecretaryDashboard />
+                )}
+                <ClinicTrialBlockOverlay />
+              </div>
+            </TabsContent>
+
+            {/* Equipe */}
+            <TabsContent value="team" className="space-y-6">
+              <ClinicTrialBanner />
+              <div className="relative">
+                <ClinicTeamManagement />
+                <ClinicTrialBlockOverlay />
+              </div>
+            </TabsContent>
+
+            {/* Link */}
+            <TabsContent value="link" className="space-y-6">
+              <ClinicTrialBanner />
+              <div className="relative">
+                <Card className="border-primary/20">
+                  <CardContent className="py-5 space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Link2 className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">Link de pré-avaliação da clínica</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Compartilhe este link com seus pacientes. As avaliações entram em um pool compartilhado da clínica e podem ser atribuídas a qualquer fisioterapeuta da equipe.
+                    </p>
+                    <div className="flex gap-2">
+                      <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
+                        {getPublicOrigin()}/assessment/clinic/{activeClinic.clinic_id}
+                      </code>
+                      <Button
+                        onClick={() => {
+                          const link = `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`;
+                          navigator.clipboard.writeText(link);
+                          setClinicLinkCopied(true);
+                          setTimeout(() => setClinicLinkCopied(false), 2000);
+                        }}
+                        variant="outline"
+                        className="gap-1.5 rounded-xl shrink-0"
+                      >
+                        {clinicLinkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                        {clinicLinkCopied ? t("referral.copied") : t("referral.copy_link")}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="mt-4">
+                  <CardContent className="py-5 space-y-3">
+                    <h3 className="font-semibold text-foreground text-sm">Como funciona</h3>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      {[
+                        "Paciente acessa o link e preenche a avaliação",
+                        "A avaliação aparece no pool da clínica como 'Sem atribuição'",
+                        "Secretária ou proprietário atribui a um fisioterapeuta",
+                        "O diagnóstico IA é gerado automaticamente ao completar",
+                        "O plano de tratamento é gratuito (incluso na assinatura)",
+                      ].map((step, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">{i + 1}</span>
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+                <ClinicTrialBlockOverlay />
+              </div>
+            </TabsContent>
+
+            {/* Mensagens */}
             <TabsContent value="messages" className="space-y-6">
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
@@ -290,30 +383,9 @@ const Dashboard = () => {
               </div>
               {professional && (
                 <div className="flex gap-2">
-                  <Button
-                    variant={msgFilter === "all" ? "default" : "outline"}
-                    size="sm"
-                    className="rounded-full text-xs"
-                    onClick={() => setMsgFilter("all")}
-                  >
-                    {t("chat.filter_all")}
-                  </Button>
-                  <Button
-                    variant={msgFilter === "patient" ? "default" : "outline"}
-                    size="sm"
-                    className="rounded-full text-xs gap-1"
-                    onClick={() => setMsgFilter("patient")}
-                  >
-                    <User className="h-3 w-3" />{t("chat.filter_patient")}
-                  </Button>
-                  <Button
-                    variant={msgFilter === "professional" ? "default" : "outline"}
-                    size="sm"
-                    className="rounded-full text-xs gap-1"
-                    onClick={() => setMsgFilter("professional")}
-                  >
-                    <StethoscopeIcon className="h-3 w-3" />{t("chat.filter_professional")}
-                  </Button>
+                  <Button variant={msgFilter === "all" ? "default" : "outline"} size="sm" className="rounded-full text-xs" onClick={() => setMsgFilter("all")}>{t("chat.filter_all")}</Button>
+                  <Button variant={msgFilter === "patient" ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1" onClick={() => setMsgFilter("patient")}><User className="h-3 w-3" />{t("chat.filter_patient")}</Button>
+                  <Button variant={msgFilter === "professional" ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1" onClick={() => setMsgFilter("professional")}><StethoscopeIcon className="h-3 w-3" />{t("chat.filter_professional")}</Button>
                 </div>
               )}
               {(msgFilter === "all" || msgFilter === "patient") && (
@@ -323,86 +395,66 @@ const Dashboard = () => {
                 <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} />
               )}
             </TabsContent>
-            <TabsContent value="agenda" className="space-y-6">
-              <ProSchedule professionalId={professional.id} />
-            </TabsContent>
-            <TabsContent value="professional" className="space-y-8">
-              {isClinicMode && <ClinicTrialBanner />}
-              <ProDashboard professional={professional} />
-            </TabsContent>
-            {isClinicMode && activeClinic && (
-              <TabsContent value="clinic" className="space-y-8">
-                <ClinicTrialBanner />
-                <div className="relative">
-                  <ProSchedule professionalId={professional.id} clinicId={activeClinic.clinic_id} />
-                  <ClinicTeamManagement />
-                  <ClinicTrialBlockOverlay />
-                </div>
-              </TabsContent>
-            )}
           </Tabs>
-        ) : (
+        ) : professional ? (
+          /* ── Personal Mode with Professional ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className={`w-full grid ${isClinicMode ? 'grid-cols-4' : 'grid-cols-2'}`}>
-              {!isClinicMode && <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>}
+            <TabsList className="w-full grid grid-cols-4">
+              <TabsTrigger value="health" className="gap-1.5 text-xs"><Heart className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_my_health")}</span></TabsTrigger>
               <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                 <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
-              {isClinicMode && (
-                <>
-                  <TabsTrigger value="agenda" className="gap-1.5 text-xs">
-                    <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="patients" className="gap-1.5 text-xs">
-                    <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">Pacientes</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="clinic" className="gap-1.5 text-xs">
-                    <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
-                  </TabsTrigger>
-                </>
-              )}
+              <TabsTrigger value="agenda" className="gap-1.5 text-xs">
+                <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
+              </TabsTrigger>
+              <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
+                <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
+              </TabsTrigger>
             </TabsList>
-            {!isClinicMode && <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>}
+            <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
             <TabsContent value="messages" className="space-y-6">
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
               </h2>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={msgSearch}
-                  onChange={(e) => setMsgSearch(e.target.value)}
-                  placeholder={t("chat.search_placeholder")}
-                  className="pl-9 rounded-xl"
-                />
+                <Input value={msgSearch} onChange={(e) => setMsgSearch(e.target.value)} placeholder={t("chat.search_placeholder")} className="pl-9 rounded-xl" />
+              </div>
+              <div className="flex gap-2">
+                <Button variant={msgFilter === "all" ? "default" : "outline"} size="sm" className="rounded-full text-xs" onClick={() => setMsgFilter("all")}>{t("chat.filter_all")}</Button>
+                <Button variant={msgFilter === "patient" ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1" onClick={() => setMsgFilter("patient")}><User className="h-3 w-3" />{t("chat.filter_patient")}</Button>
+                <Button variant={msgFilter === "professional" ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1" onClick={() => setMsgFilter("professional")}><StethoscopeIcon className="h-3 w-3" />{t("chat.filter_professional")}</Button>
+              </div>
+              {(msgFilter === "all" || msgFilter === "patient") && <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />}
+              {(msgFilter === "all" || msgFilter === "professional") && <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} />}
+            </TabsContent>
+            <TabsContent value="agenda" className="space-y-6">
+              <ProSchedule professionalId={professional.id} />
+            </TabsContent>
+            <TabsContent value="professional" className="space-y-8">
+              <ProDashboard professional={professional} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          /* ── Personal Mode without Professional ── */
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>
+              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
+                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
+            <TabsContent value="messages" className="space-y-6">
+              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
+              </h2>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input value={msgSearch} onChange={(e) => setMsgSearch(e.target.value)} placeholder={t("chat.search_placeholder")} className="pl-9 rounded-xl" />
               </div>
               <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />
             </TabsContent>
-            {isClinicMode && activeClinic && (
-              <>
-                <TabsContent value="agenda" className="space-y-6">
-                  <ClinicTrialBanner />
-                  <div className="relative">
-                    <ProSchedule clinicId={activeClinic.clinic_id} />
-                    <ClinicTrialBlockOverlay />
-                  </div>
-                </TabsContent>
-                <TabsContent value="patients" className="space-y-6">
-                  <ClinicTrialBanner />
-                  <div className="relative">
-                    <ClinicSecretaryDashboard />
-                    <ClinicTrialBlockOverlay />
-                  </div>
-                </TabsContent>
-                <TabsContent value="clinic" className="space-y-8">
-                  <ClinicTrialBanner />
-                  <div className="relative">
-                    <ClinicTeamManagement />
-                    <ClinicTrialBlockOverlay />
-                  </div>
-                </TabsContent>
-              </>
-            )}
           </Tabs>
         )}
       </main>
