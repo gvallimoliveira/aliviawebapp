@@ -216,8 +216,13 @@ const ClinicLanding = () => {
               <Button size="lg" className="rounded-xl gap-2 text-base" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
                 Começar teste grátis <ArrowRight className="h-4 w-4" />
               </Button>
-              <p className="text-xs text-muted-foreground">Vagas limitadas por região</p>
+              <Button size="lg" variant="outline" className="rounded-xl gap-2 text-base" onClick={() => navigate("/clinica/demo")}>
+                <Activity className="h-4 w-4" /> Experimentar Demo
+              </Button>
             </motion.div>
+            <motion.p initial="hidden" animate="visible" variants={fadeUp} custom={3.5} className="text-xs text-muted-foreground mt-2">
+              Vagas limitadas por região
+            </motion.p>
           </div>
         </section>
 
