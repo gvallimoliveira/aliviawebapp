@@ -181,6 +181,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const timeSlots = getTimeRange(appointments);
 
   const fetchAppointments = useCallback(async () => {
+    if (isSimulated) { setLoading(false); return; }
     setLoading(true);
     let query = (supabase.from("professional_appointments" as any) as any)
       .select("*")
@@ -195,11 +196,12 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     const { data } = await query;
     setAppointments((data as Appointment[]) || []);
     setLoading(false);
-  }, [professionalId, clinicId, rangeStart, rangeEnd]);
+  }, [professionalId, clinicId, rangeStart, rangeEnd, isSimulated]);
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
   useEffect(() => {
+    if (isSimulated) return;
     const fetchPatients = async () => {
       const map = new Map<string, KnownPatient>();
       if (clinicId) {
