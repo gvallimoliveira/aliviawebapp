@@ -98,6 +98,7 @@ const Dashboard = () => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
 
+  // Reset tab on context change or URL params
   useEffect(() => {
     if (tabFromUrl === "professional" && professional) setActiveTab("professional");
     else if (tabFromUrl === "messages") setActiveTab("messages");
@@ -106,7 +107,8 @@ const Dashboard = () => {
     else if (tabFromUrl === "clinic" && isClinicMode) setActiveTab("clinic");
     else if (isClinicMode && !tabFromUrl && professional) setActiveTab("professional");
     else if (isClinicMode && !tabFromUrl && !professional) setActiveTab("agenda");
-  }, [tabFromUrl, professional, isClinicMode]);
+    else if (!isClinicMode && !tabFromUrl) setActiveTab("health");
+  }, [tabFromUrl, professional, isClinicMode, activeClinic?.clinic_id]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
