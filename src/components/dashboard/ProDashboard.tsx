@@ -30,6 +30,8 @@ import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import ProScheduleCard from "./ProScheduleCard";
+import ClinicVolumeAlert from "./ClinicVolumeAlert";
+import SoloUpgradeBanner from "./SoloUpgradeBanner";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 

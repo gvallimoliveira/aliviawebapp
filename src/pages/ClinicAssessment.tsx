@@ -200,6 +200,7 @@ const ClinicAssessment = () => {
       const id = currentId || assessmentId;
       if (id) {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "completed" });
+        await logClinicAction("assessment_completed", id);
       }
       setStep("thank_you");
     } catch (err: any) {
