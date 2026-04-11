@@ -147,7 +147,34 @@ const ClinicSecretaryDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Therapist filter */}
+      {/* Pre-assessment link */}
+      {ownerProfessionalId && (
+        <Card>
+          <CardContent className="py-4 px-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Link2 className="h-4 w-4 text-primary" />
+              <span className="font-semibold text-sm">
+                {lang === "pt" ? "Link de pré-avaliação" : "Pre-assessment link"}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              {lang === "pt"
+                ? "Envie este link para pacientes. As avaliações serão integradas ao perfil da clínica e do profissional principal."
+                : "Send this link to patients. Assessments will be linked to the clinic and main professional profile."}
+            </p>
+            <div className="flex gap-2">
+              <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
+                {getPublicOrigin()}/assessment/professional/{ownerProfessionalId}
+              </code>
+              <Button onClick={copyAssessmentLink} variant="outline" size="sm" className="gap-1.5 shrink-0">
+                {linkCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {linkCopied ? (lang === "pt" ? "Copiado" : "Copied") : (lang === "pt" ? "Copiar" : "Copy")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {therapists.length > 1 && (
         <div className="flex items-center gap-2 flex-wrap">
           <Badge
