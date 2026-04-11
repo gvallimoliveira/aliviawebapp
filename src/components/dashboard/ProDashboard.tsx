@@ -472,12 +472,14 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
             </div>
             <div>
               <p className="font-semibold text-foreground flex items-center gap-2">
-                {t("pro.plan_title")}
+                {clinicCoversAccess ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}` : t("pro.plan_title")}
                 <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
-                  {subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
+                  {clinicCoversAccess
+                    ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
+                    : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
                 </Badge>
               </p>
-              {!subscription?.is_partner && subscription?.subscription_end && (
+              {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
@@ -501,7 +503,7 @@ const ProDashboard = ({ professional }: ProDashboardProps) => {
               <Settings className="h-3.5 w-3.5" />
               {t("pro.edit_profile")}
             </Button>
-            {!subscription?.is_partner && (
+            {!clinicCoversAccess && !subscription?.is_partner && (
               <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl">
                 {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
                 {t("pro.manage_subscription")}
