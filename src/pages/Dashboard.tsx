@@ -88,6 +88,7 @@ const Dashboard = () => {
   const [msgSearch, setMsgSearch] = useState("");
   const [msgFilter, setMsgFilter] = useState<"all" | "patient" | "professional">("all");
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
+  const [isSimulated, setIsSimulated] = useState(false);
 
   const push = usePushNotifications();
 
