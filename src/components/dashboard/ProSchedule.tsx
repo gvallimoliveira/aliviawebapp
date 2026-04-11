@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { DEMO_APPOINTMENTS, DEMO_TEAM } from "@/data/mockClinicData";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
