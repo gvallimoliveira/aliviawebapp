@@ -131,6 +131,34 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
   const [formType, setFormType] = useState("in_person");
   const [formNotes, setFormNotes] = useState("");
   const [emailWarning, setEmailWarning] = useState(false);
+  const [formProfessionalId, setFormProfessionalId] = useState(professionalId || "");
+
+  // Clinic professionals for secretary mode
+  const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
+  const isClinicOnlyMode = !professionalId && !!clinicId;
+
+  useEffect(() => {
+    if (!clinicId) return;
+    const fetchClinicPros = async () => {
+      const { data: members } = await supabase
+        .from("clinic_members")
+        .select("user_id")
+        .eq("clinic_id", clinicId)
+        .eq("status", "active")
+        .in("role", ["owner", "therapist"]);
+      if (!members || members.length === 0) return;
+      const userIds = members.map((m) => m.user_id);
+      const { data: pros } = await supabase
+        .from("professionals")
+        .select("id, full_name")
+        .in("user_id", userIds);
+      setClinicProfessionals(pros || []);
+      if (pros && pros.length > 0 && !professionalId) {
+        setFormProfessionalId(pros[0].id);
+      }
+    };
+    fetchClinicPros();
+  }, [clinicId, professionalId]);
 
   // Drag state
   const [draggedApt, setDraggedApt] = useState<Appointment | null>(null);
