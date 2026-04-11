@@ -44,7 +44,7 @@ interface Appointment {
 }
 
 interface ProScheduleProps {
-  professionalId: string;
+  professionalId?: string;
   clinicId?: string | null;
   patientEmails?: string[];
   onViewPatient?: (email: string) => void;
@@ -131,6 +131,34 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
   const [formType, setFormType] = useState("in_person");
   const [formNotes, setFormNotes] = useState("");
   const [emailWarning, setEmailWarning] = useState(false);
+  const [formProfessionalId, setFormProfessionalId] = useState(professionalId || "");
+
+  // Clinic professionals for secretary mode
+  const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
+  const isClinicOnlyMode = !professionalId && !!clinicId;
+
+  useEffect(() => {
+    if (!clinicId) return;
+    const fetchClinicPros = async () => {
+      const { data: members } = await supabase
+        .from("clinic_members")
+        .select("user_id")
+        .eq("clinic_id", clinicId)
+        .eq("status", "active")
+        .in("role", ["owner", "therapist"]);
+      if (!members || members.length === 0) return;
+      const userIds = members.map((m) => m.user_id);
+      const { data: pros } = await supabase
+        .from("professionals")
+        .select("id, full_name")
+        .in("user_id", userIds);
+      setClinicProfessionals(pros || []);
+      if (pros && pros.length > 0 && !professionalId) {
+        setFormProfessionalId(pros[0].id);
+      }
+    };
+    fetchClinicPros();
+  }, [clinicId, professionalId]);
 
   // Drag state
   const [draggedApt, setDraggedApt] = useState<Appointment | null>(null);
@@ -164,33 +192,60 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
   useEffect(() => {
     const fetchPatients = async () => {
       const map = new Map<string, KnownPatient>();
-      const { data: assessData } = await supabase
-        .from("assessments")
-        .select("patient_name, patient_email")
-        .eq("professional_id", professionalId)
-        .not("patient_email", "is", null);
-      if (assessData) {
-        assessData.forEach((a) => {
-          if (a.patient_email && a.patient_name) {
-            map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
-          }
-        });
-      }
-      const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
-        .select("patient_name, patient_email")
-        .eq("professional_id", professionalId)
-        .not("patient_email", "is", null);
-      if (aptData) {
-        (aptData as any[]).forEach((a) => {
-          if (a.patient_email && a.patient_name && !map.has(a.patient_email)) {
-            map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
-          }
-        });
+      if (clinicId) {
+        // Fetch patients from clinic assessments
+        const { data: assessData } = await supabase
+          .from("assessments")
+          .select("patient_name, patient_email")
+          .eq("clinic_id", clinicId)
+          .not("patient_email", "is", null);
+        if (assessData) {
+          assessData.forEach((a) => {
+            if (a.patient_email && a.patient_name) {
+              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+            }
+          });
+        }
+        const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
+          .select("patient_name, patient_email")
+          .eq("clinic_id", clinicId)
+          .not("patient_email", "is", null);
+        if (aptData) {
+          (aptData as any[]).forEach((a) => {
+            if (a.patient_email && a.patient_name && !map.has(a.patient_email)) {
+              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+            }
+          });
+        }
+      } else if (professionalId) {
+        const { data: assessData } = await supabase
+          .from("assessments")
+          .select("patient_name, patient_email")
+          .eq("professional_id", professionalId)
+          .not("patient_email", "is", null);
+        if (assessData) {
+          assessData.forEach((a) => {
+            if (a.patient_email && a.patient_name) {
+              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+            }
+          });
+        }
+        const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
+          .select("patient_name, patient_email")
+          .eq("professional_id", professionalId)
+          .not("patient_email", "is", null);
+        if (aptData) {
+          (aptData as any[]).forEach((a) => {
+            if (a.patient_email && a.patient_name && !map.has(a.patient_email)) {
+              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
+            }
+          });
+        }
       }
       setKnownPatients(Array.from(map.values()));
     };
     fetchPatients();
-  }, [professionalId]);
+  }, [professionalId, clinicId]);
 
   const navigateWeek = (dir: number) => setViewDate((prev) => addDays(prev, dir * daysToShow));
 
@@ -244,9 +299,15 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
     }
     setSaving(true);
     try {
+      const effectiveProfId = professionalId || formProfessionalId;
+      if (!effectiveProfId) {
+        toast({ title: isPt ? "Selecione um profissional" : "Select a professional", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
       const trimmedEmail = formEmail.trim();
       const payload: any = {
-        professional_id: professionalId,
+        professional_id: effectiveProfId,
         patient_name: formName.trim(),
         patient_email: trimmedEmail || null,
         appointment_date: format(formDate, "yyyy-MM-dd"),
@@ -266,14 +327,14 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
           const { data: existing } = await supabase
             .from("assessments")
             .select("id")
-            .eq("professional_id", professionalId)
+            .eq("professional_id", effectiveProfId)
             .eq("patient_email", trimmedEmail)
             .limit(1);
           if (!existing || existing.length === 0) {
             await supabase.from("assessments").insert({
               type: "professional",
               status: "completed",
-              professional_id: professionalId,
+              professional_id: effectiveProfId,
               patient_name: formName.trim(),
               patient_email: trimmedEmail,
               anamnesis_data: { externalPatient: true },
@@ -540,6 +601,21 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient }:
                   <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
                 </div>
               </div>
+              {isClinicOnlyMode && clinicProfessionals.length > 0 && (
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">{isPt ? "Profissional" : "Professional"} *</label>
+                  <Select value={formProfessionalId} onValueChange={setFormProfessionalId}>
+                    <SelectTrigger className="mt-1 text-xs h-9">
+                      <SelectValue placeholder={isPt ? "Selecione o profissional" : "Select professional"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clinicProfessionals.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
                 <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>

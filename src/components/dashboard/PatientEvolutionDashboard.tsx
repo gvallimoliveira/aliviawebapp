@@ -115,6 +115,7 @@ interface PatientEvolutionDashboardProps {
   onDownloadPdf?: (assessment: any) => void;
   onShareWhatsApp?: (assessment: any) => void;
   isDemo?: boolean;
+  readOnly?: boolean;
 }
 
 interface PatientGroup {
@@ -433,7 +434,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
 };
 
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, onDownloadPdf, onShareWhatsApp, isDemo }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, onDownloadPdf, onShareWhatsApp, isDemo, readOnly }: PatientEvolutionDashboardProps) => {
 
   const { t, language } = useLanguage();
   const navigate = useNavigate();
@@ -910,6 +911,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               </h3>
               <p className="text-sm text-muted-foreground">{t("pro.patients_desc")}</p>
             </div>
+            {!readOnly && (
             <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="outline"
@@ -931,6 +933,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                 <span className="hidden sm:inline">{t("pro.export_pdfs")}</span>
               </Button>
             </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -996,12 +999,12 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                 if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
                 setSelectedEmail(p.email || groupKey);
               }}
-              onTouchStart={startLongPress}
-              onTouchEnd={cancelLongPress}
-              onTouchMove={cancelLongPress}
-              onMouseDown={startLongPress}
-              onMouseUp={cancelLongPress}
-              onMouseLeave={cancelLongPress}
+              onTouchStart={readOnly ? undefined : startLongPress}
+              onTouchEnd={readOnly ? undefined : cancelLongPress}
+              onTouchMove={readOnly ? undefined : cancelLongPress}
+              onMouseDown={readOnly ? undefined : startLongPress}
+              onMouseUp={readOnly ? undefined : cancelLongPress}
+              onMouseLeave={readOnly ? undefined : cancelLongPress}
             >
               <CardContent className="py-3 px-4">
                 <div className="flex items-center justify-between gap-3">
@@ -1055,7 +1058,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {isHidden ? (
+                    {!readOnly && (isHidden ? (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -1077,7 +1080,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       >
                         {archiving === (p as any).groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
                       </Button>
-                    )}
+                    ))}
                     <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                 </div>
