@@ -36,6 +36,7 @@ import JSZip from "jszip";
 import CreateExerciseProgramModal from "@/components/dashboard/CreateExerciseProgramModal";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockClinicalImpressions, mockEvolutionSummary } from "@/data/mockPatientData";
+import PatientFilesSection from "./PatientFilesSection";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
@@ -1787,6 +1788,17 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         <SessionNotesSection
           professionalId={professionalId}
           patientEmail={selectedEmail}
+        />
+      )}
+
+      {/* ── 8.6. DOCUMENTOS DO PACIENTE ── */}
+      {selectedEmail && !isDemo && (
+        <PatientFilesSection
+          patientEmail={selectedEmail}
+          patientName={patient?.name}
+          clinicId={clinicId}
+          professionalId={professionalId}
+          readOnly={readOnly}
         />
       )}
 
