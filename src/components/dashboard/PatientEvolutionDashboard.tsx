@@ -112,6 +112,7 @@ interface PatientEvolutionDashboardProps {
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
   clinicName?: string;
+  clinicId?: string | null;
   onDownloadPdf?: (assessment: any) => void;
   onShareWhatsApp?: (assessment: any) => void;
   isDemo?: boolean;
@@ -434,7 +435,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
 };
 
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, onDownloadPdf, onShareWhatsApp, isDemo, readOnly }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly }: PatientEvolutionDashboardProps) => {
 
   const { t, language } = useLanguage();
   const navigate = useNavigate();
