@@ -792,6 +792,20 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* AI Agenda Import Modal */}
+      {(professionalId || isClinicOnlyMode) && (
+        <AgendaImportModal
+          open={importModalOpen}
+          onOpenChange={setImportModalOpen}
+          professionalId={professionalId || formProfessionalId}
+          clinicId={clinicId}
+          onImported={() => {
+            if (isSimulated) return;
+            fetchAppointments();
+          }}
+        />
+      )}
     </div>
   );
 };
