@@ -26,8 +26,9 @@ import {
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Plus, CalendarIcon, Clock, Video, MapPin, ExternalLink,
-  Loader2, Trash2, GripVertical,
+  Loader2, Trash2, GripVertical, Upload,
 } from "lucide-react";
+import AgendaImportModal from "./AgendaImportModal";
 
 interface Appointment {
   id: string;
@@ -121,7 +122,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
   const [selectedPatientKey, setSelectedPatientKey] = useState<string>("__new__");
 
@@ -504,6 +505,12 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           <Button variant="outline" size="sm" className="text-xs" onClick={() => setViewDate(new Date())}>
             {t("schedule.today")}
           </Button>
+          {!isSimulated && (professionalId || isClinicOnlyMode) && (
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setImportModalOpen(true)}>
+              <Upload className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{isPt ? "Importar" : "Import"}</span>
+            </Button>
+          )}
           <Button size="sm" className="gap-1.5 rounded-xl text-xs" onClick={() => openNew()}>
             <Plus className="h-3.5 w-3.5" />
             {t("schedule.new")}
