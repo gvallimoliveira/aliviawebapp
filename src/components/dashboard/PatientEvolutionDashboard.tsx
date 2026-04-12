@@ -36,6 +36,7 @@ import JSZip from "jszip";
 import CreateExerciseProgramModal from "@/components/dashboard/CreateExerciseProgramModal";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockClinicalImpressions, mockEvolutionSummary } from "@/data/mockPatientData";
+import PatientFilesSection from "./PatientFilesSection";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
@@ -112,6 +113,7 @@ interface PatientEvolutionDashboardProps {
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
   clinicName?: string;
+  clinicId?: string | null;
   onDownloadPdf?: (assessment: any) => void;
   onShareWhatsApp?: (assessment: any) => void;
   isDemo?: boolean;
@@ -434,7 +436,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
 };
 
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, onDownloadPdf, onShareWhatsApp, isDemo, readOnly }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly }: PatientEvolutionDashboardProps) => {
 
   const { t, language } = useLanguage();
   const navigate = useNavigate();
@@ -1786,6 +1788,17 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         <SessionNotesSection
           professionalId={professionalId}
           patientEmail={selectedEmail}
+        />
+      )}
+
+      {/* ── 8.6. DOCUMENTOS DO PACIENTE ── */}
+      {selectedEmail && !isDemo && (
+        <PatientFilesSection
+          patientEmail={selectedEmail}
+          patientName={patient?.name}
+          clinicId={clinicId}
+          professionalId={professionalId}
+          readOnly={readOnly}
         />
       )}
 

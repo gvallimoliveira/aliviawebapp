@@ -708,6 +708,66 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_files: {
+        Row: {
+          clinic_id: string | null
+          created_at: string
+          description: string | null
+          file_name: string
+          file_path: string
+          file_size_bytes: number
+          id: string
+          mime_type: string
+          patient_email: string
+          patient_name: string | null
+          professional_id: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          clinic_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_path: string
+          file_size_bytes?: number
+          id?: string
+          mime_type?: string
+          patient_email: string
+          patient_name?: string | null
+          professional_id?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          clinic_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_path?: string
+          file_size_bytes?: number
+          id?: string
+          mime_type?: string
+          patient_email?: string
+          patient_name?: string | null
+          professional_id?: string | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_files_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_files_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_appointments: {
         Row: {
           appointment_date: string

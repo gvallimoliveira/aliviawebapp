@@ -343,6 +343,7 @@ const ClinicSecretaryDashboard = () => {
             onDownloadPdf={handleDownloadPdf}
             isDemo={false}
             readOnly
+            clinicId={activeClinic?.clinic_id}
             clinicLogoUrl={activeClinic?.logo_url || undefined}
             clinicName={activeClinic?.clinic_name || undefined}
           />

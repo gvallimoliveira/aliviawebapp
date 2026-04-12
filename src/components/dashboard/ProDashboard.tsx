@@ -750,6 +750,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
             professionalLogoUrl={professional.logo_url}
             clinicLogoUrl={isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined}
             clinicName={isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined}
+            clinicId={isClinicMode ? activeClinic?.clinic_id : undefined}
             onDownloadPdf={handleDownloadPdf}
             onShareWhatsApp={handleShareWhatsApp}
             isDemo={showingSimulated}
