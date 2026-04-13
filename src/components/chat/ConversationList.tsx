@@ -8,7 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, MessageCircle, Trash2, Maximize2, Search } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2, MessageCircle, Trash2, Maximize2, Search, Plus, UserPlus } from "lucide-react";
 import ChatWindow from "./ChatWindow";
 import VideoCallListener from "./VideoCallListener";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
