@@ -340,9 +340,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     if (needsMigraineScreening()) {
       base.push("migraine_screening");
     }
-    if (isShoulderRelated()) {
-      base.push("sex_age");
-    }
+    // Always show sex_age step (includes CPF + birth_date for pre-assessment)
+    base.push("sex_age");
     base.push("paintype", "evolution", "factors", "duration", "pain_frequency", "gym", "painscore");
     return base;
   };
