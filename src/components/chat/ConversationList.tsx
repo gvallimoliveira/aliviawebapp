@@ -8,7 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, MessageCircle, Trash2, Maximize2, Search } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2, MessageCircle, Trash2, Maximize2, Search, Plus, UserPlus } from "lucide-react";
 import ChatWindow from "./ChatWindow";
 import VideoCallListener from "./VideoCallListener";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
@@ -40,6 +44,123 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
   const [activeOtherName, setActiveOtherName] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [minimized, setMinimized] = useState(true);
+  const [newConvOpen, setNewConvOpen] = useState(false);
+  const [newConvSearch, setNewConvSearch] = useState("");
+  const [newConvPatients, setNewConvPatients] = useState<{ user_id: string; name: string; email: string }[]>([]);
+  const [newConvLoading, setNewConvLoading] = useState(false);
+  const [creatingConv, setCreatingConv] = useState<string | null>(null);
+
+  // Load patients that have user accounts for new conversation modal
+  const loadPatientsForNewConv = async () => {
+    if (!professionalId && mode !== "patient") return;
+    setNewConvLoading(true);
+    try {
+      if (mode === "professional" && professionalId) {
+        // Get patient emails from assessments linked to this professional
+        const { data: assessments } = await supabase
+          .from("assessments")
+          .select("patient_email, patient_name, user_id")
+          .eq("professional_id", professionalId)
+          .not("user_id", "is", null);
+
+        const uniqueUsers = new Map<string, { user_id: string; name: string; email: string }>();
+        for (const a of assessments || []) {
+          if (a.user_id && !uniqueUsers.has(a.user_id)) {
+            uniqueUsers.set(a.user_id, {
+              user_id: a.user_id,
+              name: a.patient_name || a.patient_email || "Paciente",
+              email: a.patient_email || "",
+            });
+          }
+        }
+        setNewConvPatients(Array.from(uniqueUsers.values()));
+      } else if (mode === "patient") {
+        // Patient: load professionals they have assessments with
+        const { data: assessments } = await supabase
+          .from("assessments")
+          .select("professional_id")
+          .eq("user_id", user?.id)
+          .not("professional_id", "is", null);
+
+        const proIds = [...new Set((assessments || []).map(a => a.professional_id).filter(Boolean))];
+        const pros: { user_id: string; name: string; email: string }[] = [];
+        for (const pid of proIds) {
+          const { data: pro } = await (supabase.from("professionals" as any) as any)
+            .select("id, full_name, user_id")
+            .eq("id", pid)
+            .single();
+          if (pro) {
+            pros.push({ user_id: pro.user_id, name: pro.full_name, email: "" });
+          }
+        }
+        setNewConvPatients(pros);
+      }
+    } catch {}
+    setNewConvLoading(false);
+  };
+
+  const handleStartConversation = async (otherUserId: string, otherName: string) => {
+    if (!user) return;
+    setCreatingConv(otherUserId);
+    try {
+      const patientUserId = mode === "patient" ? user.id : otherUserId;
+      const profId = mode === "professional" ? professionalId : null;
+
+      // If professional mode, get professional_id; if patient mode, find the professional_id from assessments
+      let targetProfId = profId;
+      if (mode === "patient") {
+        // otherUserId is the professional's user_id, find professional_id
+        const { data: pro } = await (supabase.from("professionals" as any) as any)
+          .select("id")
+          .eq("user_id", otherUserId)
+          .single();
+        targetProfId = pro?.id;
+      }
+
+      if (!targetProfId) throw new Error("No professional found");
+
+      // Check if conversation already exists
+      const { data: existing } = await (supabase.from("conversations" as any) as any)
+        .select("id")
+        .eq("professional_id", targetProfId)
+        .eq("patient_user_id", patientUserId)
+        .limit(1);
+
+      let convId: string;
+      if (existing && existing.length > 0) {
+        convId = existing[0].id;
+        // Unhide if hidden
+        const unhideField = mode === "patient" ? "hidden_by_patient" : "hidden_by_professional";
+        await (supabase.from("conversations" as any) as any)
+          .update({ [unhideField]: false })
+          .eq("id", convId);
+      } else {
+        const { data: newConv, error } = await (supabase.from("conversations" as any) as any)
+          .insert({ professional_id: targetProfId, patient_user_id: patientUserId })
+          .select("id")
+          .single();
+        if (error) throw error;
+        convId = newConv.id;
+      }
+
+      setNewConvOpen(false);
+      await fetchConversations();
+      setActiveConvId(convId);
+      setActiveOtherName(otherName);
+      setMinimized(false);
+      syncConversationParam(convId);
+    } catch (err) {
+      console.error("Start conversation error:", err);
+    } finally {
+      setCreatingConv(null);
+    }
+  };
+
+  const filteredNewConvPatients = useMemo(() => {
+    if (!newConvSearch.trim()) return newConvPatients;
+    const q = newConvSearch.toLowerCase();
+    return newConvPatients.filter(p => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q));
+  }, [newConvPatients, newConvSearch]);
 
   const activeConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === activeConvId) ?? null,
@@ -203,8 +324,78 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
     }
   };
 
+  const isPt = t("chat.no_conversations") !== "chat.no_conversations";
+
   return (
     <div className="space-y-4">
+      {/* New conversation button */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full gap-2 rounded-xl"
+        onClick={() => { setNewConvOpen(true); loadPatientsForNewConv(); }}
+      >
+        <Plus className="h-4 w-4" />
+        {mode === "professional"
+          ? (isPt ? "Nova conversa" : "New conversation")
+          : (isPt ? "Iniciar conversa" : "Start conversation")}
+      </Button>
+
+      {/* New conversation modal */}
+      <Dialog open={newConvOpen} onOpenChange={setNewConvOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              {isPt ? "Nova conversa" : "New conversation"}
+            </DialogTitle>
+            <DialogDescription>
+              {mode === "professional"
+                ? (isPt ? "Selecione um paciente para iniciar uma conversa." : "Select a patient to start a conversation.")
+                : (isPt ? "Selecione um profissional para iniciar uma conversa." : "Select a professional to start a conversation.")}
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={newConvSearch}
+            onChange={(e) => setNewConvSearch(e.target.value)}
+            placeholder={isPt ? "Buscar..." : "Search..."}
+            className="text-sm"
+          />
+          <ScrollArea className="h-64">
+            {newConvLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
+            ) : filteredNewConvPatients.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                {isPt ? "Nenhum contato encontrado." : "No contacts found."}
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {filteredNewConvPatients.map((p) => (
+                  <button
+                    key={p.user_id}
+                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/60 transition-colors text-left"
+                    onClick={() => handleStartConversation(p.user_id, p.name)}
+                    disabled={!!creatingConv}
+                  >
+                    <Avatar className="h-8 w-8 border border-border shrink-0">
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                        {p.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-foreground block truncate">{p.name}</span>
+                      {p.email && <span className="text-xs text-muted-foreground truncate block">{p.email}</span>}
+                    </div>
+                    {creatingConv === p.user_id && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
       {/* Global video call listener */}
       {ENABLE_VIDEO_CALL && (
         <VideoCallListener conversationIds={conversations.map((c) => c.id)} />
