@@ -37,6 +37,7 @@ import CreateExerciseProgramModal from "@/components/dashboard/CreateExercisePro
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockClinicalImpressions, mockEvolutionSummary } from "@/data/mockPatientData";
 import PatientFilesSection from "./PatientFilesSection";
+import AddPatientModal, { type PatientToEdit } from "./AddPatientModal";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
