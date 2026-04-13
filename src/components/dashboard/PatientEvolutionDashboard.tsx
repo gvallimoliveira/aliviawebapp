@@ -1030,6 +1030,10 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           const isHidden = hiddenKeys.has((p as any).groupKey);
 
           const groupKey = (p as any).groupKey;
+          const patientRec = (p as any).patientRecord;
+          const isIncomplete = patientRec && (!patientRec.email || !patientRec.cpf || !patientRec.phone);
+          const isImportedOnly = !patientRec && p.assessments.length === 0;
+          const showIncomplete = isIncomplete || isImportedOnly;
           const startLongPress = () => {
             longPressFiredRef.current = false;
             longPressTimerRef.current = setTimeout(() => {
