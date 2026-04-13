@@ -14,11 +14,10 @@ const SAFE_ROUTES = [
 ];
 
 function isSafeRoute(pathname: string): boolean {
-  return SAFE_ROUTES.some((route) =>
-    route === "/"
-      ? pathname === "/"
-      : pathname === route || pathname === route + "/"
-  );
+  return SAFE_ROUTES.some((route) => {
+    if (route === "/") return pathname === "/";
+    return pathname === route || pathname.startsWith(route + "/") || pathname === route + "/";
+  });
 }
 
 function activateWaitingSW(): boolean {
@@ -56,8 +55,13 @@ const PwaUpdateGuard = () => {
 
   const tryActivate = () => {
     if (activating.current) return;
-    if (!(window as any).__pwaUpdatePending) return;
     if (!isSafeRoute(window.location.pathname)) return;
+
+    // Proactively check for updates when on a safe route
+    const reg = (window as any).__pwaRegistration as ServiceWorkerRegistration | undefined;
+    if (reg) reg.update?.();
+
+    if (!(window as any).__pwaUpdatePending) return;
 
     activating.current = true;
     (window as any).__pwaUpdatePending = false;

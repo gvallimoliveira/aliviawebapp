@@ -64,7 +64,7 @@ async function bootstrap() {
         (window as any).__pwaRegistration = registration;
 
         // Poll for updates
-        setInterval(() => { registration.update(); }, 15 * 1000);
+        setInterval(() => { registration.update(); }, 10 * 1000);
         document.addEventListener("visibilitychange", () => {
           if (document.visibilityState === "visible") registration.update();
         });
