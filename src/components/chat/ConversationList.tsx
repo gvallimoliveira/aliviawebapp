@@ -44,6 +44,123 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
   const [activeOtherName, setActiveOtherName] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [minimized, setMinimized] = useState(true);
+  const [newConvOpen, setNewConvOpen] = useState(false);
+  const [newConvSearch, setNewConvSearch] = useState("");
+  const [newConvPatients, setNewConvPatients] = useState<{ user_id: string; name: string; email: string }[]>([]);
+  const [newConvLoading, setNewConvLoading] = useState(false);
+  const [creatingConv, setCreatingConv] = useState<string | null>(null);
+
+  // Load patients that have user accounts for new conversation modal
+  const loadPatientsForNewConv = async () => {
+    if (!professionalId && mode !== "patient") return;
+    setNewConvLoading(true);
+    try {
+      if (mode === "professional" && professionalId) {
+        // Get patient emails from assessments linked to this professional
+        const { data: assessments } = await supabase
+          .from("assessments")
+          .select("patient_email, patient_name, user_id")
+          .eq("professional_id", professionalId)
+          .not("user_id", "is", null);
+
+        const uniqueUsers = new Map<string, { user_id: string; name: string; email: string }>();
+        for (const a of assessments || []) {
+          if (a.user_id && !uniqueUsers.has(a.user_id)) {
+            uniqueUsers.set(a.user_id, {
+              user_id: a.user_id,
+              name: a.patient_name || a.patient_email || "Paciente",
+              email: a.patient_email || "",
+            });
+          }
+        }
+        setNewConvPatients(Array.from(uniqueUsers.values()));
+      } else if (mode === "patient") {
+        // Patient: load professionals they have assessments with
+        const { data: assessments } = await supabase
+          .from("assessments")
+          .select("professional_id")
+          .eq("user_id", user?.id)
+          .not("professional_id", "is", null);
+
+        const proIds = [...new Set((assessments || []).map(a => a.professional_id).filter(Boolean))];
+        const pros: { user_id: string; name: string; email: string }[] = [];
+        for (const pid of proIds) {
+          const { data: pro } = await (supabase.from("professionals" as any) as any)
+            .select("id, full_name, user_id")
+            .eq("id", pid)
+            .single();
+          if (pro) {
+            pros.push({ user_id: pro.user_id, name: pro.full_name, email: "" });
+          }
+        }
+        setNewConvPatients(pros);
+      }
+    } catch {}
+    setNewConvLoading(false);
+  };
+
+  const handleStartConversation = async (otherUserId: string, otherName: string) => {
+    if (!user) return;
+    setCreatingConv(otherUserId);
+    try {
+      const patientUserId = mode === "patient" ? user.id : otherUserId;
+      const profId = mode === "professional" ? professionalId : null;
+
+      // If professional mode, get professional_id; if patient mode, find the professional_id from assessments
+      let targetProfId = profId;
+      if (mode === "patient") {
+        // otherUserId is the professional's user_id, find professional_id
+        const { data: pro } = await (supabase.from("professionals" as any) as any)
+          .select("id")
+          .eq("user_id", otherUserId)
+          .single();
+        targetProfId = pro?.id;
+      }
+
+      if (!targetProfId) throw new Error("No professional found");
+
+      // Check if conversation already exists
+      const { data: existing } = await (supabase.from("conversations" as any) as any)
+        .select("id")
+        .eq("professional_id", targetProfId)
+        .eq("patient_user_id", patientUserId)
+        .limit(1);
+
+      let convId: string;
+      if (existing && existing.length > 0) {
+        convId = existing[0].id;
+        // Unhide if hidden
+        const unhideField = mode === "patient" ? "hidden_by_patient" : "hidden_by_professional";
+        await (supabase.from("conversations" as any) as any)
+          .update({ [unhideField]: false })
+          .eq("id", convId);
+      } else {
+        const { data: newConv, error } = await (supabase.from("conversations" as any) as any)
+          .insert({ professional_id: targetProfId, patient_user_id: patientUserId })
+          .select("id")
+          .single();
+        if (error) throw error;
+        convId = newConv.id;
+      }
+
+      setNewConvOpen(false);
+      await fetchConversations();
+      setActiveConvId(convId);
+      setActiveOtherName(otherName);
+      setMinimized(false);
+      syncConversationParam(convId);
+    } catch (err) {
+      console.error("Start conversation error:", err);
+    } finally {
+      setCreatingConv(null);
+    }
+  };
+
+  const filteredNewConvPatients = useMemo(() => {
+    if (!newConvSearch.trim()) return newConvPatients;
+    const q = newConvSearch.toLowerCase();
+    return newConvPatients.filter(p => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q));
+  }, [newConvPatients, newConvSearch]);
 
   const activeConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === activeConvId) ?? null,
