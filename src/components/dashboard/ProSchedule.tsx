@@ -473,19 +473,6 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           await (supabase.from("patients" as any) as any).upsert(patientRow, { ignoreDuplicates: true });
           window.dispatchEvent(new CustomEvent("reload-pro-patients"));
         }
-            email: trimmedEmail || null,
-            cpf: formCpf.replace(/\D/g, "") || null,
-            birth_date: formBirthDate || null,
-            phone: formPhone.replace(/\D/g, "") || null,
-            address: formAddress.trim() || null,
-          };
-          if (clinicId) {
-            patientRow.clinic_id = clinicId;
-          } else {
-            patientRow.professional_id = effectiveProfId;
-          }
-          await (supabase.from("patients" as any) as any).upsert(patientRow, { ignoreDuplicates: true });
-        }
       }
       toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
       setModalOpen(false);
