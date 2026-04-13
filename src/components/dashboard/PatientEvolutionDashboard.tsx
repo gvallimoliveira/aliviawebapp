@@ -1104,6 +1104,21 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                           <Lock className="h-3 w-3" /> Adquirir Tratamento
                         </Badge>
                       ) : null}
+                      {showIncomplete && !readOnly && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-200 gap-1 cursor-pointer hover:bg-orange-500/20 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const rec = patientRec || { id: "", full_name: p.name, email: p.email || null };
+                            setEditPatientData(rec);
+                            setAddPatientOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-3 w-3" />
+                          {language === "pt" ? "Completar cadastro" : "Complete registration"}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
