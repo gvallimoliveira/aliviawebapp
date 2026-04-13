@@ -1,123 +1,60 @@
-# Plano: Aliv.ia Clinic
 
-## Resumo
 
-Criar um terceiro nicho de produto (Aliv.ia Clinic) para clínicas e consultórios com equipe de profissionais e secretária, incluindo hierarquia de permissoes, landing page dedicada, precificacao por faixas e coexistencia com contas individuais.
+## Plano: Campos extras de cadastro de paciente + criação automática via importação
 
----
+### Situação atual
 
-## Arquitetura de Dados
+1. **Agenda (novo paciente)**: Formulário com nome, email, tipo, duração, notas. Ao salvar com paciente novo, cria um registro em `assessments` com `externalPatient: true`. Sem CPF, data de nascimento, telefone ou endereço.
 
-### Novas tabelas
+2. **Pré-avaliação**: O formulário de anamnese coleta sexo e faixa etária, mas não CPF nem data de nascimento específica.
 
-`**clinics**` -- Representa a clinica/consultorio
+3. **Importação de agenda (AI)**: Insere apenas na tabela `professional_appointments`. **Não cria cadastro de paciente** (registro em `assessments`) nem extrai email dos pacientes da imagem. Ou seja, os pacientes importados aparecem na agenda mas **não** aparecem na listagem de pacientes.
 
-- `id`, `name`, `owner_user_id`, `subscription_status`, `subscription_stripe_id`, `logo_url`, `phone`, `address`, `created_at`
+### O que será feito
 
-`**clinic_members**` -- Vincula usuarios a uma clinica com papel
+#### 1. Migração de banco: nova tabela `patients`
 
-- `id`, `clinic_id` (FK clinics), `user_id`, `role` (enum: `owner`, `therapist`, `secretary`), `invited_by`, `invited_at`, `accepted_at`, `status` (pending/active/removed)
+Criar uma tabela dedicada `patients` para armazenar dados cadastrais completos, separando-os da tabela `assessments` (que não tem colunas para CPF, telefone, endereço, etc.):
 
-`**clinic_invitations**` -- Convites pendentes por email
+- `id`, `professional_id`, `clinic_id`, `full_name`, `email`, `cpf`, `birth_date`, `phone`, `address`, `created_at`, `updated_at`
+- RLS: profissionais veem seus pacientes; membros da clínica veem pacientes da clínica
+- Unique constraint em `(email, professional_id)` e `(email, clinic_id)` para evitar duplicatas
 
-- `id`, `clinic_id`, `email`, `role`, `invited_by`, `token`, `expires_at`, `created_at`
+#### 2. Formulário da Agenda: adicionar campos extras
 
-### Regras de negocio no banco
+No modal de criação/edição de agendamento (`ProSchedule.tsx`), quando `selectedPatientKey === "__new__"`, adicionar campos opcionais:
+- Data de nascimento
+- CPF (com máscara `000.000.000-00`)
+- Telefone celular (com máscara `(00) 00000-0000`)
+- Endereço
 
-- Enum `clinic_role` com valores `owner`, `therapist`, `secretary`
-- Funcao `get_clinic_role(user_id, clinic_id)` SECURITY DEFINER para uso em RLS
-- RLS em `clinic_members`: membros veem sua propria clinica; owner e secretary gerenciam membros
-- Avaliações da clinica: um `clinic_id` sera adicionado a tabela `assessments` e `professional_appointments` para que todos os membros vejam os mesmos pacientes
-- Link de avaliacao compartilhado: assessments criados com `clinic_id` sao visiveis para todos os membros. O owner tera tambem um link pessoal (sem `clinic_id`, apenas `professional_id`)
+Ao salvar, além de inserir em `professional_appointments`, também inserir/atualizar na tabela `patients`.
 
-### Matriz de permissoes
+#### 3. Listagem de pacientes: adição manual com campos extras
 
-```text
-Funcionalidade          | Owner  | Therapist | Secretary
-------------------------|--------|-----------|----------
-Agenda - visualizar     |   ✓    |     ✓     |    ✓
-Agenda - editar         |   ✓    |     ✗     |    ✓
-Avaliacoes - visualizar |   ✓    |     ✓     |    ✓
-Avaliacoes - editar     |   ✓    |     ✓     |    ✗
-Emitir PDFs             |   ✓    |     ✓     |    ✓
-Chat com pacientes      |   ✓    |     ✓     |    ✓
-Videochamada            |   ✓    |     ✓     |    ✓
-Gerenciar equipe        |   ✓    |     ✗     |    ✓
-Painel "Minha Saude"    |   ✗    |     ✗     |    ✗
-```
+Adicionar botão "Adicionar paciente" na aba de pacientes do `ProDashboard`, abrindo modal com os mesmos campos: nome, email, CPF, data de nascimento, telefone, endereço.
 
----
+#### 4. Pré-avaliação: adicionar CPF e data de nascimento
 
-## Precificacao por Faixas
+No formulário de anamnese (`AnamnesisForm.tsx`), adicionar campos de CPF e data de nascimento. Ao completar a avaliação, salvar esses dados na tabela `patients` (criar registro se não existir).
 
-Tres faixas a definir (valores sugeridos, voce confirma):
+#### 5. Importação de agenda (AI): criar cadastros de pacientes
 
-- **Ate 3 membros**: R$ 197/mes
-- **4 a 8 membros**: R$ 347/mes
-- **9+ membros**: R$ 497/mes
+No `AgendaImportModal.tsx`, após importar os agendamentos:
+- Para cada paciente importado que tenha nome, criar um registro na tabela `patients` (sem email, pois a imagem normalmente não contém)
+- Isso fará os pacientes aparecerem na listagem
 
-Cada faixa sera um produto/preco separado no Stripe. O sistema verificara a quantidade de membros ativos e bloqueara novos convites se o limite da faixa for atingido (com sugestao de upgrade).
+#### 6. Ajustar ProDashboard para usar tabela `patients`
 
----
+A listagem de pacientes passa a consultar também a tabela `patients` (merge com dados de `assessments`), mostrando os campos extras quando disponíveis.
 
-## Frontend
+### Arquivos afetados
 
-### 1. Gateway (pagina inicial)
+- **Nova migração SQL**: criar tabela `patients` com RLS
+- **`ProSchedule.tsx`**: adicionar campos CPF, nascimento, telefone, endereço no modal
+- **`ProDashboard.tsx`**: botão "Adicionar paciente" + modal, consulta à tabela `patients`
+- **`AgendaImportModal.tsx`**: criar registros em `patients` após importação
+- **`AnamnesisForm.tsx`**: adicionar campos CPF e data de nascimento
+- **`AssessmentStepper.tsx`** ou fluxo de conclusão: salvar dados na tabela `patients`
+- **`PatientEvolutionDashboard.tsx`**: exibir dados cadastrais extras do paciente
 
-- Novo card centralizado abaixo dos dois cards existentes: "Quero o Aliv.ia na minha clinica" com icone Building2, direcionando para `/clinica`
-
-### 2. Landing Page `/clinica`
-
-- Pagina de vendas completa com argumentos: avaliacao remota, triagem, anamnese, testes funcionais, relatorios, HEP, chat, videochamada, agenda multi-profissional
-- Comparativo visual das faixas de preco
-- CTA para registro/compra
-
-### 3. Dashboard Clinic
-
-- Reutiliza o `Dashboard.tsx` existente com adaptacoes:
-  - Sem aba "Minha Saude" -- apenas paineis profissionais
-  - Header mostra nome/logo da clinica
-  - Aba "Equipe" para owner/secretary gerenciarem membros (convidar por email, remover, alterar papel)
-  - Agenda e listagem de pacientes compartilhados entre todos os membros
-  - Componentes de edicao de avaliacoes desabilitados para secretary (view-only + botao PDF habilitado)
-
-### 4. Seletor de contexto
-
-- Ao logar, se o usuario pertence a uma clinica E tem perfil autonomo, exibir um seletor: "Acessar como Autonomo" ou "Acessar Clinica X"
-- Armazenado em estado global (context) para filtrar dados corretamente
-
-### 5. Convites
-
-- Owner/Secretary acessam "Gerenciar Equipe" > "Convidar membro"
-- Insere email + papel. Sistema envia email com link de convite
-- Ao clicar no link, usuario faz login/cadastro e e vinculado automaticamente a clinica
-
----
-
-## Backend (Edge Functions)
-
-- `**create-clinic-subscription**`: Checkout Stripe para faixa selecionada
-- `**check-clinic-subscription**`: Verifica status da assinatura da clinica
-- `**invite-clinic-member**`: Gera convite e envia email
-- `**accept-clinic-invite**`: Vincula usuario a clinica apos aceite
-
----
-
-## Plano de execucao (etapas)
-
-1. **Migracoes de banco**: criar tabelas `clinics`, `clinic_members`, `clinic_invitations`, enum, funcoes RLS, adicionar `clinic_id` em `assessments` e `professional_appointments`
-2. **Produtos Stripe**: criar 3 produtos/precos para as faixas
-3. **Edge Functions**: subscription, convites, verificacao
-4. **Landing page** `/clinica` com marketing e checkout
-5. **Gateway**: adicionar card "Clinica"
-6. **Dashboard adaptado**: context de clinica, seletor de contexto, aba equipe, permissoes no frontend
-7. **Convites por email**: fluxo de envio e aceite
-8. **Testes e ajustes**: verificar RLS, permissoes, fluxo completo
-
----
-
-## Pontos que preciso da sua confirmacao
-
-- Os valores sugeridos por faixa (R$ 197 / R$ 347 / R$ 497) estao adequados? sim
-- Devemos oferecer tambem plano anual para clinicas (com desconto similar ao Pro)? sim
-- Limite maximo de membros na faixa 9+? Ou ilimitado? ilimitado
