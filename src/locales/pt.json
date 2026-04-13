@@ -130,7 +130,7 @@
   "dashboard.see_premium": "Ver Premium",
   "redflags.title": "Triagem de Segurança",
   "redflags.subtitle": "Antes de iniciar, precisamos verificar alguns sinais importantes. Responda com sinceridade.",
-  "redflags.trauma": "Você sofreu algum trauma recente (queda, acidente, impacto)?",
+  "redflags.trauma": "Você sofreu um acidente ou impacto de grande intensidade recente que impossibilitou ou dificultou muito suas atividades diárias (andar, trabalhar, cuidar-se)?",
   "redflags.weight_loss": "Teve perda de peso inexplicada nos últimos meses?",
   "redflags.fever": "Está com febre persistente ou recorrente?",
   "redflags.sphincter": "Teve perda de controle da bexiga ou intestino?",
