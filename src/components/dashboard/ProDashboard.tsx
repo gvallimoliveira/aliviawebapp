@@ -98,17 +98,17 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
   // Realtime for clinic assessments
   useEffect(() => {
-    if (isSimulated || !isClinicMode || !activeClinic?.id) return;
+    if (isSimulated || !isClinicMode || !activeClinic?.clinic_id) return;
     const channel = supabase
-      .channel(`clinic-assessments-${activeClinic.id}`)
+      .channel(`clinic-assessments-${activeClinic.clinic_id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "assessments", filter: `clinic_id=eq.${activeClinic.id}` },
+        { event: "*", schema: "public", table: "assessments", filter: `clinic_id=eq.${activeClinic.clinic_id}` },
         () => { loadPatientAssessments(); }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [activeClinic?.id, isClinicMode, isSimulated]);
+  }, [activeClinic?.clinic_id, isClinicMode, isSimulated]);
 
   const checkSubscription = async () => {
     try {
