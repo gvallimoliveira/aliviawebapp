@@ -614,7 +614,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             ))
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Appointment Modal — scrollable */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
