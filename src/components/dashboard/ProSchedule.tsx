@@ -758,6 +758,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                       <Input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder={isPt ? "Rua, nº, bairro" : "Street, number"} className="mt-1 text-xs h-9" />
                     </div>
                   </div>
+                </>
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
