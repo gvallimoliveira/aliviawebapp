@@ -82,6 +82,34 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     loadReferrals();
   }, []);
 
+  // Realtime: auto-refresh patient assessments on changes
+  useEffect(() => {
+    if (isSimulated || !professional?.id) return;
+    const channel = supabase
+      .channel(`pro-assessments-${professional.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "assessments", filter: `professional_id=eq.${professional.id}` },
+        () => { loadPatientAssessments(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [professional?.id, isSimulated]);
+
+  // Realtime for clinic assessments
+  useEffect(() => {
+    if (isSimulated || !isClinicMode || !activeClinic?.clinic_id) return;
+    const channel = supabase
+      .channel(`clinic-assessments-${activeClinic.clinic_id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "assessments", filter: `clinic_id=eq.${activeClinic.clinic_id}` },
+        () => { loadPatientAssessments(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [activeClinic?.clinic_id, isClinicMode, isSimulated]);
+
   const checkSubscription = async () => {
     try {
       const { data, error } = await supabase.functions.invoke("check-pro-subscription");
