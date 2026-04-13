@@ -465,11 +465,13 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<{ groupKey: string; name: string; assessmentIds: string[] } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressFiredRef = useRef(false);
-  const [addPatientOpen, setAddPatientOpen] = useState(false);
-  const [newPatientName, setNewPatientName] = useState("");
-  const [newPatientEmail, setNewPatientEmail] = useState("");
-  const [newPatientPhone, setNewPatientPhone] = useState("");
-  const [addingPatient, setAddingPatient] = useState(false);
+   const [addPatientOpen, setAddPatientOpen] = useState(false);
+   const [editPatientData, setEditPatientData] = useState<PatientToEdit | null>(null);
+   const [newPatientName, setNewPatientName] = useState("");
+   const [newPatientEmail, setNewPatientEmail] = useState("");
+   const [newPatientPhone, setNewPatientPhone] = useState("");
+   const [addingPatient, setAddingPatient] = useState(false);
+   const [patientsTableData, setPatientsTableData] = useState<any[]>([]);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
