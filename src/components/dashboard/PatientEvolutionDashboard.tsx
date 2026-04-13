@@ -971,7 +971,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                 variant="outline"
                 size="sm"
                 className="gap-1.5 rounded-xl"
-                onClick={() => setAddPatientOpen(true)}
+                onClick={() => { setEditPatientData(null); setAddPatientOpen(true); }}
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{t("pro.add_patient")}</span>
