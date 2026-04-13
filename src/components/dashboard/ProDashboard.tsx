@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import AddPatientModal from "./AddPatientModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,6 +63,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [portalLoading, setPortalLoading] = useState(false);
   const [isSimulatedInternal, setIsSimulatedInternal] = useState(false);
   const isSimulated = isSimulatedProp !== undefined ? isSimulatedProp : isSimulatedInternal;
+  const [addPatientOpen, setAddPatientOpen] = useState(false);
   const setIsSimulated = (val: boolean) => {
     if (onSimulatedChange) onSimulatedChange(val);
     else setIsSimulatedInternal(val);
