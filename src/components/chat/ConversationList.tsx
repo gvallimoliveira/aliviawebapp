@@ -142,6 +142,29 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
           .single();
         if (error) throw error;
         convId = newConv.id;
+
+        // Send push notification to the professional when a patient starts a new conversation
+        if (mode === "patient") {
+          try {
+            const { data: pro } = await (supabase.from("professionals" as any) as any)
+              .select("user_id")
+              .eq("id", targetProfId)
+              .single();
+            if (pro?.user_id) {
+              const patientName = user?.user_metadata?.full_name || "Paciente";
+              await supabase.functions.invoke("send-push-notification", {
+                body: {
+                  user_id: pro.user_id,
+                  title: "Nova conversa",
+                  body: `${patientName} iniciou uma conversa com você.`,
+                  url: "/dashboard?tab=messages&conv=" + convId,
+                },
+              });
+            }
+          } catch (pushErr) {
+            console.warn("Push notification failed:", pushErr);
+          }
+        }
       }
 
       setNewConvOpen(false);
