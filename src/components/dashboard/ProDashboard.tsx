@@ -794,6 +794,14 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
       {/* Patient list grouped by email */}
       <div data-onboarding="pro-patients">
+        {!showingSimulated && (
+          <div className="flex justify-end mb-3">
+            <Button size="sm" className="gap-1.5 rounded-xl" onClick={() => setAddPatientOpen(true)}>
+              <Plus className="h-3.5 w-3.5" />
+              {language === "pt" ? "Adicionar paciente" : "Add patient"}
+            </Button>
+          </div>
+        )}
         <DashboardErrorBoundary>
           <PatientEvolutionDashboard
             assessments={displayAssessments as any}
@@ -809,6 +817,15 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           />
         </DashboardErrorBoundary>
       </div>
+
+      {/* Add Patient Modal */}
+      <AddPatientModal
+        open={addPatientOpen}
+        onOpenChange={setAddPatientOpen}
+        professionalId={professional.id}
+        clinicId={isClinicMode ? activeClinic?.clinic_id : undefined}
+        onAdded={() => loadPatientAssessments()}
+      />
 
     </div>
   );
