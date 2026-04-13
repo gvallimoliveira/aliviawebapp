@@ -319,7 +319,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setModalOpen(true);
   };
 
-  const openEdit = (apt: Appointment) => {
+  const openEdit = async (apt: Appointment) => {
     setEditingApt(apt);
     setFormDate(new Date(apt.appointment_date + "T12:00:00"));
     setFormTime(apt.appointment_time?.slice(0, 5) || "09:00");
@@ -328,9 +328,38 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setFormEmail(apt.patient_email || "");
     setFormType(apt.type);
     setFormNotes(apt.notes || "");
+    setFormCpf("");
+    setFormBirthDate("");
+    setFormPhone("");
+    setFormAddress("");
     const match = knownPatients.find((p) => p.email === apt.patient_email);
     setSelectedPatientKey(match ? match.email : "__new__");
     setModalOpen(true);
+
+    // Load extra fields from patients table
+    if (apt.patient_name || apt.patient_email) {
+      try {
+        let query = (supabase.from("patients" as any) as any).select("*");
+        if (clinicId) {
+          query = query.eq("clinic_id", clinicId);
+        } else if (professionalId) {
+          query = query.eq("professional_id", professionalId);
+        }
+        if (apt.patient_email) {
+          query = query.eq("email", apt.patient_email);
+        } else {
+          query = query.eq("full_name", apt.patient_name);
+        }
+        const { data } = await query.limit(1);
+        if (data && data.length > 0) {
+          const p = data[0];
+          setFormCpf(p.cpf ? formatCpf(p.cpf) : "");
+          setFormBirthDate(p.birth_date || "");
+          setFormPhone(p.phone ? formatPhone(p.phone) : "");
+          setFormAddress(p.address || "");
+        }
+      } catch {}
+    }
   };
 
   const handleSave = async () => {
