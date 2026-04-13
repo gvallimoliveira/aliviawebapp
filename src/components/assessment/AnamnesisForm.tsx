@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PainMap from "./PainMap";
+import { formatCpf } from "@/utils/masks";
 
 export interface AnamnesisData {
   chiefComplaint: string; // deprecated, kept for backward compat
@@ -49,6 +50,9 @@ export interface AnamnesisData {
   // Per-region pain scores
   painScoreMode?: "general" | "per_region";
   painScoresPerRegion?: Record<string, number>;
+  // Patient identification (pre-assessment)
+  cpf?: string;
+  birthDate?: string;
 }
 
 interface AnamnesisFormProps {
@@ -105,6 +109,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     painNightWaking: "",
     painScoreMode: "general",
     painScoresPerRegion: {},
+    cpf: "",
+    birthDate: "",
   });
 
   // Pre-fill all reassessment fields
@@ -334,9 +340,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     if (needsMigraineScreening()) {
       base.push("migraine_screening");
     }
-    if (isShoulderRelated()) {
-      base.push("sex_age");
-    }
+    // Always show sex_age step (includes CPF + birth_date for pre-assessment)
+    base.push("sex_age");
     base.push("paintype", "evolution", "factors", "duration", "pain_frequency", "gym", "painscore");
     return base;
   };
@@ -601,6 +606,14 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
                   </Card>
                 ))}
               </div>
+            </div>
+            <div className="space-y-3">
+              <Label>{language === "pt" ? "Data de nascimento" : "Date of birth"}</Label>
+              <Input type="date" value={data.birthDate || ""} onChange={(e) => setData({ ...data, birthDate: e.target.value })} className="text-sm h-10" />
+            </div>
+            <div className="space-y-3">
+              <Label>CPF</Label>
+              <Input value={data.cpf || ""} onChange={(e) => setData({ ...data, cpf: formatCpf(e.target.value) })} placeholder="000.000.000-00" className="text-sm h-10" maxLength={14} />
             </div>
           </div>
         );

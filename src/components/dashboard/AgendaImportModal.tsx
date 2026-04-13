@@ -126,6 +126,25 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
       const { error } = await supabase.from("professional_appointments").insert(rows);
       if (error) throw error;
 
+      // Create patient records for each imported patient (so they appear in patient list)
+      for (const a of selected) {
+        const patientRow: any = {
+          full_name: a.patient_name,
+          email: null,
+          cpf: null,
+          birth_date: null,
+          phone: null,
+          address: null,
+        };
+        if (clinicId) {
+          patientRow.clinic_id = clinicId;
+        } else {
+          patientRow.professional_id = professionalId;
+        }
+        await (supabase.from("patients" as any) as any).insert(patientRow).then(() => {});
+      }
+      window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+
       toast({
         title: lang === "pt"
           ? `${selected.length} agendamento(s) importado(s)!`

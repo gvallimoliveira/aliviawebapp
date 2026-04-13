@@ -202,6 +202,19 @@ const ClinicAssessment = () => {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "completed" });
         await logClinicAction("assessment_completed", id);
       }
+      // Save patient to patients table with CPF/birth_date from anamnesis
+      try {
+        const patientRow: any = {
+          full_name: patientName || "Paciente",
+          email: patientEmail || null,
+          cpf: data.cpf?.replace(/\D/g, "") || null,
+          birth_date: data.birthDate || null,
+          clinic_id: clinicId,
+        };
+        await (supabase.from("patients" as any) as any).insert(patientRow);
+      } catch (e) {
+        console.warn("Patient record creation skipped:", e);
+      }
       setStep("thank_you");
     } catch (err: any) {
       console.error("Diagnosis error:", err);

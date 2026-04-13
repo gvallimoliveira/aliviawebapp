@@ -211,6 +211,20 @@ const ProfessionalAssessment = () => {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "completed" });
       }
 
+      // Save patient to patients table with CPF/birth_date from anamnesis
+      try {
+        const patientRow: any = {
+          full_name: patientName || "Paciente",
+          email: patientEmail || null,
+          cpf: data.cpf?.replace(/\D/g, "") || null,
+          birth_date: data.birthDate || null,
+          professional_id: professionalId,
+        };
+        await (supabase.from("patients" as any) as any).insert(patientRow);
+      } catch (e) {
+        console.warn("Patient record creation skipped:", e);
+      }
+
       // Push notification to professional
       notifyProfessional();
 

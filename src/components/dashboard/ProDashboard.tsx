@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import AddPatientModal from "./AddPatientModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import {
-  Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
+  Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users, Plus,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
   MessageCircle, CheckCircle, XCircle, UserCheck, Play, ToggleLeft,
@@ -43,7 +44,7 @@ interface ProDashboardProps {
 }
 
 const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: isSimulatedProp, onSimulatedChange }: ProDashboardProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const { activeClinic, isClinicMode } = useClinic();
   const { toast } = useToast();
@@ -62,6 +63,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [portalLoading, setPortalLoading] = useState(false);
   const [isSimulatedInternal, setIsSimulatedInternal] = useState(false);
   const isSimulated = isSimulatedProp !== undefined ? isSimulatedProp : isSimulatedInternal;
+  const [addPatientOpen, setAddPatientOpen] = useState(false);
   const setIsSimulated = (val: boolean) => {
     if (onSimulatedChange) onSimulatedChange(val);
     else setIsSimulatedInternal(val);
@@ -792,6 +794,14 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
       {/* Patient list grouped by email */}
       <div data-onboarding="pro-patients">
+        {!showingSimulated && (
+          <div className="flex justify-end mb-3">
+            <Button size="sm" className="gap-1.5 rounded-xl" onClick={() => setAddPatientOpen(true)}>
+              <Plus className="h-3.5 w-3.5" />
+              {language === "pt" ? "Adicionar paciente" : "Add patient"}
+            </Button>
+          </div>
+        )}
         <DashboardErrorBoundary>
           <PatientEvolutionDashboard
             assessments={displayAssessments as any}
@@ -807,6 +817,15 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           />
         </DashboardErrorBoundary>
       </div>
+
+      {/* Add Patient Modal */}
+      <AddPatientModal
+        open={addPatientOpen}
+        onOpenChange={setAddPatientOpen}
+        professionalId={professional.id}
+        clinicId={isClinicMode ? activeClinic?.clinic_id : undefined}
+        onAdded={() => loadPatientAssessments()}
+      />
 
     </div>
   );

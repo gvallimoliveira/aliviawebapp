@@ -29,6 +29,7 @@ import {
   Loader2, Trash2, GripVertical, Upload,
 } from "lucide-react";
 import AgendaImportModal from "./AgendaImportModal";
+import { formatCpf, formatPhone } from "@/utils/masks";
 
 interface Appointment {
   id: string;
@@ -135,6 +136,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [formNotes, setFormNotes] = useState("");
   const [emailWarning, setEmailWarning] = useState(false);
   const [formProfessionalId, setFormProfessionalId] = useState(professionalId || "");
+  const [formCpf, setFormCpf] = useState("");
+  const [formBirthDate, setFormBirthDate] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formAddress, setFormAddress] = useState("");
 
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
@@ -306,6 +311,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setFormEmail("");
     setFormType("in_person");
     setFormNotes("");
+    setFormCpf("");
+    setFormBirthDate("");
+    setFormPhone("");
+    setFormAddress("");
     setSelectedPatientKey("__new__");
     setModalOpen(true);
   };
@@ -378,14 +387,16 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             .eq("patient_email", trimmedEmail)
             .limit(1);
           if (!existing || existing.length === 0) {
-            await supabase.from("assessments").insert({
+            const assessmentInsert: any = {
               type: "professional",
               status: "completed",
               professional_id: effectiveProfId,
               patient_name: formName.trim(),
               patient_email: trimmedEmail,
               anamnesis_data: { externalPatient: true },
-            });
+            };
+            if (clinicId) assessmentInsert.clinic_id = clinicId;
+            await supabase.from("assessments").insert(assessmentInsert);
             window.dispatchEvent(new CustomEvent("reload-pro-patients"));
             toast({
               title: t("schedule.patient_created"),
@@ -393,6 +404,23 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
               duration: 8000,
             });
           }
+        }
+        // Create/update patient record with extra fields
+        if (selectedPatientKey === "__new__" && formName.trim()) {
+          const patientRow: any = {
+            full_name: formName.trim(),
+            email: trimmedEmail || null,
+            cpf: formCpf.replace(/\D/g, "") || null,
+            birth_date: formBirthDate || null,
+            phone: formPhone.replace(/\D/g, "") || null,
+            address: formAddress.trim() || null,
+          };
+          if (clinicId) {
+            patientRow.clinic_id = clinicId;
+          } else {
+            patientRow.professional_id = effectiveProfId;
+          }
+          await (supabase.from("patients" as any) as any).upsert(patientRow, { ignoreDuplicates: true });
         }
       }
       toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
@@ -727,6 +755,30 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   <p className="text-[10px] text-destructive mt-1">{t("schedule.email_required")}</p>
                 )}
               </div>
+              {selectedPatientKey === "__new__" && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">CPF</label>
+                      <Input value={formCpf} onChange={(e) => setFormCpf(formatCpf(e.target.value))} placeholder="000.000.000-00" className="mt-1 text-xs h-9" maxLength={14} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Nascimento" : "Birth date"}</label>
+                      <Input type="date" value={formBirthDate} onChange={(e) => setFormBirthDate(e.target.value)} className="mt-1 text-xs h-9" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Celular" : "Phone"}</label>
+                      <Input value={formPhone} onChange={(e) => setFormPhone(formatPhone(e.target.value))} placeholder="(00) 00000-0000" className="mt-1 text-xs h-9" maxLength={15} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Endereço" : "Address"}</label>
+                      <Input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder={isPt ? "Rua, nº, bairro" : "Street, number"} className="mt-1 text-xs h-9" />
+                    </div>
+                  </div>
+                </>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">{t("schedule.type")}</label>
