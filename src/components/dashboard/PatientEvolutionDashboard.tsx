@@ -37,6 +37,7 @@ import CreateExerciseProgramModal from "@/components/dashboard/CreateExercisePro
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockClinicalImpressions, mockEvolutionSummary } from "@/data/mockPatientData";
 import PatientFilesSection from "./PatientFilesSection";
+import AddPatientModal, { type PatientToEdit } from "./AddPatientModal";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
@@ -464,11 +465,13 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<{ groupKey: string; name: string; assessmentIds: string[] } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressFiredRef = useRef(false);
-  const [addPatientOpen, setAddPatientOpen] = useState(false);
-  const [newPatientName, setNewPatientName] = useState("");
-  const [newPatientEmail, setNewPatientEmail] = useState("");
-  const [newPatientPhone, setNewPatientPhone] = useState("");
-  const [addingPatient, setAddingPatient] = useState(false);
+   const [addPatientOpen, setAddPatientOpen] = useState(false);
+   const [editPatientData, setEditPatientData] = useState<PatientToEdit | null>(null);
+   const [newPatientName, setNewPatientName] = useState("");
+   const [newPatientEmail, setNewPatientEmail] = useState("");
+   const [newPatientPhone, setNewPatientPhone] = useState("");
+   const [addingPatient, setAddingPatient] = useState(false);
+   const [patientsTableData, setPatientsTableData] = useState<any[]>([]);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
@@ -481,7 +484,26 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
       });
   }, [professionalId, isDemo]);
 
-  // Load HEP history for selected patient
+  // Load patients from dedicated patients table
+  useEffect(() => {
+    if (!professionalId || isDemo) return;
+    const loadPatients = async () => {
+      let query = (supabase.from("patients" as any) as any).select("*");
+      if (clinicId) {
+        query = query.eq("clinic_id", clinicId);
+      } else {
+        query = query.eq("professional_id", professionalId);
+      }
+      const { data } = await query;
+      setPatientsTableData(data || []);
+    };
+    loadPatients();
+    const handler = () => loadPatients();
+    window.addEventListener("reload-pro-patients", handler);
+    return () => window.removeEventListener("reload-pro-patients", handler);
+  }, [professionalId, clinicId, isDemo]);
+
+
   useEffect(() => {
     if (!professionalId || !selectedEmail || isDemo) { setHepHistory([]); return; }
     setHepHistoryLoading(true);
@@ -713,8 +735,9 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   }, [notes, onDownloadPdf, t, toast]);
 
   // Group assessments by patient_email (fallback to patient_name, then id)
+  // Also merge patients from the dedicated patients table
   const patients = useMemo(() => {
-    const map = new Map<string, PatientGroup & { groupKey: string }>();
+    const map = new Map<string, PatientGroup & { groupKey: string; patientRecord?: any }>();
     assessments.forEach((a) => {
       const email = (a as any).patient_email;
       const name = (a as any).patient_name;
@@ -735,9 +758,38 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         group.name = name || group.name;
       }
     });
+
+    // Merge patients from patients table (those without assessments will appear as new entries)
+    patientsTableData.forEach((pt: any) => {
+      const key = pt.email || pt.full_name || pt.id;
+      if (map.has(key)) {
+        // Attach patient record data to existing group
+        map.get(key)!.patientRecord = pt;
+      } else {
+        // Patient exists only in patients table (e.g. imported via AI), create entry with empty assessments
+        map.set(key, {
+          email: pt.email || "",
+          name: pt.full_name || "Sem nome",
+          assessments: [],
+          lastDate: pt.created_at,
+          groupKey: key,
+          patientRecord: pt,
+        });
+      }
+    });
+
+    // Also try to match by name for patients without email
+    patientsTableData.forEach((pt: any) => {
+      if (pt.email) return; // already matched by email key
+      const nameKey = pt.full_name;
+      if (nameKey && map.has(nameKey) && !map.get(nameKey)!.patientRecord) {
+        map.get(nameKey)!.patientRecord = pt;
+      }
+    });
+
     map.forEach((g) => g.assessments.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
     return Array.from(map.values()).sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
-  }, [assessments]);
+  }, [assessments, patientsTableData]);
 
   // Find selected patient (may be null)
   const patient = selectedEmail ? patients.find((p) => p.email === selectedEmail || (p as any).groupKey === selectedEmail) || null : null;
@@ -919,7 +971,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                 variant="outline"
                 size="sm"
                 className="gap-1.5 rounded-xl"
-                onClick={() => setAddPatientOpen(true)}
+                onClick={() => { setEditPatientData(null); setAddPatientOpen(true); }}
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{t("pro.add_patient")}</span>
@@ -978,6 +1030,10 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           const isHidden = hiddenKeys.has((p as any).groupKey);
 
           const groupKey = (p as any).groupKey;
+          const patientRec = (p as any).patientRecord;
+          const isIncomplete = patientRec && (!patientRec.email || !patientRec.cpf || !patientRec.phone);
+          const isImportedOnly = !patientRec && p.assessments.length === 0;
+          const showIncomplete = isIncomplete || isImportedOnly;
           const startLongPress = () => {
             longPressFiredRef.current = false;
             longPressTimerRef.current = setTimeout(() => {
@@ -1048,6 +1104,21 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                           <Lock className="h-3 w-3" /> Adquirir Tratamento
                         </Badge>
                       ) : null}
+                      {showIncomplete && !readOnly && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-200 gap-1 cursor-pointer hover:bg-orange-500/20 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const rec = patientRec || { id: "", full_name: p.name, email: p.email || null };
+                            setEditPatientData(rec);
+                            setAddPatientOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-3 w-3" />
+                          {language === "pt" ? "Completar cadastro" : "Complete registration"}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -1091,41 +1162,18 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           );
         })}
 
-        {/* Add External Patient Dialog */}
-        <Dialog open={addPatientOpen} onOpenChange={setAddPatientOpen}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>{t("pro.add_patient")}</DialogTitle>
-              <DialogDescription>{t("pro.add_patient_desc")}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_name_label")} *</label>
-                <Input value={newPatientName} onChange={(e) => setNewPatientName(e.target.value)} placeholder={t("pro.patient_name_ph")} className="mt-1 text-sm" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_email_label")}</label>
-                <div className="relative mt-1">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input value={newPatientEmail} onChange={(e) => setNewPatientEmail(e.target.value)} placeholder="email@exemplo.com" className="pl-9 text-sm" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_phone_label")}</label>
-                <div className="relative mt-1">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input value={newPatientPhone} onChange={(e) => setNewPatientPhone(e.target.value)} placeholder="(11) 99999-9999" className="pl-9 text-sm" />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button size="sm" className="gap-1.5 rounded-xl" onClick={handleAddExternalPatient} disabled={addingPatient || !newPatientName.trim()}>
-                {addingPatient ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-                {t("pro.add_patient_save")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Add/Edit Patient Modal */}
+        <AddPatientModal
+          open={addPatientOpen}
+          onOpenChange={(open) => {
+            setAddPatientOpen(open);
+            if (!open) setEditPatientData(null);
+          }}
+          professionalId={professionalId}
+          clinicId={clinicId}
+          onAdded={() => window.dispatchEvent(new CustomEvent("reload-pro-patients"))}
+          editPatient={editPatientData}
+        />
 
         {/* Long-press popup */}
         <AlertDialog open={!!longPressPatient} onOpenChange={(open) => { if (!open) setLongPressPatient(null); }}>
