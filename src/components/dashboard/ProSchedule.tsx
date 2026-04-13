@@ -135,6 +135,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [formNotes, setFormNotes] = useState("");
   const [emailWarning, setEmailWarning] = useState(false);
   const [formProfessionalId, setFormProfessionalId] = useState(professionalId || "");
+  const [formCpf, setFormCpf] = useState("");
+  const [formBirthDate, setFormBirthDate] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formAddress, setFormAddress] = useState("");
 
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
@@ -306,6 +310,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setFormEmail("");
     setFormType("in_person");
     setFormNotes("");
+    setFormCpf("");
+    setFormBirthDate("");
+    setFormPhone("");
+    setFormAddress("");
     setSelectedPatientKey("__new__");
     setModalOpen(true);
   };
