@@ -80,7 +80,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     checkSubscription();
     loadPatientAssessments();
     loadReferrals();
-  }, []);
+  }, [isClinicMode, activeClinic?.clinic_id]);
 
   // Realtime: auto-refresh patient assessments on changes
   useEffect(() => {
