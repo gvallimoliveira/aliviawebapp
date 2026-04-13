@@ -29,6 +29,7 @@ import {
   Loader2, Trash2, GripVertical, Upload,
 } from "lucide-react";
 import AgendaImportModal from "./AgendaImportModal";
+import { formatCpf, formatPhone } from "@/utils/masks";
 
 interface Appointment {
   id: string;
@@ -734,6 +735,31 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 {emailWarning && (
                   <p className="text-[10px] text-destructive mt-1">{t("schedule.email_required")}</p>
                 )}
+              </div>
+              {selectedPatientKey === "__new__" && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">CPF</label>
+                      <Input value={formCpf} onChange={(e) => setFormCpf(formatCpf(e.target.value))} placeholder="000.000.000-00" className="mt-1 text-xs h-9" maxLength={14} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Nascimento" : "Birth date"}</label>
+                      <Input type="date" value={formBirthDate} onChange={(e) => setFormBirthDate(e.target.value)} className="mt-1 text-xs h-9" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Celular" : "Phone"}</label>
+                      <Input value={formPhone} onChange={(e) => setFormPhone(formatPhone(e.target.value))} placeholder="(00) 00000-0000" className="mt-1 text-xs h-9" maxLength={15} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Endereço" : "Address"}</label>
+                      <Input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder={isPt ? "Rua, nº, bairro" : "Street, number"} className="mt-1 text-xs h-9" />
+                    </div>
+                  </div>
+                </>
+              )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
