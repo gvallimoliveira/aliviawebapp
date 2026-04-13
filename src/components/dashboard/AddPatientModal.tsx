@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -9,8 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus, Pencil } from "lucide-react";
 import { formatCpf, formatPhone } from "@/utils/masks";
+
+export interface PatientToEdit {
+  id: string;
+  full_name: string;
+  email?: string | null;
+  cpf?: string | null;
+  birth_date?: string | null;
+  phone?: string | null;
+  address?: string | null;
+}
 
 interface AddPatientModalProps {
   open: boolean;
@@ -18,12 +28,14 @@ interface AddPatientModalProps {
   professionalId: string;
   clinicId?: string | null;
   onAdded: () => void;
+  editPatient?: PatientToEdit | null;
 }
 
-const AddPatientModal = ({ open, onOpenChange, professionalId, clinicId, onAdded }: AddPatientModalProps) => {
+const AddPatientModal = ({ open, onOpenChange, professionalId, clinicId, onAdded, editPatient }: AddPatientModalProps) => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const isPt = language === "pt";
+  const isEdit = !!editPatient;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -32,6 +44,18 @@ const AddPatientModal = ({ open, onOpenChange, professionalId, clinicId, onAdded
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Pre-fill when editing
+  useEffect(() => {
+    if (editPatient && open) {
+      setName(editPatient.full_name || "");
+      setEmail(editPatient.email || "");
+      setCpf(editPatient.cpf ? formatCpf(editPatient.cpf) : "");
+      setBirthDate(editPatient.birth_date || "");
+      setPhone(editPatient.phone ? formatPhone(editPatient.phone) : "");
+      setAddress(editPatient.address || "");
+    }
+  }, [editPatient, open]);
 
   const handleSave = async () => {
     if (!name.trim()) return;
@@ -45,47 +69,56 @@ const AddPatientModal = ({ open, onOpenChange, professionalId, clinicId, onAdded
         phone: phone.replace(/\D/g, "") || null,
         address: address.trim() || null,
       };
-      if (clinicId) {
-        patientRow.clinic_id = clinicId;
+
+      if (isEdit) {
+        // Update existing patient
+        const { error } = await (supabase.from("patients" as any) as any)
+          .update(patientRow)
+          .eq("id", editPatient!.id);
+        if (error) throw error;
       } else {
-        patientRow.professional_id = professionalId;
-      }
+        // Insert new patient
+        if (clinicId) {
+          patientRow.clinic_id = clinicId;
+        } else {
+          patientRow.professional_id = professionalId;
+        }
+        const { error } = await (supabase.from("patients" as any) as any).insert(patientRow);
+        if (error) throw error;
 
-      const { error } = await (supabase.from("patients" as any) as any).insert(patientRow);
-      if (error) throw error;
-
-      // Also create assessment record so patient appears in the patient list
-      if (email.trim()) {
-        const { data: existing } = await supabase
-          .from("assessments")
-          .select("id")
-          .eq(clinicId ? "clinic_id" : "professional_id", clinicId || professionalId)
-          .eq("patient_email", email.trim())
-          .limit(1);
-        if (!existing || existing.length === 0) {
-          const assessmentRow: any = {
-            type: "professional",
-            status: "completed",
-            patient_name: name.trim(),
-            patient_email: email.trim(),
-            anamnesis_data: { externalPatient: true },
-          };
-          if (clinicId) {
-            assessmentRow.clinic_id = clinicId;
-          } else {
-            assessmentRow.professional_id = professionalId;
+        // Also create assessment record so patient appears in the patient list
+        if (email.trim()) {
+          const { data: existing } = await supabase
+            .from("assessments")
+            .select("id")
+            .eq(clinicId ? "clinic_id" : "professional_id", clinicId || professionalId)
+            .eq("patient_email", email.trim())
+            .limit(1);
+          if (!existing || existing.length === 0) {
+            const assessmentRow: any = {
+              type: "professional",
+              status: "completed",
+              patient_name: name.trim(),
+              patient_email: email.trim(),
+              anamnesis_data: { externalPatient: true },
+            };
+            if (clinicId) {
+              assessmentRow.clinic_id = clinicId;
+            } else {
+              assessmentRow.professional_id = professionalId;
+            }
+            await supabase.from("assessments").insert(assessmentRow);
           }
-          await supabase.from("assessments").insert(assessmentRow);
         }
       }
 
-      toast({ title: isPt ? "Paciente adicionado!" : "Patient added!" });
+      toast({ title: isPt ? (isEdit ? "Cadastro atualizado!" : "Paciente adicionado!") : (isEdit ? "Patient updated!" : "Patient added!") });
       onAdded();
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
       handleClose();
     } catch (err: any) {
-      console.error("Add patient error:", err);
-      toast({ title: isPt ? "Erro ao adicionar paciente" : "Error adding patient", description: err.message, variant: "destructive" });
+      console.error("Save patient error:", err);
+      toast({ title: isPt ? "Erro ao salvar paciente" : "Error saving patient", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -106,11 +139,13 @@ const AddPatientModal = ({ open, onOpenChange, professionalId, clinicId, onAdded
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-primary" />
-            {isPt ? "Adicionar paciente" : "Add patient"}
+            {isEdit ? <Pencil className="h-5 w-5 text-primary" /> : <UserPlus className="h-5 w-5 text-primary" />}
+            {isPt ? (isEdit ? "Completar cadastro" : "Adicionar paciente") : (isEdit ? "Complete registration" : "Add patient")}
           </DialogTitle>
           <DialogDescription>
-            {isPt ? "Preencha os dados do paciente. Apenas o nome é obrigatório." : "Fill in the patient data. Only the name is required."}
+            {isPt
+              ? (isEdit ? "Preencha os dados que faltam no cadastro do paciente." : "Preencha os dados do paciente. Apenas o nome é obrigatório.")
+              : (isEdit ? "Fill in the missing patient data." : "Fill in the patient data. Only the name is required.")}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh]">
@@ -144,8 +179,8 @@ const AddPatientModal = ({ open, onOpenChange, professionalId, clinicId, onAdded
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>{isPt ? "Cancelar" : "Cancel"}</Button>
           <Button onClick={handleSave} disabled={saving || !name.trim()} className="gap-1.5 rounded-xl">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-            {isPt ? "Adicionar" : "Add"}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : isEdit ? <Pencil className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+            {isPt ? (isEdit ? "Salvar" : "Adicionar") : (isEdit ? "Save" : "Add")}
           </Button>
         </DialogFooter>
       </DialogContent>
