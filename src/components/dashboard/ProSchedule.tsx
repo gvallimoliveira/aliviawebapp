@@ -387,14 +387,16 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             .eq("patient_email", trimmedEmail)
             .limit(1);
           if (!existing || existing.length === 0) {
-            await supabase.from("assessments").insert({
+            const assessmentInsert: any = {
               type: "professional",
               status: "completed",
               professional_id: effectiveProfId,
               patient_name: formName.trim(),
               patient_email: trimmedEmail,
               anamnesis_data: { externalPatient: true },
-            });
+            };
+            if (clinicId) assessmentInsert.clinic_id = clinicId;
+            await supabase.from("assessments").insert(assessmentInsert);
             window.dispatchEvent(new CustomEvent("reload-pro-patients"));
             toast({
               title: t("schedule.patient_created"),
@@ -402,6 +404,23 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
               duration: 8000,
             });
           }
+        }
+        // Create/update patient record with extra fields
+        if (selectedPatientKey === "__new__" && formName.trim()) {
+          const patientRow: any = {
+            full_name: formName.trim(),
+            email: trimmedEmail || null,
+            cpf: formCpf.replace(/\D/g, "") || null,
+            birth_date: formBirthDate || null,
+            phone: formPhone.replace(/\D/g, "") || null,
+            address: formAddress.trim() || null,
+          };
+          if (clinicId) {
+            patientRow.clinic_id = clinicId;
+          } else {
+            patientRow.professional_id = effectiveProfId;
+          }
+          await (supabase.from("patients" as any) as any).upsert(patientRow, { ignoreDuplicates: true });
         }
       }
       toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
