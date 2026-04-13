@@ -22,6 +22,7 @@ interface ConversationListProps {
   professionalId?: string;
   initialConversationId?: string | null;
   searchQuery?: string;
+  canInitiateConversation?: boolean;
 }
 
 interface ConversationItem {
@@ -34,7 +35,7 @@ interface ConversationItem {
   unread_count: number;
 }
 
-const ConversationList = ({ mode, professionalId, initialConversationId, searchQuery = "" }: ConversationListProps) => {
+const ConversationList = ({ mode, professionalId, initialConversationId, searchQuery = "", canInitiateConversation = true }: ConversationListProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -329,6 +330,7 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
   return (
     <div className="space-y-4">
       {/* New conversation button */}
+      {canInitiateConversation && (
       <Button
         variant="outline"
         size="sm"
@@ -340,6 +342,7 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
           ? (isPt ? "Nova conversa" : "New conversation")
           : (isPt ? "Iniciar conversa" : "Start conversation")}
       </Button>
+      )}
 
       {/* New conversation modal */}
       <Dialog open={newConvOpen} onOpenChange={setNewConvOpen}>
