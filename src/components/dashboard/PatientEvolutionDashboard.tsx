@@ -484,7 +484,26 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
       });
   }, [professionalId, isDemo]);
 
-  // Load HEP history for selected patient
+  // Load patients from dedicated patients table
+  useEffect(() => {
+    if (!professionalId || isDemo) return;
+    const loadPatients = async () => {
+      let query = (supabase.from("patients" as any) as any).select("*");
+      if (clinicId) {
+        query = query.eq("clinic_id", clinicId);
+      } else {
+        query = query.eq("professional_id", professionalId);
+      }
+      const { data } = await query;
+      setPatientsTableData(data || []);
+    };
+    loadPatients();
+    const handler = () => loadPatients();
+    window.addEventListener("reload-pro-patients", handler);
+    return () => window.removeEventListener("reload-pro-patients", handler);
+  }, [professionalId, clinicId, isDemo]);
+
+
   useEffect(() => {
     if (!professionalId || !selectedEmail || isDemo) { setHepHistory([]); return; }
     setHepHistoryLoading(true);
