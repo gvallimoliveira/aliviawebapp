@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import {
-  Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users,
+  Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users, Plus,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
   MessageCircle, CheckCircle, XCircle, UserCheck, Play, ToggleLeft,
@@ -44,7 +44,7 @@ interface ProDashboardProps {
 }
 
 const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: isSimulatedProp, onSimulatedChange }: ProDashboardProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const { activeClinic, isClinicMode } = useClinic();
   const { toast } = useToast();
