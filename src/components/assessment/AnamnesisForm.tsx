@@ -49,6 +49,9 @@ export interface AnamnesisData {
   // Per-region pain scores
   painScoreMode?: "general" | "per_region";
   painScoresPerRegion?: Record<string, number>;
+  // Patient identification (pre-assessment)
+  cpf?: string;
+  birthDate?: string;
 }
 
 interface AnamnesisFormProps {
