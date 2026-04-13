@@ -201,6 +201,26 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
+  // Realtime: auto-refresh appointments on changes
+  useEffect(() => {
+    if (isSimulated) return;
+    const filter = clinicId
+      ? `clinic_id=eq.${clinicId}`
+      : professionalId
+        ? `professional_id=eq.${professionalId}`
+        : null;
+    if (!filter) return;
+    const channel = supabase
+      .channel(`schedule-rt-${clinicId || professionalId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "professional_appointments", filter },
+        () => { fetchAppointments(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [clinicId, professionalId, isSimulated, fetchAppointments]);
+
   useEffect(() => {
     if (isSimulated) return;
     const fetchPatients = async () => {
