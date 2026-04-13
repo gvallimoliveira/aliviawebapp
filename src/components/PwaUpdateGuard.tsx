@@ -55,8 +55,13 @@ const PwaUpdateGuard = () => {
 
   const tryActivate = () => {
     if (activating.current) return;
-    if (!(window as any).__pwaUpdatePending) return;
     if (!isSafeRoute(window.location.pathname)) return;
+
+    // Proactively check for updates when on a safe route
+    const reg = (window as any).__pwaRegistration as ServiceWorkerRegistration | undefined;
+    if (reg) reg.update?.();
+
+    if (!(window as any).__pwaUpdatePending) return;
 
     activating.current = true;
     (window as any).__pwaUpdatePending = false;
