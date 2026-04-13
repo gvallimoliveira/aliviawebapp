@@ -76,6 +76,20 @@ const AddPatientModal = ({ open, onOpenChange, professionalId, clinicId, onAdded
           .update(patientRow)
           .eq("id", editPatient!.id);
         if (error) throw error;
+
+        // Also update assessments & appointments so all views stay in sync
+        const oldEmail = editPatient!.email;
+        const ownerFilter = clinicId ? { clinic_id: clinicId } : { professional_id: professionalId };
+        if (oldEmail) {
+          await supabase.from("assessments")
+            .update({ patient_name: name.trim(), patient_email: email.trim() || oldEmail } as any)
+            .eq(clinicId ? "clinic_id" : "professional_id", clinicId || professionalId)
+            .eq("patient_email", oldEmail);
+          await (supabase.from("professional_appointments" as any) as any)
+            .update({ patient_name: name.trim(), patient_email: email.trim() || null })
+            .eq(clinicId ? "clinic_id" : "professional_id", clinicId || professionalId)
+            .eq("patient_email", oldEmail);
+        }
       } else {
         // Insert new patient
         if (clinicId) {
