@@ -394,7 +394,7 @@ const Dashboard = () => {
                 <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />
               )}
               {professional && (msgFilter === "all" || msgFilter === "professional") && (
-                <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} />
+                <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} canInitiateConversation={true} />
               )}
             </TabsContent>
           </Tabs>
@@ -428,7 +428,7 @@ const Dashboard = () => {
                 <Button variant={msgFilter === "professional" ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1" onClick={() => setMsgFilter("professional")}><StethoscopeIcon className="h-3 w-3" />{t("chat.filter_professional")}</Button>
               </div>
               {(msgFilter === "all" || msgFilter === "patient") && <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />}
-              {(msgFilter === "all" || msgFilter === "professional") && <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} />}
+              {(msgFilter === "all" || msgFilter === "professional") && <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} canInitiateConversation={false} />}
             </TabsContent>
             <TabsContent value="agenda" className="space-y-6">
               <ProSchedule professionalId={professional.id} />
