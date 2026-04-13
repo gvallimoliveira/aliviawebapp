@@ -735,8 +735,9 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   }, [notes, onDownloadPdf, t, toast]);
 
   // Group assessments by patient_email (fallback to patient_name, then id)
+  // Also merge patients from the dedicated patients table
   const patients = useMemo(() => {
-    const map = new Map<string, PatientGroup & { groupKey: string }>();
+    const map = new Map<string, PatientGroup & { groupKey: string; patientRecord?: any }>();
     assessments.forEach((a) => {
       const email = (a as any).patient_email;
       const name = (a as any).patient_name;
@@ -757,9 +758,38 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         group.name = name || group.name;
       }
     });
+
+    // Merge patients from patients table (those without assessments will appear as new entries)
+    patientsTableData.forEach((pt: any) => {
+      const key = pt.email || pt.full_name || pt.id;
+      if (map.has(key)) {
+        // Attach patient record data to existing group
+        map.get(key)!.patientRecord = pt;
+      } else {
+        // Patient exists only in patients table (e.g. imported via AI), create entry with empty assessments
+        map.set(key, {
+          email: pt.email || "",
+          name: pt.full_name || "Sem nome",
+          assessments: [],
+          lastDate: pt.created_at,
+          groupKey: key,
+          patientRecord: pt,
+        });
+      }
+    });
+
+    // Also try to match by name for patients without email
+    patientsTableData.forEach((pt: any) => {
+      if (pt.email) return; // already matched by email key
+      const nameKey = pt.full_name;
+      if (nameKey && map.has(nameKey) && !map.get(nameKey)!.patientRecord) {
+        map.get(nameKey)!.patientRecord = pt;
+      }
+    });
+
     map.forEach((g) => g.assessments.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
     return Array.from(map.values()).sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
-  }, [assessments]);
+  }, [assessments, patientsTableData]);
 
   // Find selected patient (may be null)
   const patient = selectedEmail ? patients.find((p) => p.email === selectedEmail || (p as any).groupKey === selectedEmail) || null : null;
