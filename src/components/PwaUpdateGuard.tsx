@@ -14,11 +14,10 @@ const SAFE_ROUTES = [
 ];
 
 function isSafeRoute(pathname: string): boolean {
-  return SAFE_ROUTES.some((route) =>
-    route === "/"
-      ? pathname === "/"
-      : pathname === route || pathname === route + "/"
-  );
+  return SAFE_ROUTES.some((route) => {
+    if (route === "/") return pathname === "/";
+    return pathname === route || pathname.startsWith(route + "/") || pathname === route + "/";
+  });
 }
 
 function activateWaitingSW(): boolean {
