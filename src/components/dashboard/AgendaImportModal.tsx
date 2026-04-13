@@ -247,7 +247,7 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
               </Badge>
             </div>
 
-            <ScrollArea className="max-h-64">
+            <ScrollArea className="h-64">
               <div className="space-y-2">
                 {appointments.map((a, i) => (
                   <Card key={i} className={`transition-colors ${a.selected ? "border-primary/30 bg-primary/5" : "opacity-60"}`}>
