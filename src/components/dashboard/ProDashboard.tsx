@@ -80,7 +80,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     checkSubscription();
     loadPatientAssessments();
     loadReferrals();
-  }, []);
+  }, [isClinicMode, activeClinic?.clinic_id]);
 
   // Realtime: auto-refresh patient assessments on changes
   useEffect(() => {
@@ -123,12 +123,34 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   };
 
   const loadPatientAssessments = async () => {
-    const { data } = await supabase
+    // Load assessments linked to this professional
+    const { data: proData } = await supabase
       .from("assessments")
       .select("*")
       .eq("professional_id", professional.id)
       .order("created_at", { ascending: false });
-    setPatientAssessments(data || []);
+
+    // Also load clinic assessments (professional_id may be null) when in clinic mode
+    let clinicData: any[] = [];
+    if (isClinicMode && activeClinic?.clinic_id) {
+      const { data: cData } = await supabase
+        .from("assessments")
+        .select("*")
+        .eq("clinic_id", activeClinic.clinic_id)
+        .order("created_at", { ascending: false });
+      clinicData = cData || [];
+    }
+
+    // Merge and deduplicate by id
+    const merged = [...(proData || [])];
+    const existingIds = new Set(merged.map((a) => a.id));
+    for (const ca of clinicData) {
+      if (!existingIds.has(ca.id)) {
+        merged.push(ca);
+      }
+    }
+    merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    setPatientAssessments(merged);
   };
 
   const loadReferrals = async () => {
