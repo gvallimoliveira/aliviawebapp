@@ -1162,41 +1162,18 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           );
         })}
 
-        {/* Add External Patient Dialog */}
-        <Dialog open={addPatientOpen} onOpenChange={setAddPatientOpen}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>{t("pro.add_patient")}</DialogTitle>
-              <DialogDescription>{t("pro.add_patient_desc")}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_name_label")} *</label>
-                <Input value={newPatientName} onChange={(e) => setNewPatientName(e.target.value)} placeholder={t("pro.patient_name_ph")} className="mt-1 text-sm" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_email_label")}</label>
-                <div className="relative mt-1">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input value={newPatientEmail} onChange={(e) => setNewPatientEmail(e.target.value)} placeholder="email@exemplo.com" className="pl-9 text-sm" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("pro.patient_phone_label")}</label>
-                <div className="relative mt-1">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input value={newPatientPhone} onChange={(e) => setNewPatientPhone(e.target.value)} placeholder="(11) 99999-9999" className="pl-9 text-sm" />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button size="sm" className="gap-1.5 rounded-xl" onClick={handleAddExternalPatient} disabled={addingPatient || !newPatientName.trim()}>
-                {addingPatient ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-                {t("pro.add_patient_save")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Add/Edit Patient Modal */}
+        <AddPatientModal
+          open={addPatientOpen}
+          onOpenChange={(open) => {
+            setAddPatientOpen(open);
+            if (!open) setEditPatientData(null);
+          }}
+          professionalId={professionalId}
+          clinicId={clinicId}
+          onAdded={() => window.dispatchEvent(new CustomEvent("reload-pro-patients"))}
+          editPatient={editPatientData}
+        />
 
         {/* Long-press popup */}
         <AlertDialog open={!!longPressPatient} onOpenChange={(open) => { if (!open) setLongPressPatient(null); }}>
