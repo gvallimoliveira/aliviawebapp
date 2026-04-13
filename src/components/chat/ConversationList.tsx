@@ -324,8 +324,78 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
     }
   };
 
+  const isPt = t("chat.no_conversations") !== "chat.no_conversations";
+
   return (
     <div className="space-y-4">
+      {/* New conversation button */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full gap-2 rounded-xl"
+        onClick={() => { setNewConvOpen(true); loadPatientsForNewConv(); }}
+      >
+        <Plus className="h-4 w-4" />
+        {mode === "professional"
+          ? (isPt ? "Nova conversa" : "New conversation")
+          : (isPt ? "Iniciar conversa" : "Start conversation")}
+      </Button>
+
+      {/* New conversation modal */}
+      <Dialog open={newConvOpen} onOpenChange={setNewConvOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              {isPt ? "Nova conversa" : "New conversation"}
+            </DialogTitle>
+            <DialogDescription>
+              {mode === "professional"
+                ? (isPt ? "Selecione um paciente para iniciar uma conversa." : "Select a patient to start a conversation.")
+                : (isPt ? "Selecione um profissional para iniciar uma conversa." : "Select a professional to start a conversation.")}
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={newConvSearch}
+            onChange={(e) => setNewConvSearch(e.target.value)}
+            placeholder={isPt ? "Buscar..." : "Search..."}
+            className="text-sm"
+          />
+          <ScrollArea className="h-64">
+            {newConvLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
+            ) : filteredNewConvPatients.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                {isPt ? "Nenhum contato encontrado." : "No contacts found."}
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {filteredNewConvPatients.map((p) => (
+                  <button
+                    key={p.user_id}
+                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/60 transition-colors text-left"
+                    onClick={() => handleStartConversation(p.user_id, p.name)}
+                    disabled={!!creatingConv}
+                  >
+                    <Avatar className="h-8 w-8 border border-border shrink-0">
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                        {p.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-foreground block truncate">{p.name}</span>
+                      {p.email && <span className="text-xs text-muted-foreground truncate block">{p.email}</span>}
+                    </div>
+                    {creatingConv === p.user_id && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
       {/* Global video call listener */}
       {ENABLE_VIDEO_CALL && (
         <VideoCallListener conversationIds={conversations.map((c) => c.id)} />
