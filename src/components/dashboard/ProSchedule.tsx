@@ -402,10 +402,44 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         return;
       }
 
+      // Build patient data for upsert
+      const patientRow: any = {
+        full_name: formName.trim(),
+        email: trimmedEmail || null,
+        cpf: formCpf.replace(/\D/g, "") || null,
+        birth_date: formBirthDate || null,
+        phone: formPhone.replace(/\D/g, "") || null,
+        address: formAddress.trim() || null,
+      };
+      if (clinicId) {
+        patientRow.clinic_id = clinicId;
+      } else {
+        patientRow.professional_id = effectiveProfId;
+      }
+
       if (editingApt) {
         await (supabase.from("professional_appointments" as any) as any)
           .update(payload)
           .eq("id", editingApt.id);
+
+        // Also update patients table (match by email or name)
+        if (trimmedEmail || formName.trim()) {
+          let matchQuery = (supabase.from("patients" as any) as any).select("id");
+          if (clinicId) matchQuery = matchQuery.eq("clinic_id", clinicId);
+          else matchQuery = matchQuery.eq("professional_id", effectiveProfId);
+          if (editingApt.patient_email) matchQuery = matchQuery.eq("email", editingApt.patient_email);
+          else matchQuery = matchQuery.eq("full_name", editingApt.patient_name);
+          const { data: existingPatients } = await matchQuery.limit(1);
+
+          if (existingPatients && existingPatients.length > 0) {
+            await (supabase.from("patients" as any) as any)
+              .update(patientRow)
+              .eq("id", existingPatients[0].id);
+          } else {
+            await (supabase.from("patients" as any) as any).insert(patientRow);
+          }
+          window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+        }
       } else {
         await (supabase.from("professional_appointments" as any) as any).insert(payload);
         if (selectedPatientKey === "__new__" && trimmedEmail) {
@@ -436,8 +470,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         }
         // Create/update patient record with extra fields
         if (selectedPatientKey === "__new__" && formName.trim()) {
-          const patientRow: any = {
-            full_name: formName.trim(),
+          await (supabase.from("patients" as any) as any).upsert(patientRow, { ignoreDuplicates: true });
+          window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+        }
             email: trimmedEmail || null,
             cpf: formCpf.replace(/\D/g, "") || null,
             birth_date: formBirthDate || null,
