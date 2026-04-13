@@ -526,8 +526,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       )}
 
       {/* Time-slot grid */}
-      <ScrollArea className="h-[420px] rounded-lg border border-border/40">
-        <div className="min-w-0">
+      <div className="h-[420px] rounded-lg border border-border/40 overflow-auto">
+        <div className={cn("min-w-0", isMobile && "min-w-[500px]")}>
           {/* Day headers — sticky */}
           <div className={cn("grid sticky top-0 z-10 bg-background border-b border-border/40", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}>
             <div className="py-2 px-1" /> {/* time gutter */}
@@ -614,7 +614,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             ))
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Appointment Modal — scrollable */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
