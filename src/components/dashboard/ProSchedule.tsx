@@ -633,6 +633,18 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           <Button variant="outline" size="sm" className="text-xs" onClick={() => setViewDate(new Date())}>
             {t("schedule.today")}
           </Button>
+          {todayScheduledCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+              onClick={handleBatchConfirm}
+              disabled={batchConfirming}
+            >
+              {batchConfirming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">{isPt ? `Confirmar ${todayScheduledCount}` : `Confirm ${todayScheduledCount}`}</span>
+            </Button>
+          )}
           {!isSimulated && (professionalId || isClinicOnlyMode) && (
             <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setImportModalOpen(true)}>
               <Upload className="h-3.5 w-3.5" />
