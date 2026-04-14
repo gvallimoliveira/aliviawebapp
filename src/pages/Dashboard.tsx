@@ -383,6 +383,13 @@ const Dashboard = () => {
               </div>
             </TabsContent>
 
+            {/* Gestão (owner only) */}
+            {activeClinic.role === "owner" && (
+              <TabsContent value="analytics" className="space-y-6">
+                <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
+              </TabsContent>
+            )}
+
             {/* Mensagens */}
             <TabsContent value="messages" className="space-y-6">
               <MessagesTab
