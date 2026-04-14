@@ -32,7 +32,7 @@ import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon, Building2,
-  Link2, Copy, Check,
+  Link2, Copy, Check, Activity,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
