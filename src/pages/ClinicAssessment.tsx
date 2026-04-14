@@ -276,7 +276,13 @@ const ClinicAssessment = () => {
                 className="h-9 w-9 rounded-full object-cover border border-border"
               />
             )}
-            <span className="text-xs font-medium px-3 py-1 rounded-full bg-primary/10 text-primary">
+            <span
+              className="text-xs font-medium px-3 py-1 rounded-full"
+              style={clinic?.brand_color
+                ? { backgroundColor: `${clinic.brand_color}18`, color: clinic.brand_color }
+                : undefined
+              }
+            >
               <Building2 className="h-3 w-3 inline mr-1" />
               {clinic?.name || "Clínica"}
             </span>
