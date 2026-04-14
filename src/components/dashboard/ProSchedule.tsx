@@ -123,6 +123,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [batchConfirming, setBatchConfirming] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
   const [selectedPatientKey, setSelectedPatientKey] = useState<string>("__new__");
