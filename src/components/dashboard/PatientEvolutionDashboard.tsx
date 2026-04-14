@@ -563,7 +563,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     }
   };
 
-
+  useEffect(() => {
     if (!professionalId || !selectedEmail || isDemo) { setHepHistory([]); return; }
     setHepHistoryLoading(true);
     (supabase.from("exercise_programs") as any)
