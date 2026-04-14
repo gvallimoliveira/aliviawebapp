@@ -173,7 +173,7 @@ const DailySummaryCard = ({
 
         {/* Pending assessments alert */}
         {pendingAssessments > 0 && (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/5 border border-destructive/10">
             <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-foreground">
