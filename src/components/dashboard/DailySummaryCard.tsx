@@ -133,7 +133,7 @@ const DailySummaryCard = ({
             </p>
           </div>
           <div className="text-center p-2 rounded-lg bg-background/60 border border-border/50">
-            <p className="text-2xl font-bold text-emerald-600">{completedCount}</p>
+            <p className="text-2xl font-bold text-primary">{completedCount}</p>
             <p className="text-[10px] text-muted-foreground">
               {isPt ? "Concluídos" : "Completed"}
             </p>
@@ -174,10 +174,10 @@ const DailySummaryCard = ({
         {/* Pending assessments alert */}
         {pendingAssessments > 0 && (
           <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
-            <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+            <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-foreground">
-                <span className="font-medium text-amber-700">
+                <span className="font-medium text-destructive">
                   {pendingAssessments} {isPt ? "avaliação(ões) pendente(s)" : "pending assessment(s)"}
                 </span>
               </p>
