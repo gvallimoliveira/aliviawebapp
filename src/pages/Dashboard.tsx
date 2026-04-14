@@ -431,14 +431,7 @@ const Dashboard = () => {
             </TabsList>
             <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
             <TabsContent value="messages" className="space-y-6">
-              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
-              </h2>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input value={msgSearch} onChange={(e) => setMsgSearch(e.target.value)} placeholder={t("chat.search_placeholder")} className="pl-9 rounded-xl" />
-              </div>
-              <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />
+              <MessagesTab initialConversationId={convFromUrl} />
             </TabsContent>
           </Tabs>
         )}
