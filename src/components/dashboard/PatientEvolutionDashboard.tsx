@@ -1237,6 +1237,21 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    {!readOnly && !isHidden && p.email && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title={language === "pt" ? "Nota rápida" : "Quick note"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQuickNotePatient({ groupKey: (p as any).groupKey, email: p.email, name: p.name });
+                          setQuickNoteContent("");
+                        }}
+                      >
+                        <NotebookPen className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    )}
                     {!readOnly && (isHidden ? (
                       <Button
                         variant="ghost"
