@@ -1724,6 +1724,17 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       >
                         <Share2 className="h-3.5 w-3.5" />
                       </Button>
+                      {!readOnly && patient.email && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title={language === "pt" ? "Enviar via chat interno" : "Send via internal chat"}
+                          onClick={() => handleSendHepViaChat(link, patient.email)}
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
