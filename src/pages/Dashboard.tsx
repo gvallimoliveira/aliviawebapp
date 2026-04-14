@@ -37,6 +37,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Search, User, Stethoscope as StethoscopeIcon } from "lucide-react";
 import ProSchedule from "@/components/dashboard/ProSchedule";
+import DailySummaryCard from "@/components/dashboard/DailySummaryCard";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface PremiumAccess {
