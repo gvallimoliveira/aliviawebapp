@@ -257,7 +257,10 @@ const ClinicAssessment = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen bg-background"
+      style={clinic?.brand_color ? { "--brand-accent": clinic.brand_color } as React.CSSProperties : undefined}
+    >
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
