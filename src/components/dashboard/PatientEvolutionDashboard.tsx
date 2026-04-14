@@ -1207,6 +1207,24 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                           {language === "pt" ? "Completar cadastro" : "Complete registration"}
                         </Badge>
                       )}
+                      {/* Exercise adherence indicator */}
+                      {(() => {
+                        const patientAdherence = p.assessments.reduce((acc: { total: number; completed: number }, a: any) => {
+                          const adh = exerciseAdherence[a.id];
+                          if (adh) { acc.total += adh.total; acc.completed += adh.completed; }
+                          return acc;
+                        }, { total: 0, completed: 0 });
+                        if (patientAdherence.total > 0) {
+                          const pct = Math.round((patientAdherence.completed / patientAdherence.total) * 100);
+                          const color = pct >= 70 ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : pct >= 40 ? "bg-amber-500/10 text-amber-600 border-amber-200" : "bg-destructive/10 text-destructive border-destructive/20";
+                          return (
+                            <Badge variant="outline" className={`text-[10px] gap-1 ${color}`}>
+                              <Dumbbell className="h-3 w-3" /> {pct}% {language === "pt" ? "adesão" : "adherence"}
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
