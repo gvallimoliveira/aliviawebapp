@@ -26,7 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Plus, CalendarIcon, Clock, Video, MapPin, ExternalLink,
-  Loader2, Trash2, GripVertical, Upload,
+  Loader2, Trash2, GripVertical, Upload, Check,
 } from "lucide-react";
 import AgendaImportModal from "./AgendaImportModal";
 import { formatCpf, formatPhone } from "@/utils/masks";
