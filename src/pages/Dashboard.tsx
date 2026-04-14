@@ -280,6 +280,12 @@ const Dashboard = () => {
             {/* Agenda */}
             <TabsContent value="agenda" className="space-y-6">
               <ClinicTrialBanner />
+              <DailySummaryCard
+                professionalId={professional?.id}
+                clinicId={activeClinic.clinic_id}
+                onNavigateToAgenda={() => {}}
+                onNavigateToPatients={() => setActiveTab("patients")}
+              />
               <div className="relative">
                 <ProSchedule
                   professionalId={professional?.id}
@@ -431,6 +437,11 @@ const Dashboard = () => {
               {(msgFilter === "all" || msgFilter === "professional") && <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} canInitiateConversation={false} />}
             </TabsContent>
             <TabsContent value="agenda" className="space-y-6">
+              <DailySummaryCard
+                professionalId={professional.id}
+                onNavigateToAgenda={() => {}}
+                onNavigateToPatients={() => setActiveTab("professional")}
+              />
               <ProSchedule professionalId={professional.id} />
             </TabsContent>
             <TabsContent value="professional" className="space-y-8">
