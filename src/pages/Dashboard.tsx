@@ -35,7 +35,7 @@ import {
   Link2, Copy, Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Search, User, Stethoscope as StethoscopeIcon } from "lucide-react";
+import { Search } from "lucide-react";
 import ProSchedule from "@/components/dashboard/ProSchedule";
 import DailySummaryCard from "@/components/dashboard/DailySummaryCard";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
@@ -86,8 +86,8 @@ const Dashboard = () => {
   
   const [activeTab, setActiveTab] = useState<string>("health");
   const [unreadCount, setUnreadCount] = useState(0);
-  const [msgSearch, setMsgSearch] = useState("");
-  const [msgFilter, setMsgFilter] = useState<"all" | "patient" | "professional">("all");
+
+
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
 
