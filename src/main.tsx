@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./i18n";
 import "./index.css";
+import { startVersionChecker } from "./lib/versionChecker";
 
 const rootElement = document.getElementById("root");
 
@@ -101,6 +102,11 @@ async function bootstrap() {
       window.location.reload();
     });
   });
+
+  // Start version checker for force-update on production
+  if (!isPreviewHost && !isInIframe) {
+    startVersionChecker();
+  }
 
   renderApp();
 }
