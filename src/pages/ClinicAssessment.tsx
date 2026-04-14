@@ -412,13 +412,56 @@ const ClinicAssessment = () => {
 
         {step === "thank_you" && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 text-center py-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mx-auto">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mx-auto">
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
             </div>
             <h2 className="text-2xl font-bold text-foreground">{t("pro.thankyou_title")}</h2>
             <p className="text-muted-foreground max-w-md mx-auto">
               {t("pro.thankyou_desc").replace("{name}", clinic?.name || "")}
             </p>
+
+            {/* Post-assessment onboarding */}
+            <Card className="text-left max-w-md mx-auto border-primary/20">
+              <CardContent className="py-5 space-y-4">
+                <h3 className="font-semibold text-foreground text-sm">
+                  {language === "pt" ? "O que acontece agora?" : "What happens next?"}
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    {
+                      icon: "📋",
+                      title: language === "pt" ? "Avaliação enviada" : "Assessment submitted",
+                      desc: language === "pt"
+                        ? "Sua avaliação já está disponível para a equipe da clínica."
+                        : "Your assessment is now available to the clinic team.",
+                    },
+                    {
+                      icon: "🩺",
+                      title: language === "pt" ? "Análise profissional" : "Professional analysis",
+                      desc: language === "pt"
+                        ? "Um fisioterapeuta vai revisar seus dados e gerar um diagnóstico personalizado."
+                        : "A physiotherapist will review your data and generate a personalized diagnosis.",
+                    },
+                    {
+                      icon: "📞",
+                      title: language === "pt" ? "Contato da clínica" : "Clinic contact",
+                      desc: language === "pt"
+                        ? "A clínica entrará em contato para agendar seu atendimento ou enviar orientações."
+                        : "The clinic will contact you to schedule your appointment or send instructions.",
+                    },
+                  ].map((item, i) => (
+                    <div key={i} className="flex gap-3 items-start">
+                      <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="pt-4">
               <Button onClick={() => navigate("/")} variant="outline" className="rounded-xl">
                 {t("redflag_alert.back")}
