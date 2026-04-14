@@ -993,7 +993,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome ou email..."
+                placeholder={isPt ? "Buscar por nome, email, CPF ou telefone..." : "Search by name, email, CPF or phone..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -1017,8 +1017,16 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             const isHidden = hiddenKeys.has((p as any).groupKey);
             if (isHidden && !showHidden) return false;
             if (!searchQuery.trim()) return true;
-            const q = searchQuery.toLowerCase();
-            return p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q);
+            const q = searchQuery.toLowerCase().replace(/[.\-/()\s]/g, "");
+            const rec = (p as any).patientRecord;
+            const cpfRaw = (rec?.cpf || "").replace(/\D/g, "");
+            const phoneRaw = (rec?.phone || "").replace(/\D/g, "");
+            return (
+              p.name.toLowerCase().includes(q) ||
+              p.email.toLowerCase().includes(q) ||
+              cpfRaw.includes(q) ||
+              phoneRaw.includes(q)
+            );
           })
           .map((p) => {
           const firstScore = p.assessments[0]?.pain_score;
