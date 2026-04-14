@@ -26,7 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Plus, CalendarIcon, Clock, Video, MapPin, ExternalLink,
-  Loader2, Trash2, GripVertical, Upload,
+  Loader2, Trash2, GripVertical, Upload, Check,
 } from "lucide-react";
 import AgendaImportModal from "./AgendaImportModal";
 import { formatCpf, formatPhone } from "@/utils/masks";
@@ -123,6 +123,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [batchConfirming, setBatchConfirming] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
   const [selectedPatientKey, setSelectedPatientKey] = useState<string>("__new__");
@@ -526,6 +527,34 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     fetchAppointments();
   };
 
+  // Batch confirm all scheduled appointments for today
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const todayScheduledCount = appointments.filter(a => a.appointment_date === todayStr && a.status === "scheduled").length;
+
+  const handleBatchConfirm = async () => {
+    const todayScheduled = appointments.filter(a => a.appointment_date === todayStr && a.status === "scheduled");
+    if (todayScheduled.length === 0) return;
+    setBatchConfirming(true);
+    try {
+      if (isSimulated) {
+        setAppointments(prev => prev.map(a =>
+          a.appointment_date === todayStr && a.status === "scheduled" ? { ...a, status: "completed" } : a
+        ));
+      } else {
+        const ids = todayScheduled.map(a => a.id);
+        await (supabase.from("professional_appointments" as any) as any)
+          .update({ status: "completed" })
+          .in("id", ids);
+        await fetchAppointments();
+      }
+      toast({ title: isPt ? `${todayScheduled.length} atendimento(s) confirmado(s)` : `${todayScheduled.length} appointment(s) confirmed` });
+    } catch {
+      toast({ title: t("schedule.error"), variant: "destructive" });
+    } finally {
+      setBatchConfirming(false);
+    }
+  };
+
   // --- Drag & Drop ---
   const handleDragStart = (e: React.DragEvent, apt: Appointment) => {
     setDraggedApt(apt);
@@ -604,6 +633,18 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           <Button variant="outline" size="sm" className="text-xs" onClick={() => setViewDate(new Date())}>
             {t("schedule.today")}
           </Button>
+          {todayScheduledCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+              onClick={handleBatchConfirm}
+              disabled={batchConfirming}
+            >
+              {batchConfirming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">{isPt ? `Confirmar ${todayScheduledCount}` : `Confirm ${todayScheduledCount}`}</span>
+            </Button>
+          )}
           {!isSimulated && (professionalId || isClinicOnlyMode) && (
             <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setImportModalOpen(true)}>
               <Upload className="h-3.5 w-3.5" />

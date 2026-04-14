@@ -446,11 +446,16 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const initialPatient = searchParams.get("patient");
   const [selectedEmail, setSelectedEmail] = useState<string | null>(initialPatient);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [noteIncludeInPdf, setNoteIncludeInPdf] = useState<Record<string, boolean>>({});
   const [noteSaving, setNoteSaving] = useState<Record<string, boolean>>({});
   const [batchExporting, setBatchExporting] = useState(false);
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
+  const [quickNotePatient, setQuickNotePatient] = useState<{ groupKey: string; email: string; name: string } | null>(null);
+  const [quickNoteContent, setQuickNoteContent] = useState("");
+  const [quickNoteSaving, setQuickNoteSaving] = useState(false);
+  const [exerciseAdherence, setExerciseAdherence] = useState<Record<string, { total: number; completed: number }>>({});
   const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(new Set());
   const [showHidden, setShowHidden] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
@@ -503,6 +508,60 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     return () => window.removeEventListener("reload-pro-patients", handler);
   }, [professionalId, clinicId, isDemo]);
 
+  // Fetch exercise adherence for all patients' programs
+  useEffect(() => {
+    if (!professionalId || isDemo) return;
+    const fetchAdherence = async () => {
+      const { data: programs } = await (supabase.from("exercise_programs") as any)
+        .select("id, assessment_id")
+        .eq("professional_id", professionalId);
+      if (!programs || programs.length === 0) return;
+      const programIds = programs.map((p: any) => p.id);
+      const { data: items } = await (supabase.from("exercise_program_items") as any)
+        .select("id, program_id")
+        .in("program_id", programIds);
+      const { data: completions } = await (supabase.from("exercise_completions") as any)
+        .select("exercise_item_id, program_id")
+        .in("program_id", programIds);
+      // Group by assessment_id -> adherence
+      const adherenceMap: Record<string, { total: number; completed: number }> = {};
+      programs.forEach((prog: any) => {
+        const progItems = (items || []).filter((i: any) => i.program_id === prog.id);
+        const progCompletions = (completions || []).filter((c: any) => c.program_id === prog.id);
+        const uniqueCompleted = new Set(progCompletions.map((c: any) => c.exercise_item_id));
+        if (prog.assessment_id) {
+          adherenceMap[prog.assessment_id] = {
+            total: progItems.length,
+            completed: uniqueCompleted.size,
+          };
+        }
+      });
+      setExerciseAdherence(adherenceMap);
+    };
+    fetchAdherence();
+  }, [professionalId, isDemo]);
+
+  // Quick note save handler
+  const handleQuickNoteSave = async () => {
+    if (!quickNotePatient || !quickNoteContent.trim() || !professionalId) return;
+    setQuickNoteSaving(true);
+    try {
+      await (supabase.from("session_notes" as any) as any).insert({
+        professional_id: professionalId,
+        patient_email: quickNotePatient.email,
+        session_date: new Date().toISOString().slice(0, 10),
+        content: quickNoteContent.trim(),
+        ...(clinicId ? { clinic_id: clinicId } : {}),
+      });
+      toast({ title: "Evolução registrada!" });
+      setQuickNotePatient(null);
+      setQuickNoteContent("");
+    } catch {
+      toast({ title: "Erro ao salvar evolução", variant: "destructive" });
+    } finally {
+      setQuickNoteSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (!professionalId || !selectedEmail || isDemo) { setHepHistory([]); return; }
@@ -1011,11 +1070,32 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               </Button>
             )}
           </div>
+          {/* Status filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {(["all", "active", "inactive"] as const).map((status) => (
+              <Button
+                key={status}
+                variant={statusFilter === status ? "default" : "outline"}
+                size="sm"
+                className="text-xs rounded-xl h-7"
+                onClick={() => setStatusFilter(status)}
+              >
+                {status === "all" ? (language === "pt" ? "Todos" : "All") : status === "active" ? (language === "pt" ? "Ativos" : "Active") : (language === "pt" ? "Inativos (30d+)" : "Inactive (30d+)")}
+              </Button>
+            ))}
+          </div>
         </div>
         {patients
           .filter((p) => {
             const isHidden = hiddenKeys.has((p as any).groupKey);
             if (isHidden && !showHidden) return false;
+            // Status filter: active = last activity within 30 days, inactive = older
+            if (statusFilter !== "all") {
+              const daysSinceLast = Math.floor((Date.now() - new Date(p.lastDate).getTime()) / (1000 * 60 * 60 * 24));
+              const isActive = daysSinceLast <= 30;
+              if (statusFilter === "active" && !isActive) return false;
+              if (statusFilter === "inactive" && isActive) return false;
+            }
             if (!searchQuery.trim()) return true;
             const q = searchQuery.toLowerCase().replace(/[.\-/()\s]/g, "");
             const rec = (p as any).patientRecord;
@@ -1127,6 +1207,24 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                           {language === "pt" ? "Completar cadastro" : "Complete registration"}
                         </Badge>
                       )}
+                      {/* Exercise adherence indicator */}
+                      {(() => {
+                        const patientAdherence = p.assessments.reduce((acc: { total: number; completed: number }, a: any) => {
+                          const adh = exerciseAdherence[a.id];
+                          if (adh) { acc.total += adh.total; acc.completed += adh.completed; }
+                          return acc;
+                        }, { total: 0, completed: 0 });
+                        if (patientAdherence.total > 0) {
+                          const pct = Math.round((patientAdherence.completed / patientAdherence.total) * 100);
+                          const color = pct >= 70 ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : pct >= 40 ? "bg-amber-500/10 text-amber-600 border-amber-200" : "bg-destructive/10 text-destructive border-destructive/20";
+                          return (
+                            <Badge variant="outline" className={`text-[10px] gap-1 ${color}`}>
+                              <Dumbbell className="h-3 w-3" /> {pct}% {language === "pt" ? "adesão" : "adherence"}
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -1139,6 +1237,21 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    {!readOnly && !isHidden && p.email && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title={language === "pt" ? "Nota rápida" : "Quick note"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQuickNotePatient({ groupKey: (p as any).groupKey, email: p.email, name: p.name });
+                          setQuickNoteContent("");
+                        }}
+                      >
+                        <NotebookPen className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    )}
                     {!readOnly && (isHidden ? (
                       <Button
                         variant="ghost"
@@ -1182,6 +1295,36 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           onAdded={() => window.dispatchEvent(new CustomEvent("reload-pro-patients"))}
           editPatient={editPatientData}
         />
+
+        {/* Quick note dialog */}
+        <Dialog open={!!quickNotePatient} onOpenChange={(open) => { if (!open) setQuickNotePatient(null); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <NotebookPen className="h-4 w-4 text-primary" />
+                {language === "pt" ? "Nota rápida de evolução" : "Quick evolution note"}
+              </DialogTitle>
+              <DialogDescription>
+                {quickNotePatient?.name} — {new Date().toLocaleDateString("pt-BR")}
+              </DialogDescription>
+            </DialogHeader>
+            <Textarea
+              placeholder={language === "pt" ? "Ex: Paciente relata melhora de 30% na dor. Mantém exercícios..." : "Ex: Patient reports 30% pain improvement..."}
+              value={quickNoteContent}
+              onChange={(e) => setQuickNoteContent(e.target.value)}
+              className="min-h-[100px] resize-y text-sm"
+            />
+            <DialogFooter>
+              <Button variant="ghost" size="sm" onClick={() => setQuickNotePatient(null)}>
+                {language === "pt" ? "Cancelar" : "Cancel"}
+              </Button>
+              <Button size="sm" className="gap-1.5 rounded-xl" onClick={handleQuickNoteSave} disabled={quickNoteSaving || !quickNoteContent.trim()}>
+                {quickNoteSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5" />}
+                {language === "pt" ? "Salvar" : "Save"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Long-press popup */}
         <AlertDialog open={!!longPressPatient} onOpenChange={(open) => { if (!open) setLongPressPatient(null); }}>
