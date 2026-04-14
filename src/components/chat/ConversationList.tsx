@@ -57,7 +57,6 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
     setNewConvLoading(true);
     try {
       if (mode === "professional" && professionalId) {
-        // Get patient emails from assessments linked to this professional
         const { data: assessments } = await supabase
           .from("assessments")
           .select("patient_email, patient_name, user_id")
@@ -75,26 +74,23 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
           }
         }
         setNewConvPatients(Array.from(uniqueUsers.values()));
-      } else if (mode === "patient") {
-        // Patient: load professionals they have assessments with
+      } else if (mode === "patient" && user) {
         const { data: assessments } = await supabase
           .from("assessments")
           .select("professional_id")
-          .eq("user_id", user?.id)
+          .eq("user_id", user.id)
           .not("professional_id", "is", null);
 
-        const proIds = [...new Set((assessments || []).map(a => a.professional_id).filter(Boolean))];
-        const pros: { user_id: string; name: string; email: string }[] = [];
-        for (const pid of proIds) {
-          const { data: pro } = await (supabase.from("professionals" as any) as any)
+        const proIds = [...new Set((assessments || []).map(a => a.professional_id).filter(Boolean))] as string[];
+        if (proIds.length > 0) {
+          const { data: pros } = await supabase
+            .from("professionals")
             .select("id, full_name, user_id")
-            .eq("id", pid)
-            .single();
-          if (pro) {
-            pros.push({ user_id: pro.user_id, name: pro.full_name, email: "" });
-          }
+            .in("id", proIds);
+          setNewConvPatients(
+            (pros || []).map(p => ({ user_id: p.user_id, name: p.full_name, email: "" }))
+          );
         }
-        setNewConvPatients(pros);
       }
     } catch {}
     setNewConvLoading(false);
@@ -105,13 +101,12 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
     setCreatingConv(otherUserId);
     try {
       const patientUserId = mode === "patient" ? user.id : otherUserId;
-      const profId = mode === "professional" ? professionalId : null;
 
-      // If professional mode, get professional_id; if patient mode, find the professional_id from assessments
-      let targetProfId = profId;
+      // Resolve professional_id
+      let targetProfId = mode === "professional" ? professionalId : null;
       if (mode === "patient") {
-        // otherUserId is the professional's user_id, find professional_id
-        const { data: pro } = await (supabase.from("professionals" as any) as any)
+        const { data: pro } = await supabase
+          .from("professionals")
           .select("id")
           .eq("user_id", otherUserId)
           .single();
@@ -121,7 +116,8 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
       if (!targetProfId) throw new Error("No professional found");
 
       // Check if conversation already exists
-      const { data: existing } = await (supabase.from("conversations" as any) as any)
+      const { data: existing } = await supabase
+        .from("conversations")
         .select("id")
         .eq("professional_id", targetProfId)
         .eq("patient_user_id", patientUserId)
@@ -130,23 +126,25 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
       let convId: string;
       if (existing && existing.length > 0) {
         convId = existing[0].id;
-        // Unhide if hidden
         const unhideField = mode === "patient" ? "hidden_by_patient" : "hidden_by_professional";
-        await (supabase.from("conversations" as any) as any)
+        await supabase
+          .from("conversations")
           .update({ [unhideField]: false })
           .eq("id", convId);
       } else {
-        const { data: newConv, error } = await (supabase.from("conversations" as any) as any)
+        const { data: newConv, error } = await supabase
+          .from("conversations")
           .insert({ professional_id: targetProfId, patient_user_id: patientUserId })
           .select("id")
           .single();
         if (error) throw error;
         convId = newConv.id;
 
-        // Send push notification to the professional when a patient starts a new conversation
+        // Push notification for new conversation from patient
         if (mode === "patient") {
           try {
-            const { data: pro } = await (supabase.from("professionals" as any) as any)
+            const { data: pro } = await supabase
+              .from("professionals")
               .select("user_id")
               .eq("id", targetProfId)
               .single();
@@ -193,8 +191,6 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
 
   const filteredConversations = useMemo(() => {
     let list = [...conversations];
-
-    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
@@ -203,14 +199,11 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
           (c.last_message && c.last_message.toLowerCase().includes(q))
       );
     }
-
-    // Sort: unread first, then by updated_at desc
     list.sort((a, b) => {
       if (a.unread_count > 0 && b.unread_count === 0) return -1;
       if (a.unread_count === 0 && b.unread_count > 0) return 1;
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
     });
-
     return list;
   }, [conversations, searchQuery]);
 
@@ -219,7 +212,6 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
     fetchConversations();
   }, [user, mode, professionalId]);
 
-  // Open initial conversation if provided
   useEffect(() => {
     if (initialConversationId && conversations.length > 0) {
       const conv = conversations.find((c) => c.id === initialConversationId);
@@ -248,30 +240,30 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
   const syncConversationParam = (convId: string | null) => {
     const currentConv = searchParams.get("conv");
     if (currentConv === convId || (!convId && !currentConv)) return;
-
     const nextParams = new URLSearchParams(searchParams);
-
     if (convId) {
       nextParams.set("conv", convId);
     } else {
       nextParams.delete("conv");
     }
-
     setSearchParams(nextParams, { replace: true });
   };
 
+  /**
+   * Optimized: batch-fetch all conversations with related data
+   * instead of N+1 queries per conversation.
+   */
   const fetchConversations = async () => {
     if (!user) return;
     setLoading(true);
 
-    let query = (supabase.from("conversations" as any) as any).select("*");
-
+    // 1. Fetch conversations
+    let query = supabase.from("conversations").select("*");
     if (mode === "patient") {
       query = query.eq("patient_user_id", user.id).eq("hidden_by_patient", false);
     } else if (professionalId) {
       query = query.eq("professional_id", professionalId).eq("hidden_by_professional", false);
     }
-
     const { data: convs } = await query.order("updated_at", { ascending: false });
 
     if (!convs || convs.length === 0) {
@@ -280,46 +272,71 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
       return;
     }
 
-    // Enrich with other party name + last message + unread count
-    const enriched: ConversationItem[] = [];
+    const convIds = convs.map((c) => c.id);
 
-    for (const conv of convs) {
-      let otherName = "...";
-
-      if (mode === "patient") {
-        const { data: pro } = await (supabase.from("professionals" as any) as any)
-          .select("full_name")
-          .eq("id", conv.professional_id)
-          .single();
-        otherName = pro?.full_name || "Profissional";
-      } else {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("user_id", conv.patient_user_id)
-          .single();
-        otherName = profile?.full_name || "Paciente";
+    // 2. Batch-fetch names for the other party
+    let namesMap: Record<string, string> = {};
+    if (mode === "patient") {
+      const proIds = [...new Set(convs.map((c) => c.professional_id))];
+      const { data: pros } = await supabase
+        .from("professionals")
+        .select("id, full_name")
+        .in("id", proIds);
+      for (const p of pros || []) {
+        namesMap[p.id] = p.full_name;
       }
-
-      const { data: lastMsgs } = await (supabase.from("messages" as any) as any)
-        .select("content, created_at")
-        .eq("conversation_id", conv.id)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      const { count } = await (supabase.from("messages" as any) as any)
-        .select("id", { count: "exact", head: true })
-        .eq("conversation_id", conv.id)
-        .neq("sender_user_id", user.id)
-        .is("read_at", null);
-
-      enriched.push({
-        ...conv,
-        other_name: otherName,
-        last_message: lastMsgs?.[0]?.content || "",
-        unread_count: count || 0,
-      });
+    } else {
+      const patientUserIds = [...new Set(convs.map((c) => c.patient_user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", patientUserIds);
+      for (const p of profiles || []) {
+        namesMap[p.user_id] = p.full_name || "Paciente";
+      }
     }
+
+    // 3. Batch-fetch last messages for all conversations
+    // We fetch the most recent message per conversation using a single query
+    const { data: allMessages } = await supabase
+      .from("messages")
+      .select("conversation_id, content, created_at")
+      .in("conversation_id", convIds)
+      .order("created_at", { ascending: false });
+
+    const lastMessageMap: Record<string, string> = {};
+    for (const msg of allMessages || []) {
+      if (!lastMessageMap[msg.conversation_id]) {
+        lastMessageMap[msg.conversation_id] = msg.content;
+      }
+    }
+
+    // 4. Batch-fetch unread counts
+    const { data: unreadMessages } = await supabase
+      .from("messages")
+      .select("conversation_id")
+      .in("conversation_id", convIds)
+      .neq("sender_user_id", user.id)
+      .is("read_at", null);
+
+    const unreadMap: Record<string, number> = {};
+    for (const msg of unreadMessages || []) {
+      unreadMap[msg.conversation_id] = (unreadMap[msg.conversation_id] || 0) + 1;
+    }
+
+    // 5. Assemble enriched list
+    const enriched: ConversationItem[] = convs.map((conv) => {
+      const nameKey = mode === "patient" ? conv.professional_id : conv.patient_user_id;
+      return {
+        id: conv.id,
+        patient_user_id: conv.patient_user_id,
+        professional_id: conv.professional_id,
+        updated_at: conv.updated_at,
+        other_name: namesMap[nameKey] || (mode === "patient" ? "Profissional" : "Paciente"),
+        last_message: lastMessageMap[conv.id] || "",
+        unread_count: unreadMap[conv.id] || 0,
+      };
+    });
 
     setConversations(enriched);
     setLoading(false);
@@ -331,7 +348,8 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
     setDeletingId(convId);
     try {
       const field = mode === "patient" ? "hidden_by_patient" : "hidden_by_professional";
-      await (supabase.from("conversations" as any) as any)
+      await supabase
+        .from("conversations")
         .update({ [field]: true })
         .eq("id", convId);
       setConversations((prev) => prev.filter((c) => c.id !== convId));
