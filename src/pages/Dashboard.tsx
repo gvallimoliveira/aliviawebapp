@@ -16,7 +16,7 @@ import AdaptiveProgressionCard from "@/components/dashboard/AdaptiveProgressionC
 import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
 import ReferralCard from "@/components/dashboard/ReferralCard";
 import ProDashboard from "@/components/dashboard/ProDashboard";
-import ConversationList from "@/components/chat/ConversationList";
+import MessagesTab from "@/components/dashboard/MessagesTab";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import WelcomeSection from "@/components/dashboard/WelcomeSection";
 import QuickActions from "@/components/dashboard/QuickActions";
@@ -35,8 +35,9 @@ import {
   Link2, Copy, Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Search, User, Stethoscope as StethoscopeIcon } from "lucide-react";
+import { Search } from "lucide-react";
 import ProSchedule from "@/components/dashboard/ProSchedule";
+import DailySummaryCard from "@/components/dashboard/DailySummaryCard";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface PremiumAccess {
@@ -85,8 +86,8 @@ const Dashboard = () => {
   
   const [activeTab, setActiveTab] = useState<string>("health");
   const [unreadCount, setUnreadCount] = useState(0);
-  const [msgSearch, setMsgSearch] = useState("");
-  const [msgFilter, setMsgFilter] = useState<"all" | "patient" | "professional">("all");
+
+
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
 
@@ -280,6 +281,12 @@ const Dashboard = () => {
             {/* Agenda */}
             <TabsContent value="agenda" className="space-y-6">
               <ClinicTrialBanner />
+              <DailySummaryCard
+                professionalId={professional?.id}
+                clinicId={activeClinic.clinic_id}
+                onNavigateToAgenda={() => {}}
+                onNavigateToPatients={() => setActiveTab("patients")}
+              />
               <div className="relative">
                 <ProSchedule
                   professionalId={professional?.id}
@@ -371,31 +378,11 @@ const Dashboard = () => {
 
             {/* Mensagens */}
             <TabsContent value="messages" className="space-y-6">
-              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
-              </h2>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={msgSearch}
-                  onChange={(e) => setMsgSearch(e.target.value)}
-                  placeholder={t("chat.search_placeholder")}
-                  className="pl-9 rounded-xl"
-                />
-              </div>
-              {professional && (
-                <div className="flex gap-2">
-                  <Button variant={msgFilter === "all" ? "default" : "outline"} size="sm" className="rounded-full text-xs" onClick={() => setMsgFilter("all")}>{t("chat.filter_all")}</Button>
-                  <Button variant={msgFilter === "patient" ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1" onClick={() => setMsgFilter("patient")}><User className="h-3 w-3" />{t("chat.filter_patient")}</Button>
-                  <Button variant={msgFilter === "professional" ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1" onClick={() => setMsgFilter("professional")}><StethoscopeIcon className="h-3 w-3" />{t("chat.filter_professional")}</Button>
-                </div>
-              )}
-              {(msgFilter === "all" || msgFilter === "patient") && (
-                <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />
-              )}
-              {professional && (msgFilter === "all" || msgFilter === "professional") && (
-                <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} canInitiateConversation={true} />
-              )}
+              <MessagesTab
+                professional={professional}
+                initialConversationId={convFromUrl}
+                canInitiateConversation={true}
+              />
             </TabsContent>
           </Tabs>
         ) : professional ? (
@@ -415,22 +402,18 @@ const Dashboard = () => {
             </TabsList>
             <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
             <TabsContent value="messages" className="space-y-6">
-              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
-              </h2>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input value={msgSearch} onChange={(e) => setMsgSearch(e.target.value)} placeholder={t("chat.search_placeholder")} className="pl-9 rounded-xl" />
-              </div>
-              <div className="flex gap-2">
-                <Button variant={msgFilter === "all" ? "default" : "outline"} size="sm" className="rounded-full text-xs" onClick={() => setMsgFilter("all")}>{t("chat.filter_all")}</Button>
-                <Button variant={msgFilter === "patient" ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1" onClick={() => setMsgFilter("patient")}><User className="h-3 w-3" />{t("chat.filter_patient")}</Button>
-                <Button variant={msgFilter === "professional" ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1" onClick={() => setMsgFilter("professional")}><StethoscopeIcon className="h-3 w-3" />{t("chat.filter_professional")}</Button>
-              </div>
-              {(msgFilter === "all" || msgFilter === "patient") && <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />}
-              {(msgFilter === "all" || msgFilter === "professional") && <ConversationList mode="professional" professionalId={professional.id} initialConversationId={convFromUrl} searchQuery={msgSearch} canInitiateConversation={false} />}
+              <MessagesTab
+                professional={professional}
+                initialConversationId={convFromUrl}
+                canInitiateConversation={false}
+              />
             </TabsContent>
             <TabsContent value="agenda" className="space-y-6">
+              <DailySummaryCard
+                professionalId={professional.id}
+                onNavigateToAgenda={() => {}}
+                onNavigateToPatients={() => setActiveTab("professional")}
+              />
               <ProSchedule professionalId={professional.id} />
             </TabsContent>
             <TabsContent value="professional" className="space-y-8">
@@ -448,14 +431,7 @@ const Dashboard = () => {
             </TabsList>
             <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
             <TabsContent value="messages" className="space-y-6">
-              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-muted-foreground" />{t("chat.messages_title")}
-              </h2>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input value={msgSearch} onChange={(e) => setMsgSearch(e.target.value)} placeholder={t("chat.search_placeholder")} className="pl-9 rounded-xl" />
-              </div>
-              <ConversationList mode="patient" initialConversationId={convFromUrl} searchQuery={msgSearch} />
+              <MessagesTab initialConversationId={convFromUrl} />
             </TabsContent>
           </Tabs>
         )}
