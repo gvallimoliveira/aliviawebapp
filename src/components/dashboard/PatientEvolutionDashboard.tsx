@@ -1089,6 +1089,13 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           .filter((p) => {
             const isHidden = hiddenKeys.has((p as any).groupKey);
             if (isHidden && !showHidden) return false;
+            // Status filter: active = last activity within 30 days, inactive = older
+            if (statusFilter !== "all") {
+              const daysSinceLast = Math.floor((Date.now() - new Date(p.lastDate).getTime()) / (1000 * 60 * 60 * 24));
+              const isActive = daysSinceLast <= 30;
+              if (statusFilter === "active" && !isActive) return false;
+              if (statusFilter === "inactive" && isActive) return false;
+            }
             if (!searchQuery.trim()) return true;
             const q = searchQuery.toLowerCase().replace(/[.\-/()\s]/g, "");
             const rec = (p as any).patientRecord;
