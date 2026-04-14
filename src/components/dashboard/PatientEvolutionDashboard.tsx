@@ -1296,6 +1296,36 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           editPatient={editPatientData}
         />
 
+        {/* Quick note dialog */}
+        <Dialog open={!!quickNotePatient} onOpenChange={(open) => { if (!open) setQuickNotePatient(null); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <NotebookPen className="h-4 w-4 text-primary" />
+                {language === "pt" ? "Nota rápida de evolução" : "Quick evolution note"}
+              </DialogTitle>
+              <DialogDescription>
+                {quickNotePatient?.name} — {new Date().toLocaleDateString("pt-BR")}
+              </DialogDescription>
+            </DialogHeader>
+            <Textarea
+              placeholder={language === "pt" ? "Ex: Paciente relata melhora de 30% na dor. Mantém exercícios..." : "Ex: Patient reports 30% pain improvement..."}
+              value={quickNoteContent}
+              onChange={(e) => setQuickNoteContent(e.target.value)}
+              className="min-h-[100px] resize-y text-sm"
+            />
+            <DialogFooter>
+              <Button variant="ghost" size="sm" onClick={() => setQuickNotePatient(null)}>
+                {language === "pt" ? "Cancelar" : "Cancel"}
+              </Button>
+              <Button size="sm" className="gap-1.5 rounded-xl" onClick={handleQuickNoteSave} disabled={quickNoteSaving || !quickNoteContent.trim()}>
+                {quickNoteSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5" />}
+                {language === "pt" ? "Salvar" : "Save"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Long-press popup */}
         <AlertDialog open={!!longPressPatient} onOpenChange={(open) => { if (!open) setLongPressPatient(null); }}>
           <AlertDialogContent onClick={(e) => e.stopPropagation()}>
