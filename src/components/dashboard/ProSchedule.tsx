@@ -527,6 +527,34 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     fetchAppointments();
   };
 
+  // Batch confirm all scheduled appointments for today
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const todayScheduledCount = appointments.filter(a => a.appointment_date === todayStr && a.status === "scheduled").length;
+
+  const handleBatchConfirm = async () => {
+    const todayScheduled = appointments.filter(a => a.appointment_date === todayStr && a.status === "scheduled");
+    if (todayScheduled.length === 0) return;
+    setBatchConfirming(true);
+    try {
+      if (isSimulated) {
+        setAppointments(prev => prev.map(a =>
+          a.appointment_date === todayStr && a.status === "scheduled" ? { ...a, status: "completed" } : a
+        ));
+      } else {
+        const ids = todayScheduled.map(a => a.id);
+        await (supabase.from("professional_appointments" as any) as any)
+          .update({ status: "completed" })
+          .in("id", ids);
+        await fetchAppointments();
+      }
+      toast({ title: isPt ? `${todayScheduled.length} atendimento(s) confirmado(s)` : `${todayScheduled.length} appointment(s) confirmed` });
+    } catch {
+      toast({ title: t("schedule.error"), variant: "destructive" });
+    } finally {
+      setBatchConfirming(false);
+    }
+  };
+
   // --- Drag & Drop ---
   const handleDragStart = (e: React.DragEvent, apt: Appointment) => {
     setDraggedApt(apt);
