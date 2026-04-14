@@ -298,42 +298,54 @@ export type Database = {
       clinics: {
         Row: {
           address: string | null
+          brand_color: string | null
           created_at: string
           id: string
           logo_url: string | null
           max_members: number
           name: string
+          operating_hours_end: string | null
+          operating_hours_start: string | null
           owner_user_id: string
           phone: string | null
           subscription_status: string
           subscription_stripe_id: string | null
           updated_at: string
+          working_days: number[] | null
         }
         Insert: {
           address?: string | null
+          brand_color?: string | null
           created_at?: string
           id?: string
           logo_url?: string | null
           max_members?: number
           name: string
+          operating_hours_end?: string | null
+          operating_hours_start?: string | null
           owner_user_id: string
           phone?: string | null
           subscription_status?: string
           subscription_stripe_id?: string | null
           updated_at?: string
+          working_days?: number[] | null
         }
         Update: {
           address?: string | null
+          brand_color?: string | null
           created_at?: string
           id?: string
           logo_url?: string | null
           max_members?: number
           name?: string
+          operating_hours_end?: string | null
+          operating_hours_start?: string | null
           owner_user_id?: string
           phone?: string | null
           subscription_status?: string
           subscription_stripe_id?: string | null
           updated_at?: string
+          working_days?: number[] | null
         }
         Relationships: []
       }

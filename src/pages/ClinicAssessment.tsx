@@ -29,7 +29,7 @@ const ClinicAssessment = () => {
   const reassessmentId = searchParams.get("reassessment");
 
   const [step, setStep] = useState<ClinicStep>("loading_check");
-  const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null } | null>(null);
+  const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null; brand_color: string | null } | null>(null);
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
@@ -51,7 +51,7 @@ const ClinicAssessment = () => {
     const checkClinic = async () => {
       const { data, error } = await supabase
         .from("clinics")
-        .select("id, name, logo_url, subscription_status")
+        .select("id, name, logo_url, subscription_status, brand_color")
         .eq("id", clinicId)
         .maybeSingle();
 
@@ -257,7 +257,10 @@ const ClinicAssessment = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen bg-background"
+      style={clinic?.brand_color ? { "--brand-accent": clinic.brand_color } as React.CSSProperties : undefined}
+    >
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
@@ -273,7 +276,13 @@ const ClinicAssessment = () => {
                 className="h-9 w-9 rounded-full object-cover border border-border"
               />
             )}
-            <span className="text-xs font-medium px-3 py-1 rounded-full bg-primary/10 text-primary">
+            <span
+              className="text-xs font-medium px-3 py-1 rounded-full"
+              style={clinic?.brand_color
+                ? { backgroundColor: `${clinic.brand_color}18`, color: clinic.brand_color }
+                : undefined
+              }
+            >
               <Building2 className="h-3 w-3 inline mr-1" />
               {clinic?.name || "Clínica"}
             </span>
