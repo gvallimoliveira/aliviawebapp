@@ -7,9 +7,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Settings, Upload, Trash2, Building2, Phone, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Settings, Upload, Trash2, Building2, Phone, MapPin, Clock, CalendarDays, Palette } from "lucide-react";
 
 const MAX_SIZE = 512 * 1024;
+
+const DAY_LABELS: Record<string, string[]> = {
+  pt: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
+  en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  es: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+};
+
+const BRAND_COLORS = [
+  { value: null, label: "Padrão", hex: "hsl(168 55% 38%)" },
+  { value: "#2563eb", label: "Azul", hex: "#2563eb" },
+  { value: "#059669", label: "Verde", hex: "#059669" },
+  { value: "#7c3aed", label: "Roxo", hex: "#7c3aed" },
+  { value: "#dc2626", label: "Vermelho", hex: "#dc2626" },
+  { value: "#d97706", label: "Âmbar", hex: "#d97706" },
+  { value: "#0891b2", label: "Ciano", hex: "#0891b2" },
+  { value: "#be185d", label: "Rosa", hex: "#be185d" },
+];
 
 const ClinicSettingsCard = () => {
   const { activeClinic, refetch } = useClinic();
@@ -19,6 +37,10 @@ const ClinicSettingsCard = () => {
   const [clinicName, setClinicName] = useState(activeClinic?.clinic_name || "");
   const [phone, setPhone] = useState(activeClinic?.phone || "");
   const [address, setAddress] = useState(activeClinic?.address || "");
+  const [hoursStart, setHoursStart] = useState(activeClinic?.operating_hours_start || "08:00");
+  const [hoursEnd, setHoursEnd] = useState(activeClinic?.operating_hours_end || "18:00");
+  const [workingDays, setWorkingDays] = useState<number[]>(activeClinic?.working_days || [1, 2, 3, 4, 5]);
+  const [brandColor, setBrandColor] = useState<string | null>(activeClinic?.brand_color || null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -82,10 +104,23 @@ const ClinicSettingsCard = () => {
     setUploading(false);
   };
 
+  const toggleDay = (day: number) => {
+    setWorkingDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
+    );
+  };
+
+  const arraysEqual = (a: number[], b: number[]) =>
+    a.length === b.length && a.every((v, i) => v === b[i]);
+
   const hasChanges =
     clinicName.trim() !== (activeClinic.clinic_name || "") ||
     phone.trim() !== (activeClinic.phone || "") ||
-    address.trim() !== (activeClinic.address || "");
+    address.trim() !== (activeClinic.address || "") ||
+    hoursStart !== (activeClinic.operating_hours_start || "08:00") ||
+    hoursEnd !== (activeClinic.operating_hours_end || "18:00") ||
+    !arraysEqual(workingDays, activeClinic.working_days || [1, 2, 3, 4, 5]) ||
+    brandColor !== (activeClinic.brand_color || null);
 
   const handleSave = async () => {
     if (!clinicName.trim()) return;
@@ -97,6 +132,10 @@ const ClinicSettingsCard = () => {
           name: clinicName.trim(),
           phone: phone.trim() || null,
           address: address.trim() || null,
+          operating_hours_start: hoursStart,
+          operating_hours_end: hoursEnd,
+          working_days: workingDays,
+          brand_color: brandColor,
         })
         .eq("id", activeClinic.clinic_id);
       if (error) throw error;
@@ -107,6 +146,8 @@ const ClinicSettingsCard = () => {
     }
     setSaving(false);
   };
+
+  const dayLabels = DAY_LABELS[lang] || DAY_LABELS.pt;
 
   return (
     <Card>
@@ -182,6 +223,88 @@ const ClinicSettingsCard = () => {
             {lang === "pt" ? "Endereço" : "Address"}
           </Label>
           <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={lang === "pt" ? "Rua, número, bairro, cidade - UF" : "Full address"} maxLength={200} />
+        </div>
+
+        {/* Operating Hours */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4" />
+            {lang === "pt" ? "Horário de Funcionamento" : lang === "es" ? "Horario de Atención" : "Operating Hours"}
+          </Label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="time"
+              value={hoursStart}
+              onChange={(e) => setHoursStart(e.target.value)}
+              className="w-28"
+            />
+            <span className="text-muted-foreground text-sm">{lang === "pt" ? "às" : "to"}</span>
+            <Input
+              type="time"
+              value={hoursEnd}
+              onChange={(e) => setHoursEnd(e.target.value)}
+              className="w-28"
+            />
+          </div>
+        </div>
+
+        {/* Working Days */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <CalendarDays className="h-4 w-4" />
+            {lang === "pt" ? "Dias de Atendimento" : lang === "es" ? "Días de Atención" : "Working Days"}
+          </Label>
+          <div className="flex flex-wrap gap-1.5">
+            {dayLabels.map((label, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => toggleDay(idx)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                  workingDays.includes(idx)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:border-primary/50"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Brand Color */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <Palette className="h-4 w-4" />
+            {lang === "pt" ? "Cor do Link Institucional" : lang === "es" ? "Color del Enlace" : "Branding Color"}
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            {lang === "pt"
+              ? "Personaliza a cor de destaque na página de avaliação da clínica."
+              : "Customizes the accent color on the clinic assessment page."}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {BRAND_COLORS.map((c) => (
+              <button
+                key={c.value ?? "default"}
+                type="button"
+                onClick={() => setBrandColor(c.value)}
+                className={`w-8 h-8 rounded-full border-2 transition-all ${
+                  brandColor === c.value
+                    ? "border-foreground scale-110 ring-2 ring-ring ring-offset-2 ring-offset-background"
+                    : "border-border hover:scale-105"
+                }`}
+                style={{ backgroundColor: c.hex }}
+                title={c.label}
+              />
+            ))}
+          </div>
+          {brandColor && (
+            <Badge variant="outline" className="text-xs gap-1.5">
+              <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: brandColor }} />
+              {BRAND_COLORS.find((c) => c.value === brandColor)?.label}
+            </Badge>
+          )}
         </div>
 
         {/* Save button */}

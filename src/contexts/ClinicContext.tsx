@@ -15,6 +15,10 @@ interface ClinicMembership {
   logo_url: string | null;
   phone: string | null;
   address: string | null;
+  operating_hours_start: string | null;
+  operating_hours_end: string | null;
+  working_days: number[] | null;
+  brand_color: string | null;
 }
 
 interface ClinicContextType {
@@ -43,7 +47,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       const { data: members } = await supabase
         .from("clinic_members")
-        .select("clinic_id, role, clinics(name, subscription_status, max_members, created_at, logo_url, phone, address)")
+        .select("clinic_id, role, clinics(name, subscription_status, max_members, created_at, logo_url, phone, address, operating_hours_start, operating_hours_end, working_days, brand_color)")
         .eq("user_id", user.id)
         .eq("status", "active");
 
@@ -57,6 +61,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         logo_url: m.clinics?.logo_url || null,
         phone: m.clinics?.phone || null,
         address: m.clinics?.address || null,
+        operating_hours_start: m.clinics?.operating_hours_start || null,
+        operating_hours_end: m.clinics?.operating_hours_end || null,
+        working_days: m.clinics?.working_days || null,
+        brand_color: m.clinics?.brand_color || null,
       }));
       setMemberships(mapped);
 
