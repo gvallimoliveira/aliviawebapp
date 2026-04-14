@@ -597,6 +597,61 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     setHepModalOpen(true);
   };
 
+  const handleSendHepViaChat = async (link: string, patientEmail: string) => {
+    if (!professionalId || readOnly) return;
+    try {
+      // Find conversation with this patient
+      const { data: convs } = await (supabase.from("conversations") as any)
+        .select("id, patient_user_id")
+        .eq("professional_id", professionalId);
+
+      // Find patient user_id by email
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .limit(1000);
+
+      // Match patient email to user_id through assessments
+      const { data: patientAssessments } = await supabase
+        .from("assessments")
+        .select("user_id")
+        .eq("patient_email", patientEmail)
+        .not("user_id", "is", null)
+        .limit(1);
+
+      const patientUserId = patientAssessments?.[0]?.user_id;
+      if (!patientUserId) {
+        toast({ title: language === "pt" ? "Paciente não possui conta para chat" : "Patient has no account for chat", variant: "destructive" });
+        return;
+      }
+
+      const conv = convs?.find((c: any) => c.patient_user_id === patientUserId);
+      if (!conv) {
+        toast({ title: language === "pt" ? "Nenhuma conversa encontrada com este paciente" : "No conversation found with this patient", variant: "destructive" });
+        return;
+      }
+
+      // Send message with the link
+      const { data: pro } = await supabase
+        .from("professionals")
+        .select("user_id")
+        .eq("id", professionalId)
+        .single();
+
+      if (!pro?.user_id) return;
+
+      await (supabase.from("messages") as any).insert({
+        conversation_id: conv.id,
+        sender_user_id: pro.user_id,
+        content: `💪 ${language === "pt" ? "Seu programa de exercícios" : "Your exercise program"}: ${link}`,
+      });
+
+      toast({ title: language === "pt" ? "Link enviado via chat!" : "Link sent via chat!" });
+    } catch {
+      toast({ title: language === "pt" ? "Erro ao enviar via chat" : "Error sending via chat", variant: "destructive" });
+    }
+  };
+
   const handleDeletePatient = async (groupKey: string, assessmentIds: string[]) => {
     setDeletingPatient(groupKey);
     try {
