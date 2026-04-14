@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -24,8 +24,10 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [otherTyping, setOtherTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastSentRef = useRef(0);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Video call (only active when feature flag is on)
   const vc = useVideoCall(conversationId);
@@ -34,18 +36,20 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
     if (!conversationId || !user) return;
 
     // Fetch existing messages
-    (supabase.from("messages" as any) as any)
+    supabase
+      .from("messages")
       .select("*")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true })
-      .then(({ data }: any) => {
+      .then(({ data }) => {
         setMessages(data || []);
         setLoading(false);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
       });
 
     // Mark unread messages as read
-    (supabase.from("messages" as any) as any)
+    supabase
+      .from("messages")
       .update({ read_at: new Date().toISOString() })
       .eq("conversation_id", conversationId)
       .neq("sender_user_id", user.id)
@@ -68,11 +72,27 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
           setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
           // Auto-mark as read if from other user
           if (payload.new.sender_user_id !== user.id) {
-            (supabase.from("messages" as any) as any)
+            supabase
+              .from("messages")
               .update({ read_at: new Date().toISOString() })
               .eq("id", payload.new.id)
               .then(() => {});
           }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload: any) => {
+          // Update read_at in local state for read receipts
+          setMessages((prev) =>
+            prev.map((m) => (m.id === payload.new.id ? { ...m, read_at: payload.new.read_at } : m))
+          );
         }
       )
       .subscribe();
@@ -82,6 +102,52 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
     };
   }, [conversationId, user]);
 
+  // Typing indicator via Presence
+  useEffect(() => {
+    if (!conversationId || !user) return;
+
+    const presenceChannel = supabase.channel(`typing-${conversationId}`, {
+      config: { presence: { key: user.id } },
+    });
+
+    presenceChannel
+      .on("presence", { event: "sync" }, () => {
+        const state = presenceChannel.presenceState();
+        const otherUsers = Object.keys(state).filter((k) => k !== user.id);
+        const isTyping = otherUsers.some((uid) => {
+          const presences = state[uid] as any[];
+          return presences?.some((p: any) => p.typing);
+        });
+        setOtherTyping(isTyping);
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await presenceChannel.track({ typing: false });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [conversationId, user]);
+
+  const broadcastTyping = useCallback(
+    (isTyping: boolean) => {
+      if (!user) return;
+      const channel = supabase.channel(`typing-${conversationId}`);
+      // We use the existing subscription; track updates presence
+      channel.track({ typing: isTyping });
+    },
+    [conversationId, user]
+  );
+
+  const handleTextChange = (value: string) => {
+    setText(value);
+    broadcastTyping(true);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => broadcastTyping(false), 2000);
+  };
+
   const handleSend = async () => {
     if (!text.trim() || !user || sending) return;
     // Rate limit: 1 msg/second
@@ -90,10 +156,11 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
     lastSentRef.current = now;
 
     setSending(true);
+    broadcastTyping(false);
     const content = text.trim().slice(0, 2000);
     setText("");
 
-    await (supabase.from("messages" as any) as any).insert({
+    await supabase.from("messages").insert({
       conversation_id: conversationId,
       sender_user_id: user.id,
       content,
@@ -116,7 +183,14 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
         <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h3 className="font-semibold text-foreground truncate flex-1">{otherName}</h3>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-foreground truncate">{otherName}</h3>
+          {otherTyping && (
+            <p className="text-[10px] text-primary animate-pulse">
+              {t("chat.typing") || "digitando..."}
+            </p>
+          )}
+        </div>
         {ENABLE_VIDEO_CALL && (
           <Button
             variant="ghost"
@@ -157,6 +231,17 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
             />
           ))
         )}
+        {otherTyping && (
+          <div className="flex justify-start">
+            <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-2.5">
+              <div className="flex gap-1 items-center h-4">
+                <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce [animation-delay:0ms]" />
+                <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce [animation-delay:150ms]" />
+                <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce [animation-delay:300ms]" />
+              </div>
+            </div>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
@@ -172,7 +257,7 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
       <div className="flex items-end gap-2 px-4 py-3 border-t border-border bg-muted/20">
         <Textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => handleTextChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={t("chat.placeholder")}
           className="min-h-[40px] max-h-[120px] resize-none rounded-xl text-sm"
