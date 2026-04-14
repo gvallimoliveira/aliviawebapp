@@ -27,7 +27,7 @@ import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, Plus, Phone,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
   Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw, TrendingUp,
-  Copy, ExternalLink, Trash2, Pencil,
+  Copy, ExternalLink, Trash2, Pencil, MessageCircle,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
@@ -595,6 +595,61 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const handleEditHep = (hepId: string) => {
     setEditingHepId(hepId);
     setHepModalOpen(true);
+  };
+
+  const handleSendHepViaChat = async (link: string, patientEmail: string) => {
+    if (!professionalId || readOnly) return;
+    try {
+      // Find conversation with this patient
+      const { data: convs } = await (supabase.from("conversations") as any)
+        .select("id, patient_user_id")
+        .eq("professional_id", professionalId);
+
+      // Find patient user_id by email
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .limit(1000);
+
+      // Match patient email to user_id through assessments
+      const { data: patientAssessments } = await supabase
+        .from("assessments")
+        .select("user_id")
+        .eq("patient_email", patientEmail)
+        .not("user_id", "is", null)
+        .limit(1);
+
+      const patientUserId = patientAssessments?.[0]?.user_id;
+      if (!patientUserId) {
+        toast({ title: language === "pt" ? "Paciente não possui conta para chat" : "Patient has no account for chat", variant: "destructive" });
+        return;
+      }
+
+      const conv = convs?.find((c: any) => c.patient_user_id === patientUserId);
+      if (!conv) {
+        toast({ title: language === "pt" ? "Nenhuma conversa encontrada com este paciente" : "No conversation found with this patient", variant: "destructive" });
+        return;
+      }
+
+      // Send message with the link
+      const { data: pro } = await supabase
+        .from("professionals")
+        .select("user_id")
+        .eq("id", professionalId)
+        .single();
+
+      if (!pro?.user_id) return;
+
+      await (supabase.from("messages") as any).insert({
+        conversation_id: conv.id,
+        sender_user_id: pro.user_id,
+        content: `💪 ${language === "pt" ? "Seu programa de exercícios" : "Your exercise program"}: ${link}`,
+      });
+
+      toast({ title: language === "pt" ? "Link enviado via chat!" : "Link sent via chat!" });
+    } catch {
+      toast({ title: language === "pt" ? "Erro ao enviar via chat" : "Error sending via chat", variant: "destructive" });
+    }
   };
 
   const handleDeletePatient = async (groupKey: string, assessmentIds: string[]) => {
@@ -1669,6 +1724,17 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       >
                         <Share2 className="h-3.5 w-3.5" />
                       </Button>
+                      {!readOnly && patient.email && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title={language === "pt" ? "Enviar via chat interno" : "Send via internal chat"}
+                          onClick={() => handleSendHepViaChat(link, patient.email)}
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"

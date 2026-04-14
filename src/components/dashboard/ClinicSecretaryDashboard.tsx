@@ -12,6 +12,7 @@ import {
   Users, Stethoscope, Eye, Loader2, Copy, Check, Link2, UserPlus,
 } from "lucide-react";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
+import SecretaryReportsCard from "./SecretaryReportsCard";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
@@ -330,6 +331,11 @@ const ClinicSecretaryDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Secretary Reports */}
+      {activeClinic?.clinic_id && (
+        <SecretaryReportsCard clinicId={activeClinic.clinic_id} lang={lang} />
+      )}
 
       {/* Analytics */}
       <ProAnalyticsCharts assessments={filteredAssessments} />

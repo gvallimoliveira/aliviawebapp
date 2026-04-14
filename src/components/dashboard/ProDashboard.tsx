@@ -374,6 +374,11 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 
+  // Assessments completed by patient but not yet reviewed (no diagnosis)
+  const pendingReviewCount = patientAssessments.filter(
+    (a) => a.status === "completed" && !a.diagnosis && a.professional_id
+  ).length;
+
   const painRegionLabels: Record<string, string> = {
     head: "Cabeça", neck: "Pescoço", right_shoulder: "Ombro D.", left_shoulder: "Ombro E.",
     upper_back: "Torácica", lower_back: "Lombar", right_knee: "Joelho D.", left_knee: "Joelho E.",
@@ -695,6 +700,24 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           professionalId={professional.id}
           onNavigateToSchedule={() => navigate("/dashboard?tab=agenda")}
         />
+      )}
+
+      {/* Pending review alert */}
+      {!isSimulated && pendingReviewCount > 0 && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="py-3 px-5 flex items-center gap-3">
+            <FileCheck className="h-5 w-5 text-amber-600 shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-amber-700">
+                {pendingReviewCount} {language === "pt" ? "avaliação(ões) aguardando revisão" : "assessment(s) pending review"}
+              </span>
+              {" "}
+              <span className="text-xs">
+                {language === "pt" ? "— completadas pelo paciente mas sem diagnóstico" : "— completed by patient but without diagnosis"}
+              </span>
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Stats Cards */}
