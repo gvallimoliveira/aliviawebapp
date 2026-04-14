@@ -29,7 +29,7 @@ const ClinicAssessment = () => {
   const reassessmentId = searchParams.get("reassessment");
 
   const [step, setStep] = useState<ClinicStep>("loading_check");
-  const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null } | null>(null);
+  const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null; brand_color: string | null } | null>(null);
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
@@ -51,7 +51,7 @@ const ClinicAssessment = () => {
     const checkClinic = async () => {
       const { data, error } = await supabase
         .from("clinics")
-        .select("id, name, logo_url, subscription_status")
+        .select("id, name, logo_url, subscription_status, brand_color")
         .eq("id", clinicId)
         .maybeSingle();
 
