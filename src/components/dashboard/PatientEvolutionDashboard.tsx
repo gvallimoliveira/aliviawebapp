@@ -508,8 +508,62 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     return () => window.removeEventListener("reload-pro-patients", handler);
   }, [professionalId, clinicId, isDemo]);
 
-
+  // Fetch exercise adherence for all patients' programs
   useEffect(() => {
+    if (!professionalId || isDemo) return;
+    const fetchAdherence = async () => {
+      const { data: programs } = await (supabase.from("exercise_programs") as any)
+        .select("id, assessment_id")
+        .eq("professional_id", professionalId);
+      if (!programs || programs.length === 0) return;
+      const programIds = programs.map((p: any) => p.id);
+      const { data: items } = await (supabase.from("exercise_program_items") as any)
+        .select("id, program_id")
+        .in("program_id", programIds);
+      const { data: completions } = await (supabase.from("exercise_completions") as any)
+        .select("exercise_item_id, program_id")
+        .in("program_id", programIds);
+      // Group by assessment_id -> adherence
+      const adherenceMap: Record<string, { total: number; completed: number }> = {};
+      programs.forEach((prog: any) => {
+        const progItems = (items || []).filter((i: any) => i.program_id === prog.id);
+        const progCompletions = (completions || []).filter((c: any) => c.program_id === prog.id);
+        const uniqueCompleted = new Set(progCompletions.map((c: any) => c.exercise_item_id));
+        if (prog.assessment_id) {
+          adherenceMap[prog.assessment_id] = {
+            total: progItems.length,
+            completed: uniqueCompleted.size,
+          };
+        }
+      });
+      setExerciseAdherence(adherenceMap);
+    };
+    fetchAdherence();
+  }, [professionalId, isDemo]);
+
+  // Quick note save handler
+  const handleQuickNoteSave = async () => {
+    if (!quickNotePatient || !quickNoteContent.trim() || !professionalId) return;
+    setQuickNoteSaving(true);
+    try {
+      await (supabase.from("session_notes" as any) as any).insert({
+        professional_id: professionalId,
+        patient_email: quickNotePatient.email,
+        session_date: new Date().toISOString().slice(0, 10),
+        content: quickNoteContent.trim(),
+        ...(clinicId ? { clinic_id: clinicId } : {}),
+      });
+      toast({ title: "Evolução registrada!" });
+      setQuickNotePatient(null);
+      setQuickNoteContent("");
+    } catch {
+      toast({ title: "Erro ao salvar evolução", variant: "destructive" });
+    } finally {
+      setQuickNoteSaving(false);
+    }
+  };
+
+
     if (!professionalId || !selectedEmail || isDemo) { setHepHistory([]); return; }
     setHepHistoryLoading(true);
     (supabase.from("exercise_programs") as any)
