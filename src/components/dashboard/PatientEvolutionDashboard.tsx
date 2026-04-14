@@ -1070,6 +1070,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               </Button>
             )}
           </div>
+          {/* Status filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {(["all", "active", "inactive"] as const).map((status) => (
+              <Button
+                key={status}
+                variant={statusFilter === status ? "default" : "outline"}
+                size="sm"
+                className="text-xs rounded-xl h-7"
+                onClick={() => setStatusFilter(status)}
+              >
+                {status === "all" ? (language === "pt" ? "Todos" : "All") : status === "active" ? (language === "pt" ? "Ativos" : "Active") : (language === "pt" ? "Inativos (30d+)" : "Inactive (30d+)")}
+              </Button>
+            ))}
+          </div>
         </div>
         {patients
           .filter((p) => {
