@@ -749,6 +749,7 @@
   "chat.maximize": "Expandir conversación",
   "chat.no_messages": "Ningún mensaje aún. ¡Inicie la conversación!",
   "chat.placeholder": "Escriba su mensaje...",
+  "chat.typing": "escribiendo...",
   "chat.send_message": "Enviar mensaje",
   "chat.messages_title": "Mensajes",
   "chat.search_placeholder": "Buscar por nombre...",
