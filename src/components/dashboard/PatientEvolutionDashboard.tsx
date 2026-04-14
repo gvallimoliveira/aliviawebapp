@@ -993,7 +993,7 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder={isPt ? "Buscar por nome, email, CPF ou telefone..." : "Search by name, email, CPF or phone..."}
+                placeholder={language === "pt" ? "Buscar por nome, email, CPF ou telefone..." : "Search by name, email, CPF or phone..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
