@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy } from "react";
 import { motion } from "framer-motion";
 import { Check, X, ArrowRight, Star, Calendar, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
