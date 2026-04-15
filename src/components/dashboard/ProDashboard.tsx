@@ -51,10 +51,10 @@ const PendingReviewAlert = ({ assessments, language, navigate }: { assessments: 
         <FileCheck className="h-5 w-5 text-amber-600 shrink-0" />
         <p className="text-sm text-muted-foreground flex-1 text-left">
           <span className="font-semibold text-amber-700">
-            {assessments.length} {isPt ? "avaliação(ões) aguardando revisão" : "assessment(s) pending review"}
+            {assessments.length} {isPt ? "nova(s) avaliação(ões)" : "new assessment(s)"}
           </span>{" "}
           <span className="text-xs">
-            {isPt ? "— completadas pelo paciente mas sem diagnóstico" : "— completed by patient but without diagnosis"}
+            {isPt ? "— recebidas nas últimas 48h" : "— received in the last 48h"}
           </span>
         </p>
         {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
@@ -425,9 +425,10 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 
-  // Assessments completed by patient but not yet reviewed (no diagnosis)
+  // Recent assessments (last 48h) that may need professional attention
+  const recentCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const pendingReviewAssessments = patientAssessments.filter(
-    (a) => a.status === "completed" && !a.diagnosis && a.professional_id
+    (a) => a.status === "completed" && a.created_at >= recentCutoff
   );
   const pendingReviewCount = pendingReviewAssessments.length;
 
