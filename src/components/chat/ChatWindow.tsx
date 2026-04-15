@@ -22,6 +22,7 @@ interface ChatWindowProps {
 const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindowProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { activeClinic } = useClinic();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
