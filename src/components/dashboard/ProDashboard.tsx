@@ -87,6 +87,7 @@ const PendingReviewAlert = ({ assessments, language, navigate }: { assessments: 
   );
 };
 
+interface ProDashboardProps {
   professional: any;
   hideForClinicTabs?: boolean;
   isSimulated?: boolean;
