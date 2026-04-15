@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Calendar, Clock, Users, AlertCircle, ChevronRight, Loader2,
+  Calendar, Clock, Users, AlertCircle, ChevronRight, Loader2, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { format, isToday } from "date-fns";
 import { ptBR, enUS, es } from "date-fns/locale";
@@ -25,6 +26,14 @@ interface TodayAppointment {
   status: string;
 }
 
+interface PendingAssessment {
+  id: string;
+  patient_name: string | null;
+  patient_email: string | null;
+  created_at: string;
+  status: string;
+}
+
 const DailySummaryCard = ({
   professionalId,
   clinicId,
@@ -32,12 +41,14 @@ const DailySummaryCard = ({
   onNavigateToPatients,
 }: DailySummaryCardProps) => {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const isPt = language === "pt";
   const locale = language === "en" ? enUS : language === "es" ? es : ptBR;
 
   const [todayAppointments, setTodayAppointments] = useState<TodayAppointment[]>([]);
-  const [pendingAssessments, setPendingAssessments] = useState(0);
+  const [pendingAssessmentsList, setPendingAssessmentsList] = useState<PendingAssessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     loadSummary();
@@ -66,11 +77,12 @@ const DailySummaryCard = ({
     const { data: apts } = await aptQuery;
     setTodayAppointments((apts as TodayAppointment[]) || []);
 
-    // Load pending assessments (in_progress or no professional assigned)
+    // Load pending assessments (in_progress) with details
     let assessQuery = supabase
       .from("assessments")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "in_progress");
+      .select("id, patient_name, patient_email, created_at, status")
+      .eq("status", "in_progress")
+      .order("created_at", { ascending: false });
 
     if (clinicId) {
       assessQuery = assessQuery.eq("clinic_id", clinicId);
@@ -78,8 +90,8 @@ const DailySummaryCard = ({
       assessQuery = assessQuery.eq("professional_id", professionalId);
     }
 
-    const { count } = await assessQuery;
-    setPendingAssessments(count || 0);
+    const { data: pendingData } = await assessQuery;
+    setPendingAssessmentsList((pendingData as PendingAssessment[]) || []);
 
     setLoading(false);
   };
@@ -107,6 +119,8 @@ const DailySummaryCard = ({
       </Card>
     );
   }
+
+  const pendingCount = pendingAssessmentsList.length;
 
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/10">
@@ -171,32 +185,56 @@ const DailySummaryCard = ({
           </div>
         )}
 
-        {/* Pending assessments alert */}
-        {pendingAssessments > 0 && (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/5 border border-destructive/10">
-            <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-foreground">
-                <span className="font-medium text-destructive">
-                  {pendingAssessments} {isPt ? "avaliação(ões) pendente(s)" : "pending assessment(s)"}
-                </span>
-              </p>
-            </div>
-            {onNavigateToPatients && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="shrink-0 h-7 w-7 p-0"
-                onClick={onNavigateToPatients}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+        {/* Pending assessments alert - clickable with expandable list */}
+        {pendingCount > 0 && (
+          <div className="rounded-lg bg-destructive/5 border border-destructive/10 overflow-hidden">
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="w-full flex items-center gap-3 p-3 hover:bg-destructive/10 transition-colors"
+            >
+              <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+              <div className="flex-1 text-left">
+                <p className="text-sm text-foreground">
+                  <span className="font-medium text-destructive">
+                    {pendingCount} {isPt ? "avaliação(ões) pendente(s)" : "pending assessment(s)"}
+                  </span>
+                </p>
+              </div>
+              {expanded ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+              )}
+            </button>
+            {expanded && (
+              <div className="border-t border-destructive/10 divide-y divide-destructive/10">
+                {pendingAssessmentsList.map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => navigate(`/assessment/${a.id}`)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-destructive/10 transition-colors text-left"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {a.patient_name || a.patient_email || (isPt ? "Paciente anônimo" : "Anonymous patient")}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {format(new Date(a.created_at), "dd/MM/yyyy HH:mm")}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] shrink-0 border-amber-300 text-amber-700 bg-amber-50">
+                      {isPt ? "Em andamento" : "In progress"}
+                    </Badge>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         )}
 
         {/* Empty state */}
-        {todayAppointments.length === 0 && pendingAssessments === 0 && (
+        {todayAppointments.length === 0 && pendingCount === 0 && (
           <div className="text-center py-2">
             <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
