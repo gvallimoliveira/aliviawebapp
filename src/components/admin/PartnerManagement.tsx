@@ -1,19 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Handshake, Plus, Loader2, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Handshake, Plus, Loader2, Stethoscope, Building2, Star } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-interface Partner {
+interface PartnerDetail {
   id: string;
   full_name: string;
   email: string | null;
   city: string;
   state: string;
+  is_partner: boolean;
+  premium_granted: boolean;
+  has_clinic: boolean;
+  clinic_active: boolean;
+  clinic_id: string | null;
 }
 
 interface PartnerManagementProps {
@@ -21,55 +25,49 @@ interface PartnerManagementProps {
 }
 
 const PartnerManagement = ({ language }: PartnerManagementProps) => {
-  const [partners, setPartners] = useState<Partner[]>([]);
+  const [partners, setPartners] = useState<PartnerDetail[]>([]);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
-  const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [togglingMap, setTogglingMap] = useState<Record<string, boolean>>({});
 
   const t = language === "pt" ? {
-    title: "Parceiros — Acesso Gratuito",
-    desc: "Libere acesso profissional gratuito para parceiros",
-    email_placeholder: "E-mail do profissional cadastrado",
-    grant: "Liberar",
-    revoke: "Revogar",
+    title: "Parceiros — Gestão de Acesso",
+    desc: "Gerencie acessos PRO, Clínica e Premium dos parceiros",
+    email_placeholder: "E-mail do profissional",
+    add: "Adicionar",
     no_partners: "Nenhum parceiro ativo.",
     granted: "Acesso liberado com sucesso!",
     granted_created: "Conta criada automaticamente com senha padrão: parceiroalivia",
-    revoked: "Acesso revogado.",
+    toggled: "Acesso atualizado!",
     not_found: "Profissional não encontrado com este e-mail.",
-    auto_create_hint: "Se o profissional não tiver conta, uma será criada automaticamente com senha padrão.",
+    auto_hint: "Se não tiver conta, será criada automaticamente.",
     error: "Erro",
-    name: "Nome",
-    location: "Localização",
-    partner: "Parceiro",
+    pro_label: "PRO",
+    clinic_label: "Clínica",
+    premium_label: "Premium",
   } : {
-    title: "Partners — Free Access",
-    desc: "Grant free professional access to partners",
-    email_placeholder: "Registered professional email",
-    grant: "Grant",
-    revoke: "Revoke",
+    title: "Partners — Access Management",
+    desc: "Manage PRO, Clinic and Premium access for partners",
+    email_placeholder: "Professional email",
+    add: "Add",
     no_partners: "No active partners.",
     granted: "Access granted successfully!",
     granted_created: "Account auto-created with default password: parceiroalivia",
-    revoked: "Access revoked.",
+    toggled: "Access updated!",
     not_found: "No professional found with this email.",
-    auto_create_hint: "If the professional doesn't have an account, one will be created automatically with a default password.",
+    auto_hint: "If no account exists, one will be auto-created.",
     error: "Error",
-    name: "Name",
-    location: "Location",
-    partner: "Partner",
+    pro_label: "PRO",
+    clinic_label: "Clinic",
+    premium_label: "Premium",
   };
 
-  useEffect(() => {
-    loadPartners();
-  }, []);
-
-  const loadPartners = async () => {
+  const loadPartners = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("manage-vip-users", {
-        body: { action: "list_partners" },
+        body: { action: "get_partner_details" },
       });
       if (error) throw error;
       setPartners(data?.partners || []);
@@ -78,9 +76,11 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleGrant = async () => {
+  useEffect(() => { loadPartners(); }, [loadPartners]);
+
+  const handleAdd = async () => {
     if (!email.trim()) return;
     setAdding(true);
     try {
@@ -90,7 +90,6 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
       if (error) throw error;
       if (data?.error === "not_found") {
         toast({ title: t.error, description: t.not_found, variant: "destructive" });
-        setAdding(false);
         return;
       }
       if (data?.error) throw new Error(data.error);
@@ -104,20 +103,36 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     }
   };
 
-  const handleRevoke = async (id: string) => {
-    setRevokingId(id);
+  const handleToggle = async (partnerId: string, accessType: "pro" | "clinic" | "premium", enabled: boolean) => {
+    const key = `${partnerId}_${accessType}`;
+    setTogglingMap(prev => ({ ...prev, [key]: true }));
+
+    // Optimistic update
+    setPartners(prev => prev.map(p => {
+      if (p.id !== partnerId) return p;
+      if (accessType === "pro") return { ...p, is_partner: enabled };
+      if (accessType === "clinic") return { ...p, clinic_active: enabled, has_clinic: enabled ? true : p.has_clinic };
+      if (accessType === "premium") return { ...p, premium_granted: enabled };
+      return p;
+    }));
+
     try {
       const { data, error } = await supabase.functions.invoke("manage-vip-users", {
-        body: { action: "set_partner", professional_id: id, is_partner: false },
+        body: { action: "toggle_partner_access", professional_id: partnerId, access_type: accessType, enabled },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast({ description: t.revoked });
-      loadPartners();
+      toast({ description: t.toggled });
+      // If disabling PRO, remove from list
+      if (accessType === "pro" && !enabled) {
+        loadPartners();
+      }
     } catch (err: any) {
+      // Revert optimistic update
+      loadPartners();
       toast({ title: t.error, description: err.message, variant: "destructive" });
     } finally {
-      setRevokingId(null);
+      setTogglingMap(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -129,9 +144,9 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t.grant}</CardTitle>
-          <CardDescription>{t.desc}<br /><span className="text-xs text-muted-foreground/70">{t.auto_create_hint}</span></CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{t.add} {language === "pt" ? "parceiro" : "partner"}</CardTitle>
+          <CardDescription>{t.desc}<br /><span className="text-xs text-muted-foreground/70">{t.auto_hint}</span></CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -141,21 +156,20 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="flex-1"
+              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             />
-            <Button onClick={handleGrant} disabled={adding || !email.trim()} className="gap-2">
+            <Button onClick={handleAdd} disabled={adding || !email.trim()} className="gap-2">
               {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              {t.grant}
+              {t.add}
             </Button>
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="text-base">{t.title}</CardTitle>
-          <CardDescription>
-            {partners.length} {t.partner.toLowerCase()}(s)
-          </CardDescription>
+          <CardDescription>{partners.length} {language === "pt" ? "parceiro(s)" : "partner(s)"}</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -165,43 +179,61 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
           ) : partners.length === 0 ? (
             <p className="text-muted-foreground text-center py-6">{t.no_partners}</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t.name}</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>{t.location}</TableHead>
-                  <TableHead className="w-[80px]" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {partners.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">{p.full_name}</TableCell>
-                    <TableCell className="text-muted-foreground">{p.email || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{p.city}, {p.state}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRevoke(p.id)}
-                        disabled={revokingId === p.id}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        {revokingId === p.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <X className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="space-y-3">
+              {partners.map((p) => (
+                <PartnerCard
+                  key={p.id}
+                  partner={p}
+                  t={t}
+                  togglingMap={togglingMap}
+                  onToggle={handleToggle}
+                />
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+};
+
+interface PartnerCardProps {
+  partner: PartnerDetail;
+  t: Record<string, string>;
+  togglingMap: Record<string, boolean>;
+  onToggle: (id: string, type: "pro" | "clinic" | "premium", enabled: boolean) => void;
+}
+
+const PartnerCard = ({ partner, t, togglingMap, onToggle }: PartnerCardProps) => {
+  const toggles: { type: "pro" | "clinic" | "premium"; label: string; icon: React.ReactNode; checked: boolean }[] = [
+    { type: "pro", label: t.pro_label, icon: <Stethoscope className="h-3.5 w-3.5" />, checked: partner.is_partner },
+    { type: "clinic", label: t.clinic_label, icon: <Building2 className="h-3.5 w-3.5" />, checked: partner.clinic_active },
+    { type: "premium", label: t.premium_label, icon: <Star className="h-3.5 w-3.5" />, checked: partner.premium_granted },
+  ];
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <div>
+        <p className="font-medium text-foreground">{partner.full_name}</p>
+        <p className="text-sm text-muted-foreground">{partner.email || "—"} · {partner.city}, {partner.state}</p>
+      </div>
+      <div className="flex flex-wrap gap-4">
+        {toggles.map(({ type, label, icon, checked }) => {
+          const key = `${partner.id}_${type}`;
+          const isToggling = togglingMap[key];
+          return (
+            <label key={type} className="flex items-center gap-2 cursor-pointer select-none">
+              {isToggling ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : icon}
+              <span className="text-sm font-medium text-foreground">{label}</span>
+              <Switch
+                checked={checked}
+                disabled={isToggling}
+                onCheckedChange={(val) => onToggle(partner.id, type, val)}
+              />
+            </label>
+          );
+        })}
+      </div>
     </div>
   );
 };
