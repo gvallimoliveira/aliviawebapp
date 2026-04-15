@@ -34,6 +34,7 @@ import ClinicLanding from "./pages/ClinicLanding";
 import AcceptInvite from "./pages/AcceptInvite";
 import ClinicAssessment from "./pages/ClinicAssessment";
 import ClinicDemo from "./pages/ClinicDemo";
+import ClinicFeedback from "./pages/ClinicFeedback";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="/clinica" element={<ClinicLanding />} />
               <Route path="/clinica/demo" element={<ClinicDemo />} />
               <Route path="/assessment/clinic/:clinicId" element={<ClinicAssessment />} />
+              <Route path="/feedback/clinic/:clinicId" element={<ClinicFeedback />} />
               <Route path="/aceitar-convite" element={<AcceptInvite />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
