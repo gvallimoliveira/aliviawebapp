@@ -414,6 +414,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         appointment_time: formTime,
         duration_minutes: parseInt(formDuration) || 50,
         type: formType,
+        service_type: formServiceType,
         notes: formNotes || null,
       };
       if (clinicId) payload.clinic_id = clinicId;
@@ -901,6 +902,30 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="text-xs font-medium text-muted-foreground">{isPt ? "Serviço" : "Service"}</label>
+                  <Select value={formServiceType} onValueChange={setFormServiceType}>
+                    <SelectTrigger className="mt-1 text-xs h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(SERVICE_TYPE_LABELS).map(([key, labels]) => (
+                        <SelectItem key={key} value={key}>
+                          <span className="flex items-center gap-2">
+                            <span className={cn("w-2 h-2 rounded-full", SERVICE_TYPE_DOT[key])} />
+                            {labels[language] || labels.en}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
+                  <Input type="number" value={formDuration} onChange={(e) => setFormDuration(e.target.value)} className="mt-1 text-xs h-9" min="15" max="180" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="text-xs font-medium text-muted-foreground">{t("schedule.type")}</label>
                   <Select value={formType} onValueChange={setFormType}>
                     <SelectTrigger className="mt-1 text-xs h-9">
@@ -913,10 +938,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
-                  <Input type="number" value={formDuration} onChange={(e) => setFormDuration(e.target.value)} className="mt-1 text-xs h-9" min="15" max="180" />
-                </div>
+                <div />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
