@@ -687,12 +687,35 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         </div>
       </div>
 
-      {!isMobile && (
-        <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
-          <GripVertical className="h-3 w-3" />
-          {isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule"}
-        </p>
-      )}
+      {/* Service filter */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={() => setServiceFilter("all")}
+          className={cn("px-2.5 py-1 rounded-full text-[10px] font-medium border transition-colors",
+            serviceFilter === "all" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:bg-muted"
+          )}
+        >
+          {isPt ? "Todos" : "All"}
+        </button>
+        {Object.entries(SERVICE_TYPE_LABELS).map(([key, labels]) => (
+          <button
+            key={key}
+            onClick={() => setServiceFilter(key)}
+            className={cn("px-2.5 py-1 rounded-full text-[10px] font-medium border transition-colors flex items-center gap-1.5",
+              serviceFilter === key ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:bg-muted"
+            )}
+          >
+            <span className={cn("w-2 h-2 rounded-full", SERVICE_TYPE_DOT[key])} />
+            {labels[language] || labels.en}
+          </button>
+        ))}
+        {!isMobile && (
+          <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 ml-auto">
+            <GripVertical className="h-3 w-3" />
+            {isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule"}
+          </p>
+        )}
+      </div>
 
       {/* Time-slot grid */}
       <div className="h-[420px] rounded-lg border border-border/40 overflow-auto">
