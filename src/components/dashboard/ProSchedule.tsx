@@ -152,7 +152,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
   const [selectedPatientKey, setSelectedPatientKey] = useState<string>("__new__");
-
+  const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [formServiceType, setFormServiceType] = useState("fisioterapia");
   const [formDate, setFormDate] = useState<Date>(new Date());
   const [formTime, setFormTime] = useState("09:00");
   const [formDuration, setFormDuration] = useState("50");
@@ -187,7 +188,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         .select("user_id")
         .eq("clinic_id", clinicId)
         .eq("status", "active")
-        .in("role", ["owner", "therapist"]);
+        .in("role", ["owner", "therapist", "osteopath", "pilates_instructor", "doctor", "rpg_specialist", "massage_therapist"]);
       if (!members || members.length === 0) return;
       const userIds = members.map((m) => m.user_id);
       const { data: pros } = await supabase
