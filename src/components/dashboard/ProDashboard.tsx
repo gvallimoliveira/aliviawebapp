@@ -36,7 +36,57 @@ import SoloUpgradeBanner from "./SoloUpgradeBanner";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
-interface ProDashboardProps {
+import { format } from "date-fns";
+import { ChevronDown, ChevronUp } from "lucide-react";
+
+const PendingReviewAlert = ({ assessments, language, navigate }: { assessments: any[]; language: string; navigate: any }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isPt = language === "pt";
+  return (
+    <Card className="border-amber-500/30 bg-amber-500/5 overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-3 py-3 px-5 hover:bg-amber-500/10 transition-colors"
+      >
+        <FileCheck className="h-5 w-5 text-amber-600 shrink-0" />
+        <p className="text-sm text-muted-foreground flex-1 text-left">
+          <span className="font-semibold text-amber-700">
+            {assessments.length} {isPt ? "avaliação(ões) aguardando revisão" : "assessment(s) pending review"}
+          </span>{" "}
+          <span className="text-xs">
+            {isPt ? "— completadas pelo paciente mas sem diagnóstico" : "— completed by patient but without diagnosis"}
+          </span>
+        </p>
+        {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
+      </button>
+      {expanded && (
+        <div className="border-t border-amber-500/20 divide-y divide-amber-500/10">
+          {assessments.map((a: any) => (
+            <button
+              key={a.id}
+              onClick={() => navigate(`/assessment/${a.id}`)}
+              className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-amber-500/10 transition-colors text-left"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {a.patient_name || a.patient_email || (isPt ? "Paciente anônimo" : "Anonymous patient")}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {format(new Date(a.created_at), "dd/MM/yyyy HH:mm")}
+                </p>
+              </div>
+              <Badge variant="outline" className="text-[10px] shrink-0 border-amber-300 text-amber-700 bg-amber-50">
+                {isPt ? "Revisar" : "Review"}
+              </Badge>
+              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            </button>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+};
+
   professional: any;
   hideForClinicTabs?: boolean;
   isSimulated?: boolean;
