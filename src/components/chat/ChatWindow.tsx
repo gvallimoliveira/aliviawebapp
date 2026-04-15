@@ -2,13 +2,15 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2, Video as VideoIcon } from "lucide-react";
+import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2, Video as VideoIcon, MessageSquareHeart } from "lucide-react";
 import ChatBubble from "./ChatBubble";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import VideoCallOverlay from "./VideoCallOverlay";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface ChatWindowProps {
   conversationId: string;
