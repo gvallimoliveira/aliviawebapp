@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import SecretaryReportsCard from "./SecretaryReportsCard";
+import FeedbackSurveyCard from "./FeedbackSurveyCard";
+import FeedbackResultsCard from "./FeedbackResultsCard";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
@@ -331,6 +333,16 @@ const ClinicSecretaryDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Feedback Survey link generator */}
+      {activeClinic?.clinic_id && (
+        <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={lang} />
+      )}
+
+      {/* Feedback Results */}
+      {activeClinic?.clinic_id && (
+        <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={lang} />
+      )}
 
       {/* Secretary Reports */}
       {activeClinic?.clinic_id && (

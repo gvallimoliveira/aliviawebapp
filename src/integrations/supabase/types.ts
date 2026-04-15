@@ -210,6 +210,63 @@ export type Database = {
           },
         ]
       }
+      clinic_feedback_surveys: {
+        Row: {
+          clinic_answers: Json
+          clinic_id: string
+          created_at: string
+          general_observations: string | null
+          id: string
+          patient_email: string | null
+          patient_name: string | null
+          professional_answers: Json
+          professional_id: string | null
+          service_answers: Json
+          service_type: string
+        }
+        Insert: {
+          clinic_answers?: Json
+          clinic_id: string
+          created_at?: string
+          general_observations?: string | null
+          id?: string
+          patient_email?: string | null
+          patient_name?: string | null
+          professional_answers?: Json
+          professional_id?: string | null
+          service_answers?: Json
+          service_type?: string
+        }
+        Update: {
+          clinic_answers?: Json
+          clinic_id?: string
+          created_at?: string
+          general_observations?: string | null
+          id?: string
+          patient_email?: string | null
+          patient_name?: string | null
+          professional_answers?: Json
+          professional_id?: string | null
+          service_answers?: Json
+          service_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_feedback_surveys_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinic_feedback_surveys_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_invitations: {
         Row: {
           clinic_id: string

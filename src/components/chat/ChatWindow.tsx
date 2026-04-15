@@ -2,13 +2,15 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2, Video as VideoIcon } from "lucide-react";
+import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2, Video as VideoIcon, MessageSquareHeart } from "lucide-react";
 import ChatBubble from "./ChatBubble";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import VideoCallOverlay from "./VideoCallOverlay";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface ChatWindowProps {
   conversationId: string;
@@ -20,6 +22,7 @@ interface ChatWindowProps {
 const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindowProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { activeClinic } = useClinic();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
@@ -201,6 +204,21 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
             title={t("chat.video_call")}
           >
             <VideoIcon className="h-4 w-4" />
+          </Button>
+        )}
+        {activeClinic?.clinic_id && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0 text-primary"
+            onClick={() => {
+              const link = `${getPublicOrigin()}/feedback/clinic/${activeClinic.clinic_id}`;
+              const msg = `📋 Pesquisa de satisfação: ${link}`;
+              setText(msg);
+            }}
+            title={t("chat.send_feedback") || "Enviar pesquisa de feedback"}
+          >
+            <MessageSquareHeart className="h-4 w-4" />
           </Button>
         )}
         {onMinimize && (
