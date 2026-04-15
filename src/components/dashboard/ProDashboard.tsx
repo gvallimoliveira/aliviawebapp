@@ -375,9 +375,10 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   }).length;
 
   // Assessments completed by patient but not yet reviewed (no diagnosis)
-  const pendingReviewCount = patientAssessments.filter(
+  const pendingReviewAssessments = patientAssessments.filter(
     (a) => a.status === "completed" && !a.diagnosis && a.professional_id
-  ).length;
+  );
+  const pendingReviewCount = pendingReviewAssessments.length;
 
   const painRegionLabels: Record<string, string> = {
     head: "Cabeça", neck: "Pescoço", right_shoulder: "Ombro D.", left_shoulder: "Ombro E.",
