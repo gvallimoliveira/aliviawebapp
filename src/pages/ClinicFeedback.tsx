@@ -107,6 +107,16 @@ const ClinicFeedback = () => {
       clinic_answers: { ...clinicAnswers, observations: clinicObs },
       general_observations: generalObs || null,
     });
+
+    // Fire-and-forget notification to owner/secretary
+    supabase.functions.invoke("notify-feedback", {
+      body: {
+        clinic_id: clinicId,
+        service_type: serviceType || "fisioterapia",
+        patient_name: patientName.trim() || null,
+      },
+    }).catch(() => {});
+
     setSubmitting(false);
     setSubmitted(true);
   };

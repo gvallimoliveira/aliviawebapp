@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { BarChart3, Loader2, Star, ThumbsUp, ThumbsDown } from "lucide-react";
+import { BarChart3, Loader2, Star, ThumbsUp, ThumbsDown, Download, FileText } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const SERVICE_LABELS: Record<string, string> = {
   fisioterapia: "Fisio",
@@ -28,7 +30,96 @@ interface FeedbackResultsCardProps {
   lang: "pt" | "en" | "es";
 }
 
+const exportToCSV = (feedbacks: any[], lang: string) => {
+  const headers = [
+    "Data", "Paciente", "Email", "Serviço",
+    "Qualidade", "Resultado", "Recomenda",
+    "Comunicação", "Pontualidade", "Empatia",
+    "Limpeza", "Agendamento", "Ambiente",
+    "Obs. Serviço", "Obs. Profissional", "Obs. Clínica", "Obs. Gerais",
+  ];
+  const rows = feedbacks.map((f) => {
+    const sa = (f.service_answers || {}) as any;
+    const pa = (f.professional_answers || {}) as any;
+    const ca = (f.clinic_answers || {}) as any;
+    return [
+      new Date(f.created_at).toLocaleDateString("pt-BR"),
+      f.patient_name || "",
+      f.patient_email || "",
+      SERVICE_LABELS[f.service_type] || f.service_type,
+      sa.quality || "", sa.result || "", sa.recommend || "",
+      pa.communication || "", pa.punctuality || "", pa.empathy || "",
+      ca.cleanliness || "", ca.scheduling || "", ca.environment || "",
+      sa.observations || "", pa.observations || "", ca.observations || "",
+      f.general_observations || "",
+    ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+  });
+
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `feedbacks_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const exportToPDF = (feedbacks: any[], nps: number, recommends: number, detractors: number) => {
+  // Generate a printable HTML and use window.print
+  const rows = feedbacks.map((f) => {
+    const sa = (f.service_answers || {}) as any;
+    const pa = (f.professional_answers || {}) as any;
+    const ca = (f.clinic_answers || {}) as any;
+    return `<tr>
+      <td>${new Date(f.created_at).toLocaleDateString("pt-BR")}</td>
+      <td>${f.patient_name || "Anônimo"}</td>
+      <td>${SERVICE_LABELS[f.service_type] || f.service_type}</td>
+      <td>${sa.quality || "-"}</td>
+      <td>${sa.recommend || "-"}</td>
+      <td>${pa.communication || "-"}</td>
+      <td>${ca.cleanliness || "-"}</td>
+      <td>${f.general_observations ? f.general_observations.slice(0, 60) : "-"}</td>
+    </tr>`;
+  }).join("");
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>Relatório de Feedback</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:20px;font-size:12px}
+      h1{font-size:18px;margin-bottom:4px}
+      .summary{display:flex;gap:30px;margin:12px 0}
+      .metric{text-align:center}
+      .metric .val{font-size:28px;font-weight:bold}
+      .metric .lbl{font-size:10px;color:#666}
+      table{width:100%;border-collapse:collapse;margin-top:12px}
+      th,td{border:1px solid #ddd;padding:4px 6px;text-align:left;font-size:11px}
+      th{background:#f5f5f5}
+    </style>
+  </head><body>
+    <h1>Relatório de Feedback da Clínica</h1>
+    <p style="color:#666;font-size:11px">Gerado em ${new Date().toLocaleDateString("pt-BR")} — ${feedbacks.length} respostas</p>
+    <div class="summary">
+      <div class="metric"><div class="val" style="color:${nps >= 0 ? "#059669" : "#ef4444"}">${nps}</div><div class="lbl">NPS</div></div>
+      <div class="metric"><div class="val" style="color:#059669">${recommends}</div><div class="lbl">Promotores</div></div>
+      <div class="metric"><div class="val" style="color:#ef4444">${detractors}</div><div class="lbl">Detratores</div></div>
+    </div>
+    <table>
+      <thead><tr><th>Data</th><th>Paciente</th><th>Serviço</th><th>Qualidade</th><th>Recomenda</th><th>Comunicação</th><th>Limpeza</th><th>Observações</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </body></html>`;
+
+  const win = window.open("", "_blank");
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+    setTimeout(() => win.print(), 500);
+  }
+};
+
 const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
+  const { toast } = useToast();
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceFilter, setServiceFilter] = useState("all");
@@ -58,12 +149,10 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
 
   const filtered = serviceFilter === "all" ? feedbacks : feedbacks.filter((f) => f.service_type === serviceFilter);
 
-  // NPS-like: count recommends
   const recommends = filtered.filter((f) => (f.service_answers as any)?.recommend === "sim").length;
   const detractors = filtered.filter((f) => (f.service_answers as any)?.recommend === "nao").length;
   const nps = filtered.length > 0 ? Math.round(((recommends - detractors) / filtered.length) * 100) : 0;
 
-  // Quality summary
   const qualityCounts: Record<string, number> = {};
   filtered.forEach((f) => {
     const q = (f.service_answers as any)?.quality;
@@ -108,6 +197,31 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
           </p>
         ) : (
           <>
+            {/* Export buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs flex-1"
+                onClick={() => {
+                  exportToCSV(filtered, lang);
+                  toast({ title: lang === "pt" ? "CSV exportado!" : "CSV exported!" });
+                }}
+              >
+                <Download className="h-3.5 w-3.5" />
+                CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs flex-1"
+                onClick={() => exportToPDF(filtered, nps, recommends, detractors)}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                PDF
+              </Button>
+            </div>
+
             {/* NPS score */}
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center">
