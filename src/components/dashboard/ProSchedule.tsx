@@ -763,10 +763,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 {/* Day cells */}
                 {days.map((day) => {
                   const dateStr = format(day, "yyyy-MM-dd");
-                  const cellApts = getAptsForSlot(
-                    appointments.filter((a) => a.appointment_date === dateStr),
-                    slot
-                  );
+                  const filteredApts = serviceFilter === "all"
+                    ? appointments.filter((a) => a.appointment_date === dateStr)
+                    : appointments.filter((a) => a.appointment_date === dateStr && (a.service_type || "fisioterapia") === serviceFilter);
+                  const cellApts = getAptsForSlot(filteredApts, slot);
                   const isOver = dropTarget?.date === dateStr && dropTarget?.hour === slot;
 
                   return (
@@ -1061,6 +1061,7 @@ const AppointmentCard = ({
 }) => {
   const Icon = TYPE_ICONS[apt.type] || MapPin;
   const statusColor = STATUS_COLORS[apt.status] || STATUS_COLORS.scheduled;
+  const serviceColor = SERVICE_TYPE_COLORS[apt.service_type || "fisioterapia"] || "";
   const typeLabel = apt.type === "video_call" ? "Videochamada" : apt.type === "in_person" ? "Presencial" : "Externo";
 
   const card = (
@@ -1068,6 +1069,7 @@ const AppointmentCard = ({
       className={cn(
         "rounded-md border cursor-pointer transition-all hover:shadow-sm active:scale-[0.97]",
         statusColor,
+        serviceColor,
         apt.status === "cancelled" && "opacity-50",
         isConcurrent ? "p-0.5 flex-1 min-w-0" : "p-1"
       )}
