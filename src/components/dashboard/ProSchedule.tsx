@@ -355,6 +355,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setFormName(apt.patient_name);
     setFormEmail(apt.patient_email || "");
     setFormType(apt.type);
+    setFormServiceType(apt.service_type || "fisioterapia");
     setFormNotes(apt.notes || "");
     setFormCpf("");
     setFormBirthDate("");
