@@ -140,16 +140,6 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
       });
   }, [clinicId]);
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="py-8 flex justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
-  }
-
   const filtered = serviceFilter === "all" ? feedbacks : feedbacks.filter((f) => f.service_type === serviceFilter);
 
   const recommends = filtered.filter((f) => (f.service_answers as any)?.recommend === "sim").length;
@@ -164,7 +154,6 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
 
   const activeServices = [...new Set(feedbacks.map((f) => f.service_type))];
 
-  // Monthly trend data
   const trendData = useMemo(() => {
     if (filtered.length < 2) return [];
     const byMonth: Record<string, { total: number; promoters: number; detractors: number; excellent: number; good: number }> = {};
@@ -189,6 +178,16 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
         total: d.total,
       }));
   }, [filtered]);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-8 flex justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
