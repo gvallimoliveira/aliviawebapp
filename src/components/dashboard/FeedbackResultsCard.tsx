@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import { BarChart3, Loader2, Star, ThumbsUp, ThumbsDown, Download, FileText, TrendingUp } from "lucide-react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell,
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 
@@ -179,6 +179,40 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
       }));
   }, [filtered]);
 
+  // NPS comparison by service
+  const SERVICE_BAR_COLORS: Record<string, string> = {
+    fisioterapia: "#0d9488",
+    pilates: "#7c3aed",
+    osteopatia: "#ea580c",
+    massoterapia: "#db2777",
+    rpg: "#4f46e5",
+  };
+
+  const serviceComparisonData = useMemo(() => {
+    if (feedbacks.length < 2) return [];
+    const byService: Record<string, { total: number; promoters: number; detractors: number; satisfaction: number }> = {};
+    feedbacks.forEach((f) => {
+      const svc = f.service_type;
+      if (!byService[svc]) byService[svc] = { total: 0, promoters: 0, detractors: 0, satisfaction: 0 };
+      byService[svc].total++;
+      const rec = (f.service_answers as any)?.recommend;
+      if (rec === "sim") byService[svc].promoters++;
+      if (rec === "nao") byService[svc].detractors++;
+      const q = (f.service_answers as any)?.quality;
+      if (q === "excelente" || q === "bom") byService[svc].satisfaction++;
+    });
+    return Object.entries(byService)
+      .filter(([, d]) => d.total >= 1)
+      .map(([svc, d]) => ({
+        service: SERVICE_LABELS[svc] || svc,
+        serviceKey: svc,
+        nps: Math.round(((d.promoters - d.detractors) / d.total) * 100),
+        satisfaction: Math.round((d.satisfaction / d.total) * 100),
+        total: d.total,
+      }))
+      .sort((a, b) => b.nps - a.nps);
+  }, [feedbacks]);
+
   if (loading) {
     return (
       <Card>
@@ -333,7 +367,50 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
               </div>
             )}
 
-            {/* Quality breakdown */}
+            {/* NPS Comparison by Service */}
+            {serviceComparisonData.length >= 2 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {lang === "pt" ? "NPS por serviço" : "NPS by service"}
+                  </p>
+                </div>
+                <div className="h-44 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={serviceComparisonData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis dataKey="service" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} domain={[-100, 100]} />
+                      <Tooltip
+                        contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid hsl(var(--border))" }}
+                        formatter={(value: number, name: string) => [
+                          `${value}%`,
+                          name === "nps" ? "NPS" : lang === "pt" ? "Satisfação" : "Satisfaction",
+                        ]}
+                        labelFormatter={(label) => `${label}`}
+                      />
+                      <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} formatter={(v) => v === "nps" ? "NPS" : lang === "pt" ? "Satisfação" : "Satisfaction"} />
+                      <Bar dataKey="nps" radius={[4, 4, 0, 0]}>
+                        {serviceComparisonData.map((entry) => (
+                          <Cell key={entry.serviceKey} fill={SERVICE_BAR_COLORS[entry.serviceKey] || "hsl(var(--primary))"} />
+                        ))}
+                      </Bar>
+                      <Bar dataKey="satisfaction" radius={[4, 4, 0, 0]} fill="#10b981" opacity={0.6} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex justify-center gap-3 flex-wrap">
+                  {serviceComparisonData.map((d) => (
+                    <Badge key={d.serviceKey} variant="outline" className="text-[9px] gap-1">
+                      <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: SERVICE_BAR_COLORS[d.serviceKey] || "hsl(var(--primary))" }} />
+                      {d.service}: {d.total} resp.
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {Object.keys(qualityCounts).length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs font-medium text-muted-foreground">
