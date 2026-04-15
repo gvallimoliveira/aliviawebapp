@@ -10,6 +10,20 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* GPU-promoted blur blobs — avoid expensive repaints during scroll */
+  .blur-blob {
+    will-change: transform;
+    transform: translateZ(0);
+    contain: strict;
+    pointer-events: none;
+  }
+
+  /* Defer rendering of off-screen sections for smoother scroll */
+  .section-lazy {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 600px;
+  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 

@@ -12,8 +12,8 @@ const HeroSection = ({ showProfessionalCTA = true }: { showProfessionalCTA?: boo
   return (
     <section className="relative overflow-hidden py-20 md:py-32">
       {/* Background gradient blobs */}
-      <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/10 blur-3xl" />
+      <div className="blur-blob absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
+      <div className="blur-blob absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/10 blur-3xl" />
 
       <div className="container relative">
         <motion.div
@@ -29,12 +29,10 @@ const HeroSection = ({ showProfessionalCTA = true }: { showProfessionalCTA?: boo
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <motion.img
+            <img
               src={logoAlivia}
               alt="Aliv.iA"
-              className="h-32 w-32 md:h-40 md:w-40 drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              className="h-32 w-32 md:h-40 md:w-40 drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)] animate-float"
             />
           </motion.div>
 
