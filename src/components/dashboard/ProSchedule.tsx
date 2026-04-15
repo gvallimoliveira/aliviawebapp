@@ -337,6 +337,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setFormName("");
     setFormEmail("");
     setFormType("in_person");
+    setFormServiceType("fisioterapia");
     setFormNotes("");
     setFormCpf("");
     setFormBirthDate("");
