@@ -151,6 +151,7 @@ serve(async (req) => {
 
     // Toggle partner access (pro / clinic / premium)
     if (action === "toggle_partner_access") {
+      const { professional_id, access_type, enabled, clinic_config } = body;
       if (!professional_id || !access_type) {
         return new Response(JSON.stringify({ error: "professional_id and access_type required" }), {
           status: 400,
