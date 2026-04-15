@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import { BarChart3, Loader2, Star, ThumbsUp, ThumbsDown, Download, FileText, TrendingUp } from "lucide-react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell,
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 
