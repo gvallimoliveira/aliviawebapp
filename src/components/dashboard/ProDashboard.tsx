@@ -51,7 +51,7 @@ const PendingReviewAlert = ({ assessments, language, navigate }: { assessments: 
         <FileCheck className="h-5 w-5 text-amber-600 shrink-0" />
         <p className="text-sm text-muted-foreground flex-1 text-left">
           <span className="font-semibold text-amber-700">
-            {assessments.length} {isPt ? "avaliação(ões) aguardando revisão" : "assessment(s) pending review"}
+            {assessments.length} {isPt ? "nova(s) avaliação(ões)" : "new assessment(s)"}
           </span>{" "}
           <span className="text-xs">
             {isPt ? "— recebidas nas últimas 48h" : "— received in the last 48h"}
