@@ -44,6 +44,7 @@ interface Appointment {
   type: string;
   status: string;
   created_at: string;
+  service_type?: string;
 }
 
 interface ProScheduleProps {
@@ -64,6 +65,30 @@ const TYPE_COLORS: Record<string, string> = {
   video_call: "bg-blue-500/10 text-blue-600 border-blue-200",
   in_person: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
   external: "bg-amber-500/10 text-amber-600 border-amber-200",
+};
+
+const SERVICE_TYPE_COLORS: Record<string, string> = {
+  fisioterapia: "border-l-4 border-l-teal-500",
+  pilates: "border-l-4 border-l-purple-500",
+  osteopatia: "border-l-4 border-l-orange-500",
+  massoterapia: "border-l-4 border-l-pink-500",
+  rpg: "border-l-4 border-l-indigo-500",
+};
+
+const SERVICE_TYPE_DOT: Record<string, string> = {
+  fisioterapia: "bg-teal-500",
+  pilates: "bg-purple-500",
+  osteopatia: "bg-orange-500",
+  massoterapia: "bg-pink-500",
+  rpg: "bg-indigo-500",
+};
+
+const SERVICE_TYPE_LABELS: Record<string, Record<string, string>> = {
+  fisioterapia: { pt: "Fisioterapia", en: "Physiotherapy", es: "Fisioterapia" },
+  pilates: { pt: "Pilates", en: "Pilates", es: "Pilates" },
+  osteopatia: { pt: "Osteopatia", en: "Osteopathy", es: "Osteopatía" },
+  massoterapia: { pt: "Massoterapia", en: "Massage Therapy", es: "Masoterapia" },
+  rpg: { pt: "RPG", en: "RPG", es: "RPG" },
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -127,7 +152,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
   const [selectedPatientKey, setSelectedPatientKey] = useState<string>("__new__");
-
+  const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [formServiceType, setFormServiceType] = useState("fisioterapia");
   const [formDate, setFormDate] = useState<Date>(new Date());
   const [formTime, setFormTime] = useState("09:00");
   const [formDuration, setFormDuration] = useState("50");
@@ -162,7 +188,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         .select("user_id")
         .eq("clinic_id", clinicId)
         .eq("status", "active")
-        .in("role", ["owner", "therapist"]);
+        .in("role", ["owner", "therapist", "osteopath", "pilates_instructor", "doctor", "rpg_specialist", "massage_therapist"]);
       if (!members || members.length === 0) return;
       const userIds = members.map((m) => m.user_id);
       const { data: pros } = await supabase
@@ -311,6 +337,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setFormName("");
     setFormEmail("");
     setFormType("in_person");
+    setFormServiceType("fisioterapia");
     setFormNotes("");
     setFormCpf("");
     setFormBirthDate("");
@@ -328,6 +355,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setFormName(apt.patient_name);
     setFormEmail(apt.patient_email || "");
     setFormType(apt.type);
+    setFormServiceType(apt.service_type || "fisioterapia");
     setFormNotes(apt.notes || "");
     setFormCpf("");
     setFormBirthDate("");
@@ -386,6 +414,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         appointment_time: formTime,
         duration_minutes: parseInt(formDuration) || 50,
         type: formType,
+        service_type: formServiceType,
         notes: formNotes || null,
       };
       if (clinicId) payload.clinic_id = clinicId;
@@ -658,12 +687,35 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         </div>
       </div>
 
-      {!isMobile && (
-        <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
-          <GripVertical className="h-3 w-3" />
-          {isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule"}
-        </p>
-      )}
+      {/* Service filter */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={() => setServiceFilter("all")}
+          className={cn("px-2.5 py-1 rounded-full text-[10px] font-medium border transition-colors",
+            serviceFilter === "all" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:bg-muted"
+          )}
+        >
+          {isPt ? "Todos" : "All"}
+        </button>
+        {Object.entries(SERVICE_TYPE_LABELS).map(([key, labels]) => (
+          <button
+            key={key}
+            onClick={() => setServiceFilter(key)}
+            className={cn("px-2.5 py-1 rounded-full text-[10px] font-medium border transition-colors flex items-center gap-1.5",
+              serviceFilter === key ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:bg-muted"
+            )}
+          >
+            <span className={cn("w-2 h-2 rounded-full", SERVICE_TYPE_DOT[key])} />
+            {labels[language] || labels.en}
+          </button>
+        ))}
+        {!isMobile && (
+          <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 ml-auto">
+            <GripVertical className="h-3 w-3" />
+            {isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule"}
+          </p>
+        )}
+      </div>
 
       {/* Time-slot grid */}
       <div className="h-[420px] rounded-lg border border-border/40 overflow-auto">
@@ -711,10 +763,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 {/* Day cells */}
                 {days.map((day) => {
                   const dateStr = format(day, "yyyy-MM-dd");
-                  const cellApts = getAptsForSlot(
-                    appointments.filter((a) => a.appointment_date === dateStr),
-                    slot
-                  );
+                  const filteredApts = serviceFilter === "all"
+                    ? appointments.filter((a) => a.appointment_date === dateStr)
+                    : appointments.filter((a) => a.appointment_date === dateStr && (a.service_type || "fisioterapia") === serviceFilter);
+                  const cellApts = getAptsForSlot(filteredApts, slot);
                   const isOver = dropTarget?.date === dateStr && dropTarget?.hour === slot;
 
                   return (
@@ -873,6 +925,30 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="text-xs font-medium text-muted-foreground">{isPt ? "Serviço" : "Service"}</label>
+                  <Select value={formServiceType} onValueChange={setFormServiceType}>
+                    <SelectTrigger className="mt-1 text-xs h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(SERVICE_TYPE_LABELS).map(([key, labels]) => (
+                        <SelectItem key={key} value={key}>
+                          <span className="flex items-center gap-2">
+                            <span className={cn("w-2 h-2 rounded-full", SERVICE_TYPE_DOT[key])} />
+                            {labels[language] || labels.en}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
+                  <Input type="number" value={formDuration} onChange={(e) => setFormDuration(e.target.value)} className="mt-1 text-xs h-9" min="15" max="180" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="text-xs font-medium text-muted-foreground">{t("schedule.type")}</label>
                   <Select value={formType} onValueChange={setFormType}>
                     <SelectTrigger className="mt-1 text-xs h-9">
@@ -885,10 +961,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
-                  <Input type="number" value={formDuration} onChange={(e) => setFormDuration(e.target.value)} className="mt-1 text-xs h-9" min="15" max="180" />
-                </div>
+                <div />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
@@ -988,6 +1061,7 @@ const AppointmentCard = ({
 }) => {
   const Icon = TYPE_ICONS[apt.type] || MapPin;
   const statusColor = STATUS_COLORS[apt.status] || STATUS_COLORS.scheduled;
+  const serviceColor = SERVICE_TYPE_COLORS[apt.service_type || "fisioterapia"] || "";
   const typeLabel = apt.type === "video_call" ? "Videochamada" : apt.type === "in_person" ? "Presencial" : "Externo";
 
   const card = (
@@ -995,6 +1069,7 @@ const AppointmentCard = ({
       className={cn(
         "rounded-md border cursor-pointer transition-all hover:shadow-sm active:scale-[0.97]",
         statusColor,
+        serviceColor,
         apt.status === "cancelled" && "opacity-50",
         isConcurrent ? "p-0.5 flex-1 min-w-0" : "p-1"
       )}

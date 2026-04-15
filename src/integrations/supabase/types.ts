@@ -850,6 +850,7 @@ export type Database = {
           patient_email: string | null
           patient_name: string
           professional_id: string
+          service_type: string
           status: string
           type: string
         }
@@ -865,6 +866,7 @@ export type Database = {
           patient_email?: string | null
           patient_name?: string
           professional_id: string
+          service_type?: string
           status?: string
           type?: string
         }
@@ -880,6 +882,7 @@ export type Database = {
           patient_email?: string | null
           patient_name?: string
           professional_id?: string
+          service_type?: string
           status?: string
           type?: string
         }
@@ -1421,7 +1424,15 @@ export type Database = {
       }
     }
     Enums: {
-      clinic_role: "owner" | "therapist" | "secretary"
+      clinic_role:
+        | "owner"
+        | "therapist"
+        | "secretary"
+        | "osteopath"
+        | "pilates_instructor"
+        | "doctor"
+        | "rpg_specialist"
+        | "massage_therapist"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1549,7 +1560,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      clinic_role: ["owner", "therapist", "secretary"],
+      clinic_role: [
+        "owner",
+        "therapist",
+        "secretary",
+        "osteopath",
+        "pilates_instructor",
+        "doctor",
+        "rpg_specialist",
+        "massage_therapist",
+      ],
     },
   },
 } as const
