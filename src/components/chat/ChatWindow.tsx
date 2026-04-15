@@ -206,6 +206,21 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
             <VideoIcon className="h-4 w-4" />
           </Button>
         )}
+        {activeClinic?.clinic_id && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0 text-primary"
+            onClick={() => {
+              const link = `${getPublicOrigin()}/feedback/clinic/${activeClinic.clinic_id}`;
+              const msg = `📋 Pesquisa de satisfação: ${link}`;
+              setText(msg);
+            }}
+            title={t("chat.send_feedback") || "Enviar pesquisa de feedback"}
+          >
+            <MessageSquareHeart className="h-4 w-4" />
+          </Button>
+        )}
         {onMinimize && (
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onMinimize} title={t("chat.minimize")}>
             <Minimize2 className="h-4 w-4" />
