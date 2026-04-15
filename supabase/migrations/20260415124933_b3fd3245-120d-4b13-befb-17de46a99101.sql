@@ -1,0 +1,1 @@
+ALTER TABLE public.professionals ADD COLUMN premium_granted boolean NOT NULL DEFAULT false;

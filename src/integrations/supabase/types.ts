@@ -1032,6 +1032,7 @@ export type Database = {
           lifetime_treatment: boolean
           logo_url: string | null
           phone: string | null
+          premium_granted: boolean
           pro_access_expires_at: string | null
           profile_photo_url: string | null
           social_media: string | null
@@ -1058,6 +1059,7 @@ export type Database = {
           lifetime_treatment?: boolean
           logo_url?: string | null
           phone?: string | null
+          premium_granted?: boolean
           pro_access_expires_at?: string | null
           profile_photo_url?: string | null
           social_media?: string | null
@@ -1084,6 +1086,7 @@ export type Database = {
           lifetime_treatment?: boolean
           logo_url?: string | null
           phone?: string | null
+          premium_granted?: boolean
           pro_access_expires_at?: string | null
           profile_photo_url?: string | null
           social_media?: string | null

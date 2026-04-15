@@ -111,6 +111,154 @@ serve(async (req) => {
       });
     }
 
+    // Get partner details with all access flags
+    if (action === "get_partner_details") {
+      const { data: partners, error } = await supabaseClient
+        .from("professionals")
+        .select("id, full_name, email, city, state, is_partner, premium_granted, user_id")
+        .eq("is_partner", true)
+        .order("full_name");
+
+      if (error) throw error;
+
+      // For each partner, check if they have an active clinic
+      const enriched = await Promise.all((partners || []).map(async (p: any) => {
+        const { data: clinic } = await supabaseClient
+          .from("clinics")
+          .select("id, subscription_status")
+          .eq("owner_user_id", p.user_id)
+          .maybeSingle();
+
+        return {
+          id: p.id,
+          full_name: p.full_name,
+          email: p.email,
+          city: p.city,
+          state: p.state,
+          is_partner: p.is_partner,
+          premium_granted: p.premium_granted,
+          has_clinic: !!clinic,
+          clinic_active: clinic?.subscription_status === "active" || clinic?.subscription_status === "trialing",
+          clinic_id: clinic?.id || null,
+        };
+      }));
+
+      return new Response(JSON.stringify({ partners: enriched }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Toggle partner access (pro / clinic / premium)
+    if (action === "toggle_partner_access") {
+      const { professional_id, access_type, enabled } = body;
+      if (!professional_id || !access_type) {
+        return new Response(JSON.stringify({ error: "professional_id and access_type required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      log("toggle_partner_access", { professional_id, access_type, enabled });
+
+      const { data: pro, error: proErr } = await supabaseClient
+        .from("professionals")
+        .select("id, user_id, full_name, is_partner")
+        .eq("id", professional_id)
+        .single();
+
+      if (proErr || !pro) {
+        return new Response(JSON.stringify({ error: "Professional not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (access_type === "pro") {
+        const { error } = await supabaseClient
+          .from("professionals")
+          .update({
+            is_partner: enabled,
+            subscription_status: enabled ? "active" : "inactive",
+            approved: enabled ? true : undefined,
+          })
+          .eq("id", professional_id);
+        if (error) throw error;
+      } else if (access_type === "clinic") {
+        if (enabled) {
+          // Check if partner already has a clinic
+          const { data: existingClinic } = await supabaseClient
+            .from("clinics")
+            .select("id, subscription_status")
+            .eq("owner_user_id", pro.user_id)
+            .maybeSingle();
+
+          if (existingClinic) {
+            // Activate existing clinic
+            const { error } = await supabaseClient
+              .from("clinics")
+              .update({ subscription_status: "active" })
+              .eq("id", existingClinic.id);
+            if (error) throw error;
+          } else {
+            // Create new clinic for partner
+            const { data: newClinic, error: clinicErr } = await supabaseClient
+              .from("clinics")
+              .insert({
+                name: `Clínica de ${pro.full_name}`,
+                owner_user_id: pro.user_id,
+                subscription_status: "active",
+              })
+              .select("id")
+              .single();
+
+            if (clinicErr) throw clinicErr;
+
+            // Add partner as owner member
+            const { error: memberErr } = await supabaseClient
+              .from("clinic_members")
+              .insert({
+                clinic_id: newClinic.id,
+                user_id: pro.user_id,
+                role: "owner",
+                status: "active",
+                accepted_at: new Date().toISOString(),
+              });
+            if (memberErr) throw memberErr;
+          }
+        } else {
+          // Deactivate clinic
+          const { data: clinic } = await supabaseClient
+            .from("clinics")
+            .select("id")
+            .eq("owner_user_id", pro.user_id)
+            .maybeSingle();
+
+          if (clinic) {
+            const { error } = await supabaseClient
+              .from("clinics")
+              .update({ subscription_status: "inactive" })
+              .eq("id", clinic.id);
+            if (error) throw error;
+          }
+        }
+      } else if (access_type === "premium") {
+        const { error } = await supabaseClient
+          .from("professionals")
+          .update({ premium_granted: enabled })
+          .eq("id", professional_id);
+        if (error) throw error;
+      } else {
+        return new Response(JSON.stringify({ error: "Invalid access_type" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Set partner status
     if (action === "set_partner") {
       const { email, professional_id, is_partner } = body;
