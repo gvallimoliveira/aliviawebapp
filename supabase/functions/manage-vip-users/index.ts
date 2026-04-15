@@ -125,7 +125,7 @@ serve(async (req) => {
       const enriched = await Promise.all((partners || []).map(async (p: any) => {
         const { data: clinic } = await supabaseClient
           .from("clinics")
-          .select("id, subscription_status")
+          .select("id, name, subscription_status")
           .eq("owner_user_id", p.user_id)
           .maybeSingle();
 
@@ -140,6 +140,7 @@ serve(async (req) => {
           has_clinic: !!clinic,
           clinic_active: clinic?.subscription_status === "active" || clinic?.subscription_status === "trialing",
           clinic_id: clinic?.id || null,
+          clinic_name: clinic?.name || null,
         };
       }));
 
