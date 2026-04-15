@@ -151,8 +151,7 @@ serve(async (req) => {
 
     // Toggle partner access (pro / clinic / premium)
     if (action === "toggle_partner_access") {
-      const { professional_id, access_type, enabled } = body;
-      if (!professional_id || !access_type) {
+      const { professional_id, access_type, enabled, clinic_config } = body;
         return new Response(JSON.stringify({ error: "professional_id and access_type required" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -201,14 +200,23 @@ serve(async (req) => {
               .eq("id", existingClinic.id);
             if (error) throw error;
           } else {
-            // Create new clinic for partner
+            // Create new clinic for partner with optional config
+            const clinicInsert: any = {
+              name: clinic_config?.name || `Clínica de ${pro.full_name}`,
+              owner_user_id: pro.user_id,
+              subscription_status: "active",
+            };
+            if (clinic_config?.phone) clinicInsert.phone = clinic_config.phone;
+            if (clinic_config?.address) clinicInsert.address = clinic_config.address;
+            if (clinic_config?.operating_hours_start) clinicInsert.operating_hours_start = clinic_config.operating_hours_start;
+            if (clinic_config?.operating_hours_end) clinicInsert.operating_hours_end = clinic_config.operating_hours_end;
+            if (clinic_config?.working_days) clinicInsert.working_days = clinic_config.working_days;
+            if (clinic_config?.brand_color) clinicInsert.brand_color = clinic_config.brand_color;
+            if (clinic_config?.max_members) clinicInsert.max_members = clinic_config.max_members;
+
             const { data: newClinic, error: clinicErr } = await supabaseClient
               .from("clinics")
-              .insert({
-                name: `Clínica de ${pro.full_name}`,
-                owner_user_id: pro.user_id,
-                subscription_status: "active",
-              })
+              .insert(clinicInsert)
               .select("id")
               .single();
 
