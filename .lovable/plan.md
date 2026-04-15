@@ -1,74 +1,89 @@
 
 
-## Plano: Painel Unificado de Gestão de Parceiros
+# Pesquisa de Feedback de Serviços da Clínica
 
-### Problema atual
+## Resumo
 
-O `PartnerManagement.tsx` só controla **acesso profissional** (flag `is_partner` na tabela `professionals`). Falta controle sobre:
-- **Acesso Clínica** — criar/ativar assinatura gratuita de clínica para o parceiro
-- **Avaliação Premium pessoal** — liberar avaliações premium sem pagamento
+Criar um sistema completo de pesquisa de satisfação para clínicas, com perguntas sobre o serviço prestado, o profissional e a clínica em geral. Entregue via link público (gerado pela secretária) ou via chat interno, com pré-seleção do serviço avaliado.
 
-O admin precisa entrar em múltiplos lugares para gerenciar isso. O objetivo é ter tudo num único card por parceiro, com toggles visuais.
+## O que será construído
 
-### O que será feito
+### 1. Nova tabela `clinic_feedback_surveys`
+Armazena cada resposta de feedback com: clinic_id, service_type, professional_id (opcional), respostas às perguntas (JSONB), observação textual livre, status, created_at. RLS: membros da clínica podem ler; qualquer um pode inserir (link público).
 
-#### 1. Nova coluna `premium_granted` na tabela `professionals`
-- Adicionar `premium_granted boolean NOT NULL DEFAULT false` via migração
-- Quando `true`, o parceiro pode fazer avaliações premium pessoais sem pagar
-- O `check-pro-subscription` e o fluxo de pagamento de avaliação já verificam `is_partner`; vamos estender para checar `premium_granted` também
+### 2. Página pública `/feedback/clinic/:clinicId`
+- Rota pública similar ao `/assessment/clinic/:clinicId`
+- Aceita query param `?service=pilates&professional_id=xxx` para pré-selecionar
+- Layout branded (logo e cor da clínica)
+- Fluxo em etapas:
+  1. **Identificação** — Nome e email do paciente
+  2. **Seleção do serviço** — Dropdown com os serviços cadastrados (fisioterapia, pilates, osteopatia, massoterapia, RPG)
+  3. **Avaliação do Serviço** (múltipla escolha + campo texto):
+     - Qualidade do atendimento (Excelente / Bom / Regular / Ruim)
+     - Resultado percebido (Superou expectativas / Atendeu / Parcialmente / Não atendeu)
+     - Recomendaria o serviço? (Sim / Talvez / Não)
+  4. **Avaliação do Profissional**:
+     - Comunicação e clareza (Excelente / Bom / Regular / Ruim)
+     - Pontualidade (Sempre pontual / Geralmente / Às vezes atrasa / Frequentemente atrasa)
+     - Acolhimento e empatia (Excelente / Bom / Regular / Ruim)
+  5. **Avaliação da Clínica**:
+     - Limpeza e organização (Excelente / Bom / Regular / Ruim)
+     - Facilidade de agendamento (Muito fácil / Fácil / Difícil / Muito difícil)
+     - Ambiente e conforto (Excelente / Bom / Regular / Ruim)
+  6. **Observações gerais** — Campo de texto livre
+  7. **Agradecimento**
 
-#### 2. Nova action `get_partner_details` na Edge Function `manage-vip-users`
-- Retorna para cada parceiro: `id`, `full_name`, `email`, `is_partner`, `premium_granted`, e se possui clínica ativa (join com `clinics` e `clinic_members`)
-- Usado para popular o painel com o estado atual de cada toggle
+### 3. Geração de link pela secretária
+- No `ClinicSecretaryDashboard`, novo card "Pesquisa de Feedback"
+- Botão para copiar link genérico
+- Opção de gerar link pré-filtrado por serviço (dropdown de serviços)
 
-#### 3. Nova action `toggle_partner_access` na Edge Function `manage-vip-users`
-- Recebe `{ professional_id, access_type: "pro" | "clinic" | "premium", enabled: boolean }`
-- **pro**: atualiza `is_partner` e `subscription_status` (já existe, será refatorado)
-- **clinic**: se `enabled`, cria uma clínica com `subscription_status: 'active'` e adiciona o parceiro como owner (se não tiver uma). Se `!enabled`, marca `subscription_status: 'inactive'`
-- **premium**: atualiza `premium_granted` no registro do profissional
+### 4. Envio via Chat Interno
+- No `ConversationList` / `ChatWindow`, adicionar ação "Enviar pesquisa de feedback"
+- Ao clicar, seleciona o serviço e envia uma mensagem especial com link clicável para a pesquisa pré-preenchida
 
-#### 4. Refatorar `PartnerManagement.tsx` → painel com toggles
-- Cada parceiro aparece como um card/row com **3 switches**:
-  - 🩺 **PRO** — acesso profissional (is_partner)
-  - 🏥 **Clínica** — plataforma Minha Clínica
-  - ⭐ **Premium** — avaliação premium pessoal
-- Toggle muda estado instantaneamente com feedback visual (loading spinner no switch)
-- Manter o formulário de adicionar parceiro por email no topo
+### 5. Painel de resultados
+- Nova seção no dashboard da secretária: "Feedbacks"
+- Cards com NPS-like por serviço, por profissional
+- Lista das respostas recentes com filtro por serviço/profissional
 
-#### 5. Ajustar `check-pro-subscription` e fluxo de pagamento
-- No `check-pro-subscription`, adicionar verificação de `premium_granted` para retornar flag ao frontend
-- No fluxo de criação de avaliação premium, se o usuário tem `premium_granted: true`, pular pagamento
+## Detalhes técnicos
 
-### Arquivos afetados
+**Migração SQL:**
+```sql
+CREATE TABLE public.clinic_feedback_surveys (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  clinic_id uuid NOT NULL,
+  service_type text NOT NULL DEFAULT 'fisioterapia',
+  professional_id uuid,
+  patient_name text,
+  patient_email text,
+  service_answers jsonb NOT NULL DEFAULT '{}',
+  professional_answers jsonb NOT NULL DEFAULT '{}',
+  clinic_answers jsonb NOT NULL DEFAULT '{}',
+  general_observations text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-| Arquivo | Mudança |
-|---------|---------|
-| **Nova migração SQL** | Adiciona coluna `premium_granted` em `professionals` |
-| **`manage-vip-users/index.ts`** | Novas actions `get_partner_details` e `toggle_partner_access` |
-| **`check-pro-subscription/index.ts`** | Verificar `premium_granted` |
-| **`PartnerManagement.tsx`** | Redesign completo com 3 switches por parceiro |
-| **Fluxo de pagamento de avaliação** | Bypass quando `premium_granted = true` |
+ALTER TABLE public.clinic_feedback_surveys ENABLE ROW LEVEL SECURITY;
 
-### Detalhes técnicos
+-- Qualquer um pode submeter feedback (link público)
+CREATE POLICY "Anyone can submit feedback"
+  ON public.clinic_feedback_surveys FOR INSERT
+  TO public WITH CHECK (true);
 
-```text
-┌─────────────────────────────────────────────────┐
-│  Parceiros — Acesso Gratuito                    │
-├─────────────────────────────────────────────────┤
-│  [Email do parceiro]          [+ Adicionar]     │
-├─────────────────────────────────────────────────┤
-│  João Silva (joao@ex.com)                       │
-│  🩺 PRO [ON]  🏥 Clínica [OFF]  ⭐ Premium [ON]│
-├─────────────────────────────────────────────────┤
-│  Maria Santos (maria@ex.com)                    │
-│  🩺 PRO [ON]  🏥 Clínica [ON]   ⭐ Premium [OFF]│
-└─────────────────────────────────────────────────┘
+-- Membros da clínica podem visualizar
+CREATE POLICY "Clinic members can view feedback"
+  ON public.clinic_feedback_surveys FOR SELECT
+  TO authenticated
+  USING (is_clinic_member(auth.uid(), clinic_id));
 ```
 
-### Pontos de atenção revisados
-
-1. **Criação de clínica para parceiro**: ao ativar "Clínica", se o parceiro não tem uma clínica, cria automaticamente com nome "Clínica de [Nome]" e status ativo. Isso evita exigir que o parceiro faça o fluxo de cadastro de clínica.
-2. **Revogação segura**: ao desativar um toggle, não deleta dados — apenas marca como inativo. Preserva histórico.
-3. **Sem migração destrutiva**: `premium_granted` tem default `false`, não quebra dados existentes.
-4. **RLS**: a coluna `premium_granted` está na tabela `professionals`, que já tem RLS adequado. A edge function usa service role, sem problema.
+**Arquivos a criar/editar:**
+- `src/pages/ClinicFeedback.tsx` — Página pública do formulário
+- `src/components/dashboard/FeedbackSurveyCard.tsx` — Card da secretária para gerar links
+- `src/components/dashboard/FeedbackResultsCard.tsx` — Visualização dos resultados
+- `src/components/dashboard/ClinicSecretaryDashboard.tsx` — Integrar os novos cards
+- `src/components/chat/ChatWindow.tsx` — Botão de enviar pesquisa
+- `src/App.tsx` — Nova rota `/feedback/clinic/:clinicId`
 
