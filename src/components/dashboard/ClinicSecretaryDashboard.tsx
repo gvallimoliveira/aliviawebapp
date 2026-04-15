@@ -48,7 +48,7 @@ const ClinicSecretaryDashboard = () => {
       .select("user_id, role")
       .eq("clinic_id", activeClinic.clinic_id)
       .eq("status", "active")
-      .in("role", ["owner", "therapist"]);
+      .in("role", ["owner", "therapist", "osteopath", "pilates_instructor", "doctor", "rpg_specialist", "massage_therapist"]);
 
     if (!members || members.length === 0) {
       setLoading(false);
