@@ -37,11 +37,16 @@ const roleLabels: Record<ClinicRole, Record<string, string>> = {
   owner: { pt: "Proprietário", en: "Owner", es: "Propietario" },
   therapist: { pt: "Fisioterapeuta", en: "Therapist", es: "Fisioterapeuta" },
   secretary: { pt: "Secretária", en: "Secretary", es: "Secretaria" },
+  osteopath: { pt: "Osteopata", en: "Osteopath", es: "Osteópata" },
+  pilates_instructor: { pt: "Prof. Pilates", en: "Pilates Instructor", es: "Prof. Pilates" },
+  doctor: { pt: "Médico", en: "Doctor", es: "Médico" },
+  rpg_specialist: { pt: "RPG", en: "RPG Specialist", es: "RPG" },
+  massage_therapist: { pt: "Massoterapeuta", en: "Massage Therapist", es: "Masajista" },
 };
 
 const roleIcon = (role: ClinicRole) => {
   if (role === "owner") return <Crown className="h-3.5 w-3.5" />;
-  if (role === "therapist") return <StethIcon className="h-3.5 w-3.5" />;
+  if (role === "therapist" || role === "osteopath" || role === "doctor" || role === "rpg_specialist" || role === "massage_therapist" || role === "pilates_instructor") return <StethIcon className="h-3.5 w-3.5" />;
   return <ClipboardList className="h-3.5 w-3.5" />;
 };
 
@@ -169,6 +174,11 @@ const ClinicTeamManagement = () => {
                     <SelectContent>
                       <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
                       <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
+                      <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
+                      <SelectItem value="pilates_instructor">{roleLabels.pilates_instructor[lang]}</SelectItem>
+                      <SelectItem value="doctor">{roleLabels.doctor[lang]}</SelectItem>
+                      <SelectItem value="rpg_specialist">{roleLabels.rpg_specialist[lang]}</SelectItem>
+                      <SelectItem value="massage_therapist">{roleLabels.massage_therapist[lang]}</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveMember(m.id)}>
@@ -224,10 +234,15 @@ const ClinicTeamManagement = () => {
                  <SelectTrigger>
                    <SelectValue />
                  </SelectTrigger>
-                 <SelectContent>
-                   <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
-                   <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
-                 </SelectContent>
+                  <SelectContent>
+                    <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
+                    <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
+                    <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
+                    <SelectItem value="pilates_instructor">{roleLabels.pilates_instructor[lang]}</SelectItem>
+                    <SelectItem value="doctor">{roleLabels.doctor[lang]}</SelectItem>
+                    <SelectItem value="rpg_specialist">{roleLabels.rpg_specialist[lang]}</SelectItem>
+                    <SelectItem value="massage_therapist">{roleLabels.massage_therapist[lang]}</SelectItem>
+                  </SelectContent>
                </Select>
              </div>
              <div className="space-y-2">
