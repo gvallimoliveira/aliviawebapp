@@ -67,6 +67,30 @@ const TYPE_COLORS: Record<string, string> = {
   external: "bg-amber-500/10 text-amber-600 border-amber-200",
 };
 
+const SERVICE_TYPE_COLORS: Record<string, string> = {
+  fisioterapia: "border-l-4 border-l-teal-500",
+  pilates: "border-l-4 border-l-purple-500",
+  osteopatia: "border-l-4 border-l-orange-500",
+  massoterapia: "border-l-4 border-l-pink-500",
+  rpg: "border-l-4 border-l-indigo-500",
+};
+
+const SERVICE_TYPE_DOT: Record<string, string> = {
+  fisioterapia: "bg-teal-500",
+  pilates: "bg-purple-500",
+  osteopatia: "bg-orange-500",
+  massoterapia: "bg-pink-500",
+  rpg: "bg-indigo-500",
+};
+
+const SERVICE_TYPE_LABELS: Record<string, Record<string, string>> = {
+  fisioterapia: { pt: "Fisioterapia", en: "Physiotherapy", es: "Fisioterapia" },
+  pilates: { pt: "Pilates", en: "Pilates", es: "Pilates" },
+  osteopatia: { pt: "Osteopatia", en: "Osteopathy", es: "Osteopatía" },
+  massoterapia: { pt: "Massoterapia", en: "Massage Therapy", es: "Masoterapia" },
+  rpg: { pt: "RPG", en: "RPG", es: "RPG" },
+};
+
 const STATUS_COLORS: Record<string, string> = {
   scheduled: "bg-blue-500/10 text-blue-600 border-blue-200",
   completed: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
