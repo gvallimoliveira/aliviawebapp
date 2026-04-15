@@ -44,6 +44,7 @@ interface Appointment {
   type: string;
   status: string;
   created_at: string;
+  service_type?: string;
 }
 
 interface ProScheduleProps {
