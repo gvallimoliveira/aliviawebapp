@@ -42,7 +42,7 @@ serve(async (req) => {
     // Check if user is a partner or has annual access first
     const { data: proData } = await supabaseClient
       .from("professionals")
-      .select("id, is_partner, subscription_status, pro_access_expires_at")
+      .select("id, is_partner, subscription_status, pro_access_expires_at, premium_granted")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -54,7 +54,7 @@ serve(async (req) => {
           .update({ subscription_status: "active" })
           .eq("user_id", user.id);
       }
-      return new Response(JSON.stringify({ subscribed: true, is_partner: true }), {
+      return new Response(JSON.stringify({ subscribed: true, is_partner: true, premium_granted: proData.premium_granted }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -145,6 +145,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       subscription_end: subscriptionEnd,
+      premium_granted: proData?.premium_granted || false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
