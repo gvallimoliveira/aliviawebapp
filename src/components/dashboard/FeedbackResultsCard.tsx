@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { BarChart3, Loader2, Star, ThumbsUp, ThumbsDown, Download, FileText } from "lucide-react";
+import { BarChart3, Loader2, Star, ThumbsUp, ThumbsDown, Download, FileText, TrendingUp } from "lucide-react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from "recharts";
 import { useToast } from "@/hooks/use-toast";
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -137,16 +140,6 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
       });
   }, [clinicId]);
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="py-8 flex justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
-  }
-
   const filtered = serviceFilter === "all" ? feedbacks : feedbacks.filter((f) => f.service_type === serviceFilter);
 
   const recommends = filtered.filter((f) => (f.service_answers as any)?.recommend === "sim").length;
@@ -160,6 +153,41 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
   });
 
   const activeServices = [...new Set(feedbacks.map((f) => f.service_type))];
+
+  const trendData = useMemo(() => {
+    if (filtered.length < 2) return [];
+    const byMonth: Record<string, { total: number; promoters: number; detractors: number; excellent: number; good: number }> = {};
+    filtered.forEach((f) => {
+      const d = new Date(f.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!byMonth[key]) byMonth[key] = { total: 0, promoters: 0, detractors: 0, excellent: 0, good: 0 };
+      byMonth[key].total++;
+      const rec = (f.service_answers as any)?.recommend;
+      if (rec === "sim") byMonth[key].promoters++;
+      if (rec === "nao") byMonth[key].detractors++;
+      const q = (f.service_answers as any)?.quality;
+      if (q === "excelente") byMonth[key].excellent++;
+      if (q === "bom") byMonth[key].good++;
+    });
+    return Object.entries(byMonth)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, d]) => ({
+        month: month.slice(5) + "/" + month.slice(2, 4),
+        nps: d.total > 0 ? Math.round(((d.promoters - d.detractors) / d.total) * 100) : 0,
+        satisfaction: d.total > 0 ? Math.round(((d.excellent + d.good) / d.total) * 100) : 0,
+        total: d.total,
+      }));
+  }, [filtered]);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-8 flex justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -243,6 +271,67 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
                 <p className="text-[10px] text-muted-foreground">Detratores</p>
               </div>
             </div>
+
+            {/* Trend Charts */}
+            {trendData.length >= 2 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {lang === "pt" ? "Tendência mensal" : "Monthly trend"}
+                  </p>
+                </div>
+                <div className="h-48 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={trendData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis dataKey="month" tick={{ fontSize: 10 }} className="text-muted-foreground" />
+                      <YAxis tick={{ fontSize: 10 }} domain={[-100, 100]} className="text-muted-foreground" />
+                      <Tooltip
+                        contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid hsl(var(--border))" }}
+                        formatter={(value: number, name: string) => [
+                          `${value}%`,
+                          name === "nps" ? "NPS" : lang === "pt" ? "Satisfação" : "Satisfaction",
+                        ]}
+                        labelFormatter={(label) => `${lang === "pt" ? "Mês" : "Month"}: ${label}`}
+                      />
+                      <Legend
+                        iconSize={8}
+                        wrapperStyle={{ fontSize: 10 }}
+                        formatter={(value) =>
+                          value === "nps" ? "NPS" : lang === "pt" ? "Satisfação (Bom+Excelente)" : "Satisfaction"
+                        }
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="nps"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        dot={{ r: 3 }}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="satisfaction"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        dot={{ r: 3 }}
+                        activeDot={{ r: 5 }}
+                        strokeDasharray="5 5"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex justify-center gap-4">
+                  {trendData.map((d) => (
+                    <div key={d.month} className="text-center">
+                      <p className="text-[9px] text-muted-foreground">{d.month}</p>
+                      <p className="text-[9px] text-muted-foreground">{d.total} resp.</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Quality breakdown */}
             {Object.keys(qualityCounts).length > 0 && (
