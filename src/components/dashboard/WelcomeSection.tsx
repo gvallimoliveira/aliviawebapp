@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, Stethoscope, Crown, RotateCcw } from "lucide-react";
+import { Shield, Stethoscope, Crown, RotateCcw, Building2, Star } from "lucide-react";
 
 
 interface WelcomeSectionProps {
@@ -28,6 +30,19 @@ const WelcomeSection = ({
 }: WelcomeSectionProps) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [clinicActive, setClinicActive] = useState(false);
+
+  // Check if partner has active clinic
+  useEffect(() => {
+    if (!professional?.is_partner || !professional?.user_id) return;
+    (supabase.from("clinics") as any)
+      .select("subscription_status")
+      .eq("owner_user_id", professional.user_id)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        setClinicActive(data?.subscription_status === "active" || data?.subscription_status === "trialing");
+      });
+  }, [professional?.is_partner, professional?.user_id]);
 
   const renderBadge = () => {
     const isAdmin = userEmail === "gvallimoliveira@gmail.com";
@@ -38,7 +53,23 @@ const WelcomeSection = ({
     // Na aba profissional, mostrar badge Pro
     if (activeTab === "professional") {
       if (professional?.is_partner) {
-        return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Stethoscope className="h-3 w-3" />PRO Parceiro</Badge>;
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1">
+              <Stethoscope className="h-3 w-3" />PRO
+            </Badge>
+            {clinicActive && (
+              <Badge className="bg-teal-600 text-white text-[10px] px-2 py-0.5 gap-1">
+                <Building2 className="h-3 w-3" />Clínica
+              </Badge>
+            )}
+            {professional?.premium_granted && (
+              <Badge className="bg-amber-500 text-white text-[10px] px-2 py-0.5 gap-1">
+                <Star className="h-3 w-3" />Premium
+              </Badge>
+            )}
+          </div>
+        );
       }
       if (professional?.subscription_status === "active" && professional?.pro_access_expires_at) {
         return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Anual</Badge>;
