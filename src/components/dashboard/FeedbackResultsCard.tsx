@@ -179,6 +179,40 @@ const FeedbackResultsCard = ({ clinicId, lang }: FeedbackResultsCardProps) => {
       }));
   }, [filtered]);
 
+  // NPS comparison by service
+  const SERVICE_BAR_COLORS: Record<string, string> = {
+    fisioterapia: "#0d9488",
+    pilates: "#7c3aed",
+    osteopatia: "#ea580c",
+    massoterapia: "#db2777",
+    rpg: "#4f46e5",
+  };
+
+  const serviceComparisonData = useMemo(() => {
+    if (feedbacks.length < 2) return [];
+    const byService: Record<string, { total: number; promoters: number; detractors: number; satisfaction: number }> = {};
+    feedbacks.forEach((f) => {
+      const svc = f.service_type;
+      if (!byService[svc]) byService[svc] = { total: 0, promoters: 0, detractors: 0, satisfaction: 0 };
+      byService[svc].total++;
+      const rec = (f.service_answers as any)?.recommend;
+      if (rec === "sim") byService[svc].promoters++;
+      if (rec === "nao") byService[svc].detractors++;
+      const q = (f.service_answers as any)?.quality;
+      if (q === "excelente" || q === "bom") byService[svc].satisfaction++;
+    });
+    return Object.entries(byService)
+      .filter(([, d]) => d.total >= 1)
+      .map(([svc, d]) => ({
+        service: SERVICE_LABELS[svc] || svc,
+        serviceKey: svc,
+        nps: Math.round(((d.promoters - d.detractors) / d.total) * 100),
+        satisfaction: Math.round((d.satisfaction / d.total) * 100),
+        total: d.total,
+      }))
+      .sort((a, b) => b.nps - a.nps);
+  }, [feedbacks]);
+
   if (loading) {
     return (
       <Card>
