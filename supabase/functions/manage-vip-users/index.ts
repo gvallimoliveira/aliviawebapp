@@ -409,6 +409,60 @@ serve(async (req) => {
       });
     }
 
+    // Get clinic config by clinic_id
+    if (action === "get_clinic_config") {
+      const { clinic_id } = body;
+      if (!clinic_id) {
+        return new Response(JSON.stringify({ error: "clinic_id required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: clinic, error } = await supabaseClient
+        .from("clinics")
+        .select("id, name, phone, address, operating_hours_start, operating_hours_end, working_days, brand_color, max_members, logo_url")
+        .eq("id", clinic_id)
+        .single();
+
+      if (error) throw error;
+      return new Response(JSON.stringify({ clinic }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Update clinic config
+    if (action === "update_clinic_config") {
+      const { clinic_id, clinic_config } = body;
+      if (!clinic_id || !clinic_config) {
+        return new Response(JSON.stringify({ error: "clinic_id and clinic_config required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const updateData: any = {};
+      if (clinic_config.name) updateData.name = clinic_config.name;
+      if (clinic_config.phone !== undefined) updateData.phone = clinic_config.phone;
+      if (clinic_config.address !== undefined) updateData.address = clinic_config.address;
+      if (clinic_config.operating_hours_start) updateData.operating_hours_start = clinic_config.operating_hours_start;
+      if (clinic_config.operating_hours_end) updateData.operating_hours_end = clinic_config.operating_hours_end;
+      if (clinic_config.working_days) updateData.working_days = clinic_config.working_days;
+      if (clinic_config.brand_color !== undefined) updateData.brand_color = clinic_config.brand_color;
+      if (clinic_config.max_members) updateData.max_members = clinic_config.max_members;
+
+      const { error } = await supabaseClient
+        .from("clinics")
+        .update(updateData)
+        .eq("id", clinic_id);
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // List leads (basic assessments with patient_email)
     if (action === "list_leads") {
       // Fetch basic leads
