@@ -36,7 +36,7 @@ const HighlightsSection = () => {
   ];
 
   return (
-    <section className="py-16 md:py-24">
+    <section className="section-lazy py-16 md:py-24">
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

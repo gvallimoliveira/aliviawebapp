@@ -14,7 +14,7 @@ const TestimonialsSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="bg-muted/30 py-20 md:py-28">
+    <section className="section-lazy bg-muted/30 py-20 md:py-28">
       <div className="container">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}

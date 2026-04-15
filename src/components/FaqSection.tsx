@@ -23,7 +23,7 @@ const FaqSection = () => {
   }, [t]);
 
   return (
-    <section className="py-20 md:py-28">
+    <section className="section-lazy py-20 md:py-28">
       <div className="container">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}

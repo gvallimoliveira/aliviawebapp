@@ -31,7 +31,7 @@ const SocialSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="py-16 md:py-20">
+    <section className="section-lazy py-16 md:py-20">
       <div className="container">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}

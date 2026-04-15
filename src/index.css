@@ -10,6 +10,20 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* GPU-promoted blur blobs — avoid expensive repaints during scroll */
+  .blur-blob {
+    will-change: transform;
+    transform: translateZ(0);
+    contain: strict;
+    pointer-events: none;
+  }
+
+  /* Defer rendering of off-screen sections for smoother scroll */
+  .section-lazy {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 600px;
+  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
@@ -105,4 +119,14 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* CSS-based float animation — cheaper than JS-driven framer-motion */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+  will-change: transform;
 }

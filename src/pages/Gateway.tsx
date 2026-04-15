@@ -46,9 +46,9 @@ const Gateway = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden flex flex-col">
       {/* Background blobs */}
-      <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/10 blur-3xl" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl" />
+      <div className="blur-blob absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
+      <div className="blur-blob absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/10 blur-3xl" />
+      <div className="blur-blob absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl" />
 
       {/* Header minimal */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
@@ -160,12 +160,10 @@ const Gateway = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <motion.img
+            <img
               src={logoAlivia}
               alt="Aliv.iA"
-              className="h-24 w-24 md:h-32 md:w-32 drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              className="h-24 w-24 md:h-32 md:w-32 drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)] animate-float"
             />
           </motion.div>
 
