@@ -10,7 +10,7 @@
 
 const BUILD_HASH: string = (import.meta as any).env.VITE_BUILD_HASH ?? "__dev__";
 const VERSION_URL = "/version.json";
-const POLL_INTERVAL = 60 * 1000; // 1 minute
+const POLL_INTERVAL = 30 * 1000; // 30 seconds
 const FORCE_RELOAD_KEY = "__alivia_force_reload";
 
 let polling = false;
@@ -46,7 +46,8 @@ async function checkVersion() {
 
       await unregisterAllSW();
       await clearAllCaches();
-      window.location.reload();
+      // Bust HTTP cache with a query param so the standalone PWA shortcut also re-fetches
+      window.location.replace(window.location.pathname + "?v=" + Date.now());
     }
   } catch {
     // Network errors are fine — just retry next poll
@@ -63,10 +64,12 @@ export function startVersionChecker() {
   // Poll periodically
   setInterval(checkVersion, POLL_INTERVAL);
 
-  // Also check when user returns to tab
+  // Also check when user returns to tab / reopens the PWA shortcut
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") checkVersion();
   });
+  window.addEventListener("focus", checkVersion);
+  window.addEventListener("pageshow", checkVersion);
 
   // Check when back online
   window.addEventListener("online", checkVersion);
