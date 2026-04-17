@@ -1,12 +1,13 @@
-// Push notification handler for PWA service worker
-// This file is injected into the SW by vite-plugin-pwa
+// Standalone Push Notifications Service Worker.
+// Registered on-demand via usePushNotifications. Does NOT cache, does NOT
+// intercept fetches, does NOT touch authentication or navigation.
 
-// Listen for SKIP_WAITING message from the page so a new SW can take over
-// immediately when the user is on a safe route.
-self.addEventListener("message", (event) => {
-  if (event?.data?.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
+self.addEventListener("install", () => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener("push", (event) => {

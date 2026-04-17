@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
 /**
- * Página utilitária pública: desregistra todos os Service Workers,
- * limpa todos os caches do navegador (Cache Storage), localStorage e
- * sessionStorage e redireciona para "/auth". Útil quando um SW antigo
- * está interceptando requisições e gerando "network error" no desktop.
+ * Public utility page: unregisters every Service Worker, clears the Cache
+ * Storage, removes only auth-related localStorage keys (preserving user
+ * preferences) and redirects to /auth. Useful when stale PWA caches caused
+ * "network error" on the desktop login flow.
  */
+const AUTH_KEY_PATTERNS = [/^sb-/i, /supabase\.auth/i, /^__alivia_force_reload$/];
+
 const ClearCache = () => {
   const [done, setDone] = useState(false);
 
@@ -22,8 +24,17 @@ const ClearCache = () => {
           await Promise.all(keys.map((k) => caches.delete(k)));
         }
       } catch {}
+      try {
+        const toRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && AUTH_KEY_PATTERNS.some((re) => re.test(key))) {
+            toRemove.push(key);
+          }
+        }
+        toRemove.forEach((key) => localStorage.removeItem(key));
+      } catch {}
       try { sessionStorage.clear(); } catch {}
-      // NÃO limpamos localStorage inteiro pra preservar a sessão Supabase
       setDone(true);
       setTimeout(() => {
         window.location.replace("/auth?cache=cleared&v=" + Date.now());

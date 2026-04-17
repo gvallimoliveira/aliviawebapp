@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -12,7 +12,6 @@ import {
   UserCog,
   Home,
   BookOpen,
-  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -54,15 +53,6 @@ const GlobalMobileMenu = () => {
   const { t, toggleLanguage, language } = useLanguage();
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
-  const [updatePending, setUpdatePending] = useState(
-    () => !!(window as any).__pwaUpdatePending,
-  );
-
-  useEffect(() => {
-    const handler = () => setUpdatePending(true);
-    window.addEventListener("pwa-update-ready", handler);
-    return () => window.removeEventListener("pwa-update-ready", handler);
-  }, []);
 
   // Hide on critical/auth flows
   const path = location.pathname;
@@ -101,12 +91,6 @@ const GlobalMobileMenu = () => {
         className="md:hidden fixed top-3 right-3 z-[60] h-10 w-10 rounded-full shadow-lg bg-background/95 backdrop-blur border border-border text-foreground hover:bg-muted"
       >
         <Menu className="h-5 w-5" />
-        {updatePending && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
-          </span>
-        )}
       </Button>
 
       <Sheet open={open} onOpenChange={setOpen}>
@@ -118,16 +102,6 @@ const GlobalMobileMenu = () => {
             </SheetTitle>
           </SheetHeader>
 
-          {updatePending && (
-            <div className="mx-3 mt-3 flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary">
-              <RefreshCw className="h-3.5 w-3.5 shrink-0" />
-              {language === "pt"
-                ? "Atualização disponível — volte à tela inicial"
-                : language === "es"
-                  ? "Actualización disponible — vuelve al inicio"
-                  : "Update available — return to home"}
-            </div>
-          )}
 
           <nav className="flex flex-col gap-1 p-3">
             {user && (
