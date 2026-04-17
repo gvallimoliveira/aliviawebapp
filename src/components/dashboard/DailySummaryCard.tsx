@@ -77,11 +77,13 @@ const DailySummaryCard = ({
     const { data: apts } = await aptQuery;
     setTodayAppointments((apts as TodayAppointment[]) || []);
 
-    // Load pending assessments (in_progress) with details
+    // Load recent completed assessments (last 48h) — newly received, may need review
+    const recentCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
     let assessQuery = supabase
       .from("assessments")
       .select("id, patient_name, patient_email, created_at, status")
-      .eq("status", "in_progress")
+      .eq("status", "completed")
+      .gte("created_at", recentCutoff)
       .order("created_at", { ascending: false });
 
     if (clinicId) {
@@ -196,7 +198,10 @@ const DailySummaryCard = ({
               <div className="flex-1 text-left">
                 <p className="text-sm text-foreground">
                   <span className="font-medium text-destructive">
-                    {pendingCount} {isPt ? "avaliação(ões) pendente(s)" : "pending assessment(s)"}
+                    {pendingCount} {isPt ? "nova(s) avaliação(ões)" : "new assessment(s)"}
+                  </span>{" "}
+                  <span className="text-xs text-muted-foreground">
+                    {isPt ? "— últimas 48h" : "— last 48h"}
                   </span>
                 </p>
               </div>
@@ -223,7 +228,7 @@ const DailySummaryCard = ({
                       </p>
                     </div>
                     <Badge variant="outline" className="text-[10px] shrink-0 border-amber-300 text-amber-700 bg-amber-50">
-                      {isPt ? "Em andamento" : "In progress"}
+                      {isPt ? "Revisar" : "Review"}
                     </Badge>
                     <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                   </button>
