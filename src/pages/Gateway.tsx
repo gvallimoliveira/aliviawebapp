@@ -97,9 +97,16 @@ const Gateway = () => {
               <Globe className="h-4 w-4" />
               {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm px-2">
-              {t("nav.login")}
-            </Button>
+            {user ? (
+              <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5 px-2 text-xs">
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                {language === "pt" ? "Painel" : language === "es" ? "Panel" : "Dashboard"}
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm px-2">
+                {t("nav.login")}
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} aria-label="Menu">
               <Menu className="h-5 w-5" />
             </Button>
