@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -240,7 +239,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0">
+        <div className="px-6 pt-6 pb-2 shrink-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
@@ -253,15 +253,16 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           </DialogDescription>
         </DialogHeader>
 
-        {/* Step indicator */}
-        <div className="flex gap-1 px-1">
-          {STEPS.map((_, i) => (
-            <div key={i} className={`h-1 flex-1 rounded ${i <= step ? "bg-primary" : "bg-muted"}`} />
-          ))}
+          {/* Step indicator */}
+          <div className="flex gap-1 px-1 mt-3">
+            {STEPS.map((_, i) => (
+              <div key={i} className={`h-1 flex-1 rounded ${i <= step ? "bg-primary" : "bg-muted"}`} />
+            ))}
+          </div>
         </div>
 
-        <ScrollArea className="flex-1 pr-3 -mr-3">
-          <div className="space-y-4 py-2">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-6">
+          <div className="space-y-4 py-4">
             {/* STEP 0: ANAMNESE */}
             {step === 0 && (
               <div className="space-y-3">
@@ -463,9 +464,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="flex-row justify-between sm:justify-between border-t pt-3">
+        <DialogFooter className="flex-row justify-between sm:justify-between border-t p-4 shrink-0 bg-background">
           <Button variant="outline" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
             <ChevronLeft className="h-4 w-4" /> {isPt ? "Voltar" : "Back"}
           </Button>
