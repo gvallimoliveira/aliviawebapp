@@ -107,8 +107,7 @@ const Dashboard = () => {
 
   // Reset tab on context change or URL params
   useEffect(() => {
-    if (isClinicMode) {
-      // Clinic mode: 5 tabs (agenda, patients, team, link, messages)
+    if (activeContext === "clinic") {
       if (tabFromUrl === "messages") setActiveTab("messages");
       else if (tabFromUrl === "agenda") setActiveTab("agenda");
       else if (tabFromUrl === "patients") setActiveTab("patients");
@@ -116,14 +115,24 @@ const Dashboard = () => {
       else if (tabFromUrl === "link") setActiveTab("link");
       else if (tabFromUrl === "analytics") setActiveTab("analytics");
       else setActiveTab("agenda");
-    } else {
-      // Personal mode
-      if (tabFromUrl === "professional" && professional) setActiveTab("professional");
-      else if (tabFromUrl === "messages") setActiveTab("messages");
+    } else if (activeContext === "professional") {
+      if (tabFromUrl === "messages") setActiveTab("messages");
       else if (tabFromUrl === "agenda") setActiveTab("agenda");
-      else if (!tabFromUrl) setActiveTab("health");
+      else setActiveTab("professional");
+    } else {
+      // personal
+      if (tabFromUrl === "messages") setActiveTab("messages");
+      else setActiveTab("health");
     }
-  }, [tabFromUrl, professional, isClinicMode, activeClinic?.clinic_id]);
+  }, [tabFromUrl, activeContext, activeClinic?.clinic_id]);
+
+  // Sync professional profile presence to context + auto-redirect URL ?tab=professional
+  useEffect(() => {
+    setHasProfessionalProfile(!!professional);
+    if (professional && tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
+      setActiveContext("professional");
+    }
+  }, [professional, tabFromUrl]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
