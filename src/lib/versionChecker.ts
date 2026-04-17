@@ -10,10 +10,16 @@
 
 const BUILD_HASH: string = (import.meta as any).env.VITE_BUILD_HASH ?? "__dev__";
 const VERSION_URL = "/version.json";
-const POLL_INTERVAL = 30 * 1000; // 30 seconds
+const POLL_INTERVAL = 20 * 1000; // 20 seconds
 const FORCE_RELOAD_KEY = "__alivia_force_reload";
+const BLOCKED_ROUTES = ["/assessment", "/payment"];
 
 let polling = false;
+
+function isBlocked(): boolean {
+  const p = window.location.pathname;
+  return BLOCKED_ROUTES.some((r) => p === r || p.startsWith(r + "/"));
+}
 
 async function clearAllCaches() {
   if ("caches" in window) {
@@ -23,7 +29,7 @@ async function clearAllCaches() {
 }
 
 async function unregisterAllSW() {
-  const regs = await navigator.serviceWorker?.getRegistrations?.() ?? [];
+  const regs = (await navigator.serviceWorker?.getRegistrations?.()) ?? [];
   await Promise.all(regs.map((r) => r.unregister()));
 }
 
@@ -36,19 +42,33 @@ async function checkVersion() {
     const data = await res.json();
     const remoteHash = data?.hash;
 
-    if (remoteHash && remoteHash !== BUILD_HASH) {
-      // Prevent reload loops
-      const last = sessionStorage.getItem(FORCE_RELOAD_KEY);
-      if (last === remoteHash) return;
+    if (!remoteHash || remoteHash === BUILD_HASH) return;
 
-      sessionStorage.setItem(FORCE_RELOAD_KEY, remoteHash);
-      console.info(`[Aliv.iA] Nova versão detectada (${remoteHash}). Atualizando...`);
+    // Signal to the rest of the app that an update is pending
+    (window as any).__pwaUpdatePending = true;
+    window.dispatchEvent(new Event("pwa-update-ready"));
 
-      await unregisterAllSW();
-      await clearAllCaches();
-      // Bust HTTP cache with a query param so the standalone PWA shortcut also re-fetches
-      window.location.replace(window.location.pathname + "?v=" + Date.now());
+    // Try to push the waiting SW into activation right away
+    const reg = (window as any).__pwaRegistration as ServiceWorkerRegistration | undefined;
+    if (reg) {
+      try { await reg.update(); } catch {}
+      if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
     }
+
+    // Don't reload if user is in the middle of something critical
+    if (isBlocked()) return;
+
+    // Prevent reload loops
+    const last = sessionStorage.getItem(FORCE_RELOAD_KEY);
+    if (last === remoteHash) return;
+    sessionStorage.setItem(FORCE_RELOAD_KEY, remoteHash);
+
+    console.info(`[Aliv.iA] Nova versão detectada (${remoteHash}). Atualizando...`);
+
+    await unregisterAllSW();
+    await clearAllCaches();
+    // Bust HTTP cache with a query param so the standalone PWA shortcut also re-fetches
+    window.location.replace(window.location.pathname + "?v=" + Date.now());
   } catch {
     // Network errors are fine — just retry next poll
   }
@@ -69,7 +89,10 @@ export function startVersionChecker() {
     if (document.visibilityState === "visible") checkVersion();
   });
   window.addEventListener("focus", checkVersion);
-  window.addEventListener("pageshow", checkVersion);
+  window.addEventListener("pageshow", (e) => {
+    // pageshow fires on bfcache restore — always re-check
+    checkVersion();
+  });
 
   // Check when back online
   window.addEventListener("online", checkVersion);
