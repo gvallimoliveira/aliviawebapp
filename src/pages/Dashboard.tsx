@@ -405,7 +405,7 @@ const Dashboard = () => {
             </TabsContent>
 
             {/* Gestão (owner only) */}
-            {activeClinic.role === "owner" && (
+            {(activeClinic.role === "owner" || activeClinic.role === "secretary") && (
               <TabsContent value="analytics" className="space-y-6">
                 <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
               </TabsContent>
