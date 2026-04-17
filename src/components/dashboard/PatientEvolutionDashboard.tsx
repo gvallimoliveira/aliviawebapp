@@ -472,7 +472,8 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<{ groupKey: string; name: string; assessmentIds: string[] } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressFiredRef = useRef(false);
-   const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const [manualAssessmentTarget, setManualAssessmentTarget] = useState<{ name: string; email?: string } | null>(null);
    const [editPatientData, setEditPatientData] = useState<PatientToEdit | null>(null);
    const [newPatientName, setNewPatientName] = useState("");
    const [newPatientEmail, setNewPatientEmail] = useState("");
@@ -1351,7 +1352,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           clinicId={clinicId}
           onAdded={() => window.dispatchEvent(new CustomEvent("reload-pro-patients"))}
           editPatient={editPatientData}
+          onCreateManualAssessment={(p) => setManualAssessmentTarget(p)}
         />
+
+        {/* Manual Assessment Modal */}
+        {manualAssessmentTarget && (
+          <ManualAssessmentModal
+            open={!!manualAssessmentTarget}
+            onOpenChange={(o) => { if (!o) setManualAssessmentTarget(null); }}
+            professionalId={professionalId}
+            clinicId={clinicId}
+            patientName={manualAssessmentTarget.name}
+            patientEmail={manualAssessmentTarget.email}
+          />
+        )}
 
         {/* Quick note dialog */}
         <Dialog open={!!quickNotePatient} onOpenChange={(open) => { if (!open) setQuickNotePatient(null); }}>
