@@ -34,7 +34,14 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/vjrtsqgnoeehviypkqrf\.supabase\.co\/.*/i,
+            // NEVER cache Supabase auth endpoints — caching these causes
+            // "network error" / stale token issues on desktop after SW updates.
+            urlPattern: /^https:\/\/vjrtsqgnoeehviypkqrf\.supabase\.co\/auth\/.*/i,
+            handler: "NetworkOnly",
+            options: { cacheName: "supabase-auth-no-cache" },
+          },
+          {
+            urlPattern: /^https:\/\/vjrtsqgnoeehviypkqrf\.supabase\.co\/(?!auth\/).*/i,
             handler: "NetworkFirst",
             options: {
               cacheName: "supabase-api",

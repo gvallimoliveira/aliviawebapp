@@ -37,6 +37,7 @@ import ClinicAssessment from "./pages/ClinicAssessment";
 import ClinicDemo from "./pages/ClinicDemo";
 import ClinicFeedback from "./pages/ClinicFeedback";
 import Account from "./pages/Account";
+import ClearCache from "./pages/ClearCache";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/feedback/clinic/:clinicId" element={<ClinicFeedback />} />
               <Route path="/aceitar-convite" element={<AcceptInvite />} />
               <Route path="/conta" element={<Account />} />
+              <Route path="/limpar-cache" element={<ClearCache />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
