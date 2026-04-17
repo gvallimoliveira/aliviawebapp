@@ -837,6 +837,69 @@ export type Database = {
           },
         ]
       }
+      patient_photos: {
+        Row: {
+          category: string
+          clinic_id: string | null
+          created_at: string
+          description: string | null
+          file_name: string
+          file_path: string
+          file_size_bytes: number
+          id: string
+          mime_type: string
+          patient_email: string
+          patient_name: string | null
+          professional_id: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          category?: string
+          clinic_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_path: string
+          file_size_bytes?: number
+          id?: string
+          mime_type?: string
+          patient_email: string
+          patient_name?: string | null
+          professional_id?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          category?: string
+          clinic_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_path?: string
+          file_size_bytes?: number
+          id?: string
+          mime_type?: string
+          patient_email?: string
+          patient_name?: string | null
+          professional_id?: string | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_photos_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_photos_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null

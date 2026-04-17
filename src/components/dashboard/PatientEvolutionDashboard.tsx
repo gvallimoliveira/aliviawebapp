@@ -27,7 +27,7 @@ import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, Plus, Phone,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
   Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw, TrendingUp,
-  Copy, ExternalLink, Trash2, Pencil, MessageCircle,
+  Copy, ExternalLink, Trash2, Pencil, MessageCircle, FilePlus,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +37,9 @@ import CreateExerciseProgramModal from "@/components/dashboard/CreateExercisePro
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockClinicalImpressions, mockEvolutionSummary } from "@/data/mockPatientData";
 import PatientFilesSection from "./PatientFilesSection";
+import PatientPhotosSection from "./PatientPhotosSection";
 import AddPatientModal, { type PatientToEdit } from "./AddPatientModal";
+import ManualAssessmentModal from "./ManualAssessmentModal";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
@@ -470,7 +472,8 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
   const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<{ groupKey: string; name: string; assessmentIds: string[] } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressFiredRef = useRef(false);
-   const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const [manualAssessmentTarget, setManualAssessmentTarget] = useState<{ name: string; email?: string } | null>(null);
    const [editPatientData, setEditPatientData] = useState<PatientToEdit | null>(null);
    const [newPatientName, setNewPatientName] = useState("");
    const [newPatientEmail, setNewPatientEmail] = useState("");
@@ -1292,6 +1295,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    {!readOnly && p.email && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title={language === "pt" ? "Nova avaliação manual" : "New manual assessment"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setManualAssessmentTarget({ name: p.name, email: p.email });
+                        }}
+                      >
+                        <FilePlus className="h-4 w-4 text-primary" />
+                      </Button>
+                    )}
                     {!readOnly && !isHidden && p.email && (
                       <Button
                         variant="ghost"
@@ -1349,7 +1366,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           clinicId={clinicId}
           onAdded={() => window.dispatchEvent(new CustomEvent("reload-pro-patients"))}
           editPatient={editPatientData}
+          onCreateManualAssessment={(p) => setManualAssessmentTarget(p)}
         />
+
+        {/* Manual Assessment Modal */}
+        {manualAssessmentTarget && (
+          <ManualAssessmentModal
+            open={!!manualAssessmentTarget}
+            onOpenChange={(o) => { if (!o) setManualAssessmentTarget(null); }}
+            professionalId={professionalId}
+            clinicId={clinicId}
+            patientName={manualAssessmentTarget.name}
+            patientEmail={manualAssessmentTarget.email}
+          />
+        )}
 
         {/* Quick note dialog */}
         <Dialog open={!!quickNotePatient} onOpenChange={(open) => { if (!open) setQuickNotePatient(null); }}>
@@ -2059,6 +2089,17 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
       {/* ── 8.6. DOCUMENTOS DO PACIENTE ── */}
       {selectedEmail && !isDemo && (
         <PatientFilesSection
+          patientEmail={selectedEmail}
+          patientName={patient?.name}
+          clinicId={clinicId}
+          professionalId={professionalId}
+          readOnly={readOnly}
+        />
+      )}
+
+      {/* ── 8.7. FOTOS DO PACIENTE ── */}
+      {selectedEmail && !isDemo && (
+        <PatientPhotosSection
           patientEmail={selectedEmail}
           patientName={patient?.name}
           clinicId={clinicId}
