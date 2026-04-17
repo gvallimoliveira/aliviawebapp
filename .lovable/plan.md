@@ -1,64 +1,48 @@
 
+O usuário quer simplificar e unificar a navegação mobile:
+- Remover o botão flutuante (`GlobalMobileMenu`) que está cobrindo a logo
+- Garantir que o menu hamburguer esteja sempre presente no header (canto superior direito) em todas as páginas no mobile
+- Limpar ícones redundantes do header desktop (suporte e idioma) já que ficarão dentro do menu
+- Manter apenas o botão "Sair" visível diretamente no header (quando logado)
+
+Hoje várias páginas (Dashboard, Gateway, etc.) não renderizam o `Header` global — por isso foi criado o botão flutuante. A solução correta é tornar o `Header` global e presente em todas as rotas (exceto fluxos críticos como `/assessment`, `/auth`, `/payment-success`).
 
 ## Plano
 
-Duas funcionalidades novas para o painel profissional/clínica:
+**1. Tornar o Header global no `App.tsx`**
+- Renderizar `<Header />` no layout raiz (uma única vez), dentro do Router
+- Criar lista de rotas onde o Header deve ser ocultado (fluxos críticos: `/assessment`, `/auth`, `/payment-success`, `/aceitar-convite`, `/reset-password`, `/complete-profile`, `/hep/`, `/feedback/clinic`)
+- Implementar componente wrapper `ConditionalHeader` que usa `useLocation` para decidir
 
-### 1. Upload de Fotos do Paciente (avaliação postural / acompanhamento)
+**2. Remover renderizações duplicadas do Header**
+- Buscar páginas que importam e renderizam `<Header />` localmente (Index, ProfessionalLanding, Blog, Suporte, Conta, etc.) e remover essas chamadas, já que passará a ser global
 
-Espelhar o componente `PatientFilesSection.tsx` (PDFs) criando um novo `PatientPhotosSection.tsx` para imagens.
+**3. Remover `GlobalMobileMenu`**
+- Deletar o componente e sua referência no `App.tsx`
+- Não é mais necessário — o Header (com seu próprio hamburguer mobile) estará sempre presente
 
-**Backend:**
-- Nova tabela `patient_photos` (mesma estrutura de `patient_files` + campo `category`: 'postural' | 'follow_up' | 'other')
-- Bucket privado `patient-photos` com RLS espelhando `patient-files`
-- Limite: 30 fotos por paciente, 10MB cada, formatos JPG/PNG/WEBP
-- Políticas RLS: clínica vê fotos da clínica; profissional autônomo vê suas fotos
+**4. Limpar ícones redundantes do Header (desktop)**
+- Remover botão de Suporte (HelpCircle) — já está no menu mobile e pode ser acessado via menu desktop também (manter no menu hamburguer mobile)
+- Remover botão de Idioma (Globe) do desktop — manter apenas dentro do menu mobile
+- Manter no desktop: Logo, links de navegação (compare/how/blog/profissionais), botão Dashboard, ícone Admin, ícone Conta, botão Sair (LogOut)
+- Manter no mobile: apenas Logo + hamburguer (que abre tudo: idioma, suporte, conta, admin, sair)
 
-**Frontend:**
-- `src/components/dashboard/PatientPhotosSection.tsx` — upload, grid de miniaturas (3 col), preview em modal (lightbox), categoria selecionável, exclusão
-- Integrar no mesmo lugar onde `PatientFilesSection` é usado (página do paciente / `AssessmentView`)
+Aguarde — relendo o pedido: "remover o ícone de suporte e de idioma que se tornarão redundantes. Mantenha apenas o botão de sair". Isso aplica-se ao header desktop. O menu hamburguer (mobile) continua tendo todos os itens. Confirmado.
 
-### 2. Avaliação Manual ("Surpresa") preenchida pelo fisioterapeuta
+**5. Garantir z-index e posicionamento corretos**
+- Header já é `sticky top-0 z-50` — funciona bem
+- Hamburguer mobile fica no canto superior direito (já está assim no Header atual)
 
-Ao adicionar um paciente direto pela lista (`AddPatientModal`), oferecer botão **"Criar avaliação manual"** que abre um fluxo completo de preenchimento.
+## Arquivos a modificar
+- `src/App.tsx` — adicionar Header global condicional, remover `GlobalMobileMenu`
+- `src/components/Header.tsx` — limpar botões desktop redundantes (Globe, HelpCircle)
+- `src/components/GlobalMobileMenu.tsx` — deletar
+- Páginas que renderizam `<Header />` localmente — remover import e uso (Index, PatientLanding, ProfessionalLanding, Blog, BlogPost, Support, Account, Admin, ClinicLanding, etc.)
 
-**Novo componente:** `src/components/dashboard/ManualAssessmentModal.tsx` (multi-step, em Tabs/Stepper):
+## Resultado esperado
+- Logo nunca mais é coberta
+- Menu hamburguer sempre visível no mobile (canto superior direito do header), em qualquer página não-crítica
+- Header desktop mais limpo: navegação + Dashboard + Admin + Conta + Sair
+- Idioma e Suporte ficam acessíveis via menu hamburguer (mobile) e via links/rotas normais (desktop pode acessar suporte pela URL `/suporte`)
 
-| Etapa | Conteúdo | Reaproveita |
-|---|---|---|
-| 1. Anamnese | Formulário completo (queixa, histórico, dor, localização, intensidade, fatores agravantes/aliviantes, medicações, cirurgias, etc.) | Reusa `AnamnesisForm.tsx` em modo "manual" |
-| 2. Mapa de Dor | Selecionar regiões no `PainMapView` | Reusa `PainMap.tsx` |
-| 3. Red Flags | Triagem rápida (checkboxes) | Reusa `RedFlagScreening.tsx` |
-| 4. Questionários | Profissional escolhe quais aplicar (Roland-Morris, Oswestry, NDI, etc.) e preenche pontuação OU marca como "aplicar depois" | Reusa `QuestionnaireStep.tsx` + lista de `questionnaireData.ts` |
-| 5. Testes Funcionais | Campo de texto livre + checklist de testes feitos com resultado (positivo/negativo/observação) | Adapta `FunctionalTests.tsx` para entrada manual |
-| 6. Observações & Diagnóstico | Campo livre para impressão clínica + botão "Gerar diagnóstico com IA" (chama `generate-diagnosis` edge function existente) | Reusa edge function |
-| 7. Plano de Tratamento | Botão "Gerar plano com IA" ou preencher manual | Reusa `generate-treatment` |
-
-**Salvamento:**
-- Insere em `assessments` com `type='professional'`, `status='completed'`, `professional_id` ou `clinic_id`, `anamnesis_data`, `pain_regions`, `pain_score`, `test_results`, `red_flags`, `diagnosis`, `treatment_plan`, `patient_name`, `patient_email`
-- Marca `anamnesis_data.manualEntry = true` para diferenciar de avaliações via link
-- Após salvar, abre direto o `AssessmentView` do paciente
-
-**Trigger no `AddPatientModal`:**
-- Após `Adicionar`, exibir toast com 2 ações: "Ver lista" / "Criar avaliação agora" → abre `ManualAssessmentModal`
-- Também adicionar botão **"Nova avaliação manual"** no card de cada paciente na lista (para casos onde paciente já existe)
-
-### Arquivos a criar/editar
-
-**Criar:**
-- `src/components/dashboard/PatientPhotosSection.tsx`
-- `src/components/dashboard/ManualAssessmentModal.tsx`
-- Migration: tabela `patient_photos` + bucket `patient-photos` + RLS
-
-**Editar:**
-- `src/components/dashboard/AddPatientModal.tsx` — toast com ação pós-criação
-- `src/pages/AssessmentView.tsx` (ou onde `PatientFilesSection` é renderizado) — incluir `PatientPhotosSection`
-- Lista de pacientes no `ProDashboard`/`ClinicOwnerDashboard` — botão "Avaliação manual"
-- `src/locales/pt.json` / `en.json` / `es.json` — strings novas
-
-### Pontos de design
-- Manual assessment usa o mesmo layout/UI dos passos do link público para consistência visual
-- Validação mínima: apenas nome do paciente é obrigatório; etapas podem ser puladas
-- IA opcional em diagnóstico e tratamento (não bloqueia salvar)
-- Fotos: respeitar privacidade — bucket privado, signed URLs de 60s
-
+Pequena ressalva: no desktop o usuário perderá o atalho de 1-clique para trocar idioma e ir ao suporte. Se preferir manter esses no desktop e remover só do mobile, me avise — caso contrário sigo com a remoção total conforme solicitado.
