@@ -67,24 +67,72 @@ const Support = () => {
   const handleCheckUpdate = useCallback(async () => {
     setChecking(true);
     setCheckResult("idle");
-    try {
-      const registrations = await navigator.serviceWorker?.getRegistrations();
-      if (registrations && registrations.length > 0) {
-        for (const reg of registrations) {
-          await reg.update();
+
+    const forceReload = async () => {
+      try {
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
         }
-        // If a waiting worker exists, a new version is available
-        const hasWaiting = registrations.some((r) => r.waiting);
-        if (hasWaiting) {
-          registrations.forEach((r) => r.waiting?.postMessage({ type: "SKIP_WAITING" }));
-          setCheckResult("updated");
-        } else {
-          setCheckResult("current");
-        }
-      } else {
-        // No SW — just hard reload
-        setCheckResult("current");
+        const regs = (await navigator.serviceWorker?.getRegistrations?.()) ?? [];
+        await Promise.all(regs.map((r) => r.unregister()));
+      } catch {
+        // ignore — proceed to reload anyway
       }
+      // Bust HTTP cache too
+      window.location.replace(window.location.pathname + "?v=" + Date.now());
+    };
+
+    try {
+      // 1) Source of truth: compare build hash via /version.json
+      let remoteHash: string | null = null;
+      try {
+        const res = await fetch(`/version.json?t=${Date.now()}`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          remoteHash = data?.hash ?? null;
+        }
+      } catch {
+        // network error — fall through to SW check
+      }
+      const localHash = (import.meta as any).env?.VITE_BUILD_HASH ?? "__dev__";
+
+      if (remoteHash && localHash !== "__dev__" && remoteHash !== localHash) {
+        setCheckResult("updated");
+        setChecking(false);
+        // Give the user a moment to see the message, then hard-reload
+        setTimeout(forceReload, 800);
+        return;
+      }
+
+      // 2) Fallback: ask the SW to check for an update and wait for install to settle
+      const registrations = (await navigator.serviceWorker?.getRegistrations?.()) ?? [];
+      let updated = false;
+
+      for (const reg of registrations) {
+        await reg.update();
+        // If an installing worker appeared, wait for it to become installed
+        const installing = reg.installing;
+        if (installing) {
+          await new Promise<void>((resolve) => {
+            installing.addEventListener("statechange", () => {
+              if (installing.state === "installed" || installing.state === "redundant") resolve();
+            });
+            setTimeout(resolve, 6000); // safety timeout
+          });
+        }
+        if (reg.waiting) updated = true;
+      }
+
+      if (updated) {
+        setCheckResult("updated");
+        registrations.forEach((r) => r.waiting?.postMessage({ type: "SKIP_WAITING" }));
+        setChecking(false);
+        setTimeout(forceReload, 800);
+        return;
+      }
+
+      setCheckResult("current");
     } catch {
       setCheckResult("current");
     } finally {
