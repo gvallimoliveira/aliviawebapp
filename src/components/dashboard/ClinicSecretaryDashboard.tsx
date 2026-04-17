@@ -263,7 +263,7 @@ const ClinicSecretaryDashboard = () => {
                         <SelectValue placeholder={lang === "pt" ? "Selecionar..." : "Select..."} />
                       </SelectTrigger>
                       <SelectContent>
-                        {therapists.map((t) => (
+                        {therapists.filter((t) => !!t.id).map((t) => (
                           <SelectItem key={t.id} value={t.id} className="text-xs">
                             {t.full_name}
                           </SelectItem>
