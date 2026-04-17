@@ -64,7 +64,7 @@ const PendingReviewAlert = ({ assessments, language, navigate }: { assessments: 
           {assessments.map((a: any) => (
             <button
               key={a.id}
-              onClick={() => navigate(`/assessment/${a.id}`)}
+              onClick={() => navigate(`/assessment/view/${a.id}?from=professional`)}
               className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-amber-500/10 transition-colors text-left"
             >
               <div className="flex-1 min-w-0">
