@@ -98,7 +98,7 @@ const GlobalMobileMenu = () => {
         size="icon"
         onClick={() => setOpen(true)}
         aria-label="Menu"
-        className="md:hidden fixed top-3 left-3 z-[60] h-10 w-10 rounded-full shadow-lg bg-background/95 backdrop-blur border border-border text-foreground hover:bg-muted"
+        className="md:hidden fixed top-3 right-3 z-[60] h-10 w-10 rounded-full shadow-lg bg-background/95 backdrop-blur border border-border text-foreground hover:bg-muted"
       >
         <Menu className="h-5 w-5" />
         {updatePending && (
