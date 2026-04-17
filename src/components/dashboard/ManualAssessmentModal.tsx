@@ -398,13 +398,25 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor" : "Pain regions"}</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-72 overflow-y-auto border rounded-md p-2">
-                    {allRegions.map((r) => (
-                      <label key={r.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
-                        <Checkbox checked={painRegions.includes(r.id)} onCheckedChange={() => toggleRegion(r.id)} />
-                        <span>{isPt ? r.label_pt : r.label_en}</span>
-                      </label>
+                  <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
+                  <div className="max-h-80 overflow-y-auto border rounded-md p-2 space-y-3">
+                    {regionGroups.map((g) => (
+                      <div key={g.key}>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
+                          {isPt ? g.label_pt : g.label_en}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                          {g.ids.map((id) => {
+                            const lbl = regionLabelMap[id];
+                            return (
+                              <label key={id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                                <Checkbox checked={painRegions.includes(id)} onCheckedChange={() => toggleRegion(id)} />
+                                <span>{isPt ? lbl.label_pt : lbl.label_en}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
                     ))}
                   </div>
                   {painRegions.length > 0 && (
@@ -439,31 +451,33 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 3: QUESTIONÁRIOS */}
+            {/* STEP 3: QUESTIONÁRIOS — mesmo fluxo da avaliação premium/link */}
             {step === 3 && (
               <div className="space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  {isPt ? "Selecione os questionários aplicados e informe a pontuação (opcional):" : "Select applied questionnaires and enter the score (optional):"}
-                </p>
-                {questionnaires.map((q) => (
-                  <div key={q.id} className="border rounded-md p-3 space-y-2">
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <Checkbox checked={selectedQuestionnaires.includes(q.id)} onCheckedChange={() => toggleQuestionnaire(q.id)} className="mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{q.name} — <span className="font-normal text-muted-foreground">{isPt ? q.fullName_pt : q.fullName_en}</span></p>
-                        <p className="text-xs text-muted-foreground">{isPt ? q.description_pt : q.description_en}</p>
-                      </div>
-                    </label>
-                    {selectedQuestionnaires.includes(q.id) && (
-                      <Input
-                        placeholder={isPt ? "Pontuação obtida (ou deixe vazio para aplicar depois)" : "Score (or leave blank for later)"}
-                        value={questionnaireScores[q.id] || ""}
-                        onChange={(e) => setQuestionnaireScores({ ...questionnaireScores, [q.id]: e.target.value })}
-                        className="text-xs h-8"
-                      />
-                    )}
+                {painRegions.length === 0 ? (
+                  <div className="p-4 rounded-md border bg-muted/30 text-sm text-muted-foreground">
+                    {isPt
+                      ? "Selecione ao menos uma região com dor na etapa anterior para que os questionários aplicáveis sejam carregados automaticamente."
+                      : "Select at least one pain region in the previous step to load the applicable questionnaires."}
                   </div>
-                ))}
+                ) : (
+                  <QuestionnaireStep
+                    painRegions={painRegions}
+                    previousAnswers={undefined}
+                    onComplete={(results) => {
+                      setQuestionnaireResults(results);
+                      setStep((s) => Math.min(STEPS.length - 1, s + 1));
+                    }}
+                    onBack={() => setStep((s) => Math.max(0, s - 1))}
+                    onSkip={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+                  />
+                )}
+                {questionnaireResults.length > 0 && (
+                  <div className="text-xs text-muted-foreground p-2 rounded bg-primary/5 border border-primary/20">
+                    {isPt ? "Já aplicados: " : "Already applied: "}
+                    {questionnaireResults.map((r) => r.questionnaireName).join(", ")}
+                  </div>
+                )}
               </div>
             )}
 
