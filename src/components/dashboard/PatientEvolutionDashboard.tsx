@@ -37,7 +37,9 @@ import CreateExerciseProgramModal from "@/components/dashboard/CreateExercisePro
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockClinicalImpressions, mockEvolutionSummary } from "@/data/mockPatientData";
 import PatientFilesSection from "./PatientFilesSection";
+import PatientPhotosSection from "./PatientPhotosSection";
 import AddPatientModal, { type PatientToEdit } from "./AddPatientModal";
+import ManualAssessmentModal from "./ManualAssessmentModal";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
@@ -2059,6 +2061,17 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
       {/* ── 8.6. DOCUMENTOS DO PACIENTE ── */}
       {selectedEmail && !isDemo && (
         <PatientFilesSection
+          patientEmail={selectedEmail}
+          patientName={patient?.name}
+          clinicId={clinicId}
+          professionalId={professionalId}
+          readOnly={readOnly}
+        />
+      )}
+
+      {/* ── 8.7. FOTOS DO PACIENTE ── */}
+      {selectedEmail && !isDemo && (
+        <PatientPhotosSection
           patientEmail={selectedEmail}
           patientName={patient?.name}
           clinicId={clinicId}
