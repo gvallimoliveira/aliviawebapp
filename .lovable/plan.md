@@ -1,89 +1,64 @@
 
 
-# Pesquisa de Feedback de Serviços da Clínica
+## Plano
 
-## Resumo
+Duas funcionalidades novas para o painel profissional/clínica:
 
-Criar um sistema completo de pesquisa de satisfação para clínicas, com perguntas sobre o serviço prestado, o profissional e a clínica em geral. Entregue via link público (gerado pela secretária) ou via chat interno, com pré-seleção do serviço avaliado.
+### 1. Upload de Fotos do Paciente (avaliação postural / acompanhamento)
 
-## O que será construído
+Espelhar o componente `PatientFilesSection.tsx` (PDFs) criando um novo `PatientPhotosSection.tsx` para imagens.
 
-### 1. Nova tabela `clinic_feedback_surveys`
-Armazena cada resposta de feedback com: clinic_id, service_type, professional_id (opcional), respostas às perguntas (JSONB), observação textual livre, status, created_at. RLS: membros da clínica podem ler; qualquer um pode inserir (link público).
+**Backend:**
+- Nova tabela `patient_photos` (mesma estrutura de `patient_files` + campo `category`: 'postural' | 'follow_up' | 'other')
+- Bucket privado `patient-photos` com RLS espelhando `patient-files`
+- Limite: 30 fotos por paciente, 10MB cada, formatos JPG/PNG/WEBP
+- Políticas RLS: clínica vê fotos da clínica; profissional autônomo vê suas fotos
 
-### 2. Página pública `/feedback/clinic/:clinicId`
-- Rota pública similar ao `/assessment/clinic/:clinicId`
-- Aceita query param `?service=pilates&professional_id=xxx` para pré-selecionar
-- Layout branded (logo e cor da clínica)
-- Fluxo em etapas:
-  1. **Identificação** — Nome e email do paciente
-  2. **Seleção do serviço** — Dropdown com os serviços cadastrados (fisioterapia, pilates, osteopatia, massoterapia, RPG)
-  3. **Avaliação do Serviço** (múltipla escolha + campo texto):
-     - Qualidade do atendimento (Excelente / Bom / Regular / Ruim)
-     - Resultado percebido (Superou expectativas / Atendeu / Parcialmente / Não atendeu)
-     - Recomendaria o serviço? (Sim / Talvez / Não)
-  4. **Avaliação do Profissional**:
-     - Comunicação e clareza (Excelente / Bom / Regular / Ruim)
-     - Pontualidade (Sempre pontual / Geralmente / Às vezes atrasa / Frequentemente atrasa)
-     - Acolhimento e empatia (Excelente / Bom / Regular / Ruim)
-  5. **Avaliação da Clínica**:
-     - Limpeza e organização (Excelente / Bom / Regular / Ruim)
-     - Facilidade de agendamento (Muito fácil / Fácil / Difícil / Muito difícil)
-     - Ambiente e conforto (Excelente / Bom / Regular / Ruim)
-  6. **Observações gerais** — Campo de texto livre
-  7. **Agradecimento**
+**Frontend:**
+- `src/components/dashboard/PatientPhotosSection.tsx` — upload, grid de miniaturas (3 col), preview em modal (lightbox), categoria selecionável, exclusão
+- Integrar no mesmo lugar onde `PatientFilesSection` é usado (página do paciente / `AssessmentView`)
 
-### 3. Geração de link pela secretária
-- No `ClinicSecretaryDashboard`, novo card "Pesquisa de Feedback"
-- Botão para copiar link genérico
-- Opção de gerar link pré-filtrado por serviço (dropdown de serviços)
+### 2. Avaliação Manual ("Surpresa") preenchida pelo fisioterapeuta
 
-### 4. Envio via Chat Interno
-- No `ConversationList` / `ChatWindow`, adicionar ação "Enviar pesquisa de feedback"
-- Ao clicar, seleciona o serviço e envia uma mensagem especial com link clicável para a pesquisa pré-preenchida
+Ao adicionar um paciente direto pela lista (`AddPatientModal`), oferecer botão **"Criar avaliação manual"** que abre um fluxo completo de preenchimento.
 
-### 5. Painel de resultados
-- Nova seção no dashboard da secretária: "Feedbacks"
-- Cards com NPS-like por serviço, por profissional
-- Lista das respostas recentes com filtro por serviço/profissional
+**Novo componente:** `src/components/dashboard/ManualAssessmentModal.tsx` (multi-step, em Tabs/Stepper):
 
-## Detalhes técnicos
+| Etapa | Conteúdo | Reaproveita |
+|---|---|---|
+| 1. Anamnese | Formulário completo (queixa, histórico, dor, localização, intensidade, fatores agravantes/aliviantes, medicações, cirurgias, etc.) | Reusa `AnamnesisForm.tsx` em modo "manual" |
+| 2. Mapa de Dor | Selecionar regiões no `PainMapView` | Reusa `PainMap.tsx` |
+| 3. Red Flags | Triagem rápida (checkboxes) | Reusa `RedFlagScreening.tsx` |
+| 4. Questionários | Profissional escolhe quais aplicar (Roland-Morris, Oswestry, NDI, etc.) e preenche pontuação OU marca como "aplicar depois" | Reusa `QuestionnaireStep.tsx` + lista de `questionnaireData.ts` |
+| 5. Testes Funcionais | Campo de texto livre + checklist de testes feitos com resultado (positivo/negativo/observação) | Adapta `FunctionalTests.tsx` para entrada manual |
+| 6. Observações & Diagnóstico | Campo livre para impressão clínica + botão "Gerar diagnóstico com IA" (chama `generate-diagnosis` edge function existente) | Reusa edge function |
+| 7. Plano de Tratamento | Botão "Gerar plano com IA" ou preencher manual | Reusa `generate-treatment` |
 
-**Migração SQL:**
-```sql
-CREATE TABLE public.clinic_feedback_surveys (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  clinic_id uuid NOT NULL,
-  service_type text NOT NULL DEFAULT 'fisioterapia',
-  professional_id uuid,
-  patient_name text,
-  patient_email text,
-  service_answers jsonb NOT NULL DEFAULT '{}',
-  professional_answers jsonb NOT NULL DEFAULT '{}',
-  clinic_answers jsonb NOT NULL DEFAULT '{}',
-  general_observations text,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+**Salvamento:**
+- Insere em `assessments` com `type='professional'`, `status='completed'`, `professional_id` ou `clinic_id`, `anamnesis_data`, `pain_regions`, `pain_score`, `test_results`, `red_flags`, `diagnosis`, `treatment_plan`, `patient_name`, `patient_email`
+- Marca `anamnesis_data.manualEntry = true` para diferenciar de avaliações via link
+- Após salvar, abre direto o `AssessmentView` do paciente
 
-ALTER TABLE public.clinic_feedback_surveys ENABLE ROW LEVEL SECURITY;
+**Trigger no `AddPatientModal`:**
+- Após `Adicionar`, exibir toast com 2 ações: "Ver lista" / "Criar avaliação agora" → abre `ManualAssessmentModal`
+- Também adicionar botão **"Nova avaliação manual"** no card de cada paciente na lista (para casos onde paciente já existe)
 
--- Qualquer um pode submeter feedback (link público)
-CREATE POLICY "Anyone can submit feedback"
-  ON public.clinic_feedback_surveys FOR INSERT
-  TO public WITH CHECK (true);
+### Arquivos a criar/editar
 
--- Membros da clínica podem visualizar
-CREATE POLICY "Clinic members can view feedback"
-  ON public.clinic_feedback_surveys FOR SELECT
-  TO authenticated
-  USING (is_clinic_member(auth.uid(), clinic_id));
-```
+**Criar:**
+- `src/components/dashboard/PatientPhotosSection.tsx`
+- `src/components/dashboard/ManualAssessmentModal.tsx`
+- Migration: tabela `patient_photos` + bucket `patient-photos` + RLS
 
-**Arquivos a criar/editar:**
-- `src/pages/ClinicFeedback.tsx` — Página pública do formulário
-- `src/components/dashboard/FeedbackSurveyCard.tsx` — Card da secretária para gerar links
-- `src/components/dashboard/FeedbackResultsCard.tsx` — Visualização dos resultados
-- `src/components/dashboard/ClinicSecretaryDashboard.tsx` — Integrar os novos cards
-- `src/components/chat/ChatWindow.tsx` — Botão de enviar pesquisa
-- `src/App.tsx` — Nova rota `/feedback/clinic/:clinicId`
+**Editar:**
+- `src/components/dashboard/AddPatientModal.tsx` — toast com ação pós-criação
+- `src/pages/AssessmentView.tsx` (ou onde `PatientFilesSection` é renderizado) — incluir `PatientPhotosSection`
+- Lista de pacientes no `ProDashboard`/`ClinicOwnerDashboard` — botão "Avaliação manual"
+- `src/locales/pt.json` / `en.json` / `es.json` — strings novas
+
+### Pontos de design
+- Manual assessment usa o mesmo layout/UI dos passos do link público para consistência visual
+- Validação mínima: apenas nome do paciente é obrigatório; etapas podem ser puladas
+- IA opcional em diagnóstico e tratamento (não bloqueia salvar)
+- Fotos: respeitar privacidade — bucket privado, signed URLs de 60s
 
