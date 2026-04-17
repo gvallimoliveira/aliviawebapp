@@ -1295,6 +1295,20 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    {!readOnly && p.email && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title={language === "pt" ? "Nova avaliação manual" : "New manual assessment"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setManualAssessmentTarget({ name: p.name, email: p.email });
+                        }}
+                      >
+                        <FilePlus className="h-4 w-4 text-primary" />
+                      </Button>
+                    )}
                     {!readOnly && !isHidden && p.email && (
                       <Button
                         variant="ghost"
