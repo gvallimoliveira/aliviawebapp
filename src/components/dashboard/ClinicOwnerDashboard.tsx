@@ -230,24 +230,30 @@ const ClinicOwnerDashboard = ({ clinicId }: Props) => {
             <CardTitle className="text-sm font-medium">Distribuição de status dos atendimentos</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
                   data={statusData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
+                  innerRadius={45}
+                  outerRadius={75}
                   paddingAngle={3}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}
+                  nameKey="name"
                 >
                   {statusData.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(value: number, name: string) => {
+                    const total = statusData.reduce((s, d) => s + d.value, 0);
+                    return [`${value} (${((value / total) * 100).toFixed(0)}%)`, name];
+                  }}
+                />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
