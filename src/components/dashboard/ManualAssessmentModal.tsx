@@ -103,9 +103,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Red Flags
   const [redFlagsChecked, setRedFlagsChecked] = useState<string[]>([]);
 
-  // Questionários
-  const [selectedQuestionnaires, setSelectedQuestionnaires] = useState<string[]>([]);
-  const [questionnaireScores, setQuestionnaireScores] = useState<Record<string, string>>({});
+  // Questionários (mesmo fluxo da avaliação premium/link)
+  const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
 
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
@@ -117,7 +116,32 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Tratamento
   const [treatmentText, setTreatmentText] = useState("");
 
-  const allRegions = Object.values(regionsByView).flat();
+  // Build region groups: dedupe by id, sort alphabetically by current language label
+  const regionGroups: RegionGroup[] = (() => {
+    const seen = new Map<string, { label_pt: string; label_en: string }>();
+    for (const view of Object.values(regionsByView)) {
+      for (const r of view) {
+        if (!seen.has(r.id)) seen.set(r.id, { label_pt: r.label_pt, label_en: r.label_en });
+      }
+    }
+    return REGION_GROUPS_DEF.map((g) => {
+      const ids = Array.from(seen.keys())
+        .filter((id) => g.match(id))
+        .sort((a, b) => {
+          const la = isPt ? seen.get(a)!.label_pt : seen.get(a)!.label_en;
+          const lb = isPt ? seen.get(b)!.label_pt : seen.get(b)!.label_en;
+          return la.localeCompare(lb, isPt ? "pt-BR" : "en");
+        });
+      return { key: g.key, label_pt: g.label_pt, label_en: g.label_en, ids };
+    }).filter((g) => g.ids.length > 0);
+  })();
+  const regionLabelMap: Record<string, { label_pt: string; label_en: string }> = (() => {
+    const m: Record<string, { label_pt: string; label_en: string }> = {};
+    for (const view of Object.values(regionsByView)) {
+      for (const r of view) if (!m[r.id]) m[r.id] = { label_pt: r.label_pt, label_en: r.label_en };
+    }
+    return m;
+  })();
 
   const toggleRegion = (id: string) => {
     setPainRegions((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
