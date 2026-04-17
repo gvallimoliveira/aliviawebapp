@@ -30,6 +30,16 @@ export function usePushNotifications() {
     "PushManager" in window &&
     "Notification" in window;
 
+  // Register the dedicated push SW on demand. This worker is scoped only to
+  // push events and never intercepts fetch/navigation, so it cannot break
+  // authentication like the previous global PWA SW did.
+  const ensurePushSwRegistration = useCallback(async () => {
+    if (!isSupported) return null;
+    const existing = await navigator.serviceWorker.getRegistration("/sw-push.js");
+    if (existing) return existing;
+    return navigator.serviceWorker.register("/sw-push.js", { scope: "/" });
+  }, [isSupported]);
+
   useEffect(() => {
     if (!isSupported) {
       setPermission("unsupported");
@@ -37,9 +47,10 @@ export function usePushNotifications() {
     }
     setPermission(Notification.permission as PushPermission);
 
-    // Check if already subscribed
+    // Check if already subscribed (only if SW already registered)
     if (Notification.permission === "granted" && user) {
-      navigator.serviceWorker.ready.then(async (reg) => {
+      navigator.serviceWorker.getRegistration("/sw-push.js").then(async (reg) => {
+        if (!reg) return;
         const sub = await reg.pushManager.getSubscription();
         setSubscribed(!!sub);
       });
@@ -57,7 +68,7 @@ export function usePushNotifications() {
         return false;
       }
 
-      const reg = await navigator.serviceWorker.ready;
+      const reg = (await ensurePushSwRegistration()) ?? (await navigator.serviceWorker.ready);
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
         sub = await reg.pushManager.subscribe({
@@ -91,7 +102,12 @@ export function usePushNotifications() {
     if (!isSupported || !user) return;
     setLoading(true);
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await navigator.serviceWorker.getRegistration("/sw-push.js");
+      if (!reg) {
+        setSubscribed(false);
+        setLoading(false);
+        return;
+      }
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
         const endpoint = sub.endpoint;
