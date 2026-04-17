@@ -22,8 +22,8 @@ interface Member {
   role: ClinicRole;
   status: string;
   accepted_at: string | null;
-  profiles?: { full_name: string | null } | null;
-  email?: string;
+  full_name: string | null;
+  email: string | null;
 }
 
 interface Invitation {
@@ -65,23 +65,13 @@ const ClinicTeamManagement = () => {
 
   const fetchTeam = async () => {
     if (!activeClinic) return;
-    const { data: mems } = await supabase
-      .from("clinic_members")
-      .select("id, user_id, role, status, accepted_at")
-      .eq("clinic_id", activeClinic.clinic_id)
-      .eq("status", "active");
-    
-    // Fetch profile names for members
-    const membersWithNames: Member[] = [];
-    for (const m of mems || []) {
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("user_id", m.user_id)
-        .single();
-      membersWithNames.push({ ...m, profiles: prof });
+    const { data: mems, error: memErr } = await supabase.rpc("get_clinic_members_with_details", {
+      _clinic_id: activeClinic.clinic_id,
+    });
+    if (memErr) {
+      console.error("[ClinicTeamManagement] members error", memErr);
     }
-    setMembers(membersWithNames);
+    setMembers((mems as Member[]) || []);
 
     const { data: invs } = await supabase
       .from("clinic_invitations")
@@ -161,8 +151,11 @@ const ClinicTeamManagement = () => {
               <div className="flex items-center gap-3 min-w-0">
                 {roleIcon(m.role)}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{m.profiles?.full_name || "—"}</p>
-                  <Badge variant="outline" className="text-[10px]">{roleLabels[m.role][lang]}</Badge>
+                  <p className="text-sm font-medium truncate">{m.full_name || m.email || "—"}</p>
+                  {m.full_name && m.email && (
+                    <p className="text-xs text-muted-foreground truncate">{m.email}</p>
+                  )}
+                  <Badge variant="outline" className="text-[10px] mt-1">{roleLabels[m.role][lang]}</Badge>
                 </div>
               </div>
               {canManage && m.user_id !== user?.id && m.role !== "owner" && (
