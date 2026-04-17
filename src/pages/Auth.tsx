@@ -45,20 +45,20 @@ const Auth = () => {
         setIsForgotPassword(false);
       }
     } else if (isLogin) {
-      const { error } = await signIn(email, password);
+      const { error, session } = await signIn(email, password);
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
-      } else {
-        navigate(redirectTo);
+      } else if (session) {
+        // Session confirmed — redirect handled by useEffect on `user`
+        // (no manual navigate to avoid race with auth hydration)
       }
     } else {
-      const { error } = await signUp(email, password, fullName);
+      const { error, session } = await signUp(email, password, fullName);
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
       } else {
-        // Auto-confirm enabled: user is immediately authenticated, redirect
         toast({ title: t("auth.welcome"), description: t("auth.account_created") });
-        navigate(redirectTo);
+        // Redirect handled by useEffect when `user` populates
       }
     }
     setLoading(false);

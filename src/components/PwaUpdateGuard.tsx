@@ -9,6 +9,10 @@ import { useLocation } from "react-router-dom";
 const BLOCKED_ROUTES = [
   "/assessment",
   "/payment",
+  "/auth",
+  "/reset-password",
+  "/dashboard",
+  "/conta",
 ];
 
 function isBlocked(pathname: string): boolean {
