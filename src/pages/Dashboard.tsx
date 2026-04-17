@@ -75,7 +75,7 @@ function buildOnboardingSteps(subscriptionType?: "monthly" | "single" | null, is
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { t, toggleLanguage } = useLanguage();
-  const { memberships, activeClinic, isClinicMode } = useClinic();
+  const { memberships, activeClinic, isClinicMode, needsContextSelection } = useClinic();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
@@ -456,7 +456,7 @@ const Dashboard = () => {
         step={onboarding.step}
         currentStep={onboarding.currentStep}
         totalSteps={onboarding.totalSteps}
-        isActive={onboarding.isActive}
+        isActive={onboarding.isActive && !needsContextSelection}
         onNext={onboarding.next}
         onSkip={onboarding.skip}
       />
