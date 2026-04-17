@@ -161,8 +161,17 @@ const Dashboard = () => {
   useEffect(() => {
     if (!onboarding.isActive || !onboarding.step) return;
     const proTargets = ["pro-link", "pro-patients", "pro-subscription"];
-    if (proTargets.includes(onboarding.step.targetId)) setActiveTab("professional");
-    else if (onboarding.step.targetId.startsWith("patient-")) setActiveTab("health");
+    if (proTargets.includes(onboarding.step.targetId)) {
+      if (hasProfessionalProfile && activeContext !== "professional" && activeContext !== "clinic") {
+        setActiveContext("professional");
+      }
+      setActiveTab("professional");
+    } else if (onboarding.step.targetId.startsWith("patient-")) {
+      if (activeContext !== "personal" && availableContextsCount >= 2) {
+        // keep current context but show health if available
+      }
+      setActiveTab("health");
+    }
   }, [onboarding.step, onboarding.isActive]);
 
   useEffect(() => {
