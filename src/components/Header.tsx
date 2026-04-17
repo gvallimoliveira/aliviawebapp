@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Globe, HelpCircle, Info, LayoutDashboard, LogOut, Menu, ShieldCheck, Stethoscope, RefreshCw, UserCog } from "lucide-react";
+import { useState } from "react";
+import { Globe, HelpCircle, Info, LayoutDashboard, LogOut, Menu, ShieldCheck, Stethoscope, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -13,14 +13,7 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [updatePending, setUpdatePending] = useState(() => !!(window as any).__pwaUpdatePending);
   const isProfessionalPage = location.pathname === "/profissionais";
-
-  useEffect(() => {
-    const handler = () => setUpdatePending(true);
-    window.addEventListener("pwa-update-ready", handler);
-    return () => window.removeEventListener("pwa-update-ready", handler);
-  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -42,12 +35,6 @@ const Header = () => {
         <div className="flex items-center gap-2 cursor-pointer shrink-0 relative" onClick={() => go(user ? "/dashboard" : "/")}>
           <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
           <span className="hidden sm:inline text-xl font-bold text-foreground">Aliv.iA</span>
-          {updatePending && (
-            <span className="absolute -top-0.5 -right-1.5 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
-            </span>
-          )}
         </div>
 
         {/* Desktop nav */}
@@ -115,12 +102,6 @@ const Header = () => {
               <span className="text-lg font-bold text-foreground">Aliv.iA</span>
             </SheetTitle>
           </SheetHeader>
-          {updatePending && (
-            <div className="mx-3 mt-3 flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary">
-              <RefreshCw className="h-3.5 w-3.5 shrink-0" />
-              {language === "pt" ? "Atualização disponível — volte à tela inicial" : language === "es" ? "Actualización disponible — vuelve al inicio" : "Update available — return to home"}
-            </div>
-          )}
           <nav className="flex flex-col gap-1 p-3">
             <button
               onClick={() => go("/")}
