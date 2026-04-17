@@ -15,6 +15,9 @@ Deno.serve(async (req) => {
   try {
     const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
     const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     if (!vapidPublicKey || !vapidPrivateKey) {
       return new Response(
@@ -23,14 +26,41 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Authorization: must be either service-role internal call OR an authenticated user
+    // sending a notification to themselves.
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace("Bearer ", "").trim();
+
+    if (!token) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const isServiceRole = token === serviceRoleKey;
+    let callerUserId: string | null = null;
+
+    if (!isServiceRole) {
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser(token);
+      if (userErr || !userData?.user) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      callerUserId = userData.user.id;
+    }
+
     webpush.setVapidDetails(
       "mailto:contato@aliviawebapp.com.br",
       vapidPublicKey,
       vapidPrivateKey
     );
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { user_id, title, body, url } = await req.json();
@@ -41,6 +71,19 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Non-service-role callers can only target themselves
+    if (!isServiceRole && callerUserId !== user_id) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: cannot send notifications to other users" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Basic input sanity caps to limit abuse
+    const safeTitle = String(title).slice(0, 200);
+    const safeBody = String(body).slice(0, 500);
+    const safeUrl = url ? String(url).slice(0, 500) : "/";
 
     const { data: subscriptions, error } = await supabase
       .from("push_subscriptions")
@@ -54,7 +97,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const payload = JSON.stringify({ title, body, url: url || "/" });
+    const payload = JSON.stringify({ title: safeTitle, body: safeBody, url: safeUrl });
     let sent = 0;
     const errors: string[] = [];
     const expiredEndpoints: string[] = [];
@@ -84,7 +127,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Clean up expired subscriptions
     if (expiredEndpoints.length > 0) {
       await supabase
         .from("push_subscriptions")
