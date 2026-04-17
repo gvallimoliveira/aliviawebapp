@@ -281,7 +281,7 @@ const Dashboard = () => {
         {isClinicMode && activeClinic ? (
           /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid" style={{ gridTemplateColumns: activeClinic.role === "owner" ? "repeat(6, 1fr)" : "repeat(5, 1fr)" }}>
+            <TabsList className="w-full grid" style={{ gridTemplateColumns: (activeClinic.role === "owner" || activeClinic.role === "secretary") ? "repeat(6, 1fr)" : "repeat(5, 1fr)" }}>
               <TabsTrigger value="agenda" className="gap-1.5 text-xs">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
@@ -294,7 +294,7 @@ const Dashboard = () => {
               <TabsTrigger value="link" className="gap-1.5 text-xs">
                 <Link2 className="h-4 w-4" /><span className="hidden sm:inline">Link</span>
               </TabsTrigger>
-              {activeClinic.role === "owner" && (
+              {(activeClinic.role === "owner" || activeClinic.role === "secretary") && (
                 <TabsTrigger value="analytics" className="gap-1.5 text-xs">
                   <Activity className="h-4 w-4" /><span className="hidden sm:inline">Gestão</span>
                 </TabsTrigger>
@@ -405,7 +405,7 @@ const Dashboard = () => {
             </TabsContent>
 
             {/* Gestão (owner only) */}
-            {activeClinic.role === "owner" && (
+            {(activeClinic.role === "owner" || activeClinic.role === "secretary") && (
               <TabsContent value="analytics" className="space-y-6">
                 <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
               </TabsContent>
