@@ -17,8 +17,29 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle } from "lucide-react";
-import { questionnaires, calculateQuestionnaireScore, type QuestionnaireResult } from "@/data/questionnaireData";
+import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { regionsByView } from "@/components/assessment/painMapData";
+import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
+
+// ─── Body region grouping: proximal → distal, alphabetical within each group ───
+type RegionGroup = { key: string; label_pt: string; label_en: string; ids: string[] };
+
+const REGION_GROUPS_DEF: { key: string; label_pt: string; label_en: string; match: (id: string) => boolean }[] = [
+  { key: "head_neck", label_pt: "Cabeça e Pescoço", label_en: "Head & Neck",
+    match: (id) => id.startsWith("head") || id.startsWith("cervical") },
+  { key: "trunk", label_pt: "Tronco (Tórax / Abdômen / Coluna)", label_en: "Trunk (Chest / Abdomen / Spine)",
+    match: (id) => ["chest", "abdomen", "thoracic", "lower_back"].includes(id) || id.startsWith("thoracic_") || id.startsWith("lumbar_") },
+  { key: "upper_proximal", label_pt: "Membro Superior — Proximal (Ombro / Braço)", label_en: "Upper Limb — Proximal (Shoulder / Arm)",
+    match: (id) => id.includes("shoulder") || (id.includes("arm") && !id.includes("forearm")) },
+  { key: "upper_distal", label_pt: "Membro Superior — Distal (Cotovelo / Antebraço / Mão)", label_en: "Upper Limb — Distal (Elbow / Forearm / Hand)",
+    match: (id) => id.includes("elbow") || id.includes("forearm") || id.includes("hand") },
+  { key: "pelvis_hip", label_pt: "Pelve e Quadril (incl. Glúteo)", label_en: "Pelvis & Hip (incl. Gluteal)",
+    match: (id) => id.includes("hip") || id.includes("gluteal") },
+  { key: "lower_proximal", label_pt: "Membro Inferior — Proximal (Coxa / Joelho)", label_en: "Lower Limb — Proximal (Thigh / Knee)",
+    match: (id) => id.includes("thigh") || id.includes("knee") },
+  { key: "lower_distal", label_pt: "Membro Inferior — Distal (Perna / Panturrilha / Tornozelo / Pé)", label_en: "Lower Limb — Distal (Leg / Calf / Ankle / Foot)",
+    match: (id) => id.includes("shin") || id.includes("calf") || id.includes("ankle") || id.includes("foot") },
+];
 
 interface ManualAssessmentModalProps {
   open: boolean;
@@ -82,9 +103,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Red Flags
   const [redFlagsChecked, setRedFlagsChecked] = useState<string[]>([]);
 
-  // Questionários
-  const [selectedQuestionnaires, setSelectedQuestionnaires] = useState<string[]>([]);
-  const [questionnaireScores, setQuestionnaireScores] = useState<Record<string, string>>({});
+  // Questionários (mesmo fluxo da avaliação premium/link)
+  const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
 
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
@@ -96,7 +116,32 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Tratamento
   const [treatmentText, setTreatmentText] = useState("");
 
-  const allRegions = Object.values(regionsByView).flat();
+  // Build region groups: dedupe by id, sort alphabetically by current language label
+  const regionGroups: RegionGroup[] = (() => {
+    const seen = new Map<string, { label_pt: string; label_en: string }>();
+    for (const view of Object.values(regionsByView)) {
+      for (const r of view) {
+        if (!seen.has(r.id)) seen.set(r.id, { label_pt: r.label_pt, label_en: r.label_en });
+      }
+    }
+    return REGION_GROUPS_DEF.map((g) => {
+      const ids = Array.from(seen.keys())
+        .filter((id) => g.match(id))
+        .sort((a, b) => {
+          const la = isPt ? seen.get(a)!.label_pt : seen.get(a)!.label_en;
+          const lb = isPt ? seen.get(b)!.label_pt : seen.get(b)!.label_en;
+          return la.localeCompare(lb, isPt ? "pt-BR" : "en");
+        });
+      return { key: g.key, label_pt: g.label_pt, label_en: g.label_en, ids };
+    }).filter((g) => g.ids.length > 0);
+  })();
+  const regionLabelMap: Record<string, { label_pt: string; label_en: string }> = (() => {
+    const m: Record<string, { label_pt: string; label_en: string }> = {};
+    for (const view of Object.values(regionsByView)) {
+      for (const r of view) if (!m[r.id]) m[r.id] = { label_pt: r.label_pt, label_en: r.label_en };
+    }
+    return m;
+  })();
 
   const toggleRegion = (id: string) => {
     setPainRegions((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
@@ -106,9 +151,6 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setRedFlagsChecked((prev) => prev.includes(rf) ? prev.filter((r) => r !== rf) : [...prev, rf]);
   };
 
-  const toggleQuestionnaire = (id: string) => {
-    setSelectedQuestionnaires((prev) => prev.includes(id) ? prev.filter((q) => q !== id) : [...prev, id]);
-  };
 
   const buildAnamnesisData = () => ({
     manualEntry: true,
@@ -135,7 +177,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           anamnesis: buildAnamnesisData(),
           painRegions,
           painScore,
-          testResults: { functionalTests, questionnaires: questionnaireScores },
+          testResults: { functionalTests, questionnaires: questionnaireResults },
           language,
         },
       });
@@ -191,12 +233,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         red_flags: redFlagsChecked.length > 0 ? { detected: redFlagsChecked } : null,
         test_results: {
           functional_tests: functionalTests,
-          questionnaires: selectedQuestionnaires.map((id) => {
-            const q = questionnaires.find((qq) => qq.id === id);
+          questionnaires: questionnaireResults.map((r) => {
+            const q = questionnaires.find((qq) => qq.id === r.questionnaireId);
             return {
-              questionnaireId: id,
-              questionnaireName: q?.name || id,
-              manualScore: questionnaireScores[id] || null,
+              questionnaireId: r.questionnaireId,
+              questionnaireName: r.questionnaireName,
+              fullName_pt: q?.fullName_pt,
+              fullName_en: q?.fullName_en,
+              answers: r.answers,
+              subscaleScores: r.subscaleScores,
+              totalScore: r.totalScore,
+              maxScore: r.maxScore,
+              percentageScore: r.percentageScore,
+              interpretation_pt: r.interpretation_pt,
+              interpretation_en: r.interpretation_en,
+              severity: r.severity,
             };
           }),
         },
@@ -228,8 +279,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setChiefComplaint(""); setHistory(""); setDuration(""); setOnset("");
     setAggravating(""); setRelieving(""); setMedications(""); setPreviousSurgeries("");
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
-    setPainRegions([]); setRedFlagsChecked([]); setSelectedQuestionnaires([]);
-    setQuestionnaireScores({}); setFunctionalTests(""); setClinicalImpression("");
+    setPainRegions([]); setRedFlagsChecked([]); setQuestionnaireResults([]);
+    setFunctionalTests(""); setClinicalImpression("");
     setDiagnosisText(""); setTreatmentText("");
   };
 
@@ -347,13 +398,25 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor" : "Pain regions"}</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-72 overflow-y-auto border rounded-md p-2">
-                    {allRegions.map((r) => (
-                      <label key={r.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
-                        <Checkbox checked={painRegions.includes(r.id)} onCheckedChange={() => toggleRegion(r.id)} />
-                        <span>{isPt ? r.label_pt : r.label_en}</span>
-                      </label>
+                  <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
+                  <div className="max-h-80 overflow-y-auto border rounded-md p-2 space-y-3">
+                    {regionGroups.map((g) => (
+                      <div key={g.key}>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
+                          {isPt ? g.label_pt : g.label_en}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                          {g.ids.map((id) => {
+                            const lbl = regionLabelMap[id];
+                            return (
+                              <label key={id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                                <Checkbox checked={painRegions.includes(id)} onCheckedChange={() => toggleRegion(id)} />
+                                <span>{isPt ? lbl.label_pt : lbl.label_en}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
                     ))}
                   </div>
                   {painRegions.length > 0 && (
@@ -388,31 +451,33 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 3: QUESTIONÁRIOS */}
+            {/* STEP 3: QUESTIONÁRIOS — mesmo fluxo da avaliação premium/link */}
             {step === 3 && (
               <div className="space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  {isPt ? "Selecione os questionários aplicados e informe a pontuação (opcional):" : "Select applied questionnaires and enter the score (optional):"}
-                </p>
-                {questionnaires.map((q) => (
-                  <div key={q.id} className="border rounded-md p-3 space-y-2">
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <Checkbox checked={selectedQuestionnaires.includes(q.id)} onCheckedChange={() => toggleQuestionnaire(q.id)} className="mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{q.name} — <span className="font-normal text-muted-foreground">{isPt ? q.fullName_pt : q.fullName_en}</span></p>
-                        <p className="text-xs text-muted-foreground">{isPt ? q.description_pt : q.description_en}</p>
-                      </div>
-                    </label>
-                    {selectedQuestionnaires.includes(q.id) && (
-                      <Input
-                        placeholder={isPt ? "Pontuação obtida (ou deixe vazio para aplicar depois)" : "Score (or leave blank for later)"}
-                        value={questionnaireScores[q.id] || ""}
-                        onChange={(e) => setQuestionnaireScores({ ...questionnaireScores, [q.id]: e.target.value })}
-                        className="text-xs h-8"
-                      />
-                    )}
+                {painRegions.length === 0 ? (
+                  <div className="p-4 rounded-md border bg-muted/30 text-sm text-muted-foreground">
+                    {isPt
+                      ? "Selecione ao menos uma região com dor na etapa anterior para que os questionários aplicáveis sejam carregados automaticamente."
+                      : "Select at least one pain region in the previous step to load the applicable questionnaires."}
                   </div>
-                ))}
+                ) : (
+                  <QuestionnaireStep
+                    painRegions={painRegions}
+                    previousAnswers={undefined}
+                    onComplete={(results) => {
+                      setQuestionnaireResults(results);
+                      setStep((s) => Math.min(STEPS.length - 1, s + 1));
+                    }}
+                    onBack={() => setStep((s) => Math.max(0, s - 1))}
+                    onSkip={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+                  />
+                )}
+                {questionnaireResults.length > 0 && (
+                  <div className="text-xs text-muted-foreground p-2 rounded bg-primary/5 border border-primary/20">
+                    {isPt ? "Já aplicados: " : "Already applied: "}
+                    {questionnaireResults.map((r) => r.questionnaireName).join(", ")}
+                  </div>
+                )}
               </div>
             )}
 
