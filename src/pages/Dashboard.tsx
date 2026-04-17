@@ -327,7 +327,9 @@ const Dashboard = () => {
             <TabsContent value="patients" className="space-y-6">
               <ClinicTrialBanner />
               <div className="relative">
-                {professional ? (
+                {activeClinic.role === "secretary" ? (
+                  <ClinicSecretaryDashboard />
+                ) : professional ? (
                   <ProDashboard professional={professional} hideForClinicTabs isSimulated={isSimulated} onSimulatedChange={setIsSimulated} />
                 ) : (
                   <ClinicSecretaryDashboard />
