@@ -467,6 +467,34 @@ serve(async (req) => {
       });
     }
 
+    // Resend password recovery email to a partner / user
+    if (action === "send_password_reset") {
+      const { email } = body;
+      if (!email || typeof email !== "string") {
+        return new Response(JSON.stringify({ error: "email required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const normalizedEmail = email.toLowerCase().trim();
+      const targetUser = await findAuthUserByEmail(supabaseClient, normalizedEmail);
+      if (!targetUser) {
+        return new Response(JSON.stringify({ error: "user_not_found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error: pwErr } = await supabaseClient.auth.admin.generateLink({
+        type: "recovery",
+        email: normalizedEmail,
+      });
+      log("Manual recovery resend", { email: normalizedEmail, error: pwErr?.message });
+      if (pwErr) throw pwErr;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // List leads (basic assessments with patient_email)
     if (action === "list_leads") {
       // Fetch basic leads
