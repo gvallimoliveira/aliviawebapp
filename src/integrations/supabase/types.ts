@@ -1647,6 +1647,18 @@ export type Database = {
         Args: { _patient_user_id: string; _professional_id: string }
         Returns: string
       }
+      get_clinic_members_with_details: {
+        Args: { _clinic_id: string }
+        Returns: {
+          accepted_at: string
+          email: string
+          full_name: string
+          id: string
+          role: Database["public"]["Enums"]["clinic_role"]
+          status: string
+          user_id: string
+        }[]
+      }
       get_clinic_role: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["clinic_role"]
