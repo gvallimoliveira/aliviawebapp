@@ -35,6 +35,7 @@ import AcceptInvite from "./pages/AcceptInvite";
 import ClinicAssessment from "./pages/ClinicAssessment";
 import ClinicDemo from "./pages/ClinicDemo";
 import ClinicFeedback from "./pages/ClinicFeedback";
+import Account from "./pages/Account";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
               <Route path="/assessment/clinic/:clinicId" element={<ClinicAssessment />} />
               <Route path="/feedback/clinic/:clinicId" element={<ClinicFeedback />} />
               <Route path="/aceitar-convite" element={<AcceptInvite />} />
+              <Route path="/conta" element={<Account />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
