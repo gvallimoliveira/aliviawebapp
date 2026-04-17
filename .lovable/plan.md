@@ -1,48 +1,92 @@
 
-O usuário quer simplificar e unificar a navegação mobile:
-- Remover o botão flutuante (`GlobalMobileMenu`) que está cobrindo a logo
-- Garantir que o menu hamburguer esteja sempre presente no header (canto superior direito) em todas as páginas no mobile
-- Limpar ícones redundantes do header desktop (suporte e idioma) já que ficarão dentro do menu
-- Manter apenas o botão "Sair" visível diretamente no header (quando logado)
+## Objetivo
+Unificar a navegação de contextos no Dashboard. Hoje o seletor só alterna entre "Pessoal" e "Clínicas". Vamos adicionar um terceiro contexto: **Profissional autônomo** (quando o usuário tem perfil em `professionals` sem clínica ativa do tipo owner). Assim a aba "Profissional" e "Agenda" só aparecem nesse contexto, deixando o modo "Pessoal" enxuto (apenas Saúde + Mensagens).
 
-Hoje várias páginas (Dashboard, Gateway, etc.) não renderizam o `Header` global — por isso foi criado o botão flutuante. A solução correta é tornar o `Header` global e presente em todas as rotas (exceto fluxos críticos como `/assessment`, `/auth`, `/payment-success`).
+## Regras de visibilidade do seletor
+O seletor só aparece quando o usuário tem **2 ou mais** dos seguintes perfis:
+- **Pessoal** (sempre disponível para qualquer usuário logado)
+- **Profissional autônomo** (existe registro em `professionals` para o `user_id`)
+- **Clínica X** (uma entrada para cada `clinic_membership` ativo)
 
-## Plano
+Casos cobertos:
+- Apenas pessoal → sem seletor (modo atual: Saúde + Mensagens)
+- Pessoal + Profissional autônomo → seletor com 2 opções
+- Profissional + Clínica → seletor com Pessoal + Profissional + Clínica (3 opções)
+- Pessoal + Clínica (secretária sem perfil pro) → seletor com 2 opções
+- Os 3 perfis → seletor com 3+ opções
 
-**1. Tornar o Header global no `App.tsx`**
-- Renderizar `<Header />` no layout raiz (uma única vez), dentro do Router
-- Criar lista de rotas onde o Header deve ser ocultado (fluxos críticos: `/assessment`, `/auth`, `/payment-success`, `/aceitar-convite`, `/reset-password`, `/complete-profile`, `/hep/`, `/feedback/clinic`)
-- Implementar componente wrapper `ConditionalHeader` que usa `useLocation` para decidir
+## Modos e abas resultantes
 
-**2. Remover renderizações duplicadas do Header**
-- Buscar páginas que importam e renderizam `<Header />` localmente (Index, ProfessionalLanding, Blog, Suporte, Conta, etc.) e remover essas chamadas, já que passará a ser global
+| Contexto ativo | Abas exibidas |
+|---|---|
+| **Pessoal** | Saúde, Mensagens |
+| **Profissional autônomo** | Profissional (pacientes/avaliações), Agenda, Mensagens |
+| **Clínica (owner/therapist)** | Agenda, Pacientes, Equipe, Link, Gestão*, Mensagens |
+| **Clínica (secretary)** | igual acima sem Gestão (já existe) |
 
-**3. Remover `GlobalMobileMenu`**
-- Deletar o componente e sua referência no `App.tsx`
-- Não é mais necessário — o Header (com seu próprio hamburguer mobile) estará sempre presente
+*Gestão só para owner (já existe)
 
-**4. Limpar ícones redundantes do Header (desktop)**
-- Remover botão de Suporte (HelpCircle) — já está no menu mobile e pode ser acessado via menu desktop também (manter no menu hamburguer mobile)
-- Remover botão de Idioma (Globe) do desktop — manter apenas dentro do menu mobile
-- Manter no desktop: Logo, links de navegação (compare/how/blog/profissionais), botão Dashboard, ícone Admin, ícone Conta, botão Sair (LogOut)
-- Manter no mobile: apenas Logo + hamburguer (que abre tudo: idioma, suporte, conta, admin, sair)
+## Mudanças técnicas
 
-Aguarde — relendo o pedido: "remover o ícone de suporte e de idioma que se tornarão redundantes. Mantenha apenas o botão de sair". Isso aplica-se ao header desktop. O menu hamburguer (mobile) continua tendo todos os itens. Confirmado.
+### 1. `src/contexts/ClinicContext.tsx`
+- Adicionar novo estado `activeContext: "personal" | "professional" | "clinic"` (derivado).
+- Persistir junto: chaves `activeContextType` + `activeClinicId` em localStorage.
+- Expor `setActiveContext(type, clinicId?)`, manter `setActiveClinicId` por compat.
+- `needsContextSelection` passa a considerar também perfil profissional (recebido via prop ou checado externamente).
 
-**5. Garantir z-index e posicionamento corretos**
-- Header já é `sticky top-0 z-50` — funciona bem
-- Hamburguer mobile fica no canto superior direito (já está assim no Header atual)
+**Decisão simpler**: em vez de carregar perfil professional dentro do ClinicContext (acoplamento), criamos um novo contexto enxuto `AccountContextProvider` que recebe `hasProfessionalProfile` calculado no Dashboard e combina memberships + pessoal + profissional num único array `availableContexts`.
 
-## Arquivos a modificar
-- `src/App.tsx` — adicionar Header global condicional, remover `GlobalMobileMenu`
-- `src/components/Header.tsx` — limpar botões desktop redundantes (Globe, HelpCircle)
-- `src/components/GlobalMobileMenu.tsx` — deletar
-- Páginas que renderizam `<Header />` localmente — remover import e uso (Index, PatientLanding, ProfessionalLanding, Blog, BlogPost, Support, Account, Admin, ClinicLanding, etc.)
+Para evitar refactor grande, vamos:
+- Manter `ClinicContext` como está (memberships/activeClinic).
+- Adicionar `professionalMode: boolean` ali (default false), com setter `setProfessionalMode`.
+- Adicionar setter `hasProfessionalProfile` informado externamente (Dashboard chama `setHasProfessionalProfile(!!professional)`).
 
-## Resultado esperado
-- Logo nunca mais é coberta
-- Menu hamburguer sempre visível no mobile (canto superior direito do header), em qualquer página não-crítica
-- Header desktop mais limpo: navegação + Dashboard + Admin + Conta + Sair
-- Idioma e Suporte ficam acessíveis via menu hamburguer (mobile) e via links/rotas normais (desktop pode acessar suporte pela URL `/suporte`)
+### 2. `src/components/dashboard/ClinicContextSelector.tsx`
+Renomear para refletir uso amplo (manter nome para minimizar churn). Renderizar:
+```
+[Conta pessoal] | [Profissional autônomo] | [Clínica A] | [Clínica B]
+```
+Itens condicionais:
+- Pessoal: sempre
+- Profissional: se `hasProfessionalProfile`
+- Clínicas: do array `memberships`
 
-Pequena ressalva: no desktop o usuário perderá o atalho de 1-clique para trocar idioma e ir ao suporte. Se preferir manter esses no desktop e remover só do mobile, me avise — caso contrário sigo com a remoção total conforme solicitado.
+Esconder o componente quando o total for ≤ 1 (apenas pessoal).
+
+`onValueChange`: mapear `"solo"` → contexto pessoal, `"pro"` → profissional, qualquer UUID → clínica.
+
+### 3. `src/components/dashboard/ContextSelectionModal.tsx`
+Adicionar terceiro botão "Profissional autônomo" (ícone Stethoscope) quando `hasProfessionalProfile`. Mostrar modal só quando houver 2+ opções e nada escolhido ainda.
+
+### 4. `src/pages/Dashboard.tsx`
+- Após carregar `professional`, chamar `setHasProfessionalProfile(!!professional)`.
+- Substituir lógica `professional ? ProMode : PersonalMode` pela nova condicional baseada em `activeContext`:
+  - `clinic` → bloco de clínica (já existe)
+  - `professional` → novo bloco com 3 abas: Profissional, Agenda, Mensagens
+  - `personal` → bloco de modo pessoal (sem abas pro)
+- Default inteligente: se usuário tem só 1 contexto, ele é o ativo; se tem múltiplos e ainda não escolheu, modal aparece.
+- Tabs URL: `?tab=professional` redireciona automaticamente para o contexto profissional se aplicável.
+- Aba "Saúde" deixa de aparecer no modo profissional/clínica → conteúdo de saúde fica acessível apenas no modo pessoal (mais limpo).
+
+### 5. Pequenos ajustes
+- `WelcomeSection`: badge muda conforme `activeContext` ao invés de `activeTab`.
+- `useOnboarding`: passos do tour pro só ativam no contexto profissional (alterar efeito que muda activeTab para alterar contexto).
+- Persistência: lembrar último contexto entre sessões.
+
+## Arquivos a alterar
+1. `src/contexts/ClinicContext.tsx` — adicionar `activeContext`, `setActiveContext`, `hasProfessionalProfile`/setter, `availableContextsCount`.
+2. `src/components/dashboard/ClinicContextSelector.tsx` — opção "Profissional autônomo", esconder se ≤1 contexto.
+3. `src/components/dashboard/ContextSelectionModal.tsx` — terceiro botão.
+4. `src/pages/Dashboard.tsx` — render condicional por `activeContext`, sincronização do perfil profissional, ajuste do `useEffect` de tabs.
+5. `src/components/dashboard/WelcomeSection.tsx` — derivar badge de `activeContext` (opcional, melhoria de coerência).
+
+## Revisão de riscos
+- **Usuários só com perfil pessoal**: sem seletor, sem modal — comportamento idêntico ao atual ✓
+- **Profissional autônomo único (sem clínica)**: passará a ver seletor (Pessoal vs Profissional). Default = profissional na primeira vez (mais útil), modal aparece para confirmar.
+- **Secretária de clínica (sem perfil pro)**: vê Pessoal + Clínica. Mantém comportamento atual.
+- **Owner com perfil pro + clínica**: 3 opções. Modal aparece se nunca escolheu.
+- **URL legacy `?tab=professional`**: força contexto profissional automaticamente.
+- **Onboarding tour pro**: ajustar efeito para chamar `setActiveContext("professional")` em vez de `setActiveTab("professional")`.
+- **Modo simulado (`isSimulated`)**: continua restrito ao bloco profissional/clínica, sem mudança.
+
+Após aplicar, faço uma releitura para confirmar que nenhum import quebrou e que o default escolhido na primeira renderização não pisca entre modos.
