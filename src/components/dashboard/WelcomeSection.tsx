@@ -52,8 +52,8 @@ const WelcomeSection = ({
       return <Badge className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 gap-1 cursor-pointer hover:bg-destructive/80 transition-colors" onClick={() => navigate("/admin")}><Shield className="h-3 w-3" />Admin</Badge>;
     }
 
-    // Na aba profissional, mostrar badge Pro
-    if (activeTab === "professional") {
+    // Professional/Clinic context: show Pro badge
+    if (activeContext === "professional" || activeContext === "clinic") {
       if (professional?.is_partner) {
         return (
           <div className="flex flex-wrap gap-1.5">
