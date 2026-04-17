@@ -105,10 +105,8 @@ async function bootstrap() {
     });
   });
 
-  // Start version checker for force-update on production
-  if (!isPreviewHost && !isInIframe) {
+    // Start version checker for force-update on production
     startVersionChecker();
-  }
 
   renderApp();
 }
