@@ -1,65 +1,72 @@
 
-Objetivo: tratar isso como falha crítica de autenticação e atacar todas as camadas envolvidas no login desktop, não só o formulário.
+Objetivo: corrigir de forma estrutural o login no desktop, hoje quebrado por “NetworkError when attempting to fetch resource”, sem comprometer os links institucionais nem o restante do dashboard.
 
-Diagnóstico já encontrado:
-- O backend de autenticação não parece estar “fora do ar”: há registro recente de `POST /token` com status `200` no domínio publicado para `carolpetisco@gmail.com`.
-- Isso indica que pelo menos parte do problema está no cliente: persistência de sessão, redirecionamento prematuro, PWA/service worker, ou corrida entre login e navegação.
-- Hoje o app tem 2 pontos frágeis para esse cenário:
-  1. `Auth.tsx` navega para `/dashboard` imediatamente após `signIn`, sem esperar a sessão ficar estável.
-  2. `main.tsx`, `PwaUpdateGuard.tsx` e `versionChecker.ts` fazem limpeza/reload agressivos fora de rotas críticas, e `/auth`/`/dashboard` não estão protegidas disso.
+Diagnóstico mais provável
+- O problema não parece ser credencial nem backend de autenticação, porque no mobile funciona.
+- O ponto mais suspeito é a camada de PWA/cache/update adicionada hoje:
+  - `vite.config.ts` registra um Service Worker global via `vite-plugin-pwa`.
+  - `src/main.tsx` faz registro/atualização agressiva do SW.
+  - `src/lib/versionChecker.ts` também força limpeza de cache, unregister e reload.
+  - `src/components/PwaUpdateGuard.tsx` tenta ativar atualização e recarregar a app.
+  - `src/pages/ClearCache.tsx` limpa caches, mas preserva `localStorage`, então um estado de auth corrompido pode sobreviver.
+- Hoje existem duas responsabilidades misturadas: PWA/offline e push notifications. Isso aumenta muito o risco de o SW interferir no fluxo de auth, especialmente no desktop.
 
-Plano de correção:
-1. Blindar o fluxo de login
-- Ajustar `AuthContext.tsx` para o login retornar também o estado real da sessão após `signIn`.
-- Após autenticar, confirmar a sessão com `getSession()`/evento `SIGNED_IN` antes de considerar o login concluído.
-- Tratar explicitamente o caso “backend aceitou, mas a sessão ainda não hidratou no React”.
+Plano de correção
+1. Remover a interferência do PWA no login
+- Desabilitar o Service Worker global da aplicação para navegação/cache da app.
+- Manter apenas o manifesto de installability, se desejado, sem cache offline global.
+- Remover o bootstrap de SW global em `src/main.tsx`.
+- Remover a lógica de atualização forçada em `src/lib/versionChecker.ts`.
+- Remover `PwaUpdateGuard` do fluxo principal em `src/App.tsx`.
+- Limpar estados visuais de “update pending” em `Header` e `GlobalMobileMenu`.
 
-2. Remover a corrida entre login e redirecionamento
-- Em `Auth.tsx`, parar de fazer `navigate(redirectTo)` logo após `signIn`.
-- Deixar o redirecionamento acontecer apenas quando `user/session` já estiverem confirmados pelo `AuthProvider`.
-- Adicionar estado de “entrando...” para evitar clique duplo e navegação antes da hidratação.
+2. Preservar push notifications sem quebrar auth
+- Migrar push para um Service Worker dedicado e mínimo, registrado só quando o usuário realmente ativa notificações.
+- Ajustar `src/hooks/usePushNotifications.ts` para registrar esse worker sob demanda, em vez de depender do SW global da app.
+- Assim, notificações continuam possíveis, mas sem interceptar login/navegação.
 
-3. Parar interferências do PWA na autenticação
-- Em `main.tsx`, `PwaUpdateGuard.tsx` e `versionChecker.ts`, bloquear reload/ativação de nova versão nas rotas:
-  - `/auth`
-  - `/dashboard`
-  - `/reset-password`
-  - possivelmente `/conta`
-- Evitar que service worker/cache reset aconteça no meio do login ou imediatamente depois.
+3. Endurecer o fluxo de autenticação
+- Ajustar `AuthContext` para tratar erro de rede com recuperação mais segura:
+  - limpar apenas chaves locais de sessão/auth quando houver falha persistente de fetch;
+  - refazer `getSession()` após falha;
+  - evitar que estado antigo de sessão fique “preso”.
+- Manter o retry simples, mas com fallback específico para auth storage corrompido, não com limpeza ampla de navegador.
 
-4. Fortalecer a recuperação de erro de rede
-- Em `AuthContext.tsx`, revisar a lógica de recovery para limpar também estado parcial de autenticação quando houver falha de transporte.
-- Garantir que retry não deixe o app num estado “meio logado / meio deslogado”.
+4. Corrigir a página utilitária de limpeza
+- Em `ClearCache.tsx`, passar a limpar também apenas as chaves locais de autenticação do app, não o `localStorage` inteiro.
+- Isso vira um fallback real para auth quebrado, sem destruir outras preferências do usuário.
 
-5. Evitar falso “deslogado” após login bem-sucedido
-- Em `Dashboard.tsx`, segurar o redirect para `/auth` até o auth estar realmente resolvido.
-- Revisar guards que hoje dependem só de `user` e podem disparar cedo demais.
-- Se necessário, adicionar uma fase intermediária de hidratação da sessão antes de qualquer redirect.
+5. Validar o comportamento em todos os cenários críticos
+- Preview no editor.
+- Domínio publicado.
+- Desktop normal.
+- Desktop anônimo.
+- Login por e-mail/senha.
+- Login por Google.
+- Logout e novo login.
+- Reset de senha.
 
-6. Revisão completa de pontos relacionados
-- Conferir também `Header.tsx`, `Gateway.tsx`, `GlobalMobileMenu.tsx` e página `/conta` para garantir leitura consistente de sessão.
-- Padronizar o comportamento pós-login e pós-logout para não haver telas que pareçam “sem login” enquanto a sessão ainda está sendo restaurada.
-
-Validação que vou fazer após implementar:
-- Login com email/senha no preview
-- Login com email/senha no domínio publicado
-- Login seguido de redirecionamento para `/dashboard`
-- Navegar para home, voltar ao painel e verificar que a sessão permanece
-- Testar conta owner e conta secretária
-- Testar desktop e mobile
-- Verificar se não há reload inesperado do app durante login
-- Revisar regressões em logout, reset de senha e Google login
-
-Arquivos mais prováveis de ajuste:
-- `src/contexts/AuthContext.tsx`
-- `src/pages/Auth.tsx`
-- `src/pages/Dashboard.tsx`
+Arquivos que precisam ser alterados
+- `vite.config.ts`
 - `src/main.tsx`
-- `src/components/PwaUpdateGuard.tsx`
 - `src/lib/versionChecker.ts`
+- `src/components/PwaUpdateGuard.tsx`
+- `src/App.tsx`
+- `src/components/Header.tsx`
+- `src/components/GlobalMobileMenu.tsx`
+- `src/hooks/usePushNotifications.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/pages/ClearCache.tsx`
 
-Resultado esperado:
-- Login deixa de falhar/intermitir no desktop
-- Sessão permanece estável após autenticação
-- O app não aparenta “perder o login”
-- Preview e ambiente publicado passam a ter comportamento consistente
+Resultado esperado
+- O login para de depender de uma camada de cache/SW agressiva.
+- Desktop e mobile passam a usar o mesmo caminho de autenticação estável.
+- Push notifications continuam possíveis, mas desacopladas da navegação/autenticação.
+- O preview deixa de sofrer com efeitos colaterais de PWA.
+
+Detalhe técnico importante
+- Eu não seguiria tentando “mais um ajuste” no SW atual.
+- A estratégia certa aqui é simplificar: tirar o SW global da frente do auth e deixar notificações em um worker isolado.
+- Isso é coerente com o que o próprio projeto já indica: a camada de PWA/cache foi a principal mudança de risco recente.
+
+Quando você aprovar, eu implemento essa limpeza estrutural e deixo o login estável no desktop primeiro; depois valido se as notificações continuam operando pelo worker dedicado.
