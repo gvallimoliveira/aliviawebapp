@@ -234,14 +234,14 @@ const Dashboard = () => {
             <span className="text-xl font-bold text-foreground">Aliv.iA</span>
           </button>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
+            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 hidden md:inline-flex">
               <Globe className="h-4 w-4" />{t("nav.language")}
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} title={t("support.badge")}>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} title={t("support.badge")} className="hidden md:inline-flex">
               <HelpCircle className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
-              <LogOut className="h-4 w-4" />{t("nav.logout")}
+              <LogOut className="h-4 w-4" /><span className="hidden md:inline">{t("nav.logout")}</span>
             </Button>
           </div>
         </div>
