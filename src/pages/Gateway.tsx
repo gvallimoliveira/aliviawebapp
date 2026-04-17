@@ -53,10 +53,14 @@ const Gateway = () => {
       {/* Header minimal */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex items-center justify-between py-4">
-          <div className="flex items-center gap-2">
+          <button
+            onClick={() => user ? navigate("/dashboard") : window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="flex items-center gap-2"
+            aria-label={user ? "Ir para o painel" : "Aliv.iA"}
+          >
             <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
             <span className="text-lg font-bold text-foreground">Aliv.iA</span>
-          </div>
+          </button>
 
           {/* Desktop actions */}
           <div className="hidden sm:flex items-center gap-3">
@@ -93,9 +97,16 @@ const Gateway = () => {
               <Globe className="h-4 w-4" />
               {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm px-2">
-              {t("nav.login")}
-            </Button>
+            {user ? (
+              <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5 px-2 text-xs">
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                {language === "pt" ? "Painel" : language === "es" ? "Panel" : "Dashboard"}
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm px-2">
+                {t("nav.login")}
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} aria-label="Menu">
               <Menu className="h-5 w-5" />
             </Button>
