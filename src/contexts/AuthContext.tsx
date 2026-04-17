@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import type { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: User | null;
@@ -16,6 +16,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const NETWORK_ERROR_PATTERN = /failed to fetch|networkerror|network request failed|load failed/i;
+const AUTH_STORAGE_PATTERNS = [/^sb-/i, /supabase\.auth/i];
 
 const normalizeAuthError = (error: unknown) => {
   if (error instanceof Error) return error;
@@ -27,15 +28,57 @@ const normalizeAuthError = (error: unknown) => {
 
 const isNetworkError = (error: Error) => NETWORK_ERROR_PATTERN.test(error.message);
 
+const clearLocalAuthStorage = () => {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key && AUTH_STORAGE_PATTERNS.some((pattern) => pattern.test(key))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+  } catch {
+    /* noop */
+  }
+
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i += 1) {
+      const key = sessionStorage.key(i);
+      if (key && AUTH_STORAGE_PATTERNS.some((pattern) => pattern.test(key))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((key) => sessionStorage.removeItem(key));
+  } catch {
+    /* noop */
+  }
+};
+
 const withNetworkRetry = async <T,>(operation: () => Promise<T>): Promise<T> => {
   try {
     return await operation();
   } catch (error) {
     const normalized = normalizeAuthError(error);
     if (!isNetworkError(normalized)) throw normalized;
-    // Single retry without destroying browser state (which broke sessions)
-    await new Promise((r) => setTimeout(r, 400));
-    return operation();
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    try {
+      return await operation();
+    } catch (retryError) {
+      const normalizedRetryError = normalizeAuthError(retryError);
+      if (isNetworkError(normalizedRetryError)) {
+        clearLocalAuthStorage();
+        try {
+          await supabase.auth.getSession();
+        } catch {
+          /* noop */
+        }
+      }
+      throw normalizedRetryError;
+    }
   }
 };
 
@@ -47,39 +90,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initialized = useRef(false);
 
   useEffect(() => {
-    // Set listener BEFORE getSession to avoid missing events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      setLoading(false);
-      setReady(true);
-    });
+    let mounted = true;
 
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      if (initialized.current) return;
-      initialized.current = true;
-      setSession(existingSession);
-      setUser(existingSession?.user ?? null);
-      setLoading(false);
-      setReady(true);
-    }).catch(() => {
-      setLoading(false);
-      setReady(true);
-    });
+    const applySession = (nextSession: Session | null) => {
+      if (!mounted) return;
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+    };
 
-    return () => subscription.unsubscribe();
+    const finalizeReady = () => {
+      if (!mounted) return;
+      setLoading(false);
+      setReady(true);
+    };
+
+    const handleAuthEvent = (event: AuthChangeEvent, nextSession: Session | null) => {
+      if (!mounted) return;
+
+      if (event === "INITIAL_SESSION" && !initialized.current) {
+        return;
+      }
+
+      applySession(nextSession);
+      finalizeReady();
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(handleAuthEvent);
+
+    void supabase.auth
+      .getSession()
+      .then(({ data: { session: existingSession } }) => {
+        if (!mounted) return;
+        initialized.current = true;
+        applySession(existingSession);
+        finalizeReady();
+      })
+      .catch(() => {
+        if (!mounted) return;
+        initialized.current = true;
+        applySession(null);
+        finalizeReady();
+      });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      const { data, error } = await withNetworkRetry(() => supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-          emailRedirectTo: window.location.origin,
-        },
-      }));
+      const { data, error } = await withNetworkRetry(() =>
+        supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName },
+            emailRedirectTo: window.location.origin,
+          },
+        })
+      );
+
+      if (!error && data?.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        setLoading(false);
+        setReady(true);
+      }
+
       return { error, session: data?.session ?? null };
     } catch (error) {
       return { error: normalizeAuthError(error), session: null };
@@ -91,13 +171,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await withNetworkRetry(() =>
         supabase.auth.signInWithPassword({ email, password })
       );
+
       if (!error && data?.session) {
-        // Hydrate context immediately so callers don't race onAuthStateChange
         setSession(data.session);
         setUser(data.session.user);
-        setReady(true);
         setLoading(false);
+        setReady(true);
       }
+
       return { error, session: data?.session ?? null };
     } catch (error) {
       return { error: normalizeAuthError(error), session: null };
@@ -105,16 +186,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      clearLocalAuthStorage();
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+      setReady(true);
+    }
   };
 
   const resetPassword = async (email: string) => {
     try {
-      const { error } = await withNetworkRetry(() => supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      }));
+      const { error } = await withNetworkRetry(() =>
+        supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        })
+      );
       return { error };
     } catch (error) {
       return { error: normalizeAuthError(error) };

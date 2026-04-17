@@ -73,7 +73,7 @@ function buildOnboardingSteps(subscriptionType?: "monthly" | "single" | null, is
 }
 
 const Dashboard = () => {
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, signOut, loading: authLoading, ready: authReady } = useAuth();
   const { t, toggleLanguage } = useLanguage();
   const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount } = useClinic();
   const navigate = useNavigate();
@@ -85,11 +85,9 @@ const Dashboard = () => {
   const [premiumAccess, setPremiumAccess] = useState<PremiumAccess | null>(null);
   const [premiumLoading, setPremiumLoading] = useState(true);
   const [professional, setProfessional] = useState<any>(null);
-  
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>("health");
   const [unreadCount, setUnreadCount] = useState(0);
-
-
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
 
@@ -102,8 +100,84 @@ const Dashboard = () => {
   const onboarding = useOnboarding("onboarding_patient_completed", onboardingSteps);
 
   useEffect(() => {
-    if (!authLoading && !user) navigate("/auth");
-  }, [user, authLoading, navigate]);
+    if (!authReady || authLoading) return;
+    if (!user) navigate("/auth", { replace: true });
+  }, [user, authLoading, authReady, navigate]);
+
+  useEffect(() => {
+    if (!authReady) return;
+    if (!user) {
+      setDashboardLoading(false);
+      setPremiumLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadDashboard = async () => {
+      setDashboardLoading(true);
+      setPremiumLoading(true);
+
+      const [profileResult, assessmentsResult, sessionResult, professionalResult] = await Promise.allSettled([
+        supabase.from("profiles").select("*").eq("user_id", user.id).single(),
+        supabase.from("assessments").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.auth.getSession(),
+        (supabase.from("professionals" as any) as any).select("*").eq("user_id", user.id).maybeSingle(),
+      ]);
+
+      if (cancelled) return;
+
+      setProfile(profileResult.status === "fulfilled" ? profileResult.value.data : null);
+      setAssessments(assessmentsResult.status === "fulfilled" ? (assessmentsResult.value.data || []) : []);
+
+      let nextProfessional: any = null;
+      if (professionalResult.status === "fulfilled") {
+        nextProfessional = professionalResult.value.data || null;
+      }
+
+      if (nextProfessional?.is_partner && (nextProfessional.crefito === "000000-X" || nextProfessional.city === "A definir")) {
+        navigate("/complete-profile", { replace: true });
+        return;
+      }
+
+      setProfessional(nextProfessional);
+
+      if (!nextProfessional && tabFromUrl === "professional") {
+        navigate("/professional/register", { replace: true });
+        return;
+      }
+
+      const accessToken = sessionResult.status === "fulfilled"
+        ? sessionResult.value.data.session?.access_token
+        : null;
+
+      if (!accessToken) {
+        setPremiumAccess(null);
+        setPremiumLoading(false);
+        setDashboardLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.functions.invoke("verify-payment", { body: { check_access: true } });
+        if (cancelled) return;
+        setPremiumAccess(!error && !data?.error ? data : null);
+      } catch {
+        if (cancelled) return;
+        setPremiumAccess(null);
+      } finally {
+        if (cancelled) return;
+        setPremiumLoading(false);
+        setDashboardLoading(false);
+      }
+    };
+
+    void loadDashboard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authReady, user, navigate, tabFromUrl]);
 
   // Reset tab on context change or URL params
   useEffect(() => {
@@ -120,24 +194,25 @@ const Dashboard = () => {
       else if (tabFromUrl === "agenda") setActiveTab("agenda");
       else setActiveTab("professional");
     } else {
-      // personal
       if (tabFromUrl === "messages") setActiveTab("messages");
       else setActiveTab("health");
     }
   }, [tabFromUrl, activeContext, activeClinic?.clinic_id]);
 
-  // Sync professional profile presence to context + auto-redirect URL ?tab=professional
   useEffect(() => {
     setHasProfessionalProfile(!!professional);
     if (professional && tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
       setActiveContext("professional");
     }
-  }, [professional, tabFromUrl]);
+  }, [professional, tabFromUrl, activeContext, setActiveContext, setHasProfessionalProfile]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
     const { data: convs } = await supabase.from("conversations").select("id");
-    if (!convs || convs.length === 0) { setUnreadCount(0); return; }
+    if (!convs || convs.length === 0) {
+      setUnreadCount(0);
+      return;
+    }
     const convIds = convs.map((c: any) => c.id);
     const { count } = await supabase
       .from("messages")
@@ -149,14 +224,16 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!authReady || !user) return;
     fetchUnreadCount();
     const channel = supabase
       .channel("unread-badge")
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => fetchUnreadCount())
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [authReady, user]);
 
   useEffect(() => {
     if (!onboarding.isActive || !onboarding.step) return;
@@ -167,44 +244,19 @@ const Dashboard = () => {
       }
       setActiveTab("professional");
     } else if (onboarding.step.targetId.startsWith("patient-")) {
-      if (activeContext !== "personal" && availableContextsCount >= 2) {
-        // keep current context but show health if available
-      }
       setActiveTab("health");
     }
-  }, [onboarding.step, onboarding.isActive]);
+  }, [onboarding.step, onboarding.isActive, hasProfessionalProfile, activeContext, setActiveContext]);
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("profiles").select("*").eq("user_id", user.id).single().then(({ data }) => setProfile(data));
-    supabase.from("assessments").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setAssessments(data || []));
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.access_token) { setPremiumLoading(false); return; }
-      supabase.functions.invoke("verify-payment", { body: { check_access: true } }).then(({ data, error }) => {
-        setPremiumAccess(!error && !data?.error ? data : null);
-        setPremiumLoading(false);
-      }).catch(() => setPremiumLoading(false));
-    });
-    (supabase.from("professionals" as any) as any).select("*").eq("user_id", user.id).maybeSingle().then(({ data }: any) => {
-      if (data) {
-        if (data.is_partner && (data.crefito === "000000-X" || data.city === "A definir")) {
-          navigate("/complete-profile", { replace: true });
-          return;
-        }
-        setProfessional(data);
-      } else if (tabFromUrl === "professional") {
-        navigate("/professional/register", { replace: true });
-      }
-    });
-  }, [user]);
-
-  if (authLoading) {
+  if (!authReady || authLoading || dashboardLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
+
+  if (!user) return null;
 
   const handleSignOut = async () => { await signOut(); navigate("/"); };
 

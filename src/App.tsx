@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 
 import GlobalMobileMenu from "@/components/GlobalMobileMenu";
+import DashboardErrorBoundary from "@/components/dashboard/DashboardErrorBoundary";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ClinicProvider } from "@/contexts/ClinicContext";
@@ -46,44 +47,51 @@ const App = () => (
     <LanguageProvider>
       <AuthProvider>
         <ClinicProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToTop />
-            <GlobalMobileMenu />
-            <Routes>
-              <Route path="/" element={<Gateway />} />
-              <Route path="/para-pacientes" element={<PatientLanding />} />
-              <Route path="/landing-legacy" element={<LandingLegacy />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/assessment/view/:id" element={<AssessmentView />} />
-              <Route path="/assessment/:type" element={<Assessment />} />
-              <Route path="/payment-success" element={<PaymentSuccess />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/professional/register" element={<ProfessionalRegister />} />
-              <Route path="/professionals" element={<ProfessionalSearch />} />
-              <Route path="/assessment/professional/:professionalId" element={<ProfessionalAssessment />} />
-              <Route path="/hep/:token" element={<ExerciseProgram />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:slug" element={<BlogPost />} />
-              <Route path="/profissionais" element={<ProfessionalLanding />} />
-              <Route path="/complete-profile" element={<CompleteProfile />} />
-              <Route path="/suporte" element={<Support />} />
-              <Route path="/upgrade-welcome" element={<UpgradeWelcome />} />
-              <Route path="/clinica" element={<ClinicLanding />} />
-              <Route path="/clinica/demo" element={<ClinicDemo />} />
-              <Route path="/assessment/clinic/:clinicId" element={<ClinicAssessment />} />
-              <Route path="/feedback/clinic/:clinicId" element={<ClinicFeedback />} />
-              <Route path="/aceitar-convite" element={<AcceptInvite />} />
-              <Route path="/conta" element={<Account />} />
-              <Route path="/limpar-cache" element={<ClearCache />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ScrollToTop />
+              <GlobalMobileMenu />
+              <Routes>
+                <Route path="/" element={<Gateway />} />
+                <Route path="/para-pacientes" element={<PatientLanding />} />
+                <Route path="/landing-legacy" element={<LandingLegacy />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route
+                  path="/dashboard"
+                  element={(
+                    <DashboardErrorBoundary fallbackTitle="Erro ao abrir o dashboard">
+                      <Dashboard />
+                    </DashboardErrorBoundary>
+                  )}
+                />
+                <Route path="/assessment/view/:id" element={<AssessmentView />} />
+                <Route path="/assessment/:type" element={<Assessment />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/professional/register" element={<ProfessionalRegister />} />
+                <Route path="/professionals" element={<ProfessionalSearch />} />
+                <Route path="/assessment/professional/:professionalId" element={<ProfessionalAssessment />} />
+                <Route path="/hep/:token" element={<ExerciseProgram />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
+                <Route path="/profissionais" element={<ProfessionalLanding />} />
+                <Route path="/complete-profile" element={<CompleteProfile />} />
+                <Route path="/suporte" element={<Support />} />
+                <Route path="/upgrade-welcome" element={<UpgradeWelcome />} />
+                <Route path="/clinica" element={<ClinicLanding />} />
+                <Route path="/clinica/demo" element={<ClinicDemo />} />
+                <Route path="/assessment/clinic/:clinicId" element={<ClinicAssessment />} />
+                <Route path="/feedback/clinic/:clinicId" element={<ClinicFeedback />} />
+                <Route path="/aceitar-convite" element={<AcceptInvite />} />
+                <Route path="/conta" element={<Account />} />
+                <Route path="/limpar-cache" element={<ClearCache />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
         </ClinicProvider>
       </AuthProvider>
     </LanguageProvider>
