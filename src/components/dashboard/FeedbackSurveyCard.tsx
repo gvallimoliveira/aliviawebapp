@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 const SERVICE_OPTIONS = [
-  { value: "", label: { pt: "Todos os serviços", en: "All services", es: "Todos los servicios" } },
+  { value: "all", label: { pt: "Todos os serviços", en: "All services", es: "Todos los servicios" } },
   { value: "fisioterapia", label: { pt: "Fisioterapia", en: "Physiotherapy", es: "Fisioterapia" } },
   { value: "pilates", label: { pt: "Pilates", en: "Pilates", es: "Pilates" } },
   { value: "osteopatia", label: { pt: "Osteopatia", en: "Osteopathy", es: "Osteopatía" } },
