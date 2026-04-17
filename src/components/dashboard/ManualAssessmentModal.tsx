@@ -151,9 +151,6 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setRedFlagsChecked((prev) => prev.includes(rf) ? prev.filter((r) => r !== rf) : [...prev, rf]);
   };
 
-  const toggleQuestionnaire = (id: string) => {
-    setSelectedQuestionnaires((prev) => prev.includes(id) ? prev.filter((q) => q !== id) : [...prev, id]);
-  };
 
   const buildAnamnesisData = () => ({
     manualEntry: true,
@@ -180,7 +177,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           anamnesis: buildAnamnesisData(),
           painRegions,
           painScore,
-          testResults: { functionalTests, questionnaires: questionnaireScores },
+          testResults: { functionalTests, questionnaires: questionnaireResults },
           language,
         },
       });
@@ -236,12 +233,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         red_flags: redFlagsChecked.length > 0 ? { detected: redFlagsChecked } : null,
         test_results: {
           functional_tests: functionalTests,
-          questionnaires: selectedQuestionnaires.map((id) => {
-            const q = questionnaires.find((qq) => qq.id === id);
+          questionnaires: questionnaireResults.map((r) => {
+            const q = questionnaires.find((qq) => qq.id === r.questionnaireId);
             return {
-              questionnaireId: id,
-              questionnaireName: q?.name || id,
-              manualScore: questionnaireScores[id] || null,
+              questionnaireId: r.questionnaireId,
+              questionnaireName: r.questionnaireName,
+              fullName_pt: q?.fullName_pt,
+              fullName_en: q?.fullName_en,
+              answers: r.answers,
+              subscaleScores: r.subscaleScores,
+              totalScore: r.totalScore,
+              maxScore: r.maxScore,
+              percentageScore: r.percentageScore,
+              interpretation_pt: r.interpretation_pt,
+              interpretation_en: r.interpretation_en,
+              severity: r.severity,
             };
           }),
         },
@@ -273,8 +279,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setChiefComplaint(""); setHistory(""); setDuration(""); setOnset("");
     setAggravating(""); setRelieving(""); setMedications(""); setPreviousSurgeries("");
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
-    setPainRegions([]); setRedFlagsChecked([]); setSelectedQuestionnaires([]);
-    setQuestionnaireScores({}); setFunctionalTests(""); setClinicalImpression("");
+    setPainRegions([]); setRedFlagsChecked([]); setQuestionnaireResults([]);
+    setFunctionalTests(""); setClinicalImpression("");
     setDiagnosisText(""); setTreatmentText("");
   };
 
