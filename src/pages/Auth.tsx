@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { lovable } from "@/integrations/lovable/index";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const Auth = () => {
@@ -25,43 +25,98 @@ const Auth = () => {
   const location = useLocation();
   const redirectTo = (location.state as any)?.redirectTo || "/dashboard";
   const { toast } = useToast();
+  const redirectingRef = useRef(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (on mount or when user populates)
   useEffect(() => {
-    if (user) {
+    if (user && !redirectingRef.current) {
+      redirectingRef.current = true;
       navigate(redirectTo, { replace: true });
     }
   }, [user, navigate, redirectTo]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
 
-    if (isForgotPassword) {
-      const { error } = await resetPassword(email);
-      if (error) {
-        toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: t("auth.reset_sent"), description: t("auth.reset_sent_desc") });
-        setIsForgotPassword(false);
+    try {
+      if (isForgotPassword) {
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
+          setLoading(false);
+        } else {
+          toast({ title: t("auth.reset_sent"), description: t("auth.reset_sent_desc") });
+          setIsForgotPassword(false);
+          setLoading(false);
+        }
+        return;
       }
-    } else if (isLogin) {
-      const { error, session } = await signIn(email, password);
-      if (error) {
-        toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
-      } else if (session) {
-        // Session confirmed — redirect handled by useEffect on `user`
-        // (no manual navigate to avoid race with auth hydration)
+
+      if (isLogin) {
+        const { error, session } = await signIn(email, password);
+        if (error) {
+          toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        if (session) {
+          // Keep loading=true; the useEffect on `user` will redirect.
+          // Hard fallback in case the auth listener is delayed (rare on desktop).
+          redirectingRef.current = true;
+          window.setTimeout(() => {
+            if (window.location.pathname === "/auth") {
+              window.location.replace(redirectTo);
+            }
+          }, 1500);
+          return;
+        }
+        // No session and no error — should not happen, but reset.
+        setLoading(false);
+        return;
       }
-    } else {
-      const { error, session } = await signUp(email, password, fullName);
+
+      // Signup
+      const { error } = await signUp(email, password, fullName);
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
+        setLoading(false);
       } else {
         toast({ title: t("auth.welcome"), description: t("auth.account_created") });
-        // Redirect handled by useEffect when `user` populates
+        // Stay loading; redirect handled by useEffect when `user` populates.
       }
+    } catch (err: any) {
+      toast({
+        title: t("auth.error"),
+        description: err?.message || "Erro inesperado. Tente novamente.",
+        variant: "destructive",
+      });
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}${redirectTo}` },
+      });
+      if (error) {
+        toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
+        setLoading(false);
+      }
+      // On success the browser navigates away; no need to clear loading.
+    } catch (err: any) {
+      toast({
+        title: t("auth.error"),
+        description: err?.message || "Erro ao conectar com o Google.",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
   };
 
   return (
@@ -106,6 +161,7 @@ const Auth = () => {
                       className="pl-10"
                       autoComplete="name"
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -123,6 +179,7 @@ const Auth = () => {
                     className="pl-10"
                     autoComplete="email"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -141,6 +198,7 @@ const Auth = () => {
                       autoComplete={isLogin ? "current-password" : "new-password"}
                       minLength={6}
                       required
+                      disabled={loading}
                     />
                     <button
                       type="button"
@@ -159,13 +217,19 @@ const Auth = () => {
                     type="button"
                     onClick={() => setIsForgotPassword(true)}
                     className="text-sm text-primary hover:underline"
+                    disabled={loading}
                   >
                     {t("auth.forgot_password")}
                   </button>
                 </div>
               )}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "..." : isForgotPassword ? t("auth.send_reset") : isLogin ? t("auth.login_button") : t("auth.signup_button")}
+                {loading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {language === "pt" ? "Entrando..." : language === "es" ? "Entrando..." : "Signing in..."}
+                  </span>
+                ) : isForgotPassword ? t("auth.send_reset") : isLogin ? t("auth.login_button") : t("auth.signup_button")}
               </Button>
             </form>
 
@@ -186,16 +250,7 @@ const Auth = () => {
                   variant="outline"
                   className="w-full gap-2"
                   disabled={loading}
-                  onClick={async () => {
-                    setLoading(true);
-                    const { error } = await lovable.auth.signInWithOAuth("google", {
-                      redirect_uri: window.location.origin,
-                    });
-                    if (error) {
-                      toast({ title: t("auth.error"), description: String(error), variant: "destructive" });
-                    }
-                    setLoading(false);
-                  }}
+                  onClick={handleGoogleLogin}
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -214,6 +269,7 @@ const Auth = () => {
                   type="button"
                   onClick={() => setIsForgotPassword(false)}
                   className="text-sm text-primary hover:underline"
+                  disabled={loading}
                 >
                   {t("auth.back_to_login")}
                 </button>
@@ -222,6 +278,7 @@ const Auth = () => {
                   type="button"
                   onClick={() => setIsLogin(!isLogin)}
                   className="text-sm text-primary hover:underline"
+                  disabled={loading}
                 >
                   {isLogin ? t("auth.no_account") : t("auth.has_account")}
                 </button>
