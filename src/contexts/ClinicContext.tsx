@@ -1,9 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Database } from "@/integrations/supabase/types";
 
 type ClinicRole = Database["public"]["Enums"]["clinic_role"];
+
+export type ActiveContextType = "personal" | "professional" | "clinic";
 
 interface ClinicMembership {
   clinic_id: string;
@@ -30,14 +32,25 @@ interface ClinicContextType {
   refetch: () => Promise<void>;
   needsContextSelection: boolean;
   dismissContextSelection: () => void;
+  // New: unified context selector
+  hasProfessionalProfile: boolean;
+  setHasProfessionalProfile: (v: boolean) => void;
+  activeContext: ActiveContextType;
+  setActiveContext: (type: ActiveContextType, clinicId?: string | null) => void;
+  availableContextsCount: number;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
 
+const STORAGE_CTX_TYPE = "activeContextType";
+const STORAGE_CLINIC_ID = "activeClinicId";
+
 export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [memberships, setMemberships] = useState<ClinicMembership[]>([]);
-  const [activeClinicId, setActiveClinicId] = useState<string | null>(null);
+  const [activeClinicId, setActiveClinicIdState] = useState<string | null>(null);
+  const [activeContext, setActiveContextState] = useState<ActiveContextType>("personal");
+  const [hasProfessionalProfile, setHasProfessionalProfileState] = useState(false);
   const [loading, setLoading] = useState(true);
   const [contextDismissed, setContextDismissed] = useState(false);
   const [hasRestoredFromStorage, setHasRestoredFromStorage] = useState(false);
@@ -68,14 +81,27 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }));
       setMemberships(mapped);
 
-      // Restore persisted clinic or auto-select if only one
-      const stored = localStorage.getItem("activeClinicId");
-      if (stored && mapped.some((m) => m.clinic_id === stored)) {
-        setActiveClinicId(stored);
+      // Restore persisted context
+      const storedType = localStorage.getItem(STORAGE_CTX_TYPE) as ActiveContextType | null;
+      const storedClinic = localStorage.getItem(STORAGE_CLINIC_ID);
+
+      if (storedType === "clinic" && storedClinic && mapped.some((m) => m.clinic_id === storedClinic)) {
+        setActiveContextState("clinic");
+        setActiveClinicIdState(storedClinic);
         setHasRestoredFromStorage(true);
-      } else if (mapped.length === 1) {
-        // Only one clinic and no stored preference — show selector
-        setHasRestoredFromStorage(false);
+      } else if (storedType === "professional") {
+        setActiveContextState("professional");
+        setActiveClinicIdState(null);
+        setHasRestoredFromStorage(true);
+      } else if (storedType === "personal") {
+        setActiveContextState("personal");
+        setActiveClinicIdState(null);
+        setHasRestoredFromStorage(true);
+      } else if (storedClinic && mapped.some((m) => m.clinic_id === storedClinic)) {
+        // Legacy: only clinic id stored
+        setActiveContextState("clinic");
+        setActiveClinicIdState(storedClinic);
+        setHasRestoredFromStorage(true);
       } else {
         setHasRestoredFromStorage(false);
       }
@@ -85,7 +111,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setLoading(false);
   }, [user]);
 
-  // Reset dismissed state on user change (new login)
   useEffect(() => {
     setContextDismissed(false);
     setHasRestoredFromStorage(false);
@@ -93,33 +118,60 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => { fetchMemberships(); }, [fetchMemberships]);
 
-
   const activeClinic = memberships.find((m) => m.clinic_id === activeClinicId) || null;
 
-  // Show context selection when user has clinics, hasn't chosen yet, and hasn't dismissed
-  const needsContextSelection = !loading && memberships.length > 0 && !hasRestoredFromStorage && !contextDismissed;
+  // total contexts = personal (always) + professional (if profile) + each clinic
+  const availableContextsCount = useMemo(
+    () => 1 + (hasProfessionalProfile ? 1 : 0) + memberships.length,
+    [hasProfessionalProfile, memberships.length]
+  );
+
+  // Auto-pick when only one possible context exists (just personal) — no need to show modal
+  // Show modal if 2+ contexts and user hasn't chosen yet
+  const needsContextSelection =
+    !loading && availableContextsCount >= 2 && !hasRestoredFromStorage && !contextDismissed;
 
   const dismissContextSelection = () => setContextDismissed(true);
 
-  const handleSetClinicId = (id: string | null) => {
-    setActiveClinicId(id);
+  const setActiveContext = (type: ActiveContextType, clinicId: string | null = null) => {
+    setActiveContextState(type);
+    if (type === "clinic" && clinicId) {
+      setActiveClinicIdState(clinicId);
+      localStorage.setItem(STORAGE_CTX_TYPE, "clinic");
+      localStorage.setItem(STORAGE_CLINIC_ID, clinicId);
+    } else {
+      setActiveClinicIdState(null);
+      localStorage.setItem(STORAGE_CTX_TYPE, type);
+      localStorage.removeItem(STORAGE_CLINIC_ID);
+    }
     setContextDismissed(true);
     setHasRestoredFromStorage(true);
-    if (id) localStorage.setItem("activeClinicId", id);
-    else localStorage.removeItem("activeClinicId");
   };
+
+  // Backward-compat: setActiveClinicId(null) -> personal, setActiveClinicId(uuid) -> clinic
+  const setActiveClinicId = (id: string | null) => {
+    if (id) setActiveContext("clinic", id);
+    else setActiveContext("personal");
+  };
+
+  const setHasProfessionalProfile = (v: boolean) => setHasProfessionalProfileState(v);
 
   return (
     <ClinicContext.Provider
       value={{
         memberships,
         activeClinic,
-        setActiveClinicId: handleSetClinicId,
-        isClinicMode: !!activeClinic,
+        setActiveClinicId,
+        isClinicMode: activeContext === "clinic" && !!activeClinic,
         loading,
         refetch: fetchMemberships,
         needsContextSelection,
         dismissContextSelection,
+        hasProfessionalProfile,
+        setHasProfessionalProfile,
+        activeContext,
+        setActiveContext,
+        availableContextsCount,
       }}
     >
       {children}

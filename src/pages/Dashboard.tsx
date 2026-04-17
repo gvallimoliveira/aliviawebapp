@@ -75,7 +75,7 @@ function buildOnboardingSteps(subscriptionType?: "monthly" | "single" | null, is
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { t, toggleLanguage } = useLanguage();
-  const { memberships, activeClinic, isClinicMode, needsContextSelection } = useClinic();
+  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount } = useClinic();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
@@ -107,8 +107,7 @@ const Dashboard = () => {
 
   // Reset tab on context change or URL params
   useEffect(() => {
-    if (isClinicMode) {
-      // Clinic mode: 5 tabs (agenda, patients, team, link, messages)
+    if (activeContext === "clinic") {
       if (tabFromUrl === "messages") setActiveTab("messages");
       else if (tabFromUrl === "agenda") setActiveTab("agenda");
       else if (tabFromUrl === "patients") setActiveTab("patients");
@@ -116,14 +115,24 @@ const Dashboard = () => {
       else if (tabFromUrl === "link") setActiveTab("link");
       else if (tabFromUrl === "analytics") setActiveTab("analytics");
       else setActiveTab("agenda");
-    } else {
-      // Personal mode
-      if (tabFromUrl === "professional" && professional) setActiveTab("professional");
-      else if (tabFromUrl === "messages") setActiveTab("messages");
+    } else if (activeContext === "professional") {
+      if (tabFromUrl === "messages") setActiveTab("messages");
       else if (tabFromUrl === "agenda") setActiveTab("agenda");
-      else if (!tabFromUrl) setActiveTab("health");
+      else setActiveTab("professional");
+    } else {
+      // personal
+      if (tabFromUrl === "messages") setActiveTab("messages");
+      else setActiveTab("health");
     }
-  }, [tabFromUrl, professional, isClinicMode, activeClinic?.clinic_id]);
+  }, [tabFromUrl, activeContext, activeClinic?.clinic_id]);
+
+  // Sync professional profile presence to context + auto-redirect URL ?tab=professional
+  useEffect(() => {
+    setHasProfessionalProfile(!!professional);
+    if (professional && tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
+      setActiveContext("professional");
+    }
+  }, [professional, tabFromUrl]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
@@ -152,8 +161,17 @@ const Dashboard = () => {
   useEffect(() => {
     if (!onboarding.isActive || !onboarding.step) return;
     const proTargets = ["pro-link", "pro-patients", "pro-subscription"];
-    if (proTargets.includes(onboarding.step.targetId)) setActiveTab("professional");
-    else if (onboarding.step.targetId.startsWith("patient-")) setActiveTab("health");
+    if (proTargets.includes(onboarding.step.targetId)) {
+      if (hasProfessionalProfile && activeContext !== "professional" && activeContext !== "clinic") {
+        setActiveContext("professional");
+      }
+      setActiveTab("professional");
+    } else if (onboarding.step.targetId.startsWith("patient-")) {
+      if (activeContext !== "personal" && availableContextsCount >= 2) {
+        // keep current context but show health if available
+      }
+      setActiveTab("health");
+    }
   }, [onboarding.step, onboarding.isActive]);
 
   useEffect(() => {
@@ -248,7 +266,7 @@ const Dashboard = () => {
       </header>
 
       <main className={cn("container py-8 px-4 space-y-8", activeTab === "agenda" ? "max-w-7xl" : "max-w-4xl")}>
-        {memberships.length > 0 && <ClinicContextSelector />}
+        <ClinicContextSelector />
         <PushOptInBanner />
         <WelcomeSection
           profileName={profile?.full_name}
@@ -400,28 +418,22 @@ const Dashboard = () => {
               />
             </TabsContent>
           </Tabs>
-        ) : professional ? (
-          /* ── Personal Mode with Professional ── */
+        ) : activeContext === "professional" && professional ? (
+          /* ── Professional Autonomous Mode: 3 tabs (Profissional, Agenda, Mensagens) ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-4">
-              <TabsTrigger value="health" className="gap-1.5 text-xs"><Heart className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_my_health")}</span></TabsTrigger>
-              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
-                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
+                <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
               </TabsTrigger>
               <TabsTrigger value="agenda" className="gap-1.5 text-xs">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
-              <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
-                <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
+              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
+                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
-            <TabsContent value="messages" className="space-y-6">
-              <MessagesTab
-                professional={professional}
-                initialConversationId={convFromUrl}
-                canInitiateConversation={false}
-              />
+            <TabsContent value="professional" className="space-y-8">
+              <ProDashboard professional={professional} />
             </TabsContent>
             <TabsContent value="agenda" className="space-y-6">
               <DailySummaryCard
@@ -431,12 +443,16 @@ const Dashboard = () => {
               />
               <ProSchedule professionalId={professional.id} />
             </TabsContent>
-            <TabsContent value="professional" className="space-y-8">
-              <ProDashboard professional={professional} />
+            <TabsContent value="messages" className="space-y-6">
+              <MessagesTab
+                professional={professional}
+                initialConversationId={convFromUrl}
+                canInitiateConversation={false}
+              />
             </TabsContent>
           </Tabs>
         ) : (
-          /* ── Personal Mode without Professional ── */
+          /* ── Personal Mode: Saúde + Mensagens ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="w-full grid grid-cols-2">
               <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>
@@ -446,7 +462,11 @@ const Dashboard = () => {
             </TabsList>
             <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
             <TabsContent value="messages" className="space-y-6">
-              <MessagesTab initialConversationId={convFromUrl} />
+              <MessagesTab
+                professional={professional}
+                initialConversationId={convFromUrl}
+                canInitiateConversation={false}
+              />
             </TabsContent>
           </Tabs>
         )}
