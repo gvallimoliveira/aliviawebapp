@@ -29,9 +29,10 @@ interface AddPatientModalProps {
   clinicId?: string | null;
   onAdded: () => void;
   editPatient?: PatientToEdit | null;
+  onCreateManualAssessment?: (patient: { name: string; email?: string }) => void;
 }
 
-const AddPatientModal = ({ open, onOpenChange, professionalId, clinicId, onAdded, editPatient }: AddPatientModalProps) => {
+const AddPatientModal = ({ open, onOpenChange, professionalId, clinicId, onAdded, editPatient, onCreateManualAssessment }: AddPatientModalProps) => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const isPt = language === "pt";
@@ -126,7 +127,25 @@ const AddPatientModal = ({ open, onOpenChange, professionalId, clinicId, onAdded
         }
       }
 
-      toast({ title: isPt ? (isEdit ? "Cadastro atualizado!" : "Paciente adicionado!") : (isEdit ? "Patient updated!" : "Patient added!") });
+      const savedName = name.trim();
+      const savedEmail = email.trim();
+
+      if (!isEdit && onCreateManualAssessment) {
+        toast({
+          title: isPt ? "Paciente adicionado!" : "Patient added!",
+          description: isPt ? "Deseja criar uma avaliação manual agora?" : "Create a manual assessment now?",
+          action: (
+            <button
+              onClick={() => onCreateManualAssessment({ name: savedName, email: savedEmail || undefined })}
+              className="px-3 py-1 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90"
+            >
+              {isPt ? "Criar avaliação" : "Create assessment"}
+            </button>
+          ),
+        });
+      } else {
+        toast({ title: isPt ? (isEdit ? "Cadastro atualizado!" : "Paciente adicionado!") : (isEdit ? "Patient updated!" : "Patient added!") });
+      }
       onAdded();
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
       handleClose();
