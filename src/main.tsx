@@ -64,14 +64,16 @@ async function bootstrap() {
         // Store registration globally so PwaUpdateGuard can send SKIP_WAITING
         (window as any).__pwaRegistration = registration;
 
-        // Poll for updates
-        setInterval(() => { registration.update(); }, 10 * 1000);
+        // Poll for updates aggressively (every 15s + on every focus/visibility/online)
+        setInterval(() => { registration.update(); }, 15 * 1000);
         document.addEventListener("visibilitychange", () => {
           if (document.visibilityState === "visible") registration.update();
         });
+        window.addEventListener("focus", () => { registration.update(); });
+        window.addEventListener("pageshow", () => { registration.update(); });
         window.addEventListener("online", () => { registration.update(); });
 
-        // If there's already a waiting SW, signal update available (do NOT skip waiting)
+        // If there's already a waiting SW on first load, signal update available
         if (registration.waiting) {
           (window as any).__pwaUpdatePending = true;
           window.dispatchEvent(new Event("pwa-update-ready"));
