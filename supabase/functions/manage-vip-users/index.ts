@@ -291,10 +291,11 @@ serve(async (req) => {
           targetId = pro.id;
         } else if (is_partner) {
           // Professional not found — auto-create account + professional profile
-          // 1. Create auth user with default password
+          // 1. Create auth user with a cryptographically random temporary password
+          const tempPassword = crypto.randomUUID() + crypto.randomUUID();
           const { data: newUserData, error: createError } = await supabaseClient.auth.admin.createUser({
             email: normalizedEmail,
-            password: "parceiroalivia",
+            password: tempPassword,
             email_confirm: true,
           });
 
@@ -310,11 +311,12 @@ serve(async (req) => {
                 });
               }
 
-              // Reset password to default for existing user
-              const { error: pwErr } = await supabaseClient.auth.admin.updateUserById(existingUser.id, {
-                password: "parceiroalivia",
+              // Trigger password recovery email so partner sets their own password
+              const { error: pwErr } = await supabaseClient.auth.admin.generateLink({
+                type: "recovery",
+                email: normalizedEmail,
               });
-              log("Password reset for existing user", { error: pwErr?.message });
+              log("Recovery link generated for existing user", { error: pwErr?.message });
 
               // Create professional profile for existing auth user
               const namePart = existingUser.user_metadata?.full_name || normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
@@ -380,18 +382,19 @@ serve(async (req) => {
         });
       }
 
-      // If granting partner, also reset password to default
+      // If granting partner, send recovery email so they can (re)set their password securely
       if (is_partner) {
         const { data: proData } = await supabaseClient
           .from("professionals")
-          .select("user_id")
+          .select("user_id, email")
           .eq("id", targetId)
           .single();
-        if (proData?.user_id) {
-          const { error: pwErr } = await supabaseClient.auth.admin.updateUserById(proData.user_id, {
-            password: "parceiroalivia",
+        if (proData?.user_id && proData?.email) {
+          const { error: pwErr } = await supabaseClient.auth.admin.generateLink({
+            type: "recovery",
+            email: proData.email,
           });
-          log("Password reset on re-grant", { user_id: proData.user_id, error: pwErr?.message });
+          log("Recovery link sent on re-grant", { user_id: proData.user_id, error: pwErr?.message });
         }
       }
 
