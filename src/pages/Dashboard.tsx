@@ -240,8 +240,8 @@ const Dashboard = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} title={t("support.badge")} className="hidden md:inline-flex">
               <HelpCircle className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
-              <LogOut className="h-4 w-4" /><span className="hidden md:inline">{t("nav.logout")}</span>
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 hidden md:inline-flex">
+              <LogOut className="h-4 w-4" />{t("nav.logout")}
             </Button>
           </div>
         </div>
