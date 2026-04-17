@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Handshake, Plus, Loader2, Stethoscope, Building2, Star } from "lucide-react";
+import { Handshake, Plus, Loader2, Stethoscope, Building2, Star, KeyRound } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface PartnerDetail {
@@ -55,6 +55,10 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     pro_label: "PRO",
     clinic_label: "Clínica",
     premium_label: "Premium",
+    resend_pwd: "Reenviar e-mail de senha",
+    resend_sent: "E-mail de redefinição reenviado!",
+    resend_no_user: "Esse parceiro ainda não tem conta no Auth.",
+    resend_no_email: "Parceiro sem e-mail cadastrado.",
   } : {
     title: "Partners — Access Management",
     desc: "Manage PRO, Clinic and Premium access for partners",
@@ -70,6 +74,10 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     pro_label: "PRO",
     clinic_label: "Clinic",
     premium_label: "Premium",
+    resend_pwd: "Resend password email",
+    resend_sent: "Password reset email re-sent!",
+    resend_no_user: "This partner has no Auth account yet.",
+    resend_no_email: "Partner has no email on file.",
   };
 
   const loadPartners = useCallback(async () => {
@@ -188,6 +196,31 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     }
   };
 
+  const handleResendPassword = async (partner: PartnerDetail) => {
+    if (!partner.email) {
+      toast({ title: t.error, description: t.resend_no_email, variant: "destructive" });
+      return;
+    }
+    const key = `${partner.id}_resend`;
+    setTogglingMap(prev => ({ ...prev, [key]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-vip-users", {
+        body: { action: "send_password_reset", email: partner.email },
+      });
+      if (error) throw error;
+      if (data?.error === "user_not_found") {
+        toast({ title: t.error, description: t.resend_no_user, variant: "destructive" });
+        return;
+      }
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "✅", description: t.resend_sent });
+    } catch (err: any) {
+      toast({ title: t.error, description: err.message, variant: "destructive" });
+    } finally {
+      setTogglingMap(prev => ({ ...prev, [key]: false }));
+    }
+  };
+
   return (
     <div className="mt-8 space-y-4">
       <div className="flex items-center gap-2 mb-2">
@@ -233,7 +266,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
           ) : (
             <div className="space-y-3">
               {partners.map((p) => (
-                <PartnerCard key={p.id} partner={p} t={t} togglingMap={togglingMap} onToggle={handleToggle} />
+                <PartnerCard key={p.id} partner={p} t={t} togglingMap={togglingMap} onToggle={handleToggle} onResendPassword={handleResendPassword} />
               ))}
             </div>
           )}
@@ -273,9 +306,10 @@ interface PartnerCardProps {
   t: Record<string, string>;
   togglingMap: Record<string, boolean>;
   onToggle: (id: string, type: "pro" | "clinic" | "premium", enabled: boolean) => void;
+  onResendPassword: (partner: PartnerDetail) => void;
 }
 
-const PartnerCard = ({ partner, t, togglingMap, onToggle }: PartnerCardProps) => {
+const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword }: PartnerCardProps) => {
   const toggles: { type: "pro" | "clinic" | "premium"; label: string; icon: React.ReactNode; checked: boolean }[] = [
     { type: "pro", label: t.pro_label, icon: <Stethoscope className="h-3.5 w-3.5" />, checked: partner.is_partner },
     { type: "clinic", label: t.clinic_label, icon: <Building2 className="h-3.5 w-3.5" />, checked: partner.clinic_active },
@@ -294,7 +328,7 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle }: PartnerCardProps) =>
           </p>
         )}
       </div>
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         {toggles.map(({ type, label, icon, checked }) => {
           const key = `${partner.id}_${type}`;
           const isToggling = togglingMap[key];
@@ -310,6 +344,18 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle }: PartnerCardProps) =>
             </label>
           );
         })}
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto gap-1.5 h-8"
+          disabled={!partner.email || togglingMap[`${partner.id}_resend`]}
+          onClick={() => onResendPassword(partner)}
+        >
+          {togglingMap[`${partner.id}_resend`]
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <KeyRound className="h-3.5 w-3.5" />}
+          <span className="text-xs">{t.resend_pwd}</span>
+        </Button>
       </div>
     </div>
   );

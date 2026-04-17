@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Globe, HelpCircle, Info, LayoutDashboard, LogOut, Menu, ShieldCheck, Stethoscope, RefreshCw } from "lucide-react";
+import { Globe, HelpCircle, Info, LayoutDashboard, LogOut, Menu, ShieldCheck, Stethoscope, RefreshCw, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -83,6 +83,9 @@ const Header = () => {
             <>
               <Button variant="ghost" size="icon" onClick={() => go("/admin")} title="Admin">
                 <ShieldCheck className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => go("/conta")} title={language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}>
+                <UserCog className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="sm" onClick={() => go("/dashboard")}>
                 {t("nav.dashboard")}
@@ -184,6 +187,13 @@ const Header = () => {
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   {language === "pt" ? "Meu Painel" : language === "es" ? "Mi Panel" : "My Dashboard"}
+                </button>
+                <button
+                  onClick={() => go("/conta")}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+                >
+                  <UserCog className="h-4 w-4" />
+                  {language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}
                 </button>
                 <button
                   onClick={() => go("/admin")}
