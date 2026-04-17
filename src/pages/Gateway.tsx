@@ -53,10 +53,14 @@ const Gateway = () => {
       {/* Header minimal */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex items-center justify-between py-4">
-          <div className="flex items-center gap-2">
+          <button
+            onClick={() => user ? navigate("/dashboard") : window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="flex items-center gap-2"
+            aria-label={user ? "Ir para o painel" : "Aliv.iA"}
+          >
             <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
             <span className="text-lg font-bold text-foreground">Aliv.iA</span>
-          </div>
+          </button>
 
           {/* Desktop actions */}
           <div className="hidden sm:flex items-center gap-3">
