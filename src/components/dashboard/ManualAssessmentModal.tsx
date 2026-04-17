@@ -17,8 +17,29 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle } from "lucide-react";
-import { questionnaires, calculateQuestionnaireScore, type QuestionnaireResult } from "@/data/questionnaireData";
+import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { regionsByView } from "@/components/assessment/painMapData";
+import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
+
+// ─── Body region grouping: proximal → distal, alphabetical within each group ───
+type RegionGroup = { key: string; label_pt: string; label_en: string; ids: string[] };
+
+const REGION_GROUPS_DEF: { key: string; label_pt: string; label_en: string; match: (id: string) => boolean }[] = [
+  { key: "head_neck", label_pt: "Cabeça e Pescoço", label_en: "Head & Neck",
+    match: (id) => id.startsWith("head") || id.startsWith("cervical") },
+  { key: "trunk", label_pt: "Tronco (Tórax / Abdômen / Coluna)", label_en: "Trunk (Chest / Abdomen / Spine)",
+    match: (id) => ["chest", "abdomen", "thoracic", "lower_back"].includes(id) || id.startsWith("thoracic_") || id.startsWith("lumbar_") },
+  { key: "upper_proximal", label_pt: "Membro Superior — Proximal (Ombro / Braço)", label_en: "Upper Limb — Proximal (Shoulder / Arm)",
+    match: (id) => id.includes("shoulder") || (id.includes("arm") && !id.includes("forearm")) },
+  { key: "upper_distal", label_pt: "Membro Superior — Distal (Cotovelo / Antebraço / Mão)", label_en: "Upper Limb — Distal (Elbow / Forearm / Hand)",
+    match: (id) => id.includes("elbow") || id.includes("forearm") || id.includes("hand") },
+  { key: "pelvis_hip", label_pt: "Pelve e Quadril (incl. Glúteo)", label_en: "Pelvis & Hip (incl. Gluteal)",
+    match: (id) => id.includes("hip") || id.includes("gluteal") },
+  { key: "lower_proximal", label_pt: "Membro Inferior — Proximal (Coxa / Joelho)", label_en: "Lower Limb — Proximal (Thigh / Knee)",
+    match: (id) => id.includes("thigh") || id.includes("knee") },
+  { key: "lower_distal", label_pt: "Membro Inferior — Distal (Perna / Panturrilha / Tornozelo / Pé)", label_en: "Lower Limb — Distal (Leg / Calf / Ankle / Foot)",
+    match: (id) => id.includes("shin") || id.includes("calf") || id.includes("ankle") || id.includes("foot") },
+];
 
 interface ManualAssessmentModalProps {
   open: boolean;
