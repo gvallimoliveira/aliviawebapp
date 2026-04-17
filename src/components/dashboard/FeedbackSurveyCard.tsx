@@ -24,10 +24,10 @@ interface FeedbackSurveyCardProps {
 
 const FeedbackSurveyCard = ({ clinicId, lang }: FeedbackSurveyCardProps) => {
   const { toast } = useToast();
-  const [service, setService] = useState("");
+  const [service, setService] = useState("all");
   const [copied, setCopied] = useState(false);
 
-  const link = `${getPublicOrigin()}/feedback/clinic/${clinicId}${service ? `?service=${service}` : ""}`;
+  const link = `${getPublicOrigin()}/feedback/clinic/${clinicId}${service && service !== "all" ? `?service=${service}` : ""}`;
 
   const copy = () => {
     navigator.clipboard.writeText(link);
