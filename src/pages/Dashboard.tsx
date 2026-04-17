@@ -418,28 +418,22 @@ const Dashboard = () => {
               />
             </TabsContent>
           </Tabs>
-        ) : professional ? (
-          /* ── Personal Mode with Professional ── */
+        ) : activeContext === "professional" && professional ? (
+          /* ── Professional Autonomous Mode: 3 tabs (Profissional, Agenda, Mensagens) ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-4">
-              <TabsTrigger value="health" className="gap-1.5 text-xs"><Heart className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_my_health")}</span></TabsTrigger>
-              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
-                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
+                <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
               </TabsTrigger>
               <TabsTrigger value="agenda" className="gap-1.5 text-xs">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
-              <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
-                <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
+              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
+                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
-            <TabsContent value="messages" className="space-y-6">
-              <MessagesTab
-                professional={professional}
-                initialConversationId={convFromUrl}
-                canInitiateConversation={false}
-              />
+            <TabsContent value="professional" className="space-y-8">
+              <ProDashboard professional={professional} />
             </TabsContent>
             <TabsContent value="agenda" className="space-y-6">
               <DailySummaryCard
@@ -449,12 +443,16 @@ const Dashboard = () => {
               />
               <ProSchedule professionalId={professional.id} />
             </TabsContent>
-            <TabsContent value="professional" className="space-y-8">
-              <ProDashboard professional={professional} />
+            <TabsContent value="messages" className="space-y-6">
+              <MessagesTab
+                professional={professional}
+                initialConversationId={convFromUrl}
+                canInitiateConversation={false}
+              />
             </TabsContent>
           </Tabs>
         ) : (
-          /* ── Personal Mode without Professional ── */
+          /* ── Personal Mode: Saúde + Mensagens ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="w-full grid grid-cols-2">
               <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>
@@ -464,7 +462,11 @@ const Dashboard = () => {
             </TabsList>
             <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
             <TabsContent value="messages" className="space-y-6">
-              <MessagesTab initialConversationId={convFromUrl} />
+              <MessagesTab
+                professional={professional}
+                initialConversationId={convFromUrl}
+                canInitiateConversation={false}
+              />
             </TabsContent>
           </Tabs>
         )}
