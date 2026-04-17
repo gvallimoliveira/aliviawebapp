@@ -109,6 +109,13 @@ export type Database = {
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "assessments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       blog_posts: {
@@ -263,6 +270,13 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinic_feedback_surveys_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -440,6 +454,13 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -632,6 +653,13 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_programs_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -835,6 +863,13 @@ export type Database = {
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "patient_files_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       patient_photos: {
@@ -898,6 +933,13 @@ export type Database = {
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "patient_photos_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       patients: {
@@ -953,6 +995,13 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patients_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -1028,6 +1077,13 @@ export type Database = {
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "professional_appointments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       professional_hidden_patients: {
@@ -1094,6 +1150,13 @@ export type Database = {
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "professional_notes_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       professional_referrals: {
@@ -1134,6 +1197,13 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_referrals_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -1406,6 +1476,13 @@ export type Database = {
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "session_notes_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       support_tickets: {
@@ -1509,7 +1586,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      professionals_directory: {
+        Row: {
+          active: boolean | null
+          approved: boolean | null
+          bio: string | null
+          city: string | null
+          clinic_address: string | null
+          clinic_name: string | null
+          crefito: string | null
+          full_name: string | null
+          id: string | null
+          logo_url: string | null
+          profile_photo_url: string | null
+          social_media: string | null
+          specialties: string[] | null
+          state: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          approved?: boolean | null
+          bio?: string | null
+          city?: string | null
+          clinic_address?: string | null
+          clinic_name?: string | null
+          crefito?: string | null
+          full_name?: string | null
+          id?: string | null
+          logo_url?: string | null
+          profile_photo_url?: string | null
+          social_media?: string | null
+          specialties?: string[] | null
+          state?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          approved?: boolean | null
+          bio?: string | null
+          city?: string | null
+          clinic_address?: string | null
+          clinic_name?: string | null
+          crefito?: string | null
+          full_name?: string | null
+          id?: string | null
+          logo_url?: string | null
+          profile_photo_url?: string | null
+          social_media?: string | null
+          specialties?: string[] | null
+          state?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_manage_clinic: {
