@@ -72,13 +72,6 @@ const Header = () => {
 
         {/* Desktop actions */}
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2 sm:px-3">
-            <Globe className="h-4 w-4" />
-            <span>{language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}</span>
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => go("/suporte")} title={t("support.badge")}>
-            <HelpCircle className="h-4 w-4" />
-          </Button>
           {user ? (
             <>
               <Button variant="ghost" size="icon" onClick={() => go("/admin")} title="Admin">
