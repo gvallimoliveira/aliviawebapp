@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -6,8 +6,9 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  ready: boolean;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any; session?: Session | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: any; session?: Session | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
 }
@@ -17,50 +18,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const NETWORK_ERROR_PATTERN = /failed to fetch|networkerror|network request failed|load failed/i;
 
 const normalizeAuthError = (error: unknown) => {
-  if (error instanceof Error) {
-    return error;
-  }
-
+  if (error instanceof Error) return error;
   const message = typeof error === "string"
     ? error
     : "Não foi possível conectar para autenticar. Tente novamente.";
-
   return new Error(message);
 };
 
 const isNetworkError = (error: Error) => NETWORK_ERROR_PATTERN.test(error.message);
 
-const clearBrowserRuntimeState = async () => {
-  if (typeof window === "undefined") return;
-
-  try {
-    const registrations = (await navigator.serviceWorker?.getRegistrations?.()) ?? [];
-    await Promise.all(registrations.map((registration) => registration.unregister()));
-  } catch {
-    // ignore cleanup failures
-  }
-
-  try {
-    if ("caches" in window) {
-      const cacheKeys = await caches.keys();
-      await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
-    }
-  } catch {
-    // ignore cleanup failures
-  }
-};
-
-const withNetworkRecovery = async <T,>(operation: () => Promise<T>) => {
+const withNetworkRetry = async <T,>(operation: () => Promise<T>): Promise<T> => {
   try {
     return await operation();
   } catch (error) {
-    const normalizedError = normalizeAuthError(error);
-
-    if (!isNetworkError(normalizedError)) {
-      throw normalizedError;
-    }
-
-    await clearBrowserRuntimeState();
+    const normalized = normalizeAuthError(error);
+    if (!isNetworkError(normalized)) throw normalized;
+    // Single retry without destroying browser state (which broke sessions)
+    await new Promise((r) => setTimeout(r, 400));
     return operation();
   }
 };
@@ -69,18 +43,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
+  const initialized = useRef(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Set listener BEFORE getSession to avoid missing events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
       setLoading(false);
+      setReady(true);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      if (initialized.current) return;
+      initialized.current = true;
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
       setLoading(false);
+      setReady(true);
+    }).catch(() => {
+      setLoading(false);
+      setReady(true);
     });
 
     return () => subscription.unsubscribe();
@@ -88,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      const { error } = await withNetworkRecovery(() => supabase.auth.signUp({
+      const { data, error } = await withNetworkRetry(() => supabase.auth.signUp({
         email,
         password,
         options: {
@@ -96,32 +80,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           emailRedirectTo: window.location.origin,
         },
       }));
-
-      return { error };
+      return { error, session: data?.session ?? null };
     } catch (error) {
-      return { error: normalizeAuthError(error) };
+      return { error: normalizeAuthError(error), session: null };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await withNetworkRecovery(() => supabase.auth.signInWithPassword({ email, password }));
-      return { error };
+      const { data, error } = await withNetworkRetry(() =>
+        supabase.auth.signInWithPassword({ email, password })
+      );
+      if (!error && data?.session) {
+        // Hydrate context immediately so callers don't race onAuthStateChange
+        setSession(data.session);
+        setUser(data.session.user);
+        setReady(true);
+        setLoading(false);
+      }
+      return { error, session: data?.session ?? null };
     } catch (error) {
-      return { error: normalizeAuthError(error) };
+      return { error: normalizeAuthError(error), session: null };
     }
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
   };
 
   const resetPassword = async (email: string) => {
     try {
-      const { error } = await withNetworkRecovery(() => supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await withNetworkRetry(() => supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       }));
-
       return { error };
     } catch (error) {
       return { error: normalizeAuthError(error) };
@@ -129,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, resetPassword }}>
+    <AuthContext.Provider value={{ user, session, loading, ready, signUp, signIn, signOut, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

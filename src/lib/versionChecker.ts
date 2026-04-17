@@ -12,7 +12,7 @@ const BUILD_HASH: string = (import.meta as any).env.VITE_BUILD_HASH ?? "__dev__"
 const VERSION_URL = "/version.json";
 const POLL_INTERVAL = 20 * 1000; // 20 seconds
 const FORCE_RELOAD_KEY = "__alivia_force_reload";
-const BLOCKED_ROUTES = ["/assessment", "/payment"];
+const BLOCKED_ROUTES = ["/assessment", "/payment", "/auth", "/reset-password", "/dashboard", "/conta"];
 
 let polling = false;
 
