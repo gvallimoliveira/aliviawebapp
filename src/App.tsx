@@ -33,6 +33,7 @@ import CompleteProfile from "./pages/CompleteProfile";
 import Support from "./pages/Support";
 import UpgradeWelcome from "./pages/UpgradeWelcome";
 import ClinicLanding from "./pages/ClinicLanding";
+import ClinicSupport from "./pages/ClinicSupport";
 import AcceptInvite from "./pages/AcceptInvite";
 import ClinicAssessment from "./pages/ClinicAssessment";
 import ClinicDemo from "./pages/ClinicDemo";
@@ -82,6 +83,7 @@ const App = () => (
                 <Route path="/suporte" element={<Support />} />
                 <Route path="/upgrade-welcome" element={<UpgradeWelcome />} />
                 <Route path="/clinica" element={<ClinicLanding />} />
+                <Route path="/clinica/suporte" element={<ClinicSupport />} />
                 <Route path="/clinica/demo" element={<ClinicDemo />} />
                 <Route path="/assessment/clinic/:clinicId" element={<ClinicAssessment />} />
                 <Route path="/feedback/clinic/:clinicId" element={<ClinicFeedback />} />
