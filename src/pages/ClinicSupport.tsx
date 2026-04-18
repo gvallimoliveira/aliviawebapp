@@ -403,7 +403,7 @@ const ClinicSupport = () => {
             <p className="text-muted-foreground mb-4">
               IA, tratamentos, armazenamento, vídeochamada, pesquisa de satisfação e white-label estão inclusos no plano da clínica.
             </p>
-            <Button onClick={() => navigate("/clinica")} className="gap-2 rounded-xl">
+            <Button onClick={() => navigate("/clinica#pricing")} className="gap-2 rounded-xl">
               Ver planos e preços
             </Button>
           </CardContent>
