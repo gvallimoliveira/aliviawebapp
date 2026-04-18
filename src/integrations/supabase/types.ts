@@ -945,6 +945,7 @@ export type Database = {
       patients: {
         Row: {
           address: string | null
+          assessment_token: string | null
           birth_date: string | null
           clinic_id: string | null
           cpf: string | null
@@ -958,6 +959,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          assessment_token?: string | null
           birth_date?: string | null
           clinic_id?: string | null
           cpf?: string | null
@@ -971,6 +973,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          assessment_token?: string | null
           birth_date?: string | null
           clinic_id?: string | null
           cpf?: string | null
