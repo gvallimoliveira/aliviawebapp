@@ -97,13 +97,13 @@ const GlobalMobileMenu = () => {
 
   return (
     <>
-      {/* Floating button - mobile only */}
+      {/* Floating button - mobile only. z-40 keeps it below Radix Dialog/Sheet (z-50). */}
       <Button
         variant="default"
         size="icon"
         onClick={() => setOpen(true)}
         aria-label="Menu"
-        className="md:hidden fixed top-3 right-3 z-[60] h-10 w-10 rounded-full shadow-lg bg-background/95 backdrop-blur border border-border text-foreground hover:bg-muted"
+        className="md:hidden fixed top-3 right-3 z-40 h-10 w-10 rounded-full shadow-lg bg-background/95 backdrop-blur border border-border text-foreground hover:bg-muted"
       >
         <Menu className="h-5 w-5" />
       </Button>
