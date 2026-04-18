@@ -110,6 +110,23 @@ const ProfessionalAssessment = () => {
     checkProfessional();
   }, [professionalId, reassessmentId]);
 
+  // Load patient by token (personalized link)
+  useEffect(() => {
+    if (!patientToken) return;
+    const loadPatient = async () => {
+      const { data } = await (supabase.from("patients" as any) as any)
+        .select("id, full_name, email, professional_id")
+        .eq("assessment_token", patientToken)
+        .maybeSingle();
+      if (data && data.professional_id === professionalId) {
+        setLinkedPatient(data);
+        setPatientName(data.full_name || "");
+        if (data.email) setPatientEmail(data.email);
+      }
+    };
+    loadPatient();
+  }, [patientToken, professionalId]);
+
   const createAssessment = async () => {
     try {
       const { data, error } = await supabase
