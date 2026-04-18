@@ -1295,29 +1295,30 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {!readOnly && p.email && (
+                    {!readOnly && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                         title={language === "pt" ? "Nova avaliação manual" : "New manual assessment"}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setManualAssessmentTarget({ name: p.name, email: p.email });
+                          setManualAssessmentTarget({ name: p.name, email: p.email || "" });
                         }}
                       >
                         <FilePlus className="h-4 w-4 text-primary" />
                       </Button>
                     )}
-                    {!readOnly && !isHidden && p.email && (
+                    {!readOnly && !isHidden && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                         title={language === "pt" ? "Nota rápida" : "Quick note"}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setQuickNotePatient({ groupKey: (p as any).groupKey, email: p.email, name: p.name });
+                          const emailKey = p.email || `imported:${(p as any).groupKey || p.name}`;
+                          setQuickNotePatient({ groupKey: (p as any).groupKey, email: emailKey, name: p.name });
                           setQuickNoteContent("");
                         }}
                       >
