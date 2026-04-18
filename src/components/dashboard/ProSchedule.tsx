@@ -1131,15 +1131,13 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   );
 };
 
-/** Appointment card with drag + tooltip for concurrent */
+/** Appointment card with pointer-based drag (mouse + touch) */
 const AppointmentCard = ({
-  apt, isConcurrent, onEdit, onDragStart, onDragEnd, isMobile, isPt,
+  apt, isConcurrent, onPointerDownCard, isMobile, isPt,
 }: {
   apt: Appointment;
   isConcurrent: boolean;
-  onEdit: (apt: Appointment) => void;
-  onDragStart: (e: React.DragEvent, apt: Appointment) => void;
-  onDragEnd: (e: React.DragEvent) => void;
+  onPointerDownCard: (e: React.PointerEvent, apt: Appointment) => void;
   isMobile: boolean;
   isPt: boolean;
 }) => {
@@ -1151,20 +1149,18 @@ const AppointmentCard = ({
   const card = (
     <div
       className={cn(
-        "rounded-md border cursor-pointer transition-all hover:shadow-sm active:scale-[0.97]",
+        "rounded-md border cursor-grab active:cursor-grabbing transition-all hover:shadow-sm select-none",
         statusColor,
         serviceColor,
         apt.status === "cancelled" && "opacity-50",
         isConcurrent ? "p-0.5 flex-1 min-w-0" : "p-1"
       )}
-      draggable={!isMobile}
-      onDragStart={(e) => { e.stopPropagation(); onDragStart(e, apt); }}
-      onDragEnd={onDragEnd}
-      onClick={(e) => { e.stopPropagation(); onEdit(apt); }}
+      style={{ touchAction: "none" }}
+      onPointerDown={(e) => onPointerDownCard(e, apt)}
     >
       <div className="flex items-center gap-0.5">
         <span className="text-[9px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
-        {!isMobile && !isConcurrent && <GripVertical className="h-2 w-2 ml-auto text-muted-foreground/40" />}
+        {!isConcurrent && <GripVertical className="h-2 w-2 ml-auto text-muted-foreground/40" />}
       </div>
       {isConcurrent ? (
         <div className="flex items-center gap-0.5 mt-0.5">
