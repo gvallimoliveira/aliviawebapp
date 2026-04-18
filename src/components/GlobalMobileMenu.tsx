@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -53,6 +53,21 @@ const GlobalMobileMenu = () => {
   const { t, toggleLanguage, language } = useLanguage();
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Hide floating menu while a Radix Dialog/Sheet is open (it locks body scroll)
+  useEffect(() => {
+    const check = () => {
+      const locked =
+        document.body.hasAttribute("data-scroll-locked") ||
+        !!document.querySelector('[role="dialog"][data-state="open"]');
+      setDialogOpen(locked);
+    };
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.body, { attributes: true, attributeFilter: ["data-scroll-locked", "style"], childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, []);
 
   // Hide on critical/auth flows
   const path = location.pathname;
@@ -67,7 +82,7 @@ const GlobalMobileMenu = () => {
     return path === p || path.startsWith(p + "/");
   });
 
-  if (inCriticalFlow || pageHasHeader) return null;
+  if (inCriticalFlow || pageHasHeader || dialogOpen) return null;
 
   const go = (target: string) => {
     setOpen(false);
