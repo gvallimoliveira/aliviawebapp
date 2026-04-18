@@ -5,7 +5,7 @@ import {
   Building2, HelpCircle, Camera, Link2, Smile, Palette, Users, Calendar,
   ClipboardList, AlertTriangle, FileText, Image as ImageIcon, Brain,
   MessageCircle, Video, Bell, BookOpen, TrendingUp, Shield, CreditCard,
-  UserCog, Stethoscope, FileCheck, Sparkles, Heart,
+  UserCog, Stethoscope, FileCheck, Sparkles, Heart, Layers,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
