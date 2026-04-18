@@ -38,6 +38,7 @@ const ProfessionalAssessment = () => {
   const [patientEmail, setPatientEmail] = useState("");
   const [redFlagData, setRedFlagData] = useState<Record<string, boolean> | null>(null);
   const [originalAssessment, setOriginalAssessment] = useState<any>(null);
+  const [linkedPatient, setLinkedPatient] = useState<any>(null);
   const [prefilledRegions, setPrefilledRegions] = useState<string[] | undefined>(undefined);
   const [prefilledComplaints, setPrefilledComplaints] = useState<string[] | undefined>(undefined);
   const [prefilledOnset, setPrefilledOnset] = useState<string | undefined>(undefined);
