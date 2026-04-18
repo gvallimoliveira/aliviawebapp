@@ -584,63 +584,150 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     }
   };
 
-  // --- Drag & Drop ---
-  const handleDragStart = (e: React.DragEvent, apt: Appointment) => {
-    setDraggedApt(apt);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", apt.id);
-    if (e.currentTarget instanceof HTMLElement) {
-      e.currentTarget.style.opacity = "0.4";
-    }
-  };
+  // --- Drag & Drop (Pointer Events: works on mouse + touch) ---
+  // We avoid HTML5 native DnD because it doesn't work on touch devices.
+  const persistMove = async (apt: Appointment, dateStr: string, slotHour: string) => {
+    const newTime = slotHour.slice(0, 2) + ":" + (apt.appointment_time?.slice(3, 5) || "00");
+    const sameDate = apt.appointment_date === dateStr;
+    const sameTime = apt.appointment_time?.slice(0, 2) === slotHour.slice(0, 2);
+    if (sameDate && sameTime) return;
 
-  const handleDragEnd = (e: React.DragEvent) => {
-    if (e.currentTarget instanceof HTMLElement) {
-      e.currentTarget.style.opacity = "1";
-    }
-    setDraggedApt(null);
-    setDropTarget(null);
-  };
-
-  const handleCellDragOver = (e: React.DragEvent, dateStr: string, slotHour: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setDropTarget({ date: dateStr, hour: slotHour });
-  };
-
-  const handleCellDragLeave = () => {
-    setDropTarget(null);
-  };
-
-  const handleCellDrop = async (e: React.DragEvent, dateStr: string, slotHour: string) => {
-    e.preventDefault();
-    setDropTarget(null);
-    if (!draggedApt) return;
-
-    const newTime = slotHour.slice(0, 2) + ":" + (draggedApt.appointment_time?.slice(3, 5) || "00");
-    const sameDate = draggedApt.appointment_date === dateStr;
-    const sameTime = draggedApt.appointment_time?.slice(0, 2) === slotHour.slice(0, 2);
-    if (sameDate && sameTime) { setDraggedApt(null); return; }
-
-    // Optimistic update
     setAppointments((prev) =>
-      prev.map((a) => (a.id === draggedApt.id ? { ...a, appointment_date: dateStr, appointment_time: newTime } : a))
+      prev.map((a) => (a.id === apt.id ? { ...a, appointment_date: dateStr, appointment_time: newTime } : a))
     );
     if (isSimulated) {
       toast({ title: isPt ? "Agendamento movido" : "Appointment moved" });
-      setDraggedApt(null);
       return;
     }
     try {
       await (supabase.from("professional_appointments" as any) as any)
         .update({ appointment_date: dateStr, appointment_time: newTime })
-        .eq("id", draggedApt.id);
+        .eq("id", apt.id);
       toast({ title: isPt ? "Agendamento movido" : "Appointment moved" });
     } catch {
       fetchAppointments();
       toast({ title: t("schedule.error"), variant: "destructive" });
     }
-    setDraggedApt(null);
+  };
+
+  const handleCardPointerDown = (e: React.PointerEvent, apt: Appointment) => {
+    // Only left mouse button or touch/pen
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    e.stopPropagation();
+
+    const cardEl = e.currentTarget as HTMLElement;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const THRESHOLD = 6; // px before considered a drag (else click)
+    let dragging = false;
+    let ghost: HTMLElement | null = null;
+    let didMove = false;
+    let lastDropDate: string | null = null;
+    let lastDropHour: string | null = null;
+    let scrollRaf = 0;
+
+    const beginDrag = () => {
+      dragging = true;
+      cardEl.style.opacity = "0.35";
+      // Floating ghost preview
+      ghost = cardEl.cloneNode(true) as HTMLElement;
+      ghost.style.position = "fixed";
+      ghost.style.pointerEvents = "none";
+      ghost.style.zIndex = "9999";
+      ghost.style.opacity = "0.9";
+      ghost.style.width = `${cardEl.offsetWidth}px`;
+      ghost.style.left = `${startX - cardEl.offsetWidth / 2}px`;
+      ghost.style.top = `${startY - 12}px`;
+      ghost.style.transform = "rotate(-1.5deg)";
+      ghost.style.boxShadow = "0 8px 24px rgba(0,0,0,0.18)";
+      document.body.appendChild(ghost);
+      // Prevent text selection while dragging
+      document.body.style.userSelect = "none";
+    };
+
+    const findCellAt = (x: number, y: number): { date: string; hour: string } | null => {
+      // Hide ghost momentarily so elementFromPoint reads the cell beneath
+      const prevDisplay = ghost?.style.display;
+      if (ghost) ghost.style.display = "none";
+      const el = document.elementFromPoint(x, y) as HTMLElement | null;
+      if (ghost && prevDisplay !== undefined) ghost.style.display = prevDisplay;
+      if (!el) return null;
+      const cell = el.closest("[data-cell-date][data-cell-hour]") as HTMLElement | null;
+      if (!cell) return null;
+      return { date: cell.dataset.cellDate!, hour: cell.dataset.cellHour! };
+    };
+
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      if (!dragging) {
+        if (Math.hypot(dx, dy) < THRESHOLD) return;
+        beginDrag();
+      }
+      didMove = true;
+      ev.preventDefault();
+      if (ghost) {
+        ghost.style.left = `${ev.clientX - cardEl.offsetWidth / 2}px`;
+        ghost.style.top = `${ev.clientY - 12}px`;
+      }
+      const target = findCellAt(ev.clientX, ev.clientY);
+      if (target) {
+        lastDropDate = target.date;
+        lastDropHour = target.hour;
+        setDropTarget({ date: target.date, hour: target.hour });
+      } else {
+        lastDropDate = null;
+        lastDropHour = null;
+        setDropTarget(null);
+      }
+      // Auto-scroll near viewport edges (helps on mobile)
+      cancelAnimationFrame(scrollRaf);
+      const margin = 60;
+      const vh = window.innerHeight;
+      let dyScroll = 0;
+      if (ev.clientY < margin) dyScroll = -10;
+      else if (ev.clientY > vh - margin) dyScroll = 10;
+      if (dyScroll !== 0) {
+        scrollRaf = requestAnimationFrame(() => window.scrollBy(0, dyScroll));
+      }
+    };
+
+    const cleanup = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      cardEl.style.opacity = "1";
+      document.body.style.userSelect = "";
+      if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+      ghost = null;
+      cancelAnimationFrame(scrollRaf);
+      setDropTarget(null);
+    };
+
+    const onUp = (ev: PointerEvent) => {
+      if (dragging && didMove && lastDropDate && lastDropHour) {
+        persistMove(apt, lastDropDate, lastDropHour);
+        cleanup();
+        // Suppress the synthetic click that would re-open the modal
+        const blockClick = (cev: MouseEvent) => {
+          cev.stopPropagation();
+          cev.preventDefault();
+          window.removeEventListener("click", blockClick, true);
+        };
+        window.addEventListener("click", blockClick, true);
+        setTimeout(() => window.removeEventListener("click", blockClick, true), 50);
+      } else if (!dragging) {
+        // Treat as click → open editor
+        cleanup();
+        openEdit(apt);
+      } else {
+        cleanup();
+      }
+    };
+
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   };
 
   return (
@@ -772,6 +859,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   return (
                     <div
                       key={`${dateStr}-${slot}`}
+                      data-cell-date={dateStr}
+                      data-cell-hour={slot}
                       className={cn(
                         "border-l border-border/20 min-h-[40px] p-0.5 transition-colors cursor-pointer hover:bg-muted/30",
                         isOver && "bg-primary/10 ring-1 ring-primary/40"
@@ -779,9 +868,6 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                       onClick={() => {
                         if (cellApts.length === 0) openNew(day, slot);
                       }}
-                      onDragOver={(e) => handleCellDragOver(e, dateStr, slot)}
-                      onDragLeave={handleCellDragLeave}
-                      onDrop={(e) => handleCellDrop(e, dateStr, slot)}
                     >
                       {cellApts.length > 0 && (
                         <div className={cn("flex gap-0.5", cellApts.length > 1 ? "flex-row" : "")}>
@@ -790,9 +876,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                               key={apt.id}
                               apt={apt}
                               isConcurrent={cellApts.length > 1}
-                              onEdit={openEdit}
-                              onDragStart={handleDragStart}
-                              onDragEnd={handleDragEnd}
+                              onPointerDownCard={handleCardPointerDown}
                               isMobile={isMobile}
                               isPt={isPt}
                             />
@@ -1047,15 +1131,13 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   );
 };
 
-/** Appointment card with drag + tooltip for concurrent */
+/** Appointment card with pointer-based drag (mouse + touch) */
 const AppointmentCard = ({
-  apt, isConcurrent, onEdit, onDragStart, onDragEnd, isMobile, isPt,
+  apt, isConcurrent, onPointerDownCard, isMobile, isPt,
 }: {
   apt: Appointment;
   isConcurrent: boolean;
-  onEdit: (apt: Appointment) => void;
-  onDragStart: (e: React.DragEvent, apt: Appointment) => void;
-  onDragEnd: (e: React.DragEvent) => void;
+  onPointerDownCard: (e: React.PointerEvent, apt: Appointment) => void;
   isMobile: boolean;
   isPt: boolean;
 }) => {
@@ -1067,20 +1149,18 @@ const AppointmentCard = ({
   const card = (
     <div
       className={cn(
-        "rounded-md border cursor-pointer transition-all hover:shadow-sm active:scale-[0.97]",
+        "rounded-md border cursor-grab active:cursor-grabbing transition-all hover:shadow-sm select-none",
         statusColor,
         serviceColor,
         apt.status === "cancelled" && "opacity-50",
         isConcurrent ? "p-0.5 flex-1 min-w-0" : "p-1"
       )}
-      draggable={!isMobile}
-      onDragStart={(e) => { e.stopPropagation(); onDragStart(e, apt); }}
-      onDragEnd={onDragEnd}
-      onClick={(e) => { e.stopPropagation(); onEdit(apt); }}
+      style={{ touchAction: "none" }}
+      onPointerDown={(e) => onPointerDownCard(e, apt)}
     >
       <div className="flex items-center gap-0.5">
         <span className="text-[9px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
-        {!isMobile && !isConcurrent && <GripVertical className="h-2 w-2 ml-auto text-muted-foreground/40" />}
+        {!isConcurrent && <GripVertical className="h-2 w-2 ml-auto text-muted-foreground/40" />}
       </div>
       {isConcurrent ? (
         <div className="flex items-center gap-0.5 mt-0.5">
