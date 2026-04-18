@@ -27,6 +27,7 @@ const ProfessionalAssessment = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const reassessmentId = searchParams.get("reassessment");
+  const patientToken = searchParams.get("patient");
 
   const [step, setStep] = useState<ProfStep>("loading_check");
   const [professional, setProfessional] = useState<any>(null);
