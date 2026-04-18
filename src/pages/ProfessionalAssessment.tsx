@@ -27,6 +27,7 @@ const ProfessionalAssessment = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const reassessmentId = searchParams.get("reassessment");
+  const patientToken = searchParams.get("patient");
 
   const [step, setStep] = useState<ProfStep>("loading_check");
   const [professional, setProfessional] = useState<any>(null);
@@ -37,6 +38,7 @@ const ProfessionalAssessment = () => {
   const [patientEmail, setPatientEmail] = useState("");
   const [redFlagData, setRedFlagData] = useState<Record<string, boolean> | null>(null);
   const [originalAssessment, setOriginalAssessment] = useState<any>(null);
+  const [linkedPatient, setLinkedPatient] = useState<any>(null);
   const [prefilledRegions, setPrefilledRegions] = useState<string[] | undefined>(undefined);
   const [prefilledComplaints, setPrefilledComplaints] = useState<string[] | undefined>(undefined);
   const [prefilledOnset, setPrefilledOnset] = useState<string | undefined>(undefined);
@@ -107,6 +109,23 @@ const ProfessionalAssessment = () => {
     };
     checkProfessional();
   }, [professionalId, reassessmentId]);
+
+  // Load patient by token (personalized link)
+  useEffect(() => {
+    if (!patientToken) return;
+    const loadPatient = async () => {
+      const { data } = await (supabase.from("patients" as any) as any)
+        .select("id, full_name, email, professional_id")
+        .eq("assessment_token", patientToken)
+        .maybeSingle();
+      if (data && data.professional_id === professionalId) {
+        setLinkedPatient(data);
+        setPatientName(data.full_name || "");
+        if (data.email) setPatientEmail(data.email);
+      }
+    };
+    loadPatient();
+  }, [patientToken, professionalId]);
 
   const createAssessment = async () => {
     try {
@@ -329,6 +348,13 @@ const ProfessionalAssessment = () => {
                   Reavaliação — dados pré-preenchidos da avaliação anterior
                 </p>
               )}
+              {linkedPatient && (
+                <p className="text-xs text-primary font-medium">
+                  {language === "pt"
+                    ? "Link personalizado — esta avaliação será vinculada ao seu cadastro existente"
+                    : "Personalized link — this assessment will be linked to your existing record"}
+                </p>
+              )}
             </div>
 
             <Card className="rounded-xl">
@@ -341,7 +367,8 @@ const ProfessionalAssessment = () => {
                     onChange={(e) => setPatientName(e.target.value.slice(0, 100))}
                     placeholder={t("patient_info.name_placeholder")}
                     maxLength={100}
-                    autoFocus
+                    autoFocus={!linkedPatient}
+                    disabled={!!linkedPatient}
                   />
                 </div>
 

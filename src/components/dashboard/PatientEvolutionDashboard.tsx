@@ -27,7 +27,7 @@ import {
   ArrowLeft, Activity, Calendar, Mail, User, ChevronRight, Plus, Phone,
   FileText, ClipboardList, Stethoscope, Search, NotebookPen, Download, Loader2, Share2,
   Sparkles, FileCheck, Lock, Archive, ArchiveRestore, Eye, EyeOff, Brain, RefreshCw, Dumbbell, RotateCcw, TrendingUp,
-  Copy, ExternalLink, Trash2, Pencil, MessageCircle, FilePlus,
+  Copy, ExternalLink, Trash2, Pencil, MessageCircle, FilePlus, Link2,
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
@@ -1307,6 +1307,43 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         }}
                       >
                         <FilePlus className="h-4 w-4 text-primary" />
+                      </Button>
+                    )}
+                    {!readOnly && patientRec && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                        title={language === "pt" ? "Copiar link de avaliação personalizado" : "Copy personalized assessment link"}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            let token = patientRec.assessment_token;
+                            if (!token) {
+                              token = (crypto as any).randomUUID ? (crypto as any).randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                              const { error } = await (supabase.from("patients" as any) as any)
+                                .update({ assessment_token: token })
+                                .eq("id", patientRec.id);
+                              if (error) throw error;
+                              patientRec.assessment_token = token;
+                            }
+                            const base = clinicId
+                              ? `${window.location.origin}/assessment/clinic/${clinicId}`
+                              : `${window.location.origin}/assessment/professional/${professionalId}`;
+                            const link = `${base}?patient=${token}`;
+                            await navigator.clipboard.writeText(link);
+                            toast({
+                              title: language === "pt" ? "Link copiado!" : "Link copied!",
+                              description: language === "pt"
+                                ? "Envie ao paciente. A avaliação será vinculada automaticamente a este card."
+                                : "Send to the patient. The assessment will be auto-linked to this card.",
+                            });
+                          } catch (err: any) {
+                            toast({ title: "Erro", description: err.message, variant: "destructive" });
+                          }
+                        }}
+                      >
+                        <Link2 className="h-4 w-4 text-primary" />
                       </Button>
                     )}
                     {!readOnly && !isHidden && (
