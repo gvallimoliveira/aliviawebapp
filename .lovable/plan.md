@@ -1,72 +1,62 @@
 
-Objetivo: corrigir de forma estrutural o login no desktop, hoje quebrado por “NetworkError when attempting to fetch resource”, sem comprometer os links institucionais nem o restante do dashboard.
+## Resposta direta
 
-Diagnóstico mais provável
-- O problema não parece ser credencial nem backend de autenticação, porque no mobile funciona.
-- O ponto mais suspeito é a camada de PWA/cache/update adicionada hoje:
-  - `vite.config.ts` registra um Service Worker global via `vite-plugin-pwa`.
-  - `src/main.tsx` faz registro/atualização agressiva do SW.
-  - `src/lib/versionChecker.ts` também força limpeza de cache, unregister e reload.
-  - `src/components/PwaUpdateGuard.tsx` tenta ativar atualização e recarregar a app.
-  - `src/pages/ClearCache.tsx` limpa caches, mas preserva `localStorage`, então um estado de auth corrompido pode sobreviver.
-- Hoje existem duas responsabilidades misturadas: PWA/offline e push notifications. Isso aumenta muito o risco de o SW interferir no fluxo de auth, especialmente no desktop.
+**Sim, hoje viraria um paciente novo.** O agrupamento usa `patient_email` como chave principal (e nome como fallback). Se o paciente importado não tem email e o link genérico (`/assessment/professional/{professionalId}`) é enviado, o paciente preenche email/nome no formulário e a avaliação cai num grupo separado, sem vínculo com o card existente.
 
-Plano de correção
-1. Remover a interferência do PWA no login
-- Desabilitar o Service Worker global da aplicação para navegação/cache da app.
-- Manter apenas o manifesto de installability, se desejado, sem cache offline global.
-- Remover o bootstrap de SW global em `src/main.tsx`.
-- Remover a lógica de atualização forçada em `src/lib/versionChecker.ts`.
-- Remover `PwaUpdateGuard` do fluxo principal em `src/App.tsx`.
-- Limpar estados visuais de “update pending” em `Header` e `GlobalMobileMenu`.
+## Solução proposta: link de avaliação personalizado por paciente
 
-2. Preservar push notifications sem quebrar auth
-- Migrar push para um Service Worker dedicado e mínimo, registrado só quando o usuário realmente ativa notificações.
-- Ajustar `src/hooks/usePushNotifications.ts` para registrar esse worker sob demanda, em vez de depender do SW global da app.
-- Assim, notificações continuam possíveis, mas sem interceptar login/navegação.
+Sua ideia é a melhor — não precisa de IA. Basta gerar um link com um **token vinculado ao registro do paciente**. Quando o paciente preenche, a avaliação é automaticamente atribuída ao card existente.
 
-3. Endurecer o fluxo de autenticação
-- Ajustar `AuthContext` para tratar erro de rede com recuperação mais segura:
-  - limpar apenas chaves locais de sessão/auth quando houver falha persistente de fetch;
-  - refazer `getSession()` após falha;
-  - evitar que estado antigo de sessão fique “preso”.
-- Manter o retry simples, mas com fallback específico para auth storage corrompido, não com limpeza ampla de navegador.
+### Como vai funcionar (UX)
 
-4. Corrigir a página utilitária de limpeza
-- Em `ClearCache.tsx`, passar a limpar também apenas as chaves locais de autenticação do app, não o `localStorage` inteiro.
-- Isso vira um fallback real para auth quebrado, sem destruir outras preferências do usuário.
+1. No card do paciente importado (sem email), adicionar botão **"Gerar link de avaliação personalizado"** (ao lado dos ícones de avaliação manual / nota rápida).
+2. Clicou → gera link único `…/assessment/professional/{professionalId}?patient={token}` e copia para a área de transferência.
+3. Profissional envia por WhatsApp/SMS.
+4. Paciente abre o link → o nome dele já aparece pré-preenchido (e bloqueado), pode adicionar email opcionalmente.
+5. Ao concluir, a avaliação é gravada com o `patient_id` correto → aparece **dentro do card existente**, não cria duplicata.
 
-5. Validar o comportamento em todos os cenários críticos
-- Preview no editor.
-- Domínio publicado.
-- Desktop normal.
-- Desktop anônimo.
-- Login por e-mail/senha.
-- Login por Google.
-- Logout e novo login.
-- Reset de senha.
+### Diagrama do fluxo
 
-Arquivos que precisam ser alterados
-- `vite.config.ts`
-- `src/main.tsx`
-- `src/lib/versionChecker.ts`
-- `src/components/PwaUpdateGuard.tsx`
-- `src/App.tsx`
-- `src/components/Header.tsx`
-- `src/components/GlobalMobileMenu.tsx`
-- `src/hooks/usePushNotifications.ts`
-- `src/contexts/AuthContext.tsx`
-- `src/pages/ClearCache.tsx`
+```text
+Card paciente importado
+  └─ [Gerar link personalizado] → token único salvo em DB
+                                    ↓
+                         Profissional envia link
+                                    ↓
+                    Paciente abre /assessment/professional/{proId}?patient=TOKEN
+                                    ↓
+                    Form pré-preenche nome do patient record
+                                    ↓
+                    Submit grava assessment com patient_email do registro
+                    (ou novo campo patient_id) → agrupa no card certo
+```
 
-Resultado esperado
-- O login para de depender de uma camada de cache/SW agressiva.
-- Desktop e mobile passam a usar o mesmo caminho de autenticação estável.
-- Push notifications continuam possíveis, mas desacopladas da navegação/autenticação.
-- O preview deixa de sofrer com efeitos colaterais de PWA.
+### Mudanças técnicas
 
-Detalhe técnico importante
-- Eu não seguiria tentando “mais um ajuste” no SW atual.
-- A estratégia certa aqui é simplificar: tirar o SW global da frente do auth e deixar notificações em um worker isolado.
-- Isso é coerente com o que o próprio projeto já indica: a camada de PWA/cache foi a principal mudança de risco recente.
+1. **Migration**: adicionar coluna `assessment_token text unique` na tabela `patients` (gerado via `gen_random_uuid()::text` quando solicitado). Sem regenerar automaticamente — só sob demanda.
+2. **`PatientEvolutionDashboard.tsx`**:
+   - Novo botão "link" (ícone Link2) nos cards, sempre visível em mobile, hover em desktop (mesmo padrão dos outros ícones).
+   - Handler: se `patientRecord.assessment_token` não existe, gera e faz `update`. Depois copia `…/assessment/professional/{professionalId}?patient={token}`.
+3. **`ProfessionalAssessment.tsx`**:
+   - Ler `searchParams.get("patient")`.
+   - Se presente: buscar `patients` com aquele token (RLS permite SELECT público pois o token é o segredo — política nova: `SELECT` quando `assessment_token = $1`).
+   - Pré-preencher `patientName` e `patientEmail` (campos somente leitura para o nome).
+   - No `createAssessment`, gravar `patient_email` do registro existente (ou um campo adicional `patient_id` se quiser vínculo forte — começamos com email/nome para compatibilidade com o agrupamento atual).
+4. **Agrupamento**: já funciona — usa email se existir, nome como fallback. Como o nome vem pré-preenchido idêntico ao registro, o agrupamento por nome funciona automaticamente.
 
-Quando você aprovar, eu implemento essa limpeza estrutural e deixo o login estável no desktop primeiro; depois valido se as notificações continuam operando pelo worker dedicado.
+### Por que essa solução e não a "IA gerar link"
+
+- **Mais simples**: token UUID é instantâneo, gratuito, infalível. IA aqui não agrega valor (não há texto para gerar).
+- **Mais seguro**: token aleatório de 36 caracteres é impossível de adivinhar.
+- **Reaproveita infra existente**: já usamos o mesmo padrão em `exercise_programs.token`.
+
+### Bônus opcional (posso incluir agora ou depois)
+
+- Botão "Compartilhar via WhatsApp" que abre `wa.me/{phone}?text=…` se o paciente tem telefone cadastrado.
+- Validade de 30 dias para o token (regenera se expirado).
+
+### Arquivos afetados
+
+- `supabase/migrations/<novo>.sql` (adicionar coluna + policy SELECT por token)
+- `src/components/dashboard/PatientEvolutionDashboard.tsx`
+- `src/pages/ProfessionalAssessment.tsx`
