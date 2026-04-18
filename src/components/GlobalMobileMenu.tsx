@@ -97,13 +97,14 @@ const GlobalMobileMenu = () => {
 
   return (
     <>
-      {/* Floating button - mobile only */}
+      {/* Floating button - mobile only. Hidden via CSS when body is scroll-locked (Radix Dialog/Sheet open). */}
       <Button
         variant="default"
         size="icon"
         onClick={() => setOpen(true)}
         aria-label="Menu"
-        className="md:hidden fixed top-3 right-3 z-[60] h-10 w-10 rounded-full shadow-lg bg-background/95 backdrop-blur border border-border text-foreground hover:bg-muted"
+        data-floating-menu
+        className="md:hidden fixed top-3 right-3 z-[60] h-10 w-10 rounded-full shadow-lg bg-background/95 backdrop-blur border border-border text-foreground hover:bg-muted [body[data-scroll-locked]_&]:hidden [body:has([data-state=open][role=dialog])_&]:hidden"
       >
         <Menu className="h-5 w-5" />
       </Button>
