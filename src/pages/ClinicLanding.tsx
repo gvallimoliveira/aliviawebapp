@@ -53,6 +53,16 @@ const ClinicLanding = () => {
     if (user?.email) setTrialEmail(user.email);
   }, [user]);
 
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.slice(1);
+      // Wait for sections to render
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, []);
+
   const handleStartTrial = async (tier: "small" | "medium" | "large") => {
     if (!trialEmail.trim()) { toast.error("Informe seu e-mail"); return; }
     if (!trialPhone.trim()) { toast.error("Informe seu WhatsApp"); return; }
