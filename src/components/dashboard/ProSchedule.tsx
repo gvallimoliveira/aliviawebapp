@@ -859,6 +859,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   return (
                     <div
                       key={`${dateStr}-${slot}`}
+                      data-cell-date={dateStr}
+                      data-cell-hour={slot}
                       className={cn(
                         "border-l border-border/20 min-h-[40px] p-0.5 transition-colors cursor-pointer hover:bg-muted/30",
                         isOver && "bg-primary/10 ring-1 ring-primary/40"
@@ -866,9 +868,6 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                       onClick={() => {
                         if (cellApts.length === 0) openNew(day, slot);
                       }}
-                      onDragOver={(e) => handleCellDragOver(e, dateStr, slot)}
-                      onDragLeave={handleCellDragLeave}
-                      onDrop={(e) => handleCellDrop(e, dateStr, slot)}
                     >
                       {cellApts.length > 0 && (
                         <div className={cn("flex gap-0.5", cellApts.length > 1 ? "flex-row" : "")}>
@@ -877,9 +876,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                               key={apt.id}
                               apt={apt}
                               isConcurrent={cellApts.length > 1}
-                              onEdit={openEdit}
-                              onDragStart={handleDragStart}
-                              onDragEnd={handleDragEnd}
+                              onPointerDownCard={handleCardPointerDown}
                               isMobile={isMobile}
                               isPt={isPt}
                             />
