@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SupportContactForm from "@/components/support/SupportContactForm";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay } from "lucide-react";
+import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2 } from "lucide-react";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -187,7 +187,7 @@ const Support = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="grid gap-6 md:grid-cols-2 max-w-3xl mx-auto"
+              className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto"
             >
               <Card
                 className="cursor-pointer border-2 border-transparent hover:border-primary/40 transition-all hover:shadow-lg group"
@@ -212,6 +212,19 @@ const Support = () => {
                   </div>
                   <h2 className="text-xl font-semibold text-foreground">{t("support.pro.card_title")}</h2>
                   <p className="text-sm text-muted-foreground">{t("support.pro.card_desc")}</p>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="cursor-pointer border-2 border-transparent hover:border-primary/40 transition-all hover:shadow-lg group"
+                onClick={() => navigate("/clinica/suporte")}
+              >
+                <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                  <div className="rounded-2xl bg-primary/10 p-4 group-hover:bg-primary/20 transition-colors">
+                    <Building2 className="h-8 w-8 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-foreground">Aliv.iA Clinic</h2>
+                  <p className="text-sm text-muted-foreground">Suporte para clínicas: agenda IA, equipe, NPS, white-label e mais.</p>
                 </CardContent>
               </Card>
             </motion.div>
