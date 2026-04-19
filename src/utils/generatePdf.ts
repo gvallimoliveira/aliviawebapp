@@ -1209,9 +1209,6 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     doc.setFontSize(11);
     doc.setTextColor(...COLORS.primary);
     doc.text(ciTitle, MARGIN, y);
-    // IA badge
-    const titleW = doc.getTextWidth(ciTitle);
-    drawBadge(doc, "IA", MARGIN + titleW + 4, y - 3, COLORS.primary, COLORS.white);
     y += 6;
 
     // Overview in rounded box — RIGID (italic 9; lineHeight 4.5; safety for italic descenders)
