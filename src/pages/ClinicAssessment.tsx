@@ -27,6 +27,7 @@ const ClinicAssessment = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const reassessmentId = searchParams.get("reassessment");
+  const patientToken = searchParams.get("patient");
 
   const [step, setStep] = useState<ClinicStep>("loading_check");
   const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null; brand_color: string | null } | null>(null);
@@ -37,6 +38,7 @@ const ClinicAssessment = () => {
   const [patientEmail, setPatientEmail] = useState("");
   const [redFlagData, setRedFlagData] = useState<Record<string, boolean> | null>(null);
   const [originalAssessment, setOriginalAssessment] = useState<any>(null);
+  const [linkedPatient, setLinkedPatient] = useState<any>(null);
   const [prefilledRegions, setPrefilledRegions] = useState<string[] | undefined>(undefined);
   const [prefilledComplaints, setPrefilledComplaints] = useState<string[] | undefined>(undefined);
   const [prefilledOnset, setPrefilledOnset] = useState<string | undefined>(undefined);
@@ -49,17 +51,22 @@ const ClinicAssessment = () => {
   useEffect(() => {
     if (!clinicId) return;
     const checkClinic = async () => {
-      const { data, error } = await supabase
-        .from("clinics")
-        .select("id, name, logo_url, subscription_status, brand_color")
-        .eq("id", clinicId)
-        .maybeSingle();
+      const { data, error } = await (supabase.rpc("get_public_clinic_assessment_link" as any, {
+        _clinic_id: clinicId,
+      }) as any);
 
-      if (error || !data || (data.subscription_status !== "active" && data.subscription_status !== "trialing")) {
+      const clinicData = Array.isArray(data) ? data[0] : data;
+
+      if (error || !clinicData || !clinicData.has_access) {
         setStep("inactive");
         return;
       }
-      setClinic(data);
+      setClinic({
+        id: clinicData.id,
+        name: clinicData.name,
+        logo_url: clinicData.logo_url,
+        brand_color: clinicData.brand_color,
+      });
 
       // If reassessment, load original assessment data
       if (reassessmentId) {
@@ -103,6 +110,24 @@ const ClinicAssessment = () => {
     };
     checkClinic();
   }, [clinicId, reassessmentId]);
+
+  // Load patient by token (personalized link)
+  useEffect(() => {
+    if (!patientToken || !clinicId) return;
+    const loadPatient = async () => {
+      const { data } = await (supabase.rpc("get_patient_assessment_link_context" as any, {
+        _token: patientToken,
+        _clinic_id: clinicId,
+      }) as any);
+      const linkedPatientData = Array.isArray(data) ? data[0] : data;
+      if (linkedPatientData) {
+        setLinkedPatient(linkedPatientData);
+        setPatientName(linkedPatientData.full_name || "");
+        if (linkedPatientData.email) setPatientEmail(linkedPatientData.email);
+      }
+    };
+    loadPatient();
+  }, [patientToken, clinicId]);
 
   const logClinicAction = async (action: string, assessmentId?: string, meta?: Record<string, any>) => {
     try {
