@@ -227,18 +227,30 @@ const ClinicAssessment = () => {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "completed" });
         await logClinicAction("assessment_completed", id);
       }
-      // Save patient to patients table with CPF/birth_date from anamnesis
+      // Save/update patient: if linked via personalized token, update existing record
       try {
-        const patientRow: any = {
-          full_name: patientName || "Paciente",
-          email: patientEmail || null,
-          cpf: data.cpf?.replace(/\D/g, "") || null,
-          birth_date: data.birthDate || null,
-          clinic_id: clinicId,
-        };
-        await (supabase.from("patients" as any) as any).insert(patientRow);
+        const cpfClean = data.cpf?.replace(/\D/g, "") || null;
+        if (linkedPatient?.id) {
+          const updates: any = {};
+          if (patientEmail && !linkedPatient.email) updates.email = patientEmail;
+          if (cpfClean) updates.cpf = cpfClean;
+          if (data.birthDate) updates.birth_date = data.birthDate;
+          if (Object.keys(updates).length > 0) {
+            await (supabase.from("patients" as any) as any)
+              .update(updates)
+              .eq("id", linkedPatient.id);
+          }
+        } else {
+          await (supabase.from("patients" as any) as any).insert({
+            full_name: patientName || "Paciente",
+            email: patientEmail || null,
+            cpf: cpfClean,
+            birth_date: data.birthDate || null,
+            clinic_id: clinicId,
+          });
+        }
       } catch (e) {
-        console.warn("Patient record creation skipped:", e);
+        console.warn("Patient record save skipped:", e);
       }
       setStep("thank_you");
     } catch (err: any) {
