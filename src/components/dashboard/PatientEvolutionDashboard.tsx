@@ -1612,16 +1612,6 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
           >
             <Dumbbell className="h-4 w-4" /> Exercícios
           </Button>
-          {latestWithDiagnosis && onShareWhatsApp && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 shrink-0 text-emerald-600 border-emerald-300 hover:bg-emerald-50"
-              onClick={() => onShareWhatsApp(latestWithDiagnosis)}
-            >
-              <Share2 className="h-4 w-4" /> WhatsApp
-            </Button>
-          )}
           {patient.assessments.filter((a: any) => a.diagnosis).length >= 2 && (
             <Button
               variant="outline"
