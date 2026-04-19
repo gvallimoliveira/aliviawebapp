@@ -144,6 +144,158 @@ function drawBadge(
   doc.text(text, x + padX, y);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RIGID TEXT-IN-BOX RENDERER
+// ─────────────────────────────────────────────────────────────────────────────
+// Root cause of past PDF overflows: text was measured (splitTextToSize) using
+// a different font/size than the one used at draw time, so the green/colored
+// containers ended up too narrow or too short for the actual rendered text.
+//
+// These helpers ENFORCE the correct order:
+//   1) set font + size  →  2) sanitize  →  3) wrap to actual inner width
+//   4) compute exact height  →  5) page-break check  →  6) draw box
+//   7) render text inside the box
+//
+// Use `drawTextCard` for any colored container that holds prose
+// (clinical impression, hypothesis, narrative, disclaimer, professional notes).
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface TextCardStyle {
+  font: "helvetica";
+  weight: "normal" | "bold" | "italic" | "bolditalic";
+  size: number;
+  /** vertical line spacing in mm (per text line) */
+  lineHeight: number;
+  textColor: [number, number, number];
+}
+
+interface TextCardOptions {
+  /** outer-left x of the card */
+  x?: number;
+  /** total card width */
+  width?: number;
+  /** horizontal inner padding (mm) on each side */
+  padX?: number;
+  /** vertical inner padding (mm) — top & bottom share this same value */
+  padY?: number;
+  /** corner radius */
+  radius?: number;
+  /** background fill */
+  fill: [number, number, number];
+  /** optional border color */
+  stroke?: [number, number, number];
+  /** required to guarantee correct measurement at draw-time font */
+  body: TextCardStyle;
+  /** optional bold label rendered inline before the body */
+  label?: { text: string; color: [number, number, number]; size?: number };
+  /** extra empty space reserved at the bottom of the box (safety for italic/descenders) */
+  bottomSafety?: number;
+}
+
+function sanitizePdfText(input: string | undefined | null): string {
+  if (!input) return "";
+  return String(input)
+    // strip zero-width chars
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    // normalize line breaks
+    .replace(/\r\n?/g, "\n")
+    // collapse 3+ blank lines into 2
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * Wrap text using the EXACT font/size that will be used to render it.
+ * Always call AFTER `setFont` + `setFontSize` of the body style.
+ */
+function measureWrappedLines(
+  doc: jsPDF,
+  text: string,
+  innerWidth: number,
+  body: TextCardStyle
+): string[] {
+  doc.setFont(body.font, body.weight);
+  doc.setFontSize(body.size);
+  const safe = sanitizePdfText(text);
+  if (!safe) return [];
+  // Use a 0.5mm safety inset on the wrap width so italic/oblique glyphs that
+  // visually expand beyond their advance width still stay inside the frame.
+  const wrapW = Math.max(10, innerWidth - 0.5);
+  const lines = doc.splitTextToSize(safe, wrapW) as string[];
+  return Array.isArray(lines) ? lines : [lines];
+}
+
+/**
+ * Draw a rounded text card whose height is computed from the ACTUAL wrapped
+ * text using the body font/size. Returns the new y AFTER the card.
+ */
+function drawTextCard(
+  doc: jsPDF,
+  y: number,
+  text: string,
+  opts: TextCardOptions
+): number {
+  const x = opts.x ?? MARGIN;
+  const width = opts.width ?? CONTENT_WIDTH;
+  const padX = opts.padX ?? 8;
+  const padY = opts.padY ?? 8;
+  const radius = opts.radius ?? 4;
+  const safety = opts.bottomSafety ?? 2;
+
+  const innerW = width - padX * 2;
+
+  // Optional inline label sits on its OWN first line above the body,
+  // measured with its own size to avoid surprises.
+  let labelLines: string[] = [];
+  let labelLineH = 0;
+  if (opts.label) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(opts.label.size ?? Math.max(opts.body.size, 8));
+    labelLineH = (opts.label.size ?? Math.max(opts.body.size, 8)) * 0.45 + 1.5;
+    labelLines = doc.splitTextToSize(sanitizePdfText(opts.label.text), innerW) as string[];
+    if (!Array.isArray(labelLines)) labelLines = [labelLines as unknown as string];
+  }
+
+  const bodyLines = measureWrappedLines(doc, text, innerW, opts.body);
+  const bodyH = bodyLines.length * opts.body.lineHeight;
+  const labelBlockH = labelLines.length > 0 ? labelLines.length * labelLineH + 2 : 0;
+
+  // Total height = top padding + label block + body height + bottom padding + safety
+  const totalH = padY + labelBlockH + bodyH + padY + safety;
+
+  // Page break: if the WHOLE card cannot fit on the current page, push it down.
+  // (Cards are anti-orphan: no internal split.)
+  y = checkPage(doc, y, totalH);
+
+  // 1) Draw container
+  drawRoundedRect(doc, x, y, width, totalH, radius, opts.fill, opts.stroke);
+
+  // 2) Render label (if any)
+  let cursorY = y + padY;
+  if (labelLines.length > 0 && opts.label) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(opts.label.size ?? Math.max(opts.body.size, 8));
+    doc.setTextColor(...opts.label.color);
+    for (const ln of labelLines) {
+      // text() y is baseline; bias by ~0.8 of size in mm to align top.
+      doc.text(ln, x + padX, cursorY + (opts.label.size ?? 8) * 0.35);
+      cursorY += labelLineH;
+    }
+    cursorY += 2;
+  }
+
+  // 3) Render body — REAPPLY font/size right before drawing
+  doc.setFont(opts.body.font, opts.body.weight);
+  doc.setFontSize(opts.body.size);
+  doc.setTextColor(...opts.body.textColor);
+  for (let i = 0; i < bodyLines.length; i++) {
+    doc.text(bodyLines[i], x + padX, cursorY + opts.body.size * 0.35);
+    cursorY += opts.body.lineHeight;
+  }
+
+  return y + totalH + 2;
+}
+
 async function loadLogoBase64(): Promise<string | null> {
   try {
     const { default: logoUrl } = await import("@/assets/logo-alivia.png");
