@@ -552,8 +552,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       {isClinicMode && activeClinic && (
         <ClinicVolumeAlert clinicId={activeClinic.clinic_id} />
       )}
-      {/* Welcome card for new subscribers */}
-      {showWelcome && subscription?.subscribed && (
+      {/* Welcome card for new subscribers — only when there are no real patient assessments yet */}
+      {showWelcome && subscription?.subscribed && patientAssessments.length === 0 && (
         <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardContent className="py-6 space-y-4">
