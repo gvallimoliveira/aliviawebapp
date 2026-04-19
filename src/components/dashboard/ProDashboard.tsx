@@ -363,6 +363,9 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       return;
     }
     if (!assessment.diagnosis) return;
+    // Reserve the tab SYNCHRONOUSLY before any await — required for mobile popup blockers.
+    const { openWhatsAppDeferred } = await import("@/lib/whatsappShare");
+    const wa = openWhatsAppDeferred();
     try {
       const lang = document.documentElement.lang === "en" ? "en" : "pt";
       let proNote: string | undefined;
@@ -392,7 +395,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       const { error: uploadError } = await supabase.storage
         .from("assessment-reports")
         .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
-      
+
       let pdfUrl = "";
       if (!uploadError) {
         const { data: urlData } = supabase.storage
@@ -413,8 +416,9 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       const patientLabel = assessment.patient_name || "Paciente";
       const pdfLine = pdfUrl ? `\n\n📄 Relatório em PDF:\n${pdfUrl}` : "";
       const text = `🩺 *Aliv.iA — Relatório Profissional*\n\n👤 *Paciente:* ${patientLabel}\n📋 *Hipótese:* ${assessment.diagnosis.hypothesis}${pdfLine}\n\n💡 ${origin}`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+      wa.send(text);
     } catch {
+      wa.abort();
       toast({ title: "Erro ao compartilhar PDF", variant: "destructive" });
     }
   };
