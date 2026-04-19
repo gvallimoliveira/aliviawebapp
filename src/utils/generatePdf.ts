@@ -1209,9 +1209,6 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     doc.setFontSize(11);
     doc.setTextColor(...COLORS.primary);
     doc.text(ciTitle, MARGIN, y);
-    // IA badge
-    const titleW = doc.getTextWidth(ciTitle);
-    drawBadge(doc, "IA", MARGIN + titleW + 4, y - 3, COLORS.primary, COLORS.white);
     y += 6;
 
     // Overview in rounded box — RIGID (italic 9; lineHeight 4.5; safety for italic descenders)
@@ -1225,32 +1222,41 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     });
     y += 1;
 
-    // Therapeutic objectives
+    // Therapeutic objectives — badges em flow horizontal, com wrap por linha
     if (clinicalImpression.therapeuticObjectives?.length > 0) {
+      y = checkPage(doc, y, 18);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...COLORS.foreground);
       const objLabel = isPt ? "Objetivos Terapêuticos:" : "Therapeutic Objectives:";
       doc.text(objLabel, MARGIN, y + 4);
-      y += 8;
+      y += 9; // espaço entre label e a primeira linha de badges
+
+      const badgeH = 8;
+      const badgeGapX = 3;
+      const badgeGapY = 3;
+      const badgePadX = 4;
+      const rowMaxRight = MARGIN + TEXT_MAX_WIDTH;
+      let cursorX = MARGIN;
+      let rowH = badgeH;
+
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
 
       clinicalImpression.therapeuticObjectives.forEach((obj: string) => {
-        y = checkPage(doc, y, 10);
-        // If objective text is too long for a badge, wrap it
-        doc.setFontSize(7);
-        const objW = doc.getTextWidth(obj) + 8; // badge padding
-        if (objW > TEXT_MAX_WIDTH) {
-          const objLines = doc.splitTextToSize(obj, TEXT_MAX_WIDTH - 12);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(...COLORS.primary);
-          doc.text(objLines, MARGIN + 6, y);
-          y += objLines.length * 3.5 + 2;
-        } else {
-          drawBadge(doc, obj, MARGIN + 4, y, COLORS.primary, COLORS.white);
-          y += 8;
+        const tw = doc.getTextWidth(obj);
+        const badgeW = tw + badgePadX * 2;
+        // wrap para nova linha se ultrapassar a largura útil
+        if (cursorX + badgeW > rowMaxRight && cursorX > MARGIN) {
+          y += rowH + badgeGapY;
+          y = checkPage(doc, y, badgeH + 4);
+          cursorX = MARGIN;
         }
+        // drawBadge usa y como baseline do texto; posicionamos pela borda superior
+        drawBadge(doc, obj, cursorX, y + badgeH - 2, COLORS.primary, COLORS.white);
+        cursorX += badgeW + badgeGapX;
       });
-      y += 2;
+      y += badgeH + 4;
     }
     y += 4;
   }
