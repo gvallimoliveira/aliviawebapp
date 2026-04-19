@@ -1,72 +1,123 @@
-## Contexto
+Objetivo: corrigir de forma estrutural e definitiva a formação do PDF, especialmente os blocos de texto dentro de caixas verdes, sem quebrar os fluxos de download/WhatsApp já existentes. 
 
-Hoje o app **não tem nenhum mecanismo de atualização automática**:
+Verifique se o ultimo item do box de objetivos esta incorporado nesse plano antes de realizar, visto que ficou com simbolo de exclamação e nao o check de tarefa pronta
 
-- `PwaUpdateGuard.tsx` → no-op
-- `versionChecker.ts` → no-op
-- `main.tsx` → desregistra **qualquer** Service Worker que não seja `/sw-push.js`
-- `sw-push.js` → só lida com push, **não faz cache nem fetch**
-- Não há `manifest.json` standalone nem SW de atualização
+O que identifiquei no código
 
-Então quando o usuário abre o atalho na tela inicial, o navegador serve o HTML pelo cache HTTP padrão. Sem SW de atualização e sem cache-busting, o iOS/Android pode segurar o `index.html` por horas/dias antes de reconsultar o servidor → versão desatualizada e nenhum aviso de "atualizando".
+- O PDF é gerado centralmente em `src/utils/generatePdf.ts` com `jsPDF`, não por captura visual.
+- O problema não está só em um trecho isolado: há várias caixas e subseções que calculam altura/largura de texto de forma parecida, mas com regras inconsistentes.
+- O trecho mais sensível ao erro da sua imagem é a área de “Impressão Clínica / Clinical Impression”, mas o mesmo risco existe em:
+  - hipótese diagnóstica
+  - notas do profissional
+  - disclaimer
+  - resumo narrativo
+  - alguns blocos de questionários e listas
+- Como essa utility é compartilhada por vários pontos do app, qualquer correção precisa ficar centralizada ali para evitar regressões:
+  - PDF básico
+  - PDF premium/profissional
+  - download no dashboard
+  - compartilhamento por WhatsApp
+  - exportação em lote
 
-A regra inegociável (`mem://constraints/auth-stability`): **nenhum SW pode interceptar requests de auth do Supabase**. A tentativa anterior de PWA com Workbox quebrou login no desktop justamente por interceptar `fetch`.
+Plano de implementação
 
-&nbsp;
+1. Criar uma camada rígida de layout de texto no gerador de PDF
 
-Lembre tb que ha paginas onde nao pode acontecer a atualização automatica pois perde o fluxo em curso. Tal como durante avaliação basica ou premium em andamento e no andamento tb de fluxos de compras/ stripe.  O ideal é atualizar no dashboard, landing pages , e outras paginas seguras
+- Introduzir helpers centrais para:
+  - sanitizar texto
+  - quebrar linhas com largura real da caixa
+  - medir altura exata do bloco antes de desenhar
+  - desenhar texto somente depois da caixa já ter altura calculada
+- Padronizar largura útil interna com a regra já registrada em memória: área útil real de ~158mm.
 
-## Abordagem proposta — "Version Poll sem Service Worker"
+2. Substituir cálculos “soltos” por componentes de bloco reutilizáveis
 
-Em vez de reintroduzir um SW que intercepta `fetch` (risco de quebrar auth de novo), faço a verificação **100% no lado do cliente, em JS comum**, sem tocar em SW, sem `caches.match()`, sem interceptar nada.
+- Criar funções específicas como:
+  - `measureTextBlock`
+  - `drawWrappedTextBlock`
+  - `drawOutlinedTextCard`
+  - `drawLabeledParagraphBlock`
+- Essas funções vão receber:
+  - largura interna
+  - padding
+  - fonte/peso/tamanho
+  - line-height
+  - margem de segurança inferior
+- Assim a caixa sempre nasce da altura real do conteúdo, e não de aproximações.
 
-### Como funciona
+3. Endurecer especialmente os blocos que hoje mais quebram
 
-1. `**plugins/versionPlugin.ts` já existe e gera `/version.json**` com hash de build a cada deploy. Vou reaproveitar.
-2. **Novo `src/lib/versionChecker.ts` (substitui o no-op atual):**
-  - Faz `fetch('/version.json?t=Date.now()', { cache: 'no-store' })` em momentos seguros:
-    - Ao montar o App
-    - Quando a aba volta a ficar visível (`visibilitychange`)
-    - Quando a janela ganha foco (`focus`) — crucial para PWA mobile, pois é quando o usuário reabre o atalho
-    - A cada 15 minutos enquanto a aba está ativa
-  - Compara `remoteHash` com `import.meta.env.VITE_BUILD_HASH` (já injetado pelo plugin existente).
-  - Se diferente → mostra um **toast persistente** com botão "Atualizar agora".
-  - Ao clicar → `window.location.replace(pathname + '?v=' + hash)` (cache-bust por query string, sem mexer em SW nem em `caches`).
-3. **Salvaguardas críticas para não repetir o incidente de auth:**
-  - **Nunca** registrar SW novo nem mexer no `sw-push.js`.
-  - **Nunca** chamar `caches.delete()` automaticamente — só sob clique explícito do usuário no botão "Atualizar".
-  - **Nunca** chamar `localStorage.removeItem` em chaves `sb-*` automaticamente.
-  - **Nunca** fazer `window.location.reload()` automático sem ação do usuário (evita reload no meio de um login em curso).
-  - O fetch de `/version.json` é uma chamada GET para um arquivo estático na **mesma origem** — não toca em `*.supabase.co`, então não pode interferir com auth.
-  - Adicionar guarda: se `window.location.pathname` estiver em `/auth`, `/reset-password`, `/accept-invite`, ou se houver flag de "login em andamento" → **não exibir** o toast; apenas marcar para mostrar depois.
-4. **Manifest leve para o atalho mobile (opcional, mas recomendado):**
-  - Adicionar `<meta http-equiv="Cache-Control" content="no-cache">` em `index.html` para o HTML em si (não afeta assets com hash).
-  - Isso faz o iOS/Android revalidar o `index.html` mais rápido ao abrir o atalho — o resto (JS/CSS) já tem hash no nome via Vite.
-5. **Wire-up:** `App.tsx` chama `startVersionChecker()` uma vez no mount.
+- Reestruturar primeiro:
+  - “Clinical Impression / Impressão Clínica”
+  - hipótese diagnóstica
+  - subseções de resumo/explicação/raciocínio
+  - notas do profissional
+  - disclaimer
+- Ajustar ordem correta:
+  - definir fonte
+  - medir linhas
+  - calcular altura total
+  - verificar quebra de página
+  - desenhar caixa
+  - renderizar texto
+- Isso evita o cenário atual em que a medição e a renderização usam parâmetros diferentes.
 
-### O que NÃO vou fazer (lições do incidente anterior)
+4. Aplicar regras tipográficas rígidas
 
-- ❌ Não vou reintroduzir `vite-plugin-pwa` / Workbox.
-- ❌ Não vou criar SW que faz `addEventListener('fetch', ...)`.
-- ❌ Não vou tocar em `main.tsx`, `AuthContext.tsx`, `client.ts` ou `sw-push.js`.
-- ❌ Não vou limpar caches/localStorage automaticamente.
-- ❌ Reload só acontece sob clique do usuário.
+- Padronizar:
+  - `fontSize`
+  - `lineHeight`
+  - padding superior/inferior
+  - padding lateral
+  - distância entre título e corpo
+- Adicionar margem de segurança para descenders/itálico, porque texto em itálico costuma “escapar” visualmente mais fácil em PDF.
+- Remover qualquer largura calculada com números diferentes da largura interna da própria caixa.
 
-## Arquivos a alterar
+5. Melhorar quebra de página e anti-orfandade
 
+- Garantir que título + início do bloco fiquem juntos.
+- Se a caixa inteira não couber, mover o bloco inteiro para a próxima página.
+- Para blocos grandes, permitir quebra segura apenas entre blocos lógicos, nunca “vazando” da moldura.
 
-| Arquivo                            | Mudança                                                  |
-| ---------------------------------- | -------------------------------------------------------- |
-| `src/lib/versionChecker.ts`        | Implementar polling + toast (substitui no-op)            |
-| `src/App.tsx`                      | Chamar `startVersionChecker()` no mount                  |
-| `index.html`                       | Adicionar meta `Cache-Control: no-cache` para o HTML     |
-| `mem://constraints/auth-stability` | Adicionar nota documentando esta abordagem como aprovada |
+6. Cobrir regressões nos dois tipos de relatório
 
+- Aplicar a mesma base de layout ao:
+  - `generateBasicReportPdfBlob`
+  - `generateAssessmentPdfBlob` / `_buildPdfDoc`
+- Manter intacta a lógica de compartilhamento nativo no WhatsApp; a correção será no conteúdo/layout do PDF, não no fluxo de share.
 
-**Não tocar:** `main.tsx`, `AuthContext.tsx`, `supabase/client.ts`, `sw-push.js`, `PwaUpdateGuard.tsx`.
+7. Adicionar testes de regressão do gerador
 
-## Resultado esperado
+- Incluir testes unitários para os helpers de medição/quebra de texto.
+- Criar cenários com textos longos, itálicos, nomes extensos e múltiplos parágrafos.
+- O foco é garantir que altura medida e altura desenhada permaneçam coerentes.
 
-- Ao publicar: em até ~15 min (ou imediatamente ao reabrir o atalho), o usuário vê toast **"Nova versão disponível — Atualizar"**.
-- Clique → reload limpo com `?v=hash` → carrega a nova versão.
-- Login continua intacto: zero interceptação de requests, zero limpeza automática de storage.
+8. Validação visual obrigatória antes de entregar
+
+- Gerar PDFs de prova com casos extremos, incluindo um cenário semelhante ao do paciente Renato Valença.
+- Inspecionar visualmente todas as páginas:
+  - overflow de texto
+  - corte em bordas
+  - sobreposição
+  - espaçamento inconsistente
+  - quebra de página ruim
+- Se qualquer bloco ainda escapar da moldura, ajustar o helper central e repetir a validação.
+
+Resultado esperado
+
+- Nenhum texto ultrapassando o retângulo verde.
+- Mesma qualidade visual em PDF básico e premium.
+- Correção centralizada, sem “remendos” por tela.
+- Menor chance de retrocesso futuro porque a regra passa a ficar encapsulada em helpers únicos.
+
+Detalhes técnicos
+
+- Arquivo principal afetado: `src/utils/generatePdf.ts`
+- Não deve exigir mudanças de backend, banco ou storage.
+- O stack atual com `jsPDF` é suficiente; não vejo necessidade de migrar para captura por `html2canvas`, porque o problema é de consistência de medição/renderização e pode ser resolvido de forma mais robusta no gerador vetorial atual.
+- Também vou preservar as regras já existentes de memória:
+  - largura útil rígida de ~158mm
+  - proteção contra títulos órfãos
+  - branding atual dos relatórios
+
+Assim que você aprovar, eu implemento essa refatoração de layout no gerador de PDF e faço a correção completa com validação visual rigorosa.
