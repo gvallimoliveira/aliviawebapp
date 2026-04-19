@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import ReferralBanner from "@/components/ReferralBanner";
 import { motion } from "framer-motion";
-import { User, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users, Building2, Mail, Sparkles, Calendar } from "lucide-react";
+import { User, UserCog, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users, Building2, Mail, Sparkles, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -147,6 +147,10 @@ const Gateway = () => {
                 <button onClick={() => { navigate("/dashboard"); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors text-left">
                   <LayoutDashboard className="h-4 w-4" />
                   Dashboard
+                </button>
+                <button onClick={() => { navigate("/conta"); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left">
+                  <UserCog className="h-4 w-4" />
+                  {language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}
                 </button>
                 <button onClick={() => { handleSignOut(); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors text-left">
                   <LogOut className="h-4 w-4" />
