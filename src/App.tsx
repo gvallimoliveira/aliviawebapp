@@ -3,7 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 import ScrollToTop from "@/components/ScrollToTop";
+import { startVersionChecker } from "@/lib/versionChecker";
 
 import GlobalMobileMenu from "@/components/GlobalMobileMenu";
 import DashboardErrorBoundary from "@/components/dashboard/DashboardErrorBoundary";
@@ -43,7 +45,12 @@ import ClearCache from "./pages/ClearCache";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    startVersionChecker();
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
@@ -98,6 +105,7 @@ const App = () => (
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
