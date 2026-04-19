@@ -131,15 +131,24 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
   const handleShareWhatsApp = async () => {
     if (!diagnosis) return;
     setWhatsappLoading(true);
-    // Reserve the tab SYNCHRONOUSLY before any await — required for mobile popup blockers.
-    const { openWhatsAppDeferred } = await import("@/lib/whatsappShare");
-    const wa = openWhatsAppDeferred();
     try {
+      const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
       const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
       const pdfBlob = await generateAssessmentPdfBlob({ diagnosis, treatmentPlan: plan, language, userName: user?.user_metadata?.full_name || "", anamnesisData, painRegions, testResults, professionalLogoUrl });
 
       const fileId = assessmentId || crypto.randomUUID();
       const filePath = `${fileId}_premium.pdf`;
+      const patientLabel = user?.user_metadata?.full_name || diagnosis.hypothesis || "Paciente";
+      const nativeShareResult = await sharePdfFile({
+        blob: pdfBlob,
+        fileName: `AliviA_Relatorio_${patientLabel.replace(/\s+/g, "_")}.pdf`,
+        title: "Aliv.iA",
+        text: language === "pt" ? `Relatório em PDF de ${patientLabel}` : `PDF report for ${patientLabel}`,
+      });
+
+      if (nativeShareResult === "shared" || nativeShareResult === "cancelled") {
+        return;
+      }
 
       let publicUrl: string | null = null;
       try {
@@ -162,7 +171,11 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
         a.download = `alivia_assessment_${fileId}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
-        toast({ title: t("pdf.success") });
+          toast({
+            title: t("pdf.success"),
+            description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device.",
+          });
+          return;
       }
 
       const { getPublicOrigin } = await import("@/lib/getPublicOrigin");
@@ -171,9 +184,8 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
         ? `\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${publicUrl}`
         : "";
       const text = `🩺 *Aliv.iA — ${language === "pt" ? "Avaliação Premium Completa" : "Complete Premium Assessment"}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${pdfLine}\n\n💡 ${language === "pt" ? "Faça sua avaliação" : "Start your assessment"}:\n${origin}`;
-      wa.send(text);
+      await shareTextOrOpenWhatsApp(text, "Aliv.iA");
     } catch (err) {
-      wa.abort();
       console.error("WhatsApp share error:", err);
       toast({ title: t("pdf.error"), variant: "destructive" });
     } finally {
