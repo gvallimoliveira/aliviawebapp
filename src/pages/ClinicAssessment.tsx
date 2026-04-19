@@ -361,6 +361,13 @@ const ClinicAssessment = () => {
                   Reavaliação — dados pré-preenchidos da avaliação anterior
                 </p>
               )}
+              {linkedPatient && (
+                <p className="text-xs text-primary font-medium">
+                  {language === "pt"
+                    ? "Link personalizado — esta avaliação será vinculada ao seu cadastro existente"
+                    : "Personalized link — this assessment will be linked to your existing record"}
+                </p>
+              )}
             </div>
 
             <Card className="rounded-xl">
@@ -373,7 +380,8 @@ const ClinicAssessment = () => {
                     onChange={(e) => setPatientName(e.target.value.slice(0, 100))}
                     placeholder={t("patient_info.name_placeholder")}
                     maxLength={100}
-                    autoFocus
+                    autoFocus={!linkedPatient}
+                    disabled={!!linkedPatient}
                   />
                 </div>
 
