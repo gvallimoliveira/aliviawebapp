@@ -144,6 +144,158 @@ function drawBadge(
   doc.text(text, x + padX, y);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RIGID TEXT-IN-BOX RENDERER
+// ─────────────────────────────────────────────────────────────────────────────
+// Root cause of past PDF overflows: text was measured (splitTextToSize) using
+// a different font/size than the one used at draw time, so the green/colored
+// containers ended up too narrow or too short for the actual rendered text.
+//
+// These helpers ENFORCE the correct order:
+//   1) set font + size  →  2) sanitize  →  3) wrap to actual inner width
+//   4) compute exact height  →  5) page-break check  →  6) draw box
+//   7) render text inside the box
+//
+// Use `drawTextCard` for any colored container that holds prose
+// (clinical impression, hypothesis, narrative, disclaimer, professional notes).
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface TextCardStyle {
+  font: "helvetica";
+  weight: "normal" | "bold" | "italic" | "bolditalic";
+  size: number;
+  /** vertical line spacing in mm (per text line) */
+  lineHeight: number;
+  textColor: [number, number, number];
+}
+
+interface TextCardOptions {
+  /** outer-left x of the card */
+  x?: number;
+  /** total card width */
+  width?: number;
+  /** horizontal inner padding (mm) on each side */
+  padX?: number;
+  /** vertical inner padding (mm) — top & bottom share this same value */
+  padY?: number;
+  /** corner radius */
+  radius?: number;
+  /** background fill */
+  fill: [number, number, number];
+  /** optional border color */
+  stroke?: [number, number, number];
+  /** required to guarantee correct measurement at draw-time font */
+  body: TextCardStyle;
+  /** optional bold label rendered inline before the body */
+  label?: { text: string; color: [number, number, number]; size?: number };
+  /** extra empty space reserved at the bottom of the box (safety for italic/descenders) */
+  bottomSafety?: number;
+}
+
+function sanitizePdfText(input: string | undefined | null): string {
+  if (!input) return "";
+  return String(input)
+    // strip zero-width chars
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    // normalize line breaks
+    .replace(/\r\n?/g, "\n")
+    // collapse 3+ blank lines into 2
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * Wrap text using the EXACT font/size that will be used to render it.
+ * Always call AFTER `setFont` + `setFontSize` of the body style.
+ */
+function measureWrappedLines(
+  doc: jsPDF,
+  text: string,
+  innerWidth: number,
+  body: TextCardStyle
+): string[] {
+  doc.setFont(body.font, body.weight);
+  doc.setFontSize(body.size);
+  const safe = sanitizePdfText(text);
+  if (!safe) return [];
+  // Use a 0.5mm safety inset on the wrap width so italic/oblique glyphs that
+  // visually expand beyond their advance width still stay inside the frame.
+  const wrapW = Math.max(10, innerWidth - 0.5);
+  const lines = doc.splitTextToSize(safe, wrapW) as string[];
+  return Array.isArray(lines) ? lines : [lines];
+}
+
+/**
+ * Draw a rounded text card whose height is computed from the ACTUAL wrapped
+ * text using the body font/size. Returns the new y AFTER the card.
+ */
+function drawTextCard(
+  doc: jsPDF,
+  y: number,
+  text: string,
+  opts: TextCardOptions
+): number {
+  const x = opts.x ?? MARGIN;
+  const width = opts.width ?? CONTENT_WIDTH;
+  const padX = opts.padX ?? 8;
+  const padY = opts.padY ?? 8;
+  const radius = opts.radius ?? 4;
+  const safety = opts.bottomSafety ?? 2;
+
+  const innerW = width - padX * 2;
+
+  // Optional inline label sits on its OWN first line above the body,
+  // measured with its own size to avoid surprises.
+  let labelLines: string[] = [];
+  let labelLineH = 0;
+  if (opts.label) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(opts.label.size ?? Math.max(opts.body.size, 8));
+    labelLineH = (opts.label.size ?? Math.max(opts.body.size, 8)) * 0.45 + 1.5;
+    labelLines = doc.splitTextToSize(sanitizePdfText(opts.label.text), innerW) as string[];
+    if (!Array.isArray(labelLines)) labelLines = [labelLines as unknown as string];
+  }
+
+  const bodyLines = measureWrappedLines(doc, text, innerW, opts.body);
+  const bodyH = bodyLines.length * opts.body.lineHeight;
+  const labelBlockH = labelLines.length > 0 ? labelLines.length * labelLineH + 2 : 0;
+
+  // Total height = top padding + label block + body height + bottom padding + safety
+  const totalH = padY + labelBlockH + bodyH + padY + safety;
+
+  // Page break: if the WHOLE card cannot fit on the current page, push it down.
+  // (Cards are anti-orphan: no internal split.)
+  y = checkPage(doc, y, totalH);
+
+  // 1) Draw container
+  drawRoundedRect(doc, x, y, width, totalH, radius, opts.fill, opts.stroke);
+
+  // 2) Render label (if any)
+  let cursorY = y + padY;
+  if (labelLines.length > 0 && opts.label) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(opts.label.size ?? Math.max(opts.body.size, 8));
+    doc.setTextColor(...opts.label.color);
+    for (const ln of labelLines) {
+      // text() y is baseline; bias by ~0.8 of size in mm to align top.
+      doc.text(ln, x + padX, cursorY + (opts.label.size ?? 8) * 0.35);
+      cursorY += labelLineH;
+    }
+    cursorY += 2;
+  }
+
+  // 3) Render body — REAPPLY font/size right before drawing
+  doc.setFont(opts.body.font, opts.body.weight);
+  doc.setFontSize(opts.body.size);
+  doc.setTextColor(...opts.body.textColor);
+  for (let i = 0; i < bodyLines.length; i++) {
+    doc.text(bodyLines[i], x + padX, cursorY + opts.body.size * 0.35);
+    cursorY += opts.body.lineHeight;
+  }
+
+  return y + totalH + 2;
+}
+
 async function loadLogoBase64(): Promise<string | null> {
   try {
     const { default: logoUrl } = await import("@/assets/logo-alivia.png");
@@ -789,15 +941,15 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   // Diagnosis section
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Diagnóstica" : "Diagnostic Hypothesis", COLORS.primary);
 
-  // Hypothesis card
-  const hypoLines = doc.splitTextToSize(options.diagnosis.hypothesis, CONTENT_WIDTH - 16);
-  const hypoH = hypoLines.length * 5 + 14;
-  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, hypoH, 4, COLORS.primaryLight, COLORS.primary);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(...COLORS.primary);
-  doc.text(hypoLines, MARGIN + 8, y + 9);
-  y += hypoH + 4;
+  // Hypothesis card — RIGID layout (measure with the SAME font used to render)
+  y = drawTextCard(doc, y, options.diagnosis.hypothesis, {
+    fill: COLORS.primaryLight,
+    stroke: COLORS.primary,
+    padX: 8,
+    padY: 7,
+    body: { font: "helvetica", weight: "bold", size: 11, lineHeight: 5, textColor: COLORS.primary },
+  });
+  y += 2;
 
   // Confidence badge — only show for high confidence
   if (options.diagnosis.confidence === "high") {
@@ -908,21 +1060,19 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   }
   y += upsellH + 8;
 
-  // Disclaimer
+  // Disclaimer — RIGID layout
   const disclaimerText = isPt
     ? "Este relatório foi gerado por um sistema de inteligência artificial e tem caráter exclusivamente informativo e educacional. Ele NÃO substitui uma consulta médica ou avaliação fisioterapêutica presencial. Em caso de dor intensa ou piora dos sintomas, procure atendimento médico imediatamente."
     : "This report was generated by an artificial intelligence system and is for informational and educational purposes only. It does NOT replace a medical consultation or in-person physiotherapy assessment. In case of severe pain or worsening symptoms, seek medical attention immediately.";
-  const discLines = doc.splitTextToSize(disclaimerText, CONTENT_WIDTH - 12);
-  const discH = discLines.length * 3.5 + 14;
-  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, discH, 4, [255, 245, 245], COLORS.red);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(...COLORS.red);
-  doc.text(isPt ? "⚠  AVISO IMPORTANTE" : "⚠  IMPORTANT DISCLAIMER", MARGIN + 6, y + 8);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(100, 80, 80);
-  doc.text(discLines, MARGIN + 6, y + 14);
+  y = drawTextCard(doc, y, disclaimerText, {
+    fill: [255, 245, 245],
+    stroke: COLORS.red,
+    padX: 6,
+    padY: 6,
+    label: { text: isPt ? "AVISO IMPORTANTE" : "IMPORTANT DISCLAIMER", color: COLORS.red, size: 8 },
+    body: { font: "helvetica", weight: "normal", size: 7, lineHeight: 3.6, textColor: [100, 80, 80] },
+    bottomSafety: 1,
+  });
 
   // Footer with logo
   const totalPages = doc.getNumberOfPages();
@@ -1019,16 +1169,15 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
   // ── Diagnosis Section (FIRST after patient info) ──
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Diagnóstica" : "Diagnostic Hypothesis", COLORS.primary, 30);
 
-  // Hypothesis card
-  const hypoLines = doc.splitTextToSize(diagnosis.hypothesis, CONTENT_WIDTH - 16);
-  const hypoH = hypoLines.length * 5 + 14;
-  y = checkPage(doc, y, hypoH + 4);
-  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, hypoH, 4, COLORS.primaryLight, COLORS.primary);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(...COLORS.primary);
-  doc.text(hypoLines, MARGIN + 8, y + 9);
-  y += hypoH + 4;
+  // Hypothesis card — RIGID
+  y = drawTextCard(doc, y, diagnosis.hypothesis, {
+    fill: COLORS.primaryLight,
+    stroke: COLORS.primary,
+    padX: 8,
+    padY: 7,
+    body: { font: "helvetica", weight: "bold", size: 11, lineHeight: 5, textColor: COLORS.primary },
+  });
+  y += 2;
 
   // Confidence badge — only show for high confidence
   if (diagnosis.confidence === "high") {
@@ -1065,16 +1214,16 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     drawBadge(doc, "IA", MARGIN + titleW + 4, y - 3, COLORS.primary, COLORS.white);
     y += 6;
 
-    // Overview in rounded box
-    const overviewLines = doc.splitTextToSize(clinicalImpression.overview, CONTENT_WIDTH - 16);
-    const overviewH = overviewLines.length * 4.5 + 12;
-    y = checkPage(doc, y, overviewH + 20);
-    drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, overviewH, 4, COLORS.primaryLight, COLORS.primary);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(9);
-    doc.setTextColor(...COLORS.foreground);
-    doc.text(overviewLines, MARGIN + 8, y + 8);
-    y += overviewH + 4;
+    // Overview in rounded box — RIGID (italic 9; lineHeight 4.5; safety for italic descenders)
+    y = drawTextCard(doc, y, clinicalImpression.overview, {
+      fill: COLORS.primaryLight,
+      stroke: COLORS.primary,
+      padX: 8,
+      padY: 7,
+      body: { font: "helvetica", weight: "italic", size: 9, lineHeight: 4.5, textColor: COLORS.foreground },
+      bottomSafety: 2,
+    });
+    y += 1;
 
     // Therapeutic objectives
     if (clinicalImpression.therapeuticObjectives?.length > 0) {
@@ -1297,15 +1446,15 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
     y += 8;
     y = renderSectionTitle(doc, y, isPt ? "Notas do Profissional" : "Professional Notes", COLORS.primary);
-    const noteLines = doc.splitTextToSize(professionalNotes, CONTENT_WIDTH - 12);
-    const noteH = noteLines.length * 3.5 + 12;
-    y = checkPage(doc, y, noteH);
-    drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, noteH, 4, [245, 243, 240], COLORS.border);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8);
-    doc.setTextColor(...COLORS.muted);
-    doc.text(noteLines, MARGIN + 6, y + 8);
-    y += noteH + 6;
+    y = drawTextCard(doc, y, professionalNotes, {
+      fill: [245, 243, 240],
+      stroke: COLORS.border,
+      padX: 6,
+      padY: 7,
+      body: { font: "helvetica", weight: "italic", size: 8, lineHeight: 4, textColor: COLORS.muted },
+      bottomSafety: 2,
+    });
+    y += 4;
   }
 
   // ── Disclaimer ──
@@ -1319,18 +1468,15 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     ? "Este relatório foi gerado por um sistema de inteligência artificial e tem caráter exclusivamente informativo e educacional. Ele NÃO substitui uma consulta médica, avaliação fisioterapêutica presencial ou qualquer outro atendimento profissional de saúde. As hipóteses diagnósticas e sugestões de tratamento apresentadas devem ser validadas por um profissional habilitado antes de serem seguidas. Em caso de dor intensa, piora dos sintomas ou qualquer emergência, procure atendimento médico imediatamente."
     : "This report was generated by an artificial intelligence system and is for informational and educational purposes only. It does NOT replace a medical consultation, in-person physiotherapy assessment, or any other professional healthcare. The diagnostic hypotheses and treatment suggestions presented must be validated by a qualified professional before being followed. In case of severe pain, worsening symptoms, or any emergency, seek medical attention immediately.";
 
-  const discLines = doc.splitTextToSize(disclaimerText, CONTENT_WIDTH - 12);
-  const discH = discLines.length * 3.5 + 14;
-  y = checkPage(doc, y, discH);
-  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, discH, 4, [255, 245, 245], COLORS.red);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(...COLORS.red);
-  doc.text(isPt ? "⚠  AVISO IMPORTANTE" : "⚠  IMPORTANT DISCLAIMER", MARGIN + 6, y + 8);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(100, 80, 80);
-  doc.text(discLines, MARGIN + 6, y + 14);
+  y = drawTextCard(doc, y, disclaimerText, {
+    fill: [255, 245, 245],
+    stroke: COLORS.red,
+    padX: 6,
+    padY: 6,
+    label: { text: isPt ? "AVISO IMPORTANTE" : "IMPORTANT DISCLAIMER", color: COLORS.red, size: 8 },
+    body: { font: "helvetica", weight: "normal", size: 7, lineHeight: 3.6, textColor: [100, 80, 80] },
+    bottomSafety: 1,
+  });
 
   // ── Footer on every page with logo ──
   const totalPages = doc.getNumberOfPages();
@@ -1722,15 +1868,15 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
 
   // ── AI Narrative Summary ──
   y = renderSectionTitle(doc, y, isPt ? "Resumo Narrativo (IA)" : "AI Narrative Summary", COLORS.primary);
-  const narrativeLines = doc.splitTextToSize(options.summary.narrative, TEXT_MAX_WIDTH);
-  const narrativeH = narrativeLines.length * 3.5 + 12;
-  y = checkPage(doc, y, narrativeH);
-  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, narrativeH, 4, COLORS.primaryLight, COLORS.primary);
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(8);
-  doc.setTextColor(...COLORS.foreground);
-  doc.text(narrativeLines, MARGIN + 6, y + 8);
-  y += narrativeH + 6;
+  y = drawTextCard(doc, y, options.summary.narrative, {
+    fill: COLORS.primaryLight,
+    stroke: COLORS.primary,
+    padX: 6,
+    padY: 7,
+    body: { font: "helvetica", weight: "italic", size: 8, lineHeight: 4, textColor: COLORS.foreground },
+    bottomSafety: 2,
+  });
+  y += 4;
 
   // ── Conclusion + Recommendation Badge ──
   y = renderSectionTitle(doc, y, isPt ? "Conclusão" : "Conclusion", COLORS.primary);
@@ -1773,18 +1919,15 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   const disclaimerText = isPt
     ? "Este relatório de evolução foi gerado por inteligência artificial com base nos dados das avaliações realizadas. Tem caráter informativo e educacional, não substituindo avaliação presencial. As conclusões devem ser validadas por um profissional habilitado."
     : "This evolution report was generated by artificial intelligence based on assessment data. It is for informational and educational purposes only, and does not replace in-person evaluation. Conclusions must be validated by a qualified professional.";
-  const discLines = doc.splitTextToSize(disclaimerText, CONTENT_WIDTH - 12);
-  const discH = discLines.length * 3.5 + 14;
-  y = checkPage(doc, y, discH);
-  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, discH, 4, [255, 245, 245], COLORS.red);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(...COLORS.red);
-  doc.text(isPt ? "⚠  AVISO IMPORTANTE" : "⚠  IMPORTANT DISCLAIMER", MARGIN + 6, y + 8);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(100, 80, 80);
-  doc.text(discLines, MARGIN + 6, y + 14);
+  y = drawTextCard(doc, y, disclaimerText, {
+    fill: [255, 245, 245],
+    stroke: COLORS.red,
+    padX: 6,
+    padY: 6,
+    label: { text: isPt ? "AVISO IMPORTANTE" : "IMPORTANT DISCLAIMER", color: COLORS.red, size: 8 },
+    body: { font: "helvetica", weight: "normal", size: 7, lineHeight: 3.6, textColor: [100, 80, 80] },
+    bottomSafety: 1,
+  });
 
   // ── Footer ──
   const totalPages = doc.getNumberOfPages();
