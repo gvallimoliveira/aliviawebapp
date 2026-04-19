@@ -1590,10 +1590,10 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
               size="sm"
               className="gap-1.5 shrink-0"
               onClick={() => {
-                const base = clinicId
-                  ? `${window.location.origin}/assessment/clinic/${clinicId}`
-                  : `${window.location.origin}/assessment/professional/${professionalId}`;
-                const link = `${base}?reassessment=${latestWithDiagnosis.id}`;
+                const link = buildReassessmentLink(
+                  { professionalId, clinicId },
+                  latestWithDiagnosis.id,
+                );
                 navigator.clipboard.writeText(link);
                 toast({ title: "Link de reavaliação copiado!" });
               }}
