@@ -941,15 +941,15 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   // Diagnosis section
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Diagnóstica" : "Diagnostic Hypothesis", COLORS.primary);
 
-  // Hypothesis card
-  const hypoLines = doc.splitTextToSize(options.diagnosis.hypothesis, CONTENT_WIDTH - 16);
-  const hypoH = hypoLines.length * 5 + 14;
-  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, hypoH, 4, COLORS.primaryLight, COLORS.primary);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(...COLORS.primary);
-  doc.text(hypoLines, MARGIN + 8, y + 9);
-  y += hypoH + 4;
+  // Hypothesis card — RIGID layout (measure with the SAME font used to render)
+  y = drawTextCard(doc, y, options.diagnosis.hypothesis, {
+    fill: COLORS.primaryLight,
+    stroke: COLORS.primary,
+    padX: 8,
+    padY: 7,
+    body: { font: "helvetica", weight: "bold", size: 11, lineHeight: 5, textColor: COLORS.primary },
+  });
+  y += 2;
 
   // Confidence badge — only show for high confidence
   if (options.diagnosis.confidence === "high") {
