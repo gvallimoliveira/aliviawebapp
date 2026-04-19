@@ -1676,6 +1676,16 @@ export type Database = {
           professional_id: string
         }[]
       }
+      get_public_clinic_assessment_link: {
+        Args: { _clinic_id: string }
+        Returns: {
+          brand_color: string
+          has_access: boolean
+          id: string
+          logo_url: string
+          name: string
+        }[]
+      }
       get_public_professional_assessment_link: {
         Args: { _professional_id: string }
         Returns: {
@@ -1685,6 +1695,7 @@ export type Database = {
           has_access: boolean
           id: string
           logo_url: string
+          user_id: string
         }[]
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
