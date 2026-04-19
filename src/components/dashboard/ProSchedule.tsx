@@ -738,9 +738,27 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateWeek(-1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h3 className="text-sm font-semibold text-foreground">
-            {format(days[0], "dd MMM", { locale })} — {format(days[days.length - 1], "dd MMM yyyy", { locale })}
-          </h3>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="text-sm font-semibold text-foreground hover:text-primary transition-colors px-1 py-0.5 rounded-md hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label={isPt ? "Selecionar data" : "Pick date"}
+              >
+                {format(days[0], "dd MMM", { locale })} — {format(days[days.length - 1], "dd MMM yyyy", { locale })}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <Calendar
+                mode="single"
+                selected={viewDate}
+                onSelect={(d) => d && setViewDate(d)}
+                initialFocus
+                locale={locale}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateWeek(1)}>
             <ChevronRight className="h-4 w-4" />
           </Button>
