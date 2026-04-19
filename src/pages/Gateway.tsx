@@ -11,6 +11,7 @@ import { setSeo } from "@/lib/seo";
 import LgpdBadge from "@/components/LgpdBadge";
 import logoAlivia from "@/assets/logo-alivia.png";
 import guilhermePhoto from "@/assets/guilherme-founder.jpeg";
+import AppVersionBadge from "@/components/AppVersionBadge";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -408,6 +409,9 @@ const Gateway = () => {
           <p className="text-xs text-muted-foreground/60">
             © {new Date().getFullYear()} Aliv.iA. {t("footer.rights")}
           </p>
+          <div className="pt-1">
+            <AppVersionBadge />
+          </div>
         </div>
       </footer>
     </div>

@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import logoAlivia from "@/assets/logo-alivia.png";
+import AppVersionBadge from "@/components/AppVersionBadge";
 
 /**
  * Floating hamburger button for mobile that's always available
@@ -189,15 +190,16 @@ const GlobalMobileMenu = () => {
               {t("support.badge")}
             </button>
 
+            <button
+              onClick={() => go("/conta")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+            >
+              <UserCog className="h-4 w-4" />
+              {language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}
+            </button>
+
             {user ? (
               <>
-                <button
-                  onClick={() => go("/conta")}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
-                >
-                  <UserCog className="h-4 w-4" />
-                  {language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}
-                </button>
                 <button
                   onClick={() => go("/admin")}
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
@@ -225,6 +227,10 @@ const GlobalMobileMenu = () => {
               </button>
             )}
           </nav>
+
+          <div className="mt-auto border-t border-border/40 p-4 text-center">
+            <AppVersionBadge />
+          </div>
         </SheetContent>
       </Sheet>
     </>
