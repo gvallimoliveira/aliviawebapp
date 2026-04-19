@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, KeyRound, User, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import AppVersionBadge from "@/components/AppVersionBadge";
 
 const Account = () => {
   const { user, loading: authLoading } = useAuth();
@@ -176,6 +177,10 @@ const Account = () => {
             </form>
           </CardContent>
         </Card>
+
+        <div className="mt-6 flex justify-center">
+          <AppVersionBadge />
+        </div>
       </main>
       <Footer />
     </div>

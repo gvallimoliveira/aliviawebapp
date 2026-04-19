@@ -1,6 +1,7 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Mail } from "lucide-react";
+import AppVersionBadge from "@/components/AppVersionBadge";
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -25,6 +26,9 @@ const Footer = () => {
         <p className="text-xs text-muted-foreground/60">
           © {new Date().getFullYear()} Aliv.iA. {t("footer.rights")}
         </p>
+        <div className="mt-3">
+          <AppVersionBadge />
+        </div>
       </div>
     </footer>
   );
