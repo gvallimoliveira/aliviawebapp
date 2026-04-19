@@ -1,62 +1,72 @@
+## Contexto
 
-## Resposta direta
+Hoje o app **não tem nenhum mecanismo de atualização automática**:
 
-**Sim, hoje viraria um paciente novo.** O agrupamento usa `patient_email` como chave principal (e nome como fallback). Se o paciente importado não tem email e o link genérico (`/assessment/professional/{professionalId}`) é enviado, o paciente preenche email/nome no formulário e a avaliação cai num grupo separado, sem vínculo com o card existente.
+- `PwaUpdateGuard.tsx` → no-op
+- `versionChecker.ts` → no-op
+- `main.tsx` → desregistra **qualquer** Service Worker que não seja `/sw-push.js`
+- `sw-push.js` → só lida com push, **não faz cache nem fetch**
+- Não há `manifest.json` standalone nem SW de atualização
 
-## Solução proposta: link de avaliação personalizado por paciente
+Então quando o usuário abre o atalho na tela inicial, o navegador serve o HTML pelo cache HTTP padrão. Sem SW de atualização e sem cache-busting, o iOS/Android pode segurar o `index.html` por horas/dias antes de reconsultar o servidor → versão desatualizada e nenhum aviso de "atualizando".
 
-Sua ideia é a melhor — não precisa de IA. Basta gerar um link com um **token vinculado ao registro do paciente**. Quando o paciente preenche, a avaliação é automaticamente atribuída ao card existente.
+A regra inegociável (`mem://constraints/auth-stability`): **nenhum SW pode interceptar requests de auth do Supabase**. A tentativa anterior de PWA com Workbox quebrou login no desktop justamente por interceptar `fetch`.
 
-### Como vai funcionar (UX)
+&nbsp;
 
-1. No card do paciente importado (sem email), adicionar botão **"Gerar link de avaliação personalizado"** (ao lado dos ícones de avaliação manual / nota rápida).
-2. Clicou → gera link único `…/assessment/professional/{professionalId}?patient={token}` e copia para a área de transferência.
-3. Profissional envia por WhatsApp/SMS.
-4. Paciente abre o link → o nome dele já aparece pré-preenchido (e bloqueado), pode adicionar email opcionalmente.
-5. Ao concluir, a avaliação é gravada com o `patient_id` correto → aparece **dentro do card existente**, não cria duplicata.
+Lembre tb que ha paginas onde nao pode acontecer a atualização automatica pois perde o fluxo em curso. Tal como durante avaliação basica ou premium em andamento e no andamento tb de fluxos de compras/ stripe.  O ideal é atualizar no dashboard, landing pages , e outras paginas seguras
 
-### Diagrama do fluxo
+## Abordagem proposta — "Version Poll sem Service Worker"
 
-```text
-Card paciente importado
-  └─ [Gerar link personalizado] → token único salvo em DB
-                                    ↓
-                         Profissional envia link
-                                    ↓
-                    Paciente abre /assessment/professional/{proId}?patient=TOKEN
-                                    ↓
-                    Form pré-preenche nome do patient record
-                                    ↓
-                    Submit grava assessment com patient_email do registro
-                    (ou novo campo patient_id) → agrupa no card certo
-```
+Em vez de reintroduzir um SW que intercepta `fetch` (risco de quebrar auth de novo), faço a verificação **100% no lado do cliente, em JS comum**, sem tocar em SW, sem `caches.match()`, sem interceptar nada.
 
-### Mudanças técnicas
+### Como funciona
 
-1. **Migration**: adicionar coluna `assessment_token text unique` na tabela `patients` (gerado via `gen_random_uuid()::text` quando solicitado). Sem regenerar automaticamente — só sob demanda.
-2. **`PatientEvolutionDashboard.tsx`**:
-   - Novo botão "link" (ícone Link2) nos cards, sempre visível em mobile, hover em desktop (mesmo padrão dos outros ícones).
-   - Handler: se `patientRecord.assessment_token` não existe, gera e faz `update`. Depois copia `…/assessment/professional/{professionalId}?patient={token}`.
-3. **`ProfessionalAssessment.tsx`**:
-   - Ler `searchParams.get("patient")`.
-   - Se presente: buscar `patients` com aquele token (RLS permite SELECT público pois o token é o segredo — política nova: `SELECT` quando `assessment_token = $1`).
-   - Pré-preencher `patientName` e `patientEmail` (campos somente leitura para o nome).
-   - No `createAssessment`, gravar `patient_email` do registro existente (ou um campo adicional `patient_id` se quiser vínculo forte — começamos com email/nome para compatibilidade com o agrupamento atual).
-4. **Agrupamento**: já funciona — usa email se existir, nome como fallback. Como o nome vem pré-preenchido idêntico ao registro, o agrupamento por nome funciona automaticamente.
+1. `**plugins/versionPlugin.ts` já existe e gera `/version.json**` com hash de build a cada deploy. Vou reaproveitar.
+2. **Novo `src/lib/versionChecker.ts` (substitui o no-op atual):**
+  - Faz `fetch('/version.json?t=Date.now()', { cache: 'no-store' })` em momentos seguros:
+    - Ao montar o App
+    - Quando a aba volta a ficar visível (`visibilitychange`)
+    - Quando a janela ganha foco (`focus`) — crucial para PWA mobile, pois é quando o usuário reabre o atalho
+    - A cada 15 minutos enquanto a aba está ativa
+  - Compara `remoteHash` com `import.meta.env.VITE_BUILD_HASH` (já injetado pelo plugin existente).
+  - Se diferente → mostra um **toast persistente** com botão "Atualizar agora".
+  - Ao clicar → `window.location.replace(pathname + '?v=' + hash)` (cache-bust por query string, sem mexer em SW nem em `caches`).
+3. **Salvaguardas críticas para não repetir o incidente de auth:**
+  - **Nunca** registrar SW novo nem mexer no `sw-push.js`.
+  - **Nunca** chamar `caches.delete()` automaticamente — só sob clique explícito do usuário no botão "Atualizar".
+  - **Nunca** chamar `localStorage.removeItem` em chaves `sb-*` automaticamente.
+  - **Nunca** fazer `window.location.reload()` automático sem ação do usuário (evita reload no meio de um login em curso).
+  - O fetch de `/version.json` é uma chamada GET para um arquivo estático na **mesma origem** — não toca em `*.supabase.co`, então não pode interferir com auth.
+  - Adicionar guarda: se `window.location.pathname` estiver em `/auth`, `/reset-password`, `/accept-invite`, ou se houver flag de "login em andamento" → **não exibir** o toast; apenas marcar para mostrar depois.
+4. **Manifest leve para o atalho mobile (opcional, mas recomendado):**
+  - Adicionar `<meta http-equiv="Cache-Control" content="no-cache">` em `index.html` para o HTML em si (não afeta assets com hash).
+  - Isso faz o iOS/Android revalidar o `index.html` mais rápido ao abrir o atalho — o resto (JS/CSS) já tem hash no nome via Vite.
+5. **Wire-up:** `App.tsx` chama `startVersionChecker()` uma vez no mount.
 
-### Por que essa solução e não a "IA gerar link"
+### O que NÃO vou fazer (lições do incidente anterior)
 
-- **Mais simples**: token UUID é instantâneo, gratuito, infalível. IA aqui não agrega valor (não há texto para gerar).
-- **Mais seguro**: token aleatório de 36 caracteres é impossível de adivinhar.
-- **Reaproveita infra existente**: já usamos o mesmo padrão em `exercise_programs.token`.
+- ❌ Não vou reintroduzir `vite-plugin-pwa` / Workbox.
+- ❌ Não vou criar SW que faz `addEventListener('fetch', ...)`.
+- ❌ Não vou tocar em `main.tsx`, `AuthContext.tsx`, `client.ts` ou `sw-push.js`.
+- ❌ Não vou limpar caches/localStorage automaticamente.
+- ❌ Reload só acontece sob clique do usuário.
 
-### Bônus opcional (posso incluir agora ou depois)
+## Arquivos a alterar
 
-- Botão "Compartilhar via WhatsApp" que abre `wa.me/{phone}?text=…` se o paciente tem telefone cadastrado.
-- Validade de 30 dias para o token (regenera se expirado).
 
-### Arquivos afetados
+| Arquivo                            | Mudança                                                  |
+| ---------------------------------- | -------------------------------------------------------- |
+| `src/lib/versionChecker.ts`        | Implementar polling + toast (substitui no-op)            |
+| `src/App.tsx`                      | Chamar `startVersionChecker()` no mount                  |
+| `index.html`                       | Adicionar meta `Cache-Control: no-cache` para o HTML     |
+| `mem://constraints/auth-stability` | Adicionar nota documentando esta abordagem como aprovada |
 
-- `supabase/migrations/<novo>.sql` (adicionar coluna + policy SELECT por token)
-- `src/components/dashboard/PatientEvolutionDashboard.tsx`
-- `src/pages/ProfessionalAssessment.tsx`
+
+**Não tocar:** `main.tsx`, `AuthContext.tsx`, `supabase/client.ts`, `sw-push.js`, `PwaUpdateGuard.tsx`.
+
+## Resultado esperado
+
+- Ao publicar: em até ~15 min (ou imediatamente ao reabrir o atalho), o usuário vê toast **"Nova versão disponível — Atualizar"**.
+- Clique → reload limpo com `?v=hash` → carrega a nova versão.
+- Login continua intacto: zero interceptação de requests, zero limpeza automática de storage.
