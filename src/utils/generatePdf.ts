@@ -1134,7 +1134,9 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
 
   // ── Treatment Plan ──
   if (treatmentPlan) {
-    y = checkPage(doc, y, 30);
+    // RIGID RULE: Title + first phase header MUST stay together (no orphan title).
+    // Reserve: divider(8) + title(14) + phase header(18) + goal+focus min(24) = 64mm
+    y = checkPage(doc, y, 64);
     doc.setDrawColor(...COLORS.border);
     doc.setLineWidth(0.3);
     doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
