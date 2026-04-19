@@ -52,25 +52,17 @@ const ProfessionalAssessment = () => {
   useEffect(() => {
     if (!professionalId) return;
     const checkProfessional = async () => {
-      const { data, error } = await supabase
-        .from("professionals")
-        .select("id, full_name, subscription_status, approved, active, logo_url, user_id, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
-        .eq("id", professionalId)
-        .maybeSingle();
+      const { data, error } = await (supabase.rpc("get_public_professional_assessment_link" as any, {
+        _professional_id: professionalId,
+      }) as any);
 
-      const hasProAccess = !!data && (
-        data.subscription_status === "active" ||
-        data.is_partner === true ||
-        data.lifetime_treatment === true ||
-        data.premium_granted === true ||
-        (data.pro_access_expires_at && new Date(data.pro_access_expires_at) > new Date())
-      );
+      const professionalData = Array.isArray(data) ? data[0] : data;
 
-      if (error || !data || !data.approved || !data.active || !hasProAccess) {
+      if (error || !professionalData || !professionalData.approved || !professionalData.active || !professionalData.has_access) {
         setStep("inactive");
         return;
       }
-      setProfessional(data);
+      setProfessional(professionalData);
 
       // If reassessment, load original assessment data
       if (reassessmentId) {
@@ -122,14 +114,15 @@ const ProfessionalAssessment = () => {
   useEffect(() => {
     if (!patientToken) return;
     const loadPatient = async () => {
-      const { data } = await (supabase.from("patients" as any) as any)
-        .select("id, full_name, email, professional_id")
-        .eq("assessment_token", patientToken)
-        .maybeSingle();
-      if (data && data.professional_id === professionalId) {
-        setLinkedPatient(data);
-        setPatientName(data.full_name || "");
-        if (data.email) setPatientEmail(data.email);
+      const { data } = await (supabase.rpc("get_patient_assessment_link_context" as any, {
+        _token: patientToken,
+        _professional_id: professionalId,
+      }) as any);
+      const linkedPatientData = Array.isArray(data) ? data[0] : data;
+      if (linkedPatientData) {
+        setLinkedPatient(linkedPatientData);
+        setPatientName(linkedPatientData.full_name || "");
+        if (linkedPatientData.email) setPatientEmail(linkedPatientData.email);
       }
     };
     loadPatient();
