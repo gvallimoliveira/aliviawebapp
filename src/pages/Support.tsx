@@ -68,67 +68,47 @@ const Support = () => {
     setChecking(true);
     setCheckResult("idle");
 
-    const forceReload = async () => {
-      try {
-        if ("caches" in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map((k) => caches.delete(k)));
-        }
-        const regs = (await navigator.serviceWorker?.getRegistrations?.()) ?? [];
-        await Promise.all(regs.map((r) => r.unregister()));
-      } catch {
-        // ignore — proceed to reload anyway
-      }
-      // Bust HTTP cache too
-      window.location.replace(window.location.pathname + "?v=" + Date.now());
-    };
-
     try {
-      // 1) Source of truth: compare build hash via /version.json
+      // Aligned with src/lib/versionChecker.ts — pure version.json hash compare,
+      // NO Service Worker manipulation, NO cache clearing, NO automatic reload.
+      // Reload only happens on explicit user click (the toast button or the
+      // confirm below). See mem://constraints/auth-stability.
+      const localHash = (import.meta.env.VITE_BUILD_HASH as string | undefined) ?? "__dev__";
+
       let remoteHash: string | null = null;
       try {
-        const res = await fetch(`/version.json?t=${Date.now()}`, { cache: "no-store" });
+        const res = await fetch(`/version.json?t=${Date.now()}`, {
+          cache: "no-store",
+          credentials: "omit",
+        });
         if (res.ok) {
           const data = await res.json();
-          remoteHash = data?.hash ?? null;
+          remoteHash = typeof data?.hash === "string" ? data.hash : null;
         }
       } catch {
-        // network error — fall through to SW check
+        // network hiccup — treat as "current" rather than forcing anything
       }
-      const localHash = (import.meta as any).env?.VITE_BUILD_HASH ?? "__dev__";
 
-      if (remoteHash && localHash !== "__dev__" && remoteHash !== localHash) {
-        setCheckResult("updated");
-        setChecking(false);
-        // Give the user a moment to see the message, then hard-reload
-        setTimeout(forceReload, 800);
+      if (localHash === "__dev__") {
+        // Dev build has no real hash — nothing to compare against
+        setCheckResult("current");
         return;
       }
 
-      // 2) Fallback: ask the SW to check for an update and wait for install to settle
-      const registrations = (await navigator.serviceWorker?.getRegistrations?.()) ?? [];
-      let updated = false;
-
-      for (const reg of registrations) {
-        await reg.update();
-        // If an installing worker appeared, wait for it to become installed
-        const installing = reg.installing;
-        if (installing) {
-          await new Promise<void>((resolve) => {
-            installing.addEventListener("statechange", () => {
-              if (installing.state === "installed" || installing.state === "redundant") resolve();
-            });
-            setTimeout(resolve, 6000); // safety timeout
-          });
-        }
-        if (reg.waiting) updated = true;
-      }
-
-      if (updated) {
+      if (remoteHash && remoteHash !== localHash) {
         setCheckResult("updated");
-        registrations.forEach((r) => r.waiting?.postMessage({ type: "SKIP_WAITING" }));
-        setChecking(false);
-        setTimeout(forceReload, 800);
+        // Wait briefly so the user sees the message, then reload by adding a
+        // version query string. This bypasses the HTML cache without touching
+        // Service Workers, caches, or localStorage (auth stays intact).
+        setTimeout(() => {
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.set("v", remoteHash!);
+            window.location.replace(url.toString());
+          } catch {
+            window.location.reload();
+          }
+        }, 1000);
         return;
       }
 
