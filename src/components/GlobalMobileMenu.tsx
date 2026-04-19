@@ -201,13 +201,6 @@ const GlobalMobileMenu = () => {
             {user ? (
               <>
                 <button
-                  onClick={() => go("/conta")}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
-                >
-                  <UserCog className="h-4 w-4" />
-                  {language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}
-                </button>
-                <button
                   onClick={() => go("/admin")}
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
                 >
@@ -234,6 +227,15 @@ const GlobalMobileMenu = () => {
               </button>
             )}
           </nav>
+
+          <div className="mt-auto border-t border-border/40 p-4 text-center">
+            <AppVersionBadge />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+};
         </SheetContent>
       </Sheet>
     </>
