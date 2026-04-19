@@ -54,21 +54,25 @@ const GlobalMobileMenu = () => {
   const { t, toggleLanguage, language } = useLanguage();
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [otherDialogOpen, setOtherDialogOpen] = useState(false);
 
-  // Hide floating menu while a Radix Dialog/Sheet is open (it locks body scroll)
+  // Hide floating button while ANOTHER Radix Dialog/Sheet is open (not our own).
+  // We must not unmount while our own Sheet is open, otherwise the scroll lock
+  // is never released and the page freezes.
   useEffect(() => {
+    if (open) {
+      setOtherDialogOpen(false);
+      return;
+    }
     const check = () => {
-      const locked =
-        document.body.hasAttribute("data-scroll-locked") ||
-        !!document.querySelector('[role="dialog"][data-state="open"]');
-      setDialogOpen(locked);
+      const dialogs = document.querySelectorAll('[role="dialog"][data-state="open"]');
+      setOtherDialogOpen(dialogs.length > 0);
     };
     check();
     const obs = new MutationObserver(check);
-    obs.observe(document.body, { attributes: true, attributeFilter: ["data-scroll-locked", "style"], childList: true, subtree: true });
+    obs.observe(document.body, { attributes: true, attributeFilter: ["data-state"], childList: true, subtree: true });
     return () => obs.disconnect();
-  }, []);
+  }, [open]);
 
   // Hide on critical/auth flows
   const path = location.pathname;
@@ -83,7 +87,8 @@ const GlobalMobileMenu = () => {
     return path === p || path.startsWith(p + "/");
   });
 
-  if (inCriticalFlow || pageHasHeader || dialogOpen) return null;
+  // Only hide the floating button (not the Sheet) when something else is open.
+  const hideButton = inCriticalFlow || pageHasHeader || otherDialogOpen;
 
   const go = (target: string) => {
     setOpen(false);
@@ -98,17 +103,18 @@ const GlobalMobileMenu = () => {
 
   return (
     <>
-      {/* Floating button - mobile only. z-[60] sits above sticky page headers (z-50)
-          so it stays visible on Dashboard / internal pages without scrolling. */}
-      <Button
-        variant="default"
-        size="icon"
-        onClick={() => setOpen(true)}
-        aria-label="Menu"
-        className="md:hidden fixed top-3 right-3 z-[60] h-10 w-10 rounded-full shadow-lg bg-background/95 backdrop-blur border border-border text-foreground hover:bg-muted"
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
+      {/* Floating button - mobile only. z-[60] sits above sticky page headers (z-50). */}
+      {!hideButton && (
+        <Button
+          variant="default"
+          size="icon"
+          onClick={() => setOpen(true)}
+          aria-label="Menu"
+          className="md:hidden fixed top-3 right-3 z-[60] h-10 w-10 rounded-full shadow-lg bg-background/95 backdrop-blur border border-border text-foreground hover:bg-muted"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      )}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="w-72 p-0">
