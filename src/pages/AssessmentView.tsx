@@ -134,6 +134,9 @@ const AssessmentView = () => {
   const handleShareWhatsApp = async () => {
     if (!assessment?.diagnosis) return;
     setWhatsappLoading(true);
+    // Reserve the tab SYNCHRONOUSLY before any await — required for mobile popup blockers.
+    const { openWhatsAppDeferred } = await import("@/lib/whatsappShare");
+    const wa = openWhatsAppDeferred();
     try {
       const { generateAssessmentPdfBlob, generateBasicReportPdfBlob } = await import("@/utils/generatePdf");
       const { getPublicOrigin } = await import("@/lib/getPublicOrigin");
@@ -184,8 +187,9 @@ const AssessmentView = () => {
       const origin = getPublicOrigin();
       const pdfLine = pdfUrl ? `\n\n📄 ${isPt ? "Relatório em PDF" : "PDF Report"}:\n${pdfUrl}` : "";
       const text = `🩺 *Aliv.iA — ${isPt ? "Relatório de Avaliação" : "Assessment Report"}*\n\n📋 *${isPt ? "Hipótese" : "Hypothesis"}:* ${assessment.diagnosis.hypothesis}${pdfLine}\n\n💡 ${origin}`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+      wa.send(text);
     } catch {
+      wa.abort();
       toast({ title: isPt ? "Erro ao compartilhar" : "Error sharing", variant: "destructive" });
     } finally {
       setWhatsappLoading(false);
