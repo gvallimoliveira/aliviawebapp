@@ -260,13 +260,21 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!onboarding.isActive || !onboarding.step) return;
+
     const proTargets = ["pro-link", "pro-patients", "pro-subscription"];
+
     if (proTargets.includes(onboarding.step.targetId)) {
       if (hasProfessionalProfile && activeContext !== "professional" && activeContext !== "clinic") {
         setActiveContext("professional");
       }
       setActiveTab("professional");
-    } else if (onboarding.step.targetId.startsWith("patient-")) {
+      return;
+    }
+
+    // Important: patient onboarding must never force the dashboard into a tab
+    // that does not exist for the currently selected context. Otherwise the
+    // professional/clinic shells can render their tab bar with no content.
+    if (onboarding.step.targetId.startsWith("patient-") && activeContext === "personal") {
       setActiveTab("health");
     }
   }, [onboarding.step, onboarding.isActive, hasProfessionalProfile, activeContext, setActiveContext]);
