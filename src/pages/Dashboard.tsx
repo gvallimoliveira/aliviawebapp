@@ -181,7 +181,7 @@ const Dashboard = () => {
 
   // Reset tab on context change or URL params
   useEffect(() => {
-    if (activeContext === "clinic") {
+    if (activeContext === "clinic" && activeClinic) {
       if (tabFromUrl === "messages") setActiveTab("messages");
       else if (tabFromUrl === "agenda") setActiveTab("agenda");
       else if (tabFromUrl === "patients") setActiveTab("patients");
@@ -189,15 +189,38 @@ const Dashboard = () => {
       else if (tabFromUrl === "link") setActiveTab("link");
       else if (tabFromUrl === "analytics") setActiveTab("analytics");
       else setActiveTab("agenda");
-    } else if (activeContext === "professional") {
+    } else if (activeContext === "professional" && professional) {
       if (tabFromUrl === "messages") setActiveTab("messages");
       else if (tabFromUrl === "agenda") setActiveTab("agenda");
       else setActiveTab("professional");
-    } else {
+    } else if (activeContext === "personal") {
       if (tabFromUrl === "messages") setActiveTab("messages");
       else setActiveTab("health");
     }
-  }, [tabFromUrl, activeContext, activeClinic?.clinic_id]);
+    // If activeContext is "professional"/"clinic" but the underlying data
+    // (professional / activeClinic) hasn't arrived yet, do NOT set a tab —
+    // the rendered branch is still "personal" and would show empty content.
+    // The effect re-runs when professional/activeClinic become available.
+  }, [tabFromUrl, activeContext, activeClinic, professional]);
+
+  // Safety clamp: if activeTab doesn't belong to the currently rendered
+  // tab branch (race between context switch and async data), reset it to
+  // that branch's default so the first tab always shows content.
+  useEffect(() => {
+    const inClinicMode = isClinicMode && !!activeClinic;
+    const inProMode = !inClinicMode && activeContext === "professional" && !!professional;
+
+    const validTabs = inClinicMode
+      ? ["agenda", "patients", "team", "link", "analytics", "messages"]
+      : inProMode
+        ? ["professional", "agenda", "messages"]
+        : ["health", "messages"];
+
+    if (!validTabs.includes(activeTab)) {
+      setActiveTab(inClinicMode ? "agenda" : inProMode ? "professional" : "health");
+    }
+  }, [activeTab, activeContext, activeClinic, professional, isClinicMode]);
+
 
   useEffect(() => {
     setHasProfessionalProfile(!!professional);
