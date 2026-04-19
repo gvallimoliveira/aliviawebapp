@@ -1214,16 +1214,16 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     drawBadge(doc, "IA", MARGIN + titleW + 4, y - 3, COLORS.primary, COLORS.white);
     y += 6;
 
-    // Overview in rounded box
-    const overviewLines = doc.splitTextToSize(clinicalImpression.overview, CONTENT_WIDTH - 16);
-    const overviewH = overviewLines.length * 4.5 + 12;
-    y = checkPage(doc, y, overviewH + 20);
-    drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, overviewH, 4, COLORS.primaryLight, COLORS.primary);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(9);
-    doc.setTextColor(...COLORS.foreground);
-    doc.text(overviewLines, MARGIN + 8, y + 8);
-    y += overviewH + 4;
+    // Overview in rounded box — RIGID (italic 9; lineHeight 4.5; safety for italic descenders)
+    y = drawTextCard(doc, y, clinicalImpression.overview, {
+      fill: COLORS.primaryLight,
+      stroke: COLORS.primary,
+      padX: 8,
+      padY: 7,
+      body: { font: "helvetica", weight: "italic", size: 9, lineHeight: 4.5, textColor: COLORS.foreground },
+      bottomSafety: 2,
+    });
+    y += 1;
 
     // Therapeutic objectives
     if (clinicalImpression.therapeuticObjectives?.length > 0) {
