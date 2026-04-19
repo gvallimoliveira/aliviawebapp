@@ -315,6 +315,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
             onClick={async () => {
               setSharingPdf(true);
               try {
+                const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
                 const pdfBlob = await generateBasicReportPdfBlob({
                   diagnosis,
                   language,
@@ -323,6 +324,17 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   painScore: painScore,
                   anamnesisData: anamnesisData || undefined,
                 });
+
+                const nativeShareResult = await sharePdfFile({
+                  blob: pdfBlob,
+                  fileName: `AliviA_Resultado_${(patientName || "Paciente").replace(/\s+/g, "_")}.pdf`,
+                  title: "Aliv.iA",
+                  text: language === "pt" ? `Relatório em PDF de ${patientName || "Paciente"}` : `PDF report for ${patientName || "Patient"}`,
+                });
+
+                if (nativeShareResult === "shared" || nativeShareResult === "cancelled") {
+                  return;
+                }
 
                 const origin = getPublicOrigin();
                 const confidenceLine = diagnosis.confidence === "high" ? `\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}` : "";
@@ -352,11 +364,16 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                   a.download = `AliviA_Resultado.pdf`;
                   a.click();
                   URL.revokeObjectURL(url);
+                  toast({
+                    title: language === "pt" ? "PDF baixado" : "PDF downloaded",
+                    description: language === "pt" ? "O arquivo foi salvo para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The file was saved for manual sharing because direct attachment was not available on this device.",
+                  });
+                  return;
                 }
 
                 const pdfLine = pdfUrl ? `\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${pdfUrl}` : "";
                 const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${confidenceLine}${pdfLine}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                await shareTextOrOpenWhatsApp(text, "Aliv.iA");
               } catch (err) {
                 console.error("PDF sharing error:", err);
                 toast({
