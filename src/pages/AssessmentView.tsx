@@ -134,10 +134,8 @@ const AssessmentView = () => {
   const handleShareWhatsApp = async () => {
     if (!assessment?.diagnosis) return;
     setWhatsappLoading(true);
-    // Reserve the tab SYNCHRONOUSLY before any await — required for mobile popup blockers.
-    const { openWhatsAppDeferred } = await import("@/lib/whatsappShare");
-    const wa = openWhatsAppDeferred();
     try {
+      const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
       const { generateAssessmentPdfBlob, generateBasicReportPdfBlob } = await import("@/utils/generatePdf");
       const { getPublicOrigin } = await import("@/lib/getPublicOrigin");
       let pdfBlob: Blob;
@@ -162,6 +160,17 @@ const AssessmentView = () => {
         });
       }
 
+      const nativeShareResult = await sharePdfFile({
+        blob: pdfBlob,
+        fileName: `AliviA_Relatorio_${(assessment.patient_name || "Paciente").replace(/\s+/g, "_")}.pdf`,
+        title: "Aliv.iA",
+        text: isPt ? `Relatório em PDF de ${assessment.patient_name || "Paciente"}` : `PDF report for ${assessment.patient_name || "Patient"}`,
+      });
+
+      if (nativeShareResult === "shared" || nativeShareResult === "cancelled") {
+        return;
+      }
+
       const filePath = `${assessment.id}_view_${Date.now()}.pdf`;
       const { supabase } = await import("@/integrations/supabase/client");
       const { error: uploadError } = await supabase.storage
@@ -182,14 +191,18 @@ const AssessmentView = () => {
         a.download = `AliviA_Resultado.pdf`;
         a.click();
         URL.revokeObjectURL(url);
+        toast({
+          title: isPt ? "PDF baixado" : "PDF downloaded",
+          description: isPt ? "O arquivo foi salvo para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The file was saved for manual sharing because direct attachment was not available on this device.",
+        });
+        return;
       }
 
       const origin = getPublicOrigin();
       const pdfLine = pdfUrl ? `\n\n📄 ${isPt ? "Relatório em PDF" : "PDF Report"}:\n${pdfUrl}` : "";
       const text = `🩺 *Aliv.iA — ${isPt ? "Relatório de Avaliação" : "Assessment Report"}*\n\n📋 *${isPt ? "Hipótese" : "Hypothesis"}:* ${assessment.diagnosis.hypothesis}${pdfLine}\n\n💡 ${origin}`;
-      wa.send(text);
+      await shareTextOrOpenWhatsApp(text, "Aliv.iA");
     } catch {
-      wa.abort();
       toast({ title: isPt ? "Erro ao compartilhar" : "Error sharing", variant: "destructive" });
     } finally {
       setWhatsappLoading(false);

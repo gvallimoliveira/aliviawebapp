@@ -21,8 +21,69 @@ export interface DeferredWhatsApp {
   abort: () => void;
 }
 
+export type NativeShareResult = "shared" | "cancelled" | "unsupported";
+
+interface NativePdfShareOptions {
+  blob: Blob;
+  fileName: string;
+  text: string;
+  title?: string;
+}
+
 const buildUrl = (text: string) =>
   `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+const isAbortError = (error: unknown) =>
+  error instanceof DOMException && error.name === "AbortError";
+
+export async function sharePdfFile({ blob, fileName, text, title }: NativePdfShareOptions): Promise<NativeShareResult> {
+  if (typeof navigator === "undefined" || typeof navigator.share !== "function") {
+    return "unsupported";
+  }
+
+  const file = new File([blob], fileName, { type: "application/pdf" });
+  const shareData: ShareData = title ? { files: [file], text, title } : { files: [file], text };
+
+  if (typeof navigator.canShare === "function" && !navigator.canShare({ files: [file] })) {
+    return "unsupported";
+  }
+
+  try {
+    await navigator.share(shareData);
+    return "shared";
+  } catch (error) {
+    if (isAbortError(error)) {
+      return "cancelled";
+    }
+    console.warn("Native PDF share failed, falling back.", error);
+    return "unsupported";
+  }
+}
+
+export async function shareTextOrOpenWhatsApp(text: string, title?: string): Promise<void> {
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    try {
+      await navigator.share(title ? { title, text } : { text });
+      return;
+    } catch (error) {
+      if (isAbortError(error)) {
+        return;
+      }
+      console.warn("Native text share failed, falling back to WhatsApp URL.", error);
+    }
+  }
+
+  try {
+    const popup = window.open(buildUrl(text), "_blank");
+    if (popup) {
+      return;
+    }
+  } catch {
+    // ignore and fall back to same-tab navigation
+  }
+
+  window.location.href = buildUrl(text);
+}
 
 export function openWhatsAppDeferred(): DeferredWhatsApp {
   // Reserve a tab synchronously so the browser treats it as a user-initiated

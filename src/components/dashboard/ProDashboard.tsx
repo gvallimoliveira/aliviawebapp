@@ -363,10 +363,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       return;
     }
     if (!assessment.diagnosis) return;
-    // Reserve the tab SYNCHRONOUSLY before any await — required for mobile popup blockers.
-    const { openWhatsAppDeferred } = await import("@/lib/whatsappShare");
-    const wa = openWhatsAppDeferred();
     try {
+      const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
       const lang = document.documentElement.lang === "en" ? "en" : "pt";
       let proNote: string | undefined;
       if (professional?.id) {
@@ -391,6 +389,18 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         clinicLogoUrl: isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined,
         clinicName: isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined,
       });
+      const patientLabel = assessment.patient_name || "Paciente";
+      const nativeShareResult = await sharePdfFile({
+        blob: pdfBlob,
+        fileName: `AliviA_Relatorio_${patientLabel.replace(/\s+/g, "_")}.pdf`,
+        title: "Aliv.iA",
+        text: lang === "pt" ? `Relatório em PDF de ${patientLabel}` : `PDF report for ${patientLabel}`,
+      });
+
+      if (nativeShareResult === "shared" || nativeShareResult === "cancelled") {
+        return;
+      }
+
       const filePath = `${assessment.id}_pro_${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from("assessment-reports")
@@ -410,15 +420,18 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         a.download = `AliviA_Relatorio_Profissional.pdf`;
         a.click();
         URL.revokeObjectURL(url);
+        toast({
+          title: lang === "pt" ? "PDF baixado" : "PDF downloaded",
+          description: lang === "pt" ? "O arquivo foi salvo para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The file was saved for manual sharing because direct attachment was not available on this device.",
+        });
+        return;
       }
 
       const origin = getPublicOrigin();
-      const patientLabel = assessment.patient_name || "Paciente";
       const pdfLine = pdfUrl ? `\n\n📄 Relatório em PDF:\n${pdfUrl}` : "";
       const text = `🩺 *Aliv.iA — Relatório Profissional*\n\n👤 *Paciente:* ${patientLabel}\n📋 *Hipótese:* ${assessment.diagnosis.hypothesis}${pdfLine}\n\n💡 ${origin}`;
-      wa.send(text);
+      await shareTextOrOpenWhatsApp(text, "Aliv.iA");
     } catch {
-      wa.abort();
       toast({ title: "Erro ao compartilhar PDF", variant: "destructive" });
     }
   };
