@@ -54,11 +54,19 @@ const ProfessionalAssessment = () => {
     const checkProfessional = async () => {
       const { data, error } = await supabase
         .from("professionals")
-        .select("id, full_name, subscription_status, approved, active, logo_url, user_id")
+        .select("id, full_name, subscription_status, approved, active, logo_url, user_id, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
         .eq("id", professionalId)
         .maybeSingle();
 
-      if (error || !data || !data.approved || !data.active || data.subscription_status !== "active") {
+      const hasProAccess = !!data && (
+        data.subscription_status === "active" ||
+        data.is_partner === true ||
+        data.lifetime_treatment === true ||
+        data.premium_granted === true ||
+        (data.pro_access_expires_at && new Date(data.pro_access_expires_at) > new Date())
+      );
+
+      if (error || !data || !data.approved || !data.active || !hasProAccess) {
         setStep("inactive");
         return;
       }
