@@ -1666,6 +1666,27 @@ export type Database = {
         Args: { _clinic_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["clinic_role"]
       }
+      get_patient_assessment_link_context: {
+        Args: { _clinic_id?: string; _professional_id?: string; _token: string }
+        Returns: {
+          clinic_id: string
+          email: string
+          full_name: string
+          id: string
+          professional_id: string
+        }[]
+      }
+      get_public_professional_assessment_link: {
+        Args: { _professional_id: string }
+        Returns: {
+          active: boolean
+          approved: boolean
+          full_name: string
+          has_access: boolean
+          id: string
+          logo_url: string
+        }[]
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_clinic_member: {
         Args: { _clinic_id: string; _user_id: string }
