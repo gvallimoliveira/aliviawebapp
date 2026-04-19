@@ -131,6 +131,9 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
   const handleShareWhatsApp = async () => {
     if (!diagnosis) return;
     setWhatsappLoading(true);
+    // Reserve the tab SYNCHRONOUSLY before any await — required for mobile popup blockers.
+    const { openWhatsAppDeferred } = await import("@/lib/whatsappShare");
+    const wa = openWhatsAppDeferred();
     try {
       const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
       const pdfBlob = await generateAssessmentPdfBlob({ diagnosis, treatmentPlan: plan, language, userName: user?.user_metadata?.full_name || "", anamnesisData, painRegions, testResults, professionalLogoUrl });
@@ -168,8 +171,9 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
         ? `\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${publicUrl}`
         : "";
       const text = `🩺 *Aliv.iA — ${language === "pt" ? "Avaliação Premium Completa" : "Complete Premium Assessment"}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${pdfLine}\n\n💡 ${language === "pt" ? "Faça sua avaliação" : "Start your assessment"}:\n${origin}`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+      wa.send(text);
     } catch (err) {
+      wa.abort();
       console.error("WhatsApp share error:", err);
       toast({ title: t("pdf.error"), variant: "destructive" });
     } finally {
