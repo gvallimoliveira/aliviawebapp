@@ -236,10 +236,5 @@ const GlobalMobileMenu = () => {
     </>
   );
 };
-        </SheetContent>
-      </Sheet>
-    </>
-  );
-};
 
 export default GlobalMobileMenu;
