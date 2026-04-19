@@ -38,6 +38,11 @@ import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generat
 import { mockClinicalImpressions, mockEvolutionSummary } from "@/data/mockPatientData";
 import PatientFilesSection from "./PatientFilesSection";
 import PatientPhotosSection from "./PatientPhotosSection";
+import {
+  buildPersonalizedAssessmentLink,
+  buildReassessmentLink,
+  ensurePatientAssessmentToken,
+} from "@/lib/assessmentLinks";
 import AddPatientModal, { type PatientToEdit } from "./AddPatientModal";
 import ManualAssessmentModal from "./ManualAssessmentModal";
 
@@ -1318,19 +1323,11 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                         onClick={async (e) => {
                           e.stopPropagation();
                           try {
-                            let token = patientRec.assessment_token;
-                            if (!token) {
-                              token = (crypto as any).randomUUID ? (crypto as any).randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-                              const { error } = await (supabase.from("patients" as any) as any)
-                                .update({ assessment_token: token })
-                                .eq("id", patientRec.id);
-                              if (error) throw error;
-                              patientRec.assessment_token = token;
-                            }
-                            const base = clinicId
-                              ? `${window.location.origin}/assessment/clinic/${clinicId}`
-                              : `${window.location.origin}/assessment/professional/${professionalId}`;
-                            const link = `${base}?patient=${token}`;
+                            const token = await ensurePatientAssessmentToken(patientRec);
+                            const link = buildPersonalizedAssessmentLink(
+                              { professionalId, clinicId },
+                              token,
+                            );
                             await navigator.clipboard.writeText(link);
                             toast({
                               title: language === "pt" ? "Link copiado!" : "Link copied!",
