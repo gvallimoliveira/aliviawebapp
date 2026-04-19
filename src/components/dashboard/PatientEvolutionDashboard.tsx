@@ -1687,6 +1687,19 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                   URL.revokeObjectURL(url);
 
                   if (!isDemo) {
+                    const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
+                    const nativeShareResult = await sharePdfFile({
+                      blob,
+                      fileName: `AliviA_Evolucao_${patient.name.replace(/\s+/g, "_")}.pdf`,
+                      title: "Aliv.iA",
+                      text: `${t("evolution.title")} - ${patient.name}`,
+                    });
+
+                    if (nativeShareResult === "shared" || nativeShareResult === "cancelled") {
+                      toast({ title: t("evolution.success") });
+                      return;
+                    }
+
                     // Upload to bucket for sharing (real mode only)
                     const fileName = `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
                     const { error: uploadError } = await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
@@ -1695,9 +1708,18 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                     if (!uploadError) {
                       const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
                       if (publicUrl?.publicUrl) {
-                        const whatsappText = encodeURIComponent(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`);
-                        window.open(`https://wa.me/?text=${whatsappText}`, "_blank");
+                        await shareTextOrOpenWhatsApp(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`, "Aliv.iA");
+                      } else {
+                        toast({
+                          title: t("evolution.success"),
+                          description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device.",
+                        });
                       }
+                    } else {
+                      toast({
+                        title: t("evolution.success"),
+                        description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device.",
+                      });
                     }
                   }
 
