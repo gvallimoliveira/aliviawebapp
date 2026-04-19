@@ -1134,7 +1134,9 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
 
   // ── Treatment Plan ──
   if (treatmentPlan) {
-    y = checkPage(doc, y, 30);
+    // RIGID RULE: Title + first phase header MUST stay together (no orphan title).
+    // Reserve: divider(8) + title(14) + phase header(18) + goal+focus min(24) = 64mm
+    y = checkPage(doc, y, 64);
     doc.setDrawColor(...COLORS.border);
     doc.setLineWidth(0.3);
     doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
@@ -1180,67 +1182,70 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
       doc.text(phase.duration, PAGE_WIDTH - MARGIN - doc.getTextWidth(phase.duration) - 6, y + 9);
       y += 18;
 
-      // Goal & Focus
+      // Goal & Focus — RIGID: label on its own line indent, value wraps fully within SECTION_TEXT_W
       if (phase.goal) {
-        y = checkPage(doc, y, 12);
+        const labelGoal = isPt ? "Objetivo:" : "Goal:";
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
+        const labelGoalW = doc.getTextWidth(labelGoal + " ");
+        const goalLines = doc.splitTextToSize(phase.goal, SECTION_TEXT_W - labelGoalW - 2);
+        y = checkPage(doc, y, goalLines.length * 3.5 + 4);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(isPt ? "Objetivo:" : "Goal:", SECTION_X, y);
+        doc.text(labelGoal, SECTION_X, y);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
-        const goalLines = doc.splitTextToSize(phase.goal, SECTION_TEXT_W - 24);
-        doc.text(goalLines, SECTION_X + 22, y);
+        doc.text(goalLines, SECTION_X + labelGoalW + 2, y);
         y += goalLines.length * 3.5 + 4;
       }
 
       if (phase.focus) {
-        y = checkPage(doc, y, 12);
+        const labelFocus = isPt ? "Foco:" : "Focus:";
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
+        const labelFocusW = doc.getTextWidth(labelFocus + " ");
+        const focusLines = doc.splitTextToSize(phase.focus, SECTION_TEXT_W - labelFocusW - 2);
+        y = checkPage(doc, y, focusLines.length * 3.5 + 4);
         doc.setTextColor(...COLORS.foreground);
-        doc.text(isPt ? "Foco:" : "Focus:", SECTION_X, y);
+        doc.text(labelFocus, SECTION_X, y);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.muted);
-        const focusLines = doc.splitTextToSize(phase.focus, SECTION_TEXT_W - 24);
-        doc.text(focusLines, SECTION_X + 22, y);
+        doc.text(focusLines, SECTION_X + labelFocusW + 2, y);
         y += focusLines.length * 3.5 + 4;
       }
 
       // Exercises
       for (const ex of phase.exercises) {
-        y = checkPage(doc, y, 25);
+        // Pre-compute heights to keep entire exercise block together
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        const exNameFull = `- ${ex.name}`;
+        const nameLines = doc.splitTextToSize(exNameFull, LIST_TEXT_W);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        const descLines = doc.splitTextToSize(ex.description, LIST_TEXT_W - 4);
+        const blockH = nameLines.length * 3.8 + 4 + descLines.length * 3.5 + 6;
+        y = checkPage(doc, y, blockH);
 
-        // Exercise name with wrapping
+        // Exercise name — always on its own line(s); category badge BELOW name to avoid overlap
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
+        doc.text(nameLines, LIST_X, y);
+        y += nameLines.length * 3.8;
+
+        // Category badge on its own line, indented (small, muted, no measurement overlap risk)
         const catLabel = ex.category.replace(/_/g, " ");
         const catBadgeText = `[${catLabel}]`;
-        const exNameFull = `- ${ex.name}`;
-        const exNameW = doc.getTextWidth(exNameFull + "  " + catBadgeText);
-        if (exNameW > LIST_TEXT_W) {
-          const nameLines = doc.splitTextToSize(exNameFull, LIST_TEXT_W);
-          doc.text(nameLines, LIST_X, y);
-          y += nameLines.length * 3.5;
-          doc.setFontSize(6);
-          doc.setTextColor(...COLORS.muted);
-          doc.text(catBadgeText, LIST_X + 4, y);
-          y += 3;
-        } else {
-          doc.text(exNameFull, LIST_X, y);
-          doc.setFontSize(6);
-          doc.setTextColor(...COLORS.muted);
-          doc.text(catBadgeText, LIST_X + doc.getTextWidth(exNameFull + "  "), y);
-          y += 4;
-        }
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(6);
+        doc.setTextColor(...COLORS.muted);
+        doc.text(catBadgeText, LIST_X + 4, y);
+        y += 3.5;
 
         // Description
         doc.setFont("helvetica", "normal");
         doc.setFontSize(7.5);
         doc.setTextColor(...COLORS.muted);
-        const descLines = doc.splitTextToSize(ex.description, LIST_TEXT_W - 4);
-        y = checkPage(doc, y, descLines.length * 3.5);
         doc.text(descLines, LIST_X + 4, y);
         y += descLines.length * 3.5 + 2;
 
@@ -1250,7 +1255,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
         const setsRepsText = `${ex.sets} x ${ex.reps}  |  ${ex.frequency}`;
         const srLines = doc.splitTextToSize(setsRepsText, LIST_TEXT_W - 4);
         doc.text(srLines, LIST_X + 4, y);
-        y += srLines.length * 3.5 + 2.5;
+        y += srLines.length * 3.5 + 3;
       }
 
       y += 4;
