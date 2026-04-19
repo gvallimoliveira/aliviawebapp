@@ -1868,15 +1868,15 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
 
   // ── AI Narrative Summary ──
   y = renderSectionTitle(doc, y, isPt ? "Resumo Narrativo (IA)" : "AI Narrative Summary", COLORS.primary);
-  const narrativeLines = doc.splitTextToSize(options.summary.narrative, TEXT_MAX_WIDTH);
-  const narrativeH = narrativeLines.length * 3.5 + 12;
-  y = checkPage(doc, y, narrativeH);
-  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, narrativeH, 4, COLORS.primaryLight, COLORS.primary);
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(8);
-  doc.setTextColor(...COLORS.foreground);
-  doc.text(narrativeLines, MARGIN + 6, y + 8);
-  y += narrativeH + 6;
+  y = drawTextCard(doc, y, options.summary.narrative, {
+    fill: COLORS.primaryLight,
+    stroke: COLORS.primary,
+    padX: 6,
+    padY: 7,
+    body: { font: "helvetica", weight: "italic", size: 8, lineHeight: 4, textColor: COLORS.foreground },
+    bottomSafety: 2,
+  });
+  y += 4;
 
   // ── Conclusion + Recommendation Badge ──
   y = renderSectionTitle(doc, y, isPt ? "Conclusão" : "Conclusion", COLORS.primary);
