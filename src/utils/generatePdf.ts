@@ -1446,15 +1446,15 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
     y += 8;
     y = renderSectionTitle(doc, y, isPt ? "Notas do Profissional" : "Professional Notes", COLORS.primary);
-    const noteLines = doc.splitTextToSize(professionalNotes, CONTENT_WIDTH - 12);
-    const noteH = noteLines.length * 3.5 + 12;
-    y = checkPage(doc, y, noteH);
-    drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, noteH, 4, [245, 243, 240], COLORS.border);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8);
-    doc.setTextColor(...COLORS.muted);
-    doc.text(noteLines, MARGIN + 6, y + 8);
-    y += noteH + 6;
+    y = drawTextCard(doc, y, professionalNotes, {
+      fill: [245, 243, 240],
+      stroke: COLORS.border,
+      padX: 6,
+      padY: 7,
+      body: { font: "helvetica", weight: "italic", size: 8, lineHeight: 4, textColor: COLORS.muted },
+      bottomSafety: 2,
+    });
+    y += 4;
   }
 
   // ── Disclaimer ──
