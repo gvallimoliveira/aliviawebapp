@@ -42,22 +42,36 @@ export async function sharePdfFile({ blob, fileName, text, title }: NativePdfSha
   }
 
   const file = new File([blob], fileName, { type: "application/pdf" });
-  const shareData: ShareData = title ? { files: [file], text, title } : { files: [file], text };
+  const fullData: ShareData = title ? { files: [file], text, title } : { files: [file], text };
+  const filesOnlyData: ShareData = { files: [file] };
 
-  if (typeof navigator.canShare === "function" && !navigator.canShare({ files: [file] })) {
-    return "unsupported";
-  }
+  // iOS Safari/PWA quirk: navigator.canShare({files}) sometimes returns false
+  // even when share with files actually works. So we don't gate on canShare —
+  // we attempt the share, and only fall back if it actually throws (non-abort).
+  // We also try a "files only" payload as a second attempt because some iOS
+  // versions reject share calls that combine files + text.
+  const attempts: ShareData[] = [fullData];
+  if (text || title) attempts.push(filesOnlyData);
 
-  try {
-    await navigator.share(shareData);
-    return "shared";
-  } catch (error) {
-    if (isAbortError(error)) {
-      return "cancelled";
+  for (let i = 0; i < attempts.length; i++) {
+    try {
+      await navigator.share(attempts[i]);
+      return "shared";
+    } catch (error) {
+      if (isAbortError(error)) {
+        return "cancelled";
+      }
+      // If this wasn't the last attempt, try the simpler payload.
+      if (i < attempts.length - 1) {
+        console.warn("Native PDF share attempt failed, retrying with files-only payload.", error);
+        continue;
+      }
+      console.warn("Native PDF share failed, falling back to link.", error);
+      return "unsupported";
     }
-    console.warn("Native PDF share failed, falling back.", error);
-    return "unsupported";
   }
+
+  return "unsupported";
 }
 
 export async function shareTextOrOpenWhatsApp(text: string, title?: string): Promise<void> {
