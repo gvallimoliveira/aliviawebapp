@@ -407,14 +407,24 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
             onClick={async () => {
               setDownloadingPdf(true);
               try {
-                const pdfBlob = await generateBasicReportPdfBlob({
-                  diagnosis,
-                  language,
-                  patientName: patientName || undefined,
-                  painRegions: painRegions || undefined,
-                  painScore: painScore,
-                  anamnesisData: anamnesisData || undefined,
-                });
+                const hasPremiumData = mode === "premium" && testResults;
+                const pdfBlob = hasPremiumData
+                  ? await generateAssessmentPdfBlob({
+                      diagnosis,
+                      language,
+                      userName: patientName || "",
+                      anamnesisData: anamnesisData || undefined,
+                      painRegions: painRegions || undefined,
+                      testResults,
+                    })
+                  : await generateBasicReportPdfBlob({
+                      diagnosis,
+                      language,
+                      patientName: patientName || undefined,
+                      painRegions: painRegions || undefined,
+                      painScore: painScore,
+                      anamnesisData: anamnesisData || undefined,
+                    });
                 const url = URL.createObjectURL(pdfBlob);
                 const a = document.createElement("a");
                 a.href = url;
