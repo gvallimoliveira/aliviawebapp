@@ -81,8 +81,6 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
         }
 
         setNewConvPatients(results);
-
-        setNewConvPatients(Array.from(uniqueUsers.values()));
       } else if (mode === "patient" && user) {
         const { data: assessments } = await supabase
           .from("assessments")
