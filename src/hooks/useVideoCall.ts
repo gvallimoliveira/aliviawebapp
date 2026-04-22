@@ -156,6 +156,43 @@ export function useVideoCall(conversationId: string) {
     setState("calling");
     sendSignal({ type: "call-request", fromName: callerName || "Usuário" });
 
+    // Push notification to recipient about incoming video call
+    (async () => {
+      try {
+        const { data: conv } = await supabase
+          .from("conversations")
+          .select("patient_user_id, professional_id")
+          .eq("id", conversationId)
+          .single();
+        if (!conv) return;
+
+        let recipientUserId: string | null = null;
+        if (conv.patient_user_id === user.id) {
+          const { data: pro } = await supabase
+            .from("professionals")
+            .select("user_id")
+            .eq("id", conv.professional_id)
+            .single();
+          recipientUserId = pro?.user_id || null;
+        } else {
+          recipientUserId = conv.patient_user_id;
+        }
+
+        if (recipientUserId) {
+          await supabase.functions.invoke("send-push-notification", {
+            body: {
+              user_id: recipientUserId,
+              title: "Videochamada — Aliv.iA",
+              body: `${callerName || "Alguém"} está ligando para você`,
+              url: `/dashboard?tab=messages&conv=${conversationId}`,
+            },
+          });
+        }
+      } catch (e) {
+        console.warn("Push notification for video call failed:", e);
+      }
+    })();
+
     timeoutRef.current = setTimeout(() => {
       if (pcRef.current?.connectionState !== "connected") {
         toast({ title: t("chat.video_no_answer") });

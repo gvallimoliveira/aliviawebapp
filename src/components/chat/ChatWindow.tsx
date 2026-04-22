@@ -169,6 +169,47 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
       content,
     });
 
+    // Push notification to recipient (fire-and-forget)
+    (async () => {
+      try {
+        const { data: conv } = await supabase
+          .from("conversations")
+          .select("patient_user_id, professional_id")
+          .eq("id", conversationId)
+          .single();
+        if (!conv) return;
+
+        // Determine recipient user_id
+        let recipientUserId: string | null = null;
+        if (conv.patient_user_id === user.id) {
+          // Sender is patient → notify professional
+          const { data: pro } = await supabase
+            .from("professionals")
+            .select("user_id")
+            .eq("id", conv.professional_id)
+            .single();
+          recipientUserId = pro?.user_id || null;
+        } else {
+          // Sender is professional → notify patient
+          recipientUserId = conv.patient_user_id;
+        }
+
+        if (recipientUserId) {
+          const senderName = user.user_metadata?.full_name || "Alguém";
+          await supabase.functions.invoke("send-push-notification", {
+            body: {
+              user_id: recipientUserId,
+              title: "Nova mensagem — Aliv.iA",
+              body: `${senderName}: ${content.slice(0, 80)}${content.length > 80 ? "…" : ""}`,
+              url: `/dashboard?tab=messages&conv=${conversationId}`,
+            },
+          });
+        }
+      } catch (e) {
+        console.warn("Push notification for message failed:", e);
+      }
+    })();
+
     setSending(false);
   };
 
