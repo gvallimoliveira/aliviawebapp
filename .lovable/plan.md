@@ -1,128 +1,94 @@
 
-Objetivo: corrigir de forma estrutural todo o fluxo de link de pré-avaliação personalizado para profissionais e clínicas, garantindo que:
-- o link público abra corretamente
-- o paciente sem cadastro consiga entrar, ver o welcome e concluir a pré-avaliação
-- a avaliação fique vinculada ao profissional/clínica corretos
-- o paciente alimente a listagem existente sem duplicações indevidas
-- não haja regressão nos fluxos já funcionando
 
-O que a revisão do código mostrou
+# Revisao do fluxo de mensagens: permissoes e filtros
 
-1. O fluxo profissional está só parcialmente corrigido
-- `ProfessionalAssessment.tsx` já usa RPC pública segura para validar o profissional e buscar o paciente por token.
-- Porém o link personalizado é gerado em `PatientEvolutionDashboard.tsx` com `window.location.origin`, não com `getPublicOrigin()`.
-- Isso pode copiar domínio incorreto em preview/ambientes intermediários.
+## Problemas identificados
 
-2. O fluxo da clínica está estruturalmente incompleto
-- `ClinicAssessment.tsx` ainda consulta `clinics` diretamente com `.from("clinics")`.
-- Para visitante/paciente sem login, isso depende de RLS pública e não segue o mesmo padrão seguro do fluxo profissional.
-- Pior: a página da clínica nem lê `?patient=token`, então o “link personalizado” por paciente da clínica hoje não fecha o ciclo.
+### 1. Filtros invertidos no MessagesTab
+Quando um profissional clica no filtro "Pacientes", o componente mostra `ConversationList mode="patient"` -- que exibe as conversas onde o usuario e paciente (falando com profissionais). O correto seria mostrar as conversas com seus pacientes (mode="professional"). Os filtros estao semanticamente invertidos.
 
-3. O vínculo paciente ↔ avaliação ainda não está robusto
-- Ao concluir a avaliação, o código tenta inserir um novo paciente em `patients`.
-- Se o paciente já existia e recebeu link personalizado, o comportamento correto deveria ser atualizar/vincular o cadastro existente, não criar outro.
-- Isso explica risco de duplicação e perda da promessa “cair no card certo do paciente”.
+### 2. Popup "iniciar conversa" mostra contatos errados
+Consequencia do problema acima: ao clicar "Pacientes" e depois "Iniciar conversa", o popup carrega profissionais em vez de pacientes.
 
-4. A geração do link personalizado está centralizada no lugar errado
-- Hoje o token é criado/adicionado direto no dashboard, inline.
-- Não existe uma camada central para “garantir token + montar URL pública + respeitar profissional/clínica”.
-- Isso aumenta o risco de novos retrocessos.
+### 3. Permissoes de inicio de conversa incompletas
+Regras desejadas:
+- **Paciente comum** (busca profissional no marketplace): so o paciente inicia
+- **Profissional solo** que recebeu pre-avaliacao de paciente com conta Alivia: ambos podem iniciar
+- **Clinica**: ambos podem iniciar
 
-5. Há inconsistência entre link geral e link personalizado
-- Link geral: profissional/clínica.
-- Link personalizado: depende de `assessment_token`.
-- Mas as páginas públicas não estão espelhadas entre si: profissional trata token; clínica não.
+Situacao atual:
+- Clinic mode: `canInitiateConversation=true` -- OK para o lado profissional, mas o lado paciente tambem permite iniciar (default true no ConversationList)
+- Solo mode: `canInitiateConversation=false` -- impede o profissional de iniciar, mas permite o paciente iniciar sem restricao
+- Personal mode: `canInitiateConversation=false` -- correto parcialmente, mas paciente comum do marketplace consegue iniciar conversa pelo ConversationList default
 
-Plano de correção definitiva
+---
 
-1. Consolidar a arquitetura do link público
-- Criar um padrão único para geração de links públicos:
-  - base pública sempre via `getPublicOrigin()`
-  - rota correta por contexto:
-    - profissional: `/assessment/professional/:professionalId`
-    - clínica: `/assessment/clinic/:clinicId`
-  - token do paciente opcional via `?patient=...`
-  - reavaliação opcional via `?reassessment=...`
-- Remover qualquer montagem de URL pública com `window.location.origin` nos fluxos de avaliação.
+## Plano de correcao
 
-2. Padronizar acesso público com RPCs seguras
-- Manter o padrão já iniciado no fluxo profissional.
-- Adicionar equivalente para clínica:
-  - função pública segura para retornar apenas dados mínimos da clínica e se ela está apta a receber pré-avaliação
-- Assim, visitante anônimo nunca dependerá de leitura direta sensível de tabela para abrir o link.
+### 1. Corrigir filtros no MessagesTab
 
-3. Completar o fluxo personalizado da clínica
-- Fazer `ClinicAssessment.tsx` ler `searchParams.get("patient")`.
-- Buscar o paciente por token usando a RPC já existente com `_clinic_id`.
-- Pré-preencher nome/email quando houver token válido.
-- Exibir mensagem de “link personalizado” igual ao fluxo profissional.
-- Bloquear edição do nome quando o link estiver vinculado a paciente existente, se isso for a regra desejada já usada no fluxo profissional.
+Inverter a logica dos filtros para que correspondam a expectativa do profissional:
+- Filtro **"Pacientes"** → mostra `ConversationList mode="professional"` (conversas do profissional com seus pacientes)
+- Filtro **"Profissionais"** → mostra `ConversationList mode="patient"` (conversas onde o usuario e paciente)
 
-4. Corrigir a vinculação no final da avaliação
-- Ao concluir uma avaliação com `patient` token:
-  - localizar o paciente existente
-  - atualizar o cadastro existente com dados complementares faltantes (CPF, nascimento etc. quando fizer sentido)
-  - evitar novo insert cego em `patients`
-- Só criar novo paciente quando:
-  - não houver token personalizado
-  - e ainda não existir um paciente correspondente no contexto atual
-- Aplicar isso tanto para profissional quanto para clínica.
+### 2. Ajustar permissoes por contexto
 
-5. Blindar a relação com a listagem de pacientes
-- Garantir que a avaliação gerada preserve vínculo com:
-  - `professional_id` ou `clinic_id`
-  - nome/email corretos do paciente
-  - eventual `original_assessment_id` quando for reavaliação
-- Revisar a lógica de merge da listagem (`PatientEvolutionDashboard`) para que o card do paciente reconheça corretamente os casos:
-  - paciente com email
-  - paciente sem email
-  - paciente criado manualmente
-  - paciente vindo de link personalizado
-- O objetivo é evitar duplicata por nome/email quando já existe `patientRecord`.
+**MessagesTab** passara `canInitiateConversation` corretamente para cada ConversationList:
 
-6. Centralizar a geração do token/link
-- Extrair do dashboard a lógica de:
-  - gerar token quando não existir
-  - persistir token no paciente
-  - construir URL pública final
-- Usar helper reutilizável para profissional e clínica.
-- Isso reduz retrocesso e evita divergência entre os botões de copiar link.
+| Contexto Dashboard | ConversationList mode="professional" (com pacientes) | ConversationList mode="patient" (com profissionais) |
+|---|---|---|
+| Clinica | canInitiate = true | canInitiate = true (paciente com vinculo) |
+| Solo | canInitiate = true (pacientes com conta) | canInitiate = false (so responde) |
+| Pessoal (sem perfil pro) | N/A | canInitiate = true (marketplace) |
 
-7. Revisar segurança e regras de dados
-- Confirmar que o acesso público expõe só o mínimo necessário.
-- Manter PII protegida, sem reabrir política pública ampla em `patients`.
-- Continuar usando RPC/SECURITY DEFINER para lookup por token, em vez de SELECT público irrestrito.
+### 3. Refinar logica de contatos no popup
 
-8. Validar ponta a ponta com cenários reais
-- Testar manualmente estes cenários após implementar:
-  1. link geral do profissional abre normalmente
-  2. link personalizado do profissional abre com nome pré-preenchido
-  3. avaliação concluída cai no card correto do paciente
-  4. link geral da clínica abre normalmente
-  5. link personalizado da clínica abre com nome pré-preenchido
-  6. avaliação concluída entra no pool/listagem correta da clínica
-  7. reavaliação continua funcionando
-  8. paciente sem cadastro no app conclui tudo sem bloqueio
-  9. links copiados do dashboard usam domínio público correto
+Na funcao `loadPatientsForNewConv` do ConversationList:
+- **mode="professional"**: ja busca pacientes com `user_id` nas assessments do profissional -- correto
+- **mode="patient"**: ja busca profissionais das assessments do usuario -- correto
+- Adicionar filtro para excluir contatos com quem ja existe conversa ativa (melhoria UX)
 
-Resultado esperado
-- Nenhum link de pré-avaliação aparecendo como indisponível por erro estrutural do fluxo.
-- Profissional e clínica passam a seguir o mesmo padrão confiável.
-- O paciente não precisa ter conta.
-- O cadastro/listagem do paciente continua sendo alimentado corretamente.
-- Menor chance de retrocesso porque geração, validação e vínculo ficam padronizados.
+### 4. Ajustar `canInitiateConversation` no Dashboard.tsx
 
-Detalhes técnicos
-- Arquivos principais a revisar:
-  - `src/pages/ProfessionalAssessment.tsx`
-  - `src/pages/ClinicAssessment.tsx`
-  - `src/components/dashboard/PatientEvolutionDashboard.tsx`
-  - possivelmente `src/components/dashboard/ProDashboard.tsx`
-  - `src/lib/getPublicOrigin.ts`
-- Backend:
-  - nova RPC pública segura para contexto da clínica
-  - possível ajuste na RPC de contexto do paciente, se precisar retornar dados extras mínimos para vínculo
-- Cuidado principal:
-  - não quebrar o fluxo atual de reavaliação
-  - não quebrar a listagem existente do dashboard
-  - não reintroduzir leitura pública insegura da tabela `patients`
+- **Clinic mode** (linha 499): passar prop separada ou ajustar MessagesTab para receber permissoes granulares por modo
+- **Solo mode** (linha 532): mudar `canInitiateConversation` para `true` -- profissional solo pode iniciar com pacientes que tem conta
+- **Personal mode** (linha 550): manter `canInitiateConversation=false` para o lado profissional (nao tem); para o lado paciente, permitir apenas com profissionais do marketplace
+
+---
+
+## Arquivos a modificar
+
+1. **`src/components/dashboard/MessagesTab.tsx`**
+   - Inverter mapeamento dos filtros
+   - Passar `canInitiateConversation` separado para cada ConversationList (pro vs patient)
+   - Aceitar props mais granulares: `canInitiateAsPatient` e `canInitiateAsProfessional`
+
+2. **`src/components/chat/ConversationList.tsx`**
+   - Sem mudancas estruturais grandes; a logica de `loadPatientsForNewConv` ja esta correta por modo
+   - Pequeno ajuste: filtrar contatos que ja possuem conversa ativa
+
+3. **`src/pages/Dashboard.tsx`**
+   - Ajustar props passadas ao MessagesTab por contexto (clinic, solo, personal)
+
+4. **`mem://features/internal-messaging`**
+   - Atualizar regras de permissao documentadas
+
+---
+
+## Detalhes tecnicos
+
+A interface do MessagesTab sera expandida:
+```typescript
+interface MessagesTabProps {
+  professional?: any;
+  initialConversationId?: string | null;
+  canInitiateAsPatient?: boolean;    // pode iniciar conversa como paciente
+  canInitiateAsProfessional?: boolean; // pode iniciar conversa como profissional
+}
+```
+
+Dashboard passara:
+- Clinic: `canInitiateAsPatient={true}` + `canInitiateAsProfessional={true}`
+- Solo: `canInitiateAsPatient={false}` + `canInitiateAsProfessional={true}`
+- Personal: `canInitiateAsPatient={true}` + `canInitiateAsProfessional={false}`
+
