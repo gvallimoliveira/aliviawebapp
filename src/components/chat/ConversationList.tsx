@@ -126,53 +126,46 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
 
       if (!targetProfId) throw new Error("No professional found");
 
-      // Check if conversation already exists
-      const { data: existing } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("professional_id", targetProfId)
-        .eq("patient_user_id", patientUserId)
-        .limit(1);
-
       let convId: string;
-      if (existing && existing.length > 0) {
-        convId = existing[0].id;
-        const unhideField = mode === "patient" ? "hidden_by_patient" : "hidden_by_professional";
+
+      // Use security-definer RPC to create/find conversation (bypasses RLS issues)
+      const { data: rpcResult, error: rpcError } = await supabase.rpc(
+        "create_conversation_for_patient" as any,
+        { _professional_id: targetProfId, _patient_user_id: patientUserId }
+      );
+
+      if (rpcError) throw rpcError;
+      convId = rpcResult as string;
+
+      // If patient mode, also unhide for patient
+      if (mode === "patient") {
         await supabase
           .from("conversations")
-          .update({ [unhideField]: false })
+          .update({ hidden_by_patient: false })
           .eq("id", convId);
-      } else {
-        const { data: newConv, error } = await supabase
-          .from("conversations")
-          .insert({ professional_id: targetProfId, patient_user_id: patientUserId })
-          .select("id")
-          .single();
-        if (error) throw error;
-        convId = newConv.id;
+      }
 
-        // Push notification for new conversation from patient
-        if (mode === "patient") {
-          try {
-            const { data: pro } = await supabase
-              .from("professionals")
-              .select("user_id")
-              .eq("id", targetProfId)
-              .single();
-            if (pro?.user_id) {
-              const patientName = user?.user_metadata?.full_name || "Paciente";
-              await supabase.functions.invoke("send-push-notification", {
-                body: {
-                  user_id: pro.user_id,
-                  title: "Nova conversa",
-                  body: `${patientName} iniciou uma conversa com você.`,
-                  url: "/dashboard?tab=messages&conv=" + convId,
-                },
-              });
-            }
-          } catch (pushErr) {
-            console.warn("Push notification failed:", pushErr);
+      // Push notification for new conversation from patient
+      if (mode === "patient") {
+        try {
+          const { data: pro } = await supabase
+            .from("professionals")
+            .select("user_id")
+            .eq("id", targetProfId)
+            .single();
+          if (pro?.user_id) {
+            const patientName = user?.user_metadata?.full_name || "Paciente";
+            await supabase.functions.invoke("send-push-notification", {
+              body: {
+                user_id: pro.user_id,
+                title: "Nova conversa",
+                body: `${patientName} iniciou uma conversa com você.`,
+                url: "/dashboard?tab=messages&conv=" + convId,
+              },
+            });
           }
+        } catch (pushErr) {
+          console.warn("Push notification failed:", pushErr);
         }
       }
 
