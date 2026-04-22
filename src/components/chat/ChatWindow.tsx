@@ -71,16 +71,20 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload: any) => {
-          setMessages((prev) => [...prev, payload.new]);
-          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-          // Auto-mark as read if from other user
-          if (payload.new.sender_user_id !== user.id) {
+          const newMsg = payload.new;
+          // Auto-mark as read if from other user (this chat is open)
+          if (newMsg.sender_user_id !== user.id) {
+            const readNow = new Date().toISOString();
+            setMessages((prev) => [...prev, { ...newMsg, read_at: readNow }]);
             supabase
               .from("messages")
-              .update({ read_at: new Date().toISOString() })
-              .eq("id", payload.new.id)
+              .update({ read_at: readNow })
+              .eq("id", newMsg.id)
               .then(() => {});
+          } else {
+            setMessages((prev) => [...prev, newMsg]);
           }
+          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
         }
       )
       .on(
