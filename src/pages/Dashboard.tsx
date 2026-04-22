@@ -93,6 +93,7 @@ const Dashboard = () => {
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
   const [allConversationIds, setAllConversationIds] = useState<string[]>([]);
+  const [hasAutoSwitchedPro, setHasAutoSwitchedPro] = useState(false);
 
   const push = usePushNotifications();
 
