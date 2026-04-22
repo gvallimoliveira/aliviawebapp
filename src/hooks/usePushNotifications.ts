@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 // VAPID public key – set via environment or hardcoded after generation
-const VAPID_PUBLIC_KEY = "BHZhn7ux4bHWwSPllNfAyeyibLmBtkpnxutaFEgHdevTKHXvF079rLPxH1mUHI2bPkulgpENHwCPIXoXvvMKL7g";
+const VAPID_PUBLIC_KEY = "BCw1ra-4Rw56CTGg_gDjQne_ZGTN0VCvVk8F5Sp6xKrAUk9yIDdlczFq5iJtwdOcgAM7s01-ejB23_BafxDbUiM";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
