@@ -27,6 +27,7 @@ interface UpgradeBannerProps {
     dismissed: boolean;
     permission: string;
     loading: boolean;
+    ready: boolean;
     subscribe: () => void;
     dismiss: () => void;
   };
@@ -210,7 +211,7 @@ const UpgradeBanner = ({ premiumAccess, premiumLoading, professional, push }: Up
       )}
 
       {/* Push Notification Opt-in */}
-      {push.isSupported && !push.subscribed && !push.dismissed && push.permission !== "denied" && (
+      {push.ready && push.isSupported && !push.subscribed && !push.dismissed && push.permission !== "denied" && (
         <Card className="border-primary/20 bg-primary/[0.02]">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
