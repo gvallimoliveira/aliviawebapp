@@ -227,12 +227,10 @@ const Dashboard = () => {
 
 
   // Sync professional profile flag & auto-switch on first load only
-  const hasAutoSwitchedPro = useState(false);
   useEffect(() => {
     setHasProfessionalProfile(!!professional);
-    // Only auto-switch to professional context once (on initial load with ?tab=professional)
-    if (!hasAutoSwitchedPro[0] && professional && tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
-      hasAutoSwitchedPro[1](true);
+    if (!hasAutoSwitchedPro && professional && tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
+      setHasAutoSwitchedPro(true);
       setActiveContext("professional");
     }
   }, [professional, tabFromUrl, setHasProfessionalProfile]);
