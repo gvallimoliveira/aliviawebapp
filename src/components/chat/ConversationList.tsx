@@ -97,7 +97,7 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
             .select("id, full_name, user_id")
             .in("id", filteredProIds);
           setNewConvPatients(
-            (pros || []).map(p => ({ user_id: p.user_id, name: p.full_name, email: "" }))
+            (pros || []).map(p => ({ user_id: p.user_id, name: p.full_name, email: "", has_account: true }))
           );
         } else {
           setNewConvPatients([]);
