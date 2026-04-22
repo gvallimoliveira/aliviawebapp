@@ -1272,6 +1272,11 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
     y = renderAnamnesisSection(doc, y, anamnesisData, isPt);
   }
 
+  // ── Test Results (Questionnaires) — right after anamnesis ──
+  if (testResults) {
+    y = renderTestResultsSection(doc, y, testResults, isPt);
+  }
+
   // ── Pain Map ──
   const regions = painRegions || anamnesisData?.painRegions;
   if (regions && regions.length > 0) {
@@ -1281,11 +1286,6 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
   // ── Pain Score (VAS) — uses shared renderer ──
   const vasScore = anamnesisData?.painScore ?? undefined;
   y = renderVasSection(doc, y, isPt, vasScore, anamnesisData);
-
-  // ── Test Results (Questionnaires) ──
-  if (testResults) {
-    y = renderTestResultsSection(doc, y, testResults, isPt);
-  }
 
   // ── Treatment Plan ──
   if (treatmentPlan) {

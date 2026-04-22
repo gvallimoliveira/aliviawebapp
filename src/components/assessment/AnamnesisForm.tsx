@@ -607,14 +607,18 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
                 ))}
               </div>
             </div>
-            <div className="space-y-3">
-              <Label>{language === "pt" ? "Data de nascimento" : "Date of birth"}</Label>
-              <Input type="date" value={data.birthDate || ""} onChange={(e) => setData({ ...data, birthDate: e.target.value })} className="text-sm h-10" />
-            </div>
-            <div className="space-y-3">
-              <Label>CPF</Label>
-              <Input value={data.cpf || ""} onChange={(e) => setData({ ...data, cpf: formatCpf(e.target.value) })} placeholder="000.000.000-00" className="text-sm h-10" maxLength={14} />
-            </div>
+            {mode === "professional" && (
+              <>
+                <div className="space-y-3">
+                  <Label>{language === "pt" ? "Data de nascimento" : "Date of birth"}</Label>
+                  <Input type="date" value={data.birthDate || ""} onChange={(e) => setData({ ...data, birthDate: e.target.value })} className="text-sm h-10" />
+                </div>
+                <div className="space-y-3">
+                  <Label>CPF</Label>
+                  <Input value={data.cpf || ""} onChange={(e) => setData({ ...data, cpf: formatCpf(e.target.value) })} placeholder="000.000.000-00" className="text-sm h-10" maxLength={14} />
+                </div>
+              </>
+            )}
           </div>
         );
       case "paintype":
