@@ -23,6 +23,7 @@ export function usePushNotifications() {
   const [permission, setPermission] = useState<PushPermission>("default");
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [ready, setReady] = useState(false);
 
   const isSupported =
     typeof window !== "undefined" &&
@@ -30,9 +31,7 @@ export function usePushNotifications() {
     "PushManager" in window &&
     "Notification" in window;
 
-  // Register the dedicated push SW on demand. This worker is scoped only to
-  // push events and never intercepts fetch/navigation, so it cannot break
-  // authentication like the previous global PWA SW did.
+  // Register the dedicated push SW on demand.
   const ensurePushSwRegistration = useCallback(async () => {
     if (!isSupported) return null;
     const existing = await navigator.serviceWorker.getRegistration("/sw-push.js");
@@ -43,6 +42,7 @@ export function usePushNotifications() {
   useEffect(() => {
     if (!isSupported) {
       setPermission("unsupported");
+      setReady(true);
       return;
     }
     setPermission(Notification.permission as PushPermission);
@@ -50,10 +50,14 @@ export function usePushNotifications() {
     // Check if already subscribed (only if SW already registered)
     if (Notification.permission === "granted" && user) {
       navigator.serviceWorker.getRegistration("/sw-push.js").then(async (reg) => {
-        if (!reg) return;
-        const sub = await reg.pushManager.getSubscription();
-        setSubscribed(!!sub);
-      });
+        if (reg) {
+          const sub = await reg.pushManager.getSubscription();
+          setSubscribed(!!sub);
+        }
+        setReady(true);
+      }).catch(() => setReady(true));
+    } else {
+      setReady(true);
     }
   }, [isSupported, user]);
 
