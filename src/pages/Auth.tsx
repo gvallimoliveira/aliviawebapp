@@ -62,6 +62,18 @@ const Auth = () => {
           return;
         }
         if (session) {
+          // Check if partner needs to reset default password
+          if (session.user?.user_metadata?.force_password_reset) {
+            redirectingRef.current = true;
+            toast({
+              title: language === "pt" ? "Redefinição obrigatória" : "Password reset required",
+              description: language === "pt"
+                ? "Por segurança, defina uma nova senha para sua conta."
+                : "For security, please set a new password for your account.",
+            });
+            navigate("/reset-password", { replace: true, state: { forceReset: true } });
+            return;
+          }
           // Keep loading=true; the useEffect on `user` will redirect.
           // Hard fallback in case the auth listener is delayed (rare on desktop).
           redirectingRef.current = true;

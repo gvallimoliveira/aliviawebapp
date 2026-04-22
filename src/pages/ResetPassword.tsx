@@ -27,7 +27,7 @@ const ResetPassword = () => {
       }
     });
 
-    // Also check if we already have a session (user clicked the link)
+    // Also check if we already have a session (user clicked the link or was redirected for forced reset)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsValidSession(true);
@@ -51,6 +51,8 @@ const ResetPassword = () => {
     if (error) {
       toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
     } else {
+      // Clear force_password_reset flag if it was set
+      await supabase.auth.updateUser({ data: { force_password_reset: null } });
       toast({ title: t("auth.reset_success"), description: t("auth.reset_success_desc") });
       navigate("/dashboard");
     }

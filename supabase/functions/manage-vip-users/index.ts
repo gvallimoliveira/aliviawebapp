@@ -291,12 +291,13 @@ serve(async (req) => {
           targetId = pro.id;
         } else if (is_partner) {
           // Professional not found — auto-create account + professional profile
-          // 1. Create auth user with a cryptographically random temporary password
-          const tempPassword = crypto.randomUUID() + crypto.randomUUID();
+          // 1. Create auth user with known default password + force_password_reset flag
+          const defaultPassword = "parceiroalivia";
           const { data: newUserData, error: createError } = await supabaseClient.auth.admin.createUser({
             email: normalizedEmail,
-            password: tempPassword,
+            password: defaultPassword,
             email_confirm: true,
+            user_metadata: { force_password_reset: true },
           });
 
           if (createError) {
