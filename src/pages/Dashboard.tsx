@@ -225,12 +225,16 @@ const Dashboard = () => {
   }, [activeTab, activeContext, activeClinic, professional, isClinicMode]);
 
 
+  // Sync professional profile flag & auto-switch on first load only
+  const hasAutoSwitchedPro = useState(false);
   useEffect(() => {
     setHasProfessionalProfile(!!professional);
-    if (professional && tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
+    // Only auto-switch to professional context once (on initial load with ?tab=professional)
+    if (!hasAutoSwitchedPro[0] && professional && tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
+      hasAutoSwitchedPro[1](true);
       setActiveContext("professional");
     }
-  }, [professional, tabFromUrl, activeContext, setActiveContext, setHasProfessionalProfile]);
+  }, [professional, tabFromUrl, setHasProfessionalProfile]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
