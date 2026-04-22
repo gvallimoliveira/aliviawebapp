@@ -312,11 +312,16 @@ serve(async (req) => {
               }
 
               // Trigger password recovery email so partner sets their own password
-              const { error: pwErr } = await supabaseClient.auth.admin.generateLink({
-                type: "recovery",
-                email: normalizedEmail,
+              const origin = req.headers.get("origin") || "https://alivia.app";
+              const resetRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/recover`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "apikey": Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+                },
+                body: JSON.stringify({ email: normalizedEmail, gotrue_meta_security: { captcha_token: "" } }),
               });
-              log("Recovery link generated for existing user", { error: pwErr?.message });
+              log("Recovery email sent for existing user", { status: resetRes.status });
 
               // Create professional profile for existing auth user
               const namePart = existingUser.user_metadata?.full_name || normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
@@ -365,6 +370,17 @@ serve(async (req) => {
 
           if (insertErr) throw insertErr;
 
+          // Send recovery email so the new partner can set their password
+          const resetRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/recover`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+            },
+            body: JSON.stringify({ email: normalizedEmail }),
+          });
+          log("Recovery email sent for new user", { status: resetRes.status });
+
           return new Response(JSON.stringify({ success: true, created: true }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
@@ -390,11 +406,15 @@ serve(async (req) => {
           .eq("id", targetId)
           .single();
         if (proData?.user_id && proData?.email) {
-          const { error: pwErr } = await supabaseClient.auth.admin.generateLink({
-            type: "recovery",
-            email: proData.email,
+          const resetRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/recover`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+            },
+            body: JSON.stringify({ email: proData.email }),
           });
-          log("Recovery link sent on re-grant", { user_id: proData.user_id, error: pwErr?.message });
+          log("Recovery email sent on re-grant", { user_id: proData.user_id, status: resetRes.status });
         }
       }
 
@@ -484,12 +504,19 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { error: pwErr } = await supabaseClient.auth.admin.generateLink({
-        type: "recovery",
-        email: normalizedEmail,
+      const resetRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/recover`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        },
+        body: JSON.stringify({ email: normalizedEmail }),
       });
-      log("Manual recovery resend", { email: normalizedEmail, error: pwErr?.message });
-      if (pwErr) throw pwErr;
+      log("Manual recovery resend", { email: normalizedEmail, status: resetRes.status });
+      if (!resetRes.ok) {
+        const errBody = await resetRes.text();
+        throw new Error(`Recovery email failed: ${errBody}`);
+      }
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
