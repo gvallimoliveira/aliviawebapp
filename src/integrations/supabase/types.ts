@@ -1679,6 +1679,14 @@ export type Database = {
           professional_id: string
         }[]
       }
+      get_professional_patient_contacts: {
+        Args: { _professional_id: string }
+        Returns: {
+          email: string
+          full_name: string
+          user_id: string
+        }[]
+      }
       get_public_clinic_assessment_link: {
         Args: { _clinic_id: string }
         Returns: {

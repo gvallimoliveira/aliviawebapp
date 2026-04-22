@@ -64,118 +64,23 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
       );
 
       if (mode === "professional" && professionalId) {
-        // Strategy: gather patient emails from assessments AND patients table,
-        // then cross-reference with profiles to find those with user accounts
-        const uniqueUsers = new Map<string, { user_id: string; name: string; email: string }>();
+        // Use server-side function that resolves all patient contacts
+        const { data: contacts } = await (supabase.rpc("get_professional_patient_contacts" as any, {
+          _professional_id: professionalId,
+        }) as any);
 
-        // 1. From assessments with user_id (existing logic)
-        const { data: assessmentsWithUser } = await supabase
-          .from("assessments")
-          .select("patient_email, patient_name, user_id")
-          .eq("professional_id", professionalId)
-          .not("user_id", "is", null);
-
-        for (const a of assessmentsWithUser || []) {
-          if (a.user_id && !uniqueUsers.has(a.user_id) && !existingPartnerIds.has(a.user_id)) {
-            uniqueUsers.set(a.user_id, {
-              user_id: a.user_id,
-              name: a.patient_name || a.patient_email || "Paciente",
-              email: a.patient_email || "",
+        const results: { user_id: string; name: string; email: string }[] = [];
+        for (const c of contacts || []) {
+          if (c.user_id && !existingPartnerIds.has(c.user_id)) {
+            results.push({
+              user_id: c.user_id,
+              name: c.full_name || c.email || "Paciente",
+              email: c.email || "",
             });
           }
         }
 
-        // 2. From assessments WITHOUT user_id — match email to profiles
-        const { data: assessmentsNoUser } = await supabase
-          .from("assessments")
-          .select("patient_email, patient_name")
-          .eq("professional_id", professionalId)
-          .is("user_id", null)
-          .not("patient_email", "is", null);
-
-        // 3. From patients table
-        const { data: registeredPatients } = await supabase
-          .from("patients")
-          .select("email, full_name")
-          .eq("professional_id", professionalId)
-          .not("email", "is", null);
-
-        // Collect unique emails we need to resolve
-        const emailsToResolve = new Set<string>();
-        for (const a of assessmentsNoUser || []) {
-          if (a.patient_email && !emailsToResolve.has(a.patient_email)) {
-            emailsToResolve.add(a.patient_email);
-          }
-        }
-        for (const p of registeredPatients || []) {
-          if (p.email && !emailsToResolve.has(p.email)) {
-            emailsToResolve.add(p.email);
-          }
-        }
-
-        // Remove emails that we already have via user_id
-        const existingEmails = new Set(
-          Array.from(uniqueUsers.values()).map(u => u.email.toLowerCase()).filter(Boolean)
-        );
-        const filteredEmails = [...emailsToResolve].filter(e => !existingEmails.has(e.toLowerCase()));
-
-        // Batch lookup profiles by matching on the user's email via auth
-        // We can't query auth.users directly, but we can look up profiles
-        // and cross-check. A pragmatic approach: query profiles table and
-        // also query assessments that DO have user_id for the same email.
-        if (filteredEmails.length > 0) {
-          // Try to find user accounts by querying assessments that have user_id for these emails
-          const { data: matchedAssessments } = await supabase
-            .from("assessments")
-            .select("user_id, patient_email, patient_name")
-            .in("patient_email", filteredEmails)
-            .not("user_id", "is", null);
-
-          const emailToUser = new Map<string, { user_id: string; name: string }>();
-          for (const a of matchedAssessments || []) {
-            if (a.user_id && a.patient_email) {
-              emailToUser.set(a.patient_email.toLowerCase(), { user_id: a.user_id, name: a.patient_name || "" });
-            }
-          }
-
-          // Also query profiles to find matching names
-          const userIds = [...new Set([...emailToUser.values()].map(v => v.user_id))];
-          if (userIds.length > 0) {
-            const { data: profiles } = await supabase
-              .from("profiles")
-              .select("user_id, full_name")
-              .in("user_id", userIds);
-            for (const p of profiles || []) {
-              for (const [email, entry] of emailToUser.entries()) {
-                if (entry.user_id === p.user_id && p.full_name) {
-                  emailToUser.set(email, { ...entry, name: p.full_name });
-                }
-              }
-            }
-          }
-
-          // Build name map from assessments & patients for emails without user accounts
-          const emailNameMap = new Map<string, string>();
-          for (const a of assessmentsNoUser || []) {
-            if (a.patient_email && a.patient_name) emailNameMap.set(a.patient_email.toLowerCase(), a.patient_name);
-          }
-          for (const p of registeredPatients || []) {
-            if (p.email && p.full_name) emailNameMap.set(p.email.toLowerCase(), p.full_name);
-          }
-
-          for (const email of filteredEmails) {
-            const match = emailToUser.get(email.toLowerCase());
-            if (match && !uniqueUsers.has(match.user_id) && !existingPartnerIds.has(match.user_id)) {
-              uniqueUsers.set(match.user_id, {
-                user_id: match.user_id,
-                name: match.name || emailNameMap.get(email.toLowerCase()) || email,
-                email,
-              });
-            }
-          }
-        }
-
-        setNewConvPatients(Array.from(uniqueUsers.values()));
+        setNewConvPatients(results);
       } else if (mode === "patient" && user) {
         const { data: assessments } = await supabase
           .from("assessments")
