@@ -8,14 +8,17 @@ import { useVideoCall } from "@/hooks/useVideoCall";
 
 interface VideoCallListenerProps {
   conversationIds: string[];
-  onCallStarted?: (conversationId: string) => void;
+  onNavigateToChat?: (conversationId: string) => void;
 }
+
+const SYSTEM_PREFIX = "📹 ";
 
 /**
  * Global listener that watches all conversation channels for incoming call requests.
- * Mounts in ConversationList, shows IncomingCallModal + VideoCallOverlay when needed.
+ * Mounts at Dashboard level, shows IncomingCallModal + VideoCallOverlay when needed.
+ * On accept → navigates to chat. On reject → stays, but logs to chat history.
  */
-const VideoCallListener = ({ conversationIds, onCallStarted }: VideoCallListenerProps) => {
+const VideoCallListener = ({ conversationIds, onNavigateToChat }: VideoCallListenerProps) => {
   const { user } = useAuth();
   const [incomingConvId, setIncomingConvId] = useState<string | null>(null);
   const [incomingCallerName, setIncomingCallerName] = useState("");
@@ -23,6 +26,19 @@ const VideoCallListener = ({ conversationIds, onCallStarted }: VideoCallListener
   // Use the hook for the active conversation (only when there's an incoming call)
   const activeConvId = incomingConvId || "none";
   const vc = useVideoCall(activeConvId);
+
+  const insertSystemMessage = useCallback(async (convId: string, text: string) => {
+    if (!user) return;
+    try {
+      await supabase.from("messages").insert({
+        conversation_id: convId,
+        sender_user_id: user.id,
+        content: `${SYSTEM_PREFIX}${text}`,
+      });
+    } catch (e) {
+      console.warn("Failed to insert video call system message:", e);
+    }
+  }, [user]);
 
   // Listen to all conversation channels for call-request
   useEffect(() => {
@@ -40,7 +56,6 @@ const VideoCallListener = ({ conversationIds, onCallStarted }: VideoCallListener
         if (payload.type === "call-request") {
           setIncomingConvId(convId);
           setIncomingCallerName(payload.fromName || "Usuário");
-          onCallStarted?.(convId);
         }
       });
 
@@ -55,10 +70,15 @@ const VideoCallListener = ({ conversationIds, onCallStarted }: VideoCallListener
 
   const handleAccept = useCallback(() => {
     vc.acceptCall();
+    // Navigate to the chat conversation
+    if (incomingConvId && onNavigateToChat) {
+      onNavigateToChat(incomingConvId);
+    }
   }, [vc]);
 
   const handleReject = useCallback(() => {
     vc.rejectCall();
+    // System message is already inserted by useVideoCall.rejectCall()
     setIncomingConvId(null);
     setIncomingCallerName("");
   }, [vc]);
