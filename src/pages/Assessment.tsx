@@ -732,7 +732,7 @@ const Assessment = () => {
               painRegions={anamnesisData?.painRegions}
               painScore={anamnesisData?.painScore}
               anamnesisData={anamnesisData}
-              testResults={testResults.length > 0 ? testResults : questionnaireResults.length > 0 ? questionnaireResults : undefined}
+              testResults={[...questionnaireResults, ...testResults].length > 0 ? [...questionnaireResults, ...testResults] : undefined}
             />
             {mode === "basic" && <ExitIntentPopup variant="diagnosis" />}
           </>
@@ -751,7 +751,7 @@ const Assessment = () => {
             assessmentId={assessmentId || undefined}
             anamnesisData={anamnesisData || undefined}
             painRegions={anamnesisData?.painRegions}
-            testResults={testResults.length > 0 ? testResults : questionnaireResults.length > 0 ? questionnaireResults : undefined}
+            testResults={[...questionnaireResults, ...testResults].length > 0 ? [...questionnaireResults, ...testResults] : undefined}
             onBack={() => setStep("result")}
             onNewAssessment={() => navigate("/")}
           />
