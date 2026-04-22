@@ -499,7 +499,8 @@ const Dashboard = () => {
               <MessagesTab
                 professional={professional}
                 initialConversationId={convFromUrl}
-                canInitiateConversation={true}
+                canInitiateAsPatient={true}
+                canInitiateAsProfessional={true}
               />
             </TabsContent>
           </Tabs>
@@ -532,7 +533,8 @@ const Dashboard = () => {
               <MessagesTab
                 professional={professional}
                 initialConversationId={convFromUrl}
-                canInitiateConversation={false}
+                canInitiateAsPatient={false}
+                canInitiateAsProfessional={true}
               />
             </TabsContent>
           </Tabs>
@@ -550,7 +552,8 @@ const Dashboard = () => {
               <MessagesTab
                 professional={professional}
                 initialConversationId={convFromUrl}
-                canInitiateConversation={false}
+                canInitiateAsPatient={true}
+                canInitiateAsProfessional={false}
               />
             </TabsContent>
           </Tabs>

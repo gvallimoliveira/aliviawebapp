@@ -51,11 +51,18 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
   const [newConvLoading, setNewConvLoading] = useState(false);
   const [creatingConv, setCreatingConv] = useState<string | null>(null);
 
-  // Load patients that have user accounts for new conversation modal
+  // Load contacts for new conversation modal, excluding existing conversations
   const loadPatientsForNewConv = async () => {
     if (!professionalId && mode !== "patient") return;
     setNewConvLoading(true);
     try {
+      // Get existing conversation partner user_ids to exclude
+      const existingPartnerIds = new Set(
+        conversations.map((c) =>
+          mode === "professional" ? c.patient_user_id : c.professional_id
+        )
+      );
+
       if (mode === "professional" && professionalId) {
         const { data: assessments } = await supabase
           .from("assessments")
@@ -65,7 +72,7 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
 
         const uniqueUsers = new Map<string, { user_id: string; name: string; email: string }>();
         for (const a of assessments || []) {
-          if (a.user_id && !uniqueUsers.has(a.user_id)) {
+          if (a.user_id && !uniqueUsers.has(a.user_id) && !existingPartnerIds.has(a.user_id)) {
             uniqueUsers.set(a.user_id, {
               user_id: a.user_id,
               name: a.patient_name || a.patient_email || "Paciente",
@@ -82,14 +89,18 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
           .not("professional_id", "is", null);
 
         const proIds = [...new Set((assessments || []).map(a => a.professional_id).filter(Boolean))] as string[];
-        if (proIds.length > 0) {
+        // Also filter out professionals who already have an active conversation
+        const filteredProIds = proIds.filter(id => !existingPartnerIds.has(id));
+        if (filteredProIds.length > 0) {
           const { data: pros } = await supabase
             .from("professionals")
             .select("id, full_name, user_id")
-            .in("id", proIds);
+            .in("id", filteredProIds);
           setNewConvPatients(
             (pros || []).map(p => ({ user_id: p.user_id, name: p.full_name, email: "" }))
           );
+        } else {
+          setNewConvPatients([]);
         }
       }
     } catch {}

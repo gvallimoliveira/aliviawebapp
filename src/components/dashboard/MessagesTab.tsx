@@ -8,13 +8,15 @@ import ConversationList from "@/components/chat/ConversationList";
 interface MessagesTabProps {
   professional?: any;
   initialConversationId?: string | null;
-  canInitiateConversation?: boolean;
+  canInitiateAsPatient?: boolean;
+  canInitiateAsProfessional?: boolean;
 }
 
 const MessagesTab = ({
   professional,
   initialConversationId,
-  canInitiateConversation = false,
+  canInitiateAsPatient = false,
+  canInitiateAsProfessional = false,
 }: MessagesTabProps) => {
   const { t } = useLanguage();
   const [msgSearch, setMsgSearch] = useState("");
@@ -65,20 +67,24 @@ const MessagesTab = ({
           </Button>
         </div>
       )}
-      {(msgFilter === "all" || msgFilter === "patient") && (
-        <ConversationList
-          mode="patient"
-          initialConversationId={initialConversationId}
-          searchQuery={msgSearch}
-        />
-      )}
-      {professional && (msgFilter === "all" || msgFilter === "professional") && (
+
+      {/* Filter "Pacientes" → mode="professional" (conversations WITH patients)
+          Filter "Profissionais" → mode="patient" (conversations WITH professionals) */}
+      {(msgFilter === "all" || msgFilter === "patient") && professional && (
         <ConversationList
           mode="professional"
           professionalId={professional.id}
           initialConversationId={initialConversationId}
           searchQuery={msgSearch}
-          canInitiateConversation={canInitiateConversation}
+          canInitiateConversation={canInitiateAsProfessional}
+        />
+      )}
+      {(msgFilter === "all" || msgFilter === "professional") && (
+        <ConversationList
+          mode="patient"
+          initialConversationId={initialConversationId}
+          searchQuery={msgSearch}
+          canInitiateConversation={canInitiateAsPatient}
         />
       )}
     </div>
