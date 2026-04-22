@@ -32,6 +32,7 @@ export type Database = {
           professional_id: string | null
           red_flags: Json | null
           redo_used: boolean | null
+          reviewed_at: string | null
           status: string
           test_results: Json | null
           treatment_plan: Json | null
@@ -56,6 +57,7 @@ export type Database = {
           professional_id?: string | null
           red_flags?: Json | null
           redo_used?: boolean | null
+          reviewed_at?: string | null
           status?: string
           test_results?: Json | null
           treatment_plan?: Json | null
@@ -80,6 +82,7 @@ export type Database = {
           professional_id?: string | null
           red_flags?: Json | null
           redo_used?: boolean | null
+          reviewed_at?: string | null
           status?: string
           test_results?: Json | null
           treatment_plan?: Json | null

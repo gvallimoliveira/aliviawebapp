@@ -26,12 +26,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Authorization: must be either service-role internal call OR an authenticated user
-    // sending a notification to themselves.
+    // Authorization: accept service-role, authenticated user, or anon key (for assessment notifications)
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace("Bearer ", "").trim();
+    const apikeyHeader = req.headers.get("apikey") || "";
 
-    if (!token) {
+    if (!token && !apikeyHeader) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -39,9 +39,10 @@ Deno.serve(async (req) => {
     }
 
     const isServiceRole = token === serviceRoleKey;
+    const isAnonKey = token === anonKey || apikeyHeader === anonKey;
     let callerUserId: string | null = null;
 
-    if (!isServiceRole) {
+    if (!isServiceRole && !isAnonKey) {
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
@@ -72,8 +73,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Non-service-role callers can only target themselves
-    if (!isServiceRole && callerUserId !== user_id) {
+    // Non-service-role, non-anon callers can only target themselves
+    if (!isServiceRole && !isAnonKey && callerUserId !== user_id) {
       return new Response(
         JSON.stringify({ error: "Forbidden: cannot send notifications to other users" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
