@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -100,15 +100,23 @@ const Auth = () => {
     if (loading) return;
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}${redirectTo}` },
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
-      if (error) {
-        toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
+
+      if (result.error) {
+        toast({ title: t("auth.error"), description: String(result.error), variant: "destructive" });
         setLoading(false);
+        return;
       }
-      // On success the browser navigates away; no need to clear loading.
+
+      if (result.redirected) {
+        return; // Browser will redirect
+      }
+
+      // Session set successfully, navigate
+      redirectingRef.current = true;
+      navigate(redirectTo, { replace: true });
     } catch (err: any) {
       toast({
         title: t("auth.error"),
