@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 
-import { generateBasicReportPdfBlob } from "@/utils/generatePdf";
+import { generateBasicReportPdfBlob, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
@@ -34,6 +34,7 @@ interface DiagnosisResultProps {
   painRegions?: string[];
   painScore?: number;
   anamnesisData?: any;
+  testResults?: any;
 }
 
 const BlurredPreview = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -53,7 +54,7 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
   </Card>
 );
 
-const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData }: DiagnosisResultProps) => {
+const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData, testResults }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -316,14 +317,24 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
               setSharingPdf(true);
               try {
                 const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
-                const pdfBlob = await generateBasicReportPdfBlob({
-                  diagnosis,
-                  language,
-                  patientName: patientName || undefined,
-                  painRegions: painRegions || undefined,
-                  painScore: painScore,
-                  anamnesisData: anamnesisData || undefined,
-                });
+                const hasPremiumData = mode === "premium" && testResults;
+                const pdfBlob = hasPremiumData
+                  ? await generateAssessmentPdfBlob({
+                      diagnosis,
+                      language,
+                      userName: patientName || "",
+                      anamnesisData: anamnesisData || undefined,
+                      painRegions: painRegions || undefined,
+                      testResults,
+                    })
+                  : await generateBasicReportPdfBlob({
+                      diagnosis,
+                      language,
+                      patientName: patientName || undefined,
+                      painRegions: painRegions || undefined,
+                      painScore: painScore,
+                      anamnesisData: anamnesisData || undefined,
+                    });
 
                 const nativeShareResult = await sharePdfFile({
                   blob: pdfBlob,
@@ -396,14 +407,24 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
             onClick={async () => {
               setDownloadingPdf(true);
               try {
-                const pdfBlob = await generateBasicReportPdfBlob({
-                  diagnosis,
-                  language,
-                  patientName: patientName || undefined,
-                  painRegions: painRegions || undefined,
-                  painScore: painScore,
-                  anamnesisData: anamnesisData || undefined,
-                });
+                const hasPremiumData = mode === "premium" && testResults;
+                const pdfBlob = hasPremiumData
+                  ? await generateAssessmentPdfBlob({
+                      diagnosis,
+                      language,
+                      userName: patientName || "",
+                      anamnesisData: anamnesisData || undefined,
+                      painRegions: painRegions || undefined,
+                      testResults,
+                    })
+                  : await generateBasicReportPdfBlob({
+                      diagnosis,
+                      language,
+                      patientName: patientName || undefined,
+                      painRegions: painRegions || undefined,
+                      painScore: painScore,
+                      anamnesisData: anamnesisData || undefined,
+                    });
                 const url = URL.createObjectURL(pdfBlob);
                 const a = document.createElement("a");
                 a.href = url;

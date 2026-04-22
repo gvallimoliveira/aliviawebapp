@@ -45,20 +45,25 @@ export async function sharePdfFile({ blob, fileName, text, title }: NativePdfSha
   const fullData: ShareData = title ? { files: [file], text, title } : { files: [file], text };
   const filesOnlyData: ShareData = { files: [file] };
 
-  // iOS Safari/PWA quirk: navigator.canShare({files}) sometimes returns false
-  // even when share with files actually works. So we don't gate on canShare —
-  // we attempt the share, and only fall back if it actually throws (non-abort).
-  // We also try a "files only" payload as a second attempt because some iOS
-  // versions reject share calls that combine files + text.
   const attempts: ShareData[] = [fullData];
   if (text || title) attempts.push(filesOnlyData);
 
   for (let i = 0; i < attempts.length; i++) {
     try {
-      await navigator.share(attempts[i]);
+      // Race against a timeout to prevent the share sheet from hanging indefinitely
+      // on devices where dismissing the sheet doesn't resolve the promise.
+      const sharePromise = navigator.share(attempts[i]);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new DOMException("Share timeout", "TimeoutError")), 120_000)
+      );
+      await Promise.race([sharePromise, timeoutPromise]);
       return "shared";
     } catch (error) {
       if (isAbortError(error)) {
+        return "cancelled";
+      }
+      // Treat timeout as cancelled (user likely dismissed)
+      if (error instanceof DOMException && error.name === "TimeoutError") {
         return "cancelled";
       }
       // If this wasn't the last attempt, try the simpler payload.
