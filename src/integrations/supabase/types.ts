@@ -1649,6 +1649,10 @@ export type Database = {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
       }
+      create_conversation_for_patient: {
+        Args: { _patient_user_id: string; _professional_id: string }
+        Returns: string
+      }
       create_conversation_for_referral: {
         Args: { _patient_user_id: string; _professional_id: string }
         Returns: string
