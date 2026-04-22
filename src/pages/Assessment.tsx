@@ -732,6 +732,7 @@ const Assessment = () => {
               painRegions={anamnesisData?.painRegions}
               painScore={anamnesisData?.painScore}
               anamnesisData={anamnesisData}
+              testResults={testResults.length > 0 ? testResults : questionnaireResults.length > 0 ? questionnaireResults : undefined}
             />
             {mode === "basic" && <ExitIntentPopup variant="diagnosis" />}
           </>
