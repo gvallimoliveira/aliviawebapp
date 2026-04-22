@@ -209,11 +209,11 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
                   })}
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5">
                   {question.options.map((opt) => {
                     const isPrev = prevValue !== undefined && prevValue === opt.value && selectedValue !== opt.value;
                     return (
-                      <Button key={opt.value} variant={selectedValue === opt.value ? "default" : "outline"} size="sm" className={`rounded-lg text-xs h-auto py-1.5 px-2.5 flex-1 min-w-[60px] ${isPrev ? "border-dashed border-amber-400/70 bg-amber-50/40 dark:bg-amber-900/10" : ""}`} onClick={() => handleAnswer(question.id, opt.value)}>
+                      <Button key={opt.value} variant={selectedValue === opt.value ? "default" : "outline"} size="sm" className={`rounded-lg text-xs h-auto py-1.5 px-2 whitespace-normal text-center leading-tight ${isPrev ? "border-dashed border-amber-400/70 bg-amber-50/40 dark:bg-amber-900/10" : ""}`} onClick={() => handleAnswer(question.id, opt.value)}>
                         {language === "pt" ? opt.label_pt : opt.label_en}
                       </Button>
                     );
