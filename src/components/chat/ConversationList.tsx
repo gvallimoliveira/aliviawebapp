@@ -190,10 +190,18 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
   };
 
   const filteredNewConvPatients = useMemo(() => {
-    if (!newConvSearch.trim()) return newConvPatients;
-    const q = newConvSearch.toLowerCase();
-    return newConvPatients.filter(p => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q));
-  }, [newConvPatients, newConvSearch]);
+    let list = newConvPatients;
+    // Filter by account status unless showing all
+    if (!showAllPatients) {
+      list = list.filter(p => p.has_account);
+    }
+    if (newConvSearch.trim()) {
+      const q = newConvSearch.toLowerCase();
+      list = list.filter(p => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q));
+    }
+    // Sort: active accounts first
+    return list.sort((a, b) => (a.has_account === b.has_account ? 0 : a.has_account ? -1 : 1));
+  }, [newConvPatients, newConvSearch, showAllPatients]);
 
   const activeConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === activeConvId) ?? null,
