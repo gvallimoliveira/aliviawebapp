@@ -71,20 +71,16 @@ function showUpdateToast(remoteHash: string) {
     duration: Infinity,
     action: {
       label: "Atualizar",
-      onClick: async () => {
+      onClick: () => {
         try {
-          // Clear Cache Storage so the browser fetches fresh HTML + JS.
-          // We only touch Cache Storage (not localStorage) to avoid
-          // breaking auth tokens — see mem://constraints/auth-stability.
-          if ("caches" in window) {
-            const keys = await caches.keys();
-            await Promise.all(keys.map((k) => caches.delete(k)));
-          }
-        } catch { /* ignore */ }
-        try {
+          // Navigate to a cache-busted URL. We do NOT touch caches or
+          // localStorage — that has broken auth in the past.
+          // See mem://constraints/auth-stability.
           const url = new URL(window.location.href);
           url.searchParams.set("v", remoteHash);
-          window.location.replace(url.toString());
+          // Use assign (not replace) so the browser treats it as a
+          // fresh navigation and re-fetches the HTML document.
+          window.location.assign(url.toString());
         } catch {
           window.location.reload();
         }
