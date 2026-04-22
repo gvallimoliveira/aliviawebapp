@@ -31,6 +31,8 @@ import ClinicSecretaryDashboard from "@/components/dashboard/ClinicSecretaryDash
 import ContextSelectionModal from "@/components/dashboard/ContextSelectionModal";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import VideoCallListener from "@/components/chat/VideoCallListener";
+import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import {
   Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon, Building2,
   Link2, Copy, Check, Activity,
@@ -90,6 +92,7 @@ const Dashboard = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
+  const [allConversationIds, setAllConversationIds] = useState<string[]>([]);
 
   const push = usePushNotifications();
 
@@ -257,6 +260,27 @@ const Dashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [authReady, user]);
+
+  // Fetch all conversation IDs for the global video call listener
+  useEffect(() => {
+    if (!authReady || !user || !ENABLE_VIDEO_CALL) return;
+    const loadConvIds = async () => {
+      const { data } = await supabase.from("conversations").select("id");
+      setAllConversationIds((data || []).map((c: any) => c.id));
+    };
+    loadConvIds();
+    // Re-fetch when conversations change
+    const ch = supabase
+      .channel("conv-ids-for-video")
+      .on("postgres_changes", { event: "*", schema: "public", table: "conversations" }, () => loadConvIds())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [authReady, user]);
+
+  const handleVideoCallNavigateToChat = useCallback((convId: string) => {
+    setActiveTab("messages");
+    navigate(`/dashboard?tab=messages&conv=${convId}`, { replace: true });
+  }, [navigate]);
 
   useEffect(() => {
     if (!onboarding.isActive || !onboarding.step) return;
@@ -568,6 +592,14 @@ const Dashboard = () => {
         onNext={onboarding.next}
         onSkip={onboarding.skip}
       />
+
+      {/* Global video call listener — active on all tabs */}
+      {ENABLE_VIDEO_CALL && allConversationIds.length > 0 && (
+        <VideoCallListener
+          conversationIds={allConversationIds}
+          onNavigateToChat={handleVideoCallNavigateToChat}
+        />
+      )}
     </div>
   );
 };
