@@ -312,8 +312,13 @@ serve(async (req) => {
                 });
               }
 
-              // Trigger password recovery email so partner sets their own password
-              const origin = req.headers.get("origin") || "https://alivia.app";
+              // Set default password and force_password_reset for existing user
+              await supabaseClient.auth.admin.updateUserById(existingUser.id, {
+                password: "parceiroalivia",
+                user_metadata: { ...existingUser.user_metadata, force_password_reset: true },
+              });
+
+              // Also send recovery email as backup
               const resetRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/recover`, {
                 method: "POST",
                 headers: {
