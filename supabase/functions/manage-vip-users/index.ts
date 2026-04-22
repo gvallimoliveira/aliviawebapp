@@ -504,12 +504,19 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { error: pwErr } = await supabaseClient.auth.admin.generateLink({
-        type: "recovery",
-        email: normalizedEmail,
+      const resetRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/recover`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        },
+        body: JSON.stringify({ email: normalizedEmail }),
       });
-      log("Manual recovery resend", { email: normalizedEmail, error: pwErr?.message });
-      if (pwErr) throw pwErr;
+      log("Manual recovery resend", { email: normalizedEmail, status: resetRes.status });
+      if (!resetRes.ok) {
+        const errBody = await resetRes.text();
+        throw new Error(`Recovery email failed: ${errBody}`);
+      }
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
