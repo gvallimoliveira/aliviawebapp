@@ -228,7 +228,7 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
       if (conv && activeConvId !== conv.id) {
         setActiveConvId(conv.id);
         setActiveOtherName(conv.other_name);
-        setMinimized(true);
+        setMinimized(false);
       }
     }
   }, [activeConvId, initialConversationId, conversations]);
