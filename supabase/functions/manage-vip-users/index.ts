@@ -291,12 +291,13 @@ serve(async (req) => {
           targetId = pro.id;
         } else if (is_partner) {
           // Professional not found — auto-create account + professional profile
-          // 1. Create auth user with a cryptographically random temporary password
-          const tempPassword = crypto.randomUUID() + crypto.randomUUID();
+          // 1. Create auth user with known default password + force_password_reset flag
+          const defaultPassword = "parceiroalivia";
           const { data: newUserData, error: createError } = await supabaseClient.auth.admin.createUser({
             email: normalizedEmail,
-            password: tempPassword,
+            password: defaultPassword,
             email_confirm: true,
+            user_metadata: { force_password_reset: true },
           });
 
           if (createError) {
@@ -311,8 +312,13 @@ serve(async (req) => {
                 });
               }
 
-              // Trigger password recovery email so partner sets their own password
-              const origin = req.headers.get("origin") || "https://alivia.app";
+              // Set default password and force_password_reset for existing user
+              await supabaseClient.auth.admin.updateUserById(existingUser.id, {
+                password: "parceiroalivia",
+                user_metadata: { ...existingUser.user_metadata, force_password_reset: true },
+              });
+
+              // Also send recovery email as backup
               const resetRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/recover`, {
                 method: "POST",
                 headers: {
