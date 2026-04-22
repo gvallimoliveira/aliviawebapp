@@ -249,6 +249,13 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
     }
   }, [activeConvId, activeConversation, searchParams, setSearchParams]);
 
+  useEffect(() => {
+    if (!activeConversation) return;
+    if (activeConversation.other_name !== activeOtherName) {
+      setActiveOtherName(activeConversation.other_name);
+    }
+  }, [activeConversation, activeOtherName]);
+
   const syncConversationParam = (convId: string | null) => {
     const currentConv = searchParams.get("conv");
     if (currentConv === convId || (!convId && !currentConv)) return;
@@ -297,14 +304,29 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
       for (const p of pros || []) {
         namesMap[p.id] = p.full_name;
       }
-    } else {
-      const patientUserIds = [...new Set(convs.map((c) => c.patient_user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name")
-        .in("user_id", patientUserIds);
-      for (const p of profiles || []) {
-        namesMap[p.user_id] = p.full_name || "Paciente";
+    } else if (professionalId) {
+      const { data: contacts } = await (supabase.rpc("get_professional_all_patients" as any, {
+        _professional_id: professionalId,
+      }) as any);
+
+      for (const contact of contacts || []) {
+        if (contact.user_id) {
+          namesMap[contact.user_id] = contact.full_name || contact.email || "Paciente";
+        }
+      }
+
+      const missingPatientUserIds = [...new Set(convs.map((c) => c.patient_user_id))].filter(
+        (patientUserId) => !namesMap[patientUserId]
+      );
+
+      if (missingPatientUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", missingPatientUserIds);
+        for (const p of profiles || []) {
+          namesMap[p.user_id] = p.full_name || "Paciente";
+        }
       }
     }
 
