@@ -21,6 +21,8 @@ const ICE_SERVERS: RTCIceServer[] = [
 
 const CALL_TIMEOUT_MS = 60_000;
 
+const SYSTEM_PREFIX = "📹 ";
+
 export function useVideoCall(conversationId: string) {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -29,6 +31,8 @@ export function useVideoCall(conversationId: string) {
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [remoteUserName, setRemoteUserName] = useState("");
+
+  const callStartTimeRef = useRef<number>(0);
 
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream>(new MediaStream());
@@ -54,6 +58,19 @@ export function useVideoCall(conversationId: string) {
       el.srcObject = remoteStreamRef.current;
     }
   }, []);
+
+  const insertSystemMessage = useCallback(async (text: string) => {
+    if (!user || !conversationId) return;
+    try {
+      await supabase.from("messages").insert({
+        conversation_id: conversationId,
+        sender_user_id: user.id,
+        content: `${SYSTEM_PREFIX}${text}`,
+      });
+    } catch (e) {
+      console.warn("Failed to insert video call system message:", e);
+    }
+  }, [user, conversationId]);
 
   const cleanup = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -151,9 +168,13 @@ export function useVideoCall(conversationId: string) {
     if (!user || state !== "idle") return;
 
     const stream = await getMedia();
-    if (!stream) return;
+    if (!stream) {
+      insertSystemMessage("Videochamada não iniciada — permissão de câmera/microfone negada");
+      return;
+    }
 
     setState("calling");
+    callStartTimeRef.current = Date.now();
     sendSignal({ type: "call-request", fromName: callerName || "Usuário" });
 
     // Push notification to recipient about incoming video call
@@ -196,10 +217,11 @@ export function useVideoCall(conversationId: string) {
     timeoutRef.current = setTimeout(() => {
       if (pcRef.current?.connectionState !== "connected") {
         toast({ title: t("chat.video_no_answer") });
+        insertSystemMessage("Videochamada não atendida");
         endCall();
       }
     }, CALL_TIMEOUT_MS);
-  }, [user, state, getMedia, sendSignal, t]);
+  }, [user, state, getMedia, sendSignal, t, insertSystemMessage]);
 
   const acceptCall = useCallback(async (callerName?: string) => {
     if (!user) return;
@@ -208,6 +230,7 @@ export function useVideoCall(conversationId: string) {
     if (!stream) {
       sendSignal({ type: "call-reject" });
       setState("idle");
+      insertSystemMessage("Videochamada rejeitada — permissão negada");
       return;
     }
 
@@ -221,22 +244,33 @@ export function useVideoCall(conversationId: string) {
 
     setState("connected");
     startDurationTimer();
+    callStartTimeRef.current = Date.now();
+    insertSystemMessage("Videochamada iniciada");
     sendSignal({ type: "call-accept", fromName: callerName });
-  }, [user, getMedia, createPeerConnection, sendSignal, startDurationTimer]);
+  }, [user, getMedia, createPeerConnection, sendSignal, startDurationTimer, insertSystemMessage]);
 
   const rejectCall = useCallback(() => {
     sendSignal({ type: "call-reject" });
     setState("idle");
+    insertSystemMessage("Videochamada rejeitada");
     cleanup();
-  }, [sendSignal, cleanup]);
+  }, [sendSignal, cleanup, insertSystemMessage]);
 
   const endCall = useCallback(() => {
     sendSignal({ type: "call-end" });
+    if (callStartTimeRef.current > 0) {
+      const durationSec = Math.round((Date.now() - callStartTimeRef.current) / 1000);
+      const mins = Math.floor(durationSec / 60);
+      const secs = durationSec % 60;
+      const durationStr = mins > 0 ? `${mins}min ${secs}s` : `${secs}s`;
+      insertSystemMessage(`Videochamada encerrada — duração: ${durationStr}`);
+      callStartTimeRef.current = 0;
+    }
     setState("ended");
     cleanup();
     // Reset to idle after brief delay
     setTimeout(() => setState("idle"), 2000);
-  }, [sendSignal, cleanup]);
+  }, [sendSignal, cleanup, insertSystemMessage]);
 
   const toggleMute = useCallback(() => {
     const audioTrack = localStreamRef.current?.getAudioTracks()[0];
@@ -333,6 +367,9 @@ export function useVideoCall(conversationId: string) {
 
         case "call-reject":
           toast({ title: t("chat.video_busy") });
+          if (callStartTimeRef.current === 0) {
+            // Only the caller logs this (acceptor logs from rejectCall)
+          }
           setState("idle");
           cleanup();
           break;
