@@ -453,11 +453,22 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 
-  // Recent assessments (last 48h) that may need professional attention
-  const recentCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  // Assessments that need review: completed but not yet reviewed
   const pendingReviewAssessments = patientAssessments.filter(
-    (a) => a.status === "completed" && a.created_at >= recentCutoff
+    (a) => a.status === "completed" && !a.reviewed_at
   );
+
+  const handleMarkReviewed = async (assessmentId: string) => {
+    try {
+      await (supabase.from("assessments") as any).update({ reviewed_at: new Date().toISOString() }).eq("id", assessmentId);
+      setPatientAssessments((prev) =>
+        prev.map((a) => a.id === assessmentId ? { ...a, reviewed_at: new Date().toISOString() } : a)
+      );
+      toast({ title: language === "pt" ? "Avaliação marcada como revisada" : "Assessment marked as reviewed" });
+    } catch {
+      toast({ title: "Erro", variant: "destructive" });
+    }
+  };
   const pendingReviewCount = pendingReviewAssessments.length;
 
   const painRegionLabels: Record<string, string> = {
@@ -789,6 +800,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           assessments={pendingReviewAssessments}
           language={language}
           navigate={navigate}
+          onMarkReviewed={handleMarkReviewed}
         />
       )}
 
