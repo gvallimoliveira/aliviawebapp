@@ -47,9 +47,10 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
   const [minimized, setMinimized] = useState(true);
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [newConvSearch, setNewConvSearch] = useState("");
-  const [newConvPatients, setNewConvPatients] = useState<{ user_id: string; name: string; email: string }[]>([]);
+  const [newConvPatients, setNewConvPatients] = useState<{ user_id: string | null; name: string; email: string; has_account: boolean }[]>([]);
   const [newConvLoading, setNewConvLoading] = useState(false);
   const [creatingConv, setCreatingConv] = useState<string | null>(null);
+  const [showAllPatients, setShowAllPatients] = useState(false);
 
   // Load contacts for new conversation modal, excluding existing conversations
   const loadPatientsForNewConv = async () => {
