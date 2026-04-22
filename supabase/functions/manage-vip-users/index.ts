@@ -370,6 +370,17 @@ serve(async (req) => {
 
           if (insertErr) throw insertErr;
 
+          // Send recovery email so the new partner can set their password
+          const resetRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/recover`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+            },
+            body: JSON.stringify({ email: normalizedEmail }),
+          });
+          log("Recovery email sent for new user", { status: resetRes.status });
+
           return new Response(JSON.stringify({ success: true, created: true }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
