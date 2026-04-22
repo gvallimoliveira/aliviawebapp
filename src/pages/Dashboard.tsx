@@ -93,6 +93,7 @@ const Dashboard = () => {
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
   const [allConversationIds, setAllConversationIds] = useState<string[]>([]);
+  const [hasAutoSwitchedPro, setHasAutoSwitchedPro] = useState(false);
 
   const push = usePushNotifications();
 
@@ -225,12 +226,14 @@ const Dashboard = () => {
   }, [activeTab, activeContext, activeClinic, professional, isClinicMode]);
 
 
+  // Sync professional profile flag & auto-switch on first load only
   useEffect(() => {
     setHasProfessionalProfile(!!professional);
-    if (professional && tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
+    if (!hasAutoSwitchedPro && professional && tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
+      setHasAutoSwitchedPro(true);
       setActiveContext("professional");
     }
-  }, [professional, tabFromUrl, activeContext, setActiveContext, setHasProfessionalProfile]);
+  }, [professional, tabFromUrl, setHasProfessionalProfile]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
