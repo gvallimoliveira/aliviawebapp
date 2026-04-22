@@ -46,7 +46,7 @@ const ChatBubble = ({ content, timestamp, isMine, readAt }: ChatBubbleProps) => 
           <span className="text-[10px]">{time}</span>
           {isMine && (
             readAt ? (
-              <CheckCheck className="h-3 w-3" />
+              <CheckCheck className="h-3.5 w-3.5 text-sky-300" />
             ) : (
               <Check className="h-3 w-3" />
             )
