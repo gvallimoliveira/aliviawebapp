@@ -65,20 +65,19 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
       );
 
       if (mode === "professional" && professionalId) {
-        // Use server-side function that resolves all patient contacts
-        const { data: contacts } = await (supabase.rpc("get_professional_patient_contacts" as any, {
+        const { data: contacts } = await (supabase.rpc("get_professional_all_patients" as any, {
           _professional_id: professionalId,
         }) as any);
 
-        const results: { user_id: string; name: string; email: string }[] = [];
+        const results: { user_id: string | null; name: string; email: string; has_account: boolean }[] = [];
         for (const c of contacts || []) {
-          if (c.user_id && !existingPartnerIds.has(c.user_id)) {
-            results.push({
-              user_id: c.user_id,
-              name: c.full_name || c.email || "Paciente",
-              email: c.email || "",
-            });
-          }
+          if (c.user_id && existingPartnerIds.has(c.user_id)) continue;
+          results.push({
+            user_id: c.user_id || null,
+            name: c.full_name || c.email || "Paciente",
+            email: c.email || "",
+            has_account: !!c.has_account,
+          });
         }
 
         setNewConvPatients(results);
