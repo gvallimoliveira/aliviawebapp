@@ -7,7 +7,7 @@ const DISMISS_KEY = "push_opt_in_dismissed_v2";
 
 const PushOptInBanner = () => {
   const { user } = useAuth();
-  const { permission, subscribed, loading, isSupported, subscribe } = usePushNotifications();
+  const { permission, subscribed, loading, isSupported, ready, subscribe } = usePushNotifications();
 
   // Check versioned dismiss key directly
   const isDismissed = (() => {
@@ -18,7 +18,7 @@ const PushOptInBanner = () => {
     }
   })();
 
-  if (!user || !isSupported || subscribed || permission === "denied" || isDismissed) {
+  if (!user || !isSupported || !ready || subscribed || permission === "denied" || isDismissed) {
     return null;
   }
 

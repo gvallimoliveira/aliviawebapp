@@ -150,6 +150,7 @@ export function usePushNotifications() {
     subscribed,
     loading,
     isSupported,
+    ready,
     dismissed,
     subscribe,
     unsubscribe,
