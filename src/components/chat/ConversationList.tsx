@@ -424,6 +424,23 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
             placeholder={isPt ? "Buscar..." : "Search..."}
             className="text-sm"
           />
+          {mode === "professional" && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {isPt ? "Mostrar pacientes sem conta" : "Show patients without account"}
+              </span>
+              <Button
+                variant={showAllPatients ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs rounded-full px-3"
+                onClick={() => setShowAllPatients(!showAllPatients)}
+              >
+                {showAllPatients
+                  ? (isPt ? "Todos" : "All")
+                  : (isPt ? "Apenas com conta" : "With account only")}
+              </Button>
+            </div>
+          )}
           <ScrollArea className="h-64">
             {newConvLoading ? (
               <div className="flex justify-center py-8">
@@ -435,25 +452,41 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
               </p>
             ) : (
               <div className="space-y-1">
-                {filteredNewConvPatients.map((p) => (
-                  <button
-                    key={p.user_id}
-                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/60 transition-colors text-left"
-                    onClick={() => handleStartConversation(p.user_id, p.name)}
-                    disabled={!!creatingConv}
-                  >
-                    <Avatar className="h-8 w-8 border border-border shrink-0">
-                      <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
-                        {p.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-foreground block truncate">{p.name}</span>
-                      {p.email && <span className="text-xs text-muted-foreground truncate block">{p.email}</span>}
-                    </div>
-                    {creatingConv === p.user_id && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-                  </button>
-                ))}
+                {filteredNewConvPatients.map((p, idx) => {
+                  const canChat = p.has_account && !!p.user_id;
+                  return (
+                    <button
+                      key={p.user_id || `no-account-${idx}`}
+                      className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left ${
+                        canChat
+                          ? "hover:bg-muted/60 cursor-pointer"
+                          : "opacity-50 cursor-not-allowed"
+                      }`}
+                      onClick={() => canChat && handleStartConversation(p.user_id!, p.name)}
+                      disabled={!canChat || !!creatingConv}
+                    >
+                      <Avatar className="h-8 w-8 border border-border shrink-0">
+                        <AvatarFallback className={`font-semibold text-xs ${
+                          canChat
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                        }`}>
+                          {p.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-foreground block truncate">{p.name}</span>
+                        {p.email && <span className="text-xs text-muted-foreground truncate block">{p.email}</span>}
+                        {!canChat && (
+                          <span className="text-[10px] text-destructive/70">
+                            {isPt ? "Sem conta — não é possível iniciar chat" : "No account — cannot start chat"}
+                          </span>
+                        )}
+                      </div>
+                      {creatingConv === p.user_id && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </ScrollArea>
