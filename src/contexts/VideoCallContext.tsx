@@ -15,7 +15,12 @@ interface VideoCallContextValue {
   isCameraOff: boolean;
   callDuration: number;
   remoteUserName: string;
-  startCall: (conversationId: string, callerName: string, otherName: string) => Promise<void>;
+  startCall: (
+    conversationId: string,
+    callerName: string,
+    otherName: string,
+    preparedStream?: MediaStream | null,
+  ) => Promise<void>;
   endCall: () => void;
   toggleMute: () => void;
   toggleCamera: () => void;
@@ -36,12 +41,6 @@ const NO_OP_VALUE: VideoCallContextValue = {
   toggleCamera: () => {},
 };
 
-export function useVideoCallContext(): VideoCallContextValue {
-  const ctx = useContext(VideoCallContext);
-  return ctx ?? NO_OP_VALUE;
-}
-
-/* ── ICE servers with TURN relay fallback ── */
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
@@ -58,6 +57,8 @@ const ICE_SERVERS: RTCIceServer[] = [
 ];
 
 const CALL_TIMEOUT_MS = 60_000;
+const CONNECTION_TIMEOUT_MS = 30_000;
+const DISCONNECT_GRACE_MS = 6_000;
 const SYSTEM_PREFIX = "📹 ";
 
 interface SignalPayload {
@@ -75,11 +76,19 @@ interface VideoCallProviderProps {
   children: React.ReactNode;
 }
 
+const delay = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const isStreamUsable = (stream?: MediaStream | null) => Boolean(stream && stream.getTracks().some((track) => track.readyState === "live"));
+
+export function useVideoCallContext(): VideoCallContextValue {
+  const ctx = useContext(VideoCallContext);
+  return ctx ?? NO_OP_VALUE;
+}
+
 export function VideoCallProvider({ conversationIds, onNavigateToChat, children }: VideoCallProviderProps) {
   const { user } = useAuth();
   const { t } = useLanguage();
 
-  /* ── Rendered state ── */
   const [state, setState] = useState<VideoCallState>("idle");
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
@@ -89,7 +98,6 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const [isRinging, setIsRinging] = useState(false);
   const [incomingCallerName, setIncomingCallerName] = useState("");
 
-  /* ── Refs (avoid stale closures in broadcast callbacks) ── */
   const stateRef = useRef<VideoCallState>("idle");
   const activeConvIdRef = useRef<string | null>(null);
   const callIdRef = useRef<string | null>(null);
@@ -98,168 +106,485 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const remoteStreamRef = useRef(new MediaStream());
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const disconnectGraceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const callStartTimeRef = useRef(0);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const channelsRef = useRef<Map<string, ReturnType<typeof supabase.channel>>>(new Map());
+  const channelStatusRef = useRef<Map<string, string>>(new Map());
+  const endingRef = useRef(false);
+  const connectedOnceRef = useRef(false);
+  const disconnectRestartAttemptsRef = useRef(0);
+  const handleSignalRef = useRef<(convId: string, payload: SignalPayload) => Promise<void>>(async () => {});
 
-  const setStateSync = useCallback((s: VideoCallState) => {
-    stateRef.current = s;
-    setState(s);
+  const setStateSync = useCallback((nextState: VideoCallState) => {
+    stateRef.current = nextState;
+    setState(nextState);
   }, []);
 
-  /* ── Helpers ── */
-  const sendSignal = useCallback((convId: string, payload: Omit<SignalPayload, "from">) => {
-    if (!user) return;
-    const channel = channelsRef.current.get(convId);
-    if (!channel) { console.warn("[VideoCall] No channel for", convId); return; }
-    channel.send({ type: "broadcast", event: "webrtc-signal", payload: { ...payload, from: user.id } as SignalPayload });
-  }, [user]);
+  const clearCallTimeout = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
+
+  const clearConnectionTimeout = useCallback(() => {
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
+    }
+  }, []);
+
+  const clearDisconnectGrace = useCallback(() => {
+    if (disconnectGraceRef.current) {
+      clearTimeout(disconnectGraceRef.current);
+      disconnectGraceRef.current = null;
+    }
+  }, []);
+
+  const safeAttach = useCallback((element: HTMLVideoElement | null, stream: MediaStream | null) => {
+    if (!element) return;
+    element.srcObject = stream;
+    element.onloadedmetadata = null;
+
+    if (!stream) return;
+
+    element.onloadedmetadata = () => {
+      void element.play().catch(() => {});
+    };
+  }, []);
+
+  const attachLocalStream = useCallback((element: HTMLVideoElement | null) => {
+    localVideoRef.current = element;
+    safeAttach(element, localStreamRef.current);
+  }, [safeAttach]);
+
+  const attachRemoteStream = useCallback((element: HTMLVideoElement | null) => {
+    remoteVideoRef.current = element;
+    safeAttach(element, remoteStreamRef.current);
+  }, [safeAttach]);
+
+  const stopStream = useCallback((stream: MediaStream | null) => {
+    stream?.getTracks().forEach((track) => track.stop());
+  }, []);
+
+  const resetVisualState = useCallback(() => {
+    setIsRinging(false);
+    setIncomingCallerName("");
+    setIsMuted(false);
+    setIsCameraOff(false);
+    setCallDuration(0);
+    callStartTimeRef.current = 0;
+    connectedOnceRef.current = false;
+    disconnectRestartAttemptsRef.current = 0;
+  }, []);
+
+  const cleanup = useCallback(() => {
+    clearCallTimeout();
+    clearConnectionTimeout();
+    clearDisconnectGrace();
+
+    if (durationIntervalRef.current) {
+      clearInterval(durationIntervalRef.current);
+      durationIntervalRef.current = null;
+    }
+
+    const pc = pcRef.current;
+    if (pc) {
+      pc.ontrack = null;
+      pc.onicecandidate = null;
+      pc.oniceconnectionstatechange = null;
+      pc.onconnectionstatechange = null;
+      pc.close();
+      pcRef.current = null;
+    }
+
+    stopStream(localStreamRef.current);
+    localStreamRef.current = null;
+    pendingCandidatesRef.current = [];
+    remoteStreamRef.current = new MediaStream();
+
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+
+    resetVisualState();
+  }, [clearCallTimeout, clearConnectionTimeout, clearDisconnectGrace, resetVisualState, stopStream]);
 
   const insertSystemMessage = useCallback(async (convId: string, text: string) => {
     if (!user) return;
+
     try {
       await supabase.from("messages").insert({
         conversation_id: convId,
         sender_user_id: user.id,
         content: `${SYSTEM_PREFIX}${text}`,
       });
-    } catch (e) { console.warn("System msg insert failed:", e); }
+    } catch (error) {
+      console.warn("System msg insert failed:", error);
+    }
   }, [user]);
 
-  const cleanup = useCallback(() => {
-    if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
-    if (durationIntervalRef.current) { clearInterval(durationIntervalRef.current); durationIntervalRef.current = null; }
-    localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    localStreamRef.current = null;
-    pcRef.current?.close();
-    pcRef.current = null;
-    pendingCandidatesRef.current = [];
-    remoteStreamRef.current = new MediaStream();
-    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
-    setCallDuration(0);
-    setIsMuted(false);
-    setIsCameraOff(false);
-    callStartTimeRef.current = 0;
+  const createRealtimeChannel = useCallback((convId: string) => {
+    const existing = channelsRef.current.get(convId);
+    if (existing) {
+      return existing;
+    }
+
+    const channel = supabase.channel(`video-${convId}`, {
+      config: { broadcast: { self: false } },
+    });
+
+    channelStatusRef.current.set(convId, "SUBSCRIBING");
+
+    channel.on("broadcast", { event: "webrtc-signal" }, ({ payload }: { payload: SignalPayload }) => {
+      if (payload) {
+        void handleSignalRef.current(convId, payload);
+      }
+    });
+
+    channel.subscribe((status) => {
+      channelStatusRef.current.set(convId, status);
+    });
+
+    channelsRef.current.set(convId, channel);
+    return channel;
   }, []);
 
-  const endCallInternal = useCallback((sendEndSignal: boolean) => {
+  const waitForChannelReady = useCallback(async (convId: string) => {
+    createRealtimeChannel(convId);
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const status = channelStatusRef.current.get(convId);
+      if (status === "SUBSCRIBED") {
+        return true;
+      }
+      await delay(150);
+    }
+
+    return channelStatusRef.current.get(convId) === "SUBSCRIBED";
+  }, [createRealtimeChannel]);
+
+  const sendSignal = useCallback(async (convId: string, payload: Omit<SignalPayload, "from">, critical = true) => {
+    if (!user) return false;
+
+    const ready = await waitForChannelReady(convId);
+    if (!ready) {
+      console.warn("[VideoCall] Channel not ready for", convId, payload.type);
+      return false;
+    }
+
+    const channel = channelsRef.current.get(convId);
+    if (!channel) {
+      return false;
+    }
+
+    const message = {
+      type: "broadcast",
+      event: "webrtc-signal",
+      payload: { ...payload, from: user.id } satisfies SignalPayload,
+    };
+
+    for (let attempt = 0; attempt < (critical ? 2 : 1); attempt += 1) {
+      try {
+        const result = (await channel.send(message)) as unknown as string;
+        if (result === "ok") {
+          return true;
+        }
+      } catch (error) {
+        console.warn("[VideoCall] Failed sending signal", payload.type, error);
+      }
+
+      if (critical) {
+        await delay(150);
+      }
+    }
+
+    return false;
+  }, [user, waitForChannelReady]);
+
+  const resetToIdle = useCallback(() => {
+    cleanup();
+    setStateSync("idle");
+    setActiveConvId(null);
+    setRemoteUserName("");
+    activeConvIdRef.current = null;
+    callIdRef.current = null;
+    endingRef.current = false;
+  }, [cleanup, setStateSync]);
+
+  const endCallInternal = useCallback((sendEndSignal: boolean, endMessage?: string) => {
+    if (endingRef.current) {
+      return;
+    }
+
+    endingRef.current = true;
+
     const convId = activeConvIdRef.current;
     const callId = callIdRef.current;
-    if (convId && sendEndSignal && callId) {
-      sendSignal(convId, { type: "call-end", callId });
+    const shouldLogDuration = callStartTimeRef.current > 0 && !endMessage;
+
+    if (sendEndSignal && convId && callId) {
+      void sendSignal(convId, { type: "call-end", callId }, false);
     }
-    if (convId && callStartTimeRef.current > 0) {
-      const dur = Math.round((Date.now() - callStartTimeRef.current) / 1000);
-      const m = Math.floor(dur / 60), s = dur % 60;
-      insertSystemMessage(convId, `Videochamada encerrada — duração: ${m > 0 ? `${m}min ${s}s` : `${s}s`}`);
+
+    if (convId) {
+      if (shouldLogDuration) {
+        const durationSeconds = Math.round((Date.now() - callStartTimeRef.current) / 1000);
+        const minutes = Math.floor(durationSeconds / 60);
+        const seconds = durationSeconds % 60;
+        const durationText = minutes > 0 ? `${minutes}min ${seconds}s` : `${seconds}s`;
+        void insertSystemMessage(convId, `Videochamada encerrada — duração: ${durationText}`);
+      } else if (endMessage) {
+        void insertSystemMessage(convId, endMessage);
+      }
     }
+
     cleanup();
     setStateSync("ended");
     setIsRinging(false);
+    setIncomingCallerName("");
     activeConvIdRef.current = null;
     callIdRef.current = null;
-    setTimeout(() => { setStateSync("idle"); setActiveConvId(null); setRemoteUserName(""); }, 2000);
-  }, [sendSignal, insertSystemMessage, cleanup, setStateSync]);
 
-  const getMedia = useCallback(async (): Promise<MediaStream | null> => {
-    try {
-      return await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    } catch (err: any) {
-      if (["NotAllowedError", "NotFoundError", "NotReadableError"].includes(err.name)) {
-        try {
-          const audio = await navigator.mediaDevices.getUserMedia({ audio: true });
-          setIsCameraOff(true);
-          toast({ title: t("chat.video_camera_denied"), variant: "default" });
-          return audio;
-        } catch { /* fall through */ }
+    window.setTimeout(() => {
+      setStateSync("idle");
+      setActiveConvId(null);
+      setRemoteUserName("");
+      endingRef.current = false;
+    }, 2000);
+  }, [cleanup, insertSystemMessage, sendSignal, setStateSync]);
+
+  const startConnectionTimeout = useCallback((message = "Falha ao conectar a videochamada") => {
+    clearConnectionTimeout();
+
+    connectionTimeoutRef.current = window.setTimeout(() => {
+      if (stateRef.current === "connecting" || stateRef.current === "calling") {
+        toast({ title: message, variant: "destructive" });
+        endCallInternal(true, message);
       }
-      toast({ title: t("chat.video_permission_denied"), variant: "destructive" });
-      return null;
-    }
-  }, [t]);
+    }, CONNECTION_TIMEOUT_MS);
+  }, [clearConnectionTimeout, endCallInternal]);
 
-  const safeAttach = useCallback((el: HTMLVideoElement | null, stream: MediaStream | null) => {
-    if (!el) return;
-    el.srcObject = stream;
-    if (stream) {
-      el.onloadedmetadata = () => { el.play().catch(() => {}); };
+  const markConnected = useCallback(() => {
+    if (connectedOnceRef.current) {
+      return;
     }
+
+    connectedOnceRef.current = true;
+    clearCallTimeout();
+    clearConnectionTimeout();
+    clearDisconnectGrace();
+    disconnectRestartAttemptsRef.current = 0;
+
+    setStateSync("connected");
+
+    if (!callStartTimeRef.current) {
+      callStartTimeRef.current = Date.now();
+    }
+
+    if (!durationIntervalRef.current) {
+      durationIntervalRef.current = window.setInterval(() => {
+        setCallDuration(Math.max(0, Math.round((Date.now() - callStartTimeRef.current) / 1000)));
+      }, 1000);
+    }
+
+    const convId = activeConvIdRef.current;
+    if (convId) {
+      void insertSystemMessage(convId, "Videochamada iniciada");
+    }
+  }, [clearCallTimeout, clearConnectionTimeout, clearDisconnectGrace, insertSystemMessage, setStateSync]);
+
+  const queueCandidate = useCallback(async (candidate: RTCIceCandidateInit) => {
+    const pc = pcRef.current;
+
+    if (pc?.remoteDescription) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (error) {
+        console.warn("[VideoCall] ICE add failed", error);
+      }
+      return;
+    }
+
+    pendingCandidatesRef.current.push(candidate);
   }, []);
-
-  const attachLocalStream = useCallback((el: HTMLVideoElement | null) => {
-    localVideoRef.current = el;
-    safeAttach(el, localStreamRef.current);
-  }, [safeAttach]);
-
-  const attachRemoteStream = useCallback((el: HTMLVideoElement | null) => {
-    remoteVideoRef.current = el;
-    safeAttach(el, remoteStreamRef.current);
-  }, [safeAttach]);
 
   const flushPendingCandidates = useCallback(async () => {
     const pc = pcRef.current;
-    if (!pc?.remoteDescription) return;
-    const buf = [...pendingCandidatesRef.current];
+    if (!pc?.remoteDescription) {
+      return;
+    }
+
+    const bufferedCandidates = [...pendingCandidatesRef.current];
     pendingCandidatesRef.current = [];
-    for (const c of buf) {
-      try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch (e) { console.warn("ICE add failed:", e); }
+
+    for (const candidate of bufferedCandidates) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (error) {
+        console.warn("[VideoCall] Buffered ICE add failed", error);
+      }
     }
   }, []);
 
+  const scheduleDisconnectRecovery = useCallback(() => {
+    clearDisconnectGrace();
+
+    disconnectGraceRef.current = window.setTimeout(() => {
+      const pc = pcRef.current;
+      if (!pc) {
+        return;
+      }
+
+      if (disconnectRestartAttemptsRef.current < 1) {
+        disconnectRestartAttemptsRef.current += 1;
+        try {
+          pc.restartIce();
+          startConnectionTimeout("Tentando restabelecer a videochamada");
+          return;
+        } catch (error) {
+          console.warn("[VideoCall] ICE restart failed", error);
+        }
+      }
+
+      endCallInternal(true, "Falha ao manter a conexão da videochamada");
+    }, DISCONNECT_GRACE_MS);
+  }, [clearDisconnectGrace, endCallInternal, startConnectionTimeout]);
+
   const createPeerConnection = useCallback((stream: MediaStream, convId: string, callId: string) => {
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+    cleanup();
+    localStreamRef.current = stream;
+
+    const pc = new RTCPeerConnection({
+      iceServers: ICE_SERVERS,
+      iceCandidatePoolSize: 10,
+      bundlePolicy: "max-bundle",
+    });
+
+    const audioTracks = stream.getAudioTracks();
+    const videoTracks = stream.getVideoTracks();
+
+    audioTracks.forEach((track) => pc.addTrack(track, stream));
+    videoTracks.forEach((track) => pc.addTrack(track, stream));
+
+    if (audioTracks.length === 0) {
+      pc.addTransceiver("audio", { direction: "recvonly" });
+    }
+
+    if (videoTracks.length === 0) {
+      pc.addTransceiver("video", { direction: "recvonly" });
+    }
 
     pc.ontrack = (event) => {
-      const remote = remoteStreamRef.current;
+      const remoteStream = remoteStreamRef.current;
       event.streams[0]?.getTracks().forEach((track) => {
-        if (!remote.getTracks().find((t) => t.id === track.id)) {
-          remote.addTrack(track);
+        if (!remoteStream.getTracks().some((existingTrack) => existingTrack.id === track.id)) {
+          remoteStream.addTrack(track);
         }
       });
+
       if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = remote;
-        remoteVideoRef.current.onloadedmetadata = () => { remoteVideoRef.current?.play().catch(() => {}); };
+        safeAttach(remoteVideoRef.current, remoteStream);
       }
     };
 
     pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        sendSignal(convId, { type: "ice-candidate", callId, candidate: event.candidate.toJSON() });
+      if (!event.candidate) {
+        return;
+      }
+
+      void sendSignal(convId, {
+        type: "ice-candidate",
+        callId,
+        candidate: event.candidate.toJSON(),
+      }, false);
+    };
+
+    pc.onconnectionstatechange = () => {
+      const connectionState = pc.connectionState;
+      if (connectionState === "connected") {
+        markConnected();
+      } else if (connectionState === "disconnected") {
+        scheduleDisconnectRecovery();
+      } else if (connectionState === "failed") {
+        scheduleDisconnectRecovery();
       }
     };
 
     pc.oniceconnectionstatechange = () => {
-      console.log("[VideoCall] ICE state:", pc.iceConnectionState);
-      if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
-        if (stateRef.current === "connecting" || stateRef.current === "calling") {
-          setStateSync("connected");
-          callStartTimeRef.current = Date.now();
-          setCallDuration(0);
-          durationIntervalRef.current = setInterval(() => setCallDuration((p) => p + 1), 1000);
-          const cid = activeConvIdRef.current;
-          if (cid) insertSystemMessage(cid, "Videochamada iniciada");
-        }
-      } else if (pc.iceConnectionState === "disconnected" || pc.iceConnectionState === "failed") {
-        endCallInternal(true);
+      const iceState = pc.iceConnectionState;
+      if (iceState === "connected" || iceState === "completed") {
+        markConnected();
+      } else if (iceState === "disconnected") {
+        scheduleDisconnectRecovery();
+      } else if (iceState === "failed") {
+        scheduleDisconnectRecovery();
       }
     };
 
     pcRef.current = pc;
-    return pc;
-  }, [sendSignal, setStateSync, insertSystemMessage, endCallInternal]);
 
-  /* ── Signal handler (accessed via ref to avoid effect re-subscription) ── */
+    if (localVideoRef.current) {
+      safeAttach(localVideoRef.current, stream);
+    }
+
+    return pc;
+  }, [cleanup, markConnected, safeAttach, scheduleDisconnectRecovery, sendSignal]);
+
+  const getMedia = useCallback(async (preferredStream?: MediaStream | null) => {
+    if (isStreamUsable(preferredStream)) {
+      setIsCameraOff(preferredStream!.getVideoTracks().length === 0);
+      return preferredStream!;
+    }
+
+    if (preferredStream) {
+      stopStream(preferredStream);
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setIsCameraOff(stream.getVideoTracks().length === 0);
+      return stream;
+    } catch (error: any) {
+      if (["NotAllowedError", "NotFoundError", "NotReadableError", "AbortError"].includes(error?.name)) {
+        try {
+          const audioOnlyStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+          setIsCameraOff(true);
+          toast({ title: t("chat.video_camera_denied"), variant: "default" });
+          return audioOnlyStream;
+        } catch {
+          toast({ title: t("chat.video_permission_denied"), variant: "destructive" });
+          return null;
+        }
+      }
+
+      toast({ title: t("chat.video_permission_denied"), variant: "destructive" });
+      return null;
+    }
+  }, [stopStream, t]);
+
   const handleSignal = useCallback(async (convId: string, payload: SignalPayload) => {
-    if (!user || payload.from === user.id) return;
+    if (!user || payload.from === user.id) {
+      return;
+    }
+
     const currentCallId = callIdRef.current;
 
     switch (payload.type) {
       case "call-request": {
-        if (stateRef.current !== "idle") return;
-        console.log("[VideoCall] Incoming call", convId, "callId:", payload.callId);
+        if (stateRef.current !== "idle") {
+          await sendSignal(convId, { type: "call-reject", callId: payload.callId }, false);
+          return;
+        }
+
         callIdRef.current = payload.callId;
         activeConvIdRef.current = convId;
         setActiveConvId(convId);
@@ -267,149 +592,250 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         setRemoteUserName(payload.fromName || "Usuário");
         setIsRinging(true);
         setStateSync("ringing");
-        if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
-        break;
+
+        if (navigator.vibrate) {
+          navigator.vibrate([200, 100, 200, 100, 200]);
+        }
+        return;
       }
 
       case "call-accept": {
-        if (payload.callId !== currentCallId || stateRef.current !== "calling") return;
-        console.log("[VideoCall] Accepted by", payload.fromName);
-        if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
-        setRemoteUserName(payload.fromName || "Usuário");
+        if (payload.callId !== currentCallId || stateRef.current !== "calling") {
+          return;
+        }
+
+        clearCallTimeout();
+        setRemoteUserName(payload.fromName || remoteUserName || "Usuário");
         setStateSync("connecting");
+        startConnectionTimeout();
+
         const stream = localStreamRef.current;
-        if (!stream) { endCallInternal(true); return; }
+        if (!stream) {
+          endCallInternal(true, "Falha ao iniciar a mídia local da videochamada");
+          return;
+        }
+
         const pc = createPeerConnection(stream, convId, payload.callId);
+
         try {
-          const offer = await pc.createOffer();
+          const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
           await pc.setLocalDescription(offer);
-          sendSignal(convId, { type: "offer", callId: payload.callId, sdp: offer.sdp });
-        } catch (e) { console.error("Offer failed:", e); endCallInternal(true); }
-        break;
+          const offerSent = await sendSignal(convId, {
+            type: "offer",
+            callId: payload.callId,
+            sdp: offer.sdp,
+          });
+
+          if (!offerSent) {
+            endCallInternal(true, "Falha ao enviar a oferta da videochamada");
+          }
+        } catch (error) {
+          console.error("[VideoCall] Offer failed", error);
+          endCallInternal(true, "Falha ao negociar a videochamada");
+        }
+        return;
       }
 
       case "offer": {
-        if (payload.callId !== currentCallId) return;
+        if (payload.callId !== currentCallId) {
+          return;
+        }
+
         const pc = pcRef.current;
-        if (!pc) return;
-        console.log("[VideoCall] Received offer");
+        if (!pc) {
+          endCallInternal(true, "Falha ao preparar a resposta da videochamada");
+          return;
+        }
+
         try {
           await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: payload.sdp }));
           await flushPendingCandidates();
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          sendSignal(convId, { type: "answer", callId: payload.callId, sdp: answer.sdp });
-        } catch (e) { console.error("Answer failed:", e); endCallInternal(true); }
-        break;
+          startConnectionTimeout();
+
+          const answerSent = await sendSignal(convId, {
+            type: "answer",
+            callId: payload.callId,
+            sdp: answer.sdp,
+          });
+
+          if (!answerSent) {
+            endCallInternal(true, "Falha ao enviar a resposta da videochamada");
+          }
+        } catch (error) {
+          console.error("[VideoCall] Answer failed", error);
+          endCallInternal(true, "Falha ao concluir a videochamada");
+        }
+        return;
       }
 
       case "answer": {
-        if (payload.callId !== currentCallId) return;
+        if (payload.callId != currentCallId) {
+          return;
+        }
+
         const pc = pcRef.current;
-        if (!pc) return;
-        console.log("[VideoCall] Received answer");
+        if (!pc) {
+          endCallInternal(true, "Falha ao aplicar a resposta da videochamada");
+          return;
+        }
+
         try {
           await pc.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: payload.sdp }));
           await flushPendingCandidates();
-        } catch (e) { console.error("Handle answer failed:", e); endCallInternal(true); }
-        break;
+          startConnectionTimeout();
+        } catch (error) {
+          console.error("[VideoCall] Handle answer failed", error);
+          endCallInternal(true, "Falha ao conectar a videochamada");
+        }
+        return;
       }
 
       case "ice-candidate": {
-        if (payload.callId !== currentCallId || !payload.candidate) return;
-        const pc = pcRef.current;
-        if (pc?.remoteDescription) {
-          try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch {}
-        } else {
-          pendingCandidatesRef.current.push(payload.candidate);
+        if (payload.callId !== currentCallId || !payload.candidate) {
+          return;
         }
-        break;
+
+        await queueCandidate(payload.candidate);
+        return;
       }
 
       case "call-reject": {
-        if (payload.callId !== currentCallId) return;
+        if (payload.callId !== currentCallId) {
+          return;
+        }
+
         toast({ title: t("chat.video_busy") });
-        cleanup();
-        setStateSync("idle");
-        setActiveConvId(null);
-        activeConvIdRef.current = null;
-        callIdRef.current = null;
-        break;
+        resetToIdle();
+        return;
       }
 
       case "call-end": {
-        if (payload.callId !== currentCallId) return;
+        if (payload.callId !== currentCallId) {
+          return;
+        }
+
         endCallInternal(false);
-        break;
+        return;
       }
     }
-  }, [user, t, setStateSync, sendSignal, createPeerConnection, flushPendingCandidates, endCallInternal, cleanup]);
+  }, [
+    clearCallTimeout,
+    createPeerConnection,
+    endCallInternal,
+    flushPendingCandidates,
+    queueCandidate,
+    remoteUserName,
+    resetToIdle,
+    sendSignal,
+    setStateSync,
+    startConnectionTimeout,
+    t,
+    user,
+  ]);
 
-  const handleSignalRef = useRef(handleSignal);
   handleSignalRef.current = handleSignal;
 
-  /* ── Subscribe to broadcast channels ── */
   useEffect(() => {
-    if (!user || conversationIds.length === 0) return;
-
-    const map = new Map<string, ReturnType<typeof supabase.channel>>();
-
-    for (const convId of conversationIds) {
-      const ch = supabase.channel(`video-${convId}`, { config: { broadcast: { self: false } } });
-      ch.on("broadcast", { event: "webrtc-signal" }, ({ payload }: { payload: SignalPayload }) => {
-        if (payload) handleSignalRef.current(convId, payload);
-      });
-      ch.subscribe();
-      map.set(convId, ch);
+    if (!user) {
+      return;
     }
 
-    channelsRef.current = map;
+    const expectedConversationIds = new Set(conversationIds);
+    conversationIds.forEach((convId) => {
+      createRealtimeChannel(convId);
+    });
 
+    channelsRef.current.forEach((channel, convId) => {
+      if (!expectedConversationIds.has(convId) && convId !== activeConvIdRef.current) {
+        supabase.removeChannel(channel);
+        channelsRef.current.delete(convId);
+        channelStatusRef.current.delete(convId);
+      }
+    });
+  }, [conversationIds.join(","), createRealtimeChannel, user?.id]);
+
+  useEffect(() => {
     return () => {
-      map.forEach((ch) => supabase.removeChannel(ch));
-      channelsRef.current = new Map();
+      channelsRef.current.forEach((channel) => {
+        supabase.removeChannel(channel);
+      });
+      channelsRef.current.clear();
+      channelStatusRef.current.clear();
+      cleanup();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, conversationIds.join(",")]);
+  }, [cleanup]);
 
-  /* ── Public: start outgoing call ── */
-  const startCall = useCallback(async (conversationId: string, callerName: string, otherName: string) => {
-    if (!user || stateRef.current !== "idle") return;
+  const startCall = useCallback(async (
+    conversationId: string,
+    callerName: string,
+    otherName: string,
+    preparedStream?: MediaStream | null,
+  ) => {
+    if (!user || stateRef.current !== "idle") {
+      return;
+    }
 
-    const stream = await getMedia();
+    const stream = await getMedia(preparedStream);
     if (!stream) {
-      insertSystemMessage(conversationId, "Videochamada não iniciada — permissão de câmera/microfone negada");
+      void insertSystemMessage(conversationId, "Videochamada não iniciada — permissão de câmera/microfone negada");
       return;
     }
 
     const callId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
     localStreamRef.current = stream;
     callIdRef.current = callId;
     activeConvIdRef.current = conversationId;
     setActiveConvId(conversationId);
+    setIncomingCallerName("");
     setRemoteUserName(otherName);
     setStateSync("calling");
+    endingRef.current = false;
 
-    if (localVideoRef.current) safeAttach(localVideoRef.current, stream);
+    if (localVideoRef.current) {
+      safeAttach(localVideoRef.current, stream);
+    }
 
-    sendSignal(conversationId, { type: "call-request", callId, fromName: callerName });
+    const requestSent = await sendSignal(conversationId, {
+      type: "call-request",
+      callId,
+      fromName: callerName,
+    });
 
-    // Push notification (fire-and-forget)
-    (async () => {
+    if (!requestSent) {
+      resetToIdle();
+      toast({ title: "Falha ao iniciar a videochamada", variant: "destructive" });
+      void insertSystemMessage(conversationId, "Videochamada não iniciada — falha de sinalização");
+      return;
+    }
+
+    void (async () => {
       try {
-        const { data: conv } = await supabase
+        const { data: conversation } = await supabase
           .from("conversations")
           .select("patient_user_id, professional_id")
           .eq("id", conversationId)
           .single();
-        if (!conv) return;
-        let recipientUserId: string | null = null;
-        if (conv.patient_user_id === user.id) {
-          const { data: pro } = await supabase.from("professionals").select("user_id").eq("id", conv.professional_id).single();
-          recipientUserId = pro?.user_id || null;
-        } else {
-          recipientUserId = conv.patient_user_id;
+
+        if (!conversation) {
+          return;
         }
+
+        let recipientUserId: string | null = null;
+        if (conversation.patient_user_id === user.id) {
+          const { data: professional } = await supabase
+            .from("professionals")
+            .select("user_id")
+            .eq("id", conversation.professional_id)
+            .single();
+
+          recipientUserId = professional?.user_id || null;
+        } else {
+          recipientUserId = conversation.patient_user_id;
+        }
+
         if (recipientUserId) {
           await supabase.functions.invoke("send-push-notification", {
             body: {
@@ -420,85 +846,132 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
             },
           });
         }
-      } catch (e) { console.warn("Push for video failed:", e); }
+      } catch (error) {
+        console.warn("Push for video failed:", error);
+      }
     })();
 
-    timeoutRef.current = setTimeout(() => {
+    clearCallTimeout();
+    timeoutRef.current = window.setTimeout(() => {
       if (stateRef.current === "calling") {
         toast({ title: t("chat.video_no_answer") });
-        insertSystemMessage(conversationId, "Videochamada não atendida");
+        void insertSystemMessage(conversationId, "Videochamada não atendida");
         endCallInternal(true);
       }
     }, CALL_TIMEOUT_MS);
-  }, [user, getMedia, sendSignal, setStateSync, insertSystemMessage, endCallInternal, t, safeAttach]);
+  }, [
+    clearCallTimeout,
+    endCallInternal,
+    getMedia,
+    insertSystemMessage,
+    resetToIdle,
+    safeAttach,
+    sendSignal,
+    setStateSync,
+    t,
+    user,
+  ]);
 
-  /* ── Accept incoming call ── */
   const handleAcceptCall = useCallback(async () => {
     const convId = activeConvIdRef.current;
     const callId = callIdRef.current;
-    if (!convId || !callId || !user) return;
-
-    setIsRinging(false);
-    if (onNavigateToChat) onNavigateToChat(convId);
+    if (!convId || !callId || !user) {
+      return;
+    }
 
     const stream = await getMedia();
     if (!stream) {
-      sendSignal(convId, { type: "call-reject", callId });
-      insertSystemMessage(convId, "Videochamada rejeitada — permissão negada");
-      cleanup();
-      setStateSync("idle");
-      setActiveConvId(null);
-      activeConvIdRef.current = null;
-      callIdRef.current = null;
+      await sendSignal(convId, { type: "call-reject", callId });
+      void insertSystemMessage(convId, "Videochamada rejeitada — permissão negada");
+      resetToIdle();
       return;
     }
 
     localStreamRef.current = stream;
+    setIsRinging(false);
+    setIncomingCallerName("");
     setStateSync("connecting");
+    endingRef.current = false;
     createPeerConnection(stream, convId, callId);
-    sendSignal(convId, { type: "call-accept", callId, fromName: user.user_metadata?.full_name || "Usuário" });
-    if (localVideoRef.current) safeAttach(localVideoRef.current, stream);
-  }, [user, getMedia, sendSignal, createPeerConnection, insertSystemMessage, cleanup, setStateSync, onNavigateToChat, safeAttach]);
 
-  /* ── Reject incoming call ── */
+    const acceptSent = await sendSignal(convId, {
+      type: "call-accept",
+      callId,
+      fromName: user.user_metadata?.full_name || "Usuário",
+    });
+
+    if (!acceptSent) {
+      endCallInternal(true, "Falha ao confirmar a videochamada");
+      return;
+    }
+
+    startConnectionTimeout();
+
+    if (onNavigateToChat) {
+      onNavigateToChat(convId);
+    }
+  }, [
+    createPeerConnection,
+    endCallInternal,
+    getMedia,
+    insertSystemMessage,
+    onNavigateToChat,
+    resetToIdle,
+    sendSignal,
+    setStateSync,
+    startConnectionTimeout,
+    user,
+  ]);
+
   const handleRejectCall = useCallback(() => {
     const convId = activeConvIdRef.current;
     const callId = callIdRef.current;
-    if (convId && callId) {
-      sendSignal(convId, { type: "call-reject", callId });
-      insertSystemMessage(convId, "Videochamada recusada");
-    }
-    setIsRinging(false);
-    cleanup();
-    setStateSync("idle");
-    setActiveConvId(null);
-    activeConvIdRef.current = null;
-    callIdRef.current = null;
-  }, [sendSignal, insertSystemMessage, cleanup, setStateSync]);
 
-  const endCall = useCallback(() => endCallInternal(true), [endCallInternal]);
+    if (convId && callId) {
+      void sendSignal(convId, { type: "call-reject", callId }, false);
+      void insertSystemMessage(convId, "Videochamada recusada");
+    }
+
+    resetToIdle();
+  }, [insertSystemMessage, resetToIdle, sendSignal]);
+
+  const endCall = useCallback(() => {
+    endCallInternal(true);
+  }, [endCallInternal]);
 
   const toggleMute = useCallback(() => {
     const track = localStreamRef.current?.getAudioTracks()[0];
-    if (track) { track.enabled = !track.enabled; setIsMuted(!track.enabled); }
+    if (!track) {
+      return;
+    }
+
+    track.enabled = !track.enabled;
+    setIsMuted(!track.enabled);
   }, []);
 
   const toggleCamera = useCallback(() => {
     const track = localStreamRef.current?.getVideoTracks()[0];
-    if (track) { track.enabled = !track.enabled; setIsCameraOff(!track.enabled); }
+    if (!track) {
+      return;
+    }
+
+    track.enabled = !track.enabled;
+    setIsCameraOff(!track.enabled);
   }, []);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => { if (stateRef.current !== "idle") endCallInternal(true); };
-  }, [endCallInternal]);
-
   const contextValue: VideoCallContextValue = {
-    state, activeConversationId: activeConvId, isMuted, isCameraOff, callDuration,
-    remoteUserName, startCall, endCall, toggleMute, toggleCamera,
+    state,
+    activeConversationId: activeConvId,
+    isMuted,
+    isCameraOff,
+    callDuration,
+    remoteUserName,
+    startCall,
+    endCall,
+    toggleMute,
+    toggleCamera,
   };
 
-  // Map internal state to overlay's VideoCallState type
   const overlayState = state === "connecting" ? "calling" : state;
   const showOverlay = state === "calling" || state === "connecting" || state === "connected" || state === "ended";
 
@@ -517,7 +990,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
       {showOverlay && activeConvId && (
         <VideoCallOverlay
-          state={overlayState as any}
+          state={overlayState as VideoCallState}
           isMuted={isMuted}
           isCameraOff={isCameraOff}
           callDuration={callDuration}
