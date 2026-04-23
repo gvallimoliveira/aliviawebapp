@@ -1,94 +1,96 @@
 
+Objetivo: reestruturar a videochamada para que dois aparelhos realmente entrem na mesma sessão, recebam o aviso de chamada corretamente e consigam transmitir áudio/vídeo com estabilidade.
 
-# Revisao do fluxo de mensagens: permissoes e filtros
+1. Corrigir a arquitetura da chamada
+- Substituir o fluxo dividido atual entre `useVideoCall` e `VideoCallListener` por uma única camada de controle da chamada.
+- Centralizar em um único controlador por conversa:
+  - canal realtime
+  - estado da chamada
+  - `RTCPeerConnection`
+  - stream local/remoto
+  - timeout
+  - limpeza
+- Fazer o modal de chamada recebida e a tela de chamada ativa consumirem esse mesmo controlador, eliminando competição entre dois fluxos diferentes.
 
-## Problemas identificados
+2. Corrigir os pontos que hoje impedem a conexão
+- Remover a marcação prematura de “connected” no lado que inicia a chamada; só considerar conectada após `answer` aplicado e conexão WebRTC realmente estabelecida.
+- Corrigir o buffer de ICE candidates nos dois lados:
+  - hoje o caller acumula candidatos antes do `remoteDescription`
+  - mas não faz o flush completo depois que recebe a `answer`
+- Garantir que ofertas, respostas e ICE sejam ignorados se forem de chamadas antigas usando um `callId` único por tentativa.
+- Ajustar o listener para não depender de closures desatualizadas de estado (`isRinging`, `callState`), evitando comportamento inconsistente entre toques, aceites e encerramentos.
 
-### 1. Filtros invertidos no MessagesTab
-Quando um profissional clica no filtro "Pacientes", o componente mostra `ConversationList mode="patient"` -- que exibe as conversas onde o usuario e paciente (falando com profissionais). O correto seria mostrar as conversas com seus pacientes (mode="professional"). Os filtros estao semanticamente invertidos.
+3. Corrigir o fluxo de permissão e câmera
+- Manter a obtenção de mídia dentro do gesto direto do usuário.
+- Reaproveitar corretamente o stream aprovado na pré-chamada quando possível, em vez de destruir e recriar de forma frágil.
+- Adicionar tratamento robusto para:
+  - câmera disponível
+  - apenas áudio
+  - permissão negada
+  - câmera ocupada por outro app
+  - preview preto mesmo com permissão concedida
+- Forçar `video.play()` após `srcObject` e `onloadedmetadata` para melhorar compatibilidade em mobile.
+- Resetar completamente streams e tracks entre tentativas para não deixar vídeo remoto/local “preso” ou preto.
 
-### 2. Popup "iniciar conversa" mostra contatos errados
-Consequencia do problema acima: ao clicar "Pacientes" e depois "Iniciar conversa", o popup carrega profissionais em vez de pacientes.
+4. Corrigir a exibição do aviso de chamada recebida
+- Garantir que o evento `call-request` abra o modal mesmo fora da conversa já expandida.
+- Navegar para a conversa correta apenas após o aceite, sem quebrar o contexto da chamada.
+- Exibir estados distintos:
+  - recebendo chamada
+  - conectando
+  - conectada
+  - encerrada
+  - falha de conexão
 
-### 3. Permissoes de inicio de conversa incompletas
-Regras desejadas:
-- **Paciente comum** (busca profissional no marketplace): so o paciente inicia
-- **Profissional solo** que recebeu pre-avaliacao de paciente com conta Alivia: ambos podem iniciar
-- **Clinica**: ambos podem iniciar
+5. Adicionar fallback real para redes diferentes
+- O código atual usa apenas STUN, o que costuma falhar entre aparelhos em redes móveis/NAT diferentes.
+- Adicionar servidor de relay (TURN) como fallback para permitir conexão real entre aparelhos em cenários fora da mesma rede.
+- Manter STUN para casos simples e usar TURN quando necessário.
 
-Situacao atual:
-- Clinic mode: `canInitiateConversation=true` -- OK para o lado profissional, mas o lado paciente tambem permite iniciar (default true no ConversationList)
-- Solo mode: `canInitiateConversation=false` -- impede o profissional de iniciar, mas permite o paciente iniciar sem restricao
-- Personal mode: `canInitiateConversation=false` -- correto parcialmente, mas paciente comum do marketplace consegue iniciar conversa pelo ConversationList default
+6. Melhorar a resiliência do encerramento e novas tentativas
+- Encerrar sem deixar canais órfãos, timers ativos ou peer connections antigas.
+- Permitir nova chamada logo após falha/recusa/timeout sem precisar recarregar a página.
+- Evitar mensagens duplicadas de “encerrada” e limpar corretamente o estado visual em ambos os aparelhos.
 
----
+7. Validar ponta a ponta antes de publicar
+- Testar nos dois sentidos:
+  - aparelho A liga para B
+  - aparelho B liga para A
+- Testar:
+  - mesma rede
+  - redes diferentes
+  - aceitar
+  - recusar
+  - timeout
+  - áudio sem câmera
+  - app em foreground/background
+  - repetidas chamadas seguidas
+- Confirmar:
+  - modal de chamada aparece
+  - preview local aparece nos dois aparelhos
+  - vídeo remoto aparece
+  - áudio trafega
+  - encerramento sincroniza
+  - retry funciona sem tela preta
 
-## Plano de correcao
+Detalhes técnicos
+- Arquivos principais a reestruturar:
+  - `src/hooks/useVideoCall.ts`
+  - `src/components/chat/VideoCallListener.tsx`
+  - `src/components/chat/PreCallScreen.tsx`
+  - `src/components/chat/VideoCallOverlay.tsx`
+  - `src/components/chat/ChatWindow.tsx`
+  - `src/pages/Dashboard.tsx`
+- Ajustes principais de engenharia:
+  - estado único da chamada
+  - `callId` por sessão
+  - flush de ICE pendente após `setRemoteDescription`
+  - transição para “connected” baseada em `connectionState`/`iceConnectionState`
+  - limpeza forte de stream, tracks, peer connection e canal
+  - fallback TURN para redes difíceis
 
-### 1. Corrigir filtros no MessagesTab
-
-Inverter a logica dos filtros para que correspondam a expectativa do profissional:
-- Filtro **"Pacientes"** → mostra `ConversationList mode="professional"` (conversas do profissional com seus pacientes)
-- Filtro **"Profissionais"** → mostra `ConversationList mode="patient"` (conversas onde o usuario e paciente)
-
-### 2. Ajustar permissoes por contexto
-
-**MessagesTab** passara `canInitiateConversation` corretamente para cada ConversationList:
-
-| Contexto Dashboard | ConversationList mode="professional" (com pacientes) | ConversationList mode="patient" (com profissionais) |
-|---|---|---|
-| Clinica | canInitiate = true | canInitiate = true (paciente com vinculo) |
-| Solo | canInitiate = true (pacientes com conta) | canInitiate = false (so responde) |
-| Pessoal (sem perfil pro) | N/A | canInitiate = true (marketplace) |
-
-### 3. Refinar logica de contatos no popup
-
-Na funcao `loadPatientsForNewConv` do ConversationList:
-- **mode="professional"**: ja busca pacientes com `user_id` nas assessments do profissional -- correto
-- **mode="patient"**: ja busca profissionais das assessments do usuario -- correto
-- Adicionar filtro para excluir contatos com quem ja existe conversa ativa (melhoria UX)
-
-### 4. Ajustar `canInitiateConversation` no Dashboard.tsx
-
-- **Clinic mode** (linha 499): passar prop separada ou ajustar MessagesTab para receber permissoes granulares por modo
-- **Solo mode** (linha 532): mudar `canInitiateConversation` para `true` -- profissional solo pode iniciar com pacientes que tem conta
-- **Personal mode** (linha 550): manter `canInitiateConversation=false` para o lado profissional (nao tem); para o lado paciente, permitir apenas com profissionais do marketplace
-
----
-
-## Arquivos a modificar
-
-1. **`src/components/dashboard/MessagesTab.tsx`**
-   - Inverter mapeamento dos filtros
-   - Passar `canInitiateConversation` separado para cada ConversationList (pro vs patient)
-   - Aceitar props mais granulares: `canInitiateAsPatient` e `canInitiateAsProfessional`
-
-2. **`src/components/chat/ConversationList.tsx`**
-   - Sem mudancas estruturais grandes; a logica de `loadPatientsForNewConv` ja esta correta por modo
-   - Pequeno ajuste: filtrar contatos que ja possuem conversa ativa
-
-3. **`src/pages/Dashboard.tsx`**
-   - Ajustar props passadas ao MessagesTab por contexto (clinic, solo, personal)
-
-4. **`mem://features/internal-messaging`**
-   - Atualizar regras de permissao documentadas
-
----
-
-## Detalhes tecnicos
-
-A interface do MessagesTab sera expandida:
-```typescript
-interface MessagesTabProps {
-  professional?: any;
-  initialConversationId?: string | null;
-  canInitiateAsPatient?: boolean;    // pode iniciar conversa como paciente
-  canInitiateAsProfessional?: boolean; // pode iniciar conversa como profissional
-}
-```
-
-Dashboard passara:
-- Clinic: `canInitiateAsPatient={true}` + `canInitiateAsProfessional={true}`
-- Solo: `canInitiateAsPatient={false}` + `canInitiateAsProfessional={true}`
-- Personal: `canInitiateAsPatient={true}` + `canInitiateAsProfessional={false}`
-
+Resultado esperado
+- O aparelho receptor passa a ver o aviso de chamada.
+- Os dois aparelhos entram na mesma sessão ao aceitar.
+- Áudio e vídeo passam a circular de forma confiável.
+- Tentativas seguintes deixam de quebrar com tela preta ou chamada “fantasma”.
