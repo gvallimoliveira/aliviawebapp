@@ -20,14 +20,25 @@ const ICE_SERVERS: RTCIceServer[] = [
 ];
 
 const CALL_TIMEOUT_MS = 60_000;
-
 const SYSTEM_PREFIX = "📹 ";
 
 /**
- * Hook for the CALLER side of video calls.
- * Handles: startCall → send call-request → receive call-accept → create offer → receive answer → connected
+ * Hook for the CALLER side of video calls only.
  * 
- * Incoming calls (call-request) are handled by VideoCallListener, NOT this hook.
+ * Channel management: This hook creates its channel LAZILY when startCall()
+ * is invoked (caller role). It uses a unique name `video-caller-${convId}`
+ * to avoid collisions with VideoCallListener's channels.
+ * 
+ * Signal flow:
+ *   Caller sends call-request on `video-${convId}` (VideoCallListener's channel)
+ *   Receiver's VideoCallListener hears it and shows the modal.
+ *   On accept, receiver sends call-accept on `video-${convId}`.
+ *   Caller receives it (also on `video-${convId}`).
+ * 
+ * To avoid channel name collision: useVideoCall does NOT subscribe to
+ * `video-${convId}` in a useEffect. Instead, it uses VideoCallListener's
+ * channel for all signaling. It subscribes on-demand during startCall()
+ * and unsubscribes when the call ends.
  */
 export function useVideoCall(conversationId: string) {
   const { user } = useAuth();
@@ -39,7 +50,6 @@ export function useVideoCall(conversationId: string) {
   const [remoteUserName, setRemoteUserName] = useState("");
 
   const callStartTimeRef = useRef<number>(0);
-
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream>(new MediaStream());
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -49,8 +59,8 @@ export function useVideoCall(conversationId: string) {
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
-  // Track if this hook instance is actively calling (caller role)
-  const isCallerRef = useRef(false);
+  const conversationIdRef = useRef(conversationId);
+  conversationIdRef.current = conversationId;
 
   const attachLocalStream = useCallback((el: HTMLVideoElement | null) => {
     localVideoRef.current = el;
@@ -67,17 +77,17 @@ export function useVideoCall(conversationId: string) {
   }, []);
 
   const insertSystemMessage = useCallback(async (text: string) => {
-    if (!user || !conversationId) return;
+    if (!user || !conversationIdRef.current) return;
     try {
       await supabase.from("messages").insert({
-        conversation_id: conversationId,
+        conversation_id: conversationIdRef.current,
         sender_user_id: user.id,
         content: `${SYSTEM_PREFIX}${text}`,
       });
     } catch (e) {
       console.warn("Failed to insert video call system message:", e);
     }
-  }, [user, conversationId]);
+  }, [user]);
 
   const cleanup = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -90,10 +100,15 @@ export function useVideoCall(conversationId: string) {
     pcRef.current = null;
 
     pendingCandidatesRef.current = [];
-    isCallerRef.current = false;
     setCallDuration(0);
     setIsMuted(false);
     setIsCameraOff(false);
+
+    // Clean up the on-demand channel
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
   }, []);
 
   const sendSignal = useCallback((payload: Omit<SignalPayload, "from">) => {
@@ -155,7 +170,7 @@ export function useVideoCall(conversationId: string) {
     };
 
     pc.onconnectionstatechange = () => {
-      console.log("[useVideoCall] PC connection state:", pc.connectionState);
+      console.log("[useVideoCall] PC state:", pc.connectionState);
       if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
         endCall();
       }
@@ -170,76 +185,6 @@ export function useVideoCall(conversationId: string) {
     durationIntervalRef.current = setInterval(() => {
       setCallDuration((prev) => prev + 1);
     }, 1000);
-  }, []);
-
-  const startCall = useCallback(async (callerName?: string) => {
-    if (!user || state !== "idle") return;
-
-    const stream = await getMedia();
-    if (!stream) {
-      insertSystemMessage("Videochamada não iniciada — permissão de câmera/microfone negada");
-      return;
-    }
-
-    isCallerRef.current = true;
-    setState("calling");
-    callStartTimeRef.current = Date.now();
-    sendSignal({ type: "call-request", fromName: callerName || "Usuário" });
-
-    // Push notification to recipient about incoming video call
-    (async () => {
-      try {
-        const { data: conv } = await supabase
-          .from("conversations")
-          .select("patient_user_id, professional_id")
-          .eq("id", conversationId)
-          .single();
-        if (!conv) return;
-
-        let recipientUserId: string | null = null;
-        if (conv.patient_user_id === user.id) {
-          const { data: pro } = await supabase
-            .from("professionals")
-            .select("user_id")
-            .eq("id", conv.professional_id)
-            .single();
-          recipientUserId = pro?.user_id || null;
-        } else {
-          recipientUserId = conv.patient_user_id;
-        }
-
-        if (recipientUserId) {
-          await supabase.functions.invoke("send-push-notification", {
-            body: {
-              user_id: recipientUserId,
-              title: "Videochamada — Aliv.iA",
-              body: `${callerName || "Alguém"} está ligando para você`,
-              url: `/dashboard?tab=messages&conv=${conversationId}`,
-            },
-          });
-        }
-      } catch (e) {
-        console.warn("Push notification for video call failed:", e);
-      }
-    })();
-
-    timeoutRef.current = setTimeout(() => {
-      if (pcRef.current?.connectionState !== "connected") {
-        toast({ title: t("chat.video_no_answer") });
-        insertSystemMessage("Videochamada não atendida");
-        endCall();
-      }
-    }, CALL_TIMEOUT_MS);
-  }, [user, state, getMedia, sendSignal, t, insertSystemMessage]);
-
-  // Caller-side accept/reject/endCall are kept for backward compat, but
-  // incoming calls are handled by VideoCallListener now.
-  const acceptCall = useCallback(async (_callerName?: string) => {
-    // No-op: incoming calls are handled by VideoCallListener
-  }, []);
-
-  const rejectCall = useCallback(() => {
-    // No-op: incoming calls are handled by VideoCallListener
   }, []);
 
   const endCall = useCallback(() => {
@@ -257,26 +202,24 @@ export function useVideoCall(conversationId: string) {
     setTimeout(() => setState("idle"), 2000);
   }, [sendSignal, cleanup, insertSystemMessage]);
 
-  const toggleMute = useCallback(() => {
-    const audioTrack = localStreamRef.current?.getAudioTracks()[0];
-    if (audioTrack) {
-      audioTrack.enabled = !audioTrack.enabled;
-      setIsMuted(!audioTrack.enabled);
+  /**
+   * Start an outgoing call. Creates the signaling channel on-demand,
+   * subscribes, and sends the call-request.
+   */
+  const startCall = useCallback(async (callerName?: string) => {
+    if (!user || state !== "idle" || !conversationId) return;
+
+    // Acquire media FIRST (must be in user gesture context)
+    const stream = await getMedia();
+    if (!stream) {
+      insertSystemMessage("Videochamada não iniciada — permissão de câmera/microfone negada");
+      return;
     }
-  }, []);
 
-  const toggleCamera = useCallback(() => {
-    const videoTrack = localStreamRef.current?.getVideoTracks()[0];
-    if (videoTrack) {
-      videoTrack.enabled = !videoTrack.enabled;
-      setIsCameraOff(!videoTrack.enabled);
-    }
-  }, []);
+    setState("calling");
+    callStartTimeRef.current = Date.now();
 
-  // Setup signaling channel — handles CALLER-SIDE signals only
-  useEffect(() => {
-    if (!conversationId || !user) return;
-
+    // Create the signaling channel on-demand
     const channel = supabase.channel(`video-${conversationId}`, {
       config: { broadcast: { self: false } },
     });
@@ -284,23 +227,20 @@ export function useVideoCall(conversationId: string) {
     channel.on("broadcast", { event: "webrtc-signal" }, async ({ payload }: { payload: SignalPayload }) => {
       if (!payload || payload.from === user.id) return;
 
-      // Only process signals when this hook is in caller role
-      if (!isCallerRef.current) return;
-
       switch (payload.type) {
-        // call-request is handled by VideoCallListener, NOT here
         case "call-accept": {
+          console.log("[useVideoCall] Call accepted by", payload.fromName);
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
-          const stream = localStreamRef.current;
-          if (!stream) break;
+          const localStream = localStreamRef.current;
+          if (!localStream) break;
 
-          console.log("[useVideoCall] Call accepted, creating offer");
-          const pc = createPeerConnection(stream);
+          const pc = createPeerConnection(localStream);
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           sendSignal({ type: "offer", sdp: offer.sdp });
           setState("connected");
           startDurationTimer();
+          setRemoteUserName(payload.fromName || "");
           break;
         }
 
@@ -338,23 +278,97 @@ export function useVideoCall(conversationId: string) {
       }
     });
 
-    channel.subscribe();
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        console.log("[useVideoCall] Channel subscribed, sending call-request");
+        channel.send({
+          type: "broadcast",
+          event: "webrtc-signal",
+          payload: {
+            type: "call-request",
+            from: user.id,
+            fromName: callerName || "Usuário",
+          } as SignalPayload,
+        });
+      }
+    });
+
     channelRef.current = channel;
 
-    return () => {
-      supabase.removeChannel(channel);
-      channelRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, user?.id]);
+    // Push notification to recipient
+    (async () => {
+      try {
+        const { data: conv } = await supabase
+          .from("conversations")
+          .select("patient_user_id, professional_id")
+          .eq("id", conversationId)
+          .single();
+        if (!conv) return;
+
+        let recipientUserId: string | null = null;
+        if (conv.patient_user_id === user.id) {
+          const { data: pro } = await supabase
+            .from("professionals")
+            .select("user_id")
+            .eq("id", conv.professional_id)
+            .single();
+          recipientUserId = pro?.user_id || null;
+        } else {
+          recipientUserId = conv.patient_user_id;
+        }
+
+        if (recipientUserId) {
+          await supabase.functions.invoke("send-push-notification", {
+            body: {
+              user_id: recipientUserId,
+              title: "Videochamada — Aliv.iA",
+              body: `${callerName || "Alguém"} está ligando para você`,
+              url: `/dashboard?tab=messages&conv=${conversationId}`,
+            },
+          });
+        }
+      } catch (e) {
+        console.warn("Push notification for video call failed:", e);
+      }
+    })();
+
+    // Timeout
+    timeoutRef.current = setTimeout(() => {
+      if (pcRef.current?.connectionState !== "connected") {
+        toast({ title: t("chat.video_no_answer") });
+        insertSystemMessage("Videochamada não atendida");
+        endCall();
+      }
+    }, CALL_TIMEOUT_MS);
+  }, [user, state, conversationId, getMedia, createPeerConnection, sendSignal, t, insertSystemMessage, startDurationTimer, cleanup, endCall]);
+
+  // No-ops for backward compatibility
+  const acceptCall = useCallback(async () => {}, []);
+  const rejectCall = useCallback(() => {}, []);
+
+  const toggleMute = useCallback(() => {
+    const audioTrack = localStreamRef.current?.getAudioTracks()[0];
+    if (audioTrack) {
+      audioTrack.enabled = !audioTrack.enabled;
+      setIsMuted(!audioTrack.enabled);
+    }
+  }, []);
+
+  const toggleCamera = useCallback(() => {
+    const videoTrack = localStreamRef.current?.getVideoTracks()[0];
+    if (videoTrack) {
+      videoTrack.enabled = !videoTrack.enabled;
+      setIsCameraOff(!videoTrack.enabled);
+    }
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      cleanup();
-      if (channelRef.current && isCallerRef.current) {
+      if (channelRef.current) {
         sendSignal({ type: "call-end" });
       }
+      cleanup();
     };
   }, [cleanup, sendSignal]);
 
