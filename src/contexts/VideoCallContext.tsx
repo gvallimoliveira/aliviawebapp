@@ -922,17 +922,21 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     const convId = activeConvIdRef.current;
     const callId = callIdRef.current;
     if (!convId || !callId || !user) {
+      console.log("[VideoCall][Receiver] handleAcceptCall aborted — convId:", convId, "callId:", callId, "user:", Boolean(user));
       return;
     }
 
+    console.log("[VideoCall][Receiver] handleAcceptCall — acquiring media...");
     const stream = await getMedia();
     if (!stream) {
+      console.error("[VideoCall][Receiver] getMedia FAILED — rejecting call");
       await sendSignal(convId, { type: "call-reject", callId });
       void insertSystemMessage(convId, "Videochamada rejeitada — permissão negada");
       resetToIdle();
       return;
     }
 
+    console.log("[VideoCall][Receiver] getMedia OK — tracks:", stream.getTracks().map(t => `${t.kind}:${t.readyState}`).join(", "));
     localStreamRef.current = stream;
     setIsRinging(false);
     setIncomingCallerName("");
@@ -941,14 +945,20 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     const pc = createPeerConnection(stream, convId, callId);
     const pendingOfferSdp = incomingOfferSdpRef.current;
+    console.log("[VideoCall][Receiver] PC created — hasPendingOffer:", Boolean(pendingOfferSdp), "sdpLen:", pendingOfferSdp?.length);
 
     if (pendingOfferSdp) {
       try {
         incomingOfferSdpRef.current = null;
+        console.log("[VideoCall][Receiver] setRemoteDescription(buffered offer)...");
         await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: pendingOfferSdp }));
+        console.log("[VideoCall][Receiver] setRemoteDescription OK — flushing candidates...");
         await flushPendingCandidates();
+        console.log("[VideoCall][Receiver] createAnswer...");
         const answer = await pc.createAnswer();
+        console.log("[VideoCall][Receiver] createAnswer OK — setLocalDescription...");
         await pc.setLocalDescription(answer);
+        console.log("[VideoCall][Receiver] setLocalDescription OK — sending answer...");
         startConnectionTimeout();
 
         const answerSent = await sendSignal(convId, {
@@ -958,8 +968,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         });
 
         if (!answerSent) {
+          console.error("[VideoCall][Receiver] sendSignal(answer) FAILED");
           endCallInternal(true, "Falha ao enviar a resposta da videochamada");
           return;
+        } else {
+          console.log("[VideoCall][Receiver] answer sent OK (from buffered offer path)");
         }
       } catch (error) {
         console.error("[VideoCall] Late offer answer failed", error);
@@ -967,6 +980,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         return;
       }
     } else {
+      console.log("[VideoCall][Receiver] NO buffered offer — sending call-accept and waiting for offer...");
       const acceptSent = await sendSignal(convId, {
         type: "call-accept",
         callId,
@@ -974,8 +988,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       });
 
       if (!acceptSent) {
+        console.error("[VideoCall][Receiver] sendSignal(call-accept) FAILED");
         endCallInternal(true, "Falha ao confirmar a videochamada");
         return;
+      } else {
+        console.log("[VideoCall][Receiver] call-accept sent OK — waiting for offer...");
       }
 
       startConnectionTimeout();
