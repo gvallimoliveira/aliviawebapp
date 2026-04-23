@@ -10,6 +10,7 @@ import ChatBubble from "./ChatBubble";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import VideoCallOverlay from "./VideoCallOverlay";
+import PreCallScreen from "./PreCallScreen";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface ChatWindowProps {
@@ -34,6 +35,7 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
 
   // Video call (only active when feature flag is on)
   const vc = useVideoCall(conversationId);
+  const [showPreCall, setShowPreCall] = useState(false);
 
   useEffect(() => {
     if (!conversationId || !user) return;
@@ -244,7 +246,7 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
             variant="ghost"
             size="icon"
             className="h-8 w-8 shrink-0 text-primary"
-            onClick={() => vc.startCall(otherName)}
+            onClick={() => setShowPreCall(true)}
             disabled={vc.state !== "idle"}
             title={t("chat.video_call")}
           >
@@ -335,6 +337,19 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>
+
+      {/* Pre-call permission screen */}
+      {ENABLE_VIDEO_CALL && (
+        <PreCallScreen
+          open={showPreCall}
+          otherName={otherName}
+          onStartCall={() => {
+            setShowPreCall(false);
+            vc.startCall(otherName);
+          }}
+          onCancel={() => setShowPreCall(false)}
+        />
+      )}
 
       {/* Video call overlay */}
       {ENABLE_VIDEO_CALL && (vc.state === "connected" || vc.state === "calling" || vc.state === "ended") && (
