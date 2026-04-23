@@ -23,6 +23,12 @@ const CALL_TIMEOUT_MS = 60_000;
 
 const SYSTEM_PREFIX = "📹 ";
 
+/**
+ * Hook for the CALLER side of video calls.
+ * Handles: startCall → send call-request → receive call-accept → create offer → receive answer → connected
+ * 
+ * Incoming calls (call-request) are handled by VideoCallListener, NOT this hook.
+ */
 export function useVideoCall(conversationId: string) {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -43,8 +49,9 @@ export function useVideoCall(conversationId: string) {
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  // Track if this hook instance is actively calling (caller role)
+  const isCallerRef = useRef(false);
 
-  // Attach streams to video elements
   const attachLocalStream = useCallback((el: HTMLVideoElement | null) => {
     localVideoRef.current = el;
     if (el && localStreamRef.current) {
@@ -83,6 +90,7 @@ export function useVideoCall(conversationId: string) {
     pcRef.current = null;
 
     pendingCandidatesRef.current = [];
+    isCallerRef.current = false;
     setCallDuration(0);
     setIsMuted(false);
     setIsCameraOff(false);
@@ -106,7 +114,6 @@ export function useVideoCall(conversationId: string) {
       }
       return stream;
     } catch (err: any) {
-      // Try audio-only fallback
       if (err.name === "NotAllowedError" || err.name === "NotFoundError") {
         try {
           const audioStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
@@ -148,6 +155,7 @@ export function useVideoCall(conversationId: string) {
     };
 
     pc.onconnectionstatechange = () => {
+      console.log("[useVideoCall] PC connection state:", pc.connectionState);
       if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
         endCall();
       }
@@ -173,6 +181,7 @@ export function useVideoCall(conversationId: string) {
       return;
     }
 
+    isCallerRef.current = true;
     setState("calling");
     callStartTimeRef.current = Date.now();
     sendSignal({ type: "call-request", fromName: callerName || "Usuário" });
@@ -223,38 +232,15 @@ export function useVideoCall(conversationId: string) {
     }, CALL_TIMEOUT_MS);
   }, [user, state, getMedia, sendSignal, t, insertSystemMessage]);
 
-  const acceptCall = useCallback(async (callerName?: string) => {
-    if (!user) return;
-
-    const stream = await getMedia();
-    if (!stream) {
-      sendSignal({ type: "call-reject" });
-      setState("idle");
-      insertSystemMessage("Videochamada rejeitada — permissão negada");
-      return;
-    }
-
-    const pc = createPeerConnection(stream);
-
-    // Apply any buffered ICE candidates
-    for (const candidate of pendingCandidatesRef.current) {
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    }
-    pendingCandidatesRef.current = [];
-
-    setState("connected");
-    startDurationTimer();
-    callStartTimeRef.current = Date.now();
-    insertSystemMessage("Videochamada iniciada");
-    sendSignal({ type: "call-accept", fromName: callerName });
-  }, [user, getMedia, createPeerConnection, sendSignal, startDurationTimer, insertSystemMessage]);
+  // Caller-side accept/reject/endCall are kept for backward compat, but
+  // incoming calls are handled by VideoCallListener now.
+  const acceptCall = useCallback(async (_callerName?: string) => {
+    // No-op: incoming calls are handled by VideoCallListener
+  }, []);
 
   const rejectCall = useCallback(() => {
-    sendSignal({ type: "call-reject" });
-    setState("idle");
-    insertSystemMessage("Videochamada rejeitada");
-    cleanup();
-  }, [sendSignal, cleanup, insertSystemMessage]);
+    // No-op: incoming calls are handled by VideoCallListener
+  }, []);
 
   const endCall = useCallback(() => {
     sendSignal({ type: "call-end" });
@@ -268,7 +254,6 @@ export function useVideoCall(conversationId: string) {
     }
     setState("ended");
     cleanup();
-    // Reset to idle after brief delay
     setTimeout(() => setState("idle"), 2000);
   }, [sendSignal, cleanup, insertSystemMessage]);
 
@@ -288,7 +273,7 @@ export function useVideoCall(conversationId: string) {
     }
   }, []);
 
-  // Setup signaling channel
+  // Setup signaling channel — handles CALLER-SIDE signals only
   useEffect(() => {
     if (!conversationId || !user) return;
 
@@ -299,28 +284,17 @@ export function useVideoCall(conversationId: string) {
     channel.on("broadcast", { event: "webrtc-signal" }, async ({ payload }: { payload: SignalPayload }) => {
       if (!payload || payload.from === user.id) return;
 
-      switch (payload.type) {
-        case "call-request":
-          if (state === "idle" || state === "ended") {
-            setRemoteUserName(payload.fromName || "");
-            setState("ringing");
-            // Vibrate if supported
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
-          } else {
-            // Busy
-            channel.send({
-              type: "broadcast",
-              event: "webrtc-signal",
-              payload: { type: "call-reject", from: user.id } as SignalPayload,
-            });
-          }
-          break;
+      // Only process signals when this hook is in caller role
+      if (!isCallerRef.current) return;
 
+      switch (payload.type) {
+        // call-request is handled by VideoCallListener, NOT here
         case "call-accept": {
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
           const stream = localStreamRef.current;
           if (!stream) break;
 
+          console.log("[useVideoCall] Call accepted, creating offer");
           const pc = createPeerConnection(stream);
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
@@ -330,25 +304,10 @@ export function useVideoCall(conversationId: string) {
           break;
         }
 
-        case "offer": {
-          const pc = pcRef.current;
-          if (!pc) break;
-          await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: payload.sdp }));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          sendSignal({ type: "answer", sdp: answer.sdp });
-
-          // Apply buffered candidates
-          for (const c of pendingCandidatesRef.current) {
-            await pc.addIceCandidate(new RTCIceCandidate(c));
-          }
-          pendingCandidatesRef.current = [];
-          break;
-        }
-
         case "answer": {
           const pc = pcRef.current;
           if (!pc) break;
+          console.log("[useVideoCall] Received answer");
           await pc.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: payload.sdp }));
           break;
         }
@@ -367,9 +326,6 @@ export function useVideoCall(conversationId: string) {
 
         case "call-reject":
           toast({ title: t("chat.video_busy") });
-          if (callStartTimeRef.current === 0) {
-            // Only the caller logs this (acceptor logs from rejectCall)
-          }
           setState("idle");
           cleanup();
           break;
@@ -396,7 +352,7 @@ export function useVideoCall(conversationId: string) {
   useEffect(() => {
     return () => {
       cleanup();
-      if (channelRef.current) {
+      if (channelRef.current && isCallerRef.current) {
         sendSignal({ type: "call-end" });
       }
     };
@@ -409,7 +365,7 @@ export function useVideoCall(conversationId: string) {
     callDuration,
     remoteUserName,
     localStreamRef,
-    remoteStreamRef: remoteStreamRef,
+    remoteStreamRef,
     attachLocalStream,
     attachRemoteStream,
     startCall,
