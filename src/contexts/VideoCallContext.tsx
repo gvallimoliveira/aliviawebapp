@@ -105,6 +105,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef(new MediaStream());
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  const incomingOfferSdpRef = useRef<string | null>(null);
   const timeoutRef = useRef<number | null>(null);
   const connectionTimeoutRef = useRef<number | null>(null);
   const disconnectGraceRef = useRef<number | null>(null);
@@ -147,14 +148,18 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
   const safeAttach = useCallback((element: HTMLVideoElement | null, stream: MediaStream | null) => {
     if (!element) return;
+
+    const attemptPlay = () => {
+      void element.play().catch(() => {});
+    };
+
     element.srcObject = stream;
     element.onloadedmetadata = null;
 
     if (!stream) return;
 
-    element.onloadedmetadata = () => {
-      void element.play().catch(() => {});
-    };
+    element.onloadedmetadata = attemptPlay;
+    attemptPlay();
   }, []);
 
   const attachLocalStream = useCallback((element: HTMLVideoElement | null) => {
@@ -202,6 +207,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     }
 
     pendingCandidatesRef.current = [];
+    incomingOfferSdpRef.current = null;
     remoteStreamRef.current = new MediaStream();
     callStartTimeRef.current = 0;
     connectedOnceRef.current = false;
@@ -527,9 +533,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       const connectionState = pc.connectionState;
       if (connectionState === "connected") {
         markConnected();
-      } else if (connectionState === "disconnected") {
-        scheduleDisconnectRecovery();
-      } else if (connectionState === "failed") {
+      } else if ((connectionState === "disconnected" || connectionState === "failed") && (Boolean(pc.remoteDescription) || connectedOnceRef.current || stateRef.current === "connecting" || stateRef.current === "connected")) {
         scheduleDisconnectRecovery();
       }
     };
@@ -538,9 +542,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       const iceState = pc.iceConnectionState;
       if (iceState === "connected" || iceState === "completed") {
         markConnected();
-      } else if (iceState === "disconnected") {
-        scheduleDisconnectRecovery();
-      } else if (iceState === "failed") {
+      } else if ((iceState === "disconnected" || iceState === "failed") && (Boolean(pc.remoteDescription) || connectedOnceRef.current || stateRef.current === "connecting" || stateRef.current === "connected")) {
         scheduleDisconnectRecovery();
       }
     };
@@ -600,6 +602,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           return;
         }
 
+        cleanup();
         callIdRef.current = payload.callId;
         activeConvIdRef.current = convId;
         setActiveConvId(convId);
@@ -658,7 +661,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
         const pc = pcRef.current;
         if (!pc) {
-          endCallInternal(true, "Falha ao preparar a resposta da videochamada");
+          incomingOfferSdpRef.current = payload.sdp || null;
           return;
         }
 
@@ -907,20 +910,48 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     setIncomingCallerName("");
     setStateSync("connecting");
     endingRef.current = false;
-    createPeerConnection(stream, convId, callId);
 
-    const acceptSent = await sendSignal(convId, {
-      type: "call-accept",
-      callId,
-      fromName: user.user_metadata?.full_name || "Usuário",
-    });
+    const pc = createPeerConnection(stream, convId, callId);
+    const pendingOfferSdp = incomingOfferSdpRef.current;
 
-    if (!acceptSent) {
-      endCallInternal(true, "Falha ao confirmar a videochamada");
-      return;
+    if (pendingOfferSdp) {
+      try {
+        incomingOfferSdpRef.current = null;
+        await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: pendingOfferSdp }));
+        await flushPendingCandidates();
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        startConnectionTimeout();
+
+        const answerSent = await sendSignal(convId, {
+          type: "answer",
+          callId,
+          sdp: answer.sdp,
+        });
+
+        if (!answerSent) {
+          endCallInternal(true, "Falha ao enviar a resposta da videochamada");
+          return;
+        }
+      } catch (error) {
+        console.error("[VideoCall] Late offer answer failed", error);
+        endCallInternal(true, "Falha ao concluir a videochamada");
+        return;
+      }
+    } else {
+      const acceptSent = await sendSignal(convId, {
+        type: "call-accept",
+        callId,
+        fromName: user.user_metadata?.full_name || "Usuário",
+      });
+
+      if (!acceptSent) {
+        endCallInternal(true, "Falha ao confirmar a videochamada");
+        return;
+      }
+
+      startConnectionTimeout();
     }
-
-    startConnectionTimeout();
 
     if (onNavigateToChat) {
       onNavigateToChat(convId);
@@ -928,6 +959,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   }, [
     createPeerConnection,
     endCallInternal,
+    flushPendingCandidates,
     getMedia,
     insertSystemMessage,
     onNavigateToChat,
