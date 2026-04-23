@@ -8,8 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Loader2, Send, AlertTriangle, Minimize2, Video as VideoIcon, MessageSquareHeart } from "lucide-react";
 import ChatBubble from "./ChatBubble";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
-import { useVideoCall } from "@/hooks/useVideoCall";
-import VideoCallOverlay from "./VideoCallOverlay";
+import { useVideoCallContext } from "@/contexts/VideoCallContext";
 import PreCallScreen from "./PreCallScreen";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
@@ -33,14 +32,13 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
   const lastSentRef = useRef(0);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Video call (only active when feature flag is on)
-  const vc = useVideoCall(conversationId);
+  // Video call from unified context
+  const vc = useVideoCallContext();
   const [showPreCall, setShowPreCall] = useState(false);
 
   useEffect(() => {
     if (!conversationId || !user) return;
 
-    // Fetch existing messages
     supabase
       .from("messages")
       .select("*")
@@ -52,7 +50,6 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
       });
 
-    // Mark unread messages as read
     supabase
       .from("messages")
       .update({ read_at: new Date().toISOString() })
@@ -61,7 +58,6 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
       .is("read_at", null)
       .then(() => {});
 
-    // Subscribe to new messages
     const channel = supabase
       .channel(`chat-${conversationId}`)
       .on(
@@ -74,7 +70,6 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
         },
         (payload: any) => {
           const newMsg = payload.new;
-          // Auto-mark as read if from other user (this chat is open)
           if (newMsg.sender_user_id !== user.id) {
             const readNow = new Date().toISOString();
             setMessages((prev) => [...prev, { ...newMsg, read_at: readNow }]);
@@ -98,7 +93,6 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload: any) => {
-          // Update read_at in local state for read receipts
           setMessages((prev) =>
             prev.map((m) => (m.id === payload.new.id ? { ...m, read_at: payload.new.read_at } : m))
           );
@@ -144,7 +138,6 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
     (isTyping: boolean) => {
       if (!user) return;
       const channel = supabase.channel(`typing-${conversationId}`);
-      // We use the existing subscription; track updates presence
       channel.track({ typing: isTyping });
     },
     [conversationId, user]
@@ -159,7 +152,6 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
 
   const handleSend = async () => {
     if (!text.trim() || !user || sending) return;
-    // Rate limit: 1 msg/second
     const now = Date.now();
     if (now - lastSentRef.current < 1000) return;
     lastSentRef.current = now;
@@ -175,7 +167,7 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
       content,
     });
 
-    // Push notification to recipient (fire-and-forget)
+    // Push notification (fire-and-forget)
     (async () => {
       try {
         const { data: conv } = await supabase
@@ -185,10 +177,8 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
           .single();
         if (!conv) return;
 
-        // Determine recipient user_id
         let recipientUserId: string | null = null;
         if (conv.patient_user_id === user.id) {
-          // Sender is patient → notify professional
           const { data: pro } = await supabase
             .from("professionals")
             .select("user_id")
@@ -196,7 +186,6 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
             .single();
           recipientUserId = pro?.user_id || null;
         } else {
-          // Sender is professional → notify patient
           recipientUserId = conv.patient_user_id;
         }
 
@@ -225,6 +214,8 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
       handleSend();
     }
   };
+
+  const callerName = user?.user_metadata?.full_name || "Usuário";
 
   return (
     <div className="flex flex-col h-[500px] border border-border rounded-2xl overflow-hidden bg-background">
@@ -345,25 +336,9 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
           otherName={otherName}
           onStartCall={() => {
             setShowPreCall(false);
-            vc.startCall(otherName);
+            vc.startCall(conversationId, callerName, otherName);
           }}
           onCancel={() => setShowPreCall(false)}
-        />
-      )}
-
-      {/* Video call overlay */}
-      {ENABLE_VIDEO_CALL && (vc.state === "connected" || vc.state === "calling" || vc.state === "ended") && (
-        <VideoCallOverlay
-          state={vc.state}
-          isMuted={vc.isMuted}
-          isCameraOff={vc.isCameraOff}
-          callDuration={vc.callDuration}
-          otherName={otherName}
-          attachLocalStream={vc.attachLocalStream}
-          attachRemoteStream={vc.attachRemoteStream}
-          onToggleMute={vc.toggleMute}
-          onToggleCamera={vc.toggleCamera}
-          onEndCall={vc.endCall}
         />
       )}
     </div>
