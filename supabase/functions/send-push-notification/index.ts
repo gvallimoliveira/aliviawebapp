@@ -7,24 +7,37 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/**
+ * Ensure a base64url string has proper padding for Deno's stricter decoder.
+ */
+function ensureBase64urlPadding(str: string): string {
+  const cleaned = str.trim();
+  const pad = (4 - (cleaned.length % 4)) % 4;
+  return cleaned + "=".repeat(pad);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
-    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY");
+    const vapidPublicKeyRaw = Deno.env.get("VAPID_PUBLIC_KEY");
+    const vapidPrivateKeyRaw = Deno.env.get("VAPID_PRIVATE_KEY");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    if (!vapidPublicKey || !vapidPrivateKey) {
+    if (!vapidPublicKeyRaw || !vapidPrivateKeyRaw) {
       return new Response(
         JSON.stringify({ error: "VAPID keys not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Trim whitespace/newlines that may sneak in from env vars
+    const vapidPublicKey = vapidPublicKeyRaw.trim();
+    const vapidPrivateKey = vapidPrivateKeyRaw.trim();
 
     // Authorization: accept service-role, authenticated user, or anon key (for assessment notifications)
     const authHeader = req.headers.get("Authorization") || "";
@@ -56,11 +69,20 @@ Deno.serve(async (req) => {
       callerUserId = userData.user.id;
     }
 
-    webpush.setVapidDetails(
-      "mailto:contato@aliviawebapp.com.br",
-      vapidPublicKey,
-      vapidPrivateKey
-    );
+    // Set VAPID details — wrap in try/catch for diagnostics
+    try {
+      webpush.setVapidDetails(
+        "mailto:contato@aliviawebapp.com.br",
+        vapidPublicKey,
+        vapidPrivateKey
+      );
+    } catch (vapidErr: any) {
+      console.error("[Push] VAPID setup failed:", vapidErr?.message, "pubKey length:", vapidPublicKey.length, "privKey length:", vapidPrivateKey.length);
+      return new Response(
+        JSON.stringify({ error: "VAPID key configuration error", details: vapidErr?.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
