@@ -334,9 +334,9 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
         <PreCallScreen
           open={showPreCall}
           otherName={otherName}
-          onStartCall={() => {
+          onStartCall={(preparedStream) => {
             setShowPreCall(false);
-            vc.startCall(conversationId, callerName, otherName);
+            void vc.startCall(conversationId, callerName, otherName, preparedStream);
           }}
           onCancel={() => setShowPreCall(false)}
         />
