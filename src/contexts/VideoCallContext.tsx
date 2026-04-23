@@ -602,6 +602,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           return;
         }
 
+        cleanup();
         callIdRef.current = payload.callId;
         activeConvIdRef.current = convId;
         setActiveConvId(convId);
@@ -660,7 +661,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
         const pc = pcRef.current;
         if (!pc) {
-          endCallInternal(true, "Falha ao preparar a resposta da videochamada");
+          incomingOfferSdpRef.current = payload.sdp || null;
           return;
         }
 
@@ -909,20 +910,48 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     setIncomingCallerName("");
     setStateSync("connecting");
     endingRef.current = false;
-    createPeerConnection(stream, convId, callId);
 
-    const acceptSent = await sendSignal(convId, {
-      type: "call-accept",
-      callId,
-      fromName: user.user_metadata?.full_name || "Usuário",
-    });
+    const pc = createPeerConnection(stream, convId, callId);
+    const pendingOfferSdp = incomingOfferSdpRef.current;
 
-    if (!acceptSent) {
-      endCallInternal(true, "Falha ao confirmar a videochamada");
-      return;
+    if (pendingOfferSdp) {
+      try {
+        incomingOfferSdpRef.current = null;
+        await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: pendingOfferSdp }));
+        await flushPendingCandidates();
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        startConnectionTimeout();
+
+        const answerSent = await sendSignal(convId, {
+          type: "answer",
+          callId,
+          sdp: answer.sdp,
+        });
+
+        if (!answerSent) {
+          endCallInternal(true, "Falha ao enviar a resposta da videochamada");
+          return;
+        }
+      } catch (error) {
+        console.error("[VideoCall] Late offer answer failed", error);
+        endCallInternal(true, "Falha ao concluir a videochamada");
+        return;
+      }
+    } else {
+      const acceptSent = await sendSignal(convId, {
+        type: "call-accept",
+        callId,
+        fromName: user.user_metadata?.full_name || "Usuário",
+      });
+
+      if (!acceptSent) {
+        endCallInternal(true, "Falha ao confirmar a videochamada");
+        return;
+      }
+
+      startConnectionTimeout();
     }
-
-    startConnectionTimeout();
 
     if (onNavigateToChat) {
       onNavigateToChat(convId);
@@ -930,6 +959,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   }, [
     createPeerConnection,
     endCallInternal,
+    flushPendingCandidates,
     getMedia,
     insertSystemMessage,
     onNavigateToChat,
