@@ -31,7 +31,7 @@ import ClinicSecretaryDashboard from "@/components/dashboard/ClinicSecretaryDash
 import ContextSelectionModal from "@/components/dashboard/ContextSelectionModal";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import VideoCallListener from "@/components/chat/VideoCallListener";
+import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import {
   Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon, Building2,
