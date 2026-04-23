@@ -352,7 +352,13 @@ const Dashboard = () => {
     </Badge>
   );
 
-  return (
+  const videoCallWrapper = ENABLE_VIDEO_CALL ? (content: React.ReactNode) => (
+    <VideoCallProvider conversationIds={allConversationIds} onNavigateToChat={handleVideoCallNavigateToChat}>
+      {content}
+    </VideoCallProvider>
+  ) : (content: React.ReactNode) => <>{content}</>;
+
+  const dashboardContent = (
     <div className="min-h-screen bg-background">
       <ContextSelectionModal />
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
@@ -596,15 +602,10 @@ const Dashboard = () => {
         onSkip={onboarding.skip}
       />
 
-      {/* Global video call listener — active on all tabs */}
-      {ENABLE_VIDEO_CALL && allConversationIds.length > 0 && (
-        <VideoCallListener
-          conversationIds={allConversationIds}
-          onNavigateToChat={handleVideoCallNavigateToChat}
-        />
-      )}
     </div>
   );
+
+  return videoCallWrapper(dashboardContent);
 };
 
 export default Dashboard;
