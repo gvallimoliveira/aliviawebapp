@@ -10,6 +10,7 @@ import ChatBubble from "./ChatBubble";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import VideoCallOverlay from "./VideoCallOverlay";
+import PreCallScreen from "./PreCallScreen";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface ChatWindowProps {
