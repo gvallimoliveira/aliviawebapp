@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";
-import type { VideoCallState } from "@/hooks/useVideoCall";
+import type { VideoCallState } from "@/contexts/VideoCallContext";
 
 interface VideoCallOverlayProps {
   state: VideoCallState;
