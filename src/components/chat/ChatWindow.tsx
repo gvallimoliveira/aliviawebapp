@@ -246,7 +246,7 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
             variant="ghost"
             size="icon"
             className="h-8 w-8 shrink-0 text-primary"
-            onClick={() => vc.startCall(otherName)}
+            onClick={() => setShowPreCall(true)}
             disabled={vc.state !== "idle"}
             title={t("chat.video_call")}
           >
