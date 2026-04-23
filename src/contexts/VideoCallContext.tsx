@@ -182,8 +182,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     disconnectRestartAttemptsRef.current = 0;
   }, []);
 
-  const cleanup = useCallback(() => {
-    clearCallTimeout();
+  const resetPeerSession = useCallback((preservedLocalStream?: MediaStream | null) => {
     clearConnectionTimeout();
     clearDisconnectGrace();
 
@@ -202,21 +201,38 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       pcRef.current = null;
     }
 
-    stopStream(localStreamRef.current);
-    localStreamRef.current = null;
     pendingCandidatesRef.current = [];
     remoteStreamRef.current = new MediaStream();
-
-    if (localVideoRef.current) {
-      localVideoRef.current.srcObject = null;
-    }
+    callStartTimeRef.current = 0;
+    connectedOnceRef.current = false;
+    disconnectRestartAttemptsRef.current = 0;
+    setCallDuration(0);
 
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = null;
     }
 
+    if (preservedLocalStream) {
+      localStreamRef.current = preservedLocalStream;
+      if (localVideoRef.current) {
+        safeAttach(localVideoRef.current, preservedLocalStream);
+      }
+      return;
+    }
+
+    stopStream(localStreamRef.current);
+    localStreamRef.current = null;
+
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+  }, [clearConnectionTimeout, clearDisconnectGrace, safeAttach, stopStream]);
+
+  const cleanup = useCallback(() => {
+    clearCallTimeout();
+    resetPeerSession();
     resetVisualState();
-  }, [clearCallTimeout, clearConnectionTimeout, clearDisconnectGrace, resetVisualState, stopStream]);
+  }, [clearCallTimeout, resetPeerSession, resetVisualState]);
 
   const insertSystemMessage = useCallback(async (convId: string, text: string) => {
     if (!user) return;
@@ -460,8 +476,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   }, [clearDisconnectGrace, endCallInternal, startConnectionTimeout]);
 
   const createPeerConnection = useCallback((stream: MediaStream, convId: string, callId: string) => {
-    cleanup();
-    localStreamRef.current = stream;
+    resetPeerSession(stream);
 
     const pc = new RTCPeerConnection({
       iceServers: ICE_SERVERS,
@@ -537,7 +552,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     }
 
     return pc;
-  }, [cleanup, markConnected, safeAttach, scheduleDisconnectRecovery, sendSignal]);
+  }, [markConnected, resetPeerSession, safeAttach, scheduleDisconnectRecovery, sendSignal]);
 
   const getMedia = useCallback(async (preferredStream?: MediaStream | null) => {
     if (isStreamUsable(preferredStream)) {
