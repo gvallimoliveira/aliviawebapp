@@ -105,10 +105,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef(new MediaStream());
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const disconnectGraceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<number | null>(null);
+  const connectionTimeoutRef = useRef<number | null>(null);
+  const disconnectGraceRef = useRef<number | null>(null);
+  const durationIntervalRef = useRef<number | null>(null);
   const callStartTimeRef = useRef(0);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -286,7 +286,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       return false;
     }
 
-    const message = {
+    const message: { type: "broadcast"; event: string; payload: SignalPayload } = {
       type: "broadcast",
       event: "webrtc-signal",
       payload: { ...payload, from: user.id } satisfies SignalPayload,
