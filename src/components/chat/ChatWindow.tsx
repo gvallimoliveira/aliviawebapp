@@ -35,6 +35,7 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
 
   // Video call (only active when feature flag is on)
   const vc = useVideoCall(conversationId);
+  const [showPreCall, setShowPreCall] = useState(false);
 
   useEffect(() => {
     if (!conversationId || !user) return;
