@@ -338,6 +338,19 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
         </Button>
       </div>
 
+      {/* Pre-call permission screen */}
+      {ENABLE_VIDEO_CALL && (
+        <PreCallScreen
+          open={showPreCall}
+          otherName={otherName}
+          onStartCall={() => {
+            setShowPreCall(false);
+            vc.startCall(otherName);
+          }}
+          onCancel={() => setShowPreCall(false)}
+        />
+      )}
+
       {/* Video call overlay */}
       {ENABLE_VIDEO_CALL && (vc.state === "connected" || vc.state === "calling" || vc.state === "ended") && (
         <VideoCallOverlay
