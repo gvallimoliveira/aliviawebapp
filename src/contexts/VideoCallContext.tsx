@@ -598,11 +598,13 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     switch (payload.type) {
       case "call-request": {
         if (stateRef.current !== "idle") {
+          console.log("[VideoCall][Receiver] call-request ignored — state:", stateRef.current);
           await sendSignal(convId, { type: "call-reject", callId: payload.callId }, false);
           return;
         }
 
         cleanup();
+        console.log("[VideoCall][Receiver] call-request received — callId:", payload.callId, "from:", payload.fromName);
         callIdRef.current = payload.callId;
         activeConvIdRef.current = convId;
         setActiveConvId(convId);
@@ -619,10 +621,12 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
       case "call-accept": {
         if (payload.callId !== currentCallId || stateRef.current !== "calling") {
+          console.log("[VideoCall][Caller] call-accept ignored — callId match:", payload.callId === currentCallId, "state:", stateRef.current);
           return;
         }
 
         clearCallTimeout();
+        console.log("[VideoCall][Caller] call-accept received — creating offer");
         setRemoteUserName(payload.fromName || remoteUserName || "Usuário");
         setStateSync("connecting");
         startConnectionTimeout();
@@ -637,7 +641,9 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
         try {
           const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+          console.log("[VideoCall][Caller] createOffer OK — sdp length:", offer.sdp?.length);
           await pc.setLocalDescription(offer);
+          console.log("[VideoCall][Caller] setLocalDescription OK");
           const offerSent = await sendSignal(convId, {
             type: "offer",
             callId: payload.callId,
@@ -645,7 +651,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           });
 
           if (!offerSent) {
+            console.error("[VideoCall][Caller] sendSignal(offer) FAILED");
             endCallInternal(true, "Falha ao enviar a oferta da videochamada");
+          } else {
+            console.log("[VideoCall][Caller] offer sent OK");
           }
         } catch (error) {
           console.error("[VideoCall] Offer failed", error);
@@ -656,20 +665,27 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
       case "offer": {
         if (payload.callId !== currentCallId) {
+          console.log("[VideoCall][Receiver] offer ignored — callId mismatch:", payload.callId, "expected:", currentCallId);
           return;
         }
 
         const pc = pcRef.current;
         if (!pc) {
+          console.log("[VideoCall][Receiver] offer received but NO PC yet — buffering SDP (length:", payload.sdp?.length, ")");
           incomingOfferSdpRef.current = payload.sdp || null;
           return;
         }
 
         try {
+          console.log("[VideoCall][Receiver] offer received WITH PC — setRemoteDescription...");
           await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: payload.sdp }));
+          console.log("[VideoCall][Receiver] setRemoteDescription OK — flushing candidates...");
           await flushPendingCandidates();
+          console.log("[VideoCall][Receiver] flushPendingCandidates OK — createAnswer...");
           const answer = await pc.createAnswer();
+          console.log("[VideoCall][Receiver] createAnswer OK — sdp length:", answer.sdp?.length);
           await pc.setLocalDescription(answer);
+          console.log("[VideoCall][Receiver] setLocalDescription OK — sending answer...");
           startConnectionTimeout();
 
           const answerSent = await sendSignal(convId, {
@@ -679,7 +695,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           });
 
           if (!answerSent) {
+            console.error("[VideoCall][Receiver] sendSignal(answer) FAILED");
             endCallInternal(true, "Falha ao enviar a resposta da videochamada");
+          } else {
+            console.log("[VideoCall][Receiver] answer sent OK");
           }
         } catch (error) {
           console.error("[VideoCall] Answer failed", error);
@@ -690,18 +709,23 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
       case "answer": {
         if (payload.callId != currentCallId) {
+          console.log("[VideoCall][Caller] answer ignored — callId mismatch");
           return;
         }
 
         const pc = pcRef.current;
         if (!pc) {
+          console.error("[VideoCall][Caller] answer received but NO PC");
           endCallInternal(true, "Falha ao aplicar a resposta da videochamada");
           return;
         }
 
         try {
+          console.log("[VideoCall][Caller] answer received — setRemoteDescription...");
           await pc.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: payload.sdp }));
+          console.log("[VideoCall][Caller] setRemoteDescription(answer) OK — flushing candidates...");
           await flushPendingCandidates();
+          console.log("[VideoCall][Caller] flushPendingCandidates OK after answer");
           startConnectionTimeout();
         } catch (error) {
           console.error("[VideoCall] Handle answer failed", error);
@@ -712,9 +736,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
       case "ice-candidate": {
         if (payload.callId !== currentCallId || !payload.candidate) {
+          console.log("[VideoCall] ICE candidate ignored — callId match:", payload.callId === currentCallId, "has candidate:", Boolean(payload.candidate));
           return;
         }
 
+        console.log("[VideoCall] ICE candidate received — type:", payload.candidate?.candidate?.slice(0, 60));
         await queueCandidate(payload.candidate);
         return;
       }
@@ -731,9 +757,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
       case "call-end": {
         if (payload.callId !== currentCallId) {
+          console.log("[VideoCall] call-end ignored — callId mismatch");
           return;
         }
 
+        console.log("[VideoCall] call-end received — ending");
         endCallInternal(false);
         return;
       }
