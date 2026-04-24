@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users, Plus,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
