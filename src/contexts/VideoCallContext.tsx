@@ -1014,7 +1014,6 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     flushPendingCandidates,
     getMedia,
     insertSystemMessage,
-    onNavigateToChat,
     resetToIdle,
     sendSignal,
     setStateSync,

@@ -80,26 +80,25 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
 
         setNewConvPatients(results);
       } else if (mode === "patient" && user) {
-        const { data: assessments } = await supabase
-          .from("assessments")
-          .select("professional_id")
-          .eq("user_id", user.id)
-          .not("professional_id", "is", null);
+        // Use new RPC that consolidates assessments (by user_id OR email),
+        // patients table by email, conversations, and referrals.
+        const { data: pros, error } = await (supabase.rpc("get_patient_professionals" as any, {
+          _user_id: user.id,
+        }) as any);
 
-        const proIds = [...new Set((assessments || []).map(a => a.professional_id).filter(Boolean))] as string[];
-        // Also filter out professionals who already have an active conversation
-        const filteredProIds = proIds.filter(id => !existingPartnerIds.has(id));
-        if (filteredProIds.length > 0) {
-          const { data: pros } = await supabase
-            .from("professionals")
-            .select("id, full_name, user_id")
-            .in("id", filteredProIds);
-          setNewConvPatients(
-            (pros || []).map(p => ({ user_id: p.user_id, name: p.full_name, email: "", has_account: true }))
-          );
-        } else {
-          setNewConvPatients([]);
+        if (error) {
+          console.warn("get_patient_professionals failed, falling back:", error);
         }
+
+        const list = (pros || [])
+          .filter((p: any) => p.professional_user_id && !existingPartnerIds.has(p.professional_user_id))
+          .map((p: any) => ({
+            user_id: p.professional_user_id,
+            name: p.full_name || "Profissional",
+            email: "",
+            has_account: true,
+          }));
+        setNewConvPatients(list);
       }
     } catch {}
     setNewConvLoading(false);
