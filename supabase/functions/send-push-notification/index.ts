@@ -86,11 +86,11 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { user_id, title, body, url } = await req.json();
+    const { user_id, title, body, url, kind, tag, call_id } = await req.json();
 
-    if (!user_id || !title || !body) {
+    if (!user_id || !title) {
       return new Response(
-        JSON.stringify({ error: "user_id, title, and body are required" }),
+        JSON.stringify({ error: "user_id and title are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -105,8 +105,11 @@ Deno.serve(async (req) => {
 
     // Basic input sanity caps to limit abuse
     const safeTitle = String(title).slice(0, 200);
-    const safeBody = String(body).slice(0, 500);
+    const safeBody = body ? String(body).slice(0, 500) : "";
     const safeUrl = url ? String(url).slice(0, 500) : "/";
+    const safeKind = kind ? String(kind).slice(0, 40) : undefined;
+    const safeTag = tag ? String(tag).slice(0, 120) : undefined;
+    const safeCallId = call_id ? String(call_id).slice(0, 80) : undefined;
 
     const { data: subscriptions, error } = await supabase
       .from("push_subscriptions")
@@ -120,7 +123,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    const payload = JSON.stringify({ title: safeTitle, body: safeBody, url: safeUrl });
+    const payload = JSON.stringify({
+      title: safeTitle,
+      body: safeBody,
+      url: safeUrl,
+      kind: safeKind,
+      tag: safeTag,
+      call_id: safeCallId,
+    });
     let sent = 0;
     const errors: string[] = [];
     const expiredEndpoints: string[] = [];
