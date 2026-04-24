@@ -493,6 +493,30 @@ const ProfessionalAssessment = () => {
           </div>
         )}
 
+        {step === "diagnosis_error" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 text-center py-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 mx-auto">
+              <AlertTriangle className="h-8 w-8 text-amber-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">
+              {language === "pt" ? "Avaliação salva com sucesso" : "Assessment saved successfully"}
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              {language === "pt"
+                ? "Não conseguimos gerar o diagnóstico automático agora, mas todos os seus dados foram salvos. O profissional já pode visualizar sua avaliação."
+                : "We couldn't generate the automatic diagnosis right now, but all your data was saved. The professional can already view your assessment."}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center pt-4">
+              <Button onClick={retryDiagnosis} className="rounded-xl">
+                {language === "pt" ? "Tentar gerar diagnóstico novamente" : "Retry diagnosis"}
+              </Button>
+              <Button onClick={() => navigate("/")} variant="outline" className="rounded-xl">
+                {t("redflag_alert.back")}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
         {step === "thank_you" && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 text-center py-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mx-auto">
