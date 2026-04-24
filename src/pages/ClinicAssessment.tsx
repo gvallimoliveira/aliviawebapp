@@ -166,8 +166,13 @@ const ClinicAssessment = () => {
         is_reassessment: !!reassessmentId,
       });
       return data.id;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error creating clinic assessment:", err);
+      toast({
+        title: language === "pt" ? "Erro ao salvar avaliação" : "Error saving assessment",
+        description: err?.message || (language === "pt" ? "Tente novamente em instantes." : "Please try again."),
+        variant: "destructive",
+      });
       return null;
     }
   };
