@@ -64,9 +64,13 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       );
 
       if (mode === "professional" && professionalId) {
-        const { data: contacts } = await (supabase.rpc("get_professional_all_patients" as any, {
-          _professional_id: professionalId,
-        }) as any);
+        // In clinic mode, use clinic-wide patient list so owner/secretary/therapist
+        // can chat with any patient registered to the clinic (not just their own)
+        const rpcName = clinicId ? "get_clinic_all_patients" : "get_professional_all_patients";
+        const rpcArgs = clinicId
+          ? { _clinic_id: clinicId }
+          : { _professional_id: professionalId };
+        const { data: contacts } = await (supabase.rpc(rpcName as any, rpcArgs as any) as any);
 
         const results: { user_id: string | null; name: string; email: string; has_account: boolean }[] = [];
         for (const c of contacts || []) {
