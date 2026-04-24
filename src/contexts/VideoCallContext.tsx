@@ -886,9 +886,12 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           await supabase.functions.invoke("send-push-notification", {
             body: {
               user_id: recipientUserId,
-              title: "Videochamada — Aliv.iA",
-              body: `${callerName} está ligando para você`,
+              title: "📹 Chamada recebida",
+              body: `${callerName} está te chamando…`,
               url: `/dashboard?tab=messages&conv=${conversationId}`,
+              kind: "video-call",
+              tag: `video-call-${conversationId}`,
+              call_id: callId,
             },
           });
         }
