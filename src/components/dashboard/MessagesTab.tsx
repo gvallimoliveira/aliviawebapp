@@ -76,6 +76,7 @@ const MessagesTab = ({
         <ConversationList
           mode="professional"
           professionalId={professional.id}
+          clinicId={clinicId}
           initialConversationId={initialConversationId}
           searchQuery={msgSearch}
           canInitiateConversation={canInitiateAsProfessional}
