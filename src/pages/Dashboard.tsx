@@ -124,7 +124,8 @@ const Dashboard = () => {
 
       const [profileResult, assessmentsResult, sessionResult, professionalResult] = await Promise.allSettled([
         supabase.from("profiles").select("*").eq("user_id", user.id).single(),
-        supabase.from("assessments").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+        // Includes own assessments + pre-assessments via professional/clinic links matched by email
+        (supabase.rpc as any)("get_my_assessments"),
         supabase.auth.getSession(),
         (supabase.from("professionals" as any) as any).select("*").eq("user_id", user.id).maybeSingle(),
       ]);
