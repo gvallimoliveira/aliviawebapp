@@ -36,37 +36,41 @@ const ExerciseChecklist = () => {
   const fetchData = useCallback(async () => {
     if (!user) return;
 
-    // Get user's active programs (not expired)
-    const { data: progs } = await (supabase as any)
-      .from("exercise_programs")
-      .select(`
-        id, patient_name, 
-        professional:professionals(full_name),
-        items:exercise_program_items(
-          id, sets, reps, frequency, sort_order, custom_name,
-          exercise:exercise_library(name_pt, name_en, name_es)
-        )
-      `)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false })
-      .limit(5);
+    // Get ONLY programs that belong to this user (via assessment user_id, patient_email,
+    // or matching patient record by email). Uses a security-definer RPC to enforce ownership.
+    const { data: myPrograms, error: rpcErr } = await (supabase as any)
+      .rpc("get_my_active_exercise_programs");
 
-    if (!progs || progs.length === 0) {
+    if (rpcErr || !myPrograms || myPrograms.length === 0) {
       setPrograms([]);
       setLoading(false);
       return;
     }
 
-    // We need to find programs that belong to this user
-    // Programs don't have user_id directly, but are linked via assessments or patient_name
-    // For now, show all active programs the user can access
-    const mapped: ProgramWithItems[] = progs
-      .filter((p: any) => p.items && p.items.length > 0)
+    const programIds = myPrograms.map((p: any) => p.program_id);
+
+    // Fetch items for those programs only
+    const { data: items } = await (supabase as any)
+      .from("exercise_program_items")
+      .select(`
+        id, sets, reps, frequency, sort_order, custom_name, program_id,
+        exercise:exercise_library(name_pt, name_en, name_es)
+      `)
+      .in("program_id", programIds);
+
+    const itemsByProgram = new Map<string, any[]>();
+    (items || []).forEach((it: any) => {
+      const arr = itemsByProgram.get(it.program_id) || [];
+      arr.push(it);
+      itemsByProgram.set(it.program_id, arr);
+    });
+
+    const mapped: ProgramWithItems[] = myPrograms
       .map((p: any) => ({
-        programId: p.id,
+        programId: p.program_id,
         programName: p.patient_name || "",
-        professionalName: p.professional?.full_name || "",
-        items: (p.items || [])
+        professionalName: p.professional_name || "",
+        items: (itemsByProgram.get(p.program_id) || [])
           .sort((a: any, b: any) => a.sort_order - b.sort_order)
           .map((item: any) => ({
             id: item.id,
@@ -79,7 +83,8 @@ const ExerciseChecklist = () => {
             reps: item.reps,
             frequency: item.frequency,
           })),
-      }));
+      }))
+      .filter((p) => p.items.length > 0);
 
     setPrograms(mapped);
 
