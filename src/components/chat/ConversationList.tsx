@@ -319,9 +319,9 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
         namesMap[p.id] = p.full_name;
       }
     } else if (professionalId) {
-      const { data: contacts } = await (supabase.rpc("get_professional_all_patients" as any, {
-        _professional_id: professionalId,
-      }) as any);
+      const rpcName = clinicId ? "get_clinic_all_patients" : "get_professional_all_patients";
+      const rpcArgs = clinicId ? { _clinic_id: clinicId } : { _professional_id: professionalId };
+      const { data: contacts } = await (supabase.rpc(rpcName as any, rpcArgs as any) as any);
 
       for (const contact of contacts || []) {
         if (contact.user_id) {
