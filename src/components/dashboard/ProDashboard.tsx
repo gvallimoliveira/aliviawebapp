@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users, Plus,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
@@ -126,6 +127,9 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [isSimulatedInternal, setIsSimulatedInternal] = useState(false);
   const isSimulated = isSimulatedProp !== undefined ? isSimulatedProp : isSimulatedInternal;
   const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const [clinicTherapists, setClinicTherapists] = useState<any[]>([]);
+  const [assignTargetByAssessment, setAssignTargetByAssessment] = useState<Record<string, string>>({});
+  const [assigningAssessmentId, setAssigningAssessmentId] = useState<string | null>(null);
   const setIsSimulated = (val: boolean) => {
     if (onSimulatedChange) onSimulatedChange(val);
     else setIsSimulatedInternal(val);
@@ -215,6 +219,51 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     }
     merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     setPatientAssessments(merged);
+  };
+
+  // Load clinic therapists (for assignment dropdown) when in clinic mode
+  useEffect(() => {
+    if (!isClinicMode || !activeClinic?.clinic_id) {
+      setClinicTherapists([]);
+      return;
+    }
+    const loadTherapists = async () => {
+      const { data: members } = await supabase
+        .from("clinic_members")
+        .select("user_id, role")
+        .eq("clinic_id", activeClinic.clinic_id)
+        .eq("status", "active")
+        .in("role", ["owner", "therapist", "osteopath", "pilates_instructor", "doctor", "rpg_specialist", "massage_therapist"]);
+      if (!members || members.length === 0) { setClinicTherapists([]); return; }
+      const userIds = members.map((m: any) => m.user_id);
+      const { data: pros } = await supabase
+        .from("professionals")
+        .select("id, user_id, full_name, profile_photo_url")
+        .in("user_id", userIds);
+      setClinicTherapists(pros || []);
+    };
+    loadTherapists();
+  }, [isClinicMode, activeClinic?.clinic_id]);
+
+  const handleAssignProfessional = async (assessmentId: string, targetProId: string) => {
+    if (!targetProId) return;
+    setAssigningAssessmentId(assessmentId);
+    const { error } = await supabase
+      .from("assessments")
+      .update({ professional_id: targetProId } as any)
+      .eq("id", assessmentId);
+    setAssigningAssessmentId(null);
+    if (error) {
+      toast({ title: language === "pt" ? "Erro ao atribuir" : "Assignment error", variant: "destructive" });
+      return;
+    }
+    toast({ title: language === "pt" ? "Profissional atribuído!" : "Professional assigned!" });
+    setAssignTargetByAssessment((prev) => {
+      const next = { ...prev };
+      delete next[assessmentId];
+      return next;
+    });
+    loadPatientAssessments();
   };
 
   const loadReferrals = async () => {
@@ -470,6 +519,14 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     }
   };
   const pendingReviewCount = pendingReviewAssessments.length;
+
+  // Clinic-only: assessments without an assigned professional (need to be triaged)
+  const unassignedClinicAssessments = useMemo(() => {
+    if (!isClinicMode || !activeClinic?.clinic_id) return [];
+    return patientAssessments.filter(
+      (a: any) => a.clinic_id === activeClinic.clinic_id && !a.professional_id && a.status !== "in_progress"
+    );
+  }, [patientAssessments, isClinicMode, activeClinic?.clinic_id]);
 
   const painRegionLabels: Record<string, string> = {
     head: "Cabeça", neck: "Pescoço", right_shoulder: "Ombro D.", left_shoulder: "Ombro E.",
@@ -792,6 +849,65 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           professionalId={professional.id}
           onNavigateToSchedule={() => navigate("/dashboard?tab=agenda")}
         />
+      )}
+
+      {/* Clinic-only: unassigned assessments needing triage */}
+      {!isSimulated && isClinicMode && unassignedClinicAssessments.length > 0 && (
+        <Card className="border-blue-500/30 bg-blue-500/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2 text-blue-700">
+              <AlertTriangle className="h-4 w-4" />
+              {language === "pt"
+                ? `${unassignedClinicAssessments.length} avaliação(ões) sem profissional atribuído`
+                : `${unassignedClinicAssessments.length} assessment(s) without assigned professional`}
+            </CardTitle>
+            <CardDescription className="text-xs">
+              {language === "pt"
+                ? "Direcione cada avaliação para um fisioterapeuta da clínica para revisão e plano de tratamento."
+                : "Assign each assessment to a clinic professional for review and treatment plan."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {unassignedClinicAssessments.slice(0, 8).map((a: any) => (
+              <div key={a.id} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-blue-200 bg-background">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {a.patient_name || a.patient_email || "Paciente"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(a.created_at), "dd/MM/yyyy HH:mm")}
+                    {a.status && ` · ${a.status}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Select
+                    value={assignTargetByAssessment[a.id] || ""}
+                    onValueChange={(v) => setAssignTargetByAssessment((prev) => ({ ...prev, [a.id]: v }))}
+                  >
+                    <SelectTrigger className="h-8 text-xs w-[180px] rounded-lg">
+                      <SelectValue placeholder={language === "pt" ? "Atribuir a..." : "Assign to..."} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clinicTherapists.map((t: any) => (
+                        <SelectItem key={t.id} value={t.id} className="text-xs">
+                          {t.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    className="h-8 rounded-lg text-xs"
+                    disabled={!assignTargetByAssessment[a.id] || assigningAssessmentId === a.id}
+                    onClick={() => handleAssignProfessional(a.id, assignTargetByAssessment[a.id])}
+                  >
+                    {assigningAssessmentId === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : (language === "pt" ? "Atribuir" : "Assign")}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       {/* Pending review alert - expandable with clickable items */}
