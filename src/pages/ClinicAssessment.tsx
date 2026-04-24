@@ -220,12 +220,30 @@ const ClinicAssessment = () => {
     generateDiagnosis(anamnesisData!, [], assessmentId);
   };
 
+  const invokeDiagnosisWithRetry = async (bodyData: any, attempts = 3): Promise<any> => {
+    let lastErr: any = null;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const { data: result, error } = await supabase.functions.invoke("generate-diagnosis", { body: bodyData });
+        if (error) throw error;
+        if (!result?.diagnosis) throw new Error("Empty diagnosis");
+        return result;
+      } catch (err) {
+        lastErr = err;
+        console.warn(`Diagnosis attempt ${i + 1} failed:`, err);
+        if (i < attempts - 1) {
+          await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+        }
+      }
+    }
+    throw lastErr;
+  };
+
   const generateDiagnosis = async (data: AnamnesisData, qResults: QuestionnaireResult[], currentId?: string | null) => {
     setStep("loading");
     try {
       const bodyData: any = { anamnesisData: data, testResults: [], questionnaireResults: qResults, mode: "professional", language };
-      const { data: result, error } = await supabase.functions.invoke("generate-diagnosis", { body: bodyData });
-      if (error) throw error;
+      const result = await invokeDiagnosisWithRetry(bodyData);
 
       const id = currentId || assessmentId;
       if (id) {
@@ -260,8 +278,42 @@ const ClinicAssessment = () => {
       setStep("thank_you");
     } catch (err: any) {
       console.error("Diagnosis error:", err);
-      toast({ title: t("diagnosis.error_title"), description: t("diagnosis.error_desc"), variant: "destructive" });
-      setStep("anamnesis");
+      // Mark assessment as completed-without-diagnosis so clinic can still review the data
+      const id = currentId || assessmentId;
+      if (id) {
+        await updateAssessment(id, { status: "completed" });
+        await logClinicAction("assessment_completed_no_ai", id, { error: err?.message || String(err) });
+      }
+      // Still save patient record so it appears for the clinic
+      try {
+        const cpfClean = data.cpf?.replace(/\D/g, "") || null;
+        if (linkedPatient?.id) {
+          const updates: any = {};
+          if (patientEmail && !linkedPatient.email) updates.email = patientEmail;
+          if (cpfClean) updates.cpf = cpfClean;
+          if (data.birthDate) updates.birth_date = data.birthDate;
+          if (Object.keys(updates).length > 0) {
+            await (supabase.from("patients" as any) as any).update(updates).eq("id", linkedPatient.id);
+          }
+        } else {
+          await (supabase.from("patients" as any) as any).insert({
+            full_name: patientName || "Paciente",
+            email: patientEmail || null,
+            cpf: cpfClean,
+            birth_date: data.birthDate || null,
+            clinic_id: clinicId,
+          });
+        }
+      } catch (e) {
+        console.warn("Patient record save skipped:", e);
+      }
+      setStep("diagnosis_error");
+    }
+  };
+
+  const retryDiagnosis = () => {
+    if (anamnesisData) {
+      generateDiagnosis(anamnesisData, questionnaireResults, assessmentId);
     }
   };
 
