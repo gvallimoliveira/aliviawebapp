@@ -18,6 +18,7 @@ import ChatWindow from "./ChatWindow";
 interface ConversationListProps {
   mode: "patient" | "professional";
   professionalId?: string;
+  clinicId?: string | null;
   initialConversationId?: string | null;
   searchQuery?: string;
   canInitiateConversation?: boolean;
@@ -33,7 +34,7 @@ interface ConversationItem {
   unread_count: number;
 }
 
-const ConversationList = ({ mode, professionalId, initialConversationId, searchQuery = "", canInitiateConversation = true }: ConversationListProps) => {
+const ConversationList = ({ mode, professionalId, clinicId = null, initialConversationId, searchQuery = "", canInitiateConversation = true }: ConversationListProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
