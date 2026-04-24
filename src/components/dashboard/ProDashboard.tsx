@@ -220,6 +220,51 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     setPatientAssessments(merged);
   };
 
+  // Load clinic therapists (for assignment dropdown) when in clinic mode
+  useEffect(() => {
+    if (!isClinicMode || !activeClinic?.clinic_id) {
+      setClinicTherapists([]);
+      return;
+    }
+    const loadTherapists = async () => {
+      const { data: members } = await supabase
+        .from("clinic_members")
+        .select("user_id, role")
+        .eq("clinic_id", activeClinic.clinic_id)
+        .eq("status", "active")
+        .in("role", ["owner", "therapist", "osteopath", "pilates_instructor", "doctor", "rpg_specialist", "massage_therapist"]);
+      if (!members || members.length === 0) { setClinicTherapists([]); return; }
+      const userIds = members.map((m: any) => m.user_id);
+      const { data: pros } = await supabase
+        .from("professionals")
+        .select("id, user_id, full_name, profile_photo_url")
+        .in("user_id", userIds);
+      setClinicTherapists(pros || []);
+    };
+    loadTherapists();
+  }, [isClinicMode, activeClinic?.clinic_id]);
+
+  const handleAssignProfessional = async (assessmentId: string, targetProId: string) => {
+    if (!targetProId) return;
+    setAssigningAssessmentId(assessmentId);
+    const { error } = await supabase
+      .from("assessments")
+      .update({ professional_id: targetProId } as any)
+      .eq("id", assessmentId);
+    setAssigningAssessmentId(null);
+    if (error) {
+      toast({ title: language === "pt" ? "Erro ao atribuir" : "Assignment error", variant: "destructive" });
+      return;
+    }
+    toast({ title: language === "pt" ? "Profissional atribuído!" : "Professional assigned!" });
+    setAssignTargetByAssessment((prev) => {
+      const next = { ...prev };
+      delete next[assessmentId];
+      return next;
+    });
+    loadPatientAssessments();
+  };
+
   const loadReferrals = async () => {
     const { data: refs } = await (supabase.from("professional_referrals" as any) as any)
       .select("*")
