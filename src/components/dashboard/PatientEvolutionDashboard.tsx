@@ -1771,6 +1771,113 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         </div>
       </div>
 
+      {/* ── Fisioterapeutas responsáveis (modo clínica) ── */}
+      {clinicId && !isDemo && (() => {
+        const assignedProIds = Array.from(
+          new Set(
+            patient.assessments
+              .map((a: any) => a.professional_id)
+              .filter((id: any) => !!id)
+          )
+        ) as string[];
+        const assignedPros = clinicTherapists.filter((p) => assignedProIds.includes(p.id));
+        const unassignedCount = patient.assessments.filter((a: any) => !a.professional_id).length;
+        const canManage = !readOnly;
+        return (
+          <Card className="border-sky-200 bg-sky-50/40 dark:bg-sky-950/10">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <UserCog className="h-4 w-4 text-sky-600" />
+                Fisioterapeuta(s) responsável(eis)
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {assignedPros.length === 0 && unassignedCount > 0
+                  ? `${unassignedCount} avaliação(ões) sem fisio designado`
+                  : `${assignedPros.length} fisio(s) atualmente vinculado(s) — você pode reatribuir a qualquer momento`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {assignedPros.length === 0 ? (
+                  <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
+                    Nenhum fisio designado
+                  </Badge>
+                ) : (
+                  assignedPros.map((p) => {
+                    const count = patient.assessments.filter((a: any) => a.professional_id === p.id).length;
+                    return (
+                      <Badge key={p.id} variant="secondary" className="gap-1">
+                        <Users className="h-3 w-3" />
+                        {p.full_name}
+                        <span className="ml-1 text-[10px] opacity-70">({count})</span>
+                      </Badge>
+                    );
+                  })
+                )}
+              </div>
+              {canManage && clinicTherapists.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => { setReassignTargetId(""); setReassignOpen(true); }}
+                >
+                  <UserCog className="h-4 w-4" />
+                  Alterar / atribuir fisioterapeuta
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      {/* Reassign professional dialog */}
+      <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Atribuir fisioterapeuta</DialogTitle>
+            <DialogDescription>
+              Todas as avaliações deste paciente passarão a ser do fisio escolhido. O paciente pode atender com mais de um — basta repetir o processo quando trocar de profissional.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            {clinicTherapists.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setReassignTargetId(p.id)}
+                className={`w-full text-left p-3 rounded-md border transition-colors ${
+                  reassignTargetId === p.id
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-muted"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <UserCog className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium text-sm">{p.full_name}</span>
+                </div>
+              </button>
+            ))}
+            {clinicTherapists.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Nenhum fisioterapeuta ativo na clínica.
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReassignOpen(false)} disabled={reassigning}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => patient && handleReassignPatient(patient.assessments.map((a: any) => a.id), reassignTargetId)}
+              disabled={!reassignTargetId || reassigning}
+            >
+              {reassigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* HEP Modal */}
       <CreateExerciseProgramModal
         open={hepModalOpen}
