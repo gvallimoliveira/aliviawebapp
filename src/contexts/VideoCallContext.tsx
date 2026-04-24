@@ -417,7 +417,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       setRemoteUserName("");
       endingRef.current = false;
     }, 2000);
-  }, [cleanup, insertSystemMessage, sendSignal, setStateSync]);
+  }, [cleanup, insertSystemMessage, sendSignal, setStateSync, user]);
 
   const startConnectionTimeout = useCallback((message = "Falha ao conectar a videochamada") => {
     clearConnectionTimeout();
