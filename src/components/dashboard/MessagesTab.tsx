@@ -10,6 +10,7 @@ interface MessagesTabProps {
   initialConversationId?: string | null;
   canInitiateAsPatient?: boolean;
   canInitiateAsProfessional?: boolean;
+  clinicId?: string | null;
 }
 
 const MessagesTab = ({
@@ -17,6 +18,7 @@ const MessagesTab = ({
   initialConversationId,
   canInitiateAsPatient = false,
   canInitiateAsProfessional = false,
+  clinicId = null,
 }: MessagesTabProps) => {
   const { t } = useLanguage();
   const [msgSearch, setMsgSearch] = useState("");
