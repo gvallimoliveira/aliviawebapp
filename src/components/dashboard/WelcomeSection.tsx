@@ -31,7 +31,7 @@ const WelcomeSection = ({
 }: WelcomeSectionProps) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { activeContext } = useClinic();
+  const { activeContext, activeClinic } = useClinic();
   const [clinicActive, setClinicActive] = useState(false);
 
   // Check if partner has active clinic
