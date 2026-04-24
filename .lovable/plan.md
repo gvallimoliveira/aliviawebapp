@@ -1,96 +1,136 @@
 
-Objetivo: reestruturar a videochamada para que dois aparelhos realmente entrem na mesma sessão, recebam o aviso de chamada corretamente e consigam transmitir áudio/vídeo com estabilidade.
+Objetivo: corrigir de forma estrutural os 3 problemas que hoje estão se reforçando entre si: o aceite da videochamada no receptor aborta o fluxo, o chat do paciente pode ficar “oculto” mesmo com notificação, e a lista de profissionais não reflete corretamente quem enviou a pré-avaliação.
 
-1. Corrigir a arquitetura da chamada
-- Substituir o fluxo dividido atual entre `useVideoCall` e `VideoCallListener` por uma única camada de controle da chamada.
-- Centralizar em um único controlador por conversa:
-  - canal realtime
-  - estado da chamada
-  - `RTCPeerConnection`
-  - stream local/remoto
-  - timeout
-  - limpeza
-- Fazer o modal de chamada recebida e a tela de chamada ativa consumirem esse mesmo controlador, eliminando competição entre dois fluxos diferentes.
+Diagnóstico consolidado
+1. O fluxo do receptor ainda tem um ponto crítico de UI:
+- `IncomingCallModal` usa `Dialog` com `onOpenChange={(isOpen) => !isOpen && onReject()}`.
+- Ao aceitar a chamada, o estado muda de `ringing` para `connecting`; isso fecha o modal controlado e pode disparar `onReject()` no mesmo ciclo.
+- Resultado provável: o receptor entra no aceite, o fluxo é resetado, some a tela de chamada e volta para a aba de mensagens.
 
-2. Corrigir os pontos que hoje impedem a conexão
-- Remover a marcação prematura de “connected” no lado que inicia a chamada; só considerar conectada após `answer` aplicado e conexão WebRTC realmente estabelecida.
-- Corrigir o buffer de ICE candidates nos dois lados:
-  - hoje o caller acumula candidatos antes do `remoteDescription`
-  - mas não faz o flush completo depois que recebe a `answer`
-- Garantir que ofertas, respostas e ICE sejam ignorados se forem de chamadas antigas usando um `callId` único por tentativa.
-- Ajustar o listener para não depender de closures desatualizadas de estado (`isRinging`, `callState`), evitando comportamento inconsistente entre toques, aceites e encerramentos.
+2. O aceite ainda navega cedo demais:
+- `handleAcceptCall()` chama `onNavigateToChat(convId)` logo após enviar `call-accept`/`answer`, antes de confirmar conexão real.
+- Em mobile isso pode mascarar o overlay, re-renderizar a área de mensagens e dar a sensação de “voltou para o início”.
 
-3. Corrigir o fluxo de permissão e câmera
-- Manter a obtenção de mídia dentro do gesto direto do usuário.
-- Reaproveitar corretamente o stream aprovado na pré-chamada quando possível, em vez de destruir e recriar de forma frágil.
-- Adicionar tratamento robusto para:
-  - câmera disponível
-  - apenas áudio
-  - permissão negada
-  - câmera ocupada por outro app
-  - preview preto mesmo com permissão concedida
-- Forçar `video.play()` após `srcObject` e `onloadedmetadata` para melhorar compatibilidade em mobile.
-- Resetar completamente streams e tracks entre tentativas para não deixar vídeo remoto/local “preso” ou preto.
+3. O chat invisível no paciente tem causa funcional clara:
+- `ConversationList` esconde conversas com `hidden_by_patient = false` como condição obrigatória.
+- Se o paciente apagou a conversa, ela pode continuar existindo com novas mensagens/notificações, mas seguir invisível.
+- O badge/notificação continua chegando porque o restante do app não trata esse ocultamento de forma consistente.
 
-4. Corrigir a exibição do aviso de chamada recebida
-- Garantir que o evento `call-request` abra o modal mesmo fora da conversa já expandida.
-- Navegar para a conversa correta apenas após o aceite, sem quebrar o contexto da chamada.
-- Exibir estados distintos:
-  - recebendo chamada
-  - conectando
-  - conectada
-  - encerrada
-  - falha de conexão
+4. O filtro de profissional a partir do link de pré-avaliação está incompleto:
+- No modo paciente, a busca de profissionais para iniciar conversa depende de `assessments.user_id = user.id`.
+- Mas a pré-avaliação profissional hoje cria avaliação com `user_id: null` e guarda vínculo por `patient_email`/`patients`.
+- Resultado: o paciente que entrou por link do profissional não vê esse profissional corretamente na lista de conversa.
 
-5. Adicionar fallback real para redes diferentes
-- O código atual usa apenas STUN, o que costuma falhar entre aparelhos em redes móveis/NAT diferentes.
-- Adicionar servidor de relay (TURN) como fallback para permitir conexão real entre aparelhos em cenários fora da mesma rede.
-- Manter STUN para casos simples e usar TURN quando necessário.
+O que será implementado
 
-6. Melhorar a resiliência do encerramento e novas tentativas
-- Encerrar sem deixar canais órfãos, timers ativos ou peer connections antigas.
-- Permitir nova chamada logo após falha/recusa/timeout sem precisar recarregar a página.
-- Evitar mensagens duplicadas de “encerrada” e limpar corretamente o estado visual em ambos os aparelhos.
+1. Reestruturar o aceite da videochamada no receptor
+- Remover a dependência do fechamento automático do `Dialog` para controlar rejeição.
+- Trocar o modal de chamada recebida por uma camada fixa/overlay controlada explicitamente, sem `onOpenChange` disparando `onReject`.
+- Separar claramente os estados:
+  - `ringing`
+  - `accepting_media`
+  - `negotiating`
+  - `connected`
+  - `ended`
+- Garantir que “aceitar” só possa ser disparado uma vez por chamada, com trava contra duplo clique e contra reset concorrente.
 
-7. Validar ponta a ponta antes de publicar
-- Testar nos dois sentidos:
-  - aparelho A liga para B
-  - aparelho B liga para A
-- Testar:
-  - mesma rede
-  - redes diferentes
-  - aceitar
-  - recusar
-  - timeout
-  - áudio sem câmera
-  - app em foreground/background
-  - repetidas chamadas seguidas
-- Confirmar:
-  - modal de chamada aparece
-  - preview local aparece nos dois aparelhos
-  - vídeo remoto aparece
-  - áudio trafega
-  - encerramento sincroniza
-  - retry funciona sem tela preta
+2. Preservar o gesto do usuário no receptor
+- Fazer o caminho de aceite inteiro nascer do clique em “Atender”.
+- Criar/preparar mídia e peer connection dentro do fluxo do receptor sem deixar a UI desmontar no meio.
+- Se já existir oferta pendente, aplicar `setRemoteDescription -> createAnswer -> setLocalDescription -> send answer` ainda dentro do fluxo preservado.
+- Se a oferta ainda não chegou, manter o receptor em estado explícito de negociação aguardando a oferta, sem resetar a sessão.
+
+3. Impedir reset acidental durante o handshake
+- Blindar `resetToIdle`, `cleanup` e `endCallInternal` para não interromper uma sessão em aceite se o `callId` atual ainda estiver válido.
+- Revisar timers de timeout/desconexão para não matarem a chamada antes de SDP/ICE estarem realmente em fase útil.
+- Ignorar eventos tardios de chamadas antigas sem desmontar a chamada atual.
+
+4. Parar de navegar para mensagens antes da conexão
+- Remover a navegação imediata em `handleAcceptCall`.
+- Só sincronizar a aba/chat quando:
+  - a chamada já estiver conectada, ou
+  - o usuário tocar manualmente para abrir o chat.
+- O overlay da chamada deve permanecer soberano sobre a interface, sem depender da aba de mensagens estar aberta.
+
+5. Tornar o diagnóstico do handshake visível e acionável
+- Manter os logs detalhados já iniciados, mas complementar com rastreamento de etapa em memória:
+  - mídia adquirida
+  - PC criado
+  - offer recebida
+  - remote description aplicada
+  - answer criada
+  - local description aplicada
+  - answer enviada
+  - primeiro ICE remoto
+  - primeiro track remoto
+  - `iceConnectionState`
+  - `connectionState`
+- Exibir falha resumida em toast/system message quando o fluxo morrer antes de conectar, para não depender só do console.
+- Padronizar prefixos de log entre caller e receiver para facilitar testes futuros.
+
+6. Corrigir o problema de “notifica, mas não mostra o chat”
+- Ajustar a lógica de conversa para reaparecer quando houver retomada legítima da conversa.
+- Corrigir o reaproveitamento de conversa existente para desocultar os lados corretos.
+- Revisar:
+  - criação de conversa pelo paciente
+  - criação pelo profissional
+  - reabertura após conversa apagada
+  - recebimento de nova mensagem em conversa escondida
+- Unificar o comportamento entre lista, badge de não lidas e navegação por `?conv=` para evitar estado incoerente.
+
+7. Corrigir a origem da lista de profissionais no paciente
+- Parar de depender apenas de `assessments.user_id`.
+- Criar uma fonte consolidada para o paciente enxergar profissionais relacionados por:
+  - avaliações vinculadas ao usuário
+  - avaliações/preenchimentos por `patient_email`
+  - registros em `patients`
+  - conversas já existentes
+  - encaminhamentos/referrals quando aplicável
+- Assim o profissional que enviou o link de pré-avaliação passa a aparecer para iniciar conversa mesmo se a avaliação original foi criada antes do login.
+
+8. Ajustar backend para suportar o fluxo correto
+- Revisar a função `create_conversation_for_patient` para reaproveitar conversa existente sem deixar um dos lados invisível indevidamente.
+- Criar ou revisar RPC específica para listar profissionais elegíveis ao paciente com base no vínculo real de pré-avaliação.
+- Garantir que o app trate ocultação como preferência de UI, não como bloqueio permanente de retomada.
+
+Arquivos mais prováveis de alteração
+- `src/contexts/VideoCallContext.tsx`
+- `src/components/chat/IncomingCallModal.tsx`
+- `src/components/chat/VideoCallOverlay.tsx`
+- `src/components/chat/ConversationList.tsx`
+- `src/components/dashboard/MessagesTab.tsx`
+- `src/pages/Dashboard.tsx`
+- `src/pages/ProfessionalSearch.tsx`
+- migrations em `supabase/migrations/` para funções de conversa e vínculo paciente-profissional
+
+Validação que será feita
+1. Videochamada
+- chamada recebida abre interface estável no receptor
+- tocar em “Atender” não volta para mensagens
+- receptor permanece em tela de negociação
+- caller e receiver trocam offer/answer/ICE
+- primeiro áudio/vídeo remoto aparece dos dois lados
+- segunda chamada após encerrar também funciona
+
+2. Chat
+- paciente apaga conversa
+- profissional manda mensagem nova
+- conversa reaparece corretamente ou pode ser retomada sem “notificação fantasma”
+- abrir por `?conv=` realmente seleciona a conversa
+
+3. Filtro/profissional do link
+- paciente que veio por link profissional consegue ver o profissional relacionado
+- iniciar conversa abre/reaproveita a conversa correta
+- não ficam profissionais faltando por causa de `user_id` nulo na avaliação antiga
 
 Detalhes técnicos
-- Arquivos principais a reestruturar:
-  - `src/hooks/useVideoCall.ts`
-  - `src/components/chat/VideoCallListener.tsx`
-  - `src/components/chat/PreCallScreen.tsx`
-  - `src/components/chat/VideoCallOverlay.tsx`
-  - `src/components/chat/ChatWindow.tsx`
-  - `src/pages/Dashboard.tsx`
-- Ajustes principais de engenharia:
-  - estado único da chamada
-  - `callId` por sessão
-  - flush de ICE pendente após `setRemoteDescription`
-  - transição para “connected” baseada em `connectionState`/`iceConnectionState`
-  - limpeza forte de stream, tracks, peer connection e canal
-  - fallback TURN para redes difíceis
+- O bug mais crítico hoje não parece ser apenas ICE/TURN; há forte indício de interrupção de estado no receptor antes do handshake terminar.
+- O principal candidato é o fechamento controlado do `Dialog` chamando rejeição involuntária.
+- Em paralelo, a modelagem atual do paciente para “quem posso conversar” está incompleta para fluxos de pré-avaliação anônima/sem login prévio.
+- A correção precisa ser estrutural, não só mais um ajuste pontual no WebRTC.
 
 Resultado esperado
-- O aparelho receptor passa a ver o aviso de chamada.
-- Os dois aparelhos entram na mesma sessão ao aceitar.
-- Áudio e vídeo passam a circular de forma confiável.
-- Tentativas seguintes deixam de quebrar com tela preta ou chamada “fantasma”.
+- O receptor não aborta mais ao clicar em atender.
+- A videochamada permanece em tela de conexão até negociar ou falhar com motivo claro.
+- O chat do paciente volta a aparecer corretamente após retomadas.
+- O profissional vinculado ao link de pré-avaliação passa a aparecer corretamente para iniciar conversa.
