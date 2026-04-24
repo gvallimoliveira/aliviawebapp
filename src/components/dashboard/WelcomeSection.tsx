@@ -5,7 +5,7 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, Stethoscope, Crown, RotateCcw, Building2, Star } from "lucide-react";
+import { Shield, Stethoscope, Crown, RotateCcw, Building2, Star, Briefcase, ClipboardList, UserCog } from "lucide-react";
 
 
 interface WelcomeSectionProps {
@@ -31,7 +31,7 @@ const WelcomeSection = ({
 }: WelcomeSectionProps) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { activeContext } = useClinic();
+  const { activeContext, activeClinic } = useClinic();
   const [clinicActive, setClinicActive] = useState(false);
 
   // Check if partner has active clinic
@@ -52,11 +52,40 @@ const WelcomeSection = ({
       return <Badge className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 gap-1 cursor-pointer hover:bg-destructive/80 transition-colors" onClick={() => navigate("/admin")}><Shield className="h-3 w-3" />Admin</Badge>;
     }
 
+    // Clinic role badge (owner / secretary / therapist) when in clinic context
+    const clinicRoleBadge =
+      activeContext === "clinic" && activeClinic?.role
+        ? (() => {
+            const role = activeClinic.role;
+            if (role === "owner") {
+              return (
+                <Badge className="bg-teal-600 text-white text-[10px] px-2 py-0.5 gap-1">
+                  <UserCog className="h-3 w-3" />Proprietário(a)
+                </Badge>
+              );
+            }
+            if (role === "secretary") {
+              return (
+                <Badge className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 gap-1">
+                  <ClipboardList className="h-3 w-3" />Secretaria
+                </Badge>
+              );
+            }
+            // therapist
+            return (
+              <Badge className="bg-sky-600 text-white text-[10px] px-2 py-0.5 gap-1">
+                <Briefcase className="h-3 w-3" />Fisioterapeuta
+              </Badge>
+            );
+          })()
+        : null;
+
     // Professional/Clinic context: show Pro badge
     if (activeContext === "professional" || activeContext === "clinic") {
       if (professional?.is_partner) {
         return (
           <div className="flex flex-wrap gap-1.5">
+            {clinicRoleBadge}
             <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1">
               <Stethoscope className="h-3 w-3" />PRO
             </Badge>
@@ -74,10 +103,24 @@ const WelcomeSection = ({
         );
       }
       if (professional?.subscription_status === "active" && professional?.pro_access_expires_at) {
-        return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Anual</Badge>;
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            {clinicRoleBadge}
+            <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Anual</Badge>
+          </div>
+        );
       }
       if (professional?.subscription_status === "active") {
-        return <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Mensal</Badge>;
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            {clinicRoleBadge}
+            <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />PRO Mensal</Badge>
+          </div>
+        );
+      }
+      // No PRO badge but in clinic mode (e.g., secretary without professional profile)
+      if (clinicRoleBadge) {
+        return <div className="flex flex-wrap gap-1.5">{clinicRoleBadge}</div>;
       }
     }
 
