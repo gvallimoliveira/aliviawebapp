@@ -294,11 +294,15 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
     let namesMap: Record<string, string> = {};
     if (mode === "patient") {
       const proIds = [...new Set(convs.map((c) => c.professional_id))];
-      const { data: pros } = await supabase
-        .from("professionals")
-        .select("id, full_name")
-        .in("id", proIds);
-      for (const p of pros || []) {
+      // Use security-definer RPC to bypass RLS that hides professionals
+      // from patients (RLS only allows the professional themself or admins).
+      const { data: pros, error: prosErr } = await (supabase.rpc("get_professionals_basic_info" as any, {
+        _professional_ids: proIds,
+      }) as any);
+      if (prosErr) {
+        console.warn("get_professionals_basic_info failed:", prosErr);
+      }
+      for (const p of (pros || []) as Array<{ id: string; full_name: string }>) {
         namesMap[p.id] = p.full_name;
       }
     } else if (professionalId) {

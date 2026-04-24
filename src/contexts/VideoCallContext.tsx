@@ -355,6 +355,41 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     if (sendEndSignal && convId && callId) {
       void sendSignal(convId, { type: "call-end", callId }, false);
+
+      // Silent push to clear the incoming-call notification on the other side.
+      void (async () => {
+        try {
+          const { data: conversation } = await supabase
+            .from("conversations")
+            .select("patient_user_id, professional_id")
+            .eq("id", convId)
+            .single();
+          if (!conversation || !user) return;
+          let recipientUserId: string | null = null;
+          if (conversation.patient_user_id === user.id) {
+            const { data: professional } = await supabase
+              .from("professionals")
+              .select("user_id")
+              .eq("id", conversation.professional_id)
+              .single();
+            recipientUserId = professional?.user_id || null;
+          } else {
+            recipientUserId = conversation.patient_user_id;
+          }
+          if (recipientUserId) {
+            await supabase.functions.invoke("send-push-notification", {
+              body: {
+                user_id: recipientUserId,
+                title: "Chamada encerrada",
+                body: "",
+                url: `/dashboard?tab=messages&conv=${convId}`,
+                kind: "video-call-cancel",
+                tag: `video-call-${convId}`,
+              },
+            });
+          }
+        } catch {}
+      })();
     }
 
     if (convId) {
@@ -382,7 +417,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       setRemoteUserName("");
       endingRef.current = false;
     }, 2000);
-  }, [cleanup, insertSystemMessage, sendSignal, setStateSync]);
+  }, [cleanup, insertSystemMessage, sendSignal, setStateSync, user]);
 
   const startConnectionTimeout = useCallback((message = "Falha ao conectar a videochamada") => {
     clearConnectionTimeout();
@@ -886,9 +921,12 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           await supabase.functions.invoke("send-push-notification", {
             body: {
               user_id: recipientUserId,
-              title: "Videochamada — Aliv.iA",
-              body: `${callerName} está ligando para você`,
+              title: "📹 Chamada recebida",
+              body: `${callerName} está te chamando…`,
               url: `/dashboard?tab=messages&conv=${conversationId}`,
+              kind: "video-call",
+              tag: `video-call-${conversationId}`,
+              call_id: callId,
             },
           });
         }
