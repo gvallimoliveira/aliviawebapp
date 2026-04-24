@@ -519,6 +519,14 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   };
   const pendingReviewCount = pendingReviewAssessments.length;
 
+  // Clinic-only: assessments without an assigned professional (need to be triaged)
+  const unassignedClinicAssessments = useMemo(() => {
+    if (!isClinicMode || !activeClinic?.clinic_id) return [];
+    return patientAssessments.filter(
+      (a: any) => a.clinic_id === activeClinic.clinic_id && !a.professional_id && a.status !== "in_progress"
+    );
+  }, [patientAssessments, isClinicMode, activeClinic?.clinic_id]);
+
   const painRegionLabels: Record<string, string> = {
     head: "Cabeça", neck: "Pescoço", right_shoulder: "Ombro D.", left_shoulder: "Ombro E.",
     upper_back: "Torácica", lower_back: "Lombar", right_knee: "Joelho D.", left_knee: "Joelho E.",
