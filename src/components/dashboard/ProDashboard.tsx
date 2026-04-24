@@ -851,6 +851,65 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         />
       )}
 
+      {/* Clinic-only: unassigned assessments needing triage */}
+      {!isSimulated && isClinicMode && unassignedClinicAssessments.length > 0 && (
+        <Card className="border-blue-500/30 bg-blue-500/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2 text-blue-700">
+              <AlertTriangle className="h-4 w-4" />
+              {language === "pt"
+                ? `${unassignedClinicAssessments.length} avaliação(ões) sem profissional atribuído`
+                : `${unassignedClinicAssessments.length} assessment(s) without assigned professional`}
+            </CardTitle>
+            <CardDescription className="text-xs">
+              {language === "pt"
+                ? "Direcione cada avaliação para um fisioterapeuta da clínica para revisão e plano de tratamento."
+                : "Assign each assessment to a clinic professional for review and treatment plan."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {unassignedClinicAssessments.slice(0, 8).map((a: any) => (
+              <div key={a.id} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-blue-200 bg-background">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {a.patient_name || a.patient_email || "Paciente"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(a.created_at), "dd/MM/yyyy HH:mm")}
+                    {a.status && ` · ${a.status}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Select
+                    value={assignTargetByAssessment[a.id] || ""}
+                    onValueChange={(v) => setAssignTargetByAssessment((prev) => ({ ...prev, [a.id]: v }))}
+                  >
+                    <SelectTrigger className="h-8 text-xs w-[180px] rounded-lg">
+                      <SelectValue placeholder={language === "pt" ? "Atribuir a..." : "Assign to..."} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clinicTherapists.map((t: any) => (
+                        <SelectItem key={t.id} value={t.id} className="text-xs">
+                          {t.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    className="h-8 rounded-lg text-xs"
+                    disabled={!assignTargetByAssessment[a.id] || assigningAssessmentId === a.id}
+                    onClick={() => handleAssignProfessional(a.id, assignTargetByAssessment[a.id])}
+                  >
+                    {assigningAssessmentId === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : (language === "pt" ? "Atribuir" : "Assign")}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pending review alert - expandable with clickable items */}
       {!isSimulated && pendingReviewCount > 0 && (
         <PendingReviewAlert
