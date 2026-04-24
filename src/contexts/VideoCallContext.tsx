@@ -926,6 +926,17 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       return;
     }
 
+    // Lock state immediately so any re-render of the ringing UI cannot race
+    // with the accept flow (Dialog/overlay close → onReject was the prior bug).
+    if (stateRef.current !== "ringing") {
+      console.log("[VideoCall][Receiver] handleAcceptCall ignored — state is", stateRef.current);
+      return;
+    }
+
+    setIsRinging(false);
+    setStateSync("connecting");
+    endingRef.current = false;
+
     console.log("[VideoCall][Receiver] handleAcceptCall — acquiring media...");
     const stream = await getMedia();
     if (!stream) {
@@ -938,10 +949,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     console.log("[VideoCall][Receiver] getMedia OK — tracks:", stream.getTracks().map(t => `${t.kind}:${t.readyState}`).join(", "));
     localStreamRef.current = stream;
-    setIsRinging(false);
     setIncomingCallerName("");
-    setStateSync("connecting");
-    endingRef.current = false;
 
     const pc = createPeerConnection(stream, convId, callId);
     const pendingOfferSdp = incomingOfferSdpRef.current;
@@ -998,16 +1006,14 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       startConnectionTimeout();
     }
 
-    if (onNavigateToChat) {
-      onNavigateToChat(convId);
-    }
+    // Do NOT navigate to chat here. The overlay is global and shows on top
+    // of any tab. Navigating early was tearing down the receiver UI on mobile.
   }, [
     createPeerConnection,
     endCallInternal,
     flushPendingCandidates,
     getMedia,
     insertSystemMessage,
-    onNavigateToChat,
     resetToIdle,
     sendSignal,
     setStateSync,

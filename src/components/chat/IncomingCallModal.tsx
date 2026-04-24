@@ -1,13 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Phone, PhoneOff, Video } from "lucide-react";
 
 interface IncomingCallModalProps {
@@ -58,42 +51,71 @@ const useRingtone = (active: boolean) => {
   }, [active]);
 };
 
+/**
+ * Stable fixed overlay — does NOT use Radix Dialog.
+ * This avoids the race where Dialog's onOpenChange fires onReject
+ * when state transitions away from "ringing".
+ * Accept is locked to a single click to prevent double-fires.
+ */
 const IncomingCallModal = ({ open, callerName, onAccept, onReject }: IncomingCallModalProps) => {
   const { t } = useLanguage();
+  const [acting, setActing] = useState(false);
   useRingtone(open);
 
-  return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onReject()}>
-      <DialogContent className="sm:max-w-sm" onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="items-center">
-          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-2 animate-pulse">
-            <Video className="h-8 w-8 text-primary" />
-          </div>
-          <DialogTitle className="text-center">{t("chat.video_incoming")}</DialogTitle>
-          <DialogDescription className="text-center text-base font-medium">
-            {callerName}
-          </DialogDescription>
-        </DialogHeader>
+  if (!open) return null;
 
-        <div className="flex items-center justify-center gap-8 mt-4">
+  const handleAccept = () => {
+    if (acting) return;
+    setActing(true);
+    console.log("[IncomingCallModal] Accept clicked");
+    onAccept();
+  };
+
+  const handleReject = () => {
+    if (acting) return;
+    setActing(true);
+    console.log("[IncomingCallModal] Reject clicked");
+    onReject();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="bg-background rounded-2xl shadow-2xl border border-border w-full max-w-sm p-6 flex flex-col items-center">
+        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 animate-pulse">
+          <Video className="h-8 w-8 text-primary" />
+        </div>
+        <h2 className="text-lg font-semibold text-foreground text-center">
+          {t("chat.video_incoming")}
+        </h2>
+        <p className="text-base font-medium text-foreground text-center mt-1">
+          {callerName}
+        </p>
+
+        <div className="flex items-center justify-center gap-8 mt-6">
           <Button
             variant="destructive"
             size="icon"
             className="h-14 w-14 rounded-full"
-            onClick={onReject}
+            onClick={handleReject}
+            disabled={acting}
           >
             <PhoneOff className="h-6 w-6" />
           </Button>
           <Button
             size="icon"
             className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white"
-            onClick={onAccept}
+            onClick={handleAccept}
+            disabled={acting}
           >
             <Phone className="h-6 w-6" />
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 

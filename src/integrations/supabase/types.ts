@@ -1683,6 +1683,15 @@ export type Database = {
           professional_id: string
         }[]
       }
+      get_patient_professionals: {
+        Args: { _user_id: string }
+        Returns: {
+          full_name: string
+          logo_url: string
+          professional_id: string
+          professional_user_id: string
+        }[]
+      }
       get_professional_all_patients: {
         Args: { _professional_id: string }
         Returns: {
