@@ -38,6 +38,11 @@ interface ClinicContextType {
   activeContext: ActiveContextType;
   setActiveContext: (type: ActiveContextType, clinicId?: string | null) => void;
   availableContextsCount: number;
+  // Convenience role helpers (derived from activeClinic.role)
+  isClinicOwner: boolean;
+  isClinicSecretary: boolean;
+  isClinicTherapist: boolean;
+  canManageClinic: boolean;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
@@ -156,6 +161,12 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const setHasProfessionalProfile = (v: boolean) => setHasProfessionalProfileState(v);
 
+  const role = activeClinic?.role ?? null;
+  const isClinicOwner = role === "owner";
+  const isClinicSecretary = role === "secretary";
+  const isClinicTherapist = role === "therapist";
+  const canManageClinic = role === "owner" || role === "secretary";
+
   return (
     <ClinicContext.Provider
       value={{
@@ -172,6 +183,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         activeContext,
         setActiveContext,
         availableContextsCount,
+        isClinicOwner,
+        isClinicSecretary,
+        isClinicTherapist,
+        canManageClinic,
       }}
     >
       {children}

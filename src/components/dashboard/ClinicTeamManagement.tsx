@@ -51,7 +51,7 @@ const roleIcon = (role: ClinicRole) => {
 };
 
 const ClinicTeamManagement = () => {
-  const { activeClinic, refetch } = useClinic();
+  const { activeClinic, refetch, canManageClinic } = useClinic();
   const { user } = useAuth();
   const { language } = useLanguage();
   const [members, setMembers] = useState<Member[]>([]);
@@ -60,7 +60,7 @@ const ClinicTeamManagement = () => {
   const [inviteRole, setInviteRole] = useState<ClinicRole>("therapist");
   const [sending, setSending] = useState(false);
 
-  const canManage = activeClinic?.role === "owner" || activeClinic?.role === "secretary";
+  const canManage = canManageClinic;
   const lang = language as "pt" | "en" | "es";
 
   const fetchTeam = async () => {

@@ -36,7 +36,8 @@ interface ConversationItem {
 
 const ConversationList = ({ mode, professionalId, clinicId = null, initialConversationId, searchQuery = "", canInitiateConversation = true }: ConversationListProps) => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isPt = language === "pt";
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,9 +88,9 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       } else if (mode === "patient" && user) {
         // Use new RPC that consolidates assessments (by user_id OR email),
         // patients table by email, conversations, and referrals.
-        const { data: pros, error } = await (supabase.rpc("get_patient_professionals" as any, {
+        const { data: pros, error } = await supabase.rpc("get_patient_professionals", {
           _user_id: user.id,
-        }) as any);
+        });
 
         if (error) {
           console.warn("get_patient_professionals failed, falling back:", error);
@@ -309,13 +310,13 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       const proIds = [...new Set(convs.map((c) => c.professional_id))];
       // Use security-definer RPC to bypass RLS that hides professionals
       // from patients (RLS only allows the professional themself or admins).
-      const { data: pros, error: prosErr } = await (supabase.rpc("get_professionals_basic_info" as any, {
+      const { data: pros, error: prosErr } = await supabase.rpc("get_professionals_basic_info", {
         _professional_ids: proIds,
-      }) as any);
+      });
       if (prosErr) {
         console.warn("get_professionals_basic_info failed:", prosErr);
       }
-      for (const p of (pros || []) as Array<{ id: string; full_name: string }>) {
+      for (const p of pros || []) {
         namesMap[p.id] = p.full_name;
       }
     } else if (professionalId) {
@@ -414,7 +415,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
     }
   };
 
-  const isPt = t("chat.no_conversations") !== "chat.no_conversations";
+  
 
   return (
     <div className="space-y-4">

@@ -77,7 +77,7 @@ function buildOnboardingSteps(subscriptionType?: "monthly" | "single" | null, is
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, ready: authReady } = useAuth();
   const { t, toggleLanguage } = useLanguage();
-  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount } = useClinic();
+  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary } = useClinic();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
@@ -398,7 +398,7 @@ const Dashboard = () => {
         {isClinicMode && activeClinic ? (
           /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid" style={{ gridTemplateColumns: (activeClinic.role === "owner" || activeClinic.role === "secretary") ? "repeat(6, 1fr)" : "repeat(5, 1fr)" }}>
+            <TabsList className="w-full grid" style={{ gridTemplateColumns: canManageClinic ? "repeat(6, 1fr)" : "repeat(5, 1fr)" }}>
               <TabsTrigger value="agenda" className="gap-1.5 text-xs">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
@@ -411,7 +411,7 @@ const Dashboard = () => {
               <TabsTrigger value="link" className="gap-1.5 text-xs">
                 <Link2 className="h-4 w-4" /><span className="hidden sm:inline">Link</span>
               </TabsTrigger>
-              {(activeClinic.role === "owner" || activeClinic.role === "secretary") && (
+              {canManageClinic && (
                 <TabsTrigger value="analytics" className="gap-1.5 text-xs">
                   <Activity className="h-4 w-4" /><span className="hidden sm:inline">Gestão</span>
                 </TabsTrigger>
@@ -444,7 +444,7 @@ const Dashboard = () => {
             <TabsContent value="patients" className="space-y-6">
               <ClinicTrialBanner />
               <div className="relative">
-                {activeClinic.role === "secretary" ? (
+                {isClinicSecretary ? (
                   <ClinicSecretaryDashboard />
                 ) : professional ? (
                   <ProDashboard professional={professional} hideForClinicTabs isSimulated={isSimulated} onSimulatedChange={setIsSimulated} />
@@ -522,7 +522,7 @@ const Dashboard = () => {
             </TabsContent>
 
             {/* Gestão (owner only) */}
-            {(activeClinic.role === "owner" || activeClinic.role === "secretary") && (
+            {canManageClinic && (
               <TabsContent value="analytics" className="space-y-6">
                 <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
               </TabsContent>
