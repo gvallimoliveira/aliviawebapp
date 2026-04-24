@@ -38,6 +38,11 @@ interface ClinicContextType {
   activeContext: ActiveContextType;
   setActiveContext: (type: ActiveContextType, clinicId?: string | null) => void;
   availableContextsCount: number;
+  // Convenience role helpers (derived from activeClinic.role)
+  isClinicOwner: boolean;
+  isClinicSecretary: boolean;
+  isClinicTherapist: boolean;
+  canManageClinic: boolean;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
