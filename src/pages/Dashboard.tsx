@@ -411,7 +411,7 @@ const Dashboard = () => {
               <TabsTrigger value="link" className="gap-1.5 text-xs">
                 <Link2 className="h-4 w-4" /><span className="hidden sm:inline">Link</span>
               </TabsTrigger>
-              {(activeClinic.role === "owner" || activeClinic.role === "secretary") && (
+              {canManageClinic && (
                 <TabsTrigger value="analytics" className="gap-1.5 text-xs">
                   <Activity className="h-4 w-4" /><span className="hidden sm:inline">Gestão</span>
                 </TabsTrigger>
