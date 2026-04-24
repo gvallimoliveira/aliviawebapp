@@ -1673,6 +1673,18 @@ export type Database = {
         Args: { _clinic_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["clinic_role"]
       }
+      get_my_active_exercise_programs: {
+        Args: never
+        Returns: {
+          created_at: string
+          expires_at: string
+          notes: string
+          patient_name: string
+          professional_id: string
+          professional_name: string
+          program_id: string
+        }[]
+      }
       get_patient_assessment_link_context: {
         Args: { _clinic_id?: string; _professional_id?: string; _token: string }
         Returns: {
