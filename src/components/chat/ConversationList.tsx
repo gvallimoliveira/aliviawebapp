@@ -130,14 +130,22 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
 
       let convId: string;
 
-      // Use security-definer RPC to create/find conversation (bypasses RLS issues)
-      const { data: rpcResult, error: rpcError } = await supabase.rpc(
-        "create_conversation_for_patient" as any,
-        { _professional_id: targetProfId, _patient_user_id: patientUserId }
-      );
-
-      if (rpcError) throw rpcError;
-      convId = rpcResult as string;
+      // Clinic mode: use clinic-aware RPC so any clinic member can chat with any clinic patient
+      if (mode === "professional" && clinicId) {
+        const { data: rpcResult, error: rpcError } = await supabase.rpc(
+          "create_conversation_for_clinic_patient" as any,
+          { _clinic_id: clinicId, _professional_id: targetProfId, _patient_user_id: patientUserId }
+        );
+        if (rpcError) throw rpcError;
+        convId = rpcResult as string;
+      } else {
+        const { data: rpcResult, error: rpcError } = await supabase.rpc(
+          "create_conversation_for_patient" as any,
+          { _professional_id: targetProfId, _patient_user_id: patientUserId }
+        );
+        if (rpcError) throw rpcError;
+        convId = rpcResult as string;
+      }
 
       // If patient mode, also unhide for patient
       if (mode === "patient") {
