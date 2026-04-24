@@ -310,13 +310,13 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       const proIds = [...new Set(convs.map((c) => c.professional_id))];
       // Use security-definer RPC to bypass RLS that hides professionals
       // from patients (RLS only allows the professional themself or admins).
-      const { data: pros, error: prosErr } = await (supabase.rpc("get_professionals_basic_info" as any, {
+      const { data: pros, error: prosErr } = await supabase.rpc("get_professionals_basic_info", {
         _professional_ids: proIds,
-      }) as any);
+      });
       if (prosErr) {
         console.warn("get_professionals_basic_info failed:", prosErr);
       }
-      for (const p of (pros || []) as Array<{ id: string; full_name: string }>) {
+      for (const p of pros || []) {
         namesMap[p.id] = p.full_name;
       }
     } else if (professionalId) {
