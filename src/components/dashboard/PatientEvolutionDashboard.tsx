@@ -572,6 +572,28 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
     fetchAdherence();
   }, [professionalId, isDemo]);
 
+  // Reassign all patient assessments to a new professional within the clinic
+  const handleReassignPatient = async (assessmentIds: string[], targetProId: string) => {
+    if (!targetProId || assessmentIds.length === 0 || !clinicId) return;
+    setReassigning(true);
+    try {
+      const { error } = await (supabase.from("assessments") as any)
+        .update({ professional_id: targetProId })
+        .in("id", assessmentIds)
+        .eq("clinic_id", clinicId);
+      if (error) throw error;
+      toast({ title: "Fisioterapeuta atualizado!", description: "Todas as avaliações deste paciente foram reatribuídas." });
+      setReassignOpen(false);
+      setReassignTargetId("");
+      // Trigger reload upstream
+      window.dispatchEvent(new Event("reload-pro-patients"));
+    } catch (e: any) {
+      toast({ title: "Erro ao reatribuir", description: e?.message || "Tente novamente", variant: "destructive" });
+    } finally {
+      setReassigning(false);
+    }
+  };
+
   // Quick note save handler
   const handleQuickNoteSave = async () => {
     if (!quickNotePatient || !quickNoteContent.trim() || !professionalId) return;
