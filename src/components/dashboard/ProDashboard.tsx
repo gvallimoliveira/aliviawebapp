@@ -126,6 +126,9 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [isSimulatedInternal, setIsSimulatedInternal] = useState(false);
   const isSimulated = isSimulatedProp !== undefined ? isSimulatedProp : isSimulatedInternal;
   const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const [clinicTherapists, setClinicTherapists] = useState<any[]>([]);
+  const [assignTargetByAssessment, setAssignTargetByAssessment] = useState<Record<string, string>>({});
+  const [assigningAssessmentId, setAssigningAssessmentId] = useState<string | null>(null);
   const setIsSimulated = (val: boolean) => {
     if (onSimulatedChange) onSimulatedChange(val);
     else setIsSimulatedInternal(val);
