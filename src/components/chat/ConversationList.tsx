@@ -415,7 +415,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
     }
   };
 
-  const isPt = t("chat.no_conversations") !== "chat.no_conversations";
+  
 
   return (
     <div className="space-y-4">
