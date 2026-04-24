@@ -18,7 +18,7 @@ import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 
-type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "thank_you";
+type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you";
 
 const ProfessionalAssessment = () => {
   const { professionalId } = useParams<{ professionalId: string }>();
@@ -218,44 +218,62 @@ const ProfessionalAssessment = () => {
     generateDiagnosis(anamnesisData!, [], assessmentId);
   };
 
+  const invokeDiagnosisWithRetry = async (bodyData: any, attempts = 3): Promise<any> => {
+    let lastErr: any = null;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const { data: result, error } = await supabase.functions.invoke("generate-diagnosis", { body: bodyData });
+        if (error) throw error;
+        if (!result?.diagnosis) throw new Error("Empty diagnosis");
+        return result;
+      } catch (err) {
+        lastErr = err;
+        console.warn(`Diagnosis attempt ${i + 1} failed:`, err);
+        if (i < attempts - 1) {
+          await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+        }
+      }
+    }
+    throw lastErr;
+  };
+
+  const persistPatientRecord = async (data: AnamnesisData) => {
+    try {
+      const cpfClean = data.cpf?.replace(/\D/g, "") || null;
+      if (linkedPatient?.id) {
+        const updates: any = {};
+        if (patientEmail && !linkedPatient.email) updates.email = patientEmail;
+        if (cpfClean) updates.cpf = cpfClean;
+        if (data.birthDate) updates.birth_date = data.birthDate;
+        if (Object.keys(updates).length > 0) {
+          await (supabase.from("patients" as any) as any).update(updates).eq("id", linkedPatient.id);
+        }
+      } else {
+        await (supabase.from("patients" as any) as any).insert({
+          full_name: patientName || "Paciente",
+          email: patientEmail || null,
+          cpf: cpfClean,
+          birth_date: data.birthDate || null,
+          professional_id: professionalId,
+        });
+      }
+    } catch (e) {
+      console.warn("Patient record save skipped:", e);
+    }
+  };
+
   const generateDiagnosis = async (data: AnamnesisData, qResults: QuestionnaireResult[], currentId?: string | null) => {
     setStep("loading");
     try {
       const bodyData: any = { anamnesisData: data, testResults: [], questionnaireResults: qResults, mode: "professional", language };
-
-      const { data: result, error } = await supabase.functions.invoke("generate-diagnosis", { body: bodyData });
-      if (error) throw error;
+      const result = await invokeDiagnosisWithRetry(bodyData);
 
       const id = currentId || assessmentId;
       if (id) {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "completed" });
       }
 
-      // Save/update patient: if linked via personalized token, update the existing record
-      try {
-        const cpfClean = data.cpf?.replace(/\D/g, "") || null;
-        if (linkedPatient?.id) {
-          const updates: any = {};
-          if (patientEmail && !linkedPatient.email) updates.email = patientEmail;
-          if (cpfClean) updates.cpf = cpfClean;
-          if (data.birthDate) updates.birth_date = data.birthDate;
-          if (Object.keys(updates).length > 0) {
-            await (supabase.from("patients" as any) as any)
-              .update(updates)
-              .eq("id", linkedPatient.id);
-          }
-        } else {
-          await (supabase.from("patients" as any) as any).insert({
-            full_name: patientName || "Paciente",
-            email: patientEmail || null,
-            cpf: cpfClean,
-            birth_date: data.birthDate || null,
-            professional_id: professionalId,
-          });
-        }
-      } catch (e) {
-        console.warn("Patient record save skipped:", e);
-      }
+      await persistPatientRecord(data);
 
       // Push notification to professional
       notifyProfessional();
@@ -263,8 +281,19 @@ const ProfessionalAssessment = () => {
       setStep("thank_you");
     } catch (err: any) {
       console.error("Diagnosis error:", err);
-      toast({ title: t("diagnosis.error_title"), description: t("diagnosis.error_desc"), variant: "destructive" });
-      setStep("anamnesis");
+      const id = currentId || assessmentId;
+      if (id) {
+        await updateAssessment(id, { status: "completed" });
+      }
+      await persistPatientRecord(data);
+      notifyProfessional();
+      setStep("diagnosis_error");
+    }
+  };
+
+  const retryDiagnosis = () => {
+    if (anamnesisData) {
+      generateDiagnosis(anamnesisData, questionnaireResults, assessmentId);
     }
   };
 
@@ -462,6 +491,30 @@ const ProfessionalAssessment = () => {
             <h2 className="text-2xl font-bold text-foreground">{t("result.processing")}</h2>
             <p className="text-muted-foreground">{t("result.processing_desc")}</p>
           </div>
+        )}
+
+        {step === "diagnosis_error" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 text-center py-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 mx-auto">
+              <AlertTriangle className="h-8 w-8 text-amber-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">
+              {language === "pt" ? "Avaliação salva com sucesso" : "Assessment saved successfully"}
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              {language === "pt"
+                ? "Não conseguimos gerar o diagnóstico automático agora, mas todos os seus dados foram salvos. O profissional já pode visualizar sua avaliação."
+                : "We couldn't generate the automatic diagnosis right now, but all your data was saved. The professional can already view your assessment."}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center pt-4">
+              <Button onClick={retryDiagnosis} className="rounded-xl">
+                {language === "pt" ? "Tentar gerar diagnóstico novamente" : "Retry diagnosis"}
+              </Button>
+              <Button onClick={() => navigate("/")} variant="outline" className="rounded-xl">
+                {t("redflag_alert.back")}
+              </Button>
+            </div>
+          </motion.div>
         )}
 
         {step === "thank_you" && (
