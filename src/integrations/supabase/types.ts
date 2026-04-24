@@ -1685,6 +1685,40 @@ export type Database = {
           program_id: string
         }[]
       }
+      get_my_assessments: {
+        Args: never
+        Returns: {
+          anamnesis_data: Json | null
+          clinic_id: string | null
+          created_at: string
+          diagnosis: Json | null
+          id: string
+          original_assessment_id: string | null
+          paid_at: string | null
+          pain_regions: string[] | null
+          pain_score: number | null
+          patient_email: string | null
+          patient_name: string | null
+          payment_status: string | null
+          pending_upgrade_data: Json | null
+          professional_id: string | null
+          red_flags: Json | null
+          redo_used: boolean | null
+          reviewed_at: string | null
+          status: string
+          test_results: Json | null
+          treatment_plan: Json | null
+          type: string
+          updated_at: string
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "assessments"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_patient_assessment_link_context: {
         Args: { _clinic_id?: string; _professional_id?: string; _token: string }
         Returns: {
