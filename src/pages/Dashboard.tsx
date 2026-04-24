@@ -532,6 +532,7 @@ const Dashboard = () => {
             <TabsContent value="messages" className="space-y-6">
               <MessagesTab
                 professional={professional}
+                clinicId={activeClinic.clinic_id}
                 initialConversationId={convFromUrl}
                 canInitiateAsPatient={true}
                 canInitiateAsProfessional={true}

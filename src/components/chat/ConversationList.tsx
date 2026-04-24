@@ -18,6 +18,7 @@ import ChatWindow from "./ChatWindow";
 interface ConversationListProps {
   mode: "patient" | "professional";
   professionalId?: string;
+  clinicId?: string | null;
   initialConversationId?: string | null;
   searchQuery?: string;
   canInitiateConversation?: boolean;
@@ -33,7 +34,7 @@ interface ConversationItem {
   unread_count: number;
 }
 
-const ConversationList = ({ mode, professionalId, initialConversationId, searchQuery = "", canInitiateConversation = true }: ConversationListProps) => {
+const ConversationList = ({ mode, professionalId, clinicId = null, initialConversationId, searchQuery = "", canInitiateConversation = true }: ConversationListProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -63,9 +64,13 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
       );
 
       if (mode === "professional" && professionalId) {
-        const { data: contacts } = await (supabase.rpc("get_professional_all_patients" as any, {
-          _professional_id: professionalId,
-        }) as any);
+        // In clinic mode, use clinic-wide patient list so owner/secretary/therapist
+        // can chat with any patient registered to the clinic (not just their own)
+        const rpcName = clinicId ? "get_clinic_all_patients" : "get_professional_all_patients";
+        const rpcArgs = clinicId
+          ? { _clinic_id: clinicId }
+          : { _professional_id: professionalId };
+        const { data: contacts } = await (supabase.rpc(rpcName as any, rpcArgs as any) as any);
 
         const results: { user_id: string | null; name: string; email: string; has_account: boolean }[] = [];
         for (const c of contacts || []) {
@@ -125,14 +130,22 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
 
       let convId: string;
 
-      // Use security-definer RPC to create/find conversation (bypasses RLS issues)
-      const { data: rpcResult, error: rpcError } = await supabase.rpc(
-        "create_conversation_for_patient" as any,
-        { _professional_id: targetProfId, _patient_user_id: patientUserId }
-      );
-
-      if (rpcError) throw rpcError;
-      convId = rpcResult as string;
+      // Clinic mode: use clinic-aware RPC so any clinic member can chat with any clinic patient
+      if (mode === "professional" && clinicId) {
+        const { data: rpcResult, error: rpcError } = await supabase.rpc(
+          "create_conversation_for_clinic_patient" as any,
+          { _clinic_id: clinicId, _professional_id: targetProfId, _patient_user_id: patientUserId }
+        );
+        if (rpcError) throw rpcError;
+        convId = rpcResult as string;
+      } else {
+        const { data: rpcResult, error: rpcError } = await supabase.rpc(
+          "create_conversation_for_patient" as any,
+          { _professional_id: targetProfId, _patient_user_id: patientUserId }
+        );
+        if (rpcError) throw rpcError;
+        convId = rpcResult as string;
+      }
 
       // If patient mode, also unhide for patient
       if (mode === "patient") {
@@ -306,9 +319,9 @@ const ConversationList = ({ mode, professionalId, initialConversationId, searchQ
         namesMap[p.id] = p.full_name;
       }
     } else if (professionalId) {
-      const { data: contacts } = await (supabase.rpc("get_professional_all_patients" as any, {
-        _professional_id: professionalId,
-      }) as any);
+      const rpcName = clinicId ? "get_clinic_all_patients" : "get_professional_all_patients";
+      const rpcArgs = clinicId ? { _clinic_id: clinicId } : { _professional_id: professionalId };
+      const { data: contacts } = await (supabase.rpc(rpcName as any, rpcArgs as any) as any);
 
       for (const contact of contacts || []) {
         if (contact.user_id) {
