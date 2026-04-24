@@ -88,9 +88,9 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       } else if (mode === "patient" && user) {
         // Use new RPC that consolidates assessments (by user_id OR email),
         // patients table by email, conversations, and referrals.
-        const { data: pros, error } = await (supabase.rpc("get_patient_professionals" as any, {
+        const { data: pros, error } = await supabase.rpc("get_patient_professionals", {
           _user_id: user.id,
-        }) as any);
+        });
 
         if (error) {
           console.warn("get_patient_professionals failed, falling back:", error);
