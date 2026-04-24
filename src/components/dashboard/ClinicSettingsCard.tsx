@@ -30,7 +30,7 @@ const BRAND_COLORS = [
 ];
 
 const ClinicSettingsCard = () => {
-  const { activeClinic, refetch } = useClinic();
+  const { activeClinic, refetch, canManageClinic } = useClinic();
   const { language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
 
@@ -45,7 +45,7 @@ const ClinicSettingsCard = () => {
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const canEdit = activeClinic?.role === "owner" || activeClinic?.role === "secretary";
+  const canEdit = canManageClinic;
 
   if (!activeClinic || !canEdit) return null;
 
