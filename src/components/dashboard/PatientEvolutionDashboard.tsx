@@ -485,6 +485,29 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
    const [newPatientPhone, setNewPatientPhone] = useState("");
    const [addingPatient, setAddingPatient] = useState(false);
    const [patientsTableData, setPatientsTableData] = useState<any[]>([]);
+   const [clinicTherapists, setClinicTherapists] = useState<Array<{ id: string; full_name: string; user_id: string }>>([]);
+   const [reassignOpen, setReassignOpen] = useState(false);
+   const [reassignTargetId, setReassignTargetId] = useState<string>("");
+   const [reassigning, setReassigning] = useState(false);
+
+  // Load clinic therapists (professionals belonging to this clinic) so owner/secretary can reassign
+  useEffect(() => {
+    if (!clinicId || isDemo) return;
+    const loadTherapists = async () => {
+      const { data: members } = await (supabase.from("clinic_members") as any)
+        .select("user_id, role")
+        .eq("clinic_id", clinicId)
+        .eq("status", "active")
+        .in("role", ["owner", "therapist"]);
+      const userIds = (members || []).map((m: any) => m.user_id);
+      if (userIds.length === 0) { setClinicTherapists([]); return; }
+      const { data: pros } = await (supabase.from("professionals") as any)
+        .select("id, full_name, user_id")
+        .in("user_id", userIds);
+      setClinicTherapists(pros || []);
+    };
+    loadTherapists();
+  }, [clinicId, isDemo]);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
   useEffect(() => {
