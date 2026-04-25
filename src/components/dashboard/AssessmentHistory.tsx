@@ -2,10 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   FileText, ClipboardList, Calendar, MapPin, ChevronRight,
-  CheckCircle2, Activity, Loader2,
+  CheckCircle2, Activity, Loader2, RotateCcw,
 } from "lucide-react";
+import { buildResumeAssessmentLink } from "@/lib/assessmentLinks";
 
 const painRegionLabels: Record<string, string> = {
   head: "Cabeça", neck: "Pescoço", right_shoulder: "Ombro D.", left_shoulder: "Ombro E.",
