@@ -31,6 +31,16 @@ export const buildPersonalizedAssessmentLink = (
   token: string,
 ) => `${baseUrl(ctx)}?patient=${token}`;
 
+export const buildResumeAssessmentLink = (
+  ctx: AssessmentLinkContext,
+  assessmentId: string,
+  patientToken?: string | null,
+) => {
+  const params = new URLSearchParams({ resume: assessmentId });
+  if (patientToken) params.set("patient", patientToken);
+  return `${baseUrl(ctx)}?${params.toString()}`;
+};
+
 /**
  * Ensure the patient row has an assessment_token. Returns the token (existing or new).
  * Mutates patientRec.assessment_token in place when a new one is created.

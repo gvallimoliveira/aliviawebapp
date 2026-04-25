@@ -28,6 +28,7 @@ const ProfessionalAssessment = () => {
   const [searchParams] = useSearchParams();
   const reassessmentId = searchParams.get("reassessment");
   const patientToken = searchParams.get("patient");
+  const resumeId = searchParams.get("resume");
 
   const [step, setStep] = useState<ProfStep>("loading_check");
   const [professional, setProfessional] = useState<any>(null);
@@ -128,7 +129,56 @@ const ProfessionalAssessment = () => {
     loadPatient();
   }, [patientToken, professionalId]);
 
+  // Resume in-progress assessment
+  useEffect(() => {
+    if (!resumeId || !professionalId) return;
+    const loadResume = async () => {
+      const { data: existing, error } = await supabase
+        .from("assessments")
+        .select("id, status, patient_name, patient_email, pain_regions, pain_score, anamnesis_data, test_results, red_flags")
+        .eq("id", resumeId)
+        .eq("professional_id", professionalId)
+        .maybeSingle();
+
+      if (error || !existing) {
+        toast({
+          title: language === "pt" ? "Não foi possível retomar a avaliação" : "Could not resume assessment",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (existing.status !== "in_progress") {
+        toast({
+          title: language === "pt" ? "Esta avaliação já foi finalizada" : "This assessment is already complete",
+        });
+        return;
+      }
+
+      setAssessmentId(existing.id);
+      if (existing.patient_name) setPatientName(existing.patient_name);
+      if (existing.patient_email) setPatientEmail(existing.patient_email);
+      if (existing.pain_regions?.length) setPrefilledRegions(existing.pain_regions);
+
+      const anam = existing.anamnesis_data as any;
+      const hasAnamnesis = anam && typeof anam === "object" && Object.keys(anam).length > 0;
+
+      if (hasAnamnesis) {
+        setAnamnesisData(anam as AnamnesisData);
+        const tests = existing.test_results as any;
+        if (Array.isArray(tests) && tests.length > 0) {
+          setQuestionnaireResults(tests);
+        }
+        setStep("questionnaire");
+      } else {
+        setStep(existing.patient_email || existing.patient_name ? "anamnesis" : "patient_info");
+      }
+    };
+    loadResume();
+  }, [resumeId, professionalId, language, toast]);
+
   const createAssessment = async () => {
+    if (assessmentId) return assessmentId;
     try {
       const { data, error } = await supabase
         .from("assessments")
