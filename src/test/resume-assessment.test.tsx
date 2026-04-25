@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/dom";
 import { MemoryRouter } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import AssessmentHistory from "@/components/dashboard/AssessmentHistory";
