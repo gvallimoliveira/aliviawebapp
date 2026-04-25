@@ -16,9 +16,10 @@ import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/Anamn
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
+import ResumeSummary from "@/components/assessment/ResumeSummary";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 
-type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you";
+type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
 const ProfessionalAssessment = () => {
   const { professionalId } = useParams<{ professionalId: string }>();
@@ -34,6 +35,7 @@ const ProfessionalAssessment = () => {
   const [professional, setProfessional] = useState<any>(null);
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+  const [resumeNextStep, setResumeNextStep] = useState<ProfStep | null>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [patientName, setPatientName] = useState("");
   const [patientEmail, setPatientEmail] = useState("");
@@ -163,16 +165,19 @@ const ProfessionalAssessment = () => {
       const anam = existing.anamnesis_data as any;
       const hasAnamnesis = anam && typeof anam === "object" && Object.keys(anam).length > 0;
 
+      let nextStep: ProfStep;
       if (hasAnamnesis) {
         setAnamnesisData(anam as AnamnesisData);
         const tests = existing.test_results as any;
         if (Array.isArray(tests) && tests.length > 0) {
           setQuestionnaireResults(tests);
         }
-        setStep("questionnaire");
+        nextStep = "questionnaire";
       } else {
-        setStep(existing.patient_email || existing.patient_name ? "anamnesis" : "patient_info");
+        nextStep = existing.patient_email || existing.patient_name ? "anamnesis" : "patient_info";
       }
+      setResumeNextStep(nextStep);
+      setStep("resume_summary");
     };
     loadResume();
   }, [resumeId, professionalId, language, toast]);
@@ -411,8 +416,18 @@ const ProfessionalAssessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
-        {step !== "welcome" && step !== "patient_info" && (
+        {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
           <AssessmentStepper currentStep={step} mode="professional" />
+        )}
+
+        {step === "resume_summary" && (
+          <ResumeSummary
+            patientName={patientName}
+            patientEmail={patientEmail}
+            anamnesisData={anamnesisData}
+            questionnaireResults={questionnaireResults}
+            onContinue={() => setStep(resumeNextStep || "anamnesis")}
+          />
         )}
 
         {step === "welcome" && professional && (

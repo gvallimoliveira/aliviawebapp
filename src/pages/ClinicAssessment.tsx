@@ -16,9 +16,10 @@ import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/Anamn
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
+import ResumeSummary from "@/components/assessment/ResumeSummary";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 
-type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you";
+type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
 const ClinicAssessment = () => {
   const { clinicId } = useParams<{ clinicId: string }>();
@@ -34,6 +35,7 @@ const ClinicAssessment = () => {
   const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null; brand_color: string | null } | null>(null);
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+  const [resumeNextStep, setResumeNextStep] = useState<ClinicStep | null>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [patientName, setPatientName] = useState("");
   const [patientEmail, setPatientEmail] = useState("");
@@ -165,6 +167,7 @@ const ClinicAssessment = () => {
       const anam = existing.anamnesis_data as any;
       const hasAnamnesis = anam && typeof anam === "object" && Object.keys(anam).length > 0;
 
+      let nextStep: ClinicStep;
       if (hasAnamnesis) {
         // Restore anamnesis state and skip directly to questionnaire step
         setAnamnesisData(anam as AnamnesisData);
@@ -172,11 +175,13 @@ const ClinicAssessment = () => {
         if (Array.isArray(tests) && tests.length > 0) {
           setQuestionnaireResults(tests);
         }
-        setStep("questionnaire");
+        nextStep = "questionnaire";
       } else {
         // Anamnesis not started yet — go to patient_info / anamnesis
-        setStep(existing.patient_email || existing.patient_name ? "anamnesis" : "patient_info");
+        nextStep = existing.patient_email || existing.patient_name ? "anamnesis" : "patient_info";
       }
+      setResumeNextStep(nextStep);
+      setStep("resume_summary");
     };
     loadResume();
   }, [resumeId, clinicId, language, toast]);
@@ -443,8 +448,18 @@ const ClinicAssessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
-        {step !== "welcome" && step !== "patient_info" && (
+        {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
           <AssessmentStepper currentStep={step} mode="professional" />
+        )}
+
+        {step === "resume_summary" && (
+          <ResumeSummary
+            patientName={patientName}
+            patientEmail={patientEmail}
+            anamnesisData={anamnesisData}
+            questionnaireResults={questionnaireResults}
+            onContinue={() => setStep(resumeNextStep || "anamnesis")}
+          />
         )}
 
         {step === "welcome" && clinic && (
