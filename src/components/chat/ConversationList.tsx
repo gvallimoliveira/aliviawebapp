@@ -14,6 +14,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, MessageCircle, Trash2, Maximize2, Search, Plus, UserPlus } from "lucide-react";
 import ChatWindow from "./ChatWindow";
+import { toast } from "@/hooks/use-toast";
 
 interface ConversationListProps {
   mode: "patient" | "professional";
