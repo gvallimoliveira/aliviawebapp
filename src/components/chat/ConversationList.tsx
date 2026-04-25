@@ -52,8 +52,10 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
   const [newConvLoading, setNewConvLoading] = useState(false);
   const [creatingConv, setCreatingConv] = useState<string | null>(null);
   const [showAllPatients, setShowAllPatients] = useState(false);
+  const [pendingOpenConvId, setPendingOpenConvId] = useState<string | null>(null);
 
   const openConversation = (convId: string, otherName: string) => {
+    setPendingOpenConvId(convId);
     setActiveConvId(convId);
     setActiveOtherName(otherName);
     setMinimized(false);
@@ -267,7 +269,14 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
   }, [activeConvId, initialConversationId, conversations]);
 
   useEffect(() => {
+    if (activeConversation && pendingOpenConvId === activeConversation.id) {
+      setPendingOpenConvId(null);
+    }
+  }, [activeConversation, pendingOpenConvId]);
+
+  useEffect(() => {
     if (!activeConvId || activeConversation) return;
+    if (loading || pendingOpenConvId === activeConvId) return;
     setActiveConvId(null);
     setActiveOtherName("");
     setMinimized(true);
@@ -278,7 +287,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       nextParams.delete("conv");
       setSearchParams(nextParams, { replace: true });
     }
-  }, [activeConvId, activeConversation, searchParams, setSearchParams]);
+  }, [activeConvId, activeConversation, loading, pendingOpenConvId, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!activeConversation) return;
