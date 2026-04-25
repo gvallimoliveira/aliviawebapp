@@ -165,16 +165,19 @@ const ProfessionalAssessment = () => {
       const anam = existing.anamnesis_data as any;
       const hasAnamnesis = anam && typeof anam === "object" && Object.keys(anam).length > 0;
 
+      let nextStep: ProfStep;
       if (hasAnamnesis) {
         setAnamnesisData(anam as AnamnesisData);
         const tests = existing.test_results as any;
         if (Array.isArray(tests) && tests.length > 0) {
           setQuestionnaireResults(tests);
         }
-        setStep("questionnaire");
+        nextStep = "questionnaire";
       } else {
-        setStep(existing.patient_email || existing.patient_name ? "anamnesis" : "patient_info");
+        nextStep = existing.patient_email || existing.patient_name ? "anamnesis" : "patient_info";
       }
+      setResumeNextStep(nextStep);
+      setStep("resume_summary");
     };
     loadResume();
   }, [resumeId, professionalId, language, toast]);
