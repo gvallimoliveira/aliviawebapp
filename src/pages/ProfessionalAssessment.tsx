@@ -28,6 +28,7 @@ const ProfessionalAssessment = () => {
   const [searchParams] = useSearchParams();
   const reassessmentId = searchParams.get("reassessment");
   const patientToken = searchParams.get("patient");
+  const resumeId = searchParams.get("resume");
 
   const [step, setStep] = useState<ProfStep>("loading_check");
   const [professional, setProfessional] = useState<any>(null);
