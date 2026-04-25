@@ -35,6 +35,7 @@ const ClinicAssessment = () => {
   const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null; brand_color: string | null } | null>(null);
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+  const [resumeNextStep, setResumeNextStep] = useState<ClinicStep | null>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [patientName, setPatientName] = useState("");
   const [patientEmail, setPatientEmail] = useState("");
