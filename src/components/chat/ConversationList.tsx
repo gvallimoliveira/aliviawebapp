@@ -53,6 +53,13 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
   const [creatingConv, setCreatingConv] = useState<string | null>(null);
   const [showAllPatients, setShowAllPatients] = useState(false);
 
+  const openConversation = (convId: string, otherName: string) => {
+    setActiveConvId(convId);
+    setActiveOtherName(otherName);
+    setMinimized(false);
+    syncConversationParam(convId);
+  };
+
   // Load contacts for new conversation modal, excluding existing conversations
   const loadPatientsForNewConv = async () => {
     if (!professionalId && mode !== "patient") return;
@@ -192,11 +199,8 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       }
 
       setNewConvOpen(false);
+      openConversation(convId, otherName);
       await fetchConversations();
-      setActiveConvId(convId);
-      setActiveOtherName(otherName);
-      setMinimized(false);
-      syncConversationParam(convId);
     } catch (err: any) {
       console.error("Start conversation error:", err);
       toast({
@@ -583,10 +587,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
                     : "hover:shadow-md hover:border-primary/30"
                 }`}
                 onClick={() => {
-                  setActiveConvId(conv.id);
-                  setActiveOtherName(conv.other_name);
-                  setMinimized(false);
-                  syncConversationParam(conv.id);
+                   openConversation(conv.id, conv.other_name);
                 }}
               >
                 <CardContent className="py-3 px-4 flex items-center gap-3">
