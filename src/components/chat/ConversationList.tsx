@@ -104,6 +104,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
             name: p.full_name || "Profissional",
             email: "",
             has_account: true,
+            professional_id: p.professional_id, // pre-resolved to bypass RLS later
           }));
         setNewConvPatients(list);
       }
