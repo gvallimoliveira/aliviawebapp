@@ -48,7 +48,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
   const [minimized, setMinimized] = useState(true);
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [newConvSearch, setNewConvSearch] = useState("");
-  const [newConvPatients, setNewConvPatients] = useState<{ user_id: string | null; name: string; email: string; has_account: boolean }[]>([]);
+  const [newConvPatients, setNewConvPatients] = useState<{ user_id: string | null; name: string; email: string; has_account: boolean; professional_id?: string | null }[]>([]);
   const [newConvLoading, setNewConvLoading] = useState(false);
   const [creatingConv, setCreatingConv] = useState<string | null>(null);
   const [showAllPatients, setShowAllPatients] = useState(false);
