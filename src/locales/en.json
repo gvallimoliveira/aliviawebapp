@@ -632,7 +632,7 @@
   "b2b.benefit_3_title": "Exercise Program (HEP)",
   "b2b.benefit_3_desc": "Prescribe exercises with instructional videos and send via link to the patient. No paper, no confusion. 70+ ready-to-use exercises.",
   "b2b.benefit_4_title": "More accurate assessments",
-  "b2b.benefit_4_desc": "Structured and organized data before the consultation. Identify patterns, prioritize hypotheses and make safer clinical decisions.",
+  "b2b.benefit_4_desc": "Track your patient's pain level and functional questionnaire scores over time. Periodic reapplication to monitor progress.",
   "b2b.benefit_5_title": "Your brand on reports",
   "b2b.benefit_5_desc": "Add your logo to PDFs and the patient assessment screen. Reinforce your professional identity in every delivery.",
   "b2b.benefit_6_title": "Evolutionary Metrics Dashboard",
@@ -642,7 +642,6 @@
   "b2b.benefit_8_title": "AI-Powered Integrated Clinical Impression",
   "b2b.benefit_8_desc": "AI cross-references anamnesis, pain map, questionnaires and tests to generate an integrated clinical impression. More accuracy and speed in clinical decision-making.",
   "b2b.grad_cta": "New graduate? These tools are the edge that accelerates your clinical learning curve and gives you confidence from your very first session.",
-  "b2b.benefit_4_desc": "Track your patient's pain level and functional questionnaire scores over time. Periodic reapplication to monitor progress.",
   "b2b.cta_desc": "All of this for just",
   "b2b.cta_cancel": "Cancel anytime. No commitment.",
   "b2b.cta_button": "Subscribe to Professional Plan",
@@ -1234,21 +1233,18 @@
   "b2b.feature_8_desc": "Library with 70+ exercises with instructional videos for prescription via link",
   "b2b.feature_9_desc": "Professional logo and visual identity on PDFs and assessment screen",
   "b2b.feature_10_desc": "Automatic comparison between assessments with AI narrative summary",
-
   "exercise_checklist.title": "Today's Exercises",
   "exercise_checklist.progress": "Today's progress",
   "exercise_checklist.all_done": "Congratulations! All exercises completed today! 🎉",
   "exercise_checklist.completed_msg": "All exercises completed! Keep it up!",
   "exercise_checklist.exercise": "exercise",
   "exercise_checklist.exercises": "exercises",
-
   "evolution.pain_reduced": "Pain reduced",
   "evolution.pain_increased": "Pain increased",
   "evolution.pain_stable": "Pain stable",
   "evolution.keep_going": "Keep going! Your progress shows the treatment is working.",
   "evolution.consider_pro": "Consider consulting a professional to adjust your treatment.",
   "evolution.stable_msg": "Your pain is stable. Keep following the treatment plan.",
-
   "progression.title": "Progression Suggestion",
   "progression.phase_progress": "Progress",
   "progression.phase_maintain": "Maintain",
@@ -1257,9 +1253,7 @@
   "progression.show_tips": "View tips",
   "progression.hide_tips": "Hide tips",
   "progression.disclaimer": "AI-generated suggestion based on your data. Consult a professional before significant changes.",
-
   "dashboard.tab_agenda": "Schedule",
-
   "schedule.today_title": "Today's Schedule",
   "schedule.appointments_count": "appointment(s) today",
   "schedule.no_appointments": "No appointments today",
@@ -1299,7 +1293,6 @@
   "schedule.email_required": "Email is required to identify the patient in the system",
   "schedule.patient_created": "Patient added to your list!",
   "schedule.suggest_pre_assessment": "Send the pre-assessment link to the patient to collect complete clinical data.",
-
   "session_notes.title": "Session Notes",
   "session_notes.add": "Record session",
   "session_notes.editing": "Editing",
@@ -1319,7 +1312,6 @@
   "session_notes.delete_title": "Delete session",
   "session_notes.delete_desc": "Are you sure you want to delete this session note?",
   "session_notes.confirm_delete": "Delete",
-
   "pro.add_patient": "Add patient",
   "pro.add_patient_desc": "Register an external patient with basic info for identification.",
   "pro.patient_name_label": "Full name",
@@ -1331,5 +1323,6 @@
   "pro.patient_add_error": "Error adding patient",
   "gateway.clinic.title": "I want Aliv.iA for my clinic",
   "gateway.clinic.desc": "Complete system for clinics with multi-professional teams, shared scheduling and integrated management.",
-  "gateway.clinic.cta": "Discover Aliv.iA Clinic"
+  "gateway.clinic.cta": "Discover Aliv.iA Clinic",
+  "dashboard.continue_assessment": "Continue assessment"
 }

@@ -1233,21 +1233,18 @@
   "b2b.feature_8_desc": "Banco con 70+ ejercicios con videos instruccionales para prescripción vía enlace",
   "b2b.feature_9_desc": "Logo e identidad visual del profesional en PDFs y pantalla de evaluación",
   "b2b.feature_10_desc": "Comparativo automático entre evaluaciones con resumen narrativo de la IA",
-
   "exercise_checklist.title": "Ejercicios del Día",
   "exercise_checklist.progress": "Progreso de hoy",
   "exercise_checklist.all_done": "¡Felicidades! ¡Todos los ejercicios completados hoy! 🎉",
   "exercise_checklist.completed_msg": "¡Todos los ejercicios completados! ¡Sigue así!",
   "exercise_checklist.exercise": "ejercicio",
   "exercise_checklist.exercises": "ejercicios",
-
   "evolution.pain_reduced": "Dolor reducido",
   "evolution.pain_increased": "Dolor aumentó",
   "evolution.pain_stable": "Dolor estable",
   "evolution.keep_going": "¡Sigue así! Tu progreso muestra que el tratamiento está funcionando.",
   "evolution.consider_pro": "Considera consultar a un profesional para ajustar tu tratamiento.",
   "evolution.stable_msg": "Tu dolor está estable. Sigue el plan de tratamiento.",
-
   "progression.title": "Sugerencia de Progresión",
   "progression.phase_progress": "Progresar",
   "progression.phase_maintain": "Mantener",
@@ -1256,9 +1253,7 @@
   "progression.show_tips": "Ver consejos",
   "progression.hide_tips": "Ocultar consejos",
   "progression.disclaimer": "Sugerencia generada por IA basada en tus datos. Consulta a un profesional antes de cambios significativos.",
-
   "dashboard.tab_agenda": "Agenda",
-
   "schedule.today_title": "Agenda del Día",
   "schedule.appointments_count": "compromiso(s) hoy",
   "schedule.no_appointments": "Sin compromisos hoy",
@@ -1298,7 +1293,6 @@
   "schedule.email_required": "El correo es obligatorio para identificar al paciente en el sistema",
   "schedule.patient_created": "¡Paciente agregado a la lista!",
   "schedule.suggest_pre_assessment": "Envíe el enlace de pre-evaluación al paciente para recopilar datos clínicos completos.",
-
   "session_notes.title": "Historial de Evolución",
   "session_notes.add": "Registrar sesión",
   "session_notes.editing": "Editando",
@@ -1318,7 +1312,6 @@
   "session_notes.delete_title": "Eliminar sesión",
   "session_notes.delete_desc": "¿Está seguro que desea eliminar esta sesión del historial?",
   "session_notes.confirm_delete": "Eliminar",
-
   "pro.add_patient": "Agregar paciente",
   "pro.add_patient_desc": "Registre un paciente externo con datos básicos para identificación.",
   "pro.patient_name_label": "Nombre completo",
@@ -1330,5 +1323,6 @@
   "pro.patient_add_error": "Error al agregar paciente",
   "gateway.clinic.title": "Quiero Aliv.iA en mi clínica",
   "gateway.clinic.desc": "Sistema completo para clínicas y consultorios con equipo multiprofesional, agenda compartida y gestión integrada.",
-  "gateway.clinic.cta": "Conocer Aliv.iA Clinic"
+  "gateway.clinic.cta": "Conocer Aliv.iA Clinic",
+  "dashboard.continue_assessment": "Continuar evaluación"
 }
