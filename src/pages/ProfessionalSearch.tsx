@@ -90,30 +90,22 @@ const ProfessionalSearch = () => {
 
   const handleSendMessage = async (professionalId: string) => {
     if (!user) return;
-    // Check if conversation already exists
-    const { data: existing } = await (supabase.from("conversations" as any) as any)
-      .select("id")
-      .eq("patient_user_id", user.id)
-      .eq("professional_id", professionalId)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("create_conversation_for_patient", {
+      _professional_id: professionalId,
+      _patient_user_id: user.id,
+    });
 
-    if (existing) {
-      navigate(`/dashboard?tab=messages&conv=${existing.id}`);
-      return;
-    }
-
-    // Create new conversation
-    const { data: newConv, error } = await (supabase.from("conversations" as any) as any)
-      .insert({ patient_user_id: user.id, professional_id: professionalId })
-      .select("id")
-      .single();
-
-    if (error || !newConv) {
+    if (error || !data) {
       toast({ title: t("prof.referral_error"), variant: "destructive" });
       return;
     }
 
-    navigate(`/dashboard?tab=messages&conv=${newConv.id}`);
+    await supabase
+      .from("conversations")
+      .update({ hidden_by_patient: false })
+      .eq("id", data);
+
+    navigate(`/dashboard?tab=messages&conv=${data}`);
   };
 
   const openWhatsApp = (phone: string) => {

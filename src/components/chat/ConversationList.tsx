@@ -52,6 +52,15 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
   const [newConvLoading, setNewConvLoading] = useState(false);
   const [creatingConv, setCreatingConv] = useState<string | null>(null);
   const [showAllPatients, setShowAllPatients] = useState(false);
+  const [pendingOpenConvId, setPendingOpenConvId] = useState<string | null>(null);
+
+  const openConversation = (convId: string, otherName: string) => {
+    setPendingOpenConvId(convId);
+    setActiveConvId(convId);
+    setActiveOtherName(otherName);
+    setMinimized(false);
+    syncConversationParam(convId);
+  };
 
   // Load contacts for new conversation modal, excluding existing conversations
   const loadPatientsForNewConv = async () => {
@@ -192,11 +201,8 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       }
 
       setNewConvOpen(false);
+      openConversation(convId, otherName);
       await fetchConversations();
-      setActiveConvId(convId);
-      setActiveOtherName(otherName);
-      setMinimized(false);
-      syncConversationParam(convId);
     } catch (err: any) {
       console.error("Start conversation error:", err);
       toast({
@@ -263,7 +269,14 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
   }, [activeConvId, initialConversationId, conversations]);
 
   useEffect(() => {
+    if (activeConversation && pendingOpenConvId === activeConversation.id) {
+      setPendingOpenConvId(null);
+    }
+  }, [activeConversation, pendingOpenConvId]);
+
+  useEffect(() => {
     if (!activeConvId || activeConversation) return;
+    if (loading || pendingOpenConvId === activeConvId) return;
     setActiveConvId(null);
     setActiveOtherName("");
     setMinimized(true);
@@ -274,7 +287,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       nextParams.delete("conv");
       setSearchParams(nextParams, { replace: true });
     }
-  }, [activeConvId, activeConversation, searchParams, setSearchParams]);
+  }, [activeConvId, activeConversation, loading, pendingOpenConvId, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!activeConversation) return;
@@ -583,10 +596,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
                     : "hover:shadow-md hover:border-primary/30"
                 }`}
                 onClick={() => {
-                  setActiveConvId(conv.id);
-                  setActiveOtherName(conv.other_name);
-                  setMinimized(false);
-                  syncConversationParam(conv.id);
+                   openConversation(conv.id, conv.other_name);
                 }}
               >
                 <CardContent className="py-3 px-4 flex items-center gap-3">
