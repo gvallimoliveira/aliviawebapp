@@ -16,9 +16,10 @@ import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/Anamn
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
+import ResumeSummary from "@/components/assessment/ResumeSummary";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 
-type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you";
+type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
 const ClinicAssessment = () => {
   const { clinicId } = useParams<{ clinicId: string }>();
