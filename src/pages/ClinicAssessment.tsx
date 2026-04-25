@@ -448,8 +448,18 @@ const ClinicAssessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
-        {step !== "welcome" && step !== "patient_info" && (
+        {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
           <AssessmentStepper currentStep={step} mode="professional" />
+        )}
+
+        {step === "resume_summary" && (
+          <ResumeSummary
+            patientName={patientName}
+            patientEmail={patientEmail}
+            anamnesisData={anamnesisData}
+            questionnaireResults={questionnaireResults}
+            onContinue={() => setStep(resumeNextStep || "anamnesis")}
+          />
         )}
 
         {step === "welcome" && clinic && (
