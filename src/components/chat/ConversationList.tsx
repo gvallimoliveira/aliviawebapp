@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -307,6 +307,110 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
     }
     setSearchParams(nextParams, { replace: true });
   };
+
+  const hydrateConversation = useCallback(async (convId: string) => {
+    if (!user) return false;
+
+    const { data: conv } = await supabase
+      .from("conversations")
+      .select("*")
+      .eq("id", convId)
+      .maybeSingle();
+
+    if (!conv) return false;
+
+    let otherName = mode === "patient" ? "Profissional" : "Paciente";
+
+    if (mode === "patient") {
+      const { data: pros } = await supabase.rpc("get_professionals_basic_info", {
+        _professional_ids: [conv.professional_id],
+      });
+      otherName = pros?.[0]?.full_name || otherName;
+    } else if (clinicId || professionalId) {
+      const rpcName = clinicId ? "get_clinic_all_patients" : "get_professional_all_patients";
+      const rpcArgs = clinicId ? { _clinic_id: clinicId } : { _professional_id: professionalId };
+      const { data: contacts } = await (supabase.rpc(rpcName as any, rpcArgs as any) as any);
+      const matchedContact = (contacts || []).find((contact: any) => contact.user_id === conv.patient_user_id);
+
+      if (matchedContact) {
+        otherName = matchedContact.full_name || matchedContact.email || otherName;
+      } else {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", conv.patient_user_id)
+          .maybeSingle();
+        otherName = profile?.full_name || otherName;
+      }
+    }
+
+    const [{ data: lastMessage }, { count: unreadCount }] = await Promise.all([
+      supabase
+        .from("messages")
+        .select("content, created_at")
+        .eq("conversation_id", convId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", convId)
+        .neq("sender_user_id", user.id)
+        .is("read_at", null),
+    ]);
+
+    const hydratedConversation: ConversationItem = {
+      id: conv.id,
+      patient_user_id: conv.patient_user_id,
+      professional_id: conv.professional_id,
+      updated_at: conv.updated_at,
+      other_name: otherName,
+      last_message: lastMessage?.content || "",
+      unread_count: unreadCount || 0,
+    };
+
+    setConversations((prev) => {
+      const existingIndex = prev.findIndex((item) => item.id === convId);
+      if (existingIndex >= 0) {
+        const next = [...prev];
+        next[existingIndex] = hydratedConversation;
+        return next;
+      }
+      return [hydratedConversation, ...prev];
+    });
+
+    setActiveOtherName((current) => current || otherName);
+    return true;
+  }, [clinicId, mode, professionalId, user]);
+
+  useEffect(() => {
+    if (!pendingOpenConvId || loading || activeConversation) return;
+
+    let cancelled = false;
+
+    const ensureConversationVisible = async () => {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const hydrated = await hydrateConversation(pendingOpenConvId);
+        if (cancelled) return;
+        if (hydrated) return;
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+
+      if (cancelled) return;
+
+      setPendingOpenConvId(null);
+      toast({
+        title: isPt ? "Conversa ainda indisponível" : "Conversation not available yet",
+        description: isPt
+          ? "Não conseguimos carregar essa conversa agora. Tente novamente em alguns segundos."
+          : "We couldn't load this conversation right now. Please try again in a few seconds.",
+        variant: "destructive",
+      });
+    };
+
+    void ensureConversationVisible();
+  }, [activeConversation, hydrateConversation, isPt, loading, pendingOpenConvId]);
 
   /**
    * Optimized: batch-fetch all conversations with related data
@@ -640,6 +744,15 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
             );
           })}
         </div>
+      )}
+
+      {activeConvId && !minimized && !activeConversation && pendingOpenConvId === activeConvId && (
+        <Card>
+          <CardContent className="py-8 flex items-center justify-center gap-3 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            {isPt ? "Carregando conversa..." : "Loading conversation..."}
+          </CardContent>
+        </Card>
       )}
 
       {activeConvId && !minimized && activeConversation && (
