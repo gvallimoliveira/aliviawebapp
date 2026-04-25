@@ -41,6 +41,7 @@ import PatientPhotosSection from "./PatientPhotosSection";
 import {
   buildPersonalizedAssessmentLink,
   buildReassessmentLink,
+  buildResumeAssessmentLink,
   ensurePatientAssessmentToken,
 } from "@/lib/assessmentLinks";
 import AddPatientModal, { type PatientToEdit } from "./AddPatientModal";
