@@ -112,38 +112,47 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
     setNewConvLoading(false);
   };
 
-  const handleStartConversation = async (otherUserId: string, otherName: string) => {
+  const handleStartConversation = async (otherUserId: string, otherName: string, preResolvedProfessionalId?: string | null) => {
     if (!user) return;
     setCreatingConv(otherUserId);
     try {
       const patientUserId = mode === "patient" ? user.id : otherUserId;
 
       // Resolve professional_id
-      let targetProfId = mode === "professional" ? professionalId : null;
-      if (mode === "patient") {
+      let targetProfId: string | null | undefined =
+        mode === "professional" ? professionalId : preResolvedProfessionalId ?? null;
+
+      // Fallback: if patient mode and no pre-resolved id, try direct query (may fail under RLS)
+      if (mode === "patient" && !targetProfId) {
         const { data: pro } = await supabase
           .from("professionals")
           .select("id")
           .eq("user_id", otherUserId)
-          .single();
+          .maybeSingle();
         targetProfId = pro?.id;
       }
 
-      if (!targetProfId) throw new Error("No professional found");
+      if (!targetProfId) {
+        throw new Error(
+          isPt
+            ? "Não foi possível identificar o profissional. Tente novamente."
+            : "Could not identify the professional. Please try again."
+        );
+      }
 
       let convId: string;
 
       // Clinic mode: use clinic-aware RPC so any clinic member can chat with any clinic patient
       if (mode === "professional" && clinicId) {
         const { data: rpcResult, error: rpcError } = await supabase.rpc(
-          "create_conversation_for_clinic_patient" as any,
+          "create_conversation_for_clinic_patient",
           { _clinic_id: clinicId, _professional_id: targetProfId, _patient_user_id: patientUserId }
         );
         if (rpcError) throw rpcError;
         convId = rpcResult as string;
       } else {
         const { data: rpcResult, error: rpcError } = await supabase.rpc(
-          "create_conversation_for_patient" as any,
+          "create_conversation_for_patient",
           { _professional_id: targetProfId, _patient_user_id: patientUserId }
         );
         if (rpcError) throw rpcError;
@@ -165,7 +174,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
             .from("professionals")
             .select("user_id")
             .eq("id", targetProfId)
-            .single();
+            .maybeSingle();
           if (pro?.user_id) {
             const patientName = user?.user_metadata?.full_name || "Paciente";
             await supabase.functions.invoke("send-push-notification", {
@@ -188,8 +197,13 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       setActiveOtherName(otherName);
       setMinimized(false);
       syncConversationParam(convId);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Start conversation error:", err);
+      toast({
+        title: isPt ? "Não foi possível abrir a conversa" : "Could not start conversation",
+        description: err?.message || (isPt ? "Tente novamente em instantes." : "Please try again."),
+        variant: "destructive",
+      });
     } finally {
       setCreatingConv(null);
     }
