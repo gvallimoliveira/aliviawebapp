@@ -2317,14 +2317,31 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
         <div className="space-y-3">
           {patient.assessments.map((a: any) => {
             const qResults = getQuestionnaireResults(a);
+            const isInProgress = a.status === "in_progress";
+            const resumeCtx = clinicId
+              ? { clinicId }
+              : professionalId
+                ? { professionalId }
+                : null;
+            const resumeLink = isInProgress && resumeCtx
+              ? buildResumeAssessmentLink(resumeCtx, a.id)
+              : null;
             return (
-              <Card key={a.id} className="overflow-hidden">
+              <Card key={a.id} className={`overflow-hidden ${isInProgress ? "border-blue-300/60 bg-blue-50/30" : ""}`}>
                 <CardContent className="py-3 px-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-semibold text-foreground">
-                        {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
-                      </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-foreground">
+                          {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                        </p>
+                        {isInProgress && (
+                          <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-blue-300 text-blue-700 bg-blue-50">
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            {language === "pt" ? "Em andamento" : "In progress"}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         {a.pain_score != null && <span>Dor: {a.pain_score}/10</span>}
                         {a.diagnosis?.hypothesis && (
@@ -2333,6 +2350,18 @@ const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatm
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
+                      {isInProgress && resumeLink && !readOnly && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="h-8 gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                          title={language === "pt" ? "Continuar avaliação de onde parou" : "Continue assessment from where it stopped"}
+                          onClick={() => window.open(resumeLink, "_blank", "noopener,noreferrer")}
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                          {language === "pt" ? "Continuar" : "Continue"}
+                        </Button>
+                      )}
                       {a.diagnosis && onShareWhatsApp && (
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="WhatsApp" onClick={() => onShareWhatsApp(a)}>
                           <Share2 className="h-4 w-4 text-emerald-600" />
