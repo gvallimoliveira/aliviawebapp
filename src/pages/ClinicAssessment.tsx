@@ -28,6 +28,7 @@ const ClinicAssessment = () => {
   const [searchParams] = useSearchParams();
   const reassessmentId = searchParams.get("reassessment");
   const patientToken = searchParams.get("patient");
+  const resumeId = searchParams.get("resume");
 
   const [step, setStep] = useState<ClinicStep>("loading_check");
   const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null; brand_color: string | null } | null>(null);
