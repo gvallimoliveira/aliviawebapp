@@ -508,7 +508,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
                           ? "hover:bg-muted/60 cursor-pointer"
                           : "opacity-50 cursor-not-allowed"
                       }`}
-                      onClick={() => canChat && handleStartConversation(p.user_id!, p.name)}
+                      onClick={() => canChat && handleStartConversation(p.user_id!, p.name, p.professional_id ?? null)}
                       disabled={!canChat || !!creatingConv}
                     >
                       <Avatar className="h-8 w-8 border border-border shrink-0">
