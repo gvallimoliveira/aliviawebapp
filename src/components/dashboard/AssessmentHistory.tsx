@@ -64,12 +64,23 @@ const AssessmentHistory = ({ assessments }: AssessmentHistoryProps) => {
               .map((r: string) => painRegionLabels[r] || r)
               .slice(0, 3);
             const extraRegions = (a.pain_regions || []).length - 3;
+            const isInProgress = a.status === "in_progress";
             const isClickable = a.diagnosis || ["completed", "diagnosis_complete"].includes(a.status);
+            const resumeCtx = a.clinic_id
+              ? { clinicId: a.clinic_id }
+              : a.professional_id
+                ? { professionalId: a.professional_id }
+                : null;
+            const resumeLink = isInProgress && resumeCtx
+              ? buildResumeAssessmentLink(resumeCtx, a.id)
+              : null;
 
             return (
               <Card
                 key={a.id}
-                className={`hover:shadow-md transition-all border-border/60 hover:border-border group ${isClickable ? "cursor-pointer" : ""}`}
+                className={`hover:shadow-md transition-all border-border/60 hover:border-border group ${
+                  isInProgress ? "border-blue-300/60 bg-blue-50/30" : ""
+                } ${isClickable ? "cursor-pointer" : ""}`}
                 onClick={isClickable ? () => navigate(`/assessment/view/${a.id}`) : undefined}
               >
                 <CardContent className="py-4 px-5">
@@ -113,6 +124,20 @@ const AssessmentHistory = ({ assessments }: AssessmentHistoryProps) => {
                             <span className="text-xs text-muted-foreground ml-1">• Dor: {a.pain_score}/10</span>
                           )}
                         </div>
+                      )}
+                      {resumeLink && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="h-8 gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white self-start"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(resumeLink, "_blank", "noopener,noreferrer");
+                          }}
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                          {t("dashboard.continue_assessment") || "Continuar avaliação"}
+                        </Button>
                       )}
                     </div>
                     {isClickable && (
