@@ -96,6 +96,7 @@ const ProfessionalSearch = () => {
     });
 
     if (error || !data) {
+      console.error("handleSendMessage failed", { professionalId, userId: user.id, error });
       toast({ title: t("prof.referral_error"), variant: "destructive" });
       return;
     }
