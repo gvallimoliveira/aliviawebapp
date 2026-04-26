@@ -75,15 +75,11 @@ const RegionPainComparison = ({ assessments }: Props) => {
       )
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-    if (usable.length < 2) return [];
-
-    const first = usable[0];
-    const latest = usable[usable.length - 1];
+    if (usable.length < 1) return [];
 
     const scoreFor = (a: Assessment, zone: string): number | null => {
       const perRegion = a.anamnesis_data?.painScoresPerRegion || a.anamnesis_data?.pain_scores_per_region;
       if (perRegion && typeof perRegion === "object") {
-        // Average per-region scores belonging to this zone
         const matches: number[] = [];
         for (const [k, v] of Object.entries(perRegion)) {
           if (zoneOf(k) === zone && typeof v === "number") matches.push(v);
@@ -92,25 +88,32 @@ const RegionPainComparison = ({ assessments }: Props) => {
           return Math.round(matches.reduce((s, n) => s + n, 0) / matches.length);
         }
       }
-      // Fallback: only meaningful if this zone is present in the assessment
       const present = (a.pain_regions || []).some((r) => zoneOf(r) === zone);
       return present ? a.pain_score ?? null : null;
     };
 
     const allZones = new Set<string>();
-    [...(first.pain_regions || []), ...(latest.pain_regions || [])].forEach((r) => allZones.add(zoneOf(r)));
+    usable.forEach((a) => (a.pain_regions || []).forEach((r) => allZones.add(zoneOf(r))));
 
     const out: ZoneRow[] = [];
     allZones.forEach((zone) => {
-      const f = scoreFor(first, zone);
-      const l = scoreFor(latest, zone);
-      const diff = f != null && l != null ? f - l : null; // positive = improved
+      const containing = usable.filter((a) =>
+        (a.pain_regions || []).some((r) => zoneOf(r) === zone)
+      );
+      if (containing.length === 0) return;
+
+      const firstA = containing[0];
+      const latestA = containing[containing.length - 1];
+      const f = scoreFor(firstA, zone);
+      const l = containing.length > 1 ? scoreFor(latestA, zone) : null;
+      const diff = containing.length > 1 && f != null && l != null ? f - l : null;
+
       out.push({
         zone,
         firstScore: f,
-        latestScore: l,
-        firstDate: first.created_at,
-        latestDate: latest.created_at,
+        latestScore: containing.length > 1 ? l : f,
+        firstDate: firstA.created_at,
+        latestDate: latestA.created_at,
         diff,
       });
     });
