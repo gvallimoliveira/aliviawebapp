@@ -174,6 +174,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     occupation,
     painType,
     painTypes: painType ? [painType] : [],
+    functionalTests, // free-text observations from Step 4 (kept inside anamnesis_data so it persists and shows up in views)
     patientName,
     patientEmail: patientEmail || null,
   });
