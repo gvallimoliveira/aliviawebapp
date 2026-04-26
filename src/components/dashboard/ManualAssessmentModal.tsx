@@ -343,7 +343,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setAggravating(""); setRelieving(""); setMedications(""); setPreviousSurgeries("");
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
     setPainRegions([]); setRedFlagsChecked([]); setQuestionnaireResults([]);
-    setFunctionalTests(""); setClinicalImpression("");
+    setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
     setDiagnosisText(""); setTreatmentText("");
   };
 
