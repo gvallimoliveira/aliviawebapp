@@ -841,7 +841,7 @@ const Assessment = () => {
               diagnosis={diagnosis}
               mode={mode}
               onBack={() => setStep(mode === "premium" ? "functional_tests" : "anamnesis")}
-              onNewAssessment={() => navigate("/")}
+              onNewAssessment={() => { clearDraft(); navigate("/"); }}
               onGenerateTreatment={mode === "premium" ? generateTreatmentPlan : undefined}
               assessmentId={assessmentId}
               patientName={capturedName || user?.user_metadata?.full_name || undefined}
@@ -870,7 +870,7 @@ const Assessment = () => {
             painRegions={anamnesisData?.painRegions}
             testResults={[...questionnaireResults, ...testResults].length > 0 ? [...questionnaireResults, ...testResults] : undefined}
             onBack={() => setStep("result")}
-            onNewAssessment={() => navigate("/")}
+            onNewAssessment={() => { clearDraft(); navigate("/"); }}
           />
         )}
       </main>
