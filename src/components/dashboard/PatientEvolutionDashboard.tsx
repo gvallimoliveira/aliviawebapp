@@ -1,6 +1,18 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import SessionNotesSection from "./SessionNotesSection";
 import { questionnaires } from "@/data/questionnaireData";
+import { regionsByView } from "@/components/assessment/painMapData";
+
+// Build a flat lookup { regionId: { pt, en } } for naming questionnaire charts
+const REGION_LABELS: Record<string, { pt: string; en: string }> = (() => {
+  const map: Record<string, { pt: string; en: string }> = {};
+  Object.values(regionsByView).forEach((list) => {
+    list.forEach((r) => {
+      if (!map[r.id]) map[r.id] = { pt: r.label_pt, en: r.label_en };
+    });
+  });
+  return map;
+})();
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
