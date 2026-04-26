@@ -24,6 +24,8 @@ import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
+import OfflineBanner from "@/components/assessment/OfflineBanner";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { saveDraft, getDraft, clearDraft } from "@/lib/sessionPersistence";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
