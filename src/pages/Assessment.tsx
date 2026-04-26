@@ -504,6 +504,20 @@ const Assessment = () => {
   };
 
   const generateDiagnosis = async (data: AnamnesisData, tests: TestResult[], currentAssessmentId?: string | null, extraInfo?: string) => {
+    // Offline guard — keep the user on the previous step and queue.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setPendingAIAction("diagnosis");
+      toast({
+        title: language === "pt" ? "Sem conexão" : language === "es" ? "Sin conexión" : "Offline",
+        description:
+          language === "pt"
+            ? "Vamos gerar seu diagnóstico assim que a internet voltar."
+            : language === "es"
+            ? "Generaremos tu diagnóstico cuando vuelva la conexión."
+            : "We'll generate your diagnosis as soon as you're back online.",
+      });
+      return;
+    }
     setStep("loading");
     try {
       const bodyData: any = { anamnesisData: data, testResults: tests, questionnaireResults, mode, language };
@@ -514,6 +528,7 @@ const Assessment = () => {
         body: bodyData,
       });
       if (error) throw error;
+      setPendingAIAction(null);
       setDiagnosis(result.diagnosis);
       const id = currentAssessmentId || assessmentId;
       if (id) {
@@ -530,6 +545,13 @@ const Assessment = () => {
       }
     } catch (err: any) {
       console.error("Diagnosis error:", err);
+      // Network failure that slipped past navigator.onLine — queue it.
+      const isNetworkErr = err?.message?.toLowerCase?.().includes("network") || err?.message?.toLowerCase?.().includes("fetch");
+      if (isNetworkErr || (typeof navigator !== "undefined" && !navigator.onLine)) {
+        setPendingAIAction("diagnosis");
+        setStep(mode === "premium" ? "functional_tests" : "anamnesis");
+        return;
+      }
       toast({
         title: t("diagnosis.error_title"),
         description: t("diagnosis.error_desc"),
