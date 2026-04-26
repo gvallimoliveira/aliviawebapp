@@ -24,6 +24,8 @@ import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
+import OfflineBanner from "@/components/assessment/OfflineBanner";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { saveDraft, getDraft, clearDraft } from "@/lib/sessionPersistence";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
@@ -101,6 +103,11 @@ const Assessment = () => {
   const [isUpgradeFlow, setIsUpgradeFlow] = useState(false);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
+  // Offline mode: track network and queue AI calls that need to wait.
+  const online = useOnlineStatus();
+  // "diagnosis" = run generateDiagnosis once back online (uses last anamnesis+tests)
+  // "treatment" = run generateTreatmentPlan once back online
+  const [pendingAIAction, setPendingAIAction] = useState<null | "diagnosis" | "treatment">(null);
 
   // ----- Auto-save / resume draft (6h TTL via sessionPersistence) -----
   // Restore on first mount: if there's a draft for this same mode and the
@@ -249,6 +256,16 @@ const Assessment = () => {
     };
   }, [draftRestored, flushDraft]);
 
+  // Auto-resume queued AI step when connection comes back.
+  useEffect(() => {
+    if (!online || !pendingAIAction) return;
+    if (pendingAIAction === "diagnosis" && anamnesisData) {
+      generateDiagnosis(anamnesisData, testResults, assessmentId);
+    } else if (pendingAIAction === "treatment" && diagnosis) {
+      generateTreatmentPlan();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online, pendingAIAction]);
 
   // Redirect premium users to auth if not logged in
   useEffect(() => {
@@ -497,6 +514,20 @@ const Assessment = () => {
   };
 
   const generateDiagnosis = async (data: AnamnesisData, tests: TestResult[], currentAssessmentId?: string | null, extraInfo?: string) => {
+    // Offline guard — keep the user on the previous step and queue.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setPendingAIAction("diagnosis");
+      toast({
+        title: language === "pt" ? "Sem conexão" : language === "es" ? "Sin conexión" : "Offline",
+        description:
+          language === "pt"
+            ? "Vamos gerar seu diagnóstico assim que a internet voltar."
+            : language === "es"
+            ? "Generaremos tu diagnóstico cuando vuelva la conexión."
+            : "We'll generate your diagnosis as soon as you're back online.",
+      });
+      return;
+    }
     setStep("loading");
     try {
       const bodyData: any = { anamnesisData: data, testResults: tests, questionnaireResults, mode, language };
@@ -507,6 +538,7 @@ const Assessment = () => {
         body: bodyData,
       });
       if (error) throw error;
+      setPendingAIAction(null);
       setDiagnosis(result.diagnosis);
       const id = currentAssessmentId || assessmentId;
       if (id) {
@@ -523,6 +555,13 @@ const Assessment = () => {
       }
     } catch (err: any) {
       console.error("Diagnosis error:", err);
+      // Network failure that slipped past navigator.onLine — queue it.
+      const isNetworkErr = err?.message?.toLowerCase?.().includes("network") || err?.message?.toLowerCase?.().includes("fetch");
+      if (isNetworkErr || (typeof navigator !== "undefined" && !navigator.onLine)) {
+        setPendingAIAction("diagnosis");
+        setStep(mode === "premium" ? "functional_tests" : "anamnesis");
+        return;
+      }
       toast({
         title: t("diagnosis.error_title"),
         description: t("diagnosis.error_desc"),
@@ -552,12 +591,26 @@ const Assessment = () => {
   };
 
   const generateTreatmentPlan = async () => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setPendingAIAction("treatment");
+      toast({
+        title: language === "pt" ? "Sem conexão" : language === "es" ? "Sin conexión" : "Offline",
+        description:
+          language === "pt"
+            ? "Vamos gerar seu plano assim que a internet voltar."
+            : language === "es"
+            ? "Generaremos tu plan cuando vuelva la conexión."
+            : "We'll generate your plan as soon as you're back online.",
+      });
+      return;
+    }
     setStep("loading_treatment");
     try {
       const { data: result, error } = await supabase.functions.invoke("generate-treatment", {
         body: { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language },
       });
       if (error) throw error;
+      setPendingAIAction(null);
       setTreatmentPlan(result.treatmentPlan);
       if (assessmentId) {
         await updateAssessment(assessmentId, { treatment_plan: result.treatmentPlan as any, status: "completed" });
@@ -565,6 +618,12 @@ const Assessment = () => {
       setStep("treatment");
     } catch (err: any) {
       console.error("Treatment plan error:", err);
+      const isNetworkErr = err?.message?.toLowerCase?.().includes("network") || err?.message?.toLowerCase?.().includes("fetch");
+      if (isNetworkErr || (typeof navigator !== "undefined" && !navigator.onLine)) {
+        setPendingAIAction("treatment");
+        setStep("result");
+        return;
+      }
       toast({
         title: t("treatment.error_title"),
         description: t("treatment.error_desc"),
@@ -610,6 +669,7 @@ const Assessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
+        <OfflineBanner online={online} pendingResume={online && !!pendingAIAction} />
         {step !== "payment_check" && step !== "welcome" && (
           <AssessmentStepper currentStep={step} mode={mode as "basic" | "premium"} />
         )}
