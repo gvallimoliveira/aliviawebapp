@@ -441,6 +441,7 @@ const Dashboard = () => {
           activeTab={activeTab}
         />
 
+        <Suspense fallback={<TabFallback />}>
         {isClinicMode && activeClinic ? (
           /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
