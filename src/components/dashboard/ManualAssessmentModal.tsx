@@ -154,6 +154,40 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setRedFlagsChecked((prev) => prev.includes(rf) ? prev.filter((r) => r !== rf) : [...prev, rf]);
   };
 
+  const generateAIClinicalImpression = async () => {
+    setGeneratingCi(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
+        body: {
+          anamnesisData: buildAnamnesisData(),
+          painRegions,
+          painScore,
+          questionnaireResults,
+          diagnosis: diagnosisText
+            ? { hypothesis: diagnosisText.split("\n")[0]?.slice(0, 280), summary: diagnosisText }
+            : (clinicalImpression ? { summary: clinicalImpression } : null),
+          language,
+        },
+      });
+      if (error) throw error;
+      const ci = data?.clinicalImpression;
+      if (!ci?.overview) throw new Error("Empty AI response");
+      setAiClinicalImpression(ci);
+      // Reflect overview into the editable text field for convenience
+      setClinicalImpression(ci.overview);
+      toast({ title: isPt ? "Impressão clínica gerada!" : "Clinical impression generated!" });
+    } catch (err: any) {
+      console.error("Clinical impression error:", err);
+      toast({
+        title: isPt ? "Erro na IA" : "AI error",
+        description: err?.message || (isPt ? "Não foi possível gerar a impressão clínica." : "Could not generate clinical impression."),
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingCi(false);
+    }
+  };
+
 
   // IMPORTANT: keep keys in camelCase to match the rest of the app
   // (AssessmentView, generatePdf, generate-clinical-impression, ResumeSummary, etc.)
