@@ -32,6 +32,8 @@ import {
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
 import PainMapView from "@/components/assessment/PainMapView";
+import RegionPainComparison from "@/components/dashboard/RegionPainComparison";
+import AssessmentTimeline from "@/components/dashboard/AssessmentTimeline";
 import JSZip from "jszip";
 import CreateExerciseProgramModal from "@/components/dashboard/CreateExerciseProgramModal";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
@@ -2261,6 +2263,17 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
           </CardContent>
         </Card>
       ) : null}
+
+      {/* ── 6.5. LINHA DO TEMPO (últimas 5 avaliações) ── */}
+      <AssessmentTimeline
+        assessments={patient.assessments}
+        onSelect={(id) =>
+          navigate(`/assessment/view/${id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)
+        }
+      />
+
+      {/* ── 6.6. COMPARAÇÃO DE DOR POR REGIÃO ── */}
+      <RegionPainComparison assessments={patient.assessments} />
 
       {/* ── 7. MAPA DE DOR COMPARATIVO ── */}
       {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && (
