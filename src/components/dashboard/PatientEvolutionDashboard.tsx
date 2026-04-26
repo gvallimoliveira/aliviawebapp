@@ -1173,8 +1173,10 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         .sort((a, b) => isHigherWorse ? b.score - a.score : a.score - b.score)
         .slice(0, 3);
 
-      const showContext = (contextCountByQ.get(questionnaireId) || 0) > 1 && contextLabel;
-      const displayTitle = showContext ? `${name} — ${contextLabel}` : name;
+      // Always surface the anatomical/diagnostic context when we have one,
+      // so the clinician immediately knows which body region or condition
+      // the chart refers to (e.g. "ODI — Lombar" vs "ODI — Cervical").
+      const displayTitle = contextLabel ? `${name} — ${contextLabel}` : name;
       const totalKey = `${displayTitle} (Total)`;
       const data = entries.map((entry, i) => {
         const point: any = {
@@ -1194,7 +1196,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       charts.push({
         name,
         displayTitle,
-        contextLabel: showContext ? contextLabel : "",
+        contextLabel,
         totalKey,
         subscaleKeys: subscaleEntries.map((s) => ({ key: s.label, label: s.label })),
         data,
