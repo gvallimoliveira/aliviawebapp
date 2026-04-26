@@ -496,7 +496,12 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
    const [clinicTherapists, setClinicTherapists] = useState<Array<{ id: string; full_name: string; user_id: string }>>([]);
    const [reassignOpen, setReassignOpen] = useState(false);
    const [reassignTargetId, setReassignTargetId] = useState<string>("");
-   const [reassigning, setReassigning] = useState(false);
+    const [reassigning, setReassigning] = useState(false);
+   const [showArchivedAssessments, setShowArchivedAssessments] = useState(false);
+   const [archivingAssessmentId, setArchivingAssessmentId] = useState<string | null>(null);
+   const [deleteAssessmentTarget, setDeleteAssessmentTarget] = useState<{ id: string; date: string } | null>(null);
+   const [deletingAssessmentId, setDeletingAssessmentId] = useState<string | null>(null);
+   const [assessmentRefreshTick, setAssessmentRefreshTick] = useState(0);
 
   // Load clinic therapists (professionals belonging to this clinic) so owner/secretary can reassign
   useEffect(() => {
