@@ -581,12 +581,26 @@ const Assessment = () => {
   };
 
   const generateTreatmentPlan = async () => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setPendingAIAction("treatment");
+      toast({
+        title: language === "pt" ? "Sem conexão" : language === "es" ? "Sin conexión" : "Offline",
+        description:
+          language === "pt"
+            ? "Vamos gerar seu plano assim que a internet voltar."
+            : language === "es"
+            ? "Generaremos tu plan cuando vuelva la conexión."
+            : "We'll generate your plan as soon as you're back online.",
+      });
+      return;
+    }
     setStep("loading_treatment");
     try {
       const { data: result, error } = await supabase.functions.invoke("generate-treatment", {
         body: { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language },
       });
       if (error) throw error;
+      setPendingAIAction(null);
       setTreatmentPlan(result.treatmentPlan);
       if (assessmentId) {
         await updateAssessment(assessmentId, { treatment_plan: result.treatmentPlan as any, status: "completed" });
@@ -594,6 +608,12 @@ const Assessment = () => {
       setStep("treatment");
     } catch (err: any) {
       console.error("Treatment plan error:", err);
+      const isNetworkErr = err?.message?.toLowerCase?.().includes("network") || err?.message?.toLowerCase?.().includes("fetch");
+      if (isNetworkErr || (typeof navigator !== "undefined" && !navigator.onLine)) {
+        setPendingAIAction("treatment");
+        setStep("result");
+        return;
+      }
       toast({
         title: t("treatment.error_title"),
         description: t("treatment.error_desc"),
