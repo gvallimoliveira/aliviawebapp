@@ -2363,11 +2363,11 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       {/* ── 8. QUESTIONÁRIOS (Evolução) ── */}
       {questionnaireEvolution.length > 0 ? (
         questionnaireEvolution.map((chart) => (
-          <Card key={chart.name}>
+          <Card key={chart.displayTitle}>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <ClipboardList className="h-4 w-4 text-primary" />
-                {t("pro.questionnaire_evolution")} — {chart.name}
+                {t("pro.questionnaire_evolution")} — {chart.displayTitle}
               </CardTitle>
               <CardDescription className="text-xs">
                 Pontuação total + 3 maiores limitações funcionais (%)
