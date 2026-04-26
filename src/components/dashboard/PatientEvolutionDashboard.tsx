@@ -1073,11 +1073,43 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       }));
   }, [patient]);
 
-  // Build detailed questionnaire evolution data with subscales
+  // Build detailed questionnaire evolution data with subscales.
+  // Charts are grouped by questionnaireId + body-region context, so the same
+  // questionnaire applied to different anatomical regions (e.g. ODI for cervical
+  // vs lumbar in different assessments) generates separate, clearly labeled charts.
   const questionnaireEvolution = useMemo(() => {
     if (!patient) return [];
-    const resultsByQuestionnaire = new Map<string, {
+    const lang = document.documentElement.lang === "en" ? "en" : "pt";
+
+    // Returns a short context label for a questionnaire run, based on which
+    // pain regions of the assessment overlap with the questionnaire's mapping.
+    // Falls back to the diagnosis hypothesis (truncated) when no overlap.
+    const buildContext = (
+      qDef: typeof questionnaires[0] | undefined,
+      assessment: any,
+    ): { key: string; label: string } => {
+      const painRegions: string[] = Array.isArray(assessment?.pain_regions) ? assessment.pain_regions : [];
+      const mapping = qDef?.regionMapping || [];
+      const overlap = painRegions.filter((r) => mapping.includes(r));
+      if (overlap.length > 0) {
+        const labels = overlap.map((r) => REGION_LABELS[r]?.[lang] || r);
+        // Deduplicate (cervical_left + cervical_right => "Cervical")
+        const unique = Array.from(new Set(labels));
+        const label = unique.slice(0, 2).join(" + ") + (unique.length > 2 ? "…" : "");
+        return { key: overlap.sort().join("|"), label };
+      }
+      const hypothesis: string | undefined = assessment?.diagnosis?.hypothesis;
+      if (hypothesis) {
+        const short = hypothesis.length > 32 ? hypothesis.slice(0, 32) + "…" : hypothesis;
+        return { key: `dx:${hypothesis}`, label: short };
+      }
+      return { key: "_", label: "" };
+    };
+
+    const groups = new Map<string, {
+      questionnaireId: string;
       name: string;
+      contextLabel: string;
       qDef: typeof questionnaires[0] | undefined;
       entries: { date: string; percentageScore: number; subscaleScores: Record<string, number> }[];
     }>();
@@ -1087,14 +1119,19 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       results.forEach((r: any) => {
         if (!r.questionnaireId || r.percentageScore == null) return;
         const name = r.questionnaireName || r.questionnaireId.toUpperCase();
-        if (!resultsByQuestionnaire.has(r.questionnaireId)) {
-          resultsByQuestionnaire.set(r.questionnaireId, {
+        const qDef = questionnaires.find((q) => q.id === r.questionnaireId);
+        const ctx = buildContext(qDef, a);
+        const groupKey = `${r.questionnaireId}::${ctx.key}`;
+        if (!groups.has(groupKey)) {
+          groups.set(groupKey, {
+            questionnaireId: r.questionnaireId,
             name,
-            qDef: questionnaires.find((q) => q.id === r.questionnaireId),
+            contextLabel: ctx.label,
+            qDef,
             entries: [],
           });
         }
-        resultsByQuestionnaire.get(r.questionnaireId)!.entries.push({
+        groups.get(groupKey)!.entries.push({
           date: new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }),
           percentageScore: r.percentageScore,
           subscaleScores: r.subscaleScores || {},
@@ -1102,21 +1139,29 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       });
     });
 
+    // If a given questionnaireId only has ONE context, drop the suffix to keep
+    // titles clean (no need to disambiguate when there's nothing to confuse).
+    const contextCountByQ = new Map<string, number>();
+    groups.forEach((g) => {
+      contextCountByQ.set(g.questionnaireId, (contextCountByQ.get(g.questionnaireId) || 0) + 1);
+    });
+
     const charts: {
       name: string;
+      displayTitle: string;
+      contextLabel: string;
       totalKey: string;
       subscaleKeys: { key: string; label: string }[];
       data: any[];
     }[] = [];
 
-    resultsByQuestionnaire.forEach((info) => {
-      const { name, qDef, entries } = info;
+    groups.forEach((info) => {
+      const { name, contextLabel, qDef, entries, questionnaireId } = info;
       if (entries.length === 0) return;
 
       const latestEntry = entries[entries.length - 1];
       const subscaleLabels = qDef?.subscaleLabels || {};
       const isHigherWorse = qDef?.scoringDirection === "higher_worse";
-      const lang = document.documentElement.lang === "en" ? "en" : "pt";
 
       const subscaleEntries = Object.entries(latestEntry.subscaleScores)
         .filter(([key]) => subscaleLabels[key])
@@ -1128,7 +1173,9 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         .sort((a, b) => isHigherWorse ? b.score - a.score : a.score - b.score)
         .slice(0, 3);
 
-      const totalKey = `${name} (Total)`;
+      const showContext = (contextCountByQ.get(questionnaireId) || 0) > 1 && contextLabel;
+      const displayTitle = showContext ? `${name} — ${contextLabel}` : name;
+      const totalKey = `${displayTitle} (Total)`;
       const data = entries.map((entry, i) => {
         const point: any = {
           index: i + 1,
@@ -1138,7 +1185,6 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         subscaleEntries.forEach((sub) => {
           const subscaleValue = entry.subscaleScores[sub.key];
           if (subscaleValue != null) {
-            // subscaleScores are already stored as percentages (0-100)
             point[sub.label] = Math.round(subscaleValue);
           }
         });
@@ -1147,6 +1193,8 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
       charts.push({
         name,
+        displayTitle,
+        contextLabel: showContext ? contextLabel : "",
         totalKey,
         subscaleKeys: subscaleEntries.map((s) => ({ key: s.label, label: s.label })),
         data,
