@@ -16,6 +16,7 @@
  */
 
 const KEY = "alivia:last-session";
+const FRESH_BOOT_PATHS = new Set(["/", "/index", "/index.html"]);
 // 6 hours: long enough to cover "I switched apps for a few minutes" and
 // "I came back the next morning to finish an assessment", but short enough
 // that we never restore a stale state from days ago.
@@ -70,7 +71,7 @@ const write = (data: StoredSession) => {
 export const saveCurrentLocation = (draft?: unknown) => {
   if (typeof window === "undefined") return;
   const path = window.location.pathname;
-  if (path === "/" || NEVER_RESTORE_PREFIXES.some((p) => p !== "/" && path.startsWith(p))) {
+  if (FRESH_BOOT_PATHS.has(path) || NEVER_RESTORE_PREFIXES.some((p) => p !== "/" && path.startsWith(p))) {
     // Don't overwrite a useful saved spot with a non-restorable one
     return;
   }
@@ -121,7 +122,7 @@ export const getRestoreTarget = (): string | null => {
   if (typeof window === "undefined") return null;
   const currentPath = window.location.pathname;
   // Only restore if we landed on a "fresh boot" entry point.
-  const isFreshBoot = currentPath === "/" || currentPath === "/index.html";
+  const isFreshBoot = FRESH_BOOT_PATHS.has(currentPath);
   if (!isFreshBoot) return null;
 
   // Skip restore if the user explicitly came from a link (has utm_, ref, etc)
