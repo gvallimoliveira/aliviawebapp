@@ -716,8 +716,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    log("ERROR", { message: error.message, stack: error.stack });
-    return new Response(JSON.stringify({ error: error.message }), {
+    const err = error as Error;
+    log("ERROR", { message: err.message, stack: err.stack });
+    return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
