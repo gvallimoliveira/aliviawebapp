@@ -152,21 +152,30 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
 
+  // IMPORTANT: keep keys in camelCase to match the rest of the app
+  // (AssessmentView, generatePdf, generate-clinical-impression, ResumeSummary, etc.)
   const buildAnamnesisData = () => ({
     manualEntry: true,
-    chief_complaint: chiefComplaint,
+    // Chief complaint — store both the array form (used by AssessmentView/Resume/Pro dashboards)
+    // and the legacy single string for backward compatibility.
+    chiefComplaints: chiefComplaint ? [chiefComplaint] : [],
+    chiefComplaint,
+    customComplaint: chiefComplaint,
     history,
     duration,
+    painDuration: duration,
     onset,
-    aggravating_factors: aggravating,
-    relieving_factors: relieving,
+    aggravatingFactors: aggravating,
+    relievingFactors: relieving,
     medications,
-    previous_surgeries: previousSurgeries,
+    previousSurgeries,
+    previousTreatments: previousSurgeries,
     comorbidities,
     occupation,
-    pain_type: painType,
-    patient_name: patientName,
-    patient_email: patientEmail || null,
+    painType,
+    painTypes: painType ? [painType] : [],
+    patientName,
+    patientEmail: patientEmail || null,
   });
 
   const generateAIDiagnosis = async () => {
