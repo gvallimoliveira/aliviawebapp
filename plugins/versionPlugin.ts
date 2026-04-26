@@ -1,5 +1,5 @@
 import { Plugin } from "vite";
-import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { createHash } from "crypto";
 
@@ -8,6 +8,18 @@ import { createHash } from "crypto";
  * 1. Generates a unique build hash per build
  * 2. Injects it as VITE_BUILD_HASH env var
  * 3. Writes a /version.json to the output dir
+ *
+ * If a `public/version-extras.json` file exists at build time, its keys are
+ * merged into the final `version.json`. This is how the team can flag a
+ * release as needing a PWA shortcut reinstall (see `requiresReinstall`),
+ * provide release notes, etc — without changing the plugin itself.
+ *
+ * Example public/version-extras.json:
+ * {
+ *   "requiresReinstall": true,
+ *   "reinstallReason": "Atualizamos como o app fica salvo no celular...",
+ *   "releaseNotes": "Modo offline + comparativo por região"
+ * }
  */
 export function versionPlugin(): Plugin {
   let buildHash = "";
@@ -38,12 +50,26 @@ export function versionPlugin(): Plugin {
         mkdirSync(outDir, { recursive: true });
       }
 
-      writeFileSync(
-        resolve(outDir, "version.json"),
-        JSON.stringify({ hash: buildHash, builtAt: new Date().toISOString() }),
-      );
+      // Merge optional extras (requiresReinstall, releaseNotes, etc).
+      let extras: Record<string, unknown> = {};
+      try {
+        const extrasPath = resolve(process.cwd(), "public", "version-extras.json");
+        if (existsSync(extrasPath)) {
+          extras = JSON.parse(readFileSync(extrasPath, "utf8"));
+        }
+      } catch (err) {
+        console.warn("[alivia-version] Failed to read version-extras.json", err);
+      }
 
-      console.log(`[alivia-version] Build hash: ${buildHash}`);
+      const payload = {
+        hash: buildHash,
+        builtAt: new Date().toISOString(),
+        ...extras,
+      };
+
+      writeFileSync(resolve(outDir, "version.json"), JSON.stringify(payload));
+
+      console.log(`[alivia-version] Build hash: ${buildHash}`, extras);
     },
   };
 }
