@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE, PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 import { useParams, useNavigate } from "react-router-dom";
@@ -149,13 +149,31 @@ const Assessment = () => {
   // Auto-save: persist whenever meaningful assessment state changes. Skipped
   // until the initial restore pass is done so we don't overwrite a valid
   // draft with the empty initial state.
+  //
+  // Strategy (max safety, min jank):
+  //  1. Debounce normal state changes by 800ms (≈ "pause typing / blur").
+  //  2. Flush IMMEDIATELY on step transitions — never lose a completed step.
+  //  3. Flush IMMEDIATELY on global blur / pagehide / visibilitychange so
+  //     iOS/Android killing the PWA in the background still keeps the draft.
+  const draftRef = useRef<AssessmentDraft | null>(null);
+  const prevStepRef = useRef<AssessmentStep>(step);
+
+  const flushDraft = useCallback(() => {
+    const draft = draftRef.current;
+    if (!draft) return;
+    if (NON_RESUMABLE_STEPS.includes(draft.step)) return;
+    if (draft.step === "welcome" || draft.step === "treatment") return;
+    saveDraft(draft);
+  }, []);
+
   useEffect(() => {
     if (!draftRestored) return;
     if (NON_RESUMABLE_STEPS.includes(step)) return;
     if (step === "welcome") return;
     if (step === "treatment") {
-      // Assessment is complete — drop the draft.
       clearDraft();
+      draftRef.current = null;
+      prevStepRef.current = step;
       return;
     }
     const draft: AssessmentDraft = {
@@ -174,9 +192,16 @@ const Assessment = () => {
       capturedName,
       isUpgradeFlow,
     };
-    // Debounce: only persist after the user pauses (e.g. blurs a field)
-    // for 800ms. This avoids saving on every keystroke, which can stutter
-    // on lower-end mobile devices during long anamnesis forms.
+    draftRef.current = draft;
+
+    // Step changed → flush immediately, no debounce.
+    if (prevStepRef.current !== step) {
+      prevStepRef.current = step;
+      saveDraft(draft);
+      return;
+    }
+
+    // Otherwise debounce field-level changes.
     const timer = setTimeout(() => saveDraft(draft), 800);
     return () => clearTimeout(timer);
   }, [
@@ -195,6 +220,35 @@ const Assessment = () => {
     capturedName,
     isUpgradeFlow,
   ]);
+
+  // Global flush triggers: any input blur, tab hidden, page hide, or unload.
+  useEffect(() => {
+    if (!draftRestored) return;
+    const onBlur = (e: FocusEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      const tag = t.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t as HTMLElement).isContentEditable) {
+        flushDraft();
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushDraft();
+    };
+    const onPageHide = () => flushDraft();
+
+    document.addEventListener("focusout", onBlur, true);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("beforeunload", onPageHide);
+    return () => {
+      document.removeEventListener("focusout", onBlur, true);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("beforeunload", onPageHide);
+    };
+  }, [draftRestored, flushDraft]);
+
 
   // Redirect premium users to auth if not logged in
   useEffect(() => {
