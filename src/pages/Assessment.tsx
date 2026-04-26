@@ -100,6 +100,97 @@ const Assessment = () => {
   const [capturedName, setCapturedName] = useState<string | null>(null);
   const [isUpgradeFlow, setIsUpgradeFlow] = useState(false);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  // ----- Auto-save / resume draft (6h TTL via sessionPersistence) -----
+  // Restore on first mount: if there's a draft for this same mode and the
+  // step is resumable, hydrate the React state and jump straight back to it.
+  useEffect(() => {
+    if (draftRestored) return;
+    try {
+      const draft = getDraft<AssessmentDraft>();
+      if (!draft || draft.kind !== "assessment" || draft.mode !== mode) {
+        setDraftRestored(true);
+        return;
+      }
+      if (NON_RESUMABLE_STEPS.includes(draft.step)) {
+        setDraftRestored(true);
+        return;
+      }
+      if (draft.anamnesisData) setAnamnesisData(draft.anamnesisData);
+      if (draft.testResults?.length) setTestResults(draft.testResults);
+      if (draft.questionnaireResults?.length) setQuestionnaireResults(draft.questionnaireResults);
+      if (draft.diagnosis) setDiagnosis(draft.diagnosis);
+      if (draft.treatmentPlan) setTreatmentPlan(draft.treatmentPlan);
+      if (draft.assessmentId) setAssessmentId(draft.assessmentId);
+      if (draft.additionalInfo) setAdditionalInfo(draft.additionalInfo);
+      if (draft.hasRetried) setHasRetried(draft.hasRetried);
+      if (draft.capturedEmail) setCapturedEmail(draft.capturedEmail);
+      if (draft.capturedName) setCapturedName(draft.capturedName);
+      if (draft.isUpgradeFlow) setIsUpgradeFlow(draft.isUpgradeFlow);
+      setStep(draft.step);
+      toast({
+        title: language === "pt" ? "Avaliação retomada" : language === "es" ? "Evaluación reanudada" : "Assessment resumed",
+        description:
+          language === "pt"
+            ? "Continuamos de onde você parou."
+            : language === "es"
+            ? "Continuamos donde lo dejaste."
+            : "We picked up where you left off.",
+      });
+    } catch {
+      /* ignore */
+    } finally {
+      setDraftRestored(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-save: persist whenever meaningful assessment state changes. Skipped
+  // until the initial restore pass is done so we don't overwrite a valid
+  // draft with the empty initial state.
+  useEffect(() => {
+    if (!draftRestored) return;
+    if (NON_RESUMABLE_STEPS.includes(step)) return;
+    if (step === "welcome") return;
+    if (step === "treatment") {
+      // Assessment is complete — drop the draft.
+      clearDraft();
+      return;
+    }
+    const draft: AssessmentDraft = {
+      kind: "assessment",
+      mode: mode as "basic" | "premium",
+      step,
+      anamnesisData,
+      testResults,
+      questionnaireResults,
+      diagnosis,
+      treatmentPlan,
+      assessmentId,
+      additionalInfo,
+      hasRetried,
+      capturedEmail,
+      capturedName,
+      isUpgradeFlow,
+    };
+    saveDraft(draft);
+  }, [
+    draftRestored,
+    mode,
+    step,
+    anamnesisData,
+    testResults,
+    questionnaireResults,
+    diagnosis,
+    treatmentPlan,
+    assessmentId,
+    additionalInfo,
+    hasRetried,
+    capturedEmail,
+    capturedName,
+    isUpgradeFlow,
+  ]);
 
   // Redirect premium users to auth if not logged in
   useEffect(() => {
