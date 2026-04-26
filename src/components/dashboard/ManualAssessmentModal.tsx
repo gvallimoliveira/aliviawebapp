@@ -241,30 +241,44 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         pain_regions: painRegions,
         pain_score: painScore,
         red_flags: redFlagsChecked.length > 0 ? { detected: redFlagsChecked } : null,
-        test_results: {
-          functional_tests: functionalTests,
-          questionnaires: questionnaireResults.map((r) => {
-            const q = questionnaires.find((qq) => qq.id === r.questionnaireId);
-            return {
-              questionnaireId: r.questionnaireId,
-              questionnaireName: r.questionnaireName,
-              fullName_pt: q?.fullName_pt,
-              fullName_en: q?.fullName_en,
-              answers: r.answers,
-              subscaleScores: r.subscaleScores,
-              totalScore: r.totalScore,
-              maxScore: r.maxScore,
-              percentageScore: r.percentageScore,
-              interpretation_pt: r.interpretation_pt,
-              interpretation_en: r.interpretation_en,
-              severity: r.severity,
-            };
-          }),
-        },
-        diagnosis: diagnosisText
-          ? { manual: true, text: diagnosisText, clinical_impression: clinicalImpression }
-          : (clinicalImpression ? { manual: true, clinical_impression: clinicalImpression } : null),
-        treatment_plan: treatmentText ? { manual: true, text: treatmentText } : null,
+        // test_results MUST be an array of questionnaire results — that's what AssessmentView,
+        // generatePdf and clinical-impression all expect. Free-text functional observations
+        // already live inside anamnesis_data.functionalTests.
+        test_results: questionnaireResults.map((r) => {
+          const q = questionnaires.find((qq) => qq.id === r.questionnaireId);
+          return {
+            questionnaireId: r.questionnaireId,
+            questionnaireName: r.questionnaireName,
+            fullName_pt: q?.fullName_pt,
+            fullName_en: q?.fullName_en,
+            answers: r.answers,
+            subscaleScores: r.subscaleScores,
+            totalScore: r.totalScore,
+            maxScore: r.maxScore,
+            percentageScore: r.percentageScore,
+            interpretation_pt: r.interpretation_pt,
+            interpretation_en: r.interpretation_en,
+            severity: r.severity,
+          };
+        }),
+        // Diagnosis: use the shape the rest of the app reads — `hypothesis` + `summary`.
+        // Keep `manual: true` flag and the legacy `text`/`clinicalImpression` keys for backward compat.
+        diagnosis: (diagnosisText || clinicalImpression)
+          ? {
+              manual: true,
+              hypothesis: (diagnosisText || clinicalImpression).split("\n")[0]?.slice(0, 280) || null,
+              summary: diagnosisText || clinicalImpression,
+              text: diagnosisText || null,
+              clinicalImpression: clinicalImpression
+                ? { overview: clinicalImpression, therapeuticObjectives: [] }
+                : undefined,
+            }
+          : null,
+        // Treatment plan: keep the manual flag + the free text under both `text` and `summary`
+        // so PDF/AssessmentView can render it.
+        treatment_plan: treatmentText
+          ? { manual: true, text: treatmentText, summary: treatmentText }
+          : null,
       };
       if (clinicId) row.clinic_id = clinicId;
       else row.professional_id = professionalId;
