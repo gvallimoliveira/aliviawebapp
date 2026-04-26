@@ -151,39 +151,50 @@ const RegionPainComparison = ({ assessments }: Props) => {
             <div
               key={row.zone}
               className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card px-3 py-2"
+              title={
+                row.diff != null
+                  ? `${fmt(row.firstDate)} → ${fmt(row.latestDate)}`
+                  : `Registrada em ${fmt(row.firstDate)}`
+              }
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm font-medium text-foreground truncate">{row.zone}</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {row.firstScore ?? "—"}/10
-                </span>
-                <span className="text-muted-foreground/50">→</span>
-                <span className="text-sm font-semibold text-foreground tabular-nums">
-                  {row.latestScore ?? "—"}/10
-                </span>
-                {row.diff != null && (
-                  <Badge
-                    variant="outline"
-                    className={`gap-1 text-[10px] border-0 ${
-                      improved
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                        : worsened
-                        ? "bg-destructive/10 text-destructive"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {improved ? <ArrowDown className="h-3 w-3" /> :
-                      worsened ? <ArrowUp className="h-3 w-3" /> :
-                      <Minus className="h-3 w-3" />}
-                    {improved ? `−${row.diff}` : worsened ? `+${Math.abs(row.diff)}` : "0"}
-                  </Badge>
-                )}
-                {row.diff == null && (
-                  <Badge variant="outline" className="text-[10px] border-dashed text-muted-foreground">
-                    sem dado
-                  </Badge>
+                {row.diff != null ? (
+                  <>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {row.firstScore ?? "—"}/10
+                    </span>
+                    <span className="text-muted-foreground/50">→</span>
+                    <span className="text-sm font-semibold text-foreground tabular-nums">
+                      {row.latestScore ?? "—"}/10
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={`gap-1 text-[10px] border-0 ${
+                        improved
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : worsened
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {improved ? <ArrowDown className="h-3 w-3" /> :
+                        worsened ? <ArrowUp className="h-3 w-3" /> :
+                        <Minus className="h-3 w-3" />}
+                      {improved ? `−${row.diff}` : worsened ? `+${Math.abs(row.diff)}` : "0"}
+                    </Badge>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm font-semibold text-foreground tabular-nums">
+                      {row.firstScore ?? "—"}/10
+                    </span>
+                    <Badge variant="outline" className="text-[10px] border-dashed text-muted-foreground">
+                      única medição
+                    </Badge>
+                  </>
                 )}
               </div>
             </div>
