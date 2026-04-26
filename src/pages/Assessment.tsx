@@ -174,7 +174,11 @@ const Assessment = () => {
       capturedName,
       isUpgradeFlow,
     };
-    saveDraft(draft);
+    // Debounce: only persist after the user pauses (e.g. blurs a field)
+    // for 800ms. This avoids saving on every keystroke, which can stutter
+    // on lower-end mobile devices during long anamnesis forms.
+    const timer = setTimeout(() => saveDraft(draft), 800);
+    return () => clearTimeout(timer);
   }, [
     draftRestored,
     mode,
