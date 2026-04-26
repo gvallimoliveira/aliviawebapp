@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./i18n";
 import "./index.css";
+import { getRestoreTarget, installRouteTracker } from "./lib/sessionPersistence";
 
 const rootElement = document.getElementById("root");
 
@@ -34,6 +35,20 @@ async function unregisterLegacyServiceWorkers() {
 }
 
 void unregisterLegacyServiceWorkers();
+
+// Restore last route BEFORE React mounts the router, so BrowserRouter
+// reads the restored URL on first render. This brings the user back to
+// where they left off when iOS/Android kills the standalone PWA tab.
+try {
+  const target = getRestoreTarget();
+  if (target) {
+    history.replaceState(null, "", target);
+  }
+} catch {
+  /* noop — fallback to the original URL */
+}
+
+installRouteTracker();
 
 if (rootElement) {
   createRoot(rootElement).render(<App />);
