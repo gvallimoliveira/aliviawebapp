@@ -640,16 +640,19 @@ const Dashboard = () => {
             </TabsContent>
           </Tabs>
         )}
+        </Suspense>
       </main>
 
-      <OnboardingTour
-        step={onboarding.step}
-        currentStep={onboarding.currentStep}
-        totalSteps={onboarding.totalSteps}
-        isActive={onboarding.isActive && !needsContextSelection}
-        onNext={onboarding.next}
-        onSkip={onboarding.skip}
-      />
+      <Suspense fallback={null}>
+        <OnboardingTour
+          step={onboarding.step}
+          currentStep={onboarding.currentStep}
+          totalSteps={onboarding.totalSteps}
+          isActive={onboarding.isActive && !needsContextSelection}
+          onNext={onboarding.next}
+          onSkip={onboarding.skip}
+        />
+      </Suspense>
 
     </div>
   );
