@@ -871,6 +871,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     }
   };
 
+  const handleAddExternalPatient = async () => {
     if (!newPatientName.trim() || !professionalId) return;
     setAddingPatient(true);
     try {
