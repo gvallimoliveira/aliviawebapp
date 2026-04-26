@@ -306,9 +306,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               hypothesis: (diagnosisText || clinicalImpression).split("\n")[0]?.slice(0, 280) || null,
               summary: diagnosisText || clinicalImpression,
               text: diagnosisText || null,
-              clinicalImpression: clinicalImpression
-                ? { overview: clinicalImpression, therapeuticObjectives: [] }
-                : undefined,
+              clinicalImpression: aiClinicalImpression
+                ? aiClinicalImpression
+                : (clinicalImpression
+                    ? { overview: clinicalImpression, therapeuticObjectives: [] }
+                    : undefined),
             }
           : null,
         // Treatment plan: keep the manual flag + the free text under both `text` and `summary`
