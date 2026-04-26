@@ -1,80 +1,89 @@
+# Plano: Acelerar carregamento do app com priorização inteligente
 
+## Diagnóstico rápido
 
-## Objetivo
-Fortalecer o que já está funcionando (videochamada, chat, descoberta de profissionais) **sem alterar o fluxo atual**, corrigindo dois pontos:
+Hoje o `App.tsx` importa **todas as 30 páginas de uma vez** (Auth, Dashboard, Assessment, Admin, Blog, ClinicLanding, ClinicDemo, etc.) e o `Dashboard.tsx` importa **todos os componentes de todas as abas** sincronamente — incluindo libs pesadas como `recharts` (gráficos), `jspdf`, `jszip`, `framer-motion`, `embla-carousel`, `react-easy-crop`, `react-day-picker`. Resultado: o navegador baixa e parseia ~tudo antes de mostrar a primeira tela.
 
-1. Notificação sonora/vibração quando chega videochamada — inclusive com app em segundo plano (como WhatsApp).
-2. Nome do profissional aparecendo como genérico “Profissional” na visão do paciente (quando deveria mostrar o nome completo, igual à busca).
+A solução padrão em React/Vite é `React.lazy()` + `Suspense` + `requestIdleCallback` para pré-aquecer os módulos que serão usados em seguida.
 
----
+## Estratégia em 3 níveis
 
-## 1. Aviso sonoro + vibração da chamada em background
+### Nível 1 — Carregamento IMEDIATO (entram no bundle inicial)
+São telas/funções que o usuário vê nos primeiros segundos. Não terão delay nenhum.
 
-### Causa
-O sinal de chamada hoje viaja por Supabase Realtime (broadcast WebSocket). Quando o app está em segundo plano (aba inativa, tela bloqueada), o navegador suspende o JavaScript e o broadcast não chega. Por isso a chamada só toca se o app estiver aberto.
+- **Gateway** (`/`) — porta de entrada
+- **Auth** (`/auth`) — login/cadastro
+- **Dashboard shell** — header, abas, `WelcomeSection`, `QuickActions`, `AssessmentHistory` (aba inicial padrão)
+- **AuthContext, ClinicContext, LanguageContext** — já são imediatos
+- **Toaster, Tooltip, ScrollToTop, GlobalMobileMenu** — infraestrutura
+- **PatientLanding** e **ProfessionalLanding** — landing pages públicas (SEO/conversão)
 
-### Solução
-Disparar, **em paralelo ao broadcast atual**, uma push notification para o destinatário no exato momento em que a chamada começa. O Service Worker `sw-push.js` (já existente) recebe a push mesmo com o app fechado e mostra notificação nativa do sistema com som e vibração.
+### Nível 2 — Pré-carregadas em IDLE (após app montar, sem bloquear)
+Carregam ~300ms depois do app pintar a primeira tela, usando `requestIdleCallback`. Quando o usuário clicar, já estarão prontas.
 
-### Mudanças
-- **`src/contexts/VideoCallContext.tsx`** — Em `startCall`, após enviar `call-request` pelo broadcast, invocar também `send-push-notification` para o usuário do outro lado, com:
-  - título: “📹 Chamada recebida”
-  - corpo: `"<nome> está te chamando…"`
-  - URL: `/dashboard?tab=messages&conv=<id>`
-  - flag interna (`tag: "video-call"`, `requireInteraction: true`) para o SW tratar como chamada.
-- **`public/sw-push.js`** — Tratar push do tipo chamada com:
-  - `vibrate: [400, 200, 400, 200, 400, 200, 400]` (padrão de toque longo)
-  - `requireInteraction: true` (notificação não some sozinha)
-  - `tag: "video-call-<convId>"` (substitui notificações antigas da mesma chamada, evita duplicar)
-  - ações: “Atender” e “Recusar” (botões da notificação)
-  - Som: navegadores tocam som padrão do sistema automaticamente quando há `vibrate` + `requireInteraction`. Sem reproduzir áudio próprio (browsers bloqueiam).
-- Quando a chamada é encerrada/recusada/aceita, enviar push “silenciosa” adicional com `tag` igual para fechar a notificação anterior (evita ficar tocando depois).
+- **Assessment** (`/assessment/:type`) — fluxo de avaliação (página mais usada após o dashboard)
+- **AssessmentView** — visualização de avaliação
+- **MessagesTab + ConversationList** — chat (pré-aquece se usuário tem conversas)
+- **PainDiary, ExerciseChecklist, EvolutionSummary** — abas secundárias do Dashboard
+- **ProDashboard** (só se o usuário for profissional)
 
-### Garantias para não quebrar o fluxo atual
-- A push é **adicional**, não substitui o broadcast. Se o app estiver aberto, o modal continua aparecendo via broadcast (caminho atual). A push só é a “rede de segurança” para quando o app está em background.
-- Se o usuário ainda não autorizou push, nada quebra: a invocação falha em silêncio (já está em try/catch).
-- Som/vibração só dispara no receptor, não no caller.
+### Nível 3 — Sob demanda PURA (lazy real, só baixa ao clicar)
+Funções raramente usadas ou específicas de perfil. Mostram um spinner curtinho durante o load (~200-500ms na 4G).
 
-### Limitações honestas
-- iOS Safari só toca som de push se o usuário tiver instalado o app como PWA na tela inicial (limitação do iOS, não do código).
-- No Android, funciona em qualquer navegador moderno com push autorizado.
+- **Admin** (`/admin`) — só admins
+- **Blog**, **BlogPost** — leitura ocasional
+- **ClinicLanding, ClinicDemo, ClinicSupport, ClinicAssessment, ClinicFeedback** — fluxo de clínicas
+- **ProfessionalRegister, ProfessionalSearch, ProfessionalAssessment, ProfessionalLanding** — fluxo profissional
+- **ExerciseProgram** (`/hep/:token`) — link público de exercícios
+- **PaymentSuccess, UpgradeWelcome, ResetPassword, AcceptInvite, CompleteProfile, Account, Support, ClearCache, LandingLegacy**
+- **Componentes pesados sob demanda**:
+  - `recharts` (gráficos do `ProAnalyticsCharts`, `RegionPainComparison`) — só quando aba Analytics abrir
+  - `jspdf` + `generatePdf.ts` — só ao clicar "exportar PDF"
+  - `jszip` — só em download em lote
+  - `react-easy-crop` — só em upload de avatar/fotos
+  - `PainMapPathEditor` — só admin no modo debug
+  - `ClinicTeamManagement, ClinicSettingsCard, AgendaImportModal, ManualAssessmentModal, CreateExerciseProgramModal` — modais e telas internas
 
----
+## Como ficará na prática (visão técnica)
 
-## 2. Nome correto do profissional na visão do paciente
+```text
+src/App.tsx
+  ├─ import direto: Gateway, Auth, Dashboard (shell)
+  └─ React.lazy(): todas as outras rotas + <Suspense fallback={<Spinner/>}>
 
-### Causa raiz (confirmada via RLS do banco)
-A política RLS de `public.professionals` permite leitura apenas pelo próprio profissional ou por admin. Quando o paciente faz `SELECT id, full_name FROM professionals WHERE id IN (...)`, o RLS retorna **zero linhas** → o código cai no fallback `"Profissional"`.
+src/lib/preloader.ts (novo)
+  └─ requestIdleCallback(() => {
+        import("./pages/Assessment");
+        import("./pages/AssessmentView");
+        import("./components/dashboard/PainDiary");
+        ...
+     })
 
-A busca de profissionais (lista para iniciar conversa) funciona porque usa o RPC `get_patient_professionals` (security definer), que ignora RLS. Já a lista de conversas existentes faz `SELECT` direto e bate no bloqueio.
+src/pages/Dashboard.tsx
+  ├─ import direto: WelcomeSection, QuickActions, AssessmentHistory
+  └─ React.lazy(): PainDiary, MessagesTab, ProDashboard, ClinicTeamManagement,
+                   ProAnalyticsCharts, AdaptiveProgressionCard, AssessmentComparison...
 
-### Solução
-Criar um RPC security-definer que retorne nome + logo dos profissionais que o paciente tem direito de ver (mesmos critérios de elegibilidade já usados em `get_patient_professionals`: avaliações por user_id ou email, conversas existentes, referrals).
+src/utils/generatePdf.ts → carregado via dynamic import dentro do botão de export
+```
 
-### Mudanças
-- **Migration nova** — Função `get_professionals_basic_info(_professional_ids uuid[])`:
-  - Recebe lista de IDs.
-  - Retorna `id`, `full_name`, `logo_url` apenas dos profissionais que `auth.uid()` tem vínculo legítimo (conversa existente, avaliação por user_id ou patient_email, ou referral).
-  - Security definer, sem expor dados sensíveis (apenas nome e logo, que já são públicos no marketplace).
-- **`src/components/chat/ConversationList.tsx`** — No `fetchConversations` modo patient, trocar o `supabase.from("professionals").select(...)` pelo novo RPC. Mantém todo o resto da lógica intacta.
-- **`src/components/chat/ChatWindow.tsx`** — Não precisa mudar, recebe `otherName` por prop.
+Adicionar também no `vite.config.ts` um `manualChunks` simples para separar libs grandes (`recharts`, `jspdf`, `jszip`, `framer-motion`) em chunks próprios — assim a primeira página carrega só o essencial.
 
-### Garantias
-- Nenhuma mudança no fluxo: lista, abertura, mensagens, push e videochamada continuam idênticos.
-- Apenas a fonte do nome muda de SELECT bloqueado por RLS para RPC security-definer com filtro de elegibilidade equivalente.
-- Sem expor dados de profissionais aleatórios — só os já vinculados ao paciente.
+## Ganhos esperados
 
----
+- **Bundle inicial**: estimativa de queda de ~40-55% (de ~800KB-1.2MB para ~400-550KB gzip)
+- **Tempo até interativo**: 1.5-3s mais rápido em 4G/mobile
+- **Sem regressão**: telas Nível 2 (Assessment, chat) abrem instantâneas porque foram pré-aquecidas em idle
+- **Auth segue inalterado** (regra crítica de estabilidade do login mantida)
 
-## Arquivos afetados
-- `src/contexts/VideoCallContext.tsx` (push de chamada)
-- `public/sw-push.js` (tratamento de notificação tipo chamada, vibração, tag)
-- `src/components/chat/ConversationList.tsx` (usar RPC para nome do profissional)
-- nova migration em `supabase/migrations/` (RPC `get_professionals_basic_info`)
+## O que NÃO vai mudar
 
-## Validação
-1. **Som/vibração**: caller liga → receptor com app fechado/em background recebe notificação do sistema vibrando + som do sistema; ao tocar, abre app no chat e modal de chamada já está visível via broadcast.
-2. **Encerramento**: caller ou receptor encerra → notificação some (push silenciosa com mesma tag).
-3. **Nome do profissional**: na lista de conversas do paciente, aparece o nome real (ex.: “Guilherme Vallim”) em vez de “Profissional”. Igual ao mostrado em “Iniciar conversa”.
-4. **Não-regressão**: chamada de vídeo continua conectando como hoje; chat não fica oculto; lista de profissionais segue completa.
+- Nenhuma alteração em service worker / PWA / cache (respeita a constraint de estabilidade do auth)
+- Nenhuma mudança em comportamento de auto-save, modo offline, ou restauração de sessão
+- Nenhuma mudança visual
 
+## Pontos para você aprovar/editar
+
+1. **Concorda com a divisão dos 3 níveis acima?** Se quiser mover algo de Nível 3 → Nível 2 (ex.: deixar `ExerciseProgram` pré-aquecido porque pacientes recebem o link), me diga.
+2. **Quer um spinner global discreto** (só logotipo + barra) ou **skeleton específico por página** durante o lazy-load do Nível 3?
+3. **Posso aplicar o `manualChunks`** no Vite (separa recharts/jspdf/jszip)? Recomendo sim — é zero-risco e aumenta o ganho.
