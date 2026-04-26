@@ -17,6 +17,7 @@ import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireDa
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
+import { normalizeAssessment } from "@/lib/anamnesisCompat";
 
 // Translate i18n keys for display
 function translateKey(key: string, isPt: boolean): string {
@@ -243,7 +244,7 @@ const AssessmentView = () => {
           if (error || !data) {
             navigate(backUrl);
           } else {
-            setAssessment(data);
+            setAssessment(normalizeAssessment(data));
             if (data.treatment_plan) {
               setShowTreatment(true);
             }

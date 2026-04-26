@@ -46,6 +46,7 @@ import {
 } from "@/lib/assessmentLinks";
 import AddPatientModal, { type PatientToEdit } from "./AddPatientModal";
 import ManualAssessmentModal from "./ManualAssessmentModal";
+import { normalizeAssessment } from "@/lib/anamnesisCompat";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
@@ -445,7 +446,13 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
 };
 
 
-const PatientEvolutionDashboard = ({ assessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly }: PatientEvolutionDashboardProps) => {
+  // Normalize legacy snake_case anamnesis keys + test_results object→array shape
+  // so older manual assessments are fully readable in the UI.
+  const assessments = useMemo(
+    () => (rawAssessments || []).map((a) => normalizeAssessment(a) as any),
+    [rawAssessments]
+  );
 
   const { t, language } = useLanguage();
   const navigate = useNavigate();
