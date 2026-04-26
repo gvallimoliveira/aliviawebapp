@@ -41,6 +41,13 @@ let started = false;
 let currentHash: string | null = null;
 let lastCheckAt = 0;
 let pendingHash: string | null = null;
+let pendingMeta: UpdateMeta | null = null;
+
+interface UpdateMeta {
+  requiresReinstall?: boolean;
+  reinstallReason?: string;
+  releaseNotes?: string;
+}
 
 function getLocalHash(): string {
   // Injected by plugins/versionPlugin.ts at build time. In dev it is "__dev__".
@@ -55,19 +62,43 @@ function isUnsafeRoute(): boolean {
   );
 }
 
-function showUpdateToast(remoteHash: string) {
+function isStandalonePWA(): boolean {
+  if (typeof window === "undefined") return false;
+  // iOS Safari
+  // @ts-expect-error - non-standard
+  if (window.navigator.standalone === true) return true;
+  // Android / desktop
+  return window.matchMedia?.("(display-mode: standalone)")?.matches ?? false;
+}
+
+function showUpdateToast(remoteHash: string, meta: UpdateMeta = {}) {
   if (isUnsafeRoute()) {
     // Remember the new hash and try again on the next visibility/focus event
     // or poll tick. Do not interrupt assessments/payments/auth.
     pendingHash = remoteHash;
+    pendingMeta = meta;
     return;
   }
 
   pendingHash = null;
+  pendingMeta = null;
 
-  toast("Nova versão disponível", {
+  const standalone = isStandalonePWA();
+  const needsReinstall = meta.requiresReinstall === true;
+  const showReinstallNote = needsReinstall && standalone;
+
+  const baseTitle = "Nova versão disponível";
+  const title = showReinstallNote ? "Atualização importante disponível" : baseTitle;
+
+  const description = showReinstallNote
+    ? (meta.reinstallReason
+        ? `${meta.reinstallReason} Após atualizar, remova o atalho do Aliv.iA da tela inicial e adicione novamente para garantir que tudo funcione.`
+        : "Esta atualização exige reinstalar o atalho do Aliv.iA na tela inicial. Toque em Atualizar e, depois, remova o ícone atual e adicione de novo pelo navegador.")
+    : (meta.releaseNotes ?? "Atualize para garantir os recursos mais recentes.");
+
+  toast(title, {
     id: TOAST_ID,
-    description: "Atualize para garantir os recursos mais recentes.",
+    description,
     duration: Infinity,
     action: {
       label: "Atualizar",
