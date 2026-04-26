@@ -1139,12 +1139,8 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       });
     });
 
-    // If a given questionnaireId only has ONE context, drop the suffix to keep
-    // titles clean (no need to disambiguate when there's nothing to confuse).
-    const contextCountByQ = new Map<string, number>();
-    groups.forEach((g) => {
-      contextCountByQ.set(g.questionnaireId, (contextCountByQ.get(g.questionnaireId) || 0) + 1);
-    });
+    // (We always show the context label when available, so no per-questionnaire
+    // disambiguation count is needed.)
 
     const charts: {
       name: string;
