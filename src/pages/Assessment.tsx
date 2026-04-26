@@ -669,6 +669,7 @@ const Assessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
+        <OfflineBanner online={online} pendingResume={online && !!pendingAIAction} />
         {step !== "payment_check" && step !== "welcome" && (
           <AssessmentStepper currentStep={step} mode={mode as "basic" | "premium"} />
         )}
