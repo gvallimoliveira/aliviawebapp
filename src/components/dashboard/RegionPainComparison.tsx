@@ -138,7 +138,7 @@ const RegionPainComparison = ({ assessments }: Props) => {
           Comparação de Dor por Região
         </CardTitle>
         <CardDescription className="text-xs">
-          Variação entre {fmt(rows[0].firstDate)} e {fmt(rows[0].latestDate)}
+          Evolução por zona anatômica entre a primeira e a última avaliação que registrou cada região
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
