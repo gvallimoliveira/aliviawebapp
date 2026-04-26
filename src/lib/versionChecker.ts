@@ -135,13 +135,22 @@ async function checkOnce(force = false) {
       credentials: "omit",
     });
     if (!res.ok) return;
-    const data = (await res.json()) as { hash?: string };
+    const data = (await res.json()) as {
+      hash?: string;
+      requiresReinstall?: boolean;
+      reinstallReason?: string;
+      releaseNotes?: string;
+    };
     const remote = data?.hash;
     if (!remote || typeof remote !== "string") return;
 
     currentHash = remote;
     if (remote !== local) {
-      showUpdateToast(remote);
+      showUpdateToast(remote, {
+        requiresReinstall: data.requiresReinstall,
+        reinstallReason: data.reinstallReason,
+        releaseNotes: data.releaseNotes,
+      });
     }
   } catch {
     /* network hiccup — try again next tick */
@@ -152,7 +161,7 @@ function maybeShowPending() {
   // Called on visibility/focus/route transitions to surface a previously
   // suppressed update once the user is on a safe route again.
   if (pendingHash && !isUnsafeRoute()) {
-    showUpdateToast(pendingHash);
+    showUpdateToast(pendingHash, pendingMeta ?? {});
   }
 }
 
