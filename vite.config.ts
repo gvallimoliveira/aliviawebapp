@@ -23,4 +23,25 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split heavy libraries into separate chunks so they only load
+        // when the feature that needs them is opened.
+        manualChunks: (id) => {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("recharts") || id.includes("d3-")) return "charts";
+          if (id.includes("jspdf") || id.includes("html2canvas")) return "pdf";
+          if (id.includes("jszip")) return "zip";
+          if (id.includes("framer-motion")) return "motion";
+          if (id.includes("react-easy-crop")) return "image-crop";
+          if (id.includes("embla-carousel")) return "carousel";
+          if (id.includes("react-day-picker") || id.includes("date-fns")) return "date";
+          if (id.includes("@radix-ui")) return "radix";
+          if (id.includes("lucide-react")) return "icons";
+          return undefined;
+        },
+      },
+    },
+  },
 }));

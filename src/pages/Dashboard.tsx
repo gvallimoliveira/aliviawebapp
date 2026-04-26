@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -10,25 +10,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PainDiary from "@/components/dashboard/PainDiary";
-import ExerciseChecklist from "@/components/dashboard/ExerciseChecklist";
-import EvolutionSummary from "@/components/dashboard/EvolutionSummary";
-import AdaptiveProgressionCard from "@/components/dashboard/AdaptiveProgressionCard";
-import AssessmentComparison from "@/components/dashboard/AssessmentComparison";
+// Eager — visible immediately on the default tab
 import ReferralCard from "@/components/dashboard/ReferralCard";
-import ProDashboard from "@/components/dashboard/ProDashboard";
-import MessagesTab from "@/components/dashboard/MessagesTab";
-import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import WelcomeSection from "@/components/dashboard/WelcomeSection";
 import QuickActions from "@/components/dashboard/QuickActions";
 import AssessmentHistory from "@/components/dashboard/AssessmentHistory";
 import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import PushOptInBanner from "@/components/PushOptInBanner";
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
-import ClinicTeamManagement from "@/components/dashboard/ClinicTeamManagement";
 import ClinicTrialBanner, { ClinicTrialBlockOverlay, useClinicTrial } from "@/components/dashboard/ClinicTrialBanner";
-import ClinicSecretaryDashboard from "@/components/dashboard/ClinicSecretaryDashboard";
-import ContextSelectionModal from "@/components/dashboard/ContextSelectionModal";
+// Lazy — only rendered when the corresponding tab/section opens
+const PainDiary = lazy(() => import("@/components/dashboard/PainDiary"));
+const ExerciseChecklist = lazy(() => import("@/components/dashboard/ExerciseChecklist"));
+const EvolutionSummary = lazy(() => import("@/components/dashboard/EvolutionSummary"));
+const AdaptiveProgressionCard = lazy(() => import("@/components/dashboard/AdaptiveProgressionCard"));
+const AssessmentComparison = lazy(() => import("@/components/dashboard/AssessmentComparison"));
+const ProDashboard = lazy(() => import("@/components/dashboard/ProDashboard"));
+const MessagesTab = lazy(() => import("@/components/dashboard/MessagesTab"));
+const OnboardingTour = lazy(() => import("@/components/onboarding/OnboardingTour"));
+const ClinicTeamManagement = lazy(() => import("@/components/dashboard/ClinicTeamManagement"));
+const ClinicSecretaryDashboard = lazy(() => import("@/components/dashboard/ClinicSecretaryDashboard"));
+const ContextSelectionModal = lazy(() => import("@/components/dashboard/ContextSelectionModal"));
+const ProSchedule = lazy(() => import("@/components/dashboard/ProSchedule"));
+const DailySummaryCard = lazy(() => import("@/components/dashboard/DailySummaryCard"));
+const ClinicOwnerDashboard = lazy(() => import("@/components/dashboard/ClinicOwnerDashboard"));
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
@@ -39,10 +44,13 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import ProSchedule from "@/components/dashboard/ProSchedule";
-import DailySummaryCard from "@/components/dashboard/DailySummaryCard";
-import ClinicOwnerDashboard from "@/components/dashboard/ClinicOwnerDashboard";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+
+const TabFallback = () => (
+  <div className="flex items-center justify-center py-10">
+    <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+  </div>
+);
 
 interface PremiumAccess {
   has_access: boolean;
@@ -399,7 +407,7 @@ const Dashboard = () => {
 
   const dashboardContent = (
     <div className="min-h-screen bg-background">
-      <ContextSelectionModal />
+      <Suspense fallback={null}><ContextSelectionModal /></Suspense>
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <button onClick={() => navigate("/")} className="flex items-center gap-2">
@@ -433,6 +441,7 @@ const Dashboard = () => {
           activeTab={activeTab}
         />
 
+        <Suspense fallback={<TabFallback />}>
         {isClinicMode && activeClinic ? (
           /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -631,16 +640,19 @@ const Dashboard = () => {
             </TabsContent>
           </Tabs>
         )}
+        </Suspense>
       </main>
 
-      <OnboardingTour
-        step={onboarding.step}
-        currentStep={onboarding.currentStep}
-        totalSteps={onboarding.totalSteps}
-        isActive={onboarding.isActive && !needsContextSelection}
-        onNext={onboarding.next}
-        onSkip={onboarding.skip}
-      />
+      <Suspense fallback={null}>
+        <OnboardingTour
+          step={onboarding.step}
+          currentStep={onboarding.currentStep}
+          totalSteps={onboarding.totalSteps}
+          isActive={onboarding.isActive && !needsContextSelection}
+          onNext={onboarding.next}
+          onSkip={onboarding.skip}
+        />
+      </Suspense>
 
     </div>
   );
