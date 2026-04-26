@@ -562,8 +562,29 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             {step === 5 && (
               <div className="space-y-3">
                 <div>
-                  <Label className="text-xs">{isPt ? "Impressão clínica" : "Clinical impression"}</Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="text-xs">{isPt ? "Impressão clínica" : "Clinical impression"}</Label>
+                    <Button
+                      onClick={generateAIClinicalImpression}
+                      disabled={generatingCi}
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1"
+                    >
+                      {generatingCi ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      {isPt ? "Gerar com IA" : "Generate with AI"}
+                    </Button>
+                  </div>
                   <Textarea value={clinicalImpression} onChange={(e) => setClinicalImpression(e.target.value)} rows={3} className="mt-1 text-sm" />
+                  {aiClinicalImpression?.therapeuticObjectives?.length ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {aiClinicalImpression.therapeuticObjectives.map((obj, i) => (
+                        <Badge key={i} variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px]">
+                          {obj}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <Button onClick={generateAIDiagnosis} disabled={generatingDx} variant="outline" size="sm" className="gap-2">
                   {generatingDx ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
