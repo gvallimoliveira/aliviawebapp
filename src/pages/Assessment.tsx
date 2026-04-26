@@ -24,11 +24,37 @@ import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
+import { saveDraft, getDraft, clearDraft } from "@/lib/sessionPersistence";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
 const UPGRADE_KEY = "alivia-basic-upgrade-data";
 const UPGRADE_EXPIRY_KEY = "alivia-basic-upgrade-expiry";
+
+// Steps that are NOT safe to restore (transient/loading or terminal flows that
+// would re-trigger network calls or skip user confirmation).
+const NON_RESUMABLE_STEPS: AssessmentStep[] = [
+  "payment_check",
+  "loading",
+  "loading_treatment",
+];
+
+interface AssessmentDraft {
+  kind: "assessment";
+  mode: "basic" | "premium";
+  step: AssessmentStep;
+  anamnesisData: AnamnesisData | null;
+  testResults: TestResult[];
+  questionnaireResults: QuestionnaireResult[];
+  diagnosis: any;
+  treatmentPlan: any;
+  assessmentId: string | null;
+  additionalInfo: string;
+  hasRetried: boolean;
+  capturedEmail: string | null;
+  capturedName: string | null;
+  isUpgradeFlow: boolean;
+}
 
 const getUpgradeData = () => {
   // Try sessionStorage first, then localStorage with TTL
