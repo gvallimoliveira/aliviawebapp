@@ -1139,12 +1139,8 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       });
     });
 
-    // If a given questionnaireId only has ONE context, drop the suffix to keep
-    // titles clean (no need to disambiguate when there's nothing to confuse).
-    const contextCountByQ = new Map<string, number>();
-    groups.forEach((g) => {
-      contextCountByQ.set(g.questionnaireId, (contextCountByQ.get(g.questionnaireId) || 0) + 1);
-    });
+    // (We always show the context label when available, so no per-questionnaire
+    // disambiguation count is needed.)
 
     const charts: {
       name: string;
@@ -1156,7 +1152,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     }[] = [];
 
     groups.forEach((info) => {
-      const { name, contextLabel, qDef, entries, questionnaireId } = info;
+      const { name, contextLabel, qDef, entries } = info;
       if (entries.length === 0) return;
 
       const latestEntry = entries[entries.length - 1];
@@ -1173,8 +1169,10 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         .sort((a, b) => isHigherWorse ? b.score - a.score : a.score - b.score)
         .slice(0, 3);
 
-      const showContext = (contextCountByQ.get(questionnaireId) || 0) > 1 && contextLabel;
-      const displayTitle = showContext ? `${name} — ${contextLabel}` : name;
+      // Always surface the anatomical/diagnostic context when we have one,
+      // so the clinician immediately knows which body region or condition
+      // the chart refers to (e.g. "ODI — Lombar" vs "ODI — Cervical").
+      const displayTitle = contextLabel ? `${name} — ${contextLabel}` : name;
       const totalKey = `${displayTitle} (Total)`;
       const data = entries.map((entry, i) => {
         const point: any = {
@@ -1194,7 +1192,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       charts.push({
         name,
         displayTitle,
-        contextLabel: showContext ? contextLabel : "",
+        contextLabel,
         totalKey,
         subscaleKeys: subscaleEntries.map((s) => ({ key: s.label, label: s.label })),
         data,
