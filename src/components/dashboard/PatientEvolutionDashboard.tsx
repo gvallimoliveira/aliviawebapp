@@ -46,6 +46,7 @@ import {
 } from "@/lib/assessmentLinks";
 import AddPatientModal, { type PatientToEdit } from "./AddPatientModal";
 import ManualAssessmentModal from "./ManualAssessmentModal";
+import { normalizeAssessment } from "@/lib/anamnesisCompat";
 
 // Translate i18n anamnesis keys to display text
 function translateKey(key: string): string {
