@@ -82,6 +82,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [saving, setSaving] = useState(false);
   const [generatingDx, setGeneratingDx] = useState(false);
   const [generatingTx, setGeneratingTx] = useState(false);
+  const [generatingCi, setGeneratingCi] = useState(false);
+  const [aiClinicalImpression, setAiClinicalImpression] =
+    useState<{ overview: string; therapeuticObjectives: string[] } | null>(null);
 
   // Anamnese
   const [chiefComplaint, setChiefComplaint] = useState("");
@@ -149,6 +152,40 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   const toggleRedFlag = (rf: string) => {
     setRedFlagsChecked((prev) => prev.includes(rf) ? prev.filter((r) => r !== rf) : [...prev, rf]);
+  };
+
+  const generateAIClinicalImpression = async () => {
+    setGeneratingCi(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
+        body: {
+          anamnesisData: buildAnamnesisData(),
+          painRegions,
+          painScore,
+          questionnaireResults,
+          diagnosis: diagnosisText
+            ? { hypothesis: diagnosisText.split("\n")[0]?.slice(0, 280), summary: diagnosisText }
+            : (clinicalImpression ? { summary: clinicalImpression } : null),
+          language,
+        },
+      });
+      if (error) throw error;
+      const ci = data?.clinicalImpression;
+      if (!ci?.overview) throw new Error("Empty AI response");
+      setAiClinicalImpression(ci);
+      // Reflect overview into the editable text field for convenience
+      setClinicalImpression(ci.overview);
+      toast({ title: isPt ? "Impressão clínica gerada!" : "Clinical impression generated!" });
+    } catch (err: any) {
+      console.error("Clinical impression error:", err);
+      toast({
+        title: isPt ? "Erro na IA" : "AI error",
+        description: err?.message || (isPt ? "Não foi possível gerar a impressão clínica." : "Could not generate clinical impression."),
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingCi(false);
+    }
   };
 
 
@@ -269,9 +306,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               hypothesis: (diagnosisText || clinicalImpression).split("\n")[0]?.slice(0, 280) || null,
               summary: diagnosisText || clinicalImpression,
               text: diagnosisText || null,
-              clinicalImpression: clinicalImpression
-                ? { overview: clinicalImpression, therapeuticObjectives: [] }
-                : undefined,
+              clinicalImpression: aiClinicalImpression
+                ? aiClinicalImpression
+                : (clinicalImpression
+                    ? { overview: clinicalImpression, therapeuticObjectives: [] }
+                    : undefined),
             }
           : null,
         // Treatment plan: keep the manual flag + the free text under both `text` and `summary`
@@ -304,7 +343,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setAggravating(""); setRelieving(""); setMedications(""); setPreviousSurgeries("");
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
     setPainRegions([]); setRedFlagsChecked([]); setQuestionnaireResults([]);
-    setFunctionalTests(""); setClinicalImpression("");
+    setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
     setDiagnosisText(""); setTreatmentText("");
   };
 
@@ -525,8 +564,29 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             {step === 5 && (
               <div className="space-y-3">
                 <div>
-                  <Label className="text-xs">{isPt ? "Impressão clínica" : "Clinical impression"}</Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="text-xs">{isPt ? "Impressão clínica" : "Clinical impression"}</Label>
+                    <Button
+                      onClick={generateAIClinicalImpression}
+                      disabled={generatingCi}
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1"
+                    >
+                      {generatingCi ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      {isPt ? "Gerar com IA" : "Generate with AI"}
+                    </Button>
+                  </div>
                   <Textarea value={clinicalImpression} onChange={(e) => setClinicalImpression(e.target.value)} rows={3} className="mt-1 text-sm" />
+                  {aiClinicalImpression?.therapeuticObjectives?.length ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {aiClinicalImpression.therapeuticObjectives.map((obj, i) => (
+                        <Badge key={i} variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px]">
+                          {obj}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <Button onClick={generateAIDiagnosis} disabled={generatingDx} variant="outline" size="sm" className="gap-2">
                   {generatingDx ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
