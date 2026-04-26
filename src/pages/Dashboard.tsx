@@ -79,7 +79,7 @@ const Dashboard = () => {
   const { t, toggleLanguage } = useLanguage();
   const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary } = useClinic();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
   const convFromUrl = searchParams.get("conv");
   const [assessments, setAssessments] = useState<any[]>([]);
@@ -107,6 +107,44 @@ const Dashboard = () => {
     if (!authReady || authLoading) return;
     if (!user) navigate("/auth", { replace: true });
   }, [user, authLoading, authReady, navigate]);
+
+  useEffect(() => {
+    const nextParams = new URLSearchParams(searchParams);
+    const currentTab = nextParams.get("tab");
+    const currentContext = nextParams.get("context");
+    const currentClinicId = nextParams.get("clinicId");
+
+    const nextContext = isClinicMode && activeClinic
+      ? "clinic"
+      : activeContext === "professional" && professional
+        ? "professional"
+        : "personal";
+
+    let changed = false;
+
+    if (currentTab !== activeTab) {
+      nextParams.set("tab", activeTab);
+      changed = true;
+    }
+
+    if (currentContext !== nextContext) {
+      nextParams.set("context", nextContext);
+      changed = true;
+    }
+
+    if (nextContext === "clinic" && activeClinic) {
+      if (currentClinicId !== activeClinic.clinic_id) {
+        nextParams.set("clinicId", activeClinic.clinic_id);
+        changed = true;
+      }
+    } else if (currentClinicId) {
+      nextParams.delete("clinicId");
+      changed = true;
+    }
+
+    if (!changed) return;
+    setSearchParams(nextParams, { replace: true });
+  }, [activeTab, activeContext, activeClinic, isClinicMode, professional, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!authReady) return;
