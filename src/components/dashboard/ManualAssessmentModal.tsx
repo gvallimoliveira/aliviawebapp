@@ -82,6 +82,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [saving, setSaving] = useState(false);
   const [generatingDx, setGeneratingDx] = useState(false);
   const [generatingTx, setGeneratingTx] = useState(false);
+  const [generatingCi, setGeneratingCi] = useState(false);
+  const [aiClinicalImpression, setAiClinicalImpression] =
+    useState<{ overview: string; therapeuticObjectives: string[] } | null>(null);
 
   // Anamnese
   const [chiefComplaint, setChiefComplaint] = useState("");
