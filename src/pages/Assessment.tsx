@@ -256,6 +256,16 @@ const Assessment = () => {
     };
   }, [draftRestored, flushDraft]);
 
+  // Auto-resume queued AI step when connection comes back.
+  useEffect(() => {
+    if (!online || !pendingAIAction) return;
+    if (pendingAIAction === "diagnosis" && anamnesisData) {
+      generateDiagnosis(anamnesisData, testResults, assessmentId);
+    } else if (pendingAIAction === "treatment" && diagnosis) {
+      generateTreatmentPlan();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online, pendingAIAction]);
 
   // Redirect premium users to auth if not logged in
   useEffect(() => {
