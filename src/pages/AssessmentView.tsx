@@ -244,7 +244,7 @@ const AssessmentView = () => {
           if (error || !data) {
             navigate(backUrl);
           } else {
-            setAssessment(data);
+            setAssessment(normalizeAssessment(data));
             if (data.treatment_plan) {
               setShowTreatment(true);
             }
