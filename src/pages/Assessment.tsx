@@ -103,6 +103,11 @@ const Assessment = () => {
   const [isUpgradeFlow, setIsUpgradeFlow] = useState(false);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
+  // Offline mode: track network and queue AI calls that need to wait.
+  const online = useOnlineStatus();
+  // "diagnosis" = run generateDiagnosis once back online (uses last anamnesis+tests)
+  // "treatment" = run generateTreatmentPlan once back online
+  const [pendingAIAction, setPendingAIAction] = useState<null | "diagnosis" | "treatment">(null);
 
   // ----- Auto-save / resume draft (6h TTL via sessionPersistence) -----
   // Restore on first mount: if there's a draft for this same mode and the
