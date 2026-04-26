@@ -17,6 +17,7 @@ export type Database = {
       assessments: {
         Row: {
           anamnesis_data: Json | null
+          archived_at: string | null
           clinic_id: string | null
           created_at: string
           diagnosis: Json | null
@@ -42,6 +43,7 @@ export type Database = {
         }
         Insert: {
           anamnesis_data?: Json | null
+          archived_at?: string | null
           clinic_id?: string | null
           created_at?: string
           diagnosis?: Json | null
@@ -67,6 +69,7 @@ export type Database = {
         }
         Update: {
           anamnesis_data?: Json | null
+          archived_at?: string | null
           clinic_id?: string | null
           created_at?: string
           diagnosis?: Json | null
@@ -1706,6 +1709,7 @@ export type Database = {
         Args: never
         Returns: {
           anamnesis_data: Json | null
+          archived_at: string | null
           clinic_id: string | null
           created_at: string
           diagnosis: Json | null

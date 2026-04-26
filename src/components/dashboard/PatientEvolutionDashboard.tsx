@@ -496,7 +496,12 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
    const [clinicTherapists, setClinicTherapists] = useState<Array<{ id: string; full_name: string; user_id: string }>>([]);
    const [reassignOpen, setReassignOpen] = useState(false);
    const [reassignTargetId, setReassignTargetId] = useState<string>("");
-   const [reassigning, setReassigning] = useState(false);
+    const [reassigning, setReassigning] = useState(false);
+   const [showArchivedAssessments, setShowArchivedAssessments] = useState(false);
+   const [archivingAssessmentId, setArchivingAssessmentId] = useState<string | null>(null);
+   const [deleteAssessmentTarget, setDeleteAssessmentTarget] = useState<{ id: string; date: string } | null>(null);
+   const [deletingAssessmentId, setDeletingAssessmentId] = useState<string | null>(null);
+   const [assessmentRefreshTick, setAssessmentRefreshTick] = useState(0);
 
   // Load clinic therapists (professionals belonging to this clinic) so owner/secretary can reassign
   useEffect(() => {
@@ -788,6 +793,81 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       toast({ title: "Erro ao restaurar", variant: "destructive" });
     } finally {
       setArchiving(null);
+    }
+  };
+
+  const handleArchiveAssessment = async (assessmentId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (archivingAssessmentId) return;
+    setArchivingAssessmentId(assessmentId);
+    try {
+      const { error } = await (supabase.from("assessments") as any)
+        .update({ archived_at: new Date().toISOString() })
+        .eq("id", assessmentId);
+      if (error) throw error;
+      // Mutate in-memory to reflect immediately
+      const target = assessments.find((a) => a.id === assessmentId);
+      if (target) target.archived_at = new Date().toISOString();
+      setAssessmentRefreshTick((x) => x + 1);
+      toast({ title: language === "pt" ? "Avaliação arquivada" : "Assessment archived" });
+    } catch (err: any) {
+      toast({ title: language === "pt" ? "Erro ao arquivar avaliação" : "Error archiving", description: err?.message, variant: "destructive" });
+    } finally {
+      setArchivingAssessmentId(null);
+    }
+  };
+
+  const handleRestoreAssessment = async (assessmentId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (archivingAssessmentId) return;
+    setArchivingAssessmentId(assessmentId);
+    try {
+      const { error } = await (supabase.from("assessments") as any)
+        .update({ archived_at: null })
+        .eq("id", assessmentId);
+      if (error) throw error;
+      const target = assessments.find((a) => a.id === assessmentId);
+      if (target) target.archived_at = null;
+      setAssessmentRefreshTick((x) => x + 1);
+      toast({ title: language === "pt" ? "Avaliação restaurada" : "Assessment restored" });
+    } catch (err: any) {
+      toast({ title: language === "pt" ? "Erro ao restaurar" : "Error restoring", description: err?.message, variant: "destructive" });
+    } finally {
+      setArchivingAssessmentId(null);
+    }
+  };
+
+  const handleDeleteAssessment = async (assessmentId: string) => {
+    if (deletingAssessmentId) return;
+    setDeletingAssessmentId(assessmentId);
+    try {
+      // Cleanup related data
+      const { data: programs } = await (supabase as any)
+        .from("exercise_programs")
+        .select("id")
+        .eq("assessment_id", assessmentId);
+      if (programs) {
+        for (const prog of programs) {
+          await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
+          await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
+        }
+      }
+      if (professionalId) {
+        await supabase.from("professional_notes").delete().eq("professional_id", professionalId).eq("assessment_id", assessmentId);
+      }
+      await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", assessmentId);
+      const { error } = await supabase.from("assessments").delete().eq("id", assessmentId);
+      if (error) throw error;
+      // Remove from in-memory list
+      const idx = assessments.findIndex((a) => a.id === assessmentId);
+      if (idx >= 0) assessments.splice(idx, 1);
+      setAssessmentRefreshTick((x) => x + 1);
+      toast({ title: language === "pt" ? "Avaliação excluída" : "Assessment deleted" });
+    } catch (err: any) {
+      toast({ title: language === "pt" ? "Erro ao excluir" : "Error deleting", description: err?.message, variant: "destructive" });
+    } finally {
+      setDeletingAssessmentId(null);
+      setDeleteAssessmentTarget(null);
     }
   };
 
@@ -2319,12 +2399,30 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       )}
 
       {/* ── 9. HISTÓRICO DETALHADO (Simplificado) ── */}
-      <div>
-        <h4 className="text-sm font-semibold text-foreground mb-3">{t("dashboard.history")}</h4>
+      <div data-refresh-tick={assessmentRefreshTick}>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-semibold text-foreground">{t("dashboard.history")}</h4>
+          {patient.assessments.some((a: any) => a.archived_at) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1.5 text-muted-foreground"
+              onClick={() => setShowArchivedAssessments((v) => !v)}
+            >
+              {showArchivedAssessments ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              {showArchivedAssessments
+                ? (language === "pt" ? "Ocultar arquivadas" : "Hide archived")
+                : (language === "pt" ? `Mostrar arquivadas (${patient.assessments.filter((a: any) => a.archived_at).length})` : `Show archived (${patient.assessments.filter((a: any) => a.archived_at).length})`)}
+            </Button>
+          )}
+        </div>
         <div className="space-y-3">
-          {patient.assessments.map((a: any) => {
+          {patient.assessments
+            .filter((a: any) => showArchivedAssessments ? true : !a.archived_at)
+            .map((a: any) => {
             const qResults = getQuestionnaireResults(a);
             const isInProgress = a.status === "in_progress";
+            const isArchived = !!a.archived_at;
             const resumeCtx = clinicId
               ? { clinicId }
               : professionalId
@@ -2334,7 +2432,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
               ? buildResumeAssessmentLink(resumeCtx, a.id)
               : null;
             return (
-              <Card key={a.id} className={`overflow-hidden ${isInProgress ? "border-blue-300/60 bg-blue-50/30" : ""}`}>
+              <Card key={a.id} className={`overflow-hidden ${isInProgress ? "border-blue-300/60 bg-blue-50/30" : ""} ${isArchived ? "opacity-60 border-dashed" : ""}`}>
                 <CardContent className="py-3 px-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="space-y-0.5 min-w-0">
@@ -2348,6 +2446,12 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                             {language === "pt" ? "Em andamento" : "In progress"}
                           </Badge>
                         )}
+                        {isArchived && (
+                          <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-muted-foreground/30 text-muted-foreground bg-muted/30">
+                            <Archive className="h-3 w-3 mr-1" />
+                            {language === "pt" ? "Arquivada" : "Archived"}
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         {a.pain_score != null && <span>Dor: {a.pain_score}/10</span>}
@@ -2357,7 +2461,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      {isInProgress && resumeLink && !readOnly && (
+                      {isInProgress && resumeLink && !readOnly && !isArchived && (
                         <Button
                           variant="default"
                           size="sm"
@@ -2369,17 +2473,17 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                           {language === "pt" ? "Continuar" : "Continue"}
                         </Button>
                       )}
-                      {a.diagnosis && onShareWhatsApp && (
+                      {a.diagnosis && onShareWhatsApp && !isArchived && (
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="WhatsApp" onClick={() => onShareWhatsApp(a)}>
                           <Share2 className="h-4 w-4 text-emerald-600" />
                         </Button>
                       )}
-                      {a.diagnosis && onDownloadPdf && (
+                      {a.diagnosis && onDownloadPdf && !isArchived && (
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="PDF" onClick={() => onDownloadPdf(a)}>
                           <FileText className="h-4 w-4 text-primary" />
                         </Button>
                       )}
-                      {a.diagnosis && (
+                      {a.diagnosis && !isArchived && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -2388,6 +2492,48 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                           onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
                         >
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      )}
+                      {!readOnly && (
+                        isArchived ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            title={language === "pt" ? "Restaurar avaliação" : "Restore assessment"}
+                            disabled={archivingAssessmentId === a.id}
+                            onClick={(e) => handleRestoreAssessment(a.id, e)}
+                          >
+                            {archivingAssessmentId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-emerald-600" />}
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            title={language === "pt" ? "Arquivar avaliação" : "Archive assessment"}
+                            disabled={archivingAssessmentId === a.id}
+                            onClick={(e) => handleArchiveAssessment(a.id, e)}
+                          >
+                            {archivingAssessmentId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
+                          </Button>
+                        )
+                      )}
+                      {!readOnly && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title={language === "pt" ? "Excluir avaliação" : "Delete assessment"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteAssessmentTarget({
+                              id: a.id,
+                              date: new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
+                            });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       )}
                     </div>
@@ -2464,6 +2610,35 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
             >
               {deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteAssessmentTarget} onOpenChange={(open) => !open && setDeleteAssessmentTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "pt" ? "Excluir avaliação?" : "Delete assessment?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "pt"
+                ? `A avaliação de ${deleteAssessmentTarget?.date} será removida permanentemente, junto com notas e programas de exercícios vinculados. Esta ação não pode ser desfeita.`
+                : `The assessment from ${deleteAssessmentTarget?.date} will be permanently removed, along with linked notes and exercise programs. This cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{language === "pt" ? "Cancelar" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
+              disabled={!!deletingAssessmentId}
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleteAssessmentTarget) handleDeleteAssessment(deleteAssessmentTarget.id);
+              }}
+            >
+              {deletingAssessmentId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {language === "pt" ? "Excluir permanentemente" : "Delete permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
