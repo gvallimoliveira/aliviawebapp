@@ -2614,6 +2614,35 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!deleteAssessmentTarget} onOpenChange={(open) => !open && setDeleteAssessmentTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "pt" ? "Excluir avaliação?" : "Delete assessment?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "pt"
+                ? `A avaliação de ${deleteAssessmentTarget?.date} será removida permanentemente, junto com notas e programas de exercícios vinculados. Esta ação não pode ser desfeita.`
+                : `The assessment from ${deleteAssessmentTarget?.date} will be permanently removed, along with linked notes and exercise programs. This cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{language === "pt" ? "Cancelar" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
+              disabled={!!deletingAssessmentId}
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleteAssessmentTarget) handleDeleteAssessment(deleteAssessmentTarget.id);
+              }}
+            >
+              {deletingAssessmentId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {language === "pt" ? "Excluir permanentemente" : "Delete permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
