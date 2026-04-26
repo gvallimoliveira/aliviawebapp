@@ -1152,7 +1152,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     }[] = [];
 
     groups.forEach((info) => {
-      const { name, contextLabel, qDef, entries, questionnaireId } = info;
+      const { name, contextLabel, qDef, entries } = info;
       if (entries.length === 0) return;
 
       const latestEntry = entries[entries.length - 1];
