@@ -796,7 +796,81 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     }
   };
 
-  const handleAddExternalPatient = async () => {
+  const handleArchiveAssessment = async (assessmentId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (archivingAssessmentId) return;
+    setArchivingAssessmentId(assessmentId);
+    try {
+      const { error } = await (supabase.from("assessments") as any)
+        .update({ archived_at: new Date().toISOString() })
+        .eq("id", assessmentId);
+      if (error) throw error;
+      // Mutate in-memory to reflect immediately
+      const target = assessments.find((a) => a.id === assessmentId);
+      if (target) target.archived_at = new Date().toISOString();
+      setAssessmentRefreshTick((x) => x + 1);
+      toast({ title: language === "pt" ? "Avaliação arquivada" : "Assessment archived" });
+    } catch (err: any) {
+      toast({ title: language === "pt" ? "Erro ao arquivar avaliação" : "Error archiving", description: err?.message, variant: "destructive" });
+    } finally {
+      setArchivingAssessmentId(null);
+    }
+  };
+
+  const handleRestoreAssessment = async (assessmentId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (archivingAssessmentId) return;
+    setArchivingAssessmentId(assessmentId);
+    try {
+      const { error } = await (supabase.from("assessments") as any)
+        .update({ archived_at: null })
+        .eq("id", assessmentId);
+      if (error) throw error;
+      const target = assessments.find((a) => a.id === assessmentId);
+      if (target) target.archived_at = null;
+      setAssessmentRefreshTick((x) => x + 1);
+      toast({ title: language === "pt" ? "Avaliação restaurada" : "Assessment restored" });
+    } catch (err: any) {
+      toast({ title: language === "pt" ? "Erro ao restaurar" : "Error restoring", description: err?.message, variant: "destructive" });
+    } finally {
+      setArchivingAssessmentId(null);
+    }
+  };
+
+  const handleDeleteAssessment = async (assessmentId: string) => {
+    if (deletingAssessmentId) return;
+    setDeletingAssessmentId(assessmentId);
+    try {
+      // Cleanup related data
+      const { data: programs } = await (supabase as any)
+        .from("exercise_programs")
+        .select("id")
+        .eq("assessment_id", assessmentId);
+      if (programs) {
+        for (const prog of programs) {
+          await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
+          await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
+        }
+      }
+      if (professionalId) {
+        await supabase.from("professional_notes").delete().eq("professional_id", professionalId).eq("assessment_id", assessmentId);
+      }
+      await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", assessmentId);
+      const { error } = await supabase.from("assessments").delete().eq("id", assessmentId);
+      if (error) throw error;
+      // Remove from in-memory list
+      const idx = assessments.findIndex((a) => a.id === assessmentId);
+      if (idx >= 0) assessments.splice(idx, 1);
+      setAssessmentRefreshTick((x) => x + 1);
+      toast({ title: language === "pt" ? "Avaliação excluída" : "Assessment deleted" });
+    } catch (err: any) {
+      toast({ title: language === "pt" ? "Erro ao excluir" : "Error deleting", description: err?.message, variant: "destructive" });
+    } finally {
+      setDeletingAssessmentId(null);
+      setDeleteAssessmentTarget(null);
+    }
+  };
+
     if (!newPatientName.trim() || !professionalId) return;
     setAddingPatient(true);
     try {
