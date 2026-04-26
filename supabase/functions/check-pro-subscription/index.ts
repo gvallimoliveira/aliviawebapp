@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -112,8 +112,8 @@ serve(async (req) => {
 
     // Filter only Pro subscriptions (monthly or annual product)
     const proProductIds = ["prod_UHdISwfBcfWftS", "prod_UA4lNoezZmPwvs"];
-    const proSub = subscriptions.data.find(sub =>
-      sub.items.data.some(item => proProductIds.includes(item.price.product as string))
+    const proSub = subscriptions.data.find((sub: any) =>
+      sub.items.data.some((item: any) => proProductIds.includes(item.price.product as string))
     );
     const hasActiveSub = !!proSub;
     let subscriptionEnd = null;
