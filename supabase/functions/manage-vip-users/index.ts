@@ -467,6 +467,9 @@ serve(async (req) => {
           });
           log("Recovery email sent for new user", { status: resetRes.status });
 
+          // Send welcome email with credentials
+          await sendPartnerWelcomeEmail(normalizedEmail);
+
           return new Response(JSON.stringify({ success: true, created: true }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
