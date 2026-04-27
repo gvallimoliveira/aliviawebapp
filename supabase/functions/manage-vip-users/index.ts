@@ -425,6 +425,9 @@ serve(async (req) => {
 
               if (insertErr) throw insertErr;
 
+              // Send welcome email with credentials
+              await sendPartnerWelcomeEmail(normalizedEmail);
+
               return new Response(JSON.stringify({ success: true, created: true }), {
                 headers: { ...corsHeaders, "Content-Type": "application/json" },
               });
