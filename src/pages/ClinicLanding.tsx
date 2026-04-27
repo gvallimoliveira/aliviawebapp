@@ -194,7 +194,6 @@ const ClinicLanding = () => {
       items: [
         { icon: Activity, title: "Programa de exercícios", desc: "Exercícios domiciliares com vídeos para o paciente" },
         { icon: Heart, title: "Diário de dor diário", desc: "Slider 0-10 + gamificação para adesão" },
-        { icon: Mail, title: "Follow-up automático", desc: "E-mails nas semanas 1, 2, 4 e 6 pós-tratamento" },
         { icon: BarChart3, title: "Analytics da clínica", desc: "Volume, NPS, alertas e indicadores em tempo real" },
       ],
     },

@@ -573,7 +573,11 @@ const Dashboard = () => {
             {/* Gestão (owner only) */}
             {canManageClinic && (
               <TabsContent value="analytics" className="space-y-6">
-                <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
+                <ClinicTrialBanner />
+                <div className="relative">
+                  <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
+                  <ClinicTrialBlockOverlay />
+                </div>
               </TabsContent>
             )}
 

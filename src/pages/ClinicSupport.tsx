@@ -169,12 +169,6 @@ const categories: ToolCategory[] = [
         desc: "Inicie uma chamada de vídeo direto do chat, sem instalar nada. Ideal para orientação de exercícios à distância e acompanhamento.",
       },
       {
-        key: "follow_up",
-        icon: Bell,
-        title: "Follow-up automático",
-        desc: "E-mails automáticos de check-in nas semanas 1, 2, 4 e 6 após a avaliação, mantendo o paciente engajado e gerando oportunidade de retorno.",
-      },
-      {
         key: "nps_survey",
         icon: Smile,
         title: "Pesquisa de satisfação (NPS) por link",
