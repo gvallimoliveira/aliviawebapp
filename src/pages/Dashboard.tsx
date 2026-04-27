@@ -431,6 +431,7 @@ const Dashboard = () => {
 
       <main className={cn("container py-8 px-4 space-y-8", activeTab === "agenda" ? "max-w-7xl" : "max-w-4xl")}>
         <ClinicContextSelector />
+        <PartnerPasswordBanner isPartner={professional?.is_partner} userId={user?.id} />
         <PushOptInBanner />
         <WelcomeSection
           profileName={profile?.full_name}
