@@ -585,13 +585,17 @@ const Dashboard = () => {
 
             {/* Mensagens */}
             <TabsContent value="messages" className="space-y-6">
-              <MessagesTab
-                professional={professional}
-                clinicId={activeClinic.clinic_id}
-                initialConversationId={convFromUrl}
-                canInitiateAsPatient={true}
-                canInitiateAsProfessional={true}
-              />
+              <ClinicTrialBanner />
+              <div className="relative min-h-[400px]">
+                <MessagesTab
+                  professional={professional}
+                  clinicId={activeClinic.clinic_id}
+                  initialConversationId={convFromUrl}
+                  canInitiateAsPatient={true}
+                  canInitiateAsProfessional={true}
+                />
+                <ClinicTrialBlockOverlay />
+              </div>
             </TabsContent>
           </Tabs>
         ) : activeContext === "professional" && professional ? (
