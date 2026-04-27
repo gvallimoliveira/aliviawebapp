@@ -126,7 +126,10 @@ const ClinicTrialBanner = () => {
   );
 };
 
-/** Overlay that blocks clinic features when trial is expired */
+/** Overlay that blocks clinic features when trial is expired.
+ *  Must be placed inside a parent with `relative` positioning. Uses fixed-style
+ *  full-cover absolute positioning + high z-index + pointer-events-auto to
+ *  guarantee that the underlying content cannot be interacted with. */
 export const ClinicTrialBlockOverlay = () => {
   const { isTrialExpired, hasSubscription } = useClinicTrial();
   const { activeClinic } = useClinic();
@@ -135,21 +138,22 @@ export const ClinicTrialBlockOverlay = () => {
   if (!activeClinic || hasSubscription || !isTrialExpired) return null;
 
   return (
-    <div className="relative">
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 rounded-xl flex items-center justify-center">
-        <div className="text-center space-y-4 max-w-sm px-6">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-            <Lock className="h-7 w-7 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-bold text-foreground">Trial expirado</h3>
-          <p className="text-sm text-muted-foreground">
-            O período de teste de {TRIAL_DAYS} dias terminou. Assine para desbloquear todas as funcionalidades.
-          </p>
-          <Button onClick={() => navigate("/clinica#planos")} className="gap-2 rounded-xl">
-            <Crown className="h-4 w-4" />
-            Assinar agora
-          </Button>
+    <div
+      className="absolute inset-0 z-50 bg-background/85 backdrop-blur-sm rounded-xl flex items-start justify-center pt-16 sm:pt-24 pointer-events-auto"
+      onClickCapture={(e) => e.stopPropagation()}
+    >
+      <div className="text-center space-y-4 max-w-sm px-6 sticky top-16">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+          <Lock className="h-7 w-7 text-muted-foreground" />
         </div>
+        <h3 className="text-lg font-bold text-foreground">Trial expirado</h3>
+        <p className="text-sm text-muted-foreground">
+          O período de teste de {TRIAL_DAYS} dias terminou. Assine para desbloquear todas as funcionalidades da clínica.
+        </p>
+        <Button onClick={() => navigate("/clinica#planos")} className="gap-2 rounded-xl">
+          <Crown className="h-4 w-4" />
+          Assinar agora
+        </Button>
       </div>
     </div>
   );
