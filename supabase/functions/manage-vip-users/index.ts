@@ -491,7 +491,7 @@ serve(async (req) => {
       if (is_partner) {
         const { data: proData } = await supabaseClient
           .from("professionals")
-          .select("user_id, email")
+          .select("user_id, email, is_partner")
           .eq("id", targetId)
           .single();
         if (proData?.user_id && proData?.email) {
@@ -504,6 +504,11 @@ serve(async (req) => {
             body: JSON.stringify({ email: proData.email }),
           });
           log("Recovery email sent on re-grant", { user_id: proData.user_id, status: resetRes.status });
+
+          // Only send welcome email if this is a new partner grant (not already a partner)
+          if (!proData.is_partner) {
+            await sendPartnerWelcomeEmail(proData.email);
+          }
         }
       }
 
