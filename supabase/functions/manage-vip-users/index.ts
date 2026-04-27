@@ -50,6 +50,83 @@ const getAvailableTemporaryCrefito = async (supabaseClient: any, seed: string) =
   throw new Error("Unable to generate unique temporary CREFITO");
 };
 
+const APP_URL = "https://aliviawebapp.com.br";
+const DEFAULT_PARTNER_PASSWORD = "parceiroalivia";
+
+const sendPartnerWelcomeEmail = async (email: string) => {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY) {
+    log("Welcome email skipped — no RESEND_API_KEY");
+    return;
+  }
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff; color: #1a1a1a;">
+  <div style="text-align: center; padding: 24px 0;">
+    <h1 style="color: #0f766e; font-size: 26px; margin: 0;">Bem-vindo(a) à Aliv.iA! 🎉</h1>
+    <p style="color: #6b7280; margin-top: 8px;">Seu acesso PRO de parceiro foi liberado</p>
+  </div>
+
+  <div style="background: #f9fafb; border-radius: 12px; padding: 24px; margin: 16px 0;">
+    <p style="margin: 0 0 12px;">Olá!</p>
+    <p style="margin: 0 0 12px;">Você foi cadastrado(a) como <strong>parceiro(a) profissional</strong> da Aliv.iA — o sistema de raciocínio clínico com alma de fisioterapeuta.</p>
+    <p style="margin: 0 0 12px;">Use os dados abaixo para fazer seu primeiro acesso:</p>
+
+    <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0;">
+      <p style="margin: 4px 0;"><strong>E-mail:</strong> ${email}</p>
+      <p style="margin: 4px 0;"><strong>Senha temporária:</strong> <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">${DEFAULT_PARTNER_PASSWORD}</code></p>
+    </div>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${APP_URL}/auth" style="background: #0f766e; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">Acessar agora</a>
+    </div>
+  </div>
+
+  <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 16px; margin: 16px 0;">
+    <p style="margin: 0; font-size: 14px; color: #92400e;"><strong>⚠️ Importante:</strong> Por segurança, troque sua senha logo no primeiro acesso. Você poderá fazer isso direto na tela de cadastro inicial ou em "Minha Conta".</p>
+  </div>
+
+  <h3 style="color: #0f766e; margin-top: 28px;">Próximos passos:</h3>
+  <ol style="color: #374151; line-height: 1.8;">
+    <li>Faça login com a senha temporária</li>
+    <li>Complete seu cadastro profissional (CREFITO, cidade, estado)</li>
+    <li>Defina uma senha pessoal segura</li>
+    <li>Configure seu perfil PRO (foto, bio, agenda, especialidades)</li>
+    <li>Compartilhe seu link público de avaliação com os pacientes</li>
+  </ol>
+
+  <p style="color: #6b7280; font-size: 13px; margin-top: 32px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 16px;">
+    Dúvidas? Responda este e-mail ou acesse <a href="${APP_URL}/suporte" style="color: #0f766e;">nosso suporte</a>.<br>
+    <strong>Aliv.iA</strong> — sistema de raciocínio clínico com alma de fisioterapeuta
+  </p>
+</body>
+</html>`;
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Aliv.iA <onboarding@resend.dev>",
+        to: [email],
+        subject: "🎉 Bem-vindo(a) à Aliv.iA — Seu acesso PRO está liberado",
+        html,
+      }),
+    });
+    log("Welcome email sent", { status: response.status, ok: response.ok });
+    if (!response.ok) {
+      const errBody = await response.text();
+      log("Welcome email error body", { errBody });
+    }
+  } catch (err: any) {
+    log("Welcome email failed", { error: err.message });
+  }
+};
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
