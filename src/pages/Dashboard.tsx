@@ -17,6 +17,7 @@ import QuickActions from "@/components/dashboard/QuickActions";
 import AssessmentHistory from "@/components/dashboard/AssessmentHistory";
 import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import PushOptInBanner from "@/components/PushOptInBanner";
+import PartnerPasswordBanner from "@/components/dashboard/PartnerPasswordBanner";
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
 import ClinicTrialBanner, { ClinicTrialBlockOverlay, useClinicTrial } from "@/components/dashboard/ClinicTrialBanner";
 // Lazy — only rendered when the corresponding tab/section opens
