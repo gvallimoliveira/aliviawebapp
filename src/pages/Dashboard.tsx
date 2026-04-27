@@ -473,18 +473,20 @@ const Dashboard = () => {
             {/* Agenda */}
             <TabsContent value="agenda" className="space-y-6">
               <ClinicTrialBanner />
-              <DailySummaryCard
-                professionalId={professional?.id}
-                clinicId={activeClinic.clinic_id}
-                onNavigateToAgenda={() => {}}
-                onNavigateToPatients={() => setActiveTab("patients")}
-              />
               <div className="relative">
-                <ProSchedule
+                <DailySummaryCard
                   professionalId={professional?.id}
                   clinicId={activeClinic.clinic_id}
-                  isSimulated={isSimulated}
+                  onNavigateToAgenda={() => {}}
+                  onNavigateToPatients={() => setActiveTab("patients")}
                 />
+                <div className="mt-6">
+                  <ProSchedule
+                    professionalId={professional?.id}
+                    clinicId={activeClinic.clinic_id}
+                    isSimulated={isSimulated}
+                  />
+                </div>
                 <ClinicTrialBlockOverlay />
               </div>
             </TabsContent>
