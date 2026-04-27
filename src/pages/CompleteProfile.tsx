@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserCheck } from "lucide-react";
+import { Loader2, UserCheck, Sparkles, KeyRound, ChevronDown, ChevronUp } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const STATES = [
@@ -21,12 +21,14 @@ const CREFITO_REGEX = /^\d{1,6}-[A-Z]$/;
 
 const CompleteProfile = () => {
   const { user, loading: authLoading } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isPt = language === "pt";
   const navigate = useNavigate();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [professional, setProfessional] = useState<any>(null);
+  const [isPartner, setIsPartner] = useState(false);
 
   const [form, setForm] = useState({
     full_name: "",
@@ -34,6 +36,11 @@ const CompleteProfile = () => {
     city: "",
     state: "",
   });
+
+  // Optional password change (mainly for partners using default password)
+  const [showPasswordField, setShowPasswordField] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -56,6 +63,9 @@ const CompleteProfile = () => {
           return;
         }
         setProfessional(data);
+        setIsPartner(!!data.is_partner);
+        // Auto-expand password field for partners (they likely use default password)
+        if (data.is_partner) setShowPasswordField(true);
         setForm({
           full_name: data.full_name === data.email?.split("@")[0] ? "" : data.full_name || "",
           crefito: data.crefito === "000000-X" ? "" : data.crefito || "",
@@ -81,6 +91,26 @@ const CompleteProfile = () => {
       return;
     }
 
+    // Validate password fields if user wants to change password
+    const wantsPasswordChange = newPassword.length > 0 || confirmPassword.length > 0;
+    if (wantsPasswordChange) {
+      if (newPassword.length < 8) {
+        toast({
+          title: isPt ? "Senha muito curta" : "Password too short",
+          description: isPt ? "Mínimo de 8 caracteres." : "Minimum 8 characters.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        toast({
+          title: isPt ? "Senhas não coincidem" : "Passwords don't match",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       // Check duplicate CREFITO
@@ -102,6 +132,24 @@ const CompleteProfile = () => {
           state: form.state,
         })
         .eq("id", professional.id);
+
+      // Update password if provided
+      if (wantsPasswordChange) {
+        const { error: pwdError } = await supabase.auth.updateUser({ password: newPassword });
+        if (pwdError) {
+          toast({
+            title: isPt ? "Cadastro salvo, mas senha não foi alterada" : "Profile saved, but password not updated",
+            description: pwdError.message,
+            variant: "destructive",
+          });
+          // Continue anyway — profile was saved
+        } else {
+          // Mark banner as dismissed since password was updated
+          try {
+            localStorage.setItem(`partner_pwd_banner_dismissed_${user.id}`, "true");
+          } catch { /* noop */ }
+        }
+      }
 
       toast({ title: t("prof.saved") });
       navigate("/dashboard");
@@ -132,6 +180,27 @@ const CompleteProfile = () => {
           <CardDescription>{t("prof.complete_profile_desc")}</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Partner Welcome Banner */}
+          {isPartner && (
+            <div className="mb-5 rounded-xl border border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-4">
+              <div className="flex items-start gap-2.5">
+                <div className="shrink-0 mt-0.5 rounded-full bg-primary/15 p-1.5">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-foreground text-sm">
+                    {isPt ? "Bem-vindo(a), parceiro(a) Aliv.iA! 🎉" : "Welcome, Aliv.iA partner! 🎉"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    {isPt
+                      ? "Seu acesso PRO está liberado. Para começar, complete seu cadastro profissional e — por segurança — defina uma senha pessoal no lugar da senha padrão."
+                      : "Your PRO access is active. To get started, complete your professional profile and — for security — set a personal password instead of the default one."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>{t("prof.full_name")} *</Label>
@@ -176,6 +245,55 @@ const CompleteProfile = () => {
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Optional password change section */}
+            <div className="pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setShowPasswordField((v) => !v)}
+                className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors w-full"
+              >
+                <KeyRound className="h-4 w-4" />
+                <span className="flex-1 text-left">
+                  {isPt ? "Definir nova senha" : "Set new password"}
+                  <span className="text-xs font-normal text-muted-foreground ml-1">
+                    {isPartner
+                      ? (isPt ? "(recomendado)" : "(recommended)")
+                      : (isPt ? "(opcional)" : "(optional)")}
+                  </span>
+                </span>
+                {showPasswordField ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
+
+              {showPasswordField && (
+                <div className="mt-3 space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm">
+                      {isPt ? "Nova senha" : "New password"}
+                    </Label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder={isPt ? "Mínimo 8 caracteres" : "Minimum 8 characters"}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">
+                      {isPt ? "Confirmar senha" : "Confirm password"}
+                    </Label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder={isPt ? "Repita a senha" : "Repeat password"}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button type="submit" className="w-full rounded-xl py-5" disabled={saving}>
