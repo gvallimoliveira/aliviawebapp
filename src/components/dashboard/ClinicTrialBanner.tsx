@@ -139,10 +139,19 @@ export const ClinicTrialBlockOverlay = () => {
 
   return (
     <div
-      className="absolute inset-0 z-50 bg-background/85 backdrop-blur-sm rounded-xl flex items-start justify-center pt-16 sm:pt-24 pointer-events-auto"
-      onClickCapture={(e) => e.stopPropagation()}
+      className="absolute inset-0 z-50 bg-background/85 backdrop-blur-sm rounded-xl flex items-center justify-center pointer-events-auto min-h-[280px]"
+      onClickCapture={(e) => {
+        // Allow only clicks on the "Assinar agora" CTA inside this overlay
+        const target = e.target as HTMLElement;
+        if (!target.closest("[data-trial-cta]")) {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+      }}
+      role="alertdialog"
+      aria-label="Trial expirado"
     >
-      <div className="text-center space-y-4 max-w-sm px-6 sticky top-16">
+      <div className="text-center space-y-4 max-w-sm px-6 py-8">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
           <Lock className="h-7 w-7 text-muted-foreground" />
         </div>
@@ -150,7 +159,7 @@ export const ClinicTrialBlockOverlay = () => {
         <p className="text-sm text-muted-foreground">
           O período de teste de {TRIAL_DAYS} dias terminou. Assine para desbloquear todas as funcionalidades da clínica.
         </p>
-        <Button onClick={() => navigate("/clinica#planos")} className="gap-2 rounded-xl">
+        <Button data-trial-cta onClick={() => navigate("/clinica#planos")} className="gap-2 rounded-xl">
           <Crown className="h-4 w-4" />
           Assinar agora
         </Button>
