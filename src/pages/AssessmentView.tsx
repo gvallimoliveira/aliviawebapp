@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { mockPatientAssessments } from "@/data/mockPatientData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -87,6 +87,28 @@ const AssessmentView = () => {
   const backUrl = searchParams.get("from") === "professional"
     ? `/dashboard?tab=${tabParam || "professional"}${patientParam ? `&patient=${encodeURIComponent(patientParam)}` : ""}`
     : "/dashboard";
+  // Snapshot whether we have in-app history at mount time. If yes, prefer
+  // history.back() so the user lands exactly where they were (preserving
+  // scroll position, selected patient card, charts state, etc.). Fallback
+  // to backUrl when this page was opened directly (e.g. from email/PDF).
+  const hasInAppHistoryRef = useRef<boolean>(false);
+  useEffect(() => {
+    try {
+      hasInAppHistoryRef.current =
+        typeof window !== "undefined" &&
+        window.history.length > 1 &&
+        document.referrer.includes(window.location.host);
+    } catch {
+      hasInAppHistoryRef.current = false;
+    }
+  }, []);
+  const goBack = () => {
+    if (hasInAppHistoryRef.current) {
+      navigate(-1);
+    } else {
+      navigate(backUrl);
+    }
+  };
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showTreatment, setShowTreatment] = useState(false);
@@ -295,7 +317,7 @@ const AssessmentView = () => {
           </div>
         )}
         {/* Back button */}
-        <Button variant="ghost" onClick={() => navigate(backUrl)} className="gap-2 -ml-2">
+        <Button variant="ghost" onClick={goBack} className="gap-2 -ml-2">
           <ArrowLeft className="h-4 w-4" />
           {t("assessment_view.back")}
         </Button>
@@ -512,7 +534,7 @@ const AssessmentView = () => {
           <DiagnosisResult
             diagnosis={assessment.diagnosis}
             mode={assessment.type as "basic" | "premium"}
-            onBack={() => navigate(backUrl)}
+            onBack={goBack}
             onNewAssessment={() => navigate("/assessment/premium")}
             onGenerateTreatment={
               assessment.treatment_plan ? () => setShowTreatment(true) : undefined
