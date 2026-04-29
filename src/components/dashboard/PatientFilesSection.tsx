@@ -142,6 +142,47 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
     loadFiles();
   };
 
+  const handleShare = async (file: PatientFile) => {
+    const { data, error } = await supabase.storage
+      .from("patient-files")
+      .createSignedUrl(file.file_path, 60 * 60); // 1 hour
+    if (error || !data?.signedUrl) {
+      toast({ title: lang === "pt" ? "Erro ao gerar link" : "Error generating link", variant: "destructive" });
+      return;
+    }
+    const url = data.signedUrl;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: file.file_name, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast({ title: lang === "pt" ? "Link copiado (válido por 1h)" : "Link copied (valid 1h)" });
+      }
+    } catch {
+      // user cancelled share
+    }
+  };
+
+  const handleRename = async () => {
+    if (!renameTarget || !renameValue.trim()) return;
+    setRenaming(true);
+    let newName = renameValue.trim();
+    if (!/\.pdf$/i.test(newName)) newName += ".pdf";
+    const { error } = await supabase
+      .from("patient_files")
+      .update({ file_name: newName })
+      .eq("id", renameTarget.id);
+    setRenaming(false);
+    if (error) {
+      toast({ title: lang === "pt" ? "Erro ao renomear" : "Rename error", variant: "destructive" });
+      return;
+    }
+    toast({ title: lang === "pt" ? "Arquivo renomeado" : "File renamed" });
+    setRenameTarget(null);
+    setRenameValue("");
+    loadFiles();
+  };
+
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
