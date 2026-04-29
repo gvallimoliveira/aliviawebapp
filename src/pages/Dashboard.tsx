@@ -97,7 +97,18 @@ const Dashboard = () => {
   const [premiumLoading, setPremiumLoading] = useState(true);
   const [professional, setProfessional] = useState<any>(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>("health");
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    // Restore tab from URL first, then sessionStorage (survives short
+    // mobile background→foreground reloads), default to "health".
+    if (typeof window === "undefined") return "health";
+    const urlTab = new URLSearchParams(window.location.search).get("tab");
+    if (urlTab) return urlTab;
+    try {
+      const stored = sessionStorage.getItem("alivia_dashboard_tab");
+      if (stored) return stored;
+    } catch {}
+    return "health";
+  });
   const [unreadCount, setUnreadCount] = useState(0);
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
@@ -154,6 +165,14 @@ const Dashboard = () => {
     if (!changed) return;
     setSearchParams(nextParams, { replace: true });
   }, [activeTab, activeContext, activeClinic, isClinicMode, professional, searchParams, setSearchParams]);
+
+  // Persist active tab so a brief mobile suspend/restore cycle keeps the
+  // user on the same screen instead of bouncing back to the default tab.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("alivia_dashboard_tab", activeTab);
+    } catch {}
+  }, [activeTab]);
 
   useEffect(() => {
     if (!authReady) return;
@@ -231,28 +250,27 @@ const Dashboard = () => {
     };
   }, [authReady, user, navigate, tabFromUrl]);
 
-  // Reset tab on context change or URL params
+  // Reset tab on context change or URL params — but preserve the current
+  // tab (from URL or sessionStorage) when it's still valid for the new
+  // context. This avoids resetting to the default tab on a brief mobile
+  // app-switch / suspend cycle.
   useEffect(() => {
+    const desired = tabFromUrl || activeTab;
     if (activeContext === "clinic" && activeClinic) {
-      if (tabFromUrl === "messages") setActiveTab("messages");
-      else if (tabFromUrl === "agenda") setActiveTab("agenda");
-      else if (tabFromUrl === "patients") setActiveTab("patients");
-      else if (tabFromUrl === "team" || tabFromUrl === "clinic") setActiveTab("team");
-      else if (tabFromUrl === "link") setActiveTab("link");
-      else if (tabFromUrl === "analytics") setActiveTab("analytics");
-      else setActiveTab("agenda");
+      const valid = ["agenda", "patients", "team", "link", "analytics", "messages"];
+      const mapped = desired === "clinic" ? "team" : desired;
+      setActiveTab(valid.includes(mapped) ? mapped : "agenda");
     } else if (activeContext === "professional" && professional) {
-      if (tabFromUrl === "messages") setActiveTab("messages");
-      else if (tabFromUrl === "agenda") setActiveTab("agenda");
-      else setActiveTab("professional");
+      const valid = ["professional", "agenda", "messages"];
+      setActiveTab(valid.includes(desired) ? desired : "professional");
     } else if (activeContext === "personal") {
-      if (tabFromUrl === "messages") setActiveTab("messages");
-      else setActiveTab("health");
+      const valid = ["health", "messages"];
+      setActiveTab(valid.includes(desired) ? desired : "health");
     }
     // If activeContext is "professional"/"clinic" but the underlying data
-    // (professional / activeClinic) hasn't arrived yet, do NOT set a tab —
-    // the rendered branch is still "personal" and would show empty content.
-    // The effect re-runs when professional/activeClinic become available.
+    // hasn't arrived yet, do NOT set a tab — the effect re-runs when
+    // professional/activeClinic become available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabFromUrl, activeContext, activeClinic, professional]);
 
   // Safety clamp: if activeTab doesn't belong to the currently rendered
