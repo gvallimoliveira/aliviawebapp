@@ -295,6 +295,31 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!renameTarget} onOpenChange={(o) => { if (!o) { setRenameTarget(null); setRenameValue(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{lang === "pt" ? "Renomear documento" : "Rename document"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Input
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              placeholder={lang === "pt" ? "Novo nome" : "New name"}
+              autoFocus
+            />
+            <p className="text-[11px] text-muted-foreground">.pdf</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRenameTarget(null); setRenameValue(""); }}>
+              {lang === "pt" ? "Cancelar" : "Cancel"}
+            </Button>
+            <Button onClick={handleRename} disabled={renaming || !renameValue.trim()}>
+              {renaming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (lang === "pt" ? "Salvar" : "Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
