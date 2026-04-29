@@ -15,6 +15,7 @@ const REGION_LABELS: Record<string, { pt: string; en: string }> = (() => {
 })();
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
