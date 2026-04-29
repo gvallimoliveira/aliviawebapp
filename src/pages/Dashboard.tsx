@@ -166,6 +166,14 @@ const Dashboard = () => {
     setSearchParams(nextParams, { replace: true });
   }, [activeTab, activeContext, activeClinic, isClinicMode, professional, searchParams, setSearchParams]);
 
+  // Persist active tab so a brief mobile suspend/restore cycle keeps the
+  // user on the same screen instead of bouncing back to the default tab.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("alivia_dashboard_tab", activeTab);
+    } catch {}
+  }, [activeTab]);
+
   useEffect(() => {
     if (!authReady) return;
     if (!user) {
