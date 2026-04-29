@@ -15,6 +15,7 @@ const REGION_LABELS: Record<string, { pt: string; en: string }> = (() => {
 })();
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -471,6 +472,10 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isClinicMode } = useClinic();
+  const backTab = isClinicMode ? "patients" : "professional";
+  const buildAssessmentViewUrl = (assessmentId: string, email?: string | null) =>
+    `/assessment/view/${assessmentId}?from=professional&tab=${backTab}${email ? `&patient=${encodeURIComponent(email)}` : ""}`;
   const [searchParams] = useSearchParams();
   const initialPatient = searchParams.get("patient");
   const [selectedEmail, setSelectedEmail] = useState<string | null>(initialPatient);
@@ -1772,7 +1777,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
               variant="outline"
               size="sm"
               className="gap-1.5 shrink-0"
-              onClick={() => navigate(`/assessment/view/${latestWithDiagnosis.id}?from=professional&patient=${encodeURIComponent(patient.email)}`)}
+              onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}
             >
               <FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}
             </Button>
@@ -2197,7 +2202,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                     variant="outline"
                     size="sm"
                     className="gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
+                    onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}
                   >
                     {t("pro.view_treatment")}
                     <ChevronRight className="h-3 w-3" />
@@ -2326,7 +2331,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       <AssessmentTimeline
         assessments={patient.assessments}
         onSelect={(id) =>
-          navigate(`/assessment/view/${id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)
+          navigate(buildAssessmentViewUrl(id, selectedEmail))
         }
       />
 
@@ -2508,7 +2513,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                   <div className="flex items-center justify-between gap-2">
                     {(() => {
                       const canOpen = !!a.diagnosis && !isArchived;
-                      const openAssessment = () => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`);
+                      const openAssessment = () => navigate(buildAssessmentViewUrl(a.id, selectedEmail));
                       return (
                         <div
                           className={`space-y-0.5 min-w-0 rounded-md -mx-1 px-1 py-0.5 transition-colors ${canOpen ? "cursor-pointer hover:bg-muted/40 active:bg-muted/60" : ""}`}
@@ -2573,7 +2578,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                           size="icon"
                           className="h-8 w-8"
                           title={t("pro.view_full_assessment")}
-                          onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
+                          onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}
                         >
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </Button>

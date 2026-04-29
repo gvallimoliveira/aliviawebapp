@@ -83,8 +83,9 @@ const AssessmentView = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const patientParam = searchParams.get("patient");
+  const tabParam = searchParams.get("tab");
   const backUrl = searchParams.get("from") === "professional"
-    ? `/dashboard?tab=professional${patientParam ? `&patient=${encodeURIComponent(patientParam)}` : ""}`
+    ? `/dashboard?tab=${tabParam || "professional"}${patientParam ? `&patient=${encodeURIComponent(patientParam)}` : ""}`
     : "/dashboard";
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
