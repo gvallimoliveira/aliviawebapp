@@ -194,6 +194,8 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
     setRenameValue("");
     loadPhotos();
   };
+
+  const categoryLabel = (cat: string) => {
     if (cat === "postural") return isPt ? "Postural" : "Postural";
     if (cat === "follow_up") return isPt ? "Acompanhamento" : "Follow-up";
     return isPt ? "Outro" : "Other";
