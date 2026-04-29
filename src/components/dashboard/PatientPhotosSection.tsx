@@ -14,6 +14,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Image as ImageIcon, Upload, Trash2, Loader2, AlertCircle, Camera, Pencil, Share2, Download } from "lucide-react";
+import { downloadStorageFile } from "@/lib/downloadFile";
+import { createShortShareLink } from "@/lib/shortLink";
 import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PatientPhotosSectionProps {
@@ -146,14 +148,11 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
   };
 
   const handleShare = async (p: PatientPhoto) => {
-    const { data, error } = await supabase.storage
-      .from("patient-photos")
-      .createSignedUrl(p.file_path, 60 * 60);
-    if (error || !data?.signedUrl) {
+    const url = await createShortShareLink({ bucket: "patient-photos", filePath: p.file_path, ttlSeconds: 60 * 60 });
+    if (!url) {
       toast({ title: isPt ? "Erro ao gerar link" : "Error generating link", variant: "destructive" });
       return;
     }
-    const url = data.signedUrl;
     try {
       if (navigator.share) {
         await navigator.share({ title: p.file_name, url });
@@ -165,14 +164,11 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
   };
 
   const handleDownload = async (p: PatientPhoto) => {
-    const { data, error } = await supabase.storage
-      .from("patient-photos")
-      .createSignedUrl(p.file_path, 60);
-    if (error || !data?.signedUrl) {
-      toast({ title: isPt ? "Erro ao gerar link" : "Error generating link", variant: "destructive" });
-      return;
+    try {
+      await downloadStorageFile({ bucket: "patient-photos", filePath: p.file_path, fileName: p.file_name });
+    } catch (err: any) {
+      toast({ title: isPt ? "Erro ao baixar" : "Download error", description: err?.message, variant: "destructive" });
     }
-    window.open(data.signedUrl, "_blank");
   };
 
   const handleRename = async () => {

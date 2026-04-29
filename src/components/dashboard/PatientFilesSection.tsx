@@ -15,6 +15,8 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { FileText, Upload, Trash2, Download, Loader2, FileCheck, AlertCircle, Pencil, Share2 } from "lucide-react";
+import { downloadStorageFile } from "@/lib/downloadFile";
+import { createShortShareLink } from "@/lib/shortLink";
 
 interface PatientFilesSectionProps {
   patientEmail: string;
@@ -122,15 +124,11 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
   };
 
   const handleDownload = async (file: PatientFile) => {
-    const { data, error } = await supabase.storage
-      .from("patient-files")
-      .createSignedUrl(file.file_path, 60);
-
-    if (error || !data?.signedUrl) {
-      toast({ title: lang === "pt" ? "Erro ao gerar link" : "Error generating link", variant: "destructive" });
-      return;
+    try {
+      await downloadStorageFile({ bucket: "patient-files", filePath: file.file_path, fileName: file.file_name });
+    } catch (err: any) {
+      toast({ title: lang === "pt" ? "Erro ao baixar" : "Download error", description: err?.message, variant: "destructive" });
     }
-    window.open(data.signedUrl, "_blank");
   };
 
   const handleDelete = async () => {
@@ -143,14 +141,11 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
   };
 
   const handleShare = async (file: PatientFile) => {
-    const { data, error } = await supabase.storage
-      .from("patient-files")
-      .createSignedUrl(file.file_path, 60 * 60); // 1 hour
-    if (error || !data?.signedUrl) {
+    const url = await createShortShareLink({ bucket: "patient-files", filePath: file.file_path, ttlSeconds: 60 * 60 });
+    if (!url) {
       toast({ title: lang === "pt" ? "Erro ao gerar link" : "Error generating link", variant: "destructive" });
       return;
     }
-    const url = data.signedUrl;
     try {
       if (navigator.share) {
         await navigator.share({ title: file.file_name, url });
