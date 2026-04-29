@@ -48,6 +48,9 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<PatientFile | null>(null);
+  const [renameTarget, setRenameTarget] = useState<PatientFile | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   useEffect(() => {
     loadFiles();
