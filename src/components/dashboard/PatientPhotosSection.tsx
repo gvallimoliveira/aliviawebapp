@@ -280,16 +280,48 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
                 <Badge variant="secondary" className="absolute top-1 left-1 text-[9px] px-1 py-0">
                   {categoryLabel(p.category)}
                 </Badge>
-                {!readOnly && (
+                <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                   <Button
-                    variant="destructive"
+                    variant="secondary"
                     size="icon"
-                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+                    className="h-6 w-6"
+                    onClick={(e) => { e.stopPropagation(); handleShare(p); }}
+                    title={isPt ? "Compartilhar (link 1h)" : "Share (1h link)"}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Share2 className="h-3 w-3" />
                   </Button>
-                )}
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => { e.stopPropagation(); handleDownload(p); }}
+                    title={isPt ? "Baixar" : "Download"}
+                  >
+                    <Download className="h-3 w-3" />
+                  </Button>
+                  {!readOnly && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => { e.stopPropagation(); setRenameTarget(p); setRenameValue(p.file_name.replace(/\.[a-z0-9]+$/i, "")); }}
+                        title={isPt ? "Renomear" : "Rename"}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+                        title={isPt ? "Excluir" : "Delete"}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>
