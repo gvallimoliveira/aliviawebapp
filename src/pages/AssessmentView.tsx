@@ -87,6 +87,28 @@ const AssessmentView = () => {
   const backUrl = searchParams.get("from") === "professional"
     ? `/dashboard?tab=${tabParam || "professional"}${patientParam ? `&patient=${encodeURIComponent(patientParam)}` : ""}`
     : "/dashboard";
+  // Snapshot whether we have in-app history at mount time. If yes, prefer
+  // history.back() so the user lands exactly where they were (preserving
+  // scroll position, selected patient card, charts state, etc.). Fallback
+  // to backUrl when this page was opened directly (e.g. from email/PDF).
+  const hasInAppHistoryRef = useRef<boolean>(false);
+  useEffect(() => {
+    try {
+      hasInAppHistoryRef.current =
+        typeof window !== "undefined" &&
+        window.history.length > 1 &&
+        document.referrer.includes(window.location.host);
+    } catch {
+      hasInAppHistoryRef.current = false;
+    }
+  }, []);
+  const goBack = () => {
+    if (hasInAppHistoryRef.current) {
+      navigate(-1);
+    } else {
+      navigate(backUrl);
+    }
+  };
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showTreatment, setShowTreatment] = useState(false);
