@@ -97,7 +97,18 @@ const Dashboard = () => {
   const [premiumLoading, setPremiumLoading] = useState(true);
   const [professional, setProfessional] = useState<any>(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>("health");
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    // Restore tab from URL first, then sessionStorage (survives short
+    // mobile background→foreground reloads), default to "health".
+    if (typeof window === "undefined") return "health";
+    const urlTab = new URLSearchParams(window.location.search).get("tab");
+    if (urlTab) return urlTab;
+    try {
+      const stored = sessionStorage.getItem("alivia_dashboard_tab");
+      if (stored) return stored;
+    } catch {}
+    return "health";
+  });
   const [unreadCount, setUnreadCount] = useState(0);
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
