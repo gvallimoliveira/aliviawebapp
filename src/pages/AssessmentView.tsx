@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { mockPatientAssessments } from "@/data/mockPatientData";
 import { useAuth } from "@/contexts/AuthContext";
