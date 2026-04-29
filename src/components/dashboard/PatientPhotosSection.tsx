@@ -13,7 +13,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Image as ImageIcon, Upload, Trash2, Loader2, AlertCircle, Camera } from "lucide-react";
+import { Image as ImageIcon, Upload, Trash2, Loader2, AlertCircle, Camera, Pencil, Share2, Download } from "lucide-react";
+import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PatientPhotosSectionProps {
   patientEmail: string;
