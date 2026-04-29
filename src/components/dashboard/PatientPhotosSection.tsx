@@ -51,6 +51,9 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
   const [category, setCategory] = useState<string>("postural");
   const [deleteTarget, setDeleteTarget] = useState<PatientPhoto | null>(null);
   const [previewPhoto, setPreviewPhoto] = useState<PatientPhoto | null>(null);
+  const [renameTarget, setRenameTarget] = useState<PatientPhoto | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   useEffect(() => {
     loadPhotos();
