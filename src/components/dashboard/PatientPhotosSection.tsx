@@ -13,7 +13,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Image as ImageIcon, Upload, Trash2, Loader2, AlertCircle, Camera } from "lucide-react";
+import { Image as ImageIcon, Upload, Trash2, Loader2, AlertCircle, Camera, Pencil, Share2, Download } from "lucide-react";
+import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PatientPhotosSectionProps {
   patientEmail: string;
@@ -50,6 +51,9 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
   const [category, setCategory] = useState<string>("postural");
   const [deleteTarget, setDeleteTarget] = useState<PatientPhoto | null>(null);
   const [previewPhoto, setPreviewPhoto] = useState<PatientPhoto | null>(null);
+  const [renameTarget, setRenameTarget] = useState<PatientPhoto | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   useEffect(() => {
     loadPhotos();
@@ -141,6 +145,56 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
     loadPhotos();
   };
 
+  const handleShare = async (p: PatientPhoto) => {
+    const { data, error } = await supabase.storage
+      .from("patient-photos")
+      .createSignedUrl(p.file_path, 60 * 60);
+    if (error || !data?.signedUrl) {
+      toast({ title: isPt ? "Erro ao gerar link" : "Error generating link", variant: "destructive" });
+      return;
+    }
+    const url = data.signedUrl;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: p.file_name, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast({ title: isPt ? "Link copiado (válido por 1h)" : "Link copied (valid 1h)" });
+      }
+    } catch {}
+  };
+
+  const handleDownload = async (p: PatientPhoto) => {
+    const { data, error } = await supabase.storage
+      .from("patient-photos")
+      .createSignedUrl(p.file_path, 60);
+    if (error || !data?.signedUrl) {
+      toast({ title: isPt ? "Erro ao gerar link" : "Error generating link", variant: "destructive" });
+      return;
+    }
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const handleRename = async () => {
+    if (!renameTarget || !renameValue.trim()) return;
+    setRenaming(true);
+    const ext = (renameTarget.file_name.match(/\.[a-z0-9]+$/i)?.[0] || "").toLowerCase();
+    let newName = renameValue.trim();
+    if (ext && !new RegExp(ext + "$", "i").test(newName)) newName += ext;
+    const { error } = await (supabase.from("patient_photos" as any) as any)
+      .update({ file_name: newName })
+      .eq("id", renameTarget.id);
+    setRenaming(false);
+    if (error) {
+      toast({ title: isPt ? "Erro ao renomear" : "Rename error", variant: "destructive" });
+      return;
+    }
+    toast({ title: isPt ? "Foto renomeada" : "Photo renamed" });
+    setRenameTarget(null);
+    setRenameValue("");
+    loadPhotos();
+  };
+
   const categoryLabel = (cat: string) => {
     if (cat === "postural") return isPt ? "Postural" : "Postural";
     if (cat === "follow_up") return isPt ? "Acompanhamento" : "Follow-up";
@@ -226,16 +280,48 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
                 <Badge variant="secondary" className="absolute top-1 left-1 text-[9px] px-1 py-0">
                   {categoryLabel(p.category)}
                 </Badge>
-                {!readOnly && (
+                <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                   <Button
-                    variant="destructive"
+                    variant="secondary"
                     size="icon"
-                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+                    className="h-6 w-6"
+                    onClick={(e) => { e.stopPropagation(); handleShare(p); }}
+                    title={isPt ? "Compartilhar (link 1h)" : "Share (1h link)"}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Share2 className="h-3 w-3" />
                   </Button>
-                )}
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => { e.stopPropagation(); handleDownload(p); }}
+                    title={isPt ? "Baixar" : "Download"}
+                  >
+                    <Download className="h-3 w-3" />
+                  </Button>
+                  {!readOnly && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => { e.stopPropagation(); setRenameTarget(p); setRenameValue(p.file_name.replace(/\.[a-z0-9]+$/i, "")); }}
+                        title={isPt ? "Renomear" : "Rename"}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+                        title={isPt ? "Excluir" : "Delete"}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -272,6 +358,28 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!renameTarget} onOpenChange={(o) => { if (!o) { setRenameTarget(null); setRenameValue(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isPt ? "Renomear foto" : "Rename photo"}</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            placeholder={isPt ? "Novo nome" : "New name"}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRenameTarget(null); setRenameValue(""); }}>
+              {isPt ? "Cancelar" : "Cancel"}
+            </Button>
+            <Button onClick={handleRename} disabled={renaming || !renameValue.trim()}>
+              {renaming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (isPt ? "Salvar" : "Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

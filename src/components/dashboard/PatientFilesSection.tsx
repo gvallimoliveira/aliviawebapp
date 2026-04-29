@@ -11,7 +11,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { FileText, Upload, Trash2, Download, Loader2, FileCheck, AlertCircle } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { FileText, Upload, Trash2, Download, Loader2, FileCheck, AlertCircle, Pencil, Share2 } from "lucide-react";
 
 interface PatientFilesSectionProps {
   patientEmail: string;
@@ -45,6 +48,9 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<PatientFile | null>(null);
+  const [renameTarget, setRenameTarget] = useState<PatientFile | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -136,6 +142,47 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
     loadFiles();
   };
 
+  const handleShare = async (file: PatientFile) => {
+    const { data, error } = await supabase.storage
+      .from("patient-files")
+      .createSignedUrl(file.file_path, 60 * 60); // 1 hour
+    if (error || !data?.signedUrl) {
+      toast({ title: lang === "pt" ? "Erro ao gerar link" : "Error generating link", variant: "destructive" });
+      return;
+    }
+    const url = data.signedUrl;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: file.file_name, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast({ title: lang === "pt" ? "Link copiado (válido por 1h)" : "Link copied (valid 1h)" });
+      }
+    } catch {
+      // user cancelled share
+    }
+  };
+
+  const handleRename = async () => {
+    if (!renameTarget || !renameValue.trim()) return;
+    setRenaming(true);
+    let newName = renameValue.trim();
+    if (!/\.pdf$/i.test(newName)) newName += ".pdf";
+    const { error } = await supabase
+      .from("patient_files")
+      .update({ file_name: newName })
+      .eq("id", renameTarget.id);
+    setRenaming(false);
+    if (error) {
+      toast({ title: lang === "pt" ? "Erro ao renomear" : "Rename error", variant: "destructive" });
+      return;
+    }
+    toast({ title: lang === "pt" ? "Arquivo renomeado" : "File renamed" });
+    setRenameTarget(null);
+    setRenameValue("");
+    loadFiles();
+  };
+
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -203,13 +250,21 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
                     {formatSize(f.file_size_bytes)} · {new Date(f.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownload(f)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownload(f)} title={lang === "pt" ? "Baixar" : "Download"}>
                   <Download className="h-3.5 w-3.5" />
                 </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleShare(f)} title={lang === "pt" ? "Compartilhar (link 1h)" : "Share (1h link)"}>
+                  <Share2 className="h-3.5 w-3.5" />
+                </Button>
                 {!readOnly && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(f)}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setRenameTarget(f); setRenameValue(f.file_name.replace(/\.pdf$/i, "")); }} title={lang === "pt" ? "Renomear" : "Rename"}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(f)} title={lang === "pt" ? "Excluir" : "Delete"}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </>
                 )}
               </div>
             ))}
@@ -240,6 +295,31 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!renameTarget} onOpenChange={(o) => { if (!o) { setRenameTarget(null); setRenameValue(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{lang === "pt" ? "Renomear documento" : "Rename document"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Input
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              placeholder={lang === "pt" ? "Novo nome" : "New name"}
+              autoFocus
+            />
+            <p className="text-[11px] text-muted-foreground">.pdf</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRenameTarget(null); setRenameValue(""); }}>
+              {lang === "pt" ? "Cancelar" : "Cancel"}
+            </Button>
+            <Button onClick={handleRename} disabled={renaming || !renameValue.trim()}>
+              {renaming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (lang === "pt" ? "Salvar" : "Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
