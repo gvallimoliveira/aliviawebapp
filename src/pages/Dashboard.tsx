@@ -174,6 +174,42 @@ const Dashboard = () => {
     } catch {}
   }, [activeTab]);
 
+  // iOS PWA fallback: when the app is suspended (user switches apps or
+  // locks the device) iOS may freeze the JS context and, on resume, the
+  // React tree can re-mount or lose ephemeral state. Re-hydrate the
+  // active tab from sessionStorage on every visibility/focus/pageshow
+  // event so the user always lands back on the last screen.
+  useEffect(() => {
+    const restoreTab = () => {
+      try {
+        const urlTab = new URLSearchParams(window.location.search).get("tab");
+        const stored = sessionStorage.getItem("alivia_dashboard_tab");
+        const desired = urlTab || stored;
+        if (desired && desired !== activeTab) {
+          setActiveTab(desired);
+        }
+      } catch {}
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") restoreTab();
+    };
+    const onPageShow = (e: PageTransitionEvent) => {
+      // persisted = true means the page came from the bfcache (common on iOS)
+      if (e.persisted || document.visibilityState === "visible") restoreTab();
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", restoreTab);
+    window.addEventListener("pageshow", onPageShow);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", restoreTab);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, [activeTab]);
+
   useEffect(() => {
     if (!authReady) return;
     if (!user) {
