@@ -317,7 +317,7 @@ const AssessmentView = () => {
           </div>
         )}
         {/* Back button */}
-        <Button variant="ghost" onClick={() => navigate(backUrl)} className="gap-2 -ml-2">
+        <Button variant="ghost" onClick={goBack} className="gap-2 -ml-2">
           <ArrowLeft className="h-4 w-4" />
           {t("assessment_view.back")}
         </Button>
