@@ -11,7 +11,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { FileText, Upload, Trash2, Download, Loader2, FileCheck, AlertCircle } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { FileText, Upload, Trash2, Download, Loader2, FileCheck, AlertCircle, Pencil, Share2 } from "lucide-react";
 
 interface PatientFilesSectionProps {
   patientEmail: string;
