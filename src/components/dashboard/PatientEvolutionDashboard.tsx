@@ -2506,31 +2506,44 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
               <Card key={a.id} className={`overflow-hidden ${isInProgress ? "border-blue-300/60 bg-blue-50/30" : ""} ${isArchived ? "opacity-60 border-dashed" : ""}`}>
                 <CardContent className="py-3 px-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="space-y-0.5 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-foreground">
-                          {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
-                        </p>
-                        {isInProgress && (
-                          <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-blue-300 text-blue-700 bg-blue-50">
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                            {language === "pt" ? "Em andamento" : "In progress"}
-                          </Badge>
-                        )}
-                        {isArchived && (
-                          <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-muted-foreground/30 text-muted-foreground bg-muted/30">
-                            <Archive className="h-3 w-3 mr-1" />
-                            {language === "pt" ? "Arquivada" : "Archived"}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        {a.pain_score != null && <span>Dor: {a.pain_score}/10</span>}
-                        {a.diagnosis?.hypothesis && (
-                          <span className="line-clamp-1">• {a.diagnosis.hypothesis}</span>
-                        )}
-                      </div>
-                    </div>
+                    {(() => {
+                      const canOpen = !!a.diagnosis && !isArchived;
+                      const openAssessment = () => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`);
+                      return (
+                        <div
+                          className={`space-y-0.5 min-w-0 rounded-md -mx-1 px-1 py-0.5 transition-colors ${canOpen ? "cursor-pointer hover:bg-muted/40 active:bg-muted/60" : ""}`}
+                          role={canOpen ? "button" : undefined}
+                          tabIndex={canOpen ? 0 : undefined}
+                          onClick={canOpen ? openAssessment : undefined}
+                          onKeyDown={canOpen ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openAssessment(); } } : undefined}
+                          title={canOpen ? t("pro.view_full_assessment") : undefined}
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold text-foreground">
+                              {new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                            </p>
+                            {isInProgress && (
+                              <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-blue-300 text-blue-700 bg-blue-50">
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                {language === "pt" ? "Em andamento" : "In progress"}
+                              </Badge>
+                            )}
+                            {isArchived && (
+                              <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-muted-foreground/30 text-muted-foreground bg-muted/30">
+                                <Archive className="h-3 w-3 mr-1" />
+                                {language === "pt" ? "Arquivada" : "Archived"}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {a.pain_score != null && <span>Dor: {a.pain_score}/10</span>}
+                            {a.diagnosis?.hypothesis && (
+                              <span className="line-clamp-1">• {a.diagnosis.hypothesis}</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <div className="flex items-center gap-1 shrink-0">
                       {isInProgress && resumeLink && !readOnly && !isArchived && (
                         <Button
