@@ -250,13 +250,21 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
                     {formatSize(f.file_size_bytes)} · {new Date(f.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownload(f)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownload(f)} title={lang === "pt" ? "Baixar" : "Download"}>
                   <Download className="h-3.5 w-3.5" />
                 </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleShare(f)} title={lang === "pt" ? "Compartilhar (link 1h)" : "Share (1h link)"}>
+                  <Share2 className="h-3.5 w-3.5" />
+                </Button>
                 {!readOnly && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(f)}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setRenameTarget(f); setRenameValue(f.file_name.replace(/\.pdf$/i, "")); }} title={lang === "pt" ? "Renomear" : "Rename"}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(f)} title={lang === "pt" ? "Excluir" : "Delete"}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </>
                 )}
               </div>
             ))}
