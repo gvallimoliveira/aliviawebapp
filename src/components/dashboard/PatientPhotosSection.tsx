@@ -358,6 +358,28 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!renameTarget} onOpenChange={(o) => { if (!o) { setRenameTarget(null); setRenameValue(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isPt ? "Renomear foto" : "Rename photo"}</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            placeholder={isPt ? "Novo nome" : "New name"}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRenameTarget(null); setRenameValue(""); }}>
+              {isPt ? "Cancelar" : "Cancel"}
+            </Button>
+            <Button onClick={handleRename} disabled={renaming || !renameValue.trim()}>
+              {renaming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (isPt ? "Salvar" : "Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
