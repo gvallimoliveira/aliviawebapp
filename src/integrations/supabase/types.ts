@@ -1494,6 +1494,36 @@ export type Database = {
           },
         ]
       }
+      short_links: {
+        Row: {
+          bucket: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          file_path: string
+          id: string
+          slug: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          created_by: string
+          expires_at: string
+          file_path: string
+          id?: string
+          slug: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          file_path?: string
+          id?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       support_tickets: {
         Row: {
           admin_reply: string | null

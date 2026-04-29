@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.accept-clinic-invite]
 verify_jwt = false
+
+[functions.s]
+verify_jwt = false
