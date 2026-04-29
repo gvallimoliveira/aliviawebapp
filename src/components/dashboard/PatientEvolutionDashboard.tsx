@@ -472,6 +472,10 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isClinicMode } = useClinic();
+  const backTab = isClinicMode ? "patients" : "professional";
+  const buildAssessmentViewUrl = (assessmentId: string, email?: string | null) =>
+    `/assessment/view/${assessmentId}?from=professional&tab=${backTab}${email ? `&patient=${encodeURIComponent(email)}` : ""}`;
   const [searchParams] = useSearchParams();
   const initialPatient = searchParams.get("patient");
   const [selectedEmail, setSelectedEmail] = useState<string | null>(initialPatient);
