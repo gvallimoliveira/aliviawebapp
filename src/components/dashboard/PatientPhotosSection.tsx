@@ -145,7 +145,55 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
     loadPhotos();
   };
 
-  const categoryLabel = (cat: string) => {
+  const handleShare = async (p: PatientPhoto) => {
+    const { data, error } = await supabase.storage
+      .from("patient-photos")
+      .createSignedUrl(p.file_path, 60 * 60);
+    if (error || !data?.signedUrl) {
+      toast({ title: isPt ? "Erro ao gerar link" : "Error generating link", variant: "destructive" });
+      return;
+    }
+    const url = data.signedUrl;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: p.file_name, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast({ title: isPt ? "Link copiado (válido por 1h)" : "Link copied (valid 1h)" });
+      }
+    } catch {}
+  };
+
+  const handleDownload = async (p: PatientPhoto) => {
+    const { data, error } = await supabase.storage
+      .from("patient-photos")
+      .createSignedUrl(p.file_path, 60);
+    if (error || !data?.signedUrl) {
+      toast({ title: isPt ? "Erro ao gerar link" : "Error generating link", variant: "destructive" });
+      return;
+    }
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const handleRename = async () => {
+    if (!renameTarget || !renameValue.trim()) return;
+    setRenaming(true);
+    const ext = (renameTarget.file_name.match(/\.[a-z0-9]+$/i)?.[0] || "").toLowerCase();
+    let newName = renameValue.trim();
+    if (ext && !new RegExp(ext + "$", "i").test(newName)) newName += ext;
+    const { error } = await (supabase.from("patient_photos" as any) as any)
+      .update({ file_name: newName })
+      .eq("id", renameTarget.id);
+    setRenaming(false);
+    if (error) {
+      toast({ title: isPt ? "Erro ao renomear" : "Rename error", variant: "destructive" });
+      return;
+    }
+    toast({ title: isPt ? "Foto renomeada" : "Photo renamed" });
+    setRenameTarget(null);
+    setRenameValue("");
+    loadPhotos();
+  };
     if (cat === "postural") return isPt ? "Postural" : "Postural";
     if (cat === "follow_up") return isPt ? "Acompanhamento" : "Follow-up";
     return isPt ? "Outro" : "Other";
