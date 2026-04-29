@@ -1777,7 +1777,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
               variant="outline"
               size="sm"
               className="gap-1.5 shrink-0"
-              onClick={() => navigate(`/assessment/view/${latestWithDiagnosis.id}?from=professional&patient=${encodeURIComponent(patient.email)}`)}
+              onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}
             >
               <FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}
             </Button>
@@ -2202,7 +2202,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                     variant="outline"
                     size="sm"
                     className="gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                    onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
+                    onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}
                   >
                     {t("pro.view_treatment")}
                     <ChevronRight className="h-3 w-3" />
@@ -2331,7 +2331,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       <AssessmentTimeline
         assessments={patient.assessments}
         onSelect={(id) =>
-          navigate(`/assessment/view/${id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)
+          navigate(buildAssessmentViewUrl(id, selectedEmail))
         }
       />
 
@@ -2513,7 +2513,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                   <div className="flex items-center justify-between gap-2">
                     {(() => {
                       const canOpen = !!a.diagnosis && !isArchived;
-                      const openAssessment = () => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`);
+                      const openAssessment = () => navigate(buildAssessmentViewUrl(a.id, selectedEmail));
                       return (
                         <div
                           className={`space-y-0.5 min-w-0 rounded-md -mx-1 px-1 py-0.5 transition-colors ${canOpen ? "cursor-pointer hover:bg-muted/40 active:bg-muted/60" : ""}`}
@@ -2578,7 +2578,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                           size="icon"
                           className="h-8 w-8"
                           title={t("pro.view_full_assessment")}
-                          onClick={() => navigate(`/assessment/view/${a.id}?from=professional&patient=${encodeURIComponent(selectedEmail || "")}`)}
+                          onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}
                         >
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </Button>
