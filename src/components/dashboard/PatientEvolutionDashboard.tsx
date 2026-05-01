@@ -143,6 +143,8 @@ interface PatientEvolutionDashboardProps {
   onShareWhatsApp?: (assessment: any) => void;
   isDemo?: boolean;
   readOnly?: boolean;
+  /** When true together with readOnly, exposes the "Add patient" button (e.g. clinic secretary). */
+  canAddPatient?: boolean;
 }
 
 interface PatientGroup {
