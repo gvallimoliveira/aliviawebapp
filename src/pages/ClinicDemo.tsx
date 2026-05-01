@@ -247,7 +247,7 @@ const ClinicDemo = () => {
             {/* Schedule grid */}
             <Card>
               <ScrollArea className="w-full">
-                <div className="min-w-[600px]">
+                <div style={{ minWidth: `${60 + daysToShow * 110}px` }}>
                   {/* Days header */}
                   <div className="grid border-b border-border/60 sticky top-0 bg-background z-10" style={{ gridTemplateColumns: `60px repeat(${daysToShow}, 1fr)` }}>
                     <div className="p-2 text-[10px] text-muted-foreground border-r border-border/40" />
@@ -280,7 +280,7 @@ const ClinicDemo = () => {
                             <div
                               key={dateStr}
                               className={cn(
-                                "p-0.5 min-h-[52px] border-r border-border/40 last:border-r-0 transition-colors",
+                                "p-0.5 min-h-[52px] border-r border-border/40 last:border-r-0 transition-colors overflow-hidden min-w-0",
                                 isToday(day) && "bg-primary/[0.02]",
                                 isDropping && "bg-primary/10 ring-1 ring-primary/30 rounded"
                               )}
@@ -288,7 +288,7 @@ const ClinicDemo = () => {
                               onDragLeave={() => setDropTarget(null)}
                               onDrop={(e) => { e.preventDefault(); handleDrop(dateStr, hour); }}
                             >
-                              <div className={cn("flex gap-0.5", slotApts.length > 1 ? "flex-row" : "flex-col")}>
+                              <div className={cn("flex gap-0.5 w-full min-w-0", slotApts.length > 1 ? "flex-row" : "flex-col")}>
                                 {slotApts.map(apt => {
                                   const Icon = TYPE_ICONS[apt.type] || MapPin;
                                   const colorClass = TYPE_COLORS[apt.type] || TYPE_COLORS.in_person;
@@ -301,15 +301,15 @@ const ClinicDemo = () => {
                                       onDragEnd={() => { setDraggedApt(null); setDropTarget(null); }}
                                       onClick={() => setSelectedApt(apt)}
                                       className={cn(
-                                        "p-1.5 rounded-md border cursor-pointer hover:shadow-sm transition-all text-left group",
+                                        "p-1.5 rounded-md border cursor-pointer hover:shadow-sm transition-all text-left group overflow-hidden",
                                         colorClass,
-                                        slotApts.length > 1 ? "flex-1 min-w-0" : "w-full",
+                                        slotApts.length > 1 ? "flex-1 min-w-0" : "w-full min-w-0",
                                         draggedApt === apt.id && "opacity-50"
                                       )}
                                     >
-                                      <div className="flex items-center gap-1 mb-0.5">
+                                      <div className="flex items-center gap-1 mb-0.5 min-w-0">
                                         <GripVertical className="h-2.5 w-2.5 opacity-0 group-hover:opacity-50 shrink-0 cursor-grab" />
-                                        <span className="text-[10px] font-semibold tabular-nums">{apt.appointment_time.slice(0, 5)}</span>
+                                        <span className="text-[10px] font-semibold tabular-nums shrink-0">{apt.appointment_time.slice(0, 5)}</span>
                                         <Icon className="h-2.5 w-2.5 shrink-0" />
                                       </div>
                                       <p className="text-[10px] font-medium truncate">{apt.patient_name}</p>

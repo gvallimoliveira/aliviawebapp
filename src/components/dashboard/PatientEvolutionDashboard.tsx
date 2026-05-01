@@ -143,6 +143,8 @@ interface PatientEvolutionDashboardProps {
   onShareWhatsApp?: (assessment: any) => void;
   isDemo?: boolean;
   readOnly?: boolean;
+  /** When true together with readOnly, exposes the "Add patient" button (e.g. clinic secretary). */
+  canAddPatient?: boolean;
 }
 
 interface PatientGroup {
@@ -461,7 +463,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
 };
 
 
-const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient }: PatientEvolutionDashboardProps) => {
   // Normalize legacy snake_case anamnesis keys + test_results object→array shape
   // so older manual assessments are fully readable in the UI.
   const assessments = useMemo(
@@ -1307,6 +1309,19 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                 <span className="hidden sm:inline">{t("pro.export_pdfs")}</span>
               </Button>
             </div>
+            )}
+            {readOnly && canAddPatient && (
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 rounded-xl"
+                  onClick={() => { setEditPatientData(null); setAddPatientOpen(true); }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{t("pro.add_patient")}</span>
+                </Button>
+              </div>
             )}
           </div>
           <div className="flex items-center gap-2">
