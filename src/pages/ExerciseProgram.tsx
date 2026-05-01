@@ -112,8 +112,111 @@ const ExerciseProgram = () => {
     return match ? `https://www.youtube-nocookie.com/embed/${match[1]}?rel=0&modestbranding=1&playsinline=1` : null;
   };
 
-  const getYouTubeSearchUrl = (name: string) => {
-    return `https://www.youtube.com/results?search_query=${encodeURIComponent("fisioterapia exercício " + name)}`;
+  // Normalize accents/punctuation and expand common physiotherapy terms so the
+  // YouTube search returns the correct exercise demonstration regardless of
+  // how the exercise was named in the library.
+  const buildYouTubeQuery = (name: string, category?: string, bodyRegion?: string) => {
+    const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const cleanName = stripAccents(name)
+      .replace(/\(.*?\)/g, " ")        // drop parenthetical alt names
+      .replace(/[^\w\s\-/]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+
+    // Synonym / disambiguation map (keyword -> extra terms appended to query)
+    const synonyms: Record<string, string> = {
+      // Spine regions
+      "lombar": "coluna lombar low back",
+      "cervical": "coluna cervical pescoço neck",
+      "toracica": "coluna torácica thoracic",
+      "chin tuck": "retração cervical cervical",
+      "gato vaca": "cat cow mobilidade coluna",
+      "bird dog": "estabilização lombar core",
+      "ponte": "glute bridge glúteo lombar",
+      "hiperextensao": "extensão lombar banco romano",
+      // Hip / glute
+      "concha": "clamshell glúteo médio quadril",
+      "clamshell": "glúteo médio quadril",
+      "piriforme": "alongamento piriforme quadril",
+      "abdução de quadril": "glúteo médio quadril",
+      // Knee / leg
+      "agachamento": "squat membros inferiores",
+      "afundo": "lunge avanço membros inferiores",
+      "lunge": "afundo membros inferiores",
+      "bulgaro": "split squat búlgaro membros inferiores",
+      "stiff": "stiff levantamento terra romeno posterior coxa",
+      "leg press": "leg press quadriceps",
+      "cadeira extensora": "extensão de joelho quadríceps",
+      "cadeira flexora": "flexão de joelho posterior coxa",
+      // Shoulder / upper limb
+      "pendular": "Codman ombro mobilização",
+      "rotação externa": "rotador externo manguito rotador ombro",
+      "face pull": "ombro posterior manguito rotador",
+      "codman": "pendular ombro mobilização",
+      "puxada": "lat pulldown dorsal",
+      "remada": "rowing dorsal",
+      // Foot / ankle
+      "short foot": "arco plantar pé exercício",
+      "dorsiflexao": "tornozelo dorsiflexão mobilidade",
+      "panturrilha": "calf raise tríceps sural",
+      "alfabeto": "mobilidade tornozelo",
+      // Generic stretching / strengthening cues
+      "alongamento": "stretching alongamento",
+      "mobilização": "mobilidade articular",
+      "propriocepcao": "equilíbrio propriocepção",
+    };
+
+    // Region anchors based on bodyRegion column (e.g., "lumbar", "knee", "shoulder")
+    const regionMap: Record<string, string> = {
+      lumbar: "lombar coluna",
+      cervical: "cervical pescoço",
+      thoracic: "torácica coluna",
+      shoulder: "ombro",
+      elbow: "cotovelo",
+      wrist: "punho",
+      hip: "quadril",
+      knee: "joelho",
+      ankle: "tornozelo pé",
+      foot: "pé",
+      core: "core abdômen",
+    };
+
+    const categoryMap: Record<string, string> = {
+      strengthening: "fortalecimento",
+      stretching: "alongamento",
+      mobility: "mobilidade",
+      proprioception: "propriocepção equilíbrio",
+    };
+
+    const extras: string[] = [];
+    for (const [keyword, expansion] of Object.entries(synonyms)) {
+      if (cleanName.includes(keyword)) extras.push(expansion);
+    }
+    if (bodyRegion && regionMap[bodyRegion.toLowerCase()]) extras.push(regionMap[bodyRegion.toLowerCase()]);
+    if (category && categoryMap[category.toLowerCase()]) extras.push(categoryMap[category.toLowerCase()]);
+
+    // Always anchor with physio context + execution cue, dedupe tokens.
+    const baseAnchors = "fisioterapia exercicio execução correta";
+    const raw = `${cleanName} ${extras.join(" ")} ${baseAnchors}`;
+    const seen = new Set<string>();
+    const dedup = raw
+      .split(/\s+/)
+      .filter((tok) => {
+        const k = tok.toLowerCase();
+        if (!k || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      })
+      .join(" ");
+
+    return dedup;
+  };
+
+  const getYouTubeSearchUrl = (name: string, category?: string, bodyRegion?: string) => {
+    const query = buildYouTubeQuery(name, category, bodyRegion);
+    // gl=BR + hl=pt-BR aumenta a chance de vídeos em português/Brasil aparecerem primeiro
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&gl=BR&hl=pt-BR`;
   };
 
   const t = (key: string) => {
@@ -269,7 +372,7 @@ const ExerciseProgram = () => {
                             {isExpanded ? t("hide_video") : t("watch_video")}
                           </Button>
                           <a
-                            href={getYouTubeSearchUrl(itemName)}
+                            href={getYouTubeSearchUrl(itemName, item.exercise?.category, item.exercise?.body_region)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline inline-flex items-center gap-1"
@@ -292,7 +395,7 @@ const ExerciseProgram = () => {
                             <p className="text-[10px] text-muted-foreground mt-1">
                               {t("video_unavailable")}{" "}
                               <a
-                                href={getYouTubeSearchUrl(itemName)}
+                                href={getYouTubeSearchUrl(itemName, item.exercise?.category, item.exercise?.body_region)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-primary hover:underline"
@@ -305,7 +408,7 @@ const ExerciseProgram = () => {
                       </div>
                     ) : (
                       <a
-                        href={getYouTubeSearchUrl(itemName)}
+                        href={getYouTubeSearchUrl(itemName, item.exercise?.category, item.exercise?.body_region)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
