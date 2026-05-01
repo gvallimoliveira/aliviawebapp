@@ -1310,6 +1310,19 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
               </Button>
             </div>
             )}
+            {readOnly && canAddPatient && (
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 rounded-xl"
+                  onClick={() => { setEditPatientData(null); setAddPatientOpen(true); }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{t("pro.add_patient")}</span>
+                </Button>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
