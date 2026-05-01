@@ -1601,7 +1601,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                         <NotebookPen className="h-4 w-4 text-muted-foreground" />
                       </Button>
                     )}
-                    {!readOnly && (isHidden ? (
+                    {(!readOnly || canArchivePatient) && (isHidden ? (
                       <Button
                         variant="ghost"
                         size="icon"
