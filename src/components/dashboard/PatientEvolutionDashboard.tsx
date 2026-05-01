@@ -145,6 +145,8 @@ interface PatientEvolutionDashboardProps {
   readOnly?: boolean;
   /** When true together with readOnly, exposes the "Add patient" button (e.g. clinic secretary). */
   canAddPatient?: boolean;
+  /** When true together with readOnly, allows archiving/restoring patient cards (e.g. clinic secretary). */
+  canArchivePatient?: boolean;
 }
 
 interface PatientGroup {
@@ -463,7 +465,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
 };
 
 
-const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient }: PatientEvolutionDashboardProps) => {
   // Normalize legacy snake_case anamnesis keys + test_results object→array shape
   // so older manual assessments are fully readable in the UI.
   const assessments = useMemo(
@@ -544,15 +546,27 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   }, [clinicId, isDemo]);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
+  // For clinic context: read from clinic_hidden_patients (shared by all clinic members).
+  // For solo pro context: read from professional_hidden_patients.
   useEffect(() => {
-    if (!professionalId || isDemo) return;
+    if (isDemo) return;
+    if (clinicId) {
+      (supabase.from("clinic_hidden_patients" as any) as any)
+        .select("patient_email")
+        .eq("clinic_id", clinicId)
+        .then(({ data }: any) => {
+          if (data) setHiddenKeys(new Set(data.map((d: any) => d.patient_email)));
+        });
+      return;
+    }
+    if (!professionalId) return;
     (supabase.from("professional_hidden_patients" as any) as any)
       .select("patient_email")
       .eq("professional_id", professionalId)
       .then(({ data }: any) => {
         if (data) setHiddenKeys(new Set(data.map((d: any) => d.patient_email)));
       });
-  }, [professionalId, isDemo]);
+  }, [professionalId, isDemo, clinicId]);
 
   // Load patients from dedicated patients table
   useEffect(() => {
@@ -785,11 +799,18 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
   const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!professionalId || archiving || !groupKey) return;
+    if (archiving || !groupKey) return;
+    if (!clinicId && !professionalId) return;
     setArchiving(groupKey);
     try {
-      await (supabase.from("professional_hidden_patients" as any) as any)
-        .insert({ professional_id: professionalId, patient_email: groupKey });
+      if (clinicId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await (supabase.from("clinic_hidden_patients" as any) as any)
+          .insert({ clinic_id: clinicId, patient_email: groupKey, hidden_by: user?.id });
+      } else {
+        await (supabase.from("professional_hidden_patients" as any) as any)
+          .insert({ professional_id: professionalId, patient_email: groupKey });
+      }
       setHiddenKeys((prev) => new Set([...prev, groupKey]));
       toast({ title: "Paciente arquivado" });
     } catch (err: any) {
@@ -801,13 +822,21 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
   const handleRestorePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!professionalId || archiving || !groupKey) return;
+    if (archiving || !groupKey) return;
+    if (!clinicId && !professionalId) return;
     setArchiving(groupKey);
     try {
-      await (supabase.from("professional_hidden_patients" as any) as any)
-        .delete()
-        .eq("professional_id", professionalId)
-        .eq("patient_email", groupKey);
+      if (clinicId) {
+        await (supabase.from("clinic_hidden_patients" as any) as any)
+          .delete()
+          .eq("clinic_id", clinicId)
+          .eq("patient_email", groupKey);
+      } else {
+        await (supabase.from("professional_hidden_patients" as any) as any)
+          .delete()
+          .eq("professional_id", professionalId)
+          .eq("patient_email", groupKey);
+      }
       setHiddenKeys((prev) => { const s = new Set(prev); s.delete(groupKey); return s; });
       toast({ title: "Paciente restaurado" });
     } catch (err: any) {
@@ -1572,7 +1601,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                         <NotebookPen className="h-4 w-4 text-muted-foreground" />
                       </Button>
                     )}
-                    {!readOnly && (isHidden ? (
+                    {(!readOnly || canArchivePatient) && (isHidden ? (
                       <Button
                         variant="ghost"
                         size="icon"

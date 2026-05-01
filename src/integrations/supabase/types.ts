@@ -287,6 +287,30 @@ export type Database = {
           },
         ]
       }
+      clinic_hidden_patients: {
+        Row: {
+          clinic_id: string
+          hidden_at: string
+          hidden_by: string | null
+          id: string
+          patient_email: string
+        }
+        Insert: {
+          clinic_id: string
+          hidden_at?: string
+          hidden_by?: string | null
+          id?: string
+          patient_email: string
+        }
+        Update: {
+          clinic_id?: string
+          hidden_at?: string
+          hidden_by?: string | null
+          id?: string
+          patient_email?: string
+        }
+        Relationships: []
+      }
       clinic_invitations: {
         Row: {
           clinic_id: string
