@@ -108,7 +108,12 @@ const ExerciseProgram = () => {
 
   const getYouTubeEmbedUrl = (url: string) => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+    // Use youtube-nocookie domain + params that maximize embed availability across regions
+    return match ? `https://www.youtube-nocookie.com/embed/${match[1]}?rel=0&modestbranding=1&playsinline=1` : null;
+  };
+
+  const getYouTubeSearchUrl = (name: string) => {
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent("fisioterapia exercício " + name)}`;
   };
 
   const t = (key: string) => {
@@ -124,6 +129,8 @@ const ExerciseProgram = () => {
       freq: { pt: "Frequência", en: "Frequency", es: "Frecuencia" },
       watch_video: { pt: "Ver vídeo", en: "Watch video", es: "Ver video" },
       hide_video: { pt: "Ocultar vídeo", en: "Hide video", es: "Ocultar video" },
+      search_youtube: { pt: "Buscar no YouTube", en: "Search on YouTube", es: "Buscar en YouTube" },
+      video_unavailable: { pt: "Vídeo indisponível? Buscar alternativa", en: "Video unavailable? Search alternative", es: "¿Video no disponible? Buscar alternativa" },
     };
     return map[key]?.[language] || map[key]?.pt || key;
   };
@@ -249,29 +256,62 @@ const ExerciseProgram = () => {
                       <p className="text-xs text-muted-foreground italic">💡 {item.observations}</p>
                     )}
 
-                    {embedUrl && (
+                    {embedUrl ? (
                       <div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-1.5 text-xs text-primary p-0 h-auto"
-                          onClick={() => setExpandedVideo(isExpanded ? null : item.id)}
-                        >
-                          {isExpanded ? <ChevronUp className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                          {isExpanded ? t("hide_video") : t("watch_video")}
-                        </Button>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-xs text-primary p-0 h-auto"
+                            onClick={() => setExpandedVideo(isExpanded ? null : item.id)}
+                          >
+                            {isExpanded ? <ChevronUp className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                            {isExpanded ? t("hide_video") : t("watch_video")}
+                          </Button>
+                          <a
+                            href={getYouTubeSearchUrl(itemName)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline inline-flex items-center gap-1"
+                          >
+                            🔎 {t("search_youtube")}
+                          </a>
+                        </div>
                         {isExpanded && (
-                          <div className="mt-2 aspect-video rounded-lg overflow-hidden">
-                            <iframe
-                              src={embedUrl}
-                              className="w-full h-full"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                              title={itemName}
-                            />
-                          </div>
+                          <>
+                            <div className="mt-2 aspect-video rounded-lg overflow-hidden bg-muted">
+                              <iframe
+                                src={embedUrl}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                referrerPolicy="strict-origin-when-cross-origin"
+                                title={itemName}
+                              />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {t("video_unavailable")}{" "}
+                              <a
+                                href={getYouTubeSearchUrl(itemName)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                YouTube →
+                              </a>
+                            </p>
+                          </>
                         )}
                       </div>
+                    ) : (
+                      <a
+                        href={getYouTubeSearchUrl(itemName)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                      >
+                        <Play className="h-3 w-3" /> {t("search_youtube")}
+                      </a>
                     )}
                   </CardContent>
                 </Card>
