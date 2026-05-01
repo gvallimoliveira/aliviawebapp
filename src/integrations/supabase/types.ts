@@ -1647,6 +1647,33 @@ export type Database = {
         }
         Relationships: []
       }
+      youtube_video_cache: {
+        Row: {
+          duration_seconds: number | null
+          id: string
+          query_key: string
+          resolved_at: string
+          title: string | null
+          video_id: string
+        }
+        Insert: {
+          duration_seconds?: number | null
+          id?: string
+          query_key: string
+          resolved_at?: string
+          title?: string | null
+          video_id: string
+        }
+        Update: {
+          duration_seconds?: number | null
+          id?: string
+          query_key?: string
+          resolved_at?: string
+          title?: string | null
+          video_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       professionals_directory: {

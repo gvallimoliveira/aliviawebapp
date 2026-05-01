@@ -1,0 +1,1 @@
+DELETE FROM public.youtube_video_cache;

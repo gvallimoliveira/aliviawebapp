@@ -67,6 +67,9 @@ const ExerciseProgram = () => {
   const [expired, setExpired] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
+  // Per-item resolved video override (when the original is broken/blocked).
+  // Key = item.id, value = { videoId, title } or null while loading, false if failed.
+  const [resolvedVideos, setResolvedVideos] = useState<Record<string, { videoId: string; title?: string } | false | "loading">>({});
 
   useEffect(() => {
     if (!token) return;
@@ -102,6 +105,75 @@ const ExerciseProgram = () => {
     };
     load();
   }, [token]);
+
+  // Extract YouTube video ID from any common URL format
+  const extractVideoId = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    const m = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+  };
+
+  // For each item, validate the original video via oEmbed; if it fails or is
+  // missing, ask our edge function for the most likely replacement and cache
+  // the result in component state. This way the patient always sees a working
+  // embedded video instead of a generic search link.
+  useEffect(() => {
+    if (!items.length) return;
+    let cancelled = false;
+
+    const resolveItem = async (item: ExerciseItem) => {
+      const isCustom = !item.exercise;
+      const itemName = isCustom ? (item.custom_name || "Exercício") : (item.exercise!.name_pt || "");
+      const originalUrl = isCustom ? item.custom_video_url : item.exercise?.video_url;
+      const originalId = extractVideoId(originalUrl);
+
+      // 1. Try the original
+      if (originalId) {
+        try {
+          const oe = await fetch(
+            `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${originalId}&format=json`,
+            { method: "GET" }
+          );
+          if (oe.ok) return; // original works, nothing to do
+        } catch { /* fall through to resolver */ }
+      }
+
+      // 2. Ask our resolver
+      if (cancelled) return;
+      setResolvedVideos((prev) => ({ ...prev, [item.id]: "loading" }));
+      try {
+        const { data, error } = await supabase.functions.invoke("youtube-resolve", {
+          body: {
+            name: itemName,
+            category: item.exercise?.category || "",
+            bodyRegion: item.exercise?.body_region || "",
+          },
+        });
+        if (cancelled) return;
+        if (error || !data?.videoId) {
+          setResolvedVideos((prev) => ({ ...prev, [item.id]: false }));
+          return;
+        }
+        setResolvedVideos((prev) => ({
+          ...prev,
+          [item.id]: { videoId: data.videoId, title: data.title },
+        }));
+      } catch {
+        if (!cancelled) setResolvedVideos((prev) => ({ ...prev, [item.id]: false }));
+      }
+    };
+
+    // Validate sequentially-ish in small batches to be gentle
+    (async () => {
+      for (const item of items) {
+        if (cancelled) return;
+        await resolveItem(item);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [items]);
+
 
   const getName = (ex: any) => language === "en" ? (ex.name_en || ex.name_pt) : language === "es" ? (ex.name_es || ex.name_pt) : ex.name_pt;
   const getDesc = (ex: any) => language === "en" ? (ex.description_en || ex.description_pt) : language === "es" ? (ex.description_es || ex.description_pt) : ex.description_pt;
@@ -328,8 +400,23 @@ const ExerciseProgram = () => {
               const isCustom = !item.exercise;
               const itemName = isCustom ? (item.custom_name || "Exercício") : getName(item.exercise!);
               const videoUrl = isCustom ? item.custom_video_url : item.exercise?.video_url;
-              const embedUrl = videoUrl ? getYouTubeEmbedUrl(videoUrl) : null;
+              const originalEmbed = videoUrl ? getYouTubeEmbedUrl(videoUrl) : null;
+
+              // Pick resolved fallback (auto-selected best YouTube match) when set
+              const resolved = resolvedVideos[item.id];
+              const isLoadingResolved = resolved === "loading";
+              const resolvedFailed = resolved === false;
+              const resolvedVideo = resolved && typeof resolved === "object" ? resolved : null;
+              const resolvedEmbed = resolvedVideo
+                ? `https://www.youtube-nocookie.com/embed/${resolvedVideo.videoId}?rel=0&modestbranding=1&playsinline=1`
+                : null;
+
+              // Effective embed: prefer auto-resolved (means original was broken),
+              // otherwise the original. Hide entirely if resolver said "no_results".
+              const embedUrl = resolvedEmbed || (!resolvedFailed && !isLoadingResolved ? originalEmbed : null);
+              const isAutoResolved = !!resolvedEmbed;
               const isExpanded = expandedVideo === item.id;
+
               return (
                 <Card key={item.id} className="overflow-hidden">
                   <CardContent className="py-3 px-4 space-y-2">
@@ -371,40 +458,29 @@ const ExerciseProgram = () => {
                             {isExpanded ? <ChevronUp className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                             {isExpanded ? t("hide_video") : t("watch_video")}
                           </Button>
-                          <a
-                            href={getYouTubeSearchUrl(itemName, item.exercise?.category, item.exercise?.body_region)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline inline-flex items-center gap-1"
-                          >
-                            🔎 {t("search_youtube")}
-                          </a>
+                          {isAutoResolved && (
+                            <span className="text-[10px] text-muted-foreground italic">
+                              {language === "en" ? "auto-selected" : language === "es" ? "auto-seleccionado" : "selecionado automaticamente"}
+                            </span>
+                          )}
                         </div>
                         {isExpanded && (
-                          <>
-                            <div className="mt-2 aspect-video rounded-lg overflow-hidden bg-muted">
-                              <iframe
-                                src={embedUrl}
-                                className="w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                referrerPolicy="strict-origin-when-cross-origin"
-                                title={itemName}
-                              />
-                            </div>
-                            <p className="text-[10px] text-muted-foreground mt-1">
-                              {t("video_unavailable")}{" "}
-                              <a
-                                href={getYouTubeSearchUrl(itemName, item.exercise?.category, item.exercise?.body_region)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline"
-                              >
-                                YouTube →
-                              </a>
-                            </p>
-                          </>
+                          <div className="mt-2 aspect-video rounded-lg overflow-hidden bg-muted">
+                            <iframe
+                              src={embedUrl}
+                              className="w-full h-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              referrerPolicy="strict-origin-when-cross-origin"
+                              title={resolvedVideo?.title || itemName}
+                            />
+                          </div>
                         )}
+                      </div>
+                    ) : isLoadingResolved ? (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        {language === "en" ? "Finding the best video…" : language === "es" ? "Buscando el mejor video…" : "Buscando o melhor vídeo…"}
                       </div>
                     ) : (
                       <a
