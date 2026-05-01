@@ -400,8 +400,22 @@ const ExerciseProgram = () => {
               const isCustom = !item.exercise;
               const itemName = isCustom ? (item.custom_name || "Exercício") : getName(item.exercise!);
               const videoUrl = isCustom ? item.custom_video_url : item.exercise?.video_url;
-              const embedUrl = videoUrl ? getYouTubeEmbedUrl(videoUrl) : null;
+              const originalEmbed = videoUrl ? getYouTubeEmbedUrl(videoUrl) : null;
+
+              // Pick resolved fallback (auto-selected best YouTube match) when set
+              const resolved = resolvedVideos[item.id];
+              const isLoadingResolved = resolved === "loading";
+              const resolvedEmbed = resolved && resolved !== "loading" && resolved !== false
+                ? `https://www.youtube-nocookie.com/embed/${resolved.videoId}?rel=0&modestbranding=1&playsinline=1`
+                : null;
+
+              // Effective embed: original first, otherwise the auto-resolved one
+              const embedUrl = originalEmbed && resolved !== false && resolved !== "loading" && !resolvedEmbed
+                ? originalEmbed
+                : (resolvedEmbed || originalEmbed);
+              const isAutoResolved = !!resolvedEmbed;
               const isExpanded = expandedVideo === item.id;
+
               return (
                 <Card key={item.id} className="overflow-hidden">
                   <CardContent className="py-3 px-4 space-y-2">
@@ -443,40 +457,29 @@ const ExerciseProgram = () => {
                             {isExpanded ? <ChevronUp className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                             {isExpanded ? t("hide_video") : t("watch_video")}
                           </Button>
-                          <a
-                            href={getYouTubeSearchUrl(itemName, item.exercise?.category, item.exercise?.body_region)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline inline-flex items-center gap-1"
-                          >
-                            🔎 {t("search_youtube")}
-                          </a>
+                          {isAutoResolved && (
+                            <span className="text-[10px] text-muted-foreground italic">
+                              {language === "en" ? "auto-selected" : language === "es" ? "auto-seleccionado" : "selecionado automaticamente"}
+                            </span>
+                          )}
                         </div>
                         {isExpanded && (
-                          <>
-                            <div className="mt-2 aspect-video rounded-lg overflow-hidden bg-muted">
-                              <iframe
-                                src={embedUrl}
-                                className="w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                referrerPolicy="strict-origin-when-cross-origin"
-                                title={itemName}
-                              />
-                            </div>
-                            <p className="text-[10px] text-muted-foreground mt-1">
-                              {t("video_unavailable")}{" "}
-                              <a
-                                href={getYouTubeSearchUrl(itemName, item.exercise?.category, item.exercise?.body_region)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline"
-                              >
-                                YouTube →
-                              </a>
-                            </p>
-                          </>
+                          <div className="mt-2 aspect-video rounded-lg overflow-hidden bg-muted">
+                            <iframe
+                              src={embedUrl}
+                              className="w-full h-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              referrerPolicy="strict-origin-when-cross-origin"
+                              title={resolved && resolved !== "loading" && resolved !== false ? (resolved.title || itemName) : itemName}
+                            />
+                          </div>
                         )}
+                      </div>
+                    ) : isLoadingResolved ? (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        {language === "en" ? "Finding the best video…" : language === "es" ? "Buscando el mejor video…" : "Buscando o melhor vídeo…"}
                       </div>
                     ) : (
                       <a
