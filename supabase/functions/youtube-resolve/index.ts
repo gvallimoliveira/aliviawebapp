@@ -31,7 +31,7 @@ function parseDuration(text: string): number {
 async function searchYouTube(query: string): Promise<Candidate[]> {
   const url = `https://www.youtube.com/results?search_query=${
     encodeURIComponent(query)
-  }&gl=BR&hl=pt-BR&sp=EgIYAw%253D%253D`; // sp filter ~= 4-20min
+  }&gl=BR&hl=pt-BR`;
   const res = await fetch(url, {
     headers: {
       "User-Agent":
