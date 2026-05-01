@@ -546,15 +546,27 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   }, [clinicId, isDemo]);
 
   // Load hidden patients (stored as patient_email in DB, but used as groupKey)
+  // For clinic context: read from clinic_hidden_patients (shared by all clinic members).
+  // For solo pro context: read from professional_hidden_patients.
   useEffect(() => {
-    if (!professionalId || isDemo) return;
+    if (isDemo) return;
+    if (clinicId) {
+      (supabase.from("clinic_hidden_patients" as any) as any)
+        .select("patient_email")
+        .eq("clinic_id", clinicId)
+        .then(({ data }: any) => {
+          if (data) setHiddenKeys(new Set(data.map((d: any) => d.patient_email)));
+        });
+      return;
+    }
+    if (!professionalId) return;
     (supabase.from("professional_hidden_patients" as any) as any)
       .select("patient_email")
       .eq("professional_id", professionalId)
       .then(({ data }: any) => {
         if (data) setHiddenKeys(new Set(data.map((d: any) => d.patient_email)));
       });
-  }, [professionalId, isDemo]);
+  }, [professionalId, isDemo, clinicId]);
 
   // Load patients from dedicated patients table
   useEffect(() => {
