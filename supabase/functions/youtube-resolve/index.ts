@@ -81,11 +81,17 @@ function scoreCandidate(c: Candidate, nameTokens: string[]): number {
   const channel = stripAccents(c.channel);
   let score = 0;
 
-  // Title token matches
+  // Title token matches — heavily weighted; require core words to appear
+  let coreMatches = 0;
   for (const tok of nameTokens) {
     if (tok.length < 3) continue;
-    if (title.includes(tok)) score += 10;
+    if (title.includes(tok)) {
+      score += 15;
+      coreMatches++;
+    }
   }
+  // Strong bonus when most of the exercise name tokens appear
+  if (nameTokens.length > 0 && coreMatches / nameTokens.length >= 0.6) score += 25;
 
   // Physio context bonus
   const physioTerms = [
