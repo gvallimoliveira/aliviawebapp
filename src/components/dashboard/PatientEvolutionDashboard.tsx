@@ -799,11 +799,18 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
   const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!professionalId || archiving || !groupKey) return;
+    if (archiving || !groupKey) return;
+    if (!clinicId && !professionalId) return;
     setArchiving(groupKey);
     try {
-      await (supabase.from("professional_hidden_patients" as any) as any)
-        .insert({ professional_id: professionalId, patient_email: groupKey });
+      if (clinicId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await (supabase.from("clinic_hidden_patients" as any) as any)
+          .insert({ clinic_id: clinicId, patient_email: groupKey, hidden_by: user?.id });
+      } else {
+        await (supabase.from("professional_hidden_patients" as any) as any)
+          .insert({ professional_id: professionalId, patient_email: groupKey });
+      }
       setHiddenKeys((prev) => new Set([...prev, groupKey]));
       toast({ title: "Paciente arquivado" });
     } catch (err: any) {
@@ -815,13 +822,21 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
   const handleRestorePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!professionalId || archiving || !groupKey) return;
+    if (archiving || !groupKey) return;
+    if (!clinicId && !professionalId) return;
     setArchiving(groupKey);
     try {
-      await (supabase.from("professional_hidden_patients" as any) as any)
-        .delete()
-        .eq("professional_id", professionalId)
-        .eq("patient_email", groupKey);
+      if (clinicId) {
+        await (supabase.from("clinic_hidden_patients" as any) as any)
+          .delete()
+          .eq("clinic_id", clinicId)
+          .eq("patient_email", groupKey);
+      } else {
+        await (supabase.from("professional_hidden_patients" as any) as any)
+          .delete()
+          .eq("professional_id", professionalId)
+          .eq("patient_email", groupKey);
+      }
       setHiddenKeys((prev) => { const s = new Set(prev); s.delete(groupKey); return s; });
       toast({ title: "Paciente restaurado" });
     } catch (err: any) {
