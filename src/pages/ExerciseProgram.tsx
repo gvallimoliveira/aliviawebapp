@@ -256,29 +256,62 @@ const ExerciseProgram = () => {
                       <p className="text-xs text-muted-foreground italic">💡 {item.observations}</p>
                     )}
 
-                    {embedUrl && (
+                    {embedUrl ? (
                       <div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-1.5 text-xs text-primary p-0 h-auto"
-                          onClick={() => setExpandedVideo(isExpanded ? null : item.id)}
-                        >
-                          {isExpanded ? <ChevronUp className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                          {isExpanded ? t("hide_video") : t("watch_video")}
-                        </Button>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-xs text-primary p-0 h-auto"
+                            onClick={() => setExpandedVideo(isExpanded ? null : item.id)}
+                          >
+                            {isExpanded ? <ChevronUp className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                            {isExpanded ? t("hide_video") : t("watch_video")}
+                          </Button>
+                          <a
+                            href={getYouTubeSearchUrl(itemName)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline inline-flex items-center gap-1"
+                          >
+                            🔎 {t("search_youtube")}
+                          </a>
+                        </div>
                         {isExpanded && (
-                          <div className="mt-2 aspect-video rounded-lg overflow-hidden">
-                            <iframe
-                              src={embedUrl}
-                              className="w-full h-full"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                              title={itemName}
-                            />
-                          </div>
+                          <>
+                            <div className="mt-2 aspect-video rounded-lg overflow-hidden bg-muted">
+                              <iframe
+                                src={embedUrl}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                referrerPolicy="strict-origin-when-cross-origin"
+                                title={itemName}
+                              />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {t("video_unavailable")}{" "}
+                              <a
+                                href={getYouTubeSearchUrl(itemName)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                YouTube →
+                              </a>
+                            </p>
+                          </>
                         )}
                       </div>
+                    ) : (
+                      <a
+                        href={getYouTubeSearchUrl(itemName)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                      >
+                        <Play className="h-3 w-3" /> {t("search_youtube")}
+                      </a>
                     )}
                   </CardContent>
                 </Card>
