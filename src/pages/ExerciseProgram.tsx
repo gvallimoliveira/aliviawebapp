@@ -472,7 +472,7 @@ const ExerciseProgram = () => {
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                               allowFullScreen
                               referrerPolicy="strict-origin-when-cross-origin"
-                              title={resolved && resolved !== "loading" && resolved !== false ? (resolved.title || itemName) : itemName}
+                              title={resolvedVideo?.title || itemName}
                             />
                           </div>
                         )}
