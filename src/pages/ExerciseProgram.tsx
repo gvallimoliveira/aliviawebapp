@@ -405,14 +405,15 @@ const ExerciseProgram = () => {
               // Pick resolved fallback (auto-selected best YouTube match) when set
               const resolved = resolvedVideos[item.id];
               const isLoadingResolved = resolved === "loading";
-              const resolvedEmbed = resolved && resolved !== "loading" && resolved !== false
-                ? `https://www.youtube-nocookie.com/embed/${resolved.videoId}?rel=0&modestbranding=1&playsinline=1`
+              const resolvedFailed = resolved === false;
+              const resolvedVideo = resolved && typeof resolved === "object" ? resolved : null;
+              const resolvedEmbed = resolvedVideo
+                ? `https://www.youtube-nocookie.com/embed/${resolvedVideo.videoId}?rel=0&modestbranding=1&playsinline=1`
                 : null;
 
-              // Effective embed: original first, otherwise the auto-resolved one
-              const embedUrl = originalEmbed && resolved !== false && resolved !== "loading" && !resolvedEmbed
-                ? originalEmbed
-                : (resolvedEmbed || originalEmbed);
+              // Effective embed: prefer auto-resolved (means original was broken),
+              // otherwise the original. Hide entirely if resolver said "no_results".
+              const embedUrl = resolvedEmbed || (!resolvedFailed && !isLoadingResolved ? originalEmbed : null);
               const isAutoResolved = !!resolvedEmbed;
               const isExpanded = expandedVideo === item.id;
 
