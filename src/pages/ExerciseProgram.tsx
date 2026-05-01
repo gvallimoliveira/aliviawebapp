@@ -108,7 +108,12 @@ const ExerciseProgram = () => {
 
   const getYouTubeEmbedUrl = (url: string) => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+    // Use youtube-nocookie domain + params that maximize embed availability across regions
+    return match ? `https://www.youtube-nocookie.com/embed/${match[1]}?rel=0&modestbranding=1&playsinline=1` : null;
+  };
+
+  const getYouTubeSearchUrl = (name: string) => {
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent("fisioterapia exercício " + name)}`;
   };
 
   const t = (key: string) => {
