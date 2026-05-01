@@ -129,6 +129,8 @@ const ExerciseProgram = () => {
       freq: { pt: "Frequência", en: "Frequency", es: "Frecuencia" },
       watch_video: { pt: "Ver vídeo", en: "Watch video", es: "Ver video" },
       hide_video: { pt: "Ocultar vídeo", en: "Hide video", es: "Ocultar video" },
+      search_youtube: { pt: "Buscar no YouTube", en: "Search on YouTube", es: "Buscar en YouTube" },
+      video_unavailable: { pt: "Vídeo indisponível? Buscar alternativa", en: "Video unavailable? Search alternative", es: "¿Video no disponible? Buscar alternativa" },
     };
     return map[key]?.[language] || map[key]?.pt || key;
   };
