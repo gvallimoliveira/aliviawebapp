@@ -352,7 +352,7 @@ const ClinicSecretaryDashboard = () => {
       {/* Analytics */}
       <ProAnalyticsCharts assessments={filteredAssessments} />
 
-      {/* Patient list — read-only with ability to add patients */}
+      {/* Patient list — read-only with ability to add and archive patients */}
       {therapists.length > 0 && (
         <DashboardErrorBoundary>
           <PatientEvolutionDashboard
@@ -362,6 +362,7 @@ const ClinicSecretaryDashboard = () => {
             isDemo={false}
             readOnly
             canAddPatient
+            canArchivePatient
             clinicId={activeClinic?.clinic_id}
             clinicLogoUrl={activeClinic?.logo_url || undefined}
             clinicName={activeClinic?.clinic_name || undefined}
