@@ -145,6 +145,8 @@ interface PatientEvolutionDashboardProps {
   readOnly?: boolean;
   /** When true together with readOnly, exposes the "Add patient" button (e.g. clinic secretary). */
   canAddPatient?: boolean;
+  /** When true together with readOnly, allows archiving/restoring patient cards (e.g. clinic secretary). */
+  canArchivePatient?: boolean;
 }
 
 interface PatientGroup {
