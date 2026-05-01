@@ -465,7 +465,7 @@ const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments
 };
 
 
-const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient }: PatientEvolutionDashboardProps) => {
   // Normalize legacy snake_case anamnesis keys + test_results object→array shape
   // so older manual assessments are fully readable in the UI.
   const assessments = useMemo(
