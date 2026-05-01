@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.s]
 verify_jwt = false
+
+[functions.youtube-resolve]
+verify_jwt = false
