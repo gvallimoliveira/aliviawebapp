@@ -372,7 +372,7 @@ const ExerciseProgram = () => {
                             {isExpanded ? t("hide_video") : t("watch_video")}
                           </Button>
                           <a
-                            href={getYouTubeSearchUrl(itemName)}
+                            href={getYouTubeSearchUrl(itemName, item.exercise?.category, item.exercise?.body_region)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline inline-flex items-center gap-1"
@@ -395,7 +395,7 @@ const ExerciseProgram = () => {
                             <p className="text-[10px] text-muted-foreground mt-1">
                               {t("video_unavailable")}{" "}
                               <a
-                                href={getYouTubeSearchUrl(itemName)}
+                                href={getYouTubeSearchUrl(itemName, item.exercise?.category, item.exercise?.body_region)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-primary hover:underline"
@@ -408,7 +408,7 @@ const ExerciseProgram = () => {
                       </div>
                     ) : (
                       <a
-                        href={getYouTubeSearchUrl(itemName)}
+                        href={getYouTubeSearchUrl(itemName, item.exercise?.category, item.exercise?.body_region)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
