@@ -67,6 +67,9 @@ const ExerciseProgram = () => {
   const [expired, setExpired] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
+  // Per-item resolved video override (when the original is broken/blocked).
+  // Key = item.id, value = { videoId, title } or null while loading, false if failed.
+  const [resolvedVideos, setResolvedVideos] = useState<Record<string, { videoId: string; title?: string } | false | "loading">>({});
 
   useEffect(() => {
     if (!token) return;
