@@ -106,6 +106,75 @@ const ExerciseProgram = () => {
     load();
   }, [token]);
 
+  // Extract YouTube video ID from any common URL format
+  const extractVideoId = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    const m = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+  };
+
+  // For each item, validate the original video via oEmbed; if it fails or is
+  // missing, ask our edge function for the most likely replacement and cache
+  // the result in component state. This way the patient always sees a working
+  // embedded video instead of a generic search link.
+  useEffect(() => {
+    if (!items.length) return;
+    let cancelled = false;
+
+    const resolveItem = async (item: ExerciseItem) => {
+      const isCustom = !item.exercise;
+      const itemName = isCustom ? (item.custom_name || "Exercício") : (item.exercise!.name_pt || "");
+      const originalUrl = isCustom ? item.custom_video_url : item.exercise?.video_url;
+      const originalId = extractVideoId(originalUrl);
+
+      // 1. Try the original
+      if (originalId) {
+        try {
+          const oe = await fetch(
+            `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${originalId}&format=json`,
+            { method: "GET" }
+          );
+          if (oe.ok) return; // original works, nothing to do
+        } catch { /* fall through to resolver */ }
+      }
+
+      // 2. Ask our resolver
+      if (cancelled) return;
+      setResolvedVideos((prev) => ({ ...prev, [item.id]: "loading" }));
+      try {
+        const { data, error } = await supabase.functions.invoke("youtube-resolve", {
+          body: {
+            name: itemName,
+            category: item.exercise?.category || "",
+            bodyRegion: item.exercise?.body_region || "",
+          },
+        });
+        if (cancelled) return;
+        if (error || !data?.videoId) {
+          setResolvedVideos((prev) => ({ ...prev, [item.id]: false }));
+          return;
+        }
+        setResolvedVideos((prev) => ({
+          ...prev,
+          [item.id]: { videoId: data.videoId, title: data.title },
+        }));
+      } catch {
+        if (!cancelled) setResolvedVideos((prev) => ({ ...prev, [item.id]: false }));
+      }
+    };
+
+    // Validate sequentially-ish in small batches to be gentle
+    (async () => {
+      for (const item of items) {
+        if (cancelled) return;
+        await resolveItem(item);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [items]);
+
+
   const getName = (ex: any) => language === "en" ? (ex.name_en || ex.name_pt) : language === "es" ? (ex.name_es || ex.name_pt) : ex.name_pt;
   const getDesc = (ex: any) => language === "en" ? (ex.description_en || ex.description_pt) : language === "es" ? (ex.description_es || ex.description_pt) : ex.description_pt;
 
