@@ -247,7 +247,7 @@ const ClinicDemo = () => {
             {/* Schedule grid */}
             <Card>
               <ScrollArea className="w-full">
-                <div className="min-w-[600px]">
+                <div style={{ minWidth: `${60 + daysToShow * 110}px` }}>
                   {/* Days header */}
                   <div className="grid border-b border-border/60 sticky top-0 bg-background z-10" style={{ gridTemplateColumns: `60px repeat(${daysToShow}, 1fr)` }}>
                     <div className="p-2 text-[10px] text-muted-foreground border-r border-border/40" />
