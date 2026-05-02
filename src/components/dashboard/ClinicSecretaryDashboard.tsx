@@ -342,23 +342,28 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
         </Card>
       </div>
 
-      {/* Feedback Survey link generator */}
-      {activeClinic?.clinic_id && (
-        <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={lang} />
-      )}
+      {/* Owner/secretary-only widgets */}
+      {showPrivileged && (
+        <>
+          {/* Feedback Survey link generator */}
+          {activeClinic?.clinic_id && (
+            <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={lang} />
+          )}
 
-      {/* Feedback Results */}
-      {activeClinic?.clinic_id && (
-        <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={lang} />
-      )}
+          {/* Feedback Results */}
+          {activeClinic?.clinic_id && (
+            <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={lang} />
+          )}
 
-      {/* Secretary Reports */}
-      {activeClinic?.clinic_id && (
-        <SecretaryReportsCard clinicId={activeClinic.clinic_id} lang={lang} />
-      )}
+          {/* Secretary Reports */}
+          {activeClinic?.clinic_id && (
+            <SecretaryReportsCard clinicId={activeClinic.clinic_id} lang={lang} />
+          )}
 
-      {/* Analytics */}
-      <ProAnalyticsCharts assessments={filteredAssessments} />
+          {/* Analytics */}
+          <ProAnalyticsCharts assessments={filteredAssessments} />
+        </>
+      )}
 
       {/* Patient list — read-only with ability to add and archive patients */}
       {therapists.length > 0 && (
