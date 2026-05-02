@@ -43,6 +43,8 @@ interface ClinicContextType {
   isClinicSecretary: boolean;
   isClinicTherapist: boolean;
   canManageClinic: boolean;
+  // Pro demo: clinic therapist without own PRO profile can preview the autonomous mode
+  canAccessProDemo: boolean;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
