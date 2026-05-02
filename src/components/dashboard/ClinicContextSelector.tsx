@@ -1,10 +1,11 @@
 import { useClinic } from "@/contexts/ClinicContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Building2, User, Stethoscope } from "lucide-react";
 
 const ClinicContextSelector = () => {
-  const { memberships, activeClinic, activeContext, setActiveContext, hasProfessionalProfile, availableContextsCount } = useClinic();
+  const { memberships, activeClinic, activeContext, setActiveContext, hasProfessionalProfile, availableContextsCount, canAccessProDemo } = useClinic();
   const { language } = useLanguage();
 
   // Hide selector when only one context exists
@@ -12,19 +13,21 @@ const ClinicContextSelector = () => {
 
   const lang = language as "pt" | "en" | "es";
   const labels = {
-    pt: { solo: "Conta pessoal", pro: "Profissional autônomo" },
-    en: { solo: "Personal account", pro: "Autonomous professional" },
-    es: { solo: "Cuenta personal", pro: "Profesional autónomo" },
+    pt: { solo: "Conta pessoal", pro: "Profissional autônomo", demo: "Demo" },
+    en: { solo: "Personal account", pro: "Autonomous professional", demo: "Demo" },
+    es: { solo: "Cuenta personal", pro: "Profesional autónomo", demo: "Demo" },
   }[lang];
 
   const currentValue =
     activeContext === "clinic" && activeClinic ? activeClinic.clinic_id :
     activeContext === "professional" ? "pro" :
+    activeContext === "professional_demo" ? "pro_demo" :
     "solo";
 
   const handleChange = (v: string) => {
     if (v === "solo") setActiveContext("personal");
     else if (v === "pro") setActiveContext("professional");
+    else if (v === "pro_demo") setActiveContext("professional_demo");
     else setActiveContext("clinic", v);
   };
 
@@ -46,6 +49,17 @@ const ClinicContextSelector = () => {
               <span className="flex items-center gap-2">
                 <Stethoscope className="h-3.5 w-3.5" />
                 {labels.pro}
+              </span>
+            </SelectItem>
+          )}
+          {canAccessProDemo && (
+            <SelectItem value="pro_demo">
+              <span className="flex items-center gap-2">
+                <Stethoscope className="h-3.5 w-3.5" />
+                {labels.pro}
+                <Badge variant="outline" className="ml-1 text-[10px] py-0 px-1.5 bg-primary/10 text-primary border-primary/20">
+                  {labels.demo}
+                </Badge>
               </span>
             </SelectItem>
           )}
