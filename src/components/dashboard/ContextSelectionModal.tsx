@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Building2, User, Stethoscope } from "lucide-react";
 
 const ContextSelectionModal = () => {
-  const { memberships, needsContextSelection, setActiveContext, dismissContextSelection, hasProfessionalProfile } = useClinic();
+  const { memberships, needsContextSelection, setActiveContext, dismissContextSelection, hasProfessionalProfile, canAccessProDemo } = useClinic();
   const { language } = useLanguage();
 
   if (!needsContextSelection) return null;
