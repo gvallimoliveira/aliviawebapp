@@ -163,14 +163,19 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const setActiveContext = (type: ActiveContextType, clinicId: string | null = null) => {
     setActiveContextState(type);
+    const uid = user?.id;
     if (type === "clinic" && clinicId) {
       setActiveClinicIdState(clinicId);
-      localStorage.setItem(STORAGE_CTX_TYPE, "clinic");
-      localStorage.setItem(STORAGE_CLINIC_ID, clinicId);
+      if (uid) {
+        localStorage.setItem(ctxTypeKey(uid), "clinic");
+        localStorage.setItem(clinicIdKey(uid), clinicId);
+      }
     } else {
       setActiveClinicIdState(null);
-      localStorage.setItem(STORAGE_CTX_TYPE, type);
-      localStorage.removeItem(STORAGE_CLINIC_ID);
+      if (uid) {
+        localStorage.setItem(ctxTypeKey(uid), type);
+        localStorage.removeItem(clinicIdKey(uid));
+      }
     }
     setContextDismissed(true);
     setHasRestoredFromStorage(true);
