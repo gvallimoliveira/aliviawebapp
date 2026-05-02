@@ -549,12 +549,13 @@ const Dashboard = () => {
             <TabsContent value="patients" className="space-y-6">
               <ClinicTrialBanner />
               <div className="relative">
-                {isClinicSecretary ? (
+                {isClinicSecretary || canManageClinic ? (
                   <ClinicSecretaryDashboard />
                 ) : professional ? (
                   <ProDashboard professional={professional} hideForClinicTabs isSimulated={isSimulated} onSimulatedChange={setIsSimulated} />
                 ) : (
-                  <ClinicSecretaryDashboard />
+                  // Therapist without a professional profile yet — show a minimal restricted view
+                  <ProDashboard professional={null as any} hideForClinicTabs isSimulated={isSimulated} onSimulatedChange={setIsSimulated} />
                 )}
                 <ClinicTrialBlockOverlay />
               </div>
