@@ -17,18 +17,21 @@ const ContextSelectionModal = () => {
       desc: "Você tem mais de um perfil. Escolha o contexto de uso:",
       solo: "Conta pessoal", soloDesc: "Acessar meu painel pessoal",
       pro: "Profissional autônomo", proDesc: "Atender meus pacientes particulares",
+      proDemo: "Profissional autônomo (Demo)", proDemoDesc: "Conhecer o painel PRO com dados de exemplo",
     },
     en: {
       title: "How would you like to proceed?",
       desc: "You have multiple profiles. Choose your context:",
       solo: "Personal account", soloDesc: "Access my personal dashboard",
       pro: "Autonomous professional", proDesc: "Manage my private patients",
+      proDemo: "Autonomous professional (Demo)", proDemoDesc: "Preview the PRO dashboard with sample data",
     },
     es: {
       title: "¿Cómo desea acceder?",
       desc: "Tiene varios perfiles. Elija el contexto:",
       solo: "Cuenta personal", soloDesc: "Acceder a mi panel personal",
       pro: "Profesional autónomo", proDesc: "Atender mis pacientes particulares",
+      proDemo: "Profesional autónomo (Demo)", proDemoDesc: "Conocer el panel PRO con datos de ejemplo",
     },
   }[lang];
 
