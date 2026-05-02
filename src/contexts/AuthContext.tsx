@@ -88,6 +88,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
   const initialized = useRef(false);
+  // Tracks whether an auth event (SIGNED_IN, TOKEN_REFRESHED, signIn/signUp,
+  // etc.) has already populated state. Used to ignore a stale getSession()
+  // result that resolves AFTER a successful login and would otherwise wipe
+  // the user back to null — causing protected routes like /dashboard to
+  // bounce the user back to /auth right after signing in.
+  const hasAuthUpdate = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -111,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+      hasAuthUpdate.current = true;
       applySession(nextSession);
       finalizeReady();
     };
@@ -124,13 +131,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .then(({ data: { session: existingSession } }) => {
         if (!mounted) return;
         initialized.current = true;
-        applySession(existingSession);
+        // If a SIGNED_IN / signIn() / signUp() already populated the
+        // session in the meantime, do NOT overwrite it with the result of
+        // this initial getSession() call — it may be stale (the request
+        // started before the new tokens were written to localStorage) and
+        // would log the user straight back out.
+        if (!hasAuthUpdate.current) {
+          applySession(existingSession);
+        }
         finalizeReady();
       })
       .catch(() => {
         if (!mounted) return;
         initialized.current = true;
-        applySession(null);
+        if (!hasAuthUpdate.current) {
+          applySession(null);
+        }
         finalizeReady();
       });
 
@@ -154,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
 
       if (!error && data?.session) {
+        hasAuthUpdate.current = true;
         setSession(data.session);
         setUser(data.session.user);
         setLoading(false);
@@ -173,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
 
       if (!error && data?.session) {
+        hasAuthUpdate.current = true;
         setSession(data.session);
         setUser(data.session.user);
         setLoading(false);
@@ -189,6 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await supabase.auth.signOut();
     } finally {
+      hasAuthUpdate.current = true;
       clearLocalAuthStorage();
       setSession(null);
       setUser(null);
