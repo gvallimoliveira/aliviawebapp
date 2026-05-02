@@ -170,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
 
       if (!error && data?.session) {
+        hasAuthUpdate.current = true;
         setSession(data.session);
         setUser(data.session.user);
         setLoading(false);
@@ -189,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
 
       if (!error && data?.session) {
+        hasAuthUpdate.current = true;
         setSession(data.session);
         setUser(data.session.user);
         setLoading(false);
@@ -205,6 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await supabase.auth.signOut();
     } finally {
+      hasAuthUpdate.current = true;
       clearLocalAuthStorage();
       setSession(null);
       setUser(null);
