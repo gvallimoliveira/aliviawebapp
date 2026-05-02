@@ -5,7 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type ClinicRole = Database["public"]["Enums"]["clinic_role"];
 
-export type ActiveContextType = "personal" | "professional" | "clinic";
+export type ActiveContextType = "personal" | "professional" | "professional_demo" | "clinic";
 
 interface ClinicMembership {
   clinic_id: string;
