@@ -554,8 +554,8 @@ const Dashboard = () => {
                 ) : professional ? (
                   <ProDashboard professional={professional} hideForClinicTabs isSimulated={isSimulated} onSimulatedChange={setIsSimulated} />
                 ) : (
-                  // Therapist without a professional profile yet — show a minimal restricted view
-                  <ProDashboard professional={null as any} hideForClinicTabs isSimulated={isSimulated} onSimulatedChange={setIsSimulated} />
+                  // Therapist without professional profile — restricted view (no analytics/feedback/reports)
+                  <ClinicSecretaryDashboard restrictedTherapistView />
                 )}
                 <ClinicTrialBlockOverlay />
               </div>
