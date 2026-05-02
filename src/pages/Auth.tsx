@@ -74,14 +74,19 @@ const Auth = () => {
             navigate("/reset-password", { replace: true, state: { forceReset: true } });
             return;
           }
-          // Keep loading=true; the useEffect on `user` will redirect.
-          // Hard fallback in case the auth listener is delayed (rare on desktop).
+          // Navigate immediately — don't rely solely on the useEffect, since the
+          // user state update from signIn() is synchronous in the same render
+          // and the effect may race with redirectingRef being set.
           redirectingRef.current = true;
+          navigate(redirectTo, { replace: true });
+          // Hard fallback (rare): if SPA navigation didn't take effect within
+          // 2s (e.g. a route guard bounced back), force a full reload to the
+          // intended destination so the user is not stranded on /auth.
           window.setTimeout(() => {
             if (window.location.pathname === "/auth") {
               window.location.replace(redirectTo);
             }
-          }, 1500);
+          }, 2000);
           return;
         }
         // No session and no error — should not happen, but reset.
