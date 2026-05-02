@@ -655,41 +655,81 @@ const Dashboard = () => {
               </div>
             </TabsContent>
           </Tabs>
-        ) : activeContext === "professional" && professional ? (
-          /* ── Professional Autonomous Mode: 3 tabs (Profissional, Agenda, Mensagens) ── */
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-3">
-              <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
-                <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
-              </TabsTrigger>
-              <TabsTrigger value="agenda" className="gap-1.5 text-xs">
-                <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
-              </TabsTrigger>
-              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
-                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="professional" className="space-y-8">
-              <ProDashboard professional={professional} />
-            </TabsContent>
-            <TabsContent value="agenda" className="space-y-6">
-              <DailySummaryCard
-                professionalId={professional.id}
-                onNavigateToAgenda={() => {}}
-                onNavigateToPatients={() => setActiveTab("professional")}
-              />
-              <ProSchedule professionalId={professional.id} />
-            </TabsContent>
-            <TabsContent value="messages" className="space-y-6">
-              <MessagesTab
-                professional={professional}
-                initialConversationId={convFromUrl}
-                canInitiateAsPatient={false}
-                canInitiateAsProfessional={true}
-              />
-            </TabsContent>
-          </Tabs>
-        ) : (
+        ) : (activeContext === "professional" && professional) || activeContext === "professional_demo" ? (
+          /* ── Professional Autonomous Mode (real or demo): 3 tabs ── */
+          (() => {
+            const isProDemo = activeContext === "professional_demo";
+            const proStub: any = isProDemo ? {
+              id: "demo",
+              full_name: profile?.full_name || user?.email?.split("@")[0] || "Demo",
+              email: user?.email || "",
+              lifetime_treatment: false,
+              is_partner: false,
+              premium_granted: false,
+              crefito: "DEMO",
+              specialties: [],
+              city: "",
+              state: "",
+              profile_photo_url: null,
+              logo_url: null,
+              clinic_name: null,
+              clinic_address: null,
+              bio: null,
+              social_media: null,
+              phone: null,
+              active: true,
+              approved: false,
+              subscription_status: "inactive",
+            } : professional;
+            return (
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <TabsList className="w-full grid grid-cols-3">
+                  <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
+                    <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="agenda" className="gap-1.5 text-xs">
+                    <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
+                    <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="professional" className="space-y-8">
+                  <ProDashboard
+                    professional={proStub}
+                    isSimulated={isProDemo ? true : isSimulated}
+                    onSimulatedChange={isProDemo ? undefined : setIsSimulated}
+                  />
+                </TabsContent>
+                <TabsContent value="agenda" className="space-y-6">
+                  {!isProDemo && (
+                    <DailySummaryCard
+                      professionalId={proStub.id}
+                      onNavigateToAgenda={() => {}}
+                      onNavigateToPatients={() => setActiveTab("professional")}
+                    />
+                  )}
+                  <ProSchedule professionalId={proStub.id} isSimulated={isProDemo} />
+                </TabsContent>
+                <TabsContent value="messages" className="space-y-6">
+                  {isProDemo ? (
+                    <Card className="border-dashed">
+                      <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                        Mensagens ficam disponíveis após assinar o plano PRO.
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <MessagesTab
+                      professional={proStub}
+                      initialConversationId={convFromUrl}
+                      canInitiateAsPatient={false}
+                      canInitiateAsProfessional={true}
+                    />
+                  )}
+                </TabsContent>
+              </Tabs>
+            );
+          })()
           /* ── Personal Mode: Saúde + Mensagens ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="w-full grid grid-cols-2">
