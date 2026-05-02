@@ -67,6 +67,21 @@ const ContextSelectionModal = () => {
               </div>
             </Button>
           )}
+          {canAccessProDemo && (
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 h-auto py-4 px-4"
+              onClick={() => setActiveContext("professional_demo")}
+            >
+              <Stethoscope className="h-5 w-5 shrink-0 text-primary" />
+              <div className="text-left flex items-center gap-2">
+                <div>
+                  <p className="font-medium">{labels.proDemo}</p>
+                  <p className="text-xs text-muted-foreground">{labels.proDemoDesc}</p>
+                </div>
+              </div>
+            </Button>
+          )}
           {memberships.map((m) => (
             <Button
               key={m.clinic_id}
