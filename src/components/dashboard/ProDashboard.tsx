@@ -104,9 +104,14 @@ interface ProDashboardProps {
   hideForClinicTabs?: boolean;
   isSimulated?: boolean;
   onSimulatedChange?: (val: boolean) => void;
+  /** When true, renders a clearly-labelled demo experience for clinic
+   *  therapists without their own PRO profile. Hides real-account
+   *  controls (manage subscription, edit profile, plan gate, upsells)
+   *  and shows a single conversion CTA. */
+  isDemoMode?: boolean;
 }
 
-const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: isSimulatedProp, onSimulatedChange }: ProDashboardProps) => {
+const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: isSimulatedProp, onSimulatedChange, isDemoMode = false }: ProDashboardProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { activeClinic, isClinicMode, canManageClinic } = useClinic();
@@ -549,7 +554,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     (activeClinic.subscription_status === "active" || activeClinic.subscription_status === "trialing");
 
   // ── Plan Selection Screen (mandatory for new registrants without subscription) ──
-  if (!clinicCoversAccess && !subscription?.subscribed && (isSubscribeFlow || professional.subscription_status === "inactive")) {
+  if (!isDemoMode && !clinicCoversAccess && !subscription?.subscribed && (isSubscribeFlow || professional.subscription_status === "inactive")) {
     return (
       <div className="space-y-6 max-w-lg mx-auto py-4">
         <div className="text-center space-y-2">
@@ -679,70 +684,107 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </Card>
       )}
 
-      {/* Status bar */}
-      <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
-        <CardContent className="py-4 px-5 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
-              <Crown className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="font-semibold text-foreground flex items-center gap-2">
-                {clinicCoversAccess ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}` : t("pro.plan_title")}
-                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
-                  {clinicCoversAccess
-                    ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
-                    : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
-                </Badge>
-              </p>
-              {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
+      {/* Demo mode header — clearly identifies this is a preview */}
+      {isDemoMode ? (
+        <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <CardContent className="py-5 px-5 relative">
+            <div className="flex items-start gap-4 flex-wrap">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 shrink-0">
+                <Sparkles className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-[200px] space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-lg font-bold text-foreground">Modo Demonstração</h3>
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide">
+                    Demo
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Você está conhecendo o <span className="font-semibold text-foreground">Painel Profissional Autônomo</span> com dados de exemplo.
+                  Assine o plano PRO para atender pacientes particulares com seu link próprio, agenda, mensagens e relatórios em PDF.
                 </p>
-              )}
+                <div className="flex items-center gap-2 pt-1 flex-wrap">
+                  <Button onClick={() => handleSubscribe("annual")} disabled={checkoutLoading} className="rounded-xl gap-2">
+                    {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+                    Assinar PRO ({PRO_PLAN_ANNUAL_PRICE_FORMATTED}/mês)
+                  </Button>
+                  <Button variant="outline" onClick={() => handleSubscribe("monthly")} disabled={checkoutLoading} className="rounded-xl">
+                    Plano mensal
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Simulated toggle */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50">
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {isSimulated ? "Painel Simulado" : "Painel Pro"}
-              </span>
-              <Switch
-                checked={isSimulated}
-                onCheckedChange={setIsSimulated}
-                className="scale-90"
-              />
-            </div>
-            <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl">
-              <Settings className="h-3.5 w-3.5" />
-              {t("pro.edit_profile")}
-            </Button>
-            {!clinicCoversAccess && !subscription?.is_partner && (
-              <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl">
-                {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
-                {t("pro.manage_subscription")}
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Simulated mode banner */}
-      {isSimulated && (
-        <Card className="border-amber-200 bg-amber-500/5">
-          <CardContent className="py-3 px-5 flex items-center gap-3">
-            <ToggleLeft className="h-5 w-5 text-amber-600 shrink-0" />
-            <p className="text-sm text-amber-800">
-              <span className="font-semibold">Modo simulado ativo.</span> Você está visualizando dados fictícios para conhecer a plataforma. Desative o toggle para ver seus dados reais.
-            </p>
           </CardContent>
         </Card>
+      ) : (
+        <>
+          {/* Status bar */}
+          <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
+            <CardContent className="py-4 px-5 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
+                  <Crown className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground flex items-center gap-2">
+                    {clinicCoversAccess ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}` : t("pro.plan_title")}
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
+                      {clinicCoversAccess
+                        ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
+                        : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
+                    </Badge>
+                  </p>
+                  {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Simulated toggle */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {isSimulated ? "Painel Simulado" : "Painel Pro"}
+                  </span>
+                  <Switch
+                    checked={isSimulated}
+                    onCheckedChange={setIsSimulated}
+                    className="scale-90"
+                  />
+                </div>
+                <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl">
+                  <Settings className="h-3.5 w-3.5" />
+                  {t("pro.edit_profile")}
+                </Button>
+                {!clinicCoversAccess && !subscription?.is_partner && (
+                  <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl">
+                    {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
+                    {t("pro.manage_subscription")}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Simulated mode banner */}
+          {isSimulated && (
+            <Card className="border-amber-200 bg-amber-500/5">
+              <CardContent className="py-3 px-5 flex items-center gap-3">
+                <ToggleLeft className="h-5 w-5 text-amber-600 shrink-0" />
+                <p className="text-sm text-amber-800">
+                  <span className="font-semibold">Modo simulado ativo.</span> Você está visualizando dados fictícios para conhecer a plataforma. Desative o toggle para ver seus dados reais.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
 
       {/* Lifetime Treatment Upsell — only for non-lifetime pros, not in clinic mode */}
-      {!isSimulated && !clinicCoversAccess && !professional.lifetime_treatment && (isWithinFirstMonth ? (
+      {!isDemoMode && !isSimulated && !clinicCoversAccess && !professional.lifetime_treatment && (isWithinFirstMonth ? (
         <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardContent className="py-5">

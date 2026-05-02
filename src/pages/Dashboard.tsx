@@ -679,7 +679,7 @@ const Dashboard = () => {
               phone: null,
               active: true,
               approved: false,
-              subscription_status: "inactive",
+              subscription_status: "active",
             } : professional;
             return (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -699,6 +699,7 @@ const Dashboard = () => {
                     professional={proStub}
                     isSimulated={isProDemo ? true : isSimulated}
                     onSimulatedChange={isProDemo ? undefined : setIsSimulated}
+                    isDemoMode={isProDemo}
                   />
                 </TabsContent>
                 <TabsContent value="agenda" className="space-y-6">
