@@ -938,8 +938,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </Card>
       </div>
 
-      {/* Analytics Charts */}
-      <ProAnalyticsCharts assessments={displayAssessments} />
+      {/* Analytics Charts — hidden for therapists in clinic mode */}
+      {canViewClinicAnalytics && <ProAnalyticsCharts assessments={displayAssessments} />}
 
       {/* Referrals Section — only in real mode */}
       {!isSimulated && referrals.length > 0 && (
