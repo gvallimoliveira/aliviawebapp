@@ -104,9 +104,14 @@ interface ProDashboardProps {
   hideForClinicTabs?: boolean;
   isSimulated?: boolean;
   onSimulatedChange?: (val: boolean) => void;
+  /** When true, renders a clearly-labelled demo experience for clinic
+   *  therapists without their own PRO profile. Hides real-account
+   *  controls (manage subscription, edit profile, plan gate, upsells)
+   *  and shows a single conversion CTA. */
+  isDemoMode?: boolean;
 }
 
-const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: isSimulatedProp, onSimulatedChange }: ProDashboardProps) => {
+const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: isSimulatedProp, onSimulatedChange, isDemoMode = false }: ProDashboardProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { activeClinic, isClinicMode, canManageClinic } = useClinic();
