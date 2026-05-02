@@ -222,6 +222,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isClinicSecretary,
         isClinicTherapist,
         canManageClinic,
+        canAccessProDemo,
       }}
     >
       {children}
