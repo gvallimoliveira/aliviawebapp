@@ -699,6 +699,7 @@ const Dashboard = () => {
                     professional={proStub}
                     isSimulated={isProDemo ? true : isSimulated}
                     onSimulatedChange={isProDemo ? undefined : setIsSimulated}
+                    isDemoMode={isProDemo}
                   />
                 </TabsContent>
                 <TabsContent value="agenda" className="space-y-6">
