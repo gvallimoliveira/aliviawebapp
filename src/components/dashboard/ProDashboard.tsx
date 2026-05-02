@@ -784,7 +784,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       )}
 
       {/* Lifetime Treatment Upsell — only for non-lifetime pros, not in clinic mode */}
-      {!isSimulated && !clinicCoversAccess && !professional.lifetime_treatment && (isWithinFirstMonth ? (
+      {!isDemoMode && !isSimulated && !clinicCoversAccess && !professional.lifetime_treatment && (isWithinFirstMonth ? (
         <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardContent className="py-5">
