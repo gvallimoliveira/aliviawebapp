@@ -298,7 +298,7 @@ const Dashboard = () => {
       const valid = ["agenda", "patients", "team", "link", "analytics", "messages"];
       const mapped = desired === "clinic" ? "team" : desired;
       setActiveTab(valid.includes(mapped) ? mapped : "agenda");
-    } else if (activeContext === "professional" && professional) {
+    } else if ((activeContext === "professional" && professional) || activeContext === "professional_demo") {
       const valid = ["professional", "agenda", "messages"];
       setActiveTab(valid.includes(desired) ? desired : "professional");
     } else if (activeContext === "personal") {
