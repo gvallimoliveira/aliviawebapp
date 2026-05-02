@@ -138,7 +138,9 @@ const Dashboard = () => {
       ? "clinic"
       : activeContext === "professional" && professional
         ? "professional"
-        : "personal";
+        : activeContext === "professional_demo"
+          ? "professional_demo"
+          : "personal";
 
     let changed = false;
 
