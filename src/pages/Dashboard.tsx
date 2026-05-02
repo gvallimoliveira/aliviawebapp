@@ -705,6 +705,18 @@ const Dashboard = () => {
                   />
                 </TabsContent>
                 <TabsContent value="agenda" className="space-y-6">
+                  {isProDemo && (
+                    <Card className="border-primary/40 bg-primary/5">
+                      <CardContent className="py-3 px-4 flex items-start gap-3">
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide shrink-0 mt-0.5">Demo</Badge>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground">
+                            <span className="font-semibold">Agenda em modo demonstração.</span> Visualize como os agendamentos são organizados. Para gerenciar pacientes reais, assine o PRO.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                   {!isProDemo && (
                     <DailySummaryCard
                       professionalId={proStub.id}
@@ -716,9 +728,18 @@ const Dashboard = () => {
                 </TabsContent>
                 <TabsContent value="messages" className="space-y-6">
                   {isProDemo ? (
-                    <Card className="border-dashed">
-                      <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                        Mensagens ficam disponíveis após assinar o plano PRO.
+                    <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+                      <CardContent className="py-10 text-center space-y-4">
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide">Demo</Badge>
+                        <div className="space-y-2">
+                          <p className="text-base font-semibold text-foreground">Mensagens com pacientes</p>
+                          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                            No plano PRO, você conversa diretamente com seus pacientes particulares pelo chat seguro da Aliv.iA.
+                          </p>
+                        </div>
+                        <Button onClick={() => setActiveTab("professional")} variant="outline" className="rounded-xl">
+                          Ver opções de assinatura
+                        </Button>
                       </CardContent>
                     </Card>
                   ) : (
