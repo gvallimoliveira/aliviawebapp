@@ -679,7 +679,7 @@ const Dashboard = () => {
               phone: null,
               active: true,
               approved: false,
-              subscription_status: "inactive",
+              subscription_status: "active",
             } : professional;
             return (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
