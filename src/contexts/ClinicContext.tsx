@@ -150,10 +150,15 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const activeClinic = memberships.find((m) => m.clinic_id === activeClinicId) || null;
 
-  // total contexts = personal (always) + professional (if profile) + each clinic
+  // A clinic therapist (member of at least one clinic) WITHOUT their own
+  // PRO profile can preview the autonomous-professional dashboard in demo
+  // mode. This drives a conversion CTA to subscribe to PRO.
+  const canAccessProDemo = !hasProfessionalProfile && memberships.length > 0;
+
+  // total contexts = personal (always) + professional (real OR demo) + each clinic
   const availableContextsCount = useMemo(
-    () => 1 + (hasProfessionalProfile ? 1 : 0) + memberships.length,
-    [hasProfessionalProfile, memberships.length]
+    () => 1 + (hasProfessionalProfile || canAccessProDemo ? 1 : 0) + memberships.length,
+    [hasProfessionalProfile, canAccessProDemo, memberships.length]
   );
 
   // Auto-pick when only one possible context exists (just personal) — no need to show modal
