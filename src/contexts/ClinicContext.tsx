@@ -47,8 +47,16 @@ interface ClinicContextType {
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
 
-const STORAGE_CTX_TYPE = "activeContextType";
-const STORAGE_CLINIC_ID = "activeClinicId";
+// Storage keys are scoped per-user to prevent context bleed between
+// different accounts that log in on the same device. The legacy global
+// keys are migrated/cleaned on first load to avoid a previous user's
+// "personal" preference silently hiding the clinic profile selector for
+// a new clinic member that just signed in (e.g. a therapist invited by
+// the clinic owner).
+const LEGACY_STORAGE_CTX_TYPE = "activeContextType";
+const LEGACY_STORAGE_CLINIC_ID = "activeClinicId";
+const ctxTypeKey = (userId: string) => `activeContextType:${userId}`;
+const clinicIdKey = (userId: string) => `activeClinicId:${userId}`;
 
 export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -62,6 +70,14 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const fetchMemberships = useCallback(async () => {
     if (!user) { setMemberships([]); setLoading(false); return; }
+
+    // One-time migration: drop legacy unscoped keys so they cannot leak
+    // a previous user's preference into this session.
+    try {
+      localStorage.removeItem(LEGACY_STORAGE_CTX_TYPE);
+      localStorage.removeItem(LEGACY_STORAGE_CLINIC_ID);
+    } catch { /* noop */ }
+
     try {
       const { data: members } = await supabase
         .from("clinic_members")
@@ -86,9 +102,9 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }));
       setMemberships(mapped);
 
-      // Restore persisted context
-      const storedType = localStorage.getItem(STORAGE_CTX_TYPE) as ActiveContextType | null;
-      const storedClinic = localStorage.getItem(STORAGE_CLINIC_ID);
+      // Restore persisted context (per-user)
+      const storedType = localStorage.getItem(ctxTypeKey(user.id)) as ActiveContextType | null;
+      const storedClinic = localStorage.getItem(clinicIdKey(user.id));
 
       if (storedType === "clinic" && storedClinic && mapped.some((m) => m.clinic_id === storedClinic)) {
         setActiveContextState("clinic");
@@ -102,12 +118,19 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setActiveContextState("personal");
         setActiveClinicIdState(null);
         setHasRestoredFromStorage(true);
-      } else if (storedClinic && mapped.some((m) => m.clinic_id === storedClinic)) {
-        // Legacy: only clinic id stored
+      } else if (mapped.length > 0) {
+        // No explicit choice yet but the user belongs to one or more
+        // clinics: pre-select the first clinic so the dashboard opens
+        // in the most relevant context (the reason they were invited
+        // in the first place). The selection modal will still appear
+        // when there are 2+ contexts so the user can switch.
+        const first = mapped[0];
         setActiveContextState("clinic");
-        setActiveClinicIdState(storedClinic);
-        setHasRestoredFromStorage(true);
+        setActiveClinicIdState(first.clinic_id);
+        setHasRestoredFromStorage(false);
       } else {
+        setActiveContextState("personal");
+        setActiveClinicIdState(null);
         setHasRestoredFromStorage(false);
       }
     } catch {
@@ -140,14 +163,19 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const setActiveContext = (type: ActiveContextType, clinicId: string | null = null) => {
     setActiveContextState(type);
+    const uid = user?.id;
     if (type === "clinic" && clinicId) {
       setActiveClinicIdState(clinicId);
-      localStorage.setItem(STORAGE_CTX_TYPE, "clinic");
-      localStorage.setItem(STORAGE_CLINIC_ID, clinicId);
+      if (uid) {
+        localStorage.setItem(ctxTypeKey(uid), "clinic");
+        localStorage.setItem(clinicIdKey(uid), clinicId);
+      }
     } else {
       setActiveClinicIdState(null);
-      localStorage.setItem(STORAGE_CTX_TYPE, type);
-      localStorage.removeItem(STORAGE_CLINIC_ID);
+      if (uid) {
+        localStorage.setItem(ctxTypeKey(uid), type);
+        localStorage.removeItem(clinicIdKey(uid));
+      }
     }
     setContextDismissed(true);
     setHasRestoredFromStorage(true);
