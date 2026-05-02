@@ -251,7 +251,9 @@ const Dashboard = () => {
 
       setProfessional(nextProfessional);
 
-      if (!nextProfessional && tabFromUrl === "professional") {
+      // Do not bounce clinic therapists (no own PRO profile) to the
+      // registration flow — they may simply be exploring the demo mode.
+      if (!nextProfessional && tabFromUrl === "professional" && activeContext !== "professional_demo") {
         navigate("/professional/register", { replace: true });
         return;
       }
