@@ -730,6 +730,7 @@ const Dashboard = () => {
               </Tabs>
             );
           })()
+        ) : (
           /* ── Personal Mode: Saúde + Mensagens ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="w-full grid grid-cols-2">
