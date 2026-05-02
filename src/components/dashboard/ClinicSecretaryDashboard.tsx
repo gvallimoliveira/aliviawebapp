@@ -21,8 +21,16 @@ import { generateAssessmentPdf } from "@/utils/generatePdf";
 import { useToast } from "@/hooks/use-toast";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
-const ClinicSecretaryDashboard = () => {
-  const { activeClinic } = useClinic();
+interface ClinicSecretaryDashboardProps {
+  /** When true, hide owner/secretary-only widgets (feedback, reports, analytics, donut). */
+  restrictedTherapistView?: boolean;
+}
+
+const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSecretaryDashboardProps = {}) => {
+  const { activeClinic, canManageClinic } = useClinic();
+  // Hide privileged widgets either when explicitly restricted OR when the current
+  // user is not an owner/secretary of the active clinic (defense in depth).
+  const showPrivileged = !restrictedTherapistView && canManageClinic;
   const { language } = useLanguage();
   const { toast } = useToast();
   const lang = language as "pt" | "en" | "es";
