@@ -109,7 +109,9 @@ interface ProDashboardProps {
 const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: isSimulatedProp, onSimulatedChange }: ProDashboardProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
-  const { activeClinic, isClinicMode } = useClinic();
+  const { activeClinic, isClinicMode, canManageClinic } = useClinic();
+  // In clinic mode, restrict analytics/feedback/reports to owner & secretary only
+  const canViewClinicAnalytics = !isClinicMode || canManageClinic;
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -936,8 +938,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </Card>
       </div>
 
-      {/* Analytics Charts */}
-      <ProAnalyticsCharts assessments={displayAssessments} />
+      {/* Analytics Charts — hidden for therapists in clinic mode */}
+      {canViewClinicAnalytics && <ProAnalyticsCharts assessments={displayAssessments} />}
 
       {/* Referrals Section — only in real mode */}
       {!isSimulated && referrals.length > 0 && (
