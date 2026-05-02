@@ -21,8 +21,16 @@ import { generateAssessmentPdf } from "@/utils/generatePdf";
 import { useToast } from "@/hooks/use-toast";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
-const ClinicSecretaryDashboard = () => {
-  const { activeClinic } = useClinic();
+interface ClinicSecretaryDashboardProps {
+  /** When true, hide owner/secretary-only widgets (feedback, reports, analytics, donut). */
+  restrictedTherapistView?: boolean;
+}
+
+const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSecretaryDashboardProps = {}) => {
+  const { activeClinic, canManageClinic } = useClinic();
+  // Hide privileged widgets either when explicitly restricted OR when the current
+  // user is not an owner/secretary of the active clinic (defense in depth).
+  const showPrivileged = !restrictedTherapistView && canManageClinic;
   const { language } = useLanguage();
   const { toast } = useToast();
   const lang = language as "pt" | "en" | "es";
@@ -334,23 +342,28 @@ const ClinicSecretaryDashboard = () => {
         </Card>
       </div>
 
-      {/* Feedback Survey link generator */}
-      {activeClinic?.clinic_id && (
-        <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={lang} />
-      )}
+      {/* Owner/secretary-only widgets */}
+      {showPrivileged && (
+        <>
+          {/* Feedback Survey link generator */}
+          {activeClinic?.clinic_id && (
+            <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={lang} />
+          )}
 
-      {/* Feedback Results */}
-      {activeClinic?.clinic_id && (
-        <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={lang} />
-      )}
+          {/* Feedback Results */}
+          {activeClinic?.clinic_id && (
+            <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={lang} />
+          )}
 
-      {/* Secretary Reports */}
-      {activeClinic?.clinic_id && (
-        <SecretaryReportsCard clinicId={activeClinic.clinic_id} lang={lang} />
-      )}
+          {/* Secretary Reports */}
+          {activeClinic?.clinic_id && (
+            <SecretaryReportsCard clinicId={activeClinic.clinic_id} lang={lang} />
+          )}
 
-      {/* Analytics */}
-      <ProAnalyticsCharts assessments={filteredAssessments} />
+          {/* Analytics */}
+          <ProAnalyticsCharts assessments={filteredAssessments} />
+        </>
+      )}
 
       {/* Patient list — read-only with ability to add and archive patients */}
       {therapists.length > 0 && (
