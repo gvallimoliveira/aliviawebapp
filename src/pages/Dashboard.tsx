@@ -316,7 +316,7 @@ const Dashboard = () => {
   // that branch's default so the first tab always shows content.
   useEffect(() => {
     const inClinicMode = isClinicMode && !!activeClinic;
-    const inProMode = !inClinicMode && activeContext === "professional" && !!professional;
+    const inProMode = !inClinicMode && ((activeContext === "professional" && !!professional) || activeContext === "professional_demo");
 
     const validTabs = inClinicMode
       ? ["agenda", "patients", "team", "link", "analytics", "messages"]
