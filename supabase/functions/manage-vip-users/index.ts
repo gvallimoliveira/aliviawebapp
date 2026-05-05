@@ -333,17 +333,27 @@ serve(async (req) => {
       }
 
       if (access_type === "pro") {
+        // Liga/desliga apenas PRO; "is_partner_account" permanece para manter pessoa na lista
+        const updates: Record<string, any> = {
+          is_partner: enabled,
+          subscription_status: enabled ? "active" : "inactive",
+        };
+        if (enabled) {
+          updates.approved = true;
+          updates.is_partner_account = true; // garante que está marcado como parceiro
+        }
         const { error } = await supabaseClient
           .from("professionals")
-          .update({
-            is_partner: enabled,
-            subscription_status: enabled ? "active" : "inactive",
-            approved: enabled ? true : undefined,
-          })
+          .update(updates)
           .eq("id", professional_id);
         if (error) throw error;
       } else if (access_type === "clinic") {
         if (enabled) {
+          // Garante que pessoa está marcada como parceira
+          await supabaseClient
+            .from("professionals")
+            .update({ is_partner_account: true })
+            .eq("id", professional_id);
           // Check if partner already has a clinic
           const { data: existingClinic } = await supabaseClient
             .from("clinics")
