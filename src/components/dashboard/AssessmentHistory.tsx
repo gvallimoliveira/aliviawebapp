@@ -59,7 +59,7 @@ const AssessmentHistory = ({ assessments }: AssessmentHistoryProps) => {
           {assessments.map((a) => {
             const statusConfig = getStatusConfig(a.status);
             const StatusIcon = statusConfig.icon;
-            const hypothesis = a.diagnosis?.hypothesis;
+            const hypothesis = (a as any).final_hypothesis?.trim() || a.diagnosis?.hypothesis;
             const regions = (a.pain_regions || [])
               .map((r: string) => painRegionLabels[r] || r)
               .slice(0, 3);

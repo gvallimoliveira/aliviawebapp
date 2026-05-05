@@ -1,89 +1,110 @@
-# Plano: Acelerar carregamento do app com priorização inteligente
+## Objetivo
 
-## Diagnóstico rápido
+Permitir que o fisioterapeuta (PRO autônomo ou membro de Clínica como **owner/therapist**) sobrescreva a hipótese diagnóstica sugerida pela IA. Esse overrule:
+- Aparece apenas no **ambiente interno** (prontuário e visualização da avaliação).
+- Quando preenchido, **substitui totalmente** a hipótese da IA no prontuário e no **PDF entregue ao paciente**.
+- Quando vazio (ou marcado como "OK com a IA"), mantém o comportamento atual.
+- **Secretárias não podem editar** (decisão clínica).
 
-Hoje o `App.tsx` importa **todas as 30 páginas de uma vez** (Auth, Dashboard, Assessment, Admin, Blog, ClinicLanding, ClinicDemo, etc.) e o `Dashboard.tsx` importa **todos os componentes de todas as abas** sincronamente — incluindo libs pesadas como `recharts` (gráficos), `jspdf`, `jszip`, `framer-motion`, `embla-carousel`, `react-easy-crop`, `react-day-picker`. Resultado: o navegador baixa e parseia ~tudo antes de mostrar a primeira tela.
+## UX / Design
 
-A solução padrão em React/Vite é `React.lazy()` + `Suspense` + `requestIdleCallback` para pré-aquecer os módulos que serão usados em seguida.
-
-## Estratégia em 3 níveis
-
-### Nível 1 — Carregamento IMEDIATO (entram no bundle inicial)
-São telas/funções que o usuário vê nos primeiros segundos. Não terão delay nenhum.
-
-- **Gateway** (`/`) — porta de entrada
-- **Auth** (`/auth`) — login/cadastro
-- **Dashboard shell** — header, abas, `WelcomeSection`, `QuickActions`, `AssessmentHistory` (aba inicial padrão)
-- **AuthContext, ClinicContext, LanguageContext** — já são imediatos
-- **Toaster, Tooltip, ScrollToTop, GlobalMobileMenu** — infraestrutura
-- **PatientLanding** e **ProfessionalLanding** — landing pages públicas (SEO/conversão)
-
-### Nível 2 — Pré-carregadas em IDLE (após app montar, sem bloquear)
-Carregam ~300ms depois do app pintar a primeira tela, usando `requestIdleCallback`. Quando o usuário clicar, já estarão prontas.
-
-- **Assessment** (`/assessment/:type`) — fluxo de avaliação (página mais usada após o dashboard)
-- **AssessmentView** — visualização de avaliação
-- **MessagesTab + ConversationList** — chat (pré-aquece se usuário tem conversas)
-- **PainDiary, ExerciseChecklist, EvolutionSummary** — abas secundárias do Dashboard
-- **ProDashboard** (só se o usuário for profissional)
-
-### Nível 3 — Sob demanda PURA (lazy real, só baixa ao clicar)
-Funções raramente usadas ou específicas de perfil. Mostram um spinner curtinho durante o load (~200-500ms na 4G).
-
-- **Admin** (`/admin`) — só admins
-- **Blog**, **BlogPost** — leitura ocasional
-- **ClinicLanding, ClinicDemo, ClinicSupport, ClinicAssessment, ClinicFeedback** — fluxo de clínicas
-- **ProfessionalRegister, ProfessionalSearch, ProfessionalAssessment, ProfessionalLanding** — fluxo profissional
-- **ExerciseProgram** (`/hep/:token`) — link público de exercícios
-- **PaymentSuccess, UpgradeWelcome, ResetPassword, AcceptInvite, CompleteProfile, Account, Support, ClearCache, LandingLegacy**
-- **Componentes pesados sob demanda**:
-  - `recharts` (gráficos do `ProAnalyticsCharts`, `RegionPainComparison`) — só quando aba Analytics abrir
-  - `jspdf` + `generatePdf.ts` — só ao clicar "exportar PDF"
-  - `jszip` — só em download em lote
-  - `react-easy-crop` — só em upload de avatar/fotos
-  - `PainMapPathEditor` — só admin no modo debug
-  - `ClinicTeamManagement, ClinicSettingsCard, AgendaImportModal, ManualAssessmentModal, CreateExerciseProgramModal` — modais e telas internas
-
-## Como ficará na prática (visão técnica)
+Novo card discreto, padrão do app (rounded-xl, primary/teal, alinhado ao card "Hipótese Diagnóstica" existente), com dois estados:
 
 ```text
-src/App.tsx
-  ├─ import direto: Gateway, Auth, Dashboard (shell)
-  └─ React.lazy(): todas as outras rotas + <Suspense fallback={<Spinner/>}>
+┌─ Hipótese Diagnóstica ──────────────────────┐
+│ 🩺 Tendinopatia patelar (sugerida pela IA)  │  ← hipótese da IA (sempre visível)
+│ Confiança: Alta                             │
+└──────────────────────────────────────────────┘
 
-src/lib/preloader.ts (novo)
-  └─ requestIdleCallback(() => {
-        import("./pages/Assessment");
-        import("./pages/AssessmentView");
-        import("./components/dashboard/PainDiary");
-        ...
-     })
-
-src/pages/Dashboard.tsx
-  ├─ import direto: WelcomeSection, QuickActions, AssessmentHistory
-  └─ React.lazy(): PainDiary, MessagesTab, ProDashboard, ClinicTeamManagement,
-                   ProAnalyticsCharts, AdaptiveProgressionCard, AssessmentComparison...
-
-src/utils/generatePdf.ts → carregado via dynamic import dentro do botão de export
+┌─ Hipótese Final (Profissional) ✎ ───────────┐
+│ ◉ Concordo com a hipótese da IA             │
+│ ○ Ajustar / Sobrescrever                    │
+│   [campo de texto quando selecionado]       │
+│                              [Salvar][Cancelar]
+└──────────────────────────────────────────────┘
 ```
 
-Adicionar também no `vite.config.ts` um `manualChunks` simples para separar libs grandes (`recharts`, `jspdf`, `jszip`, `framer-motion`) em chunks próprios — assim a primeira página carrega só o essencial.
+Quando há overrule salvo, o card principal vira:
 
-## Ganhos esperados
+```text
+┌─ Hipótese Diagnóstica (Final) ──────────────┐
+│ ✓ Síndrome femoropatelar                    │  ← em destaque
+│ Revisada pelo fisioterapeuta · há 2 dias    │
+│ ──                                          │
+│ Sugestão original da IA: Tendinopatia       │  ← discreto, abaixo
+│ patelar (Confiança: Alta)            [Editar]│
+└──────────────────────────────────────────────┘
+```
 
-- **Bundle inicial**: estimativa de queda de ~40-55% (de ~800KB-1.2MB para ~400-550KB gzip)
-- **Tempo até interativo**: 1.5-3s mais rápido em 4G/mobile
-- **Sem regressão**: telas Nível 2 (Assessment, chat) abrem instantâneas porque foram pré-aquecidas em idle
-- **Auth segue inalterado** (regra crítica de estabilidade do login mantida)
+- Card de edição só aparece para usuários autorizados (PRO ativo OU clinic role owner/therapist).
+- Para o **paciente** e em links públicos, o card de edição não aparece — ele só vê a hipótese final em destaque (sem saber se foi IA ou ajustada).
 
-## O que NÃO vai mudar
+## Mudanças técnicas
 
-- Nenhuma alteração em service worker / PWA / cache (respeita a constraint de estabilidade do auth)
-- Nenhuma mudança em comportamento de auto-save, modo offline, ou restauração de sessão
-- Nenhuma mudança visual
+### 1. Banco de dados (migration)
+Adicionar à tabela `assessments`:
+- `final_hypothesis text` (nullable) — texto digitado pelo profissional.
+- `final_hypothesis_by uuid` (nullable) — `auth.uid()` de quem editou.
+- `final_hypothesis_at timestamptz` (nullable) — quando foi salvo.
 
-## Pontos para você aprovar/editar
+Sem tabela de auditoria (decisão do usuário). RLS de UPDATE já existe e cobre os papéis necessários:
+- PRO autônomo: policy "Professionals can update their linked assessments".
+- Clínica owner/therapist: policy "Clinic managers and therapists can update clinic assessments" (já restringe owner/secretary/therapist; vamos manter esse mesmo conjunto, **mas no front** bloquearemos o botão para `secretary`).
 
-1. **Concorda com a divisão dos 3 níveis acima?** Se quiser mover algo de Nível 3 → Nível 2 (ex.: deixar `ExerciseProgram` pré-aquecido porque pacientes recebem o link), me diga.
-2. **Quer um spinner global discreto** (só logotipo + barra) ou **skeleton específico por página** durante o lazy-load do Nível 3?
-3. **Posso aplicar o `manualChunks`** no Vite (separa recharts/jspdf/jszip)? Recomendo sim — é zero-risco e aumenta o ganho.
+### 2. Helper de permissão (frontend)
+Pequeno hook `useCanEditFinalHypothesis(assessment)` retornando `true` se:
+- `professional_id` corresponde ao PRO logado, **ou**
+- `clinic_id` existe e usuário tem `clinic_role` em `['owner','therapist']`.
+
+### 3. Componente novo: `FinalHypothesisEditor.tsx`
+- Recebe `assessment`, `aiHypothesis`, `finalHypothesis`, `onSaved`.
+- Estados: visualização → edição (com radio "Concordo" / "Ajustar").
+- Ao salvar: `UPDATE assessments SET final_hypothesis, final_hypothesis_by, final_hypothesis_at`. Limpar = setar `null` (volta para a IA).
+- Toast de confirmação, validação de tamanho (max 200 chars).
+
+### 4. Pontos de integração
+
+**Prontuário (`PatientEvolutionDashboard.tsx`, linha ~2190)**
+- Card "Hipótese Diagnóstica" passa a renderizar `final_hypothesis ?? diagnosis.hypothesis` em destaque.
+- Se há override: badge "Revisada pelo fisioterapeuta" + linha discreta com a sugestão original da IA.
+- Logo abaixo: `<FinalHypothesisEditor />` se permissão.
+
+**Visualização da avaliação (`AssessmentView.tsx`)**
+- Mesmo tratamento: card principal usa `final_hypothesis ?? diagnosis.hypothesis`.
+- Editor abaixo (mesmo componente, mesmo registro → sincronizado).
+
+**PDF (`utils/generatePdf.ts`, linhas 1173 e 945)**
+- Adicionar parâmetro opcional `finalHypothesis?: string` ao `AssessmentReportOptions` e `BasicReportOptions`.
+- Se presente, usar `finalHypothesis` no card principal (substitui totalmente a da IA, conforme decidido).
+- Caller passa `assessment.final_hypothesis ?? assessment.diagnosis.hypothesis`.
+
+**Compartilhamento WhatsApp (`AssessmentView.tsx` linha 227 e `DiagnosisResult.tsx` linha 386)**
+- Mesma lógica: se `final_hypothesis` existe, usa ele no texto.
+
+**Listagens secundárias (não exibem editor, apenas leitura):**
+- `AssessmentHistory.tsx` linha 62 — usar fallback `final_hypothesis ?? hypothesis`.
+- `PatientEvolutionDashboard.tsx` linhas 359, 1137, 1883, 2589 — mesmo fallback (utility helper `getDisplayHypothesis(assessment)` para evitar duplicação).
+
+### 5. NÃO alterar
+- `DiagnosisResult.tsx` (tela mostrada ao paciente logo após avaliação) → não exibe editor; o profissional acessa via prontuário/AssessmentView.
+- Edge functions de geração da IA (`generate-diagnosis`) → o overrule é puramente pós-fato, não afeta o raciocínio da IA armazenado em `diagnosis.hypothesis`.
+- Tabela de auditoria/log → fora de escopo (decidido).
+
+## Resumo de arquivos
+
+| Arquivo | Tipo |
+|---|---|
+| `supabase/migrations/...sql` | novo (3 colunas) |
+| `src/lib/finalHypothesis.ts` | novo (helper `getDisplayHypothesis` + hook permissão) |
+| `src/components/dashboard/FinalHypothesisEditor.tsx` | novo |
+| `src/components/dashboard/PatientEvolutionDashboard.tsx` | editar (card + editor + fallbacks) |
+| `src/pages/AssessmentView.tsx` | editar (card + editor + WhatsApp) |
+| `src/components/dashboard/AssessmentHistory.tsx` | editar (fallback) |
+| `src/utils/generatePdf.ts` | editar (suportar `finalHypothesis` em ambos PDFs) |
+| `src/components/assessment/DiagnosisResult.tsx` | editar leve (fallback no WhatsApp share, caso já tenha override) |
+
+## Considerações
+
+- Segurança: RLS já cobre quem pode dar UPDATE em `assessments`. O bloqueio adicional para secretária é UX no front; ela tecnicamente teria permissão de UPDATE (policy "Clinic managers and therapists" inclui secretary). Se quiser bloqueio também no DB, posso adicionar uma policy mais restrita — me avise.
+- O campo é opcional e retroativo: avaliações antigas continuam funcionando normalmente (mostram a hipótese da IA até que alguém faça overrule).
+- Memória do projeto será atualizada com regra "Final Hypothesis Overrule".

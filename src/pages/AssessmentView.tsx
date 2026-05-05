@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2 } from "lucide-react";
 import DiagnosisResult from "@/components/assessment/DiagnosisResult";
 import TreatmentPlan from "@/components/assessment/TreatmentPlan";
+import FinalHypothesisEditor from "@/components/dashboard/FinalHypothesisEditor";
+import { getDisplayHypothesis, useCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 import PainMapView from "@/components/assessment/PainMapView";
 import { regionsByView } from "@/components/assessment/painMapData";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
@@ -111,6 +113,7 @@ const AssessmentView = () => {
   };
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const canEditFinalHypothesis = useCanEditFinalHypothesis(assessment);
   const [showTreatment, setShowTreatment] = useState(false);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -122,9 +125,11 @@ const AssessmentView = () => {
     setPdfLoading(true);
     try {
       const { generateAssessmentPdf, generateBasicReportPdfBlob } = await import("@/utils/generatePdf");
+      const finalHypothesis = assessment.final_hypothesis?.trim() || undefined;
       if (assessment.type === "basic") {
         const pdfBlob = await generateBasicReportPdfBlob({
           diagnosis: assessment.diagnosis,
+          finalHypothesis,
           language,
           patientName: assessment.patient_name || undefined,
           painRegions: assessment.pain_regions || undefined,
@@ -140,6 +145,7 @@ const AssessmentView = () => {
       } else {
         await generateAssessmentPdf({
           diagnosis: assessment.diagnosis,
+          finalHypothesis,
           treatmentPlan: assessment.treatment_plan,
           language,
           userName: assessment.patient_name || user?.user_metadata?.full_name || "",
@@ -162,10 +168,12 @@ const AssessmentView = () => {
       const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
       const { generateAssessmentPdfBlob, generateBasicReportPdfBlob } = await import("@/utils/generatePdf");
       const { getPublicOrigin } = await import("@/lib/getPublicOrigin");
+      const finalHypothesis = assessment.final_hypothesis?.trim() || undefined;
       let pdfBlob: Blob;
       if (assessment.type === "basic") {
         pdfBlob = await generateBasicReportPdfBlob({
           diagnosis: assessment.diagnosis,
+          finalHypothesis,
           language,
           patientName: assessment.patient_name || undefined,
           painRegions: assessment.pain_regions || undefined,
@@ -175,6 +183,7 @@ const AssessmentView = () => {
       } else {
         pdfBlob = await generateAssessmentPdfBlob({
           diagnosis: assessment.diagnosis,
+          finalHypothesis,
           treatmentPlan: assessment.treatment_plan,
           language,
           userName: assessment.patient_name || user?.user_metadata?.full_name || "",
@@ -224,7 +233,8 @@ const AssessmentView = () => {
 
       const origin = getPublicOrigin();
       const pdfLine = pdfUrl ? `\n\n📄 ${isPt ? "Relatório em PDF" : "PDF Report"}:\n${pdfUrl}` : "";
-      const text = `🩺 *Aliv.iA — ${isPt ? "Relatório de Avaliação" : "Assessment Report"}*\n\n📋 *${isPt ? "Hipótese" : "Hypothesis"}:* ${assessment.diagnosis.hypothesis}${pdfLine}\n\n💡 ${origin}`;
+      const displayHypothesis = finalHypothesis || assessment.diagnosis.hypothesis;
+      const text = `🩺 *Aliv.iA — ${isPt ? "Relatório de Avaliação" : "Assessment Report"}*\n\n📋 *${isPt ? "Hipótese" : "Hypothesis"}:* ${displayHypothesis}${pdfLine}\n\n💡 ${origin}`;
       await shareTextOrOpenWhatsApp(text, "Aliv.iA");
     } catch {
       toast({ title: isPt ? "Erro ao compartilhar" : "Error sharing", variant: "destructive" });
@@ -531,15 +541,40 @@ const AssessmentView = () => {
 
         {/* Diagnosis */}
         {assessment.diagnosis && !showTreatment && (
-          <DiagnosisResult
-            diagnosis={assessment.diagnosis}
-            mode={assessment.type as "basic" | "premium"}
-            onBack={goBack}
-            onNewAssessment={() => navigate("/assessment/premium")}
-            onGenerateTreatment={
-              assessment.treatment_plan ? () => setShowTreatment(true) : undefined
-            }
-          />
+          <>
+            <DiagnosisResult
+              diagnosis={
+                assessment.final_hypothesis?.trim()
+                  ? { ...assessment.diagnosis, hypothesis: assessment.final_hypothesis.trim() }
+                  : assessment.diagnosis
+              }
+              mode={assessment.type as "basic" | "premium"}
+              onBack={goBack}
+              onNewAssessment={() => navigate("/assessment/premium")}
+              onGenerateTreatment={
+                assessment.treatment_plan ? () => setShowTreatment(true) : undefined
+              }
+            />
+            {canEditFinalHypothesis && (
+              <FinalHypothesisEditor
+                assessmentId={assessment.id}
+                aiHypothesis={assessment.diagnosis.hypothesis}
+                finalHypothesis={assessment.final_hypothesis}
+                finalHypothesisAt={assessment.final_hypothesis_at}
+                onSaved={(newValue) =>
+                  setAssessment((prev: any) =>
+                    prev
+                      ? {
+                          ...prev,
+                          final_hypothesis: newValue,
+                          final_hypothesis_at: newValue ? new Date().toISOString() : null,
+                        }
+                      : prev,
+                  )
+                }
+              />
+            )}
+          </>
         )}
 
         {/* Treatment Plan */}

@@ -64,6 +64,8 @@ interface AnamnesisData {
 
 interface PdfOptions {
   diagnosis: Diagnosis;
+  /** When set, replaces the AI hypothesis with the professional override. */
+  finalHypothesis?: string;
   treatmentPlan?: TreatmentPlanData;
   language: string;
   userName?: string;
@@ -886,6 +888,8 @@ function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: numbe
 // ── Basic Report PDF (for WhatsApp sharing — hypothesis, confidence, summary, pain map, VAS, disclaimer) ──
 interface BasicReportOptions {
   diagnosis: Diagnosis;
+  /** When set, replaces the AI hypothesis with the professional override. */
+  finalHypothesis?: string;
   language: string;
   patientName?: string;
   painRegions?: string[];
@@ -942,7 +946,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Diagnóstica" : "Diagnostic Hypothesis", COLORS.primary);
 
   // Hypothesis card — RIGID layout (measure with the SAME font used to render)
-  y = drawTextCard(doc, y, options.diagnosis.hypothesis, {
+  y = drawTextCard(doc, y, options.finalHypothesis?.trim() || options.diagnosis.hypothesis, {
     fill: COLORS.primaryLight,
     stroke: COLORS.primary,
     padX: 8,
@@ -1106,7 +1110,7 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName }: PdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPt = language === "pt";
   let y = MARGIN;
@@ -1170,7 +1174,7 @@ async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anam
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Diagnóstica" : "Diagnostic Hypothesis", COLORS.primary, 30);
 
   // Hypothesis card — RIGID
-  y = drawTextCard(doc, y, diagnosis.hypothesis, {
+  y = drawTextCard(doc, y, finalHypothesis?.trim() || diagnosis.hypothesis, {
     fill: COLORS.primaryLight,
     stroke: COLORS.primary,
     padX: 8,
