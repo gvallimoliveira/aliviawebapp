@@ -607,12 +607,14 @@ serve(async (req) => {
         }
       }
 
+      const partnerUpdate: Record<string, any> = {
+        is_partner: is_partner,
+        subscription_status: is_partner ? "active" : "inactive",
+      };
+      if (is_partner) partnerUpdate.is_partner_account = true;
       const { error } = await supabaseClient
         .from("professionals")
-        .update({
-          is_partner: is_partner,
-          subscription_status: is_partner ? "active" : "inactive",
-        })
+        .update(partnerUpdate)
         .eq("id", targetId);
 
       if (error) throw error;
