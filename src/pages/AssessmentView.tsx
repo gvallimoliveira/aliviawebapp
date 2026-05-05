@@ -540,15 +540,40 @@ const AssessmentView = () => {
 
         {/* Diagnosis */}
         {assessment.diagnosis && !showTreatment && (
-          <DiagnosisResult
-            diagnosis={assessment.diagnosis}
-            mode={assessment.type as "basic" | "premium"}
-            onBack={goBack}
-            onNewAssessment={() => navigate("/assessment/premium")}
-            onGenerateTreatment={
-              assessment.treatment_plan ? () => setShowTreatment(true) : undefined
-            }
-          />
+          <>
+            <DiagnosisResult
+              diagnosis={
+                assessment.final_hypothesis?.trim()
+                  ? { ...assessment.diagnosis, hypothesis: assessment.final_hypothesis.trim() }
+                  : assessment.diagnosis
+              }
+              mode={assessment.type as "basic" | "premium"}
+              onBack={goBack}
+              onNewAssessment={() => navigate("/assessment/premium")}
+              onGenerateTreatment={
+                assessment.treatment_plan ? () => setShowTreatment(true) : undefined
+              }
+            />
+            {canEditFinalHypothesis && (
+              <FinalHypothesisEditor
+                assessmentId={assessment.id}
+                aiHypothesis={assessment.diagnosis.hypothesis}
+                finalHypothesis={assessment.final_hypothesis}
+                finalHypothesisAt={assessment.final_hypothesis_at}
+                onSaved={(newValue) =>
+                  setAssessment((prev: any) =>
+                    prev
+                      ? {
+                          ...prev,
+                          final_hypothesis: newValue,
+                          final_hypothesis_at: newValue ? new Date().toISOString() : null,
+                        }
+                      : prev,
+                  )
+                }
+              />
+            )}
+          </>
         )}
 
         {/* Treatment Plan */}
