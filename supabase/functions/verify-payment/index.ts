@@ -201,6 +201,8 @@ serve(async (req) => {
 
     // Mode 2: Check if user has valid premium access (subscription-based)
     if (check_access) {
+      const normalizedEmail = (user.email || "").toLowerCase().trim();
+
       // Check VIP status
       const { data: vipUser } = await supabaseClient
         .from("vip_users")
@@ -215,6 +217,50 @@ serve(async (req) => {
           assessments_used: 0,
           max_assessments: 999,
           is_vip: true,
+          subscription_type: "monthly",
+          available_discount: null,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check Premium granted by admin (B2C, by email — for non-professionals)
+      if (normalizedEmail) {
+        const { data: grantedByEmail } = await supabaseClient
+          .from("granted_premium_users")
+          .select("id")
+          .ilike("email", normalizedEmail)
+          .maybeSingle();
+
+        if (grantedByEmail) {
+          return new Response(JSON.stringify({
+            has_access: true,
+            can_redo: true,
+            assessments_used: 0,
+            max_assessments: 999,
+            is_granted: true,
+            subscription_type: "monthly",
+            available_discount: null,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      // Check Premium granted on the professional profile (partner who also got Premium)
+      const { data: proGranted } = await supabaseClient
+        .from("professionals")
+        .select("id, premium_granted")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (proGranted?.premium_granted) {
+        return new Response(JSON.stringify({
+          has_access: true,
+          can_redo: true,
+          assessments_used: 0,
+          max_assessments: 999,
+          is_granted: true,
           subscription_type: "monthly",
           available_discount: null,
         }), {

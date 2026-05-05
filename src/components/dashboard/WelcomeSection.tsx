@@ -125,8 +125,9 @@ const WelcomeSection = ({
     }
 
     // Na aba saúde/mensagens, mostrar apenas status B2C (Premium/Básico)
+    const isGranted = (premiumAccess as any)?.is_granted === true;
     if (premiumAccess?.subscription_type === "monthly") {
-      return <Badge className="bg-amber-500/90 text-white text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />Premium Mensal</Badge>;
+      return <Badge className="bg-amber-500/90 text-white text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />{isGranted ? "Premium Liberado" : "Premium Mensal"}</Badge>;
     }
     if (premiumAccess?.subscription_type === "single") {
       return <Badge variant="outline" className="border-amber-400 text-amber-600 text-[10px] px-2 py-0.5 gap-1"><Crown className="h-3 w-3" />Premium Avulso</Badge>;

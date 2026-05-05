@@ -179,7 +179,7 @@ serve(async (req) => {
       const { data, error } = await supabaseClient
         .from("professionals")
         .select("id, full_name, email, city, state")
-        .eq("is_partner", true)
+        .eq("is_partner_account", true)
         .order("full_name");
 
       if (error) throw error;
@@ -188,17 +188,18 @@ serve(async (req) => {
       });
     }
 
-    // Get partner details with all access flags
+    // Get partner details — uses is_partner_account (permanente)
+    // is_partner_account = pessoa marcada como parceira
+    // is_partner = PRO ativo no momento (pode ser desligado sem perder o parceiro)
     if (action === "get_partner_details") {
       const { data: partners, error } = await supabaseClient
         .from("professionals")
-        .select("id, full_name, email, city, state, is_partner, premium_granted, user_id")
-        .eq("is_partner", true)
+        .select("id, full_name, email, city, state, is_partner, is_partner_account, premium_granted, user_id")
+        .eq("is_partner_account", true)
         .order("full_name");
 
       if (error) throw error;
 
-      // For each partner, check if they have an active clinic
       const enriched = await Promise.all((partners || []).map(async (p: any) => {
         const { data: clinic } = await supabaseClient
           .from("clinics")
@@ -213,6 +214,7 @@ serve(async (req) => {
           city: p.city,
           state: p.state,
           is_partner: p.is_partner,
+          is_partner_account: p.is_partner_account,
           premium_granted: p.premium_granted,
           has_clinic: !!clinic,
           clinic_active: clinic?.subscription_status === "active" || clinic?.subscription_status === "trialing",
@@ -225,6 +227,85 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // List Premium concedido por e-mail (B2C, para não-profissionais)
+    if (action === "list_granted_premium") {
+      const { data, error } = await supabaseClient
+        .from("granted_premium_users")
+        .select("id, email, granted_at, notes")
+        .order("granted_at", { ascending: false });
+      if (error) throw error;
+      return new Response(JSON.stringify({ granted: data || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "add_granted_premium") {
+      const { email, notes } = body;
+      if (!email) {
+        return new Response(JSON.stringify({ error: "email required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const normalizedEmail = String(email).toLowerCase().trim();
+      const { data, error } = await supabaseClient
+        .from("granted_premium_users")
+        .insert({ email: normalizedEmail, granted_by: user.id, notes: notes || null })
+        .select()
+        .single();
+      if (error) {
+        if (error.code === "23505") {
+          return new Response(JSON.stringify({ error: "already_granted" }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw error;
+      }
+      return new Response(JSON.stringify({ granted: data }), {
+        status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "remove_granted_premium") {
+      const { id, email } = body;
+      let q = supabaseClient.from("granted_premium_users").delete();
+      if (id) q = q.eq("id", id);
+      else if (email) q = q.ilike("email", String(email).toLowerCase().trim());
+      else {
+        return new Response(JSON.stringify({ error: "id or email required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error } = await q;
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Remove parceiro inteiramente (desliga conta de parceiro e zera tudo)
+    if (action === "remove_partner_account") {
+      const { professional_id } = body;
+      if (!professional_id) {
+        return new Response(JSON.stringify({ error: "professional_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error } = await supabaseClient
+        .from("professionals")
+        .update({
+          is_partner_account: false,
+          is_partner: false,
+          premium_granted: false,
+          subscription_status: "inactive",
+        })
+        .eq("id", professional_id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     // Toggle partner access (pro / clinic / premium)
     if (action === "toggle_partner_access") {
@@ -252,17 +333,27 @@ serve(async (req) => {
       }
 
       if (access_type === "pro") {
+        // Liga/desliga apenas PRO; "is_partner_account" permanece para manter pessoa na lista
+        const updates: Record<string, any> = {
+          is_partner: enabled,
+          subscription_status: enabled ? "active" : "inactive",
+        };
+        if (enabled) {
+          updates.approved = true;
+          updates.is_partner_account = true; // garante que está marcado como parceiro
+        }
         const { error } = await supabaseClient
           .from("professionals")
-          .update({
-            is_partner: enabled,
-            subscription_status: enabled ? "active" : "inactive",
-            approved: enabled ? true : undefined,
-          })
+          .update(updates)
           .eq("id", professional_id);
         if (error) throw error;
       } else if (access_type === "clinic") {
         if (enabled) {
+          // Garante que pessoa está marcada como parceira
+          await supabaseClient
+            .from("professionals")
+            .update({ is_partner_account: true })
+            .eq("id", professional_id);
           // Check if partner already has a clinic
           const { data: existingClinic } = await supabaseClient
             .from("clinics")
@@ -329,9 +420,11 @@ serve(async (req) => {
           }
         }
       } else if (access_type === "premium") {
+        const updates: Record<string, any> = { premium_granted: enabled };
+        if (enabled) updates.is_partner_account = true; // mantém na lista
         const { error } = await supabaseClient
           .from("professionals")
-          .update({ premium_granted: enabled })
+          .update(updates)
           .eq("id", professional_id);
         if (error) throw error;
       } else {
@@ -419,6 +512,7 @@ serve(async (req) => {
                   city: "A definir",
                   state: "XX",
                   is_partner: true,
+                  is_partner_account: true,
                   approved: true,
                   subscription_status: "active",
                 });
@@ -450,6 +544,7 @@ serve(async (req) => {
               city: "A definir",
               state: "XX",
               is_partner: true,
+              is_partner_account: true,
               approved: true,
               subscription_status: "active",
             });
@@ -512,12 +607,14 @@ serve(async (req) => {
         }
       }
 
+      const partnerUpdate: Record<string, any> = {
+        is_partner: is_partner,
+        subscription_status: is_partner ? "active" : "inactive",
+      };
+      if (is_partner) partnerUpdate.is_partner_account = true;
       const { error } = await supabaseClient
         .from("professionals")
-        .update({
-          is_partner: is_partner,
-          subscription_status: is_partner ? "active" : "inactive",
-        })
+        .update(partnerUpdate)
         .eq("id", targetId);
 
       if (error) throw error;

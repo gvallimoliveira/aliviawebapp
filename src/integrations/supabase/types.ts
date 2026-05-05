@@ -738,6 +738,30 @@ export type Database = {
           },
         ]
       }
+      granted_premium_users: {
+        Row: {
+          email: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          email: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          email?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -1255,6 +1279,7 @@ export type Database = {
           full_name: string
           id: string
           is_partner: boolean
+          is_partner_account: boolean
           lifetime_treatment: boolean
           logo_url: string | null
           phone: string | null
@@ -1282,6 +1307,7 @@ export type Database = {
           full_name: string
           id?: string
           is_partner?: boolean
+          is_partner_account?: boolean
           lifetime_treatment?: boolean
           logo_url?: string | null
           phone?: string | null
@@ -1309,6 +1335,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_partner?: boolean
+          is_partner_account?: boolean
           lifetime_treatment?: boolean
           logo_url?: string | null
           phone?: string | null
