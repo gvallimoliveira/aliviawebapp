@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Handshake, Plus, Loader2, Stethoscope, Building2, Star, KeyRound } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Handshake, Plus, Loader2, Stethoscope, Building2, Star, KeyRound, Trash2, Crown, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface PartnerDetail {
@@ -16,11 +17,19 @@ interface PartnerDetail {
   city: string;
   state: string;
   is_partner: boolean;
+  is_partner_account: boolean;
   premium_granted: boolean;
   has_clinic: boolean;
   clinic_active: boolean;
   clinic_id: string | null;
   clinic_name: string | null;
+}
+
+interface GrantedPremiumEntry {
+  id: string;
+  email: string;
+  granted_at: string;
+  notes: string | null;
 }
 
 interface PartnerManagementProps {
@@ -29,10 +38,15 @@ interface PartnerManagementProps {
 
 const PartnerManagement = ({ language }: PartnerManagementProps) => {
   const [partners, setPartners] = useState<PartnerDetail[]>([]);
+  const [granted, setGranted] = useState<GrantedPremiumEntry[]>([]);
   const [email, setEmail] = useState("");
+  const [grantedEmail, setGrantedEmail] = useState("");
   const [loading, setLoading] = useState(true);
+  const [grantedLoading, setGrantedLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [addingGranted, setAddingGranted] = useState(false);
   const [togglingMap, setTogglingMap] = useState<Record<string, boolean>>({});
+  const [removeConfirm, setRemoveConfirm] = useState<{ open: boolean; partnerId: string; partnerName: string }>({ open: false, partnerId: "", partnerName: "" });
 
   // Clinic activation dialog
   const [clinicDialog, setClinicDialog] = useState<{ open: boolean; partnerId: string; partnerName: string }>({ open: false, partnerId: "", partnerName: "" });
@@ -42,7 +56,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
   const isPt = language === "pt";
   const t = isPt ? {
     title: "Parceiros — Gestão de Acesso",
-    desc: "Gerencie acessos PRO, Clínica e Premium dos parceiros",
+    desc: "Gerencie acessos PRO, Clínica e Premium dos parceiros profissionais",
     email_placeholder: "E-mail do profissional",
     add: "Adicionar",
     no_partners: "Nenhum parceiro ativo.",
@@ -50,23 +64,36 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     granted_created: "Conta criada. Um e-mail de redefinição de senha foi enviado ao parceiro.",
     toggled: "Acesso atualizado!",
     not_found: "Profissional não encontrado com este e-mail.",
-    auto_hint: "Se não tiver conta, será criada automaticamente e o parceiro receberá um e-mail para definir a senha.",
+    auto_hint: "Se não tiver conta, será criada automaticamente e o parceiro receberá um e-mail.",
     error: "Erro",
     pro_label: "PRO",
     clinic_label: "Clínica",
     premium_label: "Premium",
-    resend_pwd: "Reenviar e-mail de senha",
+    resend_pwd: "Reenviar senha",
     resend_sent: "E-mail de redefinição reenviado!",
     resend_no_user: "Esse parceiro ainda não tem conta no Auth.",
     resend_no_email: "Parceiro sem e-mail cadastrado.",
+    remove_partner: "Remover da lista",
+    remove_confirm_title: "Remover parceiro?",
+    remove_confirm_desc: "Isso desliga PRO, Premium e remove a pessoa da lista de parceiros. A conta do usuário e o histórico permanecem.",
+    remove_confirm_action: "Sim, remover",
+    cancel: "Cancelar",
+    granted_title: "Premium liberado por e-mail",
+    granted_desc: "Conceda acesso Premium a familiares ou amigos que NÃO são profissionais (sem precisar de CREFITO).",
+    granted_placeholder: "E-mail de quem receberá Premium",
+    granted_added: "Premium liberado!",
+    granted_already: "Esse e-mail já tem Premium liberado.",
+    granted_removed: "Acesso revogado.",
+    no_granted: "Nenhum e-mail com Premium liberado.",
+    granted_remove: "Revogar",
   } : {
     title: "Partners — Access Management",
-    desc: "Manage PRO, Clinic and Premium access for partners",
+    desc: "Manage PRO, Clinic and Premium access for professional partners",
     email_placeholder: "Professional email",
     add: "Add",
     no_partners: "No active partners.",
     granted: "Access granted successfully!",
-    granted_created: "Account created. A password reset email was sent to the partner.",
+    granted_created: "Account created. A password reset email was sent.",
     toggled: "Access updated!",
     not_found: "No professional found with this email.",
     auto_hint: "If no account exists, one will be auto-created.",
@@ -74,10 +101,23 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     pro_label: "PRO",
     clinic_label: "Clinic",
     premium_label: "Premium",
-    resend_pwd: "Resend password email",
+    resend_pwd: "Resend password",
     resend_sent: "Password reset email re-sent!",
     resend_no_user: "This partner has no Auth account yet.",
     resend_no_email: "Partner has no email on file.",
+    remove_partner: "Remove from list",
+    remove_confirm_title: "Remove partner?",
+    remove_confirm_desc: "This disables PRO and Premium and removes the person from the partner list. The user account and history remain.",
+    remove_confirm_action: "Yes, remove",
+    cancel: "Cancel",
+    granted_title: "Premium granted by email",
+    granted_desc: "Grant Premium access to family or friends who are NOT professionals (no CREFITO required).",
+    granted_placeholder: "Email to receive Premium",
+    granted_added: "Premium granted!",
+    granted_already: "This email already has Premium granted.",
+    granted_removed: "Access revoked.",
+    no_granted: "No email with granted Premium.",
+    granted_remove: "Revoke",
   };
 
   const loadPartners = useCallback(async () => {
@@ -95,7 +135,22 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     }
   }, []);
 
-  useEffect(() => { loadPartners(); }, [loadPartners]);
+  const loadGranted = useCallback(async () => {
+    setGrantedLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-vip-users", {
+        body: { action: "list_granted_premium" },
+      });
+      if (error) throw error;
+      setGranted(data?.granted || []);
+    } catch {
+      setGranted([]);
+    } finally {
+      setGrantedLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadPartners(); loadGranted(); }, [loadPartners, loadGranted]);
 
   const handleAdd = async () => {
     if (!email.trim()) return;
@@ -117,6 +172,65 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
       toast({ title: t.error, description: err.message, variant: "destructive" });
     } finally {
       setAdding(false);
+    }
+  };
+
+  const handleAddGranted = async () => {
+    if (!grantedEmail.trim()) return;
+    setAddingGranted(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-vip-users", {
+        body: { action: "add_granted_premium", email: grantedEmail.trim() },
+      });
+      if (error) throw error;
+      if (data?.error === "already_granted") {
+        toast({ title: t.error, description: t.granted_already, variant: "destructive" });
+        return;
+      }
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "✅", description: t.granted_added });
+      setGrantedEmail("");
+      loadGranted();
+    } catch (err: any) {
+      toast({ title: t.error, description: err.message, variant: "destructive" });
+    } finally {
+      setAddingGranted(false);
+    }
+  };
+
+  const handleRemoveGranted = async (id: string) => {
+    setTogglingMap(p => ({ ...p, [`g_${id}`]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-vip-users", {
+        body: { action: "remove_granted_premium", id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ description: t.granted_removed });
+      loadGranted();
+    } catch (err: any) {
+      toast({ title: t.error, description: err.message, variant: "destructive" });
+    } finally {
+      setTogglingMap(p => ({ ...p, [`g_${id}`]: false }));
+    }
+  };
+
+  const handleConfirmRemovePartner = async () => {
+    const id = removeConfirm.partnerId;
+    setTogglingMap(p => ({ ...p, [`${id}_remove`]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-vip-users", {
+        body: { action: "remove_partner_account", professional_id: id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ description: t.toggled });
+      setRemoveConfirm({ open: false, partnerId: "", partnerName: "" });
+      loadPartners();
+    } catch (err: any) {
+      toast({ title: t.error, description: err.message, variant: "destructive" });
+    } finally {
+      setTogglingMap(p => ({ ...p, [`${id}_remove`]: false }));
     }
   };
 
@@ -160,7 +274,6 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
   };
 
   const handleToggle = async (partnerId: string, accessType: "pro" | "clinic" | "premium", enabled: boolean) => {
-    // If enabling clinic for the first time, open dialog for name
     if (accessType === "clinic" && enabled) {
       const partner = partners.find(p => p.id === partnerId);
       if (partner && !partner.has_clinic) {
@@ -187,7 +300,6 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ description: t.toggled });
-      if (accessType === "pro" && !enabled) loadPartners();
     } catch (err: any) {
       loadPartners();
       toast({ title: t.error, description: err.message, variant: "destructive" });
@@ -266,7 +378,72 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
           ) : (
             <div className="space-y-3">
               {partners.map((p) => (
-                <PartnerCard key={p.id} partner={p} t={t} togglingMap={togglingMap} onToggle={handleToggle} onResendPassword={handleResendPassword} />
+                <PartnerCard
+                  key={p.id}
+                  partner={p}
+                  t={t}
+                  togglingMap={togglingMap}
+                  onToggle={handleToggle}
+                  onResendPassword={handleResendPassword}
+                  onRequestRemove={() => setRemoveConfirm({ open: true, partnerId: p.id, partnerName: p.full_name })}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Premium granted by email — for non-professionals */}
+      <div className="flex items-center gap-2 mt-8 mb-2">
+        <Crown className="h-5 w-5 text-amber-500" />
+        <h2 className="text-lg font-semibold text-foreground">{t.granted_title}</h2>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardDescription>{t.granted_desc}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Input
+              placeholder={t.granted_placeholder}
+              type="email"
+              value={grantedEmail}
+              onChange={(e) => setGrantedEmail(e.target.value)}
+              className="flex-1"
+              onKeyDown={(e) => e.key === "Enter" && handleAddGranted()}
+            />
+            <Button onClick={handleAddGranted} disabled={addingGranted || !grantedEmail.trim()} className="gap-2">
+              {addingGranted ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {t.add}
+            </Button>
+          </div>
+
+          {grantedLoading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : granted.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4 text-sm">{t.no_granted}</p>
+          ) : (
+            <div className="space-y-2">
+              {granted.map((g) => (
+                <div key={g.id} className="flex items-center justify-between rounded-md border border-border bg-card p-3">
+                  <div className="flex items-center gap-2">
+                    <Crown className="h-4 w-4 text-amber-500" />
+                    <span className="text-sm font-medium text-foreground">{g.email}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 h-8 text-destructive hover:text-destructive"
+                    disabled={togglingMap[`g_${g.id}`]}
+                    onClick={() => handleRemoveGranted(g.id)}
+                  >
+                    {togglingMap[`g_${g.id}`] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                    <span className="text-xs">{t.granted_remove}</span>
+                  </Button>
+                </div>
               ))}
             </div>
           )}
@@ -297,6 +474,24 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Remove partner confirmation */}
+      <AlertDialog open={removeConfirm.open} onOpenChange={(open) => !open && setRemoveConfirm({ open: false, partnerId: "", partnerName: "" })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.remove_confirm_title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{removeConfirm.partnerName}</strong> — {t.remove_confirm_desc}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRemovePartner} className="bg-destructive hover:bg-destructive/90">
+              {t.remove_confirm_action}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
@@ -307,14 +502,16 @@ interface PartnerCardProps {
   togglingMap: Record<string, boolean>;
   onToggle: (id: string, type: "pro" | "clinic" | "premium", enabled: boolean) => void;
   onResendPassword: (partner: PartnerDetail) => void;
+  onRequestRemove: () => void;
 }
 
-const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword }: PartnerCardProps) => {
+const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRequestRemove }: PartnerCardProps) => {
   const toggles: { type: "pro" | "clinic" | "premium"; label: string; icon: React.ReactNode; checked: boolean }[] = [
     { type: "pro", label: t.pro_label, icon: <Stethoscope className="h-3.5 w-3.5" />, checked: partner.is_partner },
     { type: "clinic", label: t.clinic_label, icon: <Building2 className="h-3.5 w-3.5" />, checked: partner.clinic_active },
     { type: "premium", label: t.premium_label, icon: <Star className="h-3.5 w-3.5" />, checked: partner.premium_granted },
   ];
+  const removeKey = `${partner.id}_remove`;
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-3">
@@ -344,18 +541,32 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword }: Pa
             </label>
           );
         })}
-        <Button
-          variant="outline"
-          size="sm"
-          className="ml-auto gap-1.5 h-8"
-          disabled={!partner.email || togglingMap[`${partner.id}_resend`]}
-          onClick={() => onResendPassword(partner)}
-        >
-          {togglingMap[`${partner.id}_resend`]
-            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            : <KeyRound className="h-3.5 w-3.5" />}
-          <span className="text-xs">{t.resend_pwd}</span>
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8"
+            disabled={!partner.email || togglingMap[`${partner.id}_resend`]}
+            onClick={() => onResendPassword(partner)}
+          >
+            {togglingMap[`${partner.id}_resend`]
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              : <KeyRound className="h-3.5 w-3.5" />}
+            <span className="text-xs">{t.resend_pwd}</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 h-8 text-destructive hover:text-destructive"
+            disabled={togglingMap[removeKey]}
+            onClick={onRequestRemove}
+          >
+            {togglingMap[removeKey]
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              : <Trash2 className="h-3.5 w-3.5" />}
+            <span className="text-xs">{t.remove_partner}</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
