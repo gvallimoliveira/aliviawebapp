@@ -127,6 +127,64 @@ const sendPartnerWelcomeEmail = async (email: string) => {
     log("Welcome email failed", { error: err.message });
   }
 };
+
+// Notification email for users who ALREADY have an account in the system.
+// Does NOT mention any default password — they already have their own credentials.
+const sendPartnerGrantedEmail = async (email: string) => {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY) {
+    log("Granted email skipped — no RESEND_API_KEY");
+    return;
+  }
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff; color: #1a1a1a;">
+  <div style="text-align: center; padding: 24px 0;">
+    <h1 style="color: #0f766e; font-size: 26px; margin: 0;">Seu acesso PRO foi liberado! 🎉</h1>
+    <p style="color: #6b7280; margin-top: 8px;">Você agora é parceiro(a) profissional da Aliv.iA</p>
+  </div>
+
+  <div style="background: #f9fafb; border-radius: 12px; padding: 24px; margin: 16px 0;">
+    <p style="margin: 0 0 12px;">Olá!</p>
+    <p style="margin: 0 0 12px;">Identificamos que você já tem uma conta na Aliv.iA. Acabamos de habilitar o seu <strong>acesso PRO de parceiro</strong> nesta mesma conta.</p>
+    <p style="margin: 0 0 12px;"><strong>Use o seu e-mail e a sua senha habituais para entrar</strong> — nada muda no seu login.</p>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${APP_URL}/auth" style="background: #0f766e; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">Acessar minha conta</a>
+    </div>
+
+    <p style="margin: 0; font-size: 13px; color: #6b7280;">Esqueceu sua senha? Use o link "Esqueci minha senha" na tela de login.</p>
+  </div>
+
+  <p style="color: #6b7280; font-size: 13px; margin-top: 32px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 16px;">
+    Dúvidas? Responda este e-mail ou acesse <a href="${APP_URL}/suporte" style="color: #0f766e;">nosso suporte</a>.<br>
+    <strong>Aliv.iA</strong> — sistema de raciocínio clínico com alma de fisioterapeuta
+  </p>
+</body>
+</html>`;
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Aliv.iA <onboarding@resend.dev>",
+        to: [email],
+        subject: "🎉 Seu acesso PRO de parceiro foi liberado",
+        html,
+      }),
+    });
+    log("Granted email sent", { status: response.status, ok: response.ok });
+  } catch (err: any) {
+    log("Granted email failed", { error: err.message });
+  }
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
