@@ -2761,6 +2761,89 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       </AlertDialog>
     </div>
   );
+
+// ── DiagnosticHypothesisBlock ──────────────────────────────────────
+// Renders the "Hipótese Diagnóstica" card honoring an optional
+// professional override (final_hypothesis). When an authorized
+// professional is logged in, also renders the FinalHypothesisEditor
+// right below so they can adjust or restore the AI suggestion.
+interface DiagnosticHypothesisBlockProps {
+  assessment: any;
+  isDemo?: boolean;
+}
+
+const DiagnosticHypothesisBlock = ({ assessment, isDemo }: DiagnosticHypothesisBlockProps) => {
+  const canEdit = useCanEditFinalHypothesis(assessment);
+  const [localFinal, setLocalFinal] = useState<string | null>(assessment.final_hypothesis ?? null);
+  const [localFinalAt, setLocalFinalAt] = useState<string | null>(assessment.final_hypothesis_at ?? null);
+
+  useEffect(() => {
+    setLocalFinal(assessment.final_hypothesis ?? null);
+    setLocalFinalAt(assessment.final_hypothesis_at ?? null);
+  }, [assessment.id, assessment.final_hypothesis, assessment.final_hypothesis_at]);
+
+  const aiHypothesis: string | undefined = assessment.diagnosis?.hypothesis;
+  const displayed = (localFinal && localFinal.trim()) || aiHypothesis;
+  const hasOverride = !!(localFinal && localFinal.trim());
+  const formattedDate = localFinalAt
+    ? new Date(localFinalAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+    : null;
+
+  return (
+    <>
+      <Card className="border-primary/20">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Stethoscope className="h-4 w-4 text-primary" />
+            Hipótese Diagnóstica
+            {hasOverride && (
+              <Badge variant="secondary" className="text-[10px] ml-1">Revisada pelo fisioterapeuta</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-sm font-semibold text-foreground leading-relaxed">
+            {displayed}
+          </p>
+          {hasOverride && formattedDate && (
+            <p className="text-[11px] text-muted-foreground">Atualizada em {formattedDate}</p>
+          )}
+          {!hasOverride && assessment.diagnosis?.confidence === "high" && (
+            <Badge variant="outline" className="text-[10px] capitalize">
+              Confiança: {assessment.diagnosis.confidence}
+            </Badge>
+          )}
+          {assessment.diagnosis?.reasoning && (
+            <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+              {assessment.diagnosis.reasoning}
+            </p>
+          )}
+          {hasOverride && aiHypothesis && (
+            <div className="mt-2 pt-2 border-t border-border/60">
+              <p className="text-[11px] text-muted-foreground">
+                <Sparkles className="inline h-3 w-3 mr-1 -mt-0.5" />
+                Sugestão original da IA: <span className="italic">{aiHypothesis}</span>
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {canEdit && !isDemo && (
+        <FinalHypothesisEditor
+          assessmentId={assessment.id}
+          aiHypothesis={aiHypothesis}
+          finalHypothesis={localFinal}
+          finalHypothesisAt={localFinalAt}
+          onSaved={(newValue) => {
+            setLocalFinal(newValue);
+            setLocalFinalAt(newValue ? new Date().toISOString() : null);
+          }}
+        />
+      )}
+    </>
+  );
 };
 
 export default PatientEvolutionDashboard;
+
