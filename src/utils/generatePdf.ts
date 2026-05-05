@@ -1110,7 +1110,7 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName }: PdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPt = language === "pt";
   let y = MARGIN;
