@@ -420,9 +420,11 @@ serve(async (req) => {
           }
         }
       } else if (access_type === "premium") {
+        const updates: Record<string, any> = { premium_granted: enabled };
+        if (enabled) updates.is_partner_account = true; // mantém na lista
         const { error } = await supabaseClient
           .from("professionals")
-          .update({ premium_granted: enabled })
+          .update(updates)
           .eq("id", professional_id);
         if (error) throw error;
       } else {
