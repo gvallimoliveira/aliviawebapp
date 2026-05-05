@@ -30,6 +30,41 @@ const VerifyEmail = () => {
     }
   }, [user, navigate]);
 
+  // Periodic check + on-focus check: if the user confirmed the email in
+  // another tab, refresh the session and redirect to /dashboard automatically.
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkConfirmation = async () => {
+      try {
+        const { data: { user: refreshed } } = await supabase.auth.getUser();
+        if (!cancelled && refreshed?.email_confirmed_at) {
+          navigate("/dashboard", { replace: true });
+        }
+      } catch {
+        /* noop — network blip, will retry next tick */
+      }
+    };
+
+    const interval = window.setInterval(checkConfirmation, 5000);
+    const onFocus = () => checkConfirmation();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") checkConfirmation();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    // Run once immediately on mount
+    checkConfirmation();
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [navigate]);
+
   // Cooldown timer
   useEffect(() => {
     if (cooldown <= 0) return;
