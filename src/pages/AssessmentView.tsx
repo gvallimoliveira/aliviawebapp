@@ -167,10 +167,12 @@ const AssessmentView = () => {
       const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
       const { generateAssessmentPdfBlob, generateBasicReportPdfBlob } = await import("@/utils/generatePdf");
       const { getPublicOrigin } = await import("@/lib/getPublicOrigin");
+      const finalHypothesis = assessment.final_hypothesis?.trim() || undefined;
       let pdfBlob: Blob;
       if (assessment.type === "basic") {
         pdfBlob = await generateBasicReportPdfBlob({
           diagnosis: assessment.diagnosis,
+          finalHypothesis,
           language,
           patientName: assessment.patient_name || undefined,
           painRegions: assessment.pain_regions || undefined,
@@ -180,6 +182,7 @@ const AssessmentView = () => {
       } else {
         pdfBlob = await generateAssessmentPdfBlob({
           diagnosis: assessment.diagnosis,
+          finalHypothesis,
           treatmentPlan: assessment.treatment_plan,
           language,
           userName: assessment.patient_name || user?.user_metadata?.full_name || "",
@@ -229,7 +232,8 @@ const AssessmentView = () => {
 
       const origin = getPublicOrigin();
       const pdfLine = pdfUrl ? `\n\n📄 ${isPt ? "Relatório em PDF" : "PDF Report"}:\n${pdfUrl}` : "";
-      const text = `🩺 *Aliv.iA — ${isPt ? "Relatório de Avaliação" : "Assessment Report"}*\n\n📋 *${isPt ? "Hipótese" : "Hypothesis"}:* ${assessment.diagnosis.hypothesis}${pdfLine}\n\n💡 ${origin}`;
+      const displayHypothesis = finalHypothesis || assessment.diagnosis.hypothesis;
+      const text = `🩺 *Aliv.iA — ${isPt ? "Relatório de Avaliação" : "Assessment Report"}*\n\n📋 *${isPt ? "Hipótese" : "Hypothesis"}:* ${displayHypothesis}${pdfLine}\n\n💡 ${origin}`;
       await shareTextOrOpenWhatsApp(text, "Aliv.iA");
     } catch {
       toast({ title: isPt ? "Erro ao compartilhar" : "Error sharing", variant: "destructive" });
