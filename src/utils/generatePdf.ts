@@ -944,7 +944,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Diagnóstica" : "Diagnostic Hypothesis", COLORS.primary);
 
   // Hypothesis card — RIGID layout (measure with the SAME font used to render)
-  y = drawTextCard(doc, y, options.diagnosis.hypothesis, {
+  y = drawTextCard(doc, y, options.finalHypothesis?.trim() || options.diagnosis.hypothesis, {
     fill: COLORS.primaryLight,
     stroke: COLORS.primary,
     padX: 8,
