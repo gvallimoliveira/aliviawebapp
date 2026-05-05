@@ -113,6 +113,7 @@ const AssessmentView = () => {
   };
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const canEditFinalHypothesis = useCanEditFinalHypothesis(assessment);
   const [showTreatment, setShowTreatment] = useState(false);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
