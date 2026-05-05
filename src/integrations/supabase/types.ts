@@ -21,6 +21,9 @@ export type Database = {
           clinic_id: string | null
           created_at: string
           diagnosis: Json | null
+          final_hypothesis: string | null
+          final_hypothesis_at: string | null
+          final_hypothesis_by: string | null
           id: string
           original_assessment_id: string | null
           paid_at: string | null
@@ -47,6 +50,9 @@ export type Database = {
           clinic_id?: string | null
           created_at?: string
           diagnosis?: Json | null
+          final_hypothesis?: string | null
+          final_hypothesis_at?: string | null
+          final_hypothesis_by?: string | null
           id?: string
           original_assessment_id?: string | null
           paid_at?: string | null
@@ -73,6 +79,9 @@ export type Database = {
           clinic_id?: string | null
           created_at?: string
           diagnosis?: Json | null
+          final_hypothesis?: string | null
+          final_hypothesis_at?: string | null
+          final_hypothesis_by?: string | null
           id?: string
           original_assessment_id?: string | null
           paid_at?: string | null
@@ -1821,6 +1830,9 @@ export type Database = {
           clinic_id: string | null
           created_at: string
           diagnosis: Json | null
+          final_hypothesis: string | null
+          final_hypothesis_at: string | null
+          final_hypothesis_by: string | null
           id: string
           original_assessment_id: string | null
           paid_at: string | null
