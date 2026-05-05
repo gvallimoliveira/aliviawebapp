@@ -625,8 +625,13 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     );
   }
 
-  // Decide which data to show based on toggle
-  const showingSimulated = isSimulated || (!subscription?.subscribed && !clinicCoversAccess);
+  // Decide which data to show. Simulated data must ONLY appear when:
+  // (a) the user explicitly toggled the simulated mode, OR
+  // (b) we are rendering the demo preview (isDemoMode).
+  // We must NOT fall back to mock data based on subscription state — that
+  // would leak mock patients into a real partner/PRO panel while the
+  // subscription check is still loading or returns unexpected values.
+  const showingSimulated = isSimulated || isDemoMode;
   const displayAssessments = showingSimulated ? mockPatientAssessments : patientAssessments;
   const displayThisMonthCount = showingSimulated ? 2 : thisMonthCount;
   const displayTotalCount = showingSimulated ? mockPatientAssessments.length : patientAssessments.length;
