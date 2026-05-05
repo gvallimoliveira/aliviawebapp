@@ -103,6 +103,12 @@ const categories: ToolCategory[] = [
         desc: "A IA aplica os frameworks STEPS e D.I.F.I sobre os dados da avaliação e sugere uma hipótese clínica com nível de confiança. Você revisa, ajusta e valida — o raciocínio final é sempre seu.",
       },
       {
+        key: "final_hypothesis",
+        icon: FileCheck,
+        title: "Hipótese diagnóstica final (sobrescrever IA)",
+        desc: "Você (owner ou terapeuta da clínica) pode concordar com a hipótese da IA ou sobrescrevê-la com seu próprio diagnóstico direto no prontuário do paciente ou na visualização da avaliação. A hipótese final aparece em destaque internamente, substitui totalmente a sugestão da IA no PDF entregue ao paciente e no compartilhamento por WhatsApp — a sugestão original da IA fica visível apenas para a equipe, em uma linha discreta. Secretárias não têm permissão para editar (decisão clínica). Editável a qualquer momento, com sincronização imediata em todos os pontos do sistema.",
+      },
+      {
         key: "treatment_plan",
         icon: Stethoscope,
         title: "Plano de tratamento sugerido",
