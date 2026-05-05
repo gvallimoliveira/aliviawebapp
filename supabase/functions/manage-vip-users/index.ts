@@ -529,7 +529,9 @@ serve(async (req) => {
           });
 
           if (createError) {
-            // If user already exists in auth but not in professionals
+            // Auth user already exists — DO NOT touch their password / credentials.
+            // They already have a working login; we only need to attach a partner
+            // professional profile and notify them that PRO has been granted.
             if (createError.message?.includes("already been registered")) {
               const existingUser = await findAuthUserByEmail(supabaseClient, normalizedEmail);
               log("Existing auth lookup", { found: !!existingUser, email: normalizedEmail });
@@ -540,24 +542,8 @@ serve(async (req) => {
                 });
               }
 
-              // Set default password and force_password_reset for existing user
-              await supabaseClient.auth.admin.updateUserById(existingUser.id, {
-                password: "parceiroalivia",
-                user_metadata: { ...existingUser.user_metadata, force_password_reset: true },
-              });
-
-              // Also send recovery email as backup
-              const resetRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/recover`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "apikey": Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-                },
-                body: JSON.stringify({ email: normalizedEmail, gotrue_meta_security: { captcha_token: "" } }),
-              });
-              log("Recovery email sent for existing user", { status: resetRes.status });
-
-              // Create professional profile for existing auth user
+              // Create professional profile linked to the existing auth user.
+              // Credentials are left untouched.
               const namePart = existingUser.user_metadata?.full_name || normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
               const temporaryCrefito = await getAvailableTemporaryCrefito(supabaseClient, normalizedEmail);
               const { error: insertErr } = await supabaseClient
@@ -577,10 +563,10 @@ serve(async (req) => {
 
               if (insertErr) throw insertErr;
 
-              // Send welcome email with credentials
-              await sendPartnerWelcomeEmail(normalizedEmail);
+              // Send the "you've been granted PRO — use your usual password" email.
+              await sendPartnerGrantedEmail(normalizedEmail);
 
-              return new Response(JSON.stringify({ success: true, created: true }), {
+              return new Response(JSON.stringify({ success: true, created: true, existing_account: true }), {
                 headers: { ...corsHeaders, "Content-Type": "application/json" },
               });
             }
