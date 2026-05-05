@@ -64,6 +64,8 @@ interface AnamnesisData {
 
 interface PdfOptions {
   diagnosis: Diagnosis;
+  /** When set, replaces the AI hypothesis with the professional override. */
+  finalHypothesis?: string;
   treatmentPlan?: TreatmentPlanData;
   language: string;
   userName?: string;
