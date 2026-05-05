@@ -95,13 +95,19 @@ const Auth = () => {
       }
 
       // Signup
-      const { error } = await signUp(email, password, fullName);
+      const { error, session } = await signUp(email, password, fullName);
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
         setLoading(false);
-      } else {
+      } else if (session) {
+        // Email auto-confirm is on (rare). Let useEffect handle redirect.
         toast({ title: t("auth.welcome"), description: t("auth.account_created") });
-        // Stay loading; redirect handled by useEffect when `user` populates.
+      } else {
+        // Standard flow: confirmation email sent. Redirect to a clear
+        // "verify your email" page so the user is not stuck on a loading button.
+        setLoading(false);
+        redirectingRef.current = true;
+        navigate("/verificar-email", { replace: true, state: { email } });
       }
     } catch (err: any) {
       toast({
