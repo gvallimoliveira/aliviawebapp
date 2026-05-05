@@ -2190,29 +2190,28 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       })()}
       {/* ── 2. DIAGNÓSTICO (Hipótese Principal) ── */}
       {latestWithDiagnosis?.diagnosis?.hypothesis && (
-        <Card className="border-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Stethoscope className="h-4 w-4 text-primary" />
-              Hipótese Diagnóstica
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-sm font-medium text-foreground leading-relaxed">
-              {latestWithDiagnosis.diagnosis.hypothesis}
-            </p>
-            {latestWithDiagnosis.diagnosis.confidence === "high" && (
-              <Badge variant="outline" className="text-[10px] capitalize">
-                Confiança: {latestWithDiagnosis.diagnosis.confidence}
-              </Badge>
-            )}
-            {latestWithDiagnosis.diagnosis.reasoning && (
-              <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-                {latestWithDiagnosis.diagnosis.reasoning}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <DiagnosticHypothesisCard
+          assessment={latestWithDiagnosis}
+          isDemo={isDemo}
+          onUpdated={(newValue) => {
+            // Optimistically update the in-memory patient assessments list
+            setPatient((prev: any) => {
+              if (!prev?.assessments) return prev;
+              return {
+                ...prev,
+                assessments: prev.assessments.map((a: any) =>
+                  a.id === latestWithDiagnosis.id
+                    ? {
+                        ...a,
+                        final_hypothesis: newValue,
+                        final_hypothesis_at: newValue ? new Date().toISOString() : null,
+                      }
+                    : a,
+                ),
+              };
+            });
+          }}
+        />
       )}
 
       {/* ── 3. IMPRESSÃO CLÍNICA (IA) ── */}
