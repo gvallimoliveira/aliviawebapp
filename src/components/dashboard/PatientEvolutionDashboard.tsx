@@ -2761,6 +2761,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       </AlertDialog>
     </div>
   );
+};
 
 // ── DiagnosticHypothesisBlock ──────────────────────────────────────
 // Renders the "Hipótese Diagnóstica" card honoring an optional
