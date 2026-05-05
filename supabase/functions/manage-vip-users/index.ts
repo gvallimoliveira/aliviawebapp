@@ -626,28 +626,18 @@ serve(async (req) => {
         });
       }
 
-      // If granting partner, send recovery email so they can (re)set their password securely
+      // If granting partner, only notify the user that PRO has been enabled.
+      // Do NOT touch their password and do NOT trigger a password recovery email
+      // — they already have a working account in this branch.
       if (is_partner) {
         const { data: proData } = await supabaseClient
           .from("professionals")
           .select("user_id, email, is_partner")
           .eq("id", targetId)
           .single();
-        if (proData?.user_id && proData?.email) {
-          const resetRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/recover`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "apikey": Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-            },
-            body: JSON.stringify({ email: proData.email }),
-          });
-          log("Recovery email sent on re-grant", { user_id: proData.user_id, status: resetRes.status });
-
-          // Only send welcome email if this is a new partner grant (not already a partner)
-          if (!proData.is_partner) {
-            await sendPartnerWelcomeEmail(proData.email);
-          }
+        if (proData?.user_id && proData?.email && !proData.is_partner) {
+          // Only send notification on the false → true transition.
+          await sendPartnerGrantedEmail(proData.email);
         }
       }
 
