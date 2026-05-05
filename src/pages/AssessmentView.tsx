@@ -124,9 +124,11 @@ const AssessmentView = () => {
     setPdfLoading(true);
     try {
       const { generateAssessmentPdf, generateBasicReportPdfBlob } = await import("@/utils/generatePdf");
+      const finalHypothesis = assessment.final_hypothesis?.trim() || undefined;
       if (assessment.type === "basic") {
         const pdfBlob = await generateBasicReportPdfBlob({
           diagnosis: assessment.diagnosis,
+          finalHypothesis,
           language,
           patientName: assessment.patient_name || undefined,
           painRegions: assessment.pain_regions || undefined,
@@ -142,6 +144,7 @@ const AssessmentView = () => {
       } else {
         await generateAssessmentPdf({
           diagnosis: assessment.diagnosis,
+          finalHypothesis,
           treatmentPlan: assessment.treatment_plan,
           language,
           userName: assessment.patient_name || user?.user_metadata?.full_name || "",
