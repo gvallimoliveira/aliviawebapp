@@ -1174,7 +1174,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Diagnóstica" : "Diagnostic Hypothesis", COLORS.primary, 30);
 
   // Hypothesis card — RIGID
-  y = drawTextCard(doc, y, diagnosis.hypothesis, {
+  y = drawTextCard(doc, y, finalHypothesis?.trim() || diagnosis.hypothesis, {
     fill: COLORS.primaryLight,
     stroke: COLORS.primary,
     padX: 8,
