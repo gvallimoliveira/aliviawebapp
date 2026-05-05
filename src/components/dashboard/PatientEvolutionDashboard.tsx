@@ -2190,27 +2190,9 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       })()}
       {/* ── 2. DIAGNÓSTICO (Hipótese Principal) ── */}
       {latestWithDiagnosis?.diagnosis?.hypothesis && (
-        <DiagnosticHypothesisCard
+        <DiagnosticHypothesisBlock
           assessment={latestWithDiagnosis}
           isDemo={isDemo}
-          onUpdated={(newValue) => {
-            // Optimistically update the in-memory patient assessments list
-            setPatient((prev: any) => {
-              if (!prev?.assessments) return prev;
-              return {
-                ...prev,
-                assessments: prev.assessments.map((a: any) =>
-                  a.id === latestWithDiagnosis.id
-                    ? {
-                        ...a,
-                        final_hypothesis: newValue,
-                        final_hypothesis_at: newValue ? new Date().toISOString() : null,
-                      }
-                    : a,
-                ),
-              };
-            });
-          }}
         />
       )}
 
