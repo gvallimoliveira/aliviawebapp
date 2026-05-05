@@ -46,6 +46,7 @@ const ClinicDemo = lazy(() => import("./pages/ClinicDemo"));
 const ClinicFeedback = lazy(() => import("./pages/ClinicFeedback"));
 const Account = lazy(() => import("./pages/Account"));
 const ClearCache = lazy(() => import("./pages/ClearCache"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ const App = () => {
                   <Route path="/aceitar-convite" element={<AcceptInvite />} />
                   <Route path="/conta" element={<Account />} />
                   <Route path="/limpar-cache" element={<ClearCache />} />
+                  <Route path="/verificar-email" element={<VerifyEmail />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
