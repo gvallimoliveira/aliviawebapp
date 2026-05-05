@@ -61,6 +61,8 @@ import {
 } from "@/lib/assessmentLinks";
 import AddPatientModal, { type PatientToEdit } from "./AddPatientModal";
 import ManualAssessmentModal from "./ManualAssessmentModal";
+import FinalHypothesisEditor from "./FinalHypothesisEditor";
+import { getDisplayHypothesis, useCanEditFinalHypothesis, hasFinalOverride } from "@/lib/finalHypothesis";
 import { normalizeAssessment } from "@/lib/anamnesisCompat";
 
 // Translate i18n anamnesis keys to display text
