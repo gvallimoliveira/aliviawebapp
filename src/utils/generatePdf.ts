@@ -886,6 +886,8 @@ function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: numbe
 // ── Basic Report PDF (for WhatsApp sharing — hypothesis, confidence, summary, pain map, VAS, disclaimer) ──
 interface BasicReportOptions {
   diagnosis: Diagnosis;
+  /** When set, replaces the AI hypothesis with the professional override. */
+  finalHypothesis?: string;
   language: string;
   patientName?: string;
   painRegions?: string[];
