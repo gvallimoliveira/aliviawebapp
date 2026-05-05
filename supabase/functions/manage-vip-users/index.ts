@@ -512,6 +512,7 @@ serve(async (req) => {
                   city: "A definir",
                   state: "XX",
                   is_partner: true,
+                  is_partner_account: true,
                   approved: true,
                   subscription_status: "active",
                 });
@@ -543,6 +544,7 @@ serve(async (req) => {
               city: "A definir",
               state: "XX",
               is_partner: true,
+              is_partner_account: true,
               approved: true,
               subscription_status: "active",
             });
