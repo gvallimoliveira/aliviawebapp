@@ -20,6 +20,8 @@ const DAY_LABELS: Record<string, string[]> = {
 
 const BRAND_COLORS = [
   { value: null, label: "Padrão", hex: "hsl(168 55% 38%)" },
+  { value: "#eaff00", label: "Amarelo Neon", hex: "#eaff00" },
+  { value: "#facc15", label: "Marca-texto", hex: "#facc15" },
   { value: "#2563eb", label: "Azul", hex: "#2563eb" },
   { value: "#059669", label: "Verde", hex: "#059669" },
   { value: "#7c3aed", label: "Roxo", hex: "#7c3aed" },
