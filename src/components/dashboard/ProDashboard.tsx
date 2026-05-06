@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import AddPatientModal from "./AddPatientModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -157,6 +157,19 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     loadReferrals();
   }, [isClinicMode, activeClinic?.clinic_id]);
 
+  // Debounce realtime refetches to avoid storms when multiple therapists
+  // update assessments at the same time (clinic with 5+ active fisios).
+  const realtimeRefetchTimer = useRef<number | null>(null);
+  const scheduleRealtimeRefetch = () => {
+    if (realtimeRefetchTimer.current) {
+      window.clearTimeout(realtimeRefetchTimer.current);
+    }
+    realtimeRefetchTimer.current = window.setTimeout(() => {
+      loadPatientAssessments();
+      realtimeRefetchTimer.current = null;
+    }, 1500);
+  };
+
   // Realtime: auto-refresh patient assessments on changes
   useEffect(() => {
     if (isSimulated || !professional?.id) return;
@@ -165,10 +178,16 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "assessments", filter: `professional_id=eq.${professional.id}` },
-        () => { loadPatientAssessments(); }
+        () => { scheduleRealtimeRefetch(); }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+      if (realtimeRefetchTimer.current) {
+        window.clearTimeout(realtimeRefetchTimer.current);
+        realtimeRefetchTimer.current = null;
+      }
+    };
   }, [professional?.id, isSimulated]);
 
   // Realtime for clinic assessments
@@ -179,7 +198,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "assessments", filter: `clinic_id=eq.${activeClinic.clinic_id}` },
-        () => { loadPatientAssessments(); }
+        () => { scheduleRealtimeRefetch(); }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
