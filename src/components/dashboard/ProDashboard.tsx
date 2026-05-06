@@ -216,22 +216,35 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     }
   };
 
+  // Explicit slim-but-complete column list. Excludes `pending_upgrade_data`
+  // (large jsonb snapshot only used at upgrade-time, never read by the dashboard).
+  // Hard limit of 500 newest rows per query keeps payload bounded for clinics
+  // with thousands of historical assessments — pagination is a safer next step.
+  const ASSESSMENT_COLUMNS =
+    "id, user_id, professional_id, clinic_id, type, status, payment_status, " +
+    "patient_name, patient_email, pain_score, pain_regions, anamnesis_data, " +
+    "test_results, diagnosis, treatment_plan, red_flags, final_hypothesis, " +
+    "final_hypothesis_by, final_hypothesis_at, original_assessment_id, redo_used, " +
+    "reviewed_at, archived_at, paid_at, created_at, updated_at";
+
   const loadPatientAssessments = async () => {
     // Load assessments linked to this professional
     const { data: proData } = await supabase
       .from("assessments")
-      .select("*")
+      .select(ASSESSMENT_COLUMNS)
       .eq("professional_id", professional.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500);
 
     // Also load clinic assessments (professional_id may be null) when in clinic mode
     let clinicData: any[] = [];
     if (isClinicMode && activeClinic?.clinic_id) {
       const { data: cData } = await supabase
         .from("assessments")
-        .select("*")
+        .select(ASSESSMENT_COLUMNS)
         .eq("clinic_id", activeClinic.clinic_id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(500);
       clinicData = cData || [];
     }
 
