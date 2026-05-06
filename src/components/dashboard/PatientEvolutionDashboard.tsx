@@ -2919,6 +2919,75 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Treatment unlock picker — opens when patient has 2+ pending assessments */}
+      <Dialog open={!!treatmentPicker} onOpenChange={(open) => { if (!open) setTreatmentPicker(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "pt"
+                ? "Selecione a avaliação a desbloquear"
+                : language === "es"
+                  ? "Seleccione la evaluación a desbloquear"
+                  : "Select the assessment to unlock"}
+            </DialogTitle>
+            <DialogDescription>
+              {language === "pt"
+                ? `${treatmentPicker?.patientName ?? ""} possui mais de uma avaliação sem plano de tratamento. Escolha de qual avaliação deseja adquirir o plano.`
+                : language === "es"
+                  ? `${treatmentPicker?.patientName ?? ""} tiene más de una evaluación sin plan de tratamiento. Elija de cuál desea adquirir el plan.`
+                  : `${treatmentPicker?.patientName ?? ""} has more than one assessment without a treatment plan. Choose which one to unlock.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            {treatmentPicker?.assessments.map((a: any) => {
+              const dateStr = new Date(a.created_at).toLocaleDateString(
+                language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US",
+                { day: "2-digit", month: "short", year: "numeric" },
+              );
+              const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—";
+              const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0
+                ? a.pain_regions.join(", ")
+                : null;
+              return (
+                <div key={a.id} className="rounded-xl border border-border bg-card p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground">{dateStr}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>
+                      {region && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}
+                        </p>
+                      )}
+                    </div>
+                    {a.pain_score != null && (
+                      <Badge variant="outline" className="text-[10px] shrink-0">
+                        {language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10
+                      </Badge>
+                    )}
+                  </div>
+                  <TreatmentUnlockCTA
+                    assessmentId={a.id}
+                    lifetimeTreatment={lifetimeTreatment}
+                    onUnlocked={(treatmentPlan) => {
+                      a.treatment_plan = treatmentPlan;
+                      a.payment_status = "treatment_paid";
+                      setNotes((prev) => ({ ...prev }));
+                      setTreatmentPicker(null);
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTreatmentPicker(null)}>
+              {language === "pt" ? "Fechar" : language === "es" ? "Cerrar" : "Close"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
