@@ -43,20 +43,23 @@ const ClinicOwnerDashboard = ({ clinicId }: Props) => {
       setLoading(true);
       const sixMonthsAgo = subMonths(new Date(), 6).toISOString();
 
+      // Slim selects: only fields actually consumed by KPIs/charts.
+      // Avoids pulling heavy JSONB columns (anamnesis_data, test_results, etc.)
+      // for clinics with high assessment volume.
       const [apptRes, assessRes, membersRes] = await Promise.all([
         supabase
           .from("professional_appointments")
-          .select("*")
+          .select("appointment_date, status")
           .eq("clinic_id", clinicId)
           .gte("created_at", sixMonthsAgo),
         supabase
           .from("assessments")
-          .select("*")
+          .select("created_at")
           .eq("clinic_id", clinicId)
           .gte("created_at", sixMonthsAgo),
         supabase
           .from("clinic_members")
-          .select("*")
+          .select("role")
           .eq("clinic_id", clinicId)
           .eq("status", "active"),
       ]);
