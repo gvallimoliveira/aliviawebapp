@@ -1,3 +1,4 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,9 @@ import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, Archive, ArchiveRestore, ArrowLeft, Brain, ChevronRight, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FileText, Loader2, Lock, Mail, MessageCircle, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
+import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
+import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessmentLinks";
+import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 
 const SUBSCALE_COLORS = [
   "hsl(210, 70%, 55%)",
@@ -84,11 +88,6 @@ const DiagnosticHypothesisBlock = ({ assessment, isDemo }: DiagnosticHypothesisB
     </>
   );
 };
-
-import React from "react";
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
-import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessmentLinks";
-import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 
 export default function PatientDetailView(props: any) {
   const navigate = useNavigate();
