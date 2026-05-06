@@ -249,14 +249,14 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     }
 
     // Merge and deduplicate by id
-    const merged = [...(proData || [])];
-    const existingIds = new Set(merged.map((a) => a.id));
-    for (const ca of clinicData) {
+    const merged: any[] = [...((proData as any[]) || [])];
+    const existingIds = new Set(merged.map((a: any) => a.id));
+    for (const ca of clinicData as any[]) {
       if (!existingIds.has(ca.id)) {
         merged.push(ca);
       }
     }
-    merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    merged.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     setPatientAssessments(merged);
   };
 
