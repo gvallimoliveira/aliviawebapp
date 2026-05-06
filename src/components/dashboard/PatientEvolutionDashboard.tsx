@@ -508,6 +508,50 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const [longPressPatient, setLongPressPatient] = useState<{ groupKey: string; name: string } | null>(null);
   const [deletingPatient, setDeletingPatient] = useState<string | null>(null);
   const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<{ groupKey: string; name: string; assessmentIds: string[] } | null>(null);
+
+  // Treatment unlock UX (clickable badge → picker / scroll-to-card)
+  const [treatmentPicker, setTreatmentPicker] = useState<{ patientName: string; assessments: any[] } | null>(null);
+  const [pendingScrollToTreatment, setPendingScrollToTreatment] = useState(false);
+  const [treatmentHighlight, setTreatmentHighlight] = useState(false);
+  const treatmentSectionRef = useRef<HTMLDivElement | null>(null);
+
+  // Returns assessments that have a diagnosis but no treatment plan and aren't paid yet.
+  const getPendingTreatmentAssessments = useCallback((assessments: any[]) => {
+    return (assessments || []).filter(
+      (a: any) =>
+        a?.diagnosis &&
+        !a?.treatment_plan &&
+        a?.payment_status !== "treatment_paid" &&
+        a?.payment_status !== "treatment_generating",
+    );
+  }, []);
+
+  const scrollToTreatmentCard = useCallback(() => {
+    const el = treatmentSectionRef.current;
+    if (!el) return false;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTreatmentHighlight(true);
+    window.setTimeout(() => setTreatmentHighlight(false), 2200);
+    return true;
+  }, []);
+
+  // Handler for the badge click. If multiple pending → opens picker. If one → navigates and scrolls.
+  const handleAcquireBadgeClick = useCallback((p: { name: string; email: string; assessments: any[] }) => {
+    const pending = getPendingTreatmentAssessments(p.assessments);
+    if (pending.length === 0) return;
+    if (pending.length > 1) {
+      setTreatmentPicker({ patientName: p.name, assessments: pending });
+      return;
+    }
+    // Single pending → ensure detail view is open then scroll
+    if (selectedEmail !== (p.email || (p as any).groupKey)) {
+      setPendingScrollToTreatment(true);
+      setSelectedEmail(p.email || (p as any).groupKey);
+    } else {
+      // Already in detail view
+      if (!scrollToTreatmentCard()) setPendingScrollToTreatment(true);
+    }
+  }, [getPendingTreatmentAssessments, scrollToTreatmentCard, selectedEmail]);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressFiredRef = useRef(false);
   const [addPatientOpen, setAddPatientOpen] = useState(false);
