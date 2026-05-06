@@ -661,6 +661,27 @@ const Dashboard = () => {
           /* ── Professional Autonomous Mode (real or demo): 3 tabs ── */
           (() => {
             const isProDemo = activeContext === "professional_demo";
+            const hasProAccess = !isProDemo && !!professional && (
+              professional.subscription_status === "active"
+              || professional.is_partner === true
+              || professional.lifetime_treatment === true
+              || professional.premium_granted === true
+              || (professional.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
+            );
+            const ProLockedCard = ({ title, desc }: { title: string; desc: string }) => (
+              <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+                <CardContent className="py-10 text-center space-y-4">
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide">PRO</Badge>
+                  <div className="space-y-2">
+                    <p className="text-base font-semibold text-foreground">{title}</p>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">{desc}</p>
+                  </div>
+                  <Button onClick={() => setActiveTab("professional")} variant="outline" className="rounded-xl">
+                    Ver opções de assinatura
+                  </Button>
+                </CardContent>
+              </Card>
+            );
             const proStub: any = isProDemo ? {
               id: "demo",
               full_name: profile?.full_name || user?.email?.split("@")[0] || "Demo",
@@ -705,49 +726,53 @@ const Dashboard = () => {
                   />
                 </TabsContent>
                 <TabsContent value="agenda" className="space-y-6">
-                  {isProDemo && (
-                    <Card className="border-primary/40 bg-primary/5">
-                      <CardContent className="py-3 px-4 flex items-start gap-3">
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide shrink-0 mt-0.5">Demo</Badge>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground">
-                            <span className="font-semibold">Agenda em modo demonstração.</span> Visualize como os agendamentos são organizados. Para gerenciar pacientes reais, assine o PRO.
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  {!isProDemo && (
-                    <DailySummaryCard
-                      professionalId={proStub.id}
-                      onNavigateToAgenda={() => {}}
-                      onNavigateToPatients={() => setActiveTab("professional")}
+                  {isProDemo ? (
+                    <>
+                      <Card className="border-primary/40 bg-primary/5">
+                        <CardContent className="py-3 px-4 flex items-start gap-3">
+                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide shrink-0 mt-0.5">Demo</Badge>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-foreground">
+                              <span className="font-semibold">Agenda em modo demonstração.</span> Visualize como os agendamentos são organizados. Para gerenciar pacientes reais, assine o PRO.
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <ProSchedule professionalId={proStub.id} isSimulated={true} />
+                    </>
+                  ) : hasProAccess ? (
+                    <>
+                      <DailySummaryCard
+                        professionalId={proStub.id}
+                        onNavigateToAgenda={() => {}}
+                        onNavigateToPatients={() => setActiveTab("professional")}
+                      />
+                      <ProSchedule professionalId={proStub.id} isSimulated={isSimulated} />
+                    </>
+                  ) : (
+                    <ProLockedCard
+                      title="Agenda exclusiva do plano PRO"
+                      desc="Para agendar atendimentos, organizar sua semana e ver o resumo diário, ative sua assinatura PRO. O acesso de parceiro habilitado para você cobre apenas o perfil de Clínica."
                     />
                   )}
-                  <ProSchedule professionalId={proStub.id} isSimulated={isProDemo} />
                 </TabsContent>
                 <TabsContent value="messages" className="space-y-6">
                   {isProDemo ? (
-                    <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
-                      <CardContent className="py-10 text-center space-y-4">
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide">Demo</Badge>
-                        <div className="space-y-2">
-                          <p className="text-base font-semibold text-foreground">Mensagens com pacientes</p>
-                          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                            No plano PRO, você conversa diretamente com seus pacientes particulares pelo chat seguro da Aliv.iA.
-                          </p>
-                        </div>
-                        <Button onClick={() => setActiveTab("professional")} variant="outline" className="rounded-xl">
-                          Ver opções de assinatura
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ) : (
+                    <ProLockedCard
+                      title="Mensagens com pacientes"
+                      desc="No plano PRO, você conversa diretamente com seus pacientes particulares pelo chat seguro da Aliv.iA."
+                    />
+                  ) : hasProAccess ? (
                     <MessagesTab
                       professional={proStub}
                       initialConversationId={convFromUrl}
                       canInitiateAsPatient={false}
                       canInitiateAsProfessional={true}
+                    />
+                  ) : (
+                    <ProLockedCard
+                      title="Mensagens são parte do plano PRO"
+                      desc="O chat com pacientes está disponível apenas para profissionais com assinatura PRO ativa. Seu acesso atual cobre o perfil de Clínica."
                     />
                   )}
                 </TabsContent>
