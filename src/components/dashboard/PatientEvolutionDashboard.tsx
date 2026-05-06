@@ -2296,80 +2296,151 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       )}
 
       {/* ── 4. CTA PLANO DE TRATAMENTO ── */}
-      {latestWithDiagnosis && (() => {
-        const a = latestWithDiagnosis;
-        const hasTreatment = a.treatment_plan;
-        const isPaidPending = !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating");
-        const needsUnlock = a.diagnosis && !a.treatment_plan && !isPaidPending;
+      <div
+        ref={treatmentSectionRef}
+        id="treatment-unlock-section"
+        className={`scroll-mt-24 transition-shadow rounded-xl ${treatmentHighlight ? "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse" : ""}`}
+      >
+        {latestWithDiagnosis && (() => {
+          const a = latestWithDiagnosis;
+          const hasTreatment = a.treatment_plan;
+          const isPaidPending = !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating");
+          const needsUnlock = a.diagnosis && !a.treatment_plan && !isPaidPending;
 
-        if (hasTreatment) {
-          return (
-            <Card className="border-emerald-200 bg-emerald-500/5">
-              <CardContent className="py-4 px-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileCheck className="h-5 w-5 text-emerald-600" />
-                    <div>
-                      <p className="text-sm font-semibold text-emerald-700">{t("pro.treatment_unlocked")}</p>
-                      <p className="text-xs text-muted-foreground">Plano de tratamento disponível para este paciente.</p>
+          if (hasTreatment) {
+            return (
+              <Card className="border-emerald-200 bg-emerald-500/5">
+                <CardContent className="py-4 px-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileCheck className="h-5 w-5 text-emerald-600" />
+                      <div>
+                        <p className="text-sm font-semibold text-emerald-700">{t("pro.treatment_unlocked")}</p>
+                        <p className="text-xs text-muted-foreground">Plano de tratamento disponível para este paciente.</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                      onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}
+                    >
+                      {t("pro.view_treatment")}
+                      <ChevronRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
+
+          if (isPaidPending) {
+            return (
+              <TreatmentPaidRetry
+                assessmentId={a.id}
+                onGenerated={(treatmentPlan) => {
+                  a.treatment_plan = treatmentPlan;
+                  setNotes((prev) => ({ ...prev }));
+                }}
+              />
+            );
+          }
+
+          if (needsUnlock) {
+            return (
+              <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+                <CardContent className="py-5 px-5 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">Plano de Tratamento Personalizado</p>
+                      <p className="text-xs text-muted-foreground">Programa completo em 3 fases com exercícios progressivos, metas semanais e critérios de alta.</p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                    onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}
-                  >
-                    {t("pro.view_treatment")}
-                    <ChevronRight className="h-3 w-3" />
-                  </Button>
-                </div>
+                  <TreatmentUnlockCTA
+                    assessmentId={a.id}
+                    lifetimeTreatment={lifetimeTreatment}
+                    onUnlocked={(treatmentPlan) => {
+                      a.treatment_plan = treatmentPlan;
+                      a.payment_status = "treatment_paid";
+                      setNotes((prev) => ({ ...prev }));
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            );
+          }
+
+          return null;
+        })()}
+
+        {/* Other pending assessments (older complaints / dates without treatment plan) */}
+        {(() => {
+          if (!patient) return null;
+          const allPending = getPendingTreatmentAssessments(patient.assessments);
+          const others = latestWithDiagnosis
+            ? allPending.filter((a: any) => a.id !== latestWithDiagnosis.id)
+            : allPending;
+          if (others.length === 0) return null;
+          return (
+            <Card className="mt-3 border-amber-200 bg-amber-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2 text-amber-700">
+                  <Lock className="h-4 w-4" />
+                  {language === "pt"
+                    ? "Outras avaliações sem plano de tratamento"
+                    : language === "es"
+                      ? "Otras evaluaciones sin plan de tratamiento"
+                      : "Other assessments without treatment plan"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-0">
+                {others.map((a: any) => {
+                  const dateStr = new Date(a.created_at).toLocaleDateString(
+                    language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US",
+                    { day: "2-digit", month: "short", year: "numeric" },
+                  );
+                  const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—";
+                  const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0
+                    ? a.pain_regions.join(", ")
+                    : null;
+                  return (
+                    <div key={a.id} className="rounded-xl border border-amber-200/70 bg-background p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-foreground">{dateStr}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>
+                          {region && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}
+                            </p>
+                          )}
+                        </div>
+                        {a.pain_score != null && (
+                          <Badge variant="outline" className="text-[10px] shrink-0">
+                            {language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10
+                          </Badge>
+                        )}
+                      </div>
+                      <TreatmentUnlockCTA
+                        assessmentId={a.id}
+                        lifetimeTreatment={lifetimeTreatment}
+                        onUnlocked={(treatmentPlan) => {
+                          a.treatment_plan = treatmentPlan;
+                          a.payment_status = "treatment_paid";
+                          setNotes((prev) => ({ ...prev }));
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           );
-        }
-
-        if (isPaidPending) {
-          return (
-            <TreatmentPaidRetry
-              assessmentId={a.id}
-              onGenerated={(treatmentPlan) => {
-                a.treatment_plan = treatmentPlan;
-                setNotes((prev) => ({ ...prev }));
-              }}
-            />
-          );
-        }
-
-        if (needsUnlock) {
-          return (
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-              <CardContent className="py-5 px-5 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">Plano de Tratamento Personalizado</p>
-                    <p className="text-xs text-muted-foreground">Programa completo em 3 fases com exercícios progressivos, metas semanais e critérios de alta.</p>
-                  </div>
-                </div>
-                <TreatmentUnlockCTA
-                  assessmentId={a.id}
-                  lifetimeTreatment={lifetimeTreatment}
-                  onUnlocked={(treatmentPlan) => {
-                    a.treatment_plan = treatmentPlan;
-                    a.payment_status = "treatment_paid";
-                    setNotes((prev) => ({ ...prev }));
-                  }}
-                />
-              </CardContent>
-            </Card>
-          );
-        }
-
-        return null;
-      })()}
+        })()}
+      </div>
 
       {/* ── 5. ANAMNESE (Última Avaliação) ── */}
       {latestAnamnesisFields.length > 0 && (
