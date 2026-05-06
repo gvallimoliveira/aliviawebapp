@@ -710,6 +710,17 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     }
   };
 
+  // When detail view becomes available after a badge click, scroll to the treatment card.
+  useEffect(() => {
+    if (!pendingScrollToTreatment || !selectedEmail) return;
+    // Wait one tick so the detail view (and the treatment card) has mounted.
+    const timer = window.setTimeout(() => {
+      const ok = scrollToTreatmentCard();
+      if (ok) setPendingScrollToTreatment(false);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [pendingScrollToTreatment, selectedEmail, scrollToTreatmentCard]);
+
   useEffect(() => {
     if (!professionalId || !selectedEmail || isDemo) { setHepHistory([]); return; }
     setHepHistoryLoading(true);
