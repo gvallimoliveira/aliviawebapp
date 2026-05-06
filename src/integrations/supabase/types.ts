@@ -1794,6 +1794,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_clinic_kpis: {
+        Args: { _clinic_id: string }
+        Returns: {
+          assessments_this_month: number
+          completed_this_month: number
+          monthly_data: Json
+          occupancy: number
+          status_data: Json
+          therapists: number
+          today_count: number
+          total_this_month: number
+        }[]
+      }
       get_clinic_members_with_details: {
         Args: { _clinic_id: string }
         Returns: {
