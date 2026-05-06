@@ -1,0 +1,311 @@
+import { useNavigate } from "react-router-dom";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import AssessmentTimeline from "../AssessmentTimeline";
+import CreateExerciseProgramModal from "../CreateExerciseProgramModal";
+import FinalHypothesisEditor from "../FinalHypothesisEditor";
+import PatientFilesSection from "../PatientFilesSection";
+import PatientPhotosSection from "../PatientPhotosSection";
+import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
+import RegionPainComparison from "../RegionPainComparison";
+import SessionNotesSection from "../SessionNotesSection";
+import PainMapView from "@/components/assessment/PainMapView";
+import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
+import { mockEvolutionSummary } from "@/data/mockPatientData";
+import { supabase } from "@/integrations/supabase/client";
+import { Activity, Archive, ArchiveRestore, ArrowLeft, Brain, ChevronRight, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FileText, Loader2, Lock, Mail, MessageCircle, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
+import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
+
+const SUBSCALE_COLORS = [
+  "hsl(210, 70%, 55%)",
+  "hsl(150, 60%, 45%)",
+  "hsl(35, 80%, 55%)",
+];
+
+interface DiagnosticHypothesisBlockProps {
+  assessment: any;
+  isDemo?: boolean;
+}
+
+const DiagnosticHypothesisBlock = ({ assessment, isDemo }: DiagnosticHypothesisBlockProps) => {
+  const canEdit = propsUseCanEditFinalHypothesis(assessment);
+  const [localFinal, setLocalFinal] = React.useState<string | null>(assessment.final_hypothesis ?? null);
+  const [localFinalAt, setLocalFinalAt] = React.useState<string | null>(assessment.final_hypothesis_at ?? null);
+
+  React.useEffect(() => {
+    setLocalFinal(assessment.final_hypothesis ?? null);
+    setLocalFinalAt(assessment.final_hypothesis_at ?? null);
+  }, [assessment.id, assessment.final_hypothesis, assessment.final_hypothesis_at]);
+
+  const aiHypothesis: string | undefined = assessment.diagnosis?.hypothesis;
+  const displayed = (localFinal && localFinal.trim()) || aiHypothesis;
+  const hasOverride = !!(localFinal && localFinal.trim());
+  const formattedDate = localFinalAt ? new Date(localFinalAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : null;
+
+  return (
+    <>
+      <Card className="border-primary/20">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Stethoscope className="h-4 w-4 text-primary" />
+            Hipótese Diagnóstica
+            {hasOverride && <Badge variant="secondary" className="text-[10px] ml-1">Revisada pelo fisioterapeuta</Badge>}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-sm font-semibold text-foreground leading-relaxed">{displayed}</p>
+          {hasOverride && formattedDate && <p className="text-[11px] text-muted-foreground">Atualizada em {formattedDate}</p>}
+          {!hasOverride && assessment.diagnosis?.confidence === "high" && <Badge variant="outline" className="text-[10px] capitalize">Confiança: {assessment.diagnosis.confidence}</Badge>}
+          {assessment.diagnosis?.reasoning && <p className="text-xs text-muted-foreground leading-relaxed mt-1">{assessment.diagnosis.reasoning}</p>}
+          {hasOverride && aiHypothesis && (
+            <div className="mt-2 pt-2 border-t border-border/60">
+              <p className="text-[11px] text-muted-foreground"><Sparkles className="inline h-3 w-3 mr-1 -mt-0.5" />Sugestão original da IA: <span className="italic">{aiHypothesis}</span></p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      {canEdit && !isDemo && (
+        <FinalHypothesisEditor
+          assessmentId={assessment.id}
+          aiHypothesis={aiHypothesis}
+          finalHypothesis={localFinal}
+          finalHypothesisAt={localFinalAt}
+          onSaved={(newValue) => {
+            setLocalFinal(newValue);
+            setLocalFinalAt(newValue ? new Date().toISOString() : null);
+          }}
+        />
+      )}
+    </>
+  );
+};
+
+import React from "react";
+import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
+import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessmentLinks";
+import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
+
+export default function PatientDetailView(props: any) {
+  const navigate = useNavigate();
+  const {
+    t,
+    language,
+    patient,
+    deletingPatient,
+    setDeleteConfirmPatient,
+    latestWithDiagnosis,
+    professionalId,
+    clinicId,
+    buildAssessmentViewUrl,
+    toast,
+    setEditingHepId,
+    setHepModalOpen,
+    evolutionLoading,
+    setEvolutionLoading,
+    isDemo,
+    professionalLogoUrl,
+    clinicLogoUrl,
+    clinicName,
+    clinicTherapists,
+    readOnly,
+    reassignOpen,
+    setReassignOpen,
+    reassignTargetId,
+    setReassignTargetId,
+    reassigning,
+    handleReassignPatient,
+    hepModalOpen,
+    editingHepId,
+    hepHistory,
+    handleEditHep,
+    handleSendHepViaChat,
+    deletingHepId,
+    handleDeleteHep,
+    treatmentSectionRef,
+    treatmentHighlight,
+    lifetimeTreatment,
+    setNotes,
+    getPendingTreatmentAssessments,
+    latestAnamnesisFields,
+    latestAssessment,
+    painData,
+    selectedEmail,
+    questionnaireEvolution,
+    assessmentRefreshTick,
+    showArchivedAssessments,
+    setShowArchivedAssessments,
+    getQuestionnaireResults,
+    onShareWhatsApp,
+    onDownloadPdf,
+    archivingAssessmentId,
+    handleRestoreAssessment,
+    handleArchiveAssessment,
+    deleteAssessmentTarget,
+    setDeleteAssessmentTarget,
+    deletingAssessmentId,
+    handleDeleteAssessment,
+    noteSaving,
+    notes,
+    saveNote,
+    noteIncludeInPdf,
+    toggleNoteInPdf,
+    treatmentPicker,
+    setTreatmentPicker,
+    deleteConfirmPatient,
+    handleDeletePatient,
+    handleAcquireBadgeClick,
+  } = props;
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={() => props.setSelectedEmail(null)} className="gap-1.5 -ml-2"><ArrowLeft className="h-4 w-4" /> {t("pro.back_to_patients")}</Button>
+        <Button variant="ghost" size="sm" className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10" disabled={!!deletingPatient} onClick={() => setDeleteConfirmPatient({ groupKey: patient.groupKey, name: patient.name, assessmentIds: patient.assessments.map((a: any) => a.id) })}>
+          {deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}Excluir paciente
+        </Button>
+      </div>
+
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-lg font-semibold text-foreground">{patient.name}</h3>
+            {patient.assessments.some((a: any) => a.treatment_plan) ? (
+              <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1"><FileCheck className="h-3 w-3" /> Tratamento Liberado</Badge>
+            ) : patient.assessments.some((a: any) => a.diagnosis) ? (
+              <Badge variant="outline" role="button" tabIndex={0} title={language === "pt" ? "Clique para ir ao card de compra do plano" : language === "es" ? "Clic para ir al card de compra del plan" : "Click to jump to the purchase card"} className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1 cursor-pointer hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400" onClick={(e) => { e.stopPropagation(); handleAcquireBadgeClick({ name: patient.name, email: patient.email, assessments: patient.assessments }); }} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); handleAcquireBadgeClick({ name: patient.name, email: patient.email, assessments: patient.assessments }); } }}><Lock className="h-3 w-3" /> {language === "pt" ? "Adquirir Tratamento" : language === "es" ? "Adquirir Tratamiento" : "Unlock Treatment"}</Badge>
+            ) : null}
+          </div>
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {patient.email}<span className="mx-1">•</span>{patient.assessments.length} {t("pro.assessments_count")}</p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
+          {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { const link = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id); navigator.clipboard.writeText(link); toast({ title: "Link de reavaliação copiado!" }); }}><RotateCcw className="h-4 w-4" /> Reavaliação</Button>}
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
+          {patient.assessments.filter((a: any) => a.diagnosis).length >= 2 && (
+            <Button variant="outline" size="sm" className="gap-1.5 shrink-0" disabled={evolutionLoading} onClick={async () => {
+              setEvolutionLoading(true);
+              try {
+                const withDiagnosis = patient.assessments.filter((a: any) => a.diagnosis).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                const firstA = withDiagnosis[0];
+                const lastA = withDiagnosis[withDiagnosis.length - 1];
+                let summary: any;
+                if (isDemo) {
+                  await new Promise((r) => setTimeout(r, 1500));
+                  summary = mockEvolutionSummary;
+                } else {
+                  const normalizeQ = (tr: any) => Array.isArray(tr) ? tr.filter((t: any) => t.questionnaireId && t.percentageScore != null).map((t: any) => ({ id: t.questionnaireId, name: t.questionnaireName || t.questionnaireId, score: Math.round(t.percentageScore) })) : [];
+                  const payload = { assessments: [{ date: firstA.created_at, pain_score: firstA.pain_score, hypothesis: firstA.diagnosis?.hypothesis, pain_regions: firstA.pain_regions || [], questionnaires: normalizeQ(firstA.test_results) }, { date: lastA.created_at, pain_score: lastA.pain_score, hypothesis: lastA.diagnosis?.hypothesis, pain_regions: lastA.pain_regions || [], questionnaires: normalizeQ(lastA.test_results) }], language };
+                  const { data: summaryData, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
+                  if (error) throw new Error(error?.message || "Erro ao conectar com o servidor de IA");
+                  if (!summaryData || summaryData?.error) throw new Error(summaryData?.error || "Resposta inválida da IA");
+                  if (!summaryData.narrative || !summaryData.conclusion || !summaryData.recommendation) throw new Error("Resumo incompleto gerado pela IA. Tente novamente.");
+                  summary = summaryData;
+                }
+                const blob = await generateEvolutionPdfBlob({ patientName: patient.name, firstAssessment: { date: firstA.created_at, pain_score: firstA.pain_score, pain_regions: firstA.pain_regions || [], test_results: firstA.test_results, hypothesis: firstA.diagnosis?.hypothesis }, lastAssessment: { date: lastA.created_at, pain_score: lastA.pain_score, pain_regions: lastA.pain_regions || [], test_results: lastA.test_results, hypothesis: lastA.diagnosis?.hypothesis }, totalAssessments: withDiagnosis.length, summary: summary as EvolutionSummary, language, professionalLogoUrl, clinicLogoUrl, clinicName });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `AliviA_Evolucao_${patient.name.replace(/\s/g, "_")}.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+                if (!isDemo) {
+                  const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
+                  const nativeShareResult = await sharePdfFile({ blob, fileName: `AliviA_Evolucao_${patient.name.replace(/\s+/g, "_")}.pdf`, title: "Aliv.iA", text: `${t("evolution.title")} - ${patient.name}` });
+                  if (nativeShareResult === "shared" || nativeShareResult === "cancelled") { toast({ title: t("evolution.success") }); return; }
+                  const fileName = `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
+                  const { error: uploadError } = await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
+                  if (!uploadError) {
+                    const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
+                    if (publicUrl?.publicUrl) await shareTextOrOpenWhatsApp(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`, "Aliv.iA");
+                    else toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });
+                  } else {
+                    toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });
+                  }
+                }
+                toast({ title: t("evolution.success") });
+              } catch (err: any) {
+                console.error("Evolution report error:", err);
+                toast({ title: t("evolution.error"), description: err?.message, variant: "destructive" });
+              } finally {
+                setEvolutionLoading(false);
+              }
+            }}>{evolutionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <TrendingUp className="h-4 w-4" />}{t("evolution.title")}</Button>
+          )}
+        </div>
+      </div>
+
+      {clinicId && !isDemo && (() => {
+        const assignedProIds = Array.from(new Set(patient.assessments.map((a: any) => a.professional_id).filter((id: any) => !!id))) as string[];
+        const assignedPros = clinicTherapists.filter((p: any) => assignedProIds.includes(p.id));
+        const unassignedCount = patient.assessments.filter((a: any) => !a.professional_id).length;
+        const canManage = !readOnly;
+        return (
+          <Card className="border-sky-200 bg-sky-50/40 dark:bg-sky-950/10">
+            <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><UserCog className="h-4 w-4 text-sky-600" />Fisioterapeuta(s) responsável(eis)</CardTitle><CardDescription className="text-xs">{assignedPros.length === 0 && unassignedCount > 0 ? `${unassignedCount} avaliação(ões) sem fisio designado` : `${assignedPros.length} fisio(s) atualmente vinculado(s) — você pode reatribuir a qualquer momento`}</CardDescription></CardHeader>
+            <CardContent className="space-y-3"><div className="flex flex-wrap gap-2">{assignedPros.length === 0 ? <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">Nenhum fisio designado</Badge> : assignedPros.map((p: any) => { const count = patient.assessments.filter((a: any) => a.professional_id === p.id).length; return <Badge key={p.id} variant="secondary" className="gap-1"><Users className="h-3 w-3" />{p.full_name}<span className="ml-1 text-[10px] opacity-70">({count})</span></Badge>; })}</div>{canManage && clinicTherapists.length > 0 && <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { setReassignTargetId(""); setReassignOpen(true); }}><UserCog className="h-4 w-4" />Alterar / atribuir fisioterapeuta</Button>}</CardContent>
+          </Card>
+        );
+      })()}
+
+      <Dialog open={reassignOpen} onOpenChange={setReassignOpen}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Atribuir fisioterapeuta</DialogTitle><DialogDescription>Todas as avaliações deste paciente passarão a ser do fisio escolhido. O paciente pode atender com mais de um — basta repetir o processo quando trocar de profissional.</DialogDescription></DialogHeader><div className="space-y-2 max-h-[50vh] overflow-y-auto">{clinicTherapists.map((p: any) => <button key={p.id} type="button" onClick={() => setReassignTargetId(p.id)} className={`w-full text-left p-3 rounded-md border transition-colors ${reassignTargetId === p.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted"}`}><div className="flex items-center gap-2"><UserCog className="h-4 w-4 text-muted-foreground" /><span className="font-medium text-sm">{p.full_name}</span></div></button>)}{clinicTherapists.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum fisioterapeuta ativo na clínica.</p>}</div><DialogFooter><Button variant="outline" onClick={() => setReassignOpen(false)} disabled={reassigning}>Cancelar</Button><Button onClick={() => patient && handleReassignPatient(patient.assessments.map((a: any) => a.id), reassignTargetId)} disabled={!reassignTargetId || reassigning}>{reassigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar"}</Button></DialogFooter></DialogContent></Dialog>
+
+      <CreateExerciseProgramModal open={hepModalOpen} onOpenChange={(open) => { setHepModalOpen(open); if (!open) setEditingHepId(null); }} professionalId={professionalId} patientName={patient.name} assessmentId={latestWithDiagnosis?.id} editProgramId={editingHepId} />
+
+      {(() => {
+        const patientHeps = hepHistory.filter((h: any) => (h.patient_name || "").toLowerCase().trim() === (patient.name || "").toLowerCase().trim());
+        if (patientHeps.length === 0) return null;
+        const origin = window.location.origin;
+        return <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Dumbbell className="h-4 w-4 text-primary" /> Programas de Exercícios Enviados</CardTitle><CardDescription className="text-xs">{patientHeps.length} programa(s) criado(s)</CardDescription></CardHeader><CardContent className="space-y-2">{patientHeps.map((hep: any) => { const link = `${origin}/hep/${hep.token}`; const isExpired = new Date(hep.expires_at) < new Date(); return <div key={hep.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg border bg-muted/30"><div className="min-w-0 flex-1"><p className="text-xs font-medium text-foreground truncate">{new Date(hep.created_at).toLocaleDateString("pt-BR")}{hep.notes && <span className="text-muted-foreground ml-2">— {hep.notes}</span>}</p><p className="text-[10px] text-muted-foreground truncate">{link}</p></div><div className="flex items-center gap-1 shrink-0">{isExpired && <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30">Expirado</Badge>}<Button variant="ghost" size="icon" className="h-7 w-7" title="Editar programa" onClick={() => handleEditHep(hep.id)}><Pencil className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" title="Copiar link" onClick={() => { navigator.clipboard.writeText(link); toast({ title: "Link copiado!" }); }}><Copy className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link" onClick={() => window.open(link, "_blank")}><ExternalLink className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" title="Enviar via WhatsApp" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Seu programa de exercícios: ${link}`)}`, "_blank")}><Share2 className="h-3.5 w-3.5" /></Button>{!readOnly && patient.email && <Button variant="ghost" size="icon" className="h-7 w-7" title={language === "pt" ? "Enviar via chat interno" : "Send via internal chat"} onClick={() => handleSendHepViaChat(link, patient.email)}><MessageCircle className="h-3.5 w-3.5" /></Button>}<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir programa" disabled={deletingHepId === hep.id} onClick={() => { if (confirm("Tem certeza que deseja excluir este programa de exercícios?")) handleDeleteHep(hep.id); }}>{deletingHepId === hep.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}</Button></div></div>; })}</CardContent></Card>;
+      })()}
+
+      {latestWithDiagnosis?.diagnosis?.hypothesis && <DiagnosticHypothesisBlock assessment={latestWithDiagnosis} isDemo={isDemo} />}
+      {latestWithDiagnosis && <ClinicalImpressionCard assessment={latestWithDiagnosis} existingImpression={latestWithDiagnosis.diagnosis?.clinicalImpression} allAssessments={patient?.assessments} isDemo={isDemo} />}
+
+      <div ref={treatmentSectionRef} id="treatment-unlock-section" className={`scroll-mt-24 transition-shadow rounded-xl ${treatmentHighlight ? "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse" : ""}`}>
+        {latestWithDiagnosis && (() => {
+          const a = latestWithDiagnosis;
+          const hasTreatment = a.treatment_plan;
+          const isPaidPending = !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating");
+          const needsUnlock = a.diagnosis && !a.treatment_plan && !isPaidPending;
+          if (hasTreatment) return <Card className="border-emerald-200 bg-emerald-500/5"><CardContent className="py-4 px-5"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><FileCheck className="h-5 w-5 text-emerald-600" /><div><p className="text-sm font-semibold text-emerald-700">{t("pro.treatment_unlocked")}</p><p className="text-xs text-muted-foreground">Plano de tratamento disponível para este paciente.</p></div></div><Button variant="outline" size="sm" className="gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => navigate(buildAssessmentViewUrl(a.id, props.selectedEmail))}>{t("pro.view_treatment")}<ChevronRight className="h-3 w-3" /></Button></div></CardContent></Card>;
+          if (isPaidPending) return <TreatmentPaidRetry assessmentId={a.id} onGenerated={(treatmentPlan) => { a.treatment_plan = treatmentPlan; setNotes((prev: any) => ({ ...prev })); }} />;
+          if (needsUnlock) return <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent"><CardContent className="py-5 px-5 space-y-3"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0"><Sparkles className="h-5 w-5 text-primary" /></div><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-foreground">Plano de Tratamento Personalizado</p><p className="text-xs text-muted-foreground">Programa completo em 3 fases com exercícios progressivos, metas semanais e critérios de alta.</p></div></div><TreatmentUnlockCTA assessmentId={a.id} lifetimeTreatment={lifetimeTreatment} onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); }} /></CardContent></Card>;
+          return null;
+        })()}
+
+        {(() => {
+          const allPending = getPendingTreatmentAssessments(patient.assessments);
+          const others = latestWithDiagnosis ? allPending.filter((a: any) => a.id !== latestWithDiagnosis.id) : allPending;
+          if (others.length === 0) return null;
+          return <Card className="mt-3 border-amber-200 bg-amber-500/5"><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-amber-700"><Lock className="h-4 w-4" />{language === "pt" ? "Outras avaliações sem plano de tratamento" : language === "es" ? "Otras evaluaciones sin plan de tratamiento" : "Other assessments without treatment plan"}</CardTitle></CardHeader><CardContent className="space-y-3 pt-0">{others.map((a: any) => { const dateStr = new Date(a.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "short", year: "numeric" }); const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—"; const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0 ? a.pain_regions.join(", ") : null; return <div key={a.id} className="rounded-xl border border-amber-200/70 bg-background p-3 space-y-2"><div className="flex items-start justify-between gap-2 flex-wrap"><div className="flex-1 min-w-0"><p className="text-xs font-semibold text-foreground">{dateStr}</p><p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>{region && <p className="text-[10px] text-muted-foreground mt-0.5">{language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}</p>}</div>{a.pain_score != null && <Badge variant="outline" className="text-[10px] shrink-0">{language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10</Badge>}</div><TreatmentUnlockCTA assessmentId={a.id} lifetimeTreatment={lifetimeTreatment} onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); }} /></div>; })}</CardContent></Card>;
+        })()}
+      </div>
+
+      {latestAnamnesisFields.length > 0 && <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><ClipboardList className="h-4 w-4 text-primary" />Anamnese — Última Avaliação</CardTitle><CardDescription className="text-xs">{new Date(latestAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</CardDescription></CardHeader><CardContent><div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">{latestAnamnesisFields.map((f: any, i: number) => <div key={i} className="space-y-0.5"><span className="text-muted-foreground font-medium">{f.label}</span><p className="text-foreground">{f.value}</p></div>)}</div></CardContent></Card>}
+
+      {painData.length > 1 ? <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />{t("pro.pain_evolution")}</CardTitle></CardHeader><CardContent><div className="h-56"><ResponsiveContainer width="100%" height="100%"><AreaChart data={painData}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} /><Area type="monotone" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4 }} name="Dor" /></AreaChart></ResponsiveContainer></div></CardContent></Card> : painData.length === 1 ? <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />{t("pro.pain_evolution")}</CardTitle></CardHeader><CardContent><div className="h-32"><ResponsiveContainer width="100%" height="100%"><BarChart data={painData}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} /><Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Dor" /></BarChart></ResponsiveContainer></div></CardContent></Card> : null}
+
+      <AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
+      <RegionPainComparison assessments={patient.assessments} />
+
+      {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Stethoscope className="h-4 w-4 text-primary" />Mapa de Dor — Comparativo</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{patient.assessments.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => <div key={a.id} className="text-center space-y-2"><p className="text-xs font-medium text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}{a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}</p><PainMapView painRegions={a.pain_regions} compact /></div>)}</div></CardContent></Card>}
+
+      {questionnaireEvolution.length > 0 ? questionnaireEvolution.map((chart: any) => <Card key={chart.displayTitle}><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><ClipboardList className="h-4 w-4 text-primary" />{t("pro.questionnaire_evolution")} — {chart.displayTitle}</CardTitle><CardDescription className="text-xs">Pontuação total + 3 maiores limitações funcionais (%)</CardDescription></CardHeader><CardContent>{chart.data.length > 1 ? <div className="h-64"><ResponsiveContainer width="100%" height="100%"><LineChart data={chart.data}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" domain={[0, 100]} /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} formatter={(value: any, name: string) => [`${value}%`, name]} /><Legend /><Line type="monotone" dataKey={chart.totalKey} stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 5 }} connectNulls />{chart.subscaleKeys.map((sub: any, i: number) => <Line key={sub.key} type="monotone" dataKey={sub.key} stroke={SUBSCALE_COLORS[i % SUBSCALE_COLORS.length]} strokeWidth={1.5} strokeDasharray="5 3" dot={{ r: 3 }} connectNulls />)}</LineChart></ResponsiveContainer></div> : <div className="h-56"><ResponsiveContainer width="100%" height="100%"><BarChart data={chart.data}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" domain={[0, 100]} /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} formatter={(value: any, name: string) => [`${value}%`, name]} /><Legend /><Bar dataKey={chart.totalKey} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />{chart.subscaleKeys.map((sub: any, i: number) => <Bar key={sub.key} dataKey={sub.key} fill={SUBSCALE_COLORS[i % SUBSCALE_COLORS.length]} radius={[4, 4, 0, 0]} />)}</BarChart></ResponsiveContainer></div>}</CardContent></Card>) : <Card className="border-dashed"><CardContent className="py-6 text-center"><ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p><p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p></CardContent></Card>}
+
+      {selectedEmail && <SessionNotesSection professionalId={professionalId} patientEmail={selectedEmail} />}
+      {selectedEmail && !isDemo && <PatientFilesSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} />}
+      {selectedEmail && !isDemo && <PatientPhotosSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} />}
+
+      <div data-refresh-tick={assessmentRefreshTick}><div className="flex items-center justify-between mb-3"><h4 className="text-sm font-semibold text-foreground">{t("dashboard.history")}</h4>{patient.assessments.some((a: any) => a.archived_at) && <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground" onClick={() => setShowArchivedAssessments((v: boolean) => !v)}>{showArchivedAssessments ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}{showArchivedAssessments ? (language === "pt" ? "Ocultar arquivadas" : "Hide archived") : (language === "pt" ? `Mostrar arquivadas (${patient.assessments.filter((a: any) => a.archived_at).length})` : `Show archived (${patient.assessments.filter((a: any) => a.archived_at).length})`)}</Button>}</div><div className="space-y-3">{patient.assessments.filter((a: any) => showArchivedAssessments ? true : !a.archived_at).map((a: any) => { const qResults = getQuestionnaireResults(a); const isInProgress = a.status === "in_progress"; const isArchived = !!a.archived_at; const resumeCtx = clinicId ? { clinicId } : professionalId ? { professionalId } : null; const resumeLink = isInProgress && resumeCtx ? buildResumeAssessmentLink(resumeCtx, a.id) : null; return <Card key={a.id} className={`overflow-hidden ${isInProgress ? "border-blue-300/60 bg-blue-50/30" : ""} ${isArchived ? "opacity-60 border-dashed" : ""}`}><CardContent className="py-3 px-4 space-y-3"><div className="flex items-center justify-between gap-2"><div className={`space-y-0.5 min-w-0 rounded-md -mx-1 px-1 py-0.5 transition-colors ${!!a.diagnosis && !isArchived ? "cursor-pointer hover:bg-muted/40 active:bg-muted/60" : ""}`} role={!!a.diagnosis && !isArchived ? "button" : undefined} tabIndex={!!a.diagnosis && !isArchived ? 0 : undefined} onClick={!!a.diagnosis && !isArchived ? () => navigate(buildAssessmentViewUrl(a.id, selectedEmail)) : undefined} onKeyDown={!!a.diagnosis && !isArchived ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(buildAssessmentViewUrl(a.id, selectedEmail)); } } : undefined} title={!!a.diagnosis && !isArchived ? t("pro.view_full_assessment") : undefined}><div className="flex items-center gap-2 flex-wrap"><p className="text-sm font-semibold text-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>{isInProgress && <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-blue-300 text-blue-700 bg-blue-50"><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === "pt" ? "Em andamento" : "In progress"}</Badge>}{isArchived && <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-muted-foreground/30 text-muted-foreground bg-muted/30"><Archive className="h-3 w-3 mr-1" />{language === "pt" ? "Arquivada" : "Archived"}</Badge>}</div><div className="flex items-center gap-2 text-xs text-muted-foreground">{a.pain_score != null && <span>Dor: {a.pain_score}/10</span>}{a.diagnosis?.hypothesis && <span className="line-clamp-1">• {a.diagnosis.hypothesis}</span>}</div></div><div className="flex items-center gap-1 shrink-0">{isInProgress && resumeLink && !readOnly && !isArchived && <Button variant="default" size="sm" className="h-8 gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white" title={language === "pt" ? "Continuar avaliação de onde parou" : "Continue assessment from where it stopped"} onClick={() => window.open(resumeLink, "_blank", "noopener,noreferrer")}><RotateCcw className="h-3.5 w-3.5" />{language === "pt" ? "Continuar" : "Continue"}</Button>}{a.diagnosis && onShareWhatsApp && !isArchived && <Button variant="ghost" size="icon" className="h-8 w-8" title="WhatsApp" onClick={() => onShareWhatsApp(a)}><Share2 className="h-4 w-4 text-emerald-600" /></Button>}{a.diagnosis && onDownloadPdf && !isArchived && <Button variant="ghost" size="icon" className="h-8 w-8" title="PDF" onClick={() => onDownloadPdf(a)}><FileText className="h-4 w-4 text-primary" /></Button>}{a.diagnosis && !isArchived && <Button variant="ghost" size="icon" className="h-8 w-8" title={t("pro.view_full_assessment")} onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}><ChevronRight className="h-4 w-4 text-muted-foreground" /></Button>}{!readOnly && (isArchived ? <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Restaurar avaliação" : "Restore assessment"} disabled={archivingAssessmentId === a.id} onClick={(e) => handleRestoreAssessment(a.id, e)}>{archivingAssessmentId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-emerald-600" />}</Button> : <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Arquivar avaliação" : "Archive assessment"} disabled={archivingAssessmentId === a.id} onClick={(e) => handleArchiveAssessment(a.id, e)}>{archivingAssessmentId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}</Button>)}{!readOnly && <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Excluir avaliação" : "Delete assessment"} onClick={(e) => { e.stopPropagation(); setDeleteAssessmentTarget({ id: a.id, date: new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }) }); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></div>{qResults.length > 0 && <div className="space-y-2 border-t border-border pt-3"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"><ClipboardList className="h-3 w-3" /> Questionários</p>{qResults.map((r: any, idx: number) => <QuestionnaireResultCard key={idx} result={r} language={language} compact />)}</div>}<div className="border-t border-border pt-3"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><NotebookPen className="h-3 w-3" />{t("pro.private_notes")}{noteSaving[a.id] && <Loader2 className="h-3 w-3 animate-spin text-primary" />}{notes[a.id] && !noteSaving[a.id] && <Badge variant="outline" className="text-[9px] py-0 px-1.5">{t("pro.notes_saved")}</Badge>}</p><Textarea placeholder={t("pro.private_notes_placeholder")} value={notes[a.id] || ""} onChange={(e) => saveNote(a.id, e.target.value)} className="text-xs min-h-[60px] resize-y" /><label className="flex items-center gap-2 mt-2 cursor-pointer group"><Checkbox checked={!!noteIncludeInPdf[a.id]} onCheckedChange={(checked) => toggleNoteInPdf(a.id, !!checked)} /><span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">{t("pro.include_notes_in_pdf")}</span>{noteIncludeInPdf[a.id] && <Badge variant="outline" className="text-[9px] py-0 px-1.5 border-amber-300 text-amber-600 bg-amber-50">{t("pro.notes_will_appear_in_pdf")}</Badge>}</label></div></CardContent></Card>; })}</div></div>
+
+      <AlertDialog open={!!deleteConfirmPatient} onOpenChange={(open) => { if (!open) setDeleteConfirmPatient(null); }}><AlertDialogContent onClick={(e) => e.stopPropagation()}><AlertDialogHeader><AlertDialogTitle>Confirmar exclusão permanente</AlertDialogTitle><AlertDialogDescription>Tem certeza que deseja excluir <span className="font-semibold">{deleteConfirmPatient?.name}</span> e todas as suas {deleteConfirmPatient?.assessmentIds.length} avaliação(ões)?<br /><br /><span className="text-destructive font-medium">Esta ação é irreversível. Todos os dados de avaliações, planos de tratamento, exercícios e notas serão permanentemente apagados.</span></AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={!!deletingPatient} onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5" disabled={!!deletingPatient} onClick={(e) => { e.stopPropagation(); if (deleteConfirmPatient) handleDeletePatient(deleteConfirmPatient.groupKey, deleteConfirmPatient.assessmentIds); }}>{deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}Excluir permanentemente</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <AlertDialog open={!!deleteAssessmentTarget} onOpenChange={(open) => !open && setDeleteAssessmentTarget(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{language === "pt" ? "Excluir avaliação?" : "Delete assessment?"}</AlertDialogTitle><AlertDialogDescription>{language === "pt" ? `A avaliação de ${deleteAssessmentTarget?.date} será removida permanentemente, junto com notas e programas de exercícios vinculados. Esta ação não pode ser desfeita.` : `The assessment from ${deleteAssessmentTarget?.date} will be permanently removed, along with linked notes and exercise programs. This cannot be undone.`}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{language === "pt" ? "Cancelar" : "Cancel"}</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2" disabled={!!deletingAssessmentId} onClick={(e) => { e.preventDefault(); if (deleteAssessmentTarget) handleDeleteAssessment(deleteAssessmentTarget.id); }}>{deletingAssessmentId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}{language === "pt" ? "Excluir permanentemente" : "Delete permanently"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <Dialog open={!!treatmentPicker} onOpenChange={(open) => { if (!open) setTreatmentPicker(null); }}><DialogContent className="max-w-lg"><DialogHeader><DialogTitle>{language === "pt" ? "Selecione a avaliação a desbloquear" : language === "es" ? "Seleccione la evaluación a desbloquear" : "Select the assessment to unlock"}</DialogTitle><DialogDescription>{language === "pt" ? `${treatmentPicker?.patientName ?? ""} possui mais de uma avaliação sem plano de tratamento. Escolha de qual avaliação deseja adquirir o plano.` : language === "es" ? `${treatmentPicker?.patientName ?? ""} tiene más de una evaluación sin plan de tratamiento. Elija de cuál desea adquirir el plan.` : `${treatmentPicker?.patientName ?? ""} has more than one assessment without a treatment plan. Choose which one to unlock.`}</DialogDescription></DialogHeader><div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">{treatmentPicker?.assessments.map((a: any) => { const dateStr = new Date(a.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "short", year: "numeric" }); const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—"; const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0 ? a.pain_regions.join(", ") : null; return <div key={a.id} className="rounded-xl border border-border bg-card p-3 space-y-2"><div className="flex items-start justify-between gap-2"><div className="space-y-1 min-w-0"><p className="text-xs font-semibold text-foreground">{dateStr}</p><p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>{region && <p className="text-[10px] text-muted-foreground mt-0.5">{language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}</p>}</div>{a.pain_score != null && <Badge variant="outline" className="text-[10px] shrink-0">{language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10</Badge>}</div><TreatmentUnlockCTA assessmentId={a.id} lifetimeTreatment={lifetimeTreatment} onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); setTreatmentPicker(null); }} /></div>; })}</div><DialogFooter><Button variant="ghost" onClick={() => setTreatmentPicker(null)}>{language === "pt" ? "Fechar" : language === "es" ? "Cerrar" : "Close"}</Button></DialogFooter></DialogContent></Dialog>
+    </div>
+  );
+}
