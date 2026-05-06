@@ -142,7 +142,7 @@ const ClinicTeamManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
-            {lang === "pt" ? "Equipe" : lang === "es" ? "Equipo" : "Team"} ({members.length}/{activeClinic.max_members})
+            {lang === "pt" ? "Equipe" : lang === "es" ? "Equipo" : "Team"} ({members.length}/{activeClinic.max_members >= 9999 ? "∞ Enterprise" : activeClinic.max_members})
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
