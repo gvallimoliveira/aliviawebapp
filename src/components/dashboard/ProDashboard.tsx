@@ -307,9 +307,10 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
   const loadReferrals = async () => {
     const { data: refs } = await (supabase.from("professional_referrals" as any) as any)
-      .select("*")
+      .select("id, patient_user_id, professional_id, assessment_id, status, created_at")
       .eq("professional_id", professional.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(200);
     if (!refs || refs.length === 0) { setReferrals([]); return; }
     setReferrals(refs);
     const userIds: string[] = Array.from(new Set(refs.map((r: any) => String(r.patient_user_id))));
