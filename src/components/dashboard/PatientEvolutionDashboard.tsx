@@ -1550,8 +1550,25 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                           <FileCheck className="h-3 w-3" /> Tratamento Liberado
                         </Badge>
                       ) : p.assessments.some((a: any) => a.diagnosis) ? (
-                        <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1">
-                          <Lock className="h-3 w-3" /> Adquirir Tratamento
+                        <Badge
+                          variant="outline"
+                          role="button"
+                          tabIndex={0}
+                          title={language === "pt" ? "Clique para adquirir o plano de tratamento" : language === "es" ? "Clic para adquirir el plan de tratamiento" : "Click to acquire the treatment plan"}
+                          className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1 cursor-pointer hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAcquireBadgeClick({ name: p.name, email: p.email, assessments: p.assessments });
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleAcquireBadgeClick({ name: p.name, email: p.email, assessments: p.assessments });
+                            }
+                          }}
+                        >
+                          <Lock className="h-3 w-3" /> {language === "pt" ? "Adquirir Tratamento" : language === "es" ? "Adquirir Tratamiento" : "Unlock Treatment"}
                         </Badge>
                       ) : null}
                       {showIncomplete && !readOnly && (
