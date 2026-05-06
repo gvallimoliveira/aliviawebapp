@@ -522,15 +522,22 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     }
   };
 
-  const thisMonthCount = patientAssessments.filter((a) => {
-    const d = new Date(a.created_at);
+  // Memoized: avoids re-filtering full assessment list on every render,
+  // which matters for clinics with hundreds of assessments.
+  const thisMonthCount = useMemo(() => {
     const now = new Date();
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }).length;
+    const m = now.getMonth();
+    const y = now.getFullYear();
+    return patientAssessments.filter((a) => {
+      const d = new Date(a.created_at);
+      return d.getMonth() === m && d.getFullYear() === y;
+    }).length;
+  }, [patientAssessments]);
 
   // Assessments that need review: completed but not yet reviewed
-  const pendingReviewAssessments = patientAssessments.filter(
-    (a) => a.status === "completed" && !a.reviewed_at
+  const pendingReviewAssessments = useMemo(
+    () => patientAssessments.filter((a) => a.status === "completed" && !a.reviewed_at),
+    [patientAssessments]
   );
 
   const handleMarkReviewed = async (assessmentId: string) => {
