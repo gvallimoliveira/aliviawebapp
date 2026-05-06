@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell, Legend,
 } from "recharts";
 import {
   Activity, Users, ClipboardCheck, TrendingUp, CalendarDays, Percent,
 } from "lucide-react";
-import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval, parseISO, isToday } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface Props {
@@ -32,123 +31,68 @@ const tooltipStyle = {
   fontSize: 12,
 };
 
+interface KpiPayload {
+  today_count: number;
+  total_this_month: number;
+  completed_this_month: number;
+  occupancy: number;
+  assessments_this_month: number;
+  therapists: number;
+  monthly_data: Array<{ month_start: string; atendimentos: number; avaliacoes: number }>;
+  status_data: Array<{ name: string; value: number }>;
+}
+
 const ClinicOwnerDashboard = ({ clinicId }: Props) => {
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [assessments, setAssessments] = useState<any[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
+  const [kpiData, setKpiData] = useState<KpiPayload | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const load = async () => {
       setLoading(true);
-      const sixMonthsAgo = subMonths(new Date(), 6).toISOString();
-
-      // Slim selects: only fields actually consumed by KPIs/charts.
-      // Avoids pulling heavy JSONB columns (anamnesis_data, test_results, etc.)
-      // for clinics with high assessment volume.
-      const [apptRes, assessRes, membersRes] = await Promise.all([
-        supabase
-          .from("professional_appointments")
-          .select("appointment_date, status")
-          .eq("clinic_id", clinicId)
-          .gte("created_at", sixMonthsAgo),
-        supabase
-          .from("assessments")
-          .select("created_at")
-          .eq("clinic_id", clinicId)
-          .gte("created_at", sixMonthsAgo),
-        supabase
-          .from("clinic_members")
-          .select("role")
-          .eq("clinic_id", clinicId)
-          .eq("status", "active"),
-      ]);
-
-      setAppointments(apptRes.data || []);
-      setAssessments(assessRes.data || []);
-      setMembers(membersRes.data || []);
+      // Server-side aggregation: heavy filtering and counting now run in Postgres
+      // instead of streaming 6 months of raw rows to the browser. Drastically
+      // reduces payload + CPU for clinics with thousands of records.
+      const { data, error } = await supabase.rpc("get_clinic_kpis" as any, {
+        _clinic_id: clinicId,
+      });
+      if (cancelled) return;
+      if (error || !data) {
+        setKpiData(null);
+      } else {
+        // RPC returns SETOF — take first row
+        const row = Array.isArray(data) ? data[0] : data;
+        setKpiData(row as KpiPayload);
+      }
       setLoading(false);
     };
     load();
+    return () => { cancelled = true; };
   }, [clinicId]);
 
-  // KPI cards
-  const kpis = useMemo(() => {
-    const now = new Date();
-    const currentMonth = appointments.filter((a) => {
-      const d = parseISO(a.appointment_date);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    });
-    const completedThisMonth = currentMonth.filter((a) => a.status === "completed").length;
-    const totalThisMonth = currentMonth.length;
-    const todayAppts = appointments.filter((a) => isToday(parseISO(a.appointment_date)));
-    const therapists = members.filter((m) => m.role === "therapist" || m.role === "owner").length;
-
-    // Occupancy: assume 8 slots/day/therapist, 22 working days
-    const maxCapacity = therapists * 8 * 22;
-    const occupancy = maxCapacity > 0 ? Math.round((totalThisMonth / maxCapacity) * 100) : 0;
-
-    const assessmentsThisMonth = assessments.filter((a) => {
-      const d = parseISO(a.created_at);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }).length;
-
-    return {
-      totalThisMonth,
-      completedThisMonth,
-      todayCount: todayAppts.length,
-      occupancy: Math.min(occupancy, 100),
-      assessmentsThisMonth,
-      therapists,
-    };
-  }, [appointments, assessments, members]);
-
-  // Monthly appointments chart (last 6 months)
   const monthlyData = useMemo(() => {
-    const now = new Date();
-    const months = eachMonthOfInterval({ start: subMonths(startOfMonth(now), 5), end: startOfMonth(now) });
-    return months.map((m) => {
-      const start = startOfMonth(m);
-      const end = endOfMonth(m);
-      const count = appointments.filter((a) => {
-        const d = parseISO(a.appointment_date);
-        return d >= start && d <= end;
-      }).length;
-      const assCount = assessments.filter((a) => {
-        const d = parseISO(a.created_at);
-        return d >= start && d <= end;
-      }).length;
-      return {
-        month: format(m, "MMM", { locale: ptBR }),
-        atendimentos: count,
-        avaliacoes: assCount,
-      };
-    });
-  }, [appointments, assessments]);
-
-  // Status distribution
-  const statusData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    appointments.forEach((a) => {
-      const s = a.status || "scheduled";
-      counts[s] = (counts[s] || 0) + 1;
-    });
-    const labels: Record<string, string> = {
-      scheduled: "Agendado",
-      completed: "Concluído",
-      cancelled: "Cancelado",
-      no_show: "Não compareceu",
-    };
-    return Object.entries(counts).map(([k, v]) => ({
-      name: labels[k] || k,
-      value: v,
+    if (!kpiData?.monthly_data) return [];
+    return kpiData.monthly_data.map((m) => ({
+      month: format(parseISO(m.month_start), "MMM", { locale: ptBR }),
+      atendimentos: m.atendimentos,
+      avaliacoes: m.avaliacoes,
     }));
-  }, [appointments]);
+  }, [kpiData]);
+
+  const statusData = useMemo(() => kpiData?.status_data || [], [kpiData]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!kpiData) {
+    return (
+      <div className="text-center py-8 text-muted-foreground text-sm">
+        Não foi possível carregar os indicadores.
       </div>
     );
   }
@@ -165,42 +109,42 @@ const ClinicOwnerDashboard = ({ clinicId }: Props) => {
         <Card>
           <CardContent className="pt-4 pb-3 px-4 text-center">
             <CalendarDays className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-2xl font-bold text-foreground">{kpis.todayCount}</p>
+            <p className="text-2xl font-bold text-foreground">{kpiData.today_count}</p>
             <p className="text-xs text-muted-foreground">Hoje</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 px-4 text-center">
             <Users className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-2xl font-bold text-foreground">{kpis.totalThisMonth}</p>
+            <p className="text-2xl font-bold text-foreground">{kpiData.total_this_month}</p>
             <p className="text-xs text-muted-foreground">Atendimentos / mês</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 px-4 text-center">
             <TrendingUp className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-2xl font-bold text-foreground">{kpis.completedThisMonth}</p>
+            <p className="text-2xl font-bold text-foreground">{kpiData.completed_this_month}</p>
             <p className="text-xs text-muted-foreground">Concluídos / mês</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 px-4 text-center">
             <Percent className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-2xl font-bold text-foreground">{kpis.occupancy}%</p>
+            <p className="text-2xl font-bold text-foreground">{kpiData.occupancy}%</p>
             <p className="text-xs text-muted-foreground">Taxa de ocupação</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 px-4 text-center">
             <ClipboardCheck className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-2xl font-bold text-foreground">{kpis.assessmentsThisMonth}</p>
+            <p className="text-2xl font-bold text-foreground">{kpiData.assessments_this_month}</p>
             <p className="text-xs text-muted-foreground">Avaliações / mês</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 px-4 text-center">
             <Users className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-            <p className="text-2xl font-bold text-foreground">{kpis.therapists}</p>
+            <p className="text-2xl font-bold text-foreground">{kpiData.therapists}</p>
             <p className="text-xs text-muted-foreground">Terapeutas ativos</p>
           </CardContent>
         </Card>

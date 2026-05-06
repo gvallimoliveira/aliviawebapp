@@ -216,34 +216,47 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     }
   };
 
+  // Explicit slim-but-complete column list. Excludes `pending_upgrade_data`
+  // (large jsonb snapshot only used at upgrade-time, never read by the dashboard).
+  // Hard limit of 500 newest rows per query keeps payload bounded for clinics
+  // with thousands of historical assessments — pagination is a safer next step.
+  const ASSESSMENT_COLUMNS =
+    "id, user_id, professional_id, clinic_id, type, status, payment_status, " +
+    "patient_name, patient_email, pain_score, pain_regions, anamnesis_data, " +
+    "test_results, diagnosis, treatment_plan, red_flags, final_hypothesis, " +
+    "final_hypothesis_by, final_hypothesis_at, original_assessment_id, redo_used, " +
+    "reviewed_at, archived_at, paid_at, created_at, updated_at";
+
   const loadPatientAssessments = async () => {
     // Load assessments linked to this professional
     const { data: proData } = await supabase
       .from("assessments")
-      .select("*")
+      .select(ASSESSMENT_COLUMNS)
       .eq("professional_id", professional.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500);
 
     // Also load clinic assessments (professional_id may be null) when in clinic mode
     let clinicData: any[] = [];
     if (isClinicMode && activeClinic?.clinic_id) {
       const { data: cData } = await supabase
         .from("assessments")
-        .select("*")
+        .select(ASSESSMENT_COLUMNS)
         .eq("clinic_id", activeClinic.clinic_id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(500);
       clinicData = cData || [];
     }
 
     // Merge and deduplicate by id
-    const merged = [...(proData || [])];
-    const existingIds = new Set(merged.map((a) => a.id));
-    for (const ca of clinicData) {
+    const merged: any[] = [...((proData as any[]) || [])];
+    const existingIds = new Set(merged.map((a: any) => a.id));
+    for (const ca of clinicData as any[]) {
       if (!existingIds.has(ca.id)) {
         merged.push(ca);
       }
     }
-    merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    merged.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     setPatientAssessments(merged);
   };
 
@@ -294,9 +307,10 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
   const loadReferrals = async () => {
     const { data: refs } = await (supabase.from("professional_referrals" as any) as any)
-      .select("*")
+      .select("id, patient_user_id, professional_id, assessment_id, status, created_at")
       .eq("professional_id", professional.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(200);
     if (!refs || refs.length === 0) { setReferrals([]); return; }
     setReferrals(refs);
     const userIds: string[] = Array.from(new Set(refs.map((r: any) => String(r.patient_user_id))));
