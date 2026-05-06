@@ -661,6 +661,27 @@ const Dashboard = () => {
           /* ── Professional Autonomous Mode (real or demo): 3 tabs ── */
           (() => {
             const isProDemo = activeContext === "professional_demo";
+            const hasProAccess = !isProDemo && !!professional && (
+              professional.subscription_status === "active"
+              || professional.is_partner === true
+              || professional.lifetime_treatment === true
+              || professional.premium_granted === true
+              || (professional.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
+            );
+            const ProLockedCard = ({ title, desc }: { title: string; desc: string }) => (
+              <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+                <CardContent className="py-10 text-center space-y-4">
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide">PRO</Badge>
+                  <div className="space-y-2">
+                    <p className="text-base font-semibold text-foreground">{title}</p>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">{desc}</p>
+                  </div>
+                  <Button onClick={() => setActiveTab("professional")} variant="outline" className="rounded-xl">
+                    Ver opções de assinatura
+                  </Button>
+                </CardContent>
+              </Card>
+            );
             const proStub: any = isProDemo ? {
               id: "demo",
               full_name: profile?.full_name || user?.email?.split("@")[0] || "Demo",
