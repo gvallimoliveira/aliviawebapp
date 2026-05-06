@@ -1878,8 +1878,25 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                 <FileCheck className="h-3 w-3" /> Tratamento Liberado
               </Badge>
             ) : patient.assessments.some((a: any) => a.diagnosis) ? (
-              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1">
-                <Lock className="h-3 w-3" /> Adquirir Tratamento
+              <Badge
+                variant="outline"
+                role="button"
+                tabIndex={0}
+                title={language === "pt" ? "Clique para ir ao card de compra do plano" : language === "es" ? "Clic para ir al card de compra del plan" : "Click to jump to the purchase card"}
+                className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1 cursor-pointer hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAcquireBadgeClick({ name: patient.name, email: patient.email, assessments: patient.assessments });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAcquireBadgeClick({ name: patient.name, email: patient.email, assessments: patient.assessments });
+                  }
+                }}
+              >
+                <Lock className="h-3 w-3" /> {language === "pt" ? "Adquirir Tratamento" : language === "es" ? "Adquirir Tratamiento" : "Unlock Treatment"}
               </Badge>
             ) : null}
           </div>
