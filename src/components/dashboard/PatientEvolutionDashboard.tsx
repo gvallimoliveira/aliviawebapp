@@ -508,6 +508,50 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const [longPressPatient, setLongPressPatient] = useState<{ groupKey: string; name: string } | null>(null);
   const [deletingPatient, setDeletingPatient] = useState<string | null>(null);
   const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<{ groupKey: string; name: string; assessmentIds: string[] } | null>(null);
+
+  // Treatment unlock UX (clickable badge → picker / scroll-to-card)
+  const [treatmentPicker, setTreatmentPicker] = useState<{ patientName: string; assessments: any[] } | null>(null);
+  const [pendingScrollToTreatment, setPendingScrollToTreatment] = useState(false);
+  const [treatmentHighlight, setTreatmentHighlight] = useState(false);
+  const treatmentSectionRef = useRef<HTMLDivElement | null>(null);
+
+  // Returns assessments that have a diagnosis but no treatment plan and aren't paid yet.
+  const getPendingTreatmentAssessments = useCallback((assessments: any[]) => {
+    return (assessments || []).filter(
+      (a: any) =>
+        a?.diagnosis &&
+        !a?.treatment_plan &&
+        a?.payment_status !== "treatment_paid" &&
+        a?.payment_status !== "treatment_generating",
+    );
+  }, []);
+
+  const scrollToTreatmentCard = useCallback(() => {
+    const el = treatmentSectionRef.current;
+    if (!el) return false;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTreatmentHighlight(true);
+    window.setTimeout(() => setTreatmentHighlight(false), 2200);
+    return true;
+  }, []);
+
+  // Handler for the badge click. If multiple pending → opens picker. If one → navigates and scrolls.
+  const handleAcquireBadgeClick = useCallback((p: { name: string; email: string; assessments: any[] }) => {
+    const pending = getPendingTreatmentAssessments(p.assessments);
+    if (pending.length === 0) return;
+    if (pending.length > 1) {
+      setTreatmentPicker({ patientName: p.name, assessments: pending });
+      return;
+    }
+    // Single pending → ensure detail view is open then scroll
+    if (selectedEmail !== (p.email || (p as any).groupKey)) {
+      setPendingScrollToTreatment(true);
+      setSelectedEmail(p.email || (p as any).groupKey);
+    } else {
+      // Already in detail view
+      if (!scrollToTreatmentCard()) setPendingScrollToTreatment(true);
+    }
+  }, [getPendingTreatmentAssessments, scrollToTreatmentCard, selectedEmail]);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressFiredRef = useRef(false);
   const [addPatientOpen, setAddPatientOpen] = useState(false);
@@ -665,6 +709,17 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       setQuickNoteSaving(false);
     }
   };
+
+  // When detail view becomes available after a badge click, scroll to the treatment card.
+  useEffect(() => {
+    if (!pendingScrollToTreatment || !selectedEmail) return;
+    // Wait one tick so the detail view (and the treatment card) has mounted.
+    const timer = window.setTimeout(() => {
+      const ok = scrollToTreatmentCard();
+      if (ok) setPendingScrollToTreatment(false);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [pendingScrollToTreatment, selectedEmail, scrollToTreatmentCard]);
 
   useEffect(() => {
     if (!professionalId || !selectedEmail || isDemo) { setHepHistory([]); return; }
@@ -1495,8 +1550,25 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                           <FileCheck className="h-3 w-3" /> Tratamento Liberado
                         </Badge>
                       ) : p.assessments.some((a: any) => a.diagnosis) ? (
-                        <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1">
-                          <Lock className="h-3 w-3" /> Adquirir Tratamento
+                        <Badge
+                          variant="outline"
+                          role="button"
+                          tabIndex={0}
+                          title={language === "pt" ? "Clique para adquirir o plano de tratamento" : language === "es" ? "Clic para adquirir el plan de tratamiento" : "Click to acquire the treatment plan"}
+                          className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1 cursor-pointer hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAcquireBadgeClick({ name: p.name, email: p.email, assessments: p.assessments });
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleAcquireBadgeClick({ name: p.name, email: p.email, assessments: p.assessments });
+                            }
+                          }}
+                        >
+                          <Lock className="h-3 w-3" /> {language === "pt" ? "Adquirir Tratamento" : language === "es" ? "Adquirir Tratamiento" : "Unlock Treatment"}
                         </Badge>
                       ) : null}
                       {showIncomplete && !readOnly && (
@@ -1806,8 +1878,25 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
                 <FileCheck className="h-3 w-3" /> Tratamento Liberado
               </Badge>
             ) : patient.assessments.some((a: any) => a.diagnosis) ? (
-              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1">
-                <Lock className="h-3 w-3" /> Adquirir Tratamento
+              <Badge
+                variant="outline"
+                role="button"
+                tabIndex={0}
+                title={language === "pt" ? "Clique para ir ao card de compra do plano" : language === "es" ? "Clic para ir al card de compra del plan" : "Click to jump to the purchase card"}
+                className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1 cursor-pointer hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAcquireBadgeClick({ name: patient.name, email: patient.email, assessments: patient.assessments });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAcquireBadgeClick({ name: patient.name, email: patient.email, assessments: patient.assessments });
+                  }
+                }}
+              >
+                <Lock className="h-3 w-3" /> {language === "pt" ? "Adquirir Tratamento" : language === "es" ? "Adquirir Tratamiento" : "Unlock Treatment"}
               </Badge>
             ) : null}
           </div>
@@ -2207,80 +2296,151 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       )}
 
       {/* ── 4. CTA PLANO DE TRATAMENTO ── */}
-      {latestWithDiagnosis && (() => {
-        const a = latestWithDiagnosis;
-        const hasTreatment = a.treatment_plan;
-        const isPaidPending = !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating");
-        const needsUnlock = a.diagnosis && !a.treatment_plan && !isPaidPending;
+      <div
+        ref={treatmentSectionRef}
+        id="treatment-unlock-section"
+        className={`scroll-mt-24 transition-shadow rounded-xl ${treatmentHighlight ? "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse" : ""}`}
+      >
+        {latestWithDiagnosis && (() => {
+          const a = latestWithDiagnosis;
+          const hasTreatment = a.treatment_plan;
+          const isPaidPending = !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating");
+          const needsUnlock = a.diagnosis && !a.treatment_plan && !isPaidPending;
 
-        if (hasTreatment) {
-          return (
-            <Card className="border-emerald-200 bg-emerald-500/5">
-              <CardContent className="py-4 px-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileCheck className="h-5 w-5 text-emerald-600" />
-                    <div>
-                      <p className="text-sm font-semibold text-emerald-700">{t("pro.treatment_unlocked")}</p>
-                      <p className="text-xs text-muted-foreground">Plano de tratamento disponível para este paciente.</p>
+          if (hasTreatment) {
+            return (
+              <Card className="border-emerald-200 bg-emerald-500/5">
+                <CardContent className="py-4 px-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileCheck className="h-5 w-5 text-emerald-600" />
+                      <div>
+                        <p className="text-sm font-semibold text-emerald-700">{t("pro.treatment_unlocked")}</p>
+                        <p className="text-xs text-muted-foreground">Plano de tratamento disponível para este paciente.</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                      onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}
+                    >
+                      {t("pro.view_treatment")}
+                      <ChevronRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
+
+          if (isPaidPending) {
+            return (
+              <TreatmentPaidRetry
+                assessmentId={a.id}
+                onGenerated={(treatmentPlan) => {
+                  a.treatment_plan = treatmentPlan;
+                  setNotes((prev) => ({ ...prev }));
+                }}
+              />
+            );
+          }
+
+          if (needsUnlock) {
+            return (
+              <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+                <CardContent className="py-5 px-5 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">Plano de Tratamento Personalizado</p>
+                      <p className="text-xs text-muted-foreground">Programa completo em 3 fases com exercícios progressivos, metas semanais e critérios de alta.</p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                    onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}
-                  >
-                    {t("pro.view_treatment")}
-                    <ChevronRight className="h-3 w-3" />
-                  </Button>
-                </div>
+                  <TreatmentUnlockCTA
+                    assessmentId={a.id}
+                    lifetimeTreatment={lifetimeTreatment}
+                    onUnlocked={(treatmentPlan) => {
+                      a.treatment_plan = treatmentPlan;
+                      a.payment_status = "treatment_paid";
+                      setNotes((prev) => ({ ...prev }));
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            );
+          }
+
+          return null;
+        })()}
+
+        {/* Other pending assessments (older complaints / dates without treatment plan) */}
+        {(() => {
+          if (!patient) return null;
+          const allPending = getPendingTreatmentAssessments(patient.assessments);
+          const others = latestWithDiagnosis
+            ? allPending.filter((a: any) => a.id !== latestWithDiagnosis.id)
+            : allPending;
+          if (others.length === 0) return null;
+          return (
+            <Card className="mt-3 border-amber-200 bg-amber-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2 text-amber-700">
+                  <Lock className="h-4 w-4" />
+                  {language === "pt"
+                    ? "Outras avaliações sem plano de tratamento"
+                    : language === "es"
+                      ? "Otras evaluaciones sin plan de tratamiento"
+                      : "Other assessments without treatment plan"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-0">
+                {others.map((a: any) => {
+                  const dateStr = new Date(a.created_at).toLocaleDateString(
+                    language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US",
+                    { day: "2-digit", month: "short", year: "numeric" },
+                  );
+                  const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—";
+                  const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0
+                    ? a.pain_regions.join(", ")
+                    : null;
+                  return (
+                    <div key={a.id} className="rounded-xl border border-amber-200/70 bg-background p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-foreground">{dateStr}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>
+                          {region && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}
+                            </p>
+                          )}
+                        </div>
+                        {a.pain_score != null && (
+                          <Badge variant="outline" className="text-[10px] shrink-0">
+                            {language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10
+                          </Badge>
+                        )}
+                      </div>
+                      <TreatmentUnlockCTA
+                        assessmentId={a.id}
+                        lifetimeTreatment={lifetimeTreatment}
+                        onUnlocked={(treatmentPlan) => {
+                          a.treatment_plan = treatmentPlan;
+                          a.payment_status = "treatment_paid";
+                          setNotes((prev) => ({ ...prev }));
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           );
-        }
-
-        if (isPaidPending) {
-          return (
-            <TreatmentPaidRetry
-              assessmentId={a.id}
-              onGenerated={(treatmentPlan) => {
-                a.treatment_plan = treatmentPlan;
-                setNotes((prev) => ({ ...prev }));
-              }}
-            />
-          );
-        }
-
-        if (needsUnlock) {
-          return (
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-              <CardContent className="py-5 px-5 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">Plano de Tratamento Personalizado</p>
-                    <p className="text-xs text-muted-foreground">Programa completo em 3 fases com exercícios progressivos, metas semanais e critérios de alta.</p>
-                  </div>
-                </div>
-                <TreatmentUnlockCTA
-                  assessmentId={a.id}
-                  lifetimeTreatment={lifetimeTreatment}
-                  onUnlocked={(treatmentPlan) => {
-                    a.treatment_plan = treatmentPlan;
-                    a.payment_status = "treatment_paid";
-                    setNotes((prev) => ({ ...prev }));
-                  }}
-                />
-              </CardContent>
-            </Card>
-          );
-        }
-
-        return null;
-      })()}
+        })()}
+      </div>
 
       {/* ── 5. ANAMNESE (Última Avaliação) ── */}
       {latestAnamnesisFields.length > 0 && (
@@ -2759,6 +2919,75 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Treatment unlock picker — opens when patient has 2+ pending assessments */}
+      <Dialog open={!!treatmentPicker} onOpenChange={(open) => { if (!open) setTreatmentPicker(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "pt"
+                ? "Selecione a avaliação a desbloquear"
+                : language === "es"
+                  ? "Seleccione la evaluación a desbloquear"
+                  : "Select the assessment to unlock"}
+            </DialogTitle>
+            <DialogDescription>
+              {language === "pt"
+                ? `${treatmentPicker?.patientName ?? ""} possui mais de uma avaliação sem plano de tratamento. Escolha de qual avaliação deseja adquirir o plano.`
+                : language === "es"
+                  ? `${treatmentPicker?.patientName ?? ""} tiene más de una evaluación sin plan de tratamiento. Elija de cuál desea adquirir el plan.`
+                  : `${treatmentPicker?.patientName ?? ""} has more than one assessment without a treatment plan. Choose which one to unlock.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            {treatmentPicker?.assessments.map((a: any) => {
+              const dateStr = new Date(a.created_at).toLocaleDateString(
+                language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US",
+                { day: "2-digit", month: "short", year: "numeric" },
+              );
+              const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—";
+              const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0
+                ? a.pain_regions.join(", ")
+                : null;
+              return (
+                <div key={a.id} className="rounded-xl border border-border bg-card p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground">{dateStr}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>
+                      {region && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}
+                        </p>
+                      )}
+                    </div>
+                    {a.pain_score != null && (
+                      <Badge variant="outline" className="text-[10px] shrink-0">
+                        {language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10
+                      </Badge>
+                    )}
+                  </div>
+                  <TreatmentUnlockCTA
+                    assessmentId={a.id}
+                    lifetimeTreatment={lifetimeTreatment}
+                    onUnlocked={(treatmentPlan) => {
+                      a.treatment_plan = treatmentPlan;
+                      a.payment_status = "treatment_paid";
+                      setNotes((prev) => ({ ...prev }));
+                      setTreatmentPicker(null);
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTreatmentPicker(null)}>
+              {language === "pt" ? "Fechar" : language === "es" ? "Cerrar" : "Close"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

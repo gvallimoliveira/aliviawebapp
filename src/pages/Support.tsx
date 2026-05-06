@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SupportContactForm from "@/components/support/SupportContactForm";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, Video, FileEdit, Stamp } from "lucide-react";
+import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, Video, FileEdit, Stamp, Lock } from "lucide-react";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +47,7 @@ const proTools = [
   { key: "pro_subscription", icon: CreditCard },
   { key: "edit_profile", icon: UserCog },
   { key: "lifetime_treatment", icon: Infinity },
+  { key: "acquire_treatment_badge", icon: Lock },
   { key: "messages", icon: MessageCircle },
   { key: "video_call", icon: Video },
   { key: "clinical_impression", icon: Brain },
@@ -58,7 +59,7 @@ const proTools = [
 ];
 
 const patientFaqKeys = ["pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11", "pf12"];
-const proFaqKeys = ["rf1", "rf2", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9", "rf10", "rf11", "rf12"];
+const proFaqKeys = ["rf1", "rf2", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9", "rf10", "rf11", "rf12", "rf13"];
 
 const Support = () => {
   const { t, language } = useLanguage();
