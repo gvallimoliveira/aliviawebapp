@@ -65,6 +65,9 @@ interface AnamnesisData {
 export interface ResponsibleProfessional {
   name: string;
   crefito?: string;
+  /** Optional signature image as data URL (PNG with transparent bg).
+   *  When present, rendered above the signature line. */
+  signatureImageDataUrl?: string;
 }
 
 interface PdfOptions {
@@ -93,7 +96,8 @@ function drawResponsibleBlock(
   isPt: boolean,
   prof: ResponsibleProfessional
 ): number {
-  const blockHeight = 26;
+  const hasSignature = !!prof.signatureImageDataUrl;
+  const blockHeight = hasSignature ? 46 : 26;
   // Footer line is at y=284, so usable bottom is ~282
   if (y + blockHeight > 280) {
     doc.addPage();
@@ -104,6 +108,20 @@ function drawResponsibleBlock(
 
   const lineW = 80;
   const lineX = (PAGE_WIDTH - lineW) / 2;
+
+  // Embed signature image (max 60x18mm) just above the line
+  if (hasSignature) {
+    const imgW = 60;
+    const imgH = 18;
+    const imgX = (PAGE_WIDTH - imgW) / 2;
+    try {
+      doc.addImage(prof.signatureImageDataUrl!, "PNG", imgX, y, imgW, imgH, undefined, "FAST");
+    } catch {
+      // ignore image errors and fall back to text block
+    }
+    y += imgH + 1;
+  }
+
   doc.setDrawColor(...COLORS.muted);
   doc.setLineWidth(0.4);
   doc.line(lineX, y, lineX + lineW, y);
