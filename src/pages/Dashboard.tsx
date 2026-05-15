@@ -64,22 +64,40 @@ interface PremiumAccess {
   available_discount?: { discount_percent: number } | null;
 }
 
-function buildOnboardingSteps(subscriptionType?: "monthly" | "single" | null, isProfessional?: boolean): OnboardingStep[] {
+type OnboardingContext = "personal" | "professional" | "clinic";
+
+function buildOnboardingSteps(
+  context: OnboardingContext,
+  opts: { subscriptionType?: "monthly" | "single" | null; canManageClinic?: boolean } = {}
+): OnboardingStep[] {
+  if (context === "clinic") {
+    const steps: OnboardingStep[] = [
+      { targetId: "clinic-tab-agenda", titleKey: "onboarding.clinic.step1.title", descriptionKey: "onboarding.clinic.step1.desc", position: "bottom" },
+      { targetId: "clinic-tab-patients", titleKey: "onboarding.clinic.step2.title", descriptionKey: "onboarding.clinic.step2.desc", position: "bottom" },
+    ];
+    if (opts.canManageClinic) {
+      steps.push({ targetId: "clinic-tab-insights", titleKey: "onboarding.clinic.step3.title", descriptionKey: "onboarding.clinic.step3.desc", position: "bottom" });
+    }
+    steps.push({ targetId: "clinic-tab-clinic", titleKey: "onboarding.clinic.step4.title", descriptionKey: "onboarding.clinic.step4.desc", position: "bottom" });
+    return steps;
+  }
+
+  if (context === "professional") {
+    return [
+      { targetId: "pro-tab-trigger", titleKey: "onboarding.pro_tab.title", descriptionKey: "onboarding.pro_tab.desc", position: "bottom" },
+      { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom" },
+      { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom" },
+    ];
+  }
+
+  // personal
   const steps: OnboardingStep[] = [
     { targetId: "patient-welcome", titleKey: "onboarding.patient.step1.title", descriptionKey: "onboarding.patient.step1.desc" },
     { targetId: "patient-assessments", titleKey: "onboarding.patient.step2.title", descriptionKey: "onboarding.patient.step2.desc", position: "bottom" },
     { targetId: "patient-find-pro", titleKey: "onboarding.patient.step4.title", descriptionKey: "onboarding.patient.step4.desc", position: "bottom" },
   ];
-  if (subscriptionType !== "single") {
+  if (opts.subscriptionType !== "single") {
     steps.push({ targetId: "patient-diary", titleKey: "onboarding.patient.step3.title", descriptionKey: "onboarding.patient.step3.desc", position: "bottom" });
-  }
-  if (isProfessional) {
-    steps.push(
-      { targetId: "pro-tab-trigger", titleKey: "onboarding.pro_tab.title", descriptionKey: "onboarding.pro_tab.desc", position: "bottom" },
-      { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom" },
-      { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom" },
-      { targetId: "pro-subscription", titleKey: "onboarding.pro.step4.title", descriptionKey: "onboarding.pro.step4.desc", position: "bottom" },
-    );
   }
   return steps;
 }
