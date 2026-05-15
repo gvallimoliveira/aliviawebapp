@@ -589,8 +589,10 @@ const Dashboard = () => {
             {canManageClinic && (
               <TabsContent value="insights" className="space-y-6">
                 <ClinicTrialBanner />
-                <div className="relative">
+                <div className="relative space-y-6">
                   <InsightsTab clinicId={activeClinic.clinic_id} fullClinicMode />
+                  <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={language} />
+                  <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={language} />
                   <ClinicTrialBlockOverlay />
                 </div>
               </TabsContent>
