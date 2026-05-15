@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import AssessmentTimeline from "../AssessmentTimeline";
 import CreateExerciseProgramModal from "../CreateExerciseProgramModal";
+import ManualAssessmentModal from "../ManualAssessmentModal";
 import FinalHypothesisEditor from "../FinalHypothesisEditor";
 import PatientFilesSection from "../PatientFilesSection";
 import PatientPhotosSection from "../PatientPhotosSection";
