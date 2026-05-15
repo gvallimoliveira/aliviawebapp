@@ -68,7 +68,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
     const userIds = members.map((m) => m.user_id);
     const { data: pros } = await supabase
       .from("professionals")
-      .select("id, user_id, full_name, specialties, profile_photo_url")
+      .select("id, user_id, full_name, specialties, profile_photo_url, crefito");
       .in("user_id", userIds);
 
     setTherapists(pros || []);
