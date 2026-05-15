@@ -721,15 +721,21 @@ const Dashboard = () => {
               approved: false,
               subscription_status: "active",
             } : professional;
+            const showInsightsTab = !isProDemo && hasProAccess && !!professional?.id;
             return (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="w-full grid grid-cols-3">
+                <TabsList className="w-full grid" style={{ gridTemplateColumns: showInsightsTab ? "repeat(4, 1fr)" : "repeat(3, 1fr)" }}>
                   <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
                     <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
                   </TabsTrigger>
                   <TabsTrigger value="agenda" className="gap-1.5 text-xs">
                     <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
                   </TabsTrigger>
+                  {showInsightsTab && (
+                    <TabsTrigger value="insights" className="gap-1.5 text-xs">
+                      <Sparkles className="h-4 w-4" /><span className="hidden sm:inline">Insights</span>
+                    </TabsTrigger>
+                  )}
                   <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                     <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
                   </TabsTrigger>
