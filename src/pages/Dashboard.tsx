@@ -137,11 +137,23 @@ const Dashboard = () => {
 
   const push = usePushNotifications();
 
+  // Tutorial estritamente ligado ao contexto ativo. Cada modo tem sua
+  // própria chave de "concluído" — assim aparece UMA ÚNICA vez no
+  // primeiro acesso de cada perfil e nunca mais.
+  const onboardingContext: OnboardingContext = isClinicMode && activeClinic
+    ? "clinic"
+    : (activeContext === "professional" && professional) || activeContext === "professional_demo"
+      ? "professional"
+      : "personal";
   const onboardingSteps = useMemo(
-    () => buildOnboardingSteps(premiumAccess?.subscription_type, !!professional),
-    [premiumAccess?.subscription_type, !!professional]
+    () => buildOnboardingSteps(onboardingContext, {
+      subscriptionType: premiumAccess?.subscription_type,
+      canManageClinic,
+    }),
+    [onboardingContext, premiumAccess?.subscription_type, canManageClinic]
   );
-  const onboarding = useOnboarding("onboarding_patient_completed", onboardingSteps);
+  const onboardingStorageKey = `onboarding_${onboardingContext}_completed_v2`;
+  const onboarding = useOnboarding(onboardingStorageKey, onboardingSteps);
 
   useEffect(() => {
     if (!authReady || authLoading) return;
