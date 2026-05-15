@@ -20,6 +20,7 @@ import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTria
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { regionsByView } from "@/components/assessment/painMapData";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
+import VoiceRecorderFAB from "@/components/dashboard/VoiceRecorderFAB";
 
 // ─── Body region grouping: proximal → distal, alphabetical within each group ───
 type RegionGroup = { key: string; label_pt: string; label_en: string; ids: string[] };
@@ -353,6 +354,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
+      {open && (
+        <VoiceRecorderFAB
+          professionalId={professionalId}
+          clinicId={clinicId}
+          patientName={patientName}
+        />
+      )}
       <DialogContent className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0">
         <div className="px-6 pt-6 pb-2 shrink-0">
         <DialogHeader>
