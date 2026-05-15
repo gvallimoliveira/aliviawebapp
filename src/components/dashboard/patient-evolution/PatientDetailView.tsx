@@ -162,6 +162,8 @@ export default function PatientDetailView(props: any) {
     handleAcquireBadgeClick,
   } = props;
 
+  const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
