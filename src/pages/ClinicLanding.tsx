@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { setSeo } from "@/lib/seo";
+import { setSeo, setMedicalBusinessJsonLd, setOrganizationJsonLd } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,11 +42,13 @@ const ClinicLanding = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Aliv.iA Clinic — Plataforma completa para clínicas de fisioterapia",
+      title: "Aliv.iA Clinic — Plataforma para clínicas de fisio",
       description: "Importe agenda por foto, link de pré-avaliação, prontuário com IA, chat, vídeo, NPS e white-label. 15 dias grátis sem cartão.",
       url: "https://aliviawebapp.com.br/clinica",
       type: "website",
     });
+    setMedicalBusinessJsonLd();
+    setOrganizationJsonLd();
   }, []);
 
   useEffect(() => {

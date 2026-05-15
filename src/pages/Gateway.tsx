@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { setSeo } from "@/lib/seo";
+import { setSeo, setLandingJsonLd, setOrganizationJsonLd } from "@/lib/seo";
 import LgpdBadge from "@/components/LgpdBadge";
 import logoAlivia from "@/assets/logo-alivia.png";
 import guilhermePhoto from "@/assets/guilherme-founder.jpeg";
@@ -37,11 +37,13 @@ const Gateway = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Aliv.iA — Avaliação Musculoesquelética Inteligente",
-      description: "O Aliv.iA não é só um app — é um sistema de raciocínio clínico com alma de fisioterapeuta de verdade. Avaliação musculoesquelética com IA, diagnóstico preliminar e plano de tratamento personalizado.",
+      title: "Aliv.iA — Avaliação Musculoesquelética com IA",
+      description: "Sistema de raciocínio clínico com IA: avaliação musculoesquelética, diagnóstico preliminar e plano de tratamento personalizado em minutos.",
       url: "https://aliviawebapp.com.br",
       type: "website",
     });
+    setLandingJsonLd();
+    setOrganizationJsonLd();
   }, []);
 
   return (
