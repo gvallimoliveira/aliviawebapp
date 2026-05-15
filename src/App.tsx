@@ -69,6 +69,7 @@ const App = () => {
     <LanguageProvider>
       <AuthProvider>
         <ClinicProvider>
+          <VoiceRecorderProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
