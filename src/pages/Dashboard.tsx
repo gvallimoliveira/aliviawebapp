@@ -64,22 +64,40 @@ interface PremiumAccess {
   available_discount?: { discount_percent: number } | null;
 }
 
-function buildOnboardingSteps(subscriptionType?: "monthly" | "single" | null, isProfessional?: boolean): OnboardingStep[] {
+type OnboardingContext = "personal" | "professional" | "clinic";
+
+function buildOnboardingSteps(
+  context: OnboardingContext,
+  opts: { subscriptionType?: "monthly" | "single" | null; canManageClinic?: boolean } = {}
+): OnboardingStep[] {
+  if (context === "clinic") {
+    const steps: OnboardingStep[] = [
+      { targetId: "clinic-tab-agenda", titleKey: "onboarding.clinic.step1.title", descriptionKey: "onboarding.clinic.step1.desc", position: "bottom" },
+      { targetId: "clinic-tab-patients", titleKey: "onboarding.clinic.step2.title", descriptionKey: "onboarding.clinic.step2.desc", position: "bottom" },
+    ];
+    if (opts.canManageClinic) {
+      steps.push({ targetId: "clinic-tab-insights", titleKey: "onboarding.clinic.step3.title", descriptionKey: "onboarding.clinic.step3.desc", position: "bottom" });
+    }
+    steps.push({ targetId: "clinic-tab-clinic", titleKey: "onboarding.clinic.step4.title", descriptionKey: "onboarding.clinic.step4.desc", position: "bottom" });
+    return steps;
+  }
+
+  if (context === "professional") {
+    return [
+      { targetId: "pro-tab-trigger", titleKey: "onboarding.pro_tab.title", descriptionKey: "onboarding.pro_tab.desc", position: "bottom" },
+      { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom" },
+      { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom" },
+    ];
+  }
+
+  // personal
   const steps: OnboardingStep[] = [
     { targetId: "patient-welcome", titleKey: "onboarding.patient.step1.title", descriptionKey: "onboarding.patient.step1.desc" },
     { targetId: "patient-assessments", titleKey: "onboarding.patient.step2.title", descriptionKey: "onboarding.patient.step2.desc", position: "bottom" },
     { targetId: "patient-find-pro", titleKey: "onboarding.patient.step4.title", descriptionKey: "onboarding.patient.step4.desc", position: "bottom" },
   ];
-  if (subscriptionType !== "single") {
+  if (opts.subscriptionType !== "single") {
     steps.push({ targetId: "patient-diary", titleKey: "onboarding.patient.step3.title", descriptionKey: "onboarding.patient.step3.desc", position: "bottom" });
-  }
-  if (isProfessional) {
-    steps.push(
-      { targetId: "pro-tab-trigger", titleKey: "onboarding.pro_tab.title", descriptionKey: "onboarding.pro_tab.desc", position: "bottom" },
-      { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom" },
-      { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom" },
-      { targetId: "pro-subscription", titleKey: "onboarding.pro.step4.title", descriptionKey: "onboarding.pro.step4.desc", position: "bottom" },
-    );
   }
   return steps;
 }
@@ -119,11 +137,23 @@ const Dashboard = () => {
 
   const push = usePushNotifications();
 
+  // Tutorial estritamente ligado ao contexto ativo. Cada modo tem sua
+  // própria chave de "concluído" — assim aparece UMA ÚNICA vez no
+  // primeiro acesso de cada perfil e nunca mais.
+  const onboardingContext: OnboardingContext = isClinicMode && activeClinic
+    ? "clinic"
+    : (activeContext === "professional" && professional) || activeContext === "professional_demo"
+      ? "professional"
+      : "personal";
   const onboardingSteps = useMemo(
-    () => buildOnboardingSteps(premiumAccess?.subscription_type, !!professional),
-    [premiumAccess?.subscription_type, !!professional]
+    () => buildOnboardingSteps(onboardingContext, {
+      subscriptionType: premiumAccess?.subscription_type,
+      canManageClinic,
+    }),
+    [onboardingContext, premiumAccess?.subscription_type, canManageClinic]
   );
-  const onboarding = useOnboarding("onboarding_patient_completed", onboardingSteps);
+  const onboardingStorageKey = `onboarding_${onboardingContext}_completed_v2`;
+  const onboarding = useOnboarding(onboardingStorageKey, onboardingSteps);
 
   useEffect(() => {
     if (!authReady || authLoading) return;
@@ -399,26 +429,9 @@ const Dashboard = () => {
     navigate(`/dashboard?tab=messages&conv=${convId}`, { replace: true });
   }, [navigate]);
 
-  useEffect(() => {
-    if (!onboarding.isActive || !onboarding.step) return;
-
-    const proTargets = ["pro-link", "pro-patients", "pro-subscription"];
-
-    if (proTargets.includes(onboarding.step.targetId)) {
-      if (hasProfessionalProfile && activeContext !== "professional" && activeContext !== "clinic") {
-        setActiveContext("professional");
-      }
-      setActiveTab("professional");
-      return;
-    }
-
-    // Important: patient onboarding must never force the dashboard into a tab
-    // that does not exist for the currently selected context. Otherwise the
-    // professional/clinic shells can render their tab bar with no content.
-    if (onboarding.step.targetId.startsWith("patient-") && activeContext === "personal") {
-      setActiveTab("health");
-    }
-  }, [onboarding.step, onboarding.isActive, hasProfessionalProfile, activeContext, setActiveContext]);
+  // Tutorial é estritamente do contexto ativo (clinic/professional/personal),
+  // então NÃO precisamos mais forçar troca de tab/contexto durante o tour.
+  // Cada perfil tem seus próprios passos com targets que existem na sua tela.
 
   if (!authReady || authLoading || dashboardLoading) {
     return (
@@ -514,21 +527,21 @@ const Dashboard = () => {
           /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="w-full grid" style={{ gridTemplateColumns: canManageClinic ? "repeat(5, 1fr)" : "repeat(4, 1fr)" }}>
-              <TabsTrigger value="agenda" className="gap-1.5 text-xs">
+              <TabsTrigger value="agenda" className="gap-1.5 text-xs" data-onboarding="clinic-tab-agenda">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
-              <TabsTrigger value="patients" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
+              <TabsTrigger value="patients" className="gap-1.5 text-xs" data-onboarding="clinic-tab-patients">
                 <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">Pacientes</span>
               </TabsTrigger>
               {canManageClinic && (
-                <TabsTrigger value="insights" className="gap-1.5 text-xs">
+                <TabsTrigger value="insights" className="gap-1.5 text-xs" data-onboarding="clinic-tab-insights">
                   <Sparkles className="h-4 w-4" /><span className="hidden sm:inline">Insights</span>
                 </TabsTrigger>
               )}
               <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                 <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
-              <TabsTrigger value="clinic" className="gap-1.5 text-xs">
+              <TabsTrigger value="clinic" className="gap-1.5 text-xs" data-onboarding="clinic-tab-clinic">
                 <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Clínica</span>
               </TabsTrigger>
             </TabsList>
