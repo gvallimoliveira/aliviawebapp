@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 export interface OnboardingStep {
   targetId: string;
@@ -9,9 +9,21 @@ export interface OnboardingStep {
 
 export const useOnboarding = (storageKey: string, steps: OnboardingStep[]) => {
   const [currentStep, setCurrentStep] = useState(() => {
+    if (typeof window === "undefined") return -1;
     const completed = localStorage.getItem(storageKey);
     return completed === "true" ? -1 : 0;
   });
+
+  // Re-evaluate when the storage key changes (e.g., user switches context).
+  // Each context has its own "completed" flag — first entry shows the tour,
+  // every subsequent entry stays silent.
+  const lastKeyRef = useRef(storageKey);
+  useEffect(() => {
+    if (lastKeyRef.current === storageKey) return;
+    lastKeyRef.current = storageKey;
+    const completed = localStorage.getItem(storageKey);
+    setCurrentStep(completed === "true" ? -1 : 0);
+  }, [storageKey]);
 
   const isActive = currentStep >= 0 && currentStep < steps.length;
 
