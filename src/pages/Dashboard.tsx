@@ -299,9 +299,15 @@ const Dashboard = () => {
   useEffect(() => {
     const desired = tabFromUrl || activeTab;
     if (activeContext === "clinic" && activeClinic) {
-      const valid = ["agenda", "patients", "team", "link", "analytics", "messages"];
-      const mapped = desired === "clinic" ? "team" : desired;
-      setActiveTab(valid.includes(mapped) ? mapped : "agenda");
+      const valid = ["agenda", "patients", "insights", "messages", "clinic"];
+      // Legacy deep-link remap: team/link/analytics → clinic + sub-tab
+      const legacyMap: Record<string, string> = { team: "team", link: "link", analytics: "management" };
+      if (legacyMap[desired]) {
+        setClinicSubTab(legacyMap[desired]);
+        setActiveTab("clinic");
+      } else {
+        setActiveTab(valid.includes(desired) ? desired : "agenda");
+      }
     } else if ((activeContext === "professional" && professional) || activeContext === "professional_demo") {
       const valid = ["professional", "agenda", "insights", "messages"];
       setActiveTab(valid.includes(desired) ? desired : "professional");
