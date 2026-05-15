@@ -56,6 +56,9 @@ const proTools = [
   { key: "white_label", icon: Palette },
   { key: "evolution_report", icon: TrendingUp },
   { key: "simulated_env", icon: MonitorPlay },
+  { key: "insights_churn", icon: TrendingUp },
+  { key: "insights_discharge", icon: TrendingUp },
+  { key: "insights_revenue", icon: BarChart3 },
 ];
 
 const patientFaqKeys = ["pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11", "pf12"];
