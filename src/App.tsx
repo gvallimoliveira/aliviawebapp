@@ -120,6 +120,7 @@ const App = () => {
               </Suspense>
             </BrowserRouter>
           </TooltipProvider>
+          </VoiceRecorderProvider>
         </ClinicProvider>
       </AuthProvider>
     </LanguageProvider>
