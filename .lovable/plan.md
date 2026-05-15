@@ -1,110 +1,66 @@
-## Parte 1 — Responsável Técnico no PDF (implementar agora)
+## Assinatura digital visual + carimbo no PDF
 
-### O que muda
+Decisões confirmadas:
+- **Nível 1 apenas** (sem ICP-Brasil agora)
+- **Opt-in por relatório** (toggle "Assinar este relatório" no momento da geração)
+- **Sem página pública de verificação** (sem hash/QR/rota `/verificar`)
 
-Todo PDF profissional (autônomo e clínica) passa a ter, no rodapé da última página (acima do footer institucional), um bloco de **Responsável Técnico** com:
+---
 
-```
-_________________________________
-Nome Completo do Fisioterapeuta
-CREFITO: 123456-F
-Relatório emitido em 15/05/2026
-```
+### Fluxo do usuário
 
-### Regras de quem assina
+1. **Cadastro único da assinatura** (uma vez, em "Conta" / configurações do profissional):
+   - Tab "Assinatura digital" com 2 opções:
+     - **Desenhar** com `react-signature-canvas` (mouse/dedo)
+     - **Upload** de PNG transparente (preferível)
+   - Preview + botão "Salvar assinatura" / "Substituir"
+   - Imagem é salva em storage privado (bucket `signatures`) e a URL salva em `professionals.signature_image_url`
 
-- **PRO autônomo**: usa o `professional` logado (nome + crefito do registro `professionals`).
-- **Clínica — therapist logado**: usa o nome + crefito do próprio terapeuta.
-- **Clínica — owner ou secretary logado** (login institucional): usa nome + crefito do **owner fisioterapeuta** da clínica (busca em `professionals` pelo `owner_user_id`). Se o owner não tiver crefito cadastrado, mostra apenas o nome + aviso "CREFITO não cadastrado" e abre toast pedindo para preencher.
-- **Modo paciente / link público sem profissional**: NÃO mostra bloco (mantém comportamento atual).
+2. **Ao gerar PDF profissional** (PRO autônomo, clínica owner, clínica terapeuta):
+   - Modal/diálogo de geração ganha um **switch "Assinar digitalmente este relatório"** (default: OFF)
+   - Se ON e o profissional tiver assinatura cadastrada → embute imagem no bloco de Responsável Técnico
+   - Se ON e não tiver → toast "Cadastre sua assinatura em Conta → Assinatura digital" + gera sem assinatura
+   - Carimbo textual com nome, CREFITO, cidade/UF e data continua sempre visível (já feito na Parte 1)
 
-### Cadastro de CREFITO no modo clínica
-
-Hoje o `professionals.crefito` é `NOT NULL` no fluxo de registro PRO, mas membros adicionados via convite de clínica podem não ter perfil profissional ou ter crefito vazio. Vou:
-
-1. Adicionar um **banner "Complete seu CREFITO"** no dashboard do terapeuta de clínica quando faltar o dado.
-2. Criar/abrir um pequeno modal `CrefitoCompletionModal` com input + máscara `123456-F` + validação de duplicidade (mesma da tela de registro PRO).
-3. Salvar em `professionals` (criando o registro se ainda não existir, vinculado ao `user_id`).
+---
 
 ### Mudanças técnicas
 
-- `**src/utils/generatePdf.ts**`: nova prop `responsibleProfessional?: { name: string; crefito?: string }` em `PdfOptions` e `EvolutionReportOptions`. Renderiza o bloco antes do footer nas funções `generateAssessmentPdf`, `_buildPdfDoc` e `generateEvolutionReportPdf` (3 footers idênticos hoje — extrair helper `drawSignatureBlock(doc, pageY)`).
-- **Novo helper `src/lib/getResponsibleProfessional.ts**`: recebe `{ user, activeClinic, professionalProfile }` e devolve `{ name, crefito }` aplicando as regras acima (busca o owner via `professionals` quando user é owner/secretary).
-- **Atualizar 4 call sites**:
-  - `ProDashboard.tsx` (linha 441) → passa o profissional logado.
-  - `ClinicSecretaryDashboard.tsx` (linha 115) → busca owner da clínica.
-  - `AssessmentView.tsx` (linha 146) → resolve via helper conforme contexto.
-  - `TreatmentPlan.tsx` (linha 122) → passa profissional se houver.
-- `**src/components/dashboard/CrefitoCompletionBanner.tsx**` (novo) + integração no `ProDashboard` para terapeutas de clínica sem crefito.
-- **i18n** (pt/en/es): chaves `pdf.responsible_professional`, `pdf.crefito_label`, `pdf.issued_at`, `dashboard.crefito_missing_*`.
+**Banco** (1 migração):
+- `ALTER TABLE professionals ADD COLUMN signature_image_url text`
+- Bucket privado `signatures` + policy: profissional só lê/escreve `{user_id}/signature.png`
 
-### Sem mudanças de banco
+**Frontend**:
+- `src/components/account/SignatureManager.tsx` (novo) — tab desenhar/upload, salva no bucket
+- Adicionar tab "Assinatura digital" em `src/pages/Account.tsx`
+- Switch opt-in nos diálogos de geração de PDF:
+  - `ProDashboard.tsx` (botão de relatório)
+  - `ClinicSecretaryDashboard.tsx`
+  - `AssessmentView.tsx`
+  - `TreatmentPlan.tsx` (se aplicável)
+- `src/utils/generatePdf.ts`:
+  - `ResponsibleProfessional` ganha campo opcional `signatureImageUrl?: string`
+  - `drawResponsibleBlock` desenha a imagem (max 60×25mm) acima da linha quando presente
+  - Helper `loadImageAsDataUrl(url)` para baixar do storage privado via signed URL antes de embutir
+- `getResponsibleProfessional.ts`: retornar também `signature_image_url` quando opt-in ativo (parametro `includeSignature: boolean`)
 
-A coluna `professionals.crefito` já existe (`text NOT NULL` no PRO, mas nullable na variante listada). Vou validar que aceita preenchimento posterior — se for `NOT NULL` e bloquear inserts parciais, a alternativa é deixar criar o registro com placeholder e forçar o modal antes da primeira geração de PDF (decido após inspecionar o constraint na hora da implementação).
+**Dependências**:
+- `react-signature-canvas` (~30kb) — só carrega na página de Conta
 
----
-
-## Parte 2 — Assinatura digital + carimbo no PDF (planejamento)
-
-### Contexto regulatório (BR)
-
-- **CREFITO/COFFITO** aceita assinatura eletrônica em laudos desde que garanta autenticidade, integridade e não-repúdio.
-- **Convênios e perícias** geralmente exigem **ICP-Brasil** (e-CPF A1/A3) para validade jurídica plena. Assinaturas "simples" (imagem + carimbo) servem para uso interno, mas podem ser recusadas em perícia judicial.
-
-### Estratégia em 3 níveis (recomendo entregar em fases)
-
-**Nível 1 — Assinatura visual + carimbo digital (MVP, sem dependência externa)**
-
-- Profissional faz upload **uma vez** de imagem PNG transparente da assinatura manuscrita (drag & drop ou desenho em canvas com `react-signature-canvas`).
-- Sistema gera carimbo automático com nome, CREFITO, cidade/UF, data/hora de emissão.
-- Ambos são embutidos no PDF na última página.
-- **Hash SHA-256 do PDF** é calculado e armazenado em nova tabela `pdf_signatures` (assessment_id, hash, signed_at, professional_id, signature_image_url). No rodapé do PDF imprime-se: `Hash de integridade: ab12...` + QR code apontando para `aliviawebapp.com.br/verificar/{hash}` que mostra publicamente data, profissional, CREFITO. Isto cobre integridade e auditoria interna.
-- **Esforço**: ~2-3 dias. **Cobre**: uso clínico, prontuário, encaminhamentos. **Não cobre**: perícia judicial estrita.
-
-**Nível 2 — Assinatura ICP-Brasil via provedor (validade jurídica plena)**
-
-- Integrar com provedor cloud de assinatura (recomendados):
-  - **Clicksign** (API REST, suporta e-CPF, fluxo simples, ~R$ 1-3/assinatura)
-  - **D4Sign** (similar, foco saúde)
-  - **ZapSign** (mais barato, ~R$ 0,50-1,50)
-- Fluxo: PDF gerado → enviado via API → profissional assina pelo celular/desktop com seu certificado → callback retorna PDF assinado → armazenamos em `storage` e linkamos no `assessment`.
-- Requer **secret do provedor** + assinatura paga por uso (cobrar do PRO ou incluir cota mensal no plano).
-- **Esforço**: ~5-7 dias incluindo edge functions, webhook de callback, UI de status.
-- **Cobre**: perícia, convênio, juntada em processo.
-
-**Nível 3 — Carimbo de tempo qualificado (timestamp ICP-Brasil)**
-
-- Adicional ao Nível 2: carimbo PAdES-T via provedor (Valid, Serpro). Necessário só para perícia judicial federal específica. Posterior, sob demanda.
-
-### Decisões que precisam ser tomadas antes de implementar
-
-1. Quero começar pelo **Nível 1 (visual + hash + QR)** ou já partir para **Nível 2 (ICP-Brasil)**? Nivel 1 
-2. Se Nível 2: qual provedor (Clicksign, D4Sign, ZapSign)? Quem paga por assinatura — Aliv.iA absorve, repassa para o PRO ou cota inclusa no plano?
-3. Assinatura é obrigatória em todo PDF profissional ou opt-in por relatório? 
-4. Onde armazenar a página pública de verificação (`/verificar/{hash}`) — rota nova no app + tabela `pdf_signatures`?
-
-### Arquitetura proposta (resumo Nível 1+2)
-
-```
-professionals
-  + signature_image_url text
-  + signature_canvas_svg text (fallback)
-
-pdf_signatures (nova)
-  id, assessment_id, professional_id, file_hash,
-  signed_at, signature_method ('visual'|'icp'),
-  external_provider_id, signed_pdf_url, verification_token
-
-storage bucket: signatures (private)
-edge functions:
-  - sign-pdf-visual    (Nível 1)
-  - sign-pdf-icp       (Nível 2, chama Clicksign/D4Sign)
-  - sign-pdf-callback  (webhook do provedor)
-rota pública: /verificar/:token  → mostra metadata + status
-```
+**i18n** (pt/en/es):
+- `account.signature_tab`, `account.signature_draw`, `account.signature_upload`, `account.signature_saved`
+- `pdf.sign_this_report`, `pdf.no_signature_registered`
 
 ---
 
-## Próximos passos
+### Fora de escopo (confirmado)
+- Hash SHA-256 do PDF
+- QR code de verificação
+- Rota pública `/verificar/:token`
+- Tabela `pdf_signatures`
+- Integração com Clicksign / D4Sign / ZapSign (Nível 2)
 
-Confirma se posso seguir com a **Parte 1 agora** e me diga as decisões 1-4 da Parte 2 para eu detalhar o ticket de implementação da assinatura.
+---
+
+### Estimativa
+~1 dia de implementação. Posso começar quando você aprovar.

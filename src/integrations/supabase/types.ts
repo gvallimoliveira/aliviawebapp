@@ -1295,6 +1295,7 @@ export type Database = {
           premium_granted: boolean
           pro_access_expires_at: string | null
           profile_photo_url: string | null
+          signature_image_url: string | null
           social_media: string | null
           specialties: string[] | null
           state: string
@@ -1323,6 +1324,7 @@ export type Database = {
           premium_granted?: boolean
           pro_access_expires_at?: string | null
           profile_photo_url?: string | null
+          signature_image_url?: string | null
           social_media?: string | null
           specialties?: string[] | null
           state: string
@@ -1351,6 +1353,7 @@ export type Database = {
           premium_granted?: boolean
           pro_access_expires_at?: string | null
           profile_photo_url?: string | null
+          signature_image_url?: string | null
           social_media?: string | null
           specialties?: string[] | null
           state?: string
