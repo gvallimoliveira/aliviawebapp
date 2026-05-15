@@ -35,13 +35,14 @@ const ContextSelectionModal = lazy(() => import("@/components/dashboard/ContextS
 const ProSchedule = lazy(() => import("@/components/dashboard/ProSchedule"));
 const DailySummaryCard = lazy(() => import("@/components/dashboard/DailySummaryCard"));
 const ClinicOwnerDashboard = lazy(() => import("@/components/dashboard/ClinicOwnerDashboard"));
+const InsightsTab = lazy(() => import("@/components/dashboard/insights/InsightsTab"));
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import {
   Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon, Building2,
-  Link2, Copy, Check, Activity,
+  Link2, Copy, Check, Activity, Sparkles,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
