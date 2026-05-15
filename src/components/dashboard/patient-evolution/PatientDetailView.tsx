@@ -260,6 +260,16 @@ export default function PatientDetailView(props: any) {
 
       <CreateExerciseProgramModal open={hepModalOpen} onOpenChange={(open) => { setHepModalOpen(open); if (!open) setEditingHepId(null); }} professionalId={professionalId} patientName={patient.name} assessmentId={latestWithDiagnosis?.id} editProgramId={editingHepId} />
 
+      {manualAssessmentOpen && (
+        <ManualAssessmentModal
+          open={manualAssessmentOpen}
+          onOpenChange={setManualAssessmentOpen}
+          professionalId={professionalId}
+          clinicId={clinicId}
+          patientName={patient.name}
+          patientEmail={patient.email}
+        />
+      )}
       {(() => {
         const patientHeps = hepHistory.filter((h: any) => (h.patient_name || "").toLowerCase().trim() === (patient.name || "").toLowerCase().trim());
         if (patientHeps.length === 0) return null;
