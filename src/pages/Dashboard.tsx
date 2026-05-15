@@ -36,6 +36,8 @@ const ProSchedule = lazy(() => import("@/components/dashboard/ProSchedule"));
 const DailySummaryCard = lazy(() => import("@/components/dashboard/DailySummaryCard"));
 const ClinicOwnerDashboard = lazy(() => import("@/components/dashboard/ClinicOwnerDashboard"));
 const InsightsTab = lazy(() => import("@/components/dashboard/insights/InsightsTab"));
+const FeedbackSurveyCard = lazy(() => import("@/components/dashboard/FeedbackSurveyCard"));
+const FeedbackResultsCard = lazy(() => import("@/components/dashboard/FeedbackResultsCard"));
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
@@ -104,7 +106,7 @@ function buildOnboardingSteps(
 
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, ready: authReady } = useAuth();
-  const { t, toggleLanguage } = useLanguage();
+  const { t, toggleLanguage, language } = useLanguage();
   const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary } = useClinic();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -587,8 +589,10 @@ const Dashboard = () => {
             {canManageClinic && (
               <TabsContent value="insights" className="space-y-6">
                 <ClinicTrialBanner />
-                <div className="relative">
+                <div className="relative space-y-6">
                   <InsightsTab clinicId={activeClinic.clinic_id} fullClinicMode />
+                  <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={language} />
+                  <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={language} />
                   <ClinicTrialBlockOverlay />
                 </div>
               </TabsContent>

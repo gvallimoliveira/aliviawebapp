@@ -13,8 +13,6 @@ import {
 } from "lucide-react";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import SecretaryReportsCard from "./SecretaryReportsCard";
-import FeedbackSurveyCard from "./FeedbackSurveyCard";
-import FeedbackResultsCard from "./FeedbackResultsCard";
 import CrefitoCompletionBanner from "./CrefitoCompletionBanner";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
@@ -361,16 +359,6 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
       {/* Owner/secretary-only widgets */}
       {showPrivileged && (
         <>
-          {/* Feedback Survey link generator */}
-          {activeClinic?.clinic_id && (
-            <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={lang} />
-          )}
-
-          {/* Feedback Results */}
-          {activeClinic?.clinic_id && (
-            <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={lang} />
-          )}
-
           {/* Secretary Reports */}
           {activeClinic?.clinic_id && (
             <SecretaryReportsCard clinicId={activeClinic.clinic_id} lang={lang} />
