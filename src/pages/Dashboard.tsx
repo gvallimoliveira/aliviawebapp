@@ -324,7 +324,7 @@ const Dashboard = () => {
     const validTabs = inClinicMode
       ? ["agenda", "patients", "team", "link", "analytics", "messages"]
       : inProMode
-        ? ["professional", "agenda", "messages"]
+        ? ["professional", "agenda", "insights", "messages"]
         : ["health", "messages"];
 
     if (!validTabs.includes(activeTab)) {
