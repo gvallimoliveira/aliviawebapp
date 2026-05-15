@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
-import { setSeo } from "@/lib/seo";
+import { setSeo, setMedicalBusinessJsonLd, setOrganizationJsonLd } from "@/lib/seo";
 import LgpdBadge from "@/components/LgpdBadge";
 import { useEffect } from "react";
 
@@ -46,6 +46,8 @@ const ProfessionalLanding = () => {
       url: `${window.location.origin}/profissionais`,
       type: "website",
     });
+    setMedicalBusinessJsonLd();
+    setOrganizationJsonLd();
   }, []);
 
   const handleCTA = () => {
