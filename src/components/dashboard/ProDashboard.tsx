@@ -438,6 +438,13 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           .maybeSingle();
         if (data?.content && (data as any).include_in_pdf) proNote = data.content;
       }
+      const { resolveResponsibleProfessional } = await import("@/lib/getResponsibleProfessional");
+      const responsibleProfessional = await resolveResponsibleProfessional({
+        userId: professional?.user_id,
+        ownProfessional: professional ? { full_name: professional.full_name, crefito: professional.crefito } : null,
+        clinicId: isClinicMode ? activeClinic?.clinic_id : null,
+        clinicOwnerUserId: isClinicMode ? activeClinic?.owner_user_id : null,
+      });
       await generateAssessmentPdf({
         diagnosis: assessment.diagnosis,
         treatmentPlan: assessment.treatment_plan,
@@ -450,6 +457,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         professionalLogoUrl: professional?.logo_url || undefined,
         clinicLogoUrl: isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined,
         clinicName: isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined,
+        responsibleProfessional,
       });
       toast({ title: t("pro.download_pdf") });
     } catch {
