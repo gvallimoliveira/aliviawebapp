@@ -429,26 +429,9 @@ const Dashboard = () => {
     navigate(`/dashboard?tab=messages&conv=${convId}`, { replace: true });
   }, [navigate]);
 
-  useEffect(() => {
-    if (!onboarding.isActive || !onboarding.step) return;
-
-    const proTargets = ["pro-link", "pro-patients", "pro-subscription"];
-
-    if (proTargets.includes(onboarding.step.targetId)) {
-      if (hasProfessionalProfile && activeContext !== "professional" && activeContext !== "clinic") {
-        setActiveContext("professional");
-      }
-      setActiveTab("professional");
-      return;
-    }
-
-    // Important: patient onboarding must never force the dashboard into a tab
-    // that does not exist for the currently selected context. Otherwise the
-    // professional/clinic shells can render their tab bar with no content.
-    if (onboarding.step.targetId.startsWith("patient-") && activeContext === "personal") {
-      setActiveTab("health");
-    }
-  }, [onboarding.step, onboarding.isActive, hasProfessionalProfile, activeContext, setActiveContext]);
+  // Tutorial é estritamente do contexto ativo (clinic/professional/personal),
+  // então NÃO precisamos mais forçar troca de tab/contexto durante o tour.
+  // Cada perfil tem seus próprios passos com targets que existem na sua tela.
 
   if (!authReady || authLoading || dashboardLoading) {
     return (
