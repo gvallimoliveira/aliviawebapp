@@ -1545,6 +1545,11 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     bottomSafety: 1,
   });
 
+  // ── Responsible Technician Block (last page, before footer) ──
+  if (responsibleProfessional) {
+    y = drawResponsibleBlock(doc, y, isPt, responsibleProfessional);
+  }
+
   // ── Footer on every page with logo ──
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
