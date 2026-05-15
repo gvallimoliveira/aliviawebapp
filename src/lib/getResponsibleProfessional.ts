@@ -14,15 +14,16 @@ export async function resolveResponsibleProfessional(opts: {
   userId?: string | null;
   /** Pre-loaded professional record of the current user, when available. */
   ownProfessional?: { full_name?: string | null; crefito?: string | null } | null;
-  /** Active clinic context, when in clinic mode. */
+  /** Active clinic context id, when in clinic mode. */
   clinicId?: string | null;
+  /** Optional pre-known owner user id (saves one query). */
   clinicOwnerUserId?: string | null;
 }): Promise<ResponsibleProfessional | undefined> {
-  // 1. Prefer the current user's own professional record
-  if (opts.ownProfessional?.full_name) {
+  // 1. Prefer the current user's own professional record (with crefito)
+  if (opts.ownProfessional?.full_name && opts.ownProfessional?.crefito) {
     return {
       name: opts.ownProfessional.full_name,
-      crefito: opts.ownProfessional.crefito || undefined,
+      crefito: opts.ownProfessional.crefito,
     };
   }
 
@@ -33,21 +34,38 @@ export async function resolveResponsibleProfessional(opts: {
       .select("full_name, crefito")
       .eq("user_id", opts.userId)
       .maybeSingle();
-    if (mine?.full_name) {
-      return { name: mine.full_name, crefito: mine.crefito || undefined };
+    if (mine?.full_name && mine?.crefito) {
+      return { name: mine.full_name, crefito: mine.crefito };
     }
   }
 
-  // 3. Fallback to clinic owner (when generating from clinic owner/secretary login)
-  if (opts.clinicOwnerUserId) {
+  // 3. Fallback to clinic owner — resolve owner_user_id from clinics table
+  let ownerUserId = opts.clinicOwnerUserId || null;
+  if (!ownerUserId && opts.clinicId) {
+    const { data: clinic } = await supabase
+      .from("clinics")
+      .select("owner_user_id")
+      .eq("id", opts.clinicId)
+      .maybeSingle();
+    ownerUserId = clinic?.owner_user_id || null;
+  }
+  if (ownerUserId) {
     const { data: owner } = await supabase
       .from("professionals")
       .select("full_name, crefito")
-      .eq("user_id", opts.clinicOwnerUserId)
+      .eq("user_id", ownerUserId)
       .maybeSingle();
     if (owner?.full_name) {
       return { name: owner.full_name, crefito: owner.crefito || undefined };
     }
+  }
+
+  // 4. Last resort: own record without crefito (so name still appears)
+  if (opts.ownProfessional?.full_name) {
+    return {
+      name: opts.ownProfessional.full_name,
+      crefito: opts.ownProfessional.crefito || undefined,
+    };
   }
 
   return undefined;
