@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      assessment_voice_notes: {
+        Row: {
+          assessment_id: string | null
+          clinic_id: string | null
+          created_at: string
+          created_by: string
+          duration_seconds: number | null
+          error: string | null
+          id: string
+          language: string | null
+          patient_id: string | null
+          professional_id: string | null
+          status: string
+          summary: Json | null
+          transcript: string | null
+          updated_at: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          clinic_id?: string | null
+          created_at?: string
+          created_by: string
+          duration_seconds?: number | null
+          error?: string | null
+          id?: string
+          language?: string | null
+          patient_id?: string | null
+          professional_id?: string | null
+          status?: string
+          summary?: Json | null
+          transcript?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string | null
+          clinic_id?: string | null
+          created_at?: string
+          created_by?: string
+          duration_seconds?: number | null
+          error?: string | null
+          id?: string
+          language?: string | null
+          patient_id?: string | null
+          professional_id?: string | null
+          status?: string
+          summary?: Json | null
+          transcript?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_voice_notes_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_voice_notes_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_voice_notes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_voice_notes_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_voice_notes_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessments: {
         Row: {
           anamnesis_data: Json | null
