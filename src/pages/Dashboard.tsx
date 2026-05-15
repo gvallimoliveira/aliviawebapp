@@ -779,6 +779,11 @@ const Dashboard = () => {
                     />
                   )}
                 </TabsContent>
+                {showInsightsTab && (
+                  <TabsContent value="insights" className="space-y-6">
+                    <InsightsTab professionalId={professional.id} />
+                  </TabsContent>
+                )}
                 <TabsContent value="messages" className="space-y-6">
                   {isProDemo ? (
                     <ProLockedCard
