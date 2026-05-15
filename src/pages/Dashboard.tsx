@@ -115,6 +115,7 @@ const Dashboard = () => {
   const [isSimulated, setIsSimulated] = useState(false);
   const [allConversationIds, setAllConversationIds] = useState<string[]>([]);
   const [hasAutoSwitchedPro, setHasAutoSwitchedPro] = useState(false);
+  const [clinicSubTab, setClinicSubTab] = useState<string>("team");
 
   const push = usePushNotifications();
 
