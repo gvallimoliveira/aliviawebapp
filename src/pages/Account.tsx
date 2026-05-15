@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, KeyRound, User, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AppVersionBadge from "@/components/AppVersionBadge";
+import SignatureManager from "@/components/account/SignatureManager";
 
 const Account = () => {
   const { user, loading: authLoading } = useAuth();
@@ -177,6 +178,10 @@ const Account = () => {
             </form>
           </CardContent>
         </Card>
+
+        <div className="mt-6">
+          <SignatureManager />
+        </div>
 
         <div className="mt-6 flex justify-center">
           <AppVersionBadge />
