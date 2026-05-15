@@ -410,9 +410,11 @@ export type Database = {
           address: string | null
           brand_color: string | null
           created_at: string
+          default_session_price: number | null
           id: string
           logo_url: string | null
           max_members: number
+          monthly_revenue_goal: number | null
           name: string
           operating_hours_end: string | null
           operating_hours_start: string | null
@@ -427,9 +429,11 @@ export type Database = {
           address?: string | null
           brand_color?: string | null
           created_at?: string
+          default_session_price?: number | null
           id?: string
           logo_url?: string | null
           max_members?: number
+          monthly_revenue_goal?: number | null
           name: string
           operating_hours_end?: string | null
           operating_hours_start?: string | null
@@ -444,9 +448,11 @@ export type Database = {
           address?: string | null
           brand_color?: string | null
           created_at?: string
+          default_session_price?: number | null
           id?: string
           logo_url?: string | null
           max_members?: number
+          monthly_revenue_goal?: number | null
           name?: string
           operating_hours_end?: string | null
           operating_hours_start?: string | null
@@ -1284,6 +1290,7 @@ export type Database = {
           clinic_name: string | null
           created_at: string
           crefito: string
+          default_session_price: number | null
           email: string | null
           full_name: string
           id: string
@@ -1291,6 +1298,7 @@ export type Database = {
           is_partner_account: boolean
           lifetime_treatment: boolean
           logo_url: string | null
+          monthly_revenue_goal: number | null
           phone: string | null
           premium_granted: boolean
           pro_access_expires_at: string | null
@@ -1313,6 +1321,7 @@ export type Database = {
           clinic_name?: string | null
           created_at?: string
           crefito: string
+          default_session_price?: number | null
           email?: string | null
           full_name: string
           id?: string
@@ -1320,6 +1329,7 @@ export type Database = {
           is_partner_account?: boolean
           lifetime_treatment?: boolean
           logo_url?: string | null
+          monthly_revenue_goal?: number | null
           phone?: string | null
           premium_granted?: boolean
           pro_access_expires_at?: string | null
@@ -1342,6 +1352,7 @@ export type Database = {
           clinic_name?: string | null
           created_at?: string
           crefito?: string
+          default_session_price?: number | null
           email?: string | null
           full_name?: string
           id?: string
@@ -1349,6 +1360,7 @@ export type Database = {
           is_partner_account?: boolean
           lifetime_treatment?: boolean
           logo_url?: string | null
+          monthly_revenue_goal?: number | null
           phone?: string | null
           premium_granted?: boolean
           pro_access_expires_at?: string | null
@@ -1797,6 +1809,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_clinic_benchmarks: {
+        Args: { _clinic_id: string }
+        Returns: {
+          better_when_lower: boolean
+          clinic_value: number
+          metric: string
+          peer_avg: number
+          peer_count: number
+          size_bucket: string
+        }[]
+      }
       get_clinic_kpis: {
         Args: { _clinic_id: string }
         Returns: {
@@ -1825,6 +1848,20 @@ export type Database = {
       get_clinic_role: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["clinic_role"]
+      }
+      get_discharge_predictions: {
+        Args: { _clinic_id?: string; _professional_id?: string }
+        Returns: {
+          confidence: string
+          current_pain: number
+          initial_pain: number
+          patient_email: string
+          patient_name: string
+          professional_id: string
+          sessions_done: number
+          sessions_remaining: number
+          weeks_estimate: number
+        }[]
       }
       get_my_active_exercise_programs: {
         Args: never
@@ -1876,6 +1913,18 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_patient_adherence_scores: {
+        Args: { _clinic_id: string }
+        Returns: {
+          attendance_pct: number
+          diary_pct: number
+          exercises_pct: number
+          messages_pct: number
+          patient_email: string
+          patient_name: string
+          score: number
+        }[]
+      }
       get_patient_assessment_link_context: {
         Args: { _clinic_id?: string; _professional_id?: string; _token: string }
         Returns: {
@@ -1884,6 +1933,18 @@ export type Database = {
           full_name: string
           id: string
           professional_id: string
+        }[]
+      }
+      get_patient_churn_risk: {
+        Args: { _clinic_id?: string; _professional_id?: string }
+        Returns: {
+          last_session_date: string
+          next_session_date: string
+          patient_email: string
+          patient_name: string
+          professional_id: string
+          reasons: Json
+          score: number
         }[]
       }
       get_patient_professionals: {
