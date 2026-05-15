@@ -329,7 +329,7 @@ const Dashboard = () => {
     const inProMode = !inClinicMode && ((activeContext === "professional" && !!professional) || activeContext === "professional_demo");
 
     const validTabs = inClinicMode
-      ? ["agenda", "patients", "team", "link", "analytics", "messages"]
+      ? ["agenda", "patients", "insights", "messages", "clinic"]
       : inProMode
         ? ["professional", "agenda", "insights", "messages"]
         : ["health", "messages"];
