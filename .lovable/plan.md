@@ -1,53 +1,110 @@
-## Objetivo
-Aumentar conversão tornando o badge "Adquirir Tratamento" (hoje decorativo) em um atalho de compra, levando direto ao card de pagamento dentro do detalhe do paciente. Quando o paciente tiver mais de uma avaliação pendente (queixas/datas distintas, sem plano comprado), o clique abre um seletor para escolher de qual avaliação comprar o tratamento.
+## Parte 1 — Responsável Técnico no PDF (implementar agora)
 
-## Sim, é totalmente viável
-A infraestrutura de pagamento por avaliação já existe (`TreatmentUnlockCTA` chama `create-pro-treatment-payment` com `assessment_id`). Hoje o card de compra na visão expandida usa **apenas a avaliação mais recente** (`latestWithDiagnosis`) — então a melhoria também resolve um gap real: avaliações antigas sem tratamento ficam invisíveis para compra.
+### O que muda
 
-## Mudanças
+Todo PDF profissional (autônomo e clínica) passa a ter, no rodapé da última página (acima do footer institucional), um bloco de **Responsável Técnico** com:
 
-### 1. Badge clicável (`src/components/dashboard/PatientEvolutionDashboard.tsx`)
-Dois pontos de renderização do badge "Adquirir Tratamento":
-- **Linha ~1499** — card compacto na lista de pacientes
-- **Linha ~1810** — header do paciente expandido
+```
+_________________________________
+Nome Completo do Fisioterapeuta
+CREFITO: 123456-F
+Relatório emitido em 15/05/2026
+```
 
-Ambos passam a ser clicáveis (cursor-pointer, hover). Comportamento ao clicar (`stopPropagation` para não disparar outras ações do card):
+### Regras de quem assina
 
-- **1 avaliação pendente** (com `diagnosis` mas sem `treatment_plan` e sem `payment_status` em `treatment_paid/generating`):  
-  - Se o card já está expandido → scroll suave até o `TreatmentUnlockCTA`, com highlight de 2s.  
-  - Se não está expandido → expande o paciente, aguarda render, então faz o scroll+highlight.
+- **PRO autônomo**: usa o `professional` logado (nome + crefito do registro `professionals`).
+- **Clínica — therapist logado**: usa o nome + crefito do próprio terapeuta.
+- **Clínica — owner ou secretary logado** (login institucional): usa nome + crefito do **owner fisioterapeuta** da clínica (busca em `professionals` pelo `owner_user_id`). Se o owner não tiver crefito cadastrado, mostra apenas o nome + aviso "CREFITO não cadastrado" e abre toast pedindo para preencher.
+- **Modo paciente / link público sem profissional**: NÃO mostra bloco (mantém comportamento atual).
 
-- **2+ avaliações pendentes**: abre um `<Dialog>` "Selecione qual avaliação deseja desbloquear" listando cada avaliação pendente com:
-  - Data da avaliação (`created_at`)
-  - Queixa principal (extraída de `anamnesis_data` — região de dor + descrição curta) e hipótese (`diagnosis.hypothesis` ou `final_hypothesis`)
-  - Score de dor
-  - Botão "Adquirir tratamento — R$ 29,90" (ou "Desbloquear" se `lifetime_treatment`/clínica ativa) que dispara o mesmo fluxo do `TreatmentUnlockCTA` para aquele `assessment_id`
+### Cadastro de CREFITO no modo clínica
 
-### 2. Card de compra por avaliação no detalhe expandido
-Hoje o bloco "4. CTA PLANO DE TRATAMENTO" (linhas ~2210–2283) só renderiza para `latestWithDiagnosis`. Vamos:
-- Manter o card principal para a avaliação mais recente pendente.
-- Se houver **outras avaliações pendentes além da mais recente**, adicionar logo abaixo um sub-bloco "Outras avaliações sem plano de tratamento" com uma lista enxuta (data + queixa/hipótese + botão de desbloqueio individual reutilizando `TreatmentUnlockCTA`).
+Hoje o `professionals.crefito` é `NOT NULL` no fluxo de registro PRO, mas membros adicionados via convite de clínica podem não ter perfil profissional ou ter crefito vazio. Vou:
 
-### 3. Âncora para scroll
-Envolver o card "4. CTA PLANO DE TRATAMENTO" com `id="treatment-unlock-section"` e `ref` para permitir `scrollIntoView({ behavior: "smooth", block: "center" })` + classe temporária de ring/pulse.
+1. Adicionar um **banner "Complete seu CREFITO"** no dashboard do terapeuta de clínica quando faltar o dado.
+2. Criar/abrir um pequeno modal `CrefitoCompletionModal` com input + máscara `123456-F` + validação de duplicidade (mesma da tela de registro PRO).
+3. Salvar em `professionals` (criando o registro se ainda não existir, vinculado ao `user_id`).
 
-## Detalhes técnicos
+### Mudanças técnicas
 
-- Helper `getPendingAssessments(patient)`: filtra `patient.assessments` por `a.diagnosis && !a.treatment_plan && a.payment_status !== "treatment_paid" && a.payment_status !== "treatment_generating"`.
-- Helper `getAssessmentLabel(a)`: retorna `{ date, complaint, hypothesis, painScore }` para o seletor.
-- Estado novo: `treatmentPickerOpen` + `treatmentPickerPatient` no componente principal.
-- Reaproveitar `TreatmentUnlockCTA` (já trata caminho pago/gratuito/lifetime/clínica) — passar `assessmentId` correto.
-- i18n: novas chaves em `pt/en/es`:
-  - `pro.pick_assessment_to_unlock_title` ("Selecione a avaliação a desbloquear")
-  - `pro.pick_assessment_to_unlock_desc`
-  - `pro.other_pending_assessments` ("Outras avaliações sem plano")
-  - `pro.assessment_from` ("Avaliação de {date}")
+- `**src/utils/generatePdf.ts**`: nova prop `responsibleProfessional?: { name: string; crefito?: string }` em `PdfOptions` e `EvolutionReportOptions`. Renderiza o bloco antes do footer nas funções `generateAssessmentPdf`, `_buildPdfDoc` e `generateEvolutionReportPdf` (3 footers idênticos hoje — extrair helper `drawSignatureBlock(doc, pageY)`).
+- **Novo helper `src/lib/getResponsibleProfessional.ts**`: recebe `{ user, activeClinic, professionalProfile }` e devolve `{ name, crefito }` aplicando as regras acima (busca o owner via `professionals` quando user é owner/secretary).
+- **Atualizar 4 call sites**:
+  - `ProDashboard.tsx` (linha 441) → passa o profissional logado.
+  - `ClinicSecretaryDashboard.tsx` (linha 115) → busca owner da clínica.
+  - `AssessmentView.tsx` (linha 146) → resolve via helper conforme contexto.
+  - `TreatmentPlan.tsx` (linha 122) → passa profissional se houver.
+- `**src/components/dashboard/CrefitoCompletionBanner.tsx**` (novo) + integração no `ProDashboard` para terapeutas de clínica sem crefito.
+- **i18n** (pt/en/es): chaves `pdf.responsible_professional`, `pdf.crefito_label`, `pdf.issued_at`, `dashboard.crefito_missing_*`.
 
-## Atualização da página de Suporte (regra do projeto)
-Adicionar item curto em `Support.tsx` + `ClinicSupport.tsx` (pt/en/es) na seção de PRO/Tratamento:
-- "Como comprar plano de tratamento de uma avaliação antiga?" → explicar o badge clicável e o seletor.
+### Sem mudanças de banco
 
-## Fora de escopo
-- Não mexer no fluxo de pagamento/edge function `create-pro-treatment-payment` — já aceita `assessment_id` arbitrário.
-- Não alterar regras de clínica (tratamento gratuito) nem lifetime — apenas reaproveita o caminho existente.
-- Não criar bulk purchase (comprar várias de uma vez); cada avaliação segue 1 pagamento, conforme modelo atual.
+A coluna `professionals.crefito` já existe (`text NOT NULL` no PRO, mas nullable na variante listada). Vou validar que aceita preenchimento posterior — se for `NOT NULL` e bloquear inserts parciais, a alternativa é deixar criar o registro com placeholder e forçar o modal antes da primeira geração de PDF (decido após inspecionar o constraint na hora da implementação).
+
+---
+
+## Parte 2 — Assinatura digital + carimbo no PDF (planejamento)
+
+### Contexto regulatório (BR)
+
+- **CREFITO/COFFITO** aceita assinatura eletrônica em laudos desde que garanta autenticidade, integridade e não-repúdio.
+- **Convênios e perícias** geralmente exigem **ICP-Brasil** (e-CPF A1/A3) para validade jurídica plena. Assinaturas "simples" (imagem + carimbo) servem para uso interno, mas podem ser recusadas em perícia judicial.
+
+### Estratégia em 3 níveis (recomendo entregar em fases)
+
+**Nível 1 — Assinatura visual + carimbo digital (MVP, sem dependência externa)**
+
+- Profissional faz upload **uma vez** de imagem PNG transparente da assinatura manuscrita (drag & drop ou desenho em canvas com `react-signature-canvas`).
+- Sistema gera carimbo automático com nome, CREFITO, cidade/UF, data/hora de emissão.
+- Ambos são embutidos no PDF na última página.
+- **Hash SHA-256 do PDF** é calculado e armazenado em nova tabela `pdf_signatures` (assessment_id, hash, signed_at, professional_id, signature_image_url). No rodapé do PDF imprime-se: `Hash de integridade: ab12...` + QR code apontando para `aliviawebapp.com.br/verificar/{hash}` que mostra publicamente data, profissional, CREFITO. Isto cobre integridade e auditoria interna.
+- **Esforço**: ~2-3 dias. **Cobre**: uso clínico, prontuário, encaminhamentos. **Não cobre**: perícia judicial estrita.
+
+**Nível 2 — Assinatura ICP-Brasil via provedor (validade jurídica plena)**
+
+- Integrar com provedor cloud de assinatura (recomendados):
+  - **Clicksign** (API REST, suporta e-CPF, fluxo simples, ~R$ 1-3/assinatura)
+  - **D4Sign** (similar, foco saúde)
+  - **ZapSign** (mais barato, ~R$ 0,50-1,50)
+- Fluxo: PDF gerado → enviado via API → profissional assina pelo celular/desktop com seu certificado → callback retorna PDF assinado → armazenamos em `storage` e linkamos no `assessment`.
+- Requer **secret do provedor** + assinatura paga por uso (cobrar do PRO ou incluir cota mensal no plano).
+- **Esforço**: ~5-7 dias incluindo edge functions, webhook de callback, UI de status.
+- **Cobre**: perícia, convênio, juntada em processo.
+
+**Nível 3 — Carimbo de tempo qualificado (timestamp ICP-Brasil)**
+
+- Adicional ao Nível 2: carimbo PAdES-T via provedor (Valid, Serpro). Necessário só para perícia judicial federal específica. Posterior, sob demanda.
+
+### Decisões que precisam ser tomadas antes de implementar
+
+1. Quero começar pelo **Nível 1 (visual + hash + QR)** ou já partir para **Nível 2 (ICP-Brasil)**? Nivel 1 
+2. Se Nível 2: qual provedor (Clicksign, D4Sign, ZapSign)? Quem paga por assinatura — Aliv.iA absorve, repassa para o PRO ou cota inclusa no plano?
+3. Assinatura é obrigatória em todo PDF profissional ou opt-in por relatório? 
+4. Onde armazenar a página pública de verificação (`/verificar/{hash}`) — rota nova no app + tabela `pdf_signatures`?
+
+### Arquitetura proposta (resumo Nível 1+2)
+
+```
+professionals
+  + signature_image_url text
+  + signature_canvas_svg text (fallback)
+
+pdf_signatures (nova)
+  id, assessment_id, professional_id, file_hash,
+  signed_at, signature_method ('visual'|'icp'),
+  external_provider_id, signed_pdf_url, verification_token
+
+storage bucket: signatures (private)
+edge functions:
+  - sign-pdf-visual    (Nível 1)
+  - sign-pdf-icp       (Nível 2, chama Clicksign/D4Sign)
+  - sign-pdf-callback  (webhook do provedor)
+rota pública: /verificar/:token  → mostra metadata + status
+```
+
+---
+
+## Próximos passos
+
+Confirma se posso seguir com a **Parte 1 agora** e me diga as decisões 1-4 da Parte 2 para eu detalhar o ticket de implementação da assinatura.

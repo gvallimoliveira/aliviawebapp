@@ -62,6 +62,11 @@ interface AnamnesisData {
   painScoresPerRegion?: Record<string, number>;
 }
 
+export interface ResponsibleProfessional {
+  name: string;
+  crefito?: string;
+}
+
 interface PdfOptions {
   diagnosis: Diagnosis;
   /** When set, replaces the AI hypothesis with the professional override. */
@@ -76,6 +81,58 @@ interface PdfOptions {
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
   clinicName?: string;
+  /** Technical responsible (name + CREFITO) printed above the footer. */
+  responsibleProfessional?: ResponsibleProfessional;
+}
+
+/** Renders the "Responsável Técnico" signature block above the footer.
+ *  Adds a new page if there isn't enough vertical room. */
+function drawResponsibleBlock(
+  doc: jsPDF,
+  y: number,
+  isPt: boolean,
+  prof: ResponsibleProfessional
+): number {
+  const blockHeight = 26;
+  // Footer line is at y=284, so usable bottom is ~282
+  if (y + blockHeight > 280) {
+    doc.addPage();
+    y = MARGIN;
+  } else {
+    y += 6;
+  }
+
+  const lineW = 80;
+  const lineX = (PAGE_WIDTH - lineW) / 2;
+  doc.setDrawColor(...COLORS.muted);
+  doc.setLineWidth(0.4);
+  doc.line(lineX, y, lineX + lineW, y);
+  y += 4.5;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.foreground);
+  doc.text(prof.name || (isPt ? "Responsável Técnico" : "Technical Responsible"), PAGE_WIDTH / 2, y, { align: "center" });
+  y += 4;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.muted);
+  const crefitoTxt = prof.crefito
+    ? `CREFITO: ${prof.crefito}`
+    : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
+  doc.text(crefitoTxt, PAGE_WIDTH / 2, y, { align: "center" });
+  y += 4;
+
+  const today = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US");
+  doc.text(
+    isPt ? `Relatório emitido em ${today}` : `Report issued on ${today}`,
+    PAGE_WIDTH / 2,
+    y,
+    { align: "center" }
+  );
+  y += 4;
+  return y;
 }
 
 // Design tokens from webapp (HSL converted to RGB)
@@ -1110,7 +1167,7 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPt = language === "pt";
   let y = MARGIN;
@@ -1488,6 +1545,11 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     bottomSafety: 1,
   });
 
+  // ── Responsible Technician Block (last page, before footer) ──
+  if (responsibleProfessional) {
+    y = drawResponsibleBlock(doc, y, isPt, responsibleProfessional);
+  }
+
   // ── Footer on every page with logo ──
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
@@ -1588,6 +1650,7 @@ export interface EvolutionPdfOptions {
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
   clinicName?: string;
+  responsibleProfessional?: ResponsibleProfessional;
 }
 
 export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Promise<Blob> {
@@ -1938,6 +2001,11 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     body: { font: "helvetica", weight: "normal", size: 7, lineHeight: 3.6, textColor: [100, 80, 80] },
     bottomSafety: 1,
   });
+
+  // ── Responsible Technician Block (last page, before footer) ──
+  if (options.responsibleProfessional) {
+    y = drawResponsibleBlock(doc, y, isPt, options.responsibleProfessional);
+  }
 
   // ── Footer ──
   const totalPages = doc.getNumberOfPages();

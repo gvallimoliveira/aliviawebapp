@@ -15,6 +15,7 @@ import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import SecretaryReportsCard from "./SecretaryReportsCard";
 import FeedbackSurveyCard from "./FeedbackSurveyCard";
 import FeedbackResultsCard from "./FeedbackResultsCard";
+import CrefitoCompletionBanner from "./CrefitoCompletionBanner";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
@@ -68,7 +69,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
     const userIds = members.map((m) => m.user_id);
     const { data: pros } = await supabase
       .from("professionals")
-      .select("id, user_id, full_name, specialties, profile_photo_url")
+      .select("id, user_id, full_name, specialties, profile_photo_url, crefito")
       .in("user_id", userIds);
 
     setTherapists(pros || []);
@@ -112,6 +113,19 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
     if (!assessment.diagnosis) return;
     try {
       const pdfLang = document.documentElement.lang === "en" ? "en" : "pt";
+      const { resolveResponsibleProfessional } = await import("@/lib/getResponsibleProfessional");
+      const { data: { user } } = await supabase.auth.getUser();
+      // If the assessment has an assigned therapist, prefer them; else fall back to current user/owner
+      const assignedPro = assessment.professional_id
+        ? therapists.find((t) => t.id === assessment.professional_id)
+        : null;
+      const responsibleProfessional = await resolveResponsibleProfessional({
+        userId: user?.id,
+        ownProfessional: assignedPro
+          ? { full_name: assignedPro.full_name, crefito: (assignedPro as any).crefito }
+          : null,
+        clinicId: activeClinic?.clinic_id,
+      });
       await generateAssessmentPdf({
         diagnosis: assessment.diagnosis,
         treatmentPlan: assessment.treatment_plan,
@@ -122,6 +136,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
         testResults: assessment.test_results,
         clinicLogoUrl: activeClinic?.logo_url || undefined,
         clinicName: activeClinic?.clinic_name || undefined,
+        responsibleProfessional,
       });
       toast({ title: pdfLang === "pt" ? "PDF gerado!" : "PDF generated!" });
     } catch {
@@ -150,6 +165,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
 
   return (
     <div className="space-y-6">
+      {restrictedTherapistView && <CrefitoCompletionBanner />}
       {/* Read-only notice */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="py-3 px-5 flex items-center gap-3">
