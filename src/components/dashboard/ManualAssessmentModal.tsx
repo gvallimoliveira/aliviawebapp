@@ -326,6 +326,18 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       const { data, error } = await supabase.from("assessments").insert(row).select("id").single();
       if (error) throw error;
 
+      // Attach any unlinked voice notes from this professional in the last hour to this assessment
+      if (data?.id && user?.id) {
+        const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        await supabase
+          .from("assessment_voice_notes")
+          .update({ assessment_id: data.id })
+          .eq("created_by", user.id)
+          .eq("professional_id", professionalId)
+          .is("assessment_id", null)
+          .gte("created_at", cutoff);
+      }
+
       toast({ title: isPt ? "Avaliação criada!" : "Assessment created!" });
       onOpenChange(false);
       resetForm();
