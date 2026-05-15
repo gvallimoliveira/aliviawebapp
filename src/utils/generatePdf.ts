@@ -2002,6 +2002,11 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     bottomSafety: 1,
   });
 
+  // ── Responsible Technician Block (last page, before footer) ──
+  if (options.responsibleProfessional) {
+    y = drawResponsibleBlock(doc, y, isPt, options.responsibleProfessional);
+  }
+
   // ── Footer ──
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
