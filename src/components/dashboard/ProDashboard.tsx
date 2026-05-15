@@ -443,7 +443,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         userId: professional?.user_id,
         ownProfessional: professional ? { full_name: professional.full_name, crefito: professional.crefito } : null,
         clinicId: isClinicMode ? activeClinic?.clinic_id : null,
-        clinicOwnerUserId: isClinicMode ? activeClinic?.owner_user_id : null,
+        clinicOwnerUserId: null,
       });
       await generateAssessmentPdf({
         diagnosis: assessment.diagnosis,
