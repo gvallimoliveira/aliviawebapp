@@ -20,7 +20,7 @@ import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTria
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { regionsByView } from "@/components/assessment/painMapData";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
-import VoiceRecorderFAB from "@/components/dashboard/VoiceRecorderFAB";
+import { useVoiceRecorderSession } from "@/contexts/VoiceRecorderContext";
 
 // ─── Body region grouping: proximal → distal, alphabetical within each group ───
 type RegionGroup = { key: string; label_pt: string; label_en: string; ids: string[] };
@@ -80,6 +80,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const isPt = language === "pt";
 
   const [step, setStep] = useState(0);
+
+  // Attach a voice-recorder session at the App-level FAB while the modal is
+  // open. Lives outside the modal subtree so step navigation never resets it.
+  useVoiceRecorderSession(open, { professionalId, clinicId, patientName });
+
   const [saving, setSaving] = useState(false);
   const [generatingDx, setGeneratingDx] = useState(false);
   const [generatingTx, setGeneratingTx] = useState(false);
@@ -629,14 +634,6 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         </div>
 
         <DialogFooter className="relative flex-row justify-between sm:justify-between border-t p-4 shrink-0 bg-background">
-          {open && (
-            <VoiceRecorderFAB
-              professionalId={professionalId}
-              clinicId={clinicId}
-              patientName={patientName}
-              className="absolute -top-16 right-4 z-[60] flex flex-col items-end gap-2 pointer-events-auto sm:-top-20 sm:right-6"
-            />
-          )}
           <Button variant="outline" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
             <ChevronLeft className="h-4 w-4" /> {isPt ? "Voltar" : "Back"}
           </Button>

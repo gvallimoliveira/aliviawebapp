@@ -13,6 +13,7 @@ import DashboardErrorBoundary from "@/components/dashboard/DashboardErrorBoundar
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ClinicProvider } from "@/contexts/ClinicContext";
+import { VoiceRecorderProvider } from "@/contexts/VoiceRecorderContext";
 
 // Level 1 — eager (initial paint critical)
 import Gateway from "./pages/Gateway";
@@ -68,6 +69,7 @@ const App = () => {
     <LanguageProvider>
       <AuthProvider>
         <ClinicProvider>
+          <VoiceRecorderProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -118,6 +120,7 @@ const App = () => {
               </Suspense>
             </BrowserRouter>
           </TooltipProvider>
+          </VoiceRecorderProvider>
         </ClinicProvider>
       </AuthProvider>
     </LanguageProvider>
