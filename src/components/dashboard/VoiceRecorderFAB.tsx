@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Mic, Square, Pause, Play, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,7 @@ interface Props {
   patientId?: string | null;
   assessmentId?: string | null;
   patientName: string;
+  className?: string;
 }
 
 const MAX_DURATION_SEC = 30 * 60; // 30 min
@@ -21,7 +21,7 @@ const MAX_INLINE_SIZE = 4 * 1024 * 1024; // 4MB → inline base64; bigger goes v
 type State = "idle" | "recording" | "paused" | "uploading";
 
 export default function VoiceRecorderFAB({
-  professionalId, clinicId, patientId, assessmentId, patientName,
+  professionalId, clinicId, patientId, assessmentId, patientName, className,
 }: Props) {
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -209,9 +209,8 @@ export default function VoiceRecorderFAB({
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-  if (typeof document === "undefined") return null;
-  return createPortal(
-    <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end gap-2 pointer-events-auto">
+  return (
+    <div className={className ?? "fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end gap-2 pointer-events-auto"}>
 
       {showHint && state === "idle" && (
         <div className="bg-background border border-border shadow-lg rounded-xl px-3 py-2 text-xs max-w-[220px] relative">
@@ -264,7 +263,6 @@ export default function VoiceRecorderFAB({
           {isPt ? "Enviando..." : "Uploading..."}
         </div>
       )}
-    </div>,
-    document.body
+    </div>
   );
 }
