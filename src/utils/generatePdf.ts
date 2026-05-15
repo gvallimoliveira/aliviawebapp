@@ -1650,6 +1650,7 @@ export interface EvolutionPdfOptions {
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
   clinicName?: string;
+  responsibleProfessional?: ResponsibleProfessional;
 }
 
 export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Promise<Blob> {
