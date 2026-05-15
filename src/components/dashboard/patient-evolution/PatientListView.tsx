@@ -234,14 +234,14 @@ export default function PatientListView(props: any) {
                     <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{t("pro.last_assessment")}: {new Date(p.lastDate).toLocaleDateString("pt-BR")}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0 self-end sm:self-auto -mr-1 sm:mr-0">
+                <div className="flex w-full flex-wrap items-center gap-1 pt-1 shrink-0 sm:w-auto sm:flex-nowrap sm:justify-end sm:self-auto sm:pt-0 -mr-1 sm:mr-0">
                   {!readOnly && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" title={language === "pt" ? "Nova avaliação manual" : "New manual assessment"} onClick={(e) => { e.stopPropagation(); setManualAssessmentTarget({ name: p.name, email: p.email || "" }); }}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Nova avaliação manual" : "New manual assessment"} onClick={(e) => { e.stopPropagation(); setManualAssessmentTarget({ name: p.name, email: p.email || "" }); }}>
                       <FilePlus className="h-4 w-4 text-primary" />
                     </Button>
                   )}
                   {!readOnly && patientRec && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" title={language === "pt" ? "Copiar link de avaliação personalizado" : "Copy personalized assessment link"} onClick={async (e) => {
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Copiar link de avaliação personalizado" : "Copy personalized assessment link"} onClick={async (e) => {
                       e.stopPropagation();
                       try {
                         const token = await ensurePatientAssessmentToken(patientRec);
@@ -256,7 +256,7 @@ export default function PatientListView(props: any) {
                     </Button>
                   )}
                   {!readOnly && !isHidden && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" title={language === "pt" ? "Nota rápida" : "Quick note"} onClick={(e) => {
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Nota rápida" : "Quick note"} onClick={(e) => {
                       e.stopPropagation();
                       const emailKey = p.email || `imported:${p.groupKey || p.name}`;
                       setQuickNotePatient({ groupKey: p.groupKey, email: emailKey, name: p.name });
@@ -270,11 +270,11 @@ export default function PatientListView(props: any) {
                       {archiving === p.groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-muted-foreground" />}
                     </Button>
                   ) : (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" title="Arquivar paciente" disabled={archiving === p.groupKey} onClick={(e) => handleArchivePatient(p.groupKey, e)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Arquivar paciente" disabled={archiving === p.groupKey} onClick={(e) => handleArchivePatient(p.groupKey, e)}>
                       {archiving === p.groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
                     </Button>
                   ))}
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <ChevronRight className="hidden sm:block h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </div>
             </CardContent>
