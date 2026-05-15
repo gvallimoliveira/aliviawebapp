@@ -264,6 +264,7 @@ export default function VoiceRecorderFAB({
           {isPt ? "Enviando..." : "Uploading..."}
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
