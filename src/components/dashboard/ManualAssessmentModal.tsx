@@ -366,13 +366,6 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
-      {open && (
-        <VoiceRecorderFAB
-          professionalId={professionalId}
-          clinicId={clinicId}
-          patientName={patientName}
-        />
-      )}
       <DialogContent className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0">
         <div className="px-6 pt-6 pb-2 shrink-0">
         <DialogHeader>
@@ -635,7 +628,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           </div>
         </div>
 
-        <DialogFooter className="flex-row justify-between sm:justify-between border-t p-4 shrink-0 bg-background">
+        <DialogFooter className="relative flex-row justify-between sm:justify-between border-t p-4 shrink-0 bg-background">
+          {open && (
+            <VoiceRecorderFAB
+              professionalId={professionalId}
+              clinicId={clinicId}
+              patientName={patientName}
+              className="absolute -top-16 right-4 z-[60] flex flex-col items-end gap-2 pointer-events-auto sm:-top-20 sm:right-6"
+            />
+          )}
           <Button variant="outline" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
             <ChevronLeft className="h-4 w-4" /> {isPt ? "Voltar" : "Back"}
           </Button>
