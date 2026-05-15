@@ -183,6 +183,42 @@ const categories: ToolCategory[] = [
     ],
   },
   {
+    title: "Insights inteligentes (preditivos)",
+    icon: Sparkles,
+    items: [
+      {
+        key: "insights_churn",
+        icon: AlertTriangle,
+        title: "Predição de evasão (churn)",
+        desc: "O sistema cruza faltas, dor estagnada, baixa adesão a exercícios e silêncio no chat para sinalizar pacientes em risco de abandonar o tratamento — com sugestão de ação imediata para a equipe.",
+      },
+      {
+        key: "insights_discharge",
+        icon: FileCheck,
+        title: "Predição de alta",
+        desc: "Estimativa do número de sessões restantes até a alta, baseada na curva de evolução da dor e na adesão. Ajuda a planejar pacotes, organizar agenda e antecipar conversas com o paciente.",
+      },
+      {
+        key: "insights_adherence",
+        icon: Heart,
+        title: "Score de adesão (0-100) por paciente",
+        desc: "Combina exercícios concluídos, diário de dor, comparecimento e leitura de mensagens em um único score. A equipe identifica em segundos quem precisa de reforço.",
+      },
+      {
+        key: "insights_benchmark",
+        icon: TrendingUp,
+        title: "Benchmarking anônimo entre clínicas",
+        desc: "Compara seus indicadores (no-show, ocupação, avaliações/mês, tempo até alta) com a média de clínicas de porte semelhante. Os dados de outras clínicas são sempre anônimos.",
+      },
+      {
+        key: "insights_revenue",
+        icon: CreditCard,
+        title: "Meta de receita + simulador 'what-if'",
+        desc: "Defina sua meta mensal e o valor médio da sessão. O simulador mostra quanto a clínica ganharia ao reduzir no-show ou aumentar a ocupação em X pontos percentuais.",
+      },
+    ],
+  },
+  {
     title: "Engajamento e retenção",
     icon: Heart,
     items: [
