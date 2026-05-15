@@ -527,21 +527,21 @@ const Dashboard = () => {
           /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="w-full grid" style={{ gridTemplateColumns: canManageClinic ? "repeat(5, 1fr)" : "repeat(4, 1fr)" }}>
-              <TabsTrigger value="agenda" className="gap-1.5 text-xs">
+              <TabsTrigger value="agenda" className="gap-1.5 text-xs" data-onboarding="clinic-tab-agenda">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
-              <TabsTrigger value="patients" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
+              <TabsTrigger value="patients" className="gap-1.5 text-xs" data-onboarding="clinic-tab-patients">
                 <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">Pacientes</span>
               </TabsTrigger>
               {canManageClinic && (
-                <TabsTrigger value="insights" className="gap-1.5 text-xs">
+                <TabsTrigger value="insights" className="gap-1.5 text-xs" data-onboarding="clinic-tab-insights">
                   <Sparkles className="h-4 w-4" /><span className="hidden sm:inline">Insights</span>
                 </TabsTrigger>
               )}
               <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                 <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
-              <TabsTrigger value="clinic" className="gap-1.5 text-xs">
+              <TabsTrigger value="clinic" className="gap-1.5 text-xs" data-onboarding="clinic-tab-clinic">
                 <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Clínica</span>
               </TabsTrigger>
             </TabsList>
