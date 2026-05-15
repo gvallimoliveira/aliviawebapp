@@ -506,31 +506,23 @@ const Dashboard = () => {
         {isClinicMode && activeClinic ? (
           /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid" style={{ gridTemplateColumns: canManageClinic ? "repeat(7, 1fr)" : "repeat(5, 1fr)" }}>
+            <TabsList className="w-full grid" style={{ gridTemplateColumns: canManageClinic ? "repeat(5, 1fr)" : "repeat(4, 1fr)" }}>
               <TabsTrigger value="agenda" className="gap-1.5 text-xs">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
               <TabsTrigger value="patients" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
                 <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">Pacientes</span>
               </TabsTrigger>
-              <TabsTrigger value="team" className="gap-1.5 text-xs">
-                <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
-              </TabsTrigger>
-              <TabsTrigger value="link" className="gap-1.5 text-xs">
-                <Link2 className="h-4 w-4" /><span className="hidden sm:inline">Link</span>
-              </TabsTrigger>
               {canManageClinic && (
                 <TabsTrigger value="insights" className="gap-1.5 text-xs">
                   <Sparkles className="h-4 w-4" /><span className="hidden sm:inline">Insights</span>
                 </TabsTrigger>
               )}
-              {canManageClinic && (
-                <TabsTrigger value="analytics" className="gap-1.5 text-xs">
-                  <Activity className="h-4 w-4" /><span className="hidden sm:inline">Gestão</span>
-                </TabsTrigger>
-              )}
               <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                 <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
+              </TabsTrigger>
+              <TabsTrigger value="clinic" className="gap-1.5 text-xs">
+                <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Clínica</span>
               </TabsTrigger>
             </TabsList>
 
@@ -571,89 +563,12 @@ const Dashboard = () => {
               </div>
             </TabsContent>
 
-            {/* Equipe */}
-            <TabsContent value="team" className="space-y-6">
-              <ClinicTrialBanner />
-              <div className="relative">
-                <ClinicTeamManagement />
-                <ClinicTrialBlockOverlay />
-              </div>
-            </TabsContent>
-
-            {/* Link */}
-            <TabsContent value="link" className="space-y-6">
-              <ClinicTrialBanner />
-              <div className="relative">
-                <Card className="border-primary/20">
-                  <CardContent className="py-5 space-y-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Link2 className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold text-foreground">Link de pré-avaliação da clínica</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Compartilhe este link com seus pacientes. As avaliações entram em um pool compartilhado da clínica e podem ser atribuídas a qualquer fisioterapeuta da equipe.
-                    </p>
-                    <div className="flex gap-2">
-                      <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-                        {getPublicOrigin()}/assessment/clinic/{activeClinic.clinic_id}
-                      </code>
-                      <Button
-                        onClick={() => {
-                          const link = `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`;
-                          navigator.clipboard.writeText(link);
-                          setClinicLinkCopied(true);
-                          setTimeout(() => setClinicLinkCopied(false), 2000);
-                        }}
-                        variant="outline"
-                        className="gap-1.5 rounded-xl shrink-0"
-                      >
-                        {clinicLinkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-                        {clinicLinkCopied ? t("referral.copied") : t("referral.copy_link")}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="mt-4">
-                  <CardContent className="py-5 space-y-3">
-                    <h3 className="font-semibold text-foreground text-sm">Como funciona</h3>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      {[
-                        "Paciente acessa o link e preenche a avaliação",
-                        "A avaliação aparece no pool da clínica como 'Sem atribuição'",
-                        "Secretária ou proprietário atribui a um fisioterapeuta",
-                        "O diagnóstico IA é gerado automaticamente ao completar",
-                        "O plano de tratamento é gratuito (incluso na assinatura)",
-                      ].map((step, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">{i + 1}</span>
-                          <span>{step}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-                <ClinicTrialBlockOverlay />
-              </div>
-            </TabsContent>
-
             {/* Insights (owner/secretary only) */}
             {canManageClinic && (
               <TabsContent value="insights" className="space-y-6">
                 <ClinicTrialBanner />
                 <div className="relative">
                   <InsightsTab clinicId={activeClinic.clinic_id} fullClinicMode />
-                  <ClinicTrialBlockOverlay />
-                </div>
-              </TabsContent>
-            )}
-
-            {/* Gestão (owner only) */}
-            {canManageClinic && (
-              <TabsContent value="analytics" className="space-y-6">
-                <ClinicTrialBanner />
-                <div className="relative">
-                  <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
                   <ClinicTrialBlockOverlay />
                 </div>
               </TabsContent>
@@ -670,6 +585,95 @@ const Dashboard = () => {
                   canInitiateAsPatient={true}
                   canInitiateAsProfessional={true}
                 />
+                <ClinicTrialBlockOverlay />
+              </div>
+            </TabsContent>
+
+            {/* Clínica — agrupa Equipe & Configurações + Link + Gestão */}
+            <TabsContent value="clinic" className="space-y-6">
+              <ClinicTrialBanner />
+              <div className="relative">
+                <Tabs
+                  value={clinicSubTab}
+                  onValueChange={setClinicSubTab}
+                  className="space-y-5"
+                >
+                  <TabsList className="w-full grid" style={{ gridTemplateColumns: canManageClinic ? "repeat(3, 1fr)" : "repeat(2, 1fr)" }}>
+                    <TabsTrigger value="team" className="gap-1.5 text-xs">
+                      <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Equipe & Config</span><span className="sm:hidden">Equipe</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="link" className="gap-1.5 text-xs">
+                      <Link2 className="h-4 w-4" /><span className="hidden sm:inline">Link da clínica</span><span className="sm:hidden">Link</span>
+                    </TabsTrigger>
+                    {canManageClinic && (
+                      <TabsTrigger value="management" className="gap-1.5 text-xs">
+                        <Activity className="h-4 w-4" /><span className="hidden sm:inline">Gestão & KPIs</span><span className="sm:hidden">Gestão</span>
+                      </TabsTrigger>
+                    )}
+                  </TabsList>
+
+                  <TabsContent value="team" className="space-y-6">
+                    <ClinicTeamManagement />
+                  </TabsContent>
+
+                  <TabsContent value="link" className="space-y-4">
+                    <Card className="border-primary/20">
+                      <CardContent className="py-5 space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Link2 className="h-5 w-5 text-primary" />
+                          <h3 className="font-semibold text-foreground">Link de pré-avaliação da clínica</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Compartilhe este link com seus pacientes. As avaliações entram em um pool compartilhado da clínica e podem ser atribuídas a qualquer fisioterapeuta da equipe.
+                        </p>
+                        <div className="flex gap-2">
+                          <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
+                            {getPublicOrigin()}/assessment/clinic/{activeClinic.clinic_id}
+                          </code>
+                          <Button
+                            onClick={() => {
+                              const link = `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`;
+                              navigator.clipboard.writeText(link);
+                              setClinicLinkCopied(true);
+                              setTimeout(() => setClinicLinkCopied(false), 2000);
+                            }}
+                            variant="outline"
+                            className="gap-1.5 rounded-xl shrink-0"
+                          >
+                            {clinicLinkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                            {clinicLinkCopied ? t("referral.copied") : t("referral.copy_link")}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="py-5 space-y-3">
+                        <h3 className="font-semibold text-foreground text-sm">Como funciona</h3>
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                          {[
+                            "Paciente acessa o link e preenche a avaliação",
+                            "A avaliação aparece no pool da clínica como 'Sem atribuição'",
+                            "Secretária ou proprietário atribui a um fisioterapeuta",
+                            "O diagnóstico IA é gerado automaticamente ao completar",
+                            "O plano de tratamento é gratuito (incluso na assinatura)",
+                          ].map((step, i) => (
+                            <div key={i} className="flex items-start gap-2">
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">{i + 1}</span>
+                              <span>{step}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  {canManageClinic && (
+                    <TabsContent value="management" className="space-y-6">
+                      <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
+                    </TabsContent>
+                  )}
+                </Tabs>
                 <ClinicTrialBlockOverlay />
               </div>
             </TabsContent>
