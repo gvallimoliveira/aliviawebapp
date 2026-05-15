@@ -15,6 +15,7 @@ import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import SecretaryReportsCard from "./SecretaryReportsCard";
 import FeedbackSurveyCard from "./FeedbackSurveyCard";
 import FeedbackResultsCard from "./FeedbackResultsCard";
+import CrefitoCompletionBanner from "./CrefitoCompletionBanner";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
