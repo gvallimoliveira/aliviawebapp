@@ -62,6 +62,11 @@ interface AnamnesisData {
   painScoresPerRegion?: Record<string, number>;
 }
 
+export interface ResponsibleProfessional {
+  name: string;
+  crefito?: string;
+}
+
 interface PdfOptions {
   diagnosis: Diagnosis;
   /** When set, replaces the AI hypothesis with the professional override. */
@@ -76,6 +81,58 @@ interface PdfOptions {
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
   clinicName?: string;
+  /** Technical responsible (name + CREFITO) printed above the footer. */
+  responsibleProfessional?: ResponsibleProfessional;
+}
+
+/** Renders the "Responsável Técnico" signature block above the footer.
+ *  Adds a new page if there isn't enough vertical room. */
+function drawResponsibleBlock(
+  doc: jsPDF,
+  y: number,
+  isPt: boolean,
+  prof: ResponsibleProfessional
+): number {
+  const blockHeight = 26;
+  // Footer line is at y=284, so usable bottom is ~282
+  if (y + blockHeight > 280) {
+    doc.addPage();
+    y = MARGIN;
+  } else {
+    y += 6;
+  }
+
+  const lineW = 80;
+  const lineX = (PAGE_WIDTH - lineW) / 2;
+  doc.setDrawColor(...COLORS.muted);
+  doc.setLineWidth(0.4);
+  doc.line(lineX, y, lineX + lineW, y);
+  y += 4.5;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.foreground);
+  doc.text(prof.name || (isPt ? "Responsável Técnico" : "Technical Responsible"), PAGE_WIDTH / 2, y, { align: "center" });
+  y += 4;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.muted);
+  const crefitoTxt = prof.crefito
+    ? `CREFITO: ${prof.crefito}`
+    : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
+  doc.text(crefitoTxt, PAGE_WIDTH / 2, y, { align: "center" });
+  y += 4;
+
+  const today = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US");
+  doc.text(
+    isPt ? `Relatório emitido em ${today}` : `Report issued on ${today}`,
+    PAGE_WIDTH / 2,
+    y,
+    { align: "center" }
+  );
+  y += 4;
+  return y;
 }
 
 // Design tokens from webapp (HSL converted to RGB)
