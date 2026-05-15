@@ -165,6 +165,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
 
   return (
     <div className="space-y-6">
+      {restrictedTherapistView && <CrefitoCompletionBanner />}
       {/* Read-only notice */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="py-3 px-5 flex items-center gap-3">
