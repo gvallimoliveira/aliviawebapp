@@ -19,23 +19,29 @@ interface VoiceNote {
 
 interface Props {
   assessmentId?: string | null;
+  assessmentIds?: string[];
   patientId?: string | null;
 }
 
-export default function VoiceNoteCard({ assessmentId, patientId }: Props) {
+export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId }: Props) {
   const { language } = useLanguage();
   const { toast } = useToast();
   const isPt = language === "pt";
   const [notes, setNotes] = useState<VoiceNote[]>([]);
   const [expandedTranscript, setExpandedTranscript] = useState<Record<string, boolean>>({});
 
+  const idsKey = (assessmentIds || []).join(",");
+
   useEffect(() => {
-    if (!assessmentId && !patientId) return;
+    const ids = assessmentIds && assessmentIds.length > 0
+      ? assessmentIds
+      : assessmentId ? [assessmentId] : [];
+    if (ids.length === 0 && !patientId) return;
     let cancelled = false;
 
     const load = async () => {
       let q = supabase.from("assessment_voice_notes").select("*").order("created_at", { ascending: false });
-      if (assessmentId) q = q.eq("assessment_id", assessmentId);
+      if (ids.length > 0) q = q.in("assessment_id", ids);
       else if (patientId) q = q.eq("patient_id", patientId);
       const { data } = await q;
       if (!cancelled && data) setNotes(data as VoiceNote[]);
@@ -43,7 +49,7 @@ export default function VoiceNoteCard({ assessmentId, patientId }: Props) {
     load();
 
     const channel = supabase
-      .channel(`voice_notes_${assessmentId || patientId}`)
+      .channel(`voice_notes_${ids.join("_") || patientId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "assessment_voice_notes" }, () => load())
       .subscribe();
 
@@ -51,7 +57,8 @@ export default function VoiceNoteCard({ assessmentId, patientId }: Props) {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [assessmentId, patientId]);
+  }, [assessmentId, idsKey, patientId]);
+
 
   if (notes.length === 0) return null;
 
