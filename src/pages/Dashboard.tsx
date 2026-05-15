@@ -506,7 +506,7 @@ const Dashboard = () => {
         {isClinicMode && activeClinic ? (
           /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid" style={{ gridTemplateColumns: canManageClinic ? "repeat(6, 1fr)" : "repeat(5, 1fr)" }}>
+            <TabsList className="w-full grid" style={{ gridTemplateColumns: canManageClinic ? "repeat(7, 1fr)" : "repeat(5, 1fr)" }}>
               <TabsTrigger value="agenda" className="gap-1.5 text-xs">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
@@ -519,6 +519,11 @@ const Dashboard = () => {
               <TabsTrigger value="link" className="gap-1.5 text-xs">
                 <Link2 className="h-4 w-4" /><span className="hidden sm:inline">Link</span>
               </TabsTrigger>
+              {canManageClinic && (
+                <TabsTrigger value="insights" className="gap-1.5 text-xs">
+                  <Sparkles className="h-4 w-4" /><span className="hidden sm:inline">Insights</span>
+                </TabsTrigger>
+              )}
               {canManageClinic && (
                 <TabsTrigger value="analytics" className="gap-1.5 text-xs">
                   <Activity className="h-4 w-4" /><span className="hidden sm:inline">Gestão</span>
@@ -631,6 +636,17 @@ const Dashboard = () => {
                 <ClinicTrialBlockOverlay />
               </div>
             </TabsContent>
+
+            {/* Insights (owner/secretary only) */}
+            {canManageClinic && (
+              <TabsContent value="insights" className="space-y-6">
+                <ClinicTrialBanner />
+                <div className="relative">
+                  <InsightsTab clinicId={activeClinic.clinic_id} fullClinicMode />
+                  <ClinicTrialBlockOverlay />
+                </div>
+              </TabsContent>
+            )}
 
             {/* Gestão (owner only) */}
             {canManageClinic && (
