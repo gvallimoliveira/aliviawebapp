@@ -20,6 +20,7 @@ import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTria
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { regionsByView } from "@/components/assessment/painMapData";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
+import VoiceRecorderFAB from "@/components/dashboard/VoiceRecorderFAB";
 
 // ─── Body region grouping: proximal → distal, alphabetical within each group ───
 type RegionGroup = { key: string; label_pt: string; label_en: string; ids: string[] };
@@ -325,6 +326,18 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       const { data, error } = await supabase.from("assessments").insert(row).select("id").single();
       if (error) throw error;
 
+      // Attach any unlinked voice notes from this professional in the last hour to this assessment
+      if (data?.id && user?.id) {
+        const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        await supabase
+          .from("assessment_voice_notes")
+          .update({ assessment_id: data.id })
+          .eq("created_by", user.id)
+          .eq("professional_id", professionalId)
+          .is("assessment_id", null)
+          .gte("created_at", cutoff);
+      }
+
       toast({ title: isPt ? "Avaliação criada!" : "Assessment created!" });
       onOpenChange(false);
       resetForm();
@@ -353,6 +366,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
+      {open && (
+        <VoiceRecorderFAB
+          professionalId={professionalId}
+          clinicId={clinicId}
+          patientName={patientName}
+        />
+      )}
       <DialogContent className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0">
         <div className="px-6 pt-6 pb-2 shrink-0">
         <DialogHeader>
