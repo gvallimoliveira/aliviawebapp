@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import AssessmentTimeline from "../AssessmentTimeline";
 import CreateExerciseProgramModal from "../CreateExerciseProgramModal";
+import ManualAssessmentModal from "../ManualAssessmentModal";
 import FinalHypothesisEditor from "../FinalHypothesisEditor";
 import PatientFilesSection from "../PatientFilesSection";
 import PatientPhotosSection from "../PatientPhotosSection";
@@ -20,7 +21,7 @@ import PainMapView from "@/components/assessment/PainMapView";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, Archive, ArchiveRestore, ArrowLeft, Brain, ChevronRight, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FileText, Loader2, Lock, Mail, MessageCircle, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
+import { Activity, Archive, ArchiveRestore, ArrowLeft, Brain, ChevronRight, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, Loader2, Lock, Mail, MessageCircle, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
 import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessmentLinks";
@@ -161,6 +162,8 @@ export default function PatientDetailView(props: any) {
     handleAcquireBadgeClick,
   } = props;
 
+  const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -186,6 +189,7 @@ export default function PatientDetailView(props: any) {
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { const link = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id); navigator.clipboard.writeText(link); toast({ title: "Link de reavaliação copiado!" }); }}><RotateCcw className="h-4 w-4" /> Reavaliação</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
+          {!readOnly && !isDemo && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
           {patient.assessments.filter((a: any) => a.diagnosis).length >= 2 && (
             <Button variant="outline" size="sm" className="gap-1.5 shrink-0" disabled={evolutionLoading} onClick={async () => {
               setEvolutionLoading(true);
@@ -256,6 +260,16 @@ export default function PatientDetailView(props: any) {
 
       <CreateExerciseProgramModal open={hepModalOpen} onOpenChange={(open) => { setHepModalOpen(open); if (!open) setEditingHepId(null); }} professionalId={professionalId} patientName={patient.name} assessmentId={latestWithDiagnosis?.id} editProgramId={editingHepId} />
 
+      {manualAssessmentOpen && (
+        <ManualAssessmentModal
+          open={manualAssessmentOpen}
+          onOpenChange={setManualAssessmentOpen}
+          professionalId={professionalId}
+          clinicId={clinicId}
+          patientName={patient.name}
+          patientEmail={patient.email}
+        />
+      )}
       {(() => {
         const patientHeps = hepHistory.filter((h: any) => (h.patient_name || "").toLowerCase().trim() === (patient.name || "").toLowerCase().trim());
         if (patientHeps.length === 0) return null;

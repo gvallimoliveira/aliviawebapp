@@ -186,7 +186,7 @@ export default function PatientListView(props: any) {
             onMouseLeave={readOnly ? undefined : cancelLongPress}
           >
             <CardContent className="py-3 px-4">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-muted-foreground" />{p.name}</p>
@@ -234,7 +234,7 @@ export default function PatientListView(props: any) {
                     <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{t("pro.last_assessment")}: {new Date(p.lastDate).toLocaleDateString("pt-BR")}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1 shrink-0 self-end sm:self-auto -mr-1 sm:mr-0">
                   {!readOnly && (
                     <Button variant="ghost" size="icon" className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" title={language === "pt" ? "Nova avaliação manual" : "New manual assessment"} onClick={(e) => { e.stopPropagation(); setManualAssessmentTarget({ name: p.name, email: p.email || "" }); }}>
                       <FilePlus className="h-4 w-4 text-primary" />
