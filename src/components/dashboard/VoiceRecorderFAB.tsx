@@ -209,9 +209,10 @@ export default function VoiceRecorderFAB({
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-  // Position: bottom-left = "dead corner" (modal CTAs are bottom-right + nav bottom)
-  return (
-    <div className="fixed bottom-4 left-4 z-[60] flex flex-col items-start gap-2">
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end gap-2 pointer-events-auto">
+
       {showHint && state === "idle" && (
         <div className="bg-background border border-border shadow-lg rounded-xl px-3 py-2 text-xs max-w-[220px] relative">
           <button
