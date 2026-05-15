@@ -186,7 +186,7 @@ export default function PatientListView(props: any) {
             onMouseLeave={readOnly ? undefined : cancelLongPress}
           >
             <CardContent className="py-3 px-4">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-muted-foreground" />{p.name}</p>
