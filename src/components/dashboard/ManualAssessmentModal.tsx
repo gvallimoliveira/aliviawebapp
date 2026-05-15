@@ -80,6 +80,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const isPt = language === "pt";
 
   const [step, setStep] = useState(0);
+
+  // Attach a voice-recorder session at the App-level FAB while the modal is
+  // open. Lives outside the modal subtree so step navigation never resets it.
+  useVoiceRecorderSession(open, { professionalId, clinicId, patientName });
+
   const [saving, setSaving] = useState(false);
   const [generatingDx, setGeneratingDx] = useState(false);
   const [generatingTx, setGeneratingTx] = useState(false);
