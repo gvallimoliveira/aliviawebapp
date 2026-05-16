@@ -708,6 +708,37 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     }
   };
 
+  const [evoDeleteConfirm, setEvoDeleteConfirm] = useState(false);
+  const [evoDeleting, setEvoDeleting] = useState(false);
+
+  const parseEvolutionEntries = (content: string): string[] => {
+    if (!content) return [];
+    return content.split(/\n\n(?=\[)/g).map(s => s.trim()).filter(Boolean);
+  };
+  const evoEntries = parseEvolutionEntries(evoExistingContent);
+  const lastEvoEntry = evoEntries[evoEntries.length - 1] || "";
+
+  const deleteLastEvolution = async () => {
+    if (!professionalId || !evoAssessmentId || evoEntries.length === 0) return;
+    setEvoDeleting(true);
+    try {
+      const remaining = evoEntries.slice(0, -1).join("\n\n");
+      const { error } = await supabase.from("professional_notes").upsert(
+        { professional_id: professionalId, assessment_id: evoAssessmentId, content: remaining, updated_at: new Date().toISOString() },
+        { onConflict: "professional_id,assessment_id" }
+      );
+      if (error) throw error;
+      setEvoExistingContent(remaining);
+      setEvolutionReloadTick(t => t + 1);
+      toast({ title: isPt ? "Última evolução excluída" : language === "es" ? "Última evolución eliminada" : "Last evolution deleted" });
+    } catch (e: any) {
+      toast({ title: isPt ? "Erro ao excluir evolução" : "Failed to delete evolution", description: e?.message, variant: "destructive" });
+    } finally {
+      setEvoDeleting(false);
+      setEvoDeleteConfirm(false);
+    }
+  };
+
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const todayScheduledCount = appointments.filter(a => a.appointment_date === todayStr && a.status === "scheduled").length;
 
@@ -1293,7 +1324,20 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                             className="text-xs min-h-[80px]"
                             autoFocus
                           />
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-wrap justify-end items-center gap-2">
+                            {evoEntries.length > 0 && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="text-xs h-7 gap-1.5 text-destructive hover:text-destructive mr-auto"
+                                onClick={() => setEvoDeleteConfirm(true)}
+                                disabled={evoDeleting}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                                {isPt ? "Excluir última" : language === "es" ? "Eliminar última" : "Delete last"}
+                              </Button>
+                            )}
                             <Button type="button" size="sm" variant="ghost" className="text-xs h-7" onClick={() => { setEvoOpen(false); setEvoText(""); }}>
                               {isPt ? "Cancelar" : language === "es" ? "Cancelar" : "Cancel"}
                             </Button>
@@ -1354,6 +1398,40 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
               onClick={handleDelete}
             >
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("schedule.confirm_delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={evoDeleteConfirm} onOpenChange={(open) => { if (!open && !evoDeleting) setEvoDeleteConfirm(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isPt ? "Excluir última evolução?" : language === "es" ? "¿Eliminar última evolución?" : "Delete last evolution?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span>
+                {isPt
+                  ? "Esta ação removerá permanentemente o último registro de evolução deste paciente. Não é possível desfazer."
+                  : language === "es"
+                    ? "Esta acción eliminará permanentemente el último registro de evolución. No se puede deshacer."
+                    : "This permanently removes the last evolution entry. This action cannot be undone."}
+              </span>
+              {lastEvoEntry && (
+                <span className="block mt-2 rounded-md border border-border/40 bg-muted/40 p-2 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto font-mono">
+                  {lastEvoEntry}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={evoDeleting}>{t("session_notes.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={evoDeleting}
+              onClick={(e) => { e.preventDefault(); deleteLastEvolution(); }}
+            >
+              {evoDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : (isPt ? "Excluir" : language === "es" ? "Eliminar" : "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
