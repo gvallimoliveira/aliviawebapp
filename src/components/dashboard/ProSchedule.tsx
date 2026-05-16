@@ -964,6 +964,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                               onPointerDownCard={handleCardPointerDown}
                               isMobile={isMobile}
                               isPt={isPt}
+                              hasEvolution={!!apt.patient_email && evolutionSet.has(`${apt.patient_email}|${apt.appointment_date}`)}
                             />
                           ))}
                         </div>
