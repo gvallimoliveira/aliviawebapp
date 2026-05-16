@@ -1241,19 +1241,20 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
 /** Appointment card with pointer-based drag (mouse + touch) */
 const AppointmentCard = ({
-  apt, isConcurrent, onPointerDownCard, isMobile, isPt, hasEvolution,
+  apt, isConcurrent, onPointerDownCard, isMobile, isPt, evolution,
 }: {
   apt: Appointment;
   isConcurrent: boolean;
   onPointerDownCard: (e: React.PointerEvent, apt: Appointment) => void;
   isMobile: boolean;
   isPt: boolean;
-  hasEvolution?: boolean;
+  evolution?: { at: string; content: string; kind: "assessment" | "note" };
 }) => {
   const Icon = TYPE_ICONS[apt.type] || MapPin;
   const statusColor = STATUS_COLORS[apt.status] || STATUS_COLORS.scheduled;
   const serviceColor = SERVICE_TYPE_COLORS[apt.service_type || "fisioterapia"] || "";
   const typeLabel = apt.type === "video_call" ? "Videochamada" : apt.type === "in_person" ? "Presencial" : "Externo";
+  const hasEvolution = !!evolution;
 
   const card = (
     <div
@@ -1267,11 +1268,42 @@ const AppointmentCard = ({
       style={{ touchAction: "none" }}
       onPointerDown={(e) => onPointerDownCard(e, apt)}
     >
-      {hasEvolution && (
-        <Pencil
-          className="absolute top-0.5 right-0.5 h-2.5 w-2.5 text-emerald-600"
-          aria-label={isPt ? "Evolução registrada" : "Evolution recorded"}
-        />
+      {hasEvolution && evolution && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              className="absolute top-0.5 right-0.5 p-0.5 rounded hover:bg-emerald-200/60"
+              aria-label={isPt ? "Ver última evolução" : "View last evolution"}
+            >
+              <Pencil className="h-2.5 w-2.5 text-emerald-600" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="w-72 p-3 text-xs"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-semibold text-emerald-700">
+                {evolution.kind === "assessment"
+                  ? (isPt ? "Avaliação" : "Assessment")
+                  : (isPt ? "Evolução" : "Evolution note")}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {new Date(evolution.at).toLocaleString(isPt ? "pt-BR" : "en-US", {
+                  day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+                })}
+              </span>
+            </div>
+            <p className="whitespace-pre-wrap text-foreground/90 max-h-48 overflow-y-auto">
+              {evolution.content?.trim() || (isPt ? "(sem conteúdo)" : "(no content)")}
+            </p>
+          </PopoverContent>
+        </Popover>
       )}
       <div className="flex items-center gap-0.5">
         <span className="text-[9px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
