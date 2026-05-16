@@ -1324,7 +1324,20 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                             className="text-xs min-h-[80px]"
                             autoFocus
                           />
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-wrap justify-end items-center gap-2">
+                            {evoEntries.length > 0 && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="text-xs h-7 gap-1.5 text-destructive hover:text-destructive mr-auto"
+                                onClick={() => setEvoDeleteConfirm(true)}
+                                disabled={evoDeleting}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                                {isPt ? "Excluir última" : language === "es" ? "Eliminar última" : "Delete last"}
+                              </Button>
+                            )}
                             <Button type="button" size="sm" variant="ghost" className="text-xs h-7" onClick={() => { setEvoOpen(false); setEvoText(""); }}>
                               {isPt ? "Cancelar" : language === "es" ? "Cancelar" : "Cancel"}
                             </Button>
