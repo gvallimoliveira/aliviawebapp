@@ -64,10 +64,12 @@ type EvolutionEntry = {
   at: string | null;
 };
 
-const buildEvolutionKey = (email: string, date: string, time?: string | null) =>
-  `${email}|${date}|${(time || "").slice(0, 5)}`;
+const normalizeEvolutionEmail = (email: string) => email.trim().toLowerCase();
 
-const buildEvolutionDayKey = (email: string, date: string) => `${email}|${date}`;
+const buildEvolutionKey = (email: string, date: string, time?: string | null) =>
+  `${normalizeEvolutionEmail(email)}|${date}|${(time || "").slice(0, 5)}`;
+
+const buildEvolutionDayKey = (email: string, date: string) => `${normalizeEvolutionEmail(email)}|${date}`;
 
 const parseEvolutionStamp = (stamp: string) => {
   const normalized = stamp.trim();
@@ -509,6 +511,118 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   const navigateWeek = (dir: number) => setViewDate((prev) => addDays(prev, dir * daysToShow));
 
+  const getEvolutionContext = useCallback((aptOverride?: Appointment | null) => {
+    const targetApt = aptOverride ?? editingApt;
+    const effectiveProId = targetApt?.professional_id || professionalId || formProfessionalId || "";
+    const evolutionEmail = targetApt?.patient_email || formEmail.trim();
+
+    return { targetApt, effectiveProId, evolutionEmail };
+  }, [editingApt, professionalId, formProfessionalId, formEmail]);
+
+  const prepareEvolutionEditor = useCallback(async (aptOverride?: Appointment | null) => {
+    const { targetApt, effectiveProId, evolutionEmail } = getEvolutionContext(aptOverride);
+    if (!targetApt || !evolutionEmail || !effectiveProId) {
+      setEvoOpen(false);
+      setEvoLoading(false);
+      setEvoAssessmentId(null);
+      setEvoExistingContent("");
+      setEvoNoAssessment(false);
+      return;
+    }
+
+    setEvoOpen(true);
+    setEvoLoading(true);
+    setEvoNoAssessment(false);
+    setEvoExistingContent("");
+    setEvoAssessmentId(null);
+
+    try {
+      const aptDayStart = `${targetApt.appointment_date}T00:00:00`;
+      const aptDayEnd = `${targetApt.appointment_date}T23:59:59`;
+      const aptCreatedAt = `${targetApt.appointment_date}T${targetApt.appointment_time?.slice(0, 5) || "12:00"}:00`;
+
+      let sameDayQuery = supabase
+        .from("assessments")
+        .select("id, created_at")
+        .eq("patient_email", evolutionEmail)
+        .gte("created_at", aptDayStart)
+        .lte("created_at", aptDayEnd)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (clinicId) sameDayQuery = sameDayQuery.eq("clinic_id", clinicId);
+      else sameDayQuery = sameDayQuery.eq("professional_id", effectiveProId);
+
+      const { data: sameDayRows } = await sameDayQuery;
+
+      let assessmentId = sameDayRows?.[0]?.id || null;
+
+      if (!assessmentId) {
+        let latestQuery = supabase
+          .from("assessments")
+          .select("id, created_at")
+          .eq("patient_email", evolutionEmail)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (clinicId) latestQuery = latestQuery.eq("clinic_id", clinicId);
+        else latestQuery = latestQuery.eq("professional_id", effectiveProId);
+
+        const { data: latestRows } = await latestQuery;
+        assessmentId = latestRows?.[0]?.id || null;
+      }
+
+      if (!assessmentId) {
+        const assessmentInsert: any = {
+          type: "professional",
+          status: "completed",
+          user_id: null,
+          professional_id: clinicId ? null : effectiveProId,
+          clinic_id: clinicId || null,
+          payment_status: "covered",
+          patient_name: targetApt.patient_name || formName || null,
+          patient_email: evolutionEmail,
+          anamnesis_data: {
+            quickEvolutionOnly: true,
+            source: "schedule",
+            appointment_id: targetApt.id,
+          },
+          created_at: aptCreatedAt,
+        };
+
+        const { data: createdAssessment, error: createAssessmentError } = await supabase
+          .from("assessments")
+          .insert(assessmentInsert)
+          .select("id")
+          .single();
+
+        if (createAssessmentError) throw createAssessmentError;
+        assessmentId = createdAssessment.id;
+      }
+
+      setEvoAssessmentId(assessmentId);
+
+      const { data: existingRows } = await supabase
+        .from("professional_notes")
+        .select("content, professional_id, updated_at")
+        .eq("assessment_id", assessmentId)
+        .order("updated_at", { ascending: false })
+        .limit(5);
+
+      const matchingExisting = existingRows?.find((row: any) => row.professional_id === effectiveProId) || existingRows?.[0];
+      setEvoExistingContent(matchingExisting?.content || "");
+    } catch (e: any) {
+      setEvoNoAssessment(true);
+      toast({
+        title: isPt ? "Não foi possível abrir a evolução" : "Failed to open evolution",
+        description: e?.message,
+        variant: "destructive",
+      });
+    } finally {
+      setEvoLoading(false);
+    }
+  }, [clinicId, formName, getEvolutionContext, isPt, toast]);
+
   const handleSelectPatient = (key: string) => {
     setSelectedPatientKey(key);
     setEmailWarning(false);
@@ -545,7 +659,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const openEdit = async (apt: Appointment) => {
     setEditingApt(apt);
     setFormProfessionalId(apt.professional_id || professionalId || "");
-    setEvoOpen(false);
+    setEvoOpen(!!(apt.patient_email && (apt.professional_id || professionalId || formProfessionalId)));
     setEvoText("");
     setEvoAssessmentId(null);
     setEvoExistingContent("");
@@ -565,6 +679,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     const match = knownPatients.find((p) => p.email === apt.patient_email);
     setSelectedPatientKey(match ? match.email : "__new__");
     setModalOpen(true);
+
+    if (apt.patient_email && (apt.professional_id || professionalId || formProfessionalId)) {
+      void prepareEvolutionEditor(apt);
+    }
 
     // Load extra fields from patients table
     if (apt.patient_name || apt.patient_email) {
@@ -772,108 +890,15 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   // Inline evolution helpers
   const openEvolutionEditor = async () => {
-    const effectiveProId = professionalId || editingApt?.professional_id || formProfessionalId;
-    const evolutionEmail = editingApt?.patient_email || formEmail.trim();
-    if (!editingApt || !evolutionEmail || !effectiveProId) return;
-
-    setEvoOpen(true);
-    setEvoLoading(true);
-    setEvoNoAssessment(false);
-    setEvoExistingContent("");
-    setEvoAssessmentId(null);
-
-    try {
-      const aptDayStart = `${editingApt.appointment_date}T00:00:00`;
-      const aptDayEnd = `${editingApt.appointment_date}T23:59:59`;
-      const aptCreatedAt = `${editingApt.appointment_date}T${editingApt.appointment_time || "12:00"}:00`;
-
-      let sameDayQuery = supabase
-        .from("assessments")
-        .select("id, created_at")
-        .eq("patient_email", evolutionEmail)
-        .gte("created_at", aptDayStart)
-        .lte("created_at", aptDayEnd)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (clinicId) sameDayQuery = sameDayQuery.eq("clinic_id", clinicId);
-      else sameDayQuery = sameDayQuery.eq("professional_id", effectiveProId);
-
-      const { data: sameDayRows } = await sameDayQuery;
-
-      let assessmentId = sameDayRows?.[0]?.id || null;
-
-      if (!assessmentId) {
-        let latestQuery = supabase
-          .from("assessments")
-          .select("id, created_at")
-          .eq("patient_email", evolutionEmail)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        if (clinicId) latestQuery = latestQuery.eq("clinic_id", clinicId);
-        else latestQuery = latestQuery.eq("professional_id", effectiveProId);
-
-        const { data: latestRows } = await latestQuery;
-        assessmentId = latestRows?.[0]?.id || null;
-      }
-
-      if (!assessmentId) {
-        const assessmentInsert: any = {
-          type: "professional",
-          status: "completed",
-          user_id: null,
-          professional_id: clinicId ? null : effectiveProId,
-          clinic_id: clinicId || null,
-          payment_status: "covered",
-          patient_name: editingApt.patient_name || formName || null,
-          patient_email: evolutionEmail,
-          anamnesis_data: {
-            quickEvolutionOnly: true,
-            source: "schedule",
-            appointment_id: editingApt.id,
-          },
-          created_at: aptCreatedAt,
-        };
-
-        const { data: createdAssessment, error: createAssessmentError } = await supabase
-          .from("assessments")
-          .insert(assessmentInsert)
-          .select("id")
-          .single();
-
-        if (createAssessmentError) throw createAssessmentError;
-        assessmentId = createdAssessment.id;
-      }
-
-      setEvoAssessmentId(assessmentId);
-
-      const { data: existing } = await supabase
-        .from("professional_notes")
-        .select("content")
-        .eq("professional_id", effectiveProId)
-        .eq("assessment_id", assessmentId)
-        .maybeSingle();
-
-      setEvoExistingContent(existing?.content || "");
-    } catch (e: any) {
-      setEvoNoAssessment(true);
-      toast({
-        title: isPt ? "Não foi possível abrir a evolução" : "Failed to open evolution",
-        description: e?.message,
-        variant: "destructive",
-      });
-    } finally {
-      setEvoLoading(false);
-    }
+    await prepareEvolutionEditor();
   };
 
   const saveEvolution = async () => {
-    const effectiveProId = professionalId || editingApt?.professional_id;
-    if (!editingApt || !effectiveProId || !evoAssessmentId || !evoText.trim()) return;
+    const { targetApt, effectiveProId } = getEvolutionContext();
+    if (!targetApt || !effectiveProId || !evoAssessmentId || !evoText.trim()) return;
     setEvoSaving(true);
     try {
-      const stamp = `${editingApt.appointment_date} ${editingApt.appointment_time?.slice(0, 5) || "12:00"}`;
+      const stamp = `${targetApt.appointment_date} ${targetApt.appointment_time?.slice(0, 5) || "12:00"}`;
       const entry = `[${stamp}]\n${evoText.trim()}`;
       const newContent = evoExistingContent ? `${evoExistingContent}\n\n${entry}` : entry;
       const { error } = await supabase.from("professional_notes").upsert(
@@ -904,7 +929,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const lastEvoEntry = appointmentEvoEntries[appointmentEvoEntries.length - 1] || null;
 
   const deleteLastEvolution = async () => {
-    const effectiveProId = professionalId || editingApt?.professional_id;
+    const { effectiveProId } = getEvolutionContext();
     if (!effectiveProId || !evoAssessmentId || !lastEvoEntry) return;
     setEvoDeleting(true);
     try {
@@ -1468,7 +1493,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   </div>
                 </div>
               )}
-              {editingApt && editingApt.patient_email && (professionalId || editingApt.professional_id) && (
+              {editingApt && (() => {
+                const { effectiveProId, evolutionEmail } = getEvolutionContext();
+                return !!(evolutionEmail && effectiveProId);
+              })() && (
                 <div className="pt-2 border-t border-border/40">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-medium text-muted-foreground">
