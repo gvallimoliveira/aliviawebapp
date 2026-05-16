@@ -1219,13 +1219,14 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
 /** Appointment card with pointer-based drag (mouse + touch) */
 const AppointmentCard = ({
-  apt, isConcurrent, onPointerDownCard, isMobile, isPt,
+  apt, isConcurrent, onPointerDownCard, isMobile, isPt, hasEvolution,
 }: {
   apt: Appointment;
   isConcurrent: boolean;
   onPointerDownCard: (e: React.PointerEvent, apt: Appointment) => void;
   isMobile: boolean;
   isPt: boolean;
+  hasEvolution?: boolean;
 }) => {
   const Icon = TYPE_ICONS[apt.type] || MapPin;
   const statusColor = STATUS_COLORS[apt.status] || STATUS_COLORS.scheduled;
@@ -1235,7 +1236,7 @@ const AppointmentCard = ({
   const card = (
     <div
       className={cn(
-        "rounded-md border cursor-grab active:cursor-grabbing transition-all hover:shadow-sm select-none",
+        "relative rounded-md border cursor-grab active:cursor-grabbing transition-all hover:shadow-sm select-none",
         statusColor,
         serviceColor,
         apt.status === "cancelled" && "opacity-50",
@@ -1244,9 +1245,15 @@ const AppointmentCard = ({
       style={{ touchAction: "none" }}
       onPointerDown={(e) => onPointerDownCard(e, apt)}
     >
+      {hasEvolution && (
+        <Pencil
+          className="absolute top-0.5 right-0.5 h-2.5 w-2.5 text-emerald-600"
+          aria-label={isPt ? "Evolução registrada" : "Evolution recorded"}
+        />
+      )}
       <div className="flex items-center gap-0.5">
         <span className="text-[9px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
-        {!isConcurrent && <GripVertical className="h-2 w-2 ml-auto text-muted-foreground/40" />}
+        {!isConcurrent && !hasEvolution && <GripVertical className="h-2 w-2 ml-auto text-muted-foreground/40" />}
       </div>
       {isConcurrent ? (
         <div className="flex items-center gap-0.5 mt-0.5">
