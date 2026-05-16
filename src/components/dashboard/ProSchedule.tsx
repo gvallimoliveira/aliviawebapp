@@ -302,7 +302,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     };
     load();
     return () => { cancelled = true; };
-  }, [appointments, rangeStart, rangeEnd, clinicId, professionalId, isSimulated, isPt]);
+  }, [appointments, rangeStart, rangeEnd, clinicId, professionalId, isSimulated, isPt, evolutionReloadTick]);
 
   // Realtime: auto-refresh appointments on changes
   useEffect(() => {
