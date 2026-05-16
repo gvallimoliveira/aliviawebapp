@@ -708,6 +708,37 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     }
   };
 
+  const [evoDeleteConfirm, setEvoDeleteConfirm] = useState(false);
+  const [evoDeleting, setEvoDeleting] = useState(false);
+
+  const parseEvolutionEntries = (content: string): string[] => {
+    if (!content) return [];
+    return content.split(/\n\n(?=\[)/g).map(s => s.trim()).filter(Boolean);
+  };
+  const evoEntries = parseEvolutionEntries(evoExistingContent);
+  const lastEvoEntry = evoEntries[evoEntries.length - 1] || "";
+
+  const deleteLastEvolution = async () => {
+    if (!professionalId || !evoAssessmentId || evoEntries.length === 0) return;
+    setEvoDeleting(true);
+    try {
+      const remaining = evoEntries.slice(0, -1).join("\n\n");
+      const { error } = await supabase.from("professional_notes").upsert(
+        { professional_id: professionalId, assessment_id: evoAssessmentId, content: remaining, updated_at: new Date().toISOString() },
+        { onConflict: "professional_id,assessment_id" }
+      );
+      if (error) throw error;
+      setEvoExistingContent(remaining);
+      setEvolutionReloadTick(t => t + 1);
+      toast({ title: isPt ? "Última evolução excluída" : language === "es" ? "Última evolución eliminada" : "Last evolution deleted" });
+    } catch (e: any) {
+      toast({ title: isPt ? "Erro ao excluir evolução" : "Failed to delete evolution", description: e?.message, variant: "destructive" });
+    } finally {
+      setEvoDeleting(false);
+      setEvoDeleteConfirm(false);
+    }
+  };
+
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const todayScheduledCount = appointments.filter(a => a.appointment_date === todayStr && a.status === "scheduled").length;
 
