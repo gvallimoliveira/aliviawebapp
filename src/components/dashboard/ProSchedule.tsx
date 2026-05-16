@@ -1248,6 +1248,66 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   </div>
                 </div>
               )}
+              {editingApt && editingApt.patient_email && professionalId && (
+                <div className="pt-2 border-t border-border/40">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {isPt ? "Evolução do atendimento" : language === "es" ? "Evolución de la cita" : "Session evolution"}
+                    </label>
+                    {!evoOpen && (
+                      <Button type="button" size="sm" variant="outline" className="text-xs gap-1.5 h-7" onClick={openEvolutionEditor}>
+                        <Pencil className="h-3 w-3" />
+                        {isPt ? "Registrar evolução" : language === "es" ? "Registrar evolución" : "Add evolution"}
+                      </Button>
+                    )}
+                  </div>
+                  {evoOpen && (
+                    <div className="mt-2 space-y-2">
+                      {evoLoading ? (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          {isPt ? "Carregando..." : "Loading..."}
+                        </div>
+                      ) : evoNoAssessment ? (
+                        <p className="text-[11px] text-muted-foreground">
+                          {isPt
+                            ? "Este paciente ainda não possui avaliação criada. Abra o prontuário em \"Ver paciente\" para criar uma avaliação antes de registrar evoluções."
+                            : language === "es"
+                              ? "Este paciente aún no tiene una evaluación creada. Abra el historial en \"Ver paciente\" para crear una antes de registrar evoluciones."
+                              : "This patient has no assessment yet. Open the chart via \"View patient\" to create one before adding evolutions."}
+                        </p>
+                      ) : (
+                        <>
+                          {evoExistingContent && (
+                            <details className="text-[11px] rounded-md border border-border/40 bg-muted/30 p-2">
+                              <summary className="cursor-pointer text-muted-foreground">
+                                {isPt ? "Ver evoluções anteriores" : language === "es" ? "Ver evoluciones anteriores" : "Show previous evolutions"}
+                              </summary>
+                              <pre className="whitespace-pre-wrap mt-2 max-h-32 overflow-y-auto font-sans text-foreground/80">{evoExistingContent}</pre>
+                            </details>
+                          )}
+                          <Textarea
+                            value={evoText}
+                            onChange={(e) => setEvoText(e.target.value)}
+                            placeholder={isPt ? "Descreva o que foi feito neste atendimento..." : language === "es" ? "Describa lo realizado en esta sesión..." : "Describe what was done in this session..."}
+                            className="text-xs min-h-[80px]"
+                            autoFocus
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button type="button" size="sm" variant="ghost" className="text-xs h-7" onClick={() => { setEvoOpen(false); setEvoText(""); }}>
+                              {isPt ? "Cancelar" : language === "es" ? "Cancelar" : "Cancel"}
+                            </Button>
+                            <Button type="button" size="sm" className="text-xs gap-1.5 h-7" onClick={saveEvolution} disabled={evoSaving || !evoText.trim()}>
+                              {evoSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                              {isPt ? "Salvar evolução" : language === "es" ? "Guardar evolución" : "Save evolution"}
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </ScrollArea>
           <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-border/40">
