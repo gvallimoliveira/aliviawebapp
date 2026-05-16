@@ -870,6 +870,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       setEvoExistingContent(newContent);
       setEvoText("");
       setEvoOpen(false);
+      setEditingApt((prev) => prev ? { ...prev } : prev);
       setEvolutionReloadTick(t => t + 1);
     } catch (e: any) {
       toast({ title: isPt ? "Erro ao salvar evolução" : "Failed to save evolution", description: e?.message, variant: "destructive" });
@@ -905,6 +906,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       );
       if (error) throw error;
       setEvoExistingContent(remaining);
+      setEditingApt((prev) => prev ? { ...prev } : prev);
       setEvolutionReloadTick(t => t + 1);
       toast({ title: isPt ? "Última evolução excluída" : language === "es" ? "Última evolución eliminada" : "Last evolution deleted" });
     } catch (e: any) {
