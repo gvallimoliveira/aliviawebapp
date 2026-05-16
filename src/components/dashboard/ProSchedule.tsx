@@ -721,12 +721,13 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const lastEvoEntry = evoEntries[evoEntries.length - 1] || "";
 
   const deleteLastEvolution = async () => {
-    if (!professionalId || !evoAssessmentId || evoEntries.length === 0) return;
+    const effectiveProId = professionalId || editingApt?.professional_id;
+    if (!effectiveProId || !evoAssessmentId || evoEntries.length === 0) return;
     setEvoDeleting(true);
     try {
       const remaining = evoEntries.slice(0, -1).join("\n\n");
       const { error } = await supabase.from("professional_notes").upsert(
-        { professional_id: professionalId, assessment_id: evoAssessmentId, content: remaining, updated_at: new Date().toISOString() },
+        { professional_id: effectiveProId, assessment_id: evoAssessmentId, content: remaining, updated_at: new Date().toISOString() },
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;
