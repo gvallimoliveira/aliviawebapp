@@ -5,6 +5,7 @@ import DischargePredictionCard from "./DischargePredictionCard";
 import PatientAdherenceCard from "./PatientAdherenceCard";
 import BenchmarkCard from "./BenchmarkCard";
 import RevenueGoalCard from "./RevenueGoalCard";
+import OccupancyVsNoShowCard from "./OccupancyVsNoShowCard";
 
 interface Props {
   /** Set when in clinic mode (owner/secretary). */
@@ -40,6 +41,9 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false }: Props
         <ChurnRiskCard clinicId={clinicId} professionalId={professionalId} />
         <DischargePredictionCard clinicId={clinicId} professionalId={professionalId} />
       </div>
+
+      {/* Occupancy vs No-show — both modes */}
+      <OccupancyVsNoShowCard clinicId={clinicId} professionalId={professionalId} />
 
       {/* Clinic-only: adherence + benchmark */}
       {fullClinicMode && clinicId && (

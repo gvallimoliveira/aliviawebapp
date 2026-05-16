@@ -26,7 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Plus, CalendarIcon, Clock, Video, MapPin, ExternalLink,
-  Loader2, Trash2, GripVertical, Upload, Check,
+  Loader2, Trash2, GripVertical, Upload, Check, Pencil,
 } from "lucide-react";
 import AgendaImportModal from "./AgendaImportModal";
 import { formatCpf, formatPhone } from "@/utils/masks";
@@ -92,9 +92,18 @@ const SERVICE_TYPE_LABELS: Record<string, Record<string, string>> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  scheduled: "bg-blue-500/10 text-blue-600 border-blue-200",
-  completed: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
-  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+  scheduled: "bg-card text-foreground border-border",
+  completed: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-200",
+  no_show: "bg-red-100 text-red-900 border-red-300 dark:bg-red-900/30 dark:text-red-200",
+  no_show_justified: "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/30 dark:text-amber-200",
+  cancelled: "bg-muted text-muted-foreground border-border",
+};
+
+const STATUS_LABELS: Record<string, Record<string, string>> = {
+  completed: { pt: "Feito", en: "Done", es: "Hecho" },
+  scheduled: { pt: "Em aberto", en: "Open", es: "Abierto" },
+  no_show: { pt: "Falta", en: "No-show", es: "Falta" },
+  no_show_justified: { pt: "Falta just.", en: "Justified", es: "Justificada" },
 };
 
 interface KnownPatient {
@@ -232,6 +241,51 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   }, [professionalId, clinicId, rangeStart, rangeEnd, isSimulated]);
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
+
+  // Evolution markers: set of "email|yyyy-mm-dd" indicating that an assessment/note exists for that patient on that day
+  const [evolutionSet, setEvolutionSet] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (isSimulated) { setEvolutionSet(new Set()); return; }
+    const emails = Array.from(new Set(appointments.map(a => a.patient_email).filter(Boolean))) as string[];
+    if (emails.length === 0) { setEvolutionSet(new Set()); return; }
+    let cancelled = false;
+    const load = async () => {
+      const startISO = `${rangeStart}T00:00:00`;
+      const endISO = `${rangeEnd}T23:59:59`;
+      let aq = supabase
+        .from("assessments")
+        .select("patient_email, created_at")
+        .in("patient_email", emails)
+        .gte("created_at", startISO)
+        .lte("created_at", endISO);
+      if (clinicId) aq = aq.eq("clinic_id", clinicId);
+      else if (professionalId) aq = aq.eq("professional_id", professionalId);
+      const { data: assess } = await aq;
+      const set = new Set<string>();
+      (assess || []).forEach((r: any) => {
+        const day = (r.created_at as string).slice(0, 10);
+        set.add(`${r.patient_email}|${day}`);
+      });
+      // Notes via join: get notes whose assessment belongs to this scope, updated in window
+      let nq = supabase
+        .from("professional_notes")
+        .select("updated_at, assessments!inner(patient_email, professional_id, clinic_id)")
+        .gte("updated_at", startISO)
+        .lte("updated_at", endISO);
+      if (clinicId) nq = nq.eq("assessments.clinic_id", clinicId);
+      else if (professionalId) nq = nq.eq("assessments.professional_id", professionalId);
+      const { data: notes } = await nq;
+      (notes || []).forEach((r: any) => {
+        const email = r.assessments?.patient_email;
+        if (!email) return;
+        const day = (r.updated_at as string).slice(0, 10);
+        set.add(`${email}|${day}`);
+      });
+      if (!cancelled) setEvolutionSet(set);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [appointments, rangeStart, rangeEnd, clinicId, professionalId, isSimulated]);
 
   // Realtime: auto-refresh appointments on changes
   useEffect(() => {
@@ -554,6 +608,19 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       .update({ status: "completed" })
       .eq("id", id);
     fetchAppointments();
+  };
+
+  const handleSetStatus = async (id: string, newStatus: string) => {
+    if (isSimulated) {
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+      setEditingApt(prev => prev && prev.id === id ? { ...prev, status: newStatus } : prev);
+      return;
+    }
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+    setEditingApt(prev => prev && prev.id === id ? { ...prev, status: newStatus } : prev);
+    await (supabase.from("professional_appointments" as any) as any)
+      .update({ status: newStatus })
+      .eq("id", id);
   };
 
   // Batch confirm all scheduled appointments for today
@@ -897,6 +964,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                               onPointerDownCard={handleCardPointerDown}
                               isMobile={isMobile}
                               isPt={isPt}
+                              hasEvolution={!!apt.patient_email && evolutionSet.has(`${apt.patient_email}|${apt.appointment_date}`)}
                             />
                           ))}
                         </div>
@@ -1069,31 +1137,46 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
                 <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("schedule.notes_ph")} className="mt-1 text-xs min-h-[60px]" />
               </div>
+              {editingApt && (
+                <div className="pt-2 border-t border-border/40">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {isPt ? "Status do atendimento" : language === "es" ? "Estado de la cita" : "Appointment status"}
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-1.5">
+                    {(["completed", "scheduled", "no_show", "no_show_justified"] as const).map((st) => {
+                      const active = editingApt.status === st;
+                      const label = STATUS_LABELS[st]?.[language] || st;
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => handleSetStatus(editingApt.id, st)}
+                          className={cn(
+                            "text-[10px] font-medium px-2 py-1.5 rounded-md border transition-all",
+                            STATUS_COLORS[st],
+                            active ? "ring-2 ring-primary ring-offset-1 shadow-sm" : "opacity-70 hover:opacity-100"
+                          )}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </ScrollArea>
           <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-border/40">
             {editingApt && (
-              <div className="flex gap-2 mr-auto">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs gap-1.5"
-                  onClick={() => { setDeleteId(editingApt.id); }}
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  {t("schedule.delete")}
-                </Button>
-                {editingApt.status === "scheduled" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                    onClick={() => { handleMarkComplete(editingApt.id); setModalOpen(false); }}
-                  >
-                    {t("schedule.mark_complete")}
-                  </Button>
-                )}
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs gap-1.5 mr-auto"
+                onClick={() => { setDeleteId(editingApt.id); }}
+              >
+                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                {t("schedule.delete")}
+              </Button>
             )}
             {editingApt?.patient_email && onViewPatient && (
               <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => {
@@ -1151,13 +1234,14 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
 /** Appointment card with pointer-based drag (mouse + touch) */
 const AppointmentCard = ({
-  apt, isConcurrent, onPointerDownCard, isMobile, isPt,
+  apt, isConcurrent, onPointerDownCard, isMobile, isPt, hasEvolution,
 }: {
   apt: Appointment;
   isConcurrent: boolean;
   onPointerDownCard: (e: React.PointerEvent, apt: Appointment) => void;
   isMobile: boolean;
   isPt: boolean;
+  hasEvolution?: boolean;
 }) => {
   const Icon = TYPE_ICONS[apt.type] || MapPin;
   const statusColor = STATUS_COLORS[apt.status] || STATUS_COLORS.scheduled;
@@ -1167,7 +1251,7 @@ const AppointmentCard = ({
   const card = (
     <div
       className={cn(
-        "rounded-md border cursor-grab active:cursor-grabbing transition-all hover:shadow-sm select-none",
+        "relative rounded-md border cursor-grab active:cursor-grabbing transition-all hover:shadow-sm select-none",
         statusColor,
         serviceColor,
         apt.status === "cancelled" && "opacity-50",
@@ -1176,9 +1260,15 @@ const AppointmentCard = ({
       style={{ touchAction: "none" }}
       onPointerDown={(e) => onPointerDownCard(e, apt)}
     >
+      {hasEvolution && (
+        <Pencil
+          className="absolute top-0.5 right-0.5 h-2.5 w-2.5 text-emerald-600"
+          aria-label={isPt ? "Evolução registrada" : "Evolution recorded"}
+        />
+      )}
       <div className="flex items-center gap-0.5">
         <span className="text-[9px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
-        {!isConcurrent && <GripVertical className="h-2 w-2 ml-auto text-muted-foreground/40" />}
+        {!isConcurrent && !hasEvolution && <GripVertical className="h-2 w-2 ml-auto text-muted-foreground/40" />}
       </div>
       {isConcurrent ? (
         <div className="flex items-center gap-0.5 mt-0.5">
