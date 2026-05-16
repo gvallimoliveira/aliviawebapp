@@ -1137,31 +1137,46 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
                 <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("schedule.notes_ph")} className="mt-1 text-xs min-h-[60px]" />
               </div>
+              {editingApt && (
+                <div className="pt-2 border-t border-border/40">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {isPt ? "Status do atendimento" : language === "es" ? "Estado de la cita" : "Appointment status"}
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-1.5">
+                    {(["completed", "scheduled", "no_show", "no_show_justified"] as const).map((st) => {
+                      const active = editingApt.status === st;
+                      const label = STATUS_LABELS[st]?.[language] || st;
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => handleSetStatus(editingApt.id, st)}
+                          className={cn(
+                            "text-[10px] font-medium px-2 py-1.5 rounded-md border transition-all",
+                            STATUS_COLORS[st],
+                            active ? "ring-2 ring-primary ring-offset-1 shadow-sm" : "opacity-70 hover:opacity-100"
+                          )}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </ScrollArea>
           <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-border/40">
             {editingApt && (
-              <div className="flex gap-2 mr-auto">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs gap-1.5"
-                  onClick={() => { setDeleteId(editingApt.id); }}
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  {t("schedule.delete")}
-                </Button>
-                {editingApt.status === "scheduled" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                    onClick={() => { handleMarkComplete(editingApt.id); setModalOpen(false); }}
-                  >
-                    {t("schedule.mark_complete")}
-                  </Button>
-                )}
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs gap-1.5 mr-auto"
+                onClick={() => { setDeleteId(editingApt.id); }}
+              >
+                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                {t("schedule.delete")}
+              </Button>
             )}
             {editingApt?.patient_email && onViewPatient && (
               <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => {
