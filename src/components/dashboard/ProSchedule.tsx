@@ -345,9 +345,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     const load = async () => {
       const startISO = `${rangeStart}T00:00:00`;
       const endISO = `${rangeEnd}T23:59:59`;
+      const scopedProfessionalId = professionalId || formProfessionalId || appointments[0]?.professional_id || null;
       let aq = supabase
         .from("assessments")
-        .select("patient_email, created_at, diagnosis, anamnesis_data")
+        .select("id, patient_email, created_at, diagnosis, anamnesis_data")
         .in("patient_email", emails)
         .gte("created_at", startISO)
         .lte("created_at", endISO);
@@ -355,27 +356,41 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       else if (professionalId) aq = aq.eq("professional_id", professionalId);
       const { data: assess } = await aq;
       const map = new Map<string, EvolutionInfo>();
+      const assessmentById = new Map<string, any>();
       const upsert = (key: string, info: EvolutionInfo) => {
         const prev = map.get(key);
         if (!prev || new Date(info.at).getTime() > new Date(prev.at).getTime()) map.set(key, info);
       };
       (assess || []).forEach((r: any) => {
+        if (r.id) assessmentById.set(r.id, r);
         const day = (r.created_at as string).slice(0, 10);
         const diag = r.diagnosis?.primary_hypothesis || r.diagnosis?.hypothesis || r.diagnosis?.summary || "";
         const chief = r.anamnesis_data?.chief_complaint || "";
         const content = [diag, chief].filter(Boolean).join(" — ") || (isPt ? "Avaliação registrada" : "Assessment recorded");
         upsert(buildEvolutionDayKey(r.patient_email, day), { at: r.created_at, content, kind: "assessment" });
       });
-      let nq = supabase
-        .from("professional_notes")
-        .select("updated_at, content, assessments!inner(patient_email, professional_id, clinic_id)");
-      if (clinicId) nq = nq.eq("assessments.clinic_id", clinicId);
-      else if (professionalId) nq = nq.eq("assessments.professional_id", professionalId);
-      nq = nq.in("assessments.patient_email", emails);
-      const { data: notes } = await nq;
+
+      const assessmentIds = Array.from(assessmentById.keys());
+      let notes: any[] | null = null;
+      if (assessmentIds.length > 0) {
+        let nq = supabase
+          .from("professional_notes")
+          .select("assessment_id, updated_at, content")
+          .in("assessment_id", assessmentIds);
+
+        if (scopedProfessionalId) {
+          nq = nq.eq("professional_id", scopedProfessionalId);
+        }
+
+        const { data } = await nq;
+        notes = data;
+      }
+
       (notes || []).forEach((r: any) => {
-        const email = r.assessments?.patient_email;
+        const relatedAssessment = assessmentById.get(r.assessment_id);
+        const email = relatedAssessment?.patient_email;
         if (!email) return;
+
         const entries = parseEvolutionEntries(r.content || "");
         entries.forEach((entry) => {
           if (!entry.appointmentDate || entry.appointmentDate < rangeStart || entry.appointmentDate > rangeEnd) return;
@@ -396,7 +411,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     };
     load();
     return () => { cancelled = true; };
-  }, [appointments, rangeStart, rangeEnd, clinicId, professionalId, isSimulated, isPt, evolutionReloadTick]);
+  }, [appointments, rangeStart, rangeEnd, clinicId, professionalId, formProfessionalId, isSimulated, isPt, evolutionReloadTick]);
 
   // Realtime: auto-refresh appointments on changes
   useEffect(() => {
@@ -514,6 +529,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   const openEdit = async (apt: Appointment) => {
     setEditingApt(apt);
+    setFormProfessionalId(apt.professional_id || professionalId || "");
     setEvoOpen(false);
     setEvoText("");
     setEvoAssessmentId(null);
