@@ -336,8 +336,6 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
-  // Evolution markers: map "email|yyyy-mm-dd" => { at, content, kind }
-  type EvolutionInfo = { at: string; content: string; kind: "assessment" | "note" };
   const [evolutionMap, setEvolutionMap] = useState<Map<string, EvolutionInfo>>(new Map());
   useEffect(() => {
     if (isSimulated) { setEvolutionMap(new Map()); return; }
@@ -366,7 +364,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         const diag = r.diagnosis?.primary_hypothesis || r.diagnosis?.hypothesis || r.diagnosis?.summary || "";
         const chief = r.anamnesis_data?.chief_complaint || "";
         const content = [diag, chief].filter(Boolean).join(" — ") || (isPt ? "Avaliação registrada" : "Assessment recorded");
-        upsert(`${r.patient_email}|${day}`, { at: r.created_at, content, kind: "assessment" });
+        upsert(buildEvolutionDayKey(r.patient_email, day), { at: r.created_at, content, kind: "assessment" });
       });
       let nq = supabase
         .from("professional_notes")
@@ -379,8 +377,19 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       (notes || []).forEach((r: any) => {
         const email = r.assessments?.patient_email;
         if (!email) return;
-        const day = (r.updated_at as string).slice(0, 10);
-        upsert(`${email}|${day}`, { at: r.updated_at, content: r.content || "", kind: "note" });
+        const entries = parseEvolutionEntries(r.content || "");
+        entries.forEach((entry) => {
+          if (!entry.appointmentDate) return;
+          const key = buildEvolutionKey(email, entry.appointmentDate, entry.appointmentTime);
+          upsert(key, {
+            at: entry.at || r.updated_at,
+            content: entry.content || r.content || "",
+            kind: "note",
+          });
+        });
+
+        const fallbackDay = (r.updated_at as string).slice(0, 10);
+        upsert(buildEvolutionDayKey(email, fallbackDay), { at: r.updated_at, content: r.content || "", kind: "note" });
       });
       if (!cancelled) setEvolutionMap(map);
     };
