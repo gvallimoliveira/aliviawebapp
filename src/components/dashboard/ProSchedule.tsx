@@ -368,18 +368,17 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       });
       let nq = supabase
         .from("professional_notes")
-        .select("updated_at, content, assessments!inner(patient_email, professional_id, clinic_id)")
-        .gte("updated_at", startISO)
-        .lte("updated_at", endISO);
+        .select("updated_at, content, assessments!inner(patient_email, professional_id, clinic_id)");
       if (clinicId) nq = nq.eq("assessments.clinic_id", clinicId);
       else if (professionalId) nq = nq.eq("assessments.professional_id", professionalId);
+      nq = nq.in("assessments.patient_email", emails);
       const { data: notes } = await nq;
       (notes || []).forEach((r: any) => {
         const email = r.assessments?.patient_email;
         if (!email) return;
         const entries = parseEvolutionEntries(r.content || "");
         entries.forEach((entry) => {
-          if (!entry.appointmentDate) return;
+          if (!entry.appointmentDate || entry.appointmentDate < rangeStart || entry.appointmentDate > rangeEnd) return;
           const key = buildEvolutionKey(email, entry.appointmentDate, entry.appointmentTime);
           upsert(key, {
             at: entry.at || r.updated_at,
@@ -389,7 +388,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         });
 
         const fallbackDay = (r.updated_at as string).slice(0, 10);
-        upsert(buildEvolutionDayKey(email, fallbackDay), { at: r.updated_at, content: r.content || "", kind: "note" });
+        if (fallbackDay >= rangeStart && fallbackDay <= rangeEnd) {
+          upsert(buildEvolutionDayKey(email, fallbackDay), { at: r.updated_at, content: r.content || "", kind: "note" });
+        }
       });
       if (!cancelled) setEvolutionMap(map);
     };
