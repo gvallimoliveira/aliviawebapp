@@ -45,7 +45,7 @@ const SecretaryReportsCard = ({ clinicId, lang }: SecretaryReportsCardProps) => 
   const stats = useMemo(() => {
     const total = appointments.length;
     const completed = appointments.filter((a) => a.status === "completed").length;
-    const noShow = appointments.filter((a) => a.status === "no_show" || a.status === "cancelled").length;
+    const noShow = appointments.filter((a) => a.status === "no_show" || a.status === "no_show_justified" || a.status === "cancelled").length;
     const noShowRate = total > 0 ? Math.round((noShow / total) * 100) : 0;
 
     // New vs returning: a patient is "new" if their first assessment in the period is within the period
