@@ -47,6 +47,90 @@ interface Appointment {
   service_type?: string;
 }
 
+type EvolutionKind = "assessment" | "note";
+
+type EvolutionInfo = {
+  at: string;
+  content: string;
+  kind: EvolutionKind;
+};
+
+type EvolutionEntry = {
+  raw: string;
+  stamp: string;
+  content: string;
+  appointmentDate: string | null;
+  appointmentTime: string | null;
+  at: string | null;
+};
+
+const buildEvolutionKey = (email: string, date: string, time?: string | null) =>
+  `${email}|${date}|${(time || "").slice(0, 5)}`;
+
+const buildEvolutionDayKey = (email: string, date: string) => `${email}|${date}`;
+
+const parseEvolutionStamp = (stamp: string) => {
+  const normalized = stamp.trim();
+  const isoMatch = normalized.match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?/);
+  if (isoMatch) {
+    const appointmentDate = isoMatch[1];
+    const appointmentTime = isoMatch[2] || null;
+    return {
+      appointmentDate,
+      appointmentTime,
+      at: `${appointmentDate}T${appointmentTime || "12:00"}:00`,
+    };
+  }
+
+  const slashMatch = normalized.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:,?\s*(\d{2}):(\d{2}))?/);
+  if (slashMatch) {
+    const [, day, month, year, hour, minute] = slashMatch;
+    const appointmentDate = `${year}-${month}-${day}`;
+    const appointmentTime = hour && minute ? `${hour}:${minute}` : null;
+    return {
+      appointmentDate,
+      appointmentTime,
+      at: `${appointmentDate}T${appointmentTime || "12:00"}:00`,
+    };
+  }
+
+  return {
+    appointmentDate: null,
+    appointmentTime: null,
+    at: null,
+  };
+};
+
+const parseEvolutionEntries = (content: string): EvolutionEntry[] => {
+  if (!content) return [];
+
+  return content
+    .split(/\n\n(?=\[)/g)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .map((raw) => {
+      const match = raw.match(/^\[([^\]]+)\]\s*\n?([\s\S]*)$/);
+      const stamp = match?.[1]?.trim() || "";
+      const body = (match?.[2] || raw).trim();
+      const parsedStamp = stamp ? parseEvolutionStamp(stamp) : { appointmentDate: null, appointmentTime: null, at: null };
+
+      return {
+        raw,
+        stamp,
+        content: body,
+        appointmentDate: parsedStamp.appointmentDate,
+        appointmentTime: parsedStamp.appointmentTime,
+        at: parsedStamp.at,
+      };
+    });
+};
+
+const matchesAppointmentEvolution = (entry: EvolutionEntry, apt: Appointment) => {
+  if (!entry.appointmentDate || entry.appointmentDate !== apt.appointment_date) return false;
+  const aptTime = apt.appointment_time?.slice(0, 5) || null;
+  return !entry.appointmentTime || !aptTime || entry.appointmentTime === aptTime;
+};
+
 interface ProScheduleProps {
   professionalId?: string;
   clinicId?: string | null;
