@@ -1241,7 +1241,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                               onPointerDownCard={handleCardPointerDown}
                               isMobile={isMobile}
                               isPt={isPt}
-                              evolution={apt.patient_email ? evolutionMap.get(`${apt.patient_email}|${apt.appointment_date}`) : undefined}
+                              evolution={apt.patient_email ? (evolutionMap.get(buildEvolutionKey(apt.patient_email, apt.appointment_date, apt.appointment_time)) || evolutionMap.get(buildEvolutionDayKey(apt.patient_email, apt.appointment_date))) : undefined}
                             />
                           ))}
                         </div>
@@ -1487,7 +1487,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                             autoFocus
                           />
                           <div className="flex flex-wrap justify-end items-center gap-2">
-                            {evoEntries.length > 0 && (
+                            {appointmentEvoEntries.length > 0 && (
                               <Button
                                 type="button"
                                 size="sm"
@@ -1581,7 +1581,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
               </span>
               {lastEvoEntry && (
                 <span className="block mt-2 rounded-md border border-border/40 bg-muted/40 p-2 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto font-mono">
-                  {lastEvoEntry}
+                  {lastEvoEntry.raw}
                 </span>
               )}
             </AlertDialogDescription>
