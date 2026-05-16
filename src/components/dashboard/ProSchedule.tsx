@@ -26,7 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Plus, CalendarIcon, Clock, Video, MapPin, ExternalLink,
-  Loader2, Trash2, GripVertical, Upload, Check,
+  Loader2, Trash2, GripVertical, Upload, Check, Pencil,
 } from "lucide-react";
 import AgendaImportModal from "./AgendaImportModal";
 import { formatCpf, formatPhone } from "@/utils/masks";
@@ -92,9 +92,18 @@ const SERVICE_TYPE_LABELS: Record<string, Record<string, string>> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  scheduled: "bg-blue-500/10 text-blue-600 border-blue-200",
-  completed: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
-  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+  scheduled: "bg-card text-foreground border-border",
+  completed: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-200",
+  no_show: "bg-red-100 text-red-900 border-red-300 dark:bg-red-900/30 dark:text-red-200",
+  no_show_justified: "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/30 dark:text-amber-200",
+  cancelled: "bg-muted text-muted-foreground border-border",
+};
+
+const STATUS_LABELS: Record<string, Record<string, string>> = {
+  completed: { pt: "Feito", en: "Done", es: "Hecho" },
+  scheduled: { pt: "Em aberto", en: "Open", es: "Abierto" },
+  no_show: { pt: "Falta", en: "No-show", es: "Falta" },
+  no_show_justified: { pt: "Falta just.", en: "Justified", es: "Justificada" },
 };
 
 interface KnownPatient {
