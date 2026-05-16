@@ -1478,7 +1478,7 @@ const AppointmentCard = ({
         statusColor,
         serviceColor,
         apt.status === "cancelled" && "opacity-50",
-        isConcurrent ? "p-0.5 flex-1 min-w-0" : "p-1"
+        isConcurrent ? "p-0.5 flex-1 min-w-0" : "p-1 min-w-0 w-full overflow-hidden"
       )}
       style={{ touchAction: "none" }}
       onPointerDown={(e) => onPointerDownCard(e, apt)}
