@@ -64,10 +64,12 @@ type EvolutionEntry = {
   at: string | null;
 };
 
-const buildEvolutionKey = (email: string, date: string, time?: string | null) =>
-  `${email}|${date}|${(time || "").slice(0, 5)}`;
+const normalizeEvolutionEmail = (email: string) => email.trim().toLowerCase();
 
-const buildEvolutionDayKey = (email: string, date: string) => `${email}|${date}`;
+const buildEvolutionKey = (email: string, date: string, time?: string | null) =>
+  `${normalizeEvolutionEmail(email)}|${date}|${(time || "").slice(0, 5)}`;
+
+const buildEvolutionDayKey = (email: string, date: string) => `${normalizeEvolutionEmail(email)}|${date}`;
 
 const parseEvolutionStamp = (stamp: string) => {
   const normalized = stamp.trim();
@@ -1491,7 +1493,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   </div>
                 </div>
               )}
-              {editingApt && editingApt.patient_email && (professionalId || editingApt.professional_id) && (
+              {editingApt && (() => {
+                const { effectiveProId, evolutionEmail } = getEvolutionContext();
+                return !!(evolutionEmail && effectiveProId);
+              })() && (
                 <div className="pt-2 border-t border-border/40">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-medium text-muted-foreground">
