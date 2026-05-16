@@ -111,10 +111,11 @@ const ProScheduleCard = ({ professionalId, onNavigateToSchedule }: ProScheduleCa
                 const Icon = TYPE_ICONS[apt.type] || MapPin;
                 const colorClass = TYPE_COLORS[apt.type] || TYPE_COLORS.in_person;
                 const svcBorder = SERVICE_BORDER[apt.service_type || "fisioterapia"] || "";
+                const statusBg = STATUS_BG[apt.status] || STATUS_BG.scheduled;
                 return (
                   <div
                     key={apt.id}
-                    className={cn("flex items-center gap-2.5 p-2 rounded-lg bg-muted/30 border border-border/40", svcBorder)}
+                    className={cn("flex items-center gap-2.5 p-2 rounded-lg border border-border/40", statusBg, svcBorder)}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center gap-1.5 shrink-0">
