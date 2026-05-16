@@ -1403,6 +1403,40 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={evoDeleteConfirm} onOpenChange={(open) => { if (!open && !evoDeleting) setEvoDeleteConfirm(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isPt ? "Excluir última evolução?" : language === "es" ? "¿Eliminar última evolución?" : "Delete last evolution?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span>
+                {isPt
+                  ? "Esta ação removerá permanentemente o último registro de evolução deste paciente. Não é possível desfazer."
+                  : language === "es"
+                    ? "Esta acción eliminará permanentemente el último registro de evolución. No se puede deshacer."
+                    : "This permanently removes the last evolution entry. This action cannot be undone."}
+              </span>
+              {lastEvoEntry && (
+                <span className="block mt-2 rounded-md border border-border/40 bg-muted/40 p-2 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto font-mono">
+                  {lastEvoEntry}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={evoDeleting}>{t("session_notes.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={evoDeleting}
+              onClick={(e) => { e.preventDefault(); deleteLastEvolution(); }}
+            >
+              {evoDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : (isPt ? "Excluir" : language === "es" ? "Eliminar" : "Delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* AI Agenda Import Modal */}
       {(professionalId || isClinicOnlyMode) && (
         <AgendaImportModal
