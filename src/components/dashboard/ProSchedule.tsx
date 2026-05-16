@@ -1062,7 +1062,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                       data-cell-date={dateStr}
                       data-cell-hour={slot}
                       className={cn(
-                        "border-l border-border/20 min-h-[40px] p-0.5 transition-colors cursor-pointer hover:bg-muted/30",
+                        "border-l border-border/20 min-h-[40px] min-w-0 overflow-hidden p-0.5 transition-colors cursor-pointer hover:bg-muted/30",
                         isOver && "bg-primary/10 ring-1 ring-primary/40"
                       )}
                       onClick={() => {
