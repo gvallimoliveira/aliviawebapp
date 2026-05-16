@@ -353,7 +353,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         .gte("created_at", startISO)
         .lte("created_at", endISO);
       if (clinicId) aq = aq.eq("clinic_id", clinicId);
-      else if (professionalId) aq = aq.eq("professional_id", professionalId);
+      else if (scopedProfessionalId) aq = aq.eq("professional_id", scopedProfessionalId);
       const { data: assess } = await aq;
       const map = new Map<string, EvolutionInfo>();
       const assessmentById = new Map<string, any>();
@@ -368,6 +368,21 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         const chief = r.anamnesis_data?.chief_complaint || "";
         const content = [diag, chief].filter(Boolean).join(" — ") || (isPt ? "Avaliação registrada" : "Assessment recorded");
         upsert(buildEvolutionDayKey(r.patient_email, day), { at: r.created_at, content, kind: "assessment" });
+      });
+
+      let noteAssessmentQuery = supabase
+        .from("assessments")
+        .select("id, patient_email")
+        .in("patient_email", emails);
+
+      if (clinicId) noteAssessmentQuery = noteAssessmentQuery.eq("clinic_id", clinicId);
+      else if (scopedProfessionalId) noteAssessmentQuery = noteAssessmentQuery.eq("professional_id", scopedProfessionalId);
+
+      const { data: noteAssessments } = await noteAssessmentQuery;
+      (noteAssessments || []).forEach((r: any) => {
+        if (r.id && r.patient_email && !assessmentById.has(r.id)) {
+          assessmentById.set(r.id, r);
+        }
       });
 
       const assessmentIds = Array.from(assessmentById.keys());
