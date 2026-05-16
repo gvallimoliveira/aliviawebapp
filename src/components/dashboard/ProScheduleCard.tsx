@@ -48,6 +48,14 @@ const SERVICE_BORDER: Record<string, string> = {
   rpg: "border-l-2 border-l-indigo-500",
 };
 
+const STATUS_BG: Record<string, string> = {
+  scheduled: "bg-muted/30",
+  completed: "bg-emerald-100/70 dark:bg-emerald-900/20",
+  no_show: "bg-red-100/70 dark:bg-red-900/20",
+  no_show_justified: "bg-amber-100/70 dark:bg-amber-900/20",
+  cancelled: "bg-muted/30 opacity-60",
+};
+
 const ProScheduleCard = ({ professionalId, onNavigateToSchedule }: ProScheduleCardProps) => {
   const { t, language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
@@ -60,7 +68,6 @@ const ProScheduleCard = ({ professionalId, onNavigateToSchedule }: ProScheduleCa
       .select("*")
       .eq("professional_id", professionalId)
       .eq("appointment_date", today)
-      .eq("status", "scheduled")
       .order("appointment_time", { ascending: true })
       .then(({ data }: any) => {
         setAppointments(data || []);
