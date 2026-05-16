@@ -420,6 +420,11 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   const openEdit = async (apt: Appointment) => {
     setEditingApt(apt);
+    setEvoOpen(false);
+    setEvoText("");
+    setEvoAssessmentId(null);
+    setEvoExistingContent("");
+    setEvoNoAssessment(false);
     setFormDate(new Date(apt.appointment_date + "T12:00:00"));
     setFormTime(apt.appointment_time?.slice(0, 5) || "09:00");
     setFormDuration(String(apt.duration_minutes));
