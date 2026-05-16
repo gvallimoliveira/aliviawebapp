@@ -242,34 +242,41 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
-  // Evolution markers: set of "email|yyyy-mm-dd" indicating that an assessment/note exists for that patient on that day
-  const [evolutionSet, setEvolutionSet] = useState<Set<string>>(new Set());
+  // Evolution markers: map "email|yyyy-mm-dd" => { at, content, kind }
+  type EvolutionInfo = { at: string; content: string; kind: "assessment" | "note" };
+  const [evolutionMap, setEvolutionMap] = useState<Map<string, EvolutionInfo>>(new Map());
   useEffect(() => {
-    if (isSimulated) { setEvolutionSet(new Set()); return; }
+    if (isSimulated) { setEvolutionMap(new Map()); return; }
     const emails = Array.from(new Set(appointments.map(a => a.patient_email).filter(Boolean))) as string[];
-    if (emails.length === 0) { setEvolutionSet(new Set()); return; }
+    if (emails.length === 0) { setEvolutionMap(new Map()); return; }
     let cancelled = false;
     const load = async () => {
       const startISO = `${rangeStart}T00:00:00`;
       const endISO = `${rangeEnd}T23:59:59`;
       let aq = supabase
         .from("assessments")
-        .select("patient_email, created_at")
+        .select("patient_email, created_at, diagnosis, anamnesis_data")
         .in("patient_email", emails)
         .gte("created_at", startISO)
         .lte("created_at", endISO);
       if (clinicId) aq = aq.eq("clinic_id", clinicId);
       else if (professionalId) aq = aq.eq("professional_id", professionalId);
       const { data: assess } = await aq;
-      const set = new Set<string>();
+      const map = new Map<string, EvolutionInfo>();
+      const upsert = (key: string, info: EvolutionInfo) => {
+        const prev = map.get(key);
+        if (!prev || new Date(info.at).getTime() > new Date(prev.at).getTime()) map.set(key, info);
+      };
       (assess || []).forEach((r: any) => {
         const day = (r.created_at as string).slice(0, 10);
-        set.add(`${r.patient_email}|${day}`);
+        const diag = r.diagnosis?.primary_hypothesis || r.diagnosis?.hypothesis || r.diagnosis?.summary || "";
+        const chief = r.anamnesis_data?.chief_complaint || "";
+        const content = [diag, chief].filter(Boolean).join(" — ") || (isPt ? "Avaliação registrada" : "Assessment recorded");
+        upsert(`${r.patient_email}|${day}`, { at: r.created_at, content, kind: "assessment" });
       });
-      // Notes via join: get notes whose assessment belongs to this scope, updated in window
       let nq = supabase
         .from("professional_notes")
-        .select("updated_at, assessments!inner(patient_email, professional_id, clinic_id)")
+        .select("updated_at, content, assessments!inner(patient_email, professional_id, clinic_id)")
         .gte("updated_at", startISO)
         .lte("updated_at", endISO);
       if (clinicId) nq = nq.eq("assessments.clinic_id", clinicId);
@@ -279,13 +286,13 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         const email = r.assessments?.patient_email;
         if (!email) return;
         const day = (r.updated_at as string).slice(0, 10);
-        set.add(`${email}|${day}`);
+        upsert(`${email}|${day}`, { at: r.updated_at, content: r.content || "", kind: "note" });
       });
-      if (!cancelled) setEvolutionSet(set);
+      if (!cancelled) setEvolutionMap(map);
     };
     load();
     return () => { cancelled = true; };
-  }, [appointments, rangeStart, rangeEnd, clinicId, professionalId, isSimulated]);
+  }, [appointments, rangeStart, rangeEnd, clinicId, professionalId, isSimulated, isPt]);
 
   // Realtime: auto-refresh appointments on changes
   useEffect(() => {
@@ -964,7 +971,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                               onPointerDownCard={handleCardPointerDown}
                               isMobile={isMobile}
                               isPt={isPt}
-                              hasEvolution={!!apt.patient_email && evolutionSet.has(`${apt.patient_email}|${apt.appointment_date}`)}
+                              evolution={apt.patient_email ? evolutionMap.get(`${apt.patient_email}|${apt.appointment_date}`) : undefined}
                             />
                           ))}
                         </div>
@@ -1234,19 +1241,20 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
 /** Appointment card with pointer-based drag (mouse + touch) */
 const AppointmentCard = ({
-  apt, isConcurrent, onPointerDownCard, isMobile, isPt, hasEvolution,
+  apt, isConcurrent, onPointerDownCard, isMobile, isPt, evolution,
 }: {
   apt: Appointment;
   isConcurrent: boolean;
   onPointerDownCard: (e: React.PointerEvent, apt: Appointment) => void;
   isMobile: boolean;
   isPt: boolean;
-  hasEvolution?: boolean;
+  evolution?: { at: string; content: string; kind: "assessment" | "note" };
 }) => {
   const Icon = TYPE_ICONS[apt.type] || MapPin;
   const statusColor = STATUS_COLORS[apt.status] || STATUS_COLORS.scheduled;
   const serviceColor = SERVICE_TYPE_COLORS[apt.service_type || "fisioterapia"] || "";
   const typeLabel = apt.type === "video_call" ? "Videochamada" : apt.type === "in_person" ? "Presencial" : "Externo";
+  const hasEvolution = !!evolution;
 
   const card = (
     <div
@@ -1260,11 +1268,42 @@ const AppointmentCard = ({
       style={{ touchAction: "none" }}
       onPointerDown={(e) => onPointerDownCard(e, apt)}
     >
-      {hasEvolution && (
-        <Pencil
-          className="absolute top-0.5 right-0.5 h-2.5 w-2.5 text-emerald-600"
-          aria-label={isPt ? "Evolução registrada" : "Evolution recorded"}
-        />
+      {hasEvolution && evolution && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              className="absolute top-0.5 right-0.5 p-0.5 rounded hover:bg-emerald-200/60"
+              aria-label={isPt ? "Ver última evolução" : "View last evolution"}
+            >
+              <Pencil className="h-2.5 w-2.5 text-emerald-600" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="w-72 p-3 text-xs"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-semibold text-emerald-700">
+                {evolution.kind === "assessment"
+                  ? (isPt ? "Avaliação" : "Assessment")
+                  : (isPt ? "Evolução" : "Evolution note")}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {new Date(evolution.at).toLocaleString(isPt ? "pt-BR" : "en-US", {
+                  day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+                })}
+              </span>
+            </div>
+            <p className="whitespace-pre-wrap text-foreground/90 max-h-48 overflow-y-auto">
+              {evolution.content?.trim() || (isPt ? "(sem conteúdo)" : "(no content)")}
+            </p>
+          </PopoverContent>
+        </Popover>
       )}
       <div className="flex items-center gap-0.5">
         <span className="text-[9px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
