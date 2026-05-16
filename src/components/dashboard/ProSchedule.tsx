@@ -1282,7 +1282,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   </div>
                 </div>
               )}
-              {editingApt && editingApt.patient_email && professionalId && (
+              {editingApt && editingApt.patient_email && (professionalId || editingApt.professional_id) && (
                 <div className="pt-2 border-t border-border/40">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-medium text-muted-foreground">
