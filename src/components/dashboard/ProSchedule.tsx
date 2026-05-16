@@ -242,6 +242,51 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
+  // Evolution markers: set of "email|yyyy-mm-dd" indicating that an assessment/note exists for that patient on that day
+  const [evolutionSet, setEvolutionSet] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (isSimulated) { setEvolutionSet(new Set()); return; }
+    const emails = Array.from(new Set(appointments.map(a => a.patient_email).filter(Boolean))) as string[];
+    if (emails.length === 0) { setEvolutionSet(new Set()); return; }
+    let cancelled = false;
+    const load = async () => {
+      const startISO = `${rangeStart}T00:00:00`;
+      const endISO = `${rangeEnd}T23:59:59`;
+      let aq = supabase
+        .from("assessments")
+        .select("patient_email, created_at")
+        .in("patient_email", emails)
+        .gte("created_at", startISO)
+        .lte("created_at", endISO);
+      if (clinicId) aq = aq.eq("clinic_id", clinicId);
+      else if (professionalId) aq = aq.eq("professional_id", professionalId);
+      const { data: assess } = await aq;
+      const set = new Set<string>();
+      (assess || []).forEach((r: any) => {
+        const day = (r.created_at as string).slice(0, 10);
+        set.add(`${r.patient_email}|${day}`);
+      });
+      // Notes via join: get notes whose assessment belongs to this scope, updated in window
+      let nq = supabase
+        .from("professional_notes")
+        .select("updated_at, assessments!inner(patient_email, professional_id, clinic_id)")
+        .gte("updated_at", startISO)
+        .lte("updated_at", endISO);
+      if (clinicId) nq = nq.eq("assessments.clinic_id", clinicId);
+      else if (professionalId) nq = nq.eq("assessments.professional_id", professionalId);
+      const { data: notes } = await nq;
+      (notes || []).forEach((r: any) => {
+        const email = r.assessments?.patient_email;
+        if (!email) return;
+        const day = (r.updated_at as string).slice(0, 10);
+        set.add(`${email}|${day}`);
+      });
+      if (!cancelled) setEvolutionSet(set);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [appointments, rangeStart, rangeEnd, clinicId, professionalId, isSimulated]);
+
   // Realtime: auto-refresh appointments on changes
   useEffect(() => {
     if (isSimulated) return;
