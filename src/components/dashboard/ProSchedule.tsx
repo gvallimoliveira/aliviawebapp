@@ -565,6 +565,19 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     fetchAppointments();
   };
 
+  const handleSetStatus = async (id: string, newStatus: string) => {
+    if (isSimulated) {
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+      setEditingApt(prev => prev && prev.id === id ? { ...prev, status: newStatus } : prev);
+      return;
+    }
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+    setEditingApt(prev => prev && prev.id === id ? { ...prev, status: newStatus } : prev);
+    await (supabase.from("professional_appointments" as any) as any)
+      .update({ status: newStatus })
+      .eq("id", id);
+  };
+
   // Batch confirm all scheduled appointments for today
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const todayScheduledCount = appointments.filter(a => a.appointment_date === todayStr && a.status === "scheduled").length;
