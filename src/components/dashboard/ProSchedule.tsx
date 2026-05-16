@@ -683,7 +683,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   };
 
   const saveEvolution = async () => {
-    if (!editingApt || !professionalId || !evoAssessmentId || !evoText.trim()) return;
+    const effectiveProId = professionalId || editingApt?.professional_id;
+    if (!editingApt || !effectiveProId || !evoAssessmentId || !evoText.trim()) return;
     setEvoSaving(true);
     try {
       const aptDate = new Date(`${editingApt.appointment_date}T${editingApt.appointment_time || "12:00"}`);
@@ -693,7 +694,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       const entry = `[${stamp}]\n${evoText.trim()}`;
       const newContent = evoExistingContent ? `${evoExistingContent}\n\n${entry}` : entry;
       const { error } = await supabase.from("professional_notes").upsert(
-        { professional_id: professionalId, assessment_id: evoAssessmentId, content: newContent, updated_at: new Date().toISOString() },
+        { professional_id: effectiveProId, assessment_id: evoAssessmentId, content: newContent, updated_at: new Date().toISOString() },
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;
