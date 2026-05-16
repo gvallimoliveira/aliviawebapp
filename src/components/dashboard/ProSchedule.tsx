@@ -647,7 +647,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   // Inline evolution helpers
   const openEvolutionEditor = async () => {
-    if (!editingApt || !editingApt.patient_email || !professionalId) return;
+    const effectiveProId = professionalId || editingApt?.professional_id;
+    if (!editingApt || !editingApt.patient_email || !effectiveProId) return;
     setEvoOpen(true);
     setEvoLoading(true);
     setEvoNoAssessment(false);
@@ -661,7 +662,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         .order("created_at", { ascending: false })
         .limit(1);
       if (clinicId) aq = aq.eq("clinic_id", clinicId);
-      else aq = aq.eq("professional_id", professionalId);
+      else aq = aq.eq("professional_id", effectiveProId);
       const { data: rows } = await aq;
       const latest = rows?.[0];
       if (!latest) {
@@ -672,7 +673,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       const { data: existing } = await supabase
         .from("professional_notes")
         .select("content")
-        .eq("professional_id", professionalId)
+        .eq("professional_id", effectiveProId)
         .eq("assessment_id", latest.id)
         .maybeSingle();
       setEvoExistingContent(existing?.content || "");
@@ -682,7 +683,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   };
 
   const saveEvolution = async () => {
-    if (!editingApt || !professionalId || !evoAssessmentId || !evoText.trim()) return;
+    const effectiveProId = professionalId || editingApt?.professional_id;
+    if (!editingApt || !effectiveProId || !evoAssessmentId || !evoText.trim()) return;
     setEvoSaving(true);
     try {
       const aptDate = new Date(`${editingApt.appointment_date}T${editingApt.appointment_time || "12:00"}`);
@@ -692,7 +694,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       const entry = `[${stamp}]\n${evoText.trim()}`;
       const newContent = evoExistingContent ? `${evoExistingContent}\n\n${entry}` : entry;
       const { error } = await supabase.from("professional_notes").upsert(
-        { professional_id: professionalId, assessment_id: evoAssessmentId, content: newContent, updated_at: new Date().toISOString() },
+        { professional_id: effectiveProId, assessment_id: evoAssessmentId, content: newContent, updated_at: new Date().toISOString() },
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;
@@ -719,12 +721,13 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const lastEvoEntry = evoEntries[evoEntries.length - 1] || "";
 
   const deleteLastEvolution = async () => {
-    if (!professionalId || !evoAssessmentId || evoEntries.length === 0) return;
+    const effectiveProId = professionalId || editingApt?.professional_id;
+    if (!effectiveProId || !evoAssessmentId || evoEntries.length === 0) return;
     setEvoDeleting(true);
     try {
       const remaining = evoEntries.slice(0, -1).join("\n\n");
       const { error } = await supabase.from("professional_notes").upsert(
-        { professional_id: professionalId, assessment_id: evoAssessmentId, content: remaining, updated_at: new Date().toISOString() },
+        { professional_id: effectiveProId, assessment_id: evoAssessmentId, content: remaining, updated_at: new Date().toISOString() },
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;
@@ -1279,7 +1282,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   </div>
                 </div>
               )}
-              {editingApt && editingApt.patient_email && professionalId && (
+              {editingApt && editingApt.patient_email && (professionalId || editingApt.professional_id) && (
                 <div className="pt-2 border-t border-border/40">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-medium text-muted-foreground">
