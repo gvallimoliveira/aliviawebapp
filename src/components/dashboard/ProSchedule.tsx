@@ -1424,10 +1424,6 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 </div>
                 <div />
               </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
-                <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("schedule.notes_ph")} className="mt-1 text-xs min-h-[60px]" />
-              </div>
               {editingApt && (
                 <div className="pt-2 border-t border-border/40">
                   <label className="text-xs font-medium text-muted-foreground">
@@ -1528,6 +1524,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   )}
                 </div>
               )}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
+                <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("schedule.notes_ph")} className="mt-1 text-xs min-h-[60px]" />
+              </div>
             </div>
           </ScrollArea>
           <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-border/40">
@@ -1648,7 +1648,7 @@ const AppointmentCard = ({
   const hasEvolution = !!evolution;
 
   const card = (
-    <div
+      <div
       className={cn(
         "relative rounded-md border cursor-grab active:cursor-grabbing transition-all hover:shadow-sm select-none",
         statusColor,
@@ -1656,7 +1656,7 @@ const AppointmentCard = ({
         apt.status === "cancelled" && "opacity-50",
         isConcurrent ? "p-0.5 flex-1 min-w-0" : "p-1 min-w-0 w-full overflow-hidden"
       )}
-      style={{ touchAction: "none" }}
+        style={{ touchAction: isMobile ? "manipulation" : "none" }}
       onPointerDown={(e) => onPointerDownCard(e, apt)}
     >
       {hasEvolution && evolution && (
