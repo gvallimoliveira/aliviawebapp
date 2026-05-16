@@ -645,7 +645,69 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       .eq("id", id);
   };
 
-  // Batch confirm all scheduled appointments for today
+  // Inline evolution helpers
+  const openEvolutionEditor = async () => {
+    if (!editingApt || !editingApt.patient_email || !professionalId) return;
+    setEvoOpen(true);
+    setEvoLoading(true);
+    setEvoNoAssessment(false);
+    setEvoExistingContent("");
+    setEvoAssessmentId(null);
+    try {
+      let aq = supabase
+        .from("assessments")
+        .select("id, created_at")
+        .eq("patient_email", editingApt.patient_email)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (clinicId) aq = aq.eq("clinic_id", clinicId);
+      else aq = aq.eq("professional_id", professionalId);
+      const { data: rows } = await aq;
+      const latest = rows?.[0];
+      if (!latest) {
+        setEvoNoAssessment(true);
+        return;
+      }
+      setEvoAssessmentId(latest.id);
+      const { data: existing } = await supabase
+        .from("professional_notes")
+        .select("content")
+        .eq("professional_id", professionalId)
+        .eq("assessment_id", latest.id)
+        .maybeSingle();
+      setEvoExistingContent(existing?.content || "");
+    } finally {
+      setEvoLoading(false);
+    }
+  };
+
+  const saveEvolution = async () => {
+    if (!editingApt || !professionalId || !evoAssessmentId || !evoText.trim()) return;
+    setEvoSaving(true);
+    try {
+      const aptDate = new Date(`${editingApt.appointment_date}T${editingApt.appointment_time || "12:00"}`);
+      const stamp = aptDate.toLocaleString(isPt ? "pt-BR" : language === "es" ? "es-ES" : "en-US", {
+        day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+      });
+      const entry = `[${stamp}]\n${evoText.trim()}`;
+      const newContent = evoExistingContent ? `${evoExistingContent}\n\n${entry}` : entry;
+      const { error } = await supabase.from("professional_notes").upsert(
+        { professional_id: professionalId, assessment_id: evoAssessmentId, content: newContent, updated_at: new Date().toISOString() },
+        { onConflict: "professional_id,assessment_id" }
+      );
+      if (error) throw error;
+      toast({ title: isPt ? "Evolução registrada" : language === "es" ? "Evolución registrada" : "Evolution saved" });
+      setEvoExistingContent(newContent);
+      setEvoText("");
+      setEvoOpen(false);
+      setEvolutionReloadTick(t => t + 1);
+    } catch (e: any) {
+      toast({ title: isPt ? "Erro ao salvar evolução" : "Failed to save evolution", description: e?.message, variant: "destructive" });
+    } finally {
+      setEvoSaving(false);
+    }
+  };
+
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const todayScheduledCount = appointments.filter(a => a.appointment_date === todayStr && a.status === "scheduled").length;
 
