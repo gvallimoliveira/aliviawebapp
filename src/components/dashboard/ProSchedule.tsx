@@ -177,6 +177,16 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [formPhone, setFormPhone] = useState("");
   const [formAddress, setFormAddress] = useState("");
 
+  // Inline evolution editor (inside appointment modal)
+  const [evoOpen, setEvoOpen] = useState(false);
+  const [evoLoading, setEvoLoading] = useState(false);
+  const [evoSaving, setEvoSaving] = useState(false);
+  const [evoText, setEvoText] = useState("");
+  const [evoAssessmentId, setEvoAssessmentId] = useState<string | null>(null);
+  const [evoExistingContent, setEvoExistingContent] = useState<string>("");
+  const [evoNoAssessment, setEvoNoAssessment] = useState(false);
+  const [evolutionReloadTick, setEvolutionReloadTick] = useState(0);
+
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
   const isClinicOnlyMode = !professionalId && !!clinicId;
