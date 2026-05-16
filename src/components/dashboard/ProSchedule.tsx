@@ -841,10 +841,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     if (!editingApt || !effectiveProId || !evoAssessmentId || !evoText.trim()) return;
     setEvoSaving(true);
     try {
-      const aptDate = new Date(`${editingApt.appointment_date}T${editingApt.appointment_time || "12:00"}`);
-      const stamp = aptDate.toLocaleString(isPt ? "pt-BR" : language === "es" ? "es-ES" : "en-US", {
-        day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
-      });
+      const stamp = `${editingApt.appointment_date} ${editingApt.appointment_time?.slice(0, 5) || "12:00"}`;
       const entry = `[${stamp}]\n${evoText.trim()}`;
       const newContent = evoExistingContent ? `${evoExistingContent}\n\n${entry}` : entry;
       const { error } = await supabase.from("professional_notes").upsert(
@@ -1464,10 +1461,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                       ) : evoNoAssessment ? (
                         <p className="text-[11px] text-muted-foreground">
                           {isPt
-                            ? "Este paciente ainda não possui avaliação criada. Abra o prontuário em \"Ver paciente\" para criar uma avaliação antes de registrar evoluções."
+                            ? "Não foi possível preparar a evolução deste atendimento agora. Tente novamente em instantes."
                             : language === "es"
-                              ? "Este paciente aún no tiene una evaluación creada. Abra el historial en \"Ver paciente\" para crear una antes de registrar evoluciones."
-                              : "This patient has no assessment yet. Open the chart via \"View patient\" to create one before adding evolutions."}
+                              ? "No fue posible preparar la evolución de esta cita ahora. Inténtelo de nuevo en unos instantes."
+                              : "Couldn't prepare this appointment's evolution right now. Please try again in a moment."}
                         </p>
                       ) : (
                         <>
