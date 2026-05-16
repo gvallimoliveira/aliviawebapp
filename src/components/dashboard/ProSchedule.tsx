@@ -345,37 +345,67 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     const load = async () => {
       const startISO = `${rangeStart}T00:00:00`;
       const endISO = `${rangeEnd}T23:59:59`;
+      const scopedProfessionalId = professionalId || formProfessionalId || appointments[0]?.professional_id || null;
       let aq = supabase
         .from("assessments")
-        .select("patient_email, created_at, diagnosis, anamnesis_data")
+        .select("id, patient_email, created_at, diagnosis, anamnesis_data")
         .in("patient_email", emails)
         .gte("created_at", startISO)
         .lte("created_at", endISO);
       if (clinicId) aq = aq.eq("clinic_id", clinicId);
-      else if (professionalId) aq = aq.eq("professional_id", professionalId);
+      else if (scopedProfessionalId) aq = aq.eq("professional_id", scopedProfessionalId);
       const { data: assess } = await aq;
       const map = new Map<string, EvolutionInfo>();
+      const assessmentById = new Map<string, any>();
       const upsert = (key: string, info: EvolutionInfo) => {
         const prev = map.get(key);
         if (!prev || new Date(info.at).getTime() > new Date(prev.at).getTime()) map.set(key, info);
       };
       (assess || []).forEach((r: any) => {
+        if (r.id) assessmentById.set(r.id, r);
         const day = (r.created_at as string).slice(0, 10);
         const diag = r.diagnosis?.primary_hypothesis || r.diagnosis?.hypothesis || r.diagnosis?.summary || "";
         const chief = r.anamnesis_data?.chief_complaint || "";
         const content = [diag, chief].filter(Boolean).join(" — ") || (isPt ? "Avaliação registrada" : "Assessment recorded");
         upsert(buildEvolutionDayKey(r.patient_email, day), { at: r.created_at, content, kind: "assessment" });
       });
-      let nq = supabase
-        .from("professional_notes")
-        .select("updated_at, content, assessments!inner(patient_email, professional_id, clinic_id)");
-      if (clinicId) nq = nq.eq("assessments.clinic_id", clinicId);
-      else if (professionalId) nq = nq.eq("assessments.professional_id", professionalId);
-      nq = nq.in("assessments.patient_email", emails);
-      const { data: notes } = await nq;
+
+      let noteAssessmentQuery = supabase
+        .from("assessments")
+        .select("id, patient_email")
+        .in("patient_email", emails);
+
+      if (clinicId) noteAssessmentQuery = noteAssessmentQuery.eq("clinic_id", clinicId);
+      else if (scopedProfessionalId) noteAssessmentQuery = noteAssessmentQuery.eq("professional_id", scopedProfessionalId);
+
+      const { data: noteAssessments } = await noteAssessmentQuery;
+      (noteAssessments || []).forEach((r: any) => {
+        if (r.id && r.patient_email && !assessmentById.has(r.id)) {
+          assessmentById.set(r.id, r);
+        }
+      });
+
+      const assessmentIds = Array.from(assessmentById.keys());
+      let notes: any[] | null = null;
+      if (assessmentIds.length > 0) {
+        let nq = supabase
+          .from("professional_notes")
+          .select("assessment_id, updated_at, content")
+          .in("assessment_id", assessmentIds);
+
+        if (scopedProfessionalId) {
+          nq = nq.eq("professional_id", scopedProfessionalId);
+        }
+
+        const { data } = await nq;
+        notes = data;
+      }
+
       (notes || []).forEach((r: any) => {
-        const email = r.assessments?.patient_email;
+        const relatedAssessment = assessmentById.get(r.assessment_id);
+        const email = relatedAssessment?.patient_email;
         if (!email) return;
+
         const entries = parseEvolutionEntries(r.content || "");
         entries.forEach((entry) => {
           if (!entry.appointmentDate || entry.appointmentDate < rangeStart || entry.appointmentDate > rangeEnd) return;
@@ -396,7 +426,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     };
     load();
     return () => { cancelled = true; };
-  }, [appointments, rangeStart, rangeEnd, clinicId, professionalId, isSimulated, isPt, evolutionReloadTick]);
+  }, [appointments, rangeStart, rangeEnd, clinicId, professionalId, formProfessionalId, isSimulated, isPt, evolutionReloadTick]);
 
   // Realtime: auto-refresh appointments on changes
   useEffect(() => {
@@ -514,6 +544,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   const openEdit = async (apt: Appointment) => {
     setEditingApt(apt);
+    setFormProfessionalId(apt.professional_id || professionalId || "");
     setEvoOpen(false);
     setEvoText("");
     setEvoAssessmentId(null);
@@ -854,6 +885,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       setEvoExistingContent(newContent);
       setEvoText("");
       setEvoOpen(false);
+      setEditingApt((prev) => prev ? { ...prev } : prev);
       setEvolutionReloadTick(t => t + 1);
     } catch (e: any) {
       toast({ title: isPt ? "Erro ao salvar evolução" : "Failed to save evolution", description: e?.message, variant: "destructive" });
@@ -889,6 +921,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       );
       if (error) throw error;
       setEvoExistingContent(remaining);
+      setEditingApt((prev) => prev ? { ...prev } : prev);
       setEvolutionReloadTick(t => t + 1);
       toast({ title: isPt ? "Última evolução excluída" : language === "es" ? "Última evolución eliminada" : "Last evolution deleted" });
     } catch (e: any) {
@@ -1408,10 +1441,6 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 </div>
                 <div />
               </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
-                <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("schedule.notes_ph")} className="mt-1 text-xs min-h-[60px]" />
-              </div>
               {editingApt && (
                 <div className="pt-2 border-t border-border/40">
                   <label className="text-xs font-medium text-muted-foreground">
@@ -1512,6 +1541,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   )}
                 </div>
               )}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
+                <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("schedule.notes_ph")} className="mt-1 text-xs min-h-[60px]" />
+              </div>
             </div>
           </ScrollArea>
           <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-border/40">
@@ -1632,7 +1665,7 @@ const AppointmentCard = ({
   const hasEvolution = !!evolution;
 
   const card = (
-    <div
+      <div
       className={cn(
         "relative rounded-md border cursor-grab active:cursor-grabbing transition-all hover:shadow-sm select-none",
         statusColor,
@@ -1640,7 +1673,7 @@ const AppointmentCard = ({
         apt.status === "cancelled" && "opacity-50",
         isConcurrent ? "p-0.5 flex-1 min-w-0" : "p-1 min-w-0 w-full overflow-hidden"
       )}
-      style={{ touchAction: "none" }}
+        style={{ touchAction: isMobile ? "manipulation" : "none" }}
       onPointerDown={(e) => onPointerDownCard(e, apt)}
     >
       {hasEvolution && evolution && (
