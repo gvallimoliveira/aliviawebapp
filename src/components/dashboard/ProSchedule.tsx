@@ -647,7 +647,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   // Inline evolution helpers
   const openEvolutionEditor = async () => {
-    if (!editingApt || !editingApt.patient_email || !professionalId) return;
+    const effectiveProId = professionalId || editingApt?.professional_id;
+    if (!editingApt || !editingApt.patient_email || !effectiveProId) return;
     setEvoOpen(true);
     setEvoLoading(true);
     setEvoNoAssessment(false);
@@ -661,7 +662,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         .order("created_at", { ascending: false })
         .limit(1);
       if (clinicId) aq = aq.eq("clinic_id", clinicId);
-      else aq = aq.eq("professional_id", professionalId);
+      else aq = aq.eq("professional_id", effectiveProId);
       const { data: rows } = await aq;
       const latest = rows?.[0];
       if (!latest) {
@@ -672,7 +673,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       const { data: existing } = await supabase
         .from("professional_notes")
         .select("content")
-        .eq("professional_id", professionalId)
+        .eq("professional_id", effectiveProId)
         .eq("assessment_id", latest.id)
         .maybeSingle();
       setEvoExistingContent(existing?.content || "");
