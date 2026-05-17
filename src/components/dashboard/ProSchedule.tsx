@@ -136,6 +136,35 @@ const matchesAppointmentEvolution = (entry: EvolutionEntry, apt: Appointment) =>
   return !entry.appointmentTime || !aptTime || entry.appointmentTime === aptTime;
 };
 
+const resetEvolutionEditorState = ({
+  setEvoOpen,
+  setEvoLoading,
+  setEvoSaving,
+  setEvoText,
+  setEvoAssessmentId,
+  setEvoExistingContent,
+  setEvoNoAssessment,
+  clearRequestKey,
+}: {
+  setEvoOpen: (value: boolean) => void;
+  setEvoLoading: (value: boolean) => void;
+  setEvoSaving: (value: boolean) => void;
+  setEvoText: (value: string) => void;
+  setEvoAssessmentId: (value: string | null) => void;
+  setEvoExistingContent: (value: string) => void;
+  setEvoNoAssessment: (value: boolean) => void;
+  clearRequestKey?: () => void;
+}) => {
+  clearRequestKey?.();
+  setEvoOpen(false);
+  setEvoLoading(false);
+  setEvoSaving(false);
+  setEvoText("");
+  setEvoAssessmentId(null);
+  setEvoExistingContent("");
+  setEvoNoAssessment(false);
+};
+
 interface ProScheduleProps {
   professionalId?: string;
   clinicId?: string | null;
