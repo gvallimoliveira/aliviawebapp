@@ -1610,7 +1610,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                             value={evoText}
                             onChange={(e) => setEvoText(e.target.value)}
                             placeholder={isPt ? "Descreva o que foi feito neste atendimento..." : language === "es" ? "Describa lo realizado en esta sesión..." : "Describe what was done in this session..."}
-                            className="text-xs min-h-[112px] resize-none leading-relaxed"
+                            className="text-xs min-h-[132px] w-full resize-none leading-relaxed px-3 py-2.5"
                             autoFocus
                           />
                           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end sm:items-center">
