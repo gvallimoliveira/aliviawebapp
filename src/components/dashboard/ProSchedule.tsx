@@ -694,36 +694,64 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     }
   };
 
-  const openNew = (date?: Date, time?: string) => {
+  // Centralized full reset of the appointment modal state
+  const resetAppointmentModalState = useCallback(() => {
+    evoRequestIdRef.current += 1;
+    evoActiveRequestKeyRef.current = "";
     setEditingApt(null);
-    setFormDate(date || new Date());
-    setFormTime(time || "09:00");
-    setFormDuration("50");
     setFormName("");
     setFormEmail("");
-    setFormType("in_person");
-    setFormServiceType("fisioterapia");
     setFormNotes("");
     setFormCpf("");
     setFormBirthDate("");
     setFormPhone("");
     setFormAddress("");
+    setFormType("in_person");
+    setFormServiceType("fisioterapia");
+    setFormDuration("50");
+    setFormTime("09:00");
+    setFormDate(new Date());
     setSelectedPatientKey("__new__");
-    setModalOpen(true);
-  };
-
-  const openEdit = async (apt: Appointment) => {
-    evoRequestIdRef.current += 1;
-    evoActiveRequestKeyRef.current = "";
-    setEditingApt(apt);
-    setFormProfessionalId(apt.professional_id || professionalId || "");
-    setEvoOpen(true);
-    setEvoLoading(!!(apt.patient_email && (apt.professional_id || professionalId || formProfessionalId)));
+    setEmailWarning(false);
+    setEvoOpen(false);
+    setEvoLoading(false);
     setEvoSaving(false);
     setEvoText("");
     setEvoAssessmentId(null);
     setEvoExistingContent("");
     setEvoNoAssessment(false);
+  }, []);
+
+  const closeAppointmentModal = useCallback(() => {
+    setModalOpen(false);
+    // Defer reset until after close animation to avoid flicker in closing dialog
+    setTimeout(() => { resetAppointmentModalState(); }, 200);
+  }, [resetAppointmentModalState]);
+
+  const openNew = (date?: Date, time?: string) => {
+    resetAppointmentModalState();
+    modalSessionRef.current += 1;
+    setModalSessionId(modalSessionRef.current);
+    setFormDate(date || new Date());
+    setFormTime(time || "09:00");
+    setSelectedPatientKey("__new__");
+    setModalOpen(true);
+  };
+
+  const openEdit = async (apt: Appointment) => {
+    // 1) Bump session — invalidates any pending async + forces full remount
+    modalSessionRef.current += 1;
+    const session = modalSessionRef.current;
+    setModalSessionId(session);
+    evoRequestIdRef.current += 1;
+    evoActiveRequestKeyRef.current = "";
+
+    // 2) Apply a complete clean snapshot synchronously (atomic)
+    const effectiveProId = apt.professional_id || professionalId || "";
+    const hasEvolutionContext = !!(apt.patient_email && effectiveProId);
+
+    setEditingApt(apt);
+    setFormProfessionalId(effectiveProId);
     setFormDate(new Date(apt.appointment_date + "T12:00:00"));
     setFormTime(apt.appointment_time?.slice(0, 5) || "09:00");
     setFormDuration(String(apt.duration_minutes));
@@ -736,15 +764,29 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setFormBirthDate("");
     setFormPhone("");
     setFormAddress("");
+    setEmailWarning(false);
+
+    // Reset evolution editor cleanly; pre-show loading skeleton if context exists
+    setEvoText("");
+    setEvoAssessmentId(null);
+    setEvoExistingContent("");
+    setEvoNoAssessment(false);
+    setEvoSaving(false);
+    setEvoOpen(hasEvolutionContext);
+    setEvoLoading(hasEvolutionContext);
+
     const match = knownPatients.find((p) => p.email === apt.patient_email);
     setSelectedPatientKey(match ? match.email : "__new__");
+
+    // 3) Open modal AFTER state is set
     setModalOpen(true);
 
-    if (apt.patient_email && (apt.professional_id || professionalId || formProfessionalId)) {
+    // 4) Fetch async data, tied to this session
+    if (hasEvolutionContext) {
       void prepareEvolutionEditor(apt);
     }
 
-    // Load extra fields from patients table
+    // Load extra fields from patients table (won't affect main visible layout)
     if (apt.patient_name || apt.patient_email) {
       try {
         let query = (supabase.from("patients" as any) as any).select("*");
@@ -759,6 +801,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           query = query.eq("full_name", apt.patient_name);
         }
         const { data } = await query.limit(1);
+        // Guard: ignore if session changed (modal was closed/reopened)
+        if (modalSessionRef.current !== session) return;
         if (data && data.length > 0) {
           const p = data[0];
           setFormCpf(p.cpf ? formatCpf(p.cpf) : "");
