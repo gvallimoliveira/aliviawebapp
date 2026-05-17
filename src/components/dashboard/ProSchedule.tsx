@@ -723,7 +723,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   }, []);
 
   const closeAppointmentModal = useCallback(() => {
-    setModalOpen(false);
+    closeAppointmentModal();
     // Defer reset until after close animation to avoid flicker in closing dialog
     setTimeout(() => { resetAppointmentModalState(); }, 200);
   }, [resetAppointmentModalState]);
@@ -850,7 +850,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           setAppointments(prev => [...prev, newApt]);
         }
         toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
-        setModalOpen(false);
+        closeAppointmentModal();
         setSaving(false);
         return;
       }
@@ -928,7 +928,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         }
       }
       toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
-      setModalOpen(false);
+      closeAppointmentModal();
       setKnownPatients((prev) => {
         const te = formEmail.trim();
         if (te && !prev.find((p) => p.email === te)) {
@@ -951,7 +951,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       setAppointments(prev => prev.filter(a => a.id !== deleteId));
       toast({ title: t("schedule.deleted") });
       setDeleteId(null);
-      setModalOpen(false);
+      closeAppointmentModal();
       setDeleting(false);
       return;
     }
@@ -959,7 +959,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       await (supabase.from("professional_appointments" as any) as any).delete().eq("id", deleteId);
       toast({ title: t("schedule.deleted") });
       setDeleteId(null);
-      setModalOpen(false);
+      closeAppointmentModal();
       fetchAppointments();
     } catch {
       toast({ title: t("schedule.error"), variant: "destructive" });
@@ -1711,7 +1711,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             {editingApt?.patient_email && onViewPatient && (
               <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => {
                 onViewPatient(editingApt.patient_email!);
-                setModalOpen(false);
+                closeAppointmentModal();
               }}>
                 {t("schedule.view_patient")}
                 <ChevronRight className="h-3 w-3" />
