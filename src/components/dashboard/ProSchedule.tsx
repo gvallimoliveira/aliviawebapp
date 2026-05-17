@@ -523,346 +523,80 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   const navigateWeek = (dir: number) => setViewDate((prev) => addDays(prev, dir * daysToShow));
 
-  const getEvolutionContext = useCallback((aptOverride?: Appointment | null) => {
-    const targetApt = aptOverride ?? editingApt;
-    const effectiveProId = targetApt?.professional_id || professionalId || formProfessionalId || "";
-    const evolutionEmail = targetApt?.patient_email || formEmail.trim();
-
-    return { targetApt, effectiveProId, evolutionEmail };
-  }, [editingApt, professionalId, formProfessionalId, formEmail]);
-
-  const prepareEvolutionEditor = useCallback(async (aptOverride?: Appointment | null) => {
-    const { targetApt, effectiveProId, evolutionEmail } = getEvolutionContext(aptOverride);
-    if (!targetApt || !evolutionEmail || !effectiveProId) {
-      resetEvolutionEditorState({
-        setEvoOpen,
-        setEvoLoading,
-        setEvoSaving,
-        setEvoText,
-        setEvoAssessmentId,
-        setEvoExistingContent,
-        setEvoNoAssessment,
-        clearRequestKey: () => { evoActiveRequestKeyRef.current = ""; },
-      });
-      return;
-    }
-
-    const requestId = ++evoRequestIdRef.current;
-    const requestKey = buildEvolutionRequestKey(targetApt);
-    evoActiveRequestKeyRef.current = requestKey;
-
-    setEvoOpen(true);
-    setEvoLoading(true);
-    setEvoNoAssessment(false);
-    setEvoExistingContent("");
-    setEvoAssessmentId(null);
-
-    const applyIfCurrent = (callback: () => void) => {
-      if (evoRequestIdRef.current !== requestId || evoActiveRequestKeyRef.current !== requestKey) return false;
-      callback();
-      return true;
-    };
-
-    try {
-      const aptDayStart = `${targetApt.appointment_date}T00:00:00`;
-      const aptDayEnd = `${targetApt.appointment_date}T23:59:59`;
-      const aptCreatedAt = `${targetApt.appointment_date}T${targetApt.appointment_time?.slice(0, 5) || "12:00"}:00`;
-
-      let sameDayQuery = supabase
-        .from("assessments")
-        .select("id, created_at")
-        .eq("patient_email", evolutionEmail)
-        .gte("created_at", aptDayStart)
-        .lte("created_at", aptDayEnd)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (clinicId) sameDayQuery = sameDayQuery.eq("clinic_id", clinicId);
-      else sameDayQuery = sameDayQuery.eq("professional_id", effectiveProId);
-
-      const { data: sameDayRows } = await sameDayQuery;
-
-      let assessmentId = sameDayRows?.[0]?.id || null;
-
-      if (!assessmentId) {
-        let latestQuery = supabase
-          .from("assessments")
-          .select("id, created_at")
-          .eq("patient_email", evolutionEmail)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        if (clinicId) latestQuery = latestQuery.eq("clinic_id", clinicId);
-        else latestQuery = latestQuery.eq("professional_id", effectiveProId);
-
-        const { data: latestRows } = await latestQuery;
-        assessmentId = latestRows?.[0]?.id || null;
-      }
-
-      if (!assessmentId) {
-        const assessmentInsert: any = {
-          type: "professional",
-          status: "completed",
-          user_id: null,
-          professional_id: clinicId ? null : effectiveProId,
-          clinic_id: clinicId || null,
-          payment_status: "covered",
-          patient_name: targetApt.patient_name || formName || null,
-          patient_email: evolutionEmail,
-          anamnesis_data: {
-            quickEvolutionOnly: true,
-            source: "schedule",
-            appointment_id: targetApt.id,
-          },
-          created_at: aptCreatedAt,
-        };
-
-        const { data: createdAssessment, error: createAssessmentError } = await supabase
-          .from("assessments")
-          .insert(assessmentInsert)
-          .select("id")
-          .single();
-
-        if (createAssessmentError) throw createAssessmentError;
-        assessmentId = createdAssessment.id;
-      }
-
-      if (!applyIfCurrent(() => setEvoAssessmentId(assessmentId))) return;
-
-      const { data: existingRows } = await supabase
-        .from("professional_notes")
-        .select("content, professional_id, updated_at")
-        .eq("assessment_id", assessmentId)
-        .order("updated_at", { ascending: false })
-        .limit(5);
-
-      const matchingExisting = existingRows?.find((row: any) => row.professional_id === effectiveProId) || existingRows?.[0];
-      applyIfCurrent(() => {
-        setEvoExistingContent(matchingExisting?.content || "");
-        setEvoNoAssessment(false);
-      });
-    } catch (e: any) {
-      if (applyIfCurrent(() => setEvoNoAssessment(true))) {
-        toast({
-          title: isPt ? "Não foi possível abrir a evolução" : "Failed to open evolution",
-          description: e?.message,
-          variant: "destructive",
-        });
-      }
-    } finally {
-      applyIfCurrent(() => setEvoLoading(false));
-    }
-  }, [clinicId, formName, getEvolutionContext, isPt, toast]);
-
-  const handleSelectPatient = (key: string) => {
-    setSelectedPatientKey(key);
-    setEmailWarning(false);
-    if (key === "__new__") {
-      setFormName("");
-      setFormEmail("");
-    } else {
-      const patient = knownPatients.find((p) => p.email === key);
-      if (patient) {
-        setFormName(patient.name);
-        setFormEmail(patient.email);
-      }
-    }
-  };
-
-  // Centralized full reset of the appointment modal state
-  const resetAppointmentModalState = useCallback(() => {
-    evoRequestIdRef.current += 1;
-    evoActiveRequestKeyRef.current = "";
-    setEditingApt(null);
-    setFormName("");
-    setFormEmail("");
-    setFormNotes("");
-    setFormCpf("");
-    setFormBirthDate("");
-    setFormPhone("");
-    setFormAddress("");
-    setFormType("in_person");
-    setFormServiceType("fisioterapia");
-    setFormDuration("50");
-    setFormTime("09:00");
-    setFormDate(new Date());
-    setSelectedPatientKey("__new__");
-    setEmailWarning(false);
-    setEvoOpen(false);
-    setEvoLoading(false);
-    setEvoSaving(false);
-    setEvoText("");
-    setEvoAssessmentId(null);
-    setEvoExistingContent("");
-    setEvoNoAssessment(false);
+  // ---- Modal lifecycle ----
+  const closeAppointmentModal = useCallback(() => {
+    setModalState((s) => ({ ...s, open: false }));
   }, []);
 
-  const closeAppointmentModal = useCallback(() => {
-    setModalOpen(false);
-    // Defer reset until after close animation to avoid flicker in closing dialog
-    setTimeout(() => { resetAppointmentModalState(); }, 200);
-  }, [resetAppointmentModalState]);
-
-  const openNew = (date?: Date, time?: string) => {
-    resetAppointmentModalState();
+  const openNew = useCallback((date?: Date, time?: string) => {
     modalSessionRef.current += 1;
-    setModalSessionId(modalSessionRef.current);
-    setFormDate(date || new Date());
-    setFormTime(time || "09:00");
-    setSelectedPatientKey("__new__");
-    setModalOpen(true);
-  };
+    setModalState({
+      open: true,
+      sessionId: modalSessionRef.current,
+      apt: null,
+      defaultDate: date || new Date(),
+      defaultTime: time || "09:00",
+    });
+  }, []);
 
-  const openEdit = async (apt: Appointment) => {
-    // 1) Bump session — invalidates any pending async + forces full remount
+  const openEdit = useCallback((apt: Appointment) => {
     modalSessionRef.current += 1;
-    const session = modalSessionRef.current;
-    setModalSessionId(session);
-    evoRequestIdRef.current += 1;
-    evoActiveRequestKeyRef.current = "";
+    setModalState({
+      open: true,
+      sessionId: modalSessionRef.current,
+      apt,
+      defaultDate: new Date(apt.appointment_date + "T12:00:00"),
+      defaultTime: apt.appointment_time?.slice(0, 5) || "09:00",
+    });
+  }, []);
 
-    // 2) Apply a complete clean snapshot synchronously (atomic)
-    const effectiveProId = apt.professional_id || professionalId || "";
-    const hasEvolutionContext = !!(apt.patient_email && effectiveProId);
-
-    setEditingApt(apt);
-    setFormProfessionalId(effectiveProId);
-    setFormDate(new Date(apt.appointment_date + "T12:00:00"));
-    setFormTime(apt.appointment_time?.slice(0, 5) || "09:00");
-    setFormDuration(String(apt.duration_minutes));
-    setFormName(apt.patient_name);
-    setFormEmail(apt.patient_email || "");
-    setFormType(apt.type);
-    setFormServiceType(apt.service_type || "fisioterapia");
-    setFormNotes(apt.notes || "");
-    setFormCpf("");
-    setFormBirthDate("");
-    setFormPhone("");
-    setFormAddress("");
-    setEmailWarning(false);
-
-    // Reset evolution editor cleanly; pre-show loading skeleton if context exists
-    setEvoText("");
-    setEvoAssessmentId(null);
-    setEvoExistingContent("");
-    setEvoNoAssessment(false);
-    setEvoSaving(false);
-    setEvoOpen(hasEvolutionContext);
-    setEvoLoading(hasEvolutionContext);
-
-    const match = knownPatients.find((p) => p.email === apt.patient_email);
-    setSelectedPatientKey(match ? match.email : "__new__");
-
-    // 3) Open modal AFTER state is set
-    setModalOpen(true);
-
-    // 4) Fetch async data, tied to this session
-    if (hasEvolutionContext) {
-      void prepareEvolutionEditor(apt);
-    }
-
-    // Load extra fields from patients table (won't affect main visible layout)
-    if (apt.patient_name || apt.patient_email) {
-      try {
-        let query = (supabase.from("patients" as any) as any).select("*");
-        if (clinicId) {
-          query = query.eq("clinic_id", clinicId);
-        } else if (professionalId) {
-          query = query.eq("professional_id", professionalId);
-        }
-        if (apt.patient_email) {
-          query = query.eq("email", apt.patient_email);
-        } else {
-          query = query.eq("full_name", apt.patient_name);
-        }
-        const { data } = await query.limit(1);
-        // Guard: ignore if session changed (modal was closed/reopened)
-        if (modalSessionRef.current !== session) return;
-        if (data && data.length > 0) {
-          const p = data[0];
-          setFormCpf(p.cpf ? formatCpf(p.cpf) : "");
-          setFormBirthDate(p.birth_date || "");
-          setFormPhone(p.phone ? formatPhone(p.phone) : "");
-          setFormAddress(p.address || "");
-        }
-      } catch {}
-    }
-  };
-
-  const handleSave = async () => {
-    if (!formName.trim()) return;
-    if (selectedPatientKey === "__new__" && !formEmail.trim()) {
-      setEmailWarning(true);
-      return;
-    }
-    setSaving(true);
+  // ---- Mutations (called by child or local handlers) ----
+  const handleSubmitAppointment = useCallback(async ({
+    isEdit, editId, payload, extras,
+  }: {
+    isEdit: boolean;
+    editId: string | null;
+    payload: AppointmentEditorPayload;
+    extras: AppointmentEditorExtras;
+  }): Promise<boolean> => {
     try {
-      const effectiveProfId = professionalId || formProfessionalId;
-      if (!effectiveProfId) {
-        toast({ title: isPt ? "Selecione um profissional" : "Select a professional", variant: "destructive" });
-        setSaving(false);
-        return;
-      }
-      const trimmedEmail = formEmail.trim();
-      const payload: any = {
-        professional_id: effectiveProfId,
-        patient_name: formName.trim(),
-        patient_email: trimmedEmail || null,
-        appointment_date: format(formDate, "yyyy-MM-dd"),
-        appointment_time: formTime,
-        duration_minutes: parseInt(formDuration) || 50,
-        type: formType,
-        service_type: formServiceType,
-        notes: formNotes || null,
-      };
-      if (clinicId) payload.clinic_id = clinicId;
-
+      const effectiveProfId = payload.professional_id;
       if (isSimulated) {
-        if (editingApt) {
-          setAppointments(prev => prev.map(a => a.id === editingApt.id ? { ...a, ...payload } : a));
+        if (isEdit && editId) {
+          setAppointments(prev => prev.map(a => a.id === editId ? { ...a, ...payload } : a));
         } else {
           const newApt: Appointment = { id: `sim-${Date.now()}`, ...payload, status: "scheduled", created_at: new Date().toISOString() };
           setAppointments(prev => [...prev, newApt]);
         }
-        toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
+        toast({ title: isEdit ? t("schedule.updated") : t("schedule.created") });
         closeAppointmentModal();
-        setSaving(false);
-        return;
+        return true;
       }
 
-      // Build patient data for upsert
+      const trimmedEmail = (payload.patient_email || "").trim();
       const patientRow: any = {
-        full_name: formName.trim(),
+        full_name: payload.patient_name,
         email: trimmedEmail || null,
-        cpf: formCpf.replace(/\D/g, "") || null,
-        birth_date: formBirthDate || null,
-        phone: formPhone.replace(/\D/g, "") || null,
-        address: formAddress.trim() || null,
+        cpf: extras.cpf.replace(/\D/g, "") || null,
+        birth_date: extras.birth_date || null,
+        phone: extras.phone.replace(/\D/g, "") || null,
+        address: extras.address.trim() || null,
       };
-      if (clinicId) {
-        patientRow.clinic_id = clinicId;
-      } else {
-        patientRow.professional_id = effectiveProfId;
-      }
+      if (clinicId) patientRow.clinic_id = clinicId;
+      else patientRow.professional_id = effectiveProfId;
 
-      if (editingApt) {
+      if (isEdit && editId) {
         await (supabase.from("professional_appointments" as any) as any)
-          .update(payload)
-          .eq("id", editingApt.id);
-
-        // Also update patients table (match by email or name)
-        if (trimmedEmail || formName.trim()) {
+          .update(payload).eq("id", editId);
+        if (trimmedEmail || payload.patient_name) {
           let matchQuery = (supabase.from("patients" as any) as any).select("id");
           if (clinicId) matchQuery = matchQuery.eq("clinic_id", clinicId);
           else matchQuery = matchQuery.eq("professional_id", effectiveProfId);
-          if (editingApt.patient_email) matchQuery = matchQuery.eq("email", editingApt.patient_email);
-          else matchQuery = matchQuery.eq("full_name", editingApt.patient_name);
-          const { data: existingPatients } = await matchQuery.limit(1);
-
-          if (existingPatients && existingPatients.length > 0) {
-            await (supabase.from("patients" as any) as any)
-              .update(patientRow)
-              .eq("id", existingPatients[0].id);
+          if (trimmedEmail) matchQuery = matchQuery.eq("email", trimmedEmail);
+          else matchQuery = matchQuery.eq("full_name", payload.patient_name);
+          const { data: existing } = await matchQuery.limit(1);
+          if (existing && existing.length > 0) {
+            await (supabase.from("patients" as any) as any).update(patientRow).eq("id", existing[0].id);
           } else {
             await (supabase.from("patients" as any) as any).insert(patientRow);
           }
@@ -870,7 +604,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         }
       } else {
         await (supabase.from("professional_appointments" as any) as any).insert(payload);
-        if (selectedPatientKey === "__new__" && trimmedEmail) {
+        if (extras.selectedPatientKey === "__new__" && trimmedEmail) {
           const { data: existing } = await supabase
             .from("assessments")
             .select("id")
@@ -879,11 +613,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             .limit(1);
           if (!existing || existing.length === 0) {
             const assessmentInsert: any = {
-              type: "professional",
-              status: "completed",
+              type: "professional", status: "completed",
               professional_id: effectiveProfId,
-              patient_name: formName.trim(),
-              patient_email: trimmedEmail,
+              patient_name: payload.patient_name, patient_email: trimmedEmail,
               anamnesis_data: { externalPatient: true },
             };
             if (clinicId) assessmentInsert.clinic_id = clinicId;
@@ -896,28 +628,73 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             });
           }
         }
-        // Create/update patient record with extra fields
-        if (selectedPatientKey === "__new__" && formName.trim()) {
+        if (extras.selectedPatientKey === "__new__" && payload.patient_name) {
           await (supabase.from("patients" as any) as any).upsert(patientRow, { ignoreDuplicates: true });
           window.dispatchEvent(new CustomEvent("reload-pro-patients"));
         }
       }
-      toast({ title: editingApt ? t("schedule.updated") : t("schedule.created") });
+      toast({ title: isEdit ? t("schedule.updated") : t("schedule.created") });
       closeAppointmentModal();
       setKnownPatients((prev) => {
-        const te = formEmail.trim();
-        if (te && !prev.find((p) => p.email === te)) {
-          return [...prev, { name: formName.trim(), email: te }];
+        if (trimmedEmail && !prev.find((p) => p.email === trimmedEmail)) {
+          return [...prev, { name: payload.patient_name, email: trimmedEmail }];
         }
         return prev;
       });
       fetchAppointments();
+      return true;
+    } catch {
+      toast({ title: t("schedule.error"), variant: "destructive" });
+      return false;
+    }
+  }, [clinicId, closeAppointmentModal, fetchAppointments, isSimulated, t, toast]);
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    if (isSimulated) {
+      setAppointments(prev => prev.filter(a => a.id !== deleteId));
+      toast({ title: t("schedule.deleted") });
+      setDeleteId(null);
+      closeAppointmentModal();
+      setDeleting(false);
+      return;
+    }
+    try {
+      await (supabase.from("professional_appointments" as any) as any).delete().eq("id", deleteId);
+      toast({ title: t("schedule.deleted") });
+      setDeleteId(null);
+      closeAppointmentModal();
+      fetchAppointments();
     } catch {
       toast({ title: t("schedule.error"), variant: "destructive" });
     } finally {
-      setSaving(false);
+      setDeleting(false);
     }
   };
+
+  const handleMarkComplete = async (id: string) => {
+    if (isSimulated) {
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "completed" } : a));
+      return;
+    }
+    await (supabase.from("professional_appointments" as any) as any)
+      .update({ status: "completed" })
+      .eq("id", id);
+    fetchAppointments();
+  };
+
+  const handleSetStatus = async (id: string, newStatus: string) => {
+    if (isSimulated) {
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+      return;
+    }
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+    await (supabase.from("professional_appointments" as any) as any)
+      .update({ status: newStatus })
+      .eq("id", id);
+  };
+
 
   const handleDelete = async () => {
     if (!deleteId) return;
