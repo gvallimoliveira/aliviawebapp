@@ -1417,28 +1417,22 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
       {/* Appointment Modal — scrollable */}
       <Dialog open={modalOpen} onOpenChange={(open) => {
-        setModalOpen(open);
         if (!open) {
-          evoRequestIdRef.current += 1;
-          resetEvolutionEditorState({
-            setEvoOpen,
-            setEvoLoading,
-            setEvoSaving,
-            setEvoText,
-            setEvoAssessmentId,
-            setEvoExistingContent,
-            setEvoNoAssessment,
-            clearRequestKey: () => { evoActiveRequestKeyRef.current = ""; },
-          });
+          closeAppointmentModal();
+        } else {
+          setModalOpen(true);
         }
       }}>
-        <DialogContent key={editingApt?.id || "new-appointment"} className="max-w-md max-h-[92vh] overflow-hidden px-4 py-5 sm:px-6 sm:py-6 flex flex-col">
+        <DialogContent
+          key={`apt-modal-${modalSessionId}`}
+          className="w-[calc(100vw-1.5rem)] max-w-md max-h-[92vh] overflow-hidden px-4 py-5 sm:px-6 sm:py-6 flex flex-col"
+        >
           <DialogHeader>
             <DialogTitle>{editingApt ? t("schedule.edit") : t("schedule.new")}</DialogTitle>
             <DialogDescription>{t("schedule.form_desc")}</DialogDescription>
           </DialogHeader>
           <ScrollArea className="flex-1 -mx-1 pr-1">
-            <div className="space-y-3 pb-4 pl-1 pr-2">
+            <div className="space-y-3 pb-4 pl-1 pr-2 min-w-0">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">{t("schedule.date")}</label>
