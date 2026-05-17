@@ -306,6 +306,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [evolutionReloadTick, setEvolutionReloadTick] = useState(0);
   const evoRequestIdRef = useRef(0);
   const evoActiveRequestKeyRef = useRef("");
+  // Unique session per modal open — guarantees full remount and async invalidation
+  const modalSessionRef = useRef(0);
+  const [modalSessionId, setModalSessionId] = useState(0);
 
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
