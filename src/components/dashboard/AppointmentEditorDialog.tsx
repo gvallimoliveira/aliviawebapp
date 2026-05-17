@@ -678,7 +678,7 @@ const AppointmentEditorDialog = ({
                 <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("schedule.notes_ph")} className="mt-1 text-xs min-h-[60px]" />
               </section>
             </div>
-          </ScrollArea>
+          </div>
 
           <DialogFooter className="flex-col-reverse gap-2 sm:flex-row px-4 py-3 sm:px-6 border-t border-border/40">
             {isEdit && currentApt && (
