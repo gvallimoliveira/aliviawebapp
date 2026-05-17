@@ -129,34 +129,8 @@ const matchesAppointmentEvolution = (entry: EvolutionEntry, apt: Appointment) =>
   return !entry.appointmentTime || !aptTime || entry.appointmentTime === aptTime;
 };
 
-const resetEvolutionEditorState = ({
-  setEvoOpen,
-  setEvoLoading,
-  setEvoSaving,
-  setEvoText,
-  setEvoAssessmentId,
-  setEvoExistingContent,
-  setEvoNoAssessment,
-  clearRequestKey,
-}: {
-  setEvoOpen: (value: boolean) => void;
-  setEvoLoading: (value: boolean) => void;
-  setEvoSaving: (value: boolean) => void;
-  setEvoText: (value: string) => void;
-  setEvoAssessmentId: (value: string | null) => void;
-  setEvoExistingContent: (value: string) => void;
-  setEvoNoAssessment: (value: boolean) => void;
-  clearRequestKey?: () => void;
-}) => {
-  clearRequestKey?.();
-  setEvoOpen(false);
-  setEvoLoading(false);
-  setEvoSaving(false);
-  setEvoText("");
-  setEvoAssessmentId(null);
-  setEvoExistingContent("");
-  setEvoNoAssessment(false);
-};
+
+
 
 interface ProScheduleProps {
   professionalId?: string;
@@ -696,123 +670,6 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   };
 
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    setDeleting(true);
-    if (isSimulated) {
-      setAppointments(prev => prev.filter(a => a.id !== deleteId));
-      toast({ title: t("schedule.deleted") });
-      setDeleteId(null);
-      closeAppointmentModal();
-      setDeleting(false);
-      return;
-    }
-    try {
-      await (supabase.from("professional_appointments" as any) as any).delete().eq("id", deleteId);
-      toast({ title: t("schedule.deleted") });
-      setDeleteId(null);
-      closeAppointmentModal();
-      fetchAppointments();
-    } catch {
-      toast({ title: t("schedule.error"), variant: "destructive" });
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  const handleMarkComplete = async (id: string) => {
-    if (isSimulated) {
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "completed" } : a));
-      return;
-    }
-    await (supabase.from("professional_appointments" as any) as any)
-      .update({ status: "completed" })
-      .eq("id", id);
-    fetchAppointments();
-  };
-
-  const handleSetStatus = async (id: string, newStatus: string) => {
-    if (isSimulated) {
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
-      setEditingApt(prev => prev && prev.id === id ? { ...prev, status: newStatus } : prev);
-      return;
-    }
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
-    setEditingApt(prev => prev && prev.id === id ? { ...prev, status: newStatus } : prev);
-    await (supabase.from("professional_appointments" as any) as any)
-      .update({ status: newStatus })
-      .eq("id", id);
-  };
-
-  // Inline evolution helpers
-  const openEvolutionEditor = async () => {
-    await prepareEvolutionEditor();
-  };
-
-  const saveEvolution = async () => {
-    const { targetApt, effectiveProId } = getEvolutionContext();
-    if (!targetApt || !effectiveProId || !evoAssessmentId || !evoText.trim()) return;
-    setEvoSaving(true);
-    try {
-      const stamp = `${targetApt.appointment_date} ${targetApt.appointment_time?.slice(0, 5) || "12:00"}`;
-      const entry = `[${stamp}]\n${evoText.trim()}`;
-      const newContent = evoExistingContent ? `${evoExistingContent}\n\n${entry}` : entry;
-      const { error } = await supabase.from("professional_notes").upsert(
-        { professional_id: effectiveProId, assessment_id: evoAssessmentId, content: newContent, updated_at: new Date().toISOString() },
-        { onConflict: "professional_id,assessment_id" }
-      );
-      if (error) throw error;
-      toast({ title: isPt ? "Evolução registrada" : language === "es" ? "Evolución registrada" : "Evolution saved" });
-      setEvoExistingContent(newContent);
-      setEvoText("");
-      setEvoOpen(false);
-      setEditingApt((prev) => prev ? { ...prev } : prev);
-      setEvolutionReloadTick(t => t + 1);
-    } catch (e: any) {
-      toast({ title: isPt ? "Erro ao salvar evolução" : "Failed to save evolution", description: e?.message, variant: "destructive" });
-    } finally {
-      setEvoSaving(false);
-    }
-  };
-
-  const [evoDeleteConfirm, setEvoDeleteConfirm] = useState(false);
-  const [evoDeleting, setEvoDeleting] = useState(false);
-
-  const evoEntries = parseEvolutionEntries(evoExistingContent);
-  const appointmentEvoEntries = editingApt
-    ? evoEntries.filter((entry) => matchesAppointmentEvolution(entry, editingApt))
-    : [];
-  const lastEvoEntry = appointmentEvoEntries[appointmentEvoEntries.length - 1] || null;
-
-  const deleteLastEvolution = async () => {
-    const { effectiveProId } = getEvolutionContext();
-    if (!effectiveProId || !evoAssessmentId || !lastEvoEntry) return;
-    setEvoDeleting(true);
-    try {
-      const targetIndex = evoEntries.findIndex((entry, index) =>
-        index === evoEntries.lastIndexOf(lastEvoEntry) && entry.raw === lastEvoEntry.raw
-      );
-      const remaining = evoEntries
-        .filter((_, index) => index !== targetIndex)
-        .map((entry) => entry.raw)
-        .join("\n\n");
-      const { error } = await supabase.from("professional_notes").upsert(
-        { professional_id: effectiveProId, assessment_id: evoAssessmentId, content: remaining, updated_at: new Date().toISOString() },
-        { onConflict: "professional_id,assessment_id" }
-      );
-      if (error) throw error;
-      setEvoExistingContent(remaining);
-      setEditingApt((prev) => prev ? { ...prev } : prev);
-      setEvolutionReloadTick(t => t + 1);
-      toast({ title: isPt ? "Última evolução excluída" : language === "es" ? "Última evolución eliminada" : "Last evolution deleted" });
-    } catch (e: any) {
-      toast({ title: isPt ? "Erro ao excluir evolução" : "Failed to delete evolution", description: e?.message, variant: "destructive" });
-    } finally {
-      setEvoDeleting(false);
-      setEvoDeleteConfirm(false);
-    }
-  };
-
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const todayScheduledCount = appointments.filter(a => a.appointment_date === todayStr && a.status === "scheduled").length;
 
@@ -1167,309 +1024,32 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         </div>
       </div>
 
-      {/* Appointment Modal — scrollable */}
-      <Dialog open={modalOpen} onOpenChange={(open) => {
-        if (!open) {
-          closeAppointmentModal();
-        } else {
-          setModalOpen(true);
-        }
-      }}>
-        <DialogContent
-          key={`apt-modal-${modalSessionId}`}
-          className="w-[calc(100vw-1.5rem)] max-w-md max-h-[92vh] overflow-hidden px-4 py-5 sm:px-6 sm:py-6 flex flex-col"
-        >
-          <DialogHeader>
-            <DialogTitle>{editingApt ? t("schedule.edit") : t("schedule.new")}</DialogTitle>
-            <DialogDescription>{t("schedule.form_desc")}</DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="flex-1 -mx-1 pr-1">
-            <div className="space-y-3 pb-4 pl-1 pr-2 min-w-0">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.date")}</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="w-full justify-start text-xs gap-1.5 mt-1">
-                        <CalendarIcon className="h-3.5 w-3.5" />
-                        {format(formDate, "dd/MM/yyyy")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formDate}
-                        onSelect={(d) => d && setFormDate(d)}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.time")}</label>
-                  <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
-                </div>
-              </div>
-              {isClinicOnlyMode && clinicProfessionals.length > 0 && (
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">{isPt ? "Profissional" : "Professional"} *</label>
-                  <Select value={formProfessionalId} onValueChange={setFormProfessionalId}>
-                    <SelectTrigger className="mt-1 text-xs h-9">
-                      <SelectValue placeholder={isPt ? "Selecione o profissional" : "Select professional"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clinicProfessionals.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
-                <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
-                  <SelectTrigger className="mt-1 text-xs h-9">
-                    <SelectValue placeholder={t("schedule.select_patient_ph")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
-                    {knownPatients.map((p) => (
-                      <SelectItem key={p.email} value={p.email}>
-                        {p.name} ({p.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.patient_name")} *</label>
-                <Input
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder={t("schedule.patient_name_ph")}
-                  className="mt-1 text-xs h-9"
-                  disabled={selectedPatientKey !== "__new__"}
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">
-                  {t("schedule.patient_email")} {selectedPatientKey === "__new__" && "*"}
-                </label>
-                <Input
-                  value={formEmail}
-                  onChange={(e) => { setFormEmail(e.target.value); setEmailWarning(false); }}
-                  placeholder={t("schedule.patient_email_ph")}
-                  className={cn("mt-1 text-xs h-9", emailWarning && "border-destructive")}
-                  disabled={selectedPatientKey !== "__new__"}
-                />
-                {emailWarning && (
-                  <p className="text-[10px] text-destructive mt-1">{t("schedule.email_required")}</p>
-                )}
-              </div>
-              {selectedPatientKey === "__new__" && (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">CPF</label>
-                      <Input value={formCpf} onChange={(e) => setFormCpf(formatCpf(e.target.value))} placeholder="000.000.000-00" className="mt-1 text-xs h-9" maxLength={14} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Nascimento" : "Birth date"}</label>
-                      <Input type="date" value={formBirthDate} onChange={(e) => setFormBirthDate(e.target.value)} className="mt-1 text-xs h-9" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Celular" : "Phone"}</label>
-                      <Input value={formPhone} onChange={(e) => setFormPhone(formatPhone(e.target.value))} placeholder="(00) 00000-0000" className="mt-1 text-xs h-9" maxLength={15} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Endereço" : "Address"}</label>
-                      <Input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder={isPt ? "Rua, nº, bairro" : "Street, number"} className="mt-1 text-xs h-9" />
-                    </div>
-                  </div>
-                </>
-              )}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">{isPt ? "Serviço" : "Service"}</label>
-                  <Select value={formServiceType} onValueChange={setFormServiceType}>
-                    <SelectTrigger className="mt-1 text-xs h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(SERVICE_TYPE_LABELS).map(([key, labels]) => (
-                        <SelectItem key={key} value={key}>
-                          <span className="flex items-center gap-2">
-                            <span className={cn("w-2 h-2 rounded-full", SERVICE_TYPE_DOT[key])} />
-                            {labels[language] || labels.en}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
-                  <Input type="number" value={formDuration} onChange={(e) => setFormDuration(e.target.value)} className="mt-1 text-xs h-9" min="15" max="180" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">{t("schedule.type")}</label>
-                  <Select value={formType} onValueChange={setFormType}>
-                    <SelectTrigger className="mt-1 text-xs h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="in_person">{t("schedule.type_in_person")}</SelectItem>
-                      <SelectItem value="video_call">{t("schedule.type_video_call")}</SelectItem>
-                      <SelectItem value="external">{t("schedule.type_external")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div />
-              </div>
-              {editingApt && (
-                <div className="pt-2 border-t border-border/40">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    {isPt ? "Status do atendimento" : language === "es" ? "Estado de la cita" : "Appointment status"}
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-1.5">
-                    {(["completed", "scheduled", "no_show", "no_show_justified"] as const).map((st) => {
-                      const active = editingApt.status === st;
-                      const label = STATUS_LABELS[st]?.[language] || st;
-                      return (
-                        <button
-                          key={st}
-                          type="button"
-                          onClick={() => handleSetStatus(editingApt.id, st)}
-                          className={cn(
-                            "text-[10px] font-medium px-2 py-1.5 rounded-md border transition-all",
-                            STATUS_COLORS[st],
-                            active ? "ring-2 ring-primary ring-offset-1 shadow-sm" : "opacity-70 hover:opacity-100"
-                          )}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              {editingApt && (() => {
-                const { effectiveProId, evolutionEmail } = getEvolutionContext();
-                return !!(evolutionEmail && effectiveProId);
-              })() && (
-                <div className="pt-2 border-t border-border/40">
-                  <div className="flex items-center justify-between gap-2">
-                    <label className="text-xs font-medium text-muted-foreground">
-                      {isPt ? "Evolução do atendimento" : language === "es" ? "Evolución de la cita" : "Session evolution"}
-                    </label>
-                    {!evoOpen && !evoLoading && (
-                      <Button type="button" size="sm" variant="outline" className="text-xs gap-1.5 h-7" onClick={openEvolutionEditor}>
-                        <Pencil className="h-3 w-3" />
-                        {isPt ? "Registrar evolução" : language === "es" ? "Registrar evolución" : "Add evolution"}
-                      </Button>
-                    )}
-                  </div>
-                  {(evoOpen || evoLoading) && (
-                    <div className="mt-2 space-y-2.5">
-                      {evoLoading ? (
-                        <div className="flex min-h-[88px] items-center gap-2 rounded-md border border-border/40 bg-muted/20 px-3 py-3 text-xs text-muted-foreground">
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          {isPt ? "Carregando..." : "Loading..."}
-                        </div>
-                      ) : evoNoAssessment ? (
-                        <p className="text-[11px] text-muted-foreground">
-                          {isPt
-                            ? "Não foi possível preparar a evolução deste atendimento agora. Tente novamente em instantes."
-                            : language === "es"
-                              ? "No fue posible preparar la evolución de esta cita ahora. Inténtelo de nuevo en unos instantes."
-                              : "Couldn't prepare this appointment's evolution right now. Please try again in a moment."}
-                        </p>
-                      ) : (
-                        <>
-                          {evoExistingContent && (
-                            <details className="text-[11px] rounded-md border border-border/40 bg-muted/30 p-2">
-                              <summary className="cursor-pointer text-muted-foreground">
-                                {isPt ? "Ver evoluções anteriores" : language === "es" ? "Ver evoluciones anteriores" : "Show previous evolutions"}
-                              </summary>
-                              <pre className="whitespace-pre-wrap mt-2 max-h-32 overflow-y-auto font-sans text-foreground/80">{evoExistingContent}</pre>
-                            </details>
-                          )}
-                          <Textarea
-                            value={evoText}
-                            onChange={(e) => setEvoText(e.target.value)}
-                            placeholder={isPt ? "Descreva o que foi feito neste atendimento..." : language === "es" ? "Describa lo realizado en esta sesión..." : "Describe what was done in this session..."}
-                            className="text-xs min-h-[132px] w-full resize-none leading-relaxed px-3 py-2.5"
-                            autoFocus
-                          />
-                          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end sm:items-center">
-                            {appointmentEvoEntries.length > 0 && (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                className="text-xs h-8 gap-1.5 text-destructive hover:text-destructive sm:mr-auto"
-                                onClick={() => setEvoDeleteConfirm(true)}
-                                disabled={evoDeleting}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                                {isPt ? "Excluir última" : language === "es" ? "Eliminar última" : "Delete last"}
-                              </Button>
-                            )}
-                            <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
-                            <Button type="button" size="sm" variant="ghost" className="text-xs h-8 px-3" onClick={() => { setEvoOpen(false); setEvoText(""); }}>
-                              {isPt ? "Cancelar" : language === "es" ? "Cancelar" : "Cancel"}
-                            </Button>
-                            <Button type="button" size="sm" className="text-xs gap-1.5 h-8 min-w-[170px]" onClick={saveEvolution} disabled={evoSaving || !evoText.trim()}>
-                              {evoSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                              {isPt ? "Salvar evolução" : language === "es" ? "Guardar evolución" : "Save evolution"}
-                            </Button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("schedule.notes")}</label>
-                <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("schedule.notes_ph")} className="mt-1 text-xs min-h-[60px]" />
-              </div>
-            </div>
-          </ScrollArea>
-          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-border/40">
-            {editingApt && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs gap-1.5 mr-auto"
-                onClick={() => { setDeleteId(editingApt.id); }}
-              >
-                <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                {t("schedule.delete")}
-              </Button>
-            )}
-            {editingApt?.patient_email && onViewPatient && (
-              <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => {
-                onViewPatient(editingApt.patient_email!);
-                closeAppointmentModal();
-              }}>
-                {t("schedule.view_patient")}
-                <ChevronRight className="h-3 w-3" />
-              </Button>
-            )}
-            <Button size="sm" className="gap-1.5 rounded-xl" onClick={handleSave} disabled={saving || !formName.trim()}>
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CalendarIcon className="h-3.5 w-3.5" />}
-              {editingApt ? t("schedule.save_edit") : t("schedule.save")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Appointment Editor — fully isolated, fresh per open */}
+      {modalState.open && (
+        <AppointmentEditorDialog
+          key={`apt-editor-${modalState.sessionId}`}
+          open={modalState.open}
+          onClose={closeAppointmentModal}
+          initialApt={modalState.apt as unknown as AptInput | null}
+          defaultDate={modalState.defaultDate}
+          defaultTime={modalState.defaultTime}
+          professionalId={professionalId}
+          clinicId={clinicId}
+          isSimulated={isSimulated}
+          isClinicOnlyMode={isClinicOnlyMode}
+          clinicProfessionals={clinicProfessionals}
+          knownPatients={knownPatients}
+          language={language}
+          isPt={isPt}
+          t={t}
+          serviceMaps={{ labels: SERVICE_TYPE_LABELS, dot: SERVICE_TYPE_DOT }}
+          onSubmit={handleSubmitAppointment}
+          onRequestDelete={(id) => setDeleteId(id)}
+          onSetStatus={handleSetStatus}
+          onViewPatient={onViewPatient}
+          onEvolutionChanged={() => setEvolutionReloadTick((v) => v + 1)}
+        />
+      )}
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
@@ -1486,40 +1066,6 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
               onClick={handleDelete}
             >
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("schedule.confirm_delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={evoDeleteConfirm} onOpenChange={(open) => { if (!open && !evoDeleting) setEvoDeleteConfirm(false); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {isPt ? "Excluir última evolução?" : language === "es" ? "¿Eliminar última evolución?" : "Delete last evolution?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <span>
-                {isPt
-                  ? "Esta ação removerá permanentemente o último registro de evolução deste paciente. Não é possível desfazer."
-                  : language === "es"
-                    ? "Esta acción eliminará permanentemente el último registro de evolución. No se puede deshacer."
-                    : "This permanently removes the last evolution entry. This action cannot be undone."}
-              </span>
-              {lastEvoEntry && (
-                <span className="block mt-2 rounded-md border border-border/40 bg-muted/40 p-2 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto font-mono">
-                  {lastEvoEntry.raw}
-                </span>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={evoDeleting}>{t("session_notes.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={evoDeleting}
-              onClick={(e) => { e.preventDefault(); deleteLastEvolution(); }}
-            >
-              {evoDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : (isPt ? "Excluir" : language === "es" ? "Eliminar" : "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
