@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DEMO_APPOINTMENTS, DEMO_TEAM } from "@/data/mockClinicData";
@@ -70,6 +70,9 @@ const buildEvolutionKey = (email: string, date: string, time?: string | null) =>
   `${normalizeEvolutionEmail(email)}|${date}|${(time || "").slice(0, 5)}`;
 
 const buildEvolutionDayKey = (email: string, date: string) => `${normalizeEvolutionEmail(email)}|${date}`;
+
+const buildEvolutionRequestKey = (apt: Appointment) =>
+  `${apt.id}|${normalizeEvolutionEmail(apt.patient_email || apt.patient_name || apt.id)}|${apt.appointment_date}|${(apt.appointment_time || "").slice(0, 5)}`;
 
 const parseEvolutionStamp = (stamp: string) => {
   const normalized = stamp.trim();
@@ -272,6 +275,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [evoExistingContent, setEvoExistingContent] = useState<string>("");
   const [evoNoAssessment, setEvoNoAssessment] = useState(false);
   const [evolutionReloadTick, setEvolutionReloadTick] = useState(0);
+  const evoRequestIdRef = useRef(0);
+  const evoActiveRequestKeyRef = useRef("");
 
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
