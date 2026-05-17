@@ -556,12 +556,16 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const prepareEvolutionEditor = useCallback(async (aptOverride?: Appointment | null) => {
     const { targetApt, effectiveProId, evolutionEmail } = getEvolutionContext(aptOverride);
     if (!targetApt || !evolutionEmail || !effectiveProId) {
-      evoActiveRequestKeyRef.current = "";
-      setEvoOpen(false);
-      setEvoLoading(false);
-      setEvoAssessmentId(null);
-      setEvoExistingContent("");
-      setEvoNoAssessment(false);
+      resetEvolutionEditorState({
+        setEvoOpen,
+        setEvoLoading,
+        setEvoSaving,
+        setEvoText,
+        setEvoAssessmentId,
+        setEvoExistingContent,
+        setEvoNoAssessment,
+        clearRequestKey: () => { evoActiveRequestKeyRef.current = ""; },
+      });
       return;
     }
 
@@ -706,10 +710,13 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   };
 
   const openEdit = async (apt: Appointment) => {
+    evoRequestIdRef.current += 1;
+    evoActiveRequestKeyRef.current = "";
     setEditingApt(apt);
     setFormProfessionalId(apt.professional_id || professionalId || "");
-    setEvoOpen(false);
+    setEvoOpen(true);
     setEvoLoading(!!(apt.patient_email && (apt.professional_id || professionalId || formProfessionalId)));
+    setEvoSaving(false);
     setEvoText("");
     setEvoAssessmentId(null);
     setEvoExistingContent("");
@@ -1362,14 +1369,29 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       </div>
 
       {/* Appointment Modal — scrollable */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+      <Dialog open={modalOpen} onOpenChange={(open) => {
+        setModalOpen(open);
+        if (!open) {
+          evoRequestIdRef.current += 1;
+          resetEvolutionEditorState({
+            setEvoOpen,
+            setEvoLoading,
+            setEvoSaving,
+            setEvoText,
+            setEvoAssessmentId,
+            setEvoExistingContent,
+            setEvoNoAssessment,
+            clearRequestKey: () => { evoActiveRequestKeyRef.current = ""; },
+          });
+        }
+      }}>
+        <DialogContent key={editingApt?.id || "new-appointment"} className="max-w-md max-h-[92vh] overflow-hidden px-4 py-5 sm:px-6 sm:py-6 flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingApt ? t("schedule.edit") : t("schedule.new")}</DialogTitle>
             <DialogDescription>{t("schedule.form_desc")}</DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 -mx-6 px-6">
-            <div className="space-y-3 pb-4">
+          <ScrollArea className="flex-1 -mx-1 pr-1">
+            <div className="space-y-3 pb-4 pl-1 pr-2">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">{t("schedule.date")}</label>
