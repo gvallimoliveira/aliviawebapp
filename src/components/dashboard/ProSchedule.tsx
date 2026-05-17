@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DEMO_APPOINTMENTS, DEMO_TEAM } from "@/data/mockClinicData";
@@ -70,6 +70,9 @@ const buildEvolutionKey = (email: string, date: string, time?: string | null) =>
   `${normalizeEvolutionEmail(email)}|${date}|${(time || "").slice(0, 5)}`;
 
 const buildEvolutionDayKey = (email: string, date: string) => `${normalizeEvolutionEmail(email)}|${date}`;
+
+const buildEvolutionRequestKey = (apt: Appointment) =>
+  `${apt.id}|${normalizeEvolutionEmail(apt.patient_email || apt.patient_name || apt.id)}|${apt.appointment_date}|${(apt.appointment_time || "").slice(0, 5)}`;
 
 const parseEvolutionStamp = (stamp: string) => {
   const normalized = stamp.trim();
@@ -272,6 +275,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [evoExistingContent, setEvoExistingContent] = useState<string>("");
   const [evoNoAssessment, setEvoNoAssessment] = useState(false);
   const [evolutionReloadTick, setEvolutionReloadTick] = useState(0);
+  const evoRequestIdRef = useRef(0);
+  const evoActiveRequestKeyRef = useRef("");
 
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
@@ -522,6 +527,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const prepareEvolutionEditor = useCallback(async (aptOverride?: Appointment | null) => {
     const { targetApt, effectiveProId, evolutionEmail } = getEvolutionContext(aptOverride);
     if (!targetApt || !evolutionEmail || !effectiveProId) {
+      evoActiveRequestKeyRef.current = "";
       setEvoOpen(false);
       setEvoLoading(false);
       setEvoAssessmentId(null);
@@ -530,11 +536,21 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       return;
     }
 
+    const requestId = ++evoRequestIdRef.current;
+    const requestKey = buildEvolutionRequestKey(targetApt);
+    evoActiveRequestKeyRef.current = requestKey;
+
     setEvoOpen(true);
     setEvoLoading(true);
     setEvoNoAssessment(false);
     setEvoExistingContent("");
     setEvoAssessmentId(null);
+
+    const applyIfCurrent = (callback: () => void) => {
+      if (evoRequestIdRef.current !== requestId || evoActiveRequestKeyRef.current !== requestKey) return false;
+      callback();
+      return true;
+    };
 
     try {
       const aptDayStart = `${targetApt.appointment_date}T00:00:00`;
@@ -600,7 +616,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         assessmentId = createdAssessment.id;
       }
 
-      setEvoAssessmentId(assessmentId);
+      if (!applyIfCurrent(() => setEvoAssessmentId(assessmentId))) return;
 
       const { data: existingRows } = await supabase
         .from("professional_notes")
@@ -610,16 +626,20 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         .limit(5);
 
       const matchingExisting = existingRows?.find((row: any) => row.professional_id === effectiveProId) || existingRows?.[0];
-      setEvoExistingContent(matchingExisting?.content || "");
-    } catch (e: any) {
-      setEvoNoAssessment(true);
-      toast({
-        title: isPt ? "Não foi possível abrir a evolução" : "Failed to open evolution",
-        description: e?.message,
-        variant: "destructive",
+      applyIfCurrent(() => {
+        setEvoExistingContent(matchingExisting?.content || "");
+        setEvoNoAssessment(false);
       });
+    } catch (e: any) {
+      if (applyIfCurrent(() => setEvoNoAssessment(true))) {
+        toast({
+          title: isPt ? "Não foi possível abrir a evolução" : "Failed to open evolution",
+          description: e?.message,
+          variant: "destructive",
+        });
+      }
     } finally {
-      setEvoLoading(false);
+      applyIfCurrent(() => setEvoLoading(false));
     }
   }, [clinicId, formName, getEvolutionContext, isPt, toast]);
 
@@ -659,7 +679,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const openEdit = async (apt: Appointment) => {
     setEditingApt(apt);
     setFormProfessionalId(apt.professional_id || professionalId || "");
-    setEvoOpen(!!(apt.patient_email && (apt.professional_id || professionalId || formProfessionalId)));
+    setEvoOpen(false);
+    setEvoLoading(!!(apt.patient_email && (apt.professional_id || professionalId || formProfessionalId)));
     setEvoText("");
     setEvoAssessmentId(null);
     setEvoExistingContent("");
@@ -1498,21 +1519,21 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 return !!(evolutionEmail && effectiveProId);
               })() && (
                 <div className="pt-2 border-t border-border/40">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <label className="text-xs font-medium text-muted-foreground">
                       {isPt ? "Evolução do atendimento" : language === "es" ? "Evolución de la cita" : "Session evolution"}
                     </label>
-                    {!evoOpen && (
+                    {!evoOpen && !evoLoading && (
                       <Button type="button" size="sm" variant="outline" className="text-xs gap-1.5 h-7" onClick={openEvolutionEditor}>
                         <Pencil className="h-3 w-3" />
                         {isPt ? "Registrar evolução" : language === "es" ? "Registrar evolución" : "Add evolution"}
                       </Button>
                     )}
                   </div>
-                  {evoOpen && (
-                    <div className="mt-2 space-y-2">
+                  {(evoOpen || evoLoading) && (
+                    <div className="mt-2 space-y-2.5">
                       {evoLoading ? (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                        <div className="flex min-h-[88px] items-center gap-2 rounded-md border border-border/40 bg-muted/20 px-3 py-3 text-xs text-muted-foreground">
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           {isPt ? "Carregando..." : "Loading..."}
                         </div>
@@ -1538,16 +1559,16 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                             value={evoText}
                             onChange={(e) => setEvoText(e.target.value)}
                             placeholder={isPt ? "Descreva o que foi feito neste atendimento..." : language === "es" ? "Describa lo realizado en esta sesión..." : "Describe what was done in this session..."}
-                            className="text-xs min-h-[80px]"
+                            className="text-xs min-h-[112px] resize-none leading-relaxed"
                             autoFocus
                           />
-                          <div className="flex flex-wrap justify-end items-center gap-2">
+                          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end sm:items-center">
                             {appointmentEvoEntries.length > 0 && (
                               <Button
                                 type="button"
                                 size="sm"
                                 variant="ghost"
-                                className="text-xs h-7 gap-1.5 text-destructive hover:text-destructive mr-auto"
+                                className="text-xs h-8 gap-1.5 text-destructive hover:text-destructive sm:mr-auto"
                                 onClick={() => setEvoDeleteConfirm(true)}
                                 disabled={evoDeleting}
                               >
@@ -1555,13 +1576,15 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                                 {isPt ? "Excluir última" : language === "es" ? "Eliminar última" : "Delete last"}
                               </Button>
                             )}
-                            <Button type="button" size="sm" variant="ghost" className="text-xs h-7" onClick={() => { setEvoOpen(false); setEvoText(""); }}>
+                            <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+                            <Button type="button" size="sm" variant="ghost" className="text-xs h-8 px-3" onClick={() => { setEvoOpen(false); setEvoText(""); }}>
                               {isPt ? "Cancelar" : language === "es" ? "Cancelar" : "Cancel"}
                             </Button>
-                            <Button type="button" size="sm" className="text-xs gap-1.5 h-7" onClick={saveEvolution} disabled={evoSaving || !evoText.trim()}>
+                            <Button type="button" size="sm" className="text-xs gap-1.5 h-8 min-w-[170px]" onClick={saveEvolution} disabled={evoSaving || !evoText.trim()}>
                               {evoSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
                               {isPt ? "Salvar evolução" : language === "es" ? "Guardar evolución" : "Save evolution"}
                             </Button>
+                            </div>
                           </div>
                         </>
                       )}
