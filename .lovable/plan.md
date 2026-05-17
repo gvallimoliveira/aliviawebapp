@@ -1,101 +1,114 @@
 ## Objetivo
-Eliminar definitivamente o efeito de abrir o card da agenda com uma exibição antiga e depois trocar para a atual, além de corrigir o recorte/layout do campo de evolução no mobile.
+Reconstruir completamente o modal do card da agenda no modo profissional autônomo para eliminar a exibição antiga antes da atual, corrigir o layout mobile e consolidar num único fluxo confiável:
+- dados cadastrais básicos do paciente
+- dados do agendamento
+- classificação do atendimento (concluído, falta, falta justificada, em aberto)
+- evolução do paciente
+- ações práticas relacionadas ao atendimento
 
-## Causa raiz identificada
-O modal da agenda hoje mistura três problemas no mesmo ciclo de abertura:
-1. **Estado residual do modal**: vários fechamentos usam `setModalOpen(false)` diretamente, mas a limpeza mais completa está concentrada no `onOpenChange`. Isso permite que parte do estado visual e da evolução sobreviva entre aberturas.
-2. **Abertura incremental do conteúdo**: `openEdit` abre o modal e injeta pedaços do estado em sequência, enquanto buscas assíncronas continuam preenchendo dados depois. O resultado é um “flash” com conteúdo antigo/parcial antes do estado final.
-3. **Layout mobile apertado**: o `DialogContent` + `ScrollArea` + bloco de ações da evolução estão no limite da largura/altura do viewport pequeno, gerando sensação de recorte e proporção ruim.
+## O que será refeito
+### 1) Separar o modal do restante da agenda
+Extrair o modal para uma estrutura isolada, com estado próprio de edição, em vez de manter abertura/fechamento e evolução espalhados pelo `ProSchedule`.
 
-## Plano de correção
-### 1) Centralizar o ciclo do modal
-Criar uma rotina única para:
-- resetar **todo** o estado do modal;
-- abrir modal novo;
-- abrir modal de edição;
-- fechar modal.
+Resultado esperado:
+- abrir um card não reaproveita visual do card anterior
+- fechar limpa tudo de forma imediata e previsível
+- reabrir o mesmo card monta uma sessão nova de verdade
 
-Essa rotina vai substituir os fechamentos diretos com `setModalOpen(false)` para que **todo fechamento passe pela mesma limpeza completa**, incluindo:
-- `editingApt`
-- campos do formulário
-- seleção de paciente
-- estado de evolução (`evoOpen`, `evoLoading`, `evoText`, `evoAssessmentId`, `evoExistingContent`, request keys)
-- flags auxiliares de UI
+### 2) Criar um modelo único de estado do modal
+Substituir o conjunto atual de muitos `useState` soltos por um estado único/snapshot de sessão do modal, contendo:
+- identificação do agendamento
+- dados básicos do paciente
+- dados do atendimento
+- status atual
+- estado da evolução
+- flags de carregamento/salvamento
 
-### 2) Tornar a abertura atômica
-Reestruturar `openEdit` para não “montar” o modal aos pedaços.
+Isso evita montagem incremental e reduz o “flash” de conteúdo antigo.
 
-Vou mudar para este fluxo:
-1. montar um snapshot inicial limpo do appointment;
-2. aplicar esse snapshot inteiro antes da renderização útil;
-3. só então abrir o modal;
-4. disparar o carregamento da evolução com um token da sessão atual do modal.
+### 3) Refazer o fluxo de abertura
+Abertura nova do modal:
+1. criar uma nova sessão do modal
+2. montar snapshot inicial completo do agendamento
+3. renderizar o modal já com estrutura final estável
+4. carregar apenas os complementos assíncronos dentro de áreas dedicadas, sem trocar o layout principal
 
-Assim o modal já nasce no estado correto, sem reaproveitar visual anterior.
+### 4) Refazer a seção de classificação do atendimento
+Transformar o status em um bloco claro e estável, sempre visível para atendimentos existentes, com opções práticas:
+- Em aberto
+- Concluído
+- Falta
+- Falta justificada
 
-### 3) Blindar contra resposta assíncrona atrasada
-Apesar de já existir proteção parcial por `requestId`, vou amarrar a evolução a uma **sessão única do modal** (não só ao appointment), invalidando qualquer resposta pendente quando:
-- trocar de card;
-- fechar modal;
-- salvar ou excluir evolução;
-- navegar para o paciente.
+Esse bloco ficará desacoplado da evolução, para que a mudança de status não interfira no restante da renderização.
 
-Isso evita que uma busca velha “pinte” o modal recém-aberto.
+### 5) Refazer a seção de evolução
+Reconstruir a evolução como um bloco próprio do modal, sempre previsível:
+- campo visível de forma consistente
+- possibilidade de preencher em datas passadas
+- carregamento interno sem desmontar a UI
+- histórico anterior em área colapsável ou listagem compacta
+- salvar/excluir última evolução sem provocar re-render confuso do modal inteiro
 
-### 4) Forçar remount correto do conteúdo do modal
-Hoje o `key` do `DialogContent` depende só do `editingApt?.id`. Vou trocar para uma estratégia de **session key** de abertura, para garantir remount real em toda nova abertura — inclusive ao reabrir o mesmo agendamento.
+### 6) Corrigir layout e proporção mobile
+Reorganizar o modal para a viewport atual mobile (~440px):
+- largura útil real do conteúdo
+- padding interno estável
+- textarea maior e sem recorte
+- botões com hierarquia melhor
+- rolagem apenas onde necessário
+- rodapé fixo/estável visualmente
 
-Isso é importante porque reabrir o mesmo card com a mesma `id` pode manter DOM/estado visual reutilizado.
+### 7) Preservar ações úteis
+Manter no modal apenas o que for válido e prático para o fluxo:
+- editar dados principais do agendamento
+- alterar classificação/status
+- registrar evolução
+- excluir agendamento
+- abrir paciente quando aplicável
 
-### 5) Separar claramente “carregando evolução” de “layout do formulário”
-O bloco de evolução vai deixar de alterar o layout de forma brusca na abertura.
+## Causa raiz que será atacada
+O comportamento atual indica três problemas estruturais combinados:
+- estado residual entre aberturas
+- carregamento assíncrono mexendo no mesmo bloco visual já renderizado
+- modal grande demais e com layout dependente de conteúdo dinâmico
 
-Ajuste planejado:
-- renderizar um contêiner estável para a seção de evolução;
-- mostrar skeleton/loading dentro dele, sem mudar altura abruptamente;
-- evitar que “Registrar evolução” apareça e suma no meio da abertura.
-
-### 6) Corrigir proporção mobile do bloco de evolução
-Vou ajustar especificamente no mobile:
-- largura útil interna do modal;
-- padding horizontal do `ScrollArea`;
-- altura mínima do textarea;
-- empilhamento e largura dos botões;
-- espaço entre textarea, ações e bloco de “evoluções anteriores”.
-
-Meta: o campo ficar visualmente íntegro, sem sensação de borda cortada ou conteúdo espremido em 440px.
-
-### 7) Validar os fluxos críticos
-Depois da limpeza, vou validar estes cenários:
-- abrir card A, fechar, abrir card B;
-- abrir o mesmo card duas vezes seguidas;
-- abrir card com evolução já existente;
-- abrir card sem evolução;
-- abrir card de data passada;
-- salvar evolução e reabrir;
-- verificar se o lápis permanece coerente no card.
+A correção efetiva será arquitetural, não apenas ajuste pontual de classes ou resets.
 
 ## Detalhes técnicos
+- Refatorar o modal para um componente isolado dentro do fluxo da agenda
+- Introduzir uma `modalSessionKey` real por abertura
+- Remover resets fragmentados e timers que deixam resíduo visual na transição
+- Carregar evolução e dados auxiliares por sessão, descartando qualquer resposta atrasada
+- Renderizar skeleton/placeholder apenas dentro dos blocos assíncronos, sem trocar toda a estrutura
+- Atualizar imediatamente o card/listagem após salvar status/evolução, inclusive o indicador de lápis
+
 ```text
-Novo fluxo proposto:
-closeAppointmentModal()
-  -> invalida sessão atual
-  -> limpa todo estado visual e assíncrono
-  -> fecha modal
+ProSchedule
+  -> seleciona appointment
+  -> abre AppointmentModal(sessionKey, initialSnapshot)
 
-openEdit(apt)
-  -> cria modalSessionKey nova
-  -> aplica snapshot limpo do apt
-  -> abre modal
-  -> inicia prepareEvolutionEditor ligado à sessão atual
+AppointmentModal
+  -> seção dados básicos
+  -> seção status do atendimento
+  -> seção evolução
+  -> ações finais
 
-prepareEvolutionEditor(sessionKey, apt)
-  -> ignora qualquer retorno se a sessão mudou
-  -> preenche apenas o bloco da evolução
+Async por sessão
+  -> loadPatientDetails(sessionKey)
+  -> loadEvolution(sessionKey)
+  -> ignore responses if session changed
 ```
 
-## Resultado esperado
-- Sem flash de “layout antigo” ao tocar no card.
-- Sem troca visual tardia do bloco de evolução.
-- Campo de evolução com proporção melhor no mobile.
-- Mesmo comportamento correto para consultas passadas e para cards já com evolução.
+## Validação após reconstrução
+Vou validar estes cenários:
+- abrir card A, fechar, abrir card B
+- abrir o mesmo card duas vezes seguidas
+- abrir atendimento passado e registrar evolução
+- trocar status sem fechar modal
+- salvar evolução e confirmar atualização do ícone de lápis
+- verificar se não existe mais “layout antigo” antes da UI final
+- verificar proporção e rolagem no mobile
+
+## Entrega
+A implementação vai focar exclusivamente na reconstrução efetiva do modal da agenda e na estabilização do fluxo de status/evolução, sem expandir escopo para outras áreas.
