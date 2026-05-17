@@ -723,7 +723,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   }, []);
 
   const closeAppointmentModal = useCallback(() => {
-    closeAppointmentModal();
+    setModalOpen(false);
     // Defer reset until after close animation to avoid flicker in closing dialog
     setTimeout(() => { resetAppointmentModalState(); }, 200);
   }, [resetAppointmentModalState]);
