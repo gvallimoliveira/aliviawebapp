@@ -7,19 +7,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR, enUS, es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
-} from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
 } from "@/components/ui/tooltip";
@@ -29,7 +22,7 @@ import {
   Loader2, Trash2, GripVertical, Upload, Check, Pencil,
 } from "lucide-react";
 import AgendaImportModal from "./AgendaImportModal";
-import { formatCpf, formatPhone } from "@/utils/masks";
+import AppointmentEditorDialog, { AppointmentEditorPayload, AppointmentEditorExtras, AptInput } from "./AppointmentEditorDialog";
 
 interface Appointment {
   id: string;
