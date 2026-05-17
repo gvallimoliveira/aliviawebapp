@@ -1519,7 +1519,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 return !!(evolutionEmail && effectiveProId);
               })() && (
                 <div className="pt-2 border-t border-border/40">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <label className="text-xs font-medium text-muted-foreground">
                       {isPt ? "Evolução do atendimento" : language === "es" ? "Evolución de la cita" : "Session evolution"}
                     </label>
@@ -1530,7 +1530,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                       </Button>
                     )}
                   </div>
-                  {evoOpen && (
+                  {(evoOpen || evoLoading) && (
                     <div className="mt-2 space-y-2.5">
                       {evoLoading ? (
                         <div className="flex min-h-[88px] items-center gap-2 rounded-md border border-border/40 bg-muted/20 px-3 py-3 text-xs text-muted-foreground">
