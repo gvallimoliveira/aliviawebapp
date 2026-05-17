@@ -263,45 +263,27 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
   const [appointments, setAppointments] = useState<Appointment[]>(isSimulated ? (DEMO_APPOINTMENTS as Appointment[]) : []);
   const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingApt, setEditingApt] = useState<Appointment | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [batchConfirming, setBatchConfirming] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
-  const [selectedPatientKey, setSelectedPatientKey] = useState<string>("__new__");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
-  const [formServiceType, setFormServiceType] = useState("fisioterapia");
-  const [formDate, setFormDate] = useState<Date>(new Date());
-  const [formTime, setFormTime] = useState("09:00");
-  const [formDuration, setFormDuration] = useState("50");
-  const [formName, setFormName] = useState("");
-  const [formEmail, setFormEmail] = useState("");
-  const [formType, setFormType] = useState("in_person");
-  const [formNotes, setFormNotes] = useState("");
-  const [emailWarning, setEmailWarning] = useState(false);
   const [formProfessionalId, setFormProfessionalId] = useState(professionalId || "");
-  const [formCpf, setFormCpf] = useState("");
-  const [formBirthDate, setFormBirthDate] = useState("");
-  const [formPhone, setFormPhone] = useState("");
-  const [formAddress, setFormAddress] = useState("");
-
-  // Inline evolution editor (inside appointment modal)
-  const [evoOpen, setEvoOpen] = useState(false);
-  const [evoLoading, setEvoLoading] = useState(false);
-  const [evoSaving, setEvoSaving] = useState(false);
-  const [evoText, setEvoText] = useState("");
-  const [evoAssessmentId, setEvoAssessmentId] = useState<string | null>(null);
-  const [evoExistingContent, setEvoExistingContent] = useState<string>("");
-  const [evoNoAssessment, setEvoNoAssessment] = useState(false);
   const [evolutionReloadTick, setEvolutionReloadTick] = useState(0);
-  const evoRequestIdRef = useRef(0);
-  const evoActiveRequestKeyRef = useRef("");
-  // Unique session per modal open — guarantees full remount and async invalidation
+
+  // ---- Appointment modal: single source of truth, fresh per open ----
+  type ModalState = {
+    open: boolean;
+    sessionId: number;
+    apt: Appointment | null;
+    defaultDate: Date;
+    defaultTime: string;
+  };
+  const [modalState, setModalState] = useState<ModalState>({
+    open: false, sessionId: 0, apt: null, defaultDate: new Date(), defaultTime: "09:00",
+  });
   const modalSessionRef = useRef(0);
-  const [modalSessionId, setModalSessionId] = useState(0);
 
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
