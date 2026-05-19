@@ -437,7 +437,7 @@ const AppointmentEditorDialog = ({
             <DialogDescription className="text-xs">{t("schedule.form_desc")}</DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch" }}>
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain" style={{ WebkitOverflowScrolling: "touch" }}>
             <div className="px-4 py-4 sm:px-6 space-y-4">
               {/* ---- STATUS (only when editing) ---- */}
               {isEdit && currentApt && (
