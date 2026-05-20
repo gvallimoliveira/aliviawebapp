@@ -515,7 +515,12 @@ const Dashboard = () => {
         <PartnerPasswordBanner isPartner={professional?.is_partner} userId={user?.id} />
         <PushOptInBanner />
         <WelcomeSection
-          profileName={profile?.full_name}
+          profileName={
+            profile?.full_name?.trim() ||
+            professional?.full_name?.trim() ||
+            (isClinicMode ? activeClinic?.clinic_name : undefined) ||
+            (user?.email ? user.email.split("@")[0] : undefined)
+          }
           userEmail={user?.email}
           professional={professional}
           premiumAccess={premiumAccess}
