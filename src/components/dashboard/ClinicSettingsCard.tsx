@@ -126,6 +126,8 @@ const ClinicSettingsCard = () => {
     address.trim() !== (activeClinic.address || "") ||
     hoursStart !== (activeClinic.operating_hours_start || "08:00") ||
     hoursEnd !== (activeClinic.operating_hours_end || "18:00") ||
+    (satEnabled ? satStart : null) !== (activeClinic.saturday_hours_start || null) ||
+    (satEnabled ? satEnd : null) !== (activeClinic.saturday_hours_end || null) ||
     !arraysEqual(workingDays, activeClinic.working_days || [1, 2, 3, 4, 5]) ||
     brandColor !== (activeClinic.brand_color || null);
 
@@ -136,6 +138,16 @@ const ClinicSettingsCard = () => {
       const { error } = await supabase
         .from("clinics")
         .update({
+          name: clinicName.trim(),
+          phone: phone.trim() || null,
+          address: address.trim() || null,
+          operating_hours_start: hoursStart,
+          operating_hours_end: hoursEnd,
+          saturday_hours_start: satEnabled ? satStart : null,
+          saturday_hours_end: satEnabled ? satEnd : null,
+          working_days: workingDays,
+          brand_color: brandColor,
+        } as any)
           name: clinicName.trim(),
           phone: phone.trim() || null,
           address: address.trim() || null,
