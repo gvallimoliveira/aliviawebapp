@@ -257,6 +257,56 @@ const ClinicSettingsCard = () => {
               className="w-28"
             />
           </div>
+          <p className="text-xs text-muted-foreground">
+            {lang === "pt"
+              ? "Aplica-se a segunda a sexta. Configure o sábado separadamente abaixo."
+              : lang === "es"
+                ? "Se aplica de lunes a viernes. Configure el sábado por separado."
+                : "Applies Monday–Friday. Configure Saturday separately below."}
+          </p>
+
+          {/* Saturday-specific hours */}
+          <div className="mt-3 rounded-md border border-border bg-muted/30 p-3 space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={satEnabled}
+                onChange={(e) => setSatEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              <span className="text-sm font-medium">
+                {lang === "pt"
+                  ? "Sábado com horário diferente (meio expediente)"
+                  : lang === "es"
+                    ? "Sábado con horario distinto (medio día)"
+                    : "Saturday has different hours (half day)"}
+              </span>
+            </label>
+            {satEnabled && (
+              <div className="flex items-center gap-2 pl-6">
+                <Input
+                  type="time"
+                  value={satStart}
+                  onChange={(e) => setSatStart(e.target.value)}
+                  className="w-28"
+                />
+                <span className="text-muted-foreground text-sm">{lang === "pt" ? "às" : "to"}</span>
+                <Input
+                  type="time"
+                  value={satEnd}
+                  onChange={(e) => setSatEnd(e.target.value)}
+                  className="w-28"
+                />
+              </div>
+            )}
+            {satEnabled && !workingDays.includes(6) && (
+              <p className="text-xs text-amber-600 dark:text-amber-500 pl-6">
+                {lang === "pt"
+                  ? "⚠️ Ative o sábado nos dias de atendimento abaixo."
+                  : "⚠️ Enable Saturday in working days below."}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Working Days */}
