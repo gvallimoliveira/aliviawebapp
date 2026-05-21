@@ -41,6 +41,11 @@ const ClinicSettingsCard = () => {
   const [address, setAddress] = useState(activeClinic?.address || "");
   const [hoursStart, setHoursStart] = useState(activeClinic?.operating_hours_start || "08:00");
   const [hoursEnd, setHoursEnd] = useState(activeClinic?.operating_hours_end || "18:00");
+  const [satEnabled, setSatEnabled] = useState<boolean>(
+    !!(activeClinic?.saturday_hours_start && activeClinic?.saturday_hours_end)
+  );
+  const [satStart, setSatStart] = useState(activeClinic?.saturday_hours_start || "08:00");
+  const [satEnd, setSatEnd] = useState(activeClinic?.saturday_hours_end || "12:00");
   const [workingDays, setWorkingDays] = useState<number[]>(activeClinic?.working_days || [1, 2, 3, 4, 5]);
   const [brandColor, setBrandColor] = useState<string | null>(activeClinic?.brand_color || null);
   const [uploading, setUploading] = useState(false);
@@ -121,6 +126,8 @@ const ClinicSettingsCard = () => {
     address.trim() !== (activeClinic.address || "") ||
     hoursStart !== (activeClinic.operating_hours_start || "08:00") ||
     hoursEnd !== (activeClinic.operating_hours_end || "18:00") ||
+    (satEnabled ? satStart : null) !== (activeClinic.saturday_hours_start || null) ||
+    (satEnabled ? satEnd : null) !== (activeClinic.saturday_hours_end || null) ||
     !arraysEqual(workingDays, activeClinic.working_days || [1, 2, 3, 4, 5]) ||
     brandColor !== (activeClinic.brand_color || null);
 
@@ -136,9 +143,11 @@ const ClinicSettingsCard = () => {
           address: address.trim() || null,
           operating_hours_start: hoursStart,
           operating_hours_end: hoursEnd,
+          saturday_hours_start: satEnabled ? satStart : null,
+          saturday_hours_end: satEnabled ? satEnd : null,
           working_days: workingDays,
           brand_color: brandColor,
-        })
+        } as any)
         .eq("id", activeClinic.clinic_id);
       if (error) throw error;
       toast({ title: lang === "pt" ? "Dados atualizados!" : "Settings saved!" });
@@ -247,6 +256,56 @@ const ClinicSettingsCard = () => {
               onChange={(e) => setHoursEnd(e.target.value)}
               className="w-28"
             />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {lang === "pt"
+              ? "Aplica-se a segunda a sexta. Configure o sábado separadamente abaixo."
+              : lang === "es"
+                ? "Se aplica de lunes a viernes. Configure el sábado por separado."
+                : "Applies Monday–Friday. Configure Saturday separately below."}
+          </p>
+
+          {/* Saturday-specific hours */}
+          <div className="mt-3 rounded-md border border-border bg-muted/30 p-3 space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={satEnabled}
+                onChange={(e) => setSatEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              <span className="text-sm font-medium">
+                {lang === "pt"
+                  ? "Sábado com horário diferente (meio expediente)"
+                  : lang === "es"
+                    ? "Sábado con horario distinto (medio día)"
+                    : "Saturday has different hours (half day)"}
+              </span>
+            </label>
+            {satEnabled && (
+              <div className="flex items-center gap-2 pl-6">
+                <Input
+                  type="time"
+                  value={satStart}
+                  onChange={(e) => setSatStart(e.target.value)}
+                  className="w-28"
+                />
+                <span className="text-muted-foreground text-sm">{lang === "pt" ? "às" : "to"}</span>
+                <Input
+                  type="time"
+                  value={satEnd}
+                  onChange={(e) => setSatEnd(e.target.value)}
+                  className="w-28"
+                />
+              </div>
+            )}
+            {satEnabled && !workingDays.includes(6) && (
+              <p className="text-xs text-amber-600 dark:text-amber-500 pl-6">
+                {lang === "pt"
+                  ? "⚠️ Ative o sábado nos dias de atendimento abaixo."
+                  : "⚠️ Enable Saturday in working days below."}
+              </p>
+            )}
           </div>
         </div>
 
