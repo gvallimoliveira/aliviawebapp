@@ -148,14 +148,6 @@ const ClinicSettingsCard = () => {
           working_days: workingDays,
           brand_color: brandColor,
         } as any)
-          name: clinicName.trim(),
-          phone: phone.trim() || null,
-          address: address.trim() || null,
-          operating_hours_start: hoursStart,
-          operating_hours_end: hoursEnd,
-          working_days: workingDays,
-          brand_color: brandColor,
-        })
         .eq("id", activeClinic.clinic_id);
       if (error) throw error;
       toast({ title: lang === "pt" ? "Dados atualizados!" : "Settings saved!" });
