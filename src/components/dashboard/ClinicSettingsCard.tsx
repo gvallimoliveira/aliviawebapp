@@ -41,6 +41,11 @@ const ClinicSettingsCard = () => {
   const [address, setAddress] = useState(activeClinic?.address || "");
   const [hoursStart, setHoursStart] = useState(activeClinic?.operating_hours_start || "08:00");
   const [hoursEnd, setHoursEnd] = useState(activeClinic?.operating_hours_end || "18:00");
+  const [satEnabled, setSatEnabled] = useState<boolean>(
+    !!(activeClinic?.saturday_hours_start && activeClinic?.saturday_hours_end)
+  );
+  const [satStart, setSatStart] = useState(activeClinic?.saturday_hours_start || "08:00");
+  const [satEnd, setSatEnd] = useState(activeClinic?.saturday_hours_end || "12:00");
   const [workingDays, setWorkingDays] = useState<number[]>(activeClinic?.working_days || [1, 2, 3, 4, 5]);
   const [brandColor, setBrandColor] = useState<string | null>(activeClinic?.brand_color || null);
   const [uploading, setUploading] = useState(false);
