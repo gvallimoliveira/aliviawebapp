@@ -160,13 +160,15 @@ const ClinicTeamManagement = () => {
                   <Badge variant="outline" className="text-[10px] mt-1">{roleLabels[m.role][lang]}</Badge>
                 </div>
               </div>
-              {canManage && m.user_id !== user?.id && m.role !== "owner" && (
+              {canManage && m.user_id !== user?.id && (
                 <div className="flex items-center gap-2 shrink-0">
                   <Select value={m.role} onValueChange={(v) => handleRoleChange(m.id, v as ClinicRole)}>
-                    <SelectTrigger className="w-[130px] h-8 text-xs">
+                    <SelectTrigger className="w-[140px] h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>
+                      <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>
                       <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
                       <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
                       <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
