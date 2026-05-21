@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Users, UserPlus, Mail, Trash2, Crown, Stethoscope as StethIcon, ClipboardList } from "lucide-react";
+import { Users, UserPlus, Mail, Trash2, Crown, Shield, Stethoscope as StethIcon, ClipboardList } from "lucide-react";
 import ClinicSettingsCard from "./ClinicSettingsCard";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -35,6 +35,7 @@ interface Invitation {
 
 const roleLabels: Record<ClinicRole, Record<string, string>> = {
   owner: { pt: "Proprietário", en: "Owner", es: "Propietario" },
+  admin: { pt: "Administrador", en: "Administrator", es: "Administrador" },
   therapist: { pt: "Fisioterapeuta", en: "Therapist", es: "Fisioterapeuta" },
   secretary: { pt: "Secretária", en: "Secretary", es: "Secretaria" },
   osteopath: { pt: "Osteopata", en: "Osteopath", es: "Osteópata" },
@@ -46,6 +47,7 @@ const roleLabels: Record<ClinicRole, Record<string, string>> = {
 
 const roleIcon = (role: ClinicRole) => {
   if (role === "owner") return <Crown className="h-3.5 w-3.5" />;
+  if (role === "admin") return <Shield className="h-3.5 w-3.5" />;
   if (role === "therapist" || role === "osteopath" || role === "doctor" || role === "rpg_specialist" || role === "massage_therapist" || role === "pilates_instructor") return <StethIcon className="h-3.5 w-3.5" />;
   return <ClipboardList className="h-3.5 w-3.5" />;
 };
@@ -158,13 +160,15 @@ const ClinicTeamManagement = () => {
                   <Badge variant="outline" className="text-[10px] mt-1">{roleLabels[m.role][lang]}</Badge>
                 </div>
               </div>
-              {canManage && m.user_id !== user?.id && m.role !== "owner" && (
+              {canManage && m.user_id !== user?.id && (
                 <div className="flex items-center gap-2 shrink-0">
                   <Select value={m.role} onValueChange={(v) => handleRoleChange(m.id, v as ClinicRole)}>
-                    <SelectTrigger className="w-[130px] h-8 text-xs">
+                    <SelectTrigger className="w-[140px] h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>
+                      <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>
                       <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
                       <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
                       <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
@@ -228,6 +232,8 @@ const ClinicTeamManagement = () => {
                    <SelectValue />
                  </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>
+                    <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>
                     <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
                     <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
                     <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
