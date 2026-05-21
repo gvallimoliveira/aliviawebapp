@@ -232,6 +232,8 @@ const ClinicTeamManagement = () => {
                    <SelectValue />
                  </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>
+                    <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>
                     <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
                     <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
                     <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
