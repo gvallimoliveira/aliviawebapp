@@ -19,8 +19,11 @@ interface ClinicMembership {
   address: string | null;
   operating_hours_start: string | null;
   operating_hours_end: string | null;
+  saturday_hours_start: string | null;
+  saturday_hours_end: string | null;
   working_days: number[] | null;
   brand_color: string | null;
+
 }
 
 interface ClinicContextType {
