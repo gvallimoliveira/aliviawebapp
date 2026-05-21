@@ -202,10 +202,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const setHasProfessionalProfile = (v: boolean) => setHasProfessionalProfileState(v);
 
   const role = activeClinic?.role ?? null;
-  const isClinicOwner = role === "owner";
+  const isClinicOwner = role === "owner" || role === "admin";
   const isClinicSecretary = role === "secretary";
   const isClinicTherapist = role === "therapist";
-  const canManageClinic = role === "owner" || role === "secretary";
+  const canManageClinic = role === "owner" || role === "admin" || role === "secretary";
 
   return (
     <ClinicContext.Provider
