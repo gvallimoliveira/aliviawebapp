@@ -173,16 +173,50 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
               {lang === "pt" ? "Salvar" : "Save"}
             </Button>
 
-            {/* Current revenue */}
-            <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
+            {/* Current revenue + base inputs */}
+            <div className="p-3 rounded-lg bg-muted/40 border border-border/60 space-y-2">
               <p className="text-xs text-muted-foreground">
                 {lang === "pt" ? "Receita atual estimada (mês)" : "Current estimated revenue (month)"}
               </p>
               <p className="text-xl font-bold text-foreground">{fmtBRL(currentRevenue)}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                {completed} {lang === "pt" ? "sessões concluídas" : "completed sessions"}
-                {noShowRate > 0 && ` · no-show ${noShowRate}%`}
+              <p className="text-[11px] text-muted-foreground">
+                {lang === "pt"
+                  ? "Ajuste a base se ainda não há histórico suficiente:"
+                  : "Adjust the base if there's no history yet:"}
               </p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    {lang === "pt" ? "Sessões/mês" : "Sessions/month"}
+                  </Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    value={baseSessions || ""}
+                    onChange={(e) => { setBaseTouched(true); setBaseSessions(Number(e.target.value) || 0); }}
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    {lang === "pt" ? "No-show atual (%)" : "Current no-show (%)"}
+                  </Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    value={baseNoShow || ""}
+                    onChange={(e) => { setBaseTouched(true); setBaseNoShow(Math.min(100, Math.max(0, Number(e.target.value) || 0))); }}
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
+              {sessionsToGoal > 0 && (
+                <p className="text-[11px] text-muted-foreground pt-1">
+                  {lang === "pt"
+                    ? `Para bater a meta: ~${sessionsToGoal} sessões/mês`
+                    : `To hit goal: ~${sessionsToGoal} sessions/month`}
+                </p>
+              )}
             </div>
 
             {/* Simulator */}
@@ -215,6 +249,13 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
                 {extraRevenue > 0 && (
                   <p className="text-xs font-medium text-emerald-700">
                     +{fmtBRL(extraRevenue)} ({extraSessions} {lang === "pt" ? "sessões extras" : "extra sessions"})
+                  </p>
+                )}
+                {price <= 0 && (
+                  <p className="text-[11px] text-amber-700 mt-1">
+                    {lang === "pt"
+                      ? "Defina o valor da sessão acima para ver projeções em R$."
+                      : "Set the session price above to see R$ projections."}
                   </p>
                 )}
                 {goal > 0 && (
