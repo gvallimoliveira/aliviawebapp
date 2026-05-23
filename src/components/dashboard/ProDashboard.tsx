@@ -834,6 +834,15 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
               </CardContent>
             </Card>
           )}
+
+          {/* Backup / export — autonomous pro only (not demo, not simulated) */}
+          {!isDemoMode && !isSimulated && (
+            <ExportDataCard
+              mode="professional"
+              professionalId={professional.id}
+              entityName={professional.full_name}
+            />
+          )}
         </>
       )}
 
