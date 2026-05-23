@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Target, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import InsightCardShell from "./InsightCardShell";
 
 interface Props {
   /** owner: pass clinicId. Pro autônomo: pass professionalId. */
