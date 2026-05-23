@@ -38,6 +38,7 @@ const ClinicOwnerDashboard = lazy(() => import("@/components/dashboard/ClinicOwn
 const InsightsTab = lazy(() => import("@/components/dashboard/insights/InsightsTab"));
 const FeedbackSurveyCard = lazy(() => import("@/components/dashboard/FeedbackSurveyCard"));
 const FeedbackResultsCard = lazy(() => import("@/components/dashboard/FeedbackResultsCard"));
+const ExportDataCard = lazy(() => import("@/components/dashboard/ExportDataCard"));
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
