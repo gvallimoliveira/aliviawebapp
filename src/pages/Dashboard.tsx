@@ -706,6 +706,13 @@ const Dashboard = () => {
                   {canManageClinic && (
                     <TabsContent value="management" className="space-y-6">
                       <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
+                      {isClinicOwner && (
+                        <ExportDataCard
+                          mode="clinic"
+                          clinicId={activeClinic.clinic_id}
+                          entityName={activeClinic.clinics?.name}
+                        />
+                      )}
                     </TabsContent>
                   )}
                 </Tabs>
