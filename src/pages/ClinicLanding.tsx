@@ -157,7 +157,9 @@ const ClinicLanding = () => {
         { icon: ImageIcon, title: "Upload de laudos e exames", desc: "PDFs, raio-X, ressonância, anexos até 20MB" },
         { icon: Camera, title: "Fotos de evolução", desc: "Postura, lesão, antes/depois categorizado" },
         { icon: BookOpen, title: "Notas de sessão", desc: "Prontuário compartilhado por toda equipe" },
+        { icon: Activity, title: "Notas de voz com IA", desc: "Grave durante a consulta, IA transcreve e resume — áudio descartado" },
         { icon: FileCheck, title: "PDFs profissionais", desc: "Relatórios com a marca da sua clínica" },
+        { icon: InfinityIcon, title: "Exportar tudo (.zip)", desc: "Backup completo da clínica em 1 clique — LGPD garantido" },
       ],
     },
     {
@@ -188,6 +190,17 @@ const ClinicLanding = () => {
         { icon: Video, title: "Videochamada P2P", desc: "Teleconsulta com 1 clique, sem instalar nada" },
         { icon: Bell, title: "Notificações push", desc: "Lembretes, alertas clínicos e adesão" },
         { icon: Smile, title: "NPS via link", desc: "Pesquisa de satisfação com dashboard e comentários" },
+      ],
+    },
+    {
+      title: "Insights inteligentes (preditivos)",
+      icon: Sparkles,
+      items: [
+        { icon: AlertTriangle, title: "Predição de evasão (churn)", desc: "Identifique quem está prestes a abandonar — e aja antes" },
+        { icon: FileCheck, title: "Predição de alta", desc: "Sessões restantes até alta, baseado em dor + adesão" },
+        { icon: Heart, title: "Score de adesão 0-100", desc: "Engajamento por paciente em segundos — explicação no botão 'i'" },
+        { icon: TrendingUp, title: "Benchmark anônimo", desc: "Compare-se com clínicas de menor, mesmo e maior porte" },
+        { icon: CreditCard, title: "Meta de receita + simulador", desc: "What-if: 'se eu reduzir 10% de no-show, ganho X'" },
       ],
     },
     {

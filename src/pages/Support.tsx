@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SupportContactForm from "@/components/support/SupportContactForm";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, Video, FileEdit, Stamp, Lock } from "lucide-react";
+import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, Video, FileEdit, Stamp, Lock, Mic, Archive, Activity, Gauge } from "lucide-react";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,8 +56,12 @@ const proTools = [
   { key: "white_label", icon: Palette },
   { key: "evolution_report", icon: TrendingUp },
   { key: "simulated_env", icon: MonitorPlay },
+  { key: "voice_notes", icon: Mic },
+  { key: "data_export", icon: Archive },
   { key: "insights_churn", icon: TrendingUp },
   { key: "insights_discharge", icon: TrendingUp },
+  { key: "insights_adherence", icon: Activity },
+  { key: "insights_benchmark", icon: Gauge },
   { key: "insights_revenue", icon: BarChart3 },
 ];
 

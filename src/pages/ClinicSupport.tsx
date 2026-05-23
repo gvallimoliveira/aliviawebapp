@@ -5,7 +5,7 @@ import {
   Building2, HelpCircle, Camera, Link2, Smile, Palette, Users, Calendar,
   ClipboardList, AlertTriangle, FileText, Image as ImageIcon, Brain,
   MessageCircle, Video, Bell, BookOpen, TrendingUp, Shield, CreditCard,
-  UserCog, Stethoscope, FileCheck, Sparkles, Heart, Layers,
+  UserCog, Stethoscope, FileCheck, Sparkles, Heart, Layers, Mic, Archive,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -83,6 +83,12 @@ const categories: ToolCategory[] = [
         icon: Palette,
         title: "PDFs com a marca da clínica",
         desc: "Logo, cor e identidade da clínica aplicados em todos os relatórios gerados. Profissionalismo na entrega ao paciente e ao convênio.",
+      },
+      {
+        key: "voice_notes",
+        icon: Mic,
+        title: "Notas de voz na avaliação manual (IA)",
+        desc: "Durante uma avaliação manual no consultório, um botão flutuante de microfone permite gravar sua narrativa enquanto examina o paciente — sem interromper o atendimento para digitar. O áudio é processado pela IA (Gemini), transcrito e resumido automaticamente em texto clínico estruturado, salvo na avaliação. O áudio bruto é descartado por privacidade — só o texto permanece. Ganhe tempo real de consulta e tenha um prontuário rico mesmo no atendimento mais corrido.",
       },
       {
         key: "comparison",
@@ -239,6 +245,12 @@ const categories: ToolCategory[] = [
         icon: Palette,
         title: "White-label completo",
         desc: "Logo e cor da clínica no painel da equipe, nos PDFs, no link de avaliação e na pesquisa de satisfação. O paciente vê a sua marca em todos os pontos de contato.",
+      },
+      {
+        key: "data_export",
+        icon: Archive,
+        title: "Exportar todos os dados (.zip) — backup & LGPD",
+        desc: "No painel do proprietário, um clique gera um arquivo .zip completo com pacientes, avaliações, agendamentos, notas profissionais, notas de voz e índice de documentos/fotos (links seguros válidos por 1 hora). Você escolhe exatamente quais categorias incluir para reduzir o tamanho do arquivo. Garante portabilidade total dos dados da clínica (LGPD/CFF), backup secundário independente da plataforma e tranquilidade jurídica: os prontuários são SEUS, sempre exportáveis.",
       },
       {
         key: "all_inclusive",
