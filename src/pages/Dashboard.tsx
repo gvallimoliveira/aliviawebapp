@@ -445,7 +445,12 @@ const Dashboard = () => {
 
   if (!user) return null;
 
-  const handleSignOut = async () => { await signOut(); navigate("/"); };
+  const handleSignOut = async () => {
+    await signOut();
+    // Hard redirect — evita "tela branca" causada por re-render do
+    // Dashboard com user=null enquanto a navegação SPA acontece.
+    window.location.replace("/auth");
+  };
 
 
   const renderClientContent = () => (

@@ -17,7 +17,9 @@ const Header = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/");
+    // Hard redirect garante que rotas protegidas (Dashboard) não
+    // renderizem com user=null e fiquem em branco antes da navegação.
+    window.location.replace("/");
   };
 
   const go = (path: string) => {
