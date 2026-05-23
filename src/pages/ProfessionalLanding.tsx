@@ -94,6 +94,9 @@ const ProfessionalLanding = () => {
     { icon: Dumbbell, key: "b2b.feature_8", descKey: "b2b.feature_8_desc" },
     { icon: Palette, key: "b2b.feature_9", descKey: "b2b.feature_9_desc" },
     { icon: TrendingUp, key: "b2b.feature_10", descKey: "b2b.feature_10_desc" },
+    { icon: Brain, key: "b2b.feature_11", descKey: "b2b.feature_11_desc" },
+    { icon: BarChart3, key: "b2b.feature_12", descKey: "b2b.feature_12_desc" },
+    { icon: Zap, key: "b2b.feature_13", descKey: "b2b.feature_13_desc" },
   ];
 
   const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3", "b2b.faq4", "b2b.faq5", "b2b.faq6"];
