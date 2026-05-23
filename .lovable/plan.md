@@ -1,114 +1,69 @@
-## Objetivo
-Reconstruir completamente o modal do card da agenda no modo profissional autônomo para eliminar a exibição antiga antes da atual, corrigir o layout mobile e consolidar num único fluxo confiável:
-- dados cadastrais básicos do paciente
-- dados do agendamento
-- classificação do atendimento (concluído, falta, falta justificada, em aberto)
-- evolução do paciente
-- ações práticas relacionadas ao atendimento
+# Smart Insights — Refinements
 
-## O que será refeito
-### 1) Separar o modal do restante da agenda
-Extrair o modal para uma estrutura isolada, com estado próprio de edição, em vez de manter abertura/fechamento e evolução espalhados pelo `ProSchedule`.
+Three improvements to the Insights tab (clinic + pro modes).
 
-Resultado esperado:
-- abrir um card não reaproveita visual do card anterior
-- fechar limpa tudo de forma imediata e previsível
-- reabrir o mesmo card monta uma sessão nova de verdade
+## 1. Collapsible cards
 
-### 2) Criar um modelo único de estado do modal
-Substituir o conjunto atual de muitos `useState` soltos por um estado único/snapshot de sessão do modal, contendo:
-- identificação do agendamento
-- dados básicos do paciente
-- dados do atendimento
-- status atual
-- estado da evolução
-- flags de carregamento/salvamento
+Wrap each insight card (Churn, Discharge, Adherence, Benchmark, Occupancy, Revenue) in a `Collapsible` with a chevron toggle in the header. Persist open/closed state per-card in `localStorage` (key `insights:collapsed:<cardId>`). Default: all expanded on first load.
 
-Isso evita montagem incremental e reduz o “flash” de conteúdo antigo.
+## 2. Info popovers + per-metric customization
 
-### 3) Refazer o fluxo de abertura
-Abertura nova do modal:
-1. criar uma nova sessão do modal
-2. montar snapshot inicial completo do agendamento
-3. renderizar o modal já com estrutura final estável
-4. carregar apenas os complementos assíncronos dentro de áreas dedicadas, sem trocar o layout principal
+Add an `Info` (lowercase `i`) icon button to the top-right of each of these card headers:
+- **ChurnRiskCard**
+- **DischargePredictionCard**
+- **PatientAdherenceCard**
 
-### 4) Refazer a seção de classificação do atendimento
-Transformar o status em um bloco claro e estável, sempre visível para atendimentos existentes, com opções práticas:
-- Em aberto
-- Concluído
-- Falta
-- Falta justificada
+Clicking opens a `Popover` (or `Dialog` on mobile) that contains:
+- **How it's calculated** — plain-language explanation of the formula and weights.
+- **Customize** — editable thresholds saved per-user in a new table `insight_preferences`.
 
-Esse bloco ficará desacoplado da evolução, para que a mudança de status não interfira no restante da renderização.
+Configurable parameters per card:
 
-### 5) Refazer a seção de evolução
-Reconstruir a evolução como um bloco próprio do modal, sempre previsível:
-- campo visível de forma consistente
-- possibilidade de preencher em datas passadas
-- carregamento interno sem desmontar a UI
-- histórico anterior em área colapsável ou listagem compacta
-- salvar/excluir última evolução sem provocar re-render confuso do modal inteiro
+**Churn Risk**
+- No-show count threshold (default 2)
+- Days of silence threshold (default 14)
+- Pain stagnation window in weeks (default 3)
+- Minimum score to display (default 50)
 
-### 6) Corrigir layout e proporção mobile
-Reorganizar o modal para a viewport atual mobile (~440px):
-- largura útil real do conteúdo
-- padding interno estável
-- textarea maior e sem recorte
-- botões com hierarquia melhor
-- rolagem apenas onde necessário
-- rodapé fixo/estável visualmente
+**Discharge Prediction**
+- Minimum sessions before predicting (default 3)
+- Pain drop threshold per session (default 0.3)
+- "Close to discharge" threshold (default ≤3 sessions)
 
-### 7) Preservar ações úteis
-Manter no modal apenas o que for válido e prático para o fluxo:
-- editar dados principais do agendamento
-- alterar classificação/status
-- registrar evolução
-- excluir agendamento
-- abrir paciente quando aplicável
+**Patient Adherence**
+- Weight sliders for exercises / diary / attendance / messages (must sum to 100; auto-rebalance)
+- Lookback window (default 30 days)
 
-## Causa raiz que será atacada
-O comportamento atual indica três problemas estruturais combinados:
-- estado residual entre aberturas
-- carregamento assíncrono mexendo no mesmo bloco visual já renderizado
-- modal grande demais e com layout dependente de conteúdo dinâmico
+Changes are applied client-side immediately by re-fetching the RPC with new params, OR (when the RPC doesn't accept them) by post-filtering/re-weighting results client-side. For weights on Adherence, we'll recompute the composite score in the component using returned sub-metrics — no DB change needed. For thresholds, we'll filter results client-side.
 
-A correção efetiva será arquitetural, não apenas ajuste pontual de classes ou resets.
+## 3. Benchmark by clinic size
 
-## Detalhes técnicos
-- Refatorar o modal para um componente isolado dentro do fluxo da agenda
-- Introduzir uma `modalSessionKey` real por abertura
-- Remover resets fragmentados e timers que deixam resíduo visual na transição
-- Carregar evolução e dados auxiliares por sessão, descartando qualquer resposta atrasada
-- Renderizar skeleton/placeholder apenas dentro dos blocos assíncronos, sem trocar toda a estrutura
-- Atualizar imediatamente o card/listagem após salvar status/evolução, inclusive o indicador de lápis
+`BenchmarkCard` already shows the user's current size bucket vs peers. Extend it to show **three side-by-side columns**:
+- Small (1–3 therapists)
+- Medium (4–10)
+- Large (11+)
 
-```text
-ProSchedule
-  -> seleciona appointment
-  -> abre AppointmentModal(sessionKey, initialSnapshot)
+Highlight the column matching the logged-in clinic with a ring/border. For each metric, render the peer average per bucket so the user sees how each size class performs. The user's own value is rendered as a single row at top, with deltas vs each bucket.
 
-AppointmentModal
-  -> seção dados básicos
-  -> seção status do atendimento
-  -> seção evolução
-  -> ações finais
+Update the `get_clinic_benchmarks` RPC to also return peer averages for all three buckets (not just the user's bucket). If peer_count per bucket < 5, show "—" with a lock icon for that bucket only.
 
-Async por sessão
-  -> loadPatientDetails(sessionKey)
-  -> loadEvolution(sessionKey)
-  -> ignore responses if session changed
-```
+## Technical Summary
 
-## Validação após reconstrução
-Vou validar estes cenários:
-- abrir card A, fechar, abrir card B
-- abrir o mesmo card duas vezes seguidas
-- abrir atendimento passado e registrar evolução
-- trocar status sem fechar modal
-- salvar evolução e confirmar atualização do ícone de lápis
-- verificar se não existe mais “layout antigo” antes da UI final
-- verificar proporção e rolagem no mobile
+**Files to edit (frontend only for #1, #2):**
+- `src/components/dashboard/insights/InsightsTab.tsx` — no change unless we lift collapse state.
+- `src/components/dashboard/insights/ChurnRiskCard.tsx` — add Collapsible wrapper, Info popover, customize form, client-side filtering.
+- `src/components/dashboard/insights/DischargePredictionCard.tsx` — same pattern.
+- `src/components/dashboard/insights/PatientAdherenceCard.tsx` — same + recompute score with custom weights.
+- `src/components/dashboard/insights/BenchmarkCard.tsx` — three-column layout with bucket highlight.
+- `src/components/dashboard/insights/OccupancyVsNoShowCard.tsx` and `RevenueGoalCard.tsx` — Collapsible wrapper only.
+- New shared helper `src/components/dashboard/insights/InsightInfoButton.tsx` for the (i) button + popover shell.
+- New helper `src/components/dashboard/insights/useInsightPreferences.ts` — localStorage-backed hook for thresholds/weights.
 
-## Entrega
-A implementação vai focar exclusivamente na reconstrução efetiva do modal da agenda e na estabilização do fluxo de status/evolução, sem expandir escopo para outras áreas.
+**Migration (for #3):**
+- Update `public.get_clinic_benchmarks(_clinic_id uuid)` to return per-metric peer averages for `small`, `medium`, `large` buckets.
+
+Preferences stored in localStorage (per-user) for now — fast to ship and reversible. If you'd prefer them synced across devices, I can add an `insight_preferences` table later.
+
+## Out of scope
+- Server-side persistence of customization (using localStorage).
+- Editing OccupancyVsNoShow / RevenueGoal logic — only adding collapse.
