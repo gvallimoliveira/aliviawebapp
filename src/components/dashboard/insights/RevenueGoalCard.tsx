@@ -31,6 +31,12 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
   const [occupancy, setOccupancy] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // Permite ao usuário sobrescrever a base do simulador quando ainda
+  // não há histórico suficiente no mês (caso comum no início do mês ou
+  // em clínicas que ainda não estão registrando atendimentos no app).
+  const [baseTouched, setBaseTouched] = useState(false);
+  const [baseSessions, setBaseSessions] = useState<number>(0);
+  const [baseNoShow, setBaseNoShow] = useState<number>(0);
 
   // simulator
   const [reduceNoShow, setReduceNoShow] = useState<number>(0); // pp
@@ -65,7 +71,6 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
           setNoShowRate(total ? Math.round((100 * ns) / total) : 0);
         }
       } else if (professionalId) {
-        // Pro: count completed appointments this month
         const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
         const { data: appts } = await (supabase as any).from("professional_appointments")
           .select("status, appointment_date")
@@ -84,17 +89,29 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
     return () => { cancelled = true; };
   }, [clinicId, professionalId]);
 
-  const currentRevenue = completed * price;
-  // simulator: extra completed = recovered no-shows + occupancy gain
-  // assume "recovered no-show" approximates extra_completed = completed * (reduceNoShow / max(noShowRate,1))
-  const recoveredFromNoShow = noShowRate > 0
-    ? Math.round(completed * (reduceNoShow / Math.max(noShowRate, 1)))
-    : 0;
-  const occupancyGain = Math.round(completed * (increaseOcc / 100));
+  // Sincroniza inputs editáveis com dados reais até o usuário ajustar.
+  useEffect(() => {
+    if (!baseTouched) {
+      setBaseSessions(completed);
+      setBaseNoShow(noShowRate);
+    }
+  }, [completed, noShowRate, baseTouched]);
+
+  const effectiveSessions = baseSessions;
+  const effectiveNoShow = baseNoShow;
+  const currentRevenue = effectiveSessions * price;
+  // Recupera no-show: cada ponto percentual reduzido vira sessões extras
+  // proporcionais ao volume total estimado (sessões + no-shows).
+  const totalScheduled = effectiveNoShow > 0
+    ? effectiveSessions / (1 - effectiveNoShow / 100)
+    : effectiveSessions;
+  const recoveredFromNoShow = Math.round(totalScheduled * (reduceNoShow / 100));
+  const occupancyGain = Math.round(Math.max(effectiveSessions, 1) * (increaseOcc / 100));
   const extraSessions = recoveredFromNoShow + occupancyGain;
-  const projectedRevenue = (completed + extraSessions) * price;
+  const projectedRevenue = (effectiveSessions + extraSessions) * price;
   const extraRevenue = projectedRevenue - currentRevenue;
   const goalProgress = goal > 0 ? Math.min(100, Math.round((projectedRevenue / goal) * 100)) : 0;
+  const sessionsToGoal = goal > 0 && price > 0 ? Math.ceil(goal / price) : 0;
 
   const handleSave = async () => {
     setSaving(true);
