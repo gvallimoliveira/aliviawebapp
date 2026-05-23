@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Award, Lock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import InsightCardShell from "./InsightCardShell";
 
 interface Props { clinicId: string; }
 
@@ -14,7 +14,15 @@ interface BenchRow {
   peer_count: number;
   size_bucket: string;
   better_when_lower: boolean;
+  small_avg: number | null;
+  small_count: number;
+  medium_avg: number | null;
+  medium_count: number;
+  large_avg: number | null;
+  large_count: number;
 }
+
+const MIN_PEERS = 5;
 
 const metricLabel = (m: string, lang: string) => {
   const map: Record<string, { pt: string; en: string; es: string; unit: string }> = {
@@ -45,78 +53,106 @@ const BenchmarkCard = ({ clinicId }: Props) => {
     return () => { cancelled = true; };
   }, [clinicId]);
 
-  const peerCount = rows[0]?.peer_count ?? 0;
   const sizeBucket = rows[0]?.size_bucket ?? "small";
-  const sizeLabel = lang === "pt"
-    ? sizeBucket === "small" ? "pequeno porte (1-3 terapeutas)" : sizeBucket === "medium" ? "médio porte (4-10)" : "grande porte (11+)"
-    : sizeBucket;
+  const bucketLabel = (b: "small" | "medium" | "large") =>
+    lang === "pt"
+      ? b === "small" ? "Pequeno (1-3)" : b === "medium" ? "Médio (4-10)" : "Grande (11+)"
+      : lang === "es"
+      ? b === "small" ? "Pequeño (1-3)" : b === "medium" ? "Mediano (4-10)" : "Grande (11+)"
+      : b === "small" ? "Small (1-3)" : b === "medium" ? "Medium (4-10)" : "Large (11+)";
+
+  const buckets: ("small" | "medium" | "large")[] = ["small", "medium", "large"];
+
+  const description =
+    lang === "pt"
+      ? "Compare sua clínica com pares por porte. Dados 100% anônimos."
+      : lang === "es"
+      ? "Compara tu clínica con pares por tamaño. Datos 100% anónimos."
+      : "Compare your clinic with peers by size. Fully anonymous.";
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Award className="h-4 w-4 text-primary" />
-          {lang === "pt" ? "Benchmark anônimo" : lang === "es" ? "Benchmark anónimo" : "Anonymous benchmark"}
-        </CardTitle>
-        <CardDescription className="text-xs">
-          {lang === "pt"
-            ? `Comparação com ${peerCount} clínicas de ${sizeLabel}. Dados 100% anônimos.`
-            : `Compared with ${peerCount} similar-size clinics. Fully anonymous.`}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <InsightCardShell
+      id="benchmark"
+      icon={<Award className="h-4 w-4 text-primary" />}
+      title={lang === "pt" ? "Benchmark anônimo" : lang === "es" ? "Benchmark anónimo" : "Anonymous benchmark"}
+      description={description}
+    >
+      <div className="space-y-4">
         {loading ? (
           <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-        ) : peerCount < 5 ? (
-          <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/40 border border-border/60">
-            <Lock className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-sm text-muted-foreground">
-              {lang === "pt"
-                ? `Precisamos de pelo menos 5 clínicas de porte similar para liberar comparação anônima (atualmente: ${peerCount}).`
-                : `We need at least 5 similar-size clinics to unlock anonymous comparison (currently: ${peerCount}).`}
-            </p>
-          </div>
+        ) : rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            {lang === "pt" ? "Sem dados ainda." : "No data yet."}
+          </p>
         ) : (
           rows.map((r) => {
             const { label, unit } = metricLabel(r.metric, lang);
-            const cv = r.clinic_value ?? 0;
-            const pa = r.peer_avg ?? 0;
-            const diff = cv - pa;
-            const isBetter = r.better_when_lower ? diff < 0 : diff > 0;
-            const isWorse = r.better_when_lower ? diff > 0 : diff < 0;
-            const color = isBetter
-              ? "text-emerald-700 bg-emerald-500/10 border-emerald-500/30"
-              : isWorse
-              ? "text-amber-700 bg-amber-500/10 border-amber-500/30"
-              : "text-muted-foreground bg-muted border-border";
-            const diffAbs = Math.abs(diff).toFixed(1);
-            const directionPt = isBetter
-              ? r.better_when_lower ? "abaixo" : "acima"
-              : r.better_when_lower ? "acima" : "abaixo";
-            const verdict = lang === "pt"
-              ? `${diffAbs}${unit === "%" ? "pp" : ""} ${directionPt} da média`
-              : `${diffAbs}${unit === "%" ? "pp" : ""} ${isBetter ? (r.better_when_lower ? "below" : "above") : (r.better_when_lower ? "above" : "below")} avg`;
+            const cv = r.clinic_value;
+            const renderBucket = (b: "small" | "medium" | "large") => {
+              const avg = b === "small" ? r.small_avg : b === "medium" ? r.medium_avg : r.large_avg;
+              const cnt = b === "small" ? r.small_count : b === "medium" ? r.medium_count : r.large_count;
+              const isMine = b === sizeBucket;
+              const locked = cnt < MIN_PEERS;
+              const delta = cv != null && avg != null ? cv - avg : null;
+              const isBetter = delta != null && (r.better_when_lower ? delta < 0 : delta > 0);
+              const isWorse = delta != null && (r.better_when_lower ? delta > 0 : delta < 0);
+              return (
+                <div
+                  key={b}
+                  className={`p-2 rounded-md border text-center ${
+                    isMine
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                      : "border-border/60 bg-background"
+                  }`}
+                >
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">
+                    {bucketLabel(b)}
+                  </p>
+                  {locked ? (
+                    <div className="flex items-center justify-center gap-1 mt-1 text-muted-foreground">
+                      <Lock className="h-3 w-3" />
+                      <span className="text-xs">—</span>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm font-bold tabular-nums mt-0.5">
+                        {Number(avg).toFixed(1)}{unit}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">n={cnt}</p>
+                      {isMine && delta != null && (
+                        <p className={`text-[10px] font-medium mt-0.5 ${isBetter ? "text-emerald-700" : isWorse ? "text-amber-700" : "text-muted-foreground"}`}>
+                          {isBetter ? "✓" : isWorse ? "↑" : "—"} {Math.abs(delta).toFixed(1)}{unit === "%" ? "pp" : ""}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            };
             return (
-              <div key={r.metric} className="p-3 rounded-lg border border-border/60 space-y-1.5">
+              <div key={r.metric} className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium">{label}</p>
-                  <Badge variant="outline" className={`text-[10px] shrink-0 ${color}`}>
-                    {isBetter ? "✓" : isWorse ? "↑" : "—"}
-                  </Badge>
+                  {cv != null && (
+                    <Badge variant="outline" className="text-xs">
+                      {lang === "pt" ? "Você" : "You"}: <span className="font-bold ml-1">{Number(cv).toFixed(1)}{unit}</span>
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex items-baseline gap-3 text-xs">
-                  <span className="font-bold text-base text-foreground">{cv.toFixed(1)}{unit}</span>
-                  <span className="text-muted-foreground">{lang === "pt" ? "média" : "avg"}: {pa.toFixed(1)}{unit}</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {buckets.map(renderBucket)}
                 </div>
-                <p className={`text-xs font-medium ${isBetter ? "text-emerald-700" : isWorse ? "text-amber-700" : "text-muted-foreground"}`}>
-                  {verdict}
-                </p>
               </div>
             );
           })
         )}
-      </CardContent>
-    </Card>
+        <p className="text-[10px] text-muted-foreground text-center">
+          {lang === "pt"
+            ? `Buckets com menos de ${MIN_PEERS} clínicas ficam ocultos para preservar anonimato.`
+            : `Buckets with fewer than ${MIN_PEERS} clinics are hidden for anonymity.`}
+        </p>
+      </div>
+    </InsightCardShell>
   );
 };
 
