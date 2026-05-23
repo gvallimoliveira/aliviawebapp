@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Trophy, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Loader2, Trophy, ChevronDown, RotateCcw } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import InsightCardShell from "./InsightCardShell";
+import { useInsightPrefs } from "./useInsightPreferences";
 
 interface Props { clinicId: string; }
 
@@ -25,11 +28,19 @@ const scoreColor = (s: number) => {
   return "bg-red-500/10 text-red-700 border-red-500/30";
 };
 
+const DEFAULTS = {
+  wExercises: 40,
+  wDiary: 25,
+  wAttendance: 25,
+  wMessages: 10,
+};
+
 const PatientAdherenceCard = ({ clinicId }: Props) => {
-  const [rows, setRows] = useState<AdherenceRow[]>([]);
+  const [rawRows, setRawRows] = useState<AdherenceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const { language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
+  const { prefs, update, reset } = useInsightPrefs("adherence", DEFAULTS);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,14 +48,82 @@ const PatientAdherenceCard = ({ clinicId }: Props) => {
       setLoading(true);
       const { data, error } = await supabase.rpc("get_patient_adherence_scores" as any, { _clinic_id: clinicId });
       if (cancelled) return;
-      if (!error && Array.isArray(data)) setRows(data as any);
+      if (!error && Array.isArray(data)) setRawRows(data as any);
       setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [clinicId]);
 
+  // Recompute composite score using user weights (normalized to 100).
+  const rows = useMemo(() => {
+    const total = prefs.wExercises + prefs.wDiary + prefs.wAttendance + prefs.wMessages || 1;
+    return rawRows
+      .map((r) => ({
+        ...r,
+        score: Math.round(
+          (r.exercises_pct * prefs.wExercises +
+            r.diary_pct * prefs.wDiary +
+            r.attendance_pct * prefs.wAttendance +
+            r.messages_pct * prefs.wMessages) /
+            total
+        ),
+      }))
+      .sort((a, b) => b.score - a.score);
+  }, [rawRows, prefs]);
+
   const top = rows.slice(0, 5);
   const bottom = rows.slice(-5).reverse();
+
+  const WeightSlider = ({ label, k, max = 100 }: { label: string; k: keyof typeof DEFAULTS; max?: number }) => (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span>{label}</span>
+        <span className="font-semibold tabular-nums">{prefs[k]}%</span>
+      </div>
+      <Slider
+        value={[prefs[k]]}
+        onValueChange={(v) => update({ [k]: v[0] } as any)}
+        min={0}
+        max={max}
+        step={5}
+      />
+    </div>
+  );
+
+  const totalW = prefs.wExercises + prefs.wDiary + prefs.wAttendance + prefs.wMessages;
+
+  const infoContent = (
+    <div className="space-y-3 text-sm">
+      <div>
+        <p className="font-semibold mb-1">
+          {lang === "pt" ? "Como o score é calculado" : "How the score is calculated"}
+        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {lang === "pt"
+            ? "Combinação ponderada de: exercícios concluídos, registros no diário de dor, comparecimento às sessões e leitura de mensagens — janela de 30 dias. Você pode ajustar os pesos."
+            : "Weighted blend of: exercise completion, pain diary entries, session attendance and message reads — 30-day window. You can adjust the weights."}
+        </p>
+      </div>
+      <div className="border-t pt-3 space-y-3">
+        <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
+          {lang === "pt" ? "Pesos personalizados" : "Custom weights"}
+        </p>
+        <WeightSlider label={lang === "pt" ? "Exercícios" : "Exercises"} k="wExercises" />
+        <WeightSlider label={lang === "pt" ? "Diário de dor" : "Pain diary"} k="wDiary" />
+        <WeightSlider label={lang === "pt" ? "Comparecimento" : "Attendance"} k="wAttendance" />
+        <WeightSlider label={lang === "pt" ? "Mensagens lidas" : "Messages read"} k="wMessages" />
+        <p className="text-[11px] text-muted-foreground">
+          {lang === "pt"
+            ? `Soma atual: ${totalW}% — normalizamos automaticamente para 100%.`
+            : `Current sum: ${totalW}% — automatically normalized to 100%.`}
+        </p>
+        <Button size="sm" variant="ghost" onClick={reset} className="gap-1 text-xs h-7">
+          <RotateCcw className="h-3 w-3" />
+          {lang === "pt" ? "Restaurar padrões" : "Reset defaults"}
+        </Button>
+      </div>
+    </div>
+  );
 
   const Row = ({ r }: { r: AdherenceRow }) => (
     <Collapsible>
@@ -60,10 +139,10 @@ const PatientAdherenceCard = ({ clinicId }: Props) => {
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-2 pl-3 pr-2 pb-1 space-y-1">
         {[
-          { label: lang === "pt" ? "Exercícios" : "Exercises", v: r.exercises_pct, w: 40 },
-          { label: lang === "pt" ? "Diário de dor" : "Pain diary", v: r.diary_pct, w: 25 },
-          { label: lang === "pt" ? "Comparecimento" : "Attendance", v: r.attendance_pct, w: 25 },
-          { label: lang === "pt" ? "Mensagens lidas" : "Messages read", v: r.messages_pct, w: 10 },
+          { label: lang === "pt" ? "Exercícios" : "Exercises", v: r.exercises_pct, w: prefs.wExercises },
+          { label: lang === "pt" ? "Diário de dor" : "Pain diary", v: r.diary_pct, w: prefs.wDiary },
+          { label: lang === "pt" ? "Comparecimento" : "Attendance", v: r.attendance_pct, w: prefs.wAttendance },
+          { label: lang === "pt" ? "Mensagens lidas" : "Messages read", v: r.messages_pct, w: prefs.wMessages },
         ].map((m) => (
           <div key={m.label} className="flex items-center gap-2 text-xs">
             <span className="w-32 text-muted-foreground">{m.label} ({m.w}%)</span>
@@ -76,19 +155,18 @@ const PatientAdherenceCard = ({ clinicId }: Props) => {
   );
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Trophy className="h-4 w-4 text-amber-500" />
-          {lang === "pt" ? "Adesão dos pacientes" : lang === "es" ? "Adherencia de pacientes" : "Patient adherence"}
-        </CardTitle>
-        <CardDescription className="text-xs">
-          {lang === "pt"
-            ? "Score 0–100 combinando exercícios, diário, comparecimento e leitura de mensagens."
-            : "0–100 score combining exercises, diary, attendance and message reads."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <InsightCardShell
+      id="adherence"
+      icon={<Trophy className="h-4 w-4 text-amber-500" />}
+      title={lang === "pt" ? "Adesão dos pacientes" : lang === "es" ? "Adherencia de pacientes" : "Patient adherence"}
+      description={
+        lang === "pt"
+          ? "Score 0–100 combinando exercícios, diário, comparecimento e leitura de mensagens."
+          : "0–100 score combining exercises, diary, attendance and message reads."
+      }
+      infoContent={infoContent}
+    >
+      <div className="space-y-4">
         {loading ? (
           <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
         ) : rows.length === 0 ? (
@@ -113,8 +191,8 @@ const PatientAdherenceCard = ({ clinicId }: Props) => {
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </InsightCardShell>
   );
 };
 

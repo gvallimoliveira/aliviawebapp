@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Target, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import InsightCardShell from "./InsightCardShell";
 
 interface Props {
   /** owner: pass clinicId. Pro autônomo: pass professionalId. */
@@ -127,19 +127,18 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
   };
 
   return (
-    <Card className="border-primary/20">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Target className="h-4 w-4 text-primary" />
-          {lang === "pt" ? "Meta de receita & Simulador" : lang === "es" ? "Meta de ingresos & Simulador" : "Revenue goal & Simulator"}
-        </CardTitle>
-        <CardDescription className="text-xs">
-          {lang === "pt"
-            ? "Defina sua meta mensal e simule o impacto de melhorar no-show e ocupação."
-            : "Set your monthly target and simulate the impact of reducing no-shows and raising occupancy."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
+    <InsightCardShell
+      id="revenue"
+      className="border-primary/20"
+      icon={<Target className="h-4 w-4 text-primary" />}
+      title={lang === "pt" ? "Meta de receita & Simulador" : lang === "es" ? "Meta de ingresos & Simulador" : "Revenue goal & Simulator"}
+      description={
+        lang === "pt"
+          ? "Defina sua meta mensal e simule o impacto de melhorar no-show e ocupação."
+          : "Set your monthly target and simulate the impact of reducing no-shows and raising occupancy."
+      }
+    >
+      <div className="space-y-5">
         {loading ? (
           <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
         ) : (
@@ -270,8 +269,8 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </InsightCardShell>
   );
 };
 

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Activity, CalendarX2, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import InsightCardShell from "./InsightCardShell";
 
 interface Props {
   clinicId?: string;
@@ -90,63 +90,59 @@ const OccupancyVsNoShowCard = ({ clinicId, professionalId }: Props) => {
     stats.noShowRate > 20 ? "text-destructive" : stats.noShowRate > 10 ? "text-amber-600" : "text-foreground";
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <Activity className="h-4 w-4 text-primary" />
-          {tt.title}
-        </CardTitle>
-        <CardDescription className="text-[11px]">{tt.sub}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex justify-center py-6">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-muted/40 text-center">
-                <p className="text-2xl font-bold text-primary">{stats.occupancy}%</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{tt.occ}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/40 text-center">
-                <p className={`text-2xl font-bold ${noShowColor}`}>{stats.noShowRate}%</p>
-                <div className="flex items-center justify-center gap-1 mt-0.5">
-                  <CalendarX2 className="h-3 w-3 text-muted-foreground" />
-                  <p className="text-[10px] text-muted-foreground">{tt.no}</p>
-                </div>
+    <InsightCardShell
+      id="occupancy"
+      icon={<Activity className="h-4 w-4 text-primary" />}
+      title={tt.title}
+      description={tt.sub}
+    >
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-lg bg-muted/40 text-center">
+              <p className="text-2xl font-bold text-primary">{stats.occupancy}%</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{tt.occ}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/40 text-center">
+              <p className={`text-2xl font-bold ${noShowColor}`}>{stats.noShowRate}%</p>
+              <div className="flex items-center justify-center gap-1 mt-0.5">
+                <CalendarX2 className="h-3 w-3 text-muted-foreground" />
+                <p className="text-[10px] text-muted-foreground">{tt.no}</p>
               </div>
             </div>
-
-            {/* Mini barra comparativa */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] w-20 text-muted-foreground">{tt.occ}</span>
-                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(100, stats.occupancy)}%` }} />
-                </div>
-                <span className="text-[10px] tabular-nums w-8 text-right">{stats.occupancy}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] w-20 text-muted-foreground">{tt.no}</span>
-                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${stats.noShowRate > 20 ? "bg-destructive" : stats.noShowRate > 10 ? "bg-amber-500" : "bg-emerald-500"}`}
-                    style={{ width: `${Math.min(100, stats.noShowRate)}%` }}
-                  />
-                </div>
-                <span className="text-[10px] tabular-nums w-8 text-right">{stats.noShowRate}%</span>
-              </div>
-            </div>
-
-            <p className="text-[11px] text-muted-foreground text-center">
-              {stats.total === 0 ? tt.empty : tt.summary(stats.noShow, stats.total, stats.idleSlots)}
-            </p>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* Mini barra comparativa */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] w-20 text-muted-foreground">{tt.occ}</span>
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(100, stats.occupancy)}%` }} />
+              </div>
+              <span className="text-[10px] tabular-nums w-8 text-right">{stats.occupancy}%</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] w-20 text-muted-foreground">{tt.no}</span>
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${stats.noShowRate > 20 ? "bg-destructive" : stats.noShowRate > 10 ? "bg-amber-500" : "bg-emerald-500"}`}
+                  style={{ width: `${Math.min(100, stats.noShowRate)}%` }}
+                />
+              </div>
+              <span className="text-[10px] tabular-nums w-8 text-right">{stats.noShowRate}%</span>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-muted-foreground text-center">
+            {stats.total === 0 ? tt.empty : tt.summary(stats.noShow, stats.total, stats.idleSlots)}
+          </p>
+        </div>
+      )}
+    </InsightCardShell>
   );
 };
 

@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Loader2, MessageCircle, CalendarPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertTriangle, Loader2, MessageCircle, CalendarPlus, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import InsightCardShell from "./InsightCardShell";
+import { useInsightPrefs } from "./useInsightPreferences";
 
 interface Props {
   clinicId?: string;
@@ -28,12 +31,20 @@ const scoreColor = (score: number) => {
   return "bg-yellow-500/10 text-yellow-700 border-yellow-500/30";
 };
 
+const DEFAULTS = {
+  minScore: 50,
+  noShowThreshold: 2,
+  silenceDays: 14,
+  painStagnationWeeks: 3,
+};
+
 const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
   const [rows, setRows] = useState<ChurnRow[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
+  const { prefs, update, reset } = useInsightPrefs("churn", DEFAULTS);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,33 +62,118 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
     return () => { cancelled = true; };
   }, [clinicId, professionalId]);
 
-  return (
-    <Card className="border-red-500/20">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          {lang === "pt" ? "Pacientes em risco de evasão" : lang === "es" ? "Pacientes en riesgo de evasión" : "Patients at churn risk"}
-          {!loading && rows.length > 0 && (
-            <Badge variant="destructive" className="ml-auto text-[10px] px-2 py-0">{rows.length}</Badge>
-          )}
-        </CardTitle>
-        <CardDescription className="text-xs">
+  const filtered = useMemo(
+    () => rows.filter((r) => r.score >= prefs.minScore),
+    [rows, prefs.minScore]
+  );
+
+  const infoContent = (
+    <div className="space-y-3 text-sm">
+      <div>
+        <p className="font-semibold mb-1">
+          {lang === "pt" ? "Como o score é calculado" : "How the score is calculated"}
+        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
           {lang === "pt"
-            ? "Pacientes que combinam ausência, faltas, dor estagnada ou silêncio prolongado."
-            : lang === "es"
-            ? "Pacientes que combinan ausencias, faltas, dolor estancado o silencio prolongado."
-            : "Patients combining absence, no-shows, stagnant pain or long silence."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2">
+            ? "O score (0–100) combina sinais de risco: número de faltas recentes, dias de silêncio (sem mensagens/diário), evolução estagnada da dor e ausência de próximo agendamento. Quanto mais sinais simultâneos, maior o score."
+            : "Score (0–100) combines risk signals: recent no-shows, days of silence, stagnant pain evolution and no upcoming appointment. The more signals, the higher the score."}
+        </p>
+      </div>
+      <div className="border-t pt-3 space-y-3">
+        <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
+          {lang === "pt" ? "Personalizar" : "Customize"}
+        </p>
+        <div className="space-y-1">
+          <Label className="text-xs">
+            {lang === "pt" ? "Score mínimo para exibir" : "Minimum score to show"}
+          </Label>
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            value={prefs.minScore}
+            onChange={(e) => update({ minScore: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+            className="h-8"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">
+            {lang === "pt" ? "Faltas a considerar (referência)" : "No-show threshold (reference)"}
+          </Label>
+          <Input
+            type="number"
+            min={1}
+            value={prefs.noShowThreshold}
+            onChange={(e) => update({ noShowThreshold: Math.max(1, Number(e.target.value) || 1) })}
+            className="h-8"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">
+            {lang === "pt" ? "Dias de silêncio (referência)" : "Silence days (reference)"}
+          </Label>
+          <Input
+            type="number"
+            min={1}
+            value={prefs.silenceDays}
+            onChange={(e) => update({ silenceDays: Math.max(1, Number(e.target.value) || 1) })}
+            className="h-8"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">
+            {lang === "pt" ? "Semanas de estagnação de dor" : "Pain stagnation (weeks)"}
+          </Label>
+          <Input
+            type="number"
+            min={1}
+            value={prefs.painStagnationWeeks}
+            onChange={(e) => update({ painStagnationWeeks: Math.max(1, Number(e.target.value) || 1) })}
+            className="h-8"
+          />
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          {lang === "pt"
+            ? "Apenas o score mínimo filtra a lista local; os outros parâmetros servem como referência (o cálculo é feito no servidor)."
+            : "Only minimum score filters the list locally; other parameters are reference (calculation runs server-side)."}
+        </p>
+        <Button size="sm" variant="ghost" onClick={reset} className="gap-1 text-xs h-7">
+          <RotateCcw className="h-3 w-3" />
+          {lang === "pt" ? "Restaurar padrões" : "Reset defaults"}
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <InsightCardShell
+      id="churn"
+      className="border-red-500/20"
+      icon={<AlertTriangle className="h-4 w-4 text-red-600" />}
+      title={lang === "pt" ? "Pacientes em risco de evasão" : lang === "es" ? "Pacientes en riesgo de evasión" : "Patients at churn risk"}
+      description={
+        lang === "pt"
+          ? "Pacientes que combinam ausência, faltas, dor estagnada ou silêncio prolongado."
+          : lang === "es"
+          ? "Pacientes que combinan ausencias, faltas, dolor estancado o silencio prolongado."
+          : "Patients combining absence, no-shows, stagnant pain or long silence."
+      }
+      rightSlot={
+        !loading && filtered.length > 0 ? (
+          <Badge variant="destructive" className="ml-auto text-[10px] px-2 py-0">{filtered.length}</Badge>
+        ) : null
+      }
+      infoContent={infoContent}
+    >
+      <div className="space-y-2">
         {loading ? (
           <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-        ) : rows.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             {lang === "pt" ? "Nenhum paciente em risco no momento ✨" : lang === "es" ? "Sin pacientes en riesgo ✨" : "No patients at risk ✨"}
           </p>
         ) : (
-          rows.slice(0, 10).map((r) => (
+          filtered.slice(0, 10).map((r) => (
             <div key={r.patient_email} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-background">
               <Badge variant="outline" className={`shrink-0 px-2 py-1 text-xs font-bold ${scoreColor(r.score)}`}>
                 {r.score}
@@ -111,8 +207,8 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
             </div>
           ))
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </InsightCardShell>
   );
 };
 
