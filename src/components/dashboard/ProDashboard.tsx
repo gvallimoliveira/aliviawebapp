@@ -34,6 +34,7 @@ import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import ProScheduleCard from "./ProScheduleCard";
 import ClinicVolumeAlert from "./ClinicVolumeAlert";
 import SoloUpgradeBanner from "./SoloUpgradeBanner";
+import ExportDataCard from "./ExportDataCard";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
