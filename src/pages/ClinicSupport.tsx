@@ -247,6 +247,12 @@ const categories: ToolCategory[] = [
         desc: "Logo e cor da clínica no painel da equipe, nos PDFs, no link de avaliação e na pesquisa de satisfação. O paciente vê a sua marca em todos os pontos de contato.",
       },
       {
+        key: "data_export",
+        icon: Archive,
+        title: "Exportar todos os dados (.zip) — backup & LGPD",
+        desc: "No painel do proprietário, um clique gera um arquivo .zip completo com pacientes, avaliações, agendamentos, notas profissionais, notas de voz e índice de documentos/fotos (links seguros válidos por 1 hora). Você escolhe exatamente quais categorias incluir para reduzir o tamanho do arquivo. Garante portabilidade total dos dados da clínica (LGPD/CFF), backup secundário independente da plataforma e tranquilidade jurídica: os prontuários são SEUS, sempre exportáveis.",
+      },
+      {
         key: "all_inclusive",
         icon: Shield,
         title: "Tudo incluso, sem custo por atendimento",
