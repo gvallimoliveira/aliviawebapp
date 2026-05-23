@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Activity, CalendarX2, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import InsightCardShell from "./InsightCardShell";
 
 interface Props {
   clinicId?: string;
