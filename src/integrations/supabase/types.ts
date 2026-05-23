@@ -1907,10 +1907,16 @@ export type Database = {
         Returns: {
           better_when_lower: boolean
           clinic_value: number
+          large_avg: number
+          large_count: number
+          medium_avg: number
+          medium_count: number
           metric: string
           peer_avg: number
           peer_count: number
           size_bucket: string
+          small_avg: number
+          small_count: number
         }[]
       }
       get_clinic_kpis: {
