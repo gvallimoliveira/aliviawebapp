@@ -710,7 +710,7 @@ const Dashboard = () => {
                         <ExportDataCard
                           mode="clinic"
                           clinicId={activeClinic.clinic_id}
-                          entityName={activeClinic.clinics?.name}
+                          entityName={activeClinic.clinic_name}
                         />
                       )}
                     </TabsContent>
