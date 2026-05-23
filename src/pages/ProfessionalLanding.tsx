@@ -111,6 +111,7 @@ const ProfessionalLanding = () => {
     "b2b.pricing_inc_7",
     "b2b.pricing_inc_8",
     "b2b.pricing_inc_9",
+    "b2b.pricing_inc_10",
   ];
 
   const price = billing === "monthly" ? PRO_PLAN_PRICE : PRO_PLAN_ANNUAL_PRICE;
