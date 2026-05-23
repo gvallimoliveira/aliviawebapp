@@ -36,6 +36,9 @@ const ExportDataCard = ({ mode, clinicId, professionalId, entityName }: Props) =
     setLoading(true);
     try {
       // 1. Core tables (RLS already scopes these to the caller)
+      const sb: any = supabase;
+      const fetchScoped = (table: string) =>
+        sb.from(table).select("*").eq(scopeFilter.col, scopeFilter.val);
       const [
         patients,
         assessments,
@@ -45,15 +48,15 @@ const ExportDataCard = ({ mode, clinicId, professionalId, entityName }: Props) =
         files,
         photos,
       ] = await Promise.all([
-        supabase.from("patients").select("*").eq(scopeFilter.col, scopeFilter.val),
-        supabase.from("assessments").select("*").eq(scopeFilter.col, scopeFilter.val),
-        supabase.from("professional_appointments").select("*").eq(scopeFilter.col, scopeFilter.val),
+        fetchScoped("patients"),
+        fetchScoped("assessments"),
+        fetchScoped("professional_appointments"),
         isClinic
-          ? Promise.resolve({ data: [], error: null } as any)
-          : supabase.from("professional_notes").select("*"),
-        supabase.from("assessment_voice_notes").select("*").eq(scopeFilter.col, scopeFilter.val),
-        supabase.from("patient_files").select("*").eq(scopeFilter.col, scopeFilter.val),
-        supabase.from("patient_photos").select("*").eq(scopeFilter.col, scopeFilter.val),
+          ? Promise.resolve({ data: [], error: null }) as any
+          : sb.from("professional_notes").select("*"),
+        fetchScoped("assessment_voice_notes"),
+        fetchScoped("patient_files"),
+        fetchScoped("patient_photos"),
       ]);
 
       // 2. Build signed URLs for stored files (1h validity)
