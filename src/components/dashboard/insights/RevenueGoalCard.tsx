@@ -31,6 +31,12 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
   const [occupancy, setOccupancy] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // Permite ao usuário sobrescrever a base do simulador quando ainda
+  // não há histórico suficiente no mês (caso comum no início do mês ou
+  // em clínicas que ainda não estão registrando atendimentos no app).
+  const [baseTouched, setBaseTouched] = useState(false);
+  const [baseSessions, setBaseSessions] = useState<number>(0);
+  const [baseNoShow, setBaseNoShow] = useState<number>(0);
 
   // simulator
   const [reduceNoShow, setReduceNoShow] = useState<number>(0); // pp
@@ -65,7 +71,6 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
           setNoShowRate(total ? Math.round((100 * ns) / total) : 0);
         }
       } else if (professionalId) {
-        // Pro: count completed appointments this month
         const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
         const { data: appts } = await (supabase as any).from("professional_appointments")
           .select("status, appointment_date")
@@ -84,17 +89,29 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
     return () => { cancelled = true; };
   }, [clinicId, professionalId]);
 
-  const currentRevenue = completed * price;
-  // simulator: extra completed = recovered no-shows + occupancy gain
-  // assume "recovered no-show" approximates extra_completed = completed * (reduceNoShow / max(noShowRate,1))
-  const recoveredFromNoShow = noShowRate > 0
-    ? Math.round(completed * (reduceNoShow / Math.max(noShowRate, 1)))
-    : 0;
-  const occupancyGain = Math.round(completed * (increaseOcc / 100));
+  // Sincroniza inputs editáveis com dados reais até o usuário ajustar.
+  useEffect(() => {
+    if (!baseTouched) {
+      setBaseSessions(completed);
+      setBaseNoShow(noShowRate);
+    }
+  }, [completed, noShowRate, baseTouched]);
+
+  const effectiveSessions = baseSessions;
+  const effectiveNoShow = baseNoShow;
+  const currentRevenue = effectiveSessions * price;
+  // Recupera no-show: cada ponto percentual reduzido vira sessões extras
+  // proporcionais ao volume total estimado (sessões + no-shows).
+  const totalScheduled = effectiveNoShow > 0
+    ? effectiveSessions / (1 - effectiveNoShow / 100)
+    : effectiveSessions;
+  const recoveredFromNoShow = Math.round(totalScheduled * (reduceNoShow / 100));
+  const occupancyGain = Math.round(Math.max(effectiveSessions, 1) * (increaseOcc / 100));
   const extraSessions = recoveredFromNoShow + occupancyGain;
-  const projectedRevenue = (completed + extraSessions) * price;
+  const projectedRevenue = (effectiveSessions + extraSessions) * price;
   const extraRevenue = projectedRevenue - currentRevenue;
   const goalProgress = goal > 0 ? Math.min(100, Math.round((projectedRevenue / goal) * 100)) : 0;
+  const sessionsToGoal = goal > 0 && price > 0 ? Math.ceil(goal / price) : 0;
 
   const handleSave = async () => {
     setSaving(true);
@@ -156,16 +173,50 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
               {lang === "pt" ? "Salvar" : "Save"}
             </Button>
 
-            {/* Current revenue */}
-            <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
+            {/* Current revenue + base inputs */}
+            <div className="p-3 rounded-lg bg-muted/40 border border-border/60 space-y-2">
               <p className="text-xs text-muted-foreground">
                 {lang === "pt" ? "Receita atual estimada (mês)" : "Current estimated revenue (month)"}
               </p>
               <p className="text-xl font-bold text-foreground">{fmtBRL(currentRevenue)}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                {completed} {lang === "pt" ? "sessões concluídas" : "completed sessions"}
-                {noShowRate > 0 && ` · no-show ${noShowRate}%`}
+              <p className="text-[11px] text-muted-foreground">
+                {lang === "pt"
+                  ? "Ajuste a base se ainda não há histórico suficiente:"
+                  : "Adjust the base if there's no history yet:"}
               </p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    {lang === "pt" ? "Sessões/mês" : "Sessions/month"}
+                  </Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    value={baseSessions || ""}
+                    onChange={(e) => { setBaseTouched(true); setBaseSessions(Number(e.target.value) || 0); }}
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    {lang === "pt" ? "No-show atual (%)" : "Current no-show (%)"}
+                  </Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    value={baseNoShow || ""}
+                    onChange={(e) => { setBaseTouched(true); setBaseNoShow(Math.min(100, Math.max(0, Number(e.target.value) || 0))); }}
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
+              {sessionsToGoal > 0 && (
+                <p className="text-[11px] text-muted-foreground pt-1">
+                  {lang === "pt"
+                    ? `Para bater a meta: ~${sessionsToGoal} sessões/mês`
+                    : `To hit goal: ~${sessionsToGoal} sessions/month`}
+                </p>
+              )}
             </div>
 
             {/* Simulator */}
@@ -198,6 +249,13 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
                 {extraRevenue > 0 && (
                   <p className="text-xs font-medium text-emerald-700">
                     +{fmtBRL(extraRevenue)} ({extraSessions} {lang === "pt" ? "sessões extras" : "extra sessions"})
+                  </p>
+                )}
+                {price <= 0 && (
+                  <p className="text-[11px] text-amber-700 mt-1">
+                    {lang === "pt"
+                      ? "Defina o valor da sessão acima para ver projeções em R$."
+                      : "Set the session price above to see R$ projections."}
                   </p>
                 )}
                 {goal > 0 && (

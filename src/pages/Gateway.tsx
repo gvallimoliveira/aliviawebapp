@@ -27,7 +27,7 @@ const Gateway = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/");
+    window.location.replace("/");
   };
 
   useEffect(() => {
