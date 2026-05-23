@@ -85,6 +85,12 @@ const categories: ToolCategory[] = [
         desc: "Logo, cor e identidade da clínica aplicados em todos os relatórios gerados. Profissionalismo na entrega ao paciente e ao convênio.",
       },
       {
+        key: "voice_notes",
+        icon: Mic,
+        title: "Notas de voz na avaliação manual (IA)",
+        desc: "Durante uma avaliação manual no consultório, um botão flutuante de microfone permite gravar sua narrativa enquanto examina o paciente — sem interromper o atendimento para digitar. O áudio é processado pela IA (Gemini), transcrito e resumido automaticamente em texto clínico estruturado, salvo na avaliação. O áudio bruto é descartado por privacidade — só o texto permanece. Ganhe tempo real de consulta e tenha um prontuário rico mesmo no atendimento mais corrido.",
+      },
+      {
         key: "comparison",
         icon: TrendingUp,
         title: "Comparativo Antes vs. Depois",
