@@ -56,8 +56,12 @@ const proTools = [
   { key: "white_label", icon: Palette },
   { key: "evolution_report", icon: TrendingUp },
   { key: "simulated_env", icon: MonitorPlay },
+  { key: "voice_notes", icon: Mic },
+  { key: "data_export", icon: Archive },
   { key: "insights_churn", icon: TrendingUp },
   { key: "insights_discharge", icon: TrendingUp },
+  { key: "insights_adherence", icon: Activity },
+  { key: "insights_benchmark", icon: Gauge },
   { key: "insights_revenue", icon: BarChart3 },
 ];
 
