@@ -38,6 +38,7 @@ const ClinicOwnerDashboard = lazy(() => import("@/components/dashboard/ClinicOwn
 const InsightsTab = lazy(() => import("@/components/dashboard/insights/InsightsTab"));
 const FeedbackSurveyCard = lazy(() => import("@/components/dashboard/FeedbackSurveyCard"));
 const FeedbackResultsCard = lazy(() => import("@/components/dashboard/FeedbackResultsCard"));
+const ExportDataCard = lazy(() => import("@/components/dashboard/ExportDataCard"));
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
@@ -107,7 +108,7 @@ function buildOnboardingSteps(
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, ready: authReady } = useAuth();
   const { t, toggleLanguage, language } = useLanguage();
-  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary } = useClinic();
+  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary, isClinicOwner } = useClinic();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
@@ -705,6 +706,13 @@ const Dashboard = () => {
                   {canManageClinic && (
                     <TabsContent value="management" className="space-y-6">
                       <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
+                      {isClinicOwner && (
+                        <ExportDataCard
+                          mode="clinic"
+                          clinicId={activeClinic.clinic_id}
+                          entityName={activeClinic.clinic_name}
+                        />
+                      )}
                     </TabsContent>
                   )}
                 </Tabs>

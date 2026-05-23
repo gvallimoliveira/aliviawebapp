@@ -34,6 +34,7 @@ import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import ProScheduleCard from "./ProScheduleCard";
 import ClinicVolumeAlert from "./ClinicVolumeAlert";
 import SoloUpgradeBanner from "./SoloUpgradeBanner";
+import ExportDataCard from "./ExportDataCard";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
@@ -832,6 +833,15 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                 </p>
               </CardContent>
             </Card>
+          )}
+
+          {/* Backup / export — autonomous pro only (not demo, not simulated) */}
+          {!isDemoMode && !isSimulated && (
+            <ExportDataCard
+              mode="professional"
+              professionalId={professional.id}
+              entityName={professional.full_name}
+            />
           )}
         </>
       )}
