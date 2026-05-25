@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, ExternalLink, Check, X, Activity, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Check, X, Activity, Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,7 @@ const FunctionalTests = ({ painRegions, onComplete, onBack, hasQuestionnaires = 
   const tests = useMemo(() => getTestsForRegions(painRegions), [painRegions]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [results, setResults] = useState<TestResult[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentTest = tests[currentIndex];
   const totalTests = tests.length;
@@ -62,6 +63,8 @@ const FunctionalTests = ({ painRegions, onComplete, onBack, hasQuestionnaires = 
   };
 
   const handleFinish = () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     onComplete(results);
   };
 
@@ -215,11 +218,20 @@ const FunctionalTests = ({ painRegions, onComplete, onBack, hasQuestionnaires = 
         ) : (
           <Button
             onClick={handleFinish}
-            disabled={!allAnswered}
+            disabled={!allAnswered || isSubmitting}
             className="gap-2 rounded-xl"
           >
-            {t("ftest.finish_tests")}
-            <ChevronRight className="h-4 w-4" />
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t("ftest.finish_tests")}
+              </>
+            ) : (
+              <>
+                {t("ftest.finish_tests")}
+                <ChevronRight className="h-4 w-4" />
+              </>
+            )}
           </Button>
         )}
       </div>
