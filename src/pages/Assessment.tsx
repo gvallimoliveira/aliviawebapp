@@ -28,7 +28,7 @@ import OfflineBanner from "@/components/assessment/OfflineBanner";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { saveDraft, getDraft, clearDraft } from "@/lib/sessionPersistence";
 
-type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
+type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "final_notes" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
 const UPGRADE_KEY = "alivia-basic-upgrade-data";
 const UPGRADE_EXPIRY_KEY = "alivia-basic-upgrade-expiry";
@@ -108,6 +108,9 @@ const Assessment = () => {
   // "diagnosis" = run generateDiagnosis once back online (uses last anamnesis+tests)
   // "treatment" = run generateTreatmentPlan once back online
   const [pendingAIAction, setPendingAIAction] = useState<null | "diagnosis" | "treatment">(null);
+  const [extraQuestionnaireRegions, setExtraQuestionnaireRegions] = useState<string[]>([]);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const inFlightDiagnosisRef = useRef(false);
 
   // ----- Auto-save / resume draft (6h TTL via sessionPersistence) -----
   // Restore on first mount: if there's a draft for this same mode and the
