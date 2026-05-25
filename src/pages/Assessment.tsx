@@ -487,6 +487,25 @@ const Assessment = () => {
       });
     }
     if (mode === "premium") {
+      // Detect functional limitation context for the 3rd questionnaire rule.
+      const note = (data as any).functionalLimitationNote?.trim?.() || additionalInfo.trim();
+      if (note && data.painRegions.length >= 3) {
+        try {
+          const { data: detect } = await supabase.functions.invoke("detect-functional-limitation", {
+            body: {
+              note,
+              painRegions: data.painRegions,
+              painScoresPerRegion: data.painScoresPerRegion || {},
+              language,
+            },
+          });
+          if (Array.isArray(detect?.regions)) setExtraQuestionnaireRegions(detect.regions);
+        } catch (err) {
+          console.error("detect-functional-limitation failed (non-blocking):", err);
+        }
+      } else {
+        setExtraQuestionnaireRegions([]);
+      }
       setStep("questionnaire");
     } else {
       generateDiagnosis(data, [], id);
@@ -495,7 +514,6 @@ const Assessment = () => {
 
   const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
     setQuestionnaireResults(results);
-    // Persist questionnaire results immediately so they're available for PDF/diagnosis
     if (assessmentId && results.length > 0) {
       await updateAssessment(assessmentId, { test_results: results as any });
     }
@@ -508,12 +526,27 @@ const Assessment = () => {
 
   const handleTestsComplete = async (results: TestResult[]) => {
     setTestResults(results);
-    // Combine questionnaire results + functional test results into a single array
     const combinedResults = [...questionnaireResults, ...results];
     if (assessmentId) {
       await updateAssessment(assessmentId, { test_results: combinedResults as any });
     }
-    generateDiagnosis(anamnesisData!, results, assessmentId);
+    if (mode === "premium") {
+      setStep("final_notes");
+    } else {
+      generateDiagnosis(anamnesisData!, results, assessmentId);
+    }
+  };
+
+  const handleFinalize = async () => {
+    if (isFinalizing) return;
+    setIsFinalizing(true);
+    const extra = additionalInfo.trim();
+    const dataWithNote = extra
+      ? ({ ...anamnesisData!, additionalInfo: extra } as any)
+      : anamnesisData!;
+    if (extra) setAnamnesisData(dataWithNote);
+    await generateDiagnosis(dataWithNote, testResults, assessmentId, extra || undefined);
+    setIsFinalizing(false);
   };
 
   const generateDiagnosis = async (data: AnamnesisData, tests: TestResult[], currentAssessmentId?: string | null, extraInfo?: string) => {
