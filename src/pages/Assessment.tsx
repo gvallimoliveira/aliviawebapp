@@ -605,7 +605,9 @@ const Assessment = () => {
         description: t("diagnosis.error_desc"),
         variant: "destructive",
       });
-      setStep(mode === "premium" ? "functional_tests" : "anamnesis");
+      setStep(mode === "premium" ? "final_notes" : "anamnesis");
+    } finally {
+      inFlightDiagnosisRef.current = false;
     }
   };
 
