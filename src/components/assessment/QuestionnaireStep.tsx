@@ -180,6 +180,15 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
         </div>
       </div>
 
+      {totalQuestionnaires > 1 && currentQIndex === 0 && (
+        <div className="text-[11px] leading-snug rounded-lg border border-primary/20 bg-primary/5 text-foreground/80 px-3 py-2">
+          {tl(
+            `Para focar a análise, priorizamos ${totalQuestionnaires} questionário(s) (${priorityNames}) das regiões com maior dor.`,
+            `To focus the analysis, we prioritized ${totalQuestionnaires} questionnaire(s) (${priorityNames}) for the regions with highest pain.`
+          )}
+        </div>
+      )}
+
       {/* Questionnaire header */}
       <div className="space-y-1">
         <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
