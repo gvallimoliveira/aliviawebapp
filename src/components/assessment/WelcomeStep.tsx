@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail, User } from "lucide-react";
+import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail, User, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -154,6 +154,23 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
             </motion.div>
           ))}
         </div>
+
+        {/* Focus warning for poly-complaint patients */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="w-full max-w-sm flex items-start gap-3 p-3 rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-900/15 dark:border-amber-700/50 text-left"
+        >
+          <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-900 dark:text-amber-200 leading-snug">
+            {language === "pt"
+              ? "Se você tem mais de uma queixa de dor, foque nas mais relevantes ou que começaram nos últimos 12 meses. Dores antigas e sem relação direta podem confundir a análise."
+              : language === "es"
+              ? "Si tienes más de una queja de dolor, enfócate en las más relevantes o que comenzaron en los últimos 12 meses. Dolores antiguos sin relación directa pueden confundir el análisis."
+              : "If you have more than one pain complaint, focus on the most relevant ones or those that started within the last 12 months. Old, unrelated pains may confuse the analysis."}
+          </p>
+        </motion.div>
 
         {/* Name + Email capture for basic assessments (non-logged users) */}
         {needsEmail && (
