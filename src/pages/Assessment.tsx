@@ -597,7 +597,7 @@ const Assessment = () => {
       const isNetworkErr = err?.message?.toLowerCase?.().includes("network") || err?.message?.toLowerCase?.().includes("fetch");
       if (isNetworkErr || (typeof navigator !== "undefined" && !navigator.onLine)) {
         setPendingAIAction("diagnosis");
-        setStep(mode === "premium" ? "functional_tests" : "anamnesis");
+        setStep(mode === "premium" ? "final_notes" : "anamnesis");
         return;
       }
       toast({
