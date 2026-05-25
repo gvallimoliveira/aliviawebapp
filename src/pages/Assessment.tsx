@@ -923,8 +923,131 @@ const Assessment = () => {
               onComplete={handleQuestionnaireComplete}
               onBack={() => { if (!isUpgradeFlow) setStep("anamnesis"); }}
               onSkip={handleQuestionnaireSkip}
+              painScoresPerRegion={anamnesisData.painScoresPerRegion}
+              generalPainScore={anamnesisData.painScore}
+              extraQuestionnaireRegions={extraQuestionnaireRegions}
             />
           </>
+        )}
+        {step === "functional_tests" && anamnesisData && (
+          <FunctionalTests
+            painRegions={anamnesisData.painRegions}
+            onComplete={handleTestsComplete}
+            onBack={() => setStep("questionnaire")}
+            hasQuestionnaires={questionnaireResults.length > 0}
+          />
+        )}
+        {step === "final_notes" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="text-center space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                <MessageCircle className="h-4 w-4" />
+                {language === "pt" ? "Última etapa" : language === "es" ? "Última etapa" : "Final step"}
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">
+                {language === "pt"
+                  ? "Algo mais que devemos saber?"
+                  : language === "es"
+                  ? "¿Algo más que debamos saber?"
+                  : "Anything else we should know?"}
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                {language === "pt"
+                  ? "Espaço opcional para qualquer detalhe relevante: contexto da dor, exames, tratamentos prévios, expectativas."
+                  : language === "es"
+                  ? "Espacio opcional para cualquier detalle relevante: contexto del dolor, exámenes, tratamientos previos, expectativas."
+                  : "Optional space for any relevant detail: pain context, imaging, prior treatments, expectations."}
+              </p>
+            </div>
+
+            <Card className="rounded-xl">
+              <CardContent className="pt-6 space-y-4">
+                <Textarea
+                  value={additionalInfo}
+                  onChange={(e) => setAdditionalInfo(e.target.value.slice(0, 600))}
+                  placeholder={
+                    language === "pt"
+                      ? "Ex.: A dor piora muito ao dirigir e me impede de praticar tênis aos fins de semana..."
+                      : language === "es"
+                      ? "Ej.: El dolor empeora al conducir y me impide jugar tenis los fines de semana..."
+                      : "E.g.: The pain worsens when driving and stops me from playing tennis on weekends..."
+                  }
+                  className="min-h-[140px] rounded-xl"
+                  disabled={isFinalizing}
+                />
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>
+                    {language === "pt"
+                      ? "Opcional · sua análise será gerada em até 20s"
+                      : language === "es"
+                      ? "Opcional · tu análisis se generará en hasta 20s"
+                      : "Optional · your analysis will be generated in up to 20s"}
+                  </span>
+                  <span>{additionalInfo.length}/600</span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep("functional_tests")}
+                    disabled={isFinalizing}
+                    className="rounded-xl gap-2 sm:w-auto"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    {language === "pt" ? "Voltar" : language === "es" ? "Atrás" : "Back"}
+                  </Button>
+                  <Button
+                    onClick={handleFinalize}
+                    disabled={isFinalizing}
+                    className="rounded-xl gap-2 flex-1 h-12 text-base font-semibold"
+                  >
+                    {isFinalizing ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        {language === "pt"
+                          ? "Processando sua avaliação..."
+                          : language === "es"
+                          ? "Procesando tu evaluación..."
+                          : "Processing your assessment..."}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-5 w-5" />
+                        {language === "pt"
+                          ? "Finalizar e gerar análise"
+                          : language === "es"
+                          ? "Finalizar y generar análisis"
+                          : "Finish & generate analysis"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {isFinalizing && (
+                  <>
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-primary rounded-full"
+                        initial={{ width: "10%" }}
+                        animate={{ width: ["10%", "90%", "60%", "95%"] }}
+                        transition={{ duration: 18, ease: "easeInOut" }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-center text-muted-foreground">
+                      {language === "pt"
+                        ? "Isso pode levar até 20 segundos. Não feche a página."
+                        : language === "es"
+                        ? "Esto puede tardar hasta 20 segundos. No cierres la página."
+                        : "This may take up to 20 seconds. Please don't close the page."}
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
         {step === "functional_tests" && anamnesisData && (
           <FunctionalTests
