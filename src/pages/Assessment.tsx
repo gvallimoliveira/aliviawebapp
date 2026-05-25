@@ -28,7 +28,7 @@ import OfflineBanner from "@/components/assessment/OfflineBanner";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { saveDraft, getDraft, clearDraft } from "@/lib/sessionPersistence";
 
-type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
+type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "final_notes" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
 const UPGRADE_KEY = "alivia-basic-upgrade-data";
 const UPGRADE_EXPIRY_KEY = "alivia-basic-upgrade-expiry";
@@ -108,6 +108,9 @@ const Assessment = () => {
   // "diagnosis" = run generateDiagnosis once back online (uses last anamnesis+tests)
   // "treatment" = run generateTreatmentPlan once back online
   const [pendingAIAction, setPendingAIAction] = useState<null | "diagnosis" | "treatment">(null);
+  const [extraQuestionnaireRegions, setExtraQuestionnaireRegions] = useState<string[]>([]);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const inFlightDiagnosisRef = useRef(false);
 
   // ----- Auto-save / resume draft (6h TTL via sessionPersistence) -----
   // Restore on first mount: if there's a draft for this same mode and the
@@ -484,6 +487,25 @@ const Assessment = () => {
       });
     }
     if (mode === "premium") {
+      // Detect functional limitation context for the 3rd questionnaire rule.
+      const note = (data as any).functionalLimitationNote?.trim?.() || additionalInfo.trim();
+      if (note && data.painRegions.length >= 3) {
+        try {
+          const { data: detect } = await supabase.functions.invoke("detect-functional-limitation", {
+            body: {
+              note,
+              painRegions: data.painRegions,
+              painScoresPerRegion: data.painScoresPerRegion || {},
+              language,
+            },
+          });
+          if (Array.isArray(detect?.regions)) setExtraQuestionnaireRegions(detect.regions);
+        } catch (err) {
+          console.error("detect-functional-limitation failed (non-blocking):", err);
+        }
+      } else {
+        setExtraQuestionnaireRegions([]);
+      }
       setStep("questionnaire");
     } else {
       generateDiagnosis(data, [], id);
@@ -492,7 +514,6 @@ const Assessment = () => {
 
   const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
     setQuestionnaireResults(results);
-    // Persist questionnaire results immediately so they're available for PDF/diagnosis
     if (assessmentId && results.length > 0) {
       await updateAssessment(assessmentId, { test_results: results as any });
     }
@@ -505,15 +526,31 @@ const Assessment = () => {
 
   const handleTestsComplete = async (results: TestResult[]) => {
     setTestResults(results);
-    // Combine questionnaire results + functional test results into a single array
     const combinedResults = [...questionnaireResults, ...results];
     if (assessmentId) {
       await updateAssessment(assessmentId, { test_results: combinedResults as any });
     }
-    generateDiagnosis(anamnesisData!, results, assessmentId);
+    if (mode === "premium") {
+      setStep("final_notes");
+    } else {
+      generateDiagnosis(anamnesisData!, results, assessmentId);
+    }
+  };
+
+  const handleFinalize = async () => {
+    if (isFinalizing) return;
+    setIsFinalizing(true);
+    const extra = additionalInfo.trim();
+    const dataWithNote = extra
+      ? ({ ...anamnesisData!, additionalInfo: extra } as any)
+      : anamnesisData!;
+    if (extra) setAnamnesisData(dataWithNote);
+    await generateDiagnosis(dataWithNote, testResults, assessmentId, extra || undefined);
+    setIsFinalizing(false);
   };
 
   const generateDiagnosis = async (data: AnamnesisData, tests: TestResult[], currentAssessmentId?: string | null, extraInfo?: string) => {
+    if (inFlightDiagnosisRef.current) return;
     // Offline guard — keep the user on the previous step and queue.
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       setPendingAIAction("diagnosis");
@@ -528,6 +565,7 @@ const Assessment = () => {
       });
       return;
     }
+    inFlightDiagnosisRef.current = true;
     setStep("loading");
     try {
       const bodyData: any = { anamnesisData: data, testResults: tests, questionnaireResults, mode, language };
@@ -559,7 +597,7 @@ const Assessment = () => {
       const isNetworkErr = err?.message?.toLowerCase?.().includes("network") || err?.message?.toLowerCase?.().includes("fetch");
       if (isNetworkErr || (typeof navigator !== "undefined" && !navigator.onLine)) {
         setPendingAIAction("diagnosis");
-        setStep(mode === "premium" ? "functional_tests" : "anamnesis");
+        setStep(mode === "premium" ? "final_notes" : "anamnesis");
         return;
       }
       toast({
@@ -567,7 +605,9 @@ const Assessment = () => {
         description: t("diagnosis.error_desc"),
         variant: "destructive",
       });
-      setStep(mode === "premium" ? "functional_tests" : "anamnesis");
+      setStep(mode === "premium" ? "final_notes" : "anamnesis");
+    } finally {
+      inFlightDiagnosisRef.current = false;
     }
   };
 
@@ -883,6 +923,9 @@ const Assessment = () => {
               onComplete={handleQuestionnaireComplete}
               onBack={() => { if (!isUpgradeFlow) setStep("anamnesis"); }}
               onSkip={handleQuestionnaireSkip}
+              painScoresPerRegion={anamnesisData.painScoresPerRegion}
+              generalPainScore={anamnesisData.painScore}
+              extraQuestionnaireRegions={extraQuestionnaireRegions}
             />
           </>
         )}
@@ -893,6 +936,118 @@ const Assessment = () => {
             onBack={() => setStep("questionnaire")}
             hasQuestionnaires={questionnaireResults.length > 0}
           />
+        )}
+        {step === "final_notes" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="text-center space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                <MessageCircle className="h-4 w-4" />
+                {language === "pt" ? "Última etapa" : language === "es" ? "Última etapa" : "Final step"}
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">
+                {language === "pt"
+                  ? "Algo mais que devemos saber?"
+                  : language === "es"
+                  ? "¿Algo más que debamos saber?"
+                  : "Anything else we should know?"}
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                {language === "pt"
+                  ? "Espaço opcional para qualquer detalhe relevante: contexto da dor, exames, tratamentos prévios, expectativas."
+                  : language === "es"
+                  ? "Espacio opcional para cualquier detalle relevante: contexto del dolor, exámenes, tratamientos previos, expectativas."
+                  : "Optional space for any relevant detail: pain context, imaging, prior treatments, expectations."}
+              </p>
+            </div>
+
+            <Card className="rounded-xl">
+              <CardContent className="pt-6 space-y-4">
+                <Textarea
+                  value={additionalInfo}
+                  onChange={(e) => setAdditionalInfo(e.target.value.slice(0, 600))}
+                  placeholder={
+                    language === "pt"
+                      ? "Ex.: A dor piora muito ao dirigir e me impede de praticar tênis aos fins de semana..."
+                      : language === "es"
+                      ? "Ej.: El dolor empeora al conducir y me impide jugar tenis los fines de semana..."
+                      : "E.g.: The pain worsens when driving and stops me from playing tennis on weekends..."
+                  }
+                  className="min-h-[140px] rounded-xl"
+                  disabled={isFinalizing}
+                />
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>
+                    {language === "pt"
+                      ? "Opcional · sua análise será gerada em até 20s"
+                      : language === "es"
+                      ? "Opcional · tu análisis se generará en hasta 20s"
+                      : "Optional · your analysis will be generated in up to 20s"}
+                  </span>
+                  <span>{additionalInfo.length}/600</span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep("functional_tests")}
+                    disabled={isFinalizing}
+                    className="rounded-xl gap-2 sm:w-auto"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    {language === "pt" ? "Voltar" : language === "es" ? "Atrás" : "Back"}
+                  </Button>
+                  <Button
+                    onClick={handleFinalize}
+                    disabled={isFinalizing}
+                    className="rounded-xl gap-2 flex-1 h-12 text-base font-semibold"
+                  >
+                    {isFinalizing ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        {language === "pt"
+                          ? "Processando sua avaliação..."
+                          : language === "es"
+                          ? "Procesando tu evaluación..."
+                          : "Processing your assessment..."}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-5 w-5" />
+                        {language === "pt"
+                          ? "Finalizar e gerar análise"
+                          : language === "es"
+                          ? "Finalizar y generar análisis"
+                          : "Finish & generate analysis"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {isFinalizing && (
+                  <>
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-primary rounded-full"
+                        initial={{ width: "10%" }}
+                        animate={{ width: ["10%", "90%", "60%", "95%"] }}
+                        transition={{ duration: 18, ease: "easeInOut" }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-center text-muted-foreground">
+                      {language === "pt"
+                        ? "Isso pode levar até 20 segundos. Não feche a página."
+                        : language === "es"
+                        ? "Esto puede tardar hasta 20 segundos. No cierres la página."
+                        : "This may take up to 20 seconds. Please don't close the page."}
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
         {step === "loading" && (
           <div className="text-center py-20 space-y-4">

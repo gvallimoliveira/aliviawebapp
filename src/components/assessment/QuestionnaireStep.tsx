@@ -18,16 +18,46 @@ interface QuestionnaireStepProps {
   onBack: () => void;
   onSkip: () => void;
   previousAnswers?: Record<string, Record<string, number>>;
+  painScoresPerRegion?: Record<string, number>;
+  generalPainScore?: number;
+  extraQuestionnaireRegions?: string[];
 }
 
-const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAnswers }: QuestionnaireStepProps) => {
+const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAnswers, painScoresPerRegion, generalPainScore, extraQuestionnaireRegions }: QuestionnaireStepProps) => {
   const { language } = useLanguage();
   const tl = (pt: string, en: string) => (language === "pt" ? pt : en);
 
-  const applicableQuestionnaires = useMemo(
-    () => getApplicableQuestionnaires(painRegions),
-    [painRegions]
-  );
+  // Score each applicable questionnaire by the highest pain score among its
+  // mapped regions. Keep top 2 as mandatory. If the user described a relevant
+  // functional limitation in a low-pain region (extraQuestionnaireRegions),
+  // allow one extra questionnaire that covers that region (max 3 total).
+  const applicableQuestionnaires = useMemo(() => {
+    const all = getApplicableQuestionnaires(painRegions);
+    if (all.length <= 2) return all;
+
+    const scoreFor = (q: QuestionnaireDefinition) => {
+      let best = 0;
+      for (const r of q.regionMapping) {
+        const s = Number(painScoresPerRegion?.[r] ?? 0);
+        if (s > best) best = s;
+      }
+      if (best === 0 && typeof generalPainScore === "number") best = generalPainScore;
+      return best;
+    };
+
+    const sorted = [...all].sort((a, b) => scoreFor(b) - scoreFor(a));
+    const top = sorted.slice(0, 2);
+    const rest = sorted.slice(2);
+
+    const extraRegions = extraQuestionnaireRegions ?? [];
+    let extra: QuestionnaireDefinition | null = null;
+    if (extraRegions.length > 0) {
+      extra = rest.find((q) => q.regionMapping.some((r) => extraRegions.includes(r))) ?? null;
+    }
+    return extra ? [...top, extra] : top;
+  }, [painRegions, painScoresPerRegion, generalPainScore, extraQuestionnaireRegions]);
+
+  const priorityNames = applicableQuestionnaires.map((q) => q.name).join(" + ");
 
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [currentSubscaleIndex, setCurrentSubscaleIndex] = useState(0);
@@ -149,6 +179,15 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
           <motion.div className="h-full bg-primary rounded-full" initial={{ width: 0 }} animate={{ width: `${overallProgress}%` }} transition={{ duration: 0.3 }} />
         </div>
       </div>
+
+      {totalQuestionnaires > 1 && currentQIndex === 0 && (
+        <div className="text-[11px] leading-snug rounded-lg border border-primary/20 bg-primary/5 text-foreground/80 px-3 py-2">
+          {tl(
+            `Para focar a análise, priorizamos ${totalQuestionnaires} questionário(s) (${priorityNames}) das regiões com maior dor.`,
+            `To focus the analysis, we prioritized ${totalQuestionnaires} questionnaire(s) (${priorityNames}) for the regions with highest pain.`
+          )}
+        </div>
+      )}
 
       {/* Questionnaire header */}
       <div className="space-y-1">

@@ -90,6 +90,15 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
         <p className="text-sm text-muted-foreground">{t("painmap.subtitle")}</p>
       </div>
 
+      {/* Focus reminder */}
+      <div className="mx-auto max-w-md text-[11px] leading-snug rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-900/15 dark:border-amber-700/50 text-amber-900 dark:text-amber-200 px-3 py-2 text-center">
+        {language === "pt"
+          ? "Selecione apenas as regiões da(s) queixa(s) atual(is). Evite marcar dores antigas sem relação."
+          : language === "es"
+          ? "Selecciona solo las regiones de tu(s) queja(s) actual(es). Evita marcar dolores antiguos sin relación."
+          : "Select only the regions of your current complaint(s). Avoid marking old, unrelated pains."}
+      </div>
+
       {/* View toggle */}
       <div className="flex justify-center gap-2 flex-wrap">
         {views.map((v) => (
