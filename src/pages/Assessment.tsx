@@ -1049,14 +1049,6 @@ const Assessment = () => {
             </Card>
           </motion.div>
         )}
-        {step === "functional_tests" && anamnesisData && (
-          <FunctionalTests
-            painRegions={anamnesisData.painRegions}
-            onComplete={handleTestsComplete}
-            onBack={() => setStep("questionnaire")}
-            hasQuestionnaires={questionnaireResults.length > 0}
-          />
-        )}
         {step === "loading" && (
           <div className="text-center py-20 space-y-4">
             <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
