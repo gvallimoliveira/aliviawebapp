@@ -550,6 +550,7 @@ const Assessment = () => {
   };
 
   const generateDiagnosis = async (data: AnamnesisData, tests: TestResult[], currentAssessmentId?: string | null, extraInfo?: string) => {
+    if (inFlightDiagnosisRef.current) return;
     // Offline guard — keep the user on the previous step and queue.
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       setPendingAIAction("diagnosis");
@@ -564,6 +565,7 @@ const Assessment = () => {
       });
       return;
     }
+    inFlightDiagnosisRef.current = true;
     setStep("loading");
     try {
       const bodyData: any = { anamnesisData: data, testResults: tests, questionnaireResults, mode, language };
