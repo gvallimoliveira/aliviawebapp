@@ -1,69 +1,93 @@
-# Smart Insights — Refinements
+## Objetivo
 
-Three improvements to the Insights tab (clinic + pro modes).
+Reduzir ruído clínico em pacientes poliqueixosos no link de pré-avaliação (clínica e profissional), orientando o foco, limitando questionários, capturando contexto adicional e melhorando o feedback visual do botão Finalizar.
 
-## 1. Collapsible cards
+## 1. Orientação "foque na queixa principal"
 
-Wrap each insight card (Churn, Discharge, Adherence, Benchmark, Occupancy, Revenue) in a `Collapsible` with a chevron toggle in the header. Persist open/closed state per-card in `localStorage` (key `insights:collapsed:<cardId>`). Default: all expanded on first load.
+**Onde aparece:**
+- `WelcomeStep.tsx` (modes `professional` e `premium`/`basic`): novo card de aviso âmbar logo abaixo dos 3 passos, com ícone `AlertCircle`:
+  > "Se você tem mais de uma queixa de dor, foque nas mais relevantes ou que surgiram nos últimos 12 meses. Dores antigas e sem relação direta podem confundir a análise."
+- `PainMap.tsx`: lembrete compacto (mesmo tom âmbar, menor) acima do botão de vistas:
+  > "Selecione apenas as regiões da(s) queixa(s) atual(is). Evite marcar dores antigas sem relação."
 
-## 2. Info popovers + per-metric customization
+Traduções em `pt.json` / `en.json` / `es.json`.
 
-Add an `Info` (lowercase `i`) icon button to the top-right of each of these card headers:
-- **ChurnRiskCard**
-- **DischargePredictionCard**
-- **PatientAdherenceCard**
+## 2. Limite inteligente de questionários (máx. 3)
 
-Clicking opens a `Popover` (or `Dialog` on mobile) that contains:
-- **How it's calculated** — plain-language explanation of the formula and weights.
-- **Customize** — editable thresholds saved per-user in a new table `insight_preferences`.
+**Lógica nova em `QuestionnaireStep.tsx`** (recebe `painScoresPerRegion` via prop nova vinda de `Assessment.tsx` → `anamnesisData.painScoresPerRegion`):
 
-Configurable parameters per card:
+1. Pega `getApplicableQuestionnaires(painRegions)`.
+2. Para cada questionário, calcula `regionScore = max(painScoresPerRegion[r]) para r in q.regionMapping`. Fallback: `painScore` geral.
+3. Ordena questionários por `regionScore` desc.
+4. Mantém os **2 primeiros como obrigatórios**.
+5. O **3º só entra se** o flag `extraQuestionnaireRegions` (de Anamnese, ver §3) indicar uma região coberta por algum questionário restante. Nesse caso adiciona o questionário de maior score dessa região.
+6. Demais questionários são descartados (não exibidos, não calculados).
 
-**Churn Risk**
-- No-show count threshold (default 2)
-- Days of silence threshold (default 14)
-- Pain stagnation window in weeks (default 3)
-- Minimum score to display (default 50)
+Mostrar pequeno banner no topo: "Priorizamos os questionários das regiões com maior dor (X e Y)" para transparência.
 
-**Discharge Prediction**
-- Minimum sessions before predicting (default 3)
-- Pain drop threshold per session (default 0.3)
-- "Close to discharge" threshold (default ≤3 sessions)
+## 3. Captura de "limitação funcional relevante" + IA
 
-**Patient Adherence**
-- Weight sliders for exercises / diary / attendance / messages (must sum to 100; auto-rebalance)
-- Lookback window (default 30 days)
+**Onde:** novo passo curto entre Anamnese e Questionário (ou último passo dentro de `AnamnesisForm`, condicional a `painRegions.length >= 3`).
 
-Changes are applied client-side immediately by re-fetching the RPC with new params, OR (when the RPC doesn't accept them) by post-filtering/re-weighting results client-side. For weights on Adherence, we'll recompute the composite score in the component using returned sub-metrics — no DB change needed. For thresholds, we'll filter results client-side.
+- Textarea: "Há alguma região com dor mais baixa que ainda assim te limita muito (trabalho, esporte, sono)? Descreva brevemente."
+- Edge function leve **nova** `detect-functional-limitation`:
+  - Input: texto livre + lista de `painRegions` + `painScoresPerRegion`.
+  - Modelo: `google/gemini-2.5-flash-lite` (rápido/barato).
+  - Output JSON: `{ "regions": ["lower_back", ...] }` — apenas regiões já presentes em `painRegions` com score < 5 que o texto indicou impacto funcional.
+  - Aplica o protocolo de extração JSON em 4 camadas (regra do projeto).
+- Resultado passado como `extraQuestionnaireRegions: string[]` para `QuestionnaireStep`.
+- Se texto vazio ou IA não devolver nada: segue só com 2 questionários.
 
-## 3. Benchmark by clinic size
+Texto também é salvo em `anamnesisData.functionalLimitationNote` para constar no prontuário/PDF.
 
-`BenchmarkCard` already shows the user's current size bucket vs peers. Extend it to show **three side-by-side columns**:
-- Small (1–3 therapists)
-- Medium (4–10)
-- Large (11+)
+## 4. Campo livre antes de Finalizar (tela própria)
 
-Highlight the column matching the logged-in clinic with a ring/border. For each metric, render the peer average per bucket so the user sees how each size class performs. The user's own value is rendered as a single row at top, with deltas vs each bucket.
+Novo step `final_notes` em `Assessment.tsx`, entre `functional_tests` e `loading`:
 
-Update the `get_clinic_benchmarks` RPC to also return peer averages for all three buckets (not just the user's bucket). If peer_count per bucket < 5, show "—" with a lock icon for that bucket only.
+- Layout limpo: ícone `MessageSquare`, título "Algo mais que devemos saber?", textarea opcional (máx 600 chars) + botão **Finalizar e gerar análise**.
+- Conteúdo sobrescreve/popula `additionalInfo` existente (já consumido por `generateDiagnosis` no parâmetro `extraInfo`).
+- Botão **Voltar** retorna a `functional_tests`.
 
-## Technical Summary
+`handleTestsComplete` agora vai para `setStep("final_notes")` (premium/professional). Modo `basic` mantém fluxo atual.
 
-**Files to edit (frontend only for #1, #2):**
-- `src/components/dashboard/insights/InsightsTab.tsx` — no change unless we lift collapse state.
-- `src/components/dashboard/insights/ChurnRiskCard.tsx` — add Collapsible wrapper, Info popover, customize form, client-side filtering.
-- `src/components/dashboard/insights/DischargePredictionCard.tsx` — same pattern.
-- `src/components/dashboard/insights/PatientAdherenceCard.tsx` — same + recompute score with custom weights.
-- `src/components/dashboard/insights/BenchmarkCard.tsx` — three-column layout with bucket highlight.
-- `src/components/dashboard/insights/OccupancyVsNoShowCard.tsx` and `RevenueGoalCard.tsx` — Collapsible wrapper only.
-- New shared helper `src/components/dashboard/insights/InsightInfoButton.tsx` for the (i) button + popover shell.
-- New helper `src/components/dashboard/insights/useInsightPreferences.ts` — localStorage-backed hook for thresholds/weights.
+## 5. Feedback visual do Finalizar (anti duplo-clique)
 
-**Migration (for #3):**
-- Update `public.get_clinic_benchmarks(_clinic_id uuid)` to return per-metric peer averages for `small`, `medium`, `large` buckets.
+No novo step `final_notes` e no botão "Finalizar Testes" de `FunctionalTests.tsx`:
 
-Preferences stored in localStorage (per-user) for now — fast to ship and reversible. If you'd prefer them synced across devices, I can add an `insight_preferences` table later.
+- Usar estado local `isSubmitting`.
+- Ao clicar:
+  - `disabled = true`
+  - Trocar label para "Processando sua avaliação..." + `<Loader2 className="animate-spin" />`
+  - Adicionar barra de progresso indeterminada (componente `Progress` com animação CSS shimmer) abaixo do botão
+  - Microcopy: "Isso pode levar até 20 segundos. Não feche a página."
+- Como a transição para o step `loading` já ocorre, o disable + spinner garantem que cliques repetidos no instante anterior à mudança de tela não disparem múltiplas chamadas.
 
-## Out of scope
-- Server-side persistence of customization (using localStorage).
-- Editing OccupancyVsNoShow / RevenueGoal logic — only adding collapse.
+Adicionalmente, blindar `generateDiagnosis` em `Assessment.tsx` com guard: se já foi disparado (ref `inFlightRef.current = true`), ignora reentradas.
+
+## 6. Páginas de suporte
+
+Conforme regra do projeto, atualizar `Support.tsx`, `ClinicSupport.tsx` + `pt/en/es.json` com nota curta sobre: foco em queixa principal, limite de 3 questionários priorizados, campo de observações finais.
+
+## Detalhes técnicos
+
+**Arquivos editados:**
+- `src/pages/Assessment.tsx` — novo step `final_notes`, `inFlightRef`, prop `painScoresPerRegion` para `QuestionnaireStep`, prop `extraQuestionnaireRegions`.
+- `src/components/assessment/WelcomeStep.tsx` — alerta âmbar de foco.
+- `src/components/assessment/PainMap.tsx` — lembrete compacto.
+- `src/components/assessment/AnamnesisForm.tsx` — campo "limitação funcional" + chamada à edge function.
+- `src/components/assessment/QuestionnaireStep.tsx` — lógica de priorização (max 3, 2 obrigatórios + 1 opcional via flag).
+- `src/components/assessment/FunctionalTests.tsx` — feedback visual no Finalizar (caso `basic`).
+- `src/locales/pt.json`, `en.json`, `es.json`.
+- `src/pages/Support.tsx`, `src/pages/ClinicSupport.tsx`.
+
+**Arquivos criados:**
+- `supabase/functions/detect-functional-limitation/index.ts` (CORS + Lovable AI Gateway).
+
+**Sem migration** (campos novos vivem apenas no JSON `anamnesis_data`).
+
+**Resgate dos 3 cards já vazios da Neon:** fora do escopo desta tarefa (a correção do filtro já foi aplicada; os dados existem). Se quiser, posso fazer um varredor pós-implementação para confirmar.
+
+## Fora de escopo
+
+- Reescrita do prompt da IA de diagnóstico para considerar `functionalLimitationNote` (posso fazer em PR seguinte se desejar).
+- Mudanças no PDF para destacar nota funcional separada.
