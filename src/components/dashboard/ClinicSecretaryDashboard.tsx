@@ -405,10 +405,12 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
             professionalId={selectedTherapistId === "all" || selectedTherapistId === "unassigned" ? therapists[0]?.id : selectedTherapistId}
             onDownloadPdf={handleDownloadPdf}
             isDemo={false}
-            readOnly
+            readOnly={patientDashReadOnly}
             canAddPatient
             canArchivePatient
             allowManualAssessment
+            allowAssessmentLink
+            allowQuickNote
             clinicId={activeClinic?.clinic_id}
             clinicLogoUrl={activeClinic?.logo_url || undefined}
             clinicName={activeClinic?.clinic_name || undefined}
