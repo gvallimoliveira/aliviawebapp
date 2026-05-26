@@ -972,6 +972,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       setStep(step + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
+      void draft.discard();
       onComplete(data);
     }
   };
