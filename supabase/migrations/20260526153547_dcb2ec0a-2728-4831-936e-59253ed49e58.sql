@@ -1,0 +1,1 @@
+UPDATE public.exercise_library SET video_url = 'https://www.youtube.com/watch?v=K3K4r1AKmVo' WHERE id = '10e054f8-e4ad-41f8-a6ab-924c68496e0b';
