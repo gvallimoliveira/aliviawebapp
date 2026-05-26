@@ -147,6 +147,10 @@ interface PatientEvolutionDashboardProps {
   canArchivePatient?: boolean;
   /** When true together with readOnly, exposes the "Manual assessment" (voice-enabled) action — both in the patient card and the detail header. */
   allowManualAssessment?: boolean;
+  /** When true together with readOnly, exposes the "Copy personalized assessment link" action on the patient card. */
+  allowAssessmentLink?: boolean;
+  /** When true together with readOnly, exposes the "Quick evolution note" action on the patient card. */
+  allowQuickNote?: boolean;
   /** Fired whenever the selected patient (detail view) changes. Null = back to list. */
   onSelectionChange?: (selected: string | null) => void;
 }
@@ -174,7 +178,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   extreme: "bg-destructive",
 };
 
-const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient, allowManualAssessment, onSelectionChange }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient, allowManualAssessment, allowAssessmentLink, allowQuickNote, onSelectionChange }: PatientEvolutionDashboardProps) => {
   // Normalize legacy snake_case anamnesis keys + test_results object→array shape
   // so older manual assessments are fully readable in the UI.
   const assessments = useMemo(
@@ -1085,6 +1089,8 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         readOnly={readOnly}
         canAddPatient={canAddPatient}
         allowManualAssessment={allowManualAssessment}
+        allowAssessmentLink={allowAssessmentLink}
+        allowQuickNote={allowQuickNote}
         setEditPatientData={setEditPatientData}
         setAddPatientOpen={setAddPatientOpen}
         batchExporting={batchExporting}
