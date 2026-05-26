@@ -257,7 +257,7 @@ const ExportDataCard = ({ mode, clinicId, professionalId, entityName }: Props) =
               Backup e exportação de dados
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Gere um arquivo <strong>.zip</strong> com os dados {isClinic ? "da clínica" : "do seu perfil"}. Use para auditoria, conformidade LGPD/CFF ou backup secundário.
+              Gere um <strong>.zip</strong> com os dados {isClinic ? "da clínica" : "do seu perfil"} em <strong>CSV</strong> (abre direto no Excel/Google Sheets) e <strong>JSON</strong> (formato universal). Útil para auditoria, LGPD/CFF ou backup.
             </p>
           </div>
         </div>
