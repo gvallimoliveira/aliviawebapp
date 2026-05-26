@@ -407,6 +407,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
             clinicId={activeClinic?.clinic_id}
             clinicLogoUrl={activeClinic?.logo_url || undefined}
             clinicName={activeClinic?.clinic_name || undefined}
+            onSelectionChange={(sel) => setPatientDetailOpen(!!sel)}
           />
         </DashboardErrorBoundary>
       )}
