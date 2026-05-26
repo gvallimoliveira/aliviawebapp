@@ -24,6 +24,8 @@ export default function PatientListView(props: any) {
     readOnly,
     canAddPatient,
     allowManualAssessment,
+    allowAssessmentLink,
+    allowQuickNote,
     setEditPatientData,
     setAddPatientOpen,
     batchExporting,
