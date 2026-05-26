@@ -243,7 +243,7 @@ export default function PatientListView(props: any) {
                       <FilePlus className="h-4 w-4 text-primary" />
                     </Button>
                   )}
-                  {!readOnly && patientRec && (
+                  {(!readOnly || allowAssessmentLink) && patientRec && (
                     <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Copiar link de avaliação personalizado" : "Copy personalized assessment link"} onClick={async (e) => {
                       e.stopPropagation();
                       try {
