@@ -1084,6 +1084,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         setSearchQuery={setSearchQuery}
         readOnly={readOnly}
         canAddPatient={canAddPatient}
+        allowManualAssessment={allowManualAssessment}
         setEditPatientData={setEditPatientData}
         setAddPatientOpen={setAddPatientOpen}
         batchExporting={batchExporting}
