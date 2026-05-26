@@ -9,7 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2, UserPlus,
+  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2, UserPlus, ChevronDown, ChevronUp,
 } from "lucide-react";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import SecretaryReportsCard from "./SecretaryReportsCard";
