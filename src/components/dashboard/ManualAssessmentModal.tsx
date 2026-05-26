@@ -16,11 +16,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle } from "lucide-react";
+import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, CloudCheck } from "lucide-react";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { regionsByView } from "@/components/assessment/painMapData";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import { useVoiceRecorderSession } from "@/contexts/VoiceRecorderContext";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
+import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 
 // ─── Body region grouping: proximal → distal, alphabetical within each group ───
 type RegionGroup = { key: string; label_pt: string; label_en: string; ids: string[] };
