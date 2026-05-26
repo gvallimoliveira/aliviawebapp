@@ -114,6 +114,7 @@ export default function PatientDetailView(props: any) {
     clinicName,
     clinicTherapists,
     readOnly,
+    allowManualAssessment,
     reassignOpen,
     setReassignOpen,
     reassignTargetId,
@@ -189,7 +190,7 @@ export default function PatientDetailView(props: any) {
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { const link = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id); navigator.clipboard.writeText(link); toast({ title: "Link de reavaliação copiado!" }); }}><RotateCcw className="h-4 w-4" /> Reavaliação</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
-          {!readOnly && !isDemo && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
+          {(!readOnly || allowManualAssessment) && !isDemo && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
           {patient.assessments.filter((a: any) => a.diagnosis).length >= 2 && (
             <Button variant="outline" size="sm" className="gap-1.5 shrink-0" disabled={evolutionLoading} onClick={async () => {
               setEvolutionLoading(true);

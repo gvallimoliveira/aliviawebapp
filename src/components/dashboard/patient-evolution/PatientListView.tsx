@@ -23,6 +23,7 @@ export default function PatientListView(props: any) {
     setSearchQuery,
     readOnly,
     canAddPatient,
+    allowManualAssessment,
     setEditPatientData,
     setAddPatientOpen,
     batchExporting,
@@ -235,7 +236,7 @@ export default function PatientListView(props: any) {
                   </div>
                 </div>
                 <div className="flex w-full flex-wrap items-center gap-1 pt-1 shrink-0 sm:w-auto sm:flex-nowrap sm:justify-end sm:self-auto sm:pt-0 -mr-1 sm:mr-0">
-                  {!readOnly && (
+                  {(!readOnly || allowManualAssessment) && (
                     <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Nova avaliação manual" : "New manual assessment"} onClick={(e) => { e.stopPropagation(); setManualAssessmentTarget({ name: p.name, email: p.email || "" }); }}>
                       <FilePlus className="h-4 w-4 text-primary" />
                     </Button>

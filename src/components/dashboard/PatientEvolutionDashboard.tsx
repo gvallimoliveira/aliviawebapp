@@ -145,6 +145,8 @@ interface PatientEvolutionDashboardProps {
   canAddPatient?: boolean;
   /** When true together with readOnly, allows archiving/restoring patient cards (e.g. clinic secretary). */
   canArchivePatient?: boolean;
+  /** When true together with readOnly, exposes the "Manual assessment" (voice-enabled) action — both in the patient card and the detail header. */
+  allowManualAssessment?: boolean;
   /** Fired whenever the selected patient (detail view) changes. Null = back to list. */
   onSelectionChange?: (selected: string | null) => void;
 }
@@ -172,7 +174,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   extreme: "bg-destructive",
 };
 
-const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient, onSelectionChange }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient, allowManualAssessment, onSelectionChange }: PatientEvolutionDashboardProps) => {
   // Normalize legacy snake_case anamnesis keys + test_results object→array shape
   // so older manual assessments are fully readable in the UI.
   const assessments = useMemo(
@@ -1082,6 +1084,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         setSearchQuery={setSearchQuery}
         readOnly={readOnly}
         canAddPatient={canAddPatient}
+        allowManualAssessment={allowManualAssessment}
         setEditPatientData={setEditPatientData}
         setAddPatientOpen={setAddPatientOpen}
         batchExporting={batchExporting}
@@ -1148,6 +1151,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       clinicName={clinicName}
       clinicTherapists={clinicTherapists}
       readOnly={readOnly}
+      allowManualAssessment={allowManualAssessment}
       reassignOpen={reassignOpen}
       setReassignOpen={setReassignOpen}
       reassignTargetId={reassignTargetId}
