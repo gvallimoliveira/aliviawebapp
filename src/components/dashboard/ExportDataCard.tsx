@@ -166,6 +166,10 @@ const ExportDataCard = ({ mode, clinicId, professionalId, entityName }: Props) =
           "Links assinados (signed_url_1h) expiram em 1 hora — baixe os arquivos binários antes desse prazo.",
       };
 
+      zip.file("manifest.json", JSON.stringify(manifest, null, 2));
+
+
+
       // CSV helper — universal format readable by Excel, Numbers, Google Sheets, etc.
       const toCsv = (rows: any[]): string => {
         if (!rows || rows.length === 0) return "";
