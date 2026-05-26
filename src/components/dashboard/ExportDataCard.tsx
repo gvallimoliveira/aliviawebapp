@@ -167,13 +167,57 @@ const ExportDataCard = ({ mode, clinicId, professionalId, entityName }: Props) =
       };
 
       zip.file("manifest.json", JSON.stringify(manifest, null, 2));
-      if (selected.patients) zip.file("patients.json", JSON.stringify(patients.data ?? [], null, 2));
-      if (selected.assessments) zip.file("assessments.json", JSON.stringify(assessments.data ?? [], null, 2));
-      if (selected.appointments) zip.file("appointments.json", JSON.stringify(appointments.data ?? [], null, 2));
-      if (selected.notes) zip.file("professional_notes.json", JSON.stringify(notes.data ?? [], null, 2));
-      if (selected.voiceNotes) zip.file("voice_notes.json", JSON.stringify(voiceNotes.data ?? [], null, 2));
-      if (selected.files) zip.file("files_index.json", JSON.stringify(fileIndex, null, 2));
-      if (selected.photos) zip.file("photos_index.json", JSON.stringify(photoIndex, null, 2));
+
+
+
+      // CSV helper — universal format readable by Excel, Numbers, Google Sheets, etc.
+      const toCsv = (rows: any[]): string => {
+        if (!rows || rows.length === 0) return "";
+        const cols = Array.from(
+          rows.reduce<Set<string>>((acc, r) => {
+            Object.keys(r ?? {}).forEach((k) => acc.add(k));
+            return acc;
+          }, new Set<string>()),
+        );
+        const escape = (v: any) => {
+          if (v === null || v === undefined) return "";
+          let s = typeof v === "object" ? JSON.stringify(v) : String(v);
+          if (/[",\n;]/.test(s)) s = `"${s.replace(/"/g, '""')}"`;
+          return s;
+        };
+        const header = cols.join(",");
+        const body = rows.map((r) => cols.map((c) => escape(r?.[c])).join(",")).join("\n");
+        // UTF-8 BOM so Excel detects encoding correctly with accented characters
+        return "\ufeff" + header + "\n" + body;
+      };
+
+      const addSection = (name: string, rows: any[]) => {
+        zip.file(`json/${name}.json`, JSON.stringify(rows ?? [], null, 2));
+        zip.file(`csv/${name}.csv`, toCsv(rows ?? []));
+      };
+
+      if (selected.patients) addSection("patients", patients.data ?? []);
+      if (selected.assessments) addSection("assessments", assessments.data ?? []);
+      if (selected.appointments) addSection("appointments", appointments.data ?? []);
+      if (selected.notes) addSection("professional_notes", notes.data ?? []);
+      if (selected.voiceNotes) addSection("voice_notes", voiceNotes.data ?? []);
+      if (selected.files) addSection("files_index", fileIndex);
+      if (selected.photos) addSection("photos_index", photoIndex);
+
+      zip.file(
+        "README.txt",
+        [
+          "Aliv.iA — Backup e exportação de dados",
+          "",
+          "Este pacote contém seus dados em dois formatos universais:",
+          "  • /csv  — abre direto no Excel, Numbers, Google Sheets, LibreOffice (UTF-8 com BOM).",
+          "  • /json — formato técnico legível por qualquer linguagem/programa.",
+          "",
+          "manifest.json descreve o conteúdo. Links de arquivos binários (signed_url_1h)",
+          "expiram em 1 hora — baixe-os antes do prazo.",
+        ].join("\n"),
+      );
+
 
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
@@ -213,7 +257,7 @@ const ExportDataCard = ({ mode, clinicId, professionalId, entityName }: Props) =
               Backup e exportação de dados
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Gere um arquivo <strong>.zip</strong> com os dados {isClinic ? "da clínica" : "do seu perfil"}. Use para auditoria, conformidade LGPD/CFF ou backup secundário.
+              Gere um <strong>.zip</strong> com os dados {isClinic ? "da clínica" : "do seu perfil"} em <strong>CSV</strong> (abre direto no Excel/Google Sheets) e <strong>JSON</strong> (formato universal). Útil para auditoria, LGPD/CFF ou backup.
             </p>
           </div>
         </div>
