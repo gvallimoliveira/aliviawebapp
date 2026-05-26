@@ -1171,6 +1171,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
             onDownloadPdf={handleDownloadPdf}
             onShareWhatsApp={handleShareWhatsApp}
             isDemo={showingSimulated}
+            onSelectionChange={(sel) => setPatientDetailOpen(!!sel)}
           />
         </DashboardErrorBoundary>
       </div>
