@@ -145,6 +145,8 @@ interface PatientEvolutionDashboardProps {
   canAddPatient?: boolean;
   /** When true together with readOnly, allows archiving/restoring patient cards (e.g. clinic secretary). */
   canArchivePatient?: boolean;
+  /** When true together with readOnly, exposes the "Manual assessment" (voice-enabled) action — both in the patient card and the detail header. */
+  allowManualAssessment?: boolean;
   /** Fired whenever the selected patient (detail view) changes. Null = back to list. */
   onSelectionChange?: (selected: string | null) => void;
 }
