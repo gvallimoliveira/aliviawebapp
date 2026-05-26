@@ -23,6 +23,7 @@ export default function PatientListView(props: any) {
     setSearchQuery,
     readOnly,
     canAddPatient,
+    allowManualAssessment,
     setEditPatientData,
     setAddPatientOpen,
     batchExporting,
