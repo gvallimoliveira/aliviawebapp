@@ -391,6 +391,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       }
 
       toast({ title: isPt ? "Avaliação criada!" : "Assessment created!" });
+      void draft.discard();
       onOpenChange(false);
       resetForm();
       if (data?.id) navigate(`/assessment/view/${data.id}?from=professional`);
