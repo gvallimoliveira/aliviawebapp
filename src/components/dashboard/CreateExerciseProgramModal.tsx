@@ -94,6 +94,27 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const [copied, setCopied] = useState(false);
   const isEditing = !!editProgramId;
 
+  // Autosave (rascunho local + nuvem). Desligado em modo edição (já está salvo).
+  const draftScope = `${professionalId}:${(patientName || "").trim().toLowerCase()}:${assessmentId || ""}`;
+  const draft = useAutosaveDraft<{
+    selected: SelectedExercise[];
+    customExercises: CustomExercise[];
+    notes: string;
+  }>({
+    formKey: "hep",
+    scopeKey: open && !isEditing && !generatedLink ? draftScope : null,
+    state: { selected, customExercises, notes },
+    enabled: open && !isEditing && !generatedLink,
+  });
+
+  const handleRestoreDraft = () => {
+    const payload = draft.restore();
+    if (!payload) return;
+    setSelected(payload.selected || []);
+    setCustomExercises(payload.customExercises || []);
+    setNotes(payload.notes || "");
+  };
+
   useEffect(() => {
     if (!open) return;
     const load = async () => {
