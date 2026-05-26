@@ -114,6 +114,7 @@ export default function PatientDetailView(props: any) {
     clinicName,
     clinicTherapists,
     readOnly,
+    allowManualAssessment,
     reassignOpen,
     setReassignOpen,
     reassignTargetId,
