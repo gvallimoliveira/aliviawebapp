@@ -117,6 +117,20 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     birthDate: "",
   });
 
+  // ── Autosave (local + nuvem) ─────────────────────────────────────────────
+  const draft = useAutosaveDraft<{ step: number; data: AnamnesisData }>({
+    formKey: "anamnesis",
+    scopeKey: draftScopeKey ?? null,
+    state: { step, data },
+    enabled: !!draftScopeKey,
+  });
+  const handleRestoreDraft = () => {
+    const p = draft.restore();
+    if (!p) return;
+    if (typeof p.step === "number") setStep(p.step);
+    if (p.data) setData((prev) => ({ ...prev, ...p.data }));
+  };
+
   // Pre-fill all reassessment fields
   useEffect(() => {
     setData((prev) => {
