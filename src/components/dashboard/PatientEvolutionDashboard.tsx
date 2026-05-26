@@ -147,6 +147,10 @@ interface PatientEvolutionDashboardProps {
   canArchivePatient?: boolean;
   /** When true together with readOnly, exposes the "Manual assessment" (voice-enabled) action — both in the patient card and the detail header. */
   allowManualAssessment?: boolean;
+  /** When true together with readOnly, exposes the "Copy personalized assessment link" action on the patient card. */
+  allowAssessmentLink?: boolean;
+  /** When true together with readOnly, exposes the "Quick evolution note" action on the patient card. */
+  allowQuickNote?: boolean;
   /** Fired whenever the selected patient (detail view) changes. Null = back to list. */
   onSelectionChange?: (selected: string | null) => void;
 }
