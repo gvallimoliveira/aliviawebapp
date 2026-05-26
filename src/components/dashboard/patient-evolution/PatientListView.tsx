@@ -258,7 +258,7 @@ export default function PatientListView(props: any) {
                       <Link2 className="h-4 w-4 text-primary" />
                     </Button>
                   )}
-                  {!readOnly && !isHidden && (
+                  {(!readOnly || allowQuickNote) && !isHidden && (
                     <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Nota rápida" : "Quick note"} onClick={(e) => {
                       e.stopPropagation();
                       const emailKey = p.email || `imported:${p.groupKey || p.name}`;
