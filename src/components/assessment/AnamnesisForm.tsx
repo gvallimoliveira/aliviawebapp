@@ -983,6 +983,14 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      {draft.hasDraft && draft.draftMeta && (
+        <DraftResumeBanner
+          updatedAt={draft.draftMeta.updatedAt}
+          source={draft.draftMeta.source}
+          onRestore={handleRestoreDraft}
+          onDiscard={() => void draft.discard()}
+        />
+      )}
       {/* Progress */}
       <div className="space-y-2">
         <div className="flex justify-between text-xs text-muted-foreground">
