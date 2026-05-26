@@ -562,6 +562,7 @@ const ClinicAssessment = () => {
             mode="professional"
             onComplete={handleAnamnesisComplete}
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
+            draftScopeKey={`clinic:${clinicId}:${patientToken || reassessmentId || "anon"}`}
             initialPainRegions={prefilledRegions}
             initialChiefComplaints={prefilledComplaints}
             initialOnset={prefilledOnset}
