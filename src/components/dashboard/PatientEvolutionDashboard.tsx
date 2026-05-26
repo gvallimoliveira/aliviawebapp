@@ -1151,6 +1151,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       clinicName={clinicName}
       clinicTherapists={clinicTherapists}
       readOnly={readOnly}
+      allowManualAssessment={allowManualAssessment}
       reassignOpen={reassignOpen}
       setReassignOpen={setReassignOpen}
       reassignTargetId={reassignTargetId}
