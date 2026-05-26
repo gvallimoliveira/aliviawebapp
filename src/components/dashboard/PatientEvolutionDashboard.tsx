@@ -190,6 +190,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const [searchParams] = useSearchParams();
   const initialPatient = searchParams.get("patient");
   const [selectedEmail, setSelectedEmail] = useState<string | null>(initialPatient);
+  useEffect(() => { onSelectionChange?.(selectedEmail); }, [selectedEmail, onSelectionChange]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [notes, setNotes] = useState<Record<string, string>>({});
