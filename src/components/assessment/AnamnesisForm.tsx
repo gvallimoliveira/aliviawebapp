@@ -12,6 +12,8 @@ import { Slider } from "@/components/ui/slider";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PainMap from "./PainMap";
 import { formatCpf } from "@/utils/masks";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
+import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 
 export interface AnamnesisData {
   chiefComplaint: string; // deprecated, kept for backward compat
