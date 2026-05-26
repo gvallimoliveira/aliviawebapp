@@ -135,6 +135,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [isSimulatedInternal, setIsSimulatedInternal] = useState(false);
   const isSimulated = isSimulatedProp !== undefined ? isSimulatedProp : isSimulatedInternal;
   const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const [patientDetailOpen, setPatientDetailOpen] = useState(false);
+  const [metricsCollapsed, setMetricsCollapsed] = useState(false);
   const [clinicTherapists, setClinicTherapists] = useState<any[]>([]);
   const [assignTargetByAssessment, setAssignTargetByAssessment] = useState<Record<string, string>>({});
   const [assigningAssessmentId, setAssigningAssessmentId] = useState<string | null>(null);
@@ -1027,24 +1029,49 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         />
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="py-4 text-center">
-            <p className="text-3xl font-bold text-foreground">{displayTotalCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">{t("pro.total_assessments")}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="py-4 text-center">
-            <p className="text-3xl font-bold text-primary">{displayThisMonthCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">{t("pro.this_month")}</p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Stats Cards + Analytics — hidden while viewing a patient's detail for a cleaner workspace */}
+      {!patientDetailOpen && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setMetricsCollapsed((v) => !v)}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              aria-expanded={!metricsCollapsed}
+            >
+              {metricsCollapsed
+                ? <ChevronDown className="h-3.5 w-3.5" />
+                : <ChevronUp className="h-3.5 w-3.5" />}
+              {language === "pt"
+                ? (metricsCollapsed ? "Mostrar métricas" : "Ocultar métricas")
+                : language === "es"
+                ? (metricsCollapsed ? "Mostrar métricas" : "Ocultar métricas")
+                : (metricsCollapsed ? "Show metrics" : "Hide metrics")}
+            </button>
+          </div>
+          {!metricsCollapsed && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="py-4 text-center">
+                    <p className="text-3xl font-bold text-foreground">{displayTotalCount}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t("pro.total_assessments")}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="py-4 text-center">
+                    <p className="text-3xl font-bold text-primary">{displayThisMonthCount}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t("pro.this_month")}</p>
+                  </CardContent>
+                </Card>
+              </div>
 
-      {/* Analytics Charts — hidden for therapists in clinic mode */}
-      {canViewClinicAnalytics && <ProAnalyticsCharts assessments={displayAssessments} />}
+              {/* Analytics Charts — hidden for therapists in clinic mode */}
+              {canViewClinicAnalytics && <ProAnalyticsCharts assessments={displayAssessments} />}
+            </>
+          )}
+        </div>
+      )}
 
       {/* Referrals Section — only in real mode */}
       {!isSimulated && referrals.length > 0 && (
@@ -1144,6 +1171,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
             onDownloadPdf={handleDownloadPdf}
             onShareWhatsApp={handleShareWhatsApp}
             isDemo={showingSimulated}
+            onSelectionChange={(sel) => setPatientDetailOpen(!!sel)}
           />
         </DashboardErrorBoundary>
       </div>

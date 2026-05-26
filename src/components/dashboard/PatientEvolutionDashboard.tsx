@@ -145,6 +145,8 @@ interface PatientEvolutionDashboardProps {
   canAddPatient?: boolean;
   /** When true together with readOnly, allows archiving/restoring patient cards (e.g. clinic secretary). */
   canArchivePatient?: boolean;
+  /** Fired whenever the selected patient (detail view) changes. Null = back to list. */
+  onSelectionChange?: (selected: string | null) => void;
 }
 
 interface PatientGroup {
@@ -170,7 +172,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   extreme: "bg-destructive",
 };
 
-const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient, onSelectionChange }: PatientEvolutionDashboardProps) => {
   // Normalize legacy snake_case anamnesis keys + test_results object→array shape
   // so older manual assessments are fully readable in the UI.
   const assessments = useMemo(
@@ -188,6 +190,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const [searchParams] = useSearchParams();
   const initialPatient = searchParams.get("patient");
   const [selectedEmail, setSelectedEmail] = useState<string | null>(initialPatient);
+  useEffect(() => { onSelectionChange?.(selectedEmail); }, [selectedEmail, onSelectionChange]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [notes, setNotes] = useState<Record<string, string>>({});
