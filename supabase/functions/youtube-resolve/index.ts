@@ -153,6 +153,38 @@ Deno.serve(async (req: Request) => {
       " ",
     ).trim();
 
+    // Curated overrides — manually picked videos for common exercises where
+    // generic search returns poor results. Matched by substring of normalized name.
+    const CURATED: Array<{ match: RegExp; videoId: string; title: string; duration: number }> = [
+      {
+        // "abdução do/de quadril em pé" / "standing hip abduction"
+        match: /abdu\w*\s+(do|de|of)?\s*quadril\s+em\s+pe|standing\s+hip\s+abduction/,
+        videoId: "K3K4r1AKmVo",
+        title: "Fortalecimento Abdução de quadril em pé",
+        duration: 21,
+      },
+    ];
+    const normName = stripAccents(name);
+    const override = CURATED.find((o) => o.match.test(normName));
+    if (override) {
+      await supabase.from("youtube_video_cache").upsert({
+        query_key: queryKey,
+        video_id: override.videoId,
+        title: override.title,
+        duration_seconds: override.duration,
+      }, { onConflict: "query_key" });
+      return new Response(
+        JSON.stringify({
+          videoId: override.videoId,
+          title: override.title,
+          durationSeconds: override.duration,
+          cached: true,
+          curated: true,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // Check cache
     const { data: cached } = await supabase
       .from("youtube_video_cache")
