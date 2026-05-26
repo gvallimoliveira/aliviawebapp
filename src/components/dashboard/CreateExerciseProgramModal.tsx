@@ -15,8 +15,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2,
+  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload,
 } from "lucide-react";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
+import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 
 interface Exercise {
   id: string;
@@ -91,6 +93,27 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const isEditing = !!editProgramId;
+
+  // Autosave (rascunho local + nuvem). Desligado em modo edição (já está salvo).
+  const draftScope = `${professionalId}:${(patientName || "").trim().toLowerCase()}:${assessmentId || ""}`;
+  const draft = useAutosaveDraft<{
+    selected: SelectedExercise[];
+    customExercises: CustomExercise[];
+    notes: string;
+  }>({
+    formKey: "hep",
+    scopeKey: open && !isEditing && !generatedLink ? draftScope : null,
+    state: { selected, customExercises, notes },
+    enabled: open && !isEditing && !generatedLink,
+  });
+
+  const handleRestoreDraft = () => {
+    const payload = draft.restore();
+    if (!payload) return;
+    setSelected(payload.selected || []);
+    setCustomExercises(payload.customExercises || []);
+    setNotes(payload.notes || "");
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -277,6 +300,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
       const link = `${window.location.origin}/hep/${programToken}`;
       setGeneratedLink(link);
+      void draft.discard();
       toast({ title: isEditing ? "Programa atualizado com sucesso!" : "Programa criado com sucesso!" });
     } catch (err: any) {
       console.error(err);
@@ -360,6 +384,20 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         </DialogHeader>
 
         <div className="space-y-4">
+          {draft.hasDraft && draft.draftMeta && (
+            <DraftResumeBanner
+              updatedAt={draft.draftMeta.updatedAt}
+              source={draft.draftMeta.source}
+              onRestore={handleRestoreDraft}
+              onDiscard={() => void draft.discard()}
+            />
+          )}
+          {draft.lastSavedAt && !draft.hasDraft && (
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <CloudUpload className="h-3 w-3" />
+              {draft.saving ? "Salvando rascunho..." : "Rascunho salvo"}
+            </div>
+          )}
           {/* Filters */}
           <div className="flex gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[150px]">
