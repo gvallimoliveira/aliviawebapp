@@ -68,9 +68,11 @@ interface AnamnesisFormProps {
   initialSurgeryDetails?: string;
   initialActivityLevel?: string;
   initialHasGymAccess?: string;
+  /** Optional stable key (e.g. token, professionalId+email) to persist draft across reloads. */
+  draftScopeKey?: string | null;
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, draftScopeKey }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
