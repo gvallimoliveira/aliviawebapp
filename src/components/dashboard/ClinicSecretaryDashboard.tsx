@@ -407,7 +407,14 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
             clinicId={activeClinic?.clinic_id}
             clinicLogoUrl={activeClinic?.logo_url || undefined}
             clinicName={activeClinic?.clinic_name || undefined}
-            onSelectionChange={(sel) => setPatientDetailOpen(!!sel)}
+            onSelectionChange={(sel) => {
+              setPatientDetailOpen(!!sel);
+              if (sel) {
+                requestAnimationFrame(() =>
+                  window.scrollTo({ top: 0, behavior: "smooth" })
+                );
+              }
+            }}
           />
         </DashboardErrorBoundary>
       )}
