@@ -693,6 +693,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           <Button variant="outline" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
             <ChevronLeft className="h-4 w-4" /> {isPt ? "Voltar" : "Back"}
           </Button>
+          {draft.lastSavedAt && (
+            <span className="absolute left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-1 text-[11px] text-muted-foreground">
+              <Cloud className="h-3 w-3" />
+              {isPt ? "Rascunho salvo" : "Draft saved"}
+            </span>
+          )}
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
