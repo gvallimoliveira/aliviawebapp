@@ -1183,6 +1183,26 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </DashboardErrorBoundary>
       </div>
 
+      {/* Discreet backup/export footer — autonomous pro only */}
+      {!isDemoMode && !isSimulated && (
+        <details className="group mt-6 rounded-xl border border-border/60 bg-muted/20">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground transition">
+            <span className="flex items-center gap-2">
+              <FileArchive className="h-3.5 w-3.5" />
+              {language === "pt" ? "Backup e exportação de dados" : "Data backup & export"}
+            </span>
+            <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="px-2 pb-2">
+            <ExportDataCard
+              mode="professional"
+              professionalId={professional.id}
+              entityName={professional.full_name}
+            />
+          </div>
+        </details>
+      )}
+
       {/* Add Patient Modal */}
       <AddPatientModal
         open={addPatientOpen}
@@ -1191,6 +1211,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         clinicId={isClinicMode ? activeClinic?.clinic_id : undefined}
         onAdded={() => loadPatientAssessments()}
       />
+
 
     </div>
   );
