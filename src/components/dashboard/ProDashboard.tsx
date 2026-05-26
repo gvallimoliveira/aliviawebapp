@@ -837,14 +837,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
             </Card>
           )}
 
-          {/* Backup / export — autonomous pro only (not demo, not simulated) */}
-          {!isDemoMode && !isSimulated && (
-            <ExportDataCard
-              mode="professional"
-              professionalId={professional.id}
-              entityName={professional.full_name}
-            />
-          )}
+          {/* Backup / export moved to the bottom of the dashboard for less visual weight */}
+
         </>
       )}
 
