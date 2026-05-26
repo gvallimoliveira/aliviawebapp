@@ -39,7 +39,7 @@ import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/genera
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 import { format } from "date-fns";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, FileArchive } from "lucide-react";
 
 const PendingReviewAlert = ({ assessments, language, navigate, onMarkReviewed }: { assessments: any[]; language: string; navigate: any; onMarkReviewed: (id: string) => void }) => {
   const [expanded, setExpanded] = useState(false);
