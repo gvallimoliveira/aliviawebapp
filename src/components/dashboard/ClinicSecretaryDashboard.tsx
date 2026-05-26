@@ -26,10 +26,14 @@ interface ClinicSecretaryDashboardProps {
 }
 
 const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSecretaryDashboardProps = {}) => {
-  const { activeClinic, canManageClinic } = useClinic();
+  const { activeClinic, canManageClinic, isClinicOwner, isClinicSecretary } = useClinic();
   // Hide privileged widgets either when explicitly restricted OR when the current
   // user is not an owner/secretary of the active clinic (defense in depth).
   const showPrivileged = !restrictedTherapistView && canManageClinic;
+  // Owners/admins get full edit access on patient records; secretaries stay read-only
+  // on clinical content but can still create/archive patients, send links, take quick
+  // notes and start manual assessments.
+  const patientDashReadOnly = !isClinicOwner;
   const { language } = useLanguage();
   const { toast } = useToast();
   const lang = language as "pt" | "en" | "es";
