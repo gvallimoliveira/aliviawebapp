@@ -384,6 +384,20 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         </DialogHeader>
 
         <div className="space-y-4">
+          {draft.hasDraft && draft.draftMeta && (
+            <DraftResumeBanner
+              updatedAt={draft.draftMeta.updatedAt}
+              source={draft.draftMeta.source}
+              onRestore={handleRestoreDraft}
+              onDiscard={() => void draft.discard()}
+            />
+          )}
+          {draft.lastSavedAt && !draft.hasDraft && (
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <CloudUpload className="h-3 w-3" />
+              {draft.saving ? "Salvando rascunho..." : "Rascunho salvo"}
+            </div>
+          )}
           {/* Filters */}
           <div className="flex gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[150px]">
