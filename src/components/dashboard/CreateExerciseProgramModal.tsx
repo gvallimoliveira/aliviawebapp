@@ -300,6 +300,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
       const link = `${window.location.origin}/hep/${programToken}`;
       setGeneratedLink(link);
+      void draft.discard();
       toast({ title: isEditing ? "Programa atualizado com sucesso!" : "Programa criado com sucesso!" });
     } catch (err: any) {
       console.error(err);
