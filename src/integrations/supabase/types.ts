@@ -846,6 +846,36 @@ export type Database = {
           },
         ]
       }
+      form_drafts: {
+        Row: {
+          created_at: string
+          form_key: string
+          id: string
+          payload: Json
+          scope_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          form_key: string
+          id?: string
+          payload?: Json
+          scope_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          form_key?: string
+          id?: string
+          payload?: Json
+          scope_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       granted_premium_users: {
         Row: {
           email: string

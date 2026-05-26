@@ -1,93 +1,105 @@
 ## Objetivo
 
-Reduzir ruído clínico em pacientes poliqueixosos no link de pré-avaliação (clínica e profissional), orientando o foco, limitando questionários, capturando contexto adicional e melhorando o feedback visual do botão Finalizar.
+Eliminar perda de dados em formulários longos (HEP, Avaliação Manual, Anamnese) quando o app é recarregado por bloqueio de tela, troca de app, refresh ou crash. Estratégia dupla: **autosave local instantâneo + sync para a nuvem**, com prompt "Retomar rascunho" ao reabrir.
 
-## 1. Orientação "foque na queixa principal"
+## Como o usuário vai sentir
 
-**Onde aparece:**
-- `WelcomeStep.tsx` (modes `professional` e `premium`/`basic`): novo card de aviso âmbar logo abaixo dos 3 passos, com ícone `AlertCircle`:
-  > "Se você tem mais de uma queixa de dor, foque nas mais relevantes ou que surgiram nos últimos 12 meses. Dores antigas e sem relação direta podem confundir a análise."
-- `PainMap.tsx`: lembrete compacto (mesmo tom âmbar, menor) acima do botão de vistas:
-  > "Selecione apenas as regiões da(s) queixa(s) atual(is). Evite marcar dores antigas sem relação."
+1. Ao adicionar o 1º exercício/campo, aparece discretamente "💾 Rascunho salvo" no rodapé do modal.
+2. A cada edição, o rascunho é atualizado (debounce 800ms) — local primeiro, nuvem em background.
+3. Se o app recarrega, ao reabrir o mesmo formulário um banner pergunta: *"Encontramos um rascunho de DD/MM HH:mm com X itens. Retomar ou descartar?"*
+4. Funciona em qualquer dispositivo logado (sync via nuvem) e mesmo offline (cai pro local).
+5. Ao finalizar/salvar de verdade, o rascunho é descartado automaticamente.
 
-Traduções em `pt.json` / `en.json` / `es.json`.
+## Arquitetura
 
-## 2. Limite inteligente de questionários (máx. 3)
+### 1. Tabela `form_drafts` (nuvem)
+Genérica — uma linha por (user, form_key, scope_key).
 
-**Lógica nova em `QuestionnaireStep.tsx`** (recebe `painScoresPerRegion` via prop nova vinda de `Assessment.tsx` → `anamnesisData.painScoresPerRegion`):
+```text
+form_drafts
+├── id uuid pk
+├── user_id uuid (auth.uid)
+├── form_key text  -- 'hep' | 'manual_assessment' | 'anamnesis'
+├── scope_key text -- ex: patient_email + professional_id, ou assessment_id
+├── payload jsonb  -- estado serializado do formulário
+├── updated_at timestamptz
+└── unique (user_id, form_key, scope_key)
+```
 
-1. Pega `getApplicableQuestionnaires(painRegions)`.
-2. Para cada questionário, calcula `regionScore = max(painScoresPerRegion[r]) para r in q.regionMapping`. Fallback: `painScore` geral.
-3. Ordena questionários por `regionScore` desc.
-4. Mantém os **2 primeiros como obrigatórios**.
-5. O **3º só entra se** o flag `extraQuestionnaireRegions` (de Anamnese, ver §3) indicar uma região coberta por algum questionário restante. Nesse caso adiciona o questionário de maior score dessa região.
-6. Demais questionários são descartados (não exibidos, não calculados).
+RLS: cada usuário só vê/edita os próprios rascunhos. TTL: limpeza automática de drafts >14 dias via cron já existente (`cleanup-old-reports` ou novo).
 
-Mostrar pequeno banner no topo: "Priorizamos os questionários das regiões com maior dor (X e Y)" para transparência.
+### 2. Hook `useAutosaveDraft<T>`
+Em `src/hooks/useAutosaveDraft.ts`:
 
-## 3. Captura de "limitação funcional relevante" + IA
+```text
+useAutosaveDraft({
+  formKey: 'hep',
+  scopeKey: `${professionalId}:${patientEmail}`,
+  state: { selected, customExercises, notes },
+  enabled: open && !generatedLink,
+})
+→ { hasDraft, draftMeta, restore(), discard(), saving }
+```
 
-**Onde:** novo passo curto entre Anamnese e Questionário (ou último passo dentro de `AnamnesisForm`, condicional a `painRegions.length >= 3`).
+Comportamento:
+- **Save**: debounce 800ms → `localStorage` síncrono + `upsert` em `form_drafts` (fire-and-forget, com retry simples).
+- **Load**: ao montar com `enabled`, lê local + nuvem, pega o mais recente, expõe via `hasDraft`.
+- **Discard**: remove ambos.
+- Chave local: `alivia:draft:{formKey}:{scopeKey}`.
+- Ignora salvamento se `state` igual ao último snapshot (hash leve).
 
-- Textarea: "Há alguma região com dor mais baixa que ainda assim te limita muito (trabalho, esporte, sono)? Descreva brevemente."
-- Edge function leve **nova** `detect-functional-limitation`:
-  - Input: texto livre + lista de `painRegions` + `painScoresPerRegion`.
-  - Modelo: `google/gemini-2.5-flash-lite` (rápido/barato).
-  - Output JSON: `{ "regions": ["lower_back", ...] }` — apenas regiões já presentes em `painRegions` com score < 5 que o texto indicou impacto funcional.
-  - Aplica o protocolo de extração JSON em 4 camadas (regra do projeto).
-- Resultado passado como `extraQuestionnaireRegions: string[]` para `QuestionnaireStep`.
-- Se texto vazio ou IA não devolver nada: segue só com 2 questionários.
+### 3. Componente `DraftResumeBanner`
+Aparece no topo do modal/formulário quando `hasDraft` é true. Dois botões: **Retomar** | **Descartar**.
 
-Texto também é salvo em `anamnesisData.functionalLimitationNote` para constar no prontuário/PDF.
+## Pontos de integração
 
-## 4. Campo livre antes de Finalizar (tela própria)
+### CreateExerciseProgramModal.tsx
+- `scopeKey = ${professionalId}:${patientName}:${assessmentId ?? ''}`
+- `state = { selected, customExercises, notes }`
+- Em modo edição (`editProgramId`), autosave fica desligado (já está no servidor).
+- Após `createProgram` bem-sucedido → `discard()`.
 
-Novo step `final_notes` em `Assessment.tsx`, entre `functional_tests` e `loading`:
+### ManualAssessmentModal.tsx
+- `scopeKey = ${professionalId}:${patientEmail || patientName}`
+- `state = { painRegions, painScore, anamnesis, testResults, notes, ... }`
+- Após salvar avaliação → `discard()`.
 
-- Layout limpo: ícone `MessageSquare`, título "Algo mais que devemos saber?", textarea opcional (máx 600 chars) + botão **Finalizar e gerar análise**.
-- Conteúdo sobrescreve/popula `additionalInfo` existente (já consumido por `generateDiagnosis` no parâmetro `extraInfo`).
-- Botão **Voltar** retorna a `functional_tests`.
+### AnamnesisForm.tsx (usado em Assessment.tsx)
+- `scopeKey = ${assessmentId}` (avaliação já existe como linha)
+- `state = anamnesisData`
+- Aqui já há salvamento parcial em `assessments.anamnesis_data`; o draft cobre o intervalo entre cliques (campos em digitação) e o cenário de assessment ainda não criado.
+- Ao avançar de etapa → mantém; ao finalizar avaliação → `discard()`.
 
-`handleTestsComplete` agora vai para `setStep("final_notes")` (premium/professional). Modo `basic` mantém fluxo atual.
+## Camadas de defesa
 
-## 5. Feedback visual do Finalizar (anti duplo-clique)
-
-No novo step `final_notes` e no botão "Finalizar Testes" de `FunctionalTests.tsx`:
-
-- Usar estado local `isSubmitting`.
-- Ao clicar:
-  - `disabled = true`
-  - Trocar label para "Processando sua avaliação..." + `<Loader2 className="animate-spin" />`
-  - Adicionar barra de progresso indeterminada (componente `Progress` com animação CSS shimmer) abaixo do botão
-  - Microcopy: "Isso pode levar até 20 segundos. Não feche a página."
-- Como a transição para o step `loading` já ocorre, o disable + spinner garantem que cliques repetidos no instante anterior à mudança de tela não disparem múltiplas chamadas.
-
-Adicionalmente, blindar `generateDiagnosis` em `Assessment.tsx` com guard: se já foi disparado (ref `inFlightRef.current = true`), ignora reentradas.
-
-## 6. Páginas de suporte
-
-Conforme regra do projeto, atualizar `Support.tsx`, `ClinicSupport.tsx` + `pt/en/es.json` com nota curta sobre: foco em queixa principal, limite de 3 questionários priorizados, campo de observações finais.
+1. **Local (sempre)**: `localStorage` é síncrono e sobrevive a reload imediato. Cobre 99% dos casos do tipo "tela bloqueou".
+2. **Nuvem (quando online)**: cobre troca de dispositivo, limpeza de cache, reinstalação do PWA.
+3. **`beforeunload` / `visibilitychange`**: força flush do debounce pendente antes do app sumir.
+4. **Conflito**: se local e nuvem divergem, pega o `updated_at` mais recente e mostra ambas as datas no banner.
 
 ## Detalhes técnicos
 
-**Arquivos editados:**
-- `src/pages/Assessment.tsx` — novo step `final_notes`, `inFlightRef`, prop `painScoresPerRegion` para `QuestionnaireStep`, prop `extraQuestionnaireRegions`.
-- `src/components/assessment/WelcomeStep.tsx` — alerta âmbar de foco.
-- `src/components/assessment/PainMap.tsx` — lembrete compacto.
-- `src/components/assessment/AnamnesisForm.tsx` — campo "limitação funcional" + chamada à edge function.
-- `src/components/assessment/QuestionnaireStep.tsx` — lógica de priorização (max 3, 2 obrigatórios + 1 opcional via flag).
-- `src/components/assessment/FunctionalTests.tsx` — feedback visual no Finalizar (caso `basic`).
-- `src/locales/pt.json`, `en.json`, `es.json`.
-- `src/pages/Support.tsx`, `src/pages/ClinicSupport.tsx`.
+- Tamanho do payload: limitar a ~200KB (jsonb), avisar e parar sync na nuvem se exceder (segue só local).
+- Não salvar dados sensíveis fora do escopo do formulário (sem tokens, sem PII além do que já está no form).
+- `useAutosaveDraft` é puro client-side, sem dependências novas.
+- Migração inclui `GRANT` para `authenticated` e `service_role` (sem anon).
 
-**Arquivos criados:**
-- `supabase/functions/detect-functional-limitation/index.ts` (CORS + Lovable AI Gateway).
+## Arquivos
 
-**Sem migration** (campos novos vivem apenas no JSON `anamnesis_data`).
+**Novos**
+- `supabase/migrations/{ts}_form_drafts.sql`
+- `src/hooks/useAutosaveDraft.ts`
+- `src/components/common/DraftResumeBanner.tsx`
 
-**Resgate dos 3 cards já vazios da Neon:** fora do escopo desta tarefa (a correção do filtro já foi aplicada; os dados existem). Se quiser, posso fazer um varredor pós-implementação para confirmar.
+**Editados**
+- `src/components/dashboard/CreateExerciseProgramModal.tsx`
+- `src/components/dashboard/ManualAssessmentModal.tsx`
+- `src/components/assessment/AnamnesisForm.tsx` (+ pequena integração em `Assessment.tsx` para o `scopeKey`)
+- `src/locales/{pt,en,es}.json` — strings do banner e badge "Rascunho salvo"
+- `src/pages/Support.tsx` + `src/pages/ClinicSupport.tsx` — nova entrada explicando autosave
 
 ## Fora de escopo
 
-- Reescrita do prompt da IA de diagnóstico para considerar `functionalLimitationNote` (posso fazer em PR seguinte se desejar).
-- Mudanças no PDF para destacar nota funcional separada.
+- Histórico de versões de rascunho (só o último vence).
+- Autosave em outros formulários menores (perfil, configurações da clínica).
+- Sincronização realtime entre abas abertas simultaneamente.
