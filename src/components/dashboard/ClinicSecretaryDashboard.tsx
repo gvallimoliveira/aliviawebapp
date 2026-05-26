@@ -42,6 +42,8 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
   // Assignment state
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [assignTarget, setAssignTarget] = useState<string>("");
+  const [patientDetailOpen, setPatientDetailOpen] = useState(false);
+  const [metricsCollapsed, setMetricsCollapsed] = useState(false);
 
   useEffect(() => {
     if (!activeClinic) return;
