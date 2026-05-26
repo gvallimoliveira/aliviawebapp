@@ -173,7 +173,7 @@ export default function PatientDetailView(props: any) {
         </Button>
       </div>
 
-      <div className="flex items-start justify-between gap-3 flex-wrap">
+      <div id="patient-detail-anchor" data-patient-detail-anchor className="flex items-start justify-between gap-3 flex-wrap scroll-mt-20">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-lg font-semibold text-foreground">{patient.name}</h3>
