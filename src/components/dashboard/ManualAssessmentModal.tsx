@@ -158,6 +158,51 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainRegions((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
   };
 
+  // ── Autosave (local + nuvem) ───────────────────────────────────────────────
+  const draftScopeKey = open
+    ? `${professionalId}:${(patientEmail || patientName || "").toLowerCase().trim()}`
+    : null;
+  const draftState = {
+    step, chiefComplaint, history, duration, onset, aggravating, relieving,
+    medications, previousSurgeries, comorbidities, occupation,
+    painScore, painType, painRegions, redFlagsChecked, questionnaireResults,
+    functionalTests, clinicalImpression, diagnosisText, treatmentText,
+    aiClinicalImpression,
+  };
+  const draft = useAutosaveDraft<typeof draftState>({
+    formKey: "manual_assessment",
+    scopeKey: draftScopeKey,
+    state: draftState,
+    enabled: open,
+  });
+  const handleRestoreDraft = () => {
+    const p = draft.restore();
+    if (!p) return;
+    setStep(p.step ?? 0);
+    setChiefComplaint(p.chiefComplaint ?? "");
+    setHistory(p.history ?? "");
+    setDuration(p.duration ?? "");
+    setOnset(p.onset ?? "");
+    setAggravating(p.aggravating ?? "");
+    setRelieving(p.relieving ?? "");
+    setMedications(p.medications ?? "");
+    setPreviousSurgeries(p.previousSurgeries ?? "");
+    setComorbidities(p.comorbidities ?? "");
+    setOccupation(p.occupation ?? "");
+    setPainScore(p.painScore ?? 5);
+    setPainType(p.painType ?? "");
+    setPainRegions(p.painRegions ?? []);
+    setRedFlagsChecked(p.redFlagsChecked ?? []);
+    setQuestionnaireResults(p.questionnaireResults ?? []);
+    setFunctionalTests(p.functionalTests ?? "");
+    setClinicalImpression(p.clinicalImpression ?? "");
+    setDiagnosisText(p.diagnosisText ?? "");
+    setTreatmentText(p.treatmentText ?? "");
+    setAiClinicalImpression(p.aiClinicalImpression ?? null);
+  };
+
+
+
   const toggleRedFlag = (rf: string) => {
     setRedFlagsChecked((prev) => prev.includes(rf) ? prev.filter((r) => r !== rf) : [...prev, rf]);
   };
