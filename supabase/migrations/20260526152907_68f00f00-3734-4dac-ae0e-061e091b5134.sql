@@ -1,0 +1,1 @@
+DELETE FROM public.youtube_video_cache WHERE query_key ~* 'abdu\w*\s+(do|de)?\s*quadril\s+em\s+pe' OR query_key ~* 'standing\s+hip\s+abduction';
