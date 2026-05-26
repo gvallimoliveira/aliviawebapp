@@ -404,6 +404,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
             readOnly
             canAddPatient
             canArchivePatient
+            allowManualAssessment
             clinicId={activeClinic?.clinic_id}
             clinicLogoUrl={activeClinic?.logo_url || undefined}
             clinicName={activeClinic?.clinic_name || undefined}
