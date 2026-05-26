@@ -443,6 +443,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-6">
           <div className="space-y-4 py-4">
+            {draft.hasDraft && draft.draftMeta && (
+              <DraftResumeBanner
+                updatedAt={draft.draftMeta.updatedAt}
+                source={draft.draftMeta.source}
+                onRestore={handleRestoreDraft}
+                onDiscard={() => void draft.discard()}
+              />
+            )}
             {/* STEP 0: ANAMNESE */}
             {step === 0 && (
               <div className="space-y-3">
