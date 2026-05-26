@@ -902,6 +902,7 @@ const Assessment = () => {
             mode={mode}
             onComplete={handleAnamnesisComplete}
             onBack={() => setStep("redflags")}
+            draftScopeKey={`self:${mode}:${user?.id || "anon"}`}
           />
         )}
         {step === "questionnaire" && anamnesisData && (

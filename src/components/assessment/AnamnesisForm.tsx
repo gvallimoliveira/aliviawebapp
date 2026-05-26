@@ -12,6 +12,8 @@ import { Slider } from "@/components/ui/slider";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PainMap from "./PainMap";
 import { formatCpf } from "@/utils/masks";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
+import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 
 export interface AnamnesisData {
   chiefComplaint: string; // deprecated, kept for backward compat
@@ -66,9 +68,11 @@ interface AnamnesisFormProps {
   initialSurgeryDetails?: string;
   initialActivityLevel?: string;
   initialHasGymAccess?: string;
+  /** Optional stable key (e.g. token, professionalId+email) to persist draft across reloads. */
+  draftScopeKey?: string | null;
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, draftScopeKey }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -112,6 +116,20 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     cpf: "",
     birthDate: "",
   });
+
+  // ── Autosave (local + nuvem) ─────────────────────────────────────────────
+  const draft = useAutosaveDraft<{ step: number; data: AnamnesisData }>({
+    formKey: "anamnesis",
+    scopeKey: draftScopeKey ?? null,
+    state: { step, data },
+    enabled: !!draftScopeKey,
+  });
+  const handleRestoreDraft = () => {
+    const p = draft.restore();
+    if (!p) return;
+    if (typeof p.step === "number") setStep(p.step);
+    if (p.data) setData((prev) => ({ ...prev, ...p.data }));
+  };
 
   // Pre-fill all reassessment fields
   useEffect(() => {
@@ -954,6 +972,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       setStep(step + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
+      void draft.discard();
       onComplete(data);
     }
   };
@@ -964,6 +983,14 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      {draft.hasDraft && draft.draftMeta && (
+        <DraftResumeBanner
+          updatedAt={draft.draftMeta.updatedAt}
+          source={draft.draftMeta.source}
+          onRestore={handleRestoreDraft}
+          onDiscard={() => void draft.discard()}
+        />
+      )}
       {/* Progress */}
       <div className="space-y-2">
         <div className="flex justify-between text-xs text-muted-foreground">

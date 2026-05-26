@@ -16,11 +16,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle } from "lucide-react";
+import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud } from "lucide-react";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { regionsByView } from "@/components/assessment/painMapData";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import { useVoiceRecorderSession } from "@/contexts/VoiceRecorderContext";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
+import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 
 // ─── Body region grouping: proximal → distal, alphabetical within each group ───
 type RegionGroup = { key: string; label_pt: string; label_en: string; ids: string[] };
@@ -155,6 +157,51 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const toggleRegion = (id: string) => {
     setPainRegions((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
   };
+
+  // ── Autosave (local + nuvem) ───────────────────────────────────────────────
+  const draftScopeKey = open
+    ? `${professionalId}:${(patientEmail || patientName || "").toLowerCase().trim()}`
+    : null;
+  const draftState = {
+    step, chiefComplaint, history, duration, onset, aggravating, relieving,
+    medications, previousSurgeries, comorbidities, occupation,
+    painScore, painType, painRegions, redFlagsChecked, questionnaireResults,
+    functionalTests, clinicalImpression, diagnosisText, treatmentText,
+    aiClinicalImpression,
+  };
+  const draft = useAutosaveDraft<typeof draftState>({
+    formKey: "manual_assessment",
+    scopeKey: draftScopeKey,
+    state: draftState,
+    enabled: open,
+  });
+  const handleRestoreDraft = () => {
+    const p = draft.restore();
+    if (!p) return;
+    setStep(p.step ?? 0);
+    setChiefComplaint(p.chiefComplaint ?? "");
+    setHistory(p.history ?? "");
+    setDuration(p.duration ?? "");
+    setOnset(p.onset ?? "");
+    setAggravating(p.aggravating ?? "");
+    setRelieving(p.relieving ?? "");
+    setMedications(p.medications ?? "");
+    setPreviousSurgeries(p.previousSurgeries ?? "");
+    setComorbidities(p.comorbidities ?? "");
+    setOccupation(p.occupation ?? "");
+    setPainScore(p.painScore ?? 5);
+    setPainType(p.painType ?? "");
+    setPainRegions(p.painRegions ?? []);
+    setRedFlagsChecked(p.redFlagsChecked ?? []);
+    setQuestionnaireResults(p.questionnaireResults ?? []);
+    setFunctionalTests(p.functionalTests ?? "");
+    setClinicalImpression(p.clinicalImpression ?? "");
+    setDiagnosisText(p.diagnosisText ?? "");
+    setTreatmentText(p.treatmentText ?? "");
+    setAiClinicalImpression(p.aiClinicalImpression ?? null);
+  };
+
+
 
   const toggleRedFlag = (rf: string) => {
     setRedFlagsChecked((prev) => prev.includes(rf) ? prev.filter((r) => r !== rf) : [...prev, rf]);
@@ -344,6 +391,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       }
 
       toast({ title: isPt ? "Avaliação criada!" : "Assessment created!" });
+      void draft.discard();
       onOpenChange(false);
       resetForm();
       if (data?.id) navigate(`/assessment/view/${data.id}?from=professional`);
@@ -395,6 +443,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-6">
           <div className="space-y-4 py-4">
+            {draft.hasDraft && draft.draftMeta && (
+              <DraftResumeBanner
+                updatedAt={draft.draftMeta.updatedAt}
+                source={draft.draftMeta.source}
+                onRestore={handleRestoreDraft}
+                onDiscard={() => void draft.discard()}
+              />
+            )}
             {/* STEP 0: ANAMNESE */}
             {step === 0 && (
               <div className="space-y-3">
@@ -637,6 +693,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           <Button variant="outline" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
             <ChevronLeft className="h-4 w-4" /> {isPt ? "Voltar" : "Back"}
           </Button>
+          {draft.lastSavedAt && (
+            <span className="absolute left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-1 text-[11px] text-muted-foreground">
+              <Cloud className="h-3 w-3" />
+              {isPt ? "Rascunho salvo" : "Draft saved"}
+            </span>
+          )}
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
