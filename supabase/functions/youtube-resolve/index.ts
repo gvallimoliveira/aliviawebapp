@@ -163,6 +163,13 @@ Deno.serve(async (req: Request) => {
         title: "Fortalecimento Abdução de quadril em pé",
         duration: 21,
       },
+      {
+        // "equilíbrio unipodal" / "apoio unipodal" / "single leg balance"
+        match: /(equilibr\w*|apoio)\s+unipodal\w*|single\s+leg\s+balance|unipedal\s+balance/,
+        videoId: "zr-AAKeS_xk",
+        title: "Equilíbrio unipodal estático",
+        duration: 18,
+      },
     ];
     const normName = stripAccents(name);
     const override = CURATED.find((o) => o.match.test(normName));
