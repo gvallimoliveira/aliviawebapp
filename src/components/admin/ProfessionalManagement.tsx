@@ -4,7 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Users, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2, Users, Search, Trash2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface Props {
   language: string;
@@ -23,6 +35,14 @@ const t = (language: string) => {
       specialties: "Especialidades",
       empty: "Nenhum profissional cadastrado ainda.",
       total: "Total",
+      actions: "Ações",
+      delete: "Excluir",
+      delete_confirm_title: "Excluir profissional?",
+      delete_confirm_desc: "Esta ação remove permanentemente o cadastro do profissional. O usuário precisará criar um novo cadastro e pagar novamente para voltar. Esta ação não pode ser desfeita.",
+      delete_cancel: "Cancelar",
+      delete_ok: "Sim, excluir",
+      deleted: "Profissional excluído.",
+      delete_error: "Erro ao excluir profissional.",
     },
     en: {
       title: "Registered Professionals",
@@ -35,6 +55,14 @@ const t = (language: string) => {
       specialties: "Specialties",
       empty: "No professionals registered yet.",
       total: "Total",
+      actions: "Actions",
+      delete: "Delete",
+      delete_confirm_title: "Delete professional?",
+      delete_confirm_desc: "This permanently removes the professional record. They will need to re-register and pay again. This cannot be undone.",
+      delete_cancel: "Cancel",
+      delete_ok: "Yes, delete",
+      deleted: "Professional deleted.",
+      delete_error: "Error deleting professional.",
     },
   };
   return translations[language] || translations.en;
@@ -45,6 +73,8 @@ const ProfessionalManagement = ({ language }: Props) => {
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -56,6 +86,19 @@ const ProfessionalManagement = ({ language }: Props) => {
       setLoading(false);
     })();
   }, []);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    const { error } = await (supabase.from("professionals" as any) as any).delete().eq("id", id);
+    setDeletingId(null);
+    setConfirmId(null);
+    if (error) {
+      toast({ title: labels.delete_error, description: error.message, variant: "destructive" });
+    } else {
+      toast({ description: labels.deleted });
+      setProfessionals((prev) => prev.filter((p) => p.id !== id));
+    }
+  };
 
   const filtered = professionals.filter((p) => {
     if (!query.trim()) return true;
@@ -113,6 +156,7 @@ const ProfessionalManagement = ({ language }: Props) => {
                 <TableHead>{labels.cpf}</TableHead>
                 <TableHead>{labels.location}</TableHead>
                 <TableHead>{labels.specialties}</TableHead>
+                <TableHead className="w-[90px] text-right">{labels.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -154,12 +198,46 @@ const ProfessionalManagement = ({ language }: Props) => {
                       )}
                     </div>
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setConfirmId(p.id)}
+                      disabled={deletingId === p.id}
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      title={labels.delete}
+                    >
+                      {deletingId === p.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
       </CardContent>
+
+      <AlertDialog open={!!confirmId} onOpenChange={(open) => !open && setConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{labels.delete_confirm_title}</AlertDialogTitle>
+            <AlertDialogDescription>{labels.delete_confirm_desc}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{labels.delete_cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmId && handleDelete(confirmId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {labels.delete_ok}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
