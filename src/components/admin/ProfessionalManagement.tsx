@@ -46,7 +46,7 @@ const t = (language: string) => {
     },
     en: {
       title: "Registered Professionals",
-      desc: "All active professionals on Aliv.iA. Access is granted automatically after subscription + CREFITO + CPF.",
+      desc: "All active professionals on Aliv.iA. Access is granted automatically after subscription and a complete professional registration (required: name, CPF and CREFITO).",
       search: "Search by name, CREFITO, CPF or city...",
       name: "Name",
       crefito: "CREFITO",
