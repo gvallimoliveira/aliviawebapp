@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserCheck, Sparkles, KeyRound, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, UserCheck, Sparkles, KeyRound, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatCpf } from "@/utils/masks";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const STATES = [
@@ -33,9 +35,11 @@ const CompleteProfile = () => {
   const [form, setForm] = useState({
     full_name: "",
     crefito: "",
+    cpf: "",
     city: "",
     state: "",
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Optional password change (mainly for partners using default password)
   const [showPasswordField, setShowPasswordField] = useState(false);
