@@ -18,6 +18,8 @@ interface Ticket {
   created_at: string;
   updated_at: string;
   archived_at: string | null;
+  user_email: string | null;
+  user_name: string | null;
 }
 
 const statusIcon = { open: Clock, replied: Reply, closed: CheckCircle2 };
