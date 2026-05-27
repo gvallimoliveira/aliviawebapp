@@ -862,7 +862,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     });
 
     map.forEach((g) => g.assessments.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
-    return Array.from(map.values()).sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
+    return Array.from(map.values()).sort((a, b) => (a.name || "").localeCompare(b.name || "", "pt", { sensitivity: "base" }));
   }, [assessments, patientsTableData]);
 
   // Find selected patient (may be null)

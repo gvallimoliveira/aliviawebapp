@@ -1143,53 +1143,9 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </Card>
       )}
 
-      {/* Patient list grouped by email */}
-      <div data-onboarding="pro-patients">
-        {!showingSimulated && (
-          <div className="flex justify-end mb-3">
-            <Button size="sm" className="gap-1.5 rounded-xl" onClick={() => setAddPatientOpen(true)}>
-              <Plus className="h-3.5 w-3.5" />
-              {language === "pt" ? "Adicionar paciente" : "Add patient"}
-            </Button>
-          </div>
-        )}
-        <DashboardErrorBoundary>
-          <PatientEvolutionDashboard
-            assessments={displayAssessments as any}
-            professionalId={professional.id}
-            lifetimeTreatment={professional.lifetime_treatment || (isClinicMode && (activeClinic?.subscription_status === 'active' || activeClinic?.subscription_status === 'trialing'))}
-            professionalLogoUrl={professional.logo_url}
-            clinicLogoUrl={isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined}
-            clinicName={isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined}
-            clinicId={isClinicMode ? activeClinic?.clinic_id : undefined}
-            onDownloadPdf={handleDownloadPdf}
-            onShareWhatsApp={handleShareWhatsApp}
-            isDemo={showingSimulated}
-            onSelectionChange={(sel) => {
-              setPatientDetailOpen(!!sel);
-              if (sel) {
-                // Wait for metrics to collapse and detail view to mount, then scroll
-                // the patient name to the top of the viewport. We run twice because the
-                // first scroll happens before the metrics layout has fully reflowed,
-                // which previously left the page scrolled too far down (showing the
-                // "view full assessment" buttons instead of the patient name).
-                const scrollToAnchor = () => {
-                  const el = document.getElementById("patient-detail-anchor");
-                  if (!el) return;
-                  const y = el.getBoundingClientRect().top + window.scrollY - 80;
-                  window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
-                };
-                setTimeout(scrollToAnchor, 120);
-                setTimeout(scrollToAnchor, 360);
-              }
-            }}
-          />
-        </DashboardErrorBoundary>
-      </div>
-
-      {/* Discreet backup/export footer — autonomous pro only */}
+      {/* Discreet backup/export — positioned above patient list to remain reachable with many patients */}
       {!isDemoMode && !isSimulated && (
-        <details className="group mt-6 rounded-xl border border-border/60 bg-muted/20">
+        <details className="group rounded-xl border border-border/60 bg-muted/20">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground transition">
             <span className="flex items-center gap-2">
               <FileArchive className="h-3.5 w-3.5" />
@@ -1206,6 +1162,38 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           </div>
         </details>
       )}
+
+      {/* Patient list grouped by email */}
+      <div data-onboarding="pro-patients">
+        <DashboardErrorBoundary>
+          <PatientEvolutionDashboard
+            assessments={displayAssessments as any}
+            professionalId={professional.id}
+            lifetimeTreatment={professional.lifetime_treatment || (isClinicMode && (activeClinic?.subscription_status === 'active' || activeClinic?.subscription_status === 'trialing'))}
+            professionalLogoUrl={professional.logo_url}
+            clinicLogoUrl={isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined}
+            clinicName={isClinicMode && activeClinic?.clinic_name ? activeClinic.clinic_name : undefined}
+            clinicId={isClinicMode ? activeClinic?.clinic_id : undefined}
+            onDownloadPdf={handleDownloadPdf}
+            onShareWhatsApp={handleShareWhatsApp}
+            isDemo={showingSimulated}
+            onSelectionChange={(sel) => {
+              setPatientDetailOpen(!!sel);
+              if (sel) {
+                const scrollToAnchor = () => {
+                  const el = document.getElementById("patient-detail-anchor");
+                  if (!el) return;
+                  const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                  window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+                };
+                setTimeout(scrollToAnchor, 120);
+                setTimeout(scrollToAnchor, 360);
+              }
+            }}
+          />
+        </DashboardErrorBoundary>
+      </div>
+
 
       {/* Add Patient Modal */}
       <AddPatientModal
