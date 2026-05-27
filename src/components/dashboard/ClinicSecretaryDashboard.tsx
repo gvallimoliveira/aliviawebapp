@@ -417,13 +417,14 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
             onSelectionChange={(sel) => {
               setPatientDetailOpen(!!sel);
               if (sel) {
-                setTimeout(() => {
+                const scrollToAnchor = () => {
                   const el = document.getElementById("patient-detail-anchor");
-                  if (el) {
-                    const y = el.getBoundingClientRect().top + window.scrollY - 16;
-                    window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
-                  }
-                }, 80);
+                  if (!el) return;
+                  const y = el.getBoundingClientRect().top + window.scrollY - 8;
+                  window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+                };
+                setTimeout(scrollToAnchor, 120);
+                setTimeout(scrollToAnchor, 360);
               }
             }}
           />
