@@ -284,6 +284,8 @@ const CompleteProfile = () => {
                   ? "Usado apenas para validar identidade e evitar duplicidade. Não é exibido publicamente."
                   : "Used only to validate identity and prevent duplicates. Not publicly displayed."}
               </p>
+            </div>
+
 
             <div className="space-y-2">
               <Label>{t("prof.city")} *</Label>
