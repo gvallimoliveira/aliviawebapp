@@ -30,7 +30,7 @@ const AdminDashboard = ({ language, onNavigate }: Props) => {
     try {
       const [vipRes, proRes, ticketRes, leadRes, blogRes] = await Promise.all([
         supabase.functions.invoke("manage-vip-users", { body: { action: "list_vip" } }),
-        (supabase.from("professionals" as any) as any).select("id", { count: "exact", head: true }).eq("approved", false),
+        (supabase.from("professionals" as any) as any).select("id", { count: "exact", head: true }),
         supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("status", "open"),
         supabase.functions.invoke("manage-vip-users", { body: { action: "list_leads" } }),
         supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("published", true),
@@ -68,11 +68,10 @@ const AdminDashboard = ({ language, onNavigate }: Props) => {
     },
     {
       icon: UserCheck,
-      label: isPt ? "Profissionais Pendentes" : "Pending Professionals",
+      label: isPt ? "Profissionais Cadastrados" : "Registered Professionals",
       value: metrics?.pendingPros ?? 0,
       tab: "professionals",
-      color: "text-yellow-500",
-      urgent: (metrics?.pendingPros ?? 0) > 0,
+      color: "text-emerald-500",
     },
     {
       icon: MessageSquare,
