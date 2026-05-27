@@ -1176,7 +1176,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                 const scrollToAnchor = () => {
                   const el = document.getElementById("patient-detail-anchor");
                   if (!el) return;
-                  const y = el.getBoundingClientRect().top + window.scrollY + 48;
+                  const y = el.getBoundingClientRect().top + window.scrollY - 80;
                   window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
                 };
                 setTimeout(scrollToAnchor, 120);
