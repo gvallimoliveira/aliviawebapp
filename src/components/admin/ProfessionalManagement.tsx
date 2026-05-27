@@ -73,6 +73,8 @@ const ProfessionalManagement = ({ language }: Props) => {
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -84,6 +86,19 @@ const ProfessionalManagement = ({ language }: Props) => {
       setLoading(false);
     })();
   }, []);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    const { error } = await (supabase.from("professionals" as any) as any).delete().eq("id", id);
+    setDeletingId(null);
+    setConfirmId(null);
+    if (error) {
+      toast({ title: labels.delete_error, description: error.message, variant: "destructive" });
+    } else {
+      toast({ description: labels.deleted });
+      setProfessionals((prev) => prev.filter((p) => p.id !== id));
+    }
+  };
 
   const filtered = professionals.filter((p) => {
     if (!query.trim()) return true;
