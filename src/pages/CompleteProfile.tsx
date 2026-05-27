@@ -150,12 +150,32 @@ const CompleteProfile = () => {
         return;
       }
 
+      // Check duplicate CPF
+      const { data: cpfDup } = await (supabase.from("professionals" as any) as any)
+        .select("id, user_id")
+        .eq("cpf", cpfDigits)
+        .maybeSingle();
+      if (cpfDup && cpfDup.user_id !== user.id) {
+        toast({
+          title: isPt ? "CPF já cadastrado" : "CPF already registered",
+          description: isPt
+            ? "Este CPF já está vinculado a outra conta profissional."
+            : "This CPF is already linked to another professional account.",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
+
       await (supabase.from("professionals" as any) as any)
         .update({
           full_name: form.full_name.trim(),
           crefito: normalizedCrefito,
+          cpf: cpfDigits,
           city: form.city.trim(),
           state: form.state,
+          approved: true,
+          terms_accepted_at: new Date().toISOString(),
         })
         .eq("id", professional.id);
 
