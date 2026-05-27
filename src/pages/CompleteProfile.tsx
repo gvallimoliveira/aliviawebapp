@@ -73,9 +73,11 @@ const CompleteProfile = () => {
         setForm({
           full_name: data.full_name === data.email?.split("@")[0] ? "" : data.full_name || "",
           crefito: data.crefito === "000000-X" ? "" : data.crefito || "",
+          cpf: data.cpf ? formatCpf(data.cpf) : "",
           city: data.city === "A definir" ? "" : data.city || "",
           state: data.state === "XX" ? "" : data.state || "",
         });
+        if (data.terms_accepted_at) setTermsAccepted(true);
         setLoading(false);
       });
   }, [user]);
@@ -95,7 +97,27 @@ const CompleteProfile = () => {
       return;
     }
 
-    // Validate password fields if user wants to change password
+    const cpfDigits = form.cpf.replace(/\D/g, "");
+    if (cpfDigits.length !== 11) {
+      toast({
+        title: isPt ? "CPF inválido" : "Invalid CPF",
+        description: isPt ? "Digite os 11 dígitos do CPF." : "Enter all 11 digits.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!termsAccepted) {
+      toast({
+        title: isPt ? "Confirmação obrigatória" : "Confirmation required",
+        description: isPt
+          ? "Você precisa confirmar que os dados são verídicos."
+          : "You must confirm the data is truthful.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const wantsPasswordChange = newPassword.length > 0 || confirmPassword.length > 0;
     if (wantsPasswordChange) {
       if (newPassword.length < 8) {
