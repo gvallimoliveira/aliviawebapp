@@ -82,6 +82,7 @@ interface TreatmentPlanProps {
   testResults?: any;
   professionalLogoUrl?: string;
   mode?: string;
+  patientName?: string;
   onBack: () => void;
   onNewAssessment: () => void;
 }
