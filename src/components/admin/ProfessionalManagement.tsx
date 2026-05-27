@@ -156,6 +156,7 @@ const ProfessionalManagement = ({ language }: Props) => {
                 <TableHead>{labels.cpf}</TableHead>
                 <TableHead>{labels.location}</TableHead>
                 <TableHead>{labels.specialties}</TableHead>
+                <TableHead className="w-[90px] text-right">{labels.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -197,12 +198,46 @@ const ProfessionalManagement = ({ language }: Props) => {
                       )}
                     </div>
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setConfirmId(p.id)}
+                      disabled={deletingId === p.id}
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      title={labels.delete}
+                    >
+                      {deletingId === p.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
       </CardContent>
+
+      <AlertDialog open={!!confirmId} onOpenChange={(open) => !open && setConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{labels.delete_confirm_title}</AlertDialogTitle>
+            <AlertDialogDescription>{labels.delete_confirm_desc}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{labels.delete_cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmId && handleDelete(confirmId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {labels.delete_ok}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
