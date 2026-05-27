@@ -712,7 +712,20 @@ const ProfessionalRegister = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full rounded-xl py-5" disabled={saving}>
+              <div className="flex items-start gap-2.5 rounded-xl border border-border bg-muted/30 p-3">
+                <Checkbox
+                  id="terms-truth-pro"
+                  checked={termsAccepted}
+                  onCheckedChange={(c) => setTermsAccepted(c === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="terms-truth-pro" className="text-xs text-muted-foreground leading-relaxed cursor-pointer flex-1">
+                  <ShieldCheck className="inline h-3.5 w-3.5 text-primary mr-1 -mt-0.5" />
+                  Declaro, sob minha responsabilidade, que todos os dados informados (nome, CREFITO e CPF) são verídicos e correspondem ao meu cadastro profissional ativo. Estou ciente de que informações falsas podem levar à suspensão imediata da conta.
+                </label>
+              </div>
+
+              <Button type="submit" className="w-full rounded-xl py-5" disabled={saving || !termsAccepted}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 {existing ? t("prof.update") : t("prof.register")}
               </Button>
