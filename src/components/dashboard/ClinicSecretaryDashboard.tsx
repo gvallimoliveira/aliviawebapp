@@ -420,7 +420,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
                 const scrollToAnchor = () => {
                   const el = document.getElementById("patient-detail-anchor");
                   if (!el) return;
-                  const y = el.getBoundingClientRect().top + window.scrollY - 8;
+                  const y = el.getBoundingClientRect().top + window.scrollY - 80;
                   window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
                 };
                 setTimeout(scrollToAnchor, 120);
