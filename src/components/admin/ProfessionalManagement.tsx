@@ -89,7 +89,7 @@ const ProfessionalManagement = ({ language }: Props) => {
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
-    const { error } = await (supabase.from("professionals" as any) as any).delete().eq("id", id);
+    const { error } = await (supabase as any).rpc("admin_delete_professional", { _professional_id: id });
     setDeletingId(null);
     setConfirmId(null);
     if (error) {
