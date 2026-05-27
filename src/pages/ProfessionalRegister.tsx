@@ -568,6 +568,21 @@ const ProfessionalRegister = () => {
               </div>
 
               <div className="space-y-2">
+                <Label>CPF *</Label>
+                <Input
+                  value={form.cpf}
+                  onChange={(e) => setForm({ ...form, cpf: formatCpf(e.target.value) })}
+                  placeholder="000.000.000-00"
+                  inputMode="numeric"
+                  maxLength={14}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Usado apenas para validar sua identidade e evitar cadastros duplicados. Não é exibido publicamente.
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label className="flex items-center gap-1.5">
                   <Instagram className="h-4 w-4 text-muted-foreground" />
                   {t("prof.social_media")} *
