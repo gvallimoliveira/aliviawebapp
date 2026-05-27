@@ -33,16 +33,10 @@ serve(async (req) => {
     const { assessment_id } = await req.json();
     if (!assessment_id) throw new Error("assessment_id is required");
 
-    // Verify the professional owns this assessment
-    const { data: professional } = await supabaseClient
-      .from("professionals")
-      .select("id, lifetime_treatment")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!professional) throw new Error("Not a registered professional");
-
-    // Check if assessment belongs to an active clinic — treatment is included in clinic subscription
+    // 1) FIRST: clinic path. Treatment generation is FREE and unlimited for
+    // active/trialing clinics, available to any active clinic member
+    // (owner/admin/secretary/therapist), even if they don't have a
+    // `professionals` row of their own.
     const { data: assessmentCheck } = await supabaseClient
       .from("assessments")
       .select("id, clinic_id")
@@ -56,13 +50,23 @@ serve(async (req) => {
         .eq("id", assessmentCheck.clinic_id)
         .single();
 
-      if (clinic && (clinic.subscription_status === "active" || clinic.subscription_status === "trialing")) {
+      const clinicActive =
+        clinic && (clinic.subscription_status === "active" || clinic.subscription_status === "trialing");
+
+      const { data: membership } = await supabaseClient
+        .from("clinic_members")
+        .select("id")
+        .eq("clinic_id", assessmentCheck.clinic_id)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (clinicActive && membership) {
         await supabaseClient
           .from("assessments")
           .update({ payment_status: "treatment_paid" })
           .eq("id", assessment_id);
 
-        // Audit log
         await supabaseClient
           .from("clinic_assessment_logs")
           .insert({
@@ -78,6 +82,15 @@ serve(async (req) => {
         });
       }
     }
+
+    // 2) Otherwise — autonomous professional path
+    const { data: professional } = await supabaseClient
+      .from("professionals")
+      .select("id, lifetime_treatment")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!professional) throw new Error("Not a registered professional");
 
     // If professional has lifetime treatment, skip payment — return free access
     if (professional.lifetime_treatment) {
