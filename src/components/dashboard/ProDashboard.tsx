@@ -1169,14 +1169,18 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
               setPatientDetailOpen(!!sel);
               if (sel) {
                 // Wait for metrics to collapse and detail view to mount, then scroll
-                // the patient name slightly below the top of the viewport.
-                setTimeout(() => {
+                // the patient name to the top of the viewport. We run twice because the
+                // first scroll happens before the metrics layout has fully reflowed,
+                // which previously left the page scrolled too far down (showing the
+                // "view full assessment" buttons instead of the patient name).
+                const scrollToAnchor = () => {
                   const el = document.getElementById("patient-detail-anchor");
-                  if (el) {
-                    const y = el.getBoundingClientRect().top + window.scrollY - 16;
-                    window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
-                  }
-                }, 80);
+                  if (!el) return;
+                  const y = el.getBoundingClientRect().top + window.scrollY - 8;
+                  window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+                };
+                setTimeout(scrollToAnchor, 120);
+                setTimeout(scrollToAnchor, 360);
               }
             }}
           />
