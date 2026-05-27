@@ -265,6 +265,19 @@ const ProfessionalRegister = () => {
       toast({ title: t("prof.social_media_required"), variant: "destructive" });
       return;
     }
+    const cpfDigits = form.cpf.replace(/\D/g, "");
+    if (cpfDigits.length !== 11) {
+      toast({ title: "CPF inválido", description: "Digite os 11 dígitos do CPF.", variant: "destructive" });
+      return;
+    }
+    if (!termsAccepted) {
+      toast({
+        title: "Confirmação obrigatória",
+        description: "Você precisa confirmar que os dados informados são verídicos.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSaving(true);
     try {
       // Check for duplicate CREFITO
@@ -277,6 +290,20 @@ const ProfessionalRegister = () => {
         setSaving(false);
         return;
       }
+      // Check for duplicate CPF
+      const { data: cpfDup } = await (supabase.from("professionals" as any) as any)
+        .select("id, user_id")
+        .eq("cpf", cpfDigits)
+        .maybeSingle();
+      if (cpfDup && cpfDup.user_id !== user.id) {
+        toast({
+          title: "CPF já cadastrado",
+          description: "Este CPF já está vinculado a outra conta profissional.",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
       let photoUrl: string | null = null;
       if (photoFile) {
         photoUrl = await uploadPhoto();
@@ -286,7 +313,14 @@ const ProfessionalRegister = () => {
         logoUrl = await uploadLogo();
       }
 
-      const payload: any = { ...form, crefito: normalizedCrefito, user_id: user.id };
+      const payload: any = {
+        ...form,
+        crefito: normalizedCrefito,
+        cpf: cpfDigits,
+        user_id: user.id,
+        approved: true,
+        terms_accepted_at: new Date().toISOString(),
+      };
       if (photoUrl) {
         payload.profile_photo_url = photoUrl;
       }
@@ -300,9 +334,7 @@ const ProfessionalRegister = () => {
         navigate("/dashboard?tab=professional");
       } else {
         await (supabase.from("professionals" as any) as any).insert(payload);
-        toast({ title: t("prof.submitted_for_review") });
-        // After new registration, redirect to dashboard with subscribe flag
-        // so the plan selection screen is shown immediately
+        toast({ title: t("prof.saved") });
         navigate("/dashboard?tab=professional&subscribe=true");
       }
     } catch {
