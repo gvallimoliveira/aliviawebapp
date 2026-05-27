@@ -160,8 +160,21 @@ export default function SupportTicketManagement({ language }: { language: string
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-foreground text-sm">{ticket.subject}</h4>
                       <p className="text-xs text-muted-foreground mt-1 break-words">{ticket.message}</p>
-                      <p className="text-xs text-muted-foreground/60 mt-1">
-                        {new Date(ticket.created_at).toLocaleString()} • {ticket.user_id.slice(0, 8)}...
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-xs">
+                        <span className="font-medium text-foreground/80">
+                          {ticket.user_name || "—"}
+                        </span>
+                        {ticket.user_email && (
+                          <a
+                            href={`mailto:${ticket.user_email}?subject=Re: ${encodeURIComponent(ticket.subject)}`}
+                            className="text-primary hover:underline break-all"
+                          >
+                            {ticket.user_email}
+                          </a>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground/60 mt-0.5">
+                        {new Date(ticket.created_at).toLocaleString()}
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
