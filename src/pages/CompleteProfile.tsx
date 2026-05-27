@@ -270,6 +270,22 @@ const CompleteProfile = () => {
             </div>
 
             <div className="space-y-2">
+              <Label>CPF *</Label>
+              <Input
+                value={form.cpf}
+                onChange={(e) => setForm({ ...form, cpf: formatCpf(e.target.value) })}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                maxLength={14}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                {isPt
+                  ? "Usado apenas para validar identidade e evitar duplicidade. Não é exibido publicamente."
+                  : "Used only to validate identity and prevent duplicates. Not publicly displayed."}
+              </p>
+
+            <div className="space-y-2">
               <Label>{t("prof.city")} *</Label>
               <Input
                 value={form.city}
