@@ -62,15 +62,12 @@ export default function SupportTicketManagement({ language }: { language: string
 
   const fetchTickets = async () => {
     setLoading(true);
-    let query = (supabase.from("support_tickets" as any) as any)
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (!showArchived) {
-      query = query.is("archived_at", null);
+    const { data, error } = await (supabase as any).rpc("get_support_tickets_admin", {
+      _include_archived: showArchived,
+    });
+    if (error) {
+      console.error("[support-tickets] fetch error", error);
     }
-
-    const { data } = await query;
     setTickets((data as Ticket[]) || []);
     setLoading(false);
   };
