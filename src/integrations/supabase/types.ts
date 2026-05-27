@@ -2132,6 +2132,22 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_support_tickets_admin: {
+        Args: { _include_archived?: boolean }
+        Returns: {
+          admin_reply: string
+          archived_at: string
+          created_at: string
+          id: string
+          message: string
+          status: string
+          subject: string
+          updated_at: string
+          user_email: string
+          user_id: string
+          user_name: string
+        }[]
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_clinic_member: {
         Args: { _clinic_id: string; _user_id: string }
