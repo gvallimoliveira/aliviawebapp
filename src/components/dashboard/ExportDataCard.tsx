@@ -246,7 +246,7 @@ const ExportDataCard = ({ mode, clinicId, professionalId, entityName }: Props) =
   const selectedCount = Object.values(selected).filter(Boolean).length;
 
   return (
-    <Card className="border-primary/20">
+    <Card className="border-primary/50 bg-primary/[0.04]">
       <CardContent className="py-5 space-y-4">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
