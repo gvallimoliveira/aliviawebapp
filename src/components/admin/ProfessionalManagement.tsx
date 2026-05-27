@@ -26,7 +26,7 @@ const t = (language: string) => {
   const translations: Record<string, Record<string, string>> = {
     pt: {
       title: "Profissionais Cadastrados",
-      desc: "Lista de todos os profissionais ativos no Aliv.iA. O acesso é liberado automaticamente após assinatura + CREFITO + CPF.",
+      desc: "Lista de todos os profissionais ativos no Aliv.iA. O acesso é liberado automaticamente após a assinatura e o preenchimento do cadastro profissional completo (obrigatórios: nome, CPF e CREFITO).",
       search: "Buscar por nome, CREFITO, CPF ou cidade...",
       name: "Nome",
       crefito: "CREFITO",
@@ -46,7 +46,7 @@ const t = (language: string) => {
     },
     en: {
       title: "Registered Professionals",
-      desc: "All active professionals on Aliv.iA. Access is granted automatically after subscription + CREFITO + CPF.",
+      desc: "All active professionals on Aliv.iA. Access is granted automatically after subscription and a complete professional registration (required: name, CPF and CREFITO).",
       search: "Search by name, CREFITO, CPF or city...",
       name: "Name",
       crefito: "CREFITO",
