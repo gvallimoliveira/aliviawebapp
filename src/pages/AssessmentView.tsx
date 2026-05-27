@@ -587,6 +587,7 @@ const AssessmentView = () => {
             painRegions={painRegions}
             testResults={assessment.test_results}
             mode={assessment.type === "professional" ? "professional" : undefined}
+            patientName={assessment.patient_name || undefined}
             onBack={() => setShowTreatment(false)}
             onNewAssessment={() => navigate("/assessment/premium")}
           />
