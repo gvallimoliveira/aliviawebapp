@@ -1411,6 +1411,7 @@ export type Database = {
           city: string
           clinic_address: string | null
           clinic_name: string | null
+          cpf: string | null
           created_at: string
           crefito: string
           default_session_price: number | null
@@ -1432,6 +1433,7 @@ export type Database = {
           state: string
           subscription_status: string
           subscription_stripe_id: string | null
+          terms_accepted_at: string | null
           updated_at: string
           user_id: string
         }
@@ -1442,6 +1444,7 @@ export type Database = {
           city: string
           clinic_address?: string | null
           clinic_name?: string | null
+          cpf?: string | null
           created_at?: string
           crefito: string
           default_session_price?: number | null
@@ -1463,6 +1466,7 @@ export type Database = {
           state: string
           subscription_status?: string
           subscription_stripe_id?: string | null
+          terms_accepted_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1473,6 +1477,7 @@ export type Database = {
           city?: string
           clinic_address?: string | null
           clinic_name?: string | null
+          cpf?: string | null
           created_at?: string
           crefito?: string
           default_session_price?: number | null
@@ -1494,6 +1499,7 @@ export type Database = {
           state?: string
           subscription_status?: string
           subscription_stripe_id?: string | null
+          terms_accepted_at?: string | null
           updated_at?: string
           user_id?: string
         }

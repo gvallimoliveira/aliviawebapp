@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserCheck, Sparkles, KeyRound, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, UserCheck, Sparkles, KeyRound, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatCpf } from "@/utils/masks";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const STATES = [
@@ -33,9 +35,11 @@ const CompleteProfile = () => {
   const [form, setForm] = useState({
     full_name: "",
     crefito: "",
+    cpf: "",
     city: "",
     state: "",
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Optional password change (mainly for partners using default password)
   const [showPasswordField, setShowPasswordField] = useState(false);
@@ -69,9 +73,11 @@ const CompleteProfile = () => {
         setForm({
           full_name: data.full_name === data.email?.split("@")[0] ? "" : data.full_name || "",
           crefito: data.crefito === "000000-X" ? "" : data.crefito || "",
+          cpf: data.cpf ? formatCpf(data.cpf) : "",
           city: data.city === "A definir" ? "" : data.city || "",
           state: data.state === "XX" ? "" : data.state || "",
         });
+        if (data.terms_accepted_at) setTermsAccepted(true);
         setLoading(false);
       });
   }, [user]);
@@ -91,7 +97,27 @@ const CompleteProfile = () => {
       return;
     }
 
-    // Validate password fields if user wants to change password
+    const cpfDigits = form.cpf.replace(/\D/g, "");
+    if (cpfDigits.length !== 11) {
+      toast({
+        title: isPt ? "CPF inválido" : "Invalid CPF",
+        description: isPt ? "Digite os 11 dígitos do CPF." : "Enter all 11 digits.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!termsAccepted) {
+      toast({
+        title: isPt ? "Confirmação obrigatória" : "Confirmation required",
+        description: isPt
+          ? "Você precisa confirmar que os dados são verídicos."
+          : "You must confirm the data is truthful.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const wantsPasswordChange = newPassword.length > 0 || confirmPassword.length > 0;
     if (wantsPasswordChange) {
       if (newPassword.length < 8) {
@@ -124,12 +150,32 @@ const CompleteProfile = () => {
         return;
       }
 
+      // Check duplicate CPF
+      const { data: cpfDup } = await (supabase.from("professionals" as any) as any)
+        .select("id, user_id")
+        .eq("cpf", cpfDigits)
+        .maybeSingle();
+      if (cpfDup && cpfDup.user_id !== user.id) {
+        toast({
+          title: isPt ? "CPF já cadastrado" : "CPF already registered",
+          description: isPt
+            ? "Este CPF já está vinculado a outra conta profissional."
+            : "This CPF is already linked to another professional account.",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
+
       await (supabase.from("professionals" as any) as any)
         .update({
           full_name: form.full_name.trim(),
           crefito: normalizedCrefito,
+          cpf: cpfDigits,
           city: form.city.trim(),
           state: form.state,
+          approved: true,
+          terms_accepted_at: new Date().toISOString(),
         })
         .eq("id", professional.id);
 
@@ -224,6 +270,24 @@ const CompleteProfile = () => {
             </div>
 
             <div className="space-y-2">
+              <Label>CPF *</Label>
+              <Input
+                value={form.cpf}
+                onChange={(e) => setForm({ ...form, cpf: formatCpf(e.target.value) })}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                maxLength={14}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                {isPt
+                  ? "Usado apenas para validar identidade e evitar duplicidade. Não é exibido publicamente."
+                  : "Used only to validate identity and prevent duplicates. Not publicly displayed."}
+              </p>
+            </div>
+
+
+            <div className="space-y-2">
               <Label>{t("prof.city")} *</Label>
               <Input
                 value={form.city}
@@ -296,10 +360,26 @@ const CompleteProfile = () => {
               )}
             </div>
 
-            <Button type="submit" className="w-full rounded-xl py-5" disabled={saving}>
+            <div className="flex items-start gap-2.5 rounded-xl border border-border bg-muted/30 p-3">
+              <Checkbox
+                id="terms-truth"
+                checked={termsAccepted}
+                onCheckedChange={(c) => setTermsAccepted(c === true)}
+                className="mt-0.5"
+              />
+              <label htmlFor="terms-truth" className="text-xs text-muted-foreground leading-relaxed cursor-pointer flex-1">
+                <ShieldCheck className="inline h-3.5 w-3.5 text-primary mr-1 -mt-0.5" />
+                {isPt
+                  ? "Declaro, sob minha responsabilidade, que todos os dados informados (nome, CREFITO e CPF) são verídicos e correspondem ao meu cadastro profissional ativo. Estou ciente de que informações falsas podem levar à suspensão imediata da conta."
+                  : "I declare, under my responsibility, that all data provided (name, CREFITO and CPF) is truthful and matches my active professional registration. I'm aware that false information may lead to immediate account suspension."}
+              </label>
+            </div>
+
+            <Button type="submit" className="w-full rounded-xl py-5" disabled={saving || !termsAccepted}>
               {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {t("prof.complete_profile_btn")}
             </Button>
+
           </form>
         </CardContent>
       </Card>

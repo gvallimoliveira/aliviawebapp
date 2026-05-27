@@ -10,7 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X, Plus, ShieldCheck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatCpf } from "@/utils/masks";
 
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -60,6 +62,7 @@ const ProfessionalRegister = () => {
   const [form, setForm] = useState({
     full_name: "",
     crefito: "",
+    cpf: "",
     social_media: "",
     specialties: [] as string[],
     city: "",
@@ -70,6 +73,7 @@ const ProfessionalRegister = () => {
     clinic_name: "",
     clinic_address: "",
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -88,6 +92,7 @@ const ProfessionalRegister = () => {
           setForm({
             full_name: data.full_name || "",
             crefito: data.crefito || "",
+            cpf: data.cpf ? formatCpf(data.cpf) : "",
             social_media: data.social_media || "",
             specialties: data.specialties || [],
             city: data.city || "",
@@ -98,6 +103,7 @@ const ProfessionalRegister = () => {
             clinic_name: data.clinic_name || "",
             clinic_address: data.clinic_address || "",
           });
+          if (data.terms_accepted_at) setTermsAccepted(true);
           if (data.profile_photo_url) {
             setPhotoPreview(data.profile_photo_url);
           }
@@ -259,6 +265,19 @@ const ProfessionalRegister = () => {
       toast({ title: t("prof.social_media_required"), variant: "destructive" });
       return;
     }
+    const cpfDigits = form.cpf.replace(/\D/g, "");
+    if (cpfDigits.length !== 11) {
+      toast({ title: "CPF inválido", description: "Digite os 11 dígitos do CPF.", variant: "destructive" });
+      return;
+    }
+    if (!termsAccepted) {
+      toast({
+        title: "Confirmação obrigatória",
+        description: "Você precisa confirmar que os dados informados são verídicos.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSaving(true);
     try {
       // Check for duplicate CREFITO
@@ -271,6 +290,20 @@ const ProfessionalRegister = () => {
         setSaving(false);
         return;
       }
+      // Check for duplicate CPF
+      const { data: cpfDup } = await (supabase.from("professionals" as any) as any)
+        .select("id, user_id")
+        .eq("cpf", cpfDigits)
+        .maybeSingle();
+      if (cpfDup && cpfDup.user_id !== user.id) {
+        toast({
+          title: "CPF já cadastrado",
+          description: "Este CPF já está vinculado a outra conta profissional.",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
       let photoUrl: string | null = null;
       if (photoFile) {
         photoUrl = await uploadPhoto();
@@ -280,7 +313,14 @@ const ProfessionalRegister = () => {
         logoUrl = await uploadLogo();
       }
 
-      const payload: any = { ...form, crefito: normalizedCrefito, user_id: user.id };
+      const payload: any = {
+        ...form,
+        crefito: normalizedCrefito,
+        cpf: cpfDigits,
+        user_id: user.id,
+        approved: true,
+        terms_accepted_at: new Date().toISOString(),
+      };
       if (photoUrl) {
         payload.profile_photo_url = photoUrl;
       }
@@ -294,9 +334,7 @@ const ProfessionalRegister = () => {
         navigate("/dashboard?tab=professional");
       } else {
         await (supabase.from("professionals" as any) as any).insert(payload);
-        toast({ title: t("prof.submitted_for_review") });
-        // After new registration, redirect to dashboard with subscribe flag
-        // so the plan selection screen is shown immediately
+        toast({ title: t("prof.saved") });
         navigate("/dashboard?tab=professional&subscribe=true");
       }
     } catch {
@@ -530,6 +568,21 @@ const ProfessionalRegister = () => {
               </div>
 
               <div className="space-y-2">
+                <Label>CPF *</Label>
+                <Input
+                  value={form.cpf}
+                  onChange={(e) => setForm({ ...form, cpf: formatCpf(e.target.value) })}
+                  placeholder="000.000.000-00"
+                  inputMode="numeric"
+                  maxLength={14}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Usado apenas para validar sua identidade e evitar cadastros duplicados. Não é exibido publicamente.
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label className="flex items-center gap-1.5">
                   <Instagram className="h-4 w-4 text-muted-foreground" />
                   {t("prof.social_media")} *
@@ -659,7 +712,20 @@ const ProfessionalRegister = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full rounded-xl py-5" disabled={saving}>
+              <div className="flex items-start gap-2.5 rounded-xl border border-border bg-muted/30 p-3">
+                <Checkbox
+                  id="terms-truth-pro"
+                  checked={termsAccepted}
+                  onCheckedChange={(c) => setTermsAccepted(c === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="terms-truth-pro" className="text-xs text-muted-foreground leading-relaxed cursor-pointer flex-1">
+                  <ShieldCheck className="inline h-3.5 w-3.5 text-primary mr-1 -mt-0.5" />
+                  Declaro, sob minha responsabilidade, que todos os dados informados (nome, CREFITO e CPF) são verídicos e correspondem ao meu cadastro profissional ativo. Estou ciente de que informações falsas podem levar à suspensão imediata da conta.
+                </label>
+              </div>
+
+              <Button type="submit" className="w-full rounded-xl py-5" disabled={saving || !termsAccepted}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 {existing ? t("prof.update") : t("prof.register")}
               </Button>
