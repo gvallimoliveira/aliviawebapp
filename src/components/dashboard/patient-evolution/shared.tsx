@@ -81,13 +81,23 @@ export const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, clinicMode
             <Sparkles className="h-4 w-4 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-foreground">{t("pro.unlock_treatment_cta")}</p>
-            <p className="text-[10px] text-muted-foreground">{t("pro.unlock_treatment_desc")}</p>
+            <p className="text-xs font-semibold text-foreground">
+              {clinicMode ? "Gerar plano de tratamento" : t("pro.unlock_treatment_cta")}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {clinicMode
+                ? "Incluído no plano da clínica — geração ilimitada e gratuita."
+                : t("pro.unlock_treatment_desc")}
+            </p>
           </div>
         </div>
         <Button onClick={handleUnlock} disabled={loading} size="sm" className="w-full rounded-xl gap-1.5 text-xs">
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Lock className="h-3.5 w-3.5" />}
-          {lifetimeTreatment ? t("pro.unlock_treatment_cta") : `${t("pro.unlock_treatment_cta")} — ${PRO_TREATMENT_PRICE_FORMATTED}`}
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : clinicMode ? <Sparkles className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+          {clinicMode
+            ? "Gerar plano de tratamento"
+            : lifetimeTreatment
+              ? t("pro.unlock_treatment_cta")
+              : `${t("pro.unlock_treatment_cta")} — ${PRO_TREATMENT_PRICE_FORMATTED}`}
         </Button>
       </div>
     </div>
