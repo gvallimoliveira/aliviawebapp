@@ -1909,6 +1909,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_professional: {
+        Args: { _professional_id: string }
+        Returns: undefined
+      }
       can_manage_clinic: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
