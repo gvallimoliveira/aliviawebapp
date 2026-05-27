@@ -10,7 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X, Plus, ShieldCheck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatCpf } from "@/utils/masks";
 
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -60,6 +62,7 @@ const ProfessionalRegister = () => {
   const [form, setForm] = useState({
     full_name: "",
     crefito: "",
+    cpf: "",
     social_media: "",
     specialties: [] as string[],
     city: "",
@@ -70,6 +73,7 @@ const ProfessionalRegister = () => {
     clinic_name: "",
     clinic_address: "",
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -88,6 +92,7 @@ const ProfessionalRegister = () => {
           setForm({
             full_name: data.full_name || "",
             crefito: data.crefito || "",
+            cpf: data.cpf ? formatCpf(data.cpf) : "",
             social_media: data.social_media || "",
             specialties: data.specialties || [],
             city: data.city || "",
@@ -98,6 +103,7 @@ const ProfessionalRegister = () => {
             clinic_name: data.clinic_name || "",
             clinic_address: data.clinic_address || "",
           });
+          if (data.terms_accepted_at) setTermsAccepted(true);
           if (data.profile_photo_url) {
             setPhotoPreview(data.profile_photo_url);
           }
