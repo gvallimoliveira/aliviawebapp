@@ -17,9 +17,10 @@ export function normalizeTestResults(tr: any): any[] {
 
 const ASSESSMENT_TREATMENT_FIELDS = "id, anamnesis_data, test_results, diagnosis, treatment_plan, payment_status";
 
-export const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, onUnlocked }: {
+export const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, clinicMode, onUnlocked }: {
   assessmentId: string;
   lifetimeTreatment?: boolean;
+  clinicMode?: boolean;
   onUnlocked: (treatmentPlan: any) => void;
 }) => {
   const { t } = useLanguage();
