@@ -360,11 +360,49 @@ const AssessmentView = () => {
             </span>
           </div>
         )}
-        {/* Back button */}
-        <Button variant="ghost" onClick={goBack} className="gap-2 -ml-2">
-          <ArrowLeft className="h-4 w-4" />
-          {t("assessment_view.back")}
-        </Button>
+        {/* Back + Delete */}
+        <div className="flex items-center justify-between gap-2">
+          <Button variant="ghost" onClick={goBack} className="gap-2 -ml-2">
+            <ArrowLeft className="h-4 w-4" />
+            {t("assessment_view.back")}
+          </Button>
+          {!isDemo && user && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+              disabled={deleting}
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {isPt ? "Excluir avaliação" : "Delete assessment"}
+            </Button>
+          )}
+        </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{isPt ? "Excluir esta avaliação?" : "Delete this assessment?"}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {isPt
+                  ? "Esta ação é irreversível. A avaliação, o plano de tratamento, notas e e-mails de acompanhamento vinculados a ela serão permanentemente apagados. O paciente e as demais avaliações dele NÃO serão removidos."
+                  : "This action is irreversible. The assessment, its treatment plan, notes and follow-up e-mails will be permanently deleted. The patient and other assessments will NOT be removed."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>{isPt ? "Cancelar" : "Cancel"}</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5"
+                disabled={deleting}
+                onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              >
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                {isPt ? "Excluir permanentemente" : "Delete permanently"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Header card */}
         <Card>
