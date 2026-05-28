@@ -43,6 +43,8 @@ interface UseAutosaveDraftResult<T> {
   draftPayload: T | null;
   restore: () => T | null;
   discard: () => Promise<void>;
+  /** Força um salvamento imediato (local + nuvem), ignorando o debounce. */
+  flush: () => Promise<void>;
   saving: boolean;
   /** Última vez que algo foi salvo. Use para um pequeno "Rascunho salvo" no UI. */
   lastSavedAt: Date | null;
@@ -255,12 +257,59 @@ export function useAutosaveDraft<T>({
     }
   }, [formKey, scopeKey]);
 
+  const flush = useCallback(async () => {
+    if (!scopeKey) return;
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    const serialized = JSON.stringify(state);
+    if (!serialized || serialized === "{}" || serialized === "null" || serialized === "undefined") return;
+    lastSerializedRef.current = serialized;
+    writeLocal(formKey, scopeKey, state);
+    setLastSavedAt(new Date());
+
+    const bytes = new Blob([serialized]).size;
+    if (bytes > maxPayloadBytes) return;
+
+    let uid = userIdRef.current;
+    if (!uid) {
+      try {
+        const { data } = await supabase.auth.getUser();
+        uid = data.user?.id ?? null;
+        userIdRef.current = uid;
+      } catch {
+        return;
+      }
+    }
+    if (!uid) return;
+
+    setSaving(true);
+    try {
+      await (supabase as any).from("form_drafts").upsert(
+        {
+          user_id: uid,
+          form_key: formKey,
+          scope_key: scopeKey,
+          payload: state,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,form_key,scope_key" },
+      );
+    } catch {
+      /* noop */
+    } finally {
+      setSaving(false);
+    }
+  }, [formKey, scopeKey, state, maxPayloadBytes]);
+
   return {
     hasDraft: !!draftPayload && !restoredRef.current,
     draftMeta,
     draftPayload,
     restore,
     discard,
+    flush,
     saving,
     lastSavedAt,
   };

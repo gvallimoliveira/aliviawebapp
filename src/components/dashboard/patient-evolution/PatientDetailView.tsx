@@ -101,6 +101,72 @@ const DiagnosticHypothesisBlock = ({ assessment, isDemo }: DiagnosticHypothesisB
   );
 };
 
+interface GenerateHypothesisCardProps {
+  assessment: any;
+  isDemo?: boolean;
+  onGenerated: (diagnosis: any) => void;
+}
+
+const GenerateHypothesisCard = ({ assessment, isDemo, onGenerated }: GenerateHypothesisCardProps) => {
+  const [loading, setLoading] = React.useState(false);
+  const handleGenerate = async () => {
+    setLoading(true);
+    try {
+      if (isDemo) {
+        const demoDx = { hypothesis: "Hipótese diagnóstica simulada (demo)", summary: "Resumo demo.", confidence: "medium", manual: true };
+        onGenerated(demoDx);
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("generate-diagnosis", {
+        body: {
+          anamnesisData: {
+            ...(assessment.anamnesis_data || {}),
+            painRegions: assessment.pain_regions,
+            painScore: assessment.pain_score,
+          },
+          questionnaireResults: Array.isArray(assessment.test_results) ? assessment.test_results : [],
+          mode: "professional",
+          language: document.documentElement.lang === "en" ? "en" : "pt",
+        },
+      });
+      if (error) throw error;
+      const dx = data?.diagnosis || data;
+      if (!dx || typeof dx !== "object" || (!dx.hypothesis && !dx.summary)) {
+        throw new Error("Resposta inválida da IA");
+      }
+      const merged = { ...(assessment.diagnosis || {}), ...dx };
+      await supabase.from("assessments").update({ diagnosis: merged as any }).eq("id", assessment.id);
+      onGenerated(merged);
+    } catch (err: any) {
+      console.error("Generate hypothesis error:", err);
+      alert("Não foi possível gerar a hipótese: " + (err?.message || ""));
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <Card className="border-dashed border-primary/30 bg-primary/5">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Stethoscope className="h-4 w-4 text-primary" />
+          Hipótese Diagnóstica
+        </CardTitle>
+        <CardDescription className="text-xs">
+          Esta avaliação foi salva sem hipótese. Gere agora com IA usando os dados de anamnese, dor e questionários.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button onClick={handleGenerate} disabled={loading} size="sm" className="gap-1.5">
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          {loading ? "Gerando..." : "Gerar hipótese com IA"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
+
+
 export default function PatientDetailView(props: any) {
   const navigate = useNavigate();
   const {
@@ -302,8 +368,33 @@ export default function PatientDetailView(props: any) {
           patientEmail={patient.email}
         />
       )}
-      {latestWithDiagnosis?.diagnosis?.hypothesis && <DiagnosticHypothesisBlock assessment={latestWithDiagnosis} isDemo={isDemo} />}
-      {latestWithDiagnosis && <ClinicalImpressionCard assessment={latestWithDiagnosis} existingImpression={latestWithDiagnosis.diagnosis?.clinicalImpression} allAssessments={patient?.assessments} isDemo={isDemo} />}
+      {(() => {
+        const target = latestWithDiagnosis || latestAssessment;
+        if (!target) return null;
+        const hasHypothesis = !!target.diagnosis?.hypothesis;
+        return (
+          <>
+            {hasHypothesis ? (
+              <DiagnosticHypothesisBlock assessment={target} isDemo={isDemo} />
+            ) : (
+              <GenerateHypothesisCard
+                assessment={target}
+                isDemo={isDemo}
+                onGenerated={(dx) => {
+                  target.diagnosis = dx;
+                  setNotes?.((prev: any) => ({ ...prev }));
+                }}
+              />
+            )}
+            <ClinicalImpressionCard
+              assessment={target}
+              existingImpression={target.diagnosis?.clinicalImpression}
+              allAssessments={patient?.assessments}
+              isDemo={isDemo}
+            />
+          </>
+        );
+      })()}
 
       <div ref={treatmentSectionRef} id="treatment-unlock-section" className={`scroll-mt-24 transition-shadow rounded-xl ${treatmentHighlight ? "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse" : ""}`}>
         {latestWithDiagnosis && (() => {
