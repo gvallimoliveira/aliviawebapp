@@ -393,13 +393,9 @@ const AssessmentView = () => {
           </nav>
         )}
 
-        {/* Back + Delete */}
-        <div className="flex items-center justify-between gap-2">
-          <Button variant="ghost" onClick={goBack} className="gap-2 -ml-2">
-            <ArrowLeft className="h-4 w-4" />
-            {t("assessment_view.back")}
-          </Button>
-          {!isDemo && user && (
+        {/* Delete (top-right). Voltar + Nova Avaliação ficam no rodapé da página. */}
+        {!isDemo && user && (
+          <div className="flex items-center justify-end">
             <Button
               variant="ghost"
               size="sm"
@@ -410,8 +406,8 @@ const AssessmentView = () => {
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               {isPt ? "Excluir avaliação" : "Delete assessment"}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
