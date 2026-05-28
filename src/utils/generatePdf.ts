@@ -10,7 +10,7 @@ import { registerInterFonts } from "./fonts/registerInterFonts";
  * that produces visible character gaps in bold text).
  */
 function createPdfDoc(): jsPDF {
-  const doc = new jsPDF();
+  const doc = createPdfDoc();
   registerInterFonts(doc);
   doc.setFont("Inter", "normal");
   return doc;
@@ -987,7 +987,7 @@ interface BasicReportOptions {
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
-  const doc = new jsPDF();
+  const doc = createPdfDoc();
   const isPt = options.language === "pt";
   let y = MARGIN;
 
@@ -1200,7 +1200,7 @@ export async function generateAssessmentPdf(options: PdfOptions) {
 }
 
 async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
-  const doc = new jsPDF();
+  const doc = createPdfDoc();
   const isPt = language === "pt";
   let y = MARGIN;
 
@@ -1686,7 +1686,7 @@ export interface EvolutionPdfOptions {
 }
 
 export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Promise<Blob> {
-  const doc = new jsPDF();
+  const doc = createPdfDoc();
   const isPt = options.language === "pt";
   const isEs = options.language === "es";
   let y = MARGIN;
