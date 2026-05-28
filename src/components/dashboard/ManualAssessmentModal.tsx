@@ -442,7 +442,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       void draft.discard();
       onOpenChange(false);
       resetForm();
-      if (data?.id) navigate(`/assessment/view/${data.id}?from=professional`);
+      if (navigateAfter && data?.id) navigate(`/assessment/view/${data.id}?from=professional`);
     } catch (err: any) {
       console.error("Save assessment error:", err);
       toast({ title: isPt ? "Erro ao salvar" : "Save error", description: err.message, variant: "destructive" });
