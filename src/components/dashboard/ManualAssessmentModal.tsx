@@ -459,7 +459,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
     setPainRegions([]); setRedFlagsChecked([]); setQuestionnaireResults([]);
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
-    setDiagnosisText(""); setTreatmentText("");
+    setDiagnosisText(""); setTreatmentText(""); setAiDiagnosis(null); setAiTreatment(null);
   };
 
   const stepLabels = isPt
