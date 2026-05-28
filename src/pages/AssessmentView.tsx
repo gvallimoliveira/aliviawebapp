@@ -482,17 +482,24 @@ const AssessmentView = () => {
               </div>
             )}
 
-            {/* Pain regions chips */}
-            {regions.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-                {regions.map((r: string, i: number) => (
-                  <span key={i} className="text-xs bg-muted/60 text-muted-foreground px-2 py-0.5 rounded-full">
-                    {r}
-                  </span>
-                ))}
-              </div>
-            )}
+            {/* Pain regions chips with per-region scores */}
+            {regions.length > 0 && (() => {
+              const perRegion = (anamnesis?.painScoresPerRegion || anamnesis?.pain_scores_per_region) as Record<string, number> | undefined;
+              return (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+                  {painRegions.map((rid: string, i: number) => {
+                    const label = getRegionLabel(rid, isPt);
+                    const score = perRegion?.[rid];
+                    return (
+                      <span key={i} className="text-xs bg-muted/60 text-muted-foreground px-2 py-0.5 rounded-full">
+                        {label}{score != null ? ` · ${score}/10` : ""}
+                      </span>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {/* PDF & WhatsApp actions — destaque para exportação clínica */}
             {assessment.diagnosis && (
