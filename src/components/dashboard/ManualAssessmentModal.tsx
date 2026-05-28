@@ -167,7 +167,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   // ── Autosave (local + nuvem) ───────────────────────────────────────────────
-  const draftScopeKey = open
+  const isEditing = !!editAssessment?.id;
+  const draftScopeKey = open && !isEditing
     ? `${professionalId}:${(patientEmail || patientName || "").toLowerCase().trim()}`
     : null;
   const draftState = {
@@ -181,7 +182,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     formKey: "manual_assessment",
     scopeKey: draftScopeKey,
     state: draftState,
-    enabled: open,
+    enabled: open && !isEditing,
   });
   const handleRestoreDraft = () => {
     const p = draft.restore();
