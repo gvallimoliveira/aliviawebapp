@@ -52,6 +52,8 @@ const proTools = [
   { key: "video_call", icon: Video },
   { key: "clinical_impression", icon: Brain },
   { key: "hep", icon: Dumbbell },
+  { key: "hep_templates", icon: FileText },
+  { key: "ai_test_suggestions", icon: Lightbulb },
   { key: "reassessment", icon: RefreshCw },
   { key: "white_label", icon: Palette },
   { key: "evolution_report", icon: TrendingUp },
