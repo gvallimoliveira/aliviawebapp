@@ -570,30 +570,157 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           )}
 
           {/* HEP templates */}
-          {HEP_TEMPLATES.length > 0 && !loading && (
+          {!loading && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                {language === "en" ? "Reusable templates" : "Templates reutilizáveis"}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  {language === "en" ? "Reusable templates" : "Templates reutilizáveis"}
+                </div>
+                <div className="flex items-center gap-1">
+                  {savedTemplates.length > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => setShowManageTemplates((v) => !v)}
+                    >
+                      {showManageTemplates
+                        ? (language === "en" ? "Done" : "Concluir")
+                        : (language === "en" ? "Manage" : "Gerenciar")}
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-[11px] gap-1 bg-background"
+                    onClick={() => setShowSaveTemplate((v) => !v)}
+                    disabled={totalCount === 0}
+                    title={totalCount === 0 ? (language === "en" ? "Add exercises first" : "Adicione exercícios primeiro") : ""}
+                  >
+                    <BookmarkPlus className="h-3 w-3" />
+                    {language === "en" ? "Save as template" : "Salvar como template"}
+                  </Button>
+                </div>
               </div>
-              <Select onValueChange={(id) => {
-                const tpl = HEP_TEMPLATES.find((t) => t.id === id);
-                if (tpl) applyTemplate(tpl);
-              }}>
-                <SelectTrigger className="h-9 text-xs bg-background">
-                  <SelectValue placeholder={language === "en" ? "Apply a template..." : "Aplicar um template..."} />
-                </SelectTrigger>
-                <SelectContent>
-                  {HEP_TEMPLATES.map((tpl) => (
-                    <SelectItem key={tpl.id} value={tpl.id} className="text-xs">
-                      <div className="flex flex-col py-0.5">
-                        <span className="font-medium">{language === "en" ? tpl.name_en : tpl.name_pt}</span>
-                        <span className="text-[10px] text-muted-foreground">{tpl.items.length} {language === "en" ? "exercises" : "exercícios"}</span>
+
+              {/* Built-in templates */}
+              {HEP_TEMPLATES.length > 0 && (
+                <Select onValueChange={(id) => {
+                  const tpl = HEP_TEMPLATES.find((t) => t.id === id);
+                  if (tpl) applyTemplate(tpl);
+                }}>
+                  <SelectTrigger className="h-9 text-xs bg-background">
+                    <SelectValue placeholder={language === "en" ? "Apply a built-in template..." : "Aplicar um template padrão..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {HEP_TEMPLATES.map((tpl) => (
+                      <SelectItem key={tpl.id} value={tpl.id} className="text-xs">
+                        <div className="flex flex-col py-0.5">
+                          <span className="font-medium">{language === "en" ? tpl.name_en : tpl.name_pt}</span>
+                          <span className="text-[10px] text-muted-foreground">{tpl.items.length} {language === "en" ? "exercises" : "exercícios"}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Saved (user) templates */}
+              {savedTemplates.length > 0 && !showManageTemplates && (
+                <Select onValueChange={(id) => {
+                  const tpl = savedTemplates.find((t) => t.id === id);
+                  if (tpl) applySavedTemplate(tpl);
+                }}>
+                  <SelectTrigger className="h-9 text-xs bg-background">
+                    <SelectValue placeholder={language === "en" ? "Apply one of your templates..." : "Aplicar um dos seus templates..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {savedTemplates.map((tpl) => (
+                      <SelectItem key={tpl.id} value={tpl.id} className="text-xs">
+                        <div className="flex flex-col py-0.5">
+                          <span className="font-medium">{tpl.name}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {(tpl.items?.length ?? 0)} {language === "en" ? "exercises" : "exercícios"}
+                            {tpl.description ? ` · ${tpl.description}` : ""}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Manage saved templates */}
+              {savedTemplates.length > 0 && showManageTemplates && (
+                <div className="space-y-1 max-h-[140px] overflow-y-auto bg-background rounded-md p-1.5 border border-border">
+                  {savedTemplates.map((tpl) => (
+                    <div key={tpl.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-muted">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate">{tpl.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {(tpl.items?.length ?? 0)} {language === "en" ? "exercises" : "exercícios"}
+                          {tpl.description ? ` · ${tpl.description}` : ""}
+                        </p>
                       </div>
-                    </SelectItem>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-destructive shrink-0"
+                        onClick={() => deleteSavedTemplate(tpl.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
+
+              {/* Save form */}
+              {showSaveTemplate && (
+                <div className="space-y-2 bg-background rounded-md p-2.5 border border-border">
+                  <Input
+                    placeholder={language === "en" ? "Template name *" : "Nome do template *"}
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  <Input
+                    placeholder={language === "en" ? "Short description (optional)" : "Descrição curta (opcional)"}
+                    value={templateDescription}
+                    onChange={(e) => setTemplateDescription(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    {language === "en" ? "Saves the current selection" : "Salva a seleção atual"} ({totalCount})
+                    {notes ? ` · ${language === "en" ? "incl. general notes" : "inclui observações gerais"}` : ""}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 text-[11px] gap-1 flex-1"
+                      onClick={saveAsTemplate}
+                      disabled={!templateName.trim() || savingTemplate || totalCount === 0}
+                    >
+                      {savingTemplate ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                      {language === "en" ? "Save template" : "Salvar template"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-[11px]"
+                      onClick={() => { setShowSaveTemplate(false); setTemplateName(""); setTemplateDescription(""); }}
+                    >
+                      {language === "en" ? "Cancel" : "Cancelar"}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
