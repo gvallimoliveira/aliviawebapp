@@ -86,6 +86,12 @@ const categories: ToolCategory[] = [
         desc: "Logo, cor e identidade da clínica aplicados em todos os relatórios gerados. Profissionalismo na entrega ao paciente e ao convênio.",
       },
       {
+        key: "hep_templates",
+        icon: FileText,
+        title: "Templates reutilizáveis no HEP",
+        desc: "Salve programas de exercício como templates personalizados e reutilize em novos pacientes. Inclui templates pré-construídos (ex: progressão de ombro) e templates próprios que você cria e edita. Em clínica, os templates são compartilhados entre toda a equipe. Após aplicar um template, você pode remover exercícios individualmente se houver contraindicação para aquele paciente.",
+      },
+      {
         key: "voice_notes",
         icon: Mic,
         title: "Notas de voz na avaliação manual (IA)",
