@@ -727,6 +727,15 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                     {language === "en" ? "Saves the current selection" : "Salva a seleção atual"} ({totalCount})
                     {notes ? ` · ${language === "en" ? "incl. general notes" : "inclui observações gerais"}` : ""}
                   </p>
+                  {clinicId && (
+                    <p className="text-[10px] text-primary flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      {language === "en"
+                        ? "Shared with the whole clinic (owners, therapists & secretaries)."
+                        : "Compartilhado com toda a clínica (proprietário, fisioterapeutas e secretárias)."}
+                    </p>
+                  )}
+
                   <div className="flex gap-2">
                     <Button
                       type="button"
