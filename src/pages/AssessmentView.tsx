@@ -25,6 +25,8 @@ import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResult
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
 import { normalizeAssessment } from "@/lib/anamnesisCompat";
+import CollapsibleSection from "@/components/ui/CollapsibleSection";
+import { Separator } from "@/components/ui/separator";
 
 // Translate i18n keys for display
 function translateKey(key: string, isPt: boolean): string {
@@ -630,92 +632,101 @@ const AssessmentView = () => {
           />
         )}
 
-        {/* Anamnesis Details */}
+        <Separator className="opacity-40" />
+
+        {/* Anamnesis Details — colapsável */}
         {anamnesis && (
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4 text-primary" />
-                {isPt ? "Anamnese" : "Anamnesis"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-4 space-y-3">
-              {(anamnesis.chiefComplaints || (anamnesis.chiefComplaint ? [anamnesis.chiefComplaint] : [])).length > 0 && (
-                <AnamnesisField
-                  icon={<Heart className="h-3.5 w-3.5" />}
-                  label={isPt ? "Queixa Principal" : "Chief Complaint"}
-                  value={(anamnesis.chiefComplaints || [anamnesis.chiefComplaint]).filter(Boolean).map((c: string) => translateKey(c, isPt)).join(", ")}
-                />
-              )}
-              {anamnesis.customComplaint && (
-                <AnamnesisField
-                  label={isPt ? "Queixa Adicional" : "Additional Complaint"}
-                  value={anamnesis.customComplaint}
-                />
-              )}
-              {anamnesis.onset && (
-                <AnamnesisField
-                  icon={<TrendingUp className="h-3.5 w-3.5" />}
-                  label={isPt ? "Modo de Início" : "Onset"}
-                  value={translateKey(anamnesis.onset, isPt)}
-                />
-              )}
-              {anamnesis.painTypes?.length > 0 && (
-                <AnamnesisField
-                  label={isPt ? "Tipos de Dor" : "Pain Types"}
-                  value={anamnesis.painTypes.map((p: string) => translateKey(p, isPt)).join(", ")}
-                />
-              )}
-              {anamnesis.evolution && (
-                <AnamnesisField
-                  label={isPt ? "Evolução" : "Evolution"}
-                  value={translateKey(anamnesis.evolution, isPt)}
-                />
-              )}
-              {anamnesis.painDuration && (
-                <AnamnesisField
-                  icon={<Clock className="h-3.5 w-3.5" />}
-                  label={isPt ? "Duração da Dor" : "Pain Duration"}
-                  value={translateKey(anamnesis.painDuration, isPt)}
-                />
-              )}
-              {anamnesis.aggravatingFactors && (
-                <AnamnesisField
-                  label={isPt ? "Fatores Agravantes" : "Aggravating Factors"}
-                  value={anamnesis.aggravatingFactors}
-                />
-              )}
-              {anamnesis.relievingFactors && (
-                <AnamnesisField
-                  label={isPt ? "Fatores Aliviantes" : "Relieving Factors"}
-                  value={anamnesis.relievingFactors}
-                />
-              )}
-              {anamnesis.activityLevel && (
-                <AnamnesisField
-                  icon={<Dumbbell className="h-3.5 w-3.5" />}
-                  label={isPt ? "Nível de Atividade" : "Activity Level"}
-                  value={translateKey(anamnesis.activityLevel, isPt)}
-                />
-              )}
-              {anamnesis.hasGymAccess && (
-                <AnamnesisField
-                  label={isPt ? "Acesso a Academia" : "Gym Access"}
-                  value={translateKey(anamnesis.hasGymAccess, isPt)}
-                />
-              )}
-              {anamnesis.sex && (
-                <AnamnesisField
-                  label={isPt ? "Sexo Biológico" : "Biological Sex"}
-                  value={translateKey(anamnesis.sex, isPt)}
-                />
-              )}
-              {anamnesis.ageRange && (
-                <AnamnesisField
-                  label={isPt ? "Faixa Etária" : "Age Range"}
-                  value={translateKey(anamnesis.ageRange, isPt)}
-                />
-              )}
+            <CardContent className="py-3">
+              <CollapsibleSection
+                storageKey={`assessment:${assessment.id}:anamnese`}
+                defaultOpen
+                header={
+                  <div className="text-base font-semibold flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    {isPt ? "Anamnese" : "Anamnesis"}
+                  </div>
+                }
+              >
+                <div className="py-2 space-y-3">
+                  {(anamnesis.chiefComplaints || (anamnesis.chiefComplaint ? [anamnesis.chiefComplaint] : [])).length > 0 && (
+                    <AnamnesisField
+                      icon={<Heart className="h-3.5 w-3.5" />}
+                      label={isPt ? "Queixa Principal" : "Chief Complaint"}
+                      value={(anamnesis.chiefComplaints || [anamnesis.chiefComplaint]).filter(Boolean).map((c: string) => translateKey(c, isPt)).join(", ")}
+                    />
+                  )}
+                  {anamnesis.customComplaint && (
+                    <AnamnesisField
+                      label={isPt ? "Queixa Adicional" : "Additional Complaint"}
+                      value={anamnesis.customComplaint}
+                    />
+                  )}
+                  {anamnesis.onset && (
+                    <AnamnesisField
+                      icon={<TrendingUp className="h-3.5 w-3.5" />}
+                      label={isPt ? "Modo de Início" : "Onset"}
+                      value={translateKey(anamnesis.onset, isPt)}
+                    />
+                  )}
+                  {anamnesis.painTypes?.length > 0 && (
+                    <AnamnesisField
+                      label={isPt ? "Tipos de Dor" : "Pain Types"}
+                      value={anamnesis.painTypes.map((p: string) => translateKey(p, isPt)).join(", ")}
+                    />
+                  )}
+                  {anamnesis.evolution && (
+                    <AnamnesisField
+                      label={isPt ? "Evolução" : "Evolution"}
+                      value={translateKey(anamnesis.evolution, isPt)}
+                    />
+                  )}
+                  {anamnesis.painDuration && (
+                    <AnamnesisField
+                      icon={<Clock className="h-3.5 w-3.5" />}
+                      label={isPt ? "Duração da Dor" : "Pain Duration"}
+                      value={translateKey(anamnesis.painDuration, isPt)}
+                    />
+                  )}
+                  {anamnesis.aggravatingFactors && (
+                    <AnamnesisField
+                      label={isPt ? "Fatores Agravantes" : "Aggravating Factors"}
+                      value={anamnesis.aggravatingFactors}
+                    />
+                  )}
+                  {anamnesis.relievingFactors && (
+                    <AnamnesisField
+                      label={isPt ? "Fatores Aliviantes" : "Relieving Factors"}
+                      value={anamnesis.relievingFactors}
+                    />
+                  )}
+                  {anamnesis.activityLevel && (
+                    <AnamnesisField
+                      icon={<Dumbbell className="h-3.5 w-3.5" />}
+                      label={isPt ? "Nível de Atividade" : "Activity Level"}
+                      value={translateKey(anamnesis.activityLevel, isPt)}
+                    />
+                  )}
+                  {anamnesis.hasGymAccess && (
+                    <AnamnesisField
+                      label={isPt ? "Acesso a Academia" : "Gym Access"}
+                      value={translateKey(anamnesis.hasGymAccess, isPt)}
+                    />
+                  )}
+                  {anamnesis.sex && (
+                    <AnamnesisField
+                      label={isPt ? "Sexo Biológico" : "Biological Sex"}
+                      value={translateKey(anamnesis.sex, isPt)}
+                    />
+                  )}
+                  {anamnesis.ageRange && (
+                    <AnamnesisField
+                      label={isPt ? "Faixa Etária" : "Age Range"}
+                      value={translateKey(anamnesis.ageRange, isPt)}
+                    />
+                  )}
+                </div>
+              </CollapsibleSection>
             </CardContent>
           </Card>
         )}
@@ -723,14 +734,21 @@ const AssessmentView = () => {
         {/* Pain Map Visual */}
         {painRegions.length > 0 && (
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                {isPt ? "Mapa de Dor" : "Pain Map"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-4">
-              <PainMapView painRegions={painRegions} />
+            <CardContent className="py-3">
+              <CollapsibleSection
+                storageKey={`assessment:${assessment.id}:painmap`}
+                defaultOpen
+                header={
+                  <div className="text-base font-semibold flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    {isPt ? "Mapa de Dor" : "Pain Map"}
+                  </div>
+                }
+              >
+                <div className="py-2">
+                  <PainMapView painRegions={painRegions} />
+                </div>
+              </CollapsibleSection>
             </CardContent>
           </Card>
         )}
@@ -738,16 +756,26 @@ const AssessmentView = () => {
         {/* Questionnaire Results — only render items that actually have questionnaireId */}
         {assessment.test_results && Array.isArray(assessment.test_results) && (assessment.test_results as any[]).filter((r: any) => r.questionnaireId).length > 0 && (
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ClipboardCheck className="h-4 w-4 text-primary" />
-                {isPt ? "Questionários Funcionais" : "Functional Questionnaires"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-4 space-y-4">
-              {(assessment.test_results as any[]).filter((r: any) => r.questionnaireId).map((r: QuestionnaireResult) => (
-                <QuestionnaireResultCard key={r.questionnaireId} result={r} language={language} />
-              ))}
+            <CardContent className="py-3">
+              <CollapsibleSection
+                storageKey={`assessment:${assessment.id}:questionarios`}
+                defaultOpen={false}
+                header={
+                  <div className="text-base font-semibold flex items-center gap-2">
+                    <ClipboardCheck className="h-4 w-4 text-primary" />
+                    {isPt ? "Questionários Funcionais" : "Functional Questionnaires"}
+                    <Badge variant="outline" className="text-[10px] font-normal">
+                      {(assessment.test_results as any[]).filter((r: any) => r.questionnaireId).length}
+                    </Badge>
+                  </div>
+                }
+              >
+                <div className="py-2 space-y-4">
+                  {(assessment.test_results as any[]).filter((r: any) => r.questionnaireId).map((r: QuestionnaireResult) => (
+                    <QuestionnaireResultCard key={r.questionnaireId} result={r} language={language} />
+                  ))}
+                </div>
+              </CollapsibleSection>
             </CardContent>
           </Card>
         )}
