@@ -15,11 +15,29 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload, Sparkles,
+  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload, Sparkles, Save, X, BookmarkPlus,
 } from "lucide-react";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { HEP_TEMPLATES, type HepTemplate } from "@/data/hepTemplates";
+
+interface SavedTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  notes: string | null;
+  body_region: string;
+  items: Array<{
+    exerciseId?: string;
+    customName?: string;
+    customVideoUrl?: string;
+    sets: string;
+    reps: string;
+    frequency: string;
+    observations?: string;
+    stage?: string;
+  }>;
+}
 
 interface Exercise {
   id: string;
