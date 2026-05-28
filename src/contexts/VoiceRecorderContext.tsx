@@ -286,8 +286,45 @@ const GlobalVoiceRecorderFAB = () => {
   if (!visible) return null;
   if (typeof document === "undefined") return null;
 
+  const onDragPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Only drag with the dedicated handle (so internal buttons still get clicks).
+    if (!(e.target as HTMLElement).closest("[data-voice-drag-handle]")) return;
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      startRight: pos.right,
+      startBottom: pos.bottom,
+      moved: false,
+    };
+  };
+  const onDragPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const nextRight = Math.max(8, Math.min(vw - 80, d.startRight - dx));
+    const nextBottom = Math.max(8, Math.min(vh - 80, d.startBottom - dy));
+    setPos({ right: nextRight, bottom: nextBottom });
+  };
+  const onDragPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    dragRef.current = null;
+  };
+
   return createPortal(
-    <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-[200] flex flex-col items-end gap-2 pointer-events-auto">
+    <div
+      data-voice-recorder-fab=""
+      onPointerDown={onDragPointerDown}
+      onPointerMove={onDragPointerMove}
+      onPointerUp={onDragPointerUp}
+      onPointerCancel={onDragPointerUp}
+      style={{ right: pos.right, bottom: pos.bottom }}
+      className="fixed z-[200] flex flex-col items-end gap-2 pointer-events-auto"
+    >
       {showHint && state === "idle" && (
         <div className="bg-background border border-border shadow-lg rounded-xl px-3 py-2 text-xs max-w-[220px] relative">
           <button
@@ -298,25 +335,33 @@ const GlobalVoiceRecorderFAB = () => {
             <X className="h-3 w-3" />
           </button>
           {isPt
-            ? "Grave a entrevista da anamnese. A IA transcreve e resume depois — só texto fica salvo."
-            : "Record the anamnesis interview. AI transcribes & summarizes after — only text is saved."}
+            ? "Grave a anamnese. Arraste pela borda para reposicionar."
+            : "Record the anamnesis. Drag the edge to reposition."}
         </div>
       )}
 
       {state === "idle" && (
-        <Button
-          onClick={startRecording}
-          onMouseEnter={() => setShowHint(true)}
-          size="icon"
-          className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90"
-          aria-label={isPt ? "Iniciar gravação" : "Start recording"}
+        <div
+          data-voice-drag-handle=""
+          className="relative h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 flex items-center justify-center touch-none cursor-grab active:cursor-grabbing"
         >
-          <Mic className="h-5 w-5" />
-        </Button>
+          <Button
+            onClick={(e) => { if (!dragRef.current?.moved) startRecording(); e.stopPropagation(); }}
+            onMouseEnter={() => setShowHint(true)}
+            size="icon"
+            className="h-10 w-10 rounded-full bg-transparent hover:bg-white/10 text-primary-foreground"
+            aria-label={isPt ? "Iniciar gravação" : "Start recording"}
+          >
+            <Mic className="h-5 w-5" />
+          </Button>
+        </div>
       )}
 
       {(state === "recording" || state === "paused") && (
-        <div className="bg-background border-2 border-primary shadow-xl rounded-2xl p-2 flex items-center gap-2">
+        <div
+          data-voice-drag-handle=""
+          className="bg-background border-2 border-primary shadow-xl rounded-2xl p-2 flex items-center gap-2 touch-none cursor-grab active:cursor-grabbing"
+        >
           <div className="flex items-center gap-1.5 px-2">
             <span className={`h-2 w-2 rounded-full ${state === "recording" ? "bg-red-500 animate-pulse" : "bg-amber-500"}`} />
             <span className="text-xs font-mono tabular-nums">{fmt(seconds)}</span>
