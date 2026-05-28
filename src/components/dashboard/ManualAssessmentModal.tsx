@@ -468,7 +468,19 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
-      <DialogContent className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent
+        className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0"
+        onPointerDownOutside={(e) => {
+          // Keep the modal open when the user interacts with the floating
+          // voice-recorder FAB (rendered as a sibling portal on document.body).
+          const target = e.target as HTMLElement | null;
+          if (target?.closest?.("[data-voice-recorder-fab]")) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          const target = e.target as HTMLElement | null;
+          if (target?.closest?.("[data-voice-recorder-fab]")) e.preventDefault();
+        }}
+      >
         <div className="px-6 pt-6 pb-2 shrink-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
