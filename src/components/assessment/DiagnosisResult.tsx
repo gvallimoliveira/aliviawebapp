@@ -7,11 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 
-import { generateBasicReportPdfBlob, generateAssessmentPdfBlob } from "@/utils/generatePdf";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { getPublicOrigin } from "@/lib/getPublicOrigin";
-
 interface Diagnosis {
   hypothesis: string;
   confidence: "low" | "moderate" | "high";
