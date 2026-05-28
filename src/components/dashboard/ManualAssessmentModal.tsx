@@ -733,19 +733,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 6: TRATAMENTO */}
-            {step === 6 && (
-              <div className="space-y-3">
-                <Button onClick={generateAITreatment} disabled={generatingTx} variant="outline" size="sm" className="gap-2">
-                  {generatingTx ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                  {isPt ? "Gerar plano de tratamento com IA" : "Generate treatment plan with AI"}
-                </Button>
-                <div>
-                  <Label className="text-xs">{isPt ? "Plano de tratamento" : "Treatment plan"}</Label>
-                  <Textarea value={treatmentText} onChange={(e) => setTreatmentText(e.target.value)} rows={12} className="mt-1 text-sm" />
-                </div>
-              </div>
-            )}
+            {/* Treatment plan generation removed — it is sold separately to autonomous
+                pros on the patient page and is included for clinic mode in the same
+                location. Generating it from the manual flow caused raw-JSON output and
+                duplicated a paid/included feature. */}
           </div>
         </div>
 
