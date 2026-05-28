@@ -153,6 +153,8 @@ interface PatientEvolutionDashboardProps {
   allowQuickNote?: boolean;
   /** Fired whenever the selected patient (detail view) changes. Null = back to list. */
   onSelectionChange?: (selected: string | null) => void;
+  /** Fired after assessments are deleted (patient delete or single delete) so parent can refresh local state. */
+  onAssessmentsDeleted?: (assessmentIds: string[]) => void;
 }
 
 interface PatientGroup {
