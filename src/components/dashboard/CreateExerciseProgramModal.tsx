@@ -126,6 +126,13 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     enabled: open && !isEditing && !generatedLink,
   });
 
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [showManageTemplates, setShowManageTemplates] = useState(false);
+
   const handleRestoreDraft = () => {
     const payload = draft.restore();
     if (!payload) return;
