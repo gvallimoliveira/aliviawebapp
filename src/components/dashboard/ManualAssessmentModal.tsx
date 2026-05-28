@@ -798,17 +798,95 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
             {/* STEP 4: TESTES */}
             {step === 4 && (
-              <div>
-                <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
-                <Textarea
-                  value={functionalTests}
-                  onChange={(e) => setFunctionalTests(e.target.value)}
-                  rows={12}
-                  placeholder={isPt
-                    ? "Ex:\n- Slump test: positivo à esquerda\n- Lasègue 45° positivo\n- Força MMII grau 4\n- ADM lombar limitada em flexão\n..."
-                    : "E.g. Slump test: positive on the left, etc."}
-                  className="mt-1 text-sm font-mono"
-                />
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
+                  <Textarea
+                    value={functionalTests}
+                    onChange={(e) => setFunctionalTests(e.target.value)}
+                    rows={12}
+                    placeholder={isPt
+                      ? "Ex:\n- Slump test: positivo à esquerda\n- Lasègue 45° positivo\n- Força MMII grau 4\n- ADM lombar limitada em flexão\n..."
+                      : "E.g. Slump test: positive on the left, etc."}
+                    className="mt-1 text-sm font-mono"
+                  />
+                </div>
+
+                {/* AI-powered test suggestions box */}
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                      <Lightbulb className="h-3.5 w-3.5 text-primary" />
+                      {isPt ? "Sugestões de testes pela IA" : "AI test suggestions"}
+                    </div>
+                    <Button
+                      onClick={generateTestSuggestions}
+                      disabled={suggestingTests || (painRegions.length === 0 && !chiefComplaint)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1"
+                    >
+                      {suggestingTests
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <Sparkles className="h-3 w-3" />}
+                      {testSuggestions.length > 0
+                        ? (isPt ? "Atualizar" : "Refresh")
+                        : (isPt ? "Gerar sugestões" : "Generate suggestions")}
+                    </Button>
+                  </div>
+
+                  {testSuggestions.length === 0 && !suggestingTests && (
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      {isPt
+                        ? "A IA analisa anamnese, regiões de dor, red flags e questionários para sugerir 2-6 testes ortopédicos, de mobilidade, flexibilidade ou controle motor adicionais. Clique em uma sugestão para adicioná-la ao bloco acima."
+                        : "AI analyzes anamnesis, pain regions, red flags and questionnaires to suggest 2-6 additional orthopedic, mobility, flexibility or motor control tests. Click a suggestion to add it above."}
+                    </p>
+                  )}
+
+                  {testSuggestions.length > 0 && (
+                    <div className="space-y-1.5">
+                      {testSuggestions.map((s, i) => {
+                        const added = addedSuggestions.has(s.name);
+                        const catLabel: Record<string, { pt: string; en: string }> = {
+                          orthopedic: { pt: "Ortopédico", en: "Orthopedic" },
+                          mobility: { pt: "Mobilidade", en: "Mobility" },
+                          flexibility: { pt: "Flexibilidade", en: "Flexibility" },
+                          functional: { pt: "Funcional", en: "Functional" },
+                          motor_control: { pt: "Controle motor", en: "Motor control" },
+                          neurodynamic: { pt: "Neurodinâmico", en: "Neurodynamic" },
+                        };
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => addSuggestionToTests(s)}
+                            disabled={added}
+                            className={`w-full text-left rounded-md border p-2 text-xs transition-colors ${
+                              added
+                                ? "border-emerald-500/40 bg-emerald-500/5 cursor-default"
+                                : "border-border bg-background hover:border-primary/50 hover:bg-primary/5"
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-semibold text-foreground">{s.name}</span>
+                                  <Badge variant="outline" className="text-[9px] py-0 px-1.5">
+                                    {catLabel[s.category]?.[isPt ? "pt" : "en"] || s.category}
+                                  </Badge>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">{s.rationale}</p>
+                              </div>
+                              {added
+                                ? <span className="text-[10px] text-emerald-600 shrink-0">{isPt ? "Adicionado" : "Added"}</span>
+                                : <Plus className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
