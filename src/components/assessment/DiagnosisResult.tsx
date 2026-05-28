@@ -51,7 +51,7 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
   </Card>
 );
 
-const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData, testResults }: DiagnosisResultProps) => {
+const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData, testResults, hideFooterActions }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
 
