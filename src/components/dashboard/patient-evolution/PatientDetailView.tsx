@@ -368,8 +368,33 @@ export default function PatientDetailView(props: any) {
           patientEmail={patient.email}
         />
       )}
-      {latestWithDiagnosis?.diagnosis?.hypothesis && <DiagnosticHypothesisBlock assessment={latestWithDiagnosis} isDemo={isDemo} />}
-      {latestWithDiagnosis && <ClinicalImpressionCard assessment={latestWithDiagnosis} existingImpression={latestWithDiagnosis.diagnosis?.clinicalImpression} allAssessments={patient?.assessments} isDemo={isDemo} />}
+      {(() => {
+        const target = latestWithDiagnosis || latestAssessment;
+        if (!target) return null;
+        const hasHypothesis = !!target.diagnosis?.hypothesis;
+        return (
+          <>
+            {hasHypothesis ? (
+              <DiagnosticHypothesisBlock assessment={target} isDemo={isDemo} />
+            ) : (
+              <GenerateHypothesisCard
+                assessment={target}
+                isDemo={isDemo}
+                onGenerated={(dx) => {
+                  target.diagnosis = dx;
+                  setNotes?.((prev: any) => ({ ...prev }));
+                }}
+              />
+            )}
+            <ClinicalImpressionCard
+              assessment={target}
+              existingImpression={target.diagnosis?.clinicalImpression}
+              allAssessments={patient?.assessments}
+              isDemo={isDemo}
+            />
+          </>
+        );
+      })()}
 
       <div ref={treatmentSectionRef} id="treatment-unlock-section" className={`scroll-mt-24 transition-shadow rounded-xl ${treatmentHighlight ? "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse" : ""}`}>
         {latestWithDiagnosis && (() => {
