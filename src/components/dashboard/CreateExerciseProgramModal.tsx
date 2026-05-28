@@ -298,7 +298,106 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     });
   };
 
-  const handleCreate = async () => {
+  const applySavedTemplate = (tpl: SavedTemplate) => {
+    const lib = exercises;
+    const newSelected: SelectedExercise[] = [];
+    const newCustom: CustomExercise[] = [];
+    let missing = 0;
+    (tpl.items || []).forEach((it) => {
+      if (it.exerciseId) {
+        const ex = lib.find((e) => e.id === it.exerciseId);
+        if (!ex) { missing++; return; }
+        if (selected.some((s) => s.exercise.id === ex.id)) return;
+        const obsParts: string[] = [];
+        if (it.stage) obsParts.push(`[${it.stage}]`);
+        if (it.observations) obsParts.push(it.observations);
+        newSelected.push({
+          exercise: ex,
+          sets: it.sets,
+          reps: it.reps,
+          frequency: it.frequency,
+          observations: obsParts.join(" "),
+        });
+      } else if (it.customName) {
+        newCustom.push({
+          tempId: crypto.randomUUID(),
+          name: it.customName,
+          sets: it.sets,
+          reps: it.reps,
+          frequency: it.frequency,
+          observations: it.observations || "",
+          videoUrl: it.customVideoUrl || "",
+        });
+      }
+    });
+    setSelected([...selected, ...newSelected]);
+    if (newCustom.length) setCustomExercises([...customExercises, ...newCustom]);
+    if (tpl.notes) setNotes((prev) => (prev ? `${prev}\n\n${tpl.notes}` : tpl.notes!));
+    toast({
+      title: language === "en" ? "Template applied" : "Template aplicado",
+      description: `${newSelected.length + newCustom.length} ${language === "en" ? "exercises added" : "exercícios adicionados"}${missing ? ` (${missing} ${language === "en" ? "missing" : "ausentes"})` : ""}`,
+    });
+  };
+
+  const saveAsTemplate = async () => {
+    if (!templateName.trim() || totalCount === 0) return;
+    setSavingTemplate(true);
+    try {
+      const items = [
+        ...selected.map((s) => ({
+          exerciseId: s.exercise.id,
+          sets: s.sets,
+          reps: s.reps,
+          frequency: s.frequency,
+          observations: s.observations || undefined,
+        })),
+        ...customExercises.filter((c) => c.name.trim()).map((c) => ({
+          customName: c.name.trim(),
+          customVideoUrl: c.videoUrl.trim() || undefined,
+          sets: c.sets,
+          reps: c.reps,
+          frequency: c.frequency,
+          observations: c.observations || undefined,
+        })),
+      ];
+      const { data, error } = await (supabase as any)
+        .from("hep_templates")
+        .insert({
+          professional_id: professionalId,
+          name: templateName.trim(),
+          description: templateDescription.trim() || null,
+          notes: notes || null,
+          body_region: selected[0]?.exercise.body_region || "general",
+          items,
+        })
+        .select("id, name, description, notes, body_region, items")
+        .single();
+      if (error) throw error;
+      setSavedTemplates([data as SavedTemplate, ...savedTemplates]);
+      setShowSaveTemplate(false);
+      setTemplateName("");
+      setTemplateDescription("");
+      toast({ title: language === "en" ? "Template saved" : "Template salvo" });
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Erro ao salvar template", description: err?.message, variant: "destructive" });
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
+  const deleteSavedTemplate = async (id: string) => {
+    const ok = window.confirm(language === "en" ? "Delete this template?" : "Excluir este template?");
+    if (!ok) return;
+    const { error } = await (supabase as any).from("hep_templates").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSavedTemplates(savedTemplates.filter((t) => t.id !== id));
+    toast({ title: language === "en" ? "Template deleted" : "Template excluído" });
+  };
+
     if (totalCount === 0) return;
     setCreating(true);
     try {
