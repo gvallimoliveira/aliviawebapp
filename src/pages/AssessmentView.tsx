@@ -393,13 +393,9 @@ const AssessmentView = () => {
           </nav>
         )}
 
-        {/* Back + Delete */}
-        <div className="flex items-center justify-between gap-2">
-          <Button variant="ghost" onClick={goBack} className="gap-2 -ml-2">
-            <ArrowLeft className="h-4 w-4" />
-            {t("assessment_view.back")}
-          </Button>
-          {!isDemo && user && (
+        {/* Delete (top-right). Voltar + Nova Avaliação ficam no rodapé da página. */}
+        {!isDemo && user && (
+          <div className="flex items-center justify-end">
             <Button
               variant="ghost"
               size="sm"
@@ -410,8 +406,8 @@ const AssessmentView = () => {
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               {isPt ? "Excluir avaliação" : "Delete assessment"}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
@@ -482,17 +478,24 @@ const AssessmentView = () => {
               </div>
             )}
 
-            {/* Pain regions chips */}
-            {regions.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-                {regions.map((r: string, i: number) => (
-                  <span key={i} className="text-xs bg-muted/60 text-muted-foreground px-2 py-0.5 rounded-full">
-                    {r}
-                  </span>
-                ))}
-              </div>
-            )}
+            {/* Pain regions chips with per-region scores */}
+            {regions.length > 0 && (() => {
+              const perRegion = (anamnesis?.painScoresPerRegion || anamnesis?.pain_scores_per_region) as Record<string, number> | undefined;
+              return (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+                  {painRegions.map((rid: string, i: number) => {
+                    const label = getRegionLabel(rid, isPt);
+                    const score = perRegion?.[rid];
+                    return (
+                      <span key={i} className="text-xs bg-muted/60 text-muted-foreground px-2 py-0.5 rounded-full">
+                        {label}{score != null ? ` · ${score}/10` : ""}
+                      </span>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {/* PDF & WhatsApp actions — destaque para exportação clínica */}
             {assessment.diagnosis && (
@@ -537,6 +540,7 @@ const AssessmentView = () => {
               onGenerateTreatment={
                 assessment.treatment_plan ? scrollToTreatment : undefined
               }
+              hideFooterActions
             />
             {canEditFinalHypothesis && (
               <FinalHypothesisEditor
@@ -767,7 +771,7 @@ const AssessmentView = () => {
             <CardContent className="py-3">
               <CollapsibleSection
                 storageKey={`assessment:${assessment.id}:questionarios`}
-                defaultOpen={false}
+                defaultOpen
                 header={
                   <div className="text-base font-semibold flex items-center gap-2">
                     <ClipboardCheck className="h-4 w-4 text-primary" />
@@ -836,6 +840,17 @@ const AssessmentView = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Footer actions — Voltar + Nova Avaliação após métricas e plano */}
+        <div className="flex flex-wrap justify-between gap-2 pt-6 border-t border-border/40">
+          <Button variant="outline" onClick={goBack} className="gap-2 rounded-xl">
+            <ArrowLeft className="h-4 w-4" />
+            {t("assessment_view.back")}
+          </Button>
+          <Button onClick={() => navigate("/assessment/premium")} className="rounded-xl">
+            {isPt ? "Nova avaliação" : "New assessment"}
+          </Button>
+        </div>
       </main>
     </div>
   );
