@@ -6,6 +6,7 @@ import {
   ClipboardList, AlertTriangle, FileText, Image as ImageIcon, Brain,
   MessageCircle, Video, Bell, BookOpen, TrendingUp, Shield, CreditCard,
   UserCog, Stethoscope, FileCheck, Sparkles, Heart, Layers, Mic, Archive,
+  Lightbulb,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -85,6 +86,12 @@ const categories: ToolCategory[] = [
         desc: "Logo, cor e identidade da clínica aplicados em todos os relatórios gerados. Profissionalismo na entrega ao paciente e ao convênio.",
       },
       {
+        key: "hep_templates",
+        icon: FileText,
+        title: "Templates reutilizáveis no HEP",
+        desc: "Salve programas de exercício como templates personalizados e reutilize em novos pacientes. Inclui templates pré-construídos (ex: progressão de ombro) e templates próprios que você cria e edita. Em clínica, os templates são compartilhados entre toda a equipe. Após aplicar um template, você pode remover exercícios individualmente se houver contraindicação para aquele paciente.",
+      },
+      {
         key: "voice_notes",
         icon: Mic,
         title: "Notas de voz na avaliação manual (IA)",
@@ -119,6 +126,12 @@ const categories: ToolCategory[] = [
         icon: Stethoscope,
         title: "Plano de tratamento sugerido",
         desc: "Com base no diagnóstico, a IA propõe condutas em fases (educação, controle de dor, ativação, fortalecimento, retorno funcional). Inclui exercícios e progressões.",
+      },
+      {
+        key: "ai_test_suggestions",
+        icon: Lightbulb,
+        title: "Sugestões de testes na avaliação manual (IA)",
+        desc: "Durante a avaliação manual, a IA analisa a anamnese, regiões de dor e questionários preenchidos nas etapas anteriores e sugere 2 a 6 testes clínicos adicionais (ortopédicos, de mobilidade, neurodinâmicos ou funcionais). Clicando em uma sugestão, o teste é inserido automaticamente no campo de testes funcionais como inspiração para o profissional.",
       },
       {
         key: "clinical_impression",
