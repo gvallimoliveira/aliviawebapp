@@ -270,7 +270,7 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
       )}
 
       {/* Phases */}
-      {plan.phases.map((phase, index) => {
+      {(plan.phases || []).map((phase, index) => {
         const config = phaseConfig[phase.id] || phaseConfig.short_term;
         const isExpanded = expandedPhase === phase.id;
 

@@ -93,6 +93,35 @@ export function extractFunctionalTestsText(assessment: any): string {
 }
 
 /**
+ * Normalize a treatment_plan column.
+ *
+ * The IA may return the plan inside a `{ text: "..." }` wrapper where `text`
+ * is a markdown/json code block, or wrapped under a `treatmentPlan` key.
+ * We unwrap all of these so the UI always receives `{ phases: [...] }`.
+ */
+export function normalizeTreatmentPlan(raw: any): any {
+  if (!raw || typeof raw !== "object") return raw;
+  let plan: any = raw;
+
+  // Case: { text: "```json ... ```" } or { text: "{...}" }
+  if (plan.text && typeof plan.text === "string" && !plan.phases) {
+    const cleaned = plan.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+    try {
+      plan = JSON.parse(cleaned);
+    } catch {
+      return raw; // leave as-is if unparseable
+    }
+  }
+
+  // Case: { treatmentPlan: {...} }
+  if (plan && plan.treatmentPlan && !plan.phases) {
+    plan = plan.treatmentPlan;
+  }
+
+  return plan;
+}
+
+/**
  * Apply all normalizations to an assessment row in one call.
  * Returns a new object — does not mutate the input.
  */
@@ -102,6 +131,7 @@ export function normalizeAssessment<T extends Record<string, any>>(assessment: T
     ...assessment,
     anamnesis_data: normalizeAnamnesis(assessment.anamnesis_data),
     test_results: normalizeTestResults(assessment.test_results),
+    treatment_plan: normalizeTreatmentPlan(assessment.treatment_plan),
     _functionalTestsText: extractFunctionalTestsText(assessment),
   } as any;
 }
