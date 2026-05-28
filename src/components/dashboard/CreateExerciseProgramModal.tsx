@@ -27,6 +27,8 @@ interface SavedTemplate {
   description: string | null;
   notes: string | null;
   body_region: string;
+  professional_id: string | null;
+  clinic_id: string | null;
   items: Array<{
     exerciseId?: string;
     customName?: string;
@@ -38,6 +40,7 @@ interface SavedTemplate {
     stage?: string;
   }>;
 }
+
 
 interface Exercise {
   id: string;
@@ -75,7 +78,9 @@ interface Props {
   patientName: string;
   assessmentId?: string;
   editProgramId?: string | null;
+  clinicId?: string | null;
 }
+
 
 const categoryLabels: Record<string, Record<string, string>> = {
   strengthening: { pt: "Fortalecimento", en: "Strengthening", es: "Fortalecimiento" },
@@ -97,7 +102,7 @@ const regionLabels: Record<string, Record<string, string>> = {
   general: { pt: "Geral", en: "General", es: "General" },
 };
 
-const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId }: Props) => {
+const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId, clinicId }: Props) => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -152,13 +157,19 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         .order("category");
       setExercises(data || []);
 
-      // Load saved templates of this professional
-      const { data: tpls } = await (supabase as any)
+      // Load saved templates: own professional + (if in clinic mode) all clinic templates
+      let tplsQuery = (supabase as any)
         .from("hep_templates")
-        .select("id, name, description, notes, body_region, items")
-        .eq("professional_id", professionalId)
+        .select("id, name, description, notes, body_region, items, professional_id, clinic_id")
         .order("created_at", { ascending: false });
+      if (clinicId) {
+        tplsQuery = tplsQuery.or(`professional_id.eq.${professionalId},clinic_id.eq.${clinicId}`);
+      } else {
+        tplsQuery = tplsQuery.eq("professional_id", professionalId);
+      }
+      const { data: tpls } = await tplsQuery;
       setSavedTemplates((tpls || []) as SavedTemplate[]);
+
 
       // If editing, load existing program items
       if (editProgramId) {
@@ -210,7 +221,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       setLoading(false);
     };
     load();
-  }, [open, editProgramId, professionalId]);
+  }, [open, editProgramId, professionalId, clinicId]);
 
   const getName = (ex: Exercise) => language === "en" ? (ex.name_en || ex.name_pt) : ex.name_pt;
 
@@ -363,16 +374,18 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       const { data, error } = await (supabase as any)
         .from("hep_templates")
         .insert({
-          professional_id: professionalId,
+          professional_id: professionalId || null,
+          clinic_id: clinicId || null,
           name: templateName.trim(),
           description: templateDescription.trim() || null,
           notes: notes || null,
           body_region: selected[0]?.exercise.body_region || "general",
           items,
         })
-        .select("id, name, description, notes, body_region, items")
+        .select("id, name, description, notes, body_region, items, professional_id, clinic_id")
         .single();
       if (error) throw error;
+
       setSavedTemplates([data as SavedTemplate, ...savedTemplates]);
       setShowSaveTemplate(false);
       setTemplateName("");
@@ -641,7 +654,14 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                     {savedTemplates.map((tpl) => (
                       <SelectItem key={tpl.id} value={tpl.id} className="text-xs">
                         <div className="flex flex-col py-0.5">
-                          <span className="font-medium">{tpl.name}</span>
+                          <span className="font-medium flex items-center gap-1.5">
+                            {tpl.name}
+                            {tpl.clinic_id && (
+                              <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">
+                                {language === "en" ? "Clinic" : "Clínica"}
+                              </Badge>
+                            )}
+                          </span>
                           <span className="text-[10px] text-muted-foreground">
                             {(tpl.items?.length ?? 0)} {language === "en" ? "exercises" : "exercícios"}
                             {tpl.description ? ` · ${tpl.description}` : ""}
@@ -649,6 +669,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                         </div>
                       </SelectItem>
                     ))}
+
                   </SelectContent>
                 </Select>
               )}
@@ -659,7 +680,14 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                   {savedTemplates.map((tpl) => (
                     <div key={tpl.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-muted">
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">{tpl.name}</p>
+                        <p className="text-xs font-medium truncate flex items-center gap-1.5">
+                          {tpl.name}
+                          {tpl.clinic_id && (
+                            <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">
+                              {language === "en" ? "Clinic" : "Clínica"}
+                            </Badge>
+                          )}
+                        </p>
                         <p className="text-[10px] text-muted-foreground truncate">
                           {(tpl.items?.length ?? 0)} {language === "en" ? "exercises" : "exercícios"}
                           {tpl.description ? ` · ${tpl.description}` : ""}
@@ -676,6 +704,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                       </Button>
                     </div>
                   ))}
+
                 </div>
               )}
 
@@ -698,6 +727,15 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                     {language === "en" ? "Saves the current selection" : "Salva a seleção atual"} ({totalCount})
                     {notes ? ` · ${language === "en" ? "incl. general notes" : "inclui observações gerais"}` : ""}
                   </p>
+                  {clinicId && (
+                    <p className="text-[10px] text-primary flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      {language === "en"
+                        ? "Shared with the whole clinic (owners, therapists & secretaries)."
+                        : "Compartilhado com toda a clínica (proprietário, fisioterapeutas e secretárias)."}
+                    </p>
+                  )}
+
                   <div className="flex gap-2">
                     <Button
                       type="button"

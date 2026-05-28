@@ -903,35 +903,38 @@ export type Database = {
       hep_templates: {
         Row: {
           body_region: string
+          clinic_id: string | null
           created_at: string
           description: string | null
           id: string
           items: Json
           name: string
           notes: string | null
-          professional_id: string
+          professional_id: string | null
           updated_at: string
         }
         Insert: {
           body_region?: string
+          clinic_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           items?: Json
           name: string
           notes?: string | null
-          professional_id: string
+          professional_id?: string | null
           updated_at?: string
         }
         Update: {
           body_region?: string
+          clinic_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           items?: Json
           name?: string
           notes?: string | null
-          professional_id?: string
+          professional_id?: string | null
           updated_at?: string
         }
         Relationships: []
