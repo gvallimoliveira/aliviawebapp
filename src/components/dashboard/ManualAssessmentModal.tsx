@@ -123,9 +123,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Diagnóstico
   const [clinicalImpression, setClinicalImpression] = useState("");
   const [diagnosisText, setDiagnosisText] = useState("");
+  // Full AI diagnosis payload (hypothesis, summary, reasoning, confidence) — used on save
+  // so the hypothesis is the AI's actual hypothesis, not the first line of a JSON dump
+  // or a fallback to the clinical impression text.
+  const [aiDiagnosis, setAiDiagnosis] = useState<any | null>(null);
 
   // Tratamento
   const [treatmentText, setTreatmentText] = useState("");
+  const [aiTreatment, setAiTreatment] = useState<any | null>(null);
 
   // Build region groups: dedupe by id, sort alphabetically by current language label
   const regionGroups: RegionGroup[] = (() => {
@@ -274,16 +279,32 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     try {
       const { data, error } = await supabase.functions.invoke("generate-diagnosis", {
         body: {
-          anamnesis: buildAnamnesisData(),
-          painRegions,
-          painScore,
-          testResults: { functionalTests, questionnaires: questionnaireResults },
+          // Edge function expects `anamnesisData` (not `anamnesis`) and reads
+          // painRegions / painScore / painTypes from inside it.
+          anamnesisData: {
+            ...buildAnamnesisData(),
+            painRegions,
+            painScore,
+            painTypes: painType ? [painType] : [],
+          },
+          questionnaireResults,
+          mode: "professional",
           language,
         },
       });
       if (error) throw error;
       const dx = data?.diagnosis || data;
-      setDiagnosisText(typeof dx === "string" ? dx : JSON.stringify(dx, null, 2));
+      if (dx && typeof dx === "object" && (dx.hypothesis || dx.summary)) {
+        setAiDiagnosis(dx);
+        const parts: string[] = [];
+        if (dx.hypothesis) parts.push(String(dx.hypothesis));
+        if (dx.summary) parts.push("", String(dx.summary));
+        if (dx.reasoning) parts.push("", String(dx.reasoning));
+        setDiagnosisText(parts.join("\n"));
+      } else {
+        setAiDiagnosis(null);
+        setDiagnosisText(typeof dx === "string" ? dx : JSON.stringify(dx, null, 2));
+      }
       toast({ title: isPt ? "Diagnóstico gerado!" : "Diagnosis generated!" });
     } catch (err: any) {
       toast({ title: isPt ? "Erro na IA" : "AI error", description: err.message, variant: "destructive" });
@@ -297,16 +318,28 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     try {
       const { data, error } = await supabase.functions.invoke("generate-treatment", {
         body: {
-          anamnesis: buildAnamnesisData(),
-          painRegions,
-          painScore,
-          diagnosis: diagnosisText,
+          anamnesisData: {
+            ...buildAnamnesisData(),
+            painRegions,
+            painScore,
+          },
+          questionnaireResults,
+          diagnosis: aiDiagnosis || (diagnosisText ? { summary: diagnosisText } : null),
+          mode: "professional",
           language,
         },
       });
       if (error) throw error;
       const tx = data?.treatment_plan || data?.treatment || data;
-      setTreatmentText(typeof tx === "string" ? tx : JSON.stringify(tx, null, 2));
+      if (tx && typeof tx === "object") {
+        setAiTreatment(tx);
+        // Build a readable summary; keep the full object on save.
+        if (typeof tx.summary === "string") setTreatmentText(tx.summary);
+        else setTreatmentText(JSON.stringify(tx, null, 2));
+      } else {
+        setAiTreatment(null);
+        setTreatmentText(typeof tx === "string" ? tx : JSON.stringify(tx, null, 2));
+      }
       toast({ title: isPt ? "Plano gerado!" : "Plan generated!" });
     } catch (err: any) {
       toast({ title: isPt ? "Erro na IA" : "AI error", description: err.message, variant: "destructive" });
@@ -351,25 +384,41 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             severity: r.severity,
           };
         }),
-        // Diagnosis: use the shape the rest of the app reads — `hypothesis` + `summary`.
-        // Keep `manual: true` flag and the legacy `text`/`clinicalImpression` keys for backward compat.
-        diagnosis: (diagnosisText || clinicalImpression)
+        // Diagnosis: prefer the AI-generated hypothesis when available. We must NEVER
+        // fall back to the clinical impression for the hypothesis — the hypothesis is
+        // a distinct clinical concept and using the impression as a stand-in produced
+        // misleading diagnoses in the chart/PDF.
+        diagnosis: (aiDiagnosis || diagnosisText || clinicalImpression)
+          ? (() => {
+              const aiHyp = aiDiagnosis?.hypothesis?.toString().trim();
+              const firstLine = diagnosisText.split("\n").map((l) => l.trim()).find(Boolean) || "";
+              // Avoid leaking raw JSON braces as hypothesis text.
+              const cleanFirst = firstLine.startsWith("{") || firstLine.startsWith("[")
+                ? "" : firstLine;
+              const hypothesis = aiHyp || cleanFirst || null;
+              return {
+                manual: true,
+                ...(aiDiagnosis || {}),
+                hypothesis: hypothesis ? hypothesis.slice(0, 280) : null,
+                summary: aiDiagnosis?.summary || diagnosisText || clinicalImpression || null,
+                text: diagnosisText || null,
+                clinicalImpression: aiClinicalImpression
+                  ? aiClinicalImpression
+                  : (clinicalImpression
+                      ? { overview: clinicalImpression, therapeuticObjectives: [] }
+                      : undefined),
+              };
+            })()
+          : null,
+        // Treatment plan: keep the manual flag, the AI structured payload when present,
+        // and the free text under both `text` and `summary` so PDF/AssessmentView can render it.
+        treatment_plan: (aiTreatment || treatmentText)
           ? {
               manual: true,
-              hypothesis: (diagnosisText || clinicalImpression).split("\n")[0]?.slice(0, 280) || null,
-              summary: diagnosisText || clinicalImpression,
-              text: diagnosisText || null,
-              clinicalImpression: aiClinicalImpression
-                ? aiClinicalImpression
-                : (clinicalImpression
-                    ? { overview: clinicalImpression, therapeuticObjectives: [] }
-                    : undefined),
+              ...(aiTreatment || {}),
+              text: treatmentText || null,
+              summary: aiTreatment?.summary || treatmentText || null,
             }
-          : null,
-        // Treatment plan: keep the manual flag + the free text under both `text` and `summary`
-        // so PDF/AssessmentView can render it.
-        treatment_plan: treatmentText
-          ? { manual: true, text: treatmentText, summary: treatmentText }
           : null,
       };
       if (clinicId) row.clinic_id = clinicId;
@@ -410,7 +459,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
     setPainRegions([]); setRedFlagsChecked([]); setQuestionnaireResults([]);
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
-    setDiagnosisText(""); setTreatmentText("");
+    setDiagnosisText(""); setTreatmentText(""); setAiDiagnosis(null); setAiTreatment(null);
   };
 
   const stepLabels = isPt
@@ -419,7 +468,19 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
-      <DialogContent className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent
+        className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0"
+        onPointerDownOutside={(e) => {
+          // Keep the modal open when the user interacts with the floating
+          // voice-recorder FAB (rendered as a sibling portal on document.body).
+          const target = e.target as HTMLElement | null;
+          if (target?.closest?.("[data-voice-recorder-fab]")) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          const target = e.target as HTMLElement | null;
+          if (target?.closest?.("[data-voice-recorder-fab]")) e.preventDefault();
+        }}
+      >
         <div className="px-6 pt-6 pb-2 shrink-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
