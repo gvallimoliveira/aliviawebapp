@@ -520,7 +520,8 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   if (generatedLink) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-md w-[calc(100vw-1rem)] sm:w-full p-4 sm:p-6">
+        <DialogContent className="max-w-md h-auto max-h-[90vh] flex flex-col p-0 gap-0">
+          <div className="px-4 sm:px-6 py-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Dumbbell className="h-5 w-5 text-primary" />
@@ -538,7 +539,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button onClick={handleWhatsApp} className="flex-1 gap-1.5 rounded-xl" variant="outline">
                 <Share2 className="h-4 w-4" />
                 Enviar via WhatsApp
@@ -548,6 +549,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               </Button>
             </div>
           </div>
+          </div>
         </DialogContent>
       </Dialog>
     );
@@ -555,18 +557,21 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Dumbbell className="h-5 w-5 text-primary" />
-            {isEditing ? "Editar Programa de Exercícios" : "Criar Programa de Exercícios"}
-          </DialogTitle>
-          <DialogDescription>
-            Selecione exercícios do banco ou adicione manualmente para <span className="font-semibold">{patientName}</span>
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-2xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0">
+        <div className="px-4 sm:px-6 pt-6 pb-2 shrink-0">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 pr-8 sm:pr-10">
+              <Dumbbell className="h-5 w-5 text-primary shrink-0" />
+              <span className="min-w-0 truncate">{isEditing ? "Editar Programa de Exercícios" : "Criar Programa de Exercícios"}</span>
+            </DialogTitle>
+            <DialogDescription className="pr-8 sm:pr-10">
+              Selecione exercícios do banco ou adicione manualmente para <span className="font-semibold break-words">{patientName}</span>
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 pb-4">
+          <div className="space-y-4 pt-2">
           {draft.hasDraft && draft.draftMeta && (
             <DraftResumeBanner
               updatedAt={draft.draftMeta.updatedAt}
@@ -763,8 +768,8 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           )}
 
           {/* Filters */}
-          <div className="flex gap-2 flex-wrap">
-            <div className="relative flex-1 min-w-[150px]">
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_130px_140px] gap-2 items-start">
+            <div className="relative min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar exercício..."
@@ -774,7 +779,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               />
             </div>
             <Select value={regionFilter} onValueChange={setRegionFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Região" />
               </SelectTrigger>
               <SelectContent>
@@ -785,7 +790,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
@@ -859,7 +864,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div>
                         <Label className="text-[10px]">Séries</Label>
                         <Input value={c.sets} onChange={(e) => updateCustom(c.tempId, "sets", e.target.value)} className="h-8 text-xs" />
@@ -911,7 +916,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                         <X className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div>
                         <Label className="text-[10px]">Séries</Label>
                         <Input value={s.sets} onChange={(e) => updateSelected(s.exercise.id, "sets", e.target.value)} className="h-8 text-xs" />
@@ -956,6 +961,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
             {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Dumbbell className="h-4 w-4" />}
             {creating ? (isEditing ? "Salvando..." : "Criando...") : (isEditing ? `Salvar Alterações (${totalCount})` : `Gerar Link do Programa (${totalCount})`)}
           </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
