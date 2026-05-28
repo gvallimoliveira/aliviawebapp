@@ -210,6 +210,49 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setAiClinicalImpression(p.aiClinicalImpression ?? null);
   };
 
+  // Prefill from existing assessment when editing
+  const prefilledIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open || !editAssessment?.id) return;
+    if (prefilledIdRef.current === editAssessment.id) return;
+    prefilledIdRef.current = editAssessment.id;
+    const a = editAssessment;
+    const an = a.anamnesis_data || {};
+    setStep(0);
+    setChiefComplaint(an.chiefComplaint || an.customComplaint || (Array.isArray(an.chiefComplaints) ? an.chiefComplaints[0] : "") || "");
+    setHistory(an.history || "");
+    setDuration(an.duration || an.painDuration || "");
+    setOnset(an.onset || "");
+    setAggravating(an.aggravatingFactors || "");
+    setRelieving(an.relievingFactors || "");
+    setMedications(an.medications || "");
+    setPreviousSurgeries(an.previousSurgeries || an.previousTreatments || "");
+    setComorbidities(an.comorbidities || "");
+    setOccupation(an.occupation || "");
+    setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
+    setPainType(an.painType || (Array.isArray(an.painTypes) ? an.painTypes[0] : "") || "");
+    setPainRegions(Array.isArray(a.pain_regions) ? a.pain_regions : []);
+    setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
+    setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
+    setFunctionalTests(an.functionalTests || "");
+    const dx = a.diagnosis || {};
+    setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
+    const ci = dx.clinicalImpression;
+    setAiClinicalImpression(ci?.overview ? ci : null);
+    setClinicalImpression(ci?.overview || "");
+    const dxParts: string[] = [];
+    if (dx.hypothesis) dxParts.push(String(dx.hypothesis));
+    if (dx.summary && dx.summary !== dx.hypothesis) dxParts.push("", String(dx.summary));
+    if (dx.reasoning) dxParts.push("", String(dx.reasoning));
+    setDiagnosisText(dx.text || dxParts.join("\n"));
+    const tx = a.treatment_plan || null;
+    setAiTreatment(tx && typeof tx === "object" ? tx : null);
+    setTreatmentText(tx?.text || tx?.summary || "");
+  }, [open, editAssessment]);
+  useEffect(() => { if (!open) prefilledIdRef.current = null; }, [open]);
+
+
+
 
 
   const toggleRedFlag = (rf: string) => {
