@@ -680,7 +680,14 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                   {savedTemplates.map((tpl) => (
                     <div key={tpl.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-muted">
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">{tpl.name}</p>
+                        <p className="text-xs font-medium truncate flex items-center gap-1.5">
+                          {tpl.name}
+                          {tpl.clinic_id && (
+                            <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">
+                              {language === "en" ? "Clinic" : "Clínica"}
+                            </Badge>
+                          )}
+                        </p>
                         <p className="text-[10px] text-muted-foreground truncate">
                           {(tpl.items?.length ?? 0)} {language === "en" ? "exercises" : "exercícios"}
                           {tpl.description ? ` · ${tpl.description}` : ""}
@@ -697,6 +704,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                       </Button>
                     </div>
                   ))}
+
                 </div>
               )}
 
