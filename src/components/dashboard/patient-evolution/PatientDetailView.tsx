@@ -23,7 +23,8 @@ import PainMapView from "@/components/assessment/PainMapView";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, Archive, ArchiveRestore, ArrowLeft, Brain, ChevronRight, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, Loader2, Lock, Mail, MessageCircle, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
+import { Activity, Archive, ArchiveRestore, ArrowLeft, Brain, ChevronRight, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
 import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessmentLinks";
@@ -197,58 +198,79 @@ export default function PatientDetailView(props: any) {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
-          {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { const link = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id); navigator.clipboard.writeText(link); toast({ title: "Link de reavaliação copiado!" }); }}><RotateCcw className="h-4 w-4" /> Reavaliação</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
           {(!readOnly || allowManualAssessment) && !isDemo && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
-          {patient.assessments.filter((a: any) => a.diagnosis).length >= 2 && (
-            <Button variant="outline" size="sm" className="gap-1.5 shrink-0" disabled={evolutionLoading} onClick={async () => {
-              setEvolutionLoading(true);
-              try {
-                const withDiagnosis = patient.assessments.filter((a: any) => a.diagnosis).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-                const firstA = withDiagnosis[0];
-                const lastA = withDiagnosis[withDiagnosis.length - 1];
-                let summary: any;
-                if (isDemo) {
-                  await new Promise((r) => setTimeout(r, 1500));
-                  summary = mockEvolutionSummary;
-                } else {
-                  const normalizeQ = (tr: any) => Array.isArray(tr) ? tr.filter((t: any) => t.questionnaireId && t.percentageScore != null).map((t: any) => ({ id: t.questionnaireId, name: t.questionnaireName || t.questionnaireId, score: Math.round(t.percentageScore) })) : [];
-                  const payload = { assessments: [{ date: firstA.created_at, pain_score: firstA.pain_score, hypothesis: firstA.diagnosis?.hypothesis, pain_regions: firstA.pain_regions || [], questionnaires: normalizeQ(firstA.test_results) }, { date: lastA.created_at, pain_score: lastA.pain_score, hypothesis: lastA.diagnosis?.hypothesis, pain_regions: lastA.pain_regions || [], questionnaires: normalizeQ(lastA.test_results) }], language };
-                  const { data: summaryData, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
-                  if (error) throw new Error(error?.message || "Erro ao conectar com o servidor de IA");
-                  if (!summaryData || summaryData?.error) throw new Error(summaryData?.error || "Resposta inválida da IA");
-                  if (!summaryData.narrative || !summaryData.conclusion || !summaryData.recommendation) throw new Error("Resumo incompleto gerado pela IA. Tente novamente.");
-                  summary = summaryData;
-                }
-                const blob = await generateEvolutionPdfBlob({ patientName: patient.name, firstAssessment: { date: firstA.created_at, pain_score: firstA.pain_score, pain_regions: firstA.pain_regions || [], test_results: firstA.test_results, hypothesis: firstA.diagnosis?.hypothesis }, lastAssessment: { date: lastA.created_at, pain_score: lastA.pain_score, pain_regions: lastA.pain_regions || [], test_results: lastA.test_results, hypothesis: lastA.diagnosis?.hypothesis }, totalAssessments: withDiagnosis.length, summary: summary as EvolutionSummary, language, professionalLogoUrl, clinicLogoUrl, clinicName });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `AliviA_Evolucao_${patient.name.replace(/\s/g, "_")}.pdf`;
-                a.click();
-                URL.revokeObjectURL(url);
-                if (!isDemo) {
-                  const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
-                  const nativeShareResult = await sharePdfFile({ blob, fileName: `AliviA_Evolucao_${patient.name.replace(/\s+/g, "_")}.pdf`, title: "Aliv.iA", text: `${t("evolution.title")} - ${patient.name}` });
-                  if (nativeShareResult === "shared" || nativeShareResult === "cancelled") { toast({ title: t("evolution.success") }); return; }
-                  const fileName = `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
-                  const { error: uploadError } = await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
-                  if (!uploadError) {
-                    const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
-                    if (publicUrl?.publicUrl) await shareTextOrOpenWhatsApp(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`, "Aliv.iA");
-                    else toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });
-                  } else {
-                    toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });
-                  }
-                }
-                toast({ title: t("evolution.success") });
-              } catch (err: any) {
-                console.error("Evolution report error:", err);
-                toast({ title: t("evolution.error"), description: err?.message, variant: "destructive" });
-              } finally {
-                setEvolutionLoading(false);
-              }
-            }}>{evolutionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <TrendingUp className="h-4 w-4" />}{t("evolution.title")}</Button>
+          {(latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1.5 shrink-0" title={language === "pt" ? "Mais ações" : "More actions"}>
+                  <MoreVertical className="h-4 w-4" />
+                  <span className="hidden sm:inline">{language === "pt" ? "Mais" : "More"}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-[11px] text-muted-foreground">{language === "pt" ? "Outras ações" : "Other actions"}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {latestWithDiagnosis && (
+                  <DropdownMenuItem onSelect={() => { const link = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id); navigator.clipboard.writeText(link); toast({ title: "Link de reavaliação copiado!" }); }}>
+                    <RotateCcw className="h-4 w-4 mr-2" /> Reavaliação
+                  </DropdownMenuItem>
+                )}
+                {patient.assessments.filter((a: any) => a.diagnosis).length >= 2 && (
+                  <DropdownMenuItem disabled={evolutionLoading} onSelect={async () => {
+                    setEvolutionLoading(true);
+                    try {
+                      const withDiagnosis = patient.assessments.filter((a: any) => a.diagnosis).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                      const firstA = withDiagnosis[0];
+                      const lastA = withDiagnosis[withDiagnosis.length - 1];
+                      let summary: any;
+                      if (isDemo) {
+                        await new Promise((r) => setTimeout(r, 1500));
+                        summary = mockEvolutionSummary;
+                      } else {
+                        const normalizeQ = (tr: any) => Array.isArray(tr) ? tr.filter((t: any) => t.questionnaireId && t.percentageScore != null).map((t: any) => ({ id: t.questionnaireId, name: t.questionnaireName || t.questionnaireId, score: Math.round(t.percentageScore) })) : [];
+                        const payload = { assessments: [{ date: firstA.created_at, pain_score: firstA.pain_score, hypothesis: firstA.diagnosis?.hypothesis, pain_regions: firstA.pain_regions || [], questionnaires: normalizeQ(firstA.test_results) }, { date: lastA.created_at, pain_score: lastA.pain_score, hypothesis: lastA.diagnosis?.hypothesis, pain_regions: lastA.pain_regions || [], questionnaires: normalizeQ(lastA.test_results) }], language };
+                        const { data: summaryData, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
+                        if (error) throw new Error(error?.message || "Erro ao conectar com o servidor de IA");
+                        if (!summaryData || summaryData?.error) throw new Error(summaryData?.error || "Resposta inválida da IA");
+                        if (!summaryData.narrative || !summaryData.conclusion || !summaryData.recommendation) throw new Error("Resumo incompleto gerado pela IA. Tente novamente.");
+                        summary = summaryData;
+                      }
+                      const blob = await generateEvolutionPdfBlob({ patientName: patient.name, firstAssessment: { date: firstA.created_at, pain_score: firstA.pain_score, pain_regions: firstA.pain_regions || [], test_results: firstA.test_results, hypothesis: firstA.diagnosis?.hypothesis }, lastAssessment: { date: lastA.created_at, pain_score: lastA.pain_score, pain_regions: lastA.pain_regions || [], test_results: lastA.test_results, hypothesis: lastA.diagnosis?.hypothesis }, totalAssessments: withDiagnosis.length, summary: summary as EvolutionSummary, language, professionalLogoUrl, clinicLogoUrl, clinicName });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `AliviA_Evolucao_${patient.name.replace(/\s/g, "_")}.pdf`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      if (!isDemo) {
+                        const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
+                        const nativeShareResult = await sharePdfFile({ blob, fileName: `AliviA_Evolucao_${patient.name.replace(/\s+/g, "_")}.pdf`, title: "Aliv.iA", text: `${t("evolution.title")} - ${patient.name}` });
+                        if (nativeShareResult === "shared" || nativeShareResult === "cancelled") { toast({ title: t("evolution.success") }); return; }
+                        const fileName = `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
+                        const { error: uploadError } = await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
+                        if (!uploadError) {
+                          const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
+                          if (publicUrl?.publicUrl) await shareTextOrOpenWhatsApp(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`, "Aliv.iA");
+                          else toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });
+                        } else {
+                          toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });
+                        }
+                      }
+                      toast({ title: t("evolution.success") });
+                    } catch (err: any) {
+                      console.error("Evolution report error:", err);
+                      toast({ title: t("evolution.error"), description: err?.message, variant: "destructive" });
+                    } finally {
+                      setEvolutionLoading(false);
+                    }
+                  }}>
+                    {evolutionLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <TrendingUp className="h-4 w-4 mr-2" />}
+                    {t("evolution.title")}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>

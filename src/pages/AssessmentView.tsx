@@ -8,7 +8,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2, Trash2, ChevronRight, User } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -371,6 +371,28 @@ const AssessmentView = () => {
             </span>
           </div>
         )}
+        {/* Breadcrumb trail */}
+        {assessment.patient_name && (
+          <nav aria-label="breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground -mb-2 flex-wrap">
+            <button
+              onClick={goBack}
+              className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+              title={isPt ? "Voltar para o paciente" : "Back to patient"}
+            >
+              <User className="h-3 w-3" />
+              <span className="font-medium">{assessment.patient_name}</span>
+            </button>
+            <ChevronRight className="h-3 w-3 opacity-50" />
+            <span className="capitalize">
+              {assessment.type === "premium" ? (isPt ? "Avaliação Premium" : "Premium Assessment") : assessment.type === "professional" ? (isPt ? "Avaliação Pro" : "Pro Assessment") : (isPt ? "Avaliação" : "Assessment")}
+            </span>
+            <ChevronRight className="h-3 w-3 opacity-50" />
+            <span>
+              {new Date(assessment.created_at).toLocaleDateString(isPt ? "pt-BR" : "en-US", { day: "2-digit", month: "short", year: "numeric" })}
+            </span>
+          </nav>
+        )}
+
         {/* Back + Delete */}
         <div className="flex items-center justify-between gap-2">
           <Button variant="ghost" onClick={goBack} className="gap-2 -ml-2">
@@ -472,23 +494,23 @@ const AssessmentView = () => {
               </div>
             )}
 
-            {/* PDF & WhatsApp actions */}
+            {/* PDF & WhatsApp actions — destaque para exportação clínica */}
             {assessment.diagnosis && (
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2 pt-3 border-t border-border/60 mt-1">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
-                  className="gap-2 rounded-xl"
+                  className="gap-2 rounded-xl flex-1 font-semibold shadow-sm"
                   disabled={pdfLoading}
                   onClick={handleDownloadPdf}
                 >
                   {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  PDF
+                  {isPt ? "Baixar PDF" : "Download PDF"}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 rounded-xl text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+                  className="gap-2 rounded-xl flex-1 font-semibold text-emerald-700 border-emerald-300 bg-emerald-50/50 hover:bg-emerald-100 hover:text-emerald-800"
                   disabled={whatsappLoading}
                   onClick={handleShareWhatsApp}
                 >
@@ -634,7 +656,7 @@ const AssessmentView = () => {
                   </div>
                 }
               >
-                <div className="py-2 space-y-3">
+                <div className="py-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5">
                   {(anamnesis.chiefComplaints || (anamnesis.chiefComplaint ? [anamnesis.chiefComplaint] : [])).length > 0 && (
                     <AnamnesisField
                       icon={<Heart className="h-3.5 w-3.5" />}
