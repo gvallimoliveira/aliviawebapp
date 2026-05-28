@@ -751,8 +751,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             </span>
           )}
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => handleSave(false)} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                await draft.flush();
+                toast({
+                  title: isPt ? "Progresso salvo" : "Progress saved",
+                  description: isPt
+                    ? "Rascunho gravado na nuvem — pode fechar e voltar quando quiser."
+                    : "Draft saved to the cloud — you can close and resume later.",
+                });
+              }}
+              disabled={draft.saving}
+            >
+              {draft.saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {isPt ? "Salvar agora" : "Save now"}
             </Button>
             {step < STEPS.length - 1 ? (
