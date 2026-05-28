@@ -27,6 +27,8 @@ interface SavedTemplate {
   description: string | null;
   notes: string | null;
   body_region: string;
+  professional_id: string | null;
+  clinic_id: string | null;
   items: Array<{
     exerciseId?: string;
     customName?: string;
@@ -38,6 +40,7 @@ interface SavedTemplate {
     stage?: string;
   }>;
 }
+
 
 interface Exercise {
   id: string;
