@@ -122,6 +122,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
+  const [testSuggestions, setTestSuggestions] = useState<Array<{ name: string; category: string; rationale: string }>>([]);
+  const [suggestingTests, setSuggestingTests] = useState(false);
+  const [addedSuggestions, setAddedSuggestions] = useState<Set<string>>(new Set());
 
   // Diagnóstico
   const [clinicalImpression, setClinicalImpression] = useState("");
