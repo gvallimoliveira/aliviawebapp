@@ -900,6 +900,42 @@ export type Database = {
         }
         Relationships: []
       }
+      hep_templates: {
+        Row: {
+          body_region: string
+          created_at: string
+          description: string | null
+          id: string
+          items: Json
+          name: string
+          notes: string | null
+          professional_id: string
+          updated_at: string
+        }
+        Insert: {
+          body_region?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          items?: Json
+          name: string
+          notes?: string | null
+          professional_id: string
+          updated_at?: string
+        }
+        Update: {
+          body_region?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          items?: Json
+          name?: string
+          notes?: string | null
+          professional_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
