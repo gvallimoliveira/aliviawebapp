@@ -768,7 +768,7 @@ const AssessmentView = () => {
             <CardContent className="py-3">
               <CollapsibleSection
                 storageKey={`assessment:${assessment.id}:questionarios`}
-                defaultOpen={false}
+                defaultOpen
                 header={
                   <div className="text-base font-semibold flex items-center gap-2">
                     <ClipboardCheck className="h-4 w-4 text-primary" />
