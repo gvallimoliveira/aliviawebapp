@@ -71,7 +71,6 @@ const STEPS = [
   { id: "questionarios", label: "Questionários" },
   { id: "testes", label: "Testes" },
   { id: "diagnostico", label: "Diagnóstico" },
-  { id: "tratamento", label: "Tratamento" },
 ];
 
 const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail }: ManualAssessmentModalProps) => {
@@ -348,7 +347,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (navigateAfter: boolean = false) => {
     if (!patientName.trim()) {
       toast({ title: isPt ? "Nome do paciente é obrigatório" : "Patient name required", variant: "destructive" });
       return;
@@ -443,7 +442,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       void draft.discard();
       onOpenChange(false);
       resetForm();
-      if (data?.id) navigate(`/assessment/view/${data.id}?from=professional`);
+      if (navigateAfter && data?.id) navigate(`/assessment/view/${data.id}?from=professional`);
     } catch (err: any) {
       console.error("Save assessment error:", err);
       toast({ title: isPt ? "Erro ao salvar" : "Save error", description: err.message, variant: "destructive" });
@@ -463,8 +462,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const stepLabels = isPt
-    ? ["Anamnese", "Dor & Mapa", "Red Flags", "Questionários", "Testes", "Diagnóstico", "Tratamento"]
-    : ["Anamnesis", "Pain & Map", "Red Flags", "Questionnaires", "Tests", "Diagnosis", "Treatment"];
+    ? ["Anamnese", "Dor & Mapa", "Red Flags", "Questionários", "Testes", "Diagnóstico"]
+    : ["Anamnesis", "Pain & Map", "Red Flags", "Questionnaires", "Tests", "Diagnosis"];
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
@@ -734,19 +733,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 6: TRATAMENTO */}
-            {step === 6 && (
-              <div className="space-y-3">
-                <Button onClick={generateAITreatment} disabled={generatingTx} variant="outline" size="sm" className="gap-2">
-                  {generatingTx ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                  {isPt ? "Gerar plano de tratamento com IA" : "Generate treatment plan with AI"}
-                </Button>
-                <div>
-                  <Label className="text-xs">{isPt ? "Plano de tratamento" : "Treatment plan"}</Label>
-                  <Textarea value={treatmentText} onChange={(e) => setTreatmentText(e.target.value)} rows={12} className="mt-1 text-sm" />
-                </div>
-              </div>
-            )}
+            {/* Treatment plan generation removed — it is sold separately to autonomous
+                pros on the patient page and is included for clinic mode in the same
+                location. Generating it from the manual flow caused raw-JSON output and
+                duplicated a paid/included feature. */}
           </div>
         </div>
 
@@ -761,7 +751,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             </span>
           )}
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={handleSave} disabled={saving}>
+            <Button variant="ghost" size="sm" onClick={() => handleSave(false)} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {isPt ? "Salvar agora" : "Save now"}
             </Button>
@@ -770,9 +760,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 {isPt ? "Avançar" : "Next"} <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5">
+              <Button size="sm" onClick={() => handleSave(false)} disabled={saving} className="gap-1.5">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {isPt ? "Finalizar e abrir" : "Finish & open"}
+                {isPt ? "Finalizar" : "Finish"}
               </Button>
             )}
           </div>

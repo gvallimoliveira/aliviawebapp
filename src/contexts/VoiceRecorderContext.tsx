@@ -101,6 +101,11 @@ const GlobalVoiceRecorderFAB = () => {
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const tickRef = useRef<number | null>(null);
+  // Authoritative elapsed-seconds counter. We can't rely on the `seconds`
+  // state inside handleStop because handleStop is assigned as mr.onstop at
+  // recording start and closes over a stale value (0) — that's why valid
+  // recordings were being reported as "0s" and discarded.
+  const secondsRef = useRef(0);
   // Snapshot of session at recording start — so the upload still has correct
   // patient/professional context even if the user navigates away mid-record.
   const sessionRef = useRef<VoiceRecorderSession | null>(null);
@@ -115,13 +120,10 @@ const GlobalVoiceRecorderFAB = () => {
   const startTick = () => {
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = window.setInterval(() => {
-      setSeconds((s) => {
-        if (s + 1 >= MAX_DURATION_SEC) {
-          stopRecording();
-          return s + 1;
-        }
-        return s + 1;
-      });
+      secondsRef.current += 1;
+      const next = secondsRef.current;
+      setSeconds(next);
+      if (next >= MAX_DURATION_SEC) stopRecording();
     }, 1000);
   };
 
@@ -150,6 +152,7 @@ const GlobalVoiceRecorderFAB = () => {
       mr.onstop = handleStop;
       recRef.current = mr;
       sessionRef.current = session;
+      secondsRef.current = 0;
       mr.start(1000);
       setState("recording");
       setSeconds(0);
@@ -199,6 +202,7 @@ const GlobalVoiceRecorderFAB = () => {
     recRef.current = null;
     sessionRef.current = null;
     stopTick();
+    secondsRef.current = 0;
     setSeconds(0);
     setState("idle");
   };
@@ -209,8 +213,11 @@ const GlobalVoiceRecorderFAB = () => {
     const blob = new Blob(chunksRef.current, { type: chunksRef.current[0]?.type || "audio/webm" });
     chunksRef.current = [];
     const snap = sessionRef.current;
-    const recordedSeconds = seconds;
+    // IMPORTANT: read from ref, not from `seconds` state — handleStop was
+    // assigned as mr.onstop at start and its closure has stale state.
+    const recordedSeconds = secondsRef.current;
     sessionRef.current = null;
+    secondsRef.current = 0;
 
     // Discard recordings shorter than 20s — likely accidental and too short for useful clinical data.
     if (recordedSeconds < 20) {
@@ -239,7 +246,7 @@ const GlobalVoiceRecorderFAB = () => {
         patient_id: snap.patientId || null,
         assessment_id: snap.assessmentId || null,
         status: "processing",
-        duration_seconds: seconds,
+        duration_seconds: recordedSeconds,
         language,
       };
       const { data: vn, error: insErr } = await supabase
