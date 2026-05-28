@@ -101,6 +101,11 @@ const GlobalVoiceRecorderFAB = () => {
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const tickRef = useRef<number | null>(null);
+  // Authoritative elapsed-seconds counter. We can't rely on the `seconds`
+  // state inside handleStop because handleStop is assigned as mr.onstop at
+  // recording start and closes over a stale value (0) — that's why valid
+  // recordings were being reported as "0s" and discarded.
+  const secondsRef = useRef(0);
   // Snapshot of session at recording start — so the upload still has correct
   // patient/professional context even if the user navigates away mid-record.
   const sessionRef = useRef<VoiceRecorderSession | null>(null);
@@ -115,13 +120,10 @@ const GlobalVoiceRecorderFAB = () => {
   const startTick = () => {
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = window.setInterval(() => {
-      setSeconds((s) => {
-        if (s + 1 >= MAX_DURATION_SEC) {
-          stopRecording();
-          return s + 1;
-        }
-        return s + 1;
-      });
+      secondsRef.current += 1;
+      const next = secondsRef.current;
+      setSeconds(next);
+      if (next >= MAX_DURATION_SEC) stopRecording();
     }, 1000);
   };
 
