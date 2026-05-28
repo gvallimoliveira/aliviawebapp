@@ -137,7 +137,24 @@ export default function VoiceRecorderFAB({
     streamRef.current = null;
     const blob = new Blob(chunksRef.current, { type: chunksRef.current[0]?.type || "audio/webm" });
     chunksRef.current = [];
+    const recordedSeconds = seconds;
+
+    // Discard short accidental recordings (<20s)
+    if (recordedSeconds < 20) {
+      toast({
+        title: isPt ? "Gravação descartada" : "Recording discarded",
+        description: isPt
+          ? `Gravações com menos de 20s são ignoradas (esta teve ${recordedSeconds}s).`
+          : `Recordings under 20s are discarded (this one was ${recordedSeconds}s).`,
+      });
+      setSeconds(0);
+      setState("idle");
+      return;
+    }
+
     setState("uploading");
+
+
 
     try {
       if (!user?.id) throw new Error("Not authenticated");

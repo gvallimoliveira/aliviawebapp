@@ -209,12 +209,28 @@ const GlobalVoiceRecorderFAB = () => {
     const blob = new Blob(chunksRef.current, { type: chunksRef.current[0]?.type || "audio/webm" });
     chunksRef.current = [];
     const snap = sessionRef.current;
+    const recordedSeconds = seconds;
     sessionRef.current = null;
+
+    // Discard recordings shorter than 20s — likely accidental and too short for useful clinical data.
+    if (recordedSeconds < 20) {
+      toast({
+        title: isPt ? "Gravação descartada" : "Recording discarded",
+        description: isPt
+          ? `Gravações com menos de 20s são ignoradas (esta teve ${recordedSeconds}s). Inicie uma nova gravação mais longa.`
+          : `Recordings under 20s are discarded (this one was ${recordedSeconds}s). Start a longer recording.`,
+      });
+      setSeconds(0);
+      setState("idle");
+      return;
+    }
+
     setState("uploading");
 
     try {
       if (!user?.id) throw new Error("Not authenticated");
       if (!snap) throw new Error("No session");
+
 
       const insertRow: any = {
         created_by: user.id,
