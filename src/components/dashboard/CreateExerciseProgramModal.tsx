@@ -152,6 +152,14 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         .order("category");
       setExercises(data || []);
 
+      // Load saved templates of this professional
+      const { data: tpls } = await (supabase as any)
+        .from("hep_templates")
+        .select("id, name, description, notes, body_region, items")
+        .eq("professional_id", professionalId)
+        .order("created_at", { ascending: false });
+      setSavedTemplates((tpls || []) as SavedTemplate[]);
+
       // If editing, load existing program items
       if (editProgramId) {
         const { data: program } = await (supabase as any)
