@@ -123,9 +123,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Diagnóstico
   const [clinicalImpression, setClinicalImpression] = useState("");
   const [diagnosisText, setDiagnosisText] = useState("");
+  // Full AI diagnosis payload (hypothesis, summary, reasoning, confidence) — used on save
+  // so the hypothesis is the AI's actual hypothesis, not the first line of a JSON dump
+  // or a fallback to the clinical impression text.
+  const [aiDiagnosis, setAiDiagnosis] = useState<any | null>(null);
 
   // Tratamento
   const [treatmentText, setTreatmentText] = useState("");
+  const [aiTreatment, setAiTreatment] = useState<any | null>(null);
 
   // Build region groups: dedupe by id, sort alphabetically by current language label
   const regionGroups: RegionGroup[] = (() => {
