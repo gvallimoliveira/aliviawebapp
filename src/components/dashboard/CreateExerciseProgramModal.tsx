@@ -374,16 +374,18 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       const { data, error } = await (supabase as any)
         .from("hep_templates")
         .insert({
-          professional_id: professionalId,
+          professional_id: professionalId || null,
+          clinic_id: clinicId || null,
           name: templateName.trim(),
           description: templateDescription.trim() || null,
           notes: notes || null,
           body_region: selected[0]?.exercise.body_region || "general",
           items,
         })
-        .select("id, name, description, notes, body_region, items")
+        .select("id, name, description, notes, body_region, items, professional_id, clinic_id")
         .single();
       if (error) throw error;
+
       setSavedTemplates([data as SavedTemplate, ...savedTemplates]);
       setShowSaveTemplate(false);
       setTemplateName("");
