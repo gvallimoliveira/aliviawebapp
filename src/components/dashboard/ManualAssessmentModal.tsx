@@ -471,26 +471,40 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       if (clinicId) row.clinic_id = clinicId;
       else row.professional_id = professionalId;
 
-      const { data, error } = await supabase.from("assessments").insert(row).select("id").single();
-      if (error) throw error;
+      let savedId: string | undefined;
+      if (isEditing && editAssessment?.id) {
+        const { data, error } = await supabase
+          .from("assessments")
+          .update(row)
+          .eq("id", editAssessment.id)
+          .select("id")
+          .single();
+        if (error) throw error;
+        savedId = data?.id;
+      } else {
+        const { data, error } = await supabase.from("assessments").insert(row).select("id").single();
+        if (error) throw error;
+        savedId = data?.id;
 
-      // Attach any unlinked voice notes from this professional in the last hour to this assessment
-      if (data?.id && user?.id) {
-        const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-        await supabase
-          .from("assessment_voice_notes")
-          .update({ assessment_id: data.id })
-          .eq("created_by", user.id)
-          .eq("professional_id", professionalId)
-          .is("assessment_id", null)
-          .gte("created_at", cutoff);
+        // Attach any unlinked voice notes from this professional in the last hour to this assessment
+        if (savedId && user?.id) {
+          const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+          await supabase
+            .from("assessment_voice_notes")
+            .update({ assessment_id: savedId })
+            .eq("created_by", user.id)
+            .eq("professional_id", professionalId)
+            .is("assessment_id", null)
+            .gte("created_at", cutoff);
+        }
       }
 
-      toast({ title: isPt ? "Avaliação criada!" : "Assessment created!" });
-      void draft.discard();
+      toast({ title: isEditing ? (isPt ? "Avaliação atualizada!" : "Assessment updated!") : (isPt ? "Avaliação criada!" : "Assessment created!") });
+      if (!isEditing) void draft.discard();
+      if (savedId) onSaved?.(savedId);
       onOpenChange(false);
       resetForm();
-      if (navigateAfter && data?.id) navigate(`/assessment/view/${data.id}?from=professional`);
+      if (navigateAfter && savedId && !isEditing) navigate(`/assessment/view/${savedId}?from=professional`);
     } catch (err: any) {
       console.error("Save assessment error:", err);
       toast({ title: isPt ? "Erro ao salvar" : "Save error", description: err.message, variant: "destructive" });
