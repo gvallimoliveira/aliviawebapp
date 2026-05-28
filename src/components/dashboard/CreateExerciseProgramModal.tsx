@@ -157,13 +157,19 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         .order("category");
       setExercises(data || []);
 
-      // Load saved templates of this professional
-      const { data: tpls } = await (supabase as any)
+      // Load saved templates: own professional + (if in clinic mode) all clinic templates
+      let tplsQuery = (supabase as any)
         .from("hep_templates")
-        .select("id, name, description, notes, body_region, items")
-        .eq("professional_id", professionalId)
+        .select("id, name, description, notes, body_region, items, professional_id, clinic_id")
         .order("created_at", { ascending: false });
+      if (clinicId) {
+        tplsQuery = tplsQuery.or(`professional_id.eq.${professionalId},clinic_id.eq.${clinicId}`);
+      } else {
+        tplsQuery = tplsQuery.eq("professional_id", professionalId);
+      }
+      const { data: tpls } = await tplsQuery;
       setSavedTemplates((tpls || []) as SavedTemplate[]);
+
 
       // If editing, load existing program items
       if (editProgramId) {
