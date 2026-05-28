@@ -51,6 +51,10 @@ interface ManualAssessmentModalProps {
   clinicId?: string | null;
   patientName: string;
   patientEmail?: string;
+  /** When provided, the modal edits this existing assessment instead of creating a new one. */
+  editAssessment?: any | null;
+  /** Called after a successful save (insert or update). */
+  onSaved?: (assessmentId: string) => void;
 }
 
 const RED_FLAGS_PT = [
