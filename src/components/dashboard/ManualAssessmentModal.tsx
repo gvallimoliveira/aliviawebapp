@@ -421,8 +421,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           redFlags: redFlagsChecked,
           questionnaireResults: questionnaireResults.map((r) => ({
             name: r.questionnaireName,
-            score: r.score,
-            interpretation: r.interpretation,
+            score: r.totalScore,
+            severity: r.severity,
+            interpretation: isPt ? r.interpretation_pt : r.interpretation_en,
           })),
           currentTestsText: functionalTests,
           language,
