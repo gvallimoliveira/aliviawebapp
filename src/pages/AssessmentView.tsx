@@ -769,6 +769,43 @@ const AssessmentView = () => {
         {/* Voice notes (AI transcription) tied to this assessment */}
         <VoiceNoteCard assessmentId={assessment.id} />
 
+        {/* Treatment Plan — exibido por último, colapsável (fechado por padrão) */}
+        {assessment.treatment_plan && (
+          <div id="treatment-plan-section">
+            <Card>
+              <CardContent className="py-3">
+                <CollapsibleSection
+                  storageKey={`assessment:${assessment.id}:treatment`}
+                  defaultOpen={false}
+                  header={
+                    <div className="text-base font-semibold flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      {isPt ? "Plano de Tratamento" : "Treatment Plan"}
+                    </div>
+                  }
+                >
+                  <div className="pt-3">
+                    <TreatmentPlan
+                      plan={assessment.treatment_plan}
+                      diagnosis={assessment.diagnosis}
+                      assessmentId={assessment.id}
+                      anamnesisData={anamnesis}
+                      painRegions={painRegions}
+                      testResults={assessment.test_results}
+                      mode={assessment.type === "professional" ? "professional" : undefined}
+                      patientName={assessment.patient_name || undefined}
+                      onBack={() => {
+                        document.getElementById("treatment-plan-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                      onNewAssessment={() => navigate("/assessment/premium")}
+                    />
+                  </div>
+                </CollapsibleSection>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* No diagnosis yet */}
         {!assessment.diagnosis && (
           <Card className="border-dashed">
