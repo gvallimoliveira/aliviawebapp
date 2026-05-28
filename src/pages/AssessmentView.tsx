@@ -325,7 +325,7 @@ const AssessmentView = () => {
           setLoading(false);
         });
     }
-  }, [user, id, navigate]);
+  }, [user, id, navigate, reloadKey]);
 
   const scrollToTreatment = () => {
     setShowTreatment(true);
