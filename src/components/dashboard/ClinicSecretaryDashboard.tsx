@@ -47,7 +47,12 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [assignTarget, setAssignTarget] = useState<string>("");
   const [patientDetailOpen, setPatientDetailOpen] = useState(false);
-  const [metricsCollapsed, setMetricsCollapsed] = useState(false);
+  const [metricsCollapsed, setMetricsCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem("aliviA:metricsCollapsed:clinicSecretary") === "1"; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("aliviA:metricsCollapsed:clinicSecretary", metricsCollapsed ? "1" : "0"); } catch {}
+  }, [metricsCollapsed]);
 
   useEffect(() => {
     if (!activeClinic) return;

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import DiagnosisResult from "@/components/assessment/DiagnosisResult";
 import TreatmentPlan from "@/components/assessment/TreatmentPlan";
+import VoiceNoteCard from "@/components/dashboard/VoiceNoteCard";
 import FinalHypothesisEditor from "@/components/dashboard/FinalHypothesisEditor";
 import { getDisplayHypothesis, useCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 import PainMapView from "@/components/assessment/PainMapView";
@@ -610,6 +611,9 @@ const AssessmentView = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Voice notes (AI transcription) tied to this assessment */}
+        <VoiceNoteCard assessmentId={assessment.id} />
 
         {/* Diagnosis */}
         {assessment.diagnosis && !showTreatment && (
