@@ -501,7 +501,7 @@ const AssessmentView = () => {
         </Card>
 
         {/* Diagnosis (clinical conclusion — appears first below header) */}
-        {assessment.diagnosis && !showTreatment && (
+        {assessment.diagnosis && (
           <>
             <DiagnosisResult
               diagnosis={
@@ -513,7 +513,7 @@ const AssessmentView = () => {
               onBack={goBack}
               onNewAssessment={() => navigate("/assessment/premium")}
               onGenerateTreatment={
-                assessment.treatment_plan ? () => setShowTreatment(true) : undefined
+                assessment.treatment_plan ? scrollToTreatment : undefined
               }
             />
             {canEditFinalHypothesis && (
@@ -538,23 +538,7 @@ const AssessmentView = () => {
           </>
         )}
 
-        {/* Treatment Plan */}
-        {assessment.treatment_plan && showTreatment && (
-          <TreatmentPlan
-            plan={assessment.treatment_plan}
-            diagnosis={assessment.diagnosis}
-            assessmentId={assessment.id}
-            anamnesisData={anamnesis}
-            painRegions={painRegions}
-            testResults={assessment.test_results}
-            mode={assessment.type === "professional" ? "professional" : undefined}
-            patientName={assessment.patient_name || undefined}
-            onBack={() => setShowTreatment(false)}
-            onNewAssessment={() => navigate("/assessment/premium")}
-          />
-        )}
-
-        {/* Blurred Treatment Preview for Professional Assessments */}
+        {/* Blurred Treatment Preview for Professional Assessments (sem plano gerado) */}
         {assessment.type === "professional" && assessment.diagnosis && !assessment.treatment_plan && !showTreatment && (
           <BlurredTreatmentPreview
             onUnlock={async () => {
