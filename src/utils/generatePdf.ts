@@ -10,7 +10,7 @@ import { registerInterFonts } from "./fonts/registerInterFonts";
  * that produces visible character gaps in bold text).
  */
 function createPdfDoc(): jsPDF {
-  const doc = createPdfDoc();
+  const doc = new jsPDF();
   registerInterFonts(doc);
   doc.setFont("Inter", "normal");
   return doc;
