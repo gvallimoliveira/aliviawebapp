@@ -15,10 +15,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload,
+  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload, Sparkles,
 } from "lucide-react";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
+import { HEP_TEMPLATES, type HepTemplate } from "@/data/hepTemplates";
 
 interface Exercise {
   id: string;
@@ -228,6 +229,38 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
   const totalCount = selected.length + customExercises.filter(c => c.name.trim()).length;
 
+  const applyTemplate = (tpl: HepTemplate) => {
+    const lib = exercises;
+    const newSelected: SelectedExercise[] = [];
+    const missing: string[] = [];
+    tpl.items.forEach((it) => {
+      const ex = lib.find((e) => e.id === it.exerciseId);
+      if (!ex) {
+        missing.push(it.exerciseId);
+        return;
+      }
+      // Skip duplicates already selected
+      if (selected.some((s) => s.exercise.id === ex.id)) return;
+      const obsParts: string[] = [];
+      if (it.stage) obsParts.push(`[${it.stage}]`);
+      if (it.observations) obsParts.push(it.observations);
+      newSelected.push({
+        exercise: ex,
+        sets: it.sets,
+        reps: it.reps,
+        frequency: it.frequency,
+        observations: obsParts.join(" "),
+      });
+    });
+    setSelected([...selected, ...newSelected]);
+    const tplNotes = language === "en" ? tpl.notes_en : tpl.notes_pt;
+    setNotes((prev) => (prev ? `${prev}\n\n${tplNotes}` : tplNotes));
+    toast({
+      title: language === "en" ? "Template applied" : "Template aplicado",
+      description: `${newSelected.length} ${language === "en" ? "exercises added" : "exercícios adicionados"}${missing.length ? ` (${missing.length} ${language === "en" ? "missing in library" : "ausentes na biblioteca"})` : ""}`,
+    });
+  };
+
   const handleCreate = async () => {
     if (totalCount === 0) return;
     setCreating(true);
@@ -398,6 +431,35 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               {draft.saving ? "Salvando rascunho..." : "Rascunho salvo"}
             </div>
           )}
+
+          {/* HEP templates */}
+          {HEP_TEMPLATES.length > 0 && !loading && (
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                {language === "en" ? "Reusable templates" : "Templates reutilizáveis"}
+              </div>
+              <Select onValueChange={(id) => {
+                const tpl = HEP_TEMPLATES.find((t) => t.id === id);
+                if (tpl) applyTemplate(tpl);
+              }}>
+                <SelectTrigger className="h-9 text-xs bg-background">
+                  <SelectValue placeholder={language === "en" ? "Apply a template..." : "Aplicar um template..."} />
+                </SelectTrigger>
+                <SelectContent>
+                  {HEP_TEMPLATES.map((tpl) => (
+                    <SelectItem key={tpl.id} value={tpl.id} className="text-xs">
+                      <div className="flex flex-col py-0.5">
+                        <span className="font-medium">{language === "en" ? tpl.name_en : tpl.name_pt}</span>
+                        <span className="text-[10px] text-muted-foreground">{tpl.items.length} {language === "en" ? "exercises" : "exercícios"}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Filters */}
           <div className="flex gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[150px]">

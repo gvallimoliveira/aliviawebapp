@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud } from "lucide-react";
+import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus } from "lucide-react";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { regionsByView } from "@/components/assessment/painMapData";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
@@ -122,6 +122,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
+  const [testSuggestions, setTestSuggestions] = useState<Array<{ name: string; category: string; rationale: string }>>([]);
+  const [suggestingTests, setSuggestingTests] = useState(false);
+  const [addedSuggestions, setAddedSuggestions] = useState<Set<string>>(new Set());
 
   // Diagnóstico
   const [clinicalImpression, setClinicalImpression] = useState("");
@@ -393,6 +396,59 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     } finally {
       setGeneratingTx(false);
     }
+  };
+
+  const generateTestSuggestions = async () => {
+    setSuggestingTests(true);
+    try {
+      const anamnesisSummary = [
+        chiefComplaint && `Queixa principal: ${chiefComplaint}`,
+        history && `História: ${history}`,
+        duration && `Duração: ${duration}`,
+        onset && `Início: ${onset}`,
+        aggravating && `Piora com: ${aggravating}`,
+        relieving && `Alivia com: ${relieving}`,
+        occupation && `Ocupação: ${occupation}`,
+        comorbidities && `Comorbidades: ${comorbidities}`,
+      ].filter(Boolean).join("\n");
+
+      const { data, error } = await supabase.functions.invoke("suggest-functional-tests", {
+        body: {
+          anamnesis: anamnesisSummary,
+          painScore,
+          painType,
+          painRegions: painRegions.map((id) => regionLabelMap[id]?.[isPt ? "label_pt" : "label_en"] || id),
+          redFlags: redFlagsChecked,
+          questionnaireResults: questionnaireResults.map((r) => ({
+            name: r.questionnaireName,
+            score: r.totalScore,
+            severity: r.severity,
+            interpretation: isPt ? r.interpretation_pt : r.interpretation_en,
+          })),
+          currentTestsText: functionalTests,
+          language,
+        },
+      });
+      if (error) throw error;
+      const list = Array.isArray(data?.suggestions) ? data.suggestions : [];
+      if (list.length === 0) throw new Error(isPt ? "Sem sugestões." : "No suggestions.");
+      setTestSuggestions(list);
+      setAddedSuggestions(new Set());
+    } catch (err: any) {
+      toast({
+        title: isPt ? "Erro ao gerar sugestões" : "Error generating suggestions",
+        description: err?.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSuggestingTests(false);
+    }
+  };
+
+  const addSuggestionToTests = (s: { name: string; rationale: string }) => {
+    const line = `- ${s.name}: `;
+    setFunctionalTests((prev) => (prev ? `${prev.trimEnd()}\n${line}` : line));
+    setAddedSuggestions((prev) => new Set(prev).add(s.name));
   };
 
   const handleSave = async (navigateAfter: boolean = false) => {
@@ -742,17 +798,95 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
             {/* STEP 4: TESTES */}
             {step === 4 && (
-              <div>
-                <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
-                <Textarea
-                  value={functionalTests}
-                  onChange={(e) => setFunctionalTests(e.target.value)}
-                  rows={12}
-                  placeholder={isPt
-                    ? "Ex:\n- Slump test: positivo à esquerda\n- Lasègue 45° positivo\n- Força MMII grau 4\n- ADM lombar limitada em flexão\n..."
-                    : "E.g. Slump test: positive on the left, etc."}
-                  className="mt-1 text-sm font-mono"
-                />
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
+                  <Textarea
+                    value={functionalTests}
+                    onChange={(e) => setFunctionalTests(e.target.value)}
+                    rows={12}
+                    placeholder={isPt
+                      ? "Ex:\n- Slump test: positivo à esquerda\n- Lasègue 45° positivo\n- Força MMII grau 4\n- ADM lombar limitada em flexão\n..."
+                      : "E.g. Slump test: positive on the left, etc."}
+                    className="mt-1 text-sm font-mono"
+                  />
+                </div>
+
+                {/* AI-powered test suggestions box */}
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                      <Lightbulb className="h-3.5 w-3.5 text-primary" />
+                      {isPt ? "Sugestões de testes pela IA" : "AI test suggestions"}
+                    </div>
+                    <Button
+                      onClick={generateTestSuggestions}
+                      disabled={suggestingTests || (painRegions.length === 0 && !chiefComplaint)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1"
+                    >
+                      {suggestingTests
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <Sparkles className="h-3 w-3" />}
+                      {testSuggestions.length > 0
+                        ? (isPt ? "Atualizar" : "Refresh")
+                        : (isPt ? "Gerar sugestões" : "Generate suggestions")}
+                    </Button>
+                  </div>
+
+                  {testSuggestions.length === 0 && !suggestingTests && (
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      {isPt
+                        ? "A IA analisa anamnese, regiões de dor, red flags e questionários para sugerir 2-6 testes ortopédicos, de mobilidade, flexibilidade ou controle motor adicionais. Clique em uma sugestão para adicioná-la ao bloco acima."
+                        : "AI analyzes anamnesis, pain regions, red flags and questionnaires to suggest 2-6 additional orthopedic, mobility, flexibility or motor control tests. Click a suggestion to add it above."}
+                    </p>
+                  )}
+
+                  {testSuggestions.length > 0 && (
+                    <div className="space-y-1.5">
+                      {testSuggestions.map((s, i) => {
+                        const added = addedSuggestions.has(s.name);
+                        const catLabel: Record<string, { pt: string; en: string }> = {
+                          orthopedic: { pt: "Ortopédico", en: "Orthopedic" },
+                          mobility: { pt: "Mobilidade", en: "Mobility" },
+                          flexibility: { pt: "Flexibilidade", en: "Flexibility" },
+                          functional: { pt: "Funcional", en: "Functional" },
+                          motor_control: { pt: "Controle motor", en: "Motor control" },
+                          neurodynamic: { pt: "Neurodinâmico", en: "Neurodynamic" },
+                        };
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => addSuggestionToTests(s)}
+                            disabled={added}
+                            className={`w-full text-left rounded-md border p-2 text-xs transition-colors ${
+                              added
+                                ? "border-emerald-500/40 bg-emerald-500/5 cursor-default"
+                                : "border-border bg-background hover:border-primary/50 hover:bg-primary/5"
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-semibold text-foreground">{s.name}</span>
+                                  <Badge variant="outline" className="text-[9px] py-0 px-1.5">
+                                    {catLabel[s.category]?.[isPt ? "pt" : "en"] || s.category}
+                                  </Badge>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">{s.rationale}</p>
+                              </div>
+                              {added
+                                ? <span className="text-[10px] text-emerald-600 shrink-0">{isPt ? "Adicionado" : "Added"}</span>
+                                : <Plus className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

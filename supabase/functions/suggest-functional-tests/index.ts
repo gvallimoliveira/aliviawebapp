@@ -1,0 +1,157 @@
+// Suggest 2-6 functional/orthopedic/mobility tests based on assessment context.
+// Uses Lovable AI Gateway. CORS-enabled, public (verify_jwt=false).
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const {
+      anamnesis,           // free-form anamnesis block
+      painScore,
+      painType,
+      painRegions,
+      redFlags,
+      questionnaireResults,
+      currentTestsText,    // what the professional has already written
+      language,
+    } = await req.json();
+
+    const isPt = language === "pt";
+    const isEs = language === "es";
+    const langLabel = isEs ? "español" : isPt ? "português brasileiro" : "English";
+
+    const systemPrompt = `You are a senior musculoskeletal physiotherapy clinician.
+Your task: based on the assessment data already gathered, suggest between 2 and 6 ADDITIONAL clinical tests the therapist should consider performing, to confirm or rule out hypotheses.
+
+Rules:
+- Suggestions must be SPECIFIC, named tests — orthopedic special tests, functional movement tests, flexibility/mobility assessments, motor control tests, or neurodynamic tests.
+- Each suggestion must be directly relevant to the pain regions and clinical picture provided.
+- Do NOT repeat tests the professional has already mentioned in "currentTestsText".
+- Be concise: each suggestion = test name + 1 short sentence explaining what it screens for and why it is relevant here.
+- Mix categories when useful (orthopedic special test, mobility, motor control, neurodynamic).
+- Order by clinical priority (most informative first).
+- Respond in ${langLabel}.
+- Use the tool to return the structured output. Minimum 2, maximum 6 suggestions.`;
+
+    const userPrompt = `Assessment context:
+- Pain regions: ${(painRegions || []).join(", ") || "N/A"}
+- Pain score (VAS): ${painScore ?? "N/A"}/10
+- Pain type/characteristics: ${painType || "N/A"}
+- Red flags checked: ${(redFlags || []).join("; ") || "none"}
+- Anamnesis: ${anamnesis || "N/A"}
+- Questionnaire results: ${JSON.stringify(questionnaireResults || [])}
+- Tests already documented by the professional:
+"""
+${currentTestsText || "(none yet)"}
+"""
+
+Generate the suggestions now.`;
+
+    const tools = [{
+      type: "function",
+      function: {
+        name: "return_test_suggestions",
+        description: "Return a list of suggested clinical tests with rationale",
+        parameters: {
+          type: "object",
+          properties: {
+            suggestions: {
+              type: "array",
+              minItems: 2,
+              maxItems: 6,
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string", description: "Test name (eg. Neer test, Thomas test, Ober test)" },
+                  category: {
+                    type: "string",
+                    enum: ["orthopedic", "mobility", "flexibility", "functional", "motor_control", "neurodynamic"],
+                  },
+                  rationale: { type: "string", description: "Short sentence explaining why this test fits this case" },
+                },
+                required: ["name", "category", "rationale"],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ["suggestions"],
+          additionalProperties: false,
+        },
+      },
+    }];
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        tools,
+        tool_choice: { type: "function", function: { name: "return_test_suggestions" } },
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("AI gateway error:", response.status, errText);
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "rate_limit" }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "credits_exhausted" }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`AI gateway error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+
+    let suggestions: Array<{ name: string; category: string; rationale: string }> = [];
+    if (toolCall?.function?.arguments) {
+      const args = typeof toolCall.function.arguments === "string"
+        ? JSON.parse(toolCall.function.arguments)
+        : toolCall.function.arguments;
+      suggestions = Array.isArray(args.suggestions) ? args.suggestions.slice(0, 6) : [];
+    } else {
+      const content = result.choices?.[0]?.message?.content || "";
+      try {
+        const parsed = JSON.parse(content);
+        suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 6) : [];
+      } catch {
+        suggestions = [];
+      }
+    }
+
+    return new Response(JSON.stringify({ suggestions }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error("suggest-functional-tests error:", err);
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
