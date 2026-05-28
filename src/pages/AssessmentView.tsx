@@ -396,9 +396,20 @@ const AssessmentView = () => {
           </nav>
         )}
 
-        {/* Delete (top-right). Voltar + Nova Avaliação ficam no rodapé da página. */}
+        {/* Editar (manual) + Excluir. Voltar + Nova Avaliação ficam no rodapé. */}
         {!isDemo && user && (
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-2">
+            {assessment.anamnesis_data?.manualEntry && (assessment.professional_id || assessment.clinic_id) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="h-4 w-4" />
+                {isPt ? "Editar avaliação" : "Edit assessment"}
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -411,6 +422,20 @@ const AssessmentView = () => {
             </Button>
           </div>
         )}
+
+        {editOpen && assessment && (
+          <ManualAssessmentModal
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            professionalId={assessment.professional_id || ""}
+            clinicId={assessment.clinic_id || null}
+            patientName={assessment.patient_name || ""}
+            patientEmail={assessment.patient_email || undefined}
+            editAssessment={assessment}
+            onSaved={() => setReloadKey((k) => k + 1)}
+          />
+        )}
+
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
