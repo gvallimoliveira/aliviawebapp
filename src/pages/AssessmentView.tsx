@@ -289,8 +289,9 @@ const AssessmentView = () => {
   useEffect(() => {
     if (!id) return;
 
-    // Reset view state when switching between assessments to avoid stale
-    // `showTreatment` from a previous assessment hiding the diagnosis of the new one.
+    // Reset view state when switching between assessments. We do NOT auto-open
+    // the treatment plan: clinical data (diagnosis, anamnesis, map, tests) must
+    // appear first; treatment plan is rendered further down as a collapsible.
     setShowTreatment(false);
     setAssessment(null);
     setLoading(true);
@@ -300,9 +301,6 @@ const AssessmentView = () => {
       const mockAssessment = mockPatientAssessments.find(a => a.id === id);
       if (mockAssessment) {
         setAssessment(mockAssessment);
-        if (mockAssessment.treatment_plan) {
-          setShowTreatment(true);
-        }
       } else {
         navigate(backUrl);
       }
@@ -321,14 +319,18 @@ const AssessmentView = () => {
             navigate(backUrl);
           } else {
             setAssessment(normalizeAssessment(data));
-            if (data.treatment_plan) {
-              setShowTreatment(true);
-            }
           }
           setLoading(false);
         });
     }
   }, [user, id, navigate]);
+
+  const scrollToTreatment = () => {
+    setShowTreatment(true);
+    setTimeout(() => {
+      document.getElementById("treatment-plan-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
 
   const isDemo = id?.startsWith("demo-") ?? false;
 
@@ -499,7 +501,7 @@ const AssessmentView = () => {
         </Card>
 
         {/* Diagnosis (clinical conclusion — appears first below header) */}
-        {assessment.diagnosis && !showTreatment && (
+        {assessment.diagnosis && (
           <>
             <DiagnosisResult
               diagnosis={
@@ -511,7 +513,7 @@ const AssessmentView = () => {
               onBack={goBack}
               onNewAssessment={() => navigate("/assessment/premium")}
               onGenerateTreatment={
-                assessment.treatment_plan ? () => setShowTreatment(true) : undefined
+                assessment.treatment_plan ? scrollToTreatment : undefined
               }
             />
             {canEditFinalHypothesis && (
@@ -536,23 +538,7 @@ const AssessmentView = () => {
           </>
         )}
 
-        {/* Treatment Plan */}
-        {assessment.treatment_plan && showTreatment && (
-          <TreatmentPlan
-            plan={assessment.treatment_plan}
-            diagnosis={assessment.diagnosis}
-            assessmentId={assessment.id}
-            anamnesisData={anamnesis}
-            painRegions={painRegions}
-            testResults={assessment.test_results}
-            mode={assessment.type === "professional" ? "professional" : undefined}
-            patientName={assessment.patient_name || undefined}
-            onBack={() => setShowTreatment(false)}
-            onNewAssessment={() => navigate("/assessment/premium")}
-          />
-        )}
-
-        {/* Blurred Treatment Preview for Professional Assessments */}
+        {/* Blurred Treatment Preview for Professional Assessments (sem plano gerado) */}
         {assessment.type === "professional" && assessment.diagnosis && !assessment.treatment_plan && !showTreatment && (
           <BlurredTreatmentPreview
             onUnlock={async () => {
@@ -782,6 +768,43 @@ const AssessmentView = () => {
 
         {/* Voice notes (AI transcription) tied to this assessment */}
         <VoiceNoteCard assessmentId={assessment.id} />
+
+        {/* Treatment Plan — exibido por último, colapsável (fechado por padrão) */}
+        {assessment.treatment_plan && (
+          <div id="treatment-plan-section">
+            <Card>
+              <CardContent className="py-3">
+                <CollapsibleSection
+                  storageKey={`assessment:${assessment.id}:treatment`}
+                  defaultOpen={false}
+                  header={
+                    <div className="text-base font-semibold flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      {isPt ? "Plano de Tratamento" : "Treatment Plan"}
+                    </div>
+                  }
+                >
+                  <div className="pt-3">
+                    <TreatmentPlan
+                      plan={assessment.treatment_plan}
+                      diagnosis={assessment.diagnosis}
+                      assessmentId={assessment.id}
+                      anamnesisData={anamnesis}
+                      painRegions={painRegions}
+                      testResults={assessment.test_results}
+                      mode={assessment.type === "professional" ? "professional" : undefined}
+                      patientName={assessment.patient_name || undefined}
+                      onBack={() => {
+                        document.getElementById("treatment-plan-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                      onNewAssessment={() => navigate("/assessment/premium")}
+                    />
+                  </div>
+                </CollapsibleSection>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* No diagnosis yet */}
         {!assessment.diagnosis && (
