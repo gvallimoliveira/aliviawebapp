@@ -398,6 +398,58 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     }
   };
 
+  const generateTestSuggestions = async () => {
+    setSuggestingTests(true);
+    try {
+      const anamnesisSummary = [
+        chiefComplaint && `Queixa principal: ${chiefComplaint}`,
+        history && `História: ${history}`,
+        duration && `Duração: ${duration}`,
+        onset && `Início: ${onset}`,
+        aggravating && `Piora com: ${aggravating}`,
+        relieving && `Alivia com: ${relieving}`,
+        occupation && `Ocupação: ${occupation}`,
+        comorbidities && `Comorbidades: ${comorbidities}`,
+      ].filter(Boolean).join("\n");
+
+      const { data, error } = await supabase.functions.invoke("suggest-functional-tests", {
+        body: {
+          anamnesis: anamnesisSummary,
+          painScore,
+          painType,
+          painRegions: painRegions.map((id) => regionLabelMap[id]?.[isPt ? "label_pt" : "label_en"] || id),
+          redFlags: redFlagsChecked,
+          questionnaireResults: questionnaireResults.map((r) => ({
+            name: r.questionnaireName,
+            score: r.score,
+            interpretation: r.interpretation,
+          })),
+          currentTestsText: functionalTests,
+          language,
+        },
+      });
+      if (error) throw error;
+      const list = Array.isArray(data?.suggestions) ? data.suggestions : [];
+      if (list.length === 0) throw new Error(isPt ? "Sem sugestões." : "No suggestions.");
+      setTestSuggestions(list);
+      setAddedSuggestions(new Set());
+    } catch (err: any) {
+      toast({
+        title: isPt ? "Erro ao gerar sugestões" : "Error generating suggestions",
+        description: err?.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSuggestingTests(false);
+    }
+  };
+
+  const addSuggestionToTests = (s: { name: string; rationale: string }) => {
+    const line = `- ${s.name}: `;
+    setFunctionalTests((prev) => (prev ? `${prev.trimEnd()}\n${line}` : line));
+    setAddedSuggestions((prev) => new Set(prev).add(s.name));
+  };
+
   const handleSave = async (navigateAfter: boolean = false) => {
     if (!patientName.trim()) {
       toast({ title: isPt ? "Nome do paciente é obrigatório" : "Patient name required", variant: "destructive" });
