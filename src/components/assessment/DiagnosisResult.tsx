@@ -297,17 +297,19 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
       </div>
 
       {/* Actions */}
-      <div className="flex flex-wrap justify-between gap-2 pt-4">
-        <Button variant="outline" onClick={onBack} className="gap-2 rounded-xl">
-          <ArrowLeft className="h-4 w-4" />
-          {t("diagnosis.back")}
-        </Button>
-        <div className="flex gap-2">
-          <Button onClick={onNewAssessment} className="rounded-xl">
-            {t("diagnosis.new_assessment")}
+      {!hideFooterActions && (
+        <div className="flex flex-wrap justify-between gap-2 pt-4">
+          <Button variant="outline" onClick={onBack} className="gap-2 rounded-xl">
+            <ArrowLeft className="h-4 w-4" />
+            {t("diagnosis.back")}
           </Button>
+          <div className="flex gap-2">
+            <Button onClick={onNewAssessment} className="rounded-xl">
+              {t("diagnosis.new_assessment")}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </motion.div>
   );
 };
