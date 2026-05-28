@@ -328,26 +328,36 @@ export default function PatientDetailView(props: any) {
         })()}
       </div>
 
-      {/* Anamnese resumida da última avaliação — com atalho para a avaliação completa (Extra C) */}
+      {/* Anamnese resumida da última avaliação — colapsável (Extra C: atalho ver completa) */}
       {latestAnamnesisFields.length > 0 && (
         <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <CardTitle className="text-base flex items-center gap-2"><ClipboardList className="h-4 w-4 text-primary" />Anamnese — Última Avaliação</CardTitle>
-                <CardDescription className="text-xs">{new Date(latestAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</CardDescription>
-              </div>
-              {latestWithDiagnosis && (
-                <Button variant="ghost" size="sm" className="gap-1.5 -mt-1 -mr-2 text-xs shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}>
-                  <FileText className="h-3.5 w-3.5" />
-                  {language === "pt" ? "Ver completa" : language === "es" ? "Ver completa" : "View full"}
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent><div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">{latestAnamnesisFields.map((f: any, i: number) => <div key={i} className="space-y-0.5"><span className="text-muted-foreground font-medium">{f.label}</span><p className="text-foreground">{f.value}</p></div>)}</div></CardContent>
+          <CardContent className="py-3">
+            <CollapsibleSection
+              storageKey={`patient:${patient.groupKey || patient.email}:anamnese`}
+              defaultOpen
+              header={
+                <div className="flex items-start justify-between gap-2 pr-2">
+                  <div>
+                    <div className="text-base font-semibold flex items-center gap-2"><ClipboardList className="h-4 w-4 text-primary" />Anamnese — Última Avaliação</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{new Date(latestAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</div>
+                  </div>
+                  {latestWithDiagnosis && (
+                    <Button variant="ghost" size="sm" className="gap-1.5 -mt-1 -mr-2 text-xs shrink-0" onClick={(e) => { e.stopPropagation(); navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email)); }}>
+                      <FileText className="h-3.5 w-3.5" />
+                      {language === "pt" ? "Ver completa" : language === "es" ? "Ver completa" : "View full"}
+                    </Button>
+                  )}
+                </div>
+              }
+            >
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pt-2">{latestAnamnesisFields.map((f: any, i: number) => <div key={i} className="space-y-0.5"><span className="text-muted-foreground font-medium">{f.label}</span><p className="text-foreground">{f.value}</p></div>)}</div>
+            </CollapsibleSection>
+          </CardContent>
         </Card>
       )}
+
+      <Separator className="opacity-40" />
+
 
       {/* Linha do tempo das avaliações (visão longitudinal sobe acima dos gráficos detalhados) */}
       <AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
