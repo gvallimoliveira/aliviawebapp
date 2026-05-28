@@ -152,6 +152,7 @@ const GlobalVoiceRecorderFAB = () => {
       mr.onstop = handleStop;
       recRef.current = mr;
       sessionRef.current = session;
+      secondsRef.current = 0;
       mr.start(1000);
       setState("recording");
       setSeconds(0);
