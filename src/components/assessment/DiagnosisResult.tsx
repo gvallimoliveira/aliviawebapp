@@ -1,16 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Share2, Timer, Loader2, Download } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Timer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 
-import { generateBasicReportPdfBlob, generateAssessmentPdfBlob } from "@/utils/generatePdf";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface Diagnosis {
   hypothesis: string;
@@ -56,10 +52,7 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
 
 const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData, testResults }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [sharingPdf, setSharingPdf] = useState(false);
-  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   // 5-minute countdown timer for basic mode urgency
   const [secondsLeft, setSecondsLeft] = useState(300);
@@ -309,143 +302,6 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
           {t("diagnosis.back")}
         </Button>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="gap-2 rounded-xl text-emerald-600 border-emerald-300 hover:bg-emerald-50"
-            disabled={sharingPdf}
-            onClick={async () => {
-              setSharingPdf(true);
-              try {
-                const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
-                const hasPremiumData = mode === "premium" && testResults;
-                const pdfBlob = hasPremiumData
-                  ? await generateAssessmentPdfBlob({
-                      diagnosis,
-                      language,
-                      userName: patientName || "",
-                      anamnesisData: anamnesisData || undefined,
-                      painRegions: painRegions || undefined,
-                      testResults,
-                    })
-                  : await generateBasicReportPdfBlob({
-                      diagnosis,
-                      language,
-                      patientName: patientName || undefined,
-                      painRegions: painRegions || undefined,
-                      painScore: painScore,
-                      anamnesisData: anamnesisData || undefined,
-                    });
-
-                const nativeShareResult = await sharePdfFile({
-                  blob: pdfBlob,
-                  fileName: `AliviA_Resultado_${(patientName || "Paciente").replace(/\s+/g, "_")}.pdf`,
-                  title: "Aliv.iA",
-                  text: language === "pt" ? `Relatório em PDF de ${patientName || "Paciente"}` : `PDF report for ${patientName || "Patient"}`,
-                });
-
-                if (nativeShareResult === "shared" || nativeShareResult === "cancelled") {
-                  return;
-                }
-
-                const origin = getPublicOrigin();
-                const confidenceLine = diagnosis.confidence === "high" ? `\n📊 *${t("diagnosis.confidence_label")}:* ${conf.label}` : "";
-                let pdfUrl = "";
-
-                if (assessmentId) {
-                  const filePath = `${assessmentId}_${Date.now()}.pdf`;
-                  const { error: uploadError } = await supabase.storage
-                    .from("assessment-reports")
-                    .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
-
-                  if (!uploadError) {
-                    const { data: urlData } = supabase.storage
-                      .from("assessment-reports")
-                      .getPublicUrl(filePath);
-                    pdfUrl = urlData.publicUrl;
-                  } else {
-                    console.warn("PDF upload failed, falling back to local download:", uploadError);
-                  }
-                }
-
-                // If upload failed or no assessmentId, download locally
-                if (!pdfUrl) {
-                  const url = URL.createObjectURL(pdfBlob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `AliviA_Resultado.pdf`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                  toast({
-                    title: language === "pt" ? "PDF baixado" : "PDF downloaded",
-                    description: language === "pt" ? "O arquivo foi salvo para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The file was saved for manual sharing because direct attachment was not available on this device.",
-                  });
-                  return;
-                }
-
-                const pdfLine = pdfUrl ? `\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${pdfUrl}` : "";
-                const text = `🩺 *Aliv.iA — ${t("diagnosis.result_title")}*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${confidenceLine}${pdfLine}\n\n💡 ${t("diagnosis.whatsapp_cta")}\n${origin}`;
-                await shareTextOrOpenWhatsApp(text, "Aliv.iA");
-              } catch (err) {
-                console.error("PDF sharing error:", err);
-                toast({
-                  title: language === "pt" ? "Erro ao gerar PDF" : "Error generating PDF",
-                  description: language === "pt" ? "Tente novamente." : "Please try again.",
-                  variant: "destructive",
-                });
-              } finally {
-                setSharingPdf(false);
-              }
-            }}
-          >
-            {sharingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
-            WhatsApp
-          </Button>
-          <Button
-            variant="outline"
-            className="gap-2 rounded-xl"
-            disabled={downloadingPdf}
-            onClick={async () => {
-              setDownloadingPdf(true);
-              try {
-                const hasPremiumData = mode === "premium" && testResults;
-                const pdfBlob = hasPremiumData
-                  ? await generateAssessmentPdfBlob({
-                      diagnosis,
-                      language,
-                      userName: patientName || "",
-                      anamnesisData: anamnesisData || undefined,
-                      painRegions: painRegions || undefined,
-                      testResults,
-                    })
-                  : await generateBasicReportPdfBlob({
-                      diagnosis,
-                      language,
-                      patientName: patientName || undefined,
-                      painRegions: painRegions || undefined,
-                      painScore: painScore,
-                      anamnesisData: anamnesisData || undefined,
-                    });
-                const url = URL.createObjectURL(pdfBlob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `AliviA_Resultado.pdf`;
-                a.click();
-                URL.revokeObjectURL(url);
-              } catch (err) {
-                console.error("PDF download error:", err);
-                toast({
-                  title: language === "pt" ? "Erro ao gerar PDF" : "Error generating PDF",
-                  description: language === "pt" ? "Tente novamente." : "Please try again.",
-                  variant: "destructive",
-                });
-              } finally {
-                setDownloadingPdf(false);
-              }
-            }}
-          >
-            {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            PDF
-          </Button>
           <Button onClick={onNewAssessment} className="rounded-xl">
             {t("diagnosis.new_assessment")}
           </Button>
