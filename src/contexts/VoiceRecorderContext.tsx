@@ -213,8 +213,11 @@ const GlobalVoiceRecorderFAB = () => {
     const blob = new Blob(chunksRef.current, { type: chunksRef.current[0]?.type || "audio/webm" });
     chunksRef.current = [];
     const snap = sessionRef.current;
-    const recordedSeconds = seconds;
+    // IMPORTANT: read from ref, not from `seconds` state — handleStop was
+    // assigned as mr.onstop at start and its closure has stale state.
+    const recordedSeconds = secondsRef.current;
     sessionRef.current = null;
+    secondsRef.current = 0;
 
     // Discard recordings shorter than 20s — likely accidental and too short for useful clinical data.
     if (recordedSeconds < 20) {
