@@ -12,7 +12,7 @@
  * they want the FAB to be visible/active and `detach()` when they leave.
  */
 import {
-  createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode,
+  createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import { Mic, Square, Pause, Play, Loader2, X } from "lucide-react";
