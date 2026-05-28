@@ -53,6 +53,10 @@ const DiagnosticHypothesisBlock = ({ assessment, isDemo }: DiagnosticHypothesisB
   const hasOverride = !!(localFinal && localFinal.trim());
   const formattedDate = localFinalAt ? new Date(localFinalAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : null;
 
+  const assessmentDate = assessment?.created_at
+    ? new Date(assessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
+    : null;
+
   return (
     <>
       <Card className="border-primary/20">
@@ -62,6 +66,9 @@ const DiagnosticHypothesisBlock = ({ assessment, isDemo }: DiagnosticHypothesisB
             Hipótese Diagnóstica
             {hasOverride && <Badge variant="secondary" className="text-[10px] ml-1">Revisada pelo fisioterapeuta</Badge>}
           </CardTitle>
+          {assessmentDate && (
+            <CardDescription className="text-xs">Caso atual — avaliação de {assessmentDate}</CardDescription>
+          )}
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="text-sm font-semibold text-foreground leading-relaxed">{displayed}</p>
