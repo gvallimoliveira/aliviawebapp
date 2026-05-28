@@ -25,6 +25,8 @@ import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResult
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
 import { normalizeAssessment } from "@/lib/anamnesisCompat";
+import CollapsibleSection from "@/components/ui/CollapsibleSection";
+import { Separator } from "@/components/ui/separator";
 
 // Translate i18n keys for display
 function translateKey(key: string, isPt: boolean): string {
