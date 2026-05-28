@@ -246,7 +246,7 @@ const GlobalVoiceRecorderFAB = () => {
         patient_id: snap.patientId || null,
         assessment_id: snap.assessmentId || null,
         status: "processing",
-        duration_seconds: seconds,
+        duration_seconds: recordedSeconds,
         language,
       };
       const { data: vn, error: insErr } = await supabase
