@@ -8,6 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import AssessmentTimeline from "../AssessmentTimeline";
+import CollapsibleSection from "@/components/ui/CollapsibleSection";
+import { Separator } from "@/components/ui/separator";
 import CreateExerciseProgramModal from "../CreateExerciseProgramModal";
 import ManualAssessmentModal from "../ManualAssessmentModal";
 import FinalHypothesisEditor from "../FinalHypothesisEditor";
