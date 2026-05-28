@@ -287,6 +287,12 @@ const AssessmentView = () => {
   useEffect(() => {
     if (!id) return;
 
+    // Reset view state when switching between assessments to avoid stale
+    // `showTreatment` from a previous assessment hiding the diagnosis of the new one.
+    setShowTreatment(false);
+    setAssessment(null);
+    setLoading(true);
+
     // Handle demo/simulated assessments
     if (id.startsWith("demo-")) {
       const mockAssessment = mockPatientAssessments.find(a => a.id === id);
