@@ -1190,6 +1190,10 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                 setTimeout(scrollToAnchor, 360);
               }
             }}
+            onAssessmentsDeleted={(ids) => {
+              const idSet = new Set(ids);
+              setPatientAssessments((prev) => prev.filter((a) => !idSet.has(a.id)));
+            }}
           />
         </DashboardErrorBoundary>
       </div>
