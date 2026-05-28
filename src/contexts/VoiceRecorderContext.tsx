@@ -286,7 +286,7 @@ const GlobalVoiceRecorderFAB = () => {
   if (!visible) return null;
   if (typeof document === "undefined") return null;
 
-  const onDragPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+  const onDragPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     // Only drag with the dedicated handle (so internal buttons still get clicks).
     if (!(e.target as HTMLElement).closest("[data-voice-drag-handle]")) return;
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -298,7 +298,7 @@ const GlobalVoiceRecorderFAB = () => {
       moved: false,
     };
   };
-  const onDragPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  const onDragPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
     if (!d) return;
     const dx = e.clientX - d.startX;
@@ -310,7 +310,7 @@ const GlobalVoiceRecorderFAB = () => {
     const nextBottom = Math.max(8, Math.min(vh - 80, d.startBottom - dy));
     setPos({ right: nextRight, bottom: nextBottom });
   };
-  const onDragPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+  const onDragPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
     dragRef.current = null;
   };
