@@ -295,7 +295,25 @@ export default function PatientDetailView(props: any) {
 
         {(() => {
           const allPending = getPendingTreatmentAssessments(patient.assessments);
-          const others = latestWithDiagnosis ? allPending.filter((a: any) => a.id !== latestWithDiagnosis.id) : allPending;
+          const rawOthers = latestWithDiagnosis ? allPending.filter((a: any) => a.id !== latestWithDiagnosis.id) : allPending;
+          // Only suggest treatment unlock for the MOST RECENT pending assessment per body region.
+          // If the latest (already shown above) covers a region, hide any older pending assessment
+          // that shares any of those regions — the current clinical picture supersedes them.
+          const normRegions = (a: any): string[] => Array.isArray(a.pain_regions) ? [...a.pain_regions].map((r: any) => String(r).toLowerCase().trim()).filter(Boolean).sort() : [];
+          const latestRegions = new Set(latestWithDiagnosis ? normRegions(latestWithDiagnosis) : []);
+          const sortedDesc = [...rawOthers].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          const seenRegionKeys = new Set<string>();
+          const others: any[] = [];
+          for (const a of sortedDesc) {
+            const regions = normRegions(a);
+            // Skip if any region overlaps with the latest assessment's regions
+            if (latestRegions.size > 0 && regions.some((r) => latestRegions.has(r))) continue;
+            // Group key: sorted joined regions (or "__no_region__" if empty)
+            const key = regions.length > 0 ? regions.join("|") : "__no_region__";
+            if (seenRegionKeys.has(key)) continue;
+            seenRegionKeys.add(key);
+            others.push(a);
+          }
           if (others.length === 0) return null;
           const isClinic = !!clinicId;
           const headerColor = isClinic ? "text-primary" : "text-amber-700";
