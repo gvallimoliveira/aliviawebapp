@@ -860,7 +860,19 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               {selected.map((s) => (
                 <Card key={s.exercise.id} className="overflow-hidden">
                   <CardContent className="py-2.5 px-3 space-y-2">
-                    <p className="text-sm font-medium text-foreground">{getName(s.exercise)}</p>
+                    <div className="flex items-start gap-2">
+                      <p className="text-sm font-medium text-foreground flex-1 min-w-0">{getName(s.exercise)}</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 text-destructive hover:bg-destructive/10"
+                        onClick={() => removeSelected(s.exercise.id)}
+                        title={language === "en" ? "Remove exercise" : "Remover exercício"}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
                         <Label className="text-[10px]">Séries</Label>
