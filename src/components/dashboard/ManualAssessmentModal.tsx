@@ -751,7 +751,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             </span>
           )}
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={handleSave} disabled={saving}>
+            <Button variant="ghost" size="sm" onClick={() => handleSave(false)} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {isPt ? "Salvar agora" : "Save now"}
             </Button>
@@ -760,9 +760,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 {isPt ? "Avançar" : "Next"} <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5">
+              <Button size="sm" onClick={() => handleSave(false)} disabled={saving} className="gap-1.5">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {isPt ? "Finalizar e abrir" : "Finish & open"}
+                {isPt ? "Finalizar" : "Finish"}
               </Button>
             )}
           </div>
