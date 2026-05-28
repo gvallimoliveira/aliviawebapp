@@ -122,7 +122,37 @@ const AssessmentView = () => {
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [whatsappLoading, setWhatsappLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const isPt = language === "pt";
+
+  const handleDelete = async () => {
+    if (!assessment?.id) return;
+    setDeleting(true);
+    try {
+      // Best-effort cleanup of related rows; assessment delete will succeed if RLS permits.
+      await (supabase as any).from("professional_notes").delete().eq("assessment_id", assessment.id);
+      await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", assessment.id);
+      const { data: programs } = await (supabase as any)
+        .from("exercise_programs").select("id").eq("assessment_id", assessment.id);
+      if (programs && Array.isArray(programs)) {
+        for (const prog of programs) {
+          await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
+          await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
+        }
+      }
+      const { error } = await supabase.from("assessments").delete().eq("id", assessment.id);
+      if (error) throw error;
+      toast({ title: isPt ? "Avaliação excluída" : "Assessment deleted" });
+      goBack();
+    } catch (err: any) {
+      console.error("Delete assessment error:", err);
+      toast({ title: isPt ? "Erro ao excluir avaliação" : "Error deleting assessment", description: err?.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+    }
+  };
 
   const handleDownloadPdf = async () => {
     if (!assessment?.diagnosis) return;
