@@ -202,6 +202,7 @@ const GlobalVoiceRecorderFAB = () => {
     recRef.current = null;
     sessionRef.current = null;
     stopTick();
+    secondsRef.current = 0;
     setSeconds(0);
     setState("idle");
   };
