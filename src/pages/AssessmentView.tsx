@@ -289,8 +289,9 @@ const AssessmentView = () => {
   useEffect(() => {
     if (!id) return;
 
-    // Reset view state when switching between assessments to avoid stale
-    // `showTreatment` from a previous assessment hiding the diagnosis of the new one.
+    // Reset view state when switching between assessments. We do NOT auto-open
+    // the treatment plan: clinical data (diagnosis, anamnesis, map, tests) must
+    // appear first; treatment plan is rendered further down as a collapsible.
     setShowTreatment(false);
     setAssessment(null);
     setLoading(true);
@@ -300,9 +301,6 @@ const AssessmentView = () => {
       const mockAssessment = mockPatientAssessments.find(a => a.id === id);
       if (mockAssessment) {
         setAssessment(mockAssessment);
-        if (mockAssessment.treatment_plan) {
-          setShowTreatment(true);
-        }
       } else {
         navigate(backUrl);
       }
@@ -321,14 +319,18 @@ const AssessmentView = () => {
             navigate(backUrl);
           } else {
             setAssessment(normalizeAssessment(data));
-            if (data.treatment_plan) {
-              setShowTreatment(true);
-            }
           }
           setLoading(false);
         });
     }
   }, [user, id, navigate]);
+
+  const scrollToTreatment = () => {
+    setShowTreatment(true);
+    setTimeout(() => {
+      document.getElementById("treatment-plan-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
 
   const isDemo = id?.startsWith("demo-") ?? false;
 
