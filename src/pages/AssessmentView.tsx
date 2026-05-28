@@ -127,6 +127,8 @@ const AssessmentView = () => {
   const [whatsappLoading, setWhatsappLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const isPt = language === "pt";
 
   const handleDelete = async () => {
