@@ -1,6 +1,20 @@
 import jsPDF from "jspdf";
 import { regionsByView, type View, type ClickableRegion } from "@/components/assessment/painMapData";
 import { questionnaires, getApplicableQuestionnaires } from "@/data/questionnaireData";
+import { registerInterFonts } from "./fonts/registerInterFonts";
+
+/**
+ * Creates a new jsPDF document with the embedded Inter font family registered.
+ * Always use this instead of `new jsPDF()` so that text renders consistently
+ * across every PDF viewer (avoids the Standard-14 Helvetica substitution bug
+ * that produces visible character gaps in bold text).
+ */
+function createPdfDoc(): jsPDF {
+  const doc = new jsPDF();
+  registerInterFonts(doc);
+  doc.setFont("Inter", "normal");
+  return doc;
+}
 
 interface Exercise {
   name: string;
