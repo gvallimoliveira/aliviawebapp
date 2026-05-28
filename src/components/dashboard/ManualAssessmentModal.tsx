@@ -279,16 +279,32 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     try {
       const { data, error } = await supabase.functions.invoke("generate-diagnosis", {
         body: {
-          anamnesis: buildAnamnesisData(),
-          painRegions,
-          painScore,
-          testResults: { functionalTests, questionnaires: questionnaireResults },
+          // Edge function expects `anamnesisData` (not `anamnesis`) and reads
+          // painRegions / painScore / painTypes from inside it.
+          anamnesisData: {
+            ...buildAnamnesisData(),
+            painRegions,
+            painScore,
+            painTypes: painType ? [painType] : [],
+          },
+          questionnaireResults,
+          mode: "professional",
           language,
         },
       });
       if (error) throw error;
       const dx = data?.diagnosis || data;
-      setDiagnosisText(typeof dx === "string" ? dx : JSON.stringify(dx, null, 2));
+      if (dx && typeof dx === "object" && (dx.hypothesis || dx.summary)) {
+        setAiDiagnosis(dx);
+        const parts: string[] = [];
+        if (dx.hypothesis) parts.push(String(dx.hypothesis));
+        if (dx.summary) parts.push("", String(dx.summary));
+        if (dx.reasoning) parts.push("", String(dx.reasoning));
+        setDiagnosisText(parts.join("\n"));
+      } else {
+        setAiDiagnosis(null);
+        setDiagnosisText(typeof dx === "string" ? dx : JSON.stringify(dx, null, 2));
+      }
       toast({ title: isPt ? "Diagnóstico gerado!" : "Diagnosis generated!" });
     } catch (err: any) {
       toast({ title: isPt ? "Erro na IA" : "AI error", description: err.message, variant: "destructive" });
@@ -302,16 +318,28 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     try {
       const { data, error } = await supabase.functions.invoke("generate-treatment", {
         body: {
-          anamnesis: buildAnamnesisData(),
-          painRegions,
-          painScore,
-          diagnosis: diagnosisText,
+          anamnesisData: {
+            ...buildAnamnesisData(),
+            painRegions,
+            painScore,
+          },
+          questionnaireResults,
+          diagnosis: aiDiagnosis || (diagnosisText ? { summary: diagnosisText } : null),
+          mode: "professional",
           language,
         },
       });
       if (error) throw error;
       const tx = data?.treatment_plan || data?.treatment || data;
-      setTreatmentText(typeof tx === "string" ? tx : JSON.stringify(tx, null, 2));
+      if (tx && typeof tx === "object") {
+        setAiTreatment(tx);
+        // Build a readable summary; keep the full object on save.
+        if (typeof tx.summary === "string") setTreatmentText(tx.summary);
+        else setTreatmentText(JSON.stringify(tx, null, 2));
+      } else {
+        setAiTreatment(null);
+        setTreatmentText(typeof tx === "string" ? tx : JSON.stringify(tx, null, 2));
+      }
       toast({ title: isPt ? "Plano gerado!" : "Plan generated!" });
     } catch (err: any) {
       toast({ title: isPt ? "Erro na IA" : "AI error", description: err.message, variant: "destructive" });
