@@ -43,6 +43,8 @@ interface UseAutosaveDraftResult<T> {
   draftPayload: T | null;
   restore: () => T | null;
   discard: () => Promise<void>;
+  /** Força um salvamento imediato (local + nuvem), ignorando o debounce. */
+  flush: () => Promise<void>;
   saving: boolean;
   /** Última vez que algo foi salvo. Use para um pequeno "Rascunho salvo" no UI. */
   lastSavedAt: Date | null;
