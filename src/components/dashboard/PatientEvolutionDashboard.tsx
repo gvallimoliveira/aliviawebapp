@@ -153,6 +153,8 @@ interface PatientEvolutionDashboardProps {
   allowQuickNote?: boolean;
   /** Fired whenever the selected patient (detail view) changes. Null = back to list. */
   onSelectionChange?: (selected: string | null) => void;
+  /** Fired after assessments are deleted (patient delete or single delete) so parent can refresh local state. */
+  onAssessmentsDeleted?: (assessmentIds: string[]) => void;
 }
 
 interface PatientGroup {
@@ -178,7 +180,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   extreme: "bg-destructive",
 };
 
-const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient, allowManualAssessment, allowAssessmentLink, allowQuickNote, onSelectionChange }: PatientEvolutionDashboardProps) => {
+const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient, allowManualAssessment, allowAssessmentLink, allowQuickNote, onSelectionChange, onAssessmentsDeleted }: PatientEvolutionDashboardProps) => {
   // Normalize legacy snake_case anamnesis keys + test_results object→array shape
   // so older manual assessments are fully readable in the UI.
   const assessments = useMemo(
@@ -556,6 +558,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         .eq("patient_email", groupKey);
 
       setSelectedEmail(null);
+      onAssessmentsDeleted?.(assessmentIds);
       toast({ title: "Paciente e dados excluídos permanentemente" });
     } catch (err: any) {
       console.error("Delete patient error:", err);
