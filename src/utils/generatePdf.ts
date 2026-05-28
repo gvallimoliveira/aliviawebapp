@@ -1,6 +1,20 @@
 import jsPDF from "jspdf";
 import { regionsByView, type View, type ClickableRegion } from "@/components/assessment/painMapData";
 import { questionnaires, getApplicableQuestionnaires } from "@/data/questionnaireData";
+import { registerInterFonts } from "./fonts/registerInterFonts";
+
+/**
+ * Creates a new jsPDF document with the embedded Inter font family registered.
+ * Always use this instead of `new jsPDF()` so that text renders consistently
+ * across every PDF viewer (avoids the Standard-14 Helvetica substitution bug
+ * that produces visible character gaps in bold text).
+ */
+function createPdfDoc(): jsPDF {
+  const doc = new jsPDF();
+  registerInterFonts(doc);
+  doc.setFont("Inter", "normal");
+  return doc;
+}
 
 interface Exercise {
   name: string;
@@ -127,13 +141,13 @@ function drawResponsibleBlock(
   doc.line(lineX, y, lineX + lineW, y);
   y += 4.5;
 
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.foreground);
   doc.text(prof.name || (isPt ? "Responsável Técnico" : "Technical Responsible"), PAGE_WIDTH / 2, y, { align: "center" });
   y += 4;
 
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Inter", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
   const crefitoTxt = prof.crefito
@@ -213,7 +227,7 @@ function drawBadge(
   fg: [number, number, number]
 ) {
   doc.setFontSize(7);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   const tw = doc.getTextWidth(text);
   const padX = 4, padY = 2, h = 8;
   drawRoundedRect(doc, x, y - padY - 3, tw + padX * 2, h, 2, bg);
@@ -238,7 +252,7 @@ function drawBadge(
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface TextCardStyle {
-  font: "helvetica";
+  font: "Inter";
   weight: "normal" | "bold" | "italic" | "bolditalic";
   size: number;
   /** vertical line spacing in mm (per text line) */
@@ -326,7 +340,7 @@ function drawTextCard(
   let labelLines: string[] = [];
   let labelLineH = 0;
   if (opts.label) {
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Inter", "bold");
     doc.setFontSize(opts.label.size ?? Math.max(opts.body.size, 8));
     labelLineH = (opts.label.size ?? Math.max(opts.body.size, 8)) * 0.45 + 1.5;
     labelLines = doc.splitTextToSize(sanitizePdfText(opts.label.text), innerW) as string[];
@@ -350,7 +364,7 @@ function drawTextCard(
   // 2) Render label (if any)
   let cursorY = y + padY;
   if (labelLines.length > 0 && opts.label) {
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Inter", "bold");
     doc.setFontSize(opts.label.size ?? Math.max(opts.body.size, 8));
     doc.setTextColor(...opts.label.color);
     for (const ln of labelLines) {
@@ -633,13 +647,13 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
 
   for (const field of fields) {
     y = checkPage(doc, y, 10);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Inter", "bold");
     doc.setFontSize(8);
     doc.setTextColor(...COLORS.foreground);
     const labelText = `${field.label}: `;
     doc.text(labelText, SECTION_X, y);
     const labelW = doc.getTextWidth(labelText);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Inter", "normal");
     doc.setTextColor(...COLORS.muted);
     const availW = SECTION_TEXT_W - labelW;
     const valueLines = doc.splitTextToSize(field.value, availW > 30 ? availW : SECTION_TEXT_W);
@@ -675,7 +689,7 @@ async function renderPainMapSection(doc: jsPDF, y: number, painRegions: string[]
     try {
       doc.addImage(img.dataUrl, "PNG", startX, y, mapW, mapH);
       // View label below
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Inter", "normal");
       doc.setFontSize(7);
       doc.setTextColor(...COLORS.muted);
       const labelW = doc.getTextWidth(img.view);
@@ -726,7 +740,7 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
       const cardStartY = y - 2;
 
       // Abbreviated name (bold, larger)
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
       doc.setFontSize(10);
       doc.setTextColor(...COLORS.foreground);
       doc.text(qName, MARGIN + 5, y + 2);
@@ -736,7 +750,7 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
         severity === "minimal" ? COLORS.green :
         severity === "mild" ? [60, 130, 200] as [number, number, number] :
         severity === "moderate" ? COLORS.yellow : COLORS.red;
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
       doc.setFontSize(16);
       doc.setTextColor(...sevColor);
       const pctText = `${pct}%`;
@@ -746,7 +760,7 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
 
       // Full name (muted, smaller)
       if (fullNameLines.length > 0) {
-        doc.setFont("helvetica", "normal");
+        doc.setFont("Inter", "normal");
         doc.setFontSize(7);
         doc.setTextColor(...COLORS.muted);
         doc.text(fullNameLines, MARGIN + 5, y);
@@ -756,7 +770,7 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
       // Interpretation (colored)
       if (interpLines.length > 0) {
         y += 1;
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Inter", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...sevColor);
         doc.text(interpLines, MARGIN + 5, y);
@@ -775,14 +789,14 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
               ? (isPt ? qDef.subscaleLabels[key].pt : qDef.subscaleLabels[key].en)
               : key;
             const xPos = MARGIN + 5 + col * colW;
-            doc.setFont("helvetica", "normal");
+            doc.setFont("Inter", "normal");
             doc.setTextColor(...COLORS.muted);
             const labelText = label + ":";
             const truncLabel = doc.getTextWidth(labelText) > colW - 12
               ? labelText.substring(0, 18) + "…:"
               : labelText;
             doc.text(truncLabel, xPos, y);
-            doc.setFont("helvetica", "bold");
+            doc.setFont("Inter", "bold");
             doc.setTextColor(...COLORS.foreground);
             doc.text(`${score}%`, xPos + colW - 12, y);
           }
@@ -793,7 +807,7 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
       // Scale note (italic, muted)
       if (qDef) {
         y += 0.5;
-        doc.setFont("helvetica", "italic");
+        doc.setFont("Inter", "italic");
         doc.setFontSize(6);
         doc.setTextColor(160, 155, 148);
         const scaleNote = qDef.scoringDirection === "higher_better"
@@ -824,12 +838,12 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
       const name = test.name || test.testName || test.id || "";
       const result = test.result || test.score || test.value || "";
       if (name) {
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Inter", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
         doc.text(`${name}: `, SECTION_X, y);
         const lw = doc.getTextWidth(`${name}: `);
-        doc.setFont("helvetica", "normal");
+        doc.setFont("Inter", "normal");
         doc.setTextColor(...COLORS.muted);
         const availW = SECTION_TEXT_W - lw;
         const resultLines = doc.splitTextToSize(String(result), availW > 30 ? availW : SECTION_TEXT_W);
@@ -852,7 +866,7 @@ export async function generateAssessmentPdfBlob(options: PdfOptions): Promise<Bl
 function renderVasBar(doc: jsPDF, barX: number, y: number, barW: number, barH: number, score: number, label?: string, isPt?: boolean): number {
   // Label above bar if provided
   if (label) {
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Inter", "bold");
     doc.setFontSize(8);
     doc.setTextColor(...COLORS.foreground);
     doc.text(label, barX, y);
@@ -892,14 +906,14 @@ function renderVasBar(doc: jsPDF, barX: number, y: number, barW: number, barH: n
   doc.setDrawColor(...COLORS.foreground);
   doc.setLineWidth(1);
   doc.circle(markerX, y + barH / 2, 4, "FD");
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.foreground);
   doc.text(`${score}`, markerX - (score >= 10 ? 2.5 : 1.5), y + barH / 2 + 2.5);
   y += barH + 3;
 
   // End labels
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Inter", "normal");
   doc.setFontSize(7);
   doc.setTextColor(...COLORS.muted);
   const noPainLabel = isPt ? "Sem dor" : "No pain";
@@ -908,7 +922,7 @@ function renderVasBar(doc: jsPDF, barX: number, y: number, barW: number, barH: n
   doc.text(worstLabel, barX + barW - doc.getTextWidth(worstLabel), y + 3);
 
   // Score text centered
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(10);
   const scoreColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
   doc.setTextColor(...scoreColor);
@@ -943,7 +957,7 @@ function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: numbe
 
     // Average
     if (score != null) {
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
       doc.setFontSize(8);
       const avgColor: [number, number, number] = score <= 3 ? COLORS.green : score <= 6 ? COLORS.yellow : COLORS.red;
       doc.setTextColor(...avgColor);
@@ -973,7 +987,7 @@ interface BasicReportOptions {
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
-  const doc = new jsPDF();
+  const doc = createPdfDoc();
   const isPt = options.language === "pt";
   let y = MARGIN;
 
@@ -991,13 +1005,13 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
       textStartX = MARGIN + logoW + 3;
     } catch { /* fallback */ }
   }
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
   doc.text("Aliv.iA", textStartX, titleY);
   doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Inter", "normal");
   doc.text(isPt ? "Resultado da Avaliação Básica" : "Basic Assessment Result", textStartX, titleY + 9);
   doc.setFontSize(8);
   const dateStr = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -1007,12 +1021,12 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   // Patient name
   if (options.patientName) {
     drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 4, COLORS.background, COLORS.border);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Inter", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...COLORS.foreground);
     const pLabel = isPt ? "Paciente: " : "Patient: ";
     doc.text(pLabel, MARGIN + 6, y + 9);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Inter", "normal");
     doc.text(options.patientName, MARGIN + 6 + doc.getTextWidth(pLabel), y + 9);
     y += 20;
   }
@@ -1026,7 +1040,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     stroke: COLORS.primary,
     padX: 8,
     padY: 7,
-    body: { font: "helvetica", weight: "bold", size: 11, lineHeight: 5, textColor: COLORS.primary },
+    body: { font: "Inter", weight: "bold", size: 11, lineHeight: 5, textColor: COLORS.primary },
   });
   y += 2;
 
@@ -1096,7 +1110,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, upsellH, 4, COLORS.primaryLight, COLORS.primary);
   
   // Title with icon
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(11);
   doc.setTextColor(...COLORS.primary);
   doc.text(upsellTitle, MARGIN + 8, y + 11);
@@ -1107,7 +1121,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.line(MARGIN + 8, y + 14, MARGIN + CONTENT_WIDTH - 8, y + 14);
   
   // Bullets
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Inter", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...COLORS.foreground);
   let bulletY = y + 20;
@@ -1131,7 +1145,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     doc.addImage(logoBase64, "PNG", MARGIN + CONTENT_WIDTH - 6 - logoMotSize - 2, motBoxY, logoMotSize, logoMotSize);
   }
   
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
   for (let i = 0; i < motivationalLines.length; i++) {
@@ -1149,7 +1163,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     padX: 6,
     padY: 6,
     label: { text: isPt ? "AVISO IMPORTANTE" : "IMPORTANT DISCLAIMER", color: COLORS.red, size: 8 },
-    body: { font: "helvetica", weight: "normal", size: 7, lineHeight: 3.6, textColor: [100, 80, 80] },
+    body: { font: "Inter", weight: "normal", size: 7, lineHeight: 3.6, textColor: [100, 80, 80] },
     bottomSafety: 1,
   });
 
@@ -1170,7 +1184,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
       } catch { /* fallback */ }
     }
     doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Inter", "normal");
     doc.setTextColor(...COLORS.muted);
     doc.text(`Aliv.iA — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`, footerTextX, 290);
     doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - 8, 290);
@@ -1186,7 +1200,7 @@ export async function generateAssessmentPdf(options: PdfOptions) {
 }
 
 async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
-  const doc = new jsPDF();
+  const doc = createPdfDoc();
   const isPt = language === "pt";
   let y = MARGIN;
 
@@ -1209,13 +1223,13 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     } catch { /* fallback without logo */ }
   }
 
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
   doc.text(isClinicBranded && clinicName ? clinicName : "Aliv.iA", textStartX, titleY);
   doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Inter", "normal");
   doc.text(isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report", textStartX, titleY + 9);
   doc.setFontSize(8);
   const dateStr = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", {
@@ -1235,12 +1249,12 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   // ── Patient Info ──
   if (userName) {
     drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 4, COLORS.background, COLORS.border);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Inter", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...COLORS.foreground);
     doc.text(isPt ? "Paciente: " : "Patient: ", MARGIN + 6, y + 9);
     const labelW = doc.getTextWidth(isPt ? "Paciente: " : "Patient: ");
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Inter", "normal");
     doc.text(userName, MARGIN + 6 + labelW, y + 9);
     y += 20;
   }
@@ -1254,7 +1268,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     stroke: COLORS.primary,
     padX: 8,
     padY: 7,
-    body: { font: "helvetica", weight: "bold", size: 11, lineHeight: 5, textColor: COLORS.primary },
+    body: { font: "Inter", weight: "bold", size: 11, lineHeight: 5, textColor: COLORS.primary },
   });
   y += 2;
 
@@ -1284,7 +1298,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     y = checkPage(doc, y, 50);
     y += 4;
     const ciTitle = isPt ? "Impressão Clínica" : "Clinical Impression";
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Inter", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...COLORS.primary);
     doc.text(ciTitle, MARGIN, y);
@@ -1296,7 +1310,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
       stroke: COLORS.primary,
       padX: 8,
       padY: 7,
-      body: { font: "helvetica", weight: "italic", size: 9, lineHeight: 4.5, textColor: COLORS.foreground },
+      body: { font: "Inter", weight: "italic", size: 9, lineHeight: 4.5, textColor: COLORS.foreground },
       bottomSafety: 2,
     });
     y += 1;
@@ -1304,7 +1318,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     // Therapeutic objectives — badges em flow horizontal, com wrap por linha
     if (clinicalImpression.therapeuticObjectives?.length > 0) {
       y = checkPage(doc, y, 18);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...COLORS.foreground);
       const objLabel = isPt ? "Objetivos Terapêuticos:" : "Therapeutic Objectives:";
@@ -1320,7 +1334,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
       let rowH = badgeH;
 
       doc.setFontSize(7);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
 
       clinicalImpression.therapeuticObjectives.forEach((obj: string) => {
         const tw = doc.getTextWidth(obj);
@@ -1406,11 +1420,11 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
 
       // Phase header bar
       drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 3, pc.bg, pc.color);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
       doc.setFontSize(10);
       doc.setTextColor(...pc.color);
       doc.text(pc.label[language] || pc.label.en, MARGIN + 6, y + 9);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Inter", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...COLORS.muted);
       doc.text(phase.duration, PAGE_WIDTH - MARGIN - doc.getTextWidth(phase.duration) - 6, y + 9);
@@ -1419,14 +1433,14 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
       // Goal & Focus — RIGID: label on its own line indent, value wraps fully within SECTION_TEXT_W
       if (phase.goal) {
         const labelGoal = isPt ? "Objetivo:" : "Goal:";
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Inter", "bold");
         doc.setFontSize(8);
         const labelGoalW = doc.getTextWidth(labelGoal + " ");
         const goalLines = doc.splitTextToSize(phase.goal, SECTION_TEXT_W - labelGoalW - 2);
         y = checkPage(doc, y, goalLines.length * 3.5 + 4);
         doc.setTextColor(...COLORS.foreground);
         doc.text(labelGoal, SECTION_X, y);
-        doc.setFont("helvetica", "normal");
+        doc.setFont("Inter", "normal");
         doc.setTextColor(...COLORS.muted);
         doc.text(goalLines, SECTION_X + labelGoalW + 2, y);
         y += goalLines.length * 3.5 + 4;
@@ -1434,14 +1448,14 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
 
       if (phase.focus) {
         const labelFocus = isPt ? "Foco:" : "Focus:";
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Inter", "bold");
         doc.setFontSize(8);
         const labelFocusW = doc.getTextWidth(labelFocus + " ");
         const focusLines = doc.splitTextToSize(phase.focus, SECTION_TEXT_W - labelFocusW - 2);
         y = checkPage(doc, y, focusLines.length * 3.5 + 4);
         doc.setTextColor(...COLORS.foreground);
         doc.text(labelFocus, SECTION_X, y);
-        doc.setFont("helvetica", "normal");
+        doc.setFont("Inter", "normal");
         doc.setTextColor(...COLORS.muted);
         doc.text(focusLines, SECTION_X + labelFocusW + 2, y);
         y += focusLines.length * 3.5 + 4;
@@ -1450,18 +1464,18 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
       // Exercises
       for (const ex of phase.exercises) {
         // Pre-compute heights to keep entire exercise block together
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Inter", "bold");
         doc.setFontSize(8);
         const exNameFull = `- ${ex.name}`;
         const nameLines = doc.splitTextToSize(exNameFull, LIST_TEXT_W);
-        doc.setFont("helvetica", "normal");
+        doc.setFont("Inter", "normal");
         doc.setFontSize(7.5);
         const descLines = doc.splitTextToSize(ex.description, LIST_TEXT_W - 4);
         const blockH = nameLines.length * 3.8 + 4 + descLines.length * 3.5 + 6;
         y = checkPage(doc, y, blockH);
 
         // Exercise name — always on its own line(s); category badge BELOW name to avoid overlap
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Inter", "bold");
         doc.setFontSize(8);
         doc.setTextColor(...COLORS.foreground);
         doc.text(nameLines, LIST_X, y);
@@ -1470,14 +1484,14 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
         // Category badge on its own line, indented (small, muted, no measurement overlap risk)
         const catLabel = ex.category.replace(/_/g, " ");
         const catBadgeText = `[${catLabel}]`;
-        doc.setFont("helvetica", "italic");
+        doc.setFont("Inter", "italic");
         doc.setFontSize(6);
         doc.setTextColor(...COLORS.muted);
         doc.text(catBadgeText, LIST_X + 4, y);
         y += 3.5;
 
         // Description
-        doc.setFont("helvetica", "normal");
+        doc.setFont("Inter", "normal");
         doc.setFontSize(7.5);
         doc.setTextColor(...COLORS.muted);
         doc.text(descLines, LIST_X + 4, y);
@@ -1499,12 +1513,12 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     if (treatmentPlan.generalGuidelines && treatmentPlan.generalGuidelines.length > 0) {
       // Keep title + first guideline together
       y = checkPage(doc, y, 26);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...COLORS.foreground);
       doc.text(isPt ? "Orientacoes Gerais" : "General Guidelines", SECTION_X, y);
       y += 6;
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Inter", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...COLORS.muted);
       for (const g of treatmentPlan.generalGuidelines) {
@@ -1536,7 +1550,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
       stroke: COLORS.border,
       padX: 6,
       padY: 7,
-      body: { font: "helvetica", weight: "italic", size: 8, lineHeight: 4, textColor: COLORS.muted },
+      body: { font: "Inter", weight: "italic", size: 8, lineHeight: 4, textColor: COLORS.muted },
       bottomSafety: 2,
     });
     y += 4;
@@ -1559,7 +1573,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     padX: 6,
     padY: 6,
     label: { text: isPt ? "AVISO IMPORTANTE" : "IMPORTANT DISCLAIMER", color: COLORS.red, size: 8 },
-    body: { font: "helvetica", weight: "normal", size: 7, lineHeight: 3.6, textColor: [100, 80, 80] },
+    body: { font: "Inter", weight: "normal", size: 7, lineHeight: 3.6, textColor: [100, 80, 80] },
     bottomSafety: 1,
   });
 
@@ -1585,7 +1599,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
       } catch { /* fallback */ }
     }
     doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Inter", "normal");
     doc.setTextColor(...COLORS.muted);
     doc.text(`Aliv.iA — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`, footerTextX, 290);
 
@@ -1608,7 +1622,7 @@ function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number
   doc.setDrawColor(...color);
   doc.setLineWidth(2);
   doc.line(MARGIN, y, MARGIN + 12, y);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(13);
   doc.setTextColor(...color);
   doc.text(title, MARGIN + 16, y + 1);
@@ -1623,12 +1637,12 @@ function renderSubSection(doc: jsPDF, y: number, title: string, body: string): n
   const minBodyLines = Math.min(lines.length, 3);
   const neededForGroup = 5 + minBodyLines * 3.5 + 6;
   y = checkPage(doc, y, neededForGroup);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.foreground);
   doc.text(title, SECTION_X, y);
   y += 5;
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Inter", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
   y = checkPage(doc, y, lines.length * 3.5);
@@ -1672,7 +1686,7 @@ export interface EvolutionPdfOptions {
 }
 
 export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Promise<Blob> {
-  const doc = new jsPDF();
+  const doc = createPdfDoc();
   const isPt = options.language === "pt";
   const isEs = options.language === "es";
   let y = MARGIN;
@@ -1694,13 +1708,13 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
       textStartX = MARGIN + logoW + 3;
     } catch { /* fallback */ }
   }
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
   doc.text(isClinicBranded && options.clinicName ? options.clinicName : "Aliv.iA", textStartX, titleY);
   doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Inter", "normal");
   const reportTitle = isPt ? "Relatório de Evolução" : isEs ? "Informe de Evolución" : "Evolution Report";
   doc.text(reportTitle, textStartX, titleY + 9);
   doc.setFontSize(8);
@@ -1720,12 +1734,12 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   const periodText = `${firstDate} → ${lastDate} (${options.totalAssessments} ${isPt ? "avaliações" : isEs ? "evaluaciones" : "assessments"})`;
 
   drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 20, 4, COLORS.background, COLORS.border);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.foreground);
   const pLabel = isPt ? "Paciente: " : "Patient: ";
   doc.text(pLabel, MARGIN + 6, y + 8);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Inter", "normal");
   doc.text(options.patientName, MARGIN + 6 + doc.getTextWidth(pLabel), y + 8);
   doc.setFontSize(7);
   doc.setTextColor(...COLORS.muted);
@@ -1743,11 +1757,11 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
 
     // First assessment box
     drawRoundedRect(doc, MARGIN, y, colW, boxH, 4, COLORS.background, COLORS.border);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Inter", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...COLORS.muted);
     doc.text(isPt ? "1ª Avaliação" : "1st Assessment", MARGIN + 6, y + 8);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Inter", "bold");
     doc.setFontSize(18);
     const firstColor: [number, number, number] = firstScore <= 3 ? COLORS.green : firstScore <= 6 ? COLORS.yellow : COLORS.red;
     doc.setTextColor(...firstColor);
@@ -1756,11 +1770,11 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     // Last assessment box
     const lastX = MARGIN + colW + 8;
     drawRoundedRect(doc, lastX, y, colW, boxH, 4, COLORS.background, COLORS.border);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Inter", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...COLORS.muted);
     doc.text(isPt ? "Última Avaliação" : "Last Assessment", lastX + 6, y + 8);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Inter", "bold");
     doc.setFontSize(18);
     const lastColor: [number, number, number] = lastScore <= 3 ? COLORS.green : lastScore <= 6 ? COLORS.yellow : COLORS.red;
     doc.setTextColor(...lastColor);
@@ -1781,7 +1795,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
       : (isPt ? "— Estável" : "— Stable");
 
     drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 10, 3, changeBg);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Inter", "bold");
     doc.setFontSize(8);
     doc.setTextColor(...changeFg);
     doc.text(changeText, MARGIN + 6, y + 7);
@@ -1831,7 +1845,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
       // Table header
       y = checkPage(doc, y, 10 + matched.length * 8);
       drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 8, 2, COLORS.primary);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
       doc.setFontSize(7);
       doc.setTextColor(...COLORS.white);
       let cx = MARGIN + 4;
@@ -1848,13 +1862,13 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
         drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 7, 0, rowBg);
 
         cx = MARGIN + 4;
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Inter", "bold");
         doc.setFontSize(7);
         doc.setTextColor(...COLORS.foreground);
         doc.text(row.name, cx, y + 5);
         cx += colWidths[0];
 
-        doc.setFont("helvetica", "normal");
+        doc.setFont("Inter", "normal");
         doc.setTextColor(...COLORS.muted);
         doc.text(`${row.firstPct}%`, cx, y + 5);
         cx += colWidths[1];
@@ -1862,7 +1876,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
         cx += colWidths[2];
 
         const changeColor: [number, number, number] = row.change < 0 ? COLORS.green : row.change > 0 ? COLORS.red : COLORS.muted;
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Inter", "bold");
         doc.setTextColor(...changeColor);
         const sign = row.change > 0 ? "+" : "";
         doc.text(`${sign}${row.change}%`, cx, y + 5);
@@ -1874,7 +1888,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
 
     // Exclusive questionnaires
     if (onlyFirst.length > 0 || onlyLast.length > 0) {
-      doc.setFont("helvetica", "italic");
+      doc.setFont("Inter", "italic");
       doc.setFontSize(7);
       doc.setTextColor(...COLORS.muted);
       if (onlyFirst.length > 0) {
@@ -1912,12 +1926,12 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     };
 
     if (resolved.length > 0) {
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
       doc.setFontSize(8);
       doc.setTextColor(...COLORS.green);
       doc.text(isPt ? "✓ Resolvidas:" : "✓ Resolved:", SECTION_X, y);
       y += 4;
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Inter", "normal");
       doc.setFontSize(7);
       const resolvedText = resolved.map(regionLabel).join(", ");
       const resolvedLines = doc.splitTextToSize(resolvedText, TEXT_MAX_WIDTH);
@@ -1926,12 +1940,12 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     }
 
     if (newRegions.length > 0) {
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
       doc.setFontSize(8);
       doc.setTextColor(...COLORS.red);
       doc.text(isPt ? "✗ Novas:" : "✗ New:", SECTION_X, y);
       y += 4;
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Inter", "normal");
       doc.setFontSize(7);
       doc.setTextColor(...COLORS.muted);
       const newText = newRegions.map(regionLabel).join(", ");
@@ -1941,12 +1955,12 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     }
 
     if (persistent.length > 0) {
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Inter", "bold");
       doc.setFontSize(8);
       doc.setTextColor(...COLORS.muted);
       doc.text(isPt ? "— Mantidas:" : "— Persistent:", SECTION_X, y);
       y += 4;
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Inter", "normal");
       doc.setFontSize(7);
       const persistText = persistent.map(regionLabel).join(", ");
       const persistLines = doc.splitTextToSize(persistText, TEXT_MAX_WIDTH);
@@ -1964,7 +1978,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     stroke: COLORS.primary,
     padX: 6,
     padY: 7,
-    body: { font: "helvetica", weight: "italic", size: 8, lineHeight: 4, textColor: COLORS.foreground },
+    body: { font: "Inter", weight: "italic", size: 8, lineHeight: 4, textColor: COLORS.foreground },
     bottomSafety: 2,
   });
   y += 4;
@@ -1973,7 +1987,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   y = renderSectionTitle(doc, y, isPt ? "Conclusão" : "Conclusion", COLORS.primary);
   const conclusionLines = doc.splitTextToSize(options.summary.conclusion, TEXT_MAX_WIDTH);
   y = checkPage(doc, y, conclusionLines.length * 3.5 + 16);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Inter", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
   doc.text(conclusionLines, SECTION_X, y);
@@ -2016,7 +2030,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     padX: 6,
     padY: 6,
     label: { text: isPt ? "AVISO IMPORTANTE" : "IMPORTANT DISCLAIMER", color: COLORS.red, size: 8 },
-    body: { font: "helvetica", weight: "normal", size: 7, lineHeight: 3.6, textColor: [100, 80, 80] },
+    body: { font: "Inter", weight: "normal", size: 7, lineHeight: 3.6, textColor: [100, 80, 80] },
     bottomSafety: 1,
   });
 
@@ -2042,7 +2056,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
       } catch { /* fallback */ }
     }
     doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Inter", "normal");
     doc.setTextColor(...COLORS.muted);
     doc.text(`Aliv.iA — ${isPt ? "Relatório de Evolução" : "Evolution Report"}`, footerTextX, 290);
 
