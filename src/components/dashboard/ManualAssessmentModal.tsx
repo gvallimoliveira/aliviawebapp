@@ -384,25 +384,41 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             severity: r.severity,
           };
         }),
-        // Diagnosis: use the shape the rest of the app reads — `hypothesis` + `summary`.
-        // Keep `manual: true` flag and the legacy `text`/`clinicalImpression` keys for backward compat.
-        diagnosis: (diagnosisText || clinicalImpression)
+        // Diagnosis: prefer the AI-generated hypothesis when available. We must NEVER
+        // fall back to the clinical impression for the hypothesis — the hypothesis is
+        // a distinct clinical concept and using the impression as a stand-in produced
+        // misleading diagnoses in the chart/PDF.
+        diagnosis: (aiDiagnosis || diagnosisText || clinicalImpression)
+          ? (() => {
+              const aiHyp = aiDiagnosis?.hypothesis?.toString().trim();
+              const firstLine = diagnosisText.split("\n").map((l) => l.trim()).find(Boolean) || "";
+              // Avoid leaking raw JSON braces as hypothesis text.
+              const cleanFirst = firstLine.startsWith("{") || firstLine.startsWith("[")
+                ? "" : firstLine;
+              const hypothesis = aiHyp || cleanFirst || null;
+              return {
+                manual: true,
+                ...(aiDiagnosis || {}),
+                hypothesis: hypothesis ? hypothesis.slice(0, 280) : null,
+                summary: aiDiagnosis?.summary || diagnosisText || clinicalImpression || null,
+                text: diagnosisText || null,
+                clinicalImpression: aiClinicalImpression
+                  ? aiClinicalImpression
+                  : (clinicalImpression
+                      ? { overview: clinicalImpression, therapeuticObjectives: [] }
+                      : undefined),
+              };
+            })()
+          : null,
+        // Treatment plan: keep the manual flag, the AI structured payload when present,
+        // and the free text under both `text` and `summary` so PDF/AssessmentView can render it.
+        treatment_plan: (aiTreatment || treatmentText)
           ? {
               manual: true,
-              hypothesis: (diagnosisText || clinicalImpression).split("\n")[0]?.slice(0, 280) || null,
-              summary: diagnosisText || clinicalImpression,
-              text: diagnosisText || null,
-              clinicalImpression: aiClinicalImpression
-                ? aiClinicalImpression
-                : (clinicalImpression
-                    ? { overview: clinicalImpression, therapeuticObjectives: [] }
-                    : undefined),
+              ...(aiTreatment || {}),
+              text: treatmentText || null,
+              summary: aiTreatment?.summary || treatmentText || null,
             }
-          : null,
-        // Treatment plan: keep the manual flag + the free text under both `text` and `summary`
-        // so PDF/AssessmentView can render it.
-        treatment_plan: treatmentText
-          ? { manual: true, text: treatmentText, summary: treatmentText }
           : null,
       };
       if (clinicId) row.clinic_id = clinicId;
