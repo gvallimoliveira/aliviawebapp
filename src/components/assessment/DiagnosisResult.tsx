@@ -31,6 +31,7 @@ interface DiagnosisResultProps {
   painScore?: number;
   anamnesisData?: any;
   testResults?: any;
+  hideFooterActions?: boolean;
 }
 
 const BlurredPreview = ({ title, children }: { title: string; children: React.ReactNode }) => (
