@@ -520,7 +520,8 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   if (generatedLink) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-md w-[calc(100vw-1rem)] sm:w-full p-4 sm:p-6">
+        <DialogContent className="max-w-md h-auto max-h-[90vh] flex flex-col p-0 gap-0">
+          <div className="px-4 sm:px-6 py-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Dumbbell className="h-5 w-5 text-primary" />
@@ -538,7 +539,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button onClick={handleWhatsApp} className="flex-1 gap-1.5 rounded-xl" variant="outline">
                 <Share2 className="h-4 w-4" />
                 Enviar via WhatsApp
@@ -547,6 +548,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 Fechar
               </Button>
             </div>
+          </div>
           </div>
         </DialogContent>
       </Dialog>
