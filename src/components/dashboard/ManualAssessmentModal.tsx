@@ -546,7 +546,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
-            {isPt ? "Avaliação Manual" : "Manual Assessment"} — {patientName}
+            {isEditing ? (isPt ? "Editar Avaliação" : "Edit Assessment") : (isPt ? "Avaliação Manual" : "Manual Assessment")} — {patientName}
           </DialogTitle>
           <DialogDescription>
             {isPt
