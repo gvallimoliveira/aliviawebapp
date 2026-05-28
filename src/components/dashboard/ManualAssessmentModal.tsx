@@ -71,7 +71,6 @@ const STEPS = [
   { id: "questionarios", label: "Questionários" },
   { id: "testes", label: "Testes" },
   { id: "diagnostico", label: "Diagnóstico" },
-  { id: "tratamento", label: "Tratamento" },
 ];
 
 const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail }: ManualAssessmentModalProps) => {
