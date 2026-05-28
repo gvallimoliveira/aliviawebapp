@@ -558,6 +558,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         .eq("patient_email", groupKey);
 
       setSelectedEmail(null);
+      onAssessmentsDeleted?.(assessmentIds);
       toast({ title: "Paciente e dados excluídos permanentemente" });
     } catch (err: any) {
       console.error("Delete patient error:", err);
