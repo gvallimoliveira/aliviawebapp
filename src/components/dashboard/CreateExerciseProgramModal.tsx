@@ -78,7 +78,9 @@ interface Props {
   patientName: string;
   assessmentId?: string;
   editProgramId?: string | null;
+  clinicId?: string | null;
 }
+
 
 const categoryLabels: Record<string, Record<string, string>> = {
   strengthening: { pt: "Fortalecimento", en: "Strengthening", es: "Fortalecimiento" },
