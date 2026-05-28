@@ -240,6 +240,10 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     setSelected(selected.map((s) => s.exercise.id === id ? { ...s, [field]: value } : s));
   };
 
+  const removeSelected = (id: string) => {
+    setSelected(selected.filter((s) => s.exercise.id !== id));
+  };
+
   const addCustomExercise = () => {
     setCustomExercises([...customExercises, {
       tempId: crypto.randomUUID(),
