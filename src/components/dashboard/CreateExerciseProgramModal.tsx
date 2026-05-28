@@ -398,6 +398,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     toast({ title: language === "en" ? "Template deleted" : "Template excluído" });
   };
 
+  const handleCreate = async () => {
     if (totalCount === 0) return;
     setCreating(true);
     try {
