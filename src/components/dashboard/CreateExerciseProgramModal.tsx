@@ -229,6 +229,38 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
   const totalCount = selected.length + customExercises.filter(c => c.name.trim()).length;
 
+  const applyTemplate = (tpl: HepTemplate) => {
+    const lib = exercises;
+    const newSelected: SelectedExercise[] = [];
+    const missing: string[] = [];
+    tpl.items.forEach((it) => {
+      const ex = lib.find((e) => e.id === it.exerciseId);
+      if (!ex) {
+        missing.push(it.exerciseId);
+        return;
+      }
+      // Skip duplicates already selected
+      if (selected.some((s) => s.exercise.id === ex.id)) return;
+      const obsParts: string[] = [];
+      if (it.stage) obsParts.push(`[${it.stage}]`);
+      if (it.observations) obsParts.push(it.observations);
+      newSelected.push({
+        exercise: ex,
+        sets: it.sets,
+        reps: it.reps,
+        frequency: it.frequency,
+        observations: obsParts.join(" "),
+      });
+    });
+    setSelected([...selected, ...newSelected]);
+    const tplNotes = language === "en" ? tpl.notes_en : tpl.notes_pt;
+    setNotes((prev) => (prev ? `${prev}\n\n${tplNotes}` : tplNotes));
+    toast({
+      title: language === "en" ? "Template applied" : "Template aplicado",
+      description: `${newSelected.length} ${language === "en" ? "exercises added" : "exercícios adicionados"}${missing.length ? ` (${missing.length} ${language === "en" ? "missing in library" : "ausentes na biblioteca"})` : ""}`,
+    });
+  };
+
   const handleCreate = async () => {
     if (totalCount === 0) return;
     setCreating(true);
