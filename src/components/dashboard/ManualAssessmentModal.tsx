@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -51,6 +51,10 @@ interface ManualAssessmentModalProps {
   clinicId?: string | null;
   patientName: string;
   patientEmail?: string;
+  /** When provided, the modal edits this existing assessment instead of creating a new one. */
+  editAssessment?: any | null;
+  /** Called after a successful save (insert or update). */
+  onSaved?: (assessmentId: string) => void;
 }
 
 const RED_FLAGS_PT = [
@@ -73,7 +77,7 @@ const STEPS = [
   { id: "diagnostico", label: "Diagnóstico" },
 ];
 
-const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail }: ManualAssessmentModalProps) => {
+const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, editAssessment, onSaved }: ManualAssessmentModalProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -163,7 +167,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   // ── Autosave (local + nuvem) ───────────────────────────────────────────────
-  const draftScopeKey = open
+  const isEditing = !!editAssessment?.id;
+  const draftScopeKey = open && !isEditing
     ? `${professionalId}:${(patientEmail || patientName || "").toLowerCase().trim()}`
     : null;
   const draftState = {
@@ -177,7 +182,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     formKey: "manual_assessment",
     scopeKey: draftScopeKey,
     state: draftState,
-    enabled: open,
+    enabled: open && !isEditing,
   });
   const handleRestoreDraft = () => {
     const p = draft.restore();
@@ -204,6 +209,49 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setTreatmentText(p.treatmentText ?? "");
     setAiClinicalImpression(p.aiClinicalImpression ?? null);
   };
+
+  // Prefill from existing assessment when editing
+  const prefilledIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open || !editAssessment?.id) return;
+    if (prefilledIdRef.current === editAssessment.id) return;
+    prefilledIdRef.current = editAssessment.id;
+    const a = editAssessment;
+    const an = a.anamnesis_data || {};
+    setStep(0);
+    setChiefComplaint(an.chiefComplaint || an.customComplaint || (Array.isArray(an.chiefComplaints) ? an.chiefComplaints[0] : "") || "");
+    setHistory(an.history || "");
+    setDuration(an.duration || an.painDuration || "");
+    setOnset(an.onset || "");
+    setAggravating(an.aggravatingFactors || "");
+    setRelieving(an.relievingFactors || "");
+    setMedications(an.medications || "");
+    setPreviousSurgeries(an.previousSurgeries || an.previousTreatments || "");
+    setComorbidities(an.comorbidities || "");
+    setOccupation(an.occupation || "");
+    setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
+    setPainType(an.painType || (Array.isArray(an.painTypes) ? an.painTypes[0] : "") || "");
+    setPainRegions(Array.isArray(a.pain_regions) ? a.pain_regions : []);
+    setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
+    setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
+    setFunctionalTests(an.functionalTests || "");
+    const dx = a.diagnosis || {};
+    setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
+    const ci = dx.clinicalImpression;
+    setAiClinicalImpression(ci?.overview ? ci : null);
+    setClinicalImpression(ci?.overview || "");
+    const dxParts: string[] = [];
+    if (dx.hypothesis) dxParts.push(String(dx.hypothesis));
+    if (dx.summary && dx.summary !== dx.hypothesis) dxParts.push("", String(dx.summary));
+    if (dx.reasoning) dxParts.push("", String(dx.reasoning));
+    setDiagnosisText(dx.text || dxParts.join("\n"));
+    const tx = a.treatment_plan || null;
+    setAiTreatment(tx && typeof tx === "object" ? tx : null);
+    setTreatmentText(tx?.text || tx?.summary || "");
+  }, [open, editAssessment]);
+  useEffect(() => { if (!open) prefilledIdRef.current = null; }, [open]);
+
+
 
 
 
@@ -423,26 +471,40 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       if (clinicId) row.clinic_id = clinicId;
       else row.professional_id = professionalId;
 
-      const { data, error } = await supabase.from("assessments").insert(row).select("id").single();
-      if (error) throw error;
+      let savedId: string | undefined;
+      if (isEditing && editAssessment?.id) {
+        const { data, error } = await supabase
+          .from("assessments")
+          .update(row)
+          .eq("id", editAssessment.id)
+          .select("id")
+          .single();
+        if (error) throw error;
+        savedId = data?.id;
+      } else {
+        const { data, error } = await supabase.from("assessments").insert(row).select("id").single();
+        if (error) throw error;
+        savedId = data?.id;
 
-      // Attach any unlinked voice notes from this professional in the last hour to this assessment
-      if (data?.id && user?.id) {
-        const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-        await supabase
-          .from("assessment_voice_notes")
-          .update({ assessment_id: data.id })
-          .eq("created_by", user.id)
-          .eq("professional_id", professionalId)
-          .is("assessment_id", null)
-          .gte("created_at", cutoff);
+        // Attach any unlinked voice notes from this professional in the last hour to this assessment
+        if (savedId && user?.id) {
+          const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+          await supabase
+            .from("assessment_voice_notes")
+            .update({ assessment_id: savedId })
+            .eq("created_by", user.id)
+            .eq("professional_id", professionalId)
+            .is("assessment_id", null)
+            .gte("created_at", cutoff);
+        }
       }
 
-      toast({ title: isPt ? "Avaliação criada!" : "Assessment created!" });
-      void draft.discard();
+      toast({ title: isEditing ? (isPt ? "Avaliação atualizada!" : "Assessment updated!") : (isPt ? "Avaliação criada!" : "Assessment created!") });
+      if (!isEditing) void draft.discard();
+      if (savedId) onSaved?.(savedId);
       onOpenChange(false);
       resetForm();
-      if (navigateAfter && data?.id) navigate(`/assessment/view/${data.id}?from=professional`);
+      if (navigateAfter && savedId && !isEditing) navigate(`/assessment/view/${savedId}?from=professional`);
     } catch (err: any) {
       console.error("Save assessment error:", err);
       toast({ title: isPt ? "Erro ao salvar" : "Save error", description: err.message, variant: "destructive" });
@@ -484,7 +546,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
-            {isPt ? "Avaliação Manual" : "Manual Assessment"} — {patientName}
+            {isEditing ? (isPt ? "Editar Avaliação" : "Edit Assessment") : (isPt ? "Avaliação Manual" : "Manual Assessment")} — {patientName}
           </DialogTitle>
           <DialogDescription>
             {isPt
@@ -775,7 +837,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             ) : (
               <Button size="sm" onClick={() => handleSave(false)} disabled={saving} className="gap-1.5">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {isPt ? "Finalizar" : "Finish"}
+                {isEditing ? (isPt ? "Salvar alterações" : "Save changes") : (isPt ? "Finalizar" : "Finish")}
               </Button>
             )}
           </div>
