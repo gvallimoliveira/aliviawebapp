@@ -221,7 +221,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       setLoading(false);
     };
     load();
-  }, [open, editProgramId, professionalId]);
+  }, [open, editProgramId, professionalId, clinicId]);
 
   const getName = (ex: Exercise) => language === "en" ? (ex.name_en || ex.name_pt) : ex.name_pt;
 
