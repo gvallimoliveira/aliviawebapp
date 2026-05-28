@@ -462,8 +462,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const stepLabels = isPt
-    ? ["Anamnese", "Dor & Mapa", "Red Flags", "Questionários", "Testes", "Diagnóstico", "Tratamento"]
-    : ["Anamnesis", "Pain & Map", "Red Flags", "Questionnaires", "Tests", "Diagnosis", "Treatment"];
+    ? ["Anamnese", "Dor & Mapa", "Red Flags", "Questionários", "Testes", "Diagnóstico"]
+    : ["Anamnesis", "Pain & Map", "Red Flags", "Questionnaires", "Tests", "Diagnosis"];
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
