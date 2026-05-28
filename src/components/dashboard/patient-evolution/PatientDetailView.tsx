@@ -360,6 +360,8 @@ export default function PatientDetailView(props: any) {
 
 
       {/* Linha do tempo das avaliações (visão longitudinal sobe acima dos gráficos detalhados) */}
+      {/* Linha do tempo das avaliações (visão longitudinal sobe acima dos gráficos detalhados) */}
+      <Separator className="opacity-40" />
       <AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
 
       {/* Gráfico de evolução de dor */}
