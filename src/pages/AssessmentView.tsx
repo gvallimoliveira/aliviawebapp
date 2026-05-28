@@ -537,6 +537,7 @@ const AssessmentView = () => {
               onGenerateTreatment={
                 assessment.treatment_plan ? scrollToTreatment : undefined
               }
+              hideFooterActions
             />
             {canEditFinalHypothesis && (
               <FinalHypothesisEditor
