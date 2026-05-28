@@ -128,6 +128,12 @@ const categories: ToolCategory[] = [
         desc: "Com base no diagnóstico, a IA propõe condutas em fases (educação, controle de dor, ativação, fortalecimento, retorno funcional). Inclui exercícios e progressões.",
       },
       {
+        key: "ai_test_suggestions",
+        icon: Lightbulb,
+        title: "Sugestões de testes na avaliação manual (IA)",
+        desc: "Durante a avaliação manual, a IA analisa a anamnese, regiões de dor e questionários preenchidos nas etapas anteriores e sugere 2 a 6 testes clínicos adicionais (ortopédicos, de mobilidade, neurodinâmicos ou funcionais). Clicando em uma sugestão, o teste é inserido automaticamente no campo de testes funcionais como inspiração para o profissional.",
+      },
+      {
         key: "clinical_impression",
         icon: Brain,
         title: "Impressão clínica evolutiva",
