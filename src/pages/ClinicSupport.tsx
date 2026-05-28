@@ -6,6 +6,7 @@ import {
   ClipboardList, AlertTriangle, FileText, Image as ImageIcon, Brain,
   MessageCircle, Video, Bell, BookOpen, TrendingUp, Shield, CreditCard,
   UserCog, Stethoscope, FileCheck, Sparkles, Heart, Layers, Mic, Archive,
+  Lightbulb,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
