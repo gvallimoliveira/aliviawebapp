@@ -1,105 +1,69 @@
+
 ## Objetivo
 
-Eliminar perda de dados em formulários longos (HEP, Avaliação Manual, Anamnese) quando o app é recarregado por bloqueio de tela, troca de app, refresh ou crash. Estratégia dupla: **autosave local instantâneo + sync para a nuvem**, com prompt "Retomar rascunho" ao reabrir.
+Eliminar a barreira de confirmação de email no signup. Usuário entra direto no sistema em plano básico (com CTAs de upgrade contextuais conforme a landing de origem). Confirmação só é exigida em dois pontos sensíveis: **checkout Stripe** e **recuperação de senha**. Banner persistente lembra o usuário no dashboard.
 
-## Como o usuário vai sentir
+---
 
-1. Ao adicionar o 1º exercício/campo, aparece discretamente "💾 Rascunho salvo" no rodapé do modal.
-2. A cada edição, o rascunho é atualizado (debounce 800ms) — local primeiro, nuvem em background.
-3. Se o app recarrega, ao reabrir o mesmo formulário um banner pergunta: *"Encontramos um rascunho de DD/MM HH:mm com X itens. Retomar ou descartar?"*
-4. Funciona em qualquer dispositivo logado (sync via nuvem) e mesmo offline (cai pro local).
-5. Ao finalizar/salvar de verdade, o rascunho é descartado automaticamente.
+## Mudanças
 
-## Arquitetura
+### 1. Auth — auto-confirmar emails
+- Habilitar `auto_confirm_email: true` no Supabase Auth (via `configure_auth`).
+- Novos signups ficam imediatamente ativos: o `signUp()` já retorna `session`, então o `AuthContext` atual cai direto logado, sem passar por `/verify-email`.
 
-### 1. Tabela `form_drafts` (nuvem)
-Genérica — uma linha por (user, form_key, scope_key).
+### 2. Backfill de usuários presos
+- Migration SQL (admin-only): `UPDATE auth.users SET email_confirmed_at = COALESCE(email_confirmed_at, now()) WHERE email_confirmed_at IS NULL;` — libera todos os cadastros que estavam travados em `/verify-email`.
 
-```text
-form_drafts
-├── id uuid pk
-├── user_id uuid (auth.uid)
-├── form_key text  -- 'hep' | 'manual_assessment' | 'anamnesis'
-├── scope_key text -- ex: patient_email + professional_id, ou assessment_id
-├── payload jsonb  -- estado serializado do formulário
-├── updated_at timestamptz
-└── unique (user_id, form_key, scope_key)
-```
+### 3. Fluxo de signup (`Auth.tsx` / cadastro nas landings)
+- Após `signUp()` bem-sucedido → redirecionar direto para `/dashboard` (ou destino contextual conforme `source` / landing de origem: pro → Gateway com perfil PRO demo; clinic → Dashboard com CTA trial; paciente/landing principal → Dashboard básico).
+- Remover redirect para `/verify-email` no fluxo padrão.
+- `/verify-email` continua existindo, mas só é alcançada manualmente (ex.: botão "Reenviar confirmação" no banner).
 
-RLS: cada usuário só vê/edita os próprios rascunhos. TTL: limpeza automática de drafts >14 dias via cron já existente (`cleanup-old-reports` ou novo).
+### 4. Banner persistente "Confirme seu email"
+- Novo componente `EmailVerificationBanner.tsx` montado no layout do Dashboard (e ClinicDashboard).
+- Aparece quando `user && !user.email_confirmed_at`.
+- Conteúdo: "Confirme seu email para garantir recuperação de senha e recebimento de relatórios" + botão "Reenviar email" (chama `supabase.auth.resend`) + link "Já confirmei, atualizar".
+- Dismissível por sessão (não persistente em localStorage — volta na próxima abertura).
 
-### 2. Hook `useAutosaveDraft<T>`
-Em `src/hooks/useAutosaveDraft.ts`:
+### 5. Gate no checkout Stripe
+- Hooks de pagamento (`useProSubscription.handleSubscribe`, `handleLifetimeCheckout`, `create-clinic-subscription`, `create-pro-treatment-payment`, `create-payment` para Premium) verificam `user.email_confirmed_at` **no frontend antes de invocar a edge function**.
+- Se não confirmado → abrir modal `ConfirmEmailGateDialog` explicando que o recibo Stripe precisa de email válido, com botão "Reenviar confirmação" e instrução para clicar no link e tentar de novo.
+- Não muda lógica das edge functions (mantém compatibilidade).
 
-```text
-useAutosaveDraft({
-  formKey: 'hep',
-  scopeKey: `${professionalId}:${patientEmail}`,
-  state: { selected, customExercises, notes },
-  enabled: open && !generatedLink,
-})
-→ { hasDraft, draftMeta, restore(), discard(), saving }
-```
+### 6. Gate na recuperação de senha
+- `resetPassword` em `AuthContext`: antes de chamar `resetPasswordForEmail`, fazer lookup leve. Como `auth.users` não é acessível pelo client, abordagem alternativa: criar edge function pública `check-email-confirmed` que retorna apenas `{ confirmed: boolean }` para o email informado (sem vazar se a conta existe — sempre 200 OK, `confirmed: false` cobre tanto "não existe" quanto "não confirmado").
+- Se `confirmed: false`, exibir mensagem: "Não conseguimos enviar recuperação. Confirme seu email primeiro ou contate o suporte."
+- Mensagem genérica evita user-enumeration.
 
-Comportamento:
-- **Save**: debounce 800ms → `localStorage` síncrono + `upsert` em `form_drafts` (fire-and-forget, com retry simples).
-- **Load**: ao montar com `enabled`, lê local + nuvem, pega o mais recente, expõe via `hasDraft`.
-- **Discard**: remove ambos.
-- Chave local: `alivia:draft:{formKey}:{scopeKey}`.
-- Ignora salvamento se `state` igual ao último snapshot (hash leve).
+### 7. Atualização da página de Suporte
+- Atualizar `Support.tsx` + `ClinicSupport.tsx` (pt/en/es) com nova seção: "Sobre a confirmação de email — não é mais obrigatória para usar o app, mas necessária para assinar e recuperar senha".
 
-### 3. Componente `DraftResumeBanner`
-Aparece no topo do modal/formulário quando `hasDraft` é true. Dois botões: **Retomar** | **Descartar**.
+### 8. Memória do projeto
+- Atualizar `mem://index.md` Core: substituir referência a "verificação obrigatória" por "email opcional, exigido só em checkout e reset de senha".
+- Atualizar `mem://constraints/auth-stability` se mencionar verify-email.
 
-## Pontos de integração
-
-### CreateExerciseProgramModal.tsx
-- `scopeKey = ${professionalId}:${patientName}:${assessmentId ?? ''}`
-- `state = { selected, customExercises, notes }`
-- Em modo edição (`editProgramId`), autosave fica desligado (já está no servidor).
-- Após `createProgram` bem-sucedido → `discard()`.
-
-### ManualAssessmentModal.tsx
-- `scopeKey = ${professionalId}:${patientEmail || patientName}`
-- `state = { painRegions, painScore, anamnesis, testResults, notes, ... }`
-- Após salvar avaliação → `discard()`.
-
-### AnamnesisForm.tsx (usado em Assessment.tsx)
-- `scopeKey = ${assessmentId}` (avaliação já existe como linha)
-- `state = anamnesisData`
-- Aqui já há salvamento parcial em `assessments.anamnesis_data`; o draft cobre o intervalo entre cliques (campos em digitação) e o cenário de assessment ainda não criado.
-- Ao avançar de etapa → mantém; ao finalizar avaliação → `discard()`.
-
-## Camadas de defesa
-
-1. **Local (sempre)**: `localStorage` é síncrono e sobrevive a reload imediato. Cobre 99% dos casos do tipo "tela bloqueou".
-2. **Nuvem (quando online)**: cobre troca de dispositivo, limpeza de cache, reinstalação do PWA.
-3. **`beforeunload` / `visibilitychange`**: força flush do debounce pendente antes do app sumir.
-4. **Conflito**: se local e nuvem divergem, pega o `updated_at` mais recente e mostra ambas as datas no banner.
+---
 
 ## Detalhes técnicos
 
-- Tamanho do payload: limitar a ~200KB (jsonb), avisar e parar sync na nuvem se exceder (segue só local).
-- Não salvar dados sensíveis fora do escopo do formulário (sem tokens, sem PII além do que já está no form).
-- `useAutosaveDraft` é puro client-side, sem dependências novas.
-- Migração inclui `GRANT` para `authenticated` e `service_role` (sem anon).
+### Arquivos afetados
+- Nova migration: `auto_confirm_email` + backfill `auth.users`.
+- `supabase--configure_auth` com `auto_confirm_email: true`.
+- `src/pages/Auth.tsx` — remover navigate("/verify-email"), mandar direto para dashboard.
+- `src/contexts/AuthContext.tsx` — ajustar `resetPassword` para verificar confirmação antes.
+- Nova edge function: `supabase/functions/check-email-confirmed/index.ts` (service-role, retorna boolean genérico).
+- Novo: `src/components/EmailVerificationBanner.tsx`.
+- Novo: `src/components/ConfirmEmailGateDialog.tsx`.
+- `src/pages/Dashboard.tsx` + Clinic dashboard root — montar banner.
+- `src/hooks/useProSubscription.ts` — gate no `handleSubscribe`, `handleLifetimeCheckout`.
+- Componentes que disparam `create-clinic-subscription`, `create-payment`, `create-pro-treatment-payment` — gate antes do invoke.
+- `src/pages/Support.tsx`, `src/pages/ClinicSupport.tsx`, `src/locales/{pt,en,es}.json` — nova seção.
+- `src/pages/VerifyEmail.tsx` — manter, mas ajustar copy para "passo opcional".
 
-## Arquivos
+### O que NÃO muda
+- Estrutura de assinaturas, RLS, edge functions de pagamento, fluxos contextuais de landing (pro/clinic/paciente já funcionam corretamente hoje via `source`/redirect).
+- Política de "PRO só pode ser criado pela landing PRO" (memória já existente) — mantida; apenas o passo de verificar email some.
 
-**Novos**
-- `supabase/migrations/{ts}_form_drafts.sql`
-- `src/hooks/useAutosaveDraft.ts`
-- `src/components/common/DraftResumeBanner.tsx`
-
-**Editados**
-- `src/components/dashboard/CreateExerciseProgramModal.tsx`
-- `src/components/dashboard/ManualAssessmentModal.tsx`
-- `src/components/assessment/AnamnesisForm.tsx` (+ pequena integração em `Assessment.tsx` para o `scopeKey`)
-- `src/locales/{pt,en,es}.json` — strings do banner e badge "Rascunho salvo"
-- `src/pages/Support.tsx` + `src/pages/ClinicSupport.tsx` — nova entrada explicando autosave
-
-## Fora de escopo
-
-- Histórico de versões de rascunho (só o último vence).
-- Autosave em outros formulários menores (perfil, configurações da clínica).
-- Sincronização realtime entre abas abertas simultaneamente.
+### Risco mitigado
+- Contas fake: mantemos HIBP + limite de 1 avaliação básica por conta. Sem mudança aqui.
+- Stripe enviando recibo para email inválido: bloqueado pelo gate de checkout.

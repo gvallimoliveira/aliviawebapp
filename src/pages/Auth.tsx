@@ -94,52 +94,30 @@ const Auth = () => {
         return;
       }
 
-      // Signup
+      // Signup — email auto-confirm está ativo, então signUp() retorna sessão direto.
       const { error, session } = await signUp(email, password, fullName);
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
         setLoading(false);
       } else if (session) {
-        // Email auto-confirm is on (rare). Let useEffect handle redirect.
         toast({ title: t("auth.welcome"), description: t("auth.account_created") });
-      } else {
-        // Workaround temporário: provedores Microsoft (Hotmail/Outlook/Live/MSN)
-        // costumam atrasar/filtrar o e-mail de confirmação. Para esses domínios,
-        // confirmamos automaticamente via edge function e fazemos login direto.
-        const domain = email.trim().toLowerCase().split("@")[1] || "";
-        const microsoftDomains = new Set([
-          "hotmail.com", "hotmail.com.br",
-          "outlook.com", "outlook.com.br",
-          "live.com", "live.com.br",
-          "msn.com", "passport.com",
-        ]);
-
-        if (microsoftDomains.has(domain)) {
-          try {
-            const { supabase } = await import("@/integrations/supabase/client");
-            const { data: confirmData } = await supabase.functions.invoke(
-              "auto-confirm-microsoft-email",
-              { body: { email: email.trim() } },
-            );
-            if (confirmData?.confirmed) {
-              const { error: signInErr } = await signIn(email, password);
-              if (!signInErr) {
-                toast({ title: t("auth.welcome"), description: t("auth.account_created") });
-                redirectingRef.current = true;
-                navigate(redirectTo, { replace: true });
-                return;
-              }
-            }
-          } catch (e) {
-            console.warn("auto-confirm-microsoft-email failed", e);
-          }
-        }
-
-        // Standard flow: confirmation email sent. Redirect to a clear
-        // "verify your email" page so the user is not stuck on a loading button.
-        setLoading(false);
         redirectingRef.current = true;
-        navigate("/verificar-email", { replace: true, state: { email } });
+        navigate(redirectTo, { replace: true });
+      } else {
+        // Fallback raríssimo: signUp sem sessão. Tenta signIn imediato.
+        const { error: signInErr } = await signIn(email, password);
+        if (signInErr) {
+          toast({
+            title: t("auth.error"),
+            description: signInErr.message || "Não foi possível entrar. Tente fazer login.",
+            variant: "destructive",
+          });
+          setLoading(false);
+        } else {
+          toast({ title: t("auth.welcome"), description: t("auth.account_created") });
+          redirectingRef.current = true;
+          navigate(redirectTo, { replace: true });
+        }
       }
     } catch (err: any) {
       toast({
