@@ -41,7 +41,8 @@ interface PatientFile {
 const MAX_FILES = 20;
 const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20MB
 
-const PatientFilesSection = ({ patientEmail, patientName, clinicId, professionalId, readOnly, isDemo }: PatientFilesSectionProps) => {
+const PatientFilesSection = ({ patientEmail, patientName, clinicId, professionalId, readOnly: readOnlyProp, isDemo }: PatientFilesSectionProps) => {
+  const readOnly = readOnlyProp || isDemo;
   const { user } = useAuth();
   const { language } = useLanguage();
   const { toast } = useToast();
