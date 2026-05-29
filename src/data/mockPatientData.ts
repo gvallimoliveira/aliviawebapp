@@ -454,7 +454,7 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Quadro lombar resolvido — apto para alta com programa de manutenção",
       confidence: "high",
-      reasoning: "EVA 1/10, Oswestry 8% (mínima), paciente retornou à atividade física regular. Sem sinais clínicos de instabilidade.",
+      reasoning: "EVA 1/10, ODI 8% (mínima), paciente retornou à atividade física regular. Sem sinais clínicos de instabilidade.",
     },
     treatment_plan: null,
     test_results: [
@@ -581,7 +581,7 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-operatório imediato de reparo artroscópico de lesão SLAP tipo II — fase de proteção do reparo labral",
       confidence: "high",
-      reasoning: "Cirurgia há 10 dias. Imobilizado em tipoia abdução-neutra 4 semanas (conforme protocolo do cirurgião). ADM passiva limitada por protocolo: flexão ≤90°, rotação externa em abdução 0° ≤30°. Edema leve, ferida operatória cicatrizando sem sinais flogísticos. DASH 78% reflete dependência funcional aguda.",
+      reasoning: "Cirurgia há 10 dias. Imobilizado em tipoia abdução-neutra 4 semanas (conforme protocolo do cirurgião). ADM passiva limitada por protocolo: flexão ≤90°, rotação externa em abdução 0° ≤30°. Edema leve, ferida operatória cicatrizando sem sinais flogísticos. QuickDASH 78% reflete dependência funcional aguda.",
       clinicalImpression: {
         overview: "Paciente masculino, 45-55 anos, fisicamente ativo (CrossFit recreacional), no 10º dia pós-artroscopia para reparo de lesão SLAP tipo II do ombro direito (membro dominante). Quadro típico de fase aguda pós-cirúrgica: dor controlada com analgesia oral, ADM restrita por protocolo cirúrgico para proteção do reparo labral, atrofia funcional inicial de cintura escapular. Boa motivação e expectativa realista de retorno esportivo em 6-9 meses.",
         therapeuticObjectives: [
@@ -656,7 +656,7 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-op SLAP — fase 2 (fortalecimento progressivo) — evolução excelente",
       confidence: "high",
-      reasoning: "ADM passiva completa (flexão 170°, ABD 165°, RE em ABD 90° = 75°). Tipoia retirada. Manguito rotador ativando com isometria submáxima sem dor. Início de fortalecimento dinâmico em cadeia fechada e isotônico leve. DASH caiu de 78 para 42% (-46%).",
+      reasoning: "ADM passiva completa (flexão 170°, ABD 165°, RE em ABD 90° = 75°). Tipoia retirada. Manguito rotador ativando com isometria submáxima sem dor. Início de fortalecimento dinâmico em cadeia fechada e isotônico leve. QuickDASH caiu de 78 para 42% (-46%).",
     },
     treatment_plan: null,
     test_results: [
@@ -696,7 +696,7 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-op SLAP — fase 3 (preparação para retorno esportivo) — pronto para gestos overhead progressivos",
       confidence: "high",
-      reasoning: "Força isocinética com índice de simetria do ombro (LSI) 88% para RE e 92% para flexão. DASH 14% (mínimo), KJOC 84%. Iniciando treinamento de gestos esportivos específicos (kettlebell snatch progressivo, suporte invertido). Liberação prevista em 4-6 semanas.",
+      reasoning: "Força isocinética com índice de simetria do ombro (LSI) 88% para RE e 92% para flexão. QuickDASH 14% (mínimo), KJOC 84%. Iniciando treinamento de gestos esportivos específicos (kettlebell snatch progressivo, suporte invertido). Liberação prevista em 4-6 semanas.",
     },
     treatment_plan: null,
     test_results: [
@@ -1046,7 +1046,7 @@ export const mockPatientAssessments = [
 // Pre-built demo clinical impression for when user clicks "Gerar Impressão Clínica" in demo mode
 export const mockClinicalImpressions: Record<string, { overview: string; therapeuticObjectives: string[] }> = {
   "demo-001": {
-    overview: "Paciente feminina, 35-44 anos, sedentária, com quadro de lombalgia mecânica crônica de 3-6 meses de evolução, associada a irradiação para quadril direito. O padrão de dor intermitente com piora ao sentar prolongadamente e alívio em decúbito sugere componente discogênico. O sedentarismo é fator perpetuante importante. Os escores moderados no Oswestry (56%) indicam limitação funcional significativa, especialmente em atividades de levantamento de peso (80%) e posições estáticas.",
+    overview: "Paciente feminina, 35-44 anos, sedentária, com quadro de lombalgia mecânica crônica de 3-6 meses de evolução, associada a irradiação para quadril direito. O padrão de dor intermitente com piora ao sentar prolongadamente e alívio em decúbito sugere componente discogênico. O sedentarismo é fator perpetuante importante. Os escores moderados no ODI (56%) indicam limitação funcional significativa, especialmente em atividades de levantamento de peso (80%) e posições estáticas.",
     therapeuticObjectives: [
       "Reduzir dor lombar e irradiação para <3/10 na EVA",
       "Restaurar capacidade de sentar >1h sem dor",
@@ -1064,7 +1064,7 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     ],
   },
   "demo-003a": {
-    overview: "Paciente feminina, 45-55 anos, sedentária, apresenta quadro de cervicobraquialgia crônica progressiva com componente neuropático. O padrão de irradiação e parestesia sugere comprometimento radicular C5-C6. O sedentarismo e uso prolongado de computador são fatores perpetuantes significativos. A dor noturna frequente indica necessidade de intervenção precoce. NDI de 62% (severo) e DASH de 58% (moderado) confirmam limitação funcional importante.",
+    overview: "Paciente feminina, 45-55 anos, sedentária, apresenta quadro de cervicobraquialgia crônica progressiva com componente neuropático. O padrão de irradiação e parestesia sugere comprometimento radicular C5-C6. O sedentarismo e uso prolongado de computador são fatores perpetuantes significativos. A dor noturna frequente indica necessidade de intervenção precoce. NDI de 62% (severo) e QuickDASH de 58% (moderado) confirmam limitação funcional importante.",
     therapeuticObjectives: [
       "Reduzir dor e parestesia em membro superior direito",
       "Restaurar mobilidade cervical funcional",
@@ -1073,7 +1073,7 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     ],
   },
   "demo-003b": {
-    overview: "Reavaliação após 7 dias de tratamento. Melhora significativa: resolução completa da parestesia no membro superior e da irradiação. Dor residual apenas cervical local, de 4/10. NDI reduzido de 62% para 28% (melhora de 55%) e DASH de 58% para 22% (melhora de 62%). Paciente iniciou atividade física leve e responde bem ao tratamento. Evolução compatível com prognóstico favorável.",
+    overview: "Reavaliação após 7 dias de tratamento. Melhora significativa: resolução completa da parestesia no membro superior e da irradiação. Dor residual apenas cervical local, de 4/10. NDI reduzido de 62% para 28% (melhora de 55%) e QuickDASH de 58% para 22% (melhora de 62%). Paciente iniciou atividade física leve e responde bem ao tratamento. Evolução compatível com prognóstico favorável.",
     therapeuticObjectives: [
       "Manter ganhos funcionais",
       "Progredir para fase de fortalecimento ativo",
@@ -1082,7 +1082,7 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     ],
   },
   "demo-004": {
-    overview: "⚠️ ATENÇÃO: Paciente masculino, >55 anos, com dor toraco-lombar aguda de início súbito, intensidade 9/10, padrão contínuo com dor noturna e sem alívio. A presença de múltiplas red flags (idade >55, início súbito sem trauma, dor noturna, ausência de alívio) requer investigação complementar prioritária antes de intervenção fisioterapêutica. Oswestry de 78% (severo) confirma limitação funcional grave.",
+    overview: "⚠️ ATENÇÃO: Paciente masculino, >55 anos, com dor toraco-lombar aguda de início súbito, intensidade 9/10, padrão contínuo com dor noturna e sem alívio. A presença de múltiplas red flags (idade >55, início súbito sem trauma, dor noturna, ausência de alívio) requer investigação complementar prioritária antes de intervenção fisioterapêutica. ODI de 78% (severo) confirma limitação funcional grave.",
     therapeuticObjectives: [
       "Encaminhamento médico PRIORITÁRIO",
       "Investigação por imagem (RM recomendada)",
@@ -1091,11 +1091,11 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     ],
   },
   "demo-001b": {
-    overview: "Reavaliação após 4 semanas. Resolução do componente radicular e melhora funcional expressiva. Oswestry caiu de 56% para 32% (–43%). Paciente aderente ao HEP (91%), com retomada de atividade leve. Dor residual local de padrão mecânico, sem sinais neurais.",
+    overview: "Reavaliação após 4 semanas. Resolução do componente radicular e melhora funcional expressiva. ODI caiu de 56% para 32% (–43%). Paciente aderente ao HEP (91%), com retomada de atividade leve. Dor residual local de padrão mecânico, sem sinais neurais.",
     therapeuticObjectives: ["Progredir fortalecimento de core", "Estender tolerância postural para >90 min", "Iniciar reintrodução de atividade física aeróbica"],
   },
   "demo-001c": {
-    overview: "Avaliação de alta. Quadro lombar resolvido (EVA 1/10, Oswestry 8%). Paciente retornou à rotina plena e demonstra autonomia para manter programa de prevenção secundária. Prognóstico de baixo risco de recidiva com manutenção do estilo de vida ativo.",
+    overview: "Avaliação de alta. Quadro lombar resolvido (EVA 1/10, ODI 8%). Paciente retornou à rotina plena e demonstra autonomia para manter programa de prevenção secundária. Prognóstico de baixo risco de recidiva com manutenção do estilo de vida ativo.",
     therapeuticObjectives: ["Alta funcional", "Programa domiciliar de manutenção", "Sinais de alerta para recidiva orientados"],
   },
   "demo-002b": {
@@ -1103,19 +1103,19 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     therapeuticObjectives: ["Iniciar retorno progressivo à corrida (run-walk)", "Manter fortalecimento de VMO e glúteo médio", "Reavaliar mecânica de corrida em 4 semanas"],
   },
   "demo-004b": {
-    overview: "Reavaliação após investigação médica. RM lombar (anexada) descartou patologias graves — protusão discal L4-L5 sem compressão radicular. Liberado pelo ortopedista para fisioterapia. Quadro evoluiu para lombalgia aguda discogênica em fase subaguda. Oswestry reduziu de 78% para 52%.",
+    overview: "Reavaliação após investigação médica. RM lombar (anexada) descartou patologias graves — protusão discal L4-L5 sem compressão radicular. Liberado pelo ortopedista para fisioterapia. Quadro evoluiu para lombalgia aguda discogênica em fase subaguda. ODI reduziu de 78% para 52%.",
     therapeuticObjectives: ["Controle álgico", "Iniciar protocolo McKenzie de extensão", "Educação postural específica para o trabalho", "Reavaliar em 3 semanas"],
   },
   "demo-005a": {
-    overview: "Paciente masculino, 45-55 anos, fisicamente ativo, no 10º dia pós-artroscopia para reparo de lesão SLAP tipo II do ombro D (membro dominante). Fase aguda pós-cirúrgica: imobilização em tipoia, ADM restrita por protocolo, atrofia funcional inicial. DASH 78% e KJOC 22% refletem dependência funcional aguda.",
+    overview: "Paciente masculino, 45-55 anos, fisicamente ativo, no 10º dia pós-artroscopia para reparo de lesão SLAP tipo II do ombro D (membro dominante). Fase aguda pós-cirúrgica: imobilização em tipoia, ADM restrita por protocolo, atrofia funcional inicial. QuickDASH 78% e KJOC 22% refletem dependência funcional aguda.",
     therapeuticObjectives: ["Controle álgico (EVA <3) e edema", "Respeitar restrições cirúrgicas (flexão ≤90°, RE em ABD 0° ≤30°)", "Preservar ADM escapular e cervical", "Educação sobre proteção do reparo SLAP"],
   },
   "demo-005b": {
-    overview: "Fase 2 pós-op SLAP (30 dias). ADM passiva completa (flexão 170°, ABD 165°). Manguito ativando sem dor. DASH caiu de 78% para 42% (-46%), KJOC subiu para 58%. Pronto para fortalecimento dinâmico em cadeia fechada e isotônico leve.",
+    overview: "Fase 2 pós-op SLAP (30 dias). ADM passiva completa (flexão 170°, ABD 165°). Manguito ativando sem dor. QuickDASH caiu de 78% para 42% (-46%), KJOC subiu para 58%. Pronto para fortalecimento dinâmico em cadeia fechada e isotônico leve.",
     therapeuticObjectives: ["Restaurar força do manguito rotador (LSI >80%)", "Progredir cadeia fechada e propriocepção escapular", "Recuperar ADM ativa completa sem compensação"],
   },
   "demo-005c": {
-    overview: "Fase 3 pós-op SLAP (60 dias). Força isocinética com LSI 88% (RE) e 92% (flexão). DASH 14%, KJOC 84%. Iniciando treinamento de gestos esportivos específicos (kettlebell, suporte invertido). Liberação para retorno completo prevista em 4-6 semanas.",
+    overview: "Fase 3 pós-op SLAP (60 dias). Força isocinética com LSI 88% (RE) e 92% (flexão). QuickDASH 14%, KJOC 84%. Iniciando treinamento de gestos esportivos específicos (kettlebell, suporte invertido). Liberação para retorno completo prevista em 4-6 semanas.",
     therapeuticObjectives: ["Treino de gestos overhead progressivos", "Bateria de retorno esportivo (Y-Balance UQ, CKCUEST)", "Programa de prevenção secundária para ombro do atleta"],
   },
 
@@ -1152,13 +1152,13 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
 
 // Pre-built evolution summary for Ana Oliveira (demo-003a → demo-003b)
 export const mockEvolutionSummary = {
-  narrative: "A paciente Ana Oliveira apresentou evolução clínica significativamente favorável no período de 7 dias entre as avaliações. A dor reduziu de 8/10 para 4/10 (redução de 50%), com resolução completa da irradiação para membro superior direito e da parestesia em dermátomo C6. A região de dor no ombro direito foi completamente resolvida, persistindo apenas dor cervical residual de caráter mecânico. Os questionários funcionais demonstram melhora expressiva: NDI de 62% (severo) para 28% (leve) — melhora de 55%; DASH de 58% (moderado) para 22% (leve) — melhora de 62%. A paciente transitou de sedentária para atividade física leve, indicando boa adesão ao programa terapêutico.",
+  narrative: "A paciente Ana Oliveira apresentou evolução clínica significativamente favorável no período de 7 dias entre as avaliações. A dor reduziu de 8/10 para 4/10 (redução de 50%), com resolução completa da irradiação para membro superior direito e da parestesia em dermátomo C6. A região de dor no ombro direito foi completamente resolvida, persistindo apenas dor cervical residual de caráter mecânico. Os questionários funcionais demonstram melhora expressiva: NDI de 62% (severo) para 28% (leve) — melhora de 55%; QuickDASH de 58% (moderado) para 22% (leve) — melhora de 62%. A paciente transitou de sedentária para atividade física leve, indicando boa adesão ao programa terapêutico.",
   conclusion: "Evolução clínica excelente em curto prazo, com resolução dos sinais neurológicos e melhora funcional expressiva. Os dados sugerem boa resposta ao tratamento conservador e prognóstico favorável para recuperação completa.",
   recommendation: "Alta" as const,
   pain_change: -50,
   questionnaire_changes: [
     { name: "NDI (Cervical)", from: 62, to: 28, change: -55 },
-    { name: "DASH (Membro Superior)", from: 58, to: 22, change: -62 },
+    { name: "QuickDASH (Membro Superior)", from: 58, to: 22, change: -62 },
   ],
   resolved_regions: ["right_shoulder"],
   new_regions: [],
