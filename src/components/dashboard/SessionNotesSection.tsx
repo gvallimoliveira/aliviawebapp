@@ -30,9 +30,10 @@ interface SessionNote {
 interface SessionNotesSectionProps {
   professionalId: string;
   patientEmail: string;
+  isDemo?: boolean;
 }
 
-const SessionNotesSection = ({ professionalId, patientEmail }: SessionNotesSectionProps) => {
+const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNotesSectionProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [notes, setNotes] = useState<SessionNote[]>([]);
@@ -47,6 +48,13 @@ const SessionNotesSection = ({ professionalId, patientEmail }: SessionNotesSecti
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const fetchNotes = useCallback(async () => {
+    if (isDemo) {
+      const { mockSessionNotes } = await import("@/data/mockProDemoExtras");
+      const list = mockSessionNotes[patientEmail] || [];
+      setNotes([...list].sort((a, b) => b.session_date.localeCompare(a.session_date)));
+      setLoading(false);
+      return;
+    }
     const { data } = await (supabase.from("session_notes" as any) as any)
       .select("*")
       .eq("professional_id", professionalId)
@@ -54,7 +62,7 @@ const SessionNotesSection = ({ professionalId, patientEmail }: SessionNotesSecti
       .order("session_date", { ascending: false });
     setNotes((data as SessionNote[]) || []);
     setLoading(false);
-  }, [professionalId, patientEmail]);
+  }, [professionalId, patientEmail, isDemo]);
 
   useEffect(() => { fetchNotes(); }, [fetchNotes]);
 
