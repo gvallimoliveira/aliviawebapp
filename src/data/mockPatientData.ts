@@ -1128,17 +1128,18 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     therapeuticObjectives: ["Controle álgico", "Iniciar protocolo McKenzie de extensão", "Educação postural específica para o trabalho", "Reavaliar em 3 semanas"],
   },
   "demo-005a": {
-    overview: "Paciente masculino, >55 anos, em fase subaguda pós-AVC isquêmico esquerdo (4 meses). Apresenta hemiparesia direita com hipertonia espástica e ombro doloroso secundário a subluxação gleno-umeral. O componente neuropático da dor exige abordagem multimodal. Fugl-Meyer MS de 18/66, DASH 82% (severo).",
-    therapeuticObjectives: ["Reduzir dor neuropática (EVA <3)", "Prevenir progressão da subluxação", "Recuperar Fugl-Meyer MS >35", "Coordenação multidisciplinar com neurologia"],
+    overview: "Paciente masculino, 45-55 anos, fisicamente ativo, no 10º dia pós-artroscopia para reparo de lesão SLAP tipo II do ombro D (membro dominante). Fase aguda pós-cirúrgica: imobilização em tipoia, ADM restrita por protocolo, atrofia funcional inicial. DASH 78% e KJOC 22% refletem dependência funcional aguda.",
+    therapeuticObjectives: ["Controle álgico (EVA <3) e edema", "Respeitar restrições cirúrgicas (flexão ≤90°, RE em ABD 0° ≤30°)", "Preservar ADM escapular e cervical", "Educação sobre proteção do reparo SLAP"],
   },
   "demo-005b": {
-    overview: "Evolução favorável aos 2 meses. Subluxação reduzida (de 2 para 1 dedo). Fugl-Meyer MS 28/66 (+10 pontos). DASH 64% (–22%). Paciente realiza transferências com supervisão. Início de movimentos voluntários proximais.",
-    therapeuticObjectives: ["Progredir treino bimanual funcional", "Manter neuroprotação de ombro D", "Iniciar treino de marcha com órtese suropodálica"],
+    overview: "Fase 2 pós-op SLAP (30 dias). ADM passiva completa (flexão 170°, ABD 165°). Manguito ativando sem dor. DASH caiu de 78% para 42% (-46%), KJOC subiu para 58%. Pronto para fortalecimento dinâmico em cadeia fechada e isotônico leve.",
+    therapeuticObjectives: ["Restaurar força do manguito rotador (LSI >80%)", "Progredir cadeia fechada e propriocepção escapular", "Recuperar ADM ativa completa sem compensação"],
   },
   "demo-005c": {
-    overview: "Reabilitação neurológica em fase avançada. Fugl-Meyer MS 42/66 (+24 pontos da linha de base). Subluxação ausente, DASH 38% (melhora cumulativa de 54%). Independência modificada em AVDs. Foco em destreza fina e prevenção de quedas.",
-    therapeuticObjectives: ["Treino de destreza fina (pinça, manipulação)", "Prevenção de quedas (treino de equilíbrio)", "Reintegração comunitária", "Programa domiciliar de manutenção"],
+    overview: "Fase 3 pós-op SLAP (60 dias). Força isocinética com LSI 88% (RE) e 92% (flexão). DASH 14%, KJOC 84%. Iniciando treinamento de gestos esportivos específicos (kettlebell, suporte invertido). Liberação para retorno completo prevista em 4-6 semanas.",
+    therapeuticObjectives: ["Treino de gestos overhead progressivos", "Bateria de retorno esportivo (Y-Balance UQ, CKCUEST)", "Programa de prevenção secundária para ombro do atleta"],
   },
+
   "demo-006a": {
     overview: "Pós-operatório imediato de reconstrução de LCA E (10 dias). Atleta amadora de corrida, 25-34 anos. Edema 3+, ADM 0-65°, déficit de extensão de 5°, atrofia inicial de quadríceps. Fase de proteção tecidual. IKDC 28% / KOOS 36%.",
     therapeuticObjectives: ["Resolver edema e ganhar extensão completa", "Ativar quadríceps (QSET, SLR)", "Atingir ADM 0-110° em 4 semanas", "Educação sobre proteção do enxerto"],
