@@ -24,6 +24,7 @@ interface PatientFilesSectionProps {
   clinicId?: string | null;
   professionalId?: string;
   readOnly?: boolean;
+  isDemo?: boolean;
 }
 
 interface PatientFile {
@@ -40,7 +41,8 @@ interface PatientFile {
 const MAX_FILES = 20;
 const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20MB
 
-const PatientFilesSection = ({ patientEmail, patientName, clinicId, professionalId, readOnly }: PatientFilesSectionProps) => {
+const PatientFilesSection = ({ patientEmail, patientName, clinicId, professionalId, readOnly: readOnlyProp, isDemo }: PatientFilesSectionProps) => {
+  const readOnly = readOnlyProp || isDemo;
   const { user } = useAuth();
   const { language } = useLanguage();
   const { toast } = useToast();
@@ -60,6 +62,13 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
 
   const loadFiles = async () => {
     setLoading(true);
+    if (isDemo) {
+      const { mockPatientFiles } = await import("@/data/mockProDemoExtras");
+      const list = (mockPatientFiles[patientEmail] || []).map((f) => ({ ...f, file_path: "demo://" + f.id, uploaded_by: "demo" }));
+      setFiles(list as unknown as PatientFile[]);
+      setLoading(false);
+      return;
+    }
     let query = supabase.from("patient_files").select("*").eq("patient_email", patientEmail);
     if (clinicId) query = query.eq("clinic_id", clinicId);
     else if (professionalId) query = query.eq("professional_id", professionalId);

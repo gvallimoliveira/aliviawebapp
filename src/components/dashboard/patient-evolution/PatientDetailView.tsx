@@ -492,10 +492,10 @@ export default function PatientDetailView(props: any) {
       )}
 
       {/* Notas de sessão */}
-      {selectedEmail && <SessionNotesSection professionalId={professionalId} patientEmail={selectedEmail} />}
+      {selectedEmail && <SessionNotesSection professionalId={professionalId} patientEmail={selectedEmail} isDemo={isDemo} />}
 
       {/* Arquivos e fotos (bloco documental) */}
-      {selectedEmail && !isDemo && <PatientFilesSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} />}
+      {selectedEmail && <PatientFilesSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} isDemo={isDemo} />}
       {selectedEmail && !isDemo && <PatientPhotosSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} />}
 
       {/* Programas de exercícios enviados (ferramenta — desce após o bloco clínico) */}
