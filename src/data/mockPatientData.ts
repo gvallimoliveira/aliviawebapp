@@ -762,8 +762,6 @@ export const mockPatientAssessments = [
       disclaimer: "Plano gerado por IA seguindo protocolo MOON/Cincinnati pós-LCA.",
     },
     test_results: [
-      { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 28, severity: "severe",
-        subscaleScores: { symptoms: 25, sports: 0, daily_function: 35 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 36, severity: "severe",
         subscaleScores: { symptoms: 40, pain: 45, adl: 50, sport: 0, qol: 25 } },
     ],
@@ -803,8 +801,6 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 56, severity: "moderate",
-        subscaleScores: { symptoms: 60, sports: 35, daily_function: 75 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 64, severity: "moderate",
         subscaleScores: { symptoms: 70, pain: 75, adl: 80, sport: 40, qol: 55 } },
     ],
@@ -843,8 +839,6 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 82, severity: "mild",
-        subscaleScores: { symptoms: 85, sports: 75, daily_function: 92 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 84, severity: "mild",
         subscaleScores: { symptoms: 88, pain: 92, adl: 92, sport: 72, qol: 78 } },
     ],
@@ -883,8 +877,6 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 94, severity: "mild",
-        subscaleScores: { symptoms: 95, sports: 90, daily_function: 98 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 92, severity: "mild",
         subscaleScores: { symptoms: 95, pain: 98, adl: 98, sport: 85, qol: 88 } },
     ],
@@ -967,8 +959,6 @@ export const mockPatientAssessments = [
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 32, severity: "severe",
         subscaleScores: { symptoms: 35, pain: 40, adl: 30, sport: 10, qol: 25 } },
-      { questionnaireId: "hhs", questionnaireName: "Harris Hip Score", percentageScore: 38, severity: "severe",
-        subscaleScores: { pain: 20, function: 22, deformity: 4, range_of_motion: 3 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -1008,8 +998,6 @@ export const mockPatientAssessments = [
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 58, severity: "moderate",
         subscaleScores: { symptoms: 62, pain: 70, adl: 65, sport: 35, qol: 55 } },
-      { questionnaireId: "hhs", questionnaireName: "Harris Hip Score", percentageScore: 72, severity: "moderate",
-        subscaleScores: { pain: 38, function: 28, deformity: 4, range_of_motion: 4 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -1049,8 +1037,6 @@ export const mockPatientAssessments = [
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 88, severity: "mild",
         subscaleScores: { symptoms: 90, pain: 95, adl: 92, sport: 72, qol: 85 } },
-      { questionnaireId: "hhs", questionnaireName: "Harris Hip Score", percentageScore: 92, severity: "mild",
-        subscaleScores: { pain: 44, function: 40, deformity: 4, range_of_motion: 4 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
