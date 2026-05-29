@@ -47,7 +47,7 @@ interface ServiceMaps {
 }
 
 export interface AppointmentEditorPayload {
-  professional_id: string;
+  professional_id: string | null;
   patient_name: string;
   patient_email: string | null;
   appointment_date: string;
