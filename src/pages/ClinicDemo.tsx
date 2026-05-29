@@ -392,7 +392,7 @@ const ClinicDemo = () => {
                   assessments={mockPatientAssessments as any}
                   professionalId="demo-clinic-professional"
                   clinicId="demo-clinic"
-                  clinicName={DEMO_CLINIC.clinic_name}
+                  clinicName={DEMO_CLINIC.name}
                   isDemo
                   readOnly
                   lifetimeTreatment
