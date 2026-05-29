@@ -497,22 +497,34 @@ const AppointmentEditorDialog = ({
                   </div>
                 </div>
 
-                {clinicId && clinicProfessionals.length > 0 && (
+                {clinicId && (
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">{isPt ? "Profissional" : "Professional"} *</label>
-                    <Select value={formProfessionalId} onValueChange={setFormProfessionalId}>
-                      <SelectTrigger className="mt-1 text-xs h-9"><SelectValue placeholder={isPt ? "Selecione" : "Select"} /></SelectTrigger>
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {isPt ? "Profissional (opcional)" : "Professional (optional)"}
+                    </label>
+                    <Select
+                      value={formProfessionalId || "__none__"}
+                      onValueChange={(v) => setFormProfessionalId(v === "__none__" ? "" : v)}
+                    >
+                      <SelectTrigger className="mt-1 text-xs h-9">
+                        <SelectValue placeholder={isPt ? "Sem profissional vinculado" : "No professional assigned"} />
+                      </SelectTrigger>
                       <SelectContent>
-                        {clinicProfessionals.map(p => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}
+                        <SelectItem value="__none__">
+                          {isPt ? "Sem profissional vinculado" : "No professional assigned"}
+                        </SelectItem>
+                        {clinicProfessionals.map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                )}
-                {isClinicOnlyMode && clinicProfessionals.length === 0 && (
-                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-                    {isPt
-                      ? "Nenhum profissional cadastrado nesta clínica. Convide ou cadastre um profissional na equipe antes de agendar atendimentos."
-                      : "No professional registered in this clinic. Invite or register a professional in the team before scheduling appointments."}
+                    {clinicProfessionals.length === 0 && (
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        {isPt
+                          ? "Nenhum profissional cadastrado. Você pode agendar mesmo assim — vincule depois se desejar."
+                          : "No professional registered yet. You can still schedule and assign one later."}
+                      </p>
+                    )}
                   </div>
                 )}
 
