@@ -16,7 +16,7 @@ import {
 import {
   ClipboardList, Sparkles, Crown, ArrowLeft, HelpCircle, User, Activity,
   Flame, Calendar, MapPin, ChevronRight, CheckCircle2, FileText, Dumbbell,
-  Info, TrendingDown, Users, Lock,
+  Info, TrendingDown, Users, Lock, Trophy,
 } from "lucide-react";
 import { setSeo } from "@/lib/seo";
 
