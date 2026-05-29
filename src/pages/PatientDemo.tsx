@@ -527,7 +527,4 @@ const PatientDemo = () => {
   );
 };
 
-// Trophy import (added inline to avoid second lucide import block)
-import { Trophy } from "lucide-react";
-
 export default PatientDemo;
