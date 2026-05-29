@@ -1,69 +1,49 @@
 
-## Objetivo
+# Modernização dos Demos (Clínica + Profissional Autônomo)
 
-Eliminar a barreira de confirmação de email no signup. Usuário entra direto no sistema em plano básico (com CTAs de upgrade contextuais conforme a landing de origem). Confirmação só é exigida em dois pontos sensíveis: **checkout Stripe** e **recuperação de senha**. Banner persistente lembra o usuário no dashboard.
+## Diagnóstico atual
 
----
+**Clinic Demo (`/clinic-demo`)** — Página standalone com 5 abas planas (Agenda, Pacientes, Equipe, Link, Mensagens vazia). Falta: Insights (6 cards de IA), DailySummaryCard, FeedbackSurvey/Results, Gestão & KPIs (charts), ExportData, Mensagens reais, sub-abas em "Clínica", white-label/logo. Estética divergente (header simples, max-w-5xl, sem WelcomeSection).
 
-## Mudanças
+**Pro Demo (`activeContext='professional_demo'`)** — Já vive dentro do Dashboard real e reaproveita `ProDashboard isDemoMode`. Falta: aba Insights, DailySummaryCard na agenda, MessagesTab real (hoje placeholder), Referrals, ExportDataCard, lifetime upsell. CTAs fracos.
 
-### 1. Auth — auto-confirmar emails
-- Habilitar `auto_confirm_email: true` no Supabase Auth (via `configure_auth`).
-- Novos signups ficam imediatamente ativos: o `signUp()` já retorna `session`, então o `AuthContext` atual cai direto logado, sem passar por `/verify-email`.
+## Estratégia
 
-### 2. Backfill de usuários presos
-- Migration SQL (admin-only): `UPDATE auth.users SET email_confirmed_at = COALESCE(email_confirmed_at, now()) WHERE email_confirmed_at IS NULL;` — libera todos os cadastros que estavam travados em `/verify-email`.
+Como os componentes reais (DailySummaryCard, InsightsTab, ProSchedule, ClinicSecretaryDashboard, ClinicOwnerDashboard, MessagesTab, FeedbackSurveyCard, ClinicTeamManagement) buscam dados via Supabase e dependem de `auth.uid()`, **injetar mocks via props em cada componente seria invasivo demais**. Adotaremos abordagem híbrida:
 
-### 3. Fluxo de signup (`Auth.tsx` / cadastro nas landings)
-- Após `signUp()` bem-sucedido → redirecionar direto para `/dashboard` (ou destino contextual conforme `source` / landing de origem: pro → Gateway com perfil PRO demo; clinic → Dashboard com CTA trial; paciente/landing principal → Dashboard básico).
-- Remover redirect para `/verify-email` no fluxo padrão.
-- `/verify-email` continua existindo, mas só é alcançada manualmente (ex.: botão "Reenviar confirmação" no banner).
+1. **Reescrever `ClinicDemo.tsx`** mantendo standalone mas espelhando 1:1 o layout do Dashboard clínica real: mesmo header (logo + idioma + suporte + sair), mesma estrutura de 5 abas + sub-abas em Clínica, mesmas cores/cards/espaçamentos (semantic tokens). Construir cada tela como mockup visual usando os mesmos componentes UI (Card, Badge, Tabs) alimentados pelos mocks expandidos.
+2. **Expandir mocks** (`mockClinicData.ts`): adicionar KPIs financeiros, dados de aderência/churn/no-show, conversas de mensagens, NPS, lista de feedbacks, charts data, branding (logo/cor).
+3. **Pro Demo no Dashboard**: habilitar a aba Insights em demo com `<InsightsTab demoMode />` (criar prop), trocar placeholder de mensagens por mock visual de conversa, adicionar DailySummaryCard demo, reforçar CTAs em cada aba.
+4. **CTAs reforçados**: criar `<DemoUpsellBanner />` reutilizável (sticky no topo de cada aba, contextual: "Assinaturas a partir de R$ X — desbloqueia X feature desta tela").
+5. **Atualizar `Support.tsx` + `ClinicSupport.tsx` (pt/en/es)** mencionando o novo demo modernizado, e memória `mem://features/clinic-demo` + `mem://features/pro-simulated-environment` (já existe — atualizar).
 
-### 4. Banner persistente "Confirme seu email"
-- Novo componente `EmailVerificationBanner.tsx` montado no layout do Dashboard (e ClinicDashboard).
-- Aparece quando `user && !user.email_confirmed_at`.
-- Conteúdo: "Confirme seu email para garantir recuperação de senha e recebimento de relatórios" + botão "Reenviar email" (chama `supabase.auth.resend`) + link "Já confirmei, atualizar".
-- Dismissível por sessão (não persistente em localStorage — volta na próxima abertura).
+## Arquivos a criar/editar
 
-### 5. Gate no checkout Stripe
-- Hooks de pagamento (`useProSubscription.handleSubscribe`, `handleLifetimeCheckout`, `create-clinic-subscription`, `create-pro-treatment-payment`, `create-payment` para Premium) verificam `user.email_confirmed_at` **no frontend antes de invocar a edge function**.
-- Se não confirmado → abrir modal `ConfirmEmailGateDialog` explicando que o recibo Stripe precisa de email válido, com botão "Reenviar confirmação" e instrução para clicar no link e tentar de novo.
-- Não muda lógica das edge functions (mantém compatibilidade).
+**Criar:**
+- `src/components/demo/DemoUpsellBanner.tsx` — banner CTA contextual reutilizável
+- `src/components/demo/DemoInsightsMock.tsx` — 6 cards de insights com dados mock
+- `src/components/demo/DemoMessagesMock.tsx` — preview de conversas
+- `src/components/demo/DemoManagementMock.tsx` — KPIs + charts (recharts) com mocks
+- `src/components/demo/DemoFeedbackMock.tsx` — NPS + lista de feedbacks
+- `src/components/demo/DemoDailySummaryMock.tsx` — resumo do dia mock
 
-### 6. Gate na recuperação de senha
-- `resetPassword` em `AuthContext`: antes de chamar `resetPasswordForEmail`, fazer lookup leve. Como `auth.users` não é acessível pelo client, abordagem alternativa: criar edge function pública `check-email-confirmed` que retorna apenas `{ confirmed: boolean }` para o email informado (sem vazar se a conta existe — sempre 200 OK, `confirmed: false` cobre tanto "não existe" quanto "não confirmado").
-- Se `confirmed: false`, exibir mensagem: "Não conseguimos enviar recuperação. Confirme seu email primeiro ou contate o suporte."
-- Mensagem genérica evita user-enumeration.
-
-### 7. Atualização da página de Suporte
-- Atualizar `Support.tsx` + `ClinicSupport.tsx` (pt/en/es) com nova seção: "Sobre a confirmação de email — não é mais obrigatória para usar o app, mas necessária para assinar e recuperar senha".
-
-### 8. Memória do projeto
-- Atualizar `mem://index.md` Core: substituir referência a "verificação obrigatória" por "email opcional, exigido só em checkout e reset de senha".
-- Atualizar `mem://constraints/auth-stability` se mencionar verify-email.
-
----
+**Editar:**
+- `src/pages/ClinicDemo.tsx` — reescrita completa espelhando layout real (5 abas + sub-abas), usando mocks
+- `src/data/mockClinicData.ts` — expandir com KPIs, mensagens, feedbacks, charts, branding
+- `src/pages/Dashboard.tsx` — Pro Demo: habilitar Insights/Messages mocks, DailySummaryCard mock, banners por aba
+- `src/components/dashboard/insights/InsightsTab.tsx` — aceitar prop `demoMode` que renderiza mocks
+- `src/pages/Support.tsx`, `src/pages/ClinicSupport.tsx`, `src/locales/pt|en|es.json` — FAQ atualizada
+- `mem://features/pro-simulated-environment` — atualizar com novo escopo
 
 ## Detalhes técnicos
 
-### Arquivos afetados
-- Nova migration: `auto_confirm_email` + backfill `auth.users`.
-- `supabase--configure_auth` com `auto_confirm_email: true`.
-- `src/pages/Auth.tsx` — remover navigate("/verify-email"), mandar direto para dashboard.
-- `src/contexts/AuthContext.tsx` — ajustar `resetPassword` para verificar confirmação antes.
-- Nova edge function: `supabase/functions/check-email-confirmed/index.ts` (service-role, retorna boolean genérico).
-- Novo: `src/components/EmailVerificationBanner.tsx`.
-- Novo: `src/components/ConfirmEmailGateDialog.tsx`.
-- `src/pages/Dashboard.tsx` + Clinic dashboard root — montar banner.
-- `src/hooks/useProSubscription.ts` — gate no `handleSubscribe`, `handleLifetimeCheckout`.
-- Componentes que disparam `create-clinic-subscription`, `create-payment`, `create-pro-treatment-payment` — gate antes do invoke.
-- `src/pages/Support.tsx`, `src/pages/ClinicSupport.tsx`, `src/locales/{pt,en,es}.json` — nova seção.
-- `src/pages/VerifyEmail.tsx` — manter, mas ajustar copy para "passo opcional".
+- Manter `auto_confirm_email` e fluxo de auth intactos — demos são páginas read-only sem chamadas Supabase.
+- Reutilizar `Card`, `Badge`, `Tabs`, `ScrollArea` do shadcn; recharts já está no projeto.
+- Cores via semantic tokens (`primary`, `muted-foreground`, etc.) — nenhuma cor hard-coded.
+- Mobile-first: max-w-7xl na agenda, grid responsivo nos KPIs, ScrollArea horizontal nas conversas.
+- CTA: `<DemoUpsellBanner section="agenda" />` posicionado no topo de cada `<TabsContent>` + 1 banner sticky no header da página.
 
-### O que NÃO muda
-- Estrutura de assinaturas, RLS, edge functions de pagamento, fluxos contextuais de landing (pro/clinic/paciente já funcionam corretamente hoje via `source`/redirect).
-- Política de "PRO só pode ser criado pela landing PRO" (memória já existente) — mantida; apenas o passo de verificar email some.
+## Fora de escopo
 
-### Risco mitigado
-- Contas fake: mantemos HIBP + limite de 1 avaliação básica por conta. Sem mudança aqui.
-- Stripe enviando recibo para email inválido: bloqueado pelo gate de checkout.
+- Não refatorar `InsightsTab`/`MessagesTab` reais para aceitarem dados mock diretamente (mantemos componentes paralelos para o demo).
+- Não tocar em rotas, auth, pagamento, edge functions ou RLS.
