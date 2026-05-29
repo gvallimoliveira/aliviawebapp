@@ -30,6 +30,8 @@ import DemoMessagesMock from "@/components/demo/DemoMessagesMock";
 import DemoManagementMock from "@/components/demo/DemoManagementMock";
 import DemoFeedbackMock from "@/components/demo/DemoFeedbackMock";
 import DemoDailySummaryMock from "@/components/demo/DemoDailySummaryMock";
+import PatientEvolutionDashboard from "@/components/dashboard/PatientEvolutionDashboard";
+import { mockPatientAssessments } from "@/data/mockPatientData";
 
 const TYPE_ICONS: Record<string, typeof Video> = {
   video_call: Video,
@@ -372,43 +374,30 @@ const ClinicDemo = () => {
               </Card>
             )}
 
-            <div className="space-y-3">
-              {filteredAssessments.filter(a => a.professional_id).map(a => (
-                <Card key={a.id} className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => demoToast("No modo real, abriria o prontuário completo do paciente.")}>
-                  <CardContent className="py-4 px-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-medium text-foreground">{a.patient_name}</p>
-                          <Badge variant="outline" className={cn("text-[10px]", a.status === "completed" ? "bg-emerald-500/10 text-emerald-600 border-emerald-300/40" : "bg-blue-500/10 text-blue-600 border-blue-200")}>
-                            {a.status === "completed" ? "Concluída" : "Em andamento"}
-                          </Badge>
-                          {a.diagnosis && (
-                            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/30">
-                              Diagnóstico IA
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {getProName(a.professional_id)} • {format(new Date(a.created_at), "dd/MM/yyyy")}
-                        </p>
-                        {a.diagnosis && (
-                          <p className="text-xs text-foreground/80 mt-1 truncate">{a.diagnosis.hypothesis}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {a.pain_score && (
-                          <div className="text-center px-2">
-                            <p className="text-lg font-bold text-foreground">{a.pain_score}</p>
-                            <p className="text-[9px] text-muted-foreground">NRS</p>
-                          </div>
-                        )}
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Stethoscope className="h-4 w-4 text-primary" />
+                  Prontuários completos
+                </h3>
+                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/30">
+                  Dados de exemplo
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Clique em qualquer paciente para abrir o prontuário, evolução, anotações e documentos.
+              </p>
+              <div className="rounded-2xl border border-border/60 bg-card p-3 sm:p-4">
+                <PatientEvolutionDashboard
+                  assessments={mockPatientAssessments as any}
+                  professionalId="demo-clinic-professional"
+                  clinicId="demo-clinic"
+                  clinicName={DEMO_CLINIC.name}
+                  isDemo
+                  readOnly
+                  lifetimeTreatment
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -417,6 +406,7 @@ const ClinicDemo = () => {
               <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold text-amber-600">{assessments.filter(a => !a.professional_id).length}</p><p className="text-[10px] text-muted-foreground">Sem atribuição</p></CardContent></Card>
             </div>
           </TabsContent>
+
 
           {/* ─── Insights ─── */}
           <TabsContent value="insights" className="space-y-5">
