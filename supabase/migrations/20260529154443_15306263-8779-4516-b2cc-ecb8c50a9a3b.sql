@@ -1,0 +1,1 @@
+ALTER TABLE public.professional_appointments ALTER COLUMN professional_id DROP NOT NULL;
