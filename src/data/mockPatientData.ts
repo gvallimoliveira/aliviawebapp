@@ -958,7 +958,7 @@ export const mockPatientAssessments = [
     },
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 32, severity: "severe",
-        subscaleScores: { symptoms: 35, pain: 40, adl: 30, sport: 10, qol: 25 } },
+        subscaleScores: { symptoms: 35, stiffness: 45, pain: 40, adl: 30, sport: 10, qol: 25 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -997,7 +997,7 @@ export const mockPatientAssessments = [
     treatment_plan: null,
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 58, severity: "moderate",
-        subscaleScores: { symptoms: 62, pain: 70, adl: 65, sport: 35, qol: 55 } },
+        subscaleScores: { symptoms: 62, stiffness: 60, pain: 70, adl: 65, sport: 35, qol: 55 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -1031,12 +1031,12 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-ATQ — alta funcional liberada — manutenção e prevenção secundária",
       confidence: "high",
-      reasoning: "Marcha independente sem dispositivo, sem Trendelenburg. ADM funcional (flexão 110° — dentro do permitido para implante póstero-lateral). Força glúteo médio MRC 5. HOOS 88%, Harris Hip Score 92 (excelente). Apta para alta com programa autônomo e seguimento anual com cirurgião.",
+      reasoning: "Marcha independente sem dispositivo, sem Trendelenburg. ADM funcional (flexão 110° — dentro do permitido para implante póstero-lateral). Força glúteo médio MRC 5. HOOS 88% (função normal ou quase normal). Apta para alta com programa autônomo e seguimento anual com cirurgião.",
     },
     treatment_plan: null,
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 88, severity: "mild",
-        subscaleScores: { symptoms: 90, pain: 95, adl: 92, sport: 72, qol: 85 } },
+        subscaleScores: { symptoms: 90, stiffness: 88, pain: 95, adl: 92, sport: 72, qol: 85 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -1144,7 +1144,7 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     therapeuticObjectives: ["Avançar fortalecimento em cadeia fechada", "Eliminar Trendelenburg residual", "Aumentar tolerância de marcha para >30 min", "Iniciar treino de equilíbrio dinâmico"],
   },
   "demo-007c": {
-    overview: "Pós-ATQ — alta funcional (50 dias). Marcha independente sem dispositivo. ADM funcional dentro do permitido para implante póstero-lateral. Glúteo médio MRC 5, sem Trendelenburg. HOOS 88%, Harris Hip Score 92 (excelente). Apta para alta com programa de manutenção.",
+    overview: "Pós-ATQ — alta funcional (50 dias). Marcha independente sem dispositivo. ADM funcional dentro do permitido para implante póstero-lateral. Glúteo médio MRC 5, sem Trendelenburg. HOOS 88% (função normal ou quase normal). Apta para alta com programa de manutenção.",
     therapeuticObjectives: ["Alta funcional", "Programa domiciliar de manutenção e prevenção de quedas", "Reforço das precauções vitalícias do implante (evitar flexão >100°)", "Seguimento anual com cirurgião"],
   },
 
