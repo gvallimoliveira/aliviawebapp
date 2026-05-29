@@ -350,8 +350,10 @@ const AppointmentEditorDialog = ({
   const handleSave = async () => {
     if (!formName.trim()) return;
     if (selectedPatientKey === "__new__" && !formEmail.trim()) { setEmailWarning(true); return; }
-    const effectiveProfId = (clinicId && formProfessionalId) ? formProfessionalId : (professionalId || formProfessionalId);
-    if (!effectiveProfId) {
+    // professional is optional now — clinic owner/admin/secretary can schedule without assigning a therapist
+    const rawProfId = (clinicId && formProfessionalId) ? formProfessionalId : (professionalId || formProfessionalId);
+    const effectiveProfId = rawProfId && rawProfId !== "__none__" ? rawProfId : null;
+    if (!clinicId && !effectiveProfId) {
       toast({ title: isPt ? "Selecione um profissional" : "Select a professional", variant: "destructive" });
       return;
     }
