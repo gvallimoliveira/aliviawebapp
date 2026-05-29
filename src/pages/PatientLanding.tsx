@@ -41,6 +41,14 @@ const PatientLanding = () => {
       <ReferralBanner />
       <main>
         <HeroSection showProfessionalCTA={false} />
+        <div className="container -mt-8 mb-12 flex justify-center">
+          <a
+            href="/para-pacientes/demo"
+            className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+          >
+            ✨ Ver demo interativa do painel Premium
+          </a>
+        </div>
         <HighlightsSection />
         <ComparisonSection />
         <MethodologySection />
