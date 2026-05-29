@@ -108,12 +108,13 @@ export const mockPatientFiles: Record<string, MockPatientFile[]> = {
     { id: "doc-c3", file_name: "Exames_Lab_PCR_VHS.pdf", file_size_bytes: 410_000, mime_type: "application/pdf", description: "Marcadores inflamatórios normais", created_at: new Date(Date.now() - 16*3600000).toISOString() },
   ],
   "roberto.tavares@exemplo.com": [
-    { id: "doc-r1", file_name: "TC_Cranio_AVCIsquemicoACME.pdf", file_size_bytes: 4_120_000, mime_type: "application/pdf", description: "Tomografia inicial — AVC isquêmico em território de ACM E", created_at: new Date(Date.now() - 120*86400000).toISOString() },
-    { id: "doc-r2", file_name: "RM_Cranio_30dias.pdf", file_size_bytes: 5_300_000, mime_type: "application/pdf", description: "RM de controle aos 30 dias — extensão da lesão definida", created_at: new Date(Date.now() - 90*86400000).toISOString() },
-    { id: "doc-r3", file_name: "Relatorio_Alta_Hospitalar.pdf", file_size_bytes: 780_000, mime_type: "application/pdf", description: "Sumário de alta hospitalar com prescrições", created_at: new Date(Date.now() - 88*86400000).toISOString() },
-    { id: "doc-r4", file_name: "Receita_Neurologista_Atualizada.pdf", file_size_bytes: 220_000, mime_type: "application/pdf", description: "Receita atualizada — AAS, sinvastatina, losartana", created_at: new Date(Date.now() - 25*86400000).toISOString() },
-    { id: "doc-r5", file_name: "Avaliacao_TerapiaOcupacional.pdf", file_size_bytes: 540_000, mime_type: "application/pdf", description: "Avaliação inicial de TO — pares com fisio", created_at: new Date(Date.now() - 55*86400000).toISOString() },
+    { id: "doc-r1", file_name: "RM_Ombro_D_PreOperatorio.pdf", file_size_bytes: 3_650_000, mime_type: "application/pdf", description: "RM pré-op — lesão SLAP tipo II, manguito íntegro", created_at: new Date(Date.now() - 90*86400000).toISOString() },
+    { id: "doc-r2", file_name: "Relatorio_Cirurgico_Artroscopia_SLAP.pdf", file_size_bytes: 880_000, mime_type: "application/pdf", description: "Relatório cirúrgico — reparo SLAP tipo II com âncora bioabsorvível", created_at: new Date(Date.now() - 70*86400000).toISOString() },
+    { id: "doc-r3", file_name: "Protocolo_PosOp_Ortopedista.pdf", file_size_bytes: 460_000, mime_type: "application/pdf", description: "Protocolo de reabilitação pós-op do cirurgião (fases e restrições)", created_at: new Date(Date.now() - 68*86400000).toISOString() },
+    { id: "doc-r4", file_name: "RX_Controle_6semanas.pdf", file_size_bytes: 720_000, mime_type: "application/pdf", description: "RX de controle — âncora bem posicionada", created_at: new Date(Date.now() - 28*86400000).toISOString() },
+    { id: "doc-r5", file_name: "Avaliacao_Isocinetica_LSI.pdf", file_size_bytes: 540_000, mime_type: "application/pdf", description: "Avaliação isocinética bilateral — LSI por velocidade angular", created_at: new Date(Date.now() - 6*86400000).toISOString() },
   ],
+
   "juliana.castro@exemplo.com": [
     { id: "doc-jc1", file_name: "RM_Joelho_PreOperatorio.pdf", file_size_bytes: 3_800_000, mime_type: "application/pdf", description: "RM pré-op — ruptura completa LCA E, meniscos íntegros", created_at: new Date(Date.now() - 110*86400000).toISOString() },
     { id: "doc-jc2", file_name: "Relatorio_Cirurgico_LCA.pdf", file_size_bytes: 920_000, mime_type: "application/pdf", description: "Relatório cirúrgico — reconstrução com enxerto semitendíneo+gracilis", created_at: new Date(Date.now() - 90*86400000).toISOString() },
