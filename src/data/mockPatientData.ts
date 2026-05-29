@@ -76,8 +76,8 @@ export const mockPatientAssessments = [
     },
     test_results: [
       {
-        questionnaireId: "oswestry",
-        questionnaireName: "Oswestry (Lombar)",
+        questionnaireId: "odi",
+        questionnaireName: "ODI (Lombar)",
         percentageScore: 56,
         severity: "moderate",
         subscaleScores: {
@@ -137,9 +137,9 @@ export const mockPatientAssessments = [
         subscaleScores: {
           symptoms: 50,
           pain: 45,
-          daily_living: 35,
+          adl: 35,
           sport: 30,
-          quality_of_life: 40,
+          qol: 40,
         },
       },
     ],
@@ -238,16 +238,14 @@ export const mockPatientAssessments = [
         },
       },
       {
-        questionnaireId: "dash",
-        questionnaireName: "DASH (Membro Superior)",
+        questionnaireId: "quickdash",
+        questionnaireName: "QuickDASH (Membro Superior)",
         percentageScore: 58,
         severity: "moderate",
         subscaleScores: {
-          daily_activities: 55,
-          arm_shoulder_hand: 60,
-          social_activities: 50,
-          work: 65,
-          sleep: 55,
+          daily_activities: 60,
+          symptoms: 62,
+          social_impact: 50,
         },
       },
     ],
@@ -307,16 +305,14 @@ export const mockPatientAssessments = [
         },
       },
       {
-        questionnaireId: "dash",
-        questionnaireName: "DASH (Membro Superior)",
+        questionnaireId: "quickdash",
+        questionnaireName: "QuickDASH (Membro Superior)",
         percentageScore: 22,
         severity: "mild",
         subscaleScores: {
-          daily_activities: 20,
-          arm_shoulder_hand: 25,
-          social_activities: 15,
-          work: 25,
-          sleep: 20,
+          daily_activities: 22,
+          symptoms: 25,
+          social_impact: 15,
         },
       },
     ],
@@ -358,8 +354,8 @@ export const mockPatientAssessments = [
     treatment_plan: null,
     test_results: [
       {
-        questionnaireId: "oswestry",
-        questionnaireName: "Oswestry (Lombar)",
+        questionnaireId: "odi",
+        questionnaireName: "ODI (Lombar)",
         percentageScore: 78,
         severity: "severe",
         subscaleScores: {
@@ -423,7 +419,7 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "oswestry", questionnaireName: "Oswestry (Lombar)", percentageScore: 32, severity: "moderate",
+      { questionnaireId: "odi", questionnaireName: "ODI (Lombar)", percentageScore: 32, severity: "moderate",
         subscaleScores: { pain_intensity: 40, personal_care: 20, lifting: 40, walking: 20, sitting: 40, standing: 40, sleeping: 20, social_life: 20, traveling: 20, employment: 40 } },
     ],
     red_flags: null,
@@ -458,11 +454,11 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Quadro lombar resolvido — apto para alta com programa de manutenção",
       confidence: "high",
-      reasoning: "EVA 1/10, Oswestry 8% (mínima), paciente retornou à atividade física regular. Sem sinais clínicos de instabilidade.",
+      reasoning: "EVA 1/10, ODI 8% (mínima), paciente retornou à atividade física regular. Sem sinais clínicos de instabilidade.",
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "oswestry", questionnaireName: "Oswestry (Lombar)", percentageScore: 8, severity: "mild",
+      { questionnaireId: "odi", questionnaireName: "ODI (Lombar)", percentageScore: 8, severity: "mild",
         subscaleScores: { pain_intensity: 10, personal_care: 0, lifting: 20, walking: 0, sitting: 10, standing: 10, sleeping: 0, social_life: 0, traveling: 10, employment: 20 } },
     ],
     red_flags: null,
@@ -478,37 +474,40 @@ export const mockPatientAssessments = [
     patient_email: "joao.santos@exemplo.com",
     type: "professional",
     status: "completed",
-    pain_score: 2,
-    pain_regions: ["right_knee"],
+    pain_score: 7,
+    pain_regions: ["right_knee", "right_thigh"],
     created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     anamnesis_data: {
-      chiefComplaints: ["anamnesis.complaint.knee_pain"],
+      chiefComplaints: ["anamnesis.complaint.knee_pain", "anamnesis.complaint.weakness"],
       onset: "anamnesis.onset.trauma",
-      painDuration: "anamnesis.duration.one_three_months",
-      painTypes: ["anamnesis.pain_type.local"],
-      evolution: "anamnesis.evolution.improving",
-      activityLevel: "anamnesis.activity.regular",
+      painDuration: "anamnesis.duration.three_six_months",
+      painTypes: ["anamnesis.pain_type.local", "anamnesis.pain_type.deep"],
+      evolution: "anamnesis.evolution.worsening",
+      activityLevel: "anamnesis.activity.sedentary",
       sex: "anamnesis.sex.male",
       ageRange: "anamnesis.age.25_34",
-      painPattern: "anamnesis.pain_pattern.intermittent",
-      painWeeklyFrequency: "anamnesis.weekly_freq.1",
+      painPattern: "anamnesis.pain_pattern.continuous",
+      painWeeklyFrequency: "anamnesis.weekly_freq.daily",
+      painNightWaking: "anamnesis.night_waking.frequent",
       hasGymAccess: "anamnesis.gym.yes",
-      aggravatingFactors: "Apenas em corridas longas (>5 km)",
-      relievingFactors: "Fortalecimento VMO, ajuste de cadência",
+      aggravatingFactors: "Subir/descer escadas, agachar, permanecer sentado >30 min",
+      relievingFactors: "Apenas analgesia oral",
+      medicalHistory: "Abandonou o programa de fisioterapia após 3 sessões, retornou às corridas longas sem progressão controlada e ganhou 6 kg nos últimos meses.",
     },
     diagnosis: {
-      hypothesis: "Condromalácia patelar grau II em estabilização — preparando retorno esportivo",
+      hypothesis: "Condromalácia patelar grau II com agravamento por baixa adesão e sobrecarga — fase de descompensação",
       confidence: "high",
-      reasoning: "Ganho de força de quadríceps (+35% MRC), abolição da crepitação dolorosa. KOOS subiu de 42 → 78%. Paciente pronto para fase de retorno progressivo à corrida.",
+      reasoning: "Paciente retornou após 2 meses com piora clínica importante: KOOS caiu de 42 para 28% (-33%), edema articular reativo, crepitação dolorosa franca e Trendelenburg dinâmico. Reportou abandono do HEP, retorno precoce à corrida (>10 km) e ganho ponderal. Cenário típico de descompensação por baixa adesão — necessária reabordagem com pacto terapêutico e abordagem motivacional.",
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 78, severity: "mild",
-        subscaleScores: { symptoms: 80, pain: 82, daily_living: 85, sport: 65, quality_of_life: 78 } },
+      { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 28, severity: "severe",
+        subscaleScores: { symptoms: 35, pain: 30, adl: 28, sport: 12, qol: 22 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
   },
+
 
   // ─────────────────────────────────────────────────────────────
   // Carlos Mendes — 2ª avaliação (após investigação médica — red flags descartados)
@@ -545,7 +544,7 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "oswestry", questionnaireName: "Oswestry (Lombar)", percentageScore: 52, severity: "moderate",
+      { questionnaireId: "odi", questionnaireName: "ODI (Lombar)", percentageScore: 52, severity: "moderate",
         subscaleScores: { pain_intensity: 60, personal_care: 40, lifting: 80, walking: 40, sitting: 60, standing: 60, sleeping: 40, social_life: 40, traveling: 60, employment: 60 } },
     ],
     red_flags: null,
@@ -585,7 +584,7 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-operatório imediato de reparo artroscópico de lesão SLAP tipo II — fase de proteção do reparo labral",
       confidence: "high",
-      reasoning: "Cirurgia há 10 dias. Imobilizado em tipoia abdução-neutra 4 semanas (conforme protocolo do cirurgião). ADM passiva limitada por protocolo: flexão ≤90°, rotação externa em abdução 0° ≤30°. Edema leve, ferida operatória cicatrizando sem sinais flogísticos. DASH 78% reflete dependência funcional aguda.",
+      reasoning: "Cirurgia há 10 dias. Imobilizado em tipoia abdução-neutra 4 semanas (conforme protocolo do cirurgião). ADM passiva limitada por protocolo: flexão ≤90°, rotação externa em abdução 0° ≤30°. Edema leve, ferida operatória cicatrizando sem sinais flogísticos. SPADI 82% reflete dor e incapacidade severas.",
       clinicalImpression: {
         overview: "Paciente masculino, 45-55 anos, fisicamente ativo (CrossFit recreacional), no 10º dia pós-artroscopia para reparo de lesão SLAP tipo II do ombro direito (membro dominante). Quadro típico de fase aguda pós-cirúrgica: dor controlada com analgesia oral, ADM restrita por protocolo cirúrgico para proteção do reparo labral, atrofia funcional inicial de cintura escapular. Boa motivação e expectativa realista de retorno esportivo em 6-9 meses.",
         therapeuticObjectives: [
@@ -624,10 +623,9 @@ export const mockPatientAssessments = [
       disclaimer: "Plano gerado por IA seguindo protocolo padrão de reparo SLAP (Burkhart/ASES). Coordenado com cirurgião assistente.",
     },
     test_results: [
-      { questionnaireId: "dash", questionnaireName: "DASH (Membro Superior)", percentageScore: 78, severity: "severe",
-        subscaleScores: { daily_activities: 82, arm_shoulder_hand: 85, social_activities: 65, work: 88, sleep: 72 } },
-      { questionnaireId: "kjoc", questionnaireName: "KJOC (Ombro Atlético)", percentageScore: 22, severity: "severe",
-        subscaleScores: { symptoms: 18, function: 25, sports: 12 } },
+      { questionnaireId: "spadi", questionnaireName: "SPADI (Ombro)", percentageScore: 82, severity: "extreme",
+        subscaleScores: { pain: 78, disability: 86 } },
+
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -661,14 +659,13 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-op SLAP — fase 2 (fortalecimento progressivo) — evolução excelente",
       confidence: "high",
-      reasoning: "ADM passiva completa (flexão 170°, ABD 165°, RE em ABD 90° = 75°). Tipoia retirada. Manguito rotador ativando com isometria submáxima sem dor. Início de fortalecimento dinâmico em cadeia fechada e isotônico leve. DASH caiu de 78 para 42% (-46%).",
+      reasoning: "ADM passiva completa (flexão 170°, ABD 165°, RE em ABD 90° = 75°). Tipoia retirada. Manguito rotador ativando com isometria submáxima sem dor. Início de fortalecimento dinâmico em cadeia fechada e isotônico leve. SPADI caiu de 82 para 46% (-44%).",
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "dash", questionnaireName: "DASH (Membro Superior)", percentageScore: 42, severity: "moderate",
-        subscaleScores: { daily_activities: 45, arm_shoulder_hand: 50, social_activities: 32, work: 48, sleep: 30 } },
-      { questionnaireId: "kjoc", questionnaireName: "KJOC (Ombro Atlético)", percentageScore: 58, severity: "moderate",
-        subscaleScores: { symptoms: 60, function: 65, sports: 48 } },
+      { questionnaireId: "spadi", questionnaireName: "SPADI (Ombro)", percentageScore: 46, severity: "moderate",
+        subscaleScores: { pain: 42, disability: 50 } },
+
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -702,14 +699,13 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-op SLAP — fase 3 (preparação para retorno esportivo) — pronto para gestos overhead progressivos",
       confidence: "high",
-      reasoning: "Força isocinética com índice de simetria do ombro (LSI) 88% para RE e 92% para flexão. DASH 14% (mínimo), KJOC 84%. Iniciando treinamento de gestos esportivos específicos (kettlebell snatch progressivo, suporte invertido). Liberação prevista em 4-6 semanas.",
+      reasoning: "Força isocinética com índice de simetria do ombro (LSI) 88% para RE e 92% para flexão. SPADI 14% (disfunção mínima). Iniciando treinamento de gestos esportivos específicos (kettlebell snatch progressivo, suporte invertido). Liberação prevista em 4-6 semanas.",
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "dash", questionnaireName: "DASH (Membro Superior)", percentageScore: 14, severity: "mild",
-        subscaleScores: { daily_activities: 12, arm_shoulder_hand: 18, social_activities: 10, work: 15, sleep: 8 } },
-      { questionnaireId: "kjoc", questionnaireName: "KJOC (Ombro Atlético)", percentageScore: 84, severity: "mild",
-        subscaleScores: { symptoms: 88, function: 90, sports: 78 } },
+      { questionnaireId: "spadi", questionnaireName: "SPADI (Ombro)", percentageScore: 14, severity: "minimal",
+        subscaleScores: { pain: 12, disability: 16 } },
+
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -769,10 +765,8 @@ export const mockPatientAssessments = [
       disclaimer: "Plano gerado por IA seguindo protocolo MOON/Cincinnati pós-LCA.",
     },
     test_results: [
-      { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 28, severity: "severe",
-        subscaleScores: { symptoms: 25, sports: 0, daily_function: 35 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 36, severity: "severe",
-        subscaleScores: { symptoms: 40, pain: 45, daily_living: 50, sport: 0, quality_of_life: 25 } },
+        subscaleScores: { symptoms: 40, pain: 45, adl: 50, sport: 0, qol: 25 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -810,10 +804,8 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 56, severity: "moderate",
-        subscaleScores: { symptoms: 60, sports: 35, daily_function: 75 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 64, severity: "moderate",
-        subscaleScores: { symptoms: 70, pain: 75, daily_living: 80, sport: 40, quality_of_life: 55 } },
+        subscaleScores: { symptoms: 70, pain: 75, adl: 80, sport: 40, qol: 55 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -850,10 +842,8 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 82, severity: "mild",
-        subscaleScores: { symptoms: 85, sports: 75, daily_function: 92 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 84, severity: "mild",
-        subscaleScores: { symptoms: 88, pain: 92, daily_living: 92, sport: 72, quality_of_life: 78 } },
+        subscaleScores: { symptoms: 88, pain: 92, adl: 92, sport: 72, qol: 78 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -886,14 +876,12 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Retorno esportivo liberado — alta funcional",
       confidence: "high",
-      reasoning: "Bateria RTS positiva: LSI ≥95% em todos os testes, hop tests simétricos, IKDC 94%, ausência de cinesiofobia (TSK 22). Liberada para retorno gradual à corrida com plano de prevenção secundária.",
+      reasoning: "Bateria RTS positiva: LSI ≥95% em todos os testes, hop tests simétricos, ausência de cinesiofobia (TSK 22). Liberada para retorno gradual à corrida com plano de prevenção secundária.",
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 94, severity: "mild",
-        subscaleScores: { symptoms: 95, sports: 90, daily_function: 98 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 92, severity: "mild",
-        subscaleScores: { symptoms: 95, pain: 98, daily_living: 98, sport: 85, quality_of_life: 88 } },
+        subscaleScores: { symptoms: 95, pain: 98, adl: 98, sport: 85, qol: 88 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -973,9 +961,7 @@ export const mockPatientAssessments = [
     },
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 32, severity: "severe",
-        subscaleScores: { symptoms: 35, pain: 40, daily_living: 30, sport: 10, quality_of_life: 25 } },
-      { questionnaireId: "hhs", questionnaireName: "Harris Hip Score", percentageScore: 38, severity: "severe",
-        subscaleScores: { pain: 20, function: 22, deformity: 4, range_of_motion: 3 } },
+        subscaleScores: { symptoms: 35, stiffness: 45, pain: 40, adl: 30, sport: 10, qol: 25 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -1014,9 +1000,7 @@ export const mockPatientAssessments = [
     treatment_plan: null,
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 58, severity: "moderate",
-        subscaleScores: { symptoms: 62, pain: 70, daily_living: 65, sport: 35, quality_of_life: 55 } },
-      { questionnaireId: "hhs", questionnaireName: "Harris Hip Score", percentageScore: 72, severity: "moderate",
-        subscaleScores: { pain: 38, function: 28, deformity: 4, range_of_motion: 4 } },
+        subscaleScores: { symptoms: 62, stiffness: 60, pain: 70, adl: 65, sport: 35, qol: 55 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -1050,14 +1034,12 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-ATQ — alta funcional liberada — manutenção e prevenção secundária",
       confidence: "high",
-      reasoning: "Marcha independente sem dispositivo, sem Trendelenburg. ADM funcional (flexão 110° — dentro do permitido para implante póstero-lateral). Força glúteo médio MRC 5. HOOS 88%, Harris Hip Score 92 (excelente). Apta para alta com programa autônomo e seguimento anual com cirurgião.",
+      reasoning: "Marcha independente sem dispositivo, sem Trendelenburg. ADM funcional (flexão 110° — dentro do permitido para implante póstero-lateral). Força glúteo médio MRC 5. HOOS 88% (função normal ou quase normal). Apta para alta com programa autônomo e seguimento anual com cirurgião.",
     },
     treatment_plan: null,
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 88, severity: "mild",
-        subscaleScores: { symptoms: 90, pain: 95, daily_living: 92, sport: 72, quality_of_life: 85 } },
-      { questionnaireId: "hhs", questionnaireName: "Harris Hip Score", percentageScore: 92, severity: "mild",
-        subscaleScores: { pain: 44, function: 40, deformity: 4, range_of_motion: 4 } },
+        subscaleScores: { symptoms: 90, stiffness: 88, pain: 95, adl: 92, sport: 72, qol: 85 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -1067,7 +1049,7 @@ export const mockPatientAssessments = [
 // Pre-built demo clinical impression for when user clicks "Gerar Impressão Clínica" in demo mode
 export const mockClinicalImpressions: Record<string, { overview: string; therapeuticObjectives: string[] }> = {
   "demo-001": {
-    overview: "Paciente feminina, 35-44 anos, sedentária, com quadro de lombalgia mecânica crônica de 3-6 meses de evolução, associada a irradiação para quadril direito. O padrão de dor intermitente com piora ao sentar prolongadamente e alívio em decúbito sugere componente discogênico. O sedentarismo é fator perpetuante importante. Os escores moderados no Oswestry (56%) indicam limitação funcional significativa, especialmente em atividades de levantamento de peso (80%) e posições estáticas.",
+    overview: "Paciente feminina, 35-44 anos, sedentária, com quadro de lombalgia mecânica crônica de 3-6 meses de evolução, associada a irradiação para quadril direito. O padrão de dor intermitente com piora ao sentar prolongadamente e alívio em decúbito sugere componente discogênico. O sedentarismo é fator perpetuante importante. Os escores moderados no ODI (56%) indicam limitação funcional significativa, especialmente em atividades de levantamento de peso (80%) e posições estáticas.",
     therapeuticObjectives: [
       "Reduzir dor lombar e irradiação para <3/10 na EVA",
       "Restaurar capacidade de sentar >1h sem dor",
@@ -1085,7 +1067,7 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     ],
   },
   "demo-003a": {
-    overview: "Paciente feminina, 45-55 anos, sedentária, apresenta quadro de cervicobraquialgia crônica progressiva com componente neuropático. O padrão de irradiação e parestesia sugere comprometimento radicular C5-C6. O sedentarismo e uso prolongado de computador são fatores perpetuantes significativos. A dor noturna frequente indica necessidade de intervenção precoce. NDI de 62% (severo) e DASH de 58% (moderado) confirmam limitação funcional importante.",
+    overview: "Paciente feminina, 45-55 anos, sedentária, apresenta quadro de cervicobraquialgia crônica progressiva com componente neuropático. O padrão de irradiação e parestesia sugere comprometimento radicular C5-C6. O sedentarismo e uso prolongado de computador são fatores perpetuantes significativos. A dor noturna frequente indica necessidade de intervenção precoce. NDI de 62% (severo) e QuickDASH de 58% (moderado) confirmam limitação funcional importante.",
     therapeuticObjectives: [
       "Reduzir dor e parestesia em membro superior direito",
       "Restaurar mobilidade cervical funcional",
@@ -1094,7 +1076,7 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     ],
   },
   "demo-003b": {
-    overview: "Reavaliação após 7 dias de tratamento. Melhora significativa: resolução completa da parestesia no membro superior e da irradiação. Dor residual apenas cervical local, de 4/10. NDI reduzido de 62% para 28% (melhora de 55%) e DASH de 58% para 22% (melhora de 62%). Paciente iniciou atividade física leve e responde bem ao tratamento. Evolução compatível com prognóstico favorável.",
+    overview: "Reavaliação após 7 dias de tratamento. Melhora significativa: resolução completa da parestesia no membro superior e da irradiação. Dor residual apenas cervical local, de 4/10. NDI reduzido de 62% para 28% (melhora de 55%) e QuickDASH de 58% para 22% (melhora de 62%). Paciente iniciou atividade física leve e responde bem ao tratamento. Evolução compatível com prognóstico favorável.",
     therapeuticObjectives: [
       "Manter ganhos funcionais",
       "Progredir para fase de fortalecimento ativo",
@@ -1103,7 +1085,7 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     ],
   },
   "demo-004": {
-    overview: "⚠️ ATENÇÃO: Paciente masculino, >55 anos, com dor toraco-lombar aguda de início súbito, intensidade 9/10, padrão contínuo com dor noturna e sem alívio. A presença de múltiplas red flags (idade >55, início súbito sem trauma, dor noturna, ausência de alívio) requer investigação complementar prioritária antes de intervenção fisioterapêutica. Oswestry de 78% (severo) confirma limitação funcional grave.",
+    overview: "⚠️ ATENÇÃO: Paciente masculino, >55 anos, com dor toraco-lombar aguda de início súbito, intensidade 9/10, padrão contínuo com dor noturna e sem alívio. A presença de múltiplas red flags (idade >55, início súbito sem trauma, dor noturna, ausência de alívio) requer investigação complementar prioritária antes de intervenção fisioterapêutica. ODI de 78% (severo) confirma limitação funcional grave.",
     therapeuticObjectives: [
       "Encaminhamento médico PRIORITÁRIO",
       "Investigação por imagem (RM recomendada)",
@@ -1112,60 +1094,61 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     ],
   },
   "demo-001b": {
-    overview: "Reavaliação após 4 semanas. Resolução do componente radicular e melhora funcional expressiva. Oswestry caiu de 56% para 32% (–43%). Paciente aderente ao HEP (91%), com retomada de atividade leve. Dor residual local de padrão mecânico, sem sinais neurais.",
+    overview: "Reavaliação após 4 semanas. Resolução do componente radicular e melhora funcional expressiva. ODI caiu de 56% para 32% (–43%). Paciente aderente ao HEP (91%), com retomada de atividade leve. Dor residual local de padrão mecânico, sem sinais neurais.",
     therapeuticObjectives: ["Progredir fortalecimento de core", "Estender tolerância postural para >90 min", "Iniciar reintrodução de atividade física aeróbica"],
   },
   "demo-001c": {
-    overview: "Avaliação de alta. Quadro lombar resolvido (EVA 1/10, Oswestry 8%). Paciente retornou à rotina plena e demonstra autonomia para manter programa de prevenção secundária. Prognóstico de baixo risco de recidiva com manutenção do estilo de vida ativo.",
+    overview: "Avaliação de alta. Quadro lombar resolvido (EVA 1/10, ODI 8%). Paciente retornou à rotina plena e demonstra autonomia para manter programa de prevenção secundária. Prognóstico de baixo risco de recidiva com manutenção do estilo de vida ativo.",
     therapeuticObjectives: ["Alta funcional", "Programa domiciliar de manutenção", "Sinais de alerta para recidiva orientados"],
   },
   "demo-002b": {
-    overview: "Reavaliação de joelho após 4 semanas. KOOS subiu de 42% para 78%, abolição da crepitação, ganho de força do quadríceps (+35% MRC). Paciente pronto para fase de retorno gradual à corrida com plano de prevenção.",
-    therapeuticObjectives: ["Iniciar retorno progressivo à corrida (run-walk)", "Manter fortalecimento de VMO e glúteo médio", "Reavaliar mecânica de corrida em 4 semanas"],
+    overview: "Reavaliação após 2 meses de afastamento. KOOS caiu de 42% para 28% (-33%) — piora clínica por abandono do programa, retorno precoce à corrida e ganho ponderal. Edema reativo, crepitação franca e Trendelenburg dinâmico. Cenário de descompensação por baixa adesão.",
+    therapeuticObjectives: ["Reestabelecer pacto terapêutico (entrevista motivacional)", "Controle álgico e do edema reativo", "Reiniciar fortalecimento de VMO/glúteo com progressão criteriosa", "Suspender corrida até critérios objetivos atingidos"],
   },
+
   "demo-004b": {
-    overview: "Reavaliação após investigação médica. RM lombar (anexada) descartou patologias graves — protusão discal L4-L5 sem compressão radicular. Liberado pelo ortopedista para fisioterapia. Quadro evoluiu para lombalgia aguda discogênica em fase subaguda. Oswestry reduziu de 78% para 52%.",
+    overview: "Reavaliação após investigação médica. RM lombar (anexada) descartou patologias graves — protusão discal L4-L5 sem compressão radicular. Liberado pelo ortopedista para fisioterapia. Quadro evoluiu para lombalgia aguda discogênica em fase subaguda. ODI reduziu de 78% para 52%.",
     therapeuticObjectives: ["Controle álgico", "Iniciar protocolo McKenzie de extensão", "Educação postural específica para o trabalho", "Reavaliar em 3 semanas"],
   },
   "demo-005a": {
-    overview: "Paciente masculino, 45-55 anos, fisicamente ativo, no 10º dia pós-artroscopia para reparo de lesão SLAP tipo II do ombro D (membro dominante). Fase aguda pós-cirúrgica: imobilização em tipoia, ADM restrita por protocolo, atrofia funcional inicial. DASH 78% e KJOC 22% refletem dependência funcional aguda.",
+    overview: "Paciente masculino, 45-55 anos, fisicamente ativo, no 10º dia pós-artroscopia para reparo de lesão SLAP tipo II do ombro D (membro dominante). Fase aguda pós-cirúrgica: imobilização em tipoia, ADM restrita por protocolo, atrofia funcional inicial. SPADI 82% (disfunção extrema) reflete dor e incapacidade severas.",
     therapeuticObjectives: ["Controle álgico (EVA <3) e edema", "Respeitar restrições cirúrgicas (flexão ≤90°, RE em ABD 0° ≤30°)", "Preservar ADM escapular e cervical", "Educação sobre proteção do reparo SLAP"],
   },
   "demo-005b": {
-    overview: "Fase 2 pós-op SLAP (30 dias). ADM passiva completa (flexão 170°, ABD 165°). Manguito ativando sem dor. DASH caiu de 78% para 42% (-46%), KJOC subiu para 58%. Pronto para fortalecimento dinâmico em cadeia fechada e isotônico leve.",
+    overview: "Fase 2 pós-op SLAP (30 dias). ADM passiva completa (flexão 170°, ABD 165°). Manguito ativando sem dor. SPADI caiu de 82% para 46% (-44%). Pronto para fortalecimento dinâmico em cadeia fechada e isotônico leve.",
     therapeuticObjectives: ["Restaurar força do manguito rotador (LSI >80%)", "Progredir cadeia fechada e propriocepção escapular", "Recuperar ADM ativa completa sem compensação"],
   },
   "demo-005c": {
-    overview: "Fase 3 pós-op SLAP (60 dias). Força isocinética com LSI 88% (RE) e 92% (flexão). DASH 14%, KJOC 84%. Iniciando treinamento de gestos esportivos específicos (kettlebell, suporte invertido). Liberação para retorno completo prevista em 4-6 semanas.",
+    overview: "Fase 3 pós-op SLAP (60 dias). Força isocinética com LSI 88% (RE) e 92% (flexão). SPADI 14% (disfunção mínima). Iniciando treinamento de gestos esportivos específicos (kettlebell, suporte invertido). Liberação para retorno completo prevista em 4-6 semanas.",
     therapeuticObjectives: ["Treino de gestos overhead progressivos", "Bateria de retorno esportivo (Y-Balance UQ, CKCUEST)", "Programa de prevenção secundária para ombro do atleta"],
   },
 
   "demo-006a": {
-    overview: "Pós-operatório imediato de reconstrução de LCA E (10 dias). Atleta amadora de corrida, 25-34 anos. Edema 3+, ADM 0-65°, déficit de extensão de 5°, atrofia inicial de quadríceps. Fase de proteção tecidual. IKDC 28% / KOOS 36%.",
+    overview: "Pós-operatório imediato de reconstrução de LCA E (10 dias). Atleta amadora de corrida, 25-34 anos. Edema 3+, ADM 0-65°, déficit de extensão de 5°, atrofia inicial de quadríceps. Fase de proteção tecidual. KOOS 36% (disfunção severa).",
     therapeuticObjectives: ["Resolver edema e ganhar extensão completa", "Ativar quadríceps (QSET, SLR)", "Atingir ADM 0-110° em 4 semanas", "Educação sobre proteção do enxerto"],
   },
   "demo-006b": {
-    overview: "Fase 2 pós-LCA (30 dias). ADM completa 0-135°, déficit de força de quadríceps de 38% (LSI). Sem claudicação. IKDC 56% / KOOS 64%. Pronta para fortalecimento progressivo em cadeia cinética fechada com carga.",
+    overview: "Fase 2 pós-LCA (30 dias). ADM completa 0-135°, déficit de força de quadríceps de 38% (LSI). Sem claudicação. KOOS 64% (disfunção leve a moderada). Pronta para fortalecimento progressivo em cadeia cinética fechada com carga.",
     therapeuticObjectives: ["Reduzir déficit de força para <20% LSI", "Progredir cadeia cinética fechada", "Iniciar treino proprioceptivo dinâmico"],
   },
   "demo-006c": {
-    overview: "Fase 3 pós-LCA (65 dias). LSI quadríceps 88%, hop tests 86%. IKDC 82% / KOOS 84%. Sem dor. Iniciando treinamento pliométrico, aterrissagem e mudanças de direção. Excelente trajetória para retorno esportivo.",
+    overview: "Fase 3 pós-LCA (65 dias). LSI quadríceps 88%, hop tests 86%. KOOS 84% (função normal ou quase normal). Sem dor. Iniciando treinamento pliométrico, aterrissagem e mudanças de direção. Excelente trajetória para retorno esportivo.",
     therapeuticObjectives: ["Avançar pliometria progressiva", "Treinamento de aterrissagem e cutting", "Preparação para bateria de RTS"],
   },
   "demo-006d": {
-    overview: "Retorno esportivo liberado (90 dias). Bateria RTS positiva: LSI ≥95%, hop tests simétricos, IKDC 94%, ausência de cinesiofobia (TSK 22). Liberada para retorno gradual à corrida com plano estruturado de prevenção secundária.",
+    overview: "Retorno esportivo liberado (90 dias). Bateria RTS positiva: LSI ≥95%, hop tests simétricos, ausência de cinesiofobia (TSK 22). Liberada para retorno gradual à corrida com plano estruturado de prevenção secundária.",
     therapeuticObjectives: ["Alta funcional com plano de retorno em 12 semanas", "Programa de prevenção de re-ruptura (FIFA 11+)", "Reavaliações periódicas a cada 3 meses no 1º ano"],
   },
   "demo-007a": {
-    overview: "Paciente feminina, >55 anos, no 10º dia pós-artroplastia total de quadril D (via póstero-lateral) por coxartrose terminal. Fase aguda pós-cirúrgica: marcha com andador, ADM restrita pelas precauções anti-luxação posterior, glúteo médio MRC 2+ com Trendelenburg pré-cirúrgico. HOOS 32% / Harris Hip Score 38 (severo).",
+    overview: "Paciente feminina, >55 anos, no 10º dia pós-artroplastia total de quadril D (via póstero-lateral) por coxartrose terminal. Fase aguda pós-cirúrgica: marcha com andador, ADM restrita pelas precauções anti-luxação posterior, glúteo médio MRC 2+ com Trendelenburg pré-cirúrgico. HOOS 32% (disfunção severa).",
     therapeuticObjectives: ["Controle álgico e do edema", "Adesão estrita às precauções anti-luxação por 12 semanas", "Reativar glúteo médio e quadríceps", "Progredir marcha (andador → muleta → bengala)"],
   },
   "demo-007b": {
-    overview: "Pós-ATQ — fase 2 (25 dias). Marcha independente com bengala canadense. ADM dentro das precauções (flexão 95°, ABD 30°). Glúteo médio MRC 4 com Trendelenburg discreto residual. HOOS 58% (+81%), Harris Hip Score 72.",
+    overview: "Pós-ATQ — fase 2 (25 dias). Marcha independente com bengala canadense. ADM dentro das precauções (flexão 95°, ABD 30°). Glúteo médio MRC 4 com Trendelenburg discreto residual. HOOS 58% (+81%), disfunção moderada.",
     therapeuticObjectives: ["Avançar fortalecimento em cadeia fechada", "Eliminar Trendelenburg residual", "Aumentar tolerância de marcha para >30 min", "Iniciar treino de equilíbrio dinâmico"],
   },
   "demo-007c": {
-    overview: "Pós-ATQ — alta funcional (50 dias). Marcha independente sem dispositivo. ADM funcional dentro do permitido para implante póstero-lateral. Glúteo médio MRC 5, sem Trendelenburg. HOOS 88%, Harris Hip Score 92 (excelente). Apta para alta com programa de manutenção.",
+    overview: "Pós-ATQ — alta funcional (50 dias). Marcha independente sem dispositivo. ADM funcional dentro do permitido para implante póstero-lateral. Glúteo médio MRC 5, sem Trendelenburg. HOOS 88% (função normal ou quase normal). Apta para alta com programa de manutenção.",
     therapeuticObjectives: ["Alta funcional", "Programa domiciliar de manutenção e prevenção de quedas", "Reforço das precauções vitalícias do implante (evitar flexão >100°)", "Seguimento anual com cirurgião"],
   },
 
@@ -1173,13 +1156,13 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
 
 // Pre-built evolution summary for Ana Oliveira (demo-003a → demo-003b)
 export const mockEvolutionSummary = {
-  narrative: "A paciente Ana Oliveira apresentou evolução clínica significativamente favorável no período de 7 dias entre as avaliações. A dor reduziu de 8/10 para 4/10 (redução de 50%), com resolução completa da irradiação para membro superior direito e da parestesia em dermátomo C6. A região de dor no ombro direito foi completamente resolvida, persistindo apenas dor cervical residual de caráter mecânico. Os questionários funcionais demonstram melhora expressiva: NDI de 62% (severo) para 28% (leve) — melhora de 55%; DASH de 58% (moderado) para 22% (leve) — melhora de 62%. A paciente transitou de sedentária para atividade física leve, indicando boa adesão ao programa terapêutico.",
+  narrative: "A paciente Ana Oliveira apresentou evolução clínica significativamente favorável no período de 7 dias entre as avaliações. A dor reduziu de 8/10 para 4/10 (redução de 50%), com resolução completa da irradiação para membro superior direito e da parestesia em dermátomo C6. A região de dor no ombro direito foi completamente resolvida, persistindo apenas dor cervical residual de caráter mecânico. Os questionários funcionais demonstram melhora expressiva: NDI de 62% (severo) para 28% (leve) — melhora de 55%; QuickDASH de 58% (moderado) para 22% (leve) — melhora de 62%. A paciente transitou de sedentária para atividade física leve, indicando boa adesão ao programa terapêutico.",
   conclusion: "Evolução clínica excelente em curto prazo, com resolução dos sinais neurológicos e melhora funcional expressiva. Os dados sugerem boa resposta ao tratamento conservador e prognóstico favorável para recuperação completa.",
   recommendation: "Alta" as const,
   pain_change: -50,
   questionnaire_changes: [
     { name: "NDI (Cervical)", from: 62, to: 28, change: -55 },
-    { name: "DASH (Membro Superior)", from: 58, to: 22, change: -62 },
+    { name: "QuickDASH (Membro Superior)", from: 58, to: 22, change: -62 },
   ],
   resolved_regions: ["right_shoulder"],
   new_regions: [],
