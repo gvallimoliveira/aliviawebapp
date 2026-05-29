@@ -557,7 +557,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         address: extras.address.trim() || null,
       };
       if (clinicId) patientRow.clinic_id = clinicId;
-      else patientRow.professional_id = effectiveProfId;
+      else if (effectiveProfId) patientRow.professional_id = effectiveProfId;
 
       if (isEdit && editId) {
         await (supabase.from("professional_appointments" as any) as any)
