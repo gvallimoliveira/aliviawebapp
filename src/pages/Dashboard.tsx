@@ -771,7 +771,7 @@ const Dashboard = () => {
               approved: false,
               subscription_status: "active",
             } : professional;
-            const showInsightsTab = !isProDemo && hasProAccess && !!professional?.id;
+            const showInsightsTab = (isProDemo || (hasProAccess && !!professional?.id));
             return (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <TabsList className="w-full grid" style={{ gridTemplateColumns: showInsightsTab ? "repeat(4, 1fr)" : "repeat(3, 1fr)" }}>
