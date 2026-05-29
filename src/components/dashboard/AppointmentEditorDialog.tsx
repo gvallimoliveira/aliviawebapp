@@ -25,7 +25,7 @@ import { formatCpf, formatPhone } from "@/utils/masks";
 
 export interface AptInput {
   id: string;
-  professional_id: string;
+  professional_id: string | null;
   clinic_id?: string | null;
   patient_email: string | null;
   patient_name: string;
