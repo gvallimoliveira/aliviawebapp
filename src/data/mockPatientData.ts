@@ -620,10 +620,9 @@ export const mockPatientAssessments = [
       disclaimer: "Plano gerado por IA seguindo protocolo padrão de reparo SLAP (Burkhart/ASES). Coordenado com cirurgião assistente.",
     },
     test_results: [
-      { questionnaireId: "dash", questionnaireName: "DASH (Membro Superior)", percentageScore: 78, severity: "severe",
-        subscaleScores: { daily_activities: 82, arm_shoulder_hand: 85, social_activities: 65, work: 88, sleep: 72 } },
-      { questionnaireId: "kjoc", questionnaireName: "KJOC (Ombro Atlético)", percentageScore: 22, severity: "severe",
-        subscaleScores: { symptoms: 18, function: 25, sports: 12 } },
+      { questionnaireId: "spadi", questionnaireName: "SPADI (Ombro)", percentageScore: 82, severity: "extreme",
+        subscaleScores: { pain: 78, disability: 86 } },
+
     ],
     red_flags: null,
     payment_status: "treatment_paid",
