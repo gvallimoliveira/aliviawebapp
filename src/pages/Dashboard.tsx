@@ -39,6 +39,10 @@ const InsightsTab = lazy(() => import("@/components/dashboard/insights/InsightsT
 const FeedbackSurveyCard = lazy(() => import("@/components/dashboard/FeedbackSurveyCard"));
 const FeedbackResultsCard = lazy(() => import("@/components/dashboard/FeedbackResultsCard"));
 const ExportDataCard = lazy(() => import("@/components/dashboard/ExportDataCard"));
+const DemoUpsellBanner = lazy(() => import("@/components/demo/DemoUpsellBanner"));
+const DemoInsightsMock = lazy(() => import("@/components/demo/DemoInsightsMock"));
+const DemoMessagesMock = lazy(() => import("@/components/demo/DemoMessagesMock"));
+const DemoDailySummaryMock = lazy(() => import("@/components/demo/DemoDailySummaryMock"));
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
