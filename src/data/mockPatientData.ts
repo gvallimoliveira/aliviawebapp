@@ -76,8 +76,8 @@ export const mockPatientAssessments = [
     },
     test_results: [
       {
-        questionnaireId: "oswestry",
-        questionnaireName: "Oswestry (Lombar)",
+        questionnaireId: "odi",
+        questionnaireName: "ODI (Lombar)",
         percentageScore: 56,
         severity: "moderate",
         subscaleScores: {
@@ -137,9 +137,9 @@ export const mockPatientAssessments = [
         subscaleScores: {
           symptoms: 50,
           pain: 45,
-          daily_living: 35,
+          adl: 35,
           sport: 30,
-          quality_of_life: 40,
+          qol: 40,
         },
       },
     ],
@@ -358,8 +358,8 @@ export const mockPatientAssessments = [
     treatment_plan: null,
     test_results: [
       {
-        questionnaireId: "oswestry",
-        questionnaireName: "Oswestry (Lombar)",
+        questionnaireId: "odi",
+        questionnaireName: "ODI (Lombar)",
         percentageScore: 78,
         severity: "severe",
         subscaleScores: {
@@ -423,7 +423,7 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "oswestry", questionnaireName: "Oswestry (Lombar)", percentageScore: 32, severity: "moderate",
+      { questionnaireId: "odi", questionnaireName: "ODI (Lombar)", percentageScore: 32, severity: "moderate",
         subscaleScores: { pain_intensity: 40, personal_care: 20, lifting: 40, walking: 20, sitting: 40, standing: 40, sleeping: 20, social_life: 20, traveling: 20, employment: 40 } },
     ],
     red_flags: null,
@@ -462,7 +462,7 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "oswestry", questionnaireName: "Oswestry (Lombar)", percentageScore: 8, severity: "mild",
+      { questionnaireId: "odi", questionnaireName: "ODI (Lombar)", percentageScore: 8, severity: "mild",
         subscaleScores: { pain_intensity: 10, personal_care: 0, lifting: 20, walking: 0, sitting: 10, standing: 10, sleeping: 0, social_life: 0, traveling: 10, employment: 20 } },
     ],
     red_flags: null,
@@ -504,7 +504,7 @@ export const mockPatientAssessments = [
     treatment_plan: null,
     test_results: [
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 78, severity: "mild",
-        subscaleScores: { symptoms: 80, pain: 82, daily_living: 85, sport: 65, quality_of_life: 78 } },
+        subscaleScores: { symptoms: 80, pain: 82, adl: 85, sport: 65, qol: 78 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -545,7 +545,7 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "oswestry", questionnaireName: "Oswestry (Lombar)", percentageScore: 52, severity: "moderate",
+      { questionnaireId: "odi", questionnaireName: "ODI (Lombar)", percentageScore: 52, severity: "moderate",
         subscaleScores: { pain_intensity: 60, personal_care: 40, lifting: 80, walking: 40, sitting: 60, standing: 60, sleeping: 40, social_life: 40, traveling: 60, employment: 60 } },
     ],
     red_flags: null,
@@ -772,7 +772,7 @@ export const mockPatientAssessments = [
       { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 28, severity: "severe",
         subscaleScores: { symptoms: 25, sports: 0, daily_function: 35 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 36, severity: "severe",
-        subscaleScores: { symptoms: 40, pain: 45, daily_living: 50, sport: 0, quality_of_life: 25 } },
+        subscaleScores: { symptoms: 40, pain: 45, adl: 50, sport: 0, qol: 25 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -813,7 +813,7 @@ export const mockPatientAssessments = [
       { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 56, severity: "moderate",
         subscaleScores: { symptoms: 60, sports: 35, daily_function: 75 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 64, severity: "moderate",
-        subscaleScores: { symptoms: 70, pain: 75, daily_living: 80, sport: 40, quality_of_life: 55 } },
+        subscaleScores: { symptoms: 70, pain: 75, adl: 80, sport: 40, qol: 55 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -853,7 +853,7 @@ export const mockPatientAssessments = [
       { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 82, severity: "mild",
         subscaleScores: { symptoms: 85, sports: 75, daily_function: 92 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 84, severity: "mild",
-        subscaleScores: { symptoms: 88, pain: 92, daily_living: 92, sport: 72, quality_of_life: 78 } },
+        subscaleScores: { symptoms: 88, pain: 92, adl: 92, sport: 72, qol: 78 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -893,7 +893,7 @@ export const mockPatientAssessments = [
       { questionnaireId: "ikdc", questionnaireName: "IKDC Subjetivo", percentageScore: 94, severity: "mild",
         subscaleScores: { symptoms: 95, sports: 90, daily_function: 98 } },
       { questionnaireId: "koos", questionnaireName: "KOOS (Joelho)", percentageScore: 92, severity: "mild",
-        subscaleScores: { symptoms: 95, pain: 98, daily_living: 98, sport: 85, quality_of_life: 88 } },
+        subscaleScores: { symptoms: 95, pain: 98, adl: 98, sport: 85, qol: 88 } },
     ],
     red_flags: null,
     payment_status: "treatment_paid",
@@ -973,7 +973,7 @@ export const mockPatientAssessments = [
     },
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 32, severity: "severe",
-        subscaleScores: { symptoms: 35, pain: 40, daily_living: 30, sport: 10, quality_of_life: 25 } },
+        subscaleScores: { symptoms: 35, pain: 40, adl: 30, sport: 10, qol: 25 } },
       { questionnaireId: "hhs", questionnaireName: "Harris Hip Score", percentageScore: 38, severity: "severe",
         subscaleScores: { pain: 20, function: 22, deformity: 4, range_of_motion: 3 } },
     ],
@@ -1014,7 +1014,7 @@ export const mockPatientAssessments = [
     treatment_plan: null,
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 58, severity: "moderate",
-        subscaleScores: { symptoms: 62, pain: 70, daily_living: 65, sport: 35, quality_of_life: 55 } },
+        subscaleScores: { symptoms: 62, pain: 70, adl: 65, sport: 35, qol: 55 } },
       { questionnaireId: "hhs", questionnaireName: "Harris Hip Score", percentageScore: 72, severity: "moderate",
         subscaleScores: { pain: 38, function: 28, deformity: 4, range_of_motion: 4 } },
     ],
@@ -1055,7 +1055,7 @@ export const mockPatientAssessments = [
     treatment_plan: null,
     test_results: [
       { questionnaireId: "hoos", questionnaireName: "HOOS (Quadril)", percentageScore: 88, severity: "mild",
-        subscaleScores: { symptoms: 90, pain: 95, daily_living: 92, sport: 72, quality_of_life: 85 } },
+        subscaleScores: { symptoms: 90, pain: 95, adl: 92, sport: 72, qol: 85 } },
       { questionnaireId: "hhs", questionnaireName: "Harris Hip Score", percentageScore: 92, severity: "mild",
         subscaleScores: { pain: 44, function: 40, deformity: 4, range_of_motion: 4 } },
     ],
