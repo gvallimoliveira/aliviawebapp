@@ -1102,9 +1102,10 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     therapeuticObjectives: ["Alta funcional", "Programa domiciliar de manutenção", "Sinais de alerta para recidiva orientados"],
   },
   "demo-002b": {
-    overview: "Reavaliação de joelho após 4 semanas. KOOS subiu de 42% para 78%, abolição da crepitação, ganho de força do quadríceps (+35% MRC). Paciente pronto para fase de retorno gradual à corrida com plano de prevenção.",
-    therapeuticObjectives: ["Iniciar retorno progressivo à corrida (run-walk)", "Manter fortalecimento de VMO e glúteo médio", "Reavaliar mecânica de corrida em 4 semanas"],
+    overview: "Reavaliação após 2 meses de afastamento. KOOS caiu de 42% para 28% (-33%) — piora clínica por abandono do programa, retorno precoce à corrida e ganho ponderal. Edema reativo, crepitação franca e Trendelenburg dinâmico. Cenário de descompensação por baixa adesão.",
+    therapeuticObjectives: ["Reestabelecer pacto terapêutico (entrevista motivacional)", "Controle álgico e do edema reativo", "Reiniciar fortalecimento de VMO/glúteo com progressão criteriosa", "Suspender corrida até critérios objetivos atingidos"],
   },
+
   "demo-004b": {
     overview: "Reavaliação após investigação médica. RM lombar (anexada) descartou patologias graves — protusão discal L4-L5 sem compressão radicular. Liberado pelo ortopedista para fisioterapia. Quadro evoluiu para lombalgia aguda discogênica em fase subaguda. ODI reduziu de 78% para 52%.",
     therapeuticObjectives: ["Controle álgico", "Iniciar protocolo McKenzie de extensão", "Educação postural específica para o trabalho", "Reavaliar em 3 semanas"],
