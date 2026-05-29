@@ -9,7 +9,8 @@ const yesterdayStr = format(subDays(today, 1), "yyyy-MM-dd");
 export const DEMO_CLINIC = {
   id: "demo-clinic-001",
   name: "Clínica FisioVida",
-  logo_url: null,
+  logo_url: null as string | null,
+  brand_color: "#0EA5A4",
   phone: "(11) 98765-4321",
   address: "Rua das Palmeiras, 123 — São Paulo, SP",
   subscription_status: "active" as const,
@@ -25,7 +26,6 @@ export const DEMO_TEAM = [
 ];
 
 export const DEMO_APPOINTMENTS = [
-  // Today — filling ~50% of slots across 3 therapists (7h-20h = 13 slots each, ~6-7 per pro)
   { id: "demo-apt-1", professional_id: "demo-pro-owner", clinic_id: DEMO_CLINIC.id, patient_name: "Maria Silva", patient_email: "maria@exemplo.com", appointment_date: todayStr, appointment_time: "08:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: "Retorno lombar", created_at: subDays(today, 3).toISOString() },
   { id: "demo-apt-2", professional_id: "demo-pro-owner", clinic_id: DEMO_CLINIC.id, patient_name: "João Pereira", patient_email: "joao@exemplo.com", appointment_date: todayStr, appointment_time: "09:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: "Avaliação inicial ombro", created_at: subDays(today, 2).toISOString() },
   { id: "demo-apt-2b", professional_id: "demo-pro-owner", clinic_id: DEMO_CLINIC.id, patient_name: "Renata Gomes", patient_email: "renata@exemplo.com", appointment_date: todayStr, appointment_time: "10:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: "Fortalecimento quadril", created_at: subDays(today, 2).toISOString() },
@@ -41,7 +41,6 @@ export const DEMO_APPOINTMENTS = [
   { id: "demo-apt-5c", professional_id: "demo-pro-t2", clinic_id: DEMO_CLINIC.id, patient_name: "Patrícia Souza", patient_email: "patricia@exemplo.com", appointment_date: todayStr, appointment_time: "11:00", duration_minutes: 50, type: "external", status: "scheduled", notes: "Domiciliar", created_at: today.toISOString() },
   { id: "demo-apt-5d", professional_id: "demo-pro-t2", clinic_id: DEMO_CLINIC.id, patient_name: "Gabriel Reis", patient_email: "gabriel@exemplo.com", appointment_date: todayStr, appointment_time: "15:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: null, created_at: today.toISOString() },
   { id: "demo-apt-5e", professional_id: "demo-pro-t2", clinic_id: DEMO_CLINIC.id, patient_name: "Juliana Prado", patient_email: "juliana@exemplo.com", appointment_date: todayStr, appointment_time: "17:00", duration_minutes: 50, type: "video_call", status: "scheduled", notes: "Orientação exercícios", created_at: today.toISOString() },
-  // Tomorrow
   { id: "demo-apt-6", professional_id: "demo-pro-owner", clinic_id: DEMO_CLINIC.id, patient_name: "Pedro Santos", patient_email: "pedro@exemplo.com", appointment_date: tomorrowStr, appointment_time: "08:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: null, created_at: today.toISOString() },
   { id: "demo-apt-6b", professional_id: "demo-pro-owner", clinic_id: DEMO_CLINIC.id, patient_name: "Maria Silva", patient_email: "maria@exemplo.com", appointment_date: tomorrowStr, appointment_time: "10:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: "Retorno lombar", created_at: today.toISOString() },
   { id: "demo-apt-6c", professional_id: "demo-pro-owner", clinic_id: DEMO_CLINIC.id, patient_name: "João Pereira", patient_email: "joao@exemplo.com", appointment_date: tomorrowStr, appointment_time: "14:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: null, created_at: today.toISOString() },
@@ -50,13 +49,11 @@ export const DEMO_APPOINTMENTS = [
   { id: "demo-apt-7c", professional_id: "demo-pro-t1", clinic_id: DEMO_CLINIC.id, patient_name: "Tatiane Lopes", patient_email: "tatiane@exemplo.com", appointment_date: tomorrowStr, appointment_time: "09:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: null, created_at: today.toISOString() },
   { id: "demo-apt-7d", professional_id: "demo-pro-t1", clinic_id: DEMO_CLINIC.id, patient_name: "Ana Costa", patient_email: "ana.costa@exemplo.com", appointment_date: tomorrowStr, appointment_time: "11:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: null, created_at: today.toISOString() },
   { id: "demo-apt-7e", professional_id: "demo-pro-t1", clinic_id: DEMO_CLINIC.id, patient_name: "Carlos Mendes", patient_email: "carlos@exemplo.com", appointment_date: tomorrowStr, appointment_time: "16:00", duration_minutes: 50, type: "video_call", status: "scheduled", notes: "Reavaliação", created_at: today.toISOString() },
-  // Day after
   { id: "demo-apt-8", professional_id: "demo-pro-t1", clinic_id: DEMO_CLINIC.id, patient_name: "Roberto Alves", patient_email: "roberto@exemplo.com", appointment_date: dayAfterStr, appointment_time: "11:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: null, created_at: today.toISOString() },
   { id: "demo-apt-8b", professional_id: "demo-pro-owner", clinic_id: DEMO_CLINIC.id, patient_name: "Helena Rocha", patient_email: "helena@exemplo.com", appointment_date: dayAfterStr, appointment_time: "08:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: null, created_at: today.toISOString() },
   { id: "demo-apt-8c", professional_id: "demo-pro-owner", clinic_id: DEMO_CLINIC.id, patient_name: "Renata Gomes", patient_email: "renata@exemplo.com", appointment_date: dayAfterStr, appointment_time: "09:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: "Reavaliação", created_at: today.toISOString() },
   { id: "demo-apt-8d", professional_id: "demo-pro-t2", clinic_id: DEMO_CLINIC.id, patient_name: "Gabriel Reis", patient_email: "gabriel@exemplo.com", appointment_date: dayAfterStr, appointment_time: "10:00", duration_minutes: 50, type: "in_person", status: "scheduled", notes: null, created_at: today.toISOString() },
   { id: "demo-apt-8e", professional_id: "demo-pro-t2", clinic_id: DEMO_CLINIC.id, patient_name: "Patrícia Souza", patient_email: "patricia@exemplo.com", appointment_date: dayAfterStr, appointment_time: "14:00", duration_minutes: 50, type: "external", status: "scheduled", notes: "Domiciliar", created_at: today.toISOString() },
-  // Yesterday (completed)
   { id: "demo-apt-9", professional_id: "demo-pro-owner", clinic_id: DEMO_CLINIC.id, patient_name: "Maria Silva", patient_email: "maria@exemplo.com", appointment_date: yesterdayStr, appointment_time: "08:00", duration_minutes: 50, type: "in_person", status: "completed", notes: "Sessão realizada", created_at: subDays(today, 5).toISOString() },
   { id: "demo-apt-9b", professional_id: "demo-pro-owner", clinic_id: DEMO_CLINIC.id, patient_name: "Marcos Vieira", patient_email: "marcos@exemplo.com", appointment_date: yesterdayStr, appointment_time: "09:00", duration_minutes: 50, type: "in_person", status: "completed", notes: "Alta parcial", created_at: subDays(today, 5).toISOString() },
   { id: "demo-apt-9c", professional_id: "demo-pro-t1", clinic_id: DEMO_CLINIC.id, patient_name: "Bruno Nascimento", patient_email: "bruno@exemplo.com", appointment_date: yesterdayStr, appointment_time: "10:00", duration_minutes: 50, type: "in_person", status: "completed", notes: null, created_at: subDays(today, 4).toISOString() },
@@ -66,63 +63,189 @@ export const DEMO_APPOINTMENTS = [
 
 export const DEMO_CLINIC_ASSESSMENTS = [
   {
-    id: "demo-clinic-a1",
-    clinic_id: DEMO_CLINIC.id,
-    professional_id: "demo-pro-owner",
-    patient_name: "Maria Silva",
-    patient_email: "maria@exemplo.com",
-    type: "professional",
-    status: "completed",
-    pain_score: 7,
-    pain_regions: ["lower_back", "right_hip"],
+    id: "demo-clinic-a1", clinic_id: DEMO_CLINIC.id, professional_id: "demo-pro-owner",
+    patient_name: "Maria Silva", patient_email: "maria@exemplo.com",
+    type: "professional", status: "completed", pain_score: 7, pain_regions: ["lower_back", "right_hip"],
     created_at: subDays(today, 10).toISOString(),
     anamnesis_data: { chiefComplaints: ["anamnesis.complaint.back_pain"], onset: "anamnesis.onset.gradual", painDuration: "anamnesis.duration.three_six_months" },
     diagnosis: { hypothesis: "Lombalgia mecânica com componente radicular L4-L5", confidence: "high", icd10: "M54.5", differentials: ["Hérnia discal L4-L5", "Estenose foraminal"], reasoning: "Padrão de dor radicular associado a déficit de flexibilidade." },
     treatment_plan: { goals: ["Reduzir dor para NRS ≤ 3", "Restaurar ADM lombar"], phases: [{ name: "Fase aguda", duration: "2 semanas", exercises: ["Mobilização neural", "Estabilização segmentar"] }] },
   },
   {
-    id: "demo-clinic-a2",
-    clinic_id: DEMO_CLINIC.id,
-    professional_id: "demo-pro-t1",
-    patient_name: "Ana Costa",
-    patient_email: "ana.costa@exemplo.com",
-    type: "professional",
-    status: "completed",
-    pain_score: 5,
-    pain_regions: ["neck", "right_shoulder"],
+    id: "demo-clinic-a2", clinic_id: DEMO_CLINIC.id, professional_id: "demo-pro-t1",
+    patient_name: "Ana Costa", patient_email: "ana.costa@exemplo.com",
+    type: "professional", status: "completed", pain_score: 5, pain_regions: ["neck", "right_shoulder"],
     created_at: subDays(today, 7).toISOString(),
     anamnesis_data: { chiefComplaints: ["anamnesis.complaint.neck_pain"], onset: "anamnesis.onset.sudden" },
     diagnosis: { hypothesis: "Cervicalgia tensional com síndrome miofascial", confidence: "high", icd10: "M54.2", differentials: ["Cervicobraquialgia"], reasoning: "Pontos-gatilho em trapézio e ECM." },
     treatment_plan: null,
   },
   {
-    id: "demo-clinic-a3",
-    clinic_id: DEMO_CLINIC.id,
-    professional_id: null,
-    patient_name: "Carlos Mendes",
-    patient_email: "carlos@exemplo.com",
-    type: "professional",
-    status: "completed",
-    pain_score: 6,
-    pain_regions: ["right_knee"],
+    id: "demo-clinic-a3", clinic_id: DEMO_CLINIC.id, professional_id: null,
+    patient_name: "Carlos Mendes", patient_email: "carlos@exemplo.com",
+    type: "professional", status: "completed", pain_score: 6, pain_regions: ["right_knee"],
     created_at: subDays(today, 3).toISOString(),
     anamnesis_data: { chiefComplaints: ["anamnesis.complaint.knee_pain"], onset: "anamnesis.onset.gradual" },
     diagnosis: { hypothesis: "Condromalácia patelar grau II", confidence: "moderate", icd10: "M22.4", differentials: ["Tendinopatia patelar"], reasoning: "Dor em escadas e agachamento." },
     treatment_plan: null,
   },
   {
-    id: "demo-clinic-a4",
-    clinic_id: DEMO_CLINIC.id,
-    professional_id: null,
-    patient_name: "Lucia Ferreira",
-    patient_email: "lucia@exemplo.com",
-    type: "professional",
-    status: "in_progress",
-    pain_score: 4,
-    pain_regions: ["left_shoulder"],
+    id: "demo-clinic-a4", clinic_id: DEMO_CLINIC.id, professional_id: null,
+    patient_name: "Lucia Ferreira", patient_email: "lucia@exemplo.com",
+    type: "professional", status: "in_progress", pain_score: 4, pain_regions: ["left_shoulder"],
     created_at: subDays(today, 1).toISOString(),
-    anamnesis_data: {},
-    diagnosis: null,
-    treatment_plan: null,
+    anamnesis_data: {}, diagnosis: null, treatment_plan: null,
   },
 ];
+
+// ─── Insights (AI) ───
+export const DEMO_INSIGHTS = {
+  churn_risk: [
+    { patient_name: "Marcos Vieira", risk_score: 82, reason: "3 faltas nos últimos 14 dias + dor estável", last_visit_days: 9 },
+    { patient_name: "Helena Rocha", risk_score: 71, reason: "Aderência ao HEP caiu para 38%", last_visit_days: 7 },
+    { patient_name: "Pedro Santos", risk_score: 63, reason: "Pulou 1 sessão sem reagendar", last_visit_days: 5 },
+  ],
+  discharge_ready: [
+    { patient_name: "Bruno Nascimento", confidence: 91, reason: "Oswestry caiu de 56% → 18% em 8 sessões", sessions: 8 },
+    { patient_name: "Lucia Ferreira", confidence: 84, reason: "NRS estável em 1–2 há 3 sessões consecutivas", sessions: 12 },
+  ],
+  occupancy: {
+    week_occupancy_pct: 78,
+    no_show_pct: 6.2,
+    cancellation_pct: 4.8,
+    trend_pct: +3.4,
+  },
+  adherence: {
+    hep_adherence_pct: 67,
+    diary_streak_avg_days: 9.4,
+    top_patients: [
+      { name: "Maria Silva", pct: 94 },
+      { name: "Ana Costa", pct: 88 },
+      { name: "Bruno Nascimento", pct: 86 },
+    ],
+  },
+  benchmark: {
+    your_avg_sessions_per_discharge: 11.2,
+    market_avg: 14.6,
+    delta_pct: -23,
+    your_nps: 72,
+    market_nps: 58,
+  },
+  revenue_goal: {
+    goal: 22000,
+    current: 17850,
+    progress_pct: 81,
+    days_left: 9,
+    forecast: 24300,
+  },
+};
+
+// ─── Mensagens ───
+export const DEMO_CONVERSATIONS = [
+  {
+    id: "demo-conv-1",
+    patient_name: "Maria Silva",
+    patient_avatar: null as string | null,
+    last_message: "Doutor, posso aumentar a carga do agachamento?",
+    last_at: subDays(today, 0).toISOString(),
+    unread: 2,
+    professional_id: "demo-pro-owner",
+    messages: [
+      { id: "m1", from: "patient", text: "Bom dia! Como devo fazer o exercício de ponte?", at: "08:14" },
+      { id: "m2", from: "pro", text: "Bom dia, Maria! 3 séries de 12 repetições, contraindo o glúteo no topo por 2s.", at: "08:22" },
+      { id: "m3", from: "patient", text: "Perfeito 🙏 Doutor, posso aumentar a carga do agachamento?", at: "09:01" },
+    ],
+  },
+  {
+    id: "demo-conv-2",
+    patient_name: "Carlos Mendes",
+    patient_avatar: null as string | null,
+    last_message: "Confirmado teleconsulta às 10h ✅",
+    last_at: subDays(today, 0).toISOString(),
+    unread: 0,
+    professional_id: "demo-pro-t1",
+    messages: [
+      { id: "m1", from: "pro", text: "Carlos, sua teleconsulta é hoje às 10h. Tudo certo?", at: "07:30" },
+      { id: "m2", from: "patient", text: "Confirmado teleconsulta às 10h ✅", at: "07:42" },
+    ],
+  },
+  {
+    id: "demo-conv-3",
+    patient_name: "Bruno Nascimento",
+    patient_avatar: null as string | null,
+    last_message: "Dor zerou essa semana 🎉",
+    last_at: subDays(today, 1).toISOString(),
+    unread: 0,
+    professional_id: "demo-pro-t1",
+    messages: [
+      { id: "m1", from: "patient", text: "Dor zerou essa semana 🎉", at: "Ontem" },
+      { id: "m2", from: "pro", text: "Excelente, Bruno! Vamos avaliar alta na próxima sessão.", at: "Ontem" },
+    ],
+  },
+  {
+    id: "demo-conv-4",
+    patient_name: "Tatiane Lopes",
+    patient_avatar: null as string | null,
+    last_message: "Posso remarcar para quinta?",
+    last_at: subDays(today, 2).toISOString(),
+    unread: 1,
+    professional_id: "demo-pro-t1",
+    messages: [
+      { id: "m1", from: "patient", text: "Posso remarcar para quinta?", at: "2 dias atrás" },
+    ],
+  },
+];
+
+// ─── Feedback / NPS ───
+export const DEMO_FEEDBACK = {
+  nps: 72,
+  total_responses: 48,
+  promoters: 36,
+  passives: 8,
+  detractors: 4,
+  recent: [
+    { id: "f1", patient_name: "Maria Silva", score: 10, comment: "Atendimento humanizado, resultado incrível em 6 sessões.", at: subDays(today, 2).toISOString() },
+    { id: "f2", patient_name: "André Martins", score: 9, comment: "Dra. Camila explicou tudo com muita paciência.", at: subDays(today, 3).toISOString() },
+    { id: "f3", patient_name: "Bruno Nascimento", score: 10, comment: "Voltei a correr depois de 2 anos parado.", at: subDays(today, 5).toISOString() },
+    { id: "f4", patient_name: "Patrícia Souza", score: 7, comment: "Bom atendimento, agenda poderia ter mais horários à noite.", at: subDays(today, 6).toISOString() },
+  ],
+};
+
+// ─── Gestão & KPIs ───
+export const DEMO_MANAGEMENT = {
+  monthly_revenue: 17850,
+  monthly_revenue_prev: 15420,
+  active_patients: 84,
+  active_patients_prev: 71,
+  sessions_month: 312,
+  sessions_month_prev: 268,
+  conversion_rate_pct: 64,
+  conversion_rate_pct_prev: 58,
+  avg_ticket: 215,
+  avg_ticket_prev: 198,
+  occupancy_pct: 78,
+  // Last 6 months revenue
+  revenue_series: [
+    { month: "Jul", value: 12400 },
+    { month: "Ago", value: 13900 },
+    { month: "Set", value: 14200 },
+    { month: "Out", value: 15420 },
+    { month: "Nov", value: 16780 },
+    { month: "Dez", value: 17850 },
+  ],
+  // Specialty distribution
+  specialty_distribution: [
+    { name: "Ortopedia", value: 42 },
+    { name: "RPG / Postural", value: 22 },
+    { name: "Neurologia", value: 14 },
+    { name: "Esportiva", value: 12 },
+    { name: "Respiratória", value: 6 },
+    { name: "Outros", value: 4 },
+  ],
+  // Sessions per therapist (this month)
+  sessions_per_therapist: [
+    { name: "Dr. Ricardo", sessions: 124 },
+    { name: "Dra. Camila", sessions: 108 },
+    { name: "Dr. Felipe", sessions: 80 },
+  ],
+};
