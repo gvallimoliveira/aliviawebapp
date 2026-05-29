@@ -1252,7 +1252,7 @@ export type Database = {
           notes: string | null
           patient_email: string | null
           patient_name: string
-          professional_id: string
+          professional_id: string | null
           service_type: string
           status: string
           type: string
@@ -1268,7 +1268,7 @@ export type Database = {
           notes?: string | null
           patient_email?: string | null
           patient_name?: string
-          professional_id: string
+          professional_id?: string | null
           service_type?: string
           status?: string
           type?: string
@@ -1284,7 +1284,7 @@ export type Database = {
           notes?: string | null
           patient_email?: string | null
           patient_name?: string
-          professional_id?: string
+          professional_id?: string | null
           service_type?: string
           status?: string
           type?: string

@@ -26,7 +26,7 @@ import AppointmentEditorDialog, { AppointmentEditorPayload, AppointmentEditorExt
 
 interface Appointment {
   id: string;
-  professional_id: string;
+  professional_id: string | null;
   clinic_id?: string | null;
   patient_email: string | null;
   patient_name: string;
@@ -557,7 +557,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         address: extras.address.trim() || null,
       };
       if (clinicId) patientRow.clinic_id = clinicId;
-      else patientRow.professional_id = effectiveProfId;
+      else if (effectiveProfId) patientRow.professional_id = effectiveProfId;
 
       if (isEdit && editId) {
         await (supabase.from("professional_appointments" as any) as any)
@@ -565,33 +565,31 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         if (trimmedEmail || payload.patient_name) {
           let matchQuery = (supabase.from("patients" as any) as any).select("id");
           if (clinicId) matchQuery = matchQuery.eq("clinic_id", clinicId);
-          else matchQuery = matchQuery.eq("professional_id", effectiveProfId);
+          else if (effectiveProfId) matchQuery = matchQuery.eq("professional_id", effectiveProfId);
           if (trimmedEmail) matchQuery = matchQuery.eq("email", trimmedEmail);
           else matchQuery = matchQuery.eq("full_name", payload.patient_name);
           const { data: existing } = await matchQuery.limit(1);
           if (existing && existing.length > 0) {
             await (supabase.from("patients" as any) as any).update(patientRow).eq("id", existing[0].id);
-          } else {
+          } else if (clinicId || effectiveProfId) {
             await (supabase.from("patients" as any) as any).insert(patientRow);
           }
           window.dispatchEvent(new CustomEvent("reload-pro-patients"));
         }
       } else {
         await (supabase.from("professional_appointments" as any) as any).insert(payload);
-        if (extras.selectedPatientKey === "__new__" && trimmedEmail) {
-          const { data: existing } = await supabase
-            .from("assessments")
-            .select("id")
-            .eq("professional_id", effectiveProfId)
-            .eq("patient_email", trimmedEmail)
-            .limit(1);
+        if (extras.selectedPatientKey === "__new__" && trimmedEmail && (clinicId || effectiveProfId)) {
+          let existQ = supabase.from("assessments").select("id").eq("patient_email", trimmedEmail);
+          if (clinicId) existQ = existQ.eq("clinic_id", clinicId);
+          else if (effectiveProfId) existQ = existQ.eq("professional_id", effectiveProfId);
+          const { data: existing } = await existQ.limit(1);
           if (!existing || existing.length === 0) {
             const assessmentInsert: any = {
               type: "professional", status: "completed",
-              professional_id: effectiveProfId,
               patient_name: payload.patient_name, patient_email: trimmedEmail,
               anamnesis_data: { externalPatient: true },
             };
+            if (effectiveProfId) assessmentInsert.professional_id = effectiveProfId;
             if (clinicId) assessmentInsert.clinic_id = clinicId;
             await supabase.from("assessments").insert(assessmentInsert);
             window.dispatchEvent(new CustomEvent("reload-pro-patients"));
@@ -602,7 +600,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             });
           }
         }
-        if (extras.selectedPatientKey === "__new__" && payload.patient_name) {
+        if (extras.selectedPatientKey === "__new__" && payload.patient_name && (clinicId || effectiveProfId)) {
           await (supabase.from("patients" as any) as any).upsert(patientRow, { ignoreDuplicates: true });
           window.dispatchEvent(new CustomEvent("reload-pro-patients"));
         }
