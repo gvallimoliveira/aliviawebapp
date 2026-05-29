@@ -1101,6 +1101,62 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
       "Manejo conservador somente após exclusão de patologia grave",
     ],
   },
+  "demo-001b": {
+    overview: "Reavaliação após 4 semanas. Resolução do componente radicular e melhora funcional expressiva. Oswestry caiu de 56% para 32% (–43%). Paciente aderente ao HEP (91%), com retomada de atividade leve. Dor residual local de padrão mecânico, sem sinais neurais.",
+    therapeuticObjectives: ["Progredir fortalecimento de core", "Estender tolerância postural para >90 min", "Iniciar reintrodução de atividade física aeróbica"],
+  },
+  "demo-001c": {
+    overview: "Avaliação de alta. Quadro lombar resolvido (EVA 1/10, Oswestry 8%). Paciente retornou à rotina plena e demonstra autonomia para manter programa de prevenção secundária. Prognóstico de baixo risco de recidiva com manutenção do estilo de vida ativo.",
+    therapeuticObjectives: ["Alta funcional", "Programa domiciliar de manutenção", "Sinais de alerta para recidiva orientados"],
+  },
+  "demo-002b": {
+    overview: "Reavaliação de joelho após 4 semanas. KOOS subiu de 42% para 78%, abolição da crepitação, ganho de força do quadríceps (+35% MRC). Paciente pronto para fase de retorno gradual à corrida com plano de prevenção.",
+    therapeuticObjectives: ["Iniciar retorno progressivo à corrida (run-walk)", "Manter fortalecimento de VMO e glúteo médio", "Reavaliar mecânica de corrida em 4 semanas"],
+  },
+  "demo-004b": {
+    overview: "Reavaliação após investigação médica. RM lombar (anexada) descartou patologias graves — protusão discal L4-L5 sem compressão radicular. Liberado pelo ortopedista para fisioterapia. Quadro evoluiu para lombalgia aguda discogênica em fase subaguda. Oswestry reduziu de 78% para 52%.",
+    therapeuticObjectives: ["Controle álgico", "Iniciar protocolo McKenzie de extensão", "Educação postural específica para o trabalho", "Reavaliar em 3 semanas"],
+  },
+  "demo-005a": {
+    overview: "Paciente masculino, >55 anos, em fase subaguda pós-AVC isquêmico esquerdo (4 meses). Apresenta hemiparesia direita com hipertonia espástica e ombro doloroso secundário a subluxação gleno-umeral. O componente neuropático da dor exige abordagem multimodal. Fugl-Meyer MS de 18/66, DASH 82% (severo).",
+    therapeuticObjectives: ["Reduzir dor neuropática (EVA <3)", "Prevenir progressão da subluxação", "Recuperar Fugl-Meyer MS >35", "Coordenação multidisciplinar com neurologia"],
+  },
+  "demo-005b": {
+    overview: "Evolução favorável aos 2 meses. Subluxação reduzida (de 2 para 1 dedo). Fugl-Meyer MS 28/66 (+10 pontos). DASH 64% (–22%). Paciente realiza transferências com supervisão. Início de movimentos voluntários proximais.",
+    therapeuticObjectives: ["Progredir treino bimanual funcional", "Manter neuroprotação de ombro D", "Iniciar treino de marcha com órtese suropodálica"],
+  },
+  "demo-005c": {
+    overview: "Reabilitação neurológica em fase avançada. Fugl-Meyer MS 42/66 (+24 pontos da linha de base). Subluxação ausente, DASH 38% (melhora cumulativa de 54%). Independência modificada em AVDs. Foco em destreza fina e prevenção de quedas.",
+    therapeuticObjectives: ["Treino de destreza fina (pinça, manipulação)", "Prevenção de quedas (treino de equilíbrio)", "Reintegração comunitária", "Programa domiciliar de manutenção"],
+  },
+  "demo-006a": {
+    overview: "Pós-operatório imediato de reconstrução de LCA E (10 dias). Atleta amadora de corrida, 25-34 anos. Edema 3+, ADM 0-65°, déficit de extensão de 5°, atrofia inicial de quadríceps. Fase de proteção tecidual. IKDC 28% / KOOS 36%.",
+    therapeuticObjectives: ["Resolver edema e ganhar extensão completa", "Ativar quadríceps (QSET, SLR)", "Atingir ADM 0-110° em 4 semanas", "Educação sobre proteção do enxerto"],
+  },
+  "demo-006b": {
+    overview: "Fase 2 pós-LCA (30 dias). ADM completa 0-135°, déficit de força de quadríceps de 38% (LSI). Sem claudicação. IKDC 56% / KOOS 64%. Pronta para fortalecimento progressivo em cadeia cinética fechada com carga.",
+    therapeuticObjectives: ["Reduzir déficit de força para <20% LSI", "Progredir cadeia cinética fechada", "Iniciar treino proprioceptivo dinâmico"],
+  },
+  "demo-006c": {
+    overview: "Fase 3 pós-LCA (65 dias). LSI quadríceps 88%, hop tests 86%. IKDC 82% / KOOS 84%. Sem dor. Iniciando treinamento pliométrico, aterrissagem e mudanças de direção. Excelente trajetória para retorno esportivo.",
+    therapeuticObjectives: ["Avançar pliometria progressiva", "Treinamento de aterrissagem e cutting", "Preparação para bateria de RTS"],
+  },
+  "demo-006d": {
+    overview: "Retorno esportivo liberado (90 dias). Bateria RTS positiva: LSI ≥95%, hop tests simétricos, IKDC 94%, ausência de cinesiofobia (TSK 22). Liberada para retorno gradual à corrida com plano estruturado de prevenção secundária.",
+    therapeuticObjectives: ["Alta funcional com plano de retorno em 12 semanas", "Programa de prevenção de re-ruptura (FIFA 11+)", "Reavaliações periódicas a cada 3 meses no 1º ano"],
+  },
+  "demo-007a": {
+    overview: "Paciente feminina, 45-55 anos, com fibromialgia em surto agudo (FIQR 78%). Dor difusa em 6 regiões corporais, fadiga incapacitante, sono fragmentado e catastrofização marcada (PCS 73%). Sinais de sensibilização central importantes. Abordagem biopsicossocial é mandatória.",
+    therapeuticObjectives: ["Educação em neurociência da dor (PNE)", "Reativação gradual (graded exercise)", "Higiene do sono", "Reduzir catastrofização para PCS <40"],
+  },
+  "demo-007b": {
+    overview: "Fibromialgia em fase de estabilização (25 dias). FIQR reduziu de 78% para 54% (–31%), PCS de 73 para 48 (–34%). Número de regiões dolorosas caiu de 6 para 3. Boa adesão ao programa multimodal (hidroterapia + caminhada + relaxamento).",
+    therapeuticObjectives: ["Progredir intensidade do exercício aeróbico", "Manter pacing", "Trabalhar componente cognitivo da dor"],
+  },
+  "demo-007c": {
+    overview: "Fibromialgia em remissão funcional. FIQR 32% (impacto leve), PCS 26 (sem catastrofização clínica). Paciente independente em programa de exercícios. Reduzida prescrição medicamentosa pelo psiquiatra. Apta para alta com acompanhamento mensal.",
+    therapeuticObjectives: ["Alta clínica com follow-up mensal", "Manutenção de programa autônomo", "Identificação precoce de novos surtos"],
+  },
 };
 
 // Pre-built evolution summary for Ana Oliveira (demo-003a → demo-003b)
