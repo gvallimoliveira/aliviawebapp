@@ -1157,17 +1157,18 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     therapeuticObjectives: ["Alta funcional com plano de retorno em 12 semanas", "Programa de prevenção de re-ruptura (FIFA 11+)", "Reavaliações periódicas a cada 3 meses no 1º ano"],
   },
   "demo-007a": {
-    overview: "Paciente feminina, 45-55 anos, com fibromialgia em surto agudo (FIQR 78%). Dor difusa em 6 regiões corporais, fadiga incapacitante, sono fragmentado e catastrofização marcada (PCS 73%). Sinais de sensibilização central importantes. Abordagem biopsicossocial é mandatória.",
-    therapeuticObjectives: ["Educação em neurociência da dor (PNE)", "Reativação gradual (graded exercise)", "Higiene do sono", "Reduzir catastrofização para PCS <40"],
+    overview: "Paciente feminina, >55 anos, no 10º dia pós-artroplastia total de quadril D (via póstero-lateral) por coxartrose terminal. Fase aguda pós-cirúrgica: marcha com andador, ADM restrita pelas precauções anti-luxação posterior, glúteo médio MRC 2+ com Trendelenburg pré-cirúrgico. HOOS 32% / Harris Hip Score 38 (severo).",
+    therapeuticObjectives: ["Controle álgico e do edema", "Adesão estrita às precauções anti-luxação por 12 semanas", "Reativar glúteo médio e quadríceps", "Progredir marcha (andador → muleta → bengala)"],
   },
   "demo-007b": {
-    overview: "Fibromialgia em fase de estabilização (25 dias). FIQR reduziu de 78% para 54% (–31%), PCS de 73 para 48 (–34%). Número de regiões dolorosas caiu de 6 para 3. Boa adesão ao programa multimodal (hidroterapia + caminhada + relaxamento).",
-    therapeuticObjectives: ["Progredir intensidade do exercício aeróbico", "Manter pacing", "Trabalhar componente cognitivo da dor"],
+    overview: "Pós-ATQ — fase 2 (25 dias). Marcha independente com bengala canadense. ADM dentro das precauções (flexão 95°, ABD 30°). Glúteo médio MRC 4 com Trendelenburg discreto residual. HOOS 58% (+81%), Harris Hip Score 72.",
+    therapeuticObjectives: ["Avançar fortalecimento em cadeia fechada", "Eliminar Trendelenburg residual", "Aumentar tolerância de marcha para >30 min", "Iniciar treino de equilíbrio dinâmico"],
   },
   "demo-007c": {
-    overview: "Fibromialgia em remissão funcional. FIQR 32% (impacto leve), PCS 26 (sem catastrofização clínica). Paciente independente em programa de exercícios. Reduzida prescrição medicamentosa pelo psiquiatra. Apta para alta com acompanhamento mensal.",
-    therapeuticObjectives: ["Alta clínica com follow-up mensal", "Manutenção de programa autônomo", "Identificação precoce de novos surtos"],
+    overview: "Pós-ATQ — alta funcional (50 dias). Marcha independente sem dispositivo. ADM funcional dentro do permitido para implante póstero-lateral. Glúteo médio MRC 5, sem Trendelenburg. HOOS 88%, Harris Hip Score 92 (excelente). Apta para alta com programa de manutenção.",
+    therapeuticObjectives: ["Alta funcional", "Programa domiciliar de manutenção e prevenção de quedas", "Reforço das precauções vitalícias do implante (evitar flexão >100°)", "Seguimento anual com cirurgião"],
   },
+
 };
 
 // Pre-built evolution summary for Ana Oliveira (demo-003a → demo-003b)
