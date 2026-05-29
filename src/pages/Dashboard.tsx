@@ -790,7 +790,8 @@ const Dashboard = () => {
                     <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent value="professional" className="space-y-8">
+                <TabsContent value="professional" className="space-y-6">
+                  {isProDemo && <DemoUpsellBanner section="pro-patients" variant="pro" />}
                   <ProDashboard
                     professional={proStub}
                     isSimulated={isProDemo ? true : isSimulated}
@@ -801,16 +802,8 @@ const Dashboard = () => {
                 <TabsContent value="agenda" className="space-y-6">
                   {isProDemo ? (
                     <>
-                      <Card className="border-primary/40 bg-primary/5">
-                        <CardContent className="py-3 px-4 flex items-start gap-3">
-                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide shrink-0 mt-0.5">Demo</Badge>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground">
-                              <span className="font-semibold">Agenda em modo demonstração.</span> Visualize como os agendamentos são organizados. Para gerenciar pacientes reais, assine o PRO.
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <DemoUpsellBanner section="pro-agenda" variant="pro" />
+                      <DemoDailySummaryMock professionalId={proStub.id} />
                       <ProSchedule professionalId={proStub.id} isSimulated={true} />
                     </>
                   ) : hasProAccess ? (
@@ -831,15 +824,22 @@ const Dashboard = () => {
                 </TabsContent>
                 {showInsightsTab && (
                   <TabsContent value="insights" className="space-y-6">
-                    <InsightsTab professionalId={professional.id} />
+                    {isProDemo ? (
+                      <>
+                        <DemoUpsellBanner section="pro-insights" variant="pro" />
+                        <DemoInsightsMock variant="pro" />
+                      </>
+                    ) : (
+                      <InsightsTab professionalId={professional.id} />
+                    )}
                   </TabsContent>
                 )}
                 <TabsContent value="messages" className="space-y-6">
                   {isProDemo ? (
-                    <ProLockedCard
-                      title="Mensagens com pacientes"
-                      desc="No plano PRO, você conversa diretamente com seus pacientes particulares pelo chat seguro da Aliv.iA."
-                    />
+                    <>
+                      <DemoUpsellBanner section="pro-messages" variant="pro" />
+                      <DemoMessagesMock />
+                    </>
                   ) : hasProAccess ? (
                     <MessagesTab
                       professional={proStub}
@@ -854,6 +854,7 @@ const Dashboard = () => {
                     />
                   )}
                 </TabsContent>
+
               </Tabs>
             );
           })()
