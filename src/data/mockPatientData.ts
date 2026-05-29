@@ -1136,11 +1136,11 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     therapeuticObjectives: ["Alta funcional com plano de retorno em 12 semanas", "Programa de prevenção de re-ruptura (FIFA 11+)", "Reavaliações periódicas a cada 3 meses no 1º ano"],
   },
   "demo-007a": {
-    overview: "Paciente feminina, >55 anos, no 10º dia pós-artroplastia total de quadril D (via póstero-lateral) por coxartrose terminal. Fase aguda pós-cirúrgica: marcha com andador, ADM restrita pelas precauções anti-luxação posterior, glúteo médio MRC 2+ com Trendelenburg pré-cirúrgico. HOOS 32% / Harris Hip Score 38 (severo).",
+    overview: "Paciente feminina, >55 anos, no 10º dia pós-artroplastia total de quadril D (via póstero-lateral) por coxartrose terminal. Fase aguda pós-cirúrgica: marcha com andador, ADM restrita pelas precauções anti-luxação posterior, glúteo médio MRC 2+ com Trendelenburg pré-cirúrgico. HOOS 32% (disfunção severa).",
     therapeuticObjectives: ["Controle álgico e do edema", "Adesão estrita às precauções anti-luxação por 12 semanas", "Reativar glúteo médio e quadríceps", "Progredir marcha (andador → muleta → bengala)"],
   },
   "demo-007b": {
-    overview: "Pós-ATQ — fase 2 (25 dias). Marcha independente com bengala canadense. ADM dentro das precauções (flexão 95°, ABD 30°). Glúteo médio MRC 4 com Trendelenburg discreto residual. HOOS 58% (+81%), Harris Hip Score 72.",
+    overview: "Pós-ATQ — fase 2 (25 dias). Marcha independente com bengala canadense. ADM dentro das precauções (flexão 95°, ABD 30°). Glúteo médio MRC 4 com Trendelenburg discreto residual. HOOS 58% (+81%), disfunção moderada.",
     therapeuticObjectives: ["Avançar fortalecimento em cadeia fechada", "Eliminar Trendelenburg residual", "Aumentar tolerância de marcha para >30 min", "Iniciar treino de equilíbrio dinâmico"],
   },
   "demo-007c": {
