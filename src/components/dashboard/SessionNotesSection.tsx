@@ -68,6 +68,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
   const handleSave = async () => {
     if (!formContent.trim()) return;
+    if (isDemo) { toast({ title: "Demo: anotações não são salvas" }); setShowForm(false); setEditingNote(null); setFormContent(""); return; }
     setSaving(true);
     try {
       if (editingNote) {
@@ -98,6 +99,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
   const handleDelete = async () => {
     if (!deleteId) return;
+    if (isDemo) { toast({ title: "Demo: anotações não são removidas" }); setDeleteId(null); return; }
     setDeleting(true);
     try {
       await (supabase.from("session_notes" as any) as any).delete().eq("id", deleteId);
