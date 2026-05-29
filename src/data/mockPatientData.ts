@@ -581,7 +581,7 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-operatório imediato de reparo artroscópico de lesão SLAP tipo II — fase de proteção do reparo labral",
       confidence: "high",
-      reasoning: "Cirurgia há 10 dias. Imobilizado em tipoia abdução-neutra 4 semanas (conforme protocolo do cirurgião). ADM passiva limitada por protocolo: flexão ≤90°, rotação externa em abdução 0° ≤30°. Edema leve, ferida operatória cicatrizando sem sinais flogísticos. QuickDASH 78% reflete dependência funcional aguda.",
+      reasoning: "Cirurgia há 10 dias. Imobilizado em tipoia abdução-neutra 4 semanas (conforme protocolo do cirurgião). ADM passiva limitada por protocolo: flexão ≤90°, rotação externa em abdução 0° ≤30°. Edema leve, ferida operatória cicatrizando sem sinais flogísticos. SPADI 82% reflete dor e incapacidade severas.",
       clinicalImpression: {
         overview: "Paciente masculino, 45-55 anos, fisicamente ativo (CrossFit recreacional), no 10º dia pós-artroscopia para reparo de lesão SLAP tipo II do ombro direito (membro dominante). Quadro típico de fase aguda pós-cirúrgica: dor controlada com analgesia oral, ADM restrita por protocolo cirúrgico para proteção do reparo labral, atrofia funcional inicial de cintura escapular. Boa motivação e expectativa realista de retorno esportivo em 6-9 meses.",
         therapeuticObjectives: [
@@ -656,7 +656,7 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-op SLAP — fase 2 (fortalecimento progressivo) — evolução excelente",
       confidence: "high",
-      reasoning: "ADM passiva completa (flexão 170°, ABD 165°, RE em ABD 90° = 75°). Tipoia retirada. Manguito rotador ativando com isometria submáxima sem dor. Início de fortalecimento dinâmico em cadeia fechada e isotônico leve. QuickDASH caiu de 78 para 42% (-46%).",
+      reasoning: "ADM passiva completa (flexão 170°, ABD 165°, RE em ABD 90° = 75°). Tipoia retirada. Manguito rotador ativando com isometria submáxima sem dor. Início de fortalecimento dinâmico em cadeia fechada e isotônico leve. SPADI caiu de 82 para 46% (-44%).",
     },
     treatment_plan: null,
     test_results: [
@@ -696,7 +696,7 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Pós-op SLAP — fase 3 (preparação para retorno esportivo) — pronto para gestos overhead progressivos",
       confidence: "high",
-      reasoning: "Força isocinética com índice de simetria do ombro (LSI) 88% para RE e 92% para flexão. QuickDASH 14% (mínimo), KJOC 84%. Iniciando treinamento de gestos esportivos específicos (kettlebell snatch progressivo, suporte invertido). Liberação prevista em 4-6 semanas.",
+      reasoning: "Força isocinética com índice de simetria do ombro (LSI) 88% para RE e 92% para flexão. SPADI 14% (disfunção mínima). Iniciando treinamento de gestos esportivos específicos (kettlebell snatch progressivo, suporte invertido). Liberação prevista em 4-6 semanas.",
     },
     treatment_plan: null,
     test_results: [
@@ -873,7 +873,7 @@ export const mockPatientAssessments = [
     diagnosis: {
       hypothesis: "Retorno esportivo liberado — alta funcional",
       confidence: "high",
-      reasoning: "Bateria RTS positiva: LSI ≥95% em todos os testes, hop tests simétricos, IKDC 94%, ausência de cinesiofobia (TSK 22). Liberada para retorno gradual à corrida com plano de prevenção secundária.",
+      reasoning: "Bateria RTS positiva: LSI ≥95% em todos os testes, hop tests simétricos, ausência de cinesiofobia (TSK 22). Liberada para retorno gradual à corrida com plano de prevenção secundária.",
     },
     treatment_plan: null,
     test_results: [
@@ -1107,32 +1107,32 @@ export const mockClinicalImpressions: Record<string, { overview: string; therape
     therapeuticObjectives: ["Controle álgico", "Iniciar protocolo McKenzie de extensão", "Educação postural específica para o trabalho", "Reavaliar em 3 semanas"],
   },
   "demo-005a": {
-    overview: "Paciente masculino, 45-55 anos, fisicamente ativo, no 10º dia pós-artroscopia para reparo de lesão SLAP tipo II do ombro D (membro dominante). Fase aguda pós-cirúrgica: imobilização em tipoia, ADM restrita por protocolo, atrofia funcional inicial. QuickDASH 78% e KJOC 22% refletem dependência funcional aguda.",
+    overview: "Paciente masculino, 45-55 anos, fisicamente ativo, no 10º dia pós-artroscopia para reparo de lesão SLAP tipo II do ombro D (membro dominante). Fase aguda pós-cirúrgica: imobilização em tipoia, ADM restrita por protocolo, atrofia funcional inicial. SPADI 82% (disfunção extrema) reflete dor e incapacidade severas.",
     therapeuticObjectives: ["Controle álgico (EVA <3) e edema", "Respeitar restrições cirúrgicas (flexão ≤90°, RE em ABD 0° ≤30°)", "Preservar ADM escapular e cervical", "Educação sobre proteção do reparo SLAP"],
   },
   "demo-005b": {
-    overview: "Fase 2 pós-op SLAP (30 dias). ADM passiva completa (flexão 170°, ABD 165°). Manguito ativando sem dor. QuickDASH caiu de 78% para 42% (-46%), KJOC subiu para 58%. Pronto para fortalecimento dinâmico em cadeia fechada e isotônico leve.",
+    overview: "Fase 2 pós-op SLAP (30 dias). ADM passiva completa (flexão 170°, ABD 165°). Manguito ativando sem dor. SPADI caiu de 82% para 46% (-44%). Pronto para fortalecimento dinâmico em cadeia fechada e isotônico leve.",
     therapeuticObjectives: ["Restaurar força do manguito rotador (LSI >80%)", "Progredir cadeia fechada e propriocepção escapular", "Recuperar ADM ativa completa sem compensação"],
   },
   "demo-005c": {
-    overview: "Fase 3 pós-op SLAP (60 dias). Força isocinética com LSI 88% (RE) e 92% (flexão). QuickDASH 14%, KJOC 84%. Iniciando treinamento de gestos esportivos específicos (kettlebell, suporte invertido). Liberação para retorno completo prevista em 4-6 semanas.",
+    overview: "Fase 3 pós-op SLAP (60 dias). Força isocinética com LSI 88% (RE) e 92% (flexão). SPADI 14% (disfunção mínima). Iniciando treinamento de gestos esportivos específicos (kettlebell, suporte invertido). Liberação para retorno completo prevista em 4-6 semanas.",
     therapeuticObjectives: ["Treino de gestos overhead progressivos", "Bateria de retorno esportivo (Y-Balance UQ, CKCUEST)", "Programa de prevenção secundária para ombro do atleta"],
   },
 
   "demo-006a": {
-    overview: "Pós-operatório imediato de reconstrução de LCA E (10 dias). Atleta amadora de corrida, 25-34 anos. Edema 3+, ADM 0-65°, déficit de extensão de 5°, atrofia inicial de quadríceps. Fase de proteção tecidual. IKDC 28% / KOOS 36%.",
+    overview: "Pós-operatório imediato de reconstrução de LCA E (10 dias). Atleta amadora de corrida, 25-34 anos. Edema 3+, ADM 0-65°, déficit de extensão de 5°, atrofia inicial de quadríceps. Fase de proteção tecidual. KOOS 36% (disfunção severa).",
     therapeuticObjectives: ["Resolver edema e ganhar extensão completa", "Ativar quadríceps (QSET, SLR)", "Atingir ADM 0-110° em 4 semanas", "Educação sobre proteção do enxerto"],
   },
   "demo-006b": {
-    overview: "Fase 2 pós-LCA (30 dias). ADM completa 0-135°, déficit de força de quadríceps de 38% (LSI). Sem claudicação. IKDC 56% / KOOS 64%. Pronta para fortalecimento progressivo em cadeia cinética fechada com carga.",
+    overview: "Fase 2 pós-LCA (30 dias). ADM completa 0-135°, déficit de força de quadríceps de 38% (LSI). Sem claudicação. KOOS 64% (disfunção leve a moderada). Pronta para fortalecimento progressivo em cadeia cinética fechada com carga.",
     therapeuticObjectives: ["Reduzir déficit de força para <20% LSI", "Progredir cadeia cinética fechada", "Iniciar treino proprioceptivo dinâmico"],
   },
   "demo-006c": {
-    overview: "Fase 3 pós-LCA (65 dias). LSI quadríceps 88%, hop tests 86%. IKDC 82% / KOOS 84%. Sem dor. Iniciando treinamento pliométrico, aterrissagem e mudanças de direção. Excelente trajetória para retorno esportivo.",
+    overview: "Fase 3 pós-LCA (65 dias). LSI quadríceps 88%, hop tests 86%. KOOS 84% (função normal ou quase normal). Sem dor. Iniciando treinamento pliométrico, aterrissagem e mudanças de direção. Excelente trajetória para retorno esportivo.",
     therapeuticObjectives: ["Avançar pliometria progressiva", "Treinamento de aterrissagem e cutting", "Preparação para bateria de RTS"],
   },
   "demo-006d": {
-    overview: "Retorno esportivo liberado (90 dias). Bateria RTS positiva: LSI ≥95%, hop tests simétricos, IKDC 94%, ausência de cinesiofobia (TSK 22). Liberada para retorno gradual à corrida com plano estruturado de prevenção secundária.",
+    overview: "Retorno esportivo liberado (90 dias). Bateria RTS positiva: LSI ≥95%, hop tests simétricos, ausência de cinesiofobia (TSK 22). Liberada para retorno gradual à corrida com plano estruturado de prevenção secundária.",
     therapeuticObjectives: ["Alta funcional com plano de retorno em 12 semanas", "Programa de prevenção de re-ruptura (FIFA 11+)", "Reavaliações periódicas a cada 3 meses no 1º ano"],
   },
   "demo-007a": {
