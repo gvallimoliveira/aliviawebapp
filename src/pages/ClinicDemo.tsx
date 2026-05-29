@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,27 +9,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
   Building2, Calendar as CalendarIcon, Stethoscope, Users, MessageCircle, Crown,
-  Link2, Copy, Check, Clock, MapPin, Video, ExternalLink, ChevronLeft, ChevronRight,
-  Plus, User, Sparkles, ToggleLeft, Eye, FileText, UserPlus, Settings, ArrowLeft,
-  GripVertical, Activity,
+  Link2, Copy, Check, MapPin, Video, ExternalLink, ChevronLeft, ChevronRight,
+  Plus, User, Sparkles, ArrowLeft, GripVertical, Activity, HelpCircle, LogOut,
+  Settings, UserPlus, Palette, Image as ImageIcon, BarChart3,
 } from "lucide-react";
-import { format, addDays, startOfWeek, isSameDay, isToday } from "date-fns";
+import { format, addDays, startOfWeek, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  DEMO_CLINIC,
-  DEMO_TEAM,
-  DEMO_APPOINTMENTS,
-  DEMO_CLINIC_ASSESSMENTS,
+  DEMO_CLINIC, DEMO_TEAM, DEMO_APPOINTMENTS, DEMO_CLINIC_ASSESSMENTS,
 } from "@/data/mockClinicData";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import DemoUpsellBanner from "@/components/demo/DemoUpsellBanner";
+import DemoInsightsMock from "@/components/demo/DemoInsightsMock";
+import DemoMessagesMock from "@/components/demo/DemoMessagesMock";
+import DemoManagementMock from "@/components/demo/DemoManagementMock";
+import DemoFeedbackMock from "@/components/demo/DemoFeedbackMock";
+import DemoDailySummaryMock from "@/components/demo/DemoDailySummaryMock";
 
-// ─── Schedule Demo Component ───
 const TYPE_ICONS: Record<string, typeof Video> = {
   video_call: Video,
   in_person: MapPin,
@@ -66,18 +66,19 @@ function getTimeSlots(apts: typeof DEMO_APPOINTMENTS): string[] {
   return slots;
 }
 
-// ─── Main Demo Page ───
 const ClinicDemo = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("agenda");
+  const [clinicSubTab, setClinicSubTab] = useState("team");
   const [appointments, setAppointments] = useState(DEMO_APPOINTMENTS);
   const [assessments] = useState(DEMO_CLINIC_ASSESSMENTS);
   const [selectedApt, setSelectedApt] = useState<(typeof DEMO_APPOINTMENTS)[0] | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [filterTherapist, setFilterTherapist] = useState<string>("all");
 
-  // Schedule state
+  // Schedule
   const daysToShow = isMobile ? 3 : 7;
   const [viewDate, setViewDate] = useState(() => new Date());
   const startDate = isMobile ? viewDate : startOfWeek(viewDate, { weekStartsOn: 1 });
@@ -90,8 +91,9 @@ const ClinicDemo = () => {
   }, [appointments, days]);
 
   const timeSlots = getTimeSlots(visibleApts);
+  const therapists = DEMO_TEAM.filter(t => t.role === "owner" || t.role === "therapist");
 
-  // Drag state
+  // Drag and drop
   const [draggedApt, setDraggedApt] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ date: string; hour: string } | null>(null);
 
@@ -100,7 +102,7 @@ const ClinicDemo = () => {
     setAppointments(prev => prev.map(a =>
       a.id === draggedApt ? { ...a, appointment_date: date, appointment_time: hour + ":00" } : a
     ));
-    toast({ title: "📋 Agendamento movido", description: `Reagendado para ${format(new Date(date), "dd/MM")} às ${hour}h` });
+    toast({ title: "Agendamento movido", description: `Reagendado para ${format(new Date(date), "dd/MM")} às ${hour}h` });
     setDraggedApt(null);
     setDropTarget(null);
   }, [draggedApt, toast]);
@@ -112,10 +114,6 @@ const ClinicDemo = () => {
     toast({ title: "Link copiado!" });
     setTimeout(() => setLinkCopied(false), 2000);
   };
-
-  // Filter for selected therapist in secretary view
-  const [filterTherapist, setFilterTherapist] = useState<string>("all");
-  const therapists = DEMO_TEAM.filter(t => t.role === "owner" || t.role === "therapist");
 
   const filteredApts = useMemo(() => {
     if (filterTherapist === "all") return visibleApts;
@@ -132,9 +130,11 @@ const ClinicDemo = () => {
     return therapists.find(t => t.id === proId)?.full_name || "—";
   };
 
+  const demoToast = (msg: string) => toast({ title: "Modo demo", description: msg });
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Header — mirrors Dashboard.tsx clinic header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
@@ -142,56 +142,46 @@ const ClinicDemo = () => {
               <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
               <span className="text-xl font-bold text-foreground">Aliv.iA</span>
             </button>
-            <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px] gap-1">
-              <ToggleLeft className="h-3 w-3" />
-              Demo
+            <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-300/40 text-[10px] gap-1">
+              Demo Clínica
             </Badge>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} className="hidden md:inline-flex">
+              <HelpCircle className="h-4 w-4" />
+            </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/clinica")} className="gap-1.5 rounded-xl">
               <ArrowLeft className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Voltar</span>
+              <span className="hidden sm:inline">Sair do demo</span>
             </Button>
             <Button size="sm" onClick={() => navigate("/clinica#planos")} className="gap-1.5 rounded-xl">
               <Crown className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Assinar</span>
+              <span className="hidden sm:inline">Iniciar trial grátis</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container max-w-5xl py-6 px-4 space-y-6">
-        {/* Demo banner */}
-        <Card className="border-amber-200 bg-amber-500/5">
-          <CardContent className="py-3 px-5 flex items-center gap-3">
-            <ToggleLeft className="h-5 w-5 text-amber-600 shrink-0" />
-            <p className="text-sm text-amber-800">
-              <span className="font-semibold">Modo demonstração.</span> Explore todas as funcionalidades do Aliv.iA Clinic com dados fictícios interativos. Mova cards na agenda, abra avaliações e veja como funciona a gestão de equipe.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Clinic status bar */}
-        <Card className="border-emerald-200 bg-emerald-500/5">
+      <main className={cn("container py-6 px-4 space-y-6", activeTab === "agenda" || activeTab === "clinic" ? "max-w-7xl" : "max-w-5xl")}>
+        {/* WelcomeSection-like header */}
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background">
           <CardContent className="py-4 px-5 flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
-                <Building2 className="h-5 w-5 text-emerald-600" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+                <Building2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="font-semibold text-foreground flex items-center gap-2">
+                <p className="font-semibold text-foreground flex items-center gap-2 flex-wrap">
                   {DEMO_CLINIC.name}
-                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
-                    Ativo
-                  </Badge>
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-300/40 text-[10px]">Ativo</Badge>
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px]">Plano Médio · 8 membros</Badge>
                 </p>
-                <p className="text-xs text-muted-foreground">{DEMO_CLINIC.address}</p>
+                <p className="text-xs text-muted-foreground">{DEMO_CLINIC.address} · {DEMO_TEAM.length} membros</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Users className="h-3.5 w-3.5" />
-              {DEMO_TEAM.length} membros
-            </div>
+            <Button size="sm" onClick={() => navigate("/clinica#planos")} className="rounded-xl gap-1.5">
+              <Crown className="h-3.5 w-3.5" /> Assinar
+            </Button>
           </CardContent>
         </Card>
 
@@ -204,19 +194,22 @@ const ClinicDemo = () => {
             <TabsTrigger value="patients" className="gap-1.5 text-xs">
               <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">Pacientes</span>
             </TabsTrigger>
-            <TabsTrigger value="team" className="gap-1.5 text-xs">
-              <Users className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
-            </TabsTrigger>
-            <TabsTrigger value="link" className="gap-1.5 text-xs">
-              <Link2 className="h-4 w-4" /><span className="hidden sm:inline">Link</span>
+            <TabsTrigger value="insights" className="gap-1.5 text-xs">
+              <Sparkles className="h-4 w-4" /><span className="hidden sm:inline">Insights</span>
             </TabsTrigger>
             <TabsTrigger value="messages" className="gap-1.5 text-xs">
               <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">Mensagens</span>
             </TabsTrigger>
+            <TabsTrigger value="clinic" className="gap-1.5 text-xs">
+              <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Clínica</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* ─── Agenda ─── */}
-          <TabsContent value="agenda" className="space-y-4">
+          <TabsContent value="agenda" className="space-y-5">
+            <DemoUpsellBanner section="agenda" />
+            <DemoDailySummaryMock />
+
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setViewDate(d => addDays(d, -daysToShow))}>
@@ -238,17 +231,15 @@ const ClinicDemo = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="sm" className="gap-1.5 rounded-xl" onClick={() => toast({ title: "📋 Demo", description: "No modo real, aqui você criaria um novo agendamento." })}>
+              <Button size="sm" className="gap-1.5 rounded-xl" onClick={() => demoToast("No modo real, você criaria um novo agendamento aqui.")}>
                 <Plus className="h-3.5 w-3.5" />
                 Novo
               </Button>
             </div>
 
-            {/* Schedule grid */}
             <Card>
               <ScrollArea className="w-full">
                 <div style={{ minWidth: `${60 + daysToShow * 110}px` }}>
-                  {/* Days header */}
                   <div className="grid border-b border-border/60 sticky top-0 bg-background z-10" style={{ gridTemplateColumns: `60px repeat(${daysToShow}, 1fr)` }}>
                     <div className="p-2 text-[10px] text-muted-foreground border-r border-border/40" />
                     {days.map(day => (
@@ -264,7 +255,6 @@ const ClinicDemo = () => {
                     ))}
                   </div>
 
-                  {/* Time rows */}
                   {timeSlots.map(slot => {
                     const hour = slot.slice(0, 2);
                     return (
@@ -329,12 +319,14 @@ const ClinicDemo = () => {
             </Card>
           </TabsContent>
 
-          {/* ─── Patients ─── */}
-          <TabsContent value="patients" className="space-y-4">
+          {/* ─── Pacientes ─── */}
+          <TabsContent value="patients" className="space-y-5">
+            <DemoUpsellBanner section="patients" />
+
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <Activity className="h-5 w-5 text-primary" />
-                Avaliações da clínica
+                Pool de avaliações
               </h2>
               <Select value={filterTherapist} onValueChange={setFilterTherapist}>
                 <SelectTrigger className="w-[200px] h-8 text-xs">
@@ -349,9 +341,8 @@ const ClinicDemo = () => {
               </Select>
             </div>
 
-            {/* Unassigned assessments */}
             {filteredAssessments.filter(a => !a.professional_id).length > 0 && (
-              <Card className="border-amber-200">
+              <Card className="border-amber-300/40">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2 text-amber-700">
                     <UserPlus className="h-4 w-4" />
@@ -360,12 +351,12 @@ const ClinicDemo = () => {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {filteredAssessments.filter(a => !a.professional_id).map(a => (
-                    <div key={a.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-amber-200/50 bg-amber-500/5">
+                    <div key={a.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-amber-300/30 bg-amber-500/5">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground">{a.patient_name}</p>
                         <p className="text-xs text-muted-foreground">{a.patient_email}</p>
                       </div>
-                      <Select onValueChange={(v) => toast({ title: "📋 Demo", description: `Avaliação atribuída a ${getProName(v)}` })}>
+                      <Select onValueChange={(v) => demoToast(`Avaliação atribuída a ${getProName(v)}`)}>
                         <SelectTrigger className="w-[160px] h-8 text-xs">
                           <SelectValue placeholder="Atribuir a..." />
                         </SelectTrigger>
@@ -381,20 +372,19 @@ const ClinicDemo = () => {
               </Card>
             )}
 
-            {/* Assessment cards */}
             <div className="space-y-3">
               {filteredAssessments.filter(a => a.professional_id).map(a => (
-                <Card key={a.id} className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => toast({ title: "📋 Demo", description: "No modo real, aqui abriria o prontuário do paciente com todos os detalhes." })}>
+                <Card key={a.id} className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => demoToast("No modo real, abriria o prontuário completo do paciente.")}>
                   <CardContent className="py-4 px-5">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-medium text-foreground">{a.patient_name}</p>
-                          <Badge variant="outline" className={cn("text-[10px]", a.status === "completed" ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : "bg-blue-500/10 text-blue-600 border-blue-200")}>
+                          <Badge variant="outline" className={cn("text-[10px]", a.status === "completed" ? "bg-emerald-500/10 text-emerald-600 border-emerald-300/40" : "bg-blue-500/10 text-blue-600 border-blue-200")}>
                             {a.status === "completed" ? "Concluída" : "Em andamento"}
                           </Badge>
                           {a.diagnosis && (
-                            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/30">
                               Diagnóstico IA
                             </Badge>
                           )}
@@ -403,9 +393,7 @@ const ClinicDemo = () => {
                           {getProName(a.professional_id)} • {format(new Date(a.created_at), "dd/MM/yyyy")}
                         </p>
                         {a.diagnosis && (
-                          <p className="text-xs text-foreground/80 mt-1 truncate">
-                            {a.diagnosis.hypothesis}
-                          </p>
+                          <p className="text-xs text-foreground/80 mt-1 truncate">{a.diagnosis.hypothesis}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -423,231 +411,255 @@ const ClinicDemo = () => {
               ))}
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-3 gap-3">
-              <Card>
-                <CardContent className="py-4 text-center">
-                  <p className="text-2xl font-bold text-foreground">{assessments.length}</p>
-                  <p className="text-[10px] text-muted-foreground">Total</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="py-4 text-center">
-                  <p className="text-2xl font-bold text-primary">{assessments.filter(a => a.status === "completed").length}</p>
-                  <p className="text-[10px] text-muted-foreground">Concluídas</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="py-4 text-center">
-                  <p className="text-2xl font-bold text-amber-600">{assessments.filter(a => !a.professional_id).length}</p>
-                  <p className="text-[10px] text-muted-foreground">Sem atribuição</p>
-                </CardContent>
-              </Card>
+              <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold text-foreground">{assessments.length}</p><p className="text-[10px] text-muted-foreground">Total</p></CardContent></Card>
+              <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold text-primary">{assessments.filter(a => a.status === "completed").length}</p><p className="text-[10px] text-muted-foreground">Concluídas</p></CardContent></Card>
+              <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold text-amber-600">{assessments.filter(a => !a.professional_id).length}</p><p className="text-[10px] text-muted-foreground">Sem atribuição</p></CardContent></Card>
             </div>
           </TabsContent>
 
-          {/* ─── Team ─── */}
-          <TabsContent value="team" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Equipe
-              </h2>
-              <Button size="sm" variant="outline" className="gap-1.5 rounded-xl" onClick={() => toast({ title: "📋 Demo", description: "No modo real, aqui você adicionaria novos membros à equipe." })}>
-                <UserPlus className="h-3.5 w-3.5" />
-                Adicionar
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {DEMO_TEAM.map(member => (
-                <Card key={member.id}>
-                  <CardContent className="py-4 px-5 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                        <User className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground flex items-center gap-2">
-                          {member.full_name}
-                          <Badge variant="outline" className={cn("text-[10px] capitalize",
-                            member.role === "owner" ? "bg-primary/10 text-primary border-primary/20" :
-                            member.role === "secretary" ? "bg-amber-500/10 text-amber-600 border-amber-200" :
-                            "bg-muted text-muted-foreground"
-                          )}>
-                            {member.role === "owner" ? "Proprietário" : member.role === "secretary" ? "Secretária" : "Fisioterapeuta"}
-                          </Badge>
-                        </p>
-                        <p className="text-xs text-muted-foreground">{member.email}</p>
-                        {member.specialties.length > 0 && (
-                          <div className="flex gap-1 mt-1">
-                            {member.specialties.map(s => (
-                              <Badge key={s} variant="outline" className="text-[9px] px-1.5 py-0">{s}</Badge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    {member.role !== "owner" && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast({ title: "📋 Demo", description: "No modo real, aqui você gerenciaria o membro." })}>
-                        <Settings className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Clinic settings */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Settings className="h-4 w-4 text-primary" />
-                  Configurações da clínica
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground">Nome</label>
-                    <Input value={DEMO_CLINIC.name} readOnly className="mt-1" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">WhatsApp</label>
-                    <Input value={DEMO_CLINIC.phone || ""} readOnly className="mt-1" />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="text-xs text-muted-foreground">Endereço</label>
-                    <Input value={DEMO_CLINIC.address || ""} readOnly className="mt-1" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* ─── Insights ─── */}
+          <TabsContent value="insights" className="space-y-5">
+            <DemoUpsellBanner section="insights" />
+            <DemoInsightsMock variant="clinic" />
+            <DemoFeedbackMock />
           </TabsContent>
 
-          {/* ─── Link ─── */}
-          <TabsContent value="link" className="space-y-4">
-            <Card className="border-primary/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Link2 className="h-4 w-4 text-primary" />
-                  Link de pré-avaliação da clínica
-                </CardTitle>
-                <CardDescription className="text-sm">
-                  Compartilhe este link com seus pacientes. As avaliações entram em um pool compartilhado da clínica e podem ser atribuídas a qualquer fisioterapeuta da equipe.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2">
-                  <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-                    {getPublicOrigin()}/assessment/clinic/{DEMO_CLINIC.id}
-                  </code>
-                  <Button onClick={copyClinicLink} variant="outline" className="gap-1.5 rounded-xl shrink-0">
-                    {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-                    {linkCopied ? "Copiado" : "Copiar"}
+          {/* ─── Mensagens ─── */}
+          <TabsContent value="messages" className="space-y-5">
+            <DemoUpsellBanner section="messages" />
+            <DemoMessagesMock />
+          </TabsContent>
+
+          {/* ─── Clínica (sub-tabs) ─── */}
+          <TabsContent value="clinic" className="space-y-5">
+            <DemoUpsellBanner section="clinic" />
+            <Tabs value={clinicSubTab} onValueChange={setClinicSubTab} className="space-y-5">
+              <TabsList className="w-full grid grid-cols-3">
+                <TabsTrigger value="team" className="gap-1.5 text-xs">
+                  <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Equipe & Config</span><span className="sm:hidden">Equipe</span>
+                </TabsTrigger>
+                <TabsTrigger value="link" className="gap-1.5 text-xs">
+                  <Link2 className="h-4 w-4" /><span className="hidden sm:inline">Link da clínica</span><span className="sm:hidden">Link</span>
+                </TabsTrigger>
+                <TabsTrigger value="management" className="gap-1.5 text-xs">
+                  <BarChart3 className="h-4 w-4" /><span className="hidden sm:inline">Gestão & KPIs</span><span className="sm:hidden">Gestão</span>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Equipe & Configurações */}
+              <TabsContent value="team" className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" /> Equipe
+                  </h2>
+                  <Button size="sm" variant="outline" className="gap-1.5 rounded-xl" onClick={() => demoToast("No modo real, convide membros por e-mail.")}>
+                    <UserPlus className="h-3.5 w-3.5" /> Adicionar
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardContent className="py-5 space-y-3">
-                <h3 className="font-semibold text-foreground text-sm">Como funciona</h3>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  {[
-                    "Paciente acessa o link e preenche a avaliação",
-                    "A avaliação aparece no pool da clínica como 'Sem atribuição'",
-                    "Secretária ou proprietário atribui a um fisioterapeuta",
-                    "O diagnóstico IA é gerado automaticamente ao completar",
-                    "O plano de tratamento é gratuito (incluso na assinatura)",
-                  ].map((step, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">{i + 1}</span>
-                      <span>{step}</span>
-                    </div>
+                <div className="space-y-3">
+                  {DEMO_TEAM.map(member => (
+                    <Card key={member.id}>
+                      <CardContent className="py-4 px-5 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                            <User className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground flex items-center gap-2 flex-wrap">
+                              {member.full_name}
+                              <Badge variant="outline" className={cn("text-[10px] capitalize",
+                                member.role === "owner" ? "bg-primary/10 text-primary border-primary/30" :
+                                member.role === "secretary" ? "bg-amber-500/10 text-amber-600 border-amber-300/40" :
+                                "bg-muted text-muted-foreground"
+                              )}>
+                                {member.role === "owner" ? "Proprietário" : member.role === "secretary" ? "Secretária" : "Fisioterapeuta"}
+                              </Badge>
+                            </p>
+                            <p className="text-xs text-muted-foreground">{member.email}</p>
+                            {member.specialties.length > 0 && (
+                              <div className="flex gap-1 mt-1 flex-wrap">
+                                {member.specialties.map(s => (
+                                  <Badge key={s} variant="outline" className="text-[9px] px-1.5 py-0">{s}</Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {member.role !== "owner" && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => demoToast("Aqui você gerenciaria permissões e horários.")}>
+                            <Settings className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          {/* ─── Messages ─── */}
-          <TabsContent value="messages" className="space-y-4">
-            <Card className="border-dashed">
-              <CardContent className="py-12 text-center">
-                <MessageCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <h3 className="text-sm font-semibold text-foreground mb-1">Mensagens da clínica</h3>
-                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  No modo real, aqui você veria as conversas com pacientes da clínica. As mensagens são compartilhadas entre os membros da equipe.
-                </p>
-              </CardContent>
-            </Card>
+                {/* Settings + white-label */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Settings className="h-4 w-4 text-primary" /> Configurações da clínica
+                    </CardTitle>
+                    <CardDescription className="text-xs">Branding white-label, horários, contato</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground">Nome</label>
+                        <Input value={DEMO_CLINIC.name} readOnly className="mt-1" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">WhatsApp</label>
+                        <Input value={DEMO_CLINIC.phone || ""} readOnly className="mt-1" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-xs text-muted-foreground">Endereço</label>
+                        <Input value={DEMO_CLINIC.address || ""} readOnly className="mt-1" />
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4 space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                        <Palette className="h-3.5 w-3.5" /> Identidade visual (white-label)
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground">Cor da marca</label>
+                          <div className="mt-1 flex items-center gap-2">
+                            <div className="h-9 w-9 rounded-lg border" style={{ background: DEMO_CLINIC.brand_color }} />
+                            <Input value={DEMO_CLINIC.brand_color} readOnly />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground">Logo</label>
+                          <div className="mt-1 flex items-center gap-2 border rounded-lg p-2 bg-muted/30">
+                            <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center">
+                              <ImageIcon className="h-4 w-4 text-primary" />
+                            </div>
+                            <Button variant="outline" size="sm" className="rounded-lg" onClick={() => demoToast("Upload de logo white-label estará disponível no plano.")}>
+                              Enviar logo
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Sua logo e cor aparecem nos PDFs de avaliação, no link público e no app dos pacientes.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Link */}
+              <TabsContent value="link" className="space-y-4">
+                <Card className="border-primary/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-primary" />
+                      Link de pré-avaliação da clínica
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Compartilhe este link com seus pacientes. As avaliações entram em um pool compartilhado da clínica e podem ser atribuídas a qualquer fisioterapeuta da equipe.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-2">
+                      <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
+                        {getPublicOrigin()}/assessment/clinic/{DEMO_CLINIC.id}
+                      </code>
+                      <Button onClick={copyClinicLink} variant="outline" className="gap-1.5 rounded-xl shrink-0">
+                        {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                        {linkCopied ? "Copiado" : "Copiar"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="py-5 space-y-3">
+                    <h3 className="font-semibold text-foreground text-sm">Como funciona</h3>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      {[
+                        "Paciente acessa o link e preenche a avaliação",
+                        "A avaliação aparece no pool da clínica como 'Sem atribuição'",
+                        "Secretária ou proprietário atribui a um fisioterapeuta",
+                        "O diagnóstico IA é gerado automaticamente ao completar",
+                        "O plano de tratamento é gratuito (incluso na assinatura)",
+                      ].map((step, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">{i + 1}</span>
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Gestão & KPIs */}
+              <TabsContent value="management" className="space-y-5">
+                <DemoManagementMock />
+                <Card className="border-dashed">
+                  <CardContent className="py-5 flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Activity className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">Exportação de dados</p>
+                        <p className="text-xs text-muted-foreground">CSV de pacientes, sessões, faturamento — backup completo da operação</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" className="rounded-xl" onClick={() => demoToast("Exportação CSV disponível na assinatura.")}>
+                      Exportar CSV
+                    </Button>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
 
-        {/* CTA bottom */}
-        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10">
+        {/* Final CTA */}
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/10 via-background to-primary/10">
           <CardContent className="py-6 text-center space-y-3">
             <Sparkles className="h-8 w-8 text-primary mx-auto" />
-            <h3 className="text-lg font-bold text-foreground">Gostou do que viu?</h3>
+            <h3 className="text-lg font-bold text-foreground">Pronto para transformar sua clínica?</h3>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Comece seu teste gratuito de 15 dias. Sem cartão de crédito, sem compromisso.
+              Comece seu trial gratuito de 15 dias. Sem cartão de crédito, sem compromisso.
+              Cancele a qualquer momento.
             </p>
             <Button onClick={() => navigate("/clinica#planos")} size="lg" className="gap-2 rounded-xl">
-              <Crown className="h-4 w-4" />
-              Iniciar teste gratuito
+              <Crown className="h-4 w-4" /> Iniciar teste gratuito
             </Button>
           </CardContent>
         </Card>
       </main>
 
-      {/* Appointment detail modal */}
+      {/* Appointment detail dialog */}
       <Dialog open={!!selectedApt} onOpenChange={(o) => !o && setSelectedApt(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-primary" />
-              Detalhes do agendamento
+              <CalendarIcon className="h-5 w-5 text-primary" /> Detalhes do agendamento
             </DialogTitle>
             <DialogDescription>Visualização demonstrativa</DialogDescription>
           </DialogHeader>
           {selectedApt && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Paciente</label>
-                  <p className="text-sm font-medium text-foreground">{selectedApt.patient_name}</p>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Profissional</label>
-                  <p className="text-sm font-medium text-foreground">{getProName(selectedApt.professional_id)}</p>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Data</label>
-                  <p className="text-sm text-foreground">{format(new Date(selectedApt.appointment_date), "dd/MM/yyyy")}</p>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Horário</label>
-                  <p className="text-sm text-foreground">{selectedApt.appointment_time.slice(0, 5)} ({selectedApt.duration_minutes}min)</p>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Tipo</label>
-                  <Badge variant="outline" className={cn("text-xs", TYPE_COLORS[selectedApt.type])}>
-                    {selectedApt.type === "video_call" ? "Teleconsulta" : selectedApt.type === "external" ? "Domiciliar" : "Presencial"}
-                  </Badge>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Status</label>
-                  <Badge variant="outline" className={cn("text-xs capitalize", STATUS_COLORS[selectedApt.status])}>
-                    {selectedApt.status === "scheduled" ? "Agendado" : selectedApt.status === "completed" ? "Realizado" : "Cancelado"}
-                  </Badge>
-                </div>
+                <div><label className="text-xs text-muted-foreground">Paciente</label><p className="text-sm font-medium text-foreground">{selectedApt.patient_name}</p></div>
+                <div><label className="text-xs text-muted-foreground">Profissional</label><p className="text-sm font-medium text-foreground">{getProName(selectedApt.professional_id)}</p></div>
+                <div><label className="text-xs text-muted-foreground">Data</label><p className="text-sm text-foreground">{format(new Date(selectedApt.appointment_date), "dd/MM/yyyy")}</p></div>
+                <div><label className="text-xs text-muted-foreground">Horário</label><p className="text-sm text-foreground">{selectedApt.appointment_time.slice(0, 5)} ({selectedApt.duration_minutes}min)</p></div>
+                <div><label className="text-xs text-muted-foreground">Tipo</label><Badge variant="outline" className={cn("text-xs", TYPE_COLORS[selectedApt.type])}>{selectedApt.type === "video_call" ? "Teleconsulta" : selectedApt.type === "external" ? "Domiciliar" : "Presencial"}</Badge></div>
+                <div><label className="text-xs text-muted-foreground">Status</label><Badge variant="outline" className={cn("text-xs capitalize", STATUS_COLORS[selectedApt.status])}>{selectedApt.status === "scheduled" ? "Agendado" : selectedApt.status === "completed" ? "Realizado" : "Cancelado"}</Badge></div>
               </div>
               {selectedApt.notes && (
-                <div>
-                  <label className="text-xs text-muted-foreground">Observações</label>
-                  <p className="text-sm text-foreground mt-0.5">{selectedApt.notes}</p>
-                </div>
+                <div><label className="text-xs text-muted-foreground">Observações</label><p className="text-sm text-foreground mt-0.5">{selectedApt.notes}</p></div>
               )}
             </div>
           )}
