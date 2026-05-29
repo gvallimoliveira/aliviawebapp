@@ -45,6 +45,7 @@ const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const ClinicAssessment = lazy(() => import("./pages/ClinicAssessment"));
 const ClinicDemo = lazy(() => import("./pages/ClinicDemo"));
 const ProfessionalDemo = lazy(() => import("./pages/ProfessionalDemo"));
+const PatientDemo = lazy(() => import("./pages/PatientDemo"));
 const ClinicFeedback = lazy(() => import("./pages/ClinicFeedback"));
 const Account = lazy(() => import("./pages/Account"));
 const ClearCache = lazy(() => import("./pages/ClearCache"));
@@ -81,6 +82,7 @@ const App = () => {
                 <Routes>
                   <Route path="/" element={<Gateway />} />
                   <Route path="/para-pacientes" element={<PatientLanding />} />
+                  <Route path="/para-pacientes/demo" element={<PatientDemo />} />
                   <Route path="/landing-legacy" element={<LandingLegacy />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route
