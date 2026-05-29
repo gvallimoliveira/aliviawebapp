@@ -700,10 +700,9 @@ export const mockPatientAssessments = [
     },
     treatment_plan: null,
     test_results: [
-      { questionnaireId: "dash", questionnaireName: "DASH (Membro Superior)", percentageScore: 14, severity: "mild",
-        subscaleScores: { daily_activities: 12, arm_shoulder_hand: 18, social_activities: 10, work: 15, sleep: 8 } },
-      { questionnaireId: "kjoc", questionnaireName: "KJOC (Ombro Atlético)", percentageScore: 84, severity: "mild",
-        subscaleScores: { symptoms: 88, function: 90, sports: 78 } },
+      { questionnaireId: "spadi", questionnaireName: "SPADI (Ombro)", percentageScore: 14, severity: "minimal",
+        subscaleScores: { pain: 12, disability: 16 } },
+
     ],
     red_flags: null,
     payment_status: "treatment_paid",
