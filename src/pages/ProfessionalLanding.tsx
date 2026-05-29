@@ -151,7 +151,11 @@ const ProfessionalLanding = () => {
               {t("b2b.hero_cta")}
               <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="lg" className="rounded-xl px-8 text-base" onClick={() => {
+            <Button variant="outline" size="lg" className="rounded-xl gap-2 px-8 text-base" onClick={() => navigate("/profissionais/demo")}>
+              <Zap className="h-4 w-4" />
+              Ver demo interativa
+            </Button>
+            <Button variant="ghost" size="lg" className="rounded-xl px-8 text-base" onClick={() => {
               if (user) {
                 navigate("/dashboard?tab=professional");
               } else {
