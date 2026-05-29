@@ -123,9 +123,11 @@ export const mockPatientFiles: Record<string, MockPatientFile[]> = {
     { id: "doc-jc5", file_name: "LiberacaoMedica_RetornoEsporte.pdf", file_size_bytes: 320_000, mime_type: "application/pdf", description: "Liberação formal do ortopedista para retorno esportivo", created_at: new Date(Date.now() - 5*86400000).toISOString() },
   ],
   "helena.rocha@exemplo.com": [
-    { id: "doc-h1", file_name: "Laudo_Reumatologista_Fibromialgia.pdf", file_size_bytes: 620_000, mime_type: "application/pdf", description: "Diagnóstico fibromialgia (critérios ACR 2016)", created_at: new Date(Date.now() - 60*86400000).toISOString() },
-    { id: "doc-h2", file_name: "Receita_Psiquiatra_Duloxetina_Pregabalina.pdf", file_size_bytes: 280_000, mime_type: "application/pdf", description: "Prescrição inicial — duloxetina 60mg + pregabalina 75mg", created_at: new Date(Date.now() - 55*86400000).toISOString() },
-    { id: "doc-h3", file_name: "ExamesLab_Reumato.pdf", file_size_bytes: 760_000, mime_type: "application/pdf", description: "Painel reumatológico completo (FAN, FR, anti-CCP) — todos negativos", created_at: new Date(Date.now() - 53*86400000).toISOString() },
-    { id: "doc-h4", file_name: "Receita_Psiquiatra_ReducaoPregabalina.pdf", file_size_bytes: 250_000, mime_type: "application/pdf", description: "Atualização — redução de pregabalina para 25mg", created_at: new Date(Date.now() - 10*86400000).toISOString() },
+    { id: "doc-h1", file_name: "RX_Quadril_D_PreOperatorio.pdf", file_size_bytes: 1_180_000, mime_type: "application/pdf", description: "RX pré-op — coxartrose terminal Kellgren-Lawrence IV", created_at: new Date(Date.now() - 90*86400000).toISOString() },
+    { id: "doc-h2", file_name: "Relatorio_Cirurgico_ATQ_PosteroLateral.pdf", file_size_bytes: 940_000, mime_type: "application/pdf", description: "Relatório cirúrgico — artroplastia total via póstero-lateral, prótese não-cimentada", created_at: new Date(Date.now() - 55*86400000).toISOString() },
+    { id: "doc-h3", file_name: "Protocolo_PosOp_Cirurgiao.pdf", file_size_bytes: 410_000, mime_type: "application/pdf", description: "Protocolo de reabilitação e precauções anti-luxação posterior", created_at: new Date(Date.now() - 53*86400000).toISOString() },
+    { id: "doc-h4", file_name: "RX_Controle_6semanas.pdf", file_size_bytes: 820_000, mime_type: "application/pdf", description: "RX de controle — componentes bem posicionados, sem sinais de afrouxamento", created_at: new Date(Date.now() - 12*86400000).toISOString() },
+    { id: "doc-h5", file_name: "ExamesLab_Pre_Op.pdf", file_size_bytes: 380_000, mime_type: "application/pdf", description: "Hemograma, coagulograma e função renal pré-op", created_at: new Date(Date.now() - 95*86400000).toISOString() },
   ],
+
 };
