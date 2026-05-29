@@ -495,7 +495,7 @@ const AppointmentEditorDialog = ({
                   </div>
                 </div>
 
-                {isClinicOnlyMode && clinicProfessionals.length > 0 && (
+                {clinicId && clinicProfessionals.length > 0 && (
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{isPt ? "Profissional" : "Professional"} *</label>
                     <Select value={formProfessionalId} onValueChange={setFormProfessionalId}>
@@ -504,6 +504,13 @@ const AppointmentEditorDialog = ({
                         {clinicProfessionals.map(p => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                  </div>
+                )}
+                {isClinicOnlyMode && clinicProfessionals.length === 0 && (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+                    {isPt
+                      ? "Nenhum profissional cadastrado nesta clínica. Convide ou cadastre um profissional na equipe antes de agendar atendimentos."
+                      : "No professional registered in this clinic. Invite or register a professional in the team before scheduling appointments."}
                   </div>
                 )}
 
