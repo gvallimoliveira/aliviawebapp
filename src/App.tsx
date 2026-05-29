@@ -44,6 +44,7 @@ const ClinicSupport = lazy(() => import("./pages/ClinicSupport"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const ClinicAssessment = lazy(() => import("./pages/ClinicAssessment"));
 const ClinicDemo = lazy(() => import("./pages/ClinicDemo"));
+const ProfessionalDemo = lazy(() => import("./pages/ProfessionalDemo"));
 const ClinicFeedback = lazy(() => import("./pages/ClinicFeedback"));
 const Account = lazy(() => import("./pages/Account"));
 const ClearCache = lazy(() => import("./pages/ClearCache"));
@@ -102,6 +103,7 @@ const App = () => {
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogPost />} />
                   <Route path="/profissionais" element={<ProfessionalLanding />} />
+                  <Route path="/profissionais/demo" element={<ProfessionalDemo />} />
                   <Route path="/complete-profile" element={<CompleteProfile />} />
                   <Route path="/suporte" element={<Support />} />
                   <Route path="/upgrade-welcome" element={<UpgradeWelcome />} />
