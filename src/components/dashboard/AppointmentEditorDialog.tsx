@@ -350,7 +350,7 @@ const AppointmentEditorDialog = ({
   const handleSave = async () => {
     if (!formName.trim()) return;
     if (selectedPatientKey === "__new__" && !formEmail.trim()) { setEmailWarning(true); return; }
-    const effectiveProfId = professionalId || formProfessionalId;
+    const effectiveProfId = (clinicId && formProfessionalId) ? formProfessionalId : (professionalId || formProfessionalId);
     if (!effectiveProfId) {
       toast({ title: isPt ? "Selecione um profissional" : "Select a professional", variant: "destructive" });
       return;
