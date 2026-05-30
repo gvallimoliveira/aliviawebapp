@@ -16,13 +16,44 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus } from "lucide-react";
+import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus, Mic, Lock, Crown } from "lucide-react";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { regionsByView } from "@/components/assessment/painMapData";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import { useVoiceRecorderSession } from "@/contexts/VoiceRecorderContext";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
+import { MOCK_MANUAL_CASE } from "@/data/mockManualAssessmentCase";
+
+/**
+ * In demo mode, wraps a form control with a transparent click overlay that
+ * autofills the field with mock data instead of letting the user type.
+ */
+const DemoShield = ({
+  on,
+  onAutofill,
+  children,
+  label,
+}: {
+  on: boolean;
+  onAutofill: () => void;
+  children: React.ReactNode;
+  label?: string;
+}) => {
+  if (!on) return <>{children}</>;
+  return (
+    <div className="relative group">
+      {children}
+      <button
+        type="button"
+        onClick={onAutofill}
+        aria-label={label || "Preencher com caso simulado"}
+        title={label || "Clique para preencher com o caso simulado"}
+        className="absolute inset-0 z-10 rounded-md cursor-pointer bg-transparent hover:bg-primary/5 transition-colors"
+      />
+    </div>
+  );
+};
 
 // ─── Body region grouping: proximal → distal, alphabetical within each group ───
 type RegionGroup = { key: string; label_pt: string; label_en: string; ids: string[] };
