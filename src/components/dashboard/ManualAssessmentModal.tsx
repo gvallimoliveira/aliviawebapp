@@ -209,7 +209,46 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   })();
 
   const toggleRegion = (id: string) => {
+    if (demoMode) {
+      // In demo mode, clicking any region toggles the mock pain regions as a group.
+      setPainRegions((prev) =>
+        prev.length === 0 ? MOCK_MANUAL_CASE.painRegions : [],
+      );
+      return;
+    }
     setPainRegions((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
+  };
+
+  // ── Demo-mode helpers ──────────────────────────────────────────────────────
+  const demoUpsellToast = () => {
+    toast({
+      title: isPt ? "Disponível no plano PRO" : "Available on PRO plan",
+      description: isPt
+        ? "Esta é uma demonstração. Assine o PRO para usar com pacientes reais."
+        : "This is a preview. Subscribe to PRO to use with real patients.",
+    });
+  };
+
+  // Auto-fills a single field with mock data. If already filled with the mock,
+  // clears it so multiple clicks produce a satisfying toggle.
+  const autofill = <T,>(current: T, mockValue: T, setter: (v: T) => void, empty: T) => {
+    const isFilled = JSON.stringify(current) === JSON.stringify(mockValue);
+    setter(isFilled ? empty : mockValue);
+  };
+
+  const startDemoVoiceRecording = () => {
+    if (demoVoiceRecording) return;
+    setDemoVoiceRecording(true);
+    toast({
+      title: isPt ? "Gravando (simulação)" : "Recording (simulation)",
+      description: isPt
+        ? "Na versão PRO real, a IA transcreve e resume sua fala direto no prontuário."
+        : "In real PRO, AI transcribes and summarizes your speech into the chart.",
+    });
+    setTimeout(() => {
+      setDemoVoiceRecording(false);
+      setDemoVoiceNoteShown(true);
+    }, 2800);
   };
 
   // ── Autosave (local + nuvem) ───────────────────────────────────────────────
