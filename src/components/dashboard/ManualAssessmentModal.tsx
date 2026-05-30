@@ -1008,15 +1008,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               <div className="space-y-3">
                 <div>
                   <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
-                  <Textarea
-                    value={functionalTests}
-                    onChange={(e) => setFunctionalTests(e.target.value)}
-                    rows={12}
-                    placeholder={isPt
-                      ? "Ex:\n- Slump test: positivo à esquerda\n- Lasègue 45° positivo\n- Força MMII grau 4\n- ADM lombar limitada em flexão\n..."
-                      : "E.g. Slump test: positive on the left, etc."}
-                    className="mt-1 text-sm font-mono"
-                  />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(functionalTests, MOCK_MANUAL_CASE.functionalTests, setFunctionalTests, "")}>
+                    <Textarea
+                      value={functionalTests}
+                      onChange={(e) => setFunctionalTests(e.target.value)}
+                      rows={12}
+                      placeholder={isPt
+                        ? "Ex:\n- Slump test: positivo à esquerda\n- Lasègue 45° positivo\n- Força MMII grau 4\n- ADM lombar limitada em flexão\n..."
+                        : "E.g. Slump test: positive on the left, etc."}
+                      className="mt-1 text-sm font-mono"
+                    />
+                  </DemoShield>
                 </div>
 
                 {/* AI-powered test suggestions box */}
