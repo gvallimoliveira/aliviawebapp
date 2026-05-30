@@ -24,6 +24,34 @@ const PatientLanding = () => {
   const patientDemoImportRef = useRef<Promise<unknown> | null>(null);
   const openingDemoRef = useRef(false);
   const [isOpeningDemo, setIsOpeningDemo] = useState(false);
+  const [demoProgress, setDemoProgress] = useState(0);
+  const progressTimerRef = useRef<number | null>(null);
+  const progressRef = useRef(0);
+
+  const setProgress = useCallback((value: number) => {
+    progressRef.current = Math.max(progressRef.current, value);
+    setDemoProgress(progressRef.current);
+  }, []);
+
+  const startProgressCreep = useCallback((ceiling: number) => {
+    if (progressTimerRef.current) window.clearInterval(progressTimerRef.current);
+    progressTimerRef.current = window.setInterval(() => {
+      const current = progressRef.current;
+      if (current >= ceiling) return;
+      // Gentle asymptotic creep toward the ceiling
+      const next = current + Math.max(0.4, (ceiling - current) * 0.06);
+      setProgress(Math.min(ceiling, next));
+    }, 120) as unknown as number;
+  }, [setProgress]);
+
+  const stopProgressCreep = useCallback(() => {
+    if (progressTimerRef.current) {
+      window.clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => stopProgressCreep(), [stopProgressCreep]);
 
   const warmPatientDemo = useCallback(() => {
     if (!patientDemoImportRef.current) {
