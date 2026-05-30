@@ -9,8 +9,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2, UserPlus, ChevronDown, ChevronUp,
+  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2, UserPlus, ChevronDown, ChevronUp, MessageCircle,
 } from "lucide-react";
+import ConversationList from "@/components/chat/ConversationList";
+
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import SecretaryReportsCard from "./SecretaryReportsCard";
 import CrefitoCompletionBanner from "./CrefitoCompletionBanner";
