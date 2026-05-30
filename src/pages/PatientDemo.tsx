@@ -16,8 +16,10 @@ import {
 import {
   ClipboardList, Sparkles, Crown, ArrowLeft, HelpCircle, User, Activity,
   Flame, Calendar, MapPin, ChevronRight, CheckCircle2, FileText, Dumbbell,
-  Info, TrendingDown, Users, Lock, Trophy,
+  Info, TrendingDown, Users, Lock, Trophy, Stethoscope, AlertCircle, Brain,
+  ShieldCheck, Target, ClipboardCheck,
 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { setSeo } from "@/lib/seo";
 
 // ── Mock data: 3 assessments, lombalgia radicular ciática c/ componente miofascial ──
