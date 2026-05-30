@@ -172,22 +172,28 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
       try {
         const { data: conv } = await supabase
           .from("conversations")
-          .select("patient_user_id, professional_id")
+          .select("patient_user_id, professional_id, recipient_user_id")
           .eq("id", conversationId)
           .single();
         if (!conv) return;
 
         let recipientUserId: string | null = null;
         if (conv.patient_user_id === user.id) {
-          const { data: pro } = await supabase
-            .from("professionals")
-            .select("user_id")
-            .eq("id", conv.professional_id)
-            .single();
-          recipientUserId = pro?.user_id || null;
+          // Patient is sending — recipient is the professional OR the direct staff recipient
+          if (conv.professional_id) {
+            const { data: pro } = await supabase
+              .from("professionals")
+              .select("user_id")
+              .eq("id", conv.professional_id)
+              .single();
+            recipientUserId = pro?.user_id || null;
+          } else {
+            recipientUserId = (conv as any).recipient_user_id || null;
+          }
         } else {
           recipientUserId = conv.patient_user_id;
         }
+
 
         if (recipientUserId) {
           const senderName = user.user_metadata?.full_name || "Alguém";
