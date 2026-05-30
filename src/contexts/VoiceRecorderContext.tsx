@@ -95,7 +95,7 @@ const GlobalVoiceRecorderFAB = () => {
     right: 16,
     bottom: typeof window !== "undefined" && window.innerWidth >= 640 ? 24 : 80,
   }));
-  const dragRef = useRef<{ startX: number; startY: number; startRight: number; startBottom: number; moved: boolean } | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; startRight: number; startBottom: number; moved: boolean; pointerId: number; captured: boolean } | null>(null);
 
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -312,13 +312,19 @@ const GlobalVoiceRecorderFAB = () => {
   const onDragPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     // Only drag with the dedicated handle (so internal buttons still get clicks).
     if (!(e.target as HTMLElement).closest("[data-voice-drag-handle]")) return;
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    // IMPORTANT: do NOT call setPointerCapture here. On desktop, capturing the
+    // pointer on the wrapper redirects pointerup/click away from the inner
+    // <Button>, so onClick never fires and the recording can't start. We only
+    // capture the pointer after the user actually starts dragging (threshold
+    // crossed in onPointerMove).
     dragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
       startRight: pos.right,
       startBottom: pos.bottom,
       moved: false,
+      pointerId: e.pointerId,
+      captured: false,
     };
   };
   const onDragPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -326,7 +332,14 @@ const GlobalVoiceRecorderFAB = () => {
     if (!d) return;
     const dx = e.clientX - d.startX;
     const dy = e.clientY - d.startY;
-    if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
+    if (!d.moved && Math.abs(dx) + Math.abs(dy) > 4) {
+      d.moved = true;
+    }
+    if (!d.moved) return;
+    if (!d.captured) {
+      try { (e.currentTarget as HTMLElement).setPointerCapture?.(d.pointerId); } catch {}
+      d.captured = true;
+    }
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const nextRight = Math.max(8, Math.min(vw - 80, d.startRight - dx));
@@ -334,7 +347,10 @@ const GlobalVoiceRecorderFAB = () => {
     setPos({ right: nextRight, bottom: nextBottom });
   };
   const onDragPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
-    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    const d = dragRef.current;
+    if (d?.captured) {
+      try { (e.currentTarget as HTMLElement).releasePointerCapture?.(d.pointerId); } catch {}
+    }
     dragRef.current = null;
   };
 
