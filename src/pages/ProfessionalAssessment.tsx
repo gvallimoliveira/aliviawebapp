@@ -245,6 +245,22 @@ const ProfessionalAssessment = () => {
         status: "red_flagged",
       });
     }
+    // High-priority push to professional
+    if (professional?.user_id) {
+      try {
+        await supabase.functions.invoke("send-push-notification", {
+          body: {
+            user_id: professional.user_id,
+            title: "🚨 Red flag detectada",
+            body: `${patientName || "Paciente"} ativou sinais de alerta. Revise imediatamente.`,
+            url: id ? `/assessment/view/${id}` : "/dashboard?tab=professional",
+            tag: `redflag-${id || "x"}`,
+          },
+        });
+      } catch (err) {
+        console.warn("Red flag push failed:", err);
+      }
+    }
     setStep("redflag_alert");
   };
 
