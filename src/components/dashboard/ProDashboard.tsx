@@ -766,11 +766,11 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                   Assine o plano PRO para atender pacientes particulares com seu link próprio, agenda, mensagens e relatórios em PDF.
                 </p>
                 <div className="flex items-center gap-2 pt-1 flex-wrap">
-                  <Button onClick={() => handleSubscribe("annual")} disabled={checkoutLoading} className="rounded-xl gap-2">
+                  <Button onClick={() => user ? handleSubscribe("annual") : navigate("/profissionais#planos")} disabled={checkoutLoading} className="rounded-xl gap-2">
                     {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
                     Plano anual ({PRO_PLAN_ANNUAL_PRICE_FORMATTED})
                   </Button>
-                  <Button variant="outline" onClick={() => handleSubscribe("monthly")} disabled={checkoutLoading} className="rounded-xl gap-2">
+                  <Button variant="outline" onClick={() => user ? handleSubscribe("monthly") : navigate("/profissionais#planos")} disabled={checkoutLoading} className="rounded-xl gap-2">
                     {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                     Plano mensal ({PRO_PLAN_PRICE_FORMATTED})
                   </Button>
