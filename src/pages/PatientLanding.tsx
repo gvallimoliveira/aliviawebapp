@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle2, LoaderCircle } from "lucide-react";
 import Header from "@/components/Header";
 import ReferralBanner from "@/components/ReferralBanner";
@@ -19,7 +19,6 @@ import LgpdBadge from "@/components/LgpdBadge";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
 
 const PatientLanding = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const patientDemoImportRef = useRef<Promise<unknown> | null>(null);
   const openingDemoRef = useRef(false);
@@ -72,21 +71,19 @@ const PatientLanding = () => {
     if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
   }, []);
 
-  const handleOpenDemo = useCallback(async () => {
+  const handleOpenDemo = useCallback(() => {
     if (openingDemoRef.current) return;
     openingDemoRef.current = true;
     setIsOpeningDemo(true);
     setShowDemoFallback(false);
+    sessionStorage.setItem("patient-demo-opening", String(Date.now()));
 
     fallbackTimerRef.current = window.setTimeout(() => {
       setShowDemoFallback(true);
     }, 3000);
 
-    window.requestAnimationFrame(() => {
-      void warmPatientDemo();
-      navigate("/para-pacientes/demo");
-    });
-  }, [navigate, warmPatientDemo]);
+    void warmPatientDemo();
+  }, [warmPatientDemo]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,14 +92,13 @@ const PatientLanding = () => {
       <main>
         <HeroSection showProfessionalCTA={false} />
         <div className="container -mt-8 mb-12 flex justify-center">
-          <button
-            type="button"
+          <Link
+            to="/para-pacientes/demo"
             onMouseEnter={() => void warmPatientDemo()}
             onFocus={() => void warmPatientDemo()}
             onPointerDown={() => void warmPatientDemo()}
             onTouchStart={() => void warmPatientDemo()}
             onClick={handleOpenDemo}
-            disabled={isOpeningDemo}
             aria-busy={isOpeningDemo}
             className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors disabled:cursor-wait disabled:opacity-90"
           >
@@ -121,7 +117,7 @@ const PatientLanding = () => {
                 {demoButtonText}
               </>
             )}
-          </button>
+          </Link>
         </div>
         {isOpeningDemo ? (
           <div className="container -mt-8 mb-8 flex justify-center">
