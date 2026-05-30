@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { LoaderCircle } from "lucide-react";
 import Header from "@/components/Header";
 import ReferralBanner from "@/components/ReferralBanner";
 import HeroSection from "@/components/HeroSection";
@@ -18,8 +19,10 @@ import LgpdBadge from "@/components/LgpdBadge";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
 
 const PatientLanding = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const patientDemoImportRef = useRef<Promise<unknown> | null>(null);
+  const [isOpeningDemo, setIsOpeningDemo] = useState(false);
 
   const warmPatientDemo = useCallback(() => {
     if (!patientDemoImportRef.current) {
@@ -52,6 +55,20 @@ const PatientLanding = () => {
     return () => window.clearTimeout(preloadTimer);
   }, [warmPatientDemo]);
 
+  const handleOpenDemo = useCallback(async () => {
+    if (isOpeningDemo) return;
+    setIsOpeningDemo(true);
+
+    try {
+      await Promise.race([
+        warmPatientDemo(),
+        new Promise((resolve) => window.setTimeout(resolve, 350)),
+      ]);
+    } finally {
+      navigate("/para-pacientes/demo");
+    }
+  }, [isOpeningDemo, navigate, warmPatientDemo]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -59,16 +76,29 @@ const PatientLanding = () => {
       <main>
         <HeroSection showProfessionalCTA={false} />
         <div className="container -mt-8 mb-12 flex justify-center">
-          <Link
-            to="/para-pacientes/demo"
+          <button
+            type="button"
             onMouseEnter={() => void warmPatientDemo()}
             onFocus={() => void warmPatientDemo()}
             onPointerDown={() => void warmPatientDemo()}
             onTouchStart={() => void warmPatientDemo()}
-            className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+            onClick={handleOpenDemo}
+            disabled={isOpeningDemo}
+            aria-busy={isOpeningDemo}
+            className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors disabled:cursor-wait disabled:opacity-90"
           >
-            ✨ Ver demo interativa do painel Premium
-          </Link>
+            {isOpeningDemo ? (
+              <>
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+                Abrindo demo interativa...
+              </>
+            ) : (
+              <>
+                <span aria-hidden="true">✨</span>
+                Ver demo interativa do painel Premium
+              </>
+            )}
+          </button>
         </div>
         <HighlightsSection />
         <ComparisonSection />
