@@ -986,6 +986,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   <QuestionnaireStep
                     painRegions={painRegions}
                     previousAnswers={undefined}
+                    demoMode={demoMode}
+                    autofillAnswers={demoMode ? MOCK_MANUAL_CASE.questionnaireAnswers : undefined}
                     onComplete={(results) => {
                       setQuestionnaireResults(results);
                       setStep((s) => Math.min(STEPS.length - 1, s + 1));
@@ -993,6 +995,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     onBack={() => setStep((s) => Math.max(0, s - 1))}
                     onSkip={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
                   />
+
                 )}
                 {questionnaireResults.length > 0 && (
                   <div className="text-xs text-muted-foreground p-2 rounded bg-primary/5 border border-primary/20">
