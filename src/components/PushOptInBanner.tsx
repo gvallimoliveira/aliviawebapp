@@ -18,15 +18,25 @@ const PushOptInBanner = () => {
     }
   })();
 
-  if (!user || !isSupported || !ready || subscribed || permission === "denied" || isDismissed) {
+  // iOS Safari only delivers Web Push when the site is installed as a PWA
+  // (Add to Home Screen). Detect that case so we can guide the user.
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+  const isStandalone =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true);
+  const iosNeedsInstall = isIOS && !isStandalone;
+
+  if (!user || !ready || subscribed || permission === "denied" || isDismissed) {
     return null;
   }
+  if (!isSupported && !iosNeedsInstall) return null;
 
   const handleDismiss = () => {
     try {
       localStorage.setItem(DISMISS_KEY, "true");
     } catch {}
-    // Force re-render by reloading — simplest approach
     window.location.reload();
   };
 
@@ -46,16 +56,20 @@ const PushOptInBanner = () => {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground">
-          Ative as notificações
+          {iosNeedsInstall ? "Instale o app para receber notificações" : "Ative as notificações"}
         </p>
         <p className="text-xs text-muted-foreground">
-          Receba lembretes do diário de dor, avisos de desconto e atualizações importantes.
+          {iosNeedsInstall
+            ? "No iPhone/iPad, toque em Compartilhar → Adicionar à Tela de Início. Depois abra o app pelo ícone e ative as notificações."
+            : "Receba avisos em tempo real de novas mensagens, novas avaliações, lembretes do diário de dor e atualizações importantes."}
         </p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
-        <Button size="sm" onClick={handleSubscribe} disabled={loading}>
-          {loading ? "..." : "Ativar"}
-        </Button>
+        {!iosNeedsInstall && (
+          <Button size="sm" onClick={handleSubscribe} disabled={loading}>
+            {loading ? "..." : "Ativar"}
+          </Button>
+        )}
         <button
           onClick={handleDismiss}
           className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

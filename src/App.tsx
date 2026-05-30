@@ -14,6 +14,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ClinicProvider } from "@/contexts/ClinicContext";
 import { VoiceRecorderProvider } from "@/contexts/VoiceRecorderContext";
+import RealtimeNotifier from "@/components/RealtimeNotifier";
 
 // Level 1 — eager (initial paint critical)
 import Gateway from "./pages/Gateway";
@@ -78,6 +79,7 @@ const App = () => {
             <BrowserRouter>
               <ScrollToTop />
               <GlobalMobileMenu />
+              <RealtimeNotifier />
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Gateway />} />
