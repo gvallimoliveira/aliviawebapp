@@ -448,6 +448,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const generateAITreatment = async () => {
+    if (demoMode) { demoUpsellToast(); return; }
     setGeneratingTx(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-treatment", {
