@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, ChevronLeft, ClipboardCheck, Award } from "lucide-react";
+import { ChevronRight, ChevronLeft, ClipboardCheck, Award, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
@@ -21,9 +21,13 @@ interface QuestionnaireStepProps {
   painScoresPerRegion?: Record<string, number>;
   generalPainScore?: number;
   extraQuestionnaireRegions?: string[];
+  /** Demo mode: shows a single-click autofill button using `autofillAnswers`. */
+  demoMode?: boolean;
+  /** Mock answers keyed by questionnaire id -> question id -> value. */
+  autofillAnswers?: Record<string, Record<string, number>>;
 }
 
-const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAnswers, painScoresPerRegion, generalPainScore, extraQuestionnaireRegions }: QuestionnaireStepProps) => {
+const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAnswers, painScoresPerRegion, generalPainScore, extraQuestionnaireRegions, demoMode, autofillAnswers }: QuestionnaireStepProps) => {
   const { language } = useLanguage();
   const tl = (pt: string, en: string) => (language === "pt" ? pt : en);
 
