@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import ReferralBanner from "@/components/ReferralBanner";
 import HeroSection from "@/components/HeroSection";
