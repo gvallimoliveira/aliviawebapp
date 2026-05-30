@@ -272,7 +272,7 @@ const SimpleDiaryChart = ({ data }: { data: { date: string; score: number }[] })
   );
 };
 
-const PatientDemo = () => {
+const PatientDemoContent = () => {
   const navigate = useNavigate();
   const [assessmentDialog, setAssessmentDialog] = useState<"basic" | "premium" | null>(null);
   const [findProDialog, setFindProDialog] = useState(false);
@@ -692,4 +692,4 @@ const PatientDemo = () => {
   );
 };
 
-export default PatientDemo;
+export default PatientDemoContent;
