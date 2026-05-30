@@ -13,11 +13,12 @@ import { getSeverityColor } from "./QuestionnaireResultCard";
 
 interface AssessmentSummaryViewProps {
   assessment: any;
-  onBack: () => void;
+  onBack?: () => void;
   onDownloadPdf: () => void;
   onShareWhatsApp: () => void;
   pdfLoading?: boolean;
   whatsappLoading?: boolean;
+  embedded?: boolean;
 }
 
 function getRegionLabel(id: string, isPt: boolean): string {
@@ -52,7 +53,7 @@ function getConfidenceBadge(conf: string | undefined, isPt: boolean) {
 }
 
 const AssessmentSummaryView = ({
-  assessment, onBack, onDownloadPdf, onShareWhatsApp, pdfLoading, whatsappLoading,
+  assessment, onBack, onDownloadPdf, onShareWhatsApp, pdfLoading, whatsappLoading, embedded,
 }: AssessmentSummaryViewProps) => {
   const { language, t } = useLanguage();
   const isPt = language === "pt";
@@ -326,10 +327,12 @@ const AssessmentSummaryView = ({
       )}
 
       {/* Footer actions */}
-      <div className="rounded-2xl border bg-muted/30 p-3 flex flex-col sm:flex-row gap-2 sticky bottom-2">
-        <Button variant="outline" onClick={onBack} className="rounded-xl gap-1.5 sm:flex-none">
-          <ArrowLeft className="h-4 w-4" /> {isPt ? "Voltar" : "Back"}
-        </Button>
+      <div className={`rounded-2xl border bg-muted/30 p-3 flex flex-col sm:flex-row gap-2 ${embedded ? "" : "sticky bottom-2"}`}>
+        {!embedded && onBack && (
+          <Button variant="outline" onClick={onBack} className="rounded-xl gap-1.5 sm:flex-none">
+            <ArrowLeft className="h-4 w-4" /> {isPt ? "Voltar" : "Back"}
+          </Button>
+        )}
         {assessment.diagnosis && (
           <>
             <Button

@@ -20,6 +20,7 @@ import RegionPainComparison from "../RegionPainComparison";
 import SessionNotesSection from "../SessionNotesSection";
 import VoiceNoteCard from "../VoiceNoteCard";
 import PainMapView from "@/components/assessment/PainMapView";
+import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
@@ -338,8 +339,41 @@ export default function PatientDetailView(props: any) {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-        </div>
       </div>
+      </div>
+
+
+
+      {(() => {
+        const summaryTarget = latestWithDiagnosis || latestAssessment;
+        if (!summaryTarget) return null;
+        return (
+          <CollapsibleSection
+            storageKey={`patient-summary-open:${patient.groupKey || patient.email || "x"}`}
+            defaultOpen={true}
+            header={
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h4 className="text-sm font-semibold text-foreground">
+                  {language === "pt" ? "Resumo da última avaliação" : language === "es" ? "Resumen de la última evaluación" : "Latest assessment summary"}
+                </h4>
+                <Badge variant="outline" className="text-[10px] ml-1">
+                  {new Date(summaryTarget.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "short", year: "numeric" })}
+                </Badge>
+              </div>
+            }
+            className="rounded-2xl border border-border bg-card/50 p-4"
+          >
+            <AssessmentSummaryView
+              assessment={summaryTarget}
+              embedded
+              onDownloadPdf={() => onDownloadPdf?.(summaryTarget)}
+              onShareWhatsApp={() => onShareWhatsApp?.(summaryTarget)}
+            />
+          </CollapsibleSection>
+        );
+      })()}
+
 
       {clinicId && !isDemo && (() => {
         const assignedProIds = Array.from(new Set(patient.assessments.map((a: any) => a.professional_id).filter((id: any) => !!id))) as string[];
