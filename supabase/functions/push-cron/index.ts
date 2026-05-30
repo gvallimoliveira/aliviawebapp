@@ -464,6 +464,85 @@ Deno.serve(async (req) => {
       }
     } catch (e) { results.errors.push(`smart_alerts: ${e}`); }
 
+    // 9. REASSESSMENT SUGGESTIONS — weekly nudge if last completed assessment > 30 days
+    try {
+      const dayOfWeek = new Date().getUTCDay(); // 1 = Monday
+      if (dayOfWeek === 1 && allSubs && allSubs.length > 0) {
+        const userIds = [...new Set(allSubs.map((s: any) => s.user_id))];
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: completed } = await supabase
+          .from("assessments")
+          .select("user_id, created_at")
+          .eq("status", "completed")
+          .in("user_id", userIds)
+          .order("created_at", { ascending: false });
+        const lastByUser = new Map<string, string>();
+        for (const a of completed || []) {
+          if (!a.user_id) continue;
+          if (!lastByUser.has(a.user_id)) lastByUser.set(a.user_id, a.created_at);
+        }
+        for (const userId of userIds) {
+          const last = lastByUser.get(userId);
+          if (!last || last < thirtyDaysAgo) {
+            try {
+              const sent = await notifyUser(
+                userId,
+                "📊 Que tal uma reavaliação?",
+                "Já se passaram 30+ dias. Refaça a avaliação para acompanhar sua evolução.",
+                "/dashboard"
+              );
+              if (sent) results.reassessment_suggestions++;
+            } catch (e) { results.errors.push(`reassessment ${userId}: ${e}`); }
+          }
+        }
+      }
+    } catch (e) { results.errors.push(`reassessment_block: ${e}`); }
+
+    // 10. STREAK MILESTONES — celebrate 7/14/30/60/100-day pain-diary streaks
+    try {
+      if (allSubs && allSubs.length > 0) {
+        const userIds = [...new Set(allSubs.map((s: any) => s.user_id))];
+        const sinceStr = new Date(Date.now() - 110 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+        const { data: entries } = await supabase
+          .from("pain_diary_entries")
+          .select("user_id, logged_at")
+          .in("user_id", userIds)
+          .gte("logged_at", sinceStr)
+          .order("logged_at", { ascending: false });
+
+        const byUser = new Map<string, Set<string>>();
+        for (const e of entries || []) {
+          if (!byUser.has(e.user_id)) byUser.set(e.user_id, new Set());
+          byUser.get(e.user_id)!.add(e.logged_at);
+        }
+
+        const milestones = [7, 14, 30, 60, 100];
+        const todayDate = new Date();
+        for (const [userId, days] of byUser) {
+          // Compute current streak (consecutive days ending today)
+          if (!days.has(today)) continue; // only celebrate on the milestone day itself
+          let streak = 0;
+          for (let i = 0; i < 110; i++) {
+            const d = new Date(todayDate);
+            d.setUTCDate(todayDate.getUTCDate() - i);
+            const key = d.toISOString().split("T")[0];
+            if (days.has(key)) streak++; else break;
+          }
+          if (!milestones.includes(streak)) continue;
+          try {
+            const sent = await notifyUser(
+              userId,
+              `🏆 ${streak} dias seguidos!`,
+              `Você completou ${streak} dias de diário. Continue assim — a consistência é a chave da recuperação.`,
+              "/dashboard"
+            );
+            if (sent) results.streak_milestones++;
+          } catch (e) { results.errors.push(`streak ${userId}: ${e}`); }
+        }
+      }
+    } catch (e) { results.errors.push(`streak_block: ${e}`); }
+
+
     return new Response(
       JSON.stringify({
         success: true,
