@@ -485,7 +485,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       setGeneratedLink(link);
       void draft.discard();
 
-      // Notify the patient that a new HEP is available (push)
+      // Notify the patient that a new HEP is available (push, resolved by email)
       if (!isEditing) {
         try {
           const { data: patientRow } = await (supabase as any)
@@ -496,19 +496,15 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
             .maybeSingle();
           const email = patientRow?.email;
           if (email) {
-            const { data: userRow } = await (supabase as any).rpc("get_user_id_by_email", { _email: email });
-            const patientUserId = typeof userRow === "string" ? userRow : userRow?.[0]?.id;
-            if (patientUserId) {
-              await supabase.functions.invoke("send-push-notification", {
-                body: {
-                  user_id: patientUserId,
-                  title: "🏃 Novo programa de exercícios",
-                  body: "Seu fisioterapeuta enviou um novo HEP. Toque para iniciar.",
-                  url: link,
-                  tag: `hep-${programId}`,
-                },
-              });
-            }
+            await supabase.functions.invoke("send-push-notification", {
+              body: {
+                email,
+                title: "🏃 Novo programa de exercícios",
+                body: "Seu fisioterapeuta enviou um novo HEP. Toque para iniciar.",
+                url: link,
+                tag: `hep-${programId}`,
+              },
+            });
           }
         } catch (err) {
           console.warn("HEP push failed:", err);
