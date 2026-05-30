@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import ReferralBanner from "@/components/ReferralBanner";
