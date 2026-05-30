@@ -484,6 +484,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const generateTestSuggestions = async () => {
+    if (demoMode) { demoUpsellToast(); return; }
     setSuggestingTests(true);
     try {
       const anamnesisSummary = [
