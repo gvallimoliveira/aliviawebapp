@@ -118,18 +118,29 @@ const PatientLanding = () => {
               isOpeningDemo ? "cursor-wait pointer-events-none" : "hover:bg-primary/10"
             }`}
           >
+            {/* Inline keyframes so we don't depend on tailwind config changes */}
+            {isOpeningDemo && (
+              <style>{`
+                @keyframes demoProgressFill { 0% { width: 0% } 60% { width: 85% } 100% { width: 95% } }
+                @keyframes demoShimmerSweep { 0% { transform: translateX(-100%) } 100% { transform: translateX(100%) } }
+              `}</style>
+            )}
             {/* Progress fill that animates across the button while loading */}
             <span
               aria-hidden="true"
-              className={`pointer-events-none absolute inset-y-0 left-0 bg-primary/15 ${
-                isOpeningDemo ? "animate-[demoProgress_2.4s_ease-out_forwards]" : "w-0"
-              }`}
+              className="pointer-events-none absolute inset-y-0 left-0 bg-primary/20"
+              style={
+                isOpeningDemo
+                  ? { animation: "demoProgressFill 2.4s ease-out forwards" }
+                  : { width: 0 }
+              }
             />
             {/* Shimmer sweep */}
             {isOpeningDemo && (
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/25 to-transparent animate-[demoShimmer_1.2s_linear_infinite]"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/30 to-transparent"
+                style={{ animation: "demoShimmerSweep 1.2s linear infinite" }}
               />
             )}
             <span className="relative z-10 inline-flex items-center gap-2">
