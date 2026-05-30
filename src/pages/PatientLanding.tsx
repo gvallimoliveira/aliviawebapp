@@ -23,6 +23,7 @@ const PatientLanding = () => {
   const [searchParams] = useSearchParams();
   const patientDemoImportRef = useRef<Promise<unknown> | null>(null);
   const openingDemoRef = useRef(false);
+  const [isOpeningDemo, setIsOpeningDemo] = useState(false);
 
   const warmPatientDemo = useCallback(() => {
     if (!patientDemoImportRef.current) {
