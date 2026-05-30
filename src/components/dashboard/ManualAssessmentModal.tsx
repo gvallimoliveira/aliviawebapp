@@ -708,7 +708,22 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-6">
           <div className="space-y-4 py-4">
-            {draft.hasDraft && draft.draftMeta && (
+            {demoMode && (
+              <div className="rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-900/15 px-4 py-3 text-xs text-amber-900 dark:text-amber-200">
+                <div className="flex items-start gap-2">
+                  <Lock className="h-4 w-4 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-semibold">{isPt ? "Modo demonstração" : "Demo mode"}</p>
+                    <p className="leading-snug">
+                      {isPt
+                        ? "Para evitar uso indevido, os campos não aceitam digitação. Clique em qualquer campo para preenchê-lo com um caso simulado e avance pelas etapas para conhecer o fluxo. Assine PRO para usar com pacientes reais."
+                        : "To prevent misuse, fields can't be typed in. Click any field to auto-fill it with a simulated case and walk through the steps. Subscribe to PRO to use with real patients."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {!demoMode && draft.hasDraft && draft.draftMeta && (
               <DraftResumeBanner
                 updatedAt={draft.draftMeta.updatedAt}
                 source={draft.draftMeta.source}
@@ -716,67 +731,156 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 onDiscard={() => void draft.discard()}
               />
             )}
+
+            {/* Demo voice recorder mock (replaces the global FAB while in demo) */}
+            {demoMode && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                    <Mic className="h-4 w-4 text-primary" />
+                    {isPt ? "Gravador de voz (simulação)" : "Voice recorder (simulation)"}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={demoVoiceRecording ? "secondary" : "outline"}
+                    className="h-7 px-2 text-xs gap-1.5 rounded-lg"
+                    onClick={startDemoVoiceRecording}
+                    disabled={demoVoiceRecording}
+                  >
+                    {demoVoiceRecording ? (
+                      <>
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+                        </span>
+                        {isPt ? "Gravando..." : "Recording..."}
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="h-3 w-3" />
+                        {demoVoiceNoteShown
+                          ? (isPt ? "Gravar de novo" : "Record again")
+                          : (isPt ? "Iniciar gravação" : "Start recording")}
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  {isPt
+                    ? "Na versão PRO, sua voz é transcrita pela IA e o resumo aparece direto no prontuário. O áudio é descartado após a transcrição."
+                    : "In PRO, your voice is transcribed by AI and the summary appears directly in the chart. Audio is discarded after transcription."}
+                </p>
+                {demoVoiceRecording && (
+                  <div className="flex items-end justify-center gap-0.5 h-8">
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="w-1 rounded-full bg-primary/70 animate-pulse"
+                        style={{
+                          height: `${20 + ((i * 13) % 70)}%`,
+                          animationDelay: `${(i % 6) * 80}ms`,
+                          animationDuration: "700ms",
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {demoVoiceNoteShown && !demoVoiceRecording && (
+                  <div className="rounded-lg bg-background border border-primary/20 p-2.5 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
+                      <Sparkles className="h-3 w-3" />
+                      {isPt ? "Transcrição gerada (mock)" : "Generated transcript (mock)"}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      {MOCK_MANUAL_CASE.voiceTranscript}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* STEP 0: ANAMNESE */}
             {step === 0 && (
               <div className="space-y-3">
                 <div>
                   <Label className="text-xs">{isPt ? "Queixa principal" : "Chief complaint"} *</Label>
-                  <Textarea value={chiefComplaint} onChange={(e) => setChiefComplaint(e.target.value)} rows={2}
-                    placeholder={isPt ? "Ex: Dor lombar à esquerda há 3 semanas" : "E.g. Left lumbar pain for 3 weeks"} className="mt-1 text-sm" />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(chiefComplaint, MOCK_MANUAL_CASE.chiefComplaint, setChiefComplaint, "")}>
+                    <Textarea value={chiefComplaint} onChange={(e) => setChiefComplaint(e.target.value)} rows={2}
+                      placeholder={isPt ? "Ex: Dor lombar à esquerda há 3 semanas" : "E.g. Left lumbar pain for 3 weeks"} className="mt-1 text-sm" />
+                  </DemoShield>
                 </div>
                 <div>
                   <Label className="text-xs">{isPt ? "Histórico" : "History"}</Label>
-                  <Textarea value={history} onChange={(e) => setHistory(e.target.value)} rows={3} className="mt-1 text-sm" />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(history, MOCK_MANUAL_CASE.history, setHistory, "")}>
+                    <Textarea value={history} onChange={(e) => setHistory(e.target.value)} rows={3} className="mt-1 text-sm" />
+                  </DemoShield>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">{isPt ? "Tempo de evolução" : "Duration"}</Label>
-                    <Input value={duration} onChange={(e) => setDuration(e.target.value)} className="mt-1 text-sm h-9" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(duration, MOCK_MANUAL_CASE.duration, setDuration, "")}>
+                      <Input value={duration} onChange={(e) => setDuration(e.target.value)} className="mt-1 text-sm h-9" />
+                    </DemoShield>
                   </div>
                   <div>
                     <Label className="text-xs">{isPt ? "Início" : "Onset"}</Label>
-                    <Select value={onset} onValueChange={setOnset}>
-                      <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sudden">{isPt ? "Súbito" : "Sudden"}</SelectItem>
-                        <SelectItem value="gradual">{isPt ? "Gradual" : "Gradual"}</SelectItem>
-                        <SelectItem value="trauma">{isPt ? "Trauma" : "Trauma"}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <DemoShield on={demoMode} onAutofill={() => autofill(onset, MOCK_MANUAL_CASE.onset, setOnset, "")}>
+                      <Select value={onset} onValueChange={setOnset}>
+                        <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sudden">{isPt ? "Súbito" : "Sudden"}</SelectItem>
+                          <SelectItem value="gradual">{isPt ? "Gradual" : "Gradual"}</SelectItem>
+                          <SelectItem value="trauma">{isPt ? "Trauma" : "Trauma"}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </DemoShield>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">{isPt ? "Fatores agravantes" : "Aggravating factors"}</Label>
-                    <Textarea value={aggravating} onChange={(e) => setAggravating(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(aggravating, MOCK_MANUAL_CASE.aggravating, setAggravating, "")}>
+                      <Textarea value={aggravating} onChange={(e) => setAggravating(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    </DemoShield>
                   </div>
                   <div>
                     <Label className="text-xs">{isPt ? "Fatores aliviantes" : "Relieving factors"}</Label>
-                    <Textarea value={relieving} onChange={(e) => setRelieving(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(relieving, MOCK_MANUAL_CASE.relieving, setRelieving, "")}>
+                      <Textarea value={relieving} onChange={(e) => setRelieving(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    </DemoShield>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">{isPt ? "Medicações em uso" : "Current medications"}</Label>
-                    <Textarea value={medications} onChange={(e) => setMedications(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(medications, MOCK_MANUAL_CASE.medications, setMedications, "")}>
+                      <Textarea value={medications} onChange={(e) => setMedications(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    </DemoShield>
                   </div>
                   <div>
                     <Label className="text-xs">{isPt ? "Cirurgias prévias" : "Previous surgeries"}</Label>
-                    <Textarea value={previousSurgeries} onChange={(e) => setPreviousSurgeries(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(previousSurgeries, MOCK_MANUAL_CASE.previousSurgeries, setPreviousSurgeries, "")}>
+                      <Textarea value={previousSurgeries} onChange={(e) => setPreviousSurgeries(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    </DemoShield>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">{isPt ? "Comorbidades" : "Comorbidities"}</Label>
-                    <Input value={comorbidities} onChange={(e) => setComorbidities(e.target.value)} className="mt-1 text-sm h-9" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(comorbidities, MOCK_MANUAL_CASE.comorbidities, setComorbidities, "")}>
+                      <Input value={comorbidities} onChange={(e) => setComorbidities(e.target.value)} className="mt-1 text-sm h-9" />
+                    </DemoShield>
                   </div>
                   <div>
                     <Label className="text-xs">{isPt ? "Ocupação" : "Occupation"}</Label>
-                    <Input value={occupation} onChange={(e) => setOccupation(e.target.value)} className="mt-1 text-sm h-9" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(occupation, MOCK_MANUAL_CASE.occupation, setOccupation, "")}>
+                      <Input value={occupation} onChange={(e) => setOccupation(e.target.value)} className="mt-1 text-sm h-9" />
+                    </DemoShield>
                   </div>
                 </div>
               </div>
             )}
+
 
             {/* STEP 1: DOR */}
             {step === 1 && (
