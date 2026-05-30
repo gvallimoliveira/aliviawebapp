@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import ReferralBanner from "@/components/ReferralBanner";
 import HeroSection from "@/components/HeroSection";
@@ -20,7 +20,6 @@ import { showNavOverlay } from "@/lib/navigationOverlay";
 
 const PatientLanding = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const patientDemoImportRef = useRef<Promise<unknown> | null>(null);
   const openingDemoRef = useRef(false);
 
@@ -78,25 +77,23 @@ const PatientLanding = () => {
   }, [warmPatientDemo]);
 
   const handleOpenDemo = useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
-    // Allow new-tab clicks to behave natively.
+    // Allow modifier clicks (new tab) to behave natively.
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1) return;
-    event.preventDefault();
     if (openingDemoRef.current) return;
     openingDemoRef.current = true;
 
-    // 1) Synchronous, paint-immediate feedback via global overlay.
+    // Synchronous, paint-immediate feedback via a global overlay rendered
+    // outside <Routes>. It survives PatientLanding's unmount, so the user
+    // sees instant confirmation even while React Router transitions to the
+    // (lazily loaded) PatientDemo route.
     showNavOverlay("Abrindo demo do paciente…");
     sessionStorage.setItem("patient-demo-opening", String(Date.now()));
 
-    // 2) Kick off preload (idempotent — cached if already warmed).
+    // Kick off preload (idempotent — cached if already warmed).
     void warmPatientDemo();
-
-    // 3) Defer the actual navigation by one frame so the browser paints the
-    //    overlay BEFORE React starts the (potentially heavy) route transition.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => navigate("/para-pacientes/demo"));
-    });
-  }, [navigate, warmPatientDemo]);
+    // <Link>'s default navigation handler runs after this onClick and
+    // performs the SPA navigation — no preventDefault needed.
+  }, [warmPatientDemo]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -105,8 +102,8 @@ const PatientLanding = () => {
       <main>
         <HeroSection showProfessionalCTA={false} />
         <div className="container -mt-8 mb-12 flex justify-center">
-          <a
-            href="/para-pacientes/demo"
+          <Link
+            to="/para-pacientes/demo"
             onMouseEnter={() => void warmPatientDemo()}
             onFocus={() => void warmPatientDemo()}
             onPointerDown={() => void warmPatientDemo()}
@@ -116,7 +113,7 @@ const PatientLanding = () => {
           >
             <span aria-hidden="true">✨</span>
             Ver demo interativa do painel Premium
-          </a>
+          </Link>
         </div>
         <HighlightsSection />
         <ComparisonSection />
