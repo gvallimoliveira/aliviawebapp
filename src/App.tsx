@@ -10,6 +10,7 @@ import { startIdlePreloads } from "@/lib/preloader";
 
 import GlobalMobileMenu from "@/components/GlobalMobileMenu";
 import DashboardErrorBoundary from "@/components/dashboard/DashboardErrorBoundary";
+import NavigationOverlay from "@/components/NavigationOverlay";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ClinicProvider } from "@/contexts/ClinicContext";
@@ -77,6 +78,7 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <NavigationOverlay />
             <BrowserRouter>
               <ScrollToTop />
               <GlobalMobileMenu />
