@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { LoaderCircle } from "lucide-react";
+import { CheckCircle2, LoaderCircle } from "lucide-react";
 import Header from "@/components/Header";
 import ReferralBanner from "@/components/ReferralBanner";
 import HeroSection from "@/components/HeroSection";
@@ -24,14 +24,26 @@ const PatientLanding = () => {
   const patientDemoImportRef = useRef<Promise<unknown> | null>(null);
   const openingDemoRef = useRef(false);
   const [isOpeningDemo, setIsOpeningDemo] = useState(false);
+  const [showDemoFallback, setShowDemoFallback] = useState(false);
+  const fallbackTimerRef = useRef<number | null>(null);
 
   const warmPatientDemo = useCallback(() => {
     if (!patientDemoImportRef.current) {
-      patientDemoImportRef.current = import("./PatientDemo");
+      patientDemoImportRef.current = Promise.all([
+        import("./PatientDemo"),
+        import("@/components/demo/PatientDemoContent"),
+        import("@/components/demo/PatientDemoHealth"),
+      ]);
     }
 
     return patientDemoImportRef.current;
   }, []);
+
+  const demoButtonText = useMemo(() => {
+    if (showDemoFallback) return "Clique confirmado. Abrindo demo…";
+    if (isOpeningDemo) return "Abrindo demo…";
+    return "Ver demo interativa do painel Premium";
+  }, [isOpeningDemo, showDemoFallback]);
 
   useEffect(() => {
     const ref = searchParams.get("ref");
@@ -56,16 +68,24 @@ const PatientLanding = () => {
     return () => window.clearTimeout(preloadTimer);
   }, [warmPatientDemo]);
 
+  useEffect(() => () => {
+    if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
+  }, []);
+
   const handleOpenDemo = useCallback(async () => {
     if (openingDemoRef.current) return;
     openingDemoRef.current = true;
     setIsOpeningDemo(true);
+    setShowDemoFallback(false);
 
-    void warmPatientDemo();
+    fallbackTimerRef.current = window.setTimeout(() => {
+      setShowDemoFallback(true);
+    }, 3000);
 
-    window.setTimeout(() => {
+    window.requestAnimationFrame(() => {
+      void warmPatientDemo();
       navigate("/para-pacientes/demo");
-    }, 120);
+    });
   }, [navigate, warmPatientDemo]);
 
   return (
@@ -88,17 +108,37 @@ const PatientLanding = () => {
           >
             {isOpeningDemo ? (
               <>
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-                Abrindo demo interativa...
+                {showDemoFallback ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                )}
+                {demoButtonText}
               </>
             ) : (
               <>
                 <span aria-hidden="true">✨</span>
-                Ver demo interativa do painel Premium
+                {demoButtonText}
               </>
             )}
           </button>
         </div>
+        {isOpeningDemo ? (
+          <div className="container -mt-8 mb-8 flex justify-center">
+            <div className="w-full max-w-md rounded-2xl border border-border/60 bg-card/90 px-4 py-3 shadow-sm backdrop-blur-sm">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="font-medium text-foreground">Abrindo demo…</span>
+                <span className="text-xs text-muted-foreground">{showDemoFallback ? "Clique confirmado" : "Preparando"}</span>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                <div className={`h-full rounded-full bg-primary transition-all duration-500 ${showDemoFallback ? "w-full" : "w-2/3 animate-pulse"}`} />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {showDemoFallback ? "A demo está carregando — seu clique foi recebido." : "Carregando a experiência interativa do paciente."}
+              </p>
+            </div>
+          </div>
+        ) : null}
         <HighlightsSection />
         <ComparisonSection />
         <MethodologySection />
