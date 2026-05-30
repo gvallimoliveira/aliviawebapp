@@ -13,11 +13,12 @@ import { getSeverityColor } from "./QuestionnaireResultCard";
 
 interface AssessmentSummaryViewProps {
   assessment: any;
-  onBack: () => void;
+  onBack?: () => void;
   onDownloadPdf: () => void;
   onShareWhatsApp: () => void;
   pdfLoading?: boolean;
   whatsappLoading?: boolean;
+  embedded?: boolean;
 }
 
 function getRegionLabel(id: string, isPt: boolean): string {
