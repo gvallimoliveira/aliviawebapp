@@ -86,6 +86,13 @@ interface ManualAssessmentModalProps {
   editAssessment?: any | null;
   /** Called after a successful save (insert or update). */
   onSaved?: (assessmentId: string) => void;
+  /**
+   * When true, the modal becomes a non-functional preview used in demo dashboards:
+   * - Inputs cannot be typed; clicking a field auto-fills it with mock data.
+   * - No supabase writes, no AI calls, no draft persistence, no voice recorder FAB.
+   * - Save/AI buttons show an upsell toast instead of triggering real flows.
+   */
+  demoMode?: boolean;
 }
 
 const RED_FLAGS_PT = [
