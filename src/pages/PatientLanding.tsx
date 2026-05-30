@@ -113,6 +113,10 @@ const PatientLanding = () => {
     openingDemoRef.current = true;
     setIsOpeningDemo(true);
 
+    // Milestone 1 — click acknowledged (chunks may already be cached).
+    setProgress(15);
+    startProgressCreep(45); // creep toward "chunks loading" ceiling
+
     // Synchronous, paint-immediate feedback via a global overlay rendered
     // outside <Routes>. It survives PatientLanding's unmount, so the user
     // sees instant confirmation even while React Router transitions to the
@@ -120,11 +124,39 @@ const PatientLanding = () => {
     showNavOverlay("Abrindo demo do paciente…");
     sessionStorage.setItem("patient-demo-opening", String(Date.now()));
 
-    // Kick off preload (idempotent — cached if already warmed).
-    void warmPatientDemo();
+    // Subscribe to the overlay store — when PatientDemo hides it, the demo
+    // content has actually mounted, so we can drive the bar to 100%.
+    const unsubscribe = subscribeNavOverlay((s) => {
+      if (!s.visible && progressRef.current > 0) {
+        stopProgressCreep();
+        setProgress(100);
+        unsubscribe();
+      }
+    });
+
+    // Milestone 2 — chunks resolved (real signal).
+    warmPatientDemo()
+      .then(() => {
+        setProgress(70);
+        // Creep toward the "demo mounting" ceiling until the overlay hides.
+        startProgressCreep(92);
+      })
+      .catch(() => {
+        stopProgressCreep();
+      });
+
+    // Safety fallback: if something stalls for >8s, fill the bar so the
+    // button never looks frozen at an arbitrary spot.
+    window.setTimeout(() => {
+      if (progressRef.current < 100) {
+        stopProgressCreep();
+        setProgress(100);
+        unsubscribe();
+      }
+    }, 8000);
     // <Link>'s default navigation handler runs after this onClick and
     // performs the SPA navigation — no preventDefault needed.
-  }, [warmPatientDemo]);
+  }, [warmPatientDemo, setProgress, startProgressCreep, stopProgressCreep]);
 
   return (
     <div className="min-h-screen bg-background">
