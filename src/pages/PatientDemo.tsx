@@ -182,6 +182,8 @@ const painRegionLabels: Record<string, string> = {
 const PatientDemo = () => {
   const navigate = useNavigate();
   const [assessmentDialog, setAssessmentDialog] = useState<"basic" | "premium" | null>(null);
+  const [findProDialog, setFindProDialog] = useState(false);
+  const [openAssessment, setOpenAssessment] = useState<DemoAssessment | null>(null);
   const [hepChecked, setHepChecked] = useState<Set<string>>(new Set(["h1", "h3"]));
   const [diaryToday, setDiaryToday] = useState(2);
 
