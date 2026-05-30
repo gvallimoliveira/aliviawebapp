@@ -399,8 +399,10 @@ export default function PatientDetailView(props: any) {
           clinicId={clinicId}
           patientName={patient.name}
           patientEmail={patient.email}
+          demoMode={isDemo}
         />
       )}
+
       {(() => {
         const target = latestWithDiagnosis || latestAssessment;
         if (!target) return null;
