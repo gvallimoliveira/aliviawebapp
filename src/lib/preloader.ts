@@ -32,6 +32,10 @@ export const startIdlePreloads = () => {
   if (started) return;
   started = true;
 
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/para-pacientes")) {
+    return;
+  }
+
   // Stagger preloads so we never compete with the user's first interactions.
   idle(() => {
     safeImport("Assessment", () => import("@/pages/Assessment"));
