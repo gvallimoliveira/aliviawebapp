@@ -64,6 +64,7 @@ export default function PatientListView(props: any) {
     setDeleteConfirmPatient,
     deletingPatient,
     handleDeletePatient,
+    isDemo,
   } = props;
 
   return (
