@@ -29,6 +29,7 @@ import { normalizeAssessment } from "@/lib/anamnesisCompat";
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { Separator } from "@/components/ui/separator";
 import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // Translate i18n keys for display
 function translateKey(key: string, isPt: boolean): string {
@@ -502,7 +503,32 @@ const AssessmentView = () => {
           </AlertDialogContent>
         </AlertDialog>
 
+        <Tabs defaultValue="resumo" className="w-full">
+          <TabsList className="grid grid-cols-2 w-full max-w-sm mb-4">
+            <TabsTrigger value="resumo" className="gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" />
+              {isPt ? "Resumo" : "Summary"}
+            </TabsTrigger>
+            <TabsTrigger value="completo" className="gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              {isPt ? "Prontuário completo" : "Full record"}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="resumo" className="space-y-6 mt-0">
+            <AssessmentSummaryView
+              assessment={assessment}
+              onBack={goBack}
+              onDownloadPdf={handleDownloadPdf}
+              onShareWhatsApp={handleShareWhatsApp}
+              pdfLoading={pdfLoading}
+              whatsappLoading={whatsappLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value="completo" className="space-y-6 mt-0">
         {/* Header card */}
+
         <Card>
           <CardContent className="py-5 space-y-3">
             <div className="flex items-center justify-between">
@@ -909,8 +935,11 @@ const AssessmentView = () => {
             </CardContent>
           </Card>
         )}
+          </TabsContent>
+        </Tabs>
 
         {/* Footer actions — Voltar + Nova Avaliação após métricas e plano */}
+
         <div className="flex flex-wrap justify-between gap-2 pt-6 border-t border-border/40">
           <Button variant="outline" onClick={goBack} className="gap-2 rounded-xl">
             <ArrowLeft className="h-4 w-4" />
