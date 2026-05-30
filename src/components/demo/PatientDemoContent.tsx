@@ -9,6 +9,7 @@ import {
   Crown, ArrowLeft, HelpCircle, User, Heart, MessageCircle, Info,
 } from "lucide-react";
 import { setSeo } from "@/lib/seo";
+import { hideNavOverlay } from "@/lib/navigationOverlay";
 
 const PatientDemoMessages = lazy(() => import("@/components/demo/PatientDemoMessages"));
 const PatientDemoHealth = lazy(() => import("@/components/demo/PatientDemoHealth"));
@@ -18,6 +19,8 @@ const PatientDemoContent = () => {
   const [activeTab, setActiveTab] = useState("health");
 
   useEffect(() => {
+    hideNavOverlay();
+    sessionStorage.removeItem("patient-demo-opening");
     setSeo({
       title: "Demo Premium — Aliv.iA",
       description: "Veja como funciona o painel Premium do paciente Aliv.iA com avaliações, diário de dor e exercícios.",
