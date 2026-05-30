@@ -177,20 +177,22 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
   return (
     <div className="space-y-6">
       {restrictedTherapistView && <CrefitoCompletionBanner />}
-      {/* Read-only notice */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="py-3 px-5 flex items-center gap-3">
-          <Eye className="h-5 w-5 text-primary shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            <span className="font-semibold">
-              {lang === "pt" ? "Modo visualização." : "View mode."}
-            </span>{" "}
-            {lang === "pt"
-              ? "Você pode visualizar os dados clínicos e gerar PDFs, mas não pode editar avaliações ou dados dos pacientes."
-              : "You can view clinical data and generate PDFs, but cannot edit assessments or patient data."}
-          </p>
-        </CardContent>
-      </Card>
+      {/* Read-only notice — only for secretaries/therapists, not owners */}
+      {patientDashReadOnly && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="py-3 px-5 flex items-center gap-3">
+            <Eye className="h-5 w-5 text-primary shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold">
+                {lang === "pt" ? "Modo visualização." : "View mode."}
+              </span>{" "}
+              {lang === "pt"
+                ? "Você pode visualizar os dados clínicos e gerar PDFs, mas não pode editar avaliações ou dados dos pacientes."
+                : "You can view clinical data and generate PDFs, but cannot edit assessments or patient data."}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Clinic assessment link */}
       <Card>
