@@ -241,6 +241,7 @@ export default function PatientDetailView(props: any) {
   } = props;
 
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
+  const [summaryDialogOpen, setSummaryDialogOpen] = React.useState(false);
 
   return (
     <div className="space-y-5">
