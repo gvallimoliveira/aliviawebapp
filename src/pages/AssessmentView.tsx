@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { normalizeAssessment } from "@/lib/anamnesisCompat";
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { Separator } from "@/components/ui/separator";
+import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
 
 // Translate i18n keys for display
 function translateKey(key: string, isPt: boolean): string {
