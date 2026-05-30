@@ -36,6 +36,34 @@ async function unregisterLegacyServiceWorkers() {
 
 void unregisterLegacyServiceWorkers();
 
+// Recover from stale chunk references after a redeploy. When the browser
+// holds onto an old index.html that points to chunk filenames that no
+// longer exist on the CDN, dynamic imports throw "Importing a module
+// script failed". Reload once to pick up the fresh manifest.
+const CHUNK_RELOAD_KEY = "alivia:chunk-reload";
+const isChunkLoadError = (msg: unknown) => {
+  const text = typeof msg === "string" ? msg : (msg as Error | undefined)?.message ?? "";
+  return /Importing a module script failed|Failed to fetch dynamically imported module|Loading chunk [\d]+ failed|error loading dynamically imported module/i.test(
+    text,
+  );
+};
+const tryReload = () => {
+  try {
+    const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) || "0");
+    if (Date.now() - last < 10_000) return; // avoid reload loops
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
+  } catch {
+    /* noop */
+  }
+  window.location.reload();
+};
+window.addEventListener("error", (event) => {
+  if (isChunkLoadError(event.message) || isChunkLoadError(event.error)) tryReload();
+});
+window.addEventListener("unhandledrejection", (event) => {
+  if (isChunkLoadError(event.reason)) tryReload();
+});
+
 // Restore last route BEFORE React mounts the router, so BrowserRouter
 // reads the restored URL on first render. This brings the user back to
 // where they left off when iOS/Android kills the standalone PWA tab.
