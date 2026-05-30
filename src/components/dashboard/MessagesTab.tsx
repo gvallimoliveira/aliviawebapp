@@ -14,6 +14,8 @@ interface MessagesTabProps {
   canInitiateAsPatient?: boolean;
   canInitiateAsProfessional?: boolean;
   clinicId?: string | null;
+  /** When set, renders the clinic staff inbox (patients ↔ secretary/owner). */
+  clinicStaffInboxId?: string | null;
 }
 
 const MessagesTab = ({
@@ -22,6 +24,7 @@ const MessagesTab = ({
   canInitiateAsPatient = false,
   canInitiateAsProfessional = false,
   clinicId = null,
+  clinicStaffInboxId = null,
 }: MessagesTabProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
