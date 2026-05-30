@@ -22,6 +22,7 @@ const PatientLanding = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const patientDemoImportRef = useRef<Promise<unknown> | null>(null);
+  const openingDemoRef = useRef(false);
   const [isOpeningDemo, setIsOpeningDemo] = useState(false);
 
   const warmPatientDemo = useCallback(() => {
@@ -56,18 +57,16 @@ const PatientLanding = () => {
   }, [warmPatientDemo]);
 
   const handleOpenDemo = useCallback(async () => {
-    if (isOpeningDemo) return;
+    if (openingDemoRef.current) return;
+    openingDemoRef.current = true;
     setIsOpeningDemo(true);
 
-    try {
-      await Promise.race([
-        warmPatientDemo(),
-        new Promise((resolve) => window.setTimeout(resolve, 350)),
-      ]);
-    } finally {
+    void warmPatientDemo();
+
+    requestAnimationFrame(() => {
       navigate("/para-pacientes/demo");
-    }
-  }, [isOpeningDemo, navigate, warmPatientDemo]);
+    });
+  }, [navigate, warmPatientDemo]);
 
   return (
     <div className="min-h-screen bg-background">
