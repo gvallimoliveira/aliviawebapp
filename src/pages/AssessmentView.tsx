@@ -29,6 +29,7 @@ import { normalizeAssessment } from "@/lib/anamnesisCompat";
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { Separator } from "@/components/ui/separator";
 import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // Translate i18n keys for display
 function translateKey(key: string, isPt: boolean): string {
