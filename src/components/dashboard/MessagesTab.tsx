@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, User, Stethoscope, MessageCircle } from "lucide-react";
 import ConversationList from "@/components/chat/ConversationList";
+import ContactClinicButton from "@/components/chat/ContactClinicButton";
 
 interface MessagesTabProps {
   professional?: any;
@@ -20,9 +23,37 @@ const MessagesTab = ({
   canInitiateAsProfessional = false,
   clinicId = null,
 }: MessagesTabProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const isPt = language === "pt";
   const [msgSearch, setMsgSearch] = useState("");
   const [msgFilter, setMsgFilter] = useState<"all" | "patient" | "professional">("all");
+  const [patientClinics, setPatientClinics] = useState<{ id: string; name: string }[]>([]);
+
+  // Discover clinics the current user is a patient of, so we can offer a
+  // "message the clinic" shortcut (talks to the secretary/owner).
+  useEffect(() => {
+    if (!user || professional) return;
+    let cancelled = false;
+    (async () => {
+      const { data: assess } = await supabase
+        .from("assessments")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .not("clinic_id", "is", null);
+      const ids = [...new Set((assess || []).map((a: any) => a.clinic_id).filter(Boolean))] as string[];
+      if (ids.length === 0) {
+        if (!cancelled) setPatientClinics([]);
+        return;
+      }
+      const { data: clinics } = await supabase
+        .from("clinics")
+        .select("id, name")
+        .in("id", ids);
+      if (!cancelled) setPatientClinics((clinics || []) as { id: string; name: string }[]);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, professional]);
 
   return (
     <div className="space-y-6">
@@ -70,6 +101,18 @@ const MessagesTab = ({
         </div>
       )}
 
+      {/* Patient view: shortcut to message the clinic's secretary */}
+      {!professional && patientClinics.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs text-muted-foreground self-center">
+            {isPt ? "Atendimento da clínica:" : "Clinic support:"}
+          </span>
+          {patientClinics.map((c) => (
+            <ContactClinicButton key={c.id} clinicId={c.id} clinicName={c.name} />
+          ))}
+        </div>
+      )}
+
       {/* Filter "Pacientes" → mode="professional" (conversations WITH patients)
           Filter "Profissionais" → mode="patient" (conversations WITH professionals) */}
       {(msgFilter === "all" || msgFilter === "patient") && professional && (
@@ -95,3 +138,4 @@ const MessagesTab = ({
 };
 
 export default MessagesTab;
+
