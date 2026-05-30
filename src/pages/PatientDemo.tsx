@@ -344,7 +344,7 @@ const PatientDemo = () => {
         </div>
 
         {/* Find professional CTA (mock click) */}
-        <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group" onClick={goSubscribe}>
+        <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group" onClick={() => setFindProDialog(true)}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary group-hover:bg-primary/10 transition-colors">
