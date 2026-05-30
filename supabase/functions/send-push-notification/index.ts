@@ -86,21 +86,46 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { user_id, title, body, url, kind, tag, call_id } = await req.json();
+    const { user_id, clinic_id, email, title, body, url, kind, tag, call_id } = await req.json();
 
-    if (!user_id || !title) {
+    if (!title || (!user_id && !clinic_id && !email)) {
       return new Response(
-        JSON.stringify({ error: "user_id and title are required" }),
+        JSON.stringify({ error: "title and (user_id, clinic_id or email) are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Resolve recipient user_ids
+    let targetUserIds: string[] = [];
+    if (user_id) targetUserIds.push(user_id);
+
+    if (email && (isServiceRole || isAnonKey)) {
+      const { data: u } = await supabase.auth.admin.listUsers();
+      const match = u?.users?.find((x: any) => (x.email || "").toLowerCase() === String(email).toLowerCase());
+      if (match?.id && !targetUserIds.includes(match.id)) targetUserIds.push(match.id);
+    }
+
+    if (clinic_id) {
+      const { data: members } = await supabase
+        .from("clinic_members")
+        .select("user_id, role, status")
+        .eq("clinic_id", clinic_id)
+        .eq("status", "active")
+        .in("role", ["owner", "secretary"]);
+      for (const m of members || []) {
+        if (m.user_id && !targetUserIds.includes(m.user_id)) targetUserIds.push(m.user_id);
+      }
+    }
+
     // Non-service-role, non-anon callers can only target themselves
-    if (!isServiceRole && !isAnonKey && callerUserId !== user_id) {
-      return new Response(
-        JSON.stringify({ error: "Forbidden: cannot send notifications to other users" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!isServiceRole && !isAnonKey) {
+      targetUserIds = targetUserIds.filter((uid) => uid === callerUserId);
+      if (targetUserIds.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: cannot send notifications to other users" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Basic input sanity caps to limit abuse
@@ -114,11 +139,11 @@ Deno.serve(async (req) => {
     const { data: subscriptions, error } = await supabase
       .from("push_subscriptions")
       .select("*")
-      .eq("user_id", user_id);
+      .in("user_id", targetUserIds);
 
     if (error || !subscriptions || subscriptions.length === 0) {
       return new Response(
-        JSON.stringify({ message: "No push subscriptions found", sent: 0 }),
+        JSON.stringify({ message: "No push subscriptions found", sent: 0, targets: targetUserIds.length }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

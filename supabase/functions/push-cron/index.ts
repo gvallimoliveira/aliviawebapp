@@ -26,10 +26,12 @@ Deno.serve(async (req) => {
       exercise_reminders: 0,
       pain_spike_alerts: 0,
       inactivity_alerts: 0,
+      reassessment_suggestions: 0,
+      streak_milestones: 0,
       errors: [] as string[],
     };
 
-    // Helper: send push to a user
+    // Helper: send push to a single user
     async function notifyUser(userId: string, title: string, body: string, url: string) {
       const { data: subs } = await supabase
         .from("push_subscriptions")
@@ -37,7 +39,6 @@ Deno.serve(async (req) => {
         .eq("user_id", userId);
       if (!subs || subs.length === 0) return false;
 
-      // Call send-push-notification edge function
       const res = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
         method: "POST",
         headers: {
@@ -47,6 +48,47 @@ Deno.serve(async (req) => {
         body: JSON.stringify({ user_id: userId, title, body, url }),
       });
       return res.ok;
+    }
+
+    // Helper: send push to clinic owner + secretary (therapists stay out)
+    async function notifyClinicStaff(clinicId: string, title: string, body: string, url: string) {
+      const { data: members } = await supabase
+        .from("clinic_members")
+        .select("user_id")
+        .eq("clinic_id", clinicId)
+        .eq("status", "active")
+        .in("role", ["owner", "secretary"]);
+      let count = 0;
+      for (const m of members || []) {
+        if (await notifyUser(m.user_id, title, body, url)) count++;
+      }
+      return count;
+    }
+
+    // Resolve a patient (by user_id or email) → clinic_id if they belong to a clinic
+    async function resolveClinicForPatient(userId: string | null, email: string | null) {
+      if (userId) {
+        const { data } = await supabase
+          .from("assessments")
+          .select("clinic_id")
+          .eq("user_id", userId)
+          .not("clinic_id", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (data?.clinic_id) return data.clinic_id as string;
+      }
+      if (email) {
+        const { data } = await supabase
+          .from("patients")
+          .select("clinic_id")
+          .ilike("email", email)
+          .not("clinic_id", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (data?.clinic_id) return data.clinic_id as string;
+      }
+      return null;
     }
 
     const today = new Date().toISOString().split("T")[0];
@@ -364,15 +406,28 @@ Deno.serve(async (req) => {
             const { data: pros } = await supabase.from("professionals").select("id, user_id").in("id", proIds);
             const proUserMap = new Map((pros || []).map((p: any) => [p.id, p.user_id]));
 
+            const notifiedClinics = new Set<string>();
             for (const ref of refs) {
               const proUserId = proUserMap.get(ref.professional_id);
-              if (!proUserId) continue;
               const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", ref.patient_user_id).maybeSingle();
               const name = profile?.full_name || "Paciente";
+              const title = "⚠️ Alerta: Piora de dor";
+              const body = `${name} registrou aumento significativo de dor. Considere entrar em contato.`;
+              const url = "/dashboard?tab=professional";
               try {
-                const sent = await notifyUser(proUserId, "⚠️ Alerta: Piora de dor", `${name} registrou aumento significativo de dor. Considere entrar em contato.`, "/dashboard?tab=professional");
-                if (sent) results.pain_spike_alerts++;
-              } catch (e) { results.errors.push(`pain_spike ${proUserId}: ${e}`); }
+                if (proUserId) {
+                  const sent = await notifyUser(proUserId, title, body, url);
+                  if (sent) results.pain_spike_alerts++;
+                }
+                // Also route to clinic owner+secretary if patient is clinic-linked
+                const { data: au } = await supabase.auth.admin.getUserById(ref.patient_user_id);
+                const clinicId = await resolveClinicForPatient(ref.patient_user_id, au?.user?.email || null);
+                if (clinicId && !notifiedClinics.has(clinicId)) {
+                  const fanned = await notifyClinicStaff(clinicId, title, body, "/dashboard?tab=clinic");
+                  results.pain_spike_alerts += fanned;
+                  notifiedClinics.add(clinicId);
+                }
+              } catch (e) { results.errors.push(`pain_spike ${ref.patient_user_id}: ${e}`); }
             }
           }
         }
@@ -408,6 +463,85 @@ Deno.serve(async (req) => {
         }
       }
     } catch (e) { results.errors.push(`smart_alerts: ${e}`); }
+
+    // 9. REASSESSMENT SUGGESTIONS — weekly nudge if last completed assessment > 30 days
+    try {
+      const dayOfWeek = new Date().getUTCDay(); // 1 = Monday
+      if (dayOfWeek === 1 && allSubs && allSubs.length > 0) {
+        const userIds = [...new Set(allSubs.map((s: any) => s.user_id))];
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: completed } = await supabase
+          .from("assessments")
+          .select("user_id, created_at")
+          .eq("status", "completed")
+          .in("user_id", userIds)
+          .order("created_at", { ascending: false });
+        const lastByUser = new Map<string, string>();
+        for (const a of completed || []) {
+          if (!a.user_id) continue;
+          if (!lastByUser.has(a.user_id)) lastByUser.set(a.user_id, a.created_at);
+        }
+        for (const userId of userIds) {
+          const last = lastByUser.get(userId);
+          if (!last || last < thirtyDaysAgo) {
+            try {
+              const sent = await notifyUser(
+                userId,
+                "📊 Que tal uma reavaliação?",
+                "Já se passaram 30+ dias. Refaça a avaliação para acompanhar sua evolução.",
+                "/dashboard"
+              );
+              if (sent) results.reassessment_suggestions++;
+            } catch (e) { results.errors.push(`reassessment ${userId}: ${e}`); }
+          }
+        }
+      }
+    } catch (e) { results.errors.push(`reassessment_block: ${e}`); }
+
+    // 10. STREAK MILESTONES — celebrate 7/14/30/60/100-day pain-diary streaks
+    try {
+      if (allSubs && allSubs.length > 0) {
+        const userIds = [...new Set(allSubs.map((s: any) => s.user_id))];
+        const sinceStr = new Date(Date.now() - 110 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+        const { data: entries } = await supabase
+          .from("pain_diary_entries")
+          .select("user_id, logged_at")
+          .in("user_id", userIds)
+          .gte("logged_at", sinceStr)
+          .order("logged_at", { ascending: false });
+
+        const byUser = new Map<string, Set<string>>();
+        for (const e of entries || []) {
+          if (!byUser.has(e.user_id)) byUser.set(e.user_id, new Set());
+          byUser.get(e.user_id)!.add(e.logged_at);
+        }
+
+        const milestones = [7, 14, 30, 60, 100];
+        const todayDate = new Date();
+        for (const [userId, days] of byUser) {
+          // Compute current streak (consecutive days ending today)
+          if (!days.has(today)) continue; // only celebrate on the milestone day itself
+          let streak = 0;
+          for (let i = 0; i < 110; i++) {
+            const d = new Date(todayDate);
+            d.setUTCDate(todayDate.getUTCDate() - i);
+            const key = d.toISOString().split("T")[0];
+            if (days.has(key)) streak++; else break;
+          }
+          if (!milestones.includes(streak)) continue;
+          try {
+            const sent = await notifyUser(
+              userId,
+              `🏆 ${streak} dias seguidos!`,
+              `Você completou ${streak} dias de diário. Continue assim — a consistência é a chave da recuperação.`,
+              "/dashboard"
+            );
+            if (sent) results.streak_milestones++;
+          } catch (e) { results.errors.push(`streak ${userId}: ${e}`); }
+        }
+      }
+    } catch (e) { results.errors.push(`streak_block: ${e}`); }
+
 
     return new Response(
       JSON.stringify({

@@ -106,9 +106,29 @@ serve(async (req) => {
     // Get clinic info
     const { data: clinic } = await supabaseAdmin
       .from("clinics")
-      .select("name")
+      .select("name, owner_user_id")
       .eq("id", invitation.clinic_id)
       .single();
+
+    // Notify clinic owner + secretary that a new member joined
+    try {
+      const memberName = user.user_metadata?.full_name || user.email;
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push-notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`,
+        },
+        body: JSON.stringify({
+          clinic_id: invitation.clinic_id,
+          title: "👥 Novo membro na equipe",
+          body: `${memberName} aceitou o convite como ${invitation.role}.`,
+          url: "/dashboard?tab=clinic",
+        }),
+      });
+    } catch (e) {
+      logStep("Push notify failed", { error: String(e) });
+    }
 
     logStep("Invitation accepted", { clinicId: invitation.clinic_id, role: invitation.role });
 
