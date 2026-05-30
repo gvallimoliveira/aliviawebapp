@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { CheckCircle2, LoaderCircle } from "lucide-react";
+import { useCallback, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import ReferralBanner from "@/components/ReferralBanner";
 import HeroSection from "@/components/HeroSection";
@@ -17,14 +16,13 @@ import StickyCTA from "@/components/StickyCTA";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import LgpdBadge from "@/components/LgpdBadge";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
+import { showNavOverlay } from "@/lib/navigationOverlay";
 
 const PatientLanding = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const patientDemoImportRef = useRef<Promise<unknown> | null>(null);
   const openingDemoRef = useRef(false);
-  const [isOpeningDemo, setIsOpeningDemo] = useState(false);
-  const [showDemoFallback, setShowDemoFallback] = useState(false);
-  const fallbackTimerRef = useRef<number | null>(null);
 
   const warmPatientDemo = useCallback(() => {
     if (!patientDemoImportRef.current) {
@@ -34,15 +32,8 @@ const PatientLanding = () => {
         import("@/components/demo/PatientDemoHealth"),
       ]);
     }
-
     return patientDemoImportRef.current;
   }, []);
-
-  const demoButtonText = useMemo(() => {
-    if (showDemoFallback) return "Clique confirmado. Abrindo demo…";
-    if (isOpeningDemo) return "Abrindo demo…";
-    return "Ver demo interativa do painel Premium";
-  }, [isOpeningDemo, showDemoFallback]);
 
   useEffect(() => {
     const ref = searchParams.get("ref");
@@ -59,31 +50,53 @@ const PatientLanding = () => {
     setOrganizationJsonLd();
   }, []);
 
+  // Defer demo preload until the landing has settled (window load + idle).
+  // Earlier preloads were competing with the landing's own scripts and hurting
+  // both the landing's responsiveness AND the demo's effective load time.
   useEffect(() => {
-    const preloadTimer = window.setTimeout(() => {
-      void warmPatientDemo();
-    }, 150);
-
-    return () => window.clearTimeout(preloadTimer);
+    let cancelled = false;
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    };
+    const trigger = () => {
+      if (cancelled) return;
+      if (typeof w.requestIdleCallback === "function") {
+        w.requestIdleCallback(() => { if (!cancelled) void warmPatientDemo(); }, { timeout: 2500 });
+      } else {
+        window.setTimeout(() => { if (!cancelled) void warmPatientDemo(); }, 1200);
+      }
+    };
+    if (document.readyState === "complete") {
+      trigger();
+    } else {
+      window.addEventListener("load", trigger, { once: true });
+    }
+    return () => {
+      cancelled = true;
+      window.removeEventListener("load", trigger);
+    };
   }, [warmPatientDemo]);
 
-  useEffect(() => () => {
-    if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
-  }, []);
-
-  const handleOpenDemo = useCallback(() => {
+  const handleOpenDemo = useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
+    // Allow new-tab clicks to behave natively.
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1) return;
+    event.preventDefault();
     if (openingDemoRef.current) return;
     openingDemoRef.current = true;
-    setIsOpeningDemo(true);
-    setShowDemoFallback(false);
+
+    // 1) Synchronous, paint-immediate feedback via global overlay.
+    showNavOverlay("Abrindo demo do paciente…");
     sessionStorage.setItem("patient-demo-opening", String(Date.now()));
 
-    fallbackTimerRef.current = window.setTimeout(() => {
-      setShowDemoFallback(true);
-    }, 3000);
-
+    // 2) Kick off preload (idempotent — cached if already warmed).
     void warmPatientDemo();
-  }, [warmPatientDemo]);
+
+    // 3) Defer the actual navigation by one frame so the browser paints the
+    //    overlay BEFORE React starts the (potentially heavy) route transition.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => navigate("/para-pacientes/demo"));
+    });
+  }, [navigate, warmPatientDemo]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,49 +105,19 @@ const PatientLanding = () => {
       <main>
         <HeroSection showProfessionalCTA={false} />
         <div className="container -mt-8 mb-12 flex justify-center">
-          <Link
-            to="/para-pacientes/demo"
+          <a
+            href="/para-pacientes/demo"
             onMouseEnter={() => void warmPatientDemo()}
             onFocus={() => void warmPatientDemo()}
             onPointerDown={() => void warmPatientDemo()}
             onTouchStart={() => void warmPatientDemo()}
             onClick={handleOpenDemo}
-            aria-busy={isOpeningDemo}
-            className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors disabled:cursor-wait disabled:opacity-90"
+            className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors active:scale-[0.98]"
           >
-            {isOpeningDemo ? (
-              <>
-                {showDemoFallback ? (
-                  <CheckCircle2 className="h-4 w-4" />
-                ) : (
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                )}
-                {demoButtonText}
-              </>
-            ) : (
-              <>
-                <span aria-hidden="true">✨</span>
-                {demoButtonText}
-              </>
-            )}
-          </Link>
+            <span aria-hidden="true">✨</span>
+            Ver demo interativa do painel Premium
+          </a>
         </div>
-        {isOpeningDemo ? (
-          <div className="container -mt-8 mb-8 flex justify-center">
-            <div className="w-full max-w-md rounded-2xl border border-border/60 bg-card/90 px-4 py-3 shadow-sm backdrop-blur-sm">
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="font-medium text-foreground">Abrindo demo…</span>
-                <span className="text-xs text-muted-foreground">{showDemoFallback ? "Clique confirmado" : "Preparando"}</span>
-              </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-                <div className={`h-full rounded-full bg-primary transition-all duration-500 ${showDemoFallback ? "w-full" : "w-2/3 animate-pulse"}`} />
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {showDemoFallback ? "A demo está carregando — seu clique foi recebido." : "Carregando a experiência interativa do paciente."}
-              </p>
-            </div>
-          </div>
-        ) : null}
         <HighlightsSection />
         <ComparisonSection />
         <MethodologySection />
