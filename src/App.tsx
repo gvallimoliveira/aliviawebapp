@@ -47,6 +47,7 @@ const ClinicAssessment = lazy(() => import("./pages/ClinicAssessment"));
 const ClinicDemo = lazy(() => import("./pages/ClinicDemo"));
 const ProfessionalDemo = lazy(() => import("./pages/ProfessionalDemo"));
 const PatientDemo = lazy(() => import("./pages/PatientDemo"));
+const ProfessionalAssessmentDemo = lazy(() => import("./pages/ProfessionalAssessmentDemo"));
 const ClinicFeedback = lazy(() => import("./pages/ClinicFeedback"));
 const Account = lazy(() => import("./pages/Account"));
 const ClearCache = lazy(() => import("./pages/ClearCache"));
@@ -101,6 +102,7 @@ const App = () => {
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/professional/register" element={<ProfessionalRegister />} />
                   <Route path="/professionals" element={<ProfessionalSearch />} />
+                  <Route path="/assessment/professional/demo" element={<ProfessionalAssessmentDemo />} />
                   <Route path="/assessment/professional/:professionalId" element={<ProfessionalAssessment />} />
                   <Route path="/hep/:token" element={<ExerciseProgram />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
