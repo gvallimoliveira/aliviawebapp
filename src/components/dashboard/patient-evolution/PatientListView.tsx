@@ -64,6 +64,7 @@ export default function PatientListView(props: any) {
     setDeleteConfirmPatient,
     deletingPatient,
     handleDeletePatient,
+    isDemo,
   } = props;
 
   return (
@@ -306,6 +307,7 @@ export default function PatientListView(props: any) {
           clinicId={clinicId}
           patientName={manualAssessmentTarget.name}
           patientEmail={manualAssessmentTarget.email}
+          demoMode={!!isDemo}
         />
       )}
 

@@ -16,13 +16,44 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus } from "lucide-react";
+import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus, Mic, Lock, Crown } from "lucide-react";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { regionsByView } from "@/components/assessment/painMapData";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import { useVoiceRecorderSession } from "@/contexts/VoiceRecorderContext";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
+import { MOCK_MANUAL_CASE } from "@/data/mockManualAssessmentCase";
+
+/**
+ * In demo mode, wraps a form control with a transparent click overlay that
+ * autofills the field with mock data instead of letting the user type.
+ */
+const DemoShield = ({
+  on,
+  onAutofill,
+  children,
+  label,
+}: {
+  on: boolean;
+  onAutofill: () => void;
+  children: React.ReactNode;
+  label?: string;
+}) => {
+  if (!on) return <>{children}</>;
+  return (
+    <div className="relative group">
+      {children}
+      <button
+        type="button"
+        onClick={onAutofill}
+        aria-label={label || "Preencher com caso simulado"}
+        title={label || "Clique para preencher com o caso simulado"}
+        className="absolute inset-0 z-10 rounded-md cursor-pointer bg-transparent hover:bg-primary/5 transition-colors"
+      />
+    </div>
+  );
+};
 
 // ─── Body region grouping: proximal → distal, alphabetical within each group ───
 type RegionGroup = { key: string; label_pt: string; label_en: string; ids: string[] };
@@ -55,6 +86,13 @@ interface ManualAssessmentModalProps {
   editAssessment?: any | null;
   /** Called after a successful save (insert or update). */
   onSaved?: (assessmentId: string) => void;
+  /**
+   * When true, the modal becomes a non-functional preview used in demo dashboards:
+   * - Inputs cannot be typed; clicking a field auto-fills it with mock data.
+   * - No supabase writes, no AI calls, no draft persistence, no voice recorder FAB.
+   * - Save/AI buttons show an upsell toast instead of triggering real flows.
+   */
+  demoMode?: boolean;
 }
 
 const RED_FLAGS_PT = [
@@ -77,7 +115,7 @@ const STEPS = [
   { id: "diagnostico", label: "Diagnóstico" },
 ];
 
-const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, editAssessment, onSaved }: ManualAssessmentModalProps) => {
+const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, editAssessment, onSaved, demoMode = false }: ManualAssessmentModalProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -88,7 +126,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Attach a voice-recorder session at the App-level FAB while the modal is
   // open. Lives outside the modal subtree so step navigation never resets it.
-  useVoiceRecorderSession(open, { professionalId, clinicId, patientName });
+  // Skipped in demo mode — the FAB is replaced by an inline mock.
+  useVoiceRecorderSession(open && !demoMode, { professionalId, clinicId, patientName });
+
+  // Demo-mode voice recorder simulation state
+  const [demoVoiceRecording, setDemoVoiceRecording] = useState(false);
+  const [demoVoiceNoteShown, setDemoVoiceNoteShown] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [generatingDx, setGeneratingDx] = useState(false);
@@ -166,7 +209,46 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   })();
 
   const toggleRegion = (id: string) => {
+    if (demoMode) {
+      // In demo mode, clicking any region toggles the mock pain regions as a group.
+      setPainRegions((prev) =>
+        prev.length === 0 ? MOCK_MANUAL_CASE.painRegions : [],
+      );
+      return;
+    }
     setPainRegions((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
+  };
+
+  // ── Demo-mode helpers ──────────────────────────────────────────────────────
+  const demoUpsellToast = () => {
+    toast({
+      title: isPt ? "Disponível no plano PRO" : "Available on PRO plan",
+      description: isPt
+        ? "Esta é uma demonstração. Assine o PRO para usar com pacientes reais."
+        : "This is a preview. Subscribe to PRO to use with real patients.",
+    });
+  };
+
+  // Auto-fills a single field with mock data. If already filled with the mock,
+  // clears it so multiple clicks produce a satisfying toggle.
+  const autofill = <T,>(current: T, mockValue: T, setter: (v: T) => void, empty: T) => {
+    const isFilled = JSON.stringify(current) === JSON.stringify(mockValue);
+    setter(isFilled ? empty : mockValue);
+  };
+
+  const startDemoVoiceRecording = () => {
+    if (demoVoiceRecording) return;
+    setDemoVoiceRecording(true);
+    toast({
+      title: isPt ? "Gravando (simulação)" : "Recording (simulation)",
+      description: isPt
+        ? "Na versão PRO real, a IA transcreve e resume sua fala direto no prontuário."
+        : "In real PRO, AI transcribes and summarizes your speech into the chart.",
+    });
+    setTimeout(() => {
+      setDemoVoiceRecording(false);
+      setDemoVoiceNoteShown(true);
+    }, 2800);
   };
 
   // ── Autosave (local + nuvem) ───────────────────────────────────────────────
@@ -185,7 +267,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     formKey: "manual_assessment",
     scopeKey: draftScopeKey,
     state: draftState,
-    enabled: open && !isEditing,
+    enabled: open && !isEditing && !demoMode,
   });
   const handleRestoreDraft = () => {
     const p = draft.restore();
@@ -259,10 +341,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
 
   const toggleRedFlag = (rf: string) => {
+    if (demoMode) {
+      // Caso simulado não tem red flags — apenas avisa.
+      toast({
+        title: isPt ? "Caso simulado sem red flags" : "Mock case has no red flags",
+        description: isPt
+          ? "Em casos reais, marcar qualquer sinal interrompe a avaliação e sugere encaminhamento médico."
+          : "In real cases, checking any sign aborts assessment and suggests medical referral.",
+      });
+      return;
+    }
     setRedFlagsChecked((prev) => prev.includes(rf) ? prev.filter((r) => r !== rf) : [...prev, rf]);
   };
 
   const generateAIClinicalImpression = async () => {
+    if (demoMode) { demoUpsellToast(); return; }
     setGeneratingCi(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
@@ -325,6 +418,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   });
 
   const generateAIDiagnosis = async () => {
+    if (demoMode) { demoUpsellToast(); return; }
     setGeneratingDx(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-diagnosis", {
@@ -364,6 +458,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const generateAITreatment = async () => {
+    if (demoMode) { demoUpsellToast(); return; }
     setGeneratingTx(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-treatment", {
@@ -399,6 +494,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const generateTestSuggestions = async () => {
+    if (demoMode) { demoUpsellToast(); return; }
     setSuggestingTests(true);
     try {
       const anamnesisSummary = [
@@ -452,6 +548,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const handleSave = async (navigateAfter: boolean = false) => {
+    if (demoMode) { demoUpsellToast(); return; }
     if (!patientName.trim()) {
       toast({ title: isPt ? "Nome do paciente é obrigatório" : "Patient name required", variant: "destructive" });
       return;
@@ -621,7 +718,22 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-6">
           <div className="space-y-4 py-4">
-            {draft.hasDraft && draft.draftMeta && (
+            {demoMode && (
+              <div className="rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-900/15 px-4 py-3 text-xs text-amber-900 dark:text-amber-200">
+                <div className="flex items-start gap-2">
+                  <Lock className="h-4 w-4 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-semibold">{isPt ? "Modo demonstração" : "Demo mode"}</p>
+                    <p className="leading-snug">
+                      {isPt
+                        ? "Para evitar uso indevido, os campos não aceitam digitação. Clique em qualquer campo para preenchê-lo com um caso simulado e avance pelas etapas para conhecer o fluxo. Assine PRO para usar com pacientes reais."
+                        : "To prevent misuse, fields can't be typed in. Click any field to auto-fill it with a simulated case and walk through the steps. Subscribe to PRO to use with real patients."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {!demoMode && draft.hasDraft && draft.draftMeta && (
               <DraftResumeBanner
                 updatedAt={draft.draftMeta.updatedAt}
                 source={draft.draftMeta.source}
@@ -629,111 +741,206 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 onDiscard={() => void draft.discard()}
               />
             )}
+
+            {/* Demo voice recorder mock (replaces the global FAB while in demo) */}
+            {demoMode && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                    <Mic className="h-4 w-4 text-primary" />
+                    {isPt ? "Gravador de voz (simulação)" : "Voice recorder (simulation)"}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={demoVoiceRecording ? "secondary" : "outline"}
+                    className="h-7 px-2 text-xs gap-1.5 rounded-lg"
+                    onClick={startDemoVoiceRecording}
+                    disabled={demoVoiceRecording}
+                  >
+                    {demoVoiceRecording ? (
+                      <>
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+                        </span>
+                        {isPt ? "Gravando..." : "Recording..."}
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="h-3 w-3" />
+                        {demoVoiceNoteShown
+                          ? (isPt ? "Gravar de novo" : "Record again")
+                          : (isPt ? "Iniciar gravação" : "Start recording")}
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  {isPt
+                    ? "Na versão PRO, sua voz é transcrita pela IA e o resumo aparece direto no prontuário. O áudio é descartado após a transcrição."
+                    : "In PRO, your voice is transcribed by AI and the summary appears directly in the chart. Audio is discarded after transcription."}
+                </p>
+                {demoVoiceRecording && (
+                  <div className="flex items-end justify-center gap-0.5 h-8">
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="w-1 rounded-full bg-primary/70 animate-pulse"
+                        style={{
+                          height: `${20 + ((i * 13) % 70)}%`,
+                          animationDelay: `${(i % 6) * 80}ms`,
+                          animationDuration: "700ms",
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {demoVoiceNoteShown && !demoVoiceRecording && (
+                  <div className="rounded-lg bg-background border border-primary/20 p-2.5 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
+                      <Sparkles className="h-3 w-3" />
+                      {isPt ? "Transcrição gerada (mock)" : "Generated transcript (mock)"}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      {MOCK_MANUAL_CASE.voiceTranscript}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* STEP 0: ANAMNESE */}
             {step === 0 && (
               <div className="space-y-3">
                 <div>
                   <Label className="text-xs">{isPt ? "Queixa principal" : "Chief complaint"} *</Label>
-                  <Textarea value={chiefComplaint} onChange={(e) => setChiefComplaint(e.target.value)} rows={2}
-                    placeholder={isPt ? "Ex: Dor lombar à esquerda há 3 semanas" : "E.g. Left lumbar pain for 3 weeks"} className="mt-1 text-sm" />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(chiefComplaint, MOCK_MANUAL_CASE.chiefComplaint, setChiefComplaint, "")}>
+                    <Textarea value={chiefComplaint} onChange={(e) => setChiefComplaint(e.target.value)} rows={2}
+                      placeholder={isPt ? "Ex: Dor lombar à esquerda há 3 semanas" : "E.g. Left lumbar pain for 3 weeks"} className="mt-1 text-sm" />
+                  </DemoShield>
                 </div>
                 <div>
                   <Label className="text-xs">{isPt ? "Histórico" : "History"}</Label>
-                  <Textarea value={history} onChange={(e) => setHistory(e.target.value)} rows={3} className="mt-1 text-sm" />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(history, MOCK_MANUAL_CASE.history, setHistory, "")}>
+                    <Textarea value={history} onChange={(e) => setHistory(e.target.value)} rows={3} className="mt-1 text-sm" />
+                  </DemoShield>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">{isPt ? "Tempo de evolução" : "Duration"}</Label>
-                    <Input value={duration} onChange={(e) => setDuration(e.target.value)} className="mt-1 text-sm h-9" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(duration, MOCK_MANUAL_CASE.duration, setDuration, "")}>
+                      <Input value={duration} onChange={(e) => setDuration(e.target.value)} className="mt-1 text-sm h-9" />
+                    </DemoShield>
                   </div>
                   <div>
                     <Label className="text-xs">{isPt ? "Início" : "Onset"}</Label>
-                    <Select value={onset} onValueChange={setOnset}>
-                      <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sudden">{isPt ? "Súbito" : "Sudden"}</SelectItem>
-                        <SelectItem value="gradual">{isPt ? "Gradual" : "Gradual"}</SelectItem>
-                        <SelectItem value="trauma">{isPt ? "Trauma" : "Trauma"}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <DemoShield on={demoMode} onAutofill={() => autofill(onset, MOCK_MANUAL_CASE.onset, setOnset, "")}>
+                      <Select value={onset} onValueChange={setOnset}>
+                        <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sudden">{isPt ? "Súbito" : "Sudden"}</SelectItem>
+                          <SelectItem value="gradual">{isPt ? "Gradual" : "Gradual"}</SelectItem>
+                          <SelectItem value="trauma">{isPt ? "Trauma" : "Trauma"}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </DemoShield>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">{isPt ? "Fatores agravantes" : "Aggravating factors"}</Label>
-                    <Textarea value={aggravating} onChange={(e) => setAggravating(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(aggravating, MOCK_MANUAL_CASE.aggravating, setAggravating, "")}>
+                      <Textarea value={aggravating} onChange={(e) => setAggravating(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    </DemoShield>
                   </div>
                   <div>
                     <Label className="text-xs">{isPt ? "Fatores aliviantes" : "Relieving factors"}</Label>
-                    <Textarea value={relieving} onChange={(e) => setRelieving(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(relieving, MOCK_MANUAL_CASE.relieving, setRelieving, "")}>
+                      <Textarea value={relieving} onChange={(e) => setRelieving(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    </DemoShield>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">{isPt ? "Medicações em uso" : "Current medications"}</Label>
-                    <Textarea value={medications} onChange={(e) => setMedications(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(medications, MOCK_MANUAL_CASE.medications, setMedications, "")}>
+                      <Textarea value={medications} onChange={(e) => setMedications(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    </DemoShield>
                   </div>
                   <div>
                     <Label className="text-xs">{isPt ? "Cirurgias prévias" : "Previous surgeries"}</Label>
-                    <Textarea value={previousSurgeries} onChange={(e) => setPreviousSurgeries(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(previousSurgeries, MOCK_MANUAL_CASE.previousSurgeries, setPreviousSurgeries, "")}>
+                      <Textarea value={previousSurgeries} onChange={(e) => setPreviousSurgeries(e.target.value)} rows={2} className="mt-1 text-sm" />
+                    </DemoShield>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">{isPt ? "Comorbidades" : "Comorbidities"}</Label>
-                    <Input value={comorbidities} onChange={(e) => setComorbidities(e.target.value)} className="mt-1 text-sm h-9" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(comorbidities, MOCK_MANUAL_CASE.comorbidities, setComorbidities, "")}>
+                      <Input value={comorbidities} onChange={(e) => setComorbidities(e.target.value)} className="mt-1 text-sm h-9" />
+                    </DemoShield>
                   </div>
                   <div>
                     <Label className="text-xs">{isPt ? "Ocupação" : "Occupation"}</Label>
-                    <Input value={occupation} onChange={(e) => setOccupation(e.target.value)} className="mt-1 text-sm h-9" />
+                    <DemoShield on={demoMode} onAutofill={() => autofill(occupation, MOCK_MANUAL_CASE.occupation, setOccupation, "")}>
+                      <Input value={occupation} onChange={(e) => setOccupation(e.target.value)} className="mt-1 text-sm h-9" />
+                    </DemoShield>
                   </div>
                 </div>
               </div>
             )}
+
 
             {/* STEP 1: DOR */}
             {step === 1 && (
               <div className="space-y-4">
                 <div>
                   <Label className="text-xs">{isPt ? "Intensidade da dor (0-10)" : "Pain intensity (0-10)"}: <span className="font-bold text-primary">{painScore}</span></Label>
-                  <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="mt-2" />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(painScore, MOCK_MANUAL_CASE.painScore, setPainScore, 5)}>
+                    <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="mt-2" />
+                  </DemoShield>
                 </div>
                 <div>
                   <Label className="text-xs">{isPt ? "Tipo de dor" : "Pain type"}</Label>
-                  <Select value={painType} onValueChange={setPainType}>
-                    <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="local">{isPt ? "Local" : "Local"}</SelectItem>
-                      <SelectItem value="radiating">{isPt ? "Irradiada" : "Radiating"}</SelectItem>
-                      <SelectItem value="burning">{isPt ? "Queimação" : "Burning"}</SelectItem>
-                      <SelectItem value="tingling">{isPt ? "Formigamento" : "Tingling"}</SelectItem>
-                      <SelectItem value="throbbing">{isPt ? "Latejante" : "Throbbing"}</SelectItem>
-                      <SelectItem value="stabbing">{isPt ? "Pontada" : "Stabbing"}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <DemoShield on={demoMode} onAutofill={() => autofill(painType, MOCK_MANUAL_CASE.painType, setPainType, "")}>
+                    <Select value={painType} onValueChange={setPainType}>
+                      <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="local">{isPt ? "Local" : "Local"}</SelectItem>
+                        <SelectItem value="radiating">{isPt ? "Irradiada" : "Radiating"}</SelectItem>
+                        <SelectItem value="burning">{isPt ? "Queimação" : "Burning"}</SelectItem>
+                        <SelectItem value="tingling">{isPt ? "Formigamento" : "Tingling"}</SelectItem>
+                        <SelectItem value="throbbing">{isPt ? "Latejante" : "Throbbing"}</SelectItem>
+                        <SelectItem value="stabbing">{isPt ? "Pontada" : "Stabbing"}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </DemoShield>
                 </div>
                 <div>
                   <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
-                  <div className="max-h-80 overflow-y-auto border rounded-md p-2 space-y-3">
-                    {regionGroups.map((g) => (
-                      <div key={g.key}>
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
-                          {isPt ? g.label_pt : g.label_en}
-                        </p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-                          {g.ids.map((id) => {
-                            const lbl = regionLabelMap[id];
-                            return (
-                              <label key={id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
-                                <Checkbox checked={painRegions.includes(id)} onCheckedChange={() => toggleRegion(id)} />
-                                <span>{isPt ? lbl.label_pt : lbl.label_en}</span>
-                              </label>
-                            );
-                          })}
+                  <DemoShield on={demoMode} onAutofill={() => toggleRegion("")}>
+                    <div className="max-h-80 overflow-y-auto border rounded-md p-2 space-y-3">
+                      {regionGroups.map((g) => (
+                        <div key={g.key}>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
+                            {isPt ? g.label_pt : g.label_en}
+                          </p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                            {g.ids.map((id) => {
+                              const lbl = regionLabelMap[id];
+                              return (
+                                <label key={id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                                  <Checkbox checked={painRegions.includes(id)} onCheckedChange={() => toggleRegion(id)} />
+                                  <span>{isPt ? lbl.label_pt : lbl.label_en}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </DemoShield>
                   {painRegions.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">{painRegions.length} {isPt ? "selecionadas" : "selected"}</p>
                   )}
@@ -801,15 +1008,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               <div className="space-y-3">
                 <div>
                   <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
-                  <Textarea
-                    value={functionalTests}
-                    onChange={(e) => setFunctionalTests(e.target.value)}
-                    rows={12}
-                    placeholder={isPt
-                      ? "Ex:\n- Slump test: positivo à esquerda\n- Lasègue 45° positivo\n- Força MMII grau 4\n- ADM lombar limitada em flexão\n..."
-                      : "E.g. Slump test: positive on the left, etc."}
-                    className="mt-1 text-sm font-mono"
-                  />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(functionalTests, MOCK_MANUAL_CASE.functionalTests, setFunctionalTests, "")}>
+                    <Textarea
+                      value={functionalTests}
+                      onChange={(e) => setFunctionalTests(e.target.value)}
+                      rows={12}
+                      placeholder={isPt
+                        ? "Ex:\n- Slump test: positivo à esquerda\n- Lasègue 45° positivo\n- Força MMII grau 4\n- ADM lombar limitada em flexão\n..."
+                        : "E.g. Slump test: positive on the left, etc."}
+                      className="mt-1 text-sm font-mono"
+                    />
+                  </DemoShield>
                 </div>
 
                 {/* AI-powered test suggestions box */}
@@ -907,7 +1116,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       {isPt ? "Gerar com IA" : "Generate with AI"}
                     </Button>
                   </div>
-                  <Textarea value={clinicalImpression} onChange={(e) => setClinicalImpression(e.target.value)} rows={3} className="mt-1 text-sm" />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(clinicalImpression, MOCK_MANUAL_CASE.clinicalImpression, setClinicalImpression, "")}>
+                    <Textarea value={clinicalImpression} onChange={(e) => setClinicalImpression(e.target.value)} rows={3} className="mt-1 text-sm" />
+                  </DemoShield>
                   {aiClinicalImpression?.therapeuticObjectives?.length ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {aiClinicalImpression.therapeuticObjectives.map((obj, i) => (
@@ -924,7 +1135,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 </Button>
                 <div>
                   <Label className="text-xs">{isPt ? "Diagnóstico / Hipótese" : "Diagnosis / Hypothesis"}</Label>
-                  <Textarea value={diagnosisText} onChange={(e) => setDiagnosisText(e.target.value)} rows={8} className="mt-1 text-sm" />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(diagnosisText, MOCK_MANUAL_CASE.diagnosisText, setDiagnosisText, "")}>
+                    <Textarea value={diagnosisText} onChange={(e) => setDiagnosisText(e.target.value)} rows={8} className="mt-1 text-sm" />
+                  </DemoShield>
                 </div>
               </div>
             )}

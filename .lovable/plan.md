@@ -1,85 +1,50 @@
 ## Objetivo
-Fazer a demo do paciente abrir com percepção imediata de resposta no clique e reduzir o tempo real até a rota ficar utilizável, sem mexer em escopo além desse fluxo.
 
-## Diagnóstico
-1. **O feedback visual atual depende da própria landing permanecer montada**
-   - Hoje o CTA da landing usa estado local (`isOpeningDemo` / `showDemoFallback`) em `src/pages/PatientLanding.tsx`.
-   - Na prática, esse feedback some no momento em que a navegação tenta trocar a rota, então o usuário não vê uma confirmação confiável.
-   - No preview, o CTA clicado continuou exibindo o texto original, sem estado visível de carregamento.
+Tornar a **Avaliação Manual** visível mas não-utilizável no modo demonstração (PRO e Clínica), com uma experiência divertida: ao **clicar em qualquer campo**, ele é preenchido automaticamente com dados de um caso simulado (como se o fisioterapeuta tivesse digitado/selecionado). Inclui também aviso e simulação do **gravador de voz + transcrição**, e adiciona transcrições mock aos prontuários demo.
 
-2. **O preload está acontecendo cedo demais e em uma landing já pesada**
-   - A landing de pacientes ainda carrega bastante coisa antes mesmo do clique: `framer-motion`, `i18n` com 3 arquivos de locale, `VoiceRecorderProvider`, `GlobalMobileMenu`, `AuthProvider` e outros globais montados no app inteiro.
-   - A medição mostrou FCP perto de **3.2s** e **129 scripts / ~1.28MB** já carregados na rota `/para-pacientes`.
-   - Ou seja: o app já chega cansado antes do clique, e o preload da demo passa a competir com uma página pesada em vez de ajudar claramente.
+## Mudanças
 
-3. **A arquitetura global do App está penalizando a landing e a demo**
-   - `src/App.tsx` envolve todas as rotas com providers e componentes globais pesados, inclusive `VoiceRecorderProvider`, `RealtimeNotifier` e `GlobalMobileMenu`.
-   - Isso aumenta custo de parse/exec mesmo em uma rota pública simples como `/para-pacientes`.
+### 1. `ManualAssessmentModal` aceita modo demo
+Arquivo: `src/components/dashboard/ManualAssessmentModal.tsx`
 
-4. **O preload atual da demo é incompleto e pouco estratégico**
-   - Hoje o aquecimento da demo depende de `import()` acionado na landing e de chunks internos da demo.
-   - Falta separar claramente:
-     - shell de navegação/feedback
-     - conteúdo crítico above-the-fold da demo
-     - conteúdo secundário das abas/modais
-   - Também falta um gatilho de preload após a landing estar realmente estável, em vez de disparar quase imediatamente.
+- Nova prop `demoMode?: boolean` (default `false`).
+- Quando `demoMode`:
+  - Banner amarelo no topo do dialog: *"Modo demonstração — preenchimento automático com caso simulado. Avance pelas etapas para conhecer o fluxo. Assine PRO para usar com pacientes reais."*
+  - Inputs/Textareas/Selects/Sliders ficam **`readOnly` / `disabled`** para teclado.
+  - Cada campo recebe um wrapper `onClick` (no `<label>` ou container) que dispara `autofillField(fieldKey)` — preenche aquele campo com o valor do caso mock (se já preenchido, alterna para "limpo" para reproduzir múltiplos cliques de forma agradável).
+  - Mapa de dor: clique em qualquer região do mapa **adiciona regiões pré-definidas do caso** (ex.: `lower_back`, `gluteal_right`) em ordem.
+  - Questionários (`QuestionnaireStep`): nova prop `autofillCase` que, ao clicar em qualquer opção, seleciona a resposta do caso mock para aquela questão (e não a opção clicada).
+  - Botão **Salvar / Gerar diagnóstico** desativado com tooltip "Disponível no plano PRO" → abre upsell (já existe padrão em `ProfessionalAssessmentDemo`).
+  - `useAutosaveDraft` desabilitado.
+  - `useVoiceRecorderSession` não conecta — substituído por mock visual (item 3).
 
-## Plano
-### 1) Tornar o feedback visual persistente entre clique e troca de rota
-- Remover a dependência exclusiva do estado local da landing para mostrar “Abrindo demo…”.
-- Implementar um **indicador global/transitório de navegação para a demo** que sobreviva ao unmount da landing.
-- Exibir imediatamente após o clique:
-  - texto “Abrindo demo…”
-  - barra de progresso/skeleton simples
-  - fallback após ~3s: “Clique confirmado. Aguarde, a demo está carregando.”
-- Manter esse estado visível até o shell da demo assumir a tela.
+### 2. Caso simulado
+Arquivo novo: `src/data/mockManualAssessmentCase.ts`
 
-### 2) Mover o preload para o momento certo
-- Trocar o `setTimeout(150)` atual por preload **após a landing terminar de estabilizar**.
-- Priorizar uma estratégia do tipo:
-  - primeiro paint / first idle da landing
-  - depois aquecer apenas o chunk crítico da demo
-  - só depois aquecer partes secundárias
-- Evitar preload agressivo enquanto hero, animações e traduções ainda estão carregando.
+Exporta um objeto único `MOCK_MANUAL_CASE` com valores para cada campo: queixa principal, história, duração, agravantes, aliviantes, medicações, comorbidades, ocupação, score/tipo de dor, regiões, red flags (vazio), respostas dos questionários (Roland-Morris ou ODI), testes funcionais sugeridos com resultados. Cenário escolhido: **lombalgia mecânica crônica em escritório** (alinhado com KB existente).
 
-### 3) Enxugar o custo da landing pública
-- Reduzir o que a rota `/para-pacientes` paga antes do clique.
-- Atuar cirurgicamente em pontos de maior impacto observados:
-  - `VoiceRecorderProvider` global não deve pesar em rota pública
-  - componentes globais que não são necessários na landing pública devem ser carregados condicionalmente
-  - revisar uso de `framer-motion` no hero para evitar custo desnecessário nessa rota
-  - revisar `i18n` para não puxar 3 idiomas upfront na entrada
-- O objetivo é melhorar tanto a responsividade do botão quanto a velocidade da navegação posterior.
+### 3. Aviso + simulação do gravador de voz
+- No `ManualAssessmentModal` em `demoMode`, substituir o FAB real por um **botão mock** "Gravar voz (simulação)" na barra do modal. Ao clicar:
+  - Toast: *"Em PRO real, gravamos sua voz e a IA transcreve direto no prontuário."*
+  - Anima 3s um waveform fake e mostra um card de "transcrição gerada" estática, vinda do caso mock.
+- Banner explicativo curto perto do botão.
 
-### 4) Refinar o carregamento interno da demo
-- Garantir que a rota `/para-pacientes/demo` carregue primeiro só o essencial:
-  - shell
-  - cabeçalho
-  - primeira aba visível
-- Deixar mensagens, modais e blocos secundários ainda mais desacoplados.
-- Revisar se há imports estáticos na demo que ainda puxam dependências cedo demais.
+### 4. Transcrições mock nos prontuários demo
+- Em `src/data/mockProDemoExtras.ts` e `src/data/mockClinicData.ts`: adicionar campo `voiceNotes: Array<{ id, created_at, transcription, summary, duration_seconds }>` em 2–3 pacientes simulados.
+- `VoiceNoteCard` (`src/components/dashboard/VoiceNoteCard.tsx`): aceitar prop opcional `mockNotes` que, quando presente, renderiza esses dados sem consultar Supabase.
+- `PatientDetailView` repassa `mockNotes` quando o paciente vier do mock (já tem flag de paciente simulado disponível via `isDemo`/`readOnly`).
 
-### 5) Validar com medição real no preview
-- Re-testar no viewport móvel atual.
-- Confirmar 3 resultados objetivos:
-  - o clique mostra feedback imediatamente
-  - a navegação efetivamente ocorre sem sensação de botão morto
-  - o tempo percebido até a demo abrir cai de forma mensurável
+### 5. Propagação `demoMode` até o modal
+- `PatientEvolutionDashboard` já recebe `isDemo`. Repassar para `PatientListView` e `PatientDetailView`, e ambos repassarem `demoMode={isDemo}` ao `ManualAssessmentModal`.
+- `ProfessionalDemo.tsx` e `ClinicDemo.tsx` já marcam `isDemoMode` — nenhuma mudança ali além de garantir que `isDemo` chegue ao `PatientEvolutionDashboard`.
 
 ## Detalhes técnicos
-- Arquivos centrais a ajustar:
-  - `src/pages/PatientLanding.tsx`
-  - `src/pages/PatientDemo.tsx`
-  - `src/components/demo/PatientDemoContent.tsx`
-  - `src/App.tsx`
-  - possivelmente `src/i18n.ts` e a montagem de providers globais
-- Direção arquitetural:
-  - feedback de navegação desacoplado da página de origem
-  - preload em fases
-  - menos custo global em rotas públicas
-  - demo com chunk crítico menor
 
-## Resultado esperado
-- O usuário vê resposta visual instantânea ao tocar no CTA.
-- A landing deixa de disputar tanto recurso com o preload.
-- A demo abre com menor atraso real e menor sensação de travamento.
+- **Read-only sem quebrar layout**: aplicar `readOnly` em `<Input>`/`<Textarea>` e `pointer-events-none` + `tabIndex={-1}` apenas nos controles internos, mas **manter `onClick` no container** para disparar o autofill. Em `<Select>`/`<Slider>`/`<Checkbox>` usar `disabled` e interceptar com um overlay clicável que chama o autofill.
+- **Autofill incremental**: o helper `autofillField(key)` lê de `MOCK_MANUAL_CASE[key]` e chama o `setState` correspondente; um pequeno mapa `Record<string, () => void>` no início do componente evita um `switch` gigante.
+- **Sem efeitos colaterais**: nenhuma chamada a `supabase.*` quando `demoMode`. Guard no início de `handleSave`, `generateDiagnosis`, `generateTreatment`, `generateClinicalImpression`, `loadDraft`, etc.
+- **i18n**: textos novos em PT/EN seguindo o padrão `tl()` já usado no arquivo.
+
+## Fora do escopo
+- Não altera lógica de assinatura, RLS, ou fluxo real do `ManualAssessmentModal` para usuários PRO/clínica reais.
+- Não cria endpoint/edge function novo.

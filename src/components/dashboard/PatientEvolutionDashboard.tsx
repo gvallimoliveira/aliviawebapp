@@ -1098,6 +1098,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         readOnly={readOnly}
+        isDemo={isDemo}
         canAddPatient={canAddPatient}
         allowManualAssessment={allowManualAssessment}
         allowAssessmentLink={allowAssessmentLink}
