@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, ChevronLeft, ClipboardCheck, Award } from "lucide-react";
+import { ChevronRight, ChevronLeft, ClipboardCheck, Award, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
@@ -21,9 +21,13 @@ interface QuestionnaireStepProps {
   painScoresPerRegion?: Record<string, number>;
   generalPainScore?: number;
   extraQuestionnaireRegions?: string[];
+  /** Demo mode: shows a single-click autofill button using `autofillAnswers`. */
+  demoMode?: boolean;
+  /** Mock answers keyed by questionnaire id -> question id -> value. */
+  autofillAnswers?: Record<string, Record<string, number>>;
 }
 
-const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAnswers, painScoresPerRegion, generalPainScore, extraQuestionnaireRegions }: QuestionnaireStepProps) => {
+const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAnswers, painScoresPerRegion, generalPainScore, extraQuestionnaireRegions, demoMode, autofillAnswers }: QuestionnaireStepProps) => {
   const { language } = useLanguage();
   const tl = (pt: string, en: string) => (language === "pt" ? pt : en);
 
@@ -212,8 +216,40 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
         </div>
       )}
 
+      {/* Demo autofill: one click fills all questions visible on screen */}
+      {demoMode && (
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-400/40 bg-amber-50/60 dark:bg-amber-900/10 px-3 py-2">
+          <p className="text-[11px] leading-snug text-amber-900 dark:text-amber-200">
+            {tl(
+              "Modo demonstração: clique para preencher esta seção com as respostas do caso simulado.",
+              "Demo mode: click to fill this section with the simulated case answers.",
+            )}
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 rounded-lg border-amber-400/60 text-amber-900 dark:text-amber-100 hover:bg-amber-100/60"
+            onClick={() => {
+              const mockForQ = autofillAnswers?.[currentQ.id] || {};
+              setAllAnswers((prev) => {
+                const merged = { ...(prev[currentQ.id] || {}) };
+                for (const q of subscaleQuestions) {
+                  const v = mockForQ[q.id];
+                  merged[q.id] = typeof v === "number" ? v : (q.options[Math.floor(q.options.length / 2)]?.value ?? 0);
+                }
+                return { ...prev, [currentQ.id]: merged };
+              });
+            }}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {tl("Preencher seção", "Fill section")}
+          </Button>
+        </div>
+      )}
+
       {/* Questions */}
       <motion.div key={`${currentQ.id}-${currentSubscale}`} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="space-y-4">
+
         {subscaleQuestions.map((question) => {
           const isODILike = currentQ.id === "odi" || currentQ.id === "ndi";
           const isSPADI = currentQ.id === "spadi";
