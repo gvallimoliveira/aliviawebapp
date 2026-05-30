@@ -115,7 +115,7 @@ const STEPS = [
   { id: "diagnostico", label: "Diagnóstico" },
 ];
 
-const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, editAssessment, onSaved }: ManualAssessmentModalProps) => {
+const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, editAssessment, onSaved, demoMode = false }: ManualAssessmentModalProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -126,7 +126,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Attach a voice-recorder session at the App-level FAB while the modal is
   // open. Lives outside the modal subtree so step navigation never resets it.
-  useVoiceRecorderSession(open, { professionalId, clinicId, patientName });
+  // Skipped in demo mode — the FAB is replaced by an inline mock.
+  useVoiceRecorderSession(open && !demoMode, { professionalId, clinicId, patientName });
+
+  // Demo-mode voice recorder simulation state
+  const [demoVoiceRecording, setDemoVoiceRecording] = useState(false);
+  const [demoVoiceNoteShown, setDemoVoiceNoteShown] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [generatingDx, setGeneratingDx] = useState(false);
