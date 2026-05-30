@@ -63,9 +63,9 @@ const PatientLanding = () => {
 
     void warmPatientDemo();
 
-    requestAnimationFrame(() => {
+    window.setTimeout(() => {
       navigate("/para-pacientes/demo");
-    });
+    }, 120);
   }, [navigate, warmPatientDemo]);
 
   return (
