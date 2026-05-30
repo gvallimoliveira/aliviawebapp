@@ -267,7 +267,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     formKey: "manual_assessment",
     scopeKey: draftScopeKey,
     state: draftState,
-    enabled: open && !isEditing,
+    enabled: open && !isEditing && !demoMode,
   });
   const handleRestoreDraft = () => {
     const p = draft.restore();
