@@ -17,9 +17,11 @@ import ChatWindow from "./ChatWindow";
 import { toast } from "@/hooks/use-toast";
 
 interface ConversationListProps {
-  mode: "patient" | "professional";
+  mode: "patient" | "professional" | "staff";
   professionalId?: string;
   clinicId?: string | null;
+  /** When mode="staff", the user id of the clinic staff (secretary/owner) whose inbox to load. Defaults to current user. */
+  staffUserId?: string;
   initialConversationId?: string | null;
   searchQuery?: string;
   canInitiateConversation?: boolean;
@@ -28,14 +30,17 @@ interface ConversationListProps {
 interface ConversationItem {
   id: string;
   patient_user_id: string;
-  professional_id: string;
+  professional_id: string | null;
+  recipient_user_id: string | null;
+  clinic_id: string | null;
   updated_at: string;
   other_name: string;
   last_message?: string;
   unread_count: number;
 }
 
-const ConversationList = ({ mode, professionalId, clinicId = null, initialConversationId, searchQuery = "", canInitiateConversation = true }: ConversationListProps) => {
+const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, initialConversationId, searchQuery = "", canInitiateConversation = true }: ConversationListProps) => {
+
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const isPt = language === "pt";
