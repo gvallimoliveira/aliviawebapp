@@ -935,8 +935,11 @@ const AssessmentView = () => {
             </CardContent>
           </Card>
         )}
+          </TabsContent>
+        </Tabs>
 
         {/* Footer actions — Voltar + Nova Avaliação após métricas e plano */}
+
         <div className="flex flex-wrap justify-between gap-2 pt-6 border-t border-border/40">
           <Button variant="outline" onClick={goBack} className="gap-2 rounded-xl">
             <ArrowLeft className="h-4 w-4" />
