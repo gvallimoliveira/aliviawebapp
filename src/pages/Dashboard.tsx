@@ -623,6 +623,7 @@ const Dashboard = () => {
                   initialConversationId={convFromUrl}
                   canInitiateAsPatient={true}
                   canInitiateAsProfessional={true}
+                  clinicStaffInboxId={(isClinicSecretary || canManageClinic) ? activeClinic.clinic_id : null}
                 />
                 <ClinicTrialBlockOverlay />
               </div>

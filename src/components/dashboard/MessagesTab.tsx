@@ -14,6 +14,8 @@ interface MessagesTabProps {
   canInitiateAsPatient?: boolean;
   canInitiateAsProfessional?: boolean;
   clinicId?: string | null;
+  /** When set, renders the clinic staff inbox (patients ↔ secretary/owner). */
+  clinicStaffInboxId?: string | null;
 }
 
 const MessagesTab = ({
@@ -22,6 +24,7 @@ const MessagesTab = ({
   canInitiateAsPatient = false,
   canInitiateAsProfessional = false,
   clinicId = null,
+  clinicStaffInboxId = null,
 }: MessagesTabProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
@@ -132,6 +135,26 @@ const MessagesTab = ({
           searchQuery={msgSearch}
           canInitiateConversation={canInitiateAsPatient}
         />
+      )}
+
+      {/* Clinic staff inbox: patients of the clinic ↔ secretary/owner */}
+      {clinicStaffInboxId && (
+        <div className="space-y-3 pt-2 border-t border-border/60">
+          <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-muted-foreground" />
+            {isPt ? "Mensagens dos pacientes" : "Patient messages"}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {isPt
+              ? "Conversas iniciadas por pacientes da clínica diretamente com a recepção/secretaria."
+              : "Conversations started by clinic patients directly with the front desk."}
+          </p>
+          <ConversationList
+            mode="staff"
+            clinicId={clinicStaffInboxId}
+            canInitiateConversation={false}
+          />
+        </div>
       )}
     </div>
   );
