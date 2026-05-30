@@ -354,8 +354,13 @@ const AssessmentView = () => {
   const regions = painRegions.map((r: string) => getRegionLabel(r, isPt));
 
   // Patient mode: clean summary view (demo-style) replaces the report-style layout.
-  // Pro/clinic users keep the existing detailed prontuário view (?from=professional).
-  const isProfessionalView = searchParams.get("from") === "professional";
+  // Pro/clinic users keep the existing detailed prontuário view with Resumo + Prontuário completo tabs.
+  // Detect professional context via explicit URL flag OR by the assessment being linked to a professional/clinic
+  // AND the current authenticated user being the owner of that context (not the patient).
+  const hasFromParam = searchParams.get("from") === "professional";
+  const belongsToProContext = !!(assessment?.professional_id || assessment?.clinic_id);
+  const viewerIsProOwner = !!user && belongsToProContext && user.id !== (assessment as any)?.user_id;
+  const isProfessionalView = hasFromParam || viewerIsProOwner;
   if (!isProfessionalView) {
     return (
       <div className="min-h-screen bg-background">
