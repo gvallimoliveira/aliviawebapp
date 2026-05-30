@@ -95,7 +95,7 @@ const GlobalVoiceRecorderFAB = () => {
     right: 16,
     bottom: typeof window !== "undefined" && window.innerWidth >= 640 ? 24 : 80,
   }));
-  const dragRef = useRef<{ startX: number; startY: number; startRight: number; startBottom: number; moved: boolean } | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; startRight: number; startBottom: number; moved: boolean; pointerId: number; captured: boolean } | null>(null);
 
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
