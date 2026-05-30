@@ -102,6 +102,7 @@ const App = () => {
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/professional/register" element={<ProfessionalRegister />} />
                   <Route path="/professionals" element={<ProfessionalSearch />} />
+                  <Route path="/assessment/professional/demo" element={<ProfessionalAssessmentDemo />} />
                   <Route path="/assessment/professional/:professionalId" element={<ProfessionalAssessment />} />
                   <Route path="/hep/:token" element={<ExerciseProgram />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
