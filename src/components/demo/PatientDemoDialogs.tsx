@@ -38,11 +38,11 @@ interface DemoAssessment {
 
 interface PatientDemoDialogsProps {
   assessmentDialog: "basic" | "premium" | null;
-  setAssessmentDialog: (value: "basic" | "premium" | null) => void;
+  closeAssessmentDialog: () => void;
   findProDialog: boolean;
-  setFindProDialog: (value: boolean) => void;
+  closeFindProDialog: () => void;
   openAssessment: DemoAssessment | null;
-  setOpenAssessment: (value: DemoAssessment | null) => void;
+  closeOpenAssessment: () => void;
   goBasic: () => void;
   goSubscribe: () => void;
   painRegionLabels: Record<string, string>;
@@ -50,18 +50,18 @@ interface PatientDemoDialogsProps {
 
 const PatientDemoDialogs = ({
   assessmentDialog,
-  setAssessmentDialog,
+  closeAssessmentDialog,
   findProDialog,
-  setFindProDialog,
+  closeFindProDialog,
   openAssessment,
-  setOpenAssessment,
+  closeOpenAssessment,
   goBasic,
   goSubscribe,
   painRegionLabels,
 }: PatientDemoDialogsProps) => {
   return (
     <>
-      <Dialog open={!!assessmentDialog} onOpenChange={(o) => !o && setAssessmentDialog(null)}>
+      <Dialog open={!!assessmentDialog} onOpenChange={(o) => !o && closeAssessmentDialog()}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
@@ -98,17 +98,17 @@ const PatientDemoDialogs = ({
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => { setAssessmentDialog(null); goBasic(); }} className="rounded-xl">
+            <Button variant="outline" onClick={() => { closeAssessmentDialog(); goBasic(); }} className="rounded-xl">
               Iniciar avaliação básica
             </Button>
-            <Button onClick={() => { setAssessmentDialog(null); goSubscribe(); }} className="rounded-xl gap-1.5">
+            <Button onClick={() => { closeAssessmentDialog(); goSubscribe(); }} className="rounded-xl gap-1.5">
               <Crown className="h-4 w-4" /> Assinar Premium
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={findProDialog} onOpenChange={setFindProDialog}>
+      <Dialog open={findProDialog} onOpenChange={(o) => !o && closeFindProDialog()}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
@@ -143,17 +143,17 @@ const PatientDemoDialogs = ({
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setFindProDialog(false)} className="rounded-xl">
+            <Button variant="outline" onClick={closeFindProDialog} className="rounded-xl">
               Voltar ao demo
             </Button>
-            <Button onClick={() => { setFindProDialog(false); goSubscribe(); }} className="rounded-xl gap-1.5">
+            <Button onClick={() => { closeFindProDialog(); goSubscribe(); }} className="rounded-xl gap-1.5">
               <Crown className="h-4 w-4" /> Assinar Premium
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!openAssessment} onOpenChange={(o) => !o && setOpenAssessment(null)}>
+      <Dialog open={!!openAssessment} onOpenChange={(o) => !o && closeOpenAssessment()}>
         <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
           {openAssessment && (
             <>
@@ -318,10 +318,10 @@ const PatientDemoDialogs = ({
               </ScrollArea>
 
               <DialogFooter className="px-6 py-3 border-t bg-muted/30 flex-col sm:flex-row gap-2">
-                <Button variant="outline" onClick={() => setOpenAssessment(null)} className="rounded-xl">
+                <Button variant="outline" onClick={closeOpenAssessment} className="rounded-xl">
                   Fechar
                 </Button>
-                <Button onClick={() => { setOpenAssessment(null); goSubscribe(); }} className="rounded-xl gap-1.5">
+                <Button onClick={() => { closeOpenAssessment(); goSubscribe(); }} className="rounded-xl gap-1.5">
                   <Crown className="h-4 w-4" /> Quero meu prontuário real
                 </Button>
               </DialogFooter>

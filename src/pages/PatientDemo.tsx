@@ -677,11 +677,11 @@ const PatientDemo = () => {
         {(assessmentDialog || findProDialog || openAssessment) ? (
           <PatientDemoDialogs
             assessmentDialog={assessmentDialog}
-            setAssessmentDialog={setAssessmentDialog}
+            closeAssessmentDialog={() => setAssessmentDialog(null)}
             findProDialog={findProDialog}
-            setFindProDialog={setFindProDialog}
+            closeFindProDialog={() => setFindProDialog(false)}
             openAssessment={openAssessment}
-            setOpenAssessment={setOpenAssessment}
+            closeOpenAssessment={() => setOpenAssessment(null)}
             goBasic={goBasic}
             goSubscribe={goSubscribe}
             painRegionLabels={painRegionLabels}
