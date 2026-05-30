@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ClipboardList, Sparkles, Crown, ArrowLeft, HelpCircle, User, Activity,
   Flame, Calendar, MapPin, ChevronRight, CheckCircle2, FileText, Dumbbell,
-  Info, TrendingDown, Trophy, Heart, MessageCircle,
+  Info, TrendingDown, Trophy, Heart, MessageCircle, Users,
 } from "lucide-react";
 import { setSeo } from "@/lib/seo";
 

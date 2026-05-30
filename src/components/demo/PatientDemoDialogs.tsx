@@ -13,13 +13,16 @@ import {
 interface DemoAssessment {
   id: string;
   label: string;
+  type: string;
   created_at: string;
+  status: string;
   pain_score: number;
   pain_regions: string[];
   hypothesis: string;
   confidence: string;
   odi: number;
   sf36: number;
+  redFlags: boolean;
   anamnesis: {
     onset: string;
     character: string;
