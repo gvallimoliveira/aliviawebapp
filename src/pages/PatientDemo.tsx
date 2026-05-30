@@ -16,46 +16,137 @@ import {
 import {
   ClipboardList, Sparkles, Crown, ArrowLeft, HelpCircle, User, Activity,
   Flame, Calendar, MapPin, ChevronRight, CheckCircle2, FileText, Dumbbell,
-  Info, TrendingDown, Users, Lock, Trophy,
+  Info, TrendingDown, Users, Lock, Trophy, Stethoscope, AlertCircle, Brain,
+  ShieldCheck, Target, ClipboardCheck,
 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { setSeo } from "@/lib/seo";
 
 // ── Mock data: 3 assessments, lombalgia radicular ciática c/ componente miofascial ──
 const DEMO_ASSESSMENTS = [
   {
     id: "demo-pa-1",
+    label: "Avaliação inicial",
     type: "premium",
     created_at: "2026-03-12T10:00:00Z",
     status: "completed",
     pain_score: 8,
     pain_regions: ["lower_back", "right_gluteal", "right_hamstring", "right_calf"],
     hypothesis: "Lombalgia radicular L5-S1 à direita com irritação do ciático e componente miofascial em glúteo médio e piriforme",
+    confidence: "Alta",
     odi: 52,
     sf36: 38,
+    redFlags: false,
+    anamnesis: {
+      onset: "Há ~6 semanas após levantar caixa pesada no trabalho",
+      character: "Queimação irradiando da lombar até panturrilha direita; piora ao sentar >20min",
+      aggravators: "Sentar, tossir/espirrar, fletir tronco",
+      relievers: "Decúbito dorsal com joelhos fletidos; analgésico esporádico",
+      sleep: "Acorda 2-3x/noite por desconforto",
+      goals: "Voltar a treinar musculação e dormir a noite toda",
+    },
+    tests: [
+      { name: "Lasègue (SLR) direito", result: "Positivo a 35°", flag: "positive" as const },
+      { name: "Slump test", result: "Positivo — reproduz parestesia", flag: "positive" as const },
+      { name: "Palpação piriforme D.", result: "Trigger point ativo", flag: "positive" as const },
+      { name: "Força flexores dorsais (L5)", result: "4/5", flag: "warning" as const },
+    ],
+    questionnaires: [
+      { name: "ODI (Oswestry)", score: 52, severity: "Incapacidade grave", color: "text-destructive" },
+      { name: "SF-36 (QV)", score: 38, severity: "Comprometida", color: "text-destructive" },
+      { name: "STarT Back", score: 7, severity: "Risco alto de cronificação", color: "text-destructive" },
+      { name: "PSEQ (autoeficácia)", score: 22, severity: "Baixa", color: "text-amber-600" },
+    ],
+    plan: [
+      "Fase 1 (S1-2): controle de dor — neurodinâmica suave + educação em dor",
+      "Liberação miofascial piriforme/glúteo médio 2x/sem",
+      "Reeducação postural sentado + pausas a cada 25min",
+      "Reavaliar em 4 semanas",
+    ],
   },
   {
     id: "demo-pa-2",
+    label: "Reavaliação intermediária",
     type: "premium",
     created_at: "2026-04-15T10:00:00Z",
     status: "completed",
     pain_score: 5,
     pain_regions: ["lower_back", "right_gluteal"],
     hypothesis: "Lombalgia radicular em remissão parcial — persistência de dor miofascial em glúteo direito",
+    confidence: "Alta",
     odi: 28,
     sf36: 64,
+    redFlags: false,
+    anamnesis: {
+      onset: "Evolução de ~10 semanas — irradiação distal cessou há 2 sem",
+      character: "Dor lombar mecânica + desconforto profundo em glúteo D.",
+      aggravators: "Ficar em pé >40min, subir escadas",
+      relievers: "Alongamento de piriforme e exercícios prescritos",
+      sleep: "Dorme a noite toda em 5/7 dias",
+      goals: "Retomar corrida leve",
+    },
+    tests: [
+      { name: "Lasègue direito", result: "Negativo até 70°", flag: "ok" as const },
+      { name: "Slump test", result: "Tensão leve sem parestesia", flag: "warning" as const },
+      { name: "Palpação piriforme D.", result: "Sensibilidade reduzida", flag: "warning" as const },
+      { name: "Força flexores dorsais", result: "5/5", flag: "ok" as const },
+    ],
+    questionnaires: [
+      { name: "ODI (Oswestry)", score: 28, severity: "Incapacidade moderada", color: "text-amber-600" },
+      { name: "SF-36 (QV)", score: 64, severity: "Em recuperação", color: "text-amber-600" },
+      { name: "STarT Back", score: 4, severity: "Risco médio", color: "text-amber-600" },
+      { name: "PSEQ (autoeficácia)", score: 42, severity: "Moderada", color: "text-amber-600" },
+    ],
+    plan: [
+      "Fase 2 (S3-6): fortalecimento progressivo — core + glúteo médio",
+      "Introduzir caminhada 20-30min/dia",
+      "Manter HEP diário; aumentar carga gradual",
+      "Reavaliar em 4 semanas",
+    ],
   },
   {
     id: "demo-pa-3",
+    label: "Reavaliação de alta",
     type: "premium",
     created_at: "2026-05-20T10:00:00Z",
     status: "completed",
     pain_score: 2,
     pain_regions: ["lower_back"],
     hypothesis: "Quadro em fase final de recuperação — dor residual lombar leve em sobrecarga prolongada",
+    confidence: "Alta",
     odi: 10,
     sf36: 86,
+    redFlags: false,
+    anamnesis: {
+      onset: "Quadro estável há 4 semanas, sem episódios de irradiação",
+      character: "Desconforto lombar leve apenas após esforço prolongado",
+      aggravators: "Treino pesado de membros inferiores sem aquecimento",
+      relievers: "Descanso curto, mobilidade lombar",
+      sleep: "Sem queixas",
+      goals: "Manutenção e prevenção de recidiva",
+    },
+    tests: [
+      { name: "Lasègue direito", result: "Negativo", flag: "ok" as const },
+      { name: "Slump test", result: "Negativo", flag: "ok" as const },
+      { name: "Bridge unilateral D.", result: "12 reps simétricas", flag: "ok" as const },
+      { name: "Squat funcional", result: "Sem dor, boa simetria", flag: "ok" as const },
+    ],
+    questionnaires: [
+      { name: "ODI (Oswestry)", score: 10, severity: "Incapacidade mínima", color: "text-emerald-600" },
+      { name: "SF-36 (QV)", score: 86, severity: "Boa", color: "text-emerald-600" },
+      { name: "STarT Back", score: 1, severity: "Risco baixo", color: "text-emerald-600" },
+      { name: "PSEQ (autoeficácia)", score: 56, severity: "Alta", color: "text-emerald-600" },
+    ],
+    plan: [
+      "Fase 3 (S7-10): retorno ao esporte — progressão para corrida e musculação plena",
+      "Manutenção: HEP 3x/sem + 1 sessão quinzenal de reavaliação",
+      "Educação em prevenção de recidiva e ergonomia",
+      "Alta clínica programada",
+    ],
   },
 ];
+
+type DemoAssessment = typeof DEMO_ASSESSMENTS[number];
 
 const DEMO_DIARY = (() => {
   const arr: { date: string; score: number }[] = [];
@@ -91,6 +182,8 @@ const painRegionLabels: Record<string, string> = {
 const PatientDemo = () => {
   const navigate = useNavigate();
   const [assessmentDialog, setAssessmentDialog] = useState<"basic" | "premium" | null>(null);
+  const [findProDialog, setFindProDialog] = useState(false);
+  const [openAssessment, setOpenAssessment] = useState<DemoAssessment | null>(null);
   const [hepChecked, setHepChecked] = useState<Set<string>>(new Set(["h1", "h3"]));
   const [diaryToday, setDiaryToday] = useState(2);
 
@@ -251,7 +344,7 @@ const PatientDemo = () => {
         </div>
 
         {/* Find professional CTA (mock click) */}
-        <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group" onClick={goSubscribe}>
+        <Card className="cursor-pointer border-border hover:border-primary/50 hover:shadow-md transition-all group" onClick={() => setFindProDialog(true)}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary group-hover:bg-primary/10 transition-colors">
@@ -414,7 +507,7 @@ const PatientDemo = () => {
                 <Card
                   key={a.id}
                   className="hover:shadow-md transition-all border-border/60 hover:border-border group cursor-pointer"
-                  onClick={() => setAssessmentDialog("premium")}
+                  onClick={() => setOpenAssessment(a)}
                 >
                   <CardContent className="py-4 px-5">
                     <div className="flex items-center gap-3">
@@ -521,6 +614,237 @@ const PatientDemo = () => {
               <Crown className="h-4 w-4" /> Assinar Premium
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Find Professional dialog (demo) */}
+      <Dialog open={findProDialog} onOpenChange={setFindProDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
+              <Users className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-center">Encontre um fisioterapeuta parceiro</DialogTitle>
+            <DialogDescription className="text-center pt-1">
+              No app real, aqui aparece uma <strong>lista de fisioterapeutas verificados</strong> cadastrados na plataforma Aliv.iA — com foto, especialidades, cidade, avaliações e botão para iniciar contato.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 py-2">
+            {[
+              { name: "Dra. Ana Costa", spec: "Coluna · Dor crônica", city: "São Paulo - SP", rating: "4.9" },
+              { name: "Dr. Rafael Lima", spec: "Esportiva · Reabilitação", city: "Belo Horizonte - MG", rating: "4.8" },
+              { name: "Dra. Beatriz Souza", spec: "Neurodinâmica · Pilates clínico", city: "Curitiba - PR", rating: "5.0" },
+            ].map((p) => (
+              <div key={p.name} className="flex items-center gap-3 rounded-lg border border-border/60 p-3 opacity-80">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                  <Stethoscope className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{p.spec} · {p.city}</p>
+                </div>
+                <Badge variant="outline" className="text-[10px] shrink-0">★ {p.rating}</Badge>
+              </div>
+            ))}
+            <p className="text-[11px] text-muted-foreground italic text-center pt-1">
+              Visualização ilustrativa — disponível para assinantes Premium.
+            </p>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setFindProDialog(false)} className="rounded-xl">
+              Voltar ao demo
+            </Button>
+            <Button onClick={() => { setFindProDialog(false); goSubscribe(); }} className="rounded-xl gap-1.5">
+              <Crown className="h-4 w-4" /> Assinar Premium
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detailed assessment record dialog */}
+      <Dialog open={!!openAssessment} onOpenChange={(o) => !o && setOpenAssessment(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
+          {openAssessment && (
+            <>
+              <DialogHeader className="px-6 pt-6 pb-3 border-b">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge className="bg-primary/10 text-primary border-primary/20" variant="outline">
+                    <Sparkles className="h-3 w-3 mr-1" /> Premium
+                  </Badge>
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                    <CheckCircle2 className="h-3 w-3 mr-1" /> Concluída
+                  </Badge>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(openAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                  </span>
+                </div>
+                <DialogTitle className="text-left text-lg pt-1">{openAssessment.label}</DialogTitle>
+                <DialogDescription className="text-left">
+                  Prontuário simulado — Mariana Silva (Demo) · 34 anos · ciatalgia direita
+                </DialogDescription>
+              </DialogHeader>
+
+              <ScrollArea className="max-h-[65vh] px-6 py-4">
+                <div className="space-y-5">
+                  {/* Hipótese */}
+                  <section className="rounded-lg border border-primary/20 bg-primary/[0.03] p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-primary" />
+                      <h4 className="text-sm font-semibold text-foreground">Hipótese diagnóstica (IA)</h4>
+                      <Badge variant="outline" className="text-[10px] ml-auto bg-emerald-500/10 text-emerald-700 border-emerald-200">
+                        Confiança: {openAssessment.confidence}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed">{openAssessment.hypothesis}</p>
+                  </section>
+
+                  {/* Red flags */}
+                  <section className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <p className="text-xs text-emerald-800">
+                      <strong>Red flags:</strong> nenhuma detectada. Caso liberado para abordagem fisioterapêutica.
+                    </p>
+                  </section>
+
+                  {/* Métricas-chave */}
+                  <section className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-muted-foreground" /> Métricas principais
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded-lg border p-2 text-center">
+                        <p className="text-[10px] text-muted-foreground">EVA</p>
+                        <p className="text-xl font-bold text-foreground">{openAssessment.pain_score}/10</p>
+                      </div>
+                      <div className="rounded-lg border p-2 text-center">
+                        <p className="text-[10px] text-muted-foreground">ODI</p>
+                        <p className="text-xl font-bold text-foreground">{openAssessment.odi}%</p>
+                      </div>
+                      <div className="rounded-lg border p-2 text-center">
+                        <p className="text-[10px] text-muted-foreground">SF-36</p>
+                        <p className="text-xl font-bold text-foreground">{openAssessment.sf36}%</p>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Regiões */}
+                  <section className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" /> Regiões de dor
+                    </h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {openAssessment.pain_regions.map((r) => (
+                        <span key={r} className="text-xs bg-muted text-foreground px-2.5 py-1 rounded-full">
+                          {painRegionLabels[r] || r}
+                        </span>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* Anamnese */}
+                  <section className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <ClipboardCheck className="h-4 w-4 text-muted-foreground" /> Anamnese resumida
+                    </h4>
+                    <div className="rounded-lg border divide-y text-sm">
+                      {[
+                        ["Início", openAssessment.anamnesis.onset],
+                        ["Caráter da dor", openAssessment.anamnesis.character],
+                        ["Fatores de piora", openAssessment.anamnesis.aggravators],
+                        ["Fatores de alívio", openAssessment.anamnesis.relievers],
+                        ["Sono", openAssessment.anamnesis.sleep],
+                        ["Objetivos do paciente", openAssessment.anamnesis.goals],
+                      ].map(([k, v]) => (
+                        <div key={k} className="px-3 py-2 grid grid-cols-[120px_1fr] gap-2">
+                          <span className="text-xs text-muted-foreground">{k}</span>
+                          <span className="text-xs text-foreground">{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* Testes funcionais */}
+                  <section className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Target className="h-4 w-4 text-muted-foreground" /> Testes funcionais
+                    </h4>
+                    <div className="rounded-lg border divide-y">
+                      {openAssessment.tests.map((t) => {
+                        const color =
+                          t.flag === "positive" ? "text-destructive" :
+                          t.flag === "warning" ? "text-amber-600" : "text-emerald-600";
+                        const Icon =
+                          t.flag === "positive" ? AlertCircle :
+                          t.flag === "warning" ? AlertCircle : CheckCircle2;
+                        return (
+                          <div key={t.name} className="px-3 py-2 flex items-center gap-2">
+                            <Icon className={`h-4 w-4 ${color} shrink-0`} />
+                            <span className="text-xs text-foreground flex-1">{t.name}</span>
+                            <span className={`text-xs font-medium ${color}`}>{t.result}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  {/* Questionários */}
+                  <section className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" /> Questionários validados
+                    </h4>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      {openAssessment.questionnaires.map((q) => (
+                        <div key={q.name} className="rounded-lg border p-3 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold text-foreground">{q.name}</p>
+                            <p className={`text-base font-bold ${q.color}`}>{q.score}</p>
+                          </div>
+                          <p className={`text-[11px] ${q.color}`}>{q.severity}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* Plano */}
+                  <section className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Dumbbell className="h-4 w-4 text-muted-foreground" /> Plano de tratamento (STEPS)
+                    </h4>
+                    <ul className="rounded-lg border divide-y text-sm">
+                      {openAssessment.plan.map((step, i) => (
+                        <li key={i} className="px-3 py-2 flex items-start gap-2">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary mt-0.5">
+                            {i + 1}
+                          </span>
+                          <span className="text-xs text-foreground">{step}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+
+                  <div className="rounded-lg border border-amber-300/40 bg-amber-50/40 p-3 flex items-start gap-2">
+                    <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-amber-900/80">
+                      Esta é uma visualização ilustrativa do prontuário. No app real, cada avaliação
+                      gera um <strong>PDF clínico completo</strong> que pode ser compartilhado com seu fisioterapeuta.
+                    </p>
+                  </div>
+                </div>
+              </ScrollArea>
+
+              <DialogFooter className="px-6 py-3 border-t bg-muted/30 flex-col sm:flex-row gap-2">
+                <Button variant="outline" onClick={() => setOpenAssessment(null)} className="rounded-xl">
+                  Fechar
+                </Button>
+                <Button onClick={() => { setOpenAssessment(null); goSubscribe(); }} className="rounded-xl gap-1.5">
+                  <Crown className="h-4 w-4" /> Quero meu prontuário real
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
