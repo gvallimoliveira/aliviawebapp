@@ -78,6 +78,7 @@ const App = () => {
             <BrowserRouter>
               <ScrollToTop />
               <GlobalMobileMenu />
+              <RealtimeNotifier />
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Gateway />} />
