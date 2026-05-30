@@ -83,6 +83,7 @@ const PatientLanding = () => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1) return;
     if (openingDemoRef.current) return;
     openingDemoRef.current = true;
+    setIsOpeningDemo(true);
 
     // Synchronous, paint-immediate feedback via a global overlay rendered
     // outside <Routes>. It survives PatientLanding's unmount, so the user
@@ -111,10 +112,34 @@ const PatientLanding = () => {
             onPointerDown={() => void warmPatientDemo()}
             onTouchStart={() => void warmPatientDemo()}
             onClick={handleOpenDemo}
-            className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors active:scale-[0.98]"
+            aria-busy={isOpeningDemo}
+            aria-disabled={isOpeningDemo}
+            className={`group relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-medium text-primary transition-colors active:scale-[0.98] ${
+              isOpeningDemo ? "cursor-wait pointer-events-none" : "hover:bg-primary/10"
+            }`}
           >
-            <span aria-hidden="true">✨</span>
-            Ver demo interativa do painel Premium
+            {/* Progress fill that animates across the button while loading */}
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute inset-y-0 left-0 bg-primary/15 ${
+                isOpeningDemo ? "animate-[demoProgress_2.4s_ease-out_forwards]" : "w-0"
+              }`}
+            />
+            {/* Shimmer sweep */}
+            {isOpeningDemo && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/25 to-transparent animate-[demoShimmer_1.2s_linear_infinite]"
+              />
+            )}
+            <span className="relative z-10 inline-flex items-center gap-2">
+              {isOpeningDemo ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <span aria-hidden="true">✨</span>
+              )}
+              {isOpeningDemo ? "Abrindo demo…" : "Ver demo interativa do painel Premium"}
+            </span>
           </Link>
         </div>
         <HighlightsSection />
