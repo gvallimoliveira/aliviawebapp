@@ -17,13 +17,41 @@ import StickyCTA from "@/components/StickyCTA";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import LgpdBadge from "@/components/LgpdBadge";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
-import { showNavOverlay } from "@/lib/navigationOverlay";
+import { showNavOverlay, subscribeNavOverlay } from "@/lib/navigationOverlay";
 
 const PatientLanding = () => {
   const [searchParams] = useSearchParams();
   const patientDemoImportRef = useRef<Promise<unknown> | null>(null);
   const openingDemoRef = useRef(false);
   const [isOpeningDemo, setIsOpeningDemo] = useState(false);
+  const [demoProgress, setDemoProgress] = useState(0);
+  const progressTimerRef = useRef<number | null>(null);
+  const progressRef = useRef(0);
+
+  const setProgress = useCallback((value: number) => {
+    progressRef.current = Math.max(progressRef.current, value);
+    setDemoProgress(progressRef.current);
+  }, []);
+
+  const startProgressCreep = useCallback((ceiling: number) => {
+    if (progressTimerRef.current) window.clearInterval(progressTimerRef.current);
+    progressTimerRef.current = window.setInterval(() => {
+      const current = progressRef.current;
+      if (current >= ceiling) return;
+      // Gentle asymptotic creep toward the ceiling
+      const next = current + Math.max(0.4, (ceiling - current) * 0.06);
+      setProgress(Math.min(ceiling, next));
+    }, 120) as unknown as number;
+  }, [setProgress]);
+
+  const stopProgressCreep = useCallback(() => {
+    if (progressTimerRef.current) {
+      window.clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => stopProgressCreep(), [stopProgressCreep]);
 
   const warmPatientDemo = useCallback(() => {
     if (!patientDemoImportRef.current) {
@@ -85,6 +113,10 @@ const PatientLanding = () => {
     openingDemoRef.current = true;
     setIsOpeningDemo(true);
 
+    // Milestone 1 — click acknowledged (chunks may already be cached).
+    setProgress(15);
+    startProgressCreep(45); // creep toward "chunks loading" ceiling
+
     // Synchronous, paint-immediate feedback via a global overlay rendered
     // outside <Routes>. It survives PatientLanding's unmount, so the user
     // sees instant confirmation even while React Router transitions to the
@@ -92,11 +124,39 @@ const PatientLanding = () => {
     showNavOverlay("Abrindo demo do paciente…");
     sessionStorage.setItem("patient-demo-opening", String(Date.now()));
 
-    // Kick off preload (idempotent — cached if already warmed).
-    void warmPatientDemo();
+    // Subscribe to the overlay store — when PatientDemo hides it, the demo
+    // content has actually mounted, so we can drive the bar to 100%.
+    const unsubscribe = subscribeNavOverlay((s) => {
+      if (!s.visible && progressRef.current > 0) {
+        stopProgressCreep();
+        setProgress(100);
+        unsubscribe();
+      }
+    });
+
+    // Milestone 2 — chunks resolved (real signal).
+    warmPatientDemo()
+      .then(() => {
+        setProgress(70);
+        // Creep toward the "demo mounting" ceiling until the overlay hides.
+        startProgressCreep(92);
+      })
+      .catch(() => {
+        stopProgressCreep();
+      });
+
+    // Safety fallback: if something stalls for >8s, fill the bar so the
+    // button never looks frozen at an arbitrary spot.
+    window.setTimeout(() => {
+      if (progressRef.current < 100) {
+        stopProgressCreep();
+        setProgress(100);
+        unsubscribe();
+      }
+    }, 8000);
     // <Link>'s default navigation handler runs after this onClick and
     // performs the SPA navigation — no preventDefault needed.
-  }, [warmPatientDemo]);
+  }, [warmPatientDemo, setProgress, startProgressCreep, stopProgressCreep]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,25 +178,23 @@ const PatientLanding = () => {
               isOpeningDemo ? "cursor-wait pointer-events-none" : "hover:bg-primary/10"
             }`}
           >
-            {/* Inline keyframes so we don't depend on tailwind config changes */}
+            {/* Inline keyframes (shimmer only — progress width is data-driven) */}
             {isOpeningDemo && (
               <style>{`
-                @keyframes demoProgressFill { 0% { width: 0% } 60% { width: 85% } 100% { width: 95% } }
                 @keyframes demoShimmerSweep { 0% { transform: translateX(-100%) } 100% { transform: translateX(100%) } }
               `}</style>
             )}
-            {/* Progress fill that animates across the button while loading */}
+            {/* Real-progress fill bound to actual navigation milestones */}
             <span
               aria-hidden="true"
               className="pointer-events-none absolute inset-y-0 left-0 bg-primary/20"
-              style={
-                isOpeningDemo
-                  ? { animation: "demoProgressFill 2.4s ease-out forwards" }
-                  : { width: 0 }
-              }
+              style={{
+                width: `${isOpeningDemo ? demoProgress : 0}%`,
+                transition: "width 280ms ease-out",
+              }}
             />
-            {/* Shimmer sweep */}
-            {isOpeningDemo && (
+            {/* Shimmer sweep — paused once we hit 100% */}
+            {isOpeningDemo && demoProgress < 100 && (
               <span
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/30 to-transparent"
