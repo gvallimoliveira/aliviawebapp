@@ -330,7 +330,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
   // Load patients from dedicated patients table
   useEffect(() => {
-    if (!professionalId || isDemo) return;
+    if ((!clinicId && !professionalId) || isDemo) return;
     const loadPatients = async () => {
       let query = (supabase.from("patients" as any) as any).select("id, full_name, email, cpf, phone, created_at, clinic_id, professional_id, assessment_token");
       if (clinicId) {
@@ -349,11 +349,14 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
   // Fetch exercise adherence for all patients' programs
   useEffect(() => {
-    if (!professionalId || isDemo) return;
+    if ((!clinicId && !professionalId) || isDemo) return;
     const fetchAdherence = async () => {
-      const { data: programs } = await (supabase.from("exercise_programs") as any)
-        .select("id, assessment_id")
-        .eq("professional_id", professionalId);
+      let programsQuery = (supabase.from("exercise_programs") as any)
+        .select("id, assessment_id");
+      programsQuery = clinicId
+        ? programsQuery.eq("clinic_id", clinicId)
+        : programsQuery.eq("professional_id", professionalId);
+      const { data: programs } = await programsQuery;
       if (!programs || programs.length === 0) return;
       const programIds = programs.map((p: any) => p.id);
       const { data: items } = await (supabase.from("exercise_program_items") as any)
@@ -723,7 +726,12 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
 
   useEffect(() => {
-    if (!professionalId || assessments.length === 0 || isDemo) return;
+    if ((!clinicId && !professionalId) || assessments.length === 0 || isDemo) return;
+    if (!professionalId) {
+      setNotes({});
+      setNoteIncludeInPdf({});
+      return;
+    }
     const assessmentIds = assessments.map((a) => a.id);
     supabase
       .from("professional_notes")
