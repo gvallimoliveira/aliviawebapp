@@ -282,6 +282,21 @@ const PatientDemo = () => {
           </CardContent>
         </Card>
 
+        {/* Tabs: Minha Saúde + Mensagens (espelha o app real do paciente) */}
+        <Tabs defaultValue="health" className="space-y-6">
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="health" className="gap-1.5">
+              <Heart className="h-4 w-4" /> Minha Saúde
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="gap-1.5 relative">
+              <MessageCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Mensagens</span>
+              <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-destructive text-[10px] text-destructive-foreground flex items-center justify-center font-semibold">1</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="health" className="space-y-6">
+
         {/* Evolução resumida */}
         <Card>
           <CardHeader className="pb-3">
