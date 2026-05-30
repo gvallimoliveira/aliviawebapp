@@ -327,10 +327,32 @@ const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, 
     let otherName = mode === "patient" ? "Profissional" : "Paciente";
 
     if (mode === "patient") {
-      const { data: pros } = await supabase.rpc("get_professionals_basic_info", {
-        _professional_ids: [conv.professional_id],
-      });
-      otherName = pros?.[0]?.full_name || otherName;
+      if (conv.professional_id) {
+        const { data: pros } = await supabase.rpc("get_professionals_basic_info", {
+          _professional_ids: [conv.professional_id],
+        });
+        otherName = pros?.[0]?.full_name || otherName;
+      } else if (conv.recipient_user_id) {
+        // Conversation with clinic staff (secretary/owner)
+        const [{ data: profile }, { data: clinic }] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("user_id", conv.recipient_user_id).maybeSingle(),
+          conv.clinic_id
+            ? supabase.from("clinics").select("name").eq("id", conv.clinic_id).maybeSingle()
+            : Promise.resolve({ data: null as { name: string } | null }),
+        ]);
+        const clinicName = clinic?.name;
+        const staffName = profile?.full_name;
+        otherName = clinicName
+          ? (staffName ? `${staffName} · ${clinicName}` : clinicName)
+          : (staffName || (isPt ? "Atendimento da clínica" : "Clinic support"));
+      }
+    } else if (mode === "staff") {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", conv.patient_user_id)
+        .maybeSingle();
+      otherName = profile?.full_name || otherName;
     } else if (clinicId || professionalId) {
       const rpcName = clinicId ? "get_clinic_all_patients" : "get_professional_all_patients";
       const rpcArgs = clinicId ? { _clinic_id: clinicId } : { _professional_id: professionalId };
@@ -369,6 +391,8 @@ const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, 
       id: conv.id,
       patient_user_id: conv.patient_user_id,
       professional_id: conv.professional_id,
+      recipient_user_id: (conv as any).recipient_user_id ?? null,
+      clinic_id: (conv as any).clinic_id ?? null,
       updated_at: conv.updated_at,
       other_name: otherName,
       last_message: lastMessage?.content || "",
@@ -387,7 +411,8 @@ const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, 
 
     setActiveOtherName((current) => current || otherName);
     return true;
-  }, [clinicId, mode, professionalId, user]);
+  }, [clinicId, isPt, mode, professionalId, user]);
+
 
   useEffect(() => {
     if (!pendingOpenConvId || loading || activeConversation) return;
