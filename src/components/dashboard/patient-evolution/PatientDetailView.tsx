@@ -340,6 +340,9 @@ export default function PatientDetailView(props: any) {
             </DropdownMenu>
           )}
       </div>
+      </div>
+
+
 
       {(() => {
         const summaryTarget = latestWithDiagnosis || latestAssessment;
