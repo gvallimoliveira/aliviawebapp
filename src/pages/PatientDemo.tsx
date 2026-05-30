@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -17,7 +18,7 @@ import {
   ClipboardList, Sparkles, Crown, ArrowLeft, HelpCircle, User, Activity,
   Flame, Calendar, MapPin, ChevronRight, CheckCircle2, FileText, Dumbbell,
   Info, TrendingDown, Users, Lock, Trophy, Stethoscope, AlertCircle, Brain,
-  ShieldCheck, Target, ClipboardCheck,
+  ShieldCheck, Target, ClipboardCheck, Heart, MessageCircle, Send,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { setSeo } from "@/lib/seo";
