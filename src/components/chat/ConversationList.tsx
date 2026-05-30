@@ -260,7 +260,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, 
   useEffect(() => {
     if (!user) return;
     fetchConversations();
-  }, [user, mode, professionalId]);
+  }, [user, mode, professionalId, clinicId, staffUserId]);
 
   useEffect(() => {
     if (initialConversationId && conversations.length > 0) {
