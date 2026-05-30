@@ -86,11 +86,11 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { user_id, clinic_id, title, body, url, kind, tag, call_id } = await req.json();
+    const { user_id, clinic_id, email, title, body, url, kind, tag, call_id } = await req.json();
 
-    if (!title || (!user_id && !clinic_id)) {
+    if (!title || (!user_id && !clinic_id && !email)) {
       return new Response(
-        JSON.stringify({ error: "title and (user_id or clinic_id) are required" }),
+        JSON.stringify({ error: "title and (user_id, clinic_id or email) are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -99,8 +99,13 @@ Deno.serve(async (req) => {
     let targetUserIds: string[] = [];
     if (user_id) targetUserIds.push(user_id);
 
+    if (email && (isServiceRole || isAnonKey)) {
+      const { data: u } = await supabase.auth.admin.listUsers();
+      const match = u?.users?.find((x: any) => (x.email || "").toLowerCase() === String(email).toLowerCase());
+      if (match?.id && !targetUserIds.includes(match.id)) targetUserIds.push(match.id);
+    }
+
     if (clinic_id) {
-      // Clinic events go ONLY to owner + secretary (therapists stay out).
       const { data: members } = await supabase
         .from("clinic_members")
         .select("user_id, role, status")
