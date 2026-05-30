@@ -502,7 +502,32 @@ const AssessmentView = () => {
           </AlertDialogContent>
         </AlertDialog>
 
+        <Tabs defaultValue="resumo" className="w-full">
+          <TabsList className="grid grid-cols-2 w-full max-w-sm mb-4">
+            <TabsTrigger value="resumo" className="gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" />
+              {isPt ? "Resumo" : "Summary"}
+            </TabsTrigger>
+            <TabsTrigger value="completo" className="gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              {isPt ? "Prontuário completo" : "Full record"}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="resumo" className="space-y-6 mt-0">
+            <AssessmentSummaryView
+              assessment={assessment}
+              onBack={goBack}
+              onDownloadPdf={handleDownloadPdf}
+              onShareWhatsApp={handleShareWhatsApp}
+              pdfLoading={pdfLoading}
+              whatsappLoading={whatsappLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value="completo" className="space-y-6 mt-0">
         {/* Header card */}
+
         <Card>
           <CardContent className="py-5 space-y-3">
             <div className="flex items-center justify-between">
