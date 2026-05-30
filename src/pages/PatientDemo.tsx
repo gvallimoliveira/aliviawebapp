@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { lazy, Suspense, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,18 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ClipboardList, Sparkles, Crown, ArrowLeft, HelpCircle, User, Activity,
   Flame, Calendar, MapPin, ChevronRight, CheckCircle2, FileText, Dumbbell,
-  Info, TrendingDown, Users, Lock, Trophy, Stethoscope, AlertCircle, Brain,
-  ShieldCheck, Target, ClipboardCheck, Heart, MessageCircle, Send,
+  Info, TrendingDown, Trophy, Heart, MessageCircle,
 } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { setSeo } from "@/lib/seo";
+
+const PatientDemoMessages = lazy(() => import("@/components/demo/PatientDemoMessages"));
+const PatientDemoDialogs = lazy(() => import("@/components/demo/PatientDemoDialogs"));
 
 // ── Mock data: 3 assessments, lombalgia radicular ciática c/ componente miofascial ──
 const DEMO_ASSESSMENTS = [
@@ -281,6 +279,7 @@ const PatientDemo = () => {
   const [openAssessment, setOpenAssessment] = useState<DemoAssessment | null>(null);
   const [hepChecked, setHepChecked] = useState<Set<string>>(new Set(["h1", "h3"]));
   const [diaryToday, setDiaryToday] = useState(2);
+  const [activeTab, setActiveTab] = useState("health");
 
   useEffect(() => {
     setSeo({
@@ -377,7 +376,7 @@ const PatientDemo = () => {
         </Card>
 
         {/* Tabs: Minha Saúde + Mensagens (espelha o app real do paciente) */}
-        <Tabs defaultValue="health" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="w-full grid grid-cols-2">
             <TabsTrigger value="health" className="gap-1.5">
               <Heart className="h-4 w-4" /> Minha Saúde
@@ -667,350 +666,28 @@ const PatientDemo = () => {
 
           {/* Mensagens (demo) */}
           <TabsContent value="messages" className="space-y-4">
-            <Card className="border-amber-300/40 bg-amber-50/40">
-              <CardContent className="py-4 px-5 flex items-start gap-3">
-                <Info className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-900/80">
-                  No app real, você troca mensagens diretamente com o <strong>fisioterapeuta parceiro</strong> que acompanha seu caso — tire dúvidas sobre exercícios, relate sintomas e receba orientações entre as consultas.
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4 text-primary" /> Conversa com Dr. Demo
-                </CardTitle>
-                <CardDescription className="text-xs">Fisioterapeuta responsável · Online há 5 min</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2.5">
-                  <div className="flex justify-start">
-                    <div className="max-w-[80%] rounded-2xl rounded-bl-sm bg-muted px-3.5 py-2">
-                      <p className="text-sm text-foreground">Oi Mariana! Como foi a série de exercícios esta semana?</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">Dr. Demo · há 2 dias</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-primary/10 border border-primary/20 px-3.5 py-2">
-                      <p className="text-sm text-foreground">Consegui fazer 5 dias! A dor irradiada melhorou bastante 🙌</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">Você · há 2 dias</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-start">
-                    <div className="max-w-[80%] rounded-2xl rounded-bl-sm bg-muted px-3.5 py-2">
-                      <p className="text-sm text-foreground">Excelente! Vou liberar a próxima fase do programa. Já está disponível na aba <strong>Minha Saúde</strong>.</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">Dr. Demo · há 1 dia</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-                  <input
-                    disabled
-                    placeholder="Digite uma mensagem... (disponível na assinatura Premium)"
-                    className="flex-1 rounded-xl border border-border/60 bg-muted/40 px-3 py-2 text-sm text-muted-foreground"
-                  />
-                  <Button size="icon" disabled className="rounded-xl shrink-0">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-primary/30 bg-primary/[0.03]">
-              <CardContent className="py-4 px-5 flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-primary" />
-                  <p className="text-sm text-foreground">Mensagens com fisioterapeutas é um recurso <strong>Premium</strong>.</p>
-                </div>
-                <Button size="sm" onClick={goSubscribe} className="rounded-xl gap-1.5">
-                  <Crown className="h-3.5 w-3.5" /> Assinar Premium
-                </Button>
-              </CardContent>
-            </Card>
+            <Suspense fallback={<Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Carregando mensagens...</CardContent></Card>}>
+              <PatientDemoMessages goSubscribe={goSubscribe} />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </main>
 
-      {/* Assessment intercept dialog */}
-      <Dialog open={!!assessmentDialog} onOpenChange={(o) => !o && setAssessmentDialog(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
-              <Lock className="h-6 w-6 text-primary" />
-            </div>
-            <DialogTitle className="text-center">
-              {assessmentDialog === "premium" ? "Avaliação Premium" : "Avaliação básica"}
-            </DialogTitle>
-            <DialogDescription className="text-center pt-1">
-              Você está no <strong>modo demonstração</strong>. Para iniciar uma avaliação real:
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 py-2">
-            <div className="flex items-start gap-3 rounded-lg border border-border/60 p-3">
-              <ClipboardList className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Avaliação básica (gratuita)</p>
-                <p className="text-xs text-muted-foreground">
-                  Acesse pela landing page e faça sua triagem inicial sem custo.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/[0.03] p-3">
-              <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Avaliação Premium</p>
-                <p className="text-xs text-muted-foreground">
-                  Diagnóstico aprofundado, plano de tratamento, diário de dor e comparativo de evolução —
-                  disponível com a assinatura Premium.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => { setAssessmentDialog(null); goBasic(); }} className="rounded-xl">
-              Iniciar avaliação básica
-            </Button>
-            <Button onClick={() => { setAssessmentDialog(null); goSubscribe(); }} className="rounded-xl gap-1.5">
-              <Crown className="h-4 w-4" /> Assinar Premium
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Find Professional dialog (demo) */}
-      <Dialog open={findProDialog} onOpenChange={setFindProDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
-              <Users className="h-6 w-6 text-primary" />
-            </div>
-            <DialogTitle className="text-center">Encontre um fisioterapeuta parceiro</DialogTitle>
-            <DialogDescription className="text-center pt-1">
-              No app real, aqui aparece uma <strong>lista de fisioterapeutas verificados</strong> cadastrados na plataforma Aliv.iA — com foto, especialidades, cidade, avaliações e botão para iniciar contato.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2 py-2">
-            {[
-              { name: "Dra. Ana Costa", spec: "Coluna · Dor crônica", city: "São Paulo - SP", rating: "4.9" },
-              { name: "Dr. Rafael Lima", spec: "Esportiva · Reabilitação", city: "Belo Horizonte - MG", rating: "4.8" },
-              { name: "Dra. Beatriz Souza", spec: "Neurodinâmica · Pilates clínico", city: "Curitiba - PR", rating: "5.0" },
-            ].map((p) => (
-              <div key={p.name} className="flex items-center gap-3 rounded-lg border border-border/60 p-3 opacity-80">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 shrink-0">
-                  <Stethoscope className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">{p.spec} · {p.city}</p>
-                </div>
-                <Badge variant="outline" className="text-[10px] shrink-0">★ {p.rating}</Badge>
-              </div>
-            ))}
-            <p className="text-[11px] text-muted-foreground italic text-center pt-1">
-              Visualização ilustrativa — disponível para assinantes Premium.
-            </p>
-          </div>
-
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setFindProDialog(false)} className="rounded-xl">
-              Voltar ao demo
-            </Button>
-            <Button onClick={() => { setFindProDialog(false); goSubscribe(); }} className="rounded-xl gap-1.5">
-              <Crown className="h-4 w-4" /> Assinar Premium
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Detailed assessment record dialog */}
-      <Dialog open={!!openAssessment} onOpenChange={(o) => !o && setOpenAssessment(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
-          {openAssessment && (
-            <>
-              <DialogHeader className="px-6 pt-6 pb-3 border-b">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge className="bg-primary/10 text-primary border-primary/20" variant="outline">
-                    <Sparkles className="h-3 w-3 mr-1" /> Premium
-                  </Badge>
-                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
-                    <CheckCircle2 className="h-3 w-3 mr-1" /> Concluída
-                  </Badge>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(openAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
-                  </span>
-                </div>
-                <DialogTitle className="text-left text-lg pt-1">{openAssessment.label}</DialogTitle>
-                <DialogDescription className="text-left">
-                  Prontuário simulado — Mariana Silva (Demo) · 34 anos · ciatalgia direita
-                </DialogDescription>
-              </DialogHeader>
-
-              <ScrollArea className="max-h-[65vh] px-6 py-4">
-                <div className="space-y-5">
-                  {/* Hipótese */}
-                  <section className="rounded-lg border border-primary/20 bg-primary/[0.03] p-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Brain className="h-4 w-4 text-primary" />
-                      <h4 className="text-sm font-semibold text-foreground">Hipótese diagnóstica (IA)</h4>
-                      <Badge variant="outline" className="text-[10px] ml-auto bg-emerald-500/10 text-emerald-700 border-emerald-200">
-                        Confiança: {openAssessment.confidence}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-foreground leading-relaxed">{openAssessment.hypothesis}</p>
-                  </section>
-
-                  {/* Red flags */}
-                  <section className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <p className="text-xs text-emerald-800">
-                      <strong>Red flags:</strong> nenhuma detectada. Caso liberado para abordagem fisioterapêutica.
-                    </p>
-                  </section>
-
-                  {/* Métricas-chave */}
-                  <section className="space-y-2">
-                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-muted-foreground" /> Métricas principais
-                    </h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="rounded-lg border p-2 text-center">
-                        <p className="text-[10px] text-muted-foreground">EVA</p>
-                        <p className="text-xl font-bold text-foreground">{openAssessment.pain_score}/10</p>
-                      </div>
-                      <div className="rounded-lg border p-2 text-center">
-                        <p className="text-[10px] text-muted-foreground">ODI</p>
-                        <p className="text-xl font-bold text-foreground">{openAssessment.odi}%</p>
-                      </div>
-                      <div className="rounded-lg border p-2 text-center">
-                        <p className="text-[10px] text-muted-foreground">SF-36</p>
-                        <p className="text-xl font-bold text-foreground">{openAssessment.sf36}%</p>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Regiões */}
-                  <section className="space-y-2">
-                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" /> Regiões de dor
-                    </h4>
-                    <div className="flex flex-wrap gap-1.5">
-                      {openAssessment.pain_regions.map((r) => (
-                        <span key={r} className="text-xs bg-muted text-foreground px-2.5 py-1 rounded-full">
-                          {painRegionLabels[r] || r}
-                        </span>
-                      ))}
-                    </div>
-                  </section>
-
-                  {/* Anamnese */}
-                  <section className="space-y-2">
-                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <ClipboardCheck className="h-4 w-4 text-muted-foreground" /> Anamnese resumida
-                    </h4>
-                    <div className="rounded-lg border divide-y text-sm">
-                      {[
-                        ["Início", openAssessment.anamnesis.onset],
-                        ["Caráter da dor", openAssessment.anamnesis.character],
-                        ["Fatores de piora", openAssessment.anamnesis.aggravators],
-                        ["Fatores de alívio", openAssessment.anamnesis.relievers],
-                        ["Sono", openAssessment.anamnesis.sleep],
-                        ["Objetivos do paciente", openAssessment.anamnesis.goals],
-                      ].map(([k, v]) => (
-                        <div key={k} className="px-3 py-2 grid grid-cols-[120px_1fr] gap-2">
-                          <span className="text-xs text-muted-foreground">{k}</span>
-                          <span className="text-xs text-foreground">{v}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
-                  {/* Testes funcionais */}
-                  <section className="space-y-2">
-                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <Target className="h-4 w-4 text-muted-foreground" /> Testes funcionais
-                    </h4>
-                    <div className="rounded-lg border divide-y">
-                      {openAssessment.tests.map((t) => {
-                        const color =
-                          t.flag === "positive" ? "text-destructive" :
-                          t.flag === "warning" ? "text-amber-600" : "text-emerald-600";
-                        const Icon =
-                          t.flag === "positive" ? AlertCircle :
-                          t.flag === "warning" ? AlertCircle : CheckCircle2;
-                        return (
-                          <div key={t.name} className="px-3 py-2 flex items-center gap-2">
-                            <Icon className={`h-4 w-4 ${color} shrink-0`} />
-                            <span className="text-xs text-foreground flex-1">{t.name}</span>
-                            <span className={`text-xs font-medium ${color}`}>{t.result}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-
-                  {/* Questionários */}
-                  <section className="space-y-2">
-                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" /> Questionários validados
-                    </h4>
-                    <div className="grid sm:grid-cols-2 gap-2">
-                      {openAssessment.questionnaires.map((q) => (
-                        <div key={q.name} className="rounded-lg border p-3 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs font-semibold text-foreground">{q.name}</p>
-                            <p className={`text-base font-bold ${q.color}`}>{q.score}</p>
-                          </div>
-                          <p className={`text-[11px] ${q.color}`}>{q.severity}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
-                  {/* Plano */}
-                  <section className="space-y-2">
-                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <Dumbbell className="h-4 w-4 text-muted-foreground" /> Plano de tratamento (STEPS)
-                    </h4>
-                    <ul className="rounded-lg border divide-y text-sm">
-                      {openAssessment.plan.map((step, i) => (
-                        <li key={i} className="px-3 py-2 flex items-start gap-2">
-                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary mt-0.5">
-                            {i + 1}
-                          </span>
-                          <span className="text-xs text-foreground">{step}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-
-                  <div className="rounded-lg border border-amber-300/40 bg-amber-50/40 p-3 flex items-start gap-2">
-                    <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-amber-900/80">
-                      Esta é uma visualização ilustrativa do prontuário. No app real, cada avaliação
-                      gera um <strong>PDF clínico completo</strong> que pode ser compartilhado com seu fisioterapeuta.
-                    </p>
-                  </div>
-                </div>
-              </ScrollArea>
-
-              <DialogFooter className="px-6 py-3 border-t bg-muted/30 flex-col sm:flex-row gap-2">
-                <Button variant="outline" onClick={() => setOpenAssessment(null)} className="rounded-xl">
-                  Fechar
-                </Button>
-                <Button onClick={() => { setOpenAssessment(null); goSubscribe(); }} className="rounded-xl gap-1.5">
-                  <Crown className="h-4 w-4" /> Quero meu prontuário real
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <Suspense fallback={null}>
+        {(assessmentDialog || findProDialog || openAssessment) ? (
+          <PatientDemoDialogs
+            assessmentDialog={assessmentDialog}
+            setAssessmentDialog={setAssessmentDialog}
+            findProDialog={findProDialog}
+            setFindProDialog={setFindProDialog}
+            openAssessment={openAssessment}
+            setOpenAssessment={setOpenAssessment}
+            goBasic={goBasic}
+            goSubscribe={goSubscribe}
+            painRegionLabels={painRegionLabels}
+          />
+        ) : null}
+      </Suspense>
     </div>
   );
 };
