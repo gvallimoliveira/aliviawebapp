@@ -345,6 +345,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const generateAIClinicalImpression = async () => {
+    if (demoMode) { demoUpsellToast(); return; }
     setGeneratingCi(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
