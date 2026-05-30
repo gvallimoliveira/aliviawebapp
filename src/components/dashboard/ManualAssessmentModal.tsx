@@ -897,44 +897,50 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               <div className="space-y-4">
                 <div>
                   <Label className="text-xs">{isPt ? "Intensidade da dor (0-10)" : "Pain intensity (0-10)"}: <span className="font-bold text-primary">{painScore}</span></Label>
-                  <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="mt-2" />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(painScore, MOCK_MANUAL_CASE.painScore, setPainScore, 5)}>
+                    <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="mt-2" />
+                  </DemoShield>
                 </div>
                 <div>
                   <Label className="text-xs">{isPt ? "Tipo de dor" : "Pain type"}</Label>
-                  <Select value={painType} onValueChange={setPainType}>
-                    <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="local">{isPt ? "Local" : "Local"}</SelectItem>
-                      <SelectItem value="radiating">{isPt ? "Irradiada" : "Radiating"}</SelectItem>
-                      <SelectItem value="burning">{isPt ? "Queimação" : "Burning"}</SelectItem>
-                      <SelectItem value="tingling">{isPt ? "Formigamento" : "Tingling"}</SelectItem>
-                      <SelectItem value="throbbing">{isPt ? "Latejante" : "Throbbing"}</SelectItem>
-                      <SelectItem value="stabbing">{isPt ? "Pontada" : "Stabbing"}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <DemoShield on={demoMode} onAutofill={() => autofill(painType, MOCK_MANUAL_CASE.painType, setPainType, "")}>
+                    <Select value={painType} onValueChange={setPainType}>
+                      <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="local">{isPt ? "Local" : "Local"}</SelectItem>
+                        <SelectItem value="radiating">{isPt ? "Irradiada" : "Radiating"}</SelectItem>
+                        <SelectItem value="burning">{isPt ? "Queimação" : "Burning"}</SelectItem>
+                        <SelectItem value="tingling">{isPt ? "Formigamento" : "Tingling"}</SelectItem>
+                        <SelectItem value="throbbing">{isPt ? "Latejante" : "Throbbing"}</SelectItem>
+                        <SelectItem value="stabbing">{isPt ? "Pontada" : "Stabbing"}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </DemoShield>
                 </div>
                 <div>
                   <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
-                  <div className="max-h-80 overflow-y-auto border rounded-md p-2 space-y-3">
-                    {regionGroups.map((g) => (
-                      <div key={g.key}>
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
-                          {isPt ? g.label_pt : g.label_en}
-                        </p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-                          {g.ids.map((id) => {
-                            const lbl = regionLabelMap[id];
-                            return (
-                              <label key={id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
-                                <Checkbox checked={painRegions.includes(id)} onCheckedChange={() => toggleRegion(id)} />
-                                <span>{isPt ? lbl.label_pt : lbl.label_en}</span>
-                              </label>
-                            );
-                          })}
+                  <DemoShield on={demoMode} onAutofill={() => toggleRegion("")}>
+                    <div className="max-h-80 overflow-y-auto border rounded-md p-2 space-y-3">
+                      {regionGroups.map((g) => (
+                        <div key={g.key}>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
+                            {isPt ? g.label_pt : g.label_en}
+                          </p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                            {g.ids.map((id) => {
+                              const lbl = regionLabelMap[id];
+                              return (
+                                <label key={id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                                  <Checkbox checked={painRegions.includes(id)} onCheckedChange={() => toggleRegion(id)} />
+                                  <span>{isPt ? lbl.label_pt : lbl.label_en}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </DemoShield>
                   {painRegions.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">{painRegions.length} {isPt ? "selecionadas" : "selected"}</p>
                   )}
