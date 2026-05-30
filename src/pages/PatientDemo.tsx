@@ -507,7 +507,7 @@ const PatientDemo = () => {
                 <Card
                   key={a.id}
                   className="hover:shadow-md transition-all border-border/60 hover:border-border group cursor-pointer"
-                  onClick={() => setAssessmentDialog("premium")}
+                  onClick={() => setOpenAssessment(a)}
                 >
                   <CardContent className="py-4 px-5">
                     <div className="flex items-center gap-3">
