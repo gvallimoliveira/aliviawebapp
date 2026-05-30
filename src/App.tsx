@@ -47,6 +47,7 @@ const ClinicAssessment = lazy(() => import("./pages/ClinicAssessment"));
 const ClinicDemo = lazy(() => import("./pages/ClinicDemo"));
 const ProfessionalDemo = lazy(() => import("./pages/ProfessionalDemo"));
 const PatientDemo = lazy(() => import("./pages/PatientDemo"));
+const ProfessionalAssessmentDemo = lazy(() => import("./pages/ProfessionalAssessmentDemo"));
 const ClinicFeedback = lazy(() => import("./pages/ClinicFeedback"));
 const Account = lazy(() => import("./pages/Account"));
 const ClearCache = lazy(() => import("./pages/ClearCache"));
