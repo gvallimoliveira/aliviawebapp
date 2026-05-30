@@ -265,6 +265,7 @@ export default function PatientDetailView(props: any) {
           <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {patient.email}<span className="mx-1">•</span>{patient.assessments.length} {t("pro.assessments_count")}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {(latestWithDiagnosis || latestAssessment) && <Button variant="ghost" size="sm" className="gap-1.5 shrink-0 text-primary hover:text-primary hover:bg-primary/10" onClick={() => setSummaryDialogOpen(true)}><Sparkles className="h-4 w-4" /> {language === "pt" ? "Resumo" : language === "es" ? "Resumen" : "Summary"}</Button>}
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
           {(!readOnly || allowManualAssessment) && !isDemo && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
