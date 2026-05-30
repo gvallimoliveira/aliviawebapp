@@ -74,17 +74,36 @@ const AssessmentSummaryView = ({
   const redFlagsRaw = (diagnosis as any).redFlags ?? (diagnosis as any).red_flags;
   const redFlagsDetected = Array.isArray(redFlagsRaw) ? redFlagsRaw.length > 0 : !!redFlagsRaw;
 
+  // Translate a raw value (e.g. "neck_pain", "one_month", "anamnesis.pain_type.throbbing")
+  // by trying i18n with candidate prefixes. Falls back to a humanized version.
+  const tryT = (val: string, prefixes: string[]): string => {
+    const raw = String(val).trim();
+    if (!raw) return raw;
+    const candidates = raw.includes(".") ? [raw] : prefixes.map((p) => `${p}.${raw}`);
+    for (const key of candidates) {
+      const out = t(key);
+      if (out && out !== key) return out;
+    }
+    // humanize fallback: "one_month" -> "One month"
+    const humanized = raw.replace(/^.*\./, "").replace(/_/g, " ");
+    return humanized.charAt(0).toUpperCase() + humanized.slice(1);
+  };
+  const tList = (vals: string[] | string, prefixes: string[]): string => {
+    const arr = Array.isArray(vals) ? vals : String(vals).split(",");
+    return arr.map((v) => tryT(v, prefixes)).join(", ");
+  };
+
   const anamnesisLines: Array<[string, string]> = [];
   const cc = anamnesis.chiefComplaints || (anamnesis.chiefComplaint ? [anamnesis.chiefComplaint] : []);
-  if (cc.length) anamnesisLines.push([isPt ? "Queixa principal" : "Chief complaint", cc.join(", ")]);
+  if (cc.length) anamnesisLines.push([isPt ? "Queixa principal" : "Chief complaint", tList(cc, ["anamnesis.complaint"])]);
   if (anamnesis.customComplaint) anamnesisLines.push([isPt ? "Detalhes" : "Details", anamnesis.customComplaint]);
-  if (anamnesis.painDuration) anamnesisLines.push([isPt ? "Duração" : "Duration", String(anamnesis.painDuration).replace(/^anamnesis\..+\./, "")]);
-  if (anamnesis.onset) anamnesisLines.push([isPt ? "Início" : "Onset", String(anamnesis.onset).replace(/^anamnesis\..+\./, "")]);
-  if (anamnesis.painTypes?.length) anamnesisLines.push([isPt ? "Caráter da dor" : "Pain character", anamnesis.painTypes.join(", ")]);
-  if (anamnesis.evolution) anamnesisLines.push([isPt ? "Evolução" : "Evolution", String(anamnesis.evolution).replace(/^anamnesis\..+\./, "")]);
+  if (anamnesis.painDuration) anamnesisLines.push([isPt ? "Duração" : "Duration", tryT(anamnesis.painDuration, ["anamnesis.duration"])]);
+  if (anamnesis.onset) anamnesisLines.push([isPt ? "Início" : "Onset", tryT(anamnesis.onset, ["anamnesis.onset"])]);
+  if (anamnesis.painTypes?.length) anamnesisLines.push([isPt ? "Caráter da dor" : "Pain character", tList(anamnesis.painTypes, ["anamnesis.pain_type"])]);
+  if (anamnesis.evolution) anamnesisLines.push([isPt ? "Evolução" : "Evolution", tryT(anamnesis.evolution, ["anamnesis.evolution"])]);
   if (anamnesis.aggravatingFactors) anamnesisLines.push([isPt ? "Fatores de piora" : "Aggravators", anamnesis.aggravatingFactors]);
   if (anamnesis.relievingFactors) anamnesisLines.push([isPt ? "Fatores de alívio" : "Relievers", anamnesis.relievingFactors]);
-  if (anamnesis.activityLevel) anamnesisLines.push([isPt ? "Nível de atividade" : "Activity level", String(anamnesis.activityLevel).replace(/^anamnesis\..+\./, "")]);
+  if (anamnesis.activityLevel) anamnesisLines.push([isPt ? "Nível de atividade" : "Activity level", tryT(anamnesis.activityLevel, ["anamnesis.activity"])]);
 
   const treatmentPhases: any[] = assessment.treatment_plan?.phases || [];
 
