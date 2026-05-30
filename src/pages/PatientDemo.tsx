@@ -3,6 +3,10 @@ import { Activity, HeartPulse } from "lucide-react";
 import { setSeo } from "@/lib/seo";
 
 const PatientDemoContent = lazy(() => import("@/components/demo/PatientDemoContent"));
+export const warmPatientDemoRoute = () => Promise.all([
+  import("@/components/demo/PatientDemoContent"),
+  import("@/components/demo/PatientDemoHealth"),
+]);
 
 const PatientDemoShell = () => (
   <div className="min-h-screen bg-background">
@@ -62,6 +66,8 @@ const PatientDemo = () => {
       url: `${window.location.origin}/para-pacientes/demo`,
       type: "website",
     });
+
+    void warmPatientDemoRoute();
   }, []);
 
   return (
