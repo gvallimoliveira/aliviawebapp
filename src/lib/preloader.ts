@@ -36,7 +36,6 @@ export const startIdlePreloads = () => {
   idle(() => {
     safeImport("Assessment", () => import("@/pages/Assessment"));
     safeImport("AssessmentView", () => import("@/pages/AssessmentView"));
-    safeImport("PatientDemo", () => import("@/pages/PatientDemo"));
   });
 
   idle(() => {
