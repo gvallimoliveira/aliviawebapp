@@ -53,7 +53,7 @@ function getConfidenceBadge(conf: string | undefined, isPt: boolean) {
 }
 
 const AssessmentSummaryView = ({
-  assessment, onBack, onDownloadPdf, onShareWhatsApp, pdfLoading, whatsappLoading,
+  assessment, onBack, onDownloadPdf, onShareWhatsApp, pdfLoading, whatsappLoading, embedded,
 }: AssessmentSummaryViewProps) => {
   const { language, t } = useLanguage();
   const isPt = language === "pt";
