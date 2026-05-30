@@ -768,11 +768,47 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                 <div className="flex items-center gap-2 pt-1 flex-wrap">
                   <Button onClick={() => handleSubscribe("annual")} disabled={checkoutLoading} className="rounded-xl gap-2">
                     {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
-                    Assinar PRO ({PRO_PLAN_ANNUAL_PRICE_FORMATTED}/mês)
+                    Plano anual ({PRO_PLAN_ANNUAL_PRICE_FORMATTED})
                   </Button>
-                  <Button variant="outline" onClick={() => handleSubscribe("monthly")} disabled={checkoutLoading} className="rounded-xl">
-                    Plano mensal
+                  <Button variant="outline" onClick={() => handleSubscribe("monthly")} disabled={checkoutLoading} className="rounded-xl gap-2">
+                    {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    Plano mensal ({PRO_PLAN_PRICE_FORMATTED})
                   </Button>
+                </div>
+
+                {/* Demo: link de pré-avaliação simulado */}
+                <div className="mt-4 rounded-xl border border-dashed border-primary/40 bg-background/60 p-3 space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-300/40 text-[10px] uppercase">Demo</Badge>
+                    <p className="text-sm font-semibold text-foreground">Seu link de pré-avaliação</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Cada profissional PRO recebe um link único para enviar aos pacientes. Eles preenchem anamnese, mapa de dor e questionários antes da consulta — e o prontuário já chega pronto na sua agenda.
+                  </p>
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                    <Link2 className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <code className="text-[11px] text-foreground truncate flex-1">{getPublicOrigin()}/assessment/professional/demo</code>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2"
+                      onClick={() => {
+                        const link = `${getPublicOrigin()}/assessment/professional/demo`;
+                        navigator.clipboard.writeText(link);
+                        toast({ title: "Link copiado!", description: "Abra em outra aba para ver o onboarding do paciente." });
+                      }}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 rounded-lg gap-1.5 text-[11px]"
+                      onClick={() => window.open(`${getPublicOrigin()}/assessment/professional/demo`, "_blank")}
+                    >
+                      Abrir
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
