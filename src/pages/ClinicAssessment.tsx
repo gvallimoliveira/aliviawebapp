@@ -251,6 +251,22 @@ const ClinicAssessment = () => {
     if (id) {
       await updateAssessment(id, { red_flags: flaggedItems as any, status: "red_flagged" });
     }
+    // High-priority push to clinic owner + secretary
+    if (clinicId) {
+      try {
+        await supabase.functions.invoke("send-push-notification", {
+          body: {
+            clinic_id: clinicId,
+            title: "🚨 Red flag detectada",
+            body: `${patientName || "Paciente"} ativou sinais de alerta na avaliação.`,
+            url: id ? `/assessment/view/${id}` : "/dashboard?tab=clinic",
+            tag: `redflag-${id || "x"}`,
+          },
+        });
+      } catch (err) {
+        console.warn("Red flag push (clinic) failed:", err);
+      }
+    }
     setStep("redflag_alert");
   };
 
