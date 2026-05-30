@@ -20,6 +20,7 @@ import RegionPainComparison from "../RegionPainComparison";
 import SessionNotesSection from "../SessionNotesSection";
 import VoiceNoteCard from "../VoiceNoteCard";
 import PainMapView from "@/components/assessment/PainMapView";
+import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
