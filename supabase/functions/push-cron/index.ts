@@ -406,15 +406,28 @@ Deno.serve(async (req) => {
             const { data: pros } = await supabase.from("professionals").select("id, user_id").in("id", proIds);
             const proUserMap = new Map((pros || []).map((p: any) => [p.id, p.user_id]));
 
+            const notifiedClinics = new Set<string>();
             for (const ref of refs) {
               const proUserId = proUserMap.get(ref.professional_id);
-              if (!proUserId) continue;
               const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", ref.patient_user_id).maybeSingle();
               const name = profile?.full_name || "Paciente";
+              const title = "⚠️ Alerta: Piora de dor";
+              const body = `${name} registrou aumento significativo de dor. Considere entrar em contato.`;
+              const url = "/dashboard?tab=professional";
               try {
-                const sent = await notifyUser(proUserId, "⚠️ Alerta: Piora de dor", `${name} registrou aumento significativo de dor. Considere entrar em contato.`, "/dashboard?tab=professional");
-                if (sent) results.pain_spike_alerts++;
-              } catch (e) { results.errors.push(`pain_spike ${proUserId}: ${e}`); }
+                if (proUserId) {
+                  const sent = await notifyUser(proUserId, title, body, url);
+                  if (sent) results.pain_spike_alerts++;
+                }
+                // Also route to clinic owner+secretary if patient is clinic-linked
+                const { data: au } = await supabase.auth.admin.getUserById(ref.patient_user_id);
+                const clinicId = await resolveClinicForPatient(ref.patient_user_id, au?.user?.email || null);
+                if (clinicId && !notifiedClinics.has(clinicId)) {
+                  const fanned = await notifyClinicStaff(clinicId, title, body, "/dashboard?tab=clinic");
+                  results.pain_spike_alerts += fanned;
+                  notifiedClinics.add(clinicId);
+                }
+              } catch (e) { results.errors.push(`pain_spike ${ref.patient_user_id}: ${e}`); }
             }
           }
         }
