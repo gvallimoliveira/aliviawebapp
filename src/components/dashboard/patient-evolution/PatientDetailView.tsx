@@ -241,6 +241,7 @@ export default function PatientDetailView(props: any) {
   } = props;
 
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
+  const [summaryDialogOpen, setSummaryDialogOpen] = React.useState(false);
 
   return (
     <div className="space-y-5">
@@ -264,6 +265,7 @@ export default function PatientDetailView(props: any) {
           <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {patient.email}<span className="mx-1">•</span>{patient.assessments.length} {t("pro.assessments_count")}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {(latestWithDiagnosis || latestAssessment) && <Button variant="ghost" size="sm" className="gap-1.5 shrink-0 text-primary hover:text-primary hover:bg-primary/10" onClick={() => setSummaryDialogOpen(true)}><Sparkles className="h-4 w-4" /> {language === "pt" ? "Resumo" : language === "es" ? "Resumen" : "Summary"}</Button>}
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
           {(!readOnly || allowManualAssessment) && !isDemo && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
@@ -348,31 +350,28 @@ export default function PatientDetailView(props: any) {
         const summaryTarget = latestWithDiagnosis || latestAssessment;
         if (!summaryTarget) return null;
         return (
-          <CollapsibleSection
-            storageKey={`patient-summary-open:${patient.groupKey || patient.email || "x"}`}
-            defaultOpen={true}
-            header={
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <h4 className="text-sm font-semibold text-foreground">
+          <Dialog open={summaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
                   {language === "pt" ? "Resumo da última avaliação" : language === "es" ? "Resumen de la última evaluación" : "Latest assessment summary"}
-                </h4>
-                <Badge variant="outline" className="text-[10px] ml-1">
-                  {new Date(summaryTarget.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "short", year: "numeric" })}
-                </Badge>
-              </div>
-            }
-            className="rounded-2xl border border-border bg-card/50 p-4"
-          >
-            <AssessmentSummaryView
-              assessment={summaryTarget}
-              embedded
-              onDownloadPdf={() => onDownloadPdf?.(summaryTarget)}
-              onShareWhatsApp={() => onShareWhatsApp?.(summaryTarget)}
-            />
-          </CollapsibleSection>
+                </DialogTitle>
+                <DialogDescription>
+                  {patient.name} · {new Date(summaryTarget.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "long", year: "numeric" })}
+                </DialogDescription>
+              </DialogHeader>
+              <AssessmentSummaryView
+                assessment={summaryTarget}
+                embedded
+                onDownloadPdf={() => onDownloadPdf?.(summaryTarget)}
+                onShareWhatsApp={() => onShareWhatsApp?.(summaryTarget)}
+              />
+            </DialogContent>
+          </Dialog>
         );
       })()}
+
 
 
       {clinicId && !isDemo && (() => {
