@@ -352,6 +352,45 @@ const AssessmentView = () => {
   const painRegions = (assessment.pain_regions || []) as string[];
   const regions = painRegions.map((r: string) => getRegionLabel(r, isPt));
 
+  // Patient mode: clean summary view (demo-style) replaces the report-style layout.
+  // Pro/clinic users keep the existing detailed prontuário view (?from=professional).
+  const isProfessionalView = searchParams.get("from") === "professional";
+  if (!isProfessionalView) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
+          <div className="container flex h-16 items-center justify-between">
+            <button onClick={() => navigate("/")} className="flex items-center gap-2">
+              <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
+              <span className="text-xl font-bold text-foreground">Aliv.iA</span>
+            </button>
+            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
+              <Globe className="h-4 w-4" />
+              {t("nav.language")}
+            </Button>
+          </div>
+        </header>
+        <main className="container max-w-2xl py-6 px-4">
+          {isDemo && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-center mb-4">
+              <span className="text-xs font-medium text-amber-700">
+                {isPt ? "🎓 Modo Demonstração — dados simulados" : "🎓 Demo Mode — simulated data"}
+              </span>
+            </div>
+          )}
+          <AssessmentSummaryView
+            assessment={assessment}
+            onBack={goBack}
+            onDownloadPdf={handleDownloadPdf}
+            onShareWhatsApp={handleShareWhatsApp}
+            pdfLoading={pdfLoading}
+            whatsappLoading={whatsappLoading}
+          />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
@@ -368,6 +407,7 @@ const AssessmentView = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4 space-y-6">
+
         {isDemo && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-center">
             <span className="text-xs font-medium text-amber-700">
