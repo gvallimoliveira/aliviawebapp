@@ -538,6 +538,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const handleSave = async (navigateAfter: boolean = false) => {
+    if (demoMode) { demoUpsellToast(); return; }
     if (!patientName.trim()) {
       toast({ title: isPt ? "Nome do paciente é obrigatório" : "Patient name required", variant: "destructive" });
       return;
