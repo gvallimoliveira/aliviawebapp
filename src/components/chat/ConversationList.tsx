@@ -17,9 +17,11 @@ import ChatWindow from "./ChatWindow";
 import { toast } from "@/hooks/use-toast";
 
 interface ConversationListProps {
-  mode: "patient" | "professional";
+  mode: "patient" | "professional" | "staff";
   professionalId?: string;
   clinicId?: string | null;
+  /** When mode="staff", the user id of the clinic staff (secretary/owner) whose inbox to load. Defaults to current user. */
+  staffUserId?: string;
   initialConversationId?: string | null;
   searchQuery?: string;
   canInitiateConversation?: boolean;
@@ -28,14 +30,17 @@ interface ConversationListProps {
 interface ConversationItem {
   id: string;
   patient_user_id: string;
-  professional_id: string;
+  professional_id: string | null;
+  recipient_user_id: string | null;
+  clinic_id: string | null;
   updated_at: string;
   other_name: string;
   last_message?: string;
   unread_count: number;
 }
 
-const ConversationList = ({ mode, professionalId, clinicId = null, initialConversationId, searchQuery = "", canInitiateConversation = true }: ConversationListProps) => {
+const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, initialConversationId, searchQuery = "", canInitiateConversation = true }: ConversationListProps) => {
+
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const isPt = language === "pt";
@@ -255,7 +260,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
   useEffect(() => {
     if (!user) return;
     fetchConversations();
-  }, [user, mode, professionalId]);
+  }, [user, mode, professionalId, clinicId, staffUserId]);
 
   useEffect(() => {
     if (initialConversationId && conversations.length > 0) {
@@ -322,10 +327,32 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
     let otherName = mode === "patient" ? "Profissional" : "Paciente";
 
     if (mode === "patient") {
-      const { data: pros } = await supabase.rpc("get_professionals_basic_info", {
-        _professional_ids: [conv.professional_id],
-      });
-      otherName = pros?.[0]?.full_name || otherName;
+      if (conv.professional_id) {
+        const { data: pros } = await supabase.rpc("get_professionals_basic_info", {
+          _professional_ids: [conv.professional_id],
+        });
+        otherName = pros?.[0]?.full_name || otherName;
+      } else if (conv.recipient_user_id) {
+        // Conversation with clinic staff (secretary/owner)
+        const [{ data: profile }, { data: clinic }] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("user_id", conv.recipient_user_id).maybeSingle(),
+          conv.clinic_id
+            ? supabase.from("clinics").select("name").eq("id", conv.clinic_id).maybeSingle()
+            : Promise.resolve({ data: null as { name: string } | null }),
+        ]);
+        const clinicName = clinic?.name;
+        const staffName = profile?.full_name;
+        otherName = clinicName
+          ? (staffName ? `${staffName} · ${clinicName}` : clinicName)
+          : (staffName || (isPt ? "Atendimento da clínica" : "Clinic support"));
+      }
+    } else if (mode === "staff") {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", conv.patient_user_id)
+        .maybeSingle();
+      otherName = profile?.full_name || otherName;
     } else if (clinicId || professionalId) {
       const rpcName = clinicId ? "get_clinic_all_patients" : "get_professional_all_patients";
       const rpcArgs = clinicId ? { _clinic_id: clinicId } : { _professional_id: professionalId };
@@ -364,6 +391,8 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
       id: conv.id,
       patient_user_id: conv.patient_user_id,
       professional_id: conv.professional_id,
+      recipient_user_id: (conv as any).recipient_user_id ?? null,
+      clinic_id: (conv as any).clinic_id ?? null,
       updated_at: conv.updated_at,
       other_name: otherName,
       last_message: lastMessage?.content || "",
@@ -382,7 +411,8 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
 
     setActiveOtherName((current) => current || otherName);
     return true;
-  }, [clinicId, mode, professionalId, user]);
+  }, [clinicId, isPt, mode, professionalId, user]);
+
 
   useEffect(() => {
     if (!pendingOpenConvId || loading || activeConversation) return;
@@ -420,10 +450,17 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
     if (!user) return;
     setLoading(true);
 
+    const effectiveStaffUserId = staffUserId || user.id;
+
     // 1. Fetch conversations
     let query = supabase.from("conversations").select("*");
     if (mode === "patient") {
       query = query.eq("patient_user_id", user.id).eq("hidden_by_patient", false);
+    } else if (mode === "staff") {
+      query = query
+        .eq("recipient_user_id", effectiveStaffUserId)
+        .eq("hidden_by_professional", false);
+      if (clinicId) query = query.eq("clinic_id", clinicId);
     } else if (professionalId) {
       query = query.eq("professional_id", professionalId).eq("hidden_by_professional", false);
     }
@@ -439,19 +476,45 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
 
     // 2. Batch-fetch names for the other party
     let namesMap: Record<string, string> = {};
+    let clinicNamesMap: Record<string, string> = {};
+    let recipientNamesMap: Record<string, string> = {};
+
     if (mode === "patient") {
-      const proIds = [...new Set(convs.map((c) => c.professional_id))];
-      // Use security-definer RPC to bypass RLS that hides professionals
-      // from patients (RLS only allows the professional themself or admins).
-      const { data: pros, error: prosErr } = await supabase.rpc("get_professionals_basic_info", {
-        _professional_ids: proIds,
-      });
-      if (prosErr) {
-        console.warn("get_professionals_basic_info failed:", prosErr);
+      const proIds = [...new Set(convs.map((c) => c.professional_id).filter(Boolean))] as string[];
+      if (proIds.length > 0) {
+        const { data: pros, error: prosErr } = await supabase.rpc("get_professionals_basic_info", {
+          _professional_ids: proIds,
+        });
+        if (prosErr) console.warn("get_professionals_basic_info failed:", prosErr);
+        for (const p of pros || []) namesMap[p.id] = p.full_name;
       }
-      for (const p of pros || []) {
-        namesMap[p.id] = p.full_name;
+
+      // For clinic-staff conversations (null professional_id), resolve clinic + staff names
+      const clinicConvs = convs.filter((c) => !c.professional_id);
+      const clinicIds = [...new Set(clinicConvs.map((c: any) => c.clinic_id).filter(Boolean))] as string[];
+      const recipientIds = [...new Set(clinicConvs.map((c: any) => c.recipient_user_id).filter(Boolean))] as string[];
+
+      if (clinicIds.length > 0) {
+        const { data: clinics } = await supabase
+          .from("clinics")
+          .select("id, name")
+          .in("id", clinicIds);
+        for (const cl of clinics || []) clinicNamesMap[cl.id] = cl.name;
       }
+      if (recipientIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", recipientIds);
+        for (const pr of profs || []) recipientNamesMap[pr.user_id] = pr.full_name || "";
+      }
+    } else if (mode === "staff") {
+      const patientIds = [...new Set(convs.map((c) => c.patient_user_id))];
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", patientIds);
+      for (const p of profs || []) namesMap[p.user_id] = p.full_name || "Paciente";
     } else if (professionalId) {
       const rpcName = clinicId ? "get_clinic_all_patients" : "get_professional_all_patients";
       const rpcArgs = clinicId ? { _clinic_id: clinicId } : { _professional_id: professionalId };
@@ -479,7 +542,6 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
     }
 
     // 3. Batch-fetch last messages for all conversations
-    // We fetch the most recent message per conversation using a single query
     const { data: allMessages } = await supabase
       .from("messages")
       .select("conversation_id, content, created_at")
@@ -507,14 +569,29 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
     }
 
     // 5. Assemble enriched list
-    const enriched: ConversationItem[] = convs.map((conv) => {
-      const nameKey = mode === "patient" ? conv.professional_id : conv.patient_user_id;
+    const enriched: ConversationItem[] = convs.map((conv: any) => {
+      let otherName = "";
+      if (mode === "patient") {
+        if (conv.professional_id) {
+          otherName = namesMap[conv.professional_id] || "Profissional";
+        } else {
+          const clinicName = conv.clinic_id ? clinicNamesMap[conv.clinic_id] : "";
+          const staffName = conv.recipient_user_id ? recipientNamesMap[conv.recipient_user_id] : "";
+          otherName = clinicName
+            ? (staffName ? `${staffName} · ${clinicName}` : clinicName)
+            : (staffName || (isPt ? "Atendimento da clínica" : "Clinic support"));
+        }
+      } else {
+        otherName = namesMap[conv.patient_user_id] || "Paciente";
+      }
       return {
         id: conv.id,
         patient_user_id: conv.patient_user_id,
-        professional_id: conv.professional_id,
+        professional_id: conv.professional_id ?? null,
+        recipient_user_id: conv.recipient_user_id ?? null,
+        clinic_id: conv.clinic_id ?? null,
         updated_at: conv.updated_at,
-        other_name: namesMap[nameKey] || (mode === "patient" ? "Profissional" : "Paciente"),
+        other_name: otherName,
         last_message: lastMessageMap[conv.id] || "",
         unread_count: unreadMap[conv.id] || 0,
       };
@@ -523,6 +600,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, initialConver
     setConversations(enriched);
     setLoading(false);
   };
+
 
   const handleDeleteConversation = async (e: React.MouseEvent, convId: string) => {
     e.stopPropagation();

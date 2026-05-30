@@ -560,33 +560,46 @@ export type Database = {
       }
       conversations: {
         Row: {
+          clinic_id: string | null
           created_at: string
           hidden_by_patient: boolean
           hidden_by_professional: boolean
           id: string
           patient_user_id: string
-          professional_id: string
+          professional_id: string | null
+          recipient_user_id: string | null
           updated_at: string
         }
         Insert: {
+          clinic_id?: string | null
           created_at?: string
           hidden_by_patient?: boolean
           hidden_by_professional?: boolean
           id?: string
           patient_user_id: string
-          professional_id: string
+          professional_id?: string | null
+          recipient_user_id?: string | null
           updated_at?: string
         }
         Update: {
+          clinic_id?: string | null
           created_at?: string
           hidden_by_patient?: boolean
           hidden_by_professional?: boolean
           id?: string
           patient_user_id?: string
-          professional_id?: string
+          professional_id?: string | null
+          recipient_user_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_professional_id_fkey"
             columns: ["professional_id"]
@@ -1970,6 +1983,10 @@ export type Database = {
       }
       create_conversation_for_referral: {
         Args: { _patient_user_id: string; _professional_id: string }
+        Returns: string
+      }
+      create_conversation_with_clinic_staff: {
+        Args: { _clinic_id: string }
         Returns: string
       }
       get_clinic_all_patients: {

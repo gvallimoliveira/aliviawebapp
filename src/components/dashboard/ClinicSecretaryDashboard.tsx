@@ -9,8 +9,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2, UserPlus, ChevronDown, ChevronUp,
+  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2, UserPlus, ChevronDown, ChevronUp, MessageCircle,
 } from "lucide-react";
+import ConversationList from "@/components/chat/ConversationList";
+
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
 import SecretaryReportsCard from "./SecretaryReportsCard";
 import CrefitoCompletionBanner from "./CrefitoCompletionBanner";
@@ -435,7 +437,30 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
           />
         </DashboardErrorBoundary>
       )}
+
+      {/* Patient → clinic-staff inbox (only owner/secretary see this) */}
+      {showPrivileged && activeClinic?.clinic_id && (
+        <DashboardErrorBoundary>
+          <div className="space-y-3">
+            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-muted-foreground" />
+              {lang === "pt" ? "Mensagens dos pacientes" : "Patient messages"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {lang === "pt"
+                ? "Conversas iniciadas por pacientes da clínica diretamente com a recepção/secretaria."
+                : "Conversations started by clinic patients directly with the front desk."}
+            </p>
+            <ConversationList
+              mode="staff"
+              clinicId={activeClinic.clinic_id}
+              canInitiateConversation={false}
+            />
+          </div>
+        </DashboardErrorBoundary>
+      )}
     </div>
+
   );
 };
 
