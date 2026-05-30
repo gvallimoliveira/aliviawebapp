@@ -16,13 +16,10 @@ import { ClinicProvider } from "@/contexts/ClinicContext";
 import { VoiceRecorderProvider } from "@/contexts/VoiceRecorderContext";
 import RealtimeNotifier from "@/components/RealtimeNotifier";
 
-// Level 1 — eager (initial paint critical)
-import Gateway from "./pages/Gateway";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import NotFound from "./pages/NotFound";
-
-// Level 2/3 — lazy (split into separate chunks)
+const Gateway = lazy(() => import("./pages/Gateway"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 const PatientLanding = lazy(() => import("./pages/PatientLanding"));
 const LandingLegacy = lazy(() => import("./pages/LandingLegacy"));
 const Assessment = lazy(() => import("./pages/Assessment"));
