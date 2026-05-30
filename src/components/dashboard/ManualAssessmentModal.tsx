@@ -341,6 +341,16 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
 
   const toggleRedFlag = (rf: string) => {
+    if (demoMode) {
+      // Caso simulado não tem red flags — apenas avisa.
+      toast({
+        title: isPt ? "Caso simulado sem red flags" : "Mock case has no red flags",
+        description: isPt
+          ? "Em casos reais, marcar qualquer sinal interrompe a avaliação e sugere encaminhamento médico."
+          : "In real cases, checking any sign aborts assessment and suggests medical referral.",
+      });
+      return;
+    }
     setRedFlagsChecked((prev) => prev.includes(rf) ? prev.filter((r) => r !== rf) : [...prev, rf]);
   };
 
