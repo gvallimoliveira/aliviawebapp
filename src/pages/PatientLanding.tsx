@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import ReferralBanner from "@/components/ReferralBanner";
@@ -19,6 +19,15 @@ import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
 
 const PatientLanding = () => {
   const [searchParams] = useSearchParams();
+  const patientDemoImportRef = useRef<Promise<unknown> | null>(null);
+
+  const warmPatientDemo = useCallback(() => {
+    if (!patientDemoImportRef.current) {
+      patientDemoImportRef.current = import("./PatientDemo");
+    }
+
+    return patientDemoImportRef.current;
+  }, []);
 
   useEffect(() => {
     const ref = searchParams.get("ref");
@@ -35,6 +44,14 @@ const PatientLanding = () => {
     setOrganizationJsonLd();
   }, []);
 
+  useEffect(() => {
+    const preloadTimer = window.setTimeout(() => {
+      void warmPatientDemo();
+    }, 150);
+
+    return () => window.clearTimeout(preloadTimer);
+  }, [warmPatientDemo]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -44,8 +61,10 @@ const PatientLanding = () => {
         <div className="container -mt-8 mb-12 flex justify-center">
           <Link
             to="/para-pacientes/demo"
-            onMouseEnter={() => import("./PatientDemo")}
-            onTouchStart={() => import("./PatientDemo")}
+            onMouseEnter={() => void warmPatientDemo()}
+            onFocus={() => void warmPatientDemo()}
+            onPointerDown={() => void warmPatientDemo()}
+            onTouchStart={() => void warmPatientDemo()}
             className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
           >
             ✨ Ver demo interativa do painel Premium

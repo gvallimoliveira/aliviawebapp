@@ -12,9 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
-import {
   ClipboardList, Sparkles, Crown, ArrowLeft, HelpCircle, User, Activity,
   Flame, Calendar, MapPin, ChevronRight, CheckCircle2, FileText, Dumbbell,
   Info, TrendingDown, Users, Lock, Trophy, Stethoscope, AlertCircle, Brain,
@@ -178,6 +175,103 @@ const painRegionLabels: Record<string, string> = {
   right_gluteal: "Glúteo D.",
   right_hamstring: "Posterior Coxa D.",
   right_calf: "Panturrilha D.",
+};
+
+const SimpleDiaryChart = ({ data }: { data: { date: string; score: number }[] }) => {
+  const { areaPath, linePath, labels, points, width, height, yLines } = useMemo(() => {
+    const width = 600;
+    const height = 180;
+    const paddingX = 18;
+    const paddingTop = 16;
+    const paddingBottom = 20;
+    const innerWidth = width - paddingX * 2;
+    const innerHeight = height - paddingTop - paddingBottom;
+    const maxScore = 10;
+    const safeDivisor = Math.max(data.length - 1, 1);
+
+    const points = data.map((entry, index) => {
+      const x = paddingX + (index / safeDivisor) * innerWidth;
+      const y = paddingTop + ((maxScore - entry.score) / maxScore) * innerHeight;
+      return { ...entry, x, y };
+    });
+
+    const linePath = points
+      .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
+      .join(" ");
+
+    const lastPoint = points[points.length - 1] ?? { x: width - paddingX, y: height - paddingBottom };
+    const firstPoint = points[0] ?? { x: paddingX, y: height - paddingBottom };
+
+    const areaPath = `${linePath} L ${lastPoint.x.toFixed(1)} ${(height - paddingBottom).toFixed(1)} L ${firstPoint.x.toFixed(1)} ${(height - paddingBottom).toFixed(1)} Z`;
+
+    const labels = [0, Math.floor(safeDivisor / 3), Math.floor((safeDivisor * 2) / 3), safeDivisor]
+      .map((index) => data[index]?.date)
+      .filter((value, index, arr): value is string => Boolean(value) && arr.indexOf(value) === index);
+
+    const yLines = [0, 5, 10].map((score) => ({
+      score,
+      y: paddingTop + ((maxScore - score) / maxScore) * innerHeight,
+    }));
+
+    return { areaPath, linePath, labels, points, width, height, yLines };
+  }, [data]);
+
+  return (
+    <div className="space-y-3">
+      <div className="overflow-hidden rounded-lg border border-border/60 bg-muted/20">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="h-[180px] w-full"
+          role="img"
+          aria-label="Gráfico da evolução da dor nos últimos 14 dias"
+        >
+          {yLines.map((line) => (
+            <g key={line.score}>
+              <line
+                x1="18"
+                x2={width - 18}
+                y1={line.y}
+                y2={line.y}
+                stroke="hsl(var(--border))"
+                strokeDasharray="4 4"
+              />
+              <text x="8" y={line.y + 4} fontSize="10" fill="hsl(var(--muted-foreground))">
+                {line.score}
+              </text>
+            </g>
+          ))}
+
+          <path d={areaPath} fill="hsl(var(--primary))" opacity="0.12" />
+          <path
+            d={linePath}
+            fill="none"
+            stroke="hsl(var(--primary))"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {points.map((point) => (
+            <circle
+              key={point.date}
+              cx={point.x}
+              cy={point.y}
+              r="4"
+              fill="hsl(var(--primary))"
+              stroke="hsl(var(--background))"
+              strokeWidth="2"
+            />
+          ))}
+        </svg>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+        {labels.map((label) => (
+          <span key={label}>{label}</span>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 const PatientDemo = () => {
@@ -491,21 +585,7 @@ const PatientDemo = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">Evolução (14 dias)</CardTitle>
             </CardHeader>
             <CardContent className="pb-4">
-              <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={DEMO_DIARY}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: "hsl(var(--primary))" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <SimpleDiaryChart data={DEMO_DIARY} />
             </CardContent>
           </Card>
         </div>
