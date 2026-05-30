@@ -407,11 +407,11 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
       )}
 
       {/* Patient list — read-only with ability to add and archive patients */}
-      {therapists.length > 0 && (
+      {(filteredAssessments.length > 0 || therapists.length > 0 || activeClinic?.clinic_id) && (
         <DashboardErrorBoundary>
           <PatientEvolutionDashboard
             assessments={filteredAssessments}
-            professionalId={selectedTherapistId === "all" || selectedTherapistId === "unassigned" ? therapists[0]?.id : selectedTherapistId}
+            professionalId={selectedTherapistId === "all" || selectedTherapistId === "unassigned" ? (therapists[0]?.id || "") : selectedTherapistId}
             onDownloadPdf={handleDownloadPdf}
             isDemo={false}
             readOnly={patientDashReadOnly}
