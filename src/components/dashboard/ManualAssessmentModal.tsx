@@ -1116,7 +1116,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       {isPt ? "Gerar com IA" : "Generate with AI"}
                     </Button>
                   </div>
-                  <Textarea value={clinicalImpression} onChange={(e) => setClinicalImpression(e.target.value)} rows={3} className="mt-1 text-sm" />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(clinicalImpression, MOCK_MANUAL_CASE.clinicalImpression, setClinicalImpression, "")}>
+                    <Textarea value={clinicalImpression} onChange={(e) => setClinicalImpression(e.target.value)} rows={3} className="mt-1 text-sm" />
+                  </DemoShield>
                   {aiClinicalImpression?.therapeuticObjectives?.length ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {aiClinicalImpression.therapeuticObjectives.map((obj, i) => (
@@ -1133,7 +1135,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 </Button>
                 <div>
                   <Label className="text-xs">{isPt ? "Diagnóstico / Hipótese" : "Diagnosis / Hypothesis"}</Label>
-                  <Textarea value={diagnosisText} onChange={(e) => setDiagnosisText(e.target.value)} rows={8} className="mt-1 text-sm" />
+                  <DemoShield on={demoMode} onAutofill={() => autofill(diagnosisText, MOCK_MANUAL_CASE.diagnosisText, setDiagnosisText, "")}>
+                    <Textarea value={diagnosisText} onChange={(e) => setDiagnosisText(e.target.value)} rows={8} className="mt-1 text-sm" />
+                  </DemoShield>
                 </div>
               </div>
             )}
