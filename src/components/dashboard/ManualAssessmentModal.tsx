@@ -408,6 +408,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   });
 
   const generateAIDiagnosis = async () => {
+    if (demoMode) { demoUpsellToast(); return; }
     setGeneratingDx(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-diagnosis", {
