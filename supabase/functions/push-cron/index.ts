@@ -26,10 +26,12 @@ Deno.serve(async (req) => {
       exercise_reminders: 0,
       pain_spike_alerts: 0,
       inactivity_alerts: 0,
+      reassessment_suggestions: 0,
+      streak_milestones: 0,
       errors: [] as string[],
     };
 
-    // Helper: send push to a user
+    // Helper: send push to a single user
     async function notifyUser(userId: string, title: string, body: string, url: string) {
       const { data: subs } = await supabase
         .from("push_subscriptions")
@@ -37,7 +39,6 @@ Deno.serve(async (req) => {
         .eq("user_id", userId);
       if (!subs || subs.length === 0) return false;
 
-      // Call send-push-notification edge function
       const res = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
         method: "POST",
         headers: {
@@ -47,6 +48,47 @@ Deno.serve(async (req) => {
         body: JSON.stringify({ user_id: userId, title, body, url }),
       });
       return res.ok;
+    }
+
+    // Helper: send push to clinic owner + secretary (therapists stay out)
+    async function notifyClinicStaff(clinicId: string, title: string, body: string, url: string) {
+      const { data: members } = await supabase
+        .from("clinic_members")
+        .select("user_id")
+        .eq("clinic_id", clinicId)
+        .eq("status", "active")
+        .in("role", ["owner", "secretary"]);
+      let count = 0;
+      for (const m of members || []) {
+        if (await notifyUser(m.user_id, title, body, url)) count++;
+      }
+      return count;
+    }
+
+    // Resolve a patient (by user_id or email) → clinic_id if they belong to a clinic
+    async function resolveClinicForPatient(userId: string | null, email: string | null) {
+      if (userId) {
+        const { data } = await supabase
+          .from("assessments")
+          .select("clinic_id")
+          .eq("user_id", userId)
+          .not("clinic_id", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (data?.clinic_id) return data.clinic_id as string;
+      }
+      if (email) {
+        const { data } = await supabase
+          .from("patients")
+          .select("clinic_id")
+          .ilike("email", email)
+          .not("clinic_id", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (data?.clinic_id) return data.clinic_id as string;
+      }
+      return null;
     }
 
     const today = new Date().toISOString().split("T")[0];
