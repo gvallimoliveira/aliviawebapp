@@ -32,9 +32,9 @@ const Header = () => {
   };
 
   return (
-    {/* bg-background/95 on mobile (no backdrop-filter) avoids GPU re-compositing the whole
-        header backdrop on every scroll frame — the main cause of janky fast-scroll on phones.
-        Desktop keeps the translucent blurred look. */}
+    // bg-background/95 on mobile (no backdrop-filter) avoids the browser re-compositing the
+    // entire header backdrop on every scroll frame — the main cause of janky fast-scroll on
+    // phones. Desktop keeps the translucent blurred look.
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 md:bg-background/80 md:backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between overflow-visible">
         <div className="flex items-center gap-2 cursor-pointer shrink-0 relative" onClick={() => go(user ? "/dashboard" : "/")}>
