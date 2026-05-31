@@ -1001,8 +1001,57 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           </div>
         </div>
       </DialogContent>
+
+      {/* Demo upsell — intercepts the "Finalize" CTA in demo mode */}
+      <Dialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="mx-auto h-12 w-12 rounded-2xl bg-primary/15 flex items-center justify-center mb-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <DialogTitle className="text-center">
+              {language === "pt" ? "Isto é uma demonstração" : language === "es" ? "Esto es una demostración" : "This is a demonstration"}
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              {language === "pt"
+                ? "No PRO real, este botão gera um link único para o paciente. Veja abaixo como uma série de exercícios fica montada no link entregue ao paciente."
+                : language === "es"
+                  ? "En el PRO real, este botón genera un enlace único para el paciente. Vea cómo queda armada una serie de ejercicios en el enlace entregado."
+                  : "In real PRO, this button generates a unique link for the patient. See how an exercise series is presented in the link delivered to the patient."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-1.5 text-sm">
+            <p className="font-semibold text-foreground flex items-center gap-1.5">
+              <Dumbbell className="h-4 w-4 text-primary" />
+              {language === "pt" ? "Exemplo: Programa de Ombro" : language === "es" ? "Ejemplo: Programa de Hombro" : "Example: Shoulder Program"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {language === "pt"
+                ? "Progressão completa em 6 estágios: mobilidade → kettlebell bottom-up. Vídeos, séries e observações por exercício."
+                : language === "es"
+                  ? "Progresión completa en 6 etapas: movilidad → kettlebell bottom-up. Videos, series y observaciones por ejercicio."
+                  : "Full 6-stage progression: mobility → kettlebell bottom-up. Videos, sets and notes per exercise."}
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setDemoDialogOpen(false)} className="rounded-xl flex-1">
+              {language === "pt" ? "Continuar explorando" : language === "es" ? "Seguir explorando" : "Keep exploring"}
+            </Button>
+            <Button
+              onClick={() => { window.open("/hep/demo-shoulder", "_blank"); }}
+              className="rounded-xl gap-1.5 flex-1"
+            >
+              <Link2 className="h-4 w-4" />
+              {language === "pt" ? "Ver exemplo (Ombro)" : language === "es" ? "Ver ejemplo (Hombro)" : "View example (Shoulder)"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
+
 };
 
 export default CreateExerciseProgramModal;
