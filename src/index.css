@@ -18,12 +18,6 @@
     contain: strict;
     pointer-events: none;
   }
-
-  /* Defer rendering of off-screen sections for smoother scroll */
-  .section-lazy {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 600px;
-  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 

@@ -44,16 +44,16 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
-        <div className="section-lazy"><StatsSection /></div>
-        <div className="section-lazy"><DualAudienceSection /></div>
-        <div className="section-lazy"><HighlightsSection /></div>
-        <div className="section-lazy"><ComparisonSection /></div>
-        <div className="section-lazy"><MethodologySection /></div>
-        <div className="section-lazy"><HowItWorksSection /></div>
-        <div className="section-lazy"><ProfessionalSection /></div>
-        <div className="section-lazy"><TestimonialsSection /></div>
-        <div className="section-lazy"><FaqSection /></div>
-        <div className="section-lazy"><SocialSection /></div>
+        <StatsSection />
+        <DualAudienceSection />
+        <HighlightsSection />
+        <ComparisonSection />
+        <MethodologySection />
+        <HowItWorksSection />
+        <ProfessionalSection />
+        <TestimonialsSection />
+        <FaqSection />
+        <SocialSection />
       </main>
       <Footer />
       <StickyCTA />
