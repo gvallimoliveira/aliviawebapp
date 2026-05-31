@@ -79,7 +79,10 @@ interface Props {
   assessmentId?: string;
   editProgramId?: string | null;
   clinicId?: string | null;
+  /** Demo mode: navigation works but the "Finalize" CTA is intercepted with an upsell. */
+  demoMode?: boolean;
 }
+
 
 
 const categoryLabels: Record<string, Record<string, string>> = {
@@ -102,7 +105,7 @@ const regionLabels: Record<string, Record<string, string>> = {
   general: { pt: "Geral", en: "General", es: "General" },
 };
 
-const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId, clinicId }: Props) => {
+const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId, clinicId, demoMode = false }: Props) => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -117,6 +120,8 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const isEditing = !!editProgramId;
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+
 
   // Autosave (rascunho local + nuvem). Desligado em modo edição (já está salvo).
   const draftScope = `${professionalId}:${(patientName || "").trim().toLowerCase()}:${assessmentId || ""}`;
@@ -413,8 +418,13 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
   const handleCreate = async () => {
     if (totalCount === 0) return;
+    if (demoMode) {
+      setDemoDialogOpen(true);
+      return;
+    }
     setCreating(true);
     try {
+
       let programId: string;
       let programToken: string;
 
@@ -583,7 +593,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleClose}>
+
       <DialogContent className="max-w-2xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0">
         <div className="px-4 sm:px-6 pt-6 pb-2 shrink-0">
           <DialogHeader>
@@ -992,7 +1004,61 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         </div>
       </DialogContent>
     </Dialog>
+
+      {/* Demo upsell — intercepts the "Finalize" CTA in demo mode */}
+      <Dialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen}>
+        <DialogContent className="max-w-md">
+
+          <DialogHeader>
+            <div className="mx-auto h-12 w-12 rounded-2xl bg-primary/15 flex items-center justify-center mb-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <DialogTitle className="text-center">
+              {language === "pt" ? "Isto é uma demonstração" : language === "es" ? "Esto es una demostración" : "This is a demonstration"}
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              {language === "pt"
+                ? "No PRO real, este botão gera um link único para o paciente. Veja abaixo como uma série de exercícios fica montada no link entregue ao paciente."
+                : language === "es"
+                  ? "En el PRO real, este botón genera un enlace único para el paciente. Vea cómo queda armada una serie de ejercicios en el enlace entregado."
+                  : "In real PRO, this button generates a unique link for the patient. See how an exercise series is presented in the link delivered to the patient."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-1.5 text-sm">
+            <p className="font-semibold text-foreground flex items-center gap-1.5">
+              <Dumbbell className="h-4 w-4 text-primary" />
+              {language === "pt" ? "Exemplo: Programa de Ombro" : language === "es" ? "Ejemplo: Programa de Hombro" : "Example: Shoulder Program"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {language === "pt"
+                ? "Progressão completa em 6 estágios: mobilidade → kettlebell bottom-up. Vídeos, séries e observações por exercício."
+                : language === "es"
+                  ? "Progresión completa en 6 etapas: movilidad → kettlebell bottom-up. Videos, series y observaciones por ejercicio."
+                  : "Full 6-stage progression: mobility → kettlebell bottom-up. Videos, sets and notes per exercise."}
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setDemoDialogOpen(false)} className="rounded-xl flex-1">
+              {language === "pt" ? "Continuar explorando" : language === "es" ? "Seguir explorando" : "Keep exploring"}
+            </Button>
+            <Button
+              onClick={() => { window.open("/hep/demo-shoulder", "_blank"); }}
+              className="rounded-xl gap-1.5 flex-1"
+            >
+              <Link2 className="h-4 w-4" />
+              {language === "pt" ? "Ver exemplo (Ombro)" : language === "es" ? "Ver ejemplo (Hombro)" : "View example (Shoulder)"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+
   );
+
+
+
 };
 
 export default CreateExerciseProgramModal;
