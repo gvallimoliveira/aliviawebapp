@@ -1128,7 +1128,71 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             )}
           </div>
         </DialogFooter>
+
+        {/* Demo-mode floating voice-recorder mock — mirrors the real FAB UX */}
+        {demoMode && (
+          <div
+            data-voice-recorder-fab
+            className="absolute bottom-20 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end gap-2 pointer-events-auto"
+          >
+            {demoVoiceNoteShown && !demoVoiceRecording && (
+              <div className="bg-background border border-primary/30 shadow-xl rounded-xl p-3 max-w-[260px] space-y-1.5">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
+                  <Sparkles className="h-3 w-3" />
+                  {isPt ? "Transcrição gerada (simulação)" : "Generated transcript (simulation)"}
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-4">
+                  {MOCK_MANUAL_CASE.voiceTranscript}
+                </p>
+                <p className="text-[10px] text-muted-foreground/80 italic">
+                  {isPt
+                    ? "Em PRO real, isto vai direto para o prontuário."
+                    : "In real PRO, this goes straight into the chart."}
+                </p>
+              </div>
+            )}
+
+            {!demoVoiceRecording && (
+              <Button
+                onClick={startDemoVoiceRecording}
+                size="icon"
+                className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 relative"
+                aria-label={isPt ? "Gravador de voz (simulação)" : "Voice recorder (simulation)"}
+              >
+                <Mic className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 bg-amber-400 text-amber-950 text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  {isPt ? "DEMO" : "DEMO"}
+                </span>
+              </Button>
+            )}
+
+            {demoVoiceRecording && (
+              <div className="bg-background border-2 border-primary shadow-xl rounded-2xl p-2 flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2">
+                  <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-xs font-mono tabular-nums">
+                    {isPt ? "Gravando..." : "Recording..."}
+                  </span>
+                </div>
+                <div className="flex items-end gap-0.5 h-6 px-1">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className="w-0.5 rounded-full bg-primary/70 animate-pulse"
+                      style={{
+                        height: `${30 + ((i * 17) % 60)}%`,
+                        animationDelay: `${(i % 6) * 80}ms`,
+                        animationDuration: "700ms",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </DialogContent>
+
     </Dialog>
   );
 };
