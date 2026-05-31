@@ -1,10 +1,33 @@
 import { format, addDays, subDays } from "date-fns";
 
-const today = new Date();
+// Anchor demo dates to weekdays so the simulated agenda never shows Sat/Sun
+const nextWeekday = (d: Date): Date => {
+  const day = d.getDay();
+  if (day === 0) return addDays(d, 1); // Sun -> Mon
+  if (day === 6) return addDays(d, 2); // Sat -> Mon
+  return d;
+};
+const prevWeekday = (d: Date): Date => {
+  const day = d.getDay();
+  if (day === 0) return subDays(d, 2); // Sun -> Fri
+  if (day === 6) return subDays(d, 1); // Sat -> Fri
+  return d;
+};
+const stepWeekday = (d: Date, days: number): Date => {
+  let cur = d;
+  const step = days > 0 ? 1 : -1;
+  for (let i = 0; i < Math.abs(days); i++) {
+    cur = addDays(cur, step);
+    cur = step > 0 ? nextWeekday(cur) : prevWeekday(cur);
+  }
+  return cur;
+};
+
+const today = nextWeekday(new Date());
 const todayStr = format(today, "yyyy-MM-dd");
-const tomorrowStr = format(addDays(today, 1), "yyyy-MM-dd");
-const dayAfterStr = format(addDays(today, 2), "yyyy-MM-dd");
-const yesterdayStr = format(subDays(today, 1), "yyyy-MM-dd");
+const tomorrowStr = format(stepWeekday(today, 1), "yyyy-MM-dd");
+const dayAfterStr = format(stepWeekday(today, 2), "yyyy-MM-dd");
+const yesterdayStr = format(stepWeekday(today, -1), "yyyy-MM-dd");
 
 export const DEMO_CLINIC = {
   id: "demo-clinic-001",
