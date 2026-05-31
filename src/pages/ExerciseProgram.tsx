@@ -74,6 +74,42 @@ const ExerciseProgram = () => {
   useEffect(() => {
     if (!token) return;
     const load = async () => {
+      // DEMO mode — load a sample shoulder progression directly from the local
+      // template + exercise_library, without creating a real program row.
+      if (token === "demo-shoulder") {
+        const { HEP_TEMPLATES } = await import("@/data/hepTemplates");
+        const tpl = HEP_TEMPLATES.find((t) => t.id === "shoulder-progression-v1");
+        if (!tpl) { setNotFound(true); setLoading(false); return; }
+        const ids = tpl.items.map((it) => it.exerciseId);
+        const { data: libs } = await (supabase as any)
+          .from("exercise_library")
+          .select("id, name_pt, name_en, name_es, description_pt, description_en, description_es, body_region, category, video_url, difficulty")
+          .in("id", ids);
+        const libMap = new Map<string, any>((libs || []).map((l: any) => [l.id, l]));
+        const demoItems: ExerciseItem[] = tpl.items.map((it, idx) => ({
+          id: `demo-${idx}`,
+          sets: it.sets,
+          reps: it.reps,
+          frequency: it.frequency,
+          observations: [it.stage, it.observations].filter(Boolean).join(" — ") || null,
+          sort_order: idx,
+          custom_name: null,
+          custom_video_url: null,
+          exercise: libMap.get(it.exerciseId) || null,
+        }));
+        setProgram({
+          id: "demo-shoulder",
+          patient_name: language === "pt" ? "Paciente Demo" : language === "es" ? "Paciente Demo" : "Demo Patient",
+          notes: language === "pt" ? tpl.notes_pt : tpl.notes_en,
+          created_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          professional: { full_name: "Dr. Demo (Aliv.iA)", logo_url: null, clinic_name: null },
+        });
+        setItems(demoItems);
+        setLoading(false);
+        return;
+      }
+
       const { data: prog, error } = await (supabase as any)
         .from("exercise_programs")
         .select("id, patient_name, notes, created_at, expires_at, professional:professionals(full_name, logo_url, clinic_name)")
@@ -104,7 +140,8 @@ const ExerciseProgram = () => {
       setLoading(false);
     };
     load();
-  }, [token]);
+  }, [token, language]);
+
 
   // Extract YouTube video ID from any common URL format
   const extractVideoId = (url: string | null | undefined): string | null => {
