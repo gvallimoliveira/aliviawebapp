@@ -1003,10 +1003,12 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           </div>
         </div>
       </DialogContent>
+    </Dialog>
 
       {/* Demo upsell — intercepts the "Finalize" CTA in demo mode */}
       <Dialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen}>
         <DialogContent className="max-w-md">
+
           <DialogHeader>
             <div className="mx-auto h-12 w-12 rounded-2xl bg-primary/15 flex items-center justify-center mb-2">
               <Sparkles className="h-5 w-5 text-primary" />
