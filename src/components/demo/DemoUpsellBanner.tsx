@@ -15,7 +15,7 @@ interface Props {
 }
 
 const COPY: Record<Section, { title: string; desc: string }> = {
-  agenda:        { title: "Agenda multiprofissional inteligente",       desc: "Drag-and-drop entre fisioterapeutas, lembretes automáticos por WhatsApp e bloqueio anti no-show." },
+  agenda:        { title: "Agenda multiprofissional",                   desc: "Visualize a semana da equipe e arraste os atendimentos para reagendar — tudo num único calendário compartilhado." },
   patients:      { title: "Pool de pacientes compartilhado",            desc: "Triagem por secretária, atribuição rápida e prontuário com IA — tudo numa fila única da clínica." },
   insights:      { title: "Insights de IA exclusivos da clínica",       desc: "Risco de evasão, previsão de alta, ocupação e benchmarks de mercado — gerados a cada acesso." },
   messages:      { title: "Chat seguro com pacientes",                  desc: "Conversas centralizadas por equipe, com videochamada nativa e disclaimer de responsabilidade." },
@@ -24,7 +24,7 @@ const COPY: Record<Section, { title: string; desc: string }> = {
   feedback:      { title: "Pesquisa de satisfação (NPS) integrada",     desc: "Envio automático pós-alta + dashboard de respostas com sentimento e comentários." },
   team:          { title: "Equipe e configurações da clínica",          desc: "Convide até 8 fisios + secretárias, defina horários, especialidades e branding em minutos." },
   link:          { title: "Link institucional anti-abuso",              desc: "Pacientes triados entram no pool da clínica — não no perfil pessoal de um terapeuta." },
-  "pro-agenda":  { title: "Agenda PRO com videochamada",                desc: "Bloqueios, lembretes automáticos e teleconsulta nativa para seus pacientes particulares." },
+  "pro-agenda":  { title: "Agenda PRO com drag-and-drop",               desc: "Organize sua semana e reagende arrastando os cards — visão diária e semanal dos seus pacientes particulares." },
   "pro-insights":{ title: "Insights de IA para autônomos",              desc: "Veja risco de evasão, previsão de alta e meta de faturamento direto no painel." },
   "pro-messages":{ title: "Mensagens com pacientes (PRO)",              desc: "Chat seguro + videochamada, dentro da Aliv.iA, sem WhatsApp pessoal." },
   "pro-patients":{ title: "Prontuário com IA e relatório de evolução",  desc: "Anamnese assistida por voz, plano de tratamento adaptativo e PDF white-label." },
