@@ -120,6 +120,8 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const isEditing = !!editProgramId;
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+
 
   // Autosave (rascunho local + nuvem). Desligado em modo edição (já está salvo).
   const draftScope = `${professionalId}:${(patientName || "").trim().toLowerCase()}:${assessmentId || ""}`;
