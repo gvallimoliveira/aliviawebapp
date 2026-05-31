@@ -1133,7 +1133,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         {demoMode && (
           <div
             data-voice-recorder-fab
-            className="absolute bottom-20 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end gap-2 pointer-events-auto"
+            className="absolute bottom-24 left-4 sm:bottom-6 sm:left-6 z-[100] flex flex-col items-start gap-2 pointer-events-auto"
           >
             {demoVoiceNoteShown && !demoVoiceRecording && (
               <div className="bg-background border border-primary/30 shadow-xl rounded-xl p-3 max-w-[260px] space-y-1.5">
