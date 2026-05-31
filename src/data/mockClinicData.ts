@@ -29,6 +29,10 @@ const tomorrowStr = format(stepWeekday(today, 1), "yyyy-MM-dd");
 const dayAfterStr = format(stepWeekday(today, 2), "yyyy-MM-dd");
 const yesterdayStr = format(stepWeekday(today, -1), "yyyy-MM-dd");
 
+// Monday of the current week (so we can fill every weekday Mon-Fri)
+const _weekMonday = addDays(today, -((today.getDay() + 6) % 7));
+const weekDayStr = (i: number) => format(addDays(_weekMonday, i), "yyyy-MM-dd"); // 0=Mon .. 4=Fri
+
 export const DEMO_CLINIC = {
   id: "demo-clinic-001",
   name: "Clínica FisioVida",
