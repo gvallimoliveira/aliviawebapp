@@ -231,9 +231,12 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const locale = language === "en" ? enUS : language === "es" ? es : ptBR;
   const isPt = language === "pt";
 
-  const daysToShow = isMobile ? 3 : 7;
+  const daysToShow = isSimulated ? (isMobile ? 3 : 5) : (isMobile ? 3 : 7);
   const [viewDate, setViewDate] = useState(() => new Date());
-  const startDate = isMobile ? viewDate : startOfWeek(viewDate, { weekStartsOn: 1 });
+  // In simulated/demo mode, always anchor to Monday so weekends are excluded
+  const startDate = isSimulated
+    ? startOfWeek(viewDate, { weekStartsOn: 1 })
+    : (isMobile ? viewDate : startOfWeek(viewDate, { weekStartsOn: 1 }));
 
   const [appointments, setAppointments] = useState<Appointment[]>(isSimulated ? (DEMO_APPOINTMENTS as Appointment[]) : []);
   const [loading, setLoading] = useState(true);
