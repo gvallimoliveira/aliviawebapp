@@ -33,7 +33,7 @@ const HeroSection = ({ showProfessionalCTA = true }: { showProfessionalCTA?: boo
             <img
               src={logoAlivia}
               alt="Aliv.iA"
-              className="h-32 w-32 md:h-40 md:w-40 drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)] animate-float"
+              className="h-32 w-32 md:h-40 md:w-40 md:drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)] md:animate-float"
             />
           </motion.div>
 
