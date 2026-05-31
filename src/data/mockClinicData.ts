@@ -88,6 +88,47 @@ export const DEMO_APPOINTMENTS = [
   { id: "demo-apt-9e", professional_id: "demo-pro-t2", clinic_id: DEMO_CLINIC.id, patient_name: "Juliana Prado", patient_email: "juliana@exemplo.com", appointment_date: yesterdayStr, appointment_time: "14:00", duration_minutes: 50, type: "video_call", status: "completed", notes: "Teleconsulta concluída", created_at: subDays(today, 4).toISOString() },
 ];
 
+// Auto-fill every weekday of the current week (Mon-Fri) with a rich schedule across the team.
+// We skip days already covered by todayStr/tomorrowStr/dayAfterStr/yesterdayStr to avoid duplicates.
+const _filledDates = new Set([todayStr, tomorrowStr, dayAfterStr, yesterdayStr]);
+const _weekdayTemplate: Array<{ pro: string; time: string; name: string; email: string; type: string; notes: string | null }> = [
+  { pro: "demo-pro-owner", time: "08:00", name: "Mariana Castro",   email: "mariana@exemplo.com",  type: "in_person",  notes: "Reabilitação coluna" },
+  { pro: "demo-pro-owner", time: "09:00", name: "Eduardo Pinto",    email: "eduardo@exemplo.com",  type: "in_person",  notes: null },
+  { pro: "demo-pro-owner", time: "10:00", name: "Sofia Andrade",    email: "sofia@exemplo.com",    type: "in_person",  notes: "Pilates terapêutico" },
+  { pro: "demo-pro-owner", time: "14:00", name: "Rafael Moreira",   email: "rafael@exemplo.com",   type: "video_call", notes: "Teleconsulta retorno" },
+  { pro: "demo-pro-owner", time: "16:00", name: "Beatriz Nunes",    email: "beatriz@exemplo.com",  type: "in_person",  notes: null },
+  { pro: "demo-pro-t1",    time: "08:00", name: "Thiago Barros",    email: "thiago@exemplo.com",   type: "in_person",  notes: "Ombro pós-cirúrgico" },
+  { pro: "demo-pro-t1",    time: "09:00", name: "Larissa Cunha",    email: "larissa@exemplo.com",  type: "in_person",  notes: null },
+  { pro: "demo-pro-t1",    time: "11:00", name: "Diego Ramos",      email: "diego@exemplo.com",    type: "in_person",  notes: "Joelho — RPG" },
+  { pro: "demo-pro-t1",    time: "15:00", name: "Camila Freitas",   email: "camilaf@exemplo.com",  type: "in_person",  notes: null },
+  { pro: "demo-pro-t2",    time: "09:00", name: "Vinícius Lopes",   email: "vinicius@exemplo.com", type: "in_person",  notes: "Tornozelo — reabilitação esportiva" },
+  { pro: "demo-pro-t2",    time: "10:00", name: "Aline Tavares",    email: "aline@exemplo.com",    type: "external",   notes: "Domiciliar" },
+  { pro: "demo-pro-t2",    time: "14:00", name: "Henrique Dias",    email: "henrique@exemplo.com", type: "in_person",  notes: null },
+  { pro: "demo-pro-t2",    time: "16:00", name: "Paula Coelho",     email: "paula@exemplo.com",    type: "video_call", notes: "Orientação domiciliar" },
+];
+
+for (let i = 0; i < 5; i++) {
+  const dateStr = weekDayStr(i);
+  if (_filledDates.has(dateStr)) continue;
+  const isPast = dateStr < todayStr;
+  _weekdayTemplate.forEach((slot, idx) => {
+    DEMO_APPOINTMENTS.push({
+      id: `demo-apt-wk-${i}-${idx}`,
+      professional_id: slot.pro,
+      clinic_id: DEMO_CLINIC.id,
+      patient_name: slot.name,
+      patient_email: slot.email,
+      appointment_date: dateStr,
+      appointment_time: slot.time,
+      duration_minutes: 50,
+      type: slot.type,
+      status: isPast ? "completed" : "scheduled",
+      notes: slot.notes,
+      created_at: subDays(today, 5).toISOString(),
+    });
+  });
+}
+
 export const DEMO_CLINIC_ASSESSMENTS = [
   {
     id: "demo-clinic-a1", clinic_id: DEMO_CLINIC.id, professional_id: "demo-pro-owner",
