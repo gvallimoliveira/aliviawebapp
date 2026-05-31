@@ -593,7 +593,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleClose}>
+
       <DialogContent className="max-w-2xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0">
         <div className="px-4 sm:px-6 pt-6 pb-2 shrink-0">
           <DialogHeader>
