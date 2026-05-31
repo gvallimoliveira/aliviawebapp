@@ -15,7 +15,7 @@ interface Props {
 }
 
 const COPY: Record<Section, { title: string; desc: string }> = {
-  agenda:        { title: "Agenda multiprofissional inteligente",       desc: "Drag-and-drop entre fisioterapeutas, lembretes automáticos por WhatsApp e bloqueio anti no-show." },
+  agenda:        { title: "Agenda multiprofissional",                   desc: "Visualize a semana da equipe e arraste os atendimentos para reagendar — tudo num único calendário compartilhado." },
   patients:      { title: "Pool de pacientes compartilhado",            desc: "Triagem por secretária, atribuição rápida e prontuário com IA — tudo numa fila única da clínica." },
   insights:      { title: "Insights de IA exclusivos da clínica",       desc: "Risco de evasão, previsão de alta, ocupação e benchmarks de mercado — gerados a cada acesso." },
   messages:      { title: "Chat seguro com pacientes",                  desc: "Conversas centralizadas por equipe, com videochamada nativa e disclaimer de responsabilidade." },
