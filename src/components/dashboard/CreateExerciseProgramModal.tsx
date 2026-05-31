@@ -79,7 +79,10 @@ interface Props {
   assessmentId?: string;
   editProgramId?: string | null;
   clinicId?: string | null;
+  /** Demo mode: navigation works but the "Finalize" CTA is intercepted with an upsell. */
+  demoMode?: boolean;
 }
+
 
 
 const categoryLabels: Record<string, Record<string, string>> = {
