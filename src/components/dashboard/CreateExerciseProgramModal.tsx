@@ -105,7 +105,7 @@ const regionLabels: Record<string, Record<string, string>> = {
   general: { pt: "Geral", en: "General", es: "General" },
 };
 
-const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId, clinicId }: Props) => {
+const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId, clinicId, demoMode = false }: Props) => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [exercises, setExercises] = useState<Exercise[]>([]);
