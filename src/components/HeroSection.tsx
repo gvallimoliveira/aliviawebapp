@@ -11,9 +11,10 @@ const HeroSection = ({ showProfessionalCTA = true }: { showProfessionalCTA?: boo
 
   return (
     <section className="relative overflow-hidden py-20 md:py-32">
-      {/* Background gradient blobs */}
-      <div className="blur-blob absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
-      <div className="blur-blob absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/10 blur-3xl" />
+      {/* Background gradient blobs — hidden on mobile: the huge blur-3xl filter areas
+          force expensive GPU repaints during fast scroll on phones. */}
+      <div className="blur-blob hidden md:block absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
+      <div className="blur-blob hidden md:block absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/10 blur-3xl" />
 
       <div className="container relative">
         <motion.div
@@ -32,7 +33,7 @@ const HeroSection = ({ showProfessionalCTA = true }: { showProfessionalCTA?: boo
             <img
               src={logoAlivia}
               alt="Aliv.iA"
-              className="h-32 w-32 md:h-40 md:w-40 drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)] animate-float"
+              className="h-32 w-32 md:h-40 md:w-40 md:drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)] md:animate-float"
             />
           </motion.div>
 
