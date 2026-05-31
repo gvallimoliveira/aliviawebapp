@@ -1051,8 +1051,10 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           </div>
         </DialogContent>
       </Dialog>
+    </Dialog>
     </>
   );
+
 
 
 };
