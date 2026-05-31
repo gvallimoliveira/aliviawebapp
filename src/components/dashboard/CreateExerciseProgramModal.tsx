@@ -418,8 +418,13 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
   const handleCreate = async () => {
     if (totalCount === 0) return;
+    if (demoMode) {
+      setDemoDialogOpen(true);
+      return;
+    }
     setCreating(true);
     try {
+
       let programId: string;
       let programToken: string;
 
