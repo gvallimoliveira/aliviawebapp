@@ -26,7 +26,7 @@ const StickyCTA = ({ showProfessional = true }: { showProfessional?: boolean }) 
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/95 backdrop-blur-md shadow-[0_-4px_20px_-4px_hsl(var(--primary)/0.15)]"
+          className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background md:bg-background/95 md:backdrop-blur-md shadow-[0_-4px_20px_-4px_hsl(var(--primary)/0.15)]"
         >
           <div className="container flex items-center justify-between py-3 gap-3">
             <p className="text-sm font-medium text-foreground hidden sm:block">
