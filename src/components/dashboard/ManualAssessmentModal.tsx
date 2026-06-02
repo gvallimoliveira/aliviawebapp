@@ -591,7 +591,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         patient_email: patientEmail || null,
         anamnesis_data: buildAnamnesisData(),
         pain_regions: painRegions,
-        pain_score: painScore,
+        // Aggregate pain_score = highest per-region score (clinically the most
+        // representative) when per-region values exist; otherwise the slider value.
+        pain_score: (() => {
+          const vals = painRegions
+            .map((r) => painScoresPerRegion[r])
+            .filter((v): v is number => typeof v === "number");
+          return vals.length > 0 ? Math.max(...vals) : painScore;
+        })(),
         red_flags: redFlagsChecked.length > 0 ? { detected: redFlagsChecked } : null,
         // test_results MUST be an array of questionnaire results — that's what AssessmentView,
         // generatePdf and clinical-impression all expect. Free-text functional observations
