@@ -156,6 +156,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [painScore, setPainScore] = useState<number>(5);
   const [painType, setPainType] = useState("");
   const [painRegions, setPainRegions] = useState<string[]>([]);
+  // Per-region pain score (0-10). Filled automatically when the user marks a
+  // region (defaults to the general slider value) and editable via per-region
+  // sliders. Used both for the comparison view (RegionPainComparison reads
+  // `anamnesis_data.painScoresPerRegion`) and to derive the aggregate
+  // `pain_score` saved on the row (max of per-region scores).
+  const [painScoresPerRegion, setPainScoresPerRegion] = useState<Record<string, number>>({});
 
   // Red Flags
   const [redFlagsChecked, setRedFlagsChecked] = useState<string[]>([]);
@@ -216,7 +222,20 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       );
       return;
     }
-    setPainRegions((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
+    setPainRegions((prev) => {
+      const next = prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id];
+      setPainScoresPerRegion((m) => {
+        const out = { ...m };
+        if (next.includes(id) && out[id] === undefined) out[id] = painScore;
+        if (!next.includes(id)) delete out[id];
+        return out;
+      });
+      return next;
+    });
+  };
+
+  const setRegionPainScore = (id: string, v: number) => {
+    setPainScoresPerRegion((m) => ({ ...m, [id]: v }));
   };
 
   // ── Demo-mode helpers ──────────────────────────────────────────────────────
@@ -259,7 +278,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const draftState = {
     step, chiefComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation,
-    painScore, painType, painRegions, redFlagsChecked, questionnaireResults,
+    painScore, painType, painRegions, painScoresPerRegion, redFlagsChecked, questionnaireResults,
     functionalTests, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
   };
@@ -286,6 +305,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainScore(p.painScore ?? 5);
     setPainType(p.painType ?? "");
     setPainRegions(p.painRegions ?? []);
+    setPainScoresPerRegion(p.painScoresPerRegion ?? {});
     setRedFlagsChecked(p.redFlagsChecked ?? []);
     setQuestionnaireResults(p.questionnaireResults ?? []);
     setFunctionalTests(p.functionalTests ?? "");
@@ -317,6 +337,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
     setPainType(an.painType || (Array.isArray(an.painTypes) ? an.painTypes[0] : "") || "");
     setPainRegions(Array.isArray(a.pain_regions) ? a.pain_regions : []);
+    setPainScoresPerRegion(
+      an.painScoresPerRegion && typeof an.painScoresPerRegion === "object"
+        ? (an.painScoresPerRegion as Record<string, number>)
+        : (an.pain_scores_per_region && typeof an.pain_scores_per_region === "object"
+            ? (an.pain_scores_per_region as Record<string, number>)
+            : {}),
+    );
     setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
     setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
     setFunctionalTests(an.functionalTests || "");
@@ -412,6 +439,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     occupation,
     painType,
     painTypes: painType ? [painType] : [],
+    // Per-region pain scores (used by Comparação de Dor por Região).
+    painScoresPerRegion,
     functionalTests, // free-text observations from Step 4 (kept inside anamnesis_data so it persists and shows up in views)
     patientName,
     patientEmail: patientEmail || null,
@@ -562,7 +591,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         patient_email: patientEmail || null,
         anamnesis_data: buildAnamnesisData(),
         pain_regions: painRegions,
-        pain_score: painScore,
+        // Aggregate pain_score = highest per-region score (clinically the most
+        // representative) when per-region values exist; otherwise the slider value.
+        pain_score: (() => {
+          const vals = painRegions
+            .map((r) => painScoresPerRegion[r])
+            .filter((v): v is number => typeof v === "number");
+          return vals.length > 0 ? Math.max(...vals) : painScore;
+        })(),
         red_flags: redFlagsChecked.length > 0 ? { detected: redFlagsChecked } : null,
         // test_results MUST be an array of questionnaire results — that's what AssessmentView,
         // generatePdf and clinical-impression all expect. Free-text functional observations
@@ -671,7 +707,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setChiefComplaint(""); setHistory(""); setDuration(""); setOnset("");
     setAggravating(""); setRelieving(""); setMedications(""); setPreviousSurgeries("");
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
-    setPainRegions([]); setRedFlagsChecked([]); setQuestionnaireResults([]);
+    setPainRegions([]); setPainScoresPerRegion({}); setRedFlagsChecked([]); setQuestionnaireResults([]);
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
     setDiagnosisText(""); setTreatmentText(""); setAiDiagnosis(null); setAiTreatment(null);
   };
@@ -832,10 +868,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             {step === 1 && (
               <div className="space-y-4">
                 <div>
-                  <Label className="text-xs">{isPt ? "Intensidade da dor (0-10)" : "Pain intensity (0-10)"}: <span className="font-bold text-primary">{painScore}</span></Label>
+                  <Label className="text-xs">{isPt ? "Intensidade geral da dor (0-10)" : "Overall pain intensity (0-10)"}: <span className="font-bold text-primary">{painScore}</span></Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(painScore, MOCK_MANUAL_CASE.painScore, setPainScore, 5)}>
                     <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="mt-2" />
                   </DemoShield>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {isPt
+                      ? "Valor padrão atribuído a cada nova região marcada. Ajuste a nota individual de cada região logo abaixo."
+                      : "Default score for each newly marked region. Adjust per-region scores below."}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-xs">{isPt ? "Tipo de dor" : "Pain type"}</Label>
@@ -881,6 +922,43 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     <p className="text-xs text-muted-foreground mt-1">{painRegions.length} {isPt ? "selecionadas" : "selected"}</p>
                   )}
                 </div>
+
+                {/* Per-region pain sliders — appear only after the user marks regions */}
+                {painRegions.length > 0 && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                    <Label className="text-xs font-semibold text-foreground">
+                      {isPt ? "Nota de dor por região (0-10)" : "Pain score per region (0-10)"}
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground -mt-1">
+                      {isPt
+                        ? "Cada região marcada recebe sua própria nota. Isso permite comparar a evolução de cada zona ao longo do tempo."
+                        : "Each marked region gets its own score. This is what powers per-region progression tracking."}
+                    </p>
+                    <div className="space-y-2 pt-1">
+                      {painRegions.map((id) => {
+                        const lbl = regionLabelMap[id];
+                        const v = painScoresPerRegion[id] ?? painScore;
+                        return (
+                          <div key={id} className="flex items-center gap-3">
+                            <span className="text-xs text-foreground w-32 shrink-0 truncate">
+                              {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
+                            </span>
+                            <Slider
+                              value={[v]}
+                              onValueChange={(arr) => setRegionPainScore(id, arr[0])}
+                              min={0}
+                              max={10}
+                              step={1}
+                              className="flex-1"
+                              disabled={demoMode}
+                            />
+                            <span className="text-xs font-bold text-primary tabular-nums w-8 text-right">{v}/10</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
