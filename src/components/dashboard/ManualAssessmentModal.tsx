@@ -156,6 +156,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [painScore, setPainScore] = useState<number>(5);
   const [painType, setPainType] = useState("");
   const [painRegions, setPainRegions] = useState<string[]>([]);
+  // Per-region pain score (0-10). Filled automatically when the user marks a
+  // region (defaults to the general slider value) and editable via per-region
+  // sliders. Used both for the comparison view (RegionPainComparison reads
+  // `anamnesis_data.painScoresPerRegion`) and to derive the aggregate
+  // `pain_score` saved on the row (max of per-region scores).
+  const [painScoresPerRegion, setPainScoresPerRegion] = useState<Record<string, number>>({});
 
   // Red Flags
   const [redFlagsChecked, setRedFlagsChecked] = useState<string[]>([]);
