@@ -275,17 +275,51 @@ const GlobalVoiceRecorderFAB = () => {
         payload.audio_base64 = btoa(bin);
       }
 
-      supabase.functions.invoke("transcribe-anamnesis", { body: payload })
-        .then(({ error }) => {
-          if (error) console.error("transcribe-anamnesis error:", error);
-        });
-
       toast({
         title: isPt ? "Processando em segundo plano" : "Processing in background",
         description: isPt
           ? `A transcrição aparecerá no prontuário de ${snap.patientName} em breve.`
           : `Transcription will appear in ${snap.patientName}'s record shortly.`,
       });
+
+      // Fire the invoke without blocking the UI, but if it errors, mark the
+      // voice note as failed so the prontuário doesn't get stuck on the
+      // "processing" spinner forever.
+      supabase.functions
+        .invoke("transcribe-anamnesis", { body: payload })
+        .then(async ({ error }) => {
+          if (!error) return;
+          console.error("transcribe-anamnesis error:", error);
+          const errMsg = (error as any)?.message || (isPt ? "Falha ao processar áudio." : "Audio processing failed.");
+          await supabase
+            .from("assessment_voice_notes")
+            .update({
+              status: "failed",
+              error: errMsg + (isPt
+                ? " Tente refazer a gravação (idealmente em trechos menores)."
+                : " Please retry the recording (ideally in shorter chunks)."),
+            })
+            .eq("id", vn.id)
+            .eq("status", "processing");
+          toast({
+            title: isPt ? "Falha na transcrição" : "Transcription failed",
+            description: errMsg,
+            variant: "destructive",
+          });
+        })
+        .catch(async (err) => {
+          console.error("transcribe-anamnesis invoke threw:", err);
+          await supabase
+            .from("assessment_voice_notes")
+            .update({
+              status: "failed",
+              error: (err?.message || "Network error") + (isPt
+                ? " — refaça a gravação."
+                : " — please retry."),
+            })
+            .eq("id", vn.id)
+            .eq("status", "processing");
+        });
 
       setSeconds(0);
       setState("idle");
