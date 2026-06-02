@@ -1,50 +1,53 @@
-## Objetivo
+## Diagnóstico
 
-Tornar a **Avaliação Manual** visível mas não-utilizável no modo demonstração (PRO e Clínica), com uma experiência divertida: ao **clicar em qualquer campo**, ele é preenchido automaticamente com dados de um caso simulado (como se o fisioterapeuta tivesse digitado/selecionado). Inclui também aviso e simulação do **gravador de voz + transcrição**, e adiciona transcrições mock aos prontuários demo.
+### 1) Anamnese de voz travada em "processando"
+- Voice note `96dfee83…` da Pâmela: 465s (~7.75 min), `status=processing` sem `error`, sem `transcript`.
+- **Edge function `transcribe-anamnesis` não tem nenhum log de invocação** nesse horário (outras funções têm logs normais). Ou seja, a chamada nunca chegou no servidor.
+- Causa provável: gravação > 4 MB foi enviada para o bucket `voice-notes-tmp`, mas o `supabase.functions.invoke("transcribe-anamnesis", ...)` falhou no cliente (timeout/rede/erro). O código atual chama `.then(({error}) => console.error(...))` "fire-and-forget" — se der erro, o usuário nunca sabe e o registro fica preso em `processing` para sempre. Também não há nenhum watchdog/retry.
+- Não houve perda de áudio do lado do servidor — simplesmente o job não foi disparado / não foi acompanhado.
 
-## Mudanças
+### 2) Comparação de dor por região repete a mesma nota
+- `ManualAssessmentModal` tem 1 único slider de dor (0–10) + checkbox múltipla de regiões → salva `pain_score` (escalar) e `pain_regions` (array). Não salva `painScoresPerRegion`.
+- `RegionPainComparison.tsx` já está preparado para usar `anamnesis_data.painScoresPerRegion`, mas como ele não existe, cai no fallback `present ? a.pain_score : null` → mesma nota para todas as regiões. **Bug está na entrada de dados, não na comparação.**
 
-### 1. `ManualAssessmentModal` aceita modo demo
-Arquivo: `src/components/dashboard/ManualAssessmentModal.tsx`
+---
 
-- Nova prop `demoMode?: boolean` (default `false`).
-- Quando `demoMode`:
-  - Banner amarelo no topo do dialog: *"Modo demonstração — preenchimento automático com caso simulado. Avance pelas etapas para conhecer o fluxo. Assine PRO para usar com pacientes reais."*
-  - Inputs/Textareas/Selects/Sliders ficam **`readOnly` / `disabled`** para teclado.
-  - Cada campo recebe um wrapper `onClick` (no `<label>` ou container) que dispara `autofillField(fieldKey)` — preenche aquele campo com o valor do caso mock (se já preenchido, alterna para "limpo" para reproduzir múltiplos cliques de forma agradável).
-  - Mapa de dor: clique em qualquer região do mapa **adiciona regiões pré-definidas do caso** (ex.: `lower_back`, `gluteal_right`) em ordem.
-  - Questionários (`QuestionnaireStep`): nova prop `autofillCase` que, ao clicar em qualquer opção, seleciona a resposta do caso mock para aquela questão (e não a opção clicada).
-  - Botão **Salvar / Gerar diagnóstico** desativado com tooltip "Disponível no plano PRO" → abre upsell (já existe padrão em `ProfessionalAssessmentDemo`).
-  - `useAutosaveDraft` desabilitado.
-  - `useVoiceRecorderSession` não conecta — substituído por mock visual (item 3).
+## Plano
 
-### 2. Caso simulado
-Arquivo novo: `src/data/mockManualAssessmentCase.ts`
+### Fix 1 — Avaliação manual: nota de dor por região
 
-Exporta um objeto único `MOCK_MANUAL_CASE` com valores para cada campo: queixa principal, história, duração, agravantes, aliviantes, medicações, comorbidades, ocupação, score/tipo de dor, regiões, red flags (vazio), respostas dos questionários (Roland-Morris ou ODI), testes funcionais sugeridos com resultados. Cenário escolhido: **lombalgia mecânica crônica em escritório** (alinhado com KB existente).
+**`src/components/dashboard/ManualAssessmentModal.tsx`**
+- Substituir o slider único de dor por:
+  - Slider geral mantido como "Intensidade média/predominante" (compatibilidade + valor agregado salvo em `pain_score`).
+  - Após o usuário marcar regiões em `painRegions`, renderizar uma lista com **1 slider 0–10 por região marcada** (label = `regionLabelMap[id]`).
+  - Estado novo: `painScoresPerRegion: Record<string, number>` inicializado com o valor do slider geral; ao adicionar/remover região, sincroniza o mapa.
+- Persistência:
+  - `pain_score` = `Math.max(...Object.values(painScoresPerRegion))` (ou média — usar **máximo** porque é mais clínico e mantém timelines/badges existentes coerentes com a queixa pior).
+  - `anamnesis_data.painScoresPerRegion = { [regionId]: score }`.
+- Aplicar nas duas branches de save (rascunho + finalização) e no caminho do mock/demo case.
 
-### 3. Aviso + simulação do gravador de voz
-- No `ManualAssessmentModal` em `demoMode`, substituir o FAB real por um **botão mock** "Gravar voz (simulação)" na barra do modal. Ao clicar:
-  - Toast: *"Em PRO real, gravamos sua voz e a IA transcreve direto no prontuário."*
-  - Anima 3s um waveform fake e mostra um card de "transcrição gerada" estática, vinda do caso mock.
-- Banner explicativo curto perto do botão.
+**`src/components/dashboard/RegionPainComparison.tsx`**
+- Já funciona; nenhuma mudança lógica necessária. Apenas confirmar que o `scoreFor` continua usando `painScoresPerRegion` (sem média de bilaterais erradas — manter a média atual quando lado D./E. caem na mesma zona).
 
-### 4. Transcrições mock nos prontuários demo
-- Em `src/data/mockProDemoExtras.ts` e `src/data/mockClinicData.ts`: adicionar campo `voiceNotes: Array<{ id, created_at, transcription, summary, duration_seconds }>` em 2–3 pacientes simulados.
-- `VoiceNoteCard` (`src/components/dashboard/VoiceNoteCard.tsx`): aceitar prop opcional `mockNotes` que, quando presente, renderiza esses dados sem consultar Supabase.
-- `PatientDetailView` repassa `mockNotes` quando o paciente vier do mock (já tem flag de paciente simulado disponível via `isDemo`/`readOnly`).
+**`PatientDetailView.tsx` / `AssessmentTimeline` / PDFs**
+- Continuam usando `pain_score` agregado → sem regressão. (Sem mudanças.)
 
-### 5. Propagação `demoMode` até o modal
-- `PatientEvolutionDashboard` já recebe `isDemo`. Repassar para `PatientListView` e `PatientDetailView`, e ambos repassarem `demoMode={isDemo}` ao `ManualAssessmentModal`.
-- `ProfessionalDemo.tsx` e `ClinicDemo.tsx` já marcam `isDemoMode` — nenhuma mudança ali além de garantir que `isDemo` chegue ao `PatientEvolutionDashboard`.
+### Fix 2 — Gravação de anamnese travada em "processando"
 
-## Detalhes técnicos
+**Imediato (este registro)**
+- Marcar `96dfee83…` como `failed` com mensagem explicando que o áudio não foi processado e orientar a refazer (via migração `UPDATE … WHERE id=…`).
 
-- **Read-only sem quebrar layout**: aplicar `readOnly` em `<Input>`/`<Textarea>` e `pointer-events-none` + `tabIndex={-1}` apenas nos controles internos, mas **manter `onClick` no container** para disparar o autofill. Em `<Select>`/`<Slider>`/`<Checkbox>` usar `disabled` e interceptar com um overlay clicável que chama o autofill.
-- **Autofill incremental**: o helper `autofillField(key)` lê de `MOCK_MANUAL_CASE[key]` e chama o `setState` correspondente; um pequeno mapa `Record<string, () => void>` no início do componente evita um `switch` gigante.
-- **Sem efeitos colaterais**: nenhuma chamada a `supabase.*` quando `demoMode`. Guard no início de `handleSave`, `generateDiagnosis`, `generateTreatment`, `generateClinicalImpression`, `loadDraft`, etc.
-- **i18n**: textos novos em PT/EN seguindo o padrão `tl()` já usado no arquivo.
+**Prevenção (cliente)** — `src/contexts/VoiceRecorderContext.tsx`:
+- Trocar `.then(...)` fire-and-forget por `await` dentro do `try/catch` e, em caso de erro do invoke:
+  - `UPDATE assessment_voice_notes SET status='failed', error=<msg>` no próprio cliente.
+  - Toast destrutivo claro ("Falha ao processar áudio. Tente novamente.").
+- Adicionar limite duro de duração para upload: se `recordedSeconds > 15*60` (≈15 min), avisar que áudios longos podem falhar e pedir confirmação (Gemini tem limites práticos por chamada).
 
-## Fora do escopo
-- Não altera lógica de assinatura, RLS, ou fluxo real do `ManualAssessmentModal` para usuários PRO/clínica reais.
-- Não cria endpoint/edge function novo.
+**Watchdog (servidor)** — nova migração + função:
+- Função SQL (ou ajuste no `cleanup-pending-assessments` cron existente) que marca como `failed` qualquer `assessment_voice_notes` com `status='processing'` há mais de 10 minutos. Mensagem: "Tempo de processamento excedido — refaça a gravação."
+
+**UI do prontuário** — `VoiceNoteCard.tsx` (verificar):
+- Garantir que estados `failed` mostram CTA "Tentar novamente" ou ao menos a mensagem de erro, em vez de spinner eterno.
+
+### Fora de escopo
+- Não vamos mexer no edge function `transcribe-anamnesis` em si — ele não foi nem chamado. Se persistir após o fix do cliente, investigamos limites do Gemini para áudios longos numa próxima rodada.
