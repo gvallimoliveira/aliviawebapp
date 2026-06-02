@@ -868,10 +868,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             {step === 1 && (
               <div className="space-y-4">
                 <div>
-                  <Label className="text-xs">{isPt ? "Intensidade da dor (0-10)" : "Pain intensity (0-10)"}: <span className="font-bold text-primary">{painScore}</span></Label>
+                  <Label className="text-xs">{isPt ? "Intensidade geral da dor (0-10)" : "Overall pain intensity (0-10)"}: <span className="font-bold text-primary">{painScore}</span></Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(painScore, MOCK_MANUAL_CASE.painScore, setPainScore, 5)}>
                     <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="mt-2" />
                   </DemoShield>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {isPt
+                      ? "Valor padrão atribuído a cada nova região marcada. Ajuste a nota individual de cada região logo abaixo."
+                      : "Default score for each newly marked region. Adjust per-region scores below."}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-xs">{isPt ? "Tipo de dor" : "Pain type"}</Label>
