@@ -922,6 +922,43 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     <p className="text-xs text-muted-foreground mt-1">{painRegions.length} {isPt ? "selecionadas" : "selected"}</p>
                   )}
                 </div>
+
+                {/* Per-region pain sliders — appear only after the user marks regions */}
+                {painRegions.length > 0 && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                    <Label className="text-xs font-semibold text-foreground">
+                      {isPt ? "Nota de dor por região (0-10)" : "Pain score per region (0-10)"}
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground -mt-1">
+                      {isPt
+                        ? "Cada região marcada recebe sua própria nota. Isso permite comparar a evolução de cada zona ao longo do tempo."
+                        : "Each marked region gets its own score. This is what powers per-region progression tracking."}
+                    </p>
+                    <div className="space-y-2 pt-1">
+                      {painRegions.map((id) => {
+                        const lbl = regionLabelMap[id];
+                        const v = painScoresPerRegion[id] ?? painScore;
+                        return (
+                          <div key={id} className="flex items-center gap-3">
+                            <span className="text-xs text-foreground w-32 shrink-0 truncate">
+                              {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
+                            </span>
+                            <Slider
+                              value={[v]}
+                              onValueChange={(arr) => setRegionPainScore(id, arr[0])}
+                              min={0}
+                              max={10}
+                              step={1}
+                              className="flex-1"
+                              disabled={demoMode}
+                            />
+                            <span className="text-xs font-bold text-primary tabular-nums w-8 text-right">{v}/10</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
