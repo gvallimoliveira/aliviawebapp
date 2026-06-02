@@ -44,7 +44,36 @@ export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId }
       if (ids.length > 0) q = q.in("assessment_id", ids);
       else if (patientId) q = q.eq("patient_id", patientId);
       const { data } = await q;
-      if (!cancelled && data) setNotes(data as VoiceNote[]);
+      if (cancelled || !data) return;
+
+      // Watchdog: if a note is stuck on "processing" for more than 10 min,
+      // mark it as failed so the user sees a real error and can retry,
+      // instead of an infinite spinner.
+      const STUCK_MS = 10 * 60 * 1000;
+      const now = Date.now();
+      const stuck = (data as VoiceNote[]).filter(
+        (n) => n.status === "processing" && now - new Date(n.created_at).getTime() > STUCK_MS,
+      );
+      if (stuck.length > 0) {
+        await supabase
+          .from("assessment_voice_notes")
+          .update({
+            status: "failed",
+            error: isPt
+              ? "Tempo de processamento excedido. Refaça a gravação (idealmente em trechos menores)."
+              : "Processing timed out. Please retry the recording (ideally in shorter chunks).",
+          })
+          .in("id", stuck.map((n) => n.id))
+          .eq("status", "processing");
+        stuck.forEach((n) => {
+          n.status = "failed";
+          n.error = isPt
+            ? "Tempo de processamento excedido. Refaça a gravação (idealmente em trechos menores)."
+            : "Processing timed out. Please retry the recording (ideally in shorter chunks).";
+        });
+      }
+
+      setNotes(data as VoiceNote[]);
     };
     load();
 
