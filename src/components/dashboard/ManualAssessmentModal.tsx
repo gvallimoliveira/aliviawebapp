@@ -222,7 +222,20 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       );
       return;
     }
-    setPainRegions((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
+    setPainRegions((prev) => {
+      const next = prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id];
+      setPainScoresPerRegion((m) => {
+        const out = { ...m };
+        if (next.includes(id) && out[id] === undefined) out[id] = painScore;
+        if (!next.includes(id)) delete out[id];
+        return out;
+      });
+      return next;
+    });
+  };
+
+  const setRegionPainScore = (id: string, v: number) => {
+    setPainScoresPerRegion((m) => ({ ...m, [id]: v }));
   };
 
   // ── Demo-mode helpers ──────────────────────────────────────────────────────
