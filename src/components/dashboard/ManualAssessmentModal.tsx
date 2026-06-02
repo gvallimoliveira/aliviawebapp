@@ -278,7 +278,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const draftState = {
     step, chiefComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation,
-    painScore, painType, painRegions, redFlagsChecked, questionnaireResults,
+    painScore, painType, painRegions, painScoresPerRegion, redFlagsChecked, questionnaireResults,
     functionalTests, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
   };
