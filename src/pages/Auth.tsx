@@ -135,7 +135,7 @@ const Auth = () => {
         navigate(redirectTo, { replace: true });
       } else {
         // Fallback raríssimo: signUp sem sessão. Tenta signIn imediato.
-        const { error: signInErr } = await signIn(email, password);
+        const { error: signInErr } = await signIn(normalizedEmail, password);
         if (signInErr) {
           toast({
             title: t("auth.error"),
