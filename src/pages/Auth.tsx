@@ -97,7 +97,35 @@ const Auth = () => {
       }
 
       // Signup — email auto-confirm está ativo, então signUp() retorna sessão direto.
-      const { error, session } = await signUp(email, password, fullName);
+      // Validações extras só no signup para reduzir typos sem adicionar fricção no login.
+      const normalizedEmail = email.trim().toLowerCase();
+      if (!isValidEmailFormat(normalizedEmail)) {
+        toast({
+          title: t("auth.error"),
+          description: language === "pt"
+            ? "Email inválido. Verifique e tente novamente."
+            : language === "es"
+              ? "Email inválido. Verifique e intente nuevamente."
+              : "Invalid email. Please check and try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      if (normalizedEmail !== emailConfirm.trim().toLowerCase()) {
+        toast({
+          title: t("auth.error"),
+          description: language === "pt"
+            ? "Os emails não coincidem. Confirme o endereço digitado."
+            : language === "es"
+              ? "Los emails no coinciden. Confirme el correo ingresado."
+              : "Emails do not match. Please confirm the address.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      const { error, session } = await signUp(normalizedEmail, password, fullName);
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
         setLoading(false);
