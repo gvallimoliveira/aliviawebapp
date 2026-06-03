@@ -7,14 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import logoAlivia from "@/assets/logo-alivia.png";
+import { isValidEmailFormat, suggestEmailFix } from "@/lib/emailValidation";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
+  const [emailConfirm, setEmailConfirm] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -95,7 +97,35 @@ const Auth = () => {
       }
 
       // Signup — email auto-confirm está ativo, então signUp() retorna sessão direto.
-      const { error, session } = await signUp(email, password, fullName);
+      // Validações extras só no signup para reduzir typos sem adicionar fricção no login.
+      const normalizedEmail = email.trim().toLowerCase();
+      if (!isValidEmailFormat(normalizedEmail)) {
+        toast({
+          title: t("auth.error"),
+          description: language === "pt"
+            ? "Email inválido. Verifique e tente novamente."
+            : language === "es"
+              ? "Email inválido. Verifique e intente nuevamente."
+              : "Invalid email. Please check and try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      if (normalizedEmail !== emailConfirm.trim().toLowerCase()) {
+        toast({
+          title: t("auth.error"),
+          description: language === "pt"
+            ? "Os emails não coincidem. Confirme o endereço digitado."
+            : language === "es"
+              ? "Los emails no coinciden. Confirme el correo ingresado."
+              : "Emails do not match. Please confirm the address.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      const { error, session } = await signUp(normalizedEmail, password, fullName);
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
         setLoading(false);
@@ -105,7 +135,7 @@ const Auth = () => {
         navigate(redirectTo, { replace: true });
       } else {
         // Fallback raríssimo: signUp sem sessão. Tenta signIn imediato.
-        const { error: signInErr } = await signIn(email, password);
+        const { error: signInErr } = await signIn(normalizedEmail, password);
         if (signInErr) {
           toast({
             title: t("auth.error"),
@@ -223,7 +253,58 @@ const Auth = () => {
                     disabled={loading}
                   />
                 </div>
+                {!isLogin && !isForgotPassword && (() => {
+                  const suggestion = suggestEmailFix(email);
+                  if (!suggestion) return null;
+                  return (
+                    <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-md px-2 py-1.5">
+                      <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      <span className="flex-1">
+                        {language === "pt" ? "Você quis dizer " : language === "es" ? "¿Quisiste decir " : "Did you mean "}
+                        <button
+                          type="button"
+                          onClick={() => { setEmail(suggestion); setEmailConfirm(suggestion); }}
+                          className="font-semibold underline hover:no-underline"
+                        >
+                          {suggestion}
+                        </button>
+                        ?
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
+              {!isLogin && !isForgotPassword && (
+                <div className="space-y-2">
+                  <Label htmlFor="emailConfirm">
+                    {language === "pt" ? "Confirme seu email" : language === "es" ? "Confirme su email" : "Confirm your email"}
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="emailConfirm"
+                      type="email"
+                      value={emailConfirm}
+                      onChange={(e) => setEmailConfirm(e.target.value)}
+                      placeholder={t("auth.email_placeholder")}
+                      className="pl-10"
+                      autoComplete="off"
+                      onPaste={(e) => e.preventDefault()}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  {emailConfirm.length > 0 && email.trim().toLowerCase() !== emailConfirm.trim().toLowerCase() && (
+                    <p className="text-xs text-destructive">
+                      {language === "pt"
+                        ? "Os emails não coincidem."
+                        : language === "es"
+                          ? "Los emails no coinciden."
+                          : "Emails do not match."}
+                    </p>
+                  )}
+                </div>
+              )}
               {!isForgotPassword && (
                 <div className="space-y-2">
                   <Label htmlFor="password">{t("auth.password")}</Label>
