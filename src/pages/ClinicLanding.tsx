@@ -37,6 +37,7 @@ const ClinicLanding = () => {
   const [billingAnnual, setBillingAnnual] = useState(true);
   const [loading, setLoading] = useState<string | null>(null);
   const [subscribeLoading, setSubscribeLoading] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [trialForm, setTrialForm] = useState<string | null>(null);
   const [trialEmail, setTrialEmail] = useState("");
