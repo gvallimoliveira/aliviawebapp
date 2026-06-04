@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import {
   Building2, ArrowRight, Check, Globe, LogOut, LayoutDashboard,
   ClipboardList, Video, Calendar, FileText, Users, MessageCircle,
-  Shield, BarChart3, Activity, Star, HelpCircle,
+  Shield, BarChart3, Activity, Star, HelpCircle, Menu,
   Zap, Clock, Gift, Mail, Phone, CreditCard, Sparkles, Camera,
   Link2, Image as ImageIcon, AlertTriangle, Palette, Heart,
   TrendingUp, Bell, FileCheck, Smile, BookOpen, Stethoscope,
@@ -23,6 +23,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { CLINIC_SMALL, CLINIC_MEDIUM, CLINIC_LARGE } from "@/constants/clinicPricing";
 import LgpdBadge from "@/components/LgpdBadge";
 import InstallAppSection from "@/components/InstallAppSection";
+import MobileNavSheet from "@/components/MobileNavSheet";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
