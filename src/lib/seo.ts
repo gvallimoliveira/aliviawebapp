@@ -160,7 +160,7 @@ export function setOrganizationJsonLd() {
     url: SITE_URL,
     logo: `${SITE_URL}/og-image.png`,
     sameAs: [
-      "https://www.instagram.com/aliviawebapp",
+      "https://www.instagram.com/alivia.fisioapp",
       "https://instagram.com/gvallim.fisioterapia",
     ],
     contactPoint: {
