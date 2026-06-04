@@ -112,6 +112,7 @@ const Gateway = () => {
                 {t("nav.login")}
               </Button>
             )}
+            <MobileNavSheet open={mobileOpen} onOpenChange={setMobileOpen} hideTrigger />
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} aria-label="Menu">
               <Menu className="h-5 w-5" />
             </Button>
@@ -119,56 +120,6 @@ const Gateway = () => {
         </div>
       </header>
       <ReferralBanner />
-
-      {/* Mobile side menu */}
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-72 p-0">
-          <SheetHeader className="p-4 border-b border-border/40">
-            <SheetTitle className="flex items-center gap-2">
-              <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
-              <span className="text-lg font-bold text-foreground">Aliv.iA</span>
-            </SheetTitle>
-          </SheetHeader>
-          <nav className="flex flex-col gap-1 p-3">
-            <button onClick={() => { document.getElementById("about")?.scrollIntoView({ behavior: "smooth" }); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left">
-              <Info className="h-4 w-4" />
-              {language === "pt" ? "Sobre" : language === "es" ? "Acerca de" : "About"}
-            </button>
-            <button onClick={() => { navigate("/blog"); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left">
-              Blog
-            </button>
-            <div className="my-2 border-t border-border/40" />
-            <button onClick={() => { toggleLanguage(); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left">
-              <Globe className="h-4 w-4" />
-              {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
-            </button>
-            <button onClick={() => { navigate("/suporte"); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left">
-              <HelpCircle className="h-4 w-4" />
-              {t("support.badge")}
-            </button>
-            {user ? (
-              <>
-                <button onClick={() => { navigate("/dashboard"); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors text-left">
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
-                </button>
-                <button onClick={() => { navigate("/conta"); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left">
-                  <UserCog className="h-4 w-4" />
-                  {language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}
-                </button>
-                <button onClick={() => { handleSignOut(); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors text-left">
-                  <LogOut className="h-4 w-4" />
-                  {language === "pt" ? "Sair" : language === "es" ? "Salir" : "Sign out"}
-                </button>
-              </>
-            ) : (
-              <button onClick={() => { navigate("/auth"); setMobileOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors text-left">
-                {t("nav.login")}
-              </button>
-            )}
-          </nav>
-        </SheetContent>
-      </Sheet>
 
       {/* Main content */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-12">
