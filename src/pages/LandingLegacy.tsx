@@ -56,6 +56,7 @@ const Index = () => {
         <FaqSection />
         <SocialSection />
       </main>
+      <InstallAppSection />
       <Footer />
       <StickyCTA />
       <ExitIntentPopup />
