@@ -14,6 +14,7 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
   const isProfessionalPage = location.pathname === "/profissionais";
 
   const handleSignOut = async () => {
