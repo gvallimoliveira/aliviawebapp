@@ -19,6 +19,7 @@ import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import PushOptInBanner from "@/components/PushOptInBanner";
 import PartnerPasswordBanner from "@/components/dashboard/PartnerPasswordBanner";
 import ConfirmEmailBanner from "@/components/dashboard/ConfirmEmailBanner";
+import InstallAppCard from "@/components/InstallAppCard";
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
 import ClinicTrialBanner, { ClinicTrialBlockOverlay, useClinicTrial } from "@/components/dashboard/ClinicTrialBanner";
 // Lazy — only rendered when the corresponding tab/section opens
@@ -526,6 +527,7 @@ const Dashboard = () => {
         <PartnerPasswordBanner isPartner={professional?.is_partner} userId={user?.id} />
         <ConfirmEmailBanner user={user} />
         <PushOptInBanner />
+        <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
         <WelcomeSection
           profileName={
             profile?.full_name?.trim() ||

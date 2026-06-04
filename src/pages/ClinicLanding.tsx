@@ -22,6 +22,7 @@ import {
 import logoAlivia from "@/assets/logo-alivia.png";
 import { CLINIC_SMALL, CLINIC_MEDIUM, CLINIC_LARGE } from "@/constants/clinicPricing";
 import LgpdBadge from "@/components/LgpdBadge";
+import InstallAppSection from "@/components/InstallAppSection";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -656,6 +657,8 @@ const ClinicLanding = () => {
           </motion.div>
         </section>
       </main>
+
+      <InstallAppSection />
 
       <LgpdBadge />
 

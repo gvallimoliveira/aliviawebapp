@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Globe, HelpCircle, Info, LayoutDashboard, LogOut, Menu, ShieldCheck, Stethoscope, UserCog } from "lucide-react";
+import { BookOpen, Building2, Globe, Heart, HelpCircle, Home, LayoutDashboard, LogOut, Menu, ShieldCheck, Smartphone, Stethoscope, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
+import InstallAppDialog from "@/components/InstallAppDialog";
 
 const Header = () => {
   const { t, toggleLanguage, language } = useLanguage();
@@ -13,6 +14,7 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
   const isProfessionalPage = location.pathname === "/profissionais";
 
   const handleSignOut = async () => {
@@ -100,55 +102,81 @@ const Header = () => {
 
       {/* Mobile side menu */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="w-72 p-0 flex flex-col">
           <SheetHeader className="p-4 border-b border-border/40">
             <SheetTitle className="flex items-center gap-2">
               <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
               <span className="text-lg font-bold text-foreground">Aliv.iA</span>
             </SheetTitle>
           </SheetHeader>
-          <nav className="flex flex-col gap-1 p-3">
+          <nav className="flex flex-col gap-0.5 p-2 overflow-y-auto flex-1">
+            {user && (
+              <button
+                onClick={() => go("/dashboard")}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors text-left"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                {language === "pt" ? "Meu Painel" : language === "es" ? "Mi Panel" : "My Dashboard"}
+              </button>
+            )}
             <button
               onClick={() => go("/")}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
             >
-              <Info className="h-4 w-4" />
-              {language === "pt" ? "Sobre" : language === "es" ? "Acerca de" : "About"}
+              <Home className="h-4 w-4" />
+              {language === "pt" ? "Início" : language === "es" ? "Inicio" : "Home"}
             </button>
+
+            <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70">
+              {language === "pt" ? "Conheça o Aliv.iA" : language === "es" ? "Conoce Aliv.iA" : "Discover Aliv.iA"}
+            </div>
             <button
-              onClick={() => go("#compare")}
+              onClick={() => go("/para-pacientes")}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
             >
-              {isProfessionalPage ? (language === "pt" ? "Planos e preços" : language === "es" ? "Planes y precios" : "Plans & pricing") : t("compare.title")}
+              <Heart className="h-4 w-4" />
+              {language === "pt" ? "Para Pacientes" : language === "es" ? "Para Pacientes" : "For Patients"}
             </button>
             <button
-              onClick={() => go("#how")}
+              onClick={() => go("/profissionais")}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
             >
-              {t("how.title")}
+              <Stethoscope className="h-4 w-4" />
+              {t("nav.professional")}
+            </button>
+            <button
+              onClick={() => go("/clinica")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+            >
+              <Building2 className="h-4 w-4" />
+              {language === "pt" ? "Aliv.iA Clínica" : language === "es" ? "Aliv.iA Clínica" : "Aliv.iA Clinic"}
             </button>
             <button
               onClick={() => go("/blog")}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
             >
+              <BookOpen className="h-4 w-4" />
               {t("blog.title")}
             </button>
-            <button
-              onClick={() => go("/profissionais")}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors text-left"
-            >
-              <Stethoscope className="h-4 w-4" />
-              {t("nav.professional")}
-            </button>
 
-            <div className="my-2 border-t border-border/40" />
-
+            <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70">
+              {language === "pt" ? "Conta & Utilidades" : language === "es" ? "Cuenta y Utilidades" : "Account & Utilities"}
+            </div>
+            {user && (
+              <button
+                onClick={() => go("/conta")}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+              >
+                <UserCog className="h-4 w-4" />
+                {language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}
+              </button>
+            )}
             <button
-              onClick={() => { toggleLanguage(); setMobileOpen(false); }}
+              onClick={() => { setMobileOpen(false); setInstallOpen(true); }}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
             >
-              <Globe className="h-4 w-4" />
-              {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
+              <Smartphone className="h-4 w-4" />
+              {language === "pt" ? "Instalar como App" : language === "es" ? "Instalar como App" : "Install as App"}
             </button>
             <button
               onClick={() => go("/suporte")}
@@ -157,38 +185,34 @@ const Header = () => {
               <HelpCircle className="h-4 w-4" />
               {t("support.badge")}
             </button>
+            <button
+              onClick={() => { toggleLanguage(); setMobileOpen(false); }}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+            >
+              <Globe className="h-4 w-4" />
+              {language === "pt" ? "Idioma: Português" : language === "en" ? "Language: English" : "Idioma: Español"}
+              <span className="ml-auto text-xs text-primary">→ {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}</span>
+            </button>
+            {user && (
+              <button
+                onClick={() => go("/admin")}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Admin
+              </button>
+            )}
+
+            <div className="my-2 border-t border-border/40" />
 
             {user ? (
-              <>
-                <button
-                  onClick={() => go("/dashboard")}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors text-left"
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  {language === "pt" ? "Meu Painel" : language === "es" ? "Mi Panel" : "My Dashboard"}
-                </button>
-                <button
-                  onClick={() => go("/conta")}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
-                >
-                  <UserCog className="h-4 w-4" />
-                  {language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}
-                </button>
-                <button
-                  onClick={() => go("/admin")}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  Admin
-                </button>
-                <button
-                  onClick={() => { handleSignOut(); setMobileOpen(false); }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors text-left"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {language === "pt" ? "Sair" : language === "es" ? "Salir" : "Sign out"}
-                </button>
-              </>
+              <button
+                onClick={() => { handleSignOut(); setMobileOpen(false); }}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors text-left"
+              >
+                <LogOut className="h-4 w-4" />
+                {language === "pt" ? "Sair" : language === "es" ? "Salir" : "Sign out"}
+              </button>
             ) : (
               <button
                 onClick={() => go("/auth")}
@@ -200,6 +224,8 @@ const Header = () => {
           </nav>
         </SheetContent>
       </Sheet>
+
+      <InstallAppDialog open={installOpen} onOpenChange={setInstallOpen} />
     </header>
   );
 };

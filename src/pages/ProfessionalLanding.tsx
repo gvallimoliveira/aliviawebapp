@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/accordion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import InstallAppSection from "@/components/InstallAppSection";
 import { motion } from "framer-motion";
 import {
   Clock, Target, FileText, Activity, Stethoscope, ArrowRight, ArrowDown,
@@ -512,6 +513,7 @@ const ProfessionalLanding = () => {
         </div>
       </section>
 
+      <InstallAppSection />
       <Footer />
     </div>
   );

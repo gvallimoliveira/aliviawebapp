@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext";
 import { setSeo } from "@/lib/seo";
+import InstallAppCard from "@/components/InstallAppCard";
 
 type ToolItem = {
   key: string;
@@ -372,6 +373,12 @@ const ClinicSupport = () => {
             Guia das funcionalidades do modo Clínica — da migração da agenda à pesquisa de satisfação. Se ainda restar dúvida, fale com a gente.
           </p>
         </motion.div>
+
+        <div className="max-w-2xl mx-auto mb-10">
+          <InstallAppCard defaultOpen={false} hideIfStandalone={false} />
+        </div>
+
+
 
         {/* Quick links to landing & demo */}
         <div className="flex flex-wrap items-center justify-center gap-3 mb-12">

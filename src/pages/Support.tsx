@@ -17,6 +17,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { setSeo } from "@/lib/seo";
+import InstallAppCard from "@/components/InstallAppCard";
 
 type SupportProfile = "patient" | "professional" | null;
 
@@ -172,6 +173,11 @@ const Support = () => {
             {t("support.subtitle")}
           </p>
         </motion.div>
+
+        <div className="max-w-2xl mx-auto mb-10">
+          <InstallAppCard defaultOpen={false} hideIfStandalone={false} />
+        </div>
+
 
         {/* Profile selection */}
         <AnimatePresence mode="wait">
