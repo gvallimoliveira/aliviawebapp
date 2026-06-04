@@ -174,6 +174,11 @@ const Support = () => {
           </p>
         </motion.div>
 
+        <div className="max-w-2xl mx-auto mb-10">
+          <InstallAppCard defaultOpen={false} hideIfStandalone={false} />
+        </div>
+
+
         {/* Profile selection */}
         <AnimatePresence mode="wait">
           {!profile ? (
