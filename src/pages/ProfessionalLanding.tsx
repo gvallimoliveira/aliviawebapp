@@ -513,6 +513,7 @@ const ProfessionalLanding = () => {
         </div>
       </section>
 
+      <InstallAppSection />
       <Footer />
     </div>
   );
