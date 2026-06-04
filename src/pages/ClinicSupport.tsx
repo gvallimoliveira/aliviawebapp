@@ -374,6 +374,12 @@ const ClinicSupport = () => {
           </p>
         </motion.div>
 
+        <div className="max-w-2xl mx-auto mb-10">
+          <InstallAppCard defaultOpen={false} hideIfStandalone={false} />
+        </div>
+
+
+
         {/* Quick links to landing & demo */}
         <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
           <Button variant="outline" className="gap-2 rounded-xl" onClick={() => navigate("/clinica")}>
