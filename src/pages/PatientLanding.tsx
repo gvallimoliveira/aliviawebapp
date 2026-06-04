@@ -222,6 +222,7 @@ const PatientLanding = () => {
         <SocialSection />
         <LgpdBadge />
       </main>
+      <InstallAppSection />
       <Footer />
       <StickyCTA showProfessional={false} />
       <ExitIntentPopup />
