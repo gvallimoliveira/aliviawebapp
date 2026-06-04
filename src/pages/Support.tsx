@@ -17,6 +17,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { setSeo } from "@/lib/seo";
+import InstallAppCard from "@/components/InstallAppCard";
 
 type SupportProfile = "patient" | "professional" | null;
 
