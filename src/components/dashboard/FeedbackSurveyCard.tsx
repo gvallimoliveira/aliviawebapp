@@ -29,8 +29,14 @@ const FeedbackSurveyCard = ({ clinicId, lang }: FeedbackSurveyCardProps) => {
 
   const link = `${getPublicOrigin()}/feedback/clinic/${clinicId}${service && service !== "all" ? `?service=${service}` : ""}`;
 
-  const copy = () => {
-    navigator.clipboard.writeText(link);
+  const copy = async () => {
+    try {
+      const { createShortAppLink } = await import("@/lib/shortLink");
+      const short = await createShortAppLink(link);
+      await navigator.clipboard.writeText(short);
+    } catch {
+      await navigator.clipboard.writeText(link);
+    }
     setCopied(true);
     toast({ title: lang === "pt" ? "Link copiado!" : "Link copied!" });
     setTimeout(() => setCopied(false), 2000);
