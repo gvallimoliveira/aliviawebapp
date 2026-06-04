@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Globe, HelpCircle, Info, LayoutDashboard, LogOut, Menu, ShieldCheck, Stethoscope, UserCog } from "lucide-react";
+import { BookOpen, Building2, Globe, Heart, HelpCircle, Home, LayoutDashboard, LogOut, Menu, ShieldCheck, Smartphone, Stethoscope, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
+import InstallAppDialog from "@/components/InstallAppDialog";
 
 const Header = () => {
   const { t, toggleLanguage, language } = useLanguage();
