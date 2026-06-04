@@ -527,6 +527,7 @@ const Dashboard = () => {
         <PartnerPasswordBanner isPartner={professional?.is_partner} userId={user?.id} />
         <ConfirmEmailBanner user={user} />
         <PushOptInBanner />
+        <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
         <WelcomeSection
           profileName={
             profile?.full_name?.trim() ||
