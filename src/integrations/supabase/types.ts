@@ -1752,31 +1752,34 @@ export type Database = {
       }
       short_links: {
         Row: {
-          bucket: string
+          bucket: string | null
           created_at: string
           created_by: string
           expires_at: string
-          file_path: string
+          file_path: string | null
           id: string
           slug: string
+          target_url: string | null
         }
         Insert: {
-          bucket: string
+          bucket?: string | null
           created_at?: string
           created_by: string
           expires_at: string
-          file_path: string
+          file_path?: string | null
           id?: string
           slug: string
+          target_url?: string | null
         }
         Update: {
-          bucket?: string
+          bucket?: string | null
           created_at?: string
           created_by?: string
           expires_at?: string
-          file_path?: string
+          file_path?: string | null
           id?: string
           slug?: string
+          target_url?: string | null
         }
         Relationships: []
       }
