@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import {
   Building2, ArrowRight, Check, Globe, LogOut, LayoutDashboard,
   ClipboardList, Video, Calendar, FileText, Users, MessageCircle,
-  Shield, BarChart3, Activity, Star, HelpCircle,
+  Shield, BarChart3, Activity, Star, HelpCircle, Menu,
   Zap, Clock, Gift, Mail, Phone, CreditCard, Sparkles, Camera,
   Link2, Image as ImageIcon, AlertTriangle, Palette, Heart,
   TrendingUp, Bell, FileCheck, Smile, BookOpen, Stethoscope,
@@ -23,6 +23,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { CLINIC_SMALL, CLINIC_MEDIUM, CLINIC_LARGE } from "@/constants/clinicPricing";
 import LgpdBadge from "@/components/LgpdBadge";
 import InstallAppSection from "@/components/InstallAppSection";
+import MobileNavSheet from "@/components/MobileNavSheet";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -36,6 +37,7 @@ const ClinicLanding = () => {
   const [billingAnnual, setBillingAnnual] = useState(true);
   const [loading, setLoading] = useState<string | null>(null);
   const [subscribeLoading, setSubscribeLoading] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [trialForm, setTrialForm] = useState<string | null>(null);
   const [trialEmail, setTrialEmail] = useState("");
@@ -246,23 +248,41 @@ const ClinicLanding = () => {
             <span className="text-lg font-bold text-foreground">Aliv.iA</span>
             <Badge variant="outline" className="text-xs border-primary/30 text-primary">Clinic</Badge>
           </button>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2">
-              <Globe className="h-4 w-4" />
-              {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
-            </Button>
-            {user ? (
-              <>
-                <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5">
-                  <LayoutDashboard className="h-4 w-4" />Dashboard
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* Desktop actions */}
+            <div className="hidden md:flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2">
+                <Globe className="h-4 w-4" />
+                {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}
+              </Button>
+              {user ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5">
+                    <LayoutDashboard className="h-4 w-4" />Dashboard
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>Entrar</Button>
+              )}
+            </div>
+            {/* Mobile actions */}
+            <div className="flex md:hidden items-center gap-1">
+              {user ? (
+                <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5 px-2 text-xs">
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  {language === "pt" ? "Painel" : language === "es" ? "Panel" : "Dashboard"}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>Entrar</Button>
-            )}
+              ) : (
+                <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="text-sm px-2">Entrar</Button>
+              )}
+              <MobileNavSheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} hideTrigger />
+              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)} aria-label="Menu">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
