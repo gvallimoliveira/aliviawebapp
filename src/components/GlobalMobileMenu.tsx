@@ -139,9 +139,32 @@ const GlobalMobileMenu = () => {
   });
   const hideButton = inCriticalFlow || pageHasHeader || otherDialogOpen;
 
-  const go = (target: string) => {
+  useEffect(() => {
     setOpen(false);
-    navigate(target);
+    document.documentElement.scrollLeft = 0;
+    document.body.scrollLeft = 0;
+    window.scrollTo({ top: 0, left: 0 });
+  }, [path]);
+
+  const navigateAfterSheetClose = (target: string) => {
+    const performNavigation = () => {
+      navigate(target);
+      window.scrollTo({ top: 0, left: 0 });
+      document.documentElement.scrollLeft = 0;
+      document.body.scrollLeft = 0;
+    };
+
+    if (open) {
+      setOpen(false);
+      window.setTimeout(performNavigation, 0);
+      return;
+    }
+
+    performNavigation();
+  };
+
+  const go = (target: string) => {
+    navigateAfterSheetClose(target);
   };
 
   const handleSignOut = async () => {
