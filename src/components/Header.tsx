@@ -24,13 +24,27 @@ const Header = () => {
     window.location.replace("/");
   };
 
+  const navigateAfterMenuClose = (target: string) => {
+    const performNavigation = () => {
+      navigate(target);
+      window.scrollTo({ top: 0, left: 0 });
+    };
+
+    if (mobileOpen) {
+      setMobileOpen(false);
+      window.setTimeout(performNavigation, 0);
+      return;
+    }
+
+    performNavigation();
+  };
+
   const go = (path: string) => {
     if (path.startsWith("#")) {
       document.querySelector(path)?.scrollIntoView({ behavior: "smooth" });
     } else {
-      navigate(path);
+      navigateAfterMenuClose(path);
     }
-    setMobileOpen(false);
   };
 
   return (
