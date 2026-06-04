@@ -532,14 +532,19 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
   const handleCopy = async () => {
     if (!generatedLink) return;
-    await navigator.clipboard.writeText(generatedLink);
+    // HEP links expire in 3 months (the program is meant to be refreshed)
+    const { createShortAppLink } = await import("@/lib/shortLink");
+    const short = await createShortAppLink(generatedLink, { ttlSeconds: 60 * 60 * 24 * 90 });
+    await navigator.clipboard.writeText(short);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     if (!generatedLink) return;
-    const text = `Olá ${patientName}! Preparei seu programa de exercícios domiciliares. Acesse aqui: ${generatedLink}`;
+    const { createShortAppLink } = await import("@/lib/shortLink");
+    const short = await createShortAppLink(generatedLink, { ttlSeconds: 60 * 60 * 24 * 90 });
+    const text = `Olá ${patientName}! Preparei seu programa de exercícios domiciliares. Acesse aqui: ${short}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
