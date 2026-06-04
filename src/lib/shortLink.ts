@@ -57,3 +57,50 @@ export async function createShortShareLink(opts: {
   const { data } = await supabase.storage.from(opts.bucket).createSignedUrl(opts.filePath, ttl);
   return data?.signedUrl || "";
 }
+
+/**
+ * Shorten an arbitrary in-app URL on demand (e.g. assessment, reassessment, HEP,
+ * feedback survey links). Resolves to a `https://<ref>.supabase.co/functions/v1/s/<slug>`
+ * URL that 302-redirects to the original.
+ *
+ * **Safe by design**: if anything fails (no auth, DB error, network), this function
+ * returns the original long URL — callers can use the result unconditionally.
+ *
+ * @param longUrl  The full URL to shorten.
+ * @param opts.ttlSeconds  How long the short link stays valid. Default: 5 years.
+ */
+export async function createShortAppLink(
+  longUrl: string,
+  opts: { ttlSeconds?: number } = {},
+): Promise<string> {
+  try {
+    if (!longUrl || !/^https?:\/\//i.test(longUrl)) return longUrl;
+
+    const ttl = opts.ttlSeconds ?? 60 * 60 * 24 * 365 * 5; // 5 years default
+    const expiresAt = new Date(Date.now() + ttl * 1000).toISOString();
+
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) return longUrl;
+
+    const ref = getProjectRef();
+    if (!ref) return longUrl;
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const slug = generateSlug(7);
+      const { error } = await supabase.from("short_links").insert({
+        slug,
+        target_url: longUrl,
+        created_by: userId,
+        expires_at: expiresAt,
+      } as any);
+      if (!error) {
+        return `https://${ref}.supabase.co/functions/v1/s/${slug}`;
+      }
+      if (!String(error.message || "").toLowerCase().includes("duplicate")) break;
+    }
+  } catch (e) {
+    console.warn("createShortAppLink failed, using long URL", e);
+  }
+  return longUrl;
+}

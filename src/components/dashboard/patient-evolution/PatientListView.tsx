@@ -250,7 +250,9 @@ export default function PatientListView(props: any) {
                       try {
                         const token = await ensurePatientAssessmentToken(patientRec);
                         const link = buildPersonalizedAssessmentLink({ professionalId, clinicId }, token);
-                        await navigator.clipboard.writeText(link);
+                        const { createShortAppLink } = await import("@/lib/shortLink");
+                        const short = await createShortAppLink(link);
+                        await navigator.clipboard.writeText(short);
                         toast({ title: language === "pt" ? "Link copiado!" : "Link copied!", description: language === "pt" ? "Envie ao paciente. A avaliação será vinculada automaticamente a este card." : "Send to the patient. The assessment will be auto-linked to this card." });
                       } catch (err: any) {
                         toast({ title: "Erro", description: err.message, variant: "destructive" });

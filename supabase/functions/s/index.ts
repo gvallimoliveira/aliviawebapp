@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from("short_links")
-      .select("bucket, file_path, expires_at")
+      .select("bucket, file_path, target_url, expires_at")
       .eq("slug", slug)
       .maybeSingle();
 
@@ -117,6 +117,19 @@ Deno.serve(async (req) => {
 
     if (new Date(data.expires_at).getTime() < Date.now()) {
       return htmlResponse("expired", 410);
+    }
+
+    // App-URL short link → direct 302 to the long URL
+    if (data.target_url) {
+      return new Response(null, {
+        status: 302,
+        headers: { ...corsHeaders, Location: data.target_url, "Cache-Control": "no-store" },
+      });
+    }
+
+    // Storage short link → sign and redirect
+    if (!data.bucket || !data.file_path) {
+      return htmlResponse("not_found", 404);
     }
 
     const ttl = Math.max(60, Math.floor((new Date(data.expires_at).getTime() - Date.now()) / 1000));
