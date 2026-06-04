@@ -12,6 +12,7 @@ import LgpdBadge from "@/components/LgpdBadge";
 import logoAlivia from "@/assets/logo-alivia.png";
 import guilhermePhoto from "@/assets/guilherme-founder.jpeg";
 import AppVersionBadge from "@/components/AppVersionBadge";
+import InstallAppCard from "@/components/InstallAppCard";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
