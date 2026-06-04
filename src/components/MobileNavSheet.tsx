@@ -43,9 +43,25 @@ const MobileNavSheet = ({ open: controlledOpen, onOpenChange, hideTrigger, trigg
     onOpenChange?.(v);
   };
 
+  const navigateAfterSheetClose = (path: string) => {
+    const performNavigation = () => {
+      navigate(path);
+      window.scrollTo({ top: 0, left: 0 });
+      document.documentElement.scrollLeft = 0;
+      document.body.scrollLeft = 0;
+    };
+
+    if (open) {
+      setOpen(false);
+      window.setTimeout(performNavigation, 0);
+      return;
+    }
+
+    performNavigation();
+  };
+
   const go = (path: string) => {
-    setOpen(false);
-    navigate(path);
+    navigateAfterSheetClose(path);
   };
 
   const handleSignOut = async () => {

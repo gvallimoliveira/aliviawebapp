@@ -121,7 +121,7 @@ const ProfessionalLanding = () => {
     : `R$${PRO_PLAN_ANNUAL_PRICE.toFixed(2).replace(".", ",")}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Header />
 
       {/* Hero */}
