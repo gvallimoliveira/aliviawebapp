@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext";
 import { setSeo } from "@/lib/seo";
+import InstallAppCard from "@/components/InstallAppCard";
 
 type ToolItem = {
   key: string;
