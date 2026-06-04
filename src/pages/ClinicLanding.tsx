@@ -658,6 +658,8 @@ const ClinicLanding = () => {
         </section>
       </main>
 
+      <InstallAppSection />
+
       <LgpdBadge />
 
       <footer className="relative z-10 border-t border-border/40 bg-muted/20 py-6">
