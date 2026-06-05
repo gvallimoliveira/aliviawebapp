@@ -501,6 +501,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         anamnesisData: assessment.anamnesis_data,
         painRegions: assessment.pain_regions,
         testResults: assessment.test_results,
+        redFlags: (assessment.red_flags as any)?.detected,
         professionalNotes: proNote,
         professionalLogoUrl: professional?.logo_url || undefined,
         clinicLogoUrl: isClinicMode && activeClinic?.logo_url ? activeClinic.logo_url : undefined,
