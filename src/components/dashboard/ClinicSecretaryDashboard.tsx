@@ -145,6 +145,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
         anamnesisData: assessment.anamnesis_data,
         painRegions: assessment.pain_regions,
         testResults: assessment.test_results,
+        redFlags: (assessment.red_flags as any)?.detected,
         clinicLogoUrl: activeClinic?.logo_url || undefined,
         clinicName: activeClinic?.clinic_name || undefined,
         responsibleProfessional,

@@ -796,6 +796,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
             anamnesisData: a.anamnesis_data,
             painRegions: a.pain_regions,
             testResults: a.test_results,
+            redFlags: (a.red_flags as any)?.detected,
             professionalNotes: noteIncludeInPdf[a.id] ? (notes[a.id] || undefined) : undefined,
           });
           const date = new Date(a.created_at).toISOString().slice(0, 10);
