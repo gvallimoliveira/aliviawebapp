@@ -1023,6 +1023,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     {questionnaireResults.map((r) => r.questionnaireName).join(", ")}
                   </div>
                 )}
+
+                {/* Specialty (cardio / geri) AI-suggested questionnaires */}
+                {!demoMode && (
+                  <SpecialtyQuestionnairesPanel
+                    ref={specialtyPanelRef}
+                    anamnesisData={buildAnamnesisData()}
+                    professionalId={professionalId}
+                    clinicId={clinicId}
+                    patientName={patientName}
+                    patientEmail={patientEmail}
+                    assessmentId={editAssessment?.id || null}
+                    initialApplied={specialtyApplied}
+                    onApplied={setSpecialtyApplied}
+                  />
+                )}
               </div>
             )}
 
