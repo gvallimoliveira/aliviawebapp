@@ -429,11 +429,21 @@ IMPORTANT RULES:
 - When validated questionnaire results are provided, use the scores and subscale analysis to support your hypothesis and identify the most affected functional areas.
 - When the patient provides additional information after an initial low-confidence assessment, you MUST carefully integrate this new data into your clinical reasoning. Re-evaluate your hypothesis considering ALL available data (original anamnesis + new information). The additional details often contain critical clues (mechanism of injury, specific triggers, prior treatments, temporal patterns) that can significantly narrow the differential diagnosis and increase confidence level.
 
+${redFlagsList.length > 0 ? `
+RED FLAGS DOCUMENTED BY THE PROFESSIONAL DURING ASSESSMENT (MANDATORY — integrate into the report):
+The attending professional flagged the following warning signs: ${redFlagsList.join("; ")}.
+You MUST:
+- Acknowledge these red flag(s) explicitly within the "summary" field (1 short sentence).
+- Copy them verbatim into the "redFlags" array of your JSON output.
+- In professional mode the workflow does NOT terminate: the case is supervised, so frame the conduct as "continue physiotherapy with concurrent medical follow-up" — do NOT recommend stopping the assessment.
+` : ""}
+
 Response format (JSON):
 {
   "hypothesis": "Main diagnostic hypothesis name",
   "confidence": "low" | "moderate" | "high",
   "summary": "Brief 1-2 sentence summary of the hypothesis",
+  "redFlags": ${redFlagsList.length > 0 ? JSON.stringify(redFlagsList) : "[]"},
   ${isBasic || isProfessional ? "" : `"explanation": "Detailed explanation of what's happening in the body (2-3 paragraphs). Reference questionnaire findings when available.",
   "reasoning": "Why this hypothesis based on the provided data, including questionnaire score interpretation",
   "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
