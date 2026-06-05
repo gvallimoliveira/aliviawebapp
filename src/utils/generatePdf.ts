@@ -1090,6 +1090,9 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   // Summary
   y = renderSubSection(doc, y, isPt ? "Resumo" : "Summary", options.diagnosis.summary);
 
+  // Red flags (documented but non-blocking when professional supervised)
+  y = renderRedFlagsCard(doc, y, options.redFlags, isPt);
+
   // ── Pain Score (VAS) — uses shared renderer ──
   y = renderVasSection(doc, y, isPt, options.painScore, options.anamnesisData);
 
