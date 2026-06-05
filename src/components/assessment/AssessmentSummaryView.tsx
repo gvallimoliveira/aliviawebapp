@@ -71,7 +71,14 @@ const AssessmentSummaryView = ({
   const funcTests = testResults.filter((r) => r.testId && !r.questionnaireId);
   const qResults: QuestionnaireResult[] = testResults.filter((r: any) => r.questionnaireId);
 
-  const redFlagsRaw = (diagnosis as any).redFlags ?? (diagnosis as any).red_flags;
+  const redFlagsRaw =
+    (diagnosis as any).redFlags ??
+    (diagnosis as any).red_flags ??
+    (assessment.red_flags as any)?.detected ??
+    assessment.red_flags;
+  const redFlagsList: string[] = Array.isArray(redFlagsRaw)
+    ? redFlagsRaw.filter((x: any) => typeof x === "string")
+    : [];
   const redFlagsDetected = Array.isArray(redFlagsRaw) ? redFlagsRaw.length > 0 : !!redFlagsRaw;
 
   // Translate a raw value (e.g. "neck_pain", "one_month", "anamnesis.pain_type.throbbing")
