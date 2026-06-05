@@ -1,15 +1,19 @@
+import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Brain, ShieldCheck, ShieldAlert, Activity, MapPin, ClipboardCheck, Target,
   FileText, Dumbbell, Calendar, Sparkles, CheckCircle2, AlertCircle, Info,
-  Download, Share2, Loader2, ArrowLeft,
+  Download, Share2, Loader2, ArrowLeft, RotateCcw,
 } from "lucide-react";
 import { regionsByView } from "./painMapData";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { functionalTests } from "@/data/functionalTestsData";
 import { getSeverityColor } from "./QuestionnaireResultCard";
+import DismissRedFlagDialog from "./DismissRedFlagDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface AssessmentSummaryViewProps {
   assessment: any;
@@ -19,6 +23,8 @@ interface AssessmentSummaryViewProps {
   pdfLoading?: boolean;
   whatsappLoading?: boolean;
   embedded?: boolean;
+  professionalContext?: boolean;
+  onAssessmentUpdated?: () => void;
 }
 
 function getRegionLabel(id: string, isPt: boolean): string {
