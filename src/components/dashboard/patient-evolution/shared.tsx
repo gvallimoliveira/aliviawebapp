@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { mockClinicalImpressions } from "@/data/mockPatientData";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Brain, FileCheck, Loader2, Lock, RefreshCw, Sparkles } from "lucide-react";
 
 export function normalizeTestResults(tr: any): any[] {
@@ -181,6 +181,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
   const { language } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [impression, setImpression] = useState<{ overview: string; therapeuticObjectives: string[] } | null>(existingImpression || null);
+  const autoRegenRef = useRef(false);
 
   const buildTimeline = () => {
     if (!allAssessments || allAssessments.length === 0) return undefined;
@@ -244,6 +245,23 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
       setLoading(false);
     }
   };
+
+  // Auto-regenerate impression when assessment is flagged (e.g. after a pending
+  // questionnaire is completed by the patient).
+  useEffect(() => {
+    if (isDemo) return;
+    if (autoRegenRef.current) return;
+    if (!assessment?.needs_reimpression) return;
+    autoRegenRef.current = true;
+    (async () => {
+      await generate();
+      try {
+        await supabase.from("assessments").update({ needs_reimpression: false }).eq("id", assessment.id);
+      } catch (e) { console.warn("clear needs_reimpression failed", e); }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assessment?.id, assessment?.needs_reimpression]);
+
 
   return (
     <Card>

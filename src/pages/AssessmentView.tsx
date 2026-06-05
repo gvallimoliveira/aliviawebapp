@@ -30,6 +30,7 @@ import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { Separator } from "@/components/ui/separator";
 import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import PendingQuestionnairesCard from "@/components/assessment/PendingQuestionnairesCard";
 
 // Translate i18n keys for display
 function translateKey(key: string, isPt: boolean): string {
@@ -891,6 +892,13 @@ const AssessmentView = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Specialty / pending questionnaires (cardio/geri) */}
+        {!String(assessment.id).startsWith("demo-") && (
+          <PendingQuestionnairesCard assessmentId={assessment.id} canManage={viewerIsProOwner} />
+        )}
+
+
 
         {/* Voice notes (AI transcription) tied to this assessment */}
         <VoiceNoteCard assessmentId={assessment.id} />
