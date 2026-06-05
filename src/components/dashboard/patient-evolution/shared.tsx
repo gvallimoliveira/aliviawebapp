@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { mockClinicalImpressions } from "@/data/mockPatientData";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Brain, FileCheck, Loader2, Lock, RefreshCw, Sparkles } from "lucide-react";
 
 export function normalizeTestResults(tr: any): any[] {
