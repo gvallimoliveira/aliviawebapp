@@ -8,7 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { getSpecialtyQuestionnaire } from "@/data/specialtyQuestionnaires";
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
-import { getPublicOrigin } from "@/lib/origin";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 
 interface Props {
   assessmentId: string;
