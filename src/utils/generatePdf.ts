@@ -400,26 +400,32 @@ function renderRedFlagsCard(
   doc: jsPDF,
   y: number,
   redFlags: string[] | undefined,
-  isPt: boolean
+  isPt: boolean,
+  dismissal?: { at?: string; by?: string; reason?: string } | null
 ): number {
   if (!redFlags || redFlags.length === 0) return y;
+  const isDismissed = !!dismissal?.at;
   const title = isPt
-    ? "Sinais de Alerta (Red Flags)"
-    : "Warning Signs (Red Flags)";
-  const note = isPt
-    ? "Identificados durante a avaliação. Conduta: acompanhamento com a equipe médica responsável. Não interrompe a abordagem fisioterapêutica quando já há supervisão médica do(s) item(ns) acima."
-    : "Identified during the assessment. Conduct: follow-up with the attending medical team. Does not interrupt physiotherapy when medical supervision of the item(s) above is already in place.";
+    ? (isDismissed ? "Sinais de Alerta (Red Flags) — Dispensada" : "Sinais de Alerta (Red Flags)")
+    : (isDismissed ? "Warning Signs (Red Flags) — Dismissed" : "Warning Signs (Red Flags)");
+  const note = isDismissed
+    ? (isPt
+        ? `Dispensada em ${dismissal?.at ? new Date(dismissal.at).toLocaleDateString("pt-BR") : "—"} por ${dismissal?.by || "—"}.${dismissal?.reason ? ` Motivo: ${dismissal.reason}` : ""} A hipótese fisioterapêutica foi liberada para uso clínico.`
+        : `Dismissed on ${dismissal?.at ? new Date(dismissal.at).toLocaleDateString("en-US") : "—"} by ${dismissal?.by || "—"}.${dismissal?.reason ? ` Reason: ${dismissal.reason}` : ""} The physiotherapy hypothesis was released for clinical use.`)
+    : (isPt
+        ? "ATENÇÃO: identificados durante a avaliação. A hipótese fisioterapêutica abaixo fica SOB RESSALVA e NÃO deve ser usada para definir conduta até avaliação e liberação médica do(s) item(ns) acima."
+        : "ATTENTION: identified during the assessment. The physiotherapy hypothesis below is UNDER RESERVATION and must NOT guide treatment until medical evaluation and clearance of the item(s) above.");
   const bullets = redFlags.map((rf) => `• ${rf}`).join("\n");
   const body = `${bullets}\n\n${note}`;
   y = checkPage(doc, y, 30);
   y += 2;
   return drawTextCard(doc, y, body, {
-    fill: [253, 246, 220],
-    stroke: COLORS.yellow,
+    fill: isDismissed ? [220, 240, 252] : [253, 232, 220],
+    stroke: isDismissed ? COLORS.primary : COLORS.yellow,
     padX: 8,
     padY: 7,
     body: { font: "Inter", weight: "normal", size: 9, lineHeight: 4.5, textColor: COLORS.foreground },
-    label: { text: title, color: COLORS.yellow, size: 10 },
+    label: { text: title, color: isDismissed ? COLORS.primary : COLORS.yellow, size: 10 },
   });
 }
 
