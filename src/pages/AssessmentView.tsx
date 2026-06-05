@@ -396,6 +396,8 @@ const AssessmentView = () => {
             onShareWhatsApp={handleShareWhatsApp}
             pdfLoading={pdfLoading}
             whatsappLoading={whatsappLoading}
+            professionalContext={!!(assessment.professional_id || assessment.clinic_id || assessment.type === "professional")}
+            onAssessmentUpdated={() => setReloadKey((k) => k + 1)}
           />
         </main>
       </div>
@@ -533,6 +535,8 @@ const AssessmentView = () => {
               onShareWhatsApp={handleShareWhatsApp}
               pdfLoading={pdfLoading}
               whatsappLoading={whatsappLoading}
+              professionalContext={!!(assessment.professional_id || assessment.clinic_id || assessment.type === "professional")}
+              onAssessmentUpdated={() => setReloadKey((k) => k + 1)}
             />
           </TabsContent>
 
