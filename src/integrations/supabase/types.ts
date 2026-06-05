@@ -112,6 +112,7 @@ export type Database = {
           final_hypothesis_at: string | null
           final_hypothesis_by: string | null
           id: string
+          needs_reimpression: boolean
           original_assessment_id: string | null
           paid_at: string | null
           pain_regions: string[] | null
@@ -141,6 +142,7 @@ export type Database = {
           final_hypothesis_at?: string | null
           final_hypothesis_by?: string | null
           id?: string
+          needs_reimpression?: boolean
           original_assessment_id?: string | null
           paid_at?: string | null
           pain_regions?: string[] | null
@@ -170,6 +172,7 @@ export type Database = {
           final_hypothesis_at?: string | null
           final_hypothesis_by?: string | null
           id?: string
+          needs_reimpression?: boolean
           original_assessment_id?: string | null
           paid_at?: string | null
           pain_regions?: string[] | null
@@ -1253,6 +1256,92 @@ export type Database = {
           },
         ]
       }
+      pending_questionnaires: {
+        Row: {
+          answers: Json | null
+          assessment_id: string | null
+          clinic_id: string | null
+          completed_at: string | null
+          completed_via: string | null
+          created_at: string
+          domain: string
+          id: string
+          patient_id: string | null
+          professional_id: string | null
+          questionnaire_id: string
+          score: Json | null
+          share_token: string | null
+          status: string
+          suggested_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json | null
+          assessment_id?: string | null
+          clinic_id?: string | null
+          completed_at?: string | null
+          completed_via?: string | null
+          created_at?: string
+          domain: string
+          id?: string
+          patient_id?: string | null
+          professional_id?: string | null
+          questionnaire_id: string
+          score?: Json | null
+          share_token?: string | null
+          status?: string
+          suggested_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json | null
+          assessment_id?: string | null
+          clinic_id?: string | null
+          completed_at?: string | null
+          completed_via?: string | null
+          created_at?: string
+          domain?: string
+          id?: string
+          patient_id?: string | null
+          professional_id?: string | null
+          questionnaire_id?: string
+          score?: Json | null
+          share_token?: string | null
+          status?: string
+          suggested_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_questionnaires_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_questionnaires_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_questionnaires_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_questionnaires_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_appointments: {
         Row: {
           appointment_date: string
@@ -2085,6 +2174,7 @@ export type Database = {
           final_hypothesis_at: string | null
           final_hypothesis_by: string | null
           id: string
+          needs_reimpression: boolean
           original_assessment_id: string | null
           paid_at: string | null
           pain_regions: string[] | null
