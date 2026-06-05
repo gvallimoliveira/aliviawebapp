@@ -168,27 +168,43 @@ const AssessmentSummaryView = ({
 
       {/* Red flags */}
       <section
-        className={`rounded-2xl border p-3 flex items-start gap-2 ${
+        className={`rounded-2xl border p-3 ${
           redFlagsDetected
-            ? "border-destructive/30 bg-destructive/5"
+            ? "border-amber-300/60 bg-amber-50/60"
             : "border-emerald-200 bg-emerald-50/50"
         }`}
       >
-        {redFlagsDetected ? (
-          <ShieldAlert className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-        ) : (
-          <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2">
+          {redFlagsDetected ? (
+            <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+          ) : (
+            <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+          )}
+          <p className={`text-xs ${redFlagsDetected ? "text-amber-900" : "text-emerald-800"}`}>
+            <strong>Red flags:</strong>{" "}
+            {redFlagsDetected
+              ? (isPt
+                  ? "sinais de alerta identificados durante a avaliação."
+                  : "warning signs identified during the assessment.")
+              : (isPt
+                  ? "nenhuma detectada. Caso liberado para abordagem fisioterapêutica."
+                  : "none detected. Case cleared for physiotherapy.")}
+          </p>
+        </div>
+        {redFlagsList.length > 0 && (
+          <ul className="mt-2 ml-6 list-disc text-xs text-amber-900 space-y-0.5">
+            {redFlagsList.map((rf, i) => (
+              <li key={i}>{rf}</li>
+            ))}
+          </ul>
         )}
-        <p className={`text-xs ${redFlagsDetected ? "text-destructive" : "text-emerald-800"}`}>
-          <strong>Red flags:</strong>{" "}
-          {redFlagsDetected
-            ? (isPt
-                ? "sinais de alerta detectados — encaminhamento médico recomendado."
-                : "warning signs detected — medical referral recommended.")
-            : (isPt
-                ? "nenhuma detectada. Caso liberado para abordagem fisioterapêutica."
-                : "none detected. Case cleared for physiotherapy.")}
-        </p>
+        {redFlagsDetected && (
+          <p className="mt-2 ml-6 text-[11px] text-amber-800/80 leading-relaxed">
+            {isPt
+              ? "Conduta: acompanhamento com a equipe médica responsável. Não interrompe a abordagem fisioterapêutica quando já há supervisão médica do(s) item(ns) acima."
+              : "Conduct: follow-up with the attending medical team. Does not interrupt physiotherapy when medical supervision of the item(s) above is already in place."}
+          </p>
+        )}
       </section>
 
       {/* Metrics */}
