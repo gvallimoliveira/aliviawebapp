@@ -122,7 +122,7 @@ const Gateway = () => {
       <ReferralBanner />
 
       {/* Main content */}
-      <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-12">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-12">
         <div className="max-w-4xl w-full mx-auto text-center">
           {/* Floating logo */}
           <motion.div
