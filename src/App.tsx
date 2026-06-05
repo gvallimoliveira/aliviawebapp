@@ -51,6 +51,7 @@ const Account = lazy(() => import("./pages/Account"));
 const ClearCache = lazy(() => import("./pages/ClearCache"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const PendingQuestionnaire = lazy(() => import("./pages/PendingQuestionnaire"));
 
 const queryClient = new QueryClient();
 
