@@ -893,6 +893,13 @@ const AssessmentView = () => {
           </Card>
         )}
 
+        {/* Specialty / pending questionnaires (cardio/geri) */}
+        {!String(assessment.id).startsWith("demo-") && (
+          <PendingQuestionnairesCard assessmentId={assessment.id} canManage={viewerIsProOwner} />
+        )}
+
+
+
         {/* Voice notes (AI transcription) tied to this assessment */}
         <VoiceNoteCard assessmentId={assessment.id} />
 
