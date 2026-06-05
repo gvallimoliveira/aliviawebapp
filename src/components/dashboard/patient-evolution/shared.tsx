@@ -181,6 +181,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
   const { language } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [impression, setImpression] = useState<{ overview: string; therapeuticObjectives: string[] } | null>(existingImpression || null);
+  const autoRegenRef = useRef(false);
 
   const buildTimeline = () => {
     if (!allAssessments || allAssessments.length === 0) return undefined;
