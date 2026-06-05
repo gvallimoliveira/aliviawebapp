@@ -184,16 +184,33 @@ const AssessmentSummaryView = ({
 
       {/* Hypothesis */}
       {displayHypothesis && (
-        <section className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-4 space-y-2">
+        <section className={`rounded-2xl border p-4 space-y-2 ${
+          hypothesisSuppressed
+            ? "border-amber-300/60 bg-amber-50/50"
+            : "border-primary/20 bg-primary/[0.03]"
+        }`}>
           <div className="flex items-center gap-2 flex-wrap">
-            <Brain className="h-4 w-4 text-primary" />
+            <Brain className={`h-4 w-4 ${hypothesisSuppressed ? "text-amber-700" : "text-primary"}`} />
             <h4 className="text-sm font-semibold text-foreground">
               {isPt ? "Hipótese diagnóstica (IA)" : "Diagnostic hypothesis (AI)"}
             </h4>
-            <Badge variant="outline" className={`text-[10px] ml-auto ${confidence.cls}`}>
-              {isPt ? "Confiança" : "Confidence"}: {confidence.label}
-            </Badge>
+            {hypothesisSuppressed ? (
+              <Badge variant="outline" className="text-[10px] ml-auto bg-amber-100 text-amber-800 border-amber-300">
+                {isPt ? "Sob ressalva — requer aval médico" : "Under reservation — requires medical clearance"}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className={`text-[10px] ml-auto ${confidence.cls}`}>
+                {isPt ? "Confiança" : "Confidence"}: {confidence.label}
+              </Badge>
+            )}
           </div>
+          {hypothesisSuppressed && (
+            <p className="text-[11px] text-amber-900 bg-amber-100/60 rounded p-2 leading-relaxed">
+              {isPt
+                ? "A hipótese abaixo NÃO deve ser usada para definir conduta enquanto o sinal de alerta não for avaliado por um médico. Após liberação médica, dispense a red flag no botão abaixo para liberar o uso clínico."
+                : "The hypothesis below MUST NOT guide treatment until the warning sign is evaluated by a physician. Once cleared, dismiss the red flag with the button below to release it for clinical use."}
+            </p>
+          )}
           <p className="text-sm text-foreground leading-relaxed">{displayHypothesis}</p>
           {diagnosis.summary && (
             <p className="text-xs text-muted-foreground leading-relaxed pt-1 border-t border-primary/10">
@@ -207,17 +224,19 @@ const AssessmentSummaryView = ({
       <section
         className={`rounded-2xl border p-3 ${
           redFlagsDetected
-            ? "border-amber-300/60 bg-amber-50/60"
+            ? (isDismissed
+                ? "border-sky-300/60 bg-sky-50/60"
+                : "border-amber-300/60 bg-amber-50/60")
             : "border-emerald-200 bg-emerald-50/50"
         }`}
       >
         <div className="flex items-start gap-2">
           {redFlagsDetected ? (
-            <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <ShieldAlert className={`h-4 w-4 shrink-0 mt-0.5 ${isDismissed ? "text-sky-600" : "text-amber-600"}`} />
           ) : (
             <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
           )}
-          <p className={`text-xs ${redFlagsDetected ? "text-amber-900" : "text-emerald-800"}`}>
+          <p className={`text-xs ${redFlagsDetected ? (isDismissed ? "text-sky-900" : "text-amber-900") : "text-emerald-800"}`}>
             <strong>Red flags:</strong>{" "}
             {redFlagsDetected
               ? (isPt
@@ -229,20 +248,68 @@ const AssessmentSummaryView = ({
           </p>
         </div>
         {redFlagsList.length > 0 && (
-          <ul className="mt-2 ml-6 list-disc text-xs text-amber-900 space-y-0.5">
+          <ul className={`mt-2 ml-6 list-disc text-xs space-y-0.5 ${isDismissed ? "text-sky-900" : "text-amber-900"}`}>
             {redFlagsList.map((rf, i) => (
               <li key={i}>{rf}</li>
             ))}
           </ul>
         )}
-        {redFlagsDetected && (
-          <p className="mt-2 ml-6 text-[11px] text-amber-800/80 leading-relaxed">
-            {isPt
-              ? "Conduta: acompanhamento com a equipe médica responsável. Não interrompe a abordagem fisioterapêutica quando já há supervisão médica do(s) item(ns) acima."
-              : "Conduct: follow-up with the attending medical team. Does not interrupt physiotherapy when medical supervision of the item(s) above is already in place."}
-          </p>
+        {redFlagsDetected && isDismissed && (
+          <div className="mt-2 ml-6 text-[11px] text-sky-900 leading-relaxed">
+            <p>
+              <strong>{isPt ? "Dispensada em" : "Dismissed on"}</strong>{" "}
+              {dismissedAt ? new Date(dismissedAt).toLocaleDateString(isPt ? "pt-BR" : "en-US") : ""}{" "}
+              {isPt ? "por" : "by"} <strong>{dismissedByName || "—"}</strong>.
+            </p>
+            {dismissedReason && (
+              <p className="mt-1 italic">"{dismissedReason}"</p>
+            )}
+            {professionalContext && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mt-1 h-7 px-2 text-[11px] text-sky-700 hover:text-sky-900"
+                onClick={handleRevert}
+                disabled={reverting}
+              >
+                <RotateCcw className="h-3 w-3 mr-1" />
+                {isPt ? "Reverter dispensa" : "Revert dismissal"}
+              </Button>
+            )}
+          </div>
+        )}
+        {redFlagsDetected && !isDismissed && (
+          <>
+            <p className="mt-2 ml-6 text-[11px] text-amber-800/80 leading-relaxed">
+              {isPt
+                ? "Hipótese fisioterapêutica fica sob ressalva até avaliação médica do(s) item(ns) acima. Após liberação, dispense para uso clínico."
+                : "Physiotherapy hypothesis is held under reservation until medical evaluation of the item(s) above. Dismiss after clearance."}
+            </p>
+            {professionalContext && (
+              <div className="mt-2 ml-6">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs border-amber-400 text-amber-800 hover:bg-amber-100"
+                  onClick={() => setDismissOpen(true)}
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+                  {isPt ? "Dispensar red flag" : "Dismiss red flag"}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </section>
+
+      {professionalContext && (
+        <DismissRedFlagDialog
+          open={dismissOpen}
+          onOpenChange={setDismissOpen}
+          assessmentId={assessment.id}
+          onDismissed={onAssessmentUpdated}
+        />
+      )}
 
       {/* Metrics */}
       <section className="space-y-2">
