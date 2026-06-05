@@ -261,10 +261,11 @@ THERMOTHERAPY AND INJURY PROTOCOL GUIDELINES:
    - Transition from PRICE to PEACE & LOVE approach.
    - Can introduce contrast therapy (alternância quente/frio) if appropriate.
 
-EXERCISE GUIDELINES:
-- Short-term: 3-5 exercises focused on pain relief and gentle mobility
-- Medium-term: 4-6 exercises adding strengthening and functional movements
-- Long-term: 4-6 exercises for return to full activity and prevention
+EXERCISE GUIDELINES (UNIVERSAL — applies to all cases):
+- Every phase MUST contain a non-empty "exercises" array with concrete, prescribable exercises. NEVER return a phase with only goal/focus and no exercises.
+- Short-term: 3-5 exercises focused on pain relief and gentle mobility (or 6-8 if cardio/geri protocol is active)
+- Medium-term: 4-6 exercises adding strengthening and functional movements (or 7-9 if cardio/geri)
+- Long-term: 4-6 exercises for return to full activity and prevention (or 7-9 if cardio/geri)
 - Each exercise MUST have "searchQueryPro" and "searchQueryShorts" fields (NOT videoUrls or searchQuery)
 - Adapt exercises based on equipment availability: ${hasGym ? "gym equipment available" : "bodyweight and resistance bands only"}
 - Adapt intensity based on activity level: ${anamnesisData?.activityLevel || "not specified"}
