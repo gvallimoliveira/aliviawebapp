@@ -1,82 +1,108 @@
-# Plano: Install-as-App + Reorganização dos menus
+## Objetivo
 
-## 1. "Instale como App" (PWA / Atalho na Tela Inicial)
+Adicionar questionários validados de **cardiorrespiratória** (mMRC, CAT, Borg CR10) e **geriatria** (TUG, Berg, SPPB, FES-I) ao fluxo PRO/Clínica, sugeridos pela IA com base na anamnese, **selecionáveis** pelo fisio para não estender demais a avaliação, com possibilidade de **retomar depois** (presencial ou via link enviado ao paciente) e **regenerar a impressão clínica** automaticamente.
 
-Criar um componente único e reaproveitável **`InstallAppGuide`** com instruções passo a passo expansíveis (Accordion), detectando automaticamente iOS / Android / Desktop e mostrando o fluxo correto. Toggle "Mostrar / Ocultar passos".
+---
 
-Conteúdo (3 abas internas):
-- **iPhone / iPad (Safari):** Toque em Compartilhar → "Adicionar à Tela de Início" → Adicionar.
-- **Android (Chrome):** Toque no menu ⋮ → "Instalar app" ou "Adicionar à tela inicial".
-- **Desktop (Chrome/Edge):** Ícone de instalar na barra de endereços → Instalar.
+## 1. Catálogo de questionários (novo)
 
-Inclui nota: "Não é um app de loja — é o mesmo site funcionando como atalho, sempre atualizado, sem ocupar espaço extra."
+Criar `src/data/specialtyQuestionnaires.ts` no mesmo formato de `questionnaireData.ts`:
 
-### Onde inserir
+- **Cardio**: mMRC (1 item, dispneia), CAT (8 itens, impacto da DPOC), Borg CR10 (1 item, percepção de esforço).
+- **Geriatria**: FES-I (16 itens, medo de cair), TUG (teste cronometrado — input único em segundos), Berg (14 itens de equilíbrio), SPPB (3 subtestes cronometrados).
 
-**A. Landing pages (pré-login)** — versão "vitrine", colapsada por padrão, com badge "📱 Use como app no celular":
-- `PatientLanding.tsx` — uma seção curta antes do Footer.
-- `ProfessionalLanding.tsx` — idem.
-- `ClinicLanding.tsx` — idem.
-- `LandingLegacy.tsx` — idem.
+Cada item inclui: id, domínio (`cardio` / `geri`), gatilhos clínicos, tempo médio de aplicação e regras de interpretação do score.
 
-**B. Dentro do sistema (pós-login)** — versão "utilitária":
-- **Gateway (`/`)** logado: card discreto abaixo do seletor de perfis ("Acesso rápido: instale o Aliv.iA no seu celular").
-- **Dashboard:** card dispensável no topo da aba "Visão geral" (com `localStorage` para "não mostrar mais"), aparecendo só nas primeiras visitas e quando `display-mode: standalone` é falso.
-- **Suporte (`Support.tsx` e `ClinicSupport.tsx`):** entrada permanente na seção "Dicas de uso" → "Como instalar o Aliv.iA no celular" (sempre acessível, nunca dispensa).
-- **Menu lateral global:** novo item "Instalar como app" que abre um Dialog com o mesmo guia (atalho rápido em qualquer página).
+## 2. Sugestão pela IA
 
-### Lógica de detecção
-- Esconder o card automático quando `window.matchMedia('(display-mode: standalone)').matches` (já instalado).
-- Detectar UA para abrir aba correta por padrão (iOS / Android / Desktop), mas permitir trocar.
+Nova edge function `suggest-specialty-questionnaires`:
+- Recebe `anamnesis`, `painRegions` e `age`.
+- Reaproveita o helper `shouldIncludePedroKnowledge` (já existente) para decidir domínio (cardio, geri, ambos ou nenhum).
+- Retorna até 3 sugestões: `[{ id, domain, reason, priority }]`.
 
-## 2. Menu lateral global — reorganização
+## 3. Tela de seleção (somente fluxo manual PRO/Clínica)
 
-Hoje o `GlobalMobileMenu.tsx` (e o `Header.tsx`) misturam itens da landing do paciente com itens globais, e não citam o Aliv.iA Clínica. Proposta de itens, agrupados, válidos para **qualquer** página:
+Novo step **após** o `QuestionnaireStep` padrão, apenas em `ProfessionalAssessment.tsx` e `ClinicAssessment.tsx`:
 
-### 🏠 Navegação principal
-1. **Meu Painel** (`/dashboard`) — só se logado, destaque.
-2. **Início** (`/`) — Gateway.
+- Card "Questionários especializados sugeridos" com badges (Cardio / Geri).
+- Cada item mostra: nome, motivo da sugestão (ex.: "Paciente >65a + queixa de dispneia"), tempo estimado e **checkbox**.
+- Botões: **"Aplicar agora"** (entra no fluxo) ou **"Aplicar depois"** (salva como pendente no prontuário).
+- Se a IA não retornar sugestões, o step é pulado silenciosamente.
+- Avaliações self-service do paciente **não** são afetadas.
 
-### 🌐 Conheça o Aliv.iA
-3. **Para Pacientes** (`/para-pacientes`)
-4. **Para Profissionais** (`/profissionais`)
-5. **Aliv.iA Clínica** (`/clinica`) ← **novo**
-6. **Blog** (`/blog`)
+## 4. Tabela `pending_questionnaires` (nova)
 
-### ⚙️ Conta & Utilidades
-7. **Minha Conta** (`/conta`) — só logado.
-8. **Admin** (`/admin`) — só admin (hoje aparece para todo logado; manter como está por escopo, mas marcar como melhoria futura).
-9. **Instalar como App** ← **novo**, abre Dialog com `InstallAppGuide`.
-10. **Suporte** (`/suporte` ou `/clinica/suporte` conforme contexto ativo)
-11. **Idioma: PT / EN / ES** (mantém toggle atual)
+Colunas:
+```
+id, assessment_id, patient_id, professional_id, clinic_id,
+questionnaire_id, domain, suggested_reason,
+status ('pending' | 'completed' | 'skipped'),
+answers jsonb, score jsonb,
+completed_at, completed_via ('in_session' | 'patient_link' | 'manual_later'),
+created_at, share_token (para link público)
+```
++ GRANTs + RLS (fisio dono / membro da clínica / paciente dono).
 
-### 🚪 Sessão
-12. **Entrar** (`/auth`) — se deslogado.
-13. **Sair** — se logado.
+## 5. Prontuário — card "Questionários pendentes"
 
-### Itens removidos do menu mobile
-- "Sobre o Aliv.iA" como item separado (consolidado em "Para Pacientes" e nas demais landings de "Conheça").
-- Âncoras `#compare` e `#how` (eram da landing legacy e não fazem sentido em outras páginas).
+Em `PatientDetailDialog` (e equivalente da clínica):
+- Card com badge de contador.
+- Para cada pendente, duas ações:
+  - **"Preencher agora"** abre modal com o questionário no consultório.
+  - **"Enviar link ao paciente"** gera short-link com `share_token` e copia para WhatsApp.
+- Nova rota pública `/q/:token` para o paciente responder sem login; ao salvar, marca como completo.
 
-### Arquivos afetados
-- `src/components/GlobalMobileMenu.tsx` — nova estrutura agrupada com separadores e títulos de grupo.
-- `src/components/Header.tsx` — mesmo conteúdo no Sheet mobile do Header para consistência (Para Pacientes / Para Profissionais / Aliv.iA Clínica / Blog / Instalar app / Suporte / Idioma).
-- `src/locales/pt.json`, `en.json`, `es.json` — chaves novas: `nav.patient`, `nav.clinic`, `nav.installApp`, `nav.groupExplore`, `nav.groupAccount`, etc.
+## 6. Regeneração automática da impressão clínica
 
-## 3. Novos arquivos
-- `src/components/InstallAppGuide.tsx` — componente com Tabs (iOS/Android/Desktop) + Accordion de passos + detecção UA + check de `display-mode: standalone`.
-- `src/components/InstallAppCard.tsx` — wrapper dispensável para Dashboard/Gateway (usa `localStorage` key `alivia_install_card_dismissed`).
-- Reutilizado em Landing, Support, Dialog do menu.
+Ao marcar um questionário como `completed`:
+- Setar flag `assessment.needs_reimpression = true`.
+- O frontend, ao abrir o prontuário, detecta a flag e dispara `generate-clinical-impression`, substituindo a impressão atual (mantendo histórico/versão).
+- Decisão técnica: flag + disparo no front, em vez de webhook assíncrono — mais simples e evita custo de `pg_net`.
 
-## 4. Não-objetivos
-- **Não** transformar em PWA real (sem service worker / offline). Apenas instruções de atalho — alinha-se à diretriz "manifest-only, sem SW".
-- **Não** alterar lógica de auth, rotas ou backend.
-- **Não** mexer no `Header` desktop (apenas no Sheet mobile dele para consistência).
+## 7. Integração com diagnóstico e tratamento
+
+- `generate-diagnosis` e `generate-treatment` passam a receber `specialty_scores` no prompt quando existirem.
+- A `PEDRO_KNOWLEDGE_BASE` continua sendo injetada condicionalmente como hoje.
+
+## 8. PDF
+
+Scores especializados concluídos entram em uma nova seção **"Avaliação funcional especializada"**, abaixo dos questionários padrão, respeitando o limite de 158mm.
+
+## 9. Páginas de suporte
+
+Atualizar `Support.tsx` + `ClinicSupport.tsx` (pt/en/es) com a nova funcionalidade, conforme regra de manutenção.
+
+---
 
 ## Detalhes técnicos
-- Componente puramente client-side, sem dependências novas (usa shadcn `Tabs`, `Accordion`, `Dialog`, `Card`).
-- Verificação `standalone` via `useEffect` + `matchMedia` (evita SSR issues — projeto é SPA Vite, ok).
-- Texto traduzido em 3 idiomas via i18n existente.
-- Sem mudanças de DB, edge functions ou auth.
 
-Aprovando, implemento em uma única passada.
+- Step de seleção custa, no máximo, ~5s extras (apenas checkboxes).
+- Self-service do paciente segue inalterado — questionários especializados nunca aparecem fora do fluxo manual PRO/Clínica.
+- 1 nova tabela com GRANTs e RLS; nenhuma dependência nova.
+
+---
+
+## Arquivos afetados
+
+**Novos**
+- `src/data/specialtyQuestionnaires.ts`
+- `src/components/assessment/SpecialtyQuestionnaireSelector.tsx`
+- `src/components/assessment/PendingQuestionnairesCard.tsx`
+- `src/pages/PublicQuestionnaire.tsx` (rota `/q/:token`)
+- `supabase/functions/suggest-specialty-questionnaires/index.ts`
+- Migration: `pending_questionnaires` + GRANTs + RLS + flag `needs_reimpression`
+
+**Editados**
+- `src/pages/ProfessionalAssessment.tsx`, `src/pages/ClinicAssessment.tsx` (novo step)
+- `src/components/dashboard/PatientDetailDialog.tsx` (card de pendentes + trigger de regeneração)
+- `supabase/functions/generate-diagnosis/index.ts`, `generate-treatment/index.ts` (consumir `specialty_scores`)
+- `supabase/functions/generate-clinical-impression/index.ts` (consumir novos scores)
+- `src/utils/generatePdf.ts` (nova seção)
+- `src/App.tsx` (rota pública)
+- `Support.tsx` + `ClinicSupport.tsx` + `src/locales/{pt,en,es}.json`
+
+---
+
+## Fora do escopo
+- Auto-regeneração via webhook (ficará com flag + disparo no front).
+- Aplicação dos questionários especializados em modo self-service do paciente.
