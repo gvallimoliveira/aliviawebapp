@@ -96,6 +96,8 @@ interface PdfOptions {
   testResults?: any;
   /** Red flags detected during assessment (assessment.red_flags?.detected). */
   redFlags?: string[];
+  /** When set, indicates the red flag was professionally dismissed (medical clearance). */
+  redFlagsDismissal?: { at?: string; by?: string; reason?: string } | null;
   professionalNotes?: string;
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
@@ -1028,6 +1030,8 @@ interface BasicReportOptions {
   anamnesisData?: any;
   /** Red flags detected during assessment (assessment.red_flags?.detected). */
   redFlags?: string[];
+  /** When set, indicates the red flag was professionally dismissed. */
+  redFlagsDismissal?: { at?: string; by?: string; reason?: string } | null;
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
@@ -1099,7 +1103,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   y = renderSubSection(doc, y, isPt ? "Resumo" : "Summary", options.diagnosis.summary);
 
   // Red flags (documented but non-blocking when professional supervised)
-  y = renderRedFlagsCard(doc, y, options.redFlags, isPt);
+  y = renderRedFlagsCard(doc, y, options.redFlags, isPt, options.redFlagsDismissal);
 
   // ── Pain Score (VAS) — uses shared renderer ──
   y = renderVasSection(doc, y, isPt, options.painScore, options.anamnesisData);
