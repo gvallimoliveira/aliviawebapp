@@ -694,6 +694,29 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         }
       }
 
+      // Persist scheduled specialty questionnaires as pending rows tied to this assessment.
+      if (savedId) {
+        const pendingItems = specialtyPanelRef.current?.getScheduled() || [];
+        const toInsert = pendingItems.filter((p) => !p.share_token);
+        if (toInsert.length > 0) {
+          try {
+            await supabase.from("pending_questionnaires" as any).insert(
+              toInsert.map((p) => ({
+                assessment_id: savedId,
+                professional_id: clinicId ? null : professionalId,
+                clinic_id: clinicId || null,
+                questionnaire_id: p.questionnaireId,
+                domain: p.domain,
+                suggested_reason: p.suggestedReason,
+                status: "pending",
+              })),
+            );
+          } catch (err) {
+            console.warn("pending questionnaires insert failed:", err);
+          }
+        }
+      }
+
       toast({ title: isEditing ? (isPt ? "Avaliação atualizada!" : "Assessment updated!") : (isPt ? "Avaliação criada!" : "Assessment created!") });
       if (!isEditing) void draft.discard();
       if (savedId) onSaved?.(savedId);
