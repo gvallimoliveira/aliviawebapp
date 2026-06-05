@@ -246,6 +246,23 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
     }
   };
 
+  // Auto-regenerate impression when assessment is flagged (e.g. after a pending
+  // questionnaire is completed by the patient).
+  useEffect(() => {
+    if (isDemo) return;
+    if (autoRegenRef.current) return;
+    if (!assessment?.needs_reimpression) return;
+    autoRegenRef.current = true;
+    (async () => {
+      await generate();
+      try {
+        await supabase.from("assessments").update({ needs_reimpression: false }).eq("id", assessment.id);
+      } catch (e) { console.warn("clear needs_reimpression failed", e); }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assessment?.id, assessment?.needs_reimpression]);
+
+
   return (
     <Card>
       <CardHeader className="pb-2">
