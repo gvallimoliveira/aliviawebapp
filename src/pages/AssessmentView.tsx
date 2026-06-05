@@ -234,6 +234,7 @@ const AssessmentView = () => {
           anamnesisData: assessment.anamnesis_data,
           painRegions: assessment.pain_regions,
           testResults: assessment.test_results,
+          redFlags: (assessment.red_flags as any)?.detected,
         });
       }
 
