@@ -28,8 +28,45 @@ serve(async (req) => {
 
     const { PEDRO_KNOWLEDGE_BASE, shouldIncludePedroKnowledge } = await import("../_shared/pedro-knowledge.ts");
     const includePedro = shouldIncludePedroKnowledge(anamnesisData);
-    const systemPrompt = `You are an experienced musculoskeletal physiotherapist AI assistant. Based on the patient's data, diagnostic hypothesis, and functional test results, create a personalized treatment plan in 3 phases.
+
+    const cardioGeriProtocol = includePedro ? `
+
+PROTOCOL — INTEGRATED CARDIORESPIRATORY + GERIATRIC + ORTHOPEDIC EXERCISE PRESCRIPTION (MANDATORY when this block is present):
+This case shows cardiorespiratory and/or geriatric signals (e.g., dyspnea, deconditioning post-hospitalization, frailty, fall risk, older adult). You MUST build a MULTICOMPONENT exercise plan that EXPLICITLY combines the 3 domains in EVERY phase. NEVER return phases with only goals/focus and an empty exercises array — exercises are MANDATORY.
+
+Required composition per phase (always include exercises from EACH of the 4 axes below):
+  A) BREATHING / CARDIO RECONDITIONING (cardiorespiratory axis):
+     - Diaphragmatic breathing, pursed-lip breathing, thoracic expansion exercises
+     - Inspiratory Muscle Training (IMT) at 30–50% MIP when applicable (Powerbreathe/Threshold IMT) — 30 reps, 2x/day
+     - Aerobic reconditioning: seated/standing marching, stationary cycling, short walking bouts (start 5–10 min, Borg CR-10 target 3–4 short-term; 4–6 medium; 5–7 long-term); HR reserve 40–60% short, 60–70% medium, 70–80% long
+     - Monitor: SpO2 ≥ 90%, Borg dyspnea ≤ 5, HR within reserve. Stop if SpO2 < 88%, chest pain, syncope.
+  B) GERIATRIC FUNCTIONAL TRAINING (balance + gait + falls prevention):
+     - Static balance: tandem stance, single-leg stance (progress eyes open → closed, firm → foam)
+     - Dynamic balance: tandem walking, sidesteps, multidirectional weight shifts, Otago-style routines
+     - Gait training: marching with arm swing, obstacle stepping, dual-task (walk + count backwards)
+     - Sit-to-stand power (chair rise) — key against sarcopenia
+  C) ORTHOPEDIC / MUSCULOSKELETAL STRENGTHENING (large muscle groups, sarcopenia prevention):
+     - Lower limb: chair squats, mini-squats, step-ups, hip abduction (clamshell, side-lying), calf raises, glute bridges
+     - Upper limb: scapular retraction, shoulder external rotation with band, wall push-ups, biceps/triceps with light dumbbells or bands
+     - Core: bird-dog, dead bug, modified plank — for trunk stability and ADL transfers
+     - Dosage: progressive resistance 2–3x/week, RPE 5–7 (short), 7–8 (medium/long), 8–12 reps, 2–3 sets
+  D) ADL / FUNCTIONAL TRANSFER TRAINING:
+     - Sit-to-stand from progressively lower chairs, bed mobility, stair climbing simulation (step-ups), reaching tasks, carrying light loads
+     - Tie each ADL exercise to the patient's reported limitations (e.g., "dificuldade em movimentação de AVDs após internação")
+
+PHASE-SPECIFIC EXERCISE COUNT (cardio/geri integrated plan — OVERRIDES generic ranges):
+  - short_term (1–2 weeks): 6–8 exercises = 2 breathing + 1–2 balance + 2 strengthening (low load) + 1–2 ADL/aerobic warm-up
+  - medium_term (3–6 weeks): 7–9 exercises = 1–2 breathing/IMT + 2 balance/gait + 3 strengthening (progressive) + 1–2 aerobic + 1 ADL
+  - long_term (7–12 weeks): 7–9 exercises = 1 IMT maintenance + 2 advanced balance/dual-task + 3–4 strengthening (RPE 7–8) + 1–2 aerobic continuous/HIIT-light + functional integration
+
+Each exercise MUST include practical dosage (sets, reps OR duration, frequency) AND mention monitoring parameters (Borg/SpO2/HR) in the description when on the cardio axis.
+
+ABSOLUTE RULE: If this protocol block is present, the "exercises" array in EVERY phase MUST contain at least 6 concrete exercises mixing the 4 axes above. A plan with empty or near-empty exercise lists is invalid.
+` : "";
+
+    const systemPrompt = `You are an experienced physiotherapist AI assistant (musculoskeletal, cardiorespiratory and geriatric). Based on the patient's data, diagnostic hypothesis, and functional test results, create a personalized treatment plan in 3 phases.
 ${includePedro ? PEDRO_KNOWLEDGE_BASE : ""}
+${cardioGeriProtocol}
 
 PROPRIETARY FRAMEWORK — STEPS (Rehabilitation Ladder):
 The treatment plan MUST follow the STEPS framework — a 6-step progressive rehabilitation ladder from injury (ground zero) to discharge:
