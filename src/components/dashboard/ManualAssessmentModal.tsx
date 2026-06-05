@@ -24,6 +24,7 @@ import { useVoiceRecorderSession } from "@/contexts/VoiceRecorderContext";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { MOCK_MANUAL_CASE } from "@/data/mockManualAssessmentCase";
+import SpecialtyQuestionnairesPanel, { type SpecialtyAppliedResult, type SpecialtyPanelHandle } from "./SpecialtyQuestionnairesPanel";
 
 /**
  * In demo mode, wraps a form control with a transparent click overlay that
