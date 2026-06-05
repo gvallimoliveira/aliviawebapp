@@ -5,12 +5,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT_PT = `Você é um assistente clínico de fisioterapia. Receberá um áudio de uma consulta de anamnese (conversa entre fisioterapeuta e paciente).
-Sua tarefa: (1) transcrever literalmente o áudio em português, (2) gerar um resumo clínico estruturado focado em informações relevantes para o raciocínio clínico fisioterapêutico (D.I.F.I — Dor, Inibição, Fraqueza, Incapacidade).
+// Chunk-only transcription prompt (no summary). Used for every audio chunk.
+const TRANSCRIBE_PROMPT_PT = `Você é um transcritor clínico. Transcreva LITERALMENTE em português o áudio fornecido. Inclua marcações [inaudível] quando necessário. Não resuma, não interprete.
 
-Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários, no seguinte formato:
+Responda EXCLUSIVAMENTE em JSON válido:
+{ "transcript": "transcrição literal completa do trecho" }`;
+
+const TRANSCRIBE_PROMPT_EN = `You are a clinical transcriber. Transcribe the audio LITERALLY in English. Use [inaudible] where needed. Do not summarize or interpret.
+
+Reply EXCLUSIVELY in valid JSON:
+{ "transcript": "full literal transcription of this segment" }`;
+
+// Summary prompt — runs once at the end over the full concatenated transcript.
+const SUMMARY_PROMPT_PT = `Você é um assistente clínico de fisioterapia. Receberá a transcrição completa de uma consulta de anamnese (conversa entre fisioterapeuta e paciente).
+Gere um resumo clínico estruturado focado em informações relevantes para o raciocínio clínico fisioterapêutico (D.I.F.I — Dor, Inibição, Fraqueza, Incapacidade).
+
+Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários:
 {
-  "transcript": "transcrição literal completa",
   "summary": {
     "chiefComplaint": "queixa principal em 1 frase",
     "painHistory": "histórico da dor: início, evolução, padrão",
@@ -22,15 +33,13 @@ Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários, no segu
     "observations": "outras observações clínicas relevantes do diálogo"
   }
 }
-
 Se algum campo não tiver informação, use string vazia ou array vazio. Não invente dados.`;
 
-const SYSTEM_PROMPT_EN = `You are a physiotherapy clinical assistant. You will receive an audio of an anamnesis consultation (dialogue between physiotherapist and patient).
-Your task: (1) literally transcribe the audio in English, (2) generate a structured clinical summary focused on physiotherapy clinical reasoning.
+const SUMMARY_PROMPT_EN = `You are a physiotherapy clinical assistant. You will receive the full transcription of an anamnesis consultation.
+Generate a structured clinical summary for physiotherapy clinical reasoning.
 
-Reply EXCLUSIVELY in valid JSON, no markdown, no comments:
+Reply EXCLUSIVELY in valid JSON:
 {
-  "transcript": "full literal transcription",
   "summary": {
     "chiefComplaint": "...",
     "painHistory": "...",
@@ -46,29 +55,45 @@ If a field has no info, use empty string or empty array. Do not invent data.`;
 
 // 4-layer JSON extraction
 function extractJson(text: string): any {
-  // 1. direct parse
   try { return JSON.parse(text); } catch {}
-  // 2. strip markdown fences
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) {
-    try { return JSON.parse(fenced[1]); } catch {}
-  }
-  // 3. find first { ... last }
+  if (fenced) { try { return JSON.parse(fenced[1]); } catch {} }
   const first = text.indexOf("{");
   const last = text.lastIndexOf("}");
   if (first !== -1 && last > first) {
     const slice = text.slice(first, last + 1);
     try { return JSON.parse(slice); } catch {}
-    // 4. cleanup trailing commas
     try { return JSON.parse(slice.replace(/,\s*([}\]])/g, "$1")); } catch {}
   }
   throw new Error("Could not extract valid JSON from AI response");
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+function audioFormatFromMime(mime: string): string {
+  if (mime.includes("webm")) return "webm";
+  if (mime.includes("mp4") || mime.includes("m4a")) return "mp4";
+  if (mime.includes("ogg")) return "ogg";
+  if (mime.includes("wav")) return "wav";
+  return "webm";
+}
+
+async function callAI(apiKey: string, body: any): Promise<any> {
+  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const errText = await resp.text();
+    console.error("AI gateway error:", resp.status, errText);
+    if (resp.status === 429) throw new Error("Limite de uso da IA excedido. Tente novamente em alguns minutos.");
+    if (resp.status === 402) throw new Error("Créditos de IA esgotados. Adicione créditos no workspace.");
+    throw new Error(`AI gateway ${resp.status}`);
   }
+  return await resp.json();
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -86,7 +111,15 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { voice_note_id, audio_base64, mime_type, storage_path, language } = body;
+    const {
+      voice_note_id,
+      audio_base64,
+      mime_type,
+      storage_path,
+      language,
+      chunk_index = 0,
+      is_final = true,
+    } = body;
 
     if (!voice_note_id) {
       return new Response(JSON.stringify({ error: "voice_note_id required" }), {
@@ -96,9 +129,8 @@ Deno.serve(async (req) => {
     voiceNoteId = voice_note_id;
 
     let audioB64: string | null = audio_base64 || null;
-    let audioMime = mime_type || "audio/webm";
+    const audioMime = mime_type || "audio/webm";
 
-    // If audio is in storage, download it
     if (!audioB64 && storage_path) {
       const { data: file, error: dlErr } = await admin.storage
         .from("voice-notes-tmp")
@@ -110,72 +142,87 @@ Deno.serve(async (req) => {
       for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
       audioB64 = btoa(binary);
     }
-
-    if (!audioB64) {
-      throw new Error("No audio provided");
-    }
+    if (!audioB64) throw new Error("No audio provided");
 
     const isPt = (language || "pt") === "pt";
-    const systemPrompt = isPt ? SYSTEM_PROMPT_PT : SYSTEM_PROMPT_EN;
+    const transcribePrompt = isPt ? TRANSCRIBE_PROMPT_PT : TRANSCRIBE_PROMPT_EN;
 
-    // Call Lovable AI Gateway with audio inline
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      },
-      body: JSON.stringify({
+    // 1) Transcribe just this chunk
+    const transcribeResp = await callAI(LOVABLE_API_KEY, {
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: transcribePrompt },
+        {
+          role: "user",
+          content: [
+            { type: "input_audio", input_audio: { data: audioB64, format: audioFormatFromMime(audioMime) } },
+            { type: "text", text: isPt ? "Transcreva este trecho." : "Transcribe this segment." },
+          ],
+        },
+      ],
+    });
+    const chunkContent = transcribeResp?.choices?.[0]?.message?.content || "";
+    const chunkParsed = extractJson(chunkContent);
+    const chunkTranscript: string = (chunkParsed.transcript || "").trim();
+
+    // 2) Append to existing transcript on the row
+    const { data: existing, error: selErr } = await admin
+      .from("assessment_voice_notes")
+      .select("transcript")
+      .eq("id", voice_note_id)
+      .single();
+    if (selErr) throw selErr;
+
+    const prev = (existing?.transcript || "").trim();
+    const separator = prev ? "\n\n" : "";
+    const fullTranscript = prev + separator + chunkTranscript;
+
+    // Update transcript immediately
+    await admin
+      .from("assessment_voice_notes")
+      .update({
+        transcript: fullTranscript,
+        status: is_final ? "processing" : "processing", // keep processing until summary done
+      })
+      .eq("id", voice_note_id);
+
+    // 3) If final chunk → generate summary over the full transcript
+    if (is_final) {
+      const summaryPrompt = isPt ? SUMMARY_PROMPT_PT : SUMMARY_PROMPT_EN;
+      const summaryResp = await callAI(LOVABLE_API_KEY, {
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: [
-              {
-                type: "input_audio",
-                input_audio: {
-                  data: audioB64,
-                  format: audioMime.includes("webm") ? "webm" : audioMime.includes("mp4") || audioMime.includes("m4a") ? "mp4" : audioMime.includes("ogg") ? "ogg" : "webm",
-                },
-              },
-              { type: "text", text: isPt ? "Transcreva e resuma esta consulta." : "Transcribe and summarize this consultation." },
-            ],
-          },
+          { role: "system", content: summaryPrompt },
+          { role: "user", content: fullTranscript || (isPt ? "(transcrição vazia)" : "(empty transcript)") },
         ],
-      }),
-    });
+      });
+      const summaryContent = summaryResp?.choices?.[0]?.message?.content || "";
+      let summary: any = {};
+      try {
+        const parsed = extractJson(summaryContent);
+        summary = parsed.summary || parsed || {};
+      } catch (e) {
+        console.error("Summary parse failed:", e);
+      }
 
-    if (!aiResp.ok) {
-      const errText = await aiResp.text();
-      console.error("AI gateway error:", aiResp.status, errText);
-      if (aiResp.status === 429) throw new Error("Limite de uso da IA excedido. Tente novamente em alguns minutos.");
-      if (aiResp.status === 402) throw new Error("Créditos de IA esgotados. Adicione créditos no workspace.");
-      throw new Error(`AI gateway ${aiResp.status}`);
+      await admin
+        .from("assessment_voice_notes")
+        .update({ status: "ready", summary, error: null })
+        .eq("id", voice_note_id);
     }
 
-    const aiData = await aiResp.json();
-    const content = aiData?.choices?.[0]?.message?.content || "";
-    const parsed = extractJson(content);
-
-    const transcript = parsed.transcript || "";
-    const summary = parsed.summary || {};
-
-    await admin.from("assessment_voice_notes").update({
-      status: "ready",
-      transcript,
-      summary,
-      error: null,
-    }).eq("id", voice_note_id);
-
-    // Cleanup tmp file
+    // 4) Cleanup tmp file for this chunk
     if (storage_path) {
       await admin.storage.from("voice-notes-tmp").remove([storage_path]).catch(() => {});
     }
 
-    return new Response(JSON.stringify({ ok: true, transcript, summary }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({
+      ok: true,
+      chunk_index,
+      is_final,
+      chunk_transcript_chars: chunkTranscript.length,
+      transcript_chars: fullTranscript.length,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err: any) {
     console.error("transcribe-anamnesis error:", err);
     if (voiceNoteId) {

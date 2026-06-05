@@ -15,8 +15,10 @@ interface Props {
   className?: string;
 }
 
-const MAX_DURATION_SEC = 30 * 60; // 30 min
+const CHUNK_DURATION_SEC = 10 * 60;     // rotate MediaRecorder every 10 min
+const MAX_TOTAL_DURATION_SEC = 60 * 60; // hard cap: 1 h per session
 const MAX_INLINE_SIZE = 4 * 1024 * 1024; // 4MB → inline base64; bigger goes via storage
+const MIN_KEEP_SEC = 20;
 
 type State = "idle" | "recording" | "paused" | "uploading";
 
@@ -37,6 +39,15 @@ export default function VoiceRecorderFAB({
   const streamRef = useRef<MediaStream | null>(null);
   const tickRef = useRef<number | null>(null);
 
+  // Multi-chunk session state
+  const voiceNoteIdRef = useRef<string | null>(null);
+  const chunkIndexRef = useRef(0);
+  const chunkSecondsRef = useRef(0);
+  const totalSecondsRef = useRef(0);
+  const finalStopRef = useRef(true); // true when user pressed stop; false when auto-rotating
+  const isRotatingRef = useRef(false);
+  const sessionMimeRef = useRef<string>("audio/webm");
+
   useEffect(() => {
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
@@ -47,13 +58,16 @@ export default function VoiceRecorderFAB({
   const startTick = () => {
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = window.setInterval(() => {
-      setSeconds((s) => {
-        if (s + 1 >= MAX_DURATION_SEC) {
-          stopRecording();
-          return s + 1;
-        }
-        return s + 1;
-      });
+      chunkSecondsRef.current += 1;
+      totalSecondsRef.current += 1;
+      setSeconds(totalSecondsRef.current);
+      if (totalSecondsRef.current >= MAX_TOTAL_DURATION_SEC) {
+        stopRecording();
+        return;
+      }
+      if (chunkSecondsRef.current >= CHUNK_DURATION_SEC) {
+        rotateChunk();
+      }
     }, 1000);
   };
 
@@ -64,26 +78,44 @@ export default function VoiceRecorderFAB({
     }
   };
 
+  const pickMime = (): string => {
+    if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) return "audio/webm;codecs=opus";
+    if (MediaRecorder.isTypeSupported("audio/webm")) return "audio/webm";
+    if (MediaRecorder.isTypeSupported("audio/mp4")) return "audio/mp4";
+    return "";
+  };
+
+  const newRecorderOnStream = (stream: MediaStream) => {
+    const mime = sessionMimeRef.current;
+    const mr = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    chunksRef.current = [];
+    mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+    mr.onstop = handleStop;
+    recRef.current = mr;
+    mr.start(1000);
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
       streamRef.current = stream;
-      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : "";
-      const mr = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-      chunksRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      mr.onstop = handleStop;
-      recRef.current = mr;
-      mr.start(1000);
-      setState("recording");
+      sessionMimeRef.current = pickMime();
+
+      // reset session refs
+      voiceNoteIdRef.current = null;
+      chunkIndexRef.current = 0;
+      chunkSecondsRef.current = 0;
+      totalSecondsRef.current = 0;
+      finalStopRef.current = true;
+      isRotatingRef.current = false;
       setSeconds(0);
+
+      newRecorderOnStream(stream);
+      setState("recording");
       startTick();
+
       toast({
         title: isPt ? "Gravação iniciada" : "Recording started",
         description: isPt
@@ -112,8 +144,17 @@ export default function VoiceRecorderFAB({
     }
   };
 
+  const rotateChunk = () => {
+    if (!recRef.current || isRotatingRef.current) return;
+    if (recRef.current.state === "inactive") return;
+    isRotatingRef.current = true;
+    finalStopRef.current = false;
+    recRef.current.stop(); // onstop will upload + start next chunk
+  };
+
   const stopRecording = () => {
     if (!recRef.current) return;
+    finalStopRef.current = true;
     if (recRef.current.state !== "inactive") recRef.current.stop();
     stopTick();
   };
@@ -129,37 +170,95 @@ export default function VoiceRecorderFAB({
     recRef.current = null;
     stopTick();
     setSeconds(0);
+    voiceNoteIdRef.current = null;
+    chunkIndexRef.current = 0;
+    chunkSecondsRef.current = 0;
+    totalSecondsRef.current = 0;
+    isRotatingRef.current = false;
     setState("idle");
   };
 
   const handleStop = async () => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
+    const wasFinal = finalStopRef.current;
     const blob = new Blob(chunksRef.current, { type: chunksRef.current[0]?.type || "audio/webm" });
     chunksRef.current = [];
-    const recordedSeconds = seconds;
 
-    // Discard short accidental recordings (<20s)
-    if (recordedSeconds < 20) {
+    const idx = chunkIndexRef.current;
+    chunkIndexRef.current += 1;
+    const chunkDuration = chunkSecondsRef.current;
+    chunkSecondsRef.current = 0;
+    const totalAtStop = totalSecondsRef.current;
+
+    // Discard very short single-chunk accidental recordings
+    if (wasFinal && idx === 0 && totalAtStop < MIN_KEEP_SEC) {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+      recRef.current = null;
       toast({
         title: isPt ? "Gravação descartada" : "Recording discarded",
         description: isPt
-          ? `Gravações com menos de 20s são ignoradas (esta teve ${recordedSeconds}s).`
-          : `Recordings under 20s are discarded (this one was ${recordedSeconds}s).`,
+          ? `Gravações com menos de ${MIN_KEEP_SEC}s são ignoradas (esta teve ${totalAtStop}s).`
+          : `Recordings under ${MIN_KEEP_SEC}s are discarded (this one was ${totalAtStop}s).`,
       });
       setSeconds(0);
       setState("idle");
       return;
     }
 
-    setState("uploading");
+    // If rotating, start the next recorder IMMEDIATELY on the same stream so the user
+    // doesn't experience any gap. The chunk upload runs in the background.
+    if (!wasFinal && streamRef.current) {
+      try {
+        newRecorderOnStream(streamRef.current);
+      } catch (e) {
+        console.error("Failed to start next chunk recorder:", e);
+      }
+      isRotatingRef.current = false;
+      // UI remains in "recording" state — fully invisible to user
+    } else {
+      // Final stop → tear down stream
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+      recRef.current = null;
+      stopTick();
+      setState("uploading");
+    }
 
+    // Upload chunk to backend (fire-and-forget for non-final chunks)
+    uploadChunk(blob, idx, wasFinal, chunkDuration, totalAtStop).catch((err) => {
+      console.error(`Chunk ${idx} upload error:`, err);
+      if (wasFinal) {
+        toast({
+          title: isPt ? "Erro ao enviar áudio" : "Upload error",
+          description: err?.message || "",
+          variant: "destructive",
+        });
+        setState("idle");
+        setSeconds(0);
+      }
+    });
 
+    if (wasFinal) {
+      // Reset UI; processing continues in background
+      setSeconds(0);
+      voiceNoteIdRef.current = null;
+      chunkIndexRef.current = 0;
+      totalSecondsRef.current = 0;
+      setState("idle");
+    }
+  };
 
-    try {
-      if (!user?.id) throw new Error("Not authenticated");
+  const uploadChunk = async (
+    blob: Blob,
+    chunkIndex: number,
+    isFinal: boolean,
+    chunkDuration: number,
+    totalDuration: number,
+  ) => {
+    if (!user?.id) throw new Error("Not authenticated");
 
-      // Create voice note row first
+    // For first chunk, create the voice_note row up-front
+    if (chunkIndex === 0 && !voiceNoteIdRef.current) {
       const insertRow: any = {
         created_by: user.id,
         professional_id: professionalId,
@@ -167,7 +266,7 @@ export default function VoiceRecorderFAB({
         patient_id: patientId || null,
         assessment_id: assessmentId || null,
         status: "processing",
-        duration_seconds: seconds,
+        duration_seconds: totalDuration,
         language,
       };
       const { data: vn, error: insErr } = await supabase
@@ -176,51 +275,60 @@ export default function VoiceRecorderFAB({
         .select("id")
         .single();
       if (insErr) throw insErr;
+      voiceNoteIdRef.current = vn.id;
+    }
 
-      let payload: any = { voice_note_id: vn.id, language, mime_type: blob.type };
+    const voiceNoteId = voiceNoteIdRef.current;
+    if (!voiceNoteId) throw new Error("voice_note_id missing");
 
-      if (blob.size > MAX_INLINE_SIZE) {
-        // Upload to storage tmp
-        const path = `${user.id}/${vn.id}.webm`;
-        const { error: upErr } = await supabase.storage
-          .from("voice-notes-tmp")
-          .upload(path, blob, { contentType: blob.type, upsert: true });
-        if (upErr) throw upErr;
-        payload.storage_path = path;
-      } else {
-        const arr = new Uint8Array(await blob.arrayBuffer());
-        let bin = "";
-        const CHUNK = 0x8000;
-        for (let i = 0; i < arr.length; i += CHUNK) {
-          bin += String.fromCharCode.apply(null, Array.from(arr.subarray(i, i + CHUNK)));
-        }
-        payload.audio_base64 = btoa(bin);
+    // Update total duration as we accumulate chunks
+    if (chunkIndex > 0) {
+      await supabase
+        .from("assessment_voice_notes")
+        .update({ duration_seconds: totalDuration })
+        .eq("id", voiceNoteId)
+        .then(() => {}, () => {});
+    }
+
+    const payload: any = {
+      voice_note_id: voiceNoteId,
+      language,
+      mime_type: blob.type || sessionMimeRef.current,
+      chunk_index: chunkIndex,
+      is_final: isFinal,
+      chunk_duration_seconds: chunkDuration,
+    };
+
+    if (blob.size > MAX_INLINE_SIZE) {
+      const path = `${user.id}/${voiceNoteId}/${chunkIndex}.webm`;
+      const { error: upErr } = await supabase.storage
+        .from("voice-notes-tmp")
+        .upload(path, blob, { contentType: blob.type, upsert: true });
+      if (upErr) throw upErr;
+      payload.storage_path = path;
+    } else {
+      const arr = new Uint8Array(await blob.arrayBuffer());
+      let bin = "";
+      const CHUNK = 0x8000;
+      for (let i = 0; i < arr.length; i += CHUNK) {
+        bin += String.fromCharCode.apply(null, Array.from(arr.subarray(i, i + CHUNK)));
       }
+      payload.audio_base64 = btoa(bin);
+    }
 
-      // Fire-and-forget invoke; do not await result so user isn't blocked
-      supabase.functions.invoke("transcribe-anamnesis", { body: payload })
-        .then(({ error }) => {
-          if (error) console.error("transcribe-anamnesis error:", error);
-        });
+    // Fire-and-forget invoke
+    supabase.functions.invoke("transcribe-anamnesis", { body: payload })
+      .then(({ error }) => {
+        if (error) console.error("transcribe-anamnesis error:", error);
+      });
 
+    if (isFinal) {
       toast({
         title: isPt ? "Processando em segundo plano" : "Processing in background",
         description: isPt
           ? `A transcrição aparecerá no prontuário de ${patientName} em breve.`
           : `Transcription will appear in ${patientName}'s record shortly.`,
       });
-
-      setSeconds(0);
-      setState("idle");
-    } catch (err: any) {
-      console.error("Voice note upload error:", err);
-      toast({
-        title: isPt ? "Erro ao enviar áudio" : "Upload error",
-        description: err?.message || "",
-        variant: "destructive",
-      });
-      setState("idle");
-      setSeconds(0);
     }
   };
 
@@ -239,8 +347,8 @@ export default function VoiceRecorderFAB({
             <X className="h-3 w-3" />
           </button>
           {isPt
-            ? "Grave a entrevista da anamnese. A IA transcreve e resume depois — só texto fica salvo."
-            : "Record the anamnesis interview. AI transcribes & summarizes after — only text is saved."}
+            ? "Grave a entrevista da anamnese (até 1h). A IA transcreve e resume depois — só texto fica salvo."
+            : "Record the anamnesis interview (up to 1h). AI transcribes & summarizes after — only text is saved."}
         </div>
       )}
 
