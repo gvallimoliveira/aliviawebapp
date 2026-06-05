@@ -169,6 +169,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Questionários (mesmo fluxo da avaliação premium/link)
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+  const [specialtyApplied, setSpecialtyApplied] = useState<SpecialtyAppliedResult[]>([]);
+  const specialtyPanelRef = useRef<SpecialtyPanelHandle | null>(null);
 
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
