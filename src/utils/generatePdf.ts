@@ -389,6 +389,40 @@ function drawTextCard(
   return y + totalH + 2;
 }
 
+/**
+ * Renders the "Red Flags" warning card used in both basic-blob and full PDF
+ * variants. Returns the y position right after the card (or the original `y`
+ * when there are no flags). Non-blocking by design: when a professional
+ * supervised the assessment, red flags are documented but do NOT terminate
+ * the report flow.
+ */
+function renderRedFlagsCard(
+  doc: jsPDF,
+  y: number,
+  redFlags: string[] | undefined,
+  isPt: boolean
+): number {
+  if (!redFlags || redFlags.length === 0) return y;
+  const title = isPt
+    ? "Sinais de Alerta (Red Flags)"
+    : "Warning Signs (Red Flags)";
+  const note = isPt
+    ? "Identificados durante a avaliação. Conduta: acompanhamento com a equipe médica responsável. Não interrompe a abordagem fisioterapêutica quando já há supervisão médica do(s) item(ns) acima."
+    : "Identified during the assessment. Conduct: follow-up with the attending medical team. Does not interrupt physiotherapy when medical supervision of the item(s) above is already in place.";
+  const bullets = redFlags.map((rf) => `• ${rf}`).join("\n");
+  const body = `${bullets}\n\n${note}`;
+  y = checkPage(doc, y, 30);
+  y += 2;
+  return drawTextCard(doc, y, body, {
+    fill: [253, 246, 220],
+    stroke: COLORS.yellow,
+    padX: 8,
+    padY: 7,
+    body: { font: "Inter", weight: "normal", size: 9, lineHeight: 4.5, textColor: COLORS.foreground },
+    label: { text: title, color: COLORS.yellow, size: 10 },
+  });
+}
+
 async function loadLogoBase64(): Promise<string | null> {
   try {
     const { default: logoUrl } = await import("@/assets/logo-alivia.png");
