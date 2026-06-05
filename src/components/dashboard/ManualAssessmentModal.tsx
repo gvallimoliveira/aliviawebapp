@@ -24,6 +24,7 @@ import { useVoiceRecorderSession } from "@/contexts/VoiceRecorderContext";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { MOCK_MANUAL_CASE } from "@/data/mockManualAssessmentCase";
+import SpecialtyQuestionnairesPanel, { type SpecialtyAppliedResult, type SpecialtyPanelHandle } from "./SpecialtyQuestionnairesPanel";
 
 /**
  * In demo mode, wraps a form control with a transparent click overlay that
@@ -168,6 +169,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Questionários (mesmo fluxo da avaliação premium/link)
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+  const [specialtyApplied, setSpecialtyApplied] = useState<SpecialtyAppliedResult[]>([]);
+  const specialtyPanelRef = useRef<SpecialtyPanelHandle | null>(null);
 
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
@@ -346,6 +349,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     );
     setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
     setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
+    setSpecialtyApplied(Array.isArray(an?.specialtyResults) ? an.specialtyResults : []);
     setFunctionalTests(an.functionalTests || "");
     const dx = a.diagnosis || {};
     setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
@@ -444,6 +448,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     functionalTests, // free-text observations from Step 4 (kept inside anamnesis_data so it persists and shows up in views)
     patientName,
     patientEmail: patientEmail || null,
+    // Specialty (cardio/geri) results applied inline during this session.
+    specialtyResults: specialtyApplied.length > 0 ? specialtyApplied : undefined,
   });
 
   const generateAIDiagnosis = async () => {
@@ -688,6 +694,29 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         }
       }
 
+      // Persist scheduled specialty questionnaires as pending rows tied to this assessment.
+      if (savedId) {
+        const pendingItems = specialtyPanelRef.current?.getScheduled() || [];
+        const toInsert = pendingItems.filter((p) => !p.share_token);
+        if (toInsert.length > 0) {
+          try {
+            await supabase.from("pending_questionnaires" as any).insert(
+              toInsert.map((p) => ({
+                assessment_id: savedId,
+                professional_id: clinicId ? null : professionalId,
+                clinic_id: clinicId || null,
+                questionnaire_id: p.questionnaireId,
+                domain: p.domain,
+                suggested_reason: p.suggestedReason,
+                status: "pending",
+              })),
+            );
+          } catch (err) {
+            console.warn("pending questionnaires insert failed:", err);
+          }
+        }
+      }
+
       toast({ title: isEditing ? (isPt ? "Avaliação atualizada!" : "Assessment updated!") : (isPt ? "Avaliação criada!" : "Assessment created!") });
       if (!isEditing) void draft.discard();
       if (savedId) onSaved?.(savedId);
@@ -710,6 +739,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainRegions([]); setPainScoresPerRegion({}); setRedFlagsChecked([]); setQuestionnaireResults([]);
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
     setDiagnosisText(""); setTreatmentText(""); setAiDiagnosis(null); setAiTreatment(null);
+    setSpecialtyApplied([]);
   };
 
   const stepLabels = isPt
@@ -1016,6 +1046,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     {isPt ? "Já aplicados: " : "Already applied: "}
                     {questionnaireResults.map((r) => r.questionnaireName).join(", ")}
                   </div>
+                )}
+
+                {/* Specialty (cardio / geri) AI-suggested questionnaires */}
+                {!demoMode && (
+                  <SpecialtyQuestionnairesPanel
+                    ref={specialtyPanelRef}
+                    anamnesisData={buildAnamnesisData()}
+                    professionalId={professionalId}
+                    clinicId={clinicId}
+                    patientName={patientName}
+                    patientEmail={patientEmail}
+                    assessmentId={editAssessment?.id || null}
+                    initialApplied={specialtyApplied}
+                    onApplied={setSpecialtyApplied}
+                  />
                 )}
               </div>
             )}
