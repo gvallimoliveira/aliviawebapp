@@ -331,7 +331,9 @@ CLINICAL DECISION:
 ` : "";
 
 
+    const { PEDRO_KNOWLEDGE_BASE } = await import("../_shared/pedro-knowledge.ts");
     const systemPrompt = `You are an experienced musculoskeletal physiotherapist AI assistant. Based on the patient's anamnesis data and validated questionnaire results, generate a diagnostic hypothesis.
+${PEDRO_KNOWLEDGE_BASE}
 
 PROPRIETARY MODEL — D.I.F.I. (Pain Feedback Cycle):
 D.I.F.I. stands for: Dor (Pain) → Inibição (Inhibition) → Fraqueza (Weakness) → Incapacidade (Disability) → back to more Pain.
