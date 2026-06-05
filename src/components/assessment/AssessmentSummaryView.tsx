@@ -60,9 +60,13 @@ function getConfidenceBadge(conf: string | undefined, isPt: boolean) {
 
 const AssessmentSummaryView = ({
   assessment, onBack, onDownloadPdf, onShareWhatsApp, pdfLoading, whatsappLoading, embedded,
+  professionalContext, onAssessmentUpdated,
 }: AssessmentSummaryViewProps) => {
   const { language, t } = useLanguage();
+  const { toast } = useToast();
   const isPt = language === "pt";
+  const [dismissOpen, setDismissOpen] = useState(false);
+  const [reverting, setReverting] = useState(false);
 
   const diagnosis = assessment.diagnosis || {};
   const displayHypothesis = assessment.final_hypothesis?.trim() || diagnosis.hypothesis;
@@ -77,15 +81,42 @@ const AssessmentSummaryView = ({
   const funcTests = testResults.filter((r) => r.testId && !r.questionnaireId);
   const qResults: QuestionnaireResult[] = testResults.filter((r: any) => r.questionnaireId);
 
-  const redFlagsRaw =
-    (diagnosis as any).redFlags ??
-    (diagnosis as any).red_flags ??
-    (assessment.red_flags as any)?.detected ??
-    assessment.red_flags;
-  const redFlagsList: string[] = Array.isArray(redFlagsRaw)
-    ? redFlagsRaw.filter((x: any) => typeof x === "string")
-    : [];
-  const redFlagsDetected = Array.isArray(redFlagsRaw) ? redFlagsRaw.length > 0 : !!redFlagsRaw;
+  const rawRf = assessment.red_flags;
+  const rfFromDiagnosis = (diagnosis as any).redFlags ?? (diagnosis as any).red_flags;
+  let redFlagsList: string[] = [];
+  if (Array.isArray(rfFromDiagnosis)) {
+    redFlagsList = rfFromDiagnosis.filter((x: any) => typeof x === "string");
+  }
+  if (redFlagsList.length === 0 && rawRf && typeof rawRf === "object" && !Array.isArray(rawRf)) {
+    redFlagsList = Object.entries(rawRf)
+      .filter(([, v]) => v === true)
+      .map(([k]) => t(k) || k);
+  }
+  const redFlagsDetected =
+    redFlagsList.length > 0 ||
+    (rawRf && typeof rawRf === "object" && !Array.isArray(rawRf)
+      ? Object.values(rawRf).some((v) => v === true)
+      : !!rawRf);
+  const isDismissed = !!assessment.red_flags_dismissed_at;
+  const dismissedByName = assessment.red_flags_dismissed_by_name as string | undefined;
+  const dismissedAt = assessment.red_flags_dismissed_at as string | undefined;
+  const dismissedReason = assessment.red_flags_dismissed_reason as string | undefined;
+  const hypothesisSuppressed = redFlagsDetected && !isDismissed;
+
+  const handleRevert = async () => {
+    if (!confirm(isPt ? "Reverter a dispensa desta red flag?" : "Revert this red flag dismissal?")) return;
+    setReverting(true);
+    const { error } = await (supabase.rpc as any)("revert_assessment_red_flags_dismissal", {
+      _assessment_id: assessment.id,
+    });
+    setReverting(false);
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: isPt ? "Dispensa revertida" : "Dismissal reverted" });
+    onAssessmentUpdated?.();
+  };
 
   // Translate a raw value (e.g. "neck_pain", "one_month", "anamnesis.pain_type.throbbing")
   // by trying i18n with candidate prefixes. Falls back to a humanized version.
