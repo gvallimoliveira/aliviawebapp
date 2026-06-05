@@ -26,9 +26,10 @@ serve(async (req) => {
       ? "The patient HAS ACCESS to a gym with free weights, resistance machines, and standard gym equipment. You can prescribe exercises using barbells, dumbbells, cable machines, leg press, etc."
       : "The patient does NOT have access to a gym. All exercises MUST be bodyweight-based OR use minimal/affordable equipment like resistance bands (elastic bands), tennis balls, foam rollers, or towels. Suggest resistance bands as an affordable alternative when appropriate, mentioning they are low-cost and versatile.";
 
-    const { PEDRO_KNOWLEDGE_BASE } = await import("../_shared/pedro-knowledge.ts");
+    const { PEDRO_KNOWLEDGE_BASE, shouldIncludePedroKnowledge } = await import("../_shared/pedro-knowledge.ts");
+    const includePedro = shouldIncludePedroKnowledge(anamnesisData);
     const systemPrompt = `You are an experienced musculoskeletal physiotherapist AI assistant. Based on the patient's data, diagnostic hypothesis, and functional test results, create a personalized treatment plan in 3 phases.
-${PEDRO_KNOWLEDGE_BASE}
+${includePedro ? PEDRO_KNOWLEDGE_BASE : ""}
 
 PROPRIETARY FRAMEWORK — STEPS (Rehabilitation Ladder):
 The treatment plan MUST follow the STEPS framework — a 6-step progressive rehabilitation ladder from injury (ground zero) to discharge:
