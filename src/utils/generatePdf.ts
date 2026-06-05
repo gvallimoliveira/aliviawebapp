@@ -1323,6 +1323,9 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   // Summary
   y = renderSubSection(doc, y, isPt ? "Resumo" : "Summary", diagnosis.summary);
 
+  // Red flags (documented but non-blocking when professional supervised)
+  y = renderRedFlagsCard(doc, y, redFlags, isPt);
+
   // Explanation
   if (diagnosis.explanation) {
     y = renderSubSection(doc, y, isPt ? "O que está acontecendo?" : "What's happening?", diagnosis.explanation);
