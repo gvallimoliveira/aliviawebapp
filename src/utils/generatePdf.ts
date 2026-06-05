@@ -94,6 +94,8 @@ interface PdfOptions {
   anamnesisData?: AnamnesisData;
   painRegions?: string[];
   testResults?: any;
+  /** Red flags detected during assessment (assessment.red_flags?.detected). */
+  redFlags?: string[];
   professionalNotes?: string;
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
