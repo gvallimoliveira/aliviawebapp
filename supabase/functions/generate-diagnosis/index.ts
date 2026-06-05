@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed } = await req.json();
     const redFlagsList: string[] = Array.isArray(bodyRedFlags)
       ? bodyRedFlags
       : Array.isArray(anamnesisData?.redFlags) ? anamnesisData.redFlags : [];
@@ -435,7 +435,11 @@ The attending professional flagged the following warning signs: ${redFlagsList.j
 You MUST:
 - Acknowledge these red flag(s) explicitly within the "summary" field (1 short sentence).
 - Copy them verbatim into the "redFlags" array of your JSON output.
-- In professional mode the workflow does NOT terminate: the case is supervised, so frame the conduct as "continue physiotherapy with concurrent medical follow-up" — do NOT recommend stopping the assessment.
+${redFlagsDismissed ? `- The red flag(s) have ALREADY been dismissed by the attending professional after medical clearance. Proceed with the normal physiotherapy hypothesis and mention in the summary that medical clearance is on file.
+- Set "hypothesisSuppressed" to false.` : `- The red flag has NOT yet been cleared by a physician. The physiotherapy hypothesis MUST be considered preliminary and "under reservation" until a doctor evaluates the patient.
+- Set "hypothesisSuppressed" to true.
+- Inside the "summary" field, OPEN with an explicit warning sentence in bold-ish wording such as: "ATENÇÃO: sinal de alerta médico detectado — a hipótese fisioterapêutica abaixo não deve ser usada para conduta até avaliação médica." (or English equivalent if language is English).
+- Still provide a "hypothesis" field so the professional has a working differential, but the "disclaimer" and "summary" must make crystal clear that medical clearance is required before any treatment plan.`}
 ` : ""}
 
 Response format (JSON):
@@ -444,6 +448,7 @@ Response format (JSON):
   "confidence": "low" | "moderate" | "high",
   "summary": "Brief 1-2 sentence summary of the hypothesis",
   "redFlags": ${redFlagsList.length > 0 ? JSON.stringify(redFlagsList) : "[]"},
+  "hypothesisSuppressed": ${redFlagsList.length > 0 && !redFlagsDismissed ? "true" : "false"},
   ${isBasic || isProfessional ? "" : `"explanation": "Detailed explanation of what's happening in the body (2-3 paragraphs). Reference questionnaire findings when available.",
   "reasoning": "Why this hypothesis based on the provided data, including questionnaire score interpretation",
   "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
