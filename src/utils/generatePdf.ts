@@ -1020,6 +1020,8 @@ interface BasicReportOptions {
   painRegions?: string[];
   painScore?: number;
   anamnesisData?: any;
+  /** Red flags detected during assessment (assessment.red_flags?.detected). */
+  redFlags?: string[];
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
