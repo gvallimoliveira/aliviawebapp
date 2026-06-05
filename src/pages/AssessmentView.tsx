@@ -224,6 +224,7 @@ const AssessmentView = () => {
           painRegions: assessment.pain_regions || undefined,
           painScore: assessment.pain_score,
           anamnesisData: assessment.anamnesis_data || undefined,
+          redFlags: (assessment.red_flags as any)?.detected,
         });
       } else {
         pdfBlob = await generateAssessmentPdfBlob({
