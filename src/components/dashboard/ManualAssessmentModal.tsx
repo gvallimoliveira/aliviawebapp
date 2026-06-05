@@ -349,6 +349,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     );
     setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
     setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
+    setSpecialtyApplied(Array.isArray(an?.specialtyResults) ? an.specialtyResults : []);
     setFunctionalTests(an.functionalTests || "");
     const dx = a.diagnosis || {};
     setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
