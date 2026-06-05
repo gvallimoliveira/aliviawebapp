@@ -12,7 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags } = await req.json();
+    const redFlagsList: string[] = Array.isArray(bodyRedFlags)
+      ? bodyRedFlags
+      : Array.isArray(anamnesisData?.redFlags) ? anamnesisData.redFlags : [];
 
     const painSubArea = anamnesisData.painSubArea || "";
     const hadTwist = anamnesisData.hadTwist || "";
