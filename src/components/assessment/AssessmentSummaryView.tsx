@@ -1,15 +1,19 @@
+import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Brain, ShieldCheck, ShieldAlert, Activity, MapPin, ClipboardCheck, Target,
   FileText, Dumbbell, Calendar, Sparkles, CheckCircle2, AlertCircle, Info,
-  Download, Share2, Loader2, ArrowLeft,
+  Download, Share2, Loader2, ArrowLeft, RotateCcw,
 } from "lucide-react";
 import { regionsByView } from "./painMapData";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { functionalTests } from "@/data/functionalTestsData";
 import { getSeverityColor } from "./QuestionnaireResultCard";
+import DismissRedFlagDialog from "./DismissRedFlagDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface AssessmentSummaryViewProps {
   assessment: any;
@@ -19,6 +23,8 @@ interface AssessmentSummaryViewProps {
   pdfLoading?: boolean;
   whatsappLoading?: boolean;
   embedded?: boolean;
+  professionalContext?: boolean;
+  onAssessmentUpdated?: () => void;
 }
 
 function getRegionLabel(id: string, isPt: boolean): string {
@@ -54,9 +60,13 @@ function getConfidenceBadge(conf: string | undefined, isPt: boolean) {
 
 const AssessmentSummaryView = ({
   assessment, onBack, onDownloadPdf, onShareWhatsApp, pdfLoading, whatsappLoading, embedded,
+  professionalContext, onAssessmentUpdated,
 }: AssessmentSummaryViewProps) => {
   const { language, t } = useLanguage();
+  const { toast } = useToast();
   const isPt = language === "pt";
+  const [dismissOpen, setDismissOpen] = useState(false);
+  const [reverting, setReverting] = useState(false);
 
   const diagnosis = assessment.diagnosis || {};
   const displayHypothesis = assessment.final_hypothesis?.trim() || diagnosis.hypothesis;
@@ -71,15 +81,42 @@ const AssessmentSummaryView = ({
   const funcTests = testResults.filter((r) => r.testId && !r.questionnaireId);
   const qResults: QuestionnaireResult[] = testResults.filter((r: any) => r.questionnaireId);
 
-  const redFlagsRaw =
-    (diagnosis as any).redFlags ??
-    (diagnosis as any).red_flags ??
-    (assessment.red_flags as any)?.detected ??
-    assessment.red_flags;
-  const redFlagsList: string[] = Array.isArray(redFlagsRaw)
-    ? redFlagsRaw.filter((x: any) => typeof x === "string")
-    : [];
-  const redFlagsDetected = Array.isArray(redFlagsRaw) ? redFlagsRaw.length > 0 : !!redFlagsRaw;
+  const rawRf = assessment.red_flags;
+  const rfFromDiagnosis = (diagnosis as any).redFlags ?? (diagnosis as any).red_flags;
+  let redFlagsList: string[] = [];
+  if (Array.isArray(rfFromDiagnosis)) {
+    redFlagsList = rfFromDiagnosis.filter((x: any) => typeof x === "string");
+  }
+  if (redFlagsList.length === 0 && rawRf && typeof rawRf === "object" && !Array.isArray(rawRf)) {
+    redFlagsList = Object.entries(rawRf)
+      .filter(([, v]) => v === true)
+      .map(([k]) => t(k) || k);
+  }
+  const redFlagsDetected =
+    redFlagsList.length > 0 ||
+    (rawRf && typeof rawRf === "object" && !Array.isArray(rawRf)
+      ? Object.values(rawRf).some((v) => v === true)
+      : !!rawRf);
+  const isDismissed = !!assessment.red_flags_dismissed_at;
+  const dismissedByName = assessment.red_flags_dismissed_by_name as string | undefined;
+  const dismissedAt = assessment.red_flags_dismissed_at as string | undefined;
+  const dismissedReason = assessment.red_flags_dismissed_reason as string | undefined;
+  const hypothesisSuppressed = redFlagsDetected && !isDismissed;
+
+  const handleRevert = async () => {
+    if (!confirm(isPt ? "Reverter a dispensa desta red flag?" : "Revert this red flag dismissal?")) return;
+    setReverting(true);
+    const { error } = await (supabase.rpc as any)("revert_assessment_red_flags_dismissal", {
+      _assessment_id: assessment.id,
+    });
+    setReverting(false);
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: isPt ? "Dispensa revertida" : "Dismissal reverted" });
+    onAssessmentUpdated?.();
+  };
 
   // Translate a raw value (e.g. "neck_pain", "one_month", "anamnesis.pain_type.throbbing")
   // by trying i18n with candidate prefixes. Falls back to a humanized version.
@@ -147,16 +184,33 @@ const AssessmentSummaryView = ({
 
       {/* Hypothesis */}
       {displayHypothesis && (
-        <section className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-4 space-y-2">
+        <section className={`rounded-2xl border p-4 space-y-2 ${
+          hypothesisSuppressed
+            ? "border-amber-300/60 bg-amber-50/50"
+            : "border-primary/20 bg-primary/[0.03]"
+        }`}>
           <div className="flex items-center gap-2 flex-wrap">
-            <Brain className="h-4 w-4 text-primary" />
+            <Brain className={`h-4 w-4 ${hypothesisSuppressed ? "text-amber-700" : "text-primary"}`} />
             <h4 className="text-sm font-semibold text-foreground">
               {isPt ? "Hipótese diagnóstica (IA)" : "Diagnostic hypothesis (AI)"}
             </h4>
-            <Badge variant="outline" className={`text-[10px] ml-auto ${confidence.cls}`}>
-              {isPt ? "Confiança" : "Confidence"}: {confidence.label}
-            </Badge>
+            {hypothesisSuppressed ? (
+              <Badge variant="outline" className="text-[10px] ml-auto bg-amber-100 text-amber-800 border-amber-300">
+                {isPt ? "Sob ressalva — requer aval médico" : "Under reservation — requires medical clearance"}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className={`text-[10px] ml-auto ${confidence.cls}`}>
+                {isPt ? "Confiança" : "Confidence"}: {confidence.label}
+              </Badge>
+            )}
           </div>
+          {hypothesisSuppressed && (
+            <p className="text-[11px] text-amber-900 bg-amber-100/60 rounded p-2 leading-relaxed">
+              {isPt
+                ? "A hipótese abaixo NÃO deve ser usada para definir conduta enquanto o sinal de alerta não for avaliado por um médico. Após liberação médica, dispense a red flag no botão abaixo para liberar o uso clínico."
+                : "The hypothesis below MUST NOT guide treatment until the warning sign is evaluated by a physician. Once cleared, dismiss the red flag with the button below to release it for clinical use."}
+            </p>
+          )}
           <p className="text-sm text-foreground leading-relaxed">{displayHypothesis}</p>
           {diagnosis.summary && (
             <p className="text-xs text-muted-foreground leading-relaxed pt-1 border-t border-primary/10">
@@ -170,17 +224,19 @@ const AssessmentSummaryView = ({
       <section
         className={`rounded-2xl border p-3 ${
           redFlagsDetected
-            ? "border-amber-300/60 bg-amber-50/60"
+            ? (isDismissed
+                ? "border-sky-300/60 bg-sky-50/60"
+                : "border-amber-300/60 bg-amber-50/60")
             : "border-emerald-200 bg-emerald-50/50"
         }`}
       >
         <div className="flex items-start gap-2">
           {redFlagsDetected ? (
-            <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <ShieldAlert className={`h-4 w-4 shrink-0 mt-0.5 ${isDismissed ? "text-sky-600" : "text-amber-600"}`} />
           ) : (
             <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
           )}
-          <p className={`text-xs ${redFlagsDetected ? "text-amber-900" : "text-emerald-800"}`}>
+          <p className={`text-xs ${redFlagsDetected ? (isDismissed ? "text-sky-900" : "text-amber-900") : "text-emerald-800"}`}>
             <strong>Red flags:</strong>{" "}
             {redFlagsDetected
               ? (isPt
@@ -192,20 +248,68 @@ const AssessmentSummaryView = ({
           </p>
         </div>
         {redFlagsList.length > 0 && (
-          <ul className="mt-2 ml-6 list-disc text-xs text-amber-900 space-y-0.5">
+          <ul className={`mt-2 ml-6 list-disc text-xs space-y-0.5 ${isDismissed ? "text-sky-900" : "text-amber-900"}`}>
             {redFlagsList.map((rf, i) => (
               <li key={i}>{rf}</li>
             ))}
           </ul>
         )}
-        {redFlagsDetected && (
-          <p className="mt-2 ml-6 text-[11px] text-amber-800/80 leading-relaxed">
-            {isPt
-              ? "Conduta: acompanhamento com a equipe médica responsável. Não interrompe a abordagem fisioterapêutica quando já há supervisão médica do(s) item(ns) acima."
-              : "Conduct: follow-up with the attending medical team. Does not interrupt physiotherapy when medical supervision of the item(s) above is already in place."}
-          </p>
+        {redFlagsDetected && isDismissed && (
+          <div className="mt-2 ml-6 text-[11px] text-sky-900 leading-relaxed">
+            <p>
+              <strong>{isPt ? "Dispensada em" : "Dismissed on"}</strong>{" "}
+              {dismissedAt ? new Date(dismissedAt).toLocaleDateString(isPt ? "pt-BR" : "en-US") : ""}{" "}
+              {isPt ? "por" : "by"} <strong>{dismissedByName || "—"}</strong>.
+            </p>
+            {dismissedReason && (
+              <p className="mt-1 italic">"{dismissedReason}"</p>
+            )}
+            {professionalContext && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mt-1 h-7 px-2 text-[11px] text-sky-700 hover:text-sky-900"
+                onClick={handleRevert}
+                disabled={reverting}
+              >
+                <RotateCcw className="h-3 w-3 mr-1" />
+                {isPt ? "Reverter dispensa" : "Revert dismissal"}
+              </Button>
+            )}
+          </div>
+        )}
+        {redFlagsDetected && !isDismissed && (
+          <>
+            <p className="mt-2 ml-6 text-[11px] text-amber-800/80 leading-relaxed">
+              {isPt
+                ? "Hipótese fisioterapêutica fica sob ressalva até avaliação médica do(s) item(ns) acima. Após liberação, dispense para uso clínico."
+                : "Physiotherapy hypothesis is held under reservation until medical evaluation of the item(s) above. Dismiss after clearance."}
+            </p>
+            {professionalContext && (
+              <div className="mt-2 ml-6">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs border-amber-400 text-amber-800 hover:bg-amber-100"
+                  onClick={() => setDismissOpen(true)}
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+                  {isPt ? "Dispensar red flag" : "Dismiss red flag"}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </section>
+
+      {professionalContext && (
+        <DismissRedFlagDialog
+          open={dismissOpen}
+          onOpenChange={setDismissOpen}
+          assessmentId={assessment.id}
+          onDismissed={onAssessmentUpdated}
+        />
+      )}
 
       {/* Metrics */}
       <section className="space-y-2">

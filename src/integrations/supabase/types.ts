@@ -123,6 +123,10 @@ export type Database = {
           pending_upgrade_data: Json | null
           professional_id: string | null
           red_flags: Json | null
+          red_flags_dismissed_at: string | null
+          red_flags_dismissed_by: string | null
+          red_flags_dismissed_by_name: string | null
+          red_flags_dismissed_reason: string | null
           redo_used: boolean | null
           reviewed_at: string | null
           status: string
@@ -153,6 +157,10 @@ export type Database = {
           pending_upgrade_data?: Json | null
           professional_id?: string | null
           red_flags?: Json | null
+          red_flags_dismissed_at?: string | null
+          red_flags_dismissed_by?: string | null
+          red_flags_dismissed_by_name?: string | null
+          red_flags_dismissed_reason?: string | null
           redo_used?: boolean | null
           reviewed_at?: string | null
           status?: string
@@ -183,6 +191,10 @@ export type Database = {
           pending_upgrade_data?: Json | null
           professional_id?: string | null
           red_flags?: Json | null
+          red_flags_dismissed_at?: string | null
+          red_flags_dismissed_by?: string | null
+          red_flags_dismissed_by_name?: string | null
+          red_flags_dismissed_reason?: string | null
           redo_used?: boolean | null
           reviewed_at?: string | null
           status?: string
@@ -2081,6 +2093,10 @@ export type Database = {
         Args: { _clinic_id: string }
         Returns: string
       }
+      dismiss_assessment_red_flags: {
+        Args: { _assessment_id: string; _reason: string }
+        Returns: undefined
+      }
       get_clinic_all_patients: {
         Args: { _clinic_id: string }
         Returns: {
@@ -2185,6 +2201,10 @@ export type Database = {
           pending_upgrade_data: Json | null
           professional_id: string | null
           red_flags: Json | null
+          red_flags_dismissed_at: string | null
+          red_flags_dismissed_by: string | null
+          red_flags_dismissed_by_name: string | null
+          red_flags_dismissed_reason: string | null
           redo_used: boolean | null
           reviewed_at: string | null
           status: string
@@ -2315,6 +2335,10 @@ export type Database = {
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
+      }
+      revert_assessment_red_flags_dismissal: {
+        Args: { _assessment_id: string }
+        Returns: undefined
       }
       try_direct_clinic_add: {
         Args: {

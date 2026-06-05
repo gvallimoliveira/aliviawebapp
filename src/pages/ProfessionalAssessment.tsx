@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import RedFlagScreening from "@/components/assessment/RedFlagScreening";
 import RedFlagAlert from "@/components/assessment/RedFlagAlert";
+import RedFlagContinueScreen from "@/components/assessment/RedFlagContinueScreen";
 import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/AnamnesisForm";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
@@ -19,7 +20,7 @@ import WelcomeStep from "@/components/assessment/WelcomeStep";
 import ResumeSummary from "@/components/assessment/ResumeSummary";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 
-type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
+type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
 const ProfessionalAssessment = () => {
   const { professionalId } = useParams<{ professionalId: string }>();
@@ -240,12 +241,9 @@ const ProfessionalAssessment = () => {
     setRedFlagData(flaggedItems);
     const id = await createAssessment();
     if (id) {
-      await updateAssessment(id, {
-        red_flags: flaggedItems as any,
-        status: "red_flagged",
-      });
+      // Save red flags but DO NOT mark assessment as red_flagged — flow continues.
+      await updateAssessment(id, { red_flags: flaggedItems as any });
     }
-    // High-priority push to professional
     if (professional?.user_id) {
       try {
         await supabase.functions.invoke("send-push-notification", {
@@ -260,6 +258,13 @@ const ProfessionalAssessment = () => {
       } catch (err) {
         console.warn("Red flag push failed:", err);
       }
+    }
+    setStep("redflag_continue");
+  };
+
+  const handleRedFlagEnd = async () => {
+    if (assessmentId) {
+      await updateAssessment(assessmentId, { status: "red_flagged" });
     }
     setStep("redflag_alert");
   };
@@ -529,8 +534,16 @@ const ProfessionalAssessment = () => {
         {step === "redflags" && (
           <RedFlagScreening
             onPass={() => setStep("anamnesis")}
-            onFlagged={() => setStep("redflag_alert")}
+            onFlagged={() => setStep("redflag_continue")}
             onFlaggedWithData={handleRedFlagged}
+          />
+        )}
+        {step === "redflag_continue" && redFlagData && (
+          <RedFlagContinueScreen
+            flaggedItems={redFlagData}
+            professionalName={professional?.full_name}
+            onContinue={() => setStep("anamnesis")}
+            onEnd={handleRedFlagEnd}
           />
         )}
         {step === "redflag_alert" && (

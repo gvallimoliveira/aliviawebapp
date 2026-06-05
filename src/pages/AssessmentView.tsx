@@ -179,6 +179,7 @@ const AssessmentView = () => {
           painScore: assessment.pain_score,
           anamnesisData: assessment.anamnesis_data || undefined,
           redFlags: (assessment.red_flags as any)?.detected,
+          redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
         });
         const url = URL.createObjectURL(pdfBlob);
         const a = document.createElement("a");
@@ -197,6 +198,7 @@ const AssessmentView = () => {
           painRegions: assessment.pain_regions,
           testResults: assessment.test_results,
           redFlags: (assessment.red_flags as any)?.detected,
+          redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
         });
       }
     } catch {
@@ -225,6 +227,7 @@ const AssessmentView = () => {
           painScore: assessment.pain_score,
           anamnesisData: assessment.anamnesis_data || undefined,
           redFlags: (assessment.red_flags as any)?.detected,
+          redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
         });
       } else {
         pdfBlob = await generateAssessmentPdfBlob({
@@ -237,6 +240,7 @@ const AssessmentView = () => {
           painRegions: assessment.pain_regions,
           testResults: assessment.test_results,
           redFlags: (assessment.red_flags as any)?.detected,
+          redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
         });
       }
 
@@ -396,6 +400,8 @@ const AssessmentView = () => {
             onShareWhatsApp={handleShareWhatsApp}
             pdfLoading={pdfLoading}
             whatsappLoading={whatsappLoading}
+            professionalContext={!!(assessment.professional_id || assessment.clinic_id || assessment.type === "professional")}
+            onAssessmentUpdated={() => setReloadKey((k) => k + 1)}
           />
         </main>
       </div>
@@ -533,6 +539,8 @@ const AssessmentView = () => {
               onShareWhatsApp={handleShareWhatsApp}
               pdfLoading={pdfLoading}
               whatsappLoading={whatsappLoading}
+              professionalContext={!!(assessment.professional_id || assessment.clinic_id || assessment.type === "professional")}
+              onAssessmentUpdated={() => setReloadKey((k) => k + 1)}
             />
           </TabsContent>
 

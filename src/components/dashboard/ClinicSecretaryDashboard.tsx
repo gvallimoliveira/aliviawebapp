@@ -146,6 +146,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
         painRegions: assessment.pain_regions,
         testResults: assessment.test_results,
         redFlags: (assessment.red_flags as any)?.detected,
+          redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
         clinicLogoUrl: activeClinic?.logo_url || undefined,
         clinicName: activeClinic?.clinic_name || undefined,
         responsibleProfessional,

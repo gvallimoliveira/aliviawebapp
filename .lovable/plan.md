@@ -1,108 +1,102 @@
+# Red flags: continuar avaliação em links pro/clínica (com dispensa rastreável)
+
 ## Objetivo
 
-Adicionar questionários validados de **cardiorrespiratória** (mMRC, CAT, Borg CR10) e **geriatria** (TUG, Berg, SPPB, FES-I) ao fluxo PRO/Clínica, sugeridos pela IA com base na anamnese, **selecionáveis** pelo fisio para não estender demais a avaliação, com possibilidade de **retomar depois** (presencial ou via link enviado ao paciente) e **regenerar a impressão clínica** automaticamente.
+Parar de afugentar clientes em **links profissionais e de clínica** quando uma red flag é marcada. A avaliação passa a ser concluída normalmente, mas o sistema sinaliza fortemente a necessidade de aval médico e suprime a hipótese diagnóstica do destaque até que o profissional dispense a red flag com justificativa. Histórico da dispensa fica visível no PDF (auditoria).
+
+**Fluxo do paciente final (Assessment.tsx básica/premium auto-serviço) permanece como hoje: interrompe.**
 
 ---
 
-## 1. Catálogo de questionários (novo)
+## 1. Mudança de fluxo nos links pro/clínica
 
-Criar `src/data/specialtyQuestionnaires.ts` no mesmo formato de `questionnaireData.ts`:
+Arquivos: `src/pages/ProfessionalAssessment.tsx`, `src/pages/ClinicAssessment.tsx`.
 
-- **Cardio**: mMRC (1 item, dispneia), CAT (8 itens, impacto da DPOC), Borg CR10 (1 item, percepção de esforço).
-- **Geriatria**: FES-I (16 itens, medo de cair), TUG (teste cronometrado — input único em segundos), Berg (14 itens de equilíbrio), SPPB (3 subtestes cronometrados).
+- `handleRedFlagged` deixa de mudar `status` para `red_flagged` e de redirecionar para `RedFlagAlert`. Em vez disso:
+  - Salva `red_flags` (objeto com itens marcados) no assessment.
+  - Mostra um modal/tela intermediária "Atenção — sinal de alerta detectado" explicando que o profissional será avisado e que a hipótese ficará sob ressalva até liberação médica. Botões: "Entendi, continuar avaliação" e "Encerrar agora" (encerrar mantém comportamento atual de `red_flagged`).
+  - Ao continuar, segue para a próxima etapa normal (dor/pain map/anamnese).
+- `RedFlagAlert` continua existindo, usado só quando o paciente opta por encerrar e no fluxo do paciente final.
 
-Cada item inclui: id, domínio (`cardio` / `geri`), gatilhos clínicos, tempo médio de aplicação e regras de interpretação do score.
+## 2. Persistência e dispensa
 
-## 2. Sugestão pela IA
+Nova coluna em `assessments`:
+- `red_flags_dismissed_at timestamptz`
+- `red_flags_dismissed_by uuid` (user_id do profissional)
+- `red_flags_dismissed_reason text` (justificativa obrigatória)
+- `red_flags_dismissed_by_name text` (snapshot do nome para PDF, caso o profissional saia da clínica)
 
-Nova edge function `suggest-specialty-questionnaires`:
-- Recebe `anamnesis`, `painRegions` e `age`.
-- Reaproveita o helper `shouldIncludePedroKnowledge` (já existente) para decidir domínio (cardio, geri, ambos ou nenhum).
-- Retorna até 3 sugestões: `[{ id, domain, reason, priority }]`.
+Quem pode dispensar: qualquer membro ativo da clínica com role `owner | admin | therapist` (não `secretary`), ou o profissional dono do assessment. Validado em uma RPC `dismiss_assessment_red_flags(_assessment_id, _reason)` security definer, com checagem via `is_clinic_member`/owner do professional. RLS continua restringindo updates diretos.
 
-## 3. Tela de seleção (somente fluxo manual PRO/Clínica)
+Reverter dispensa: outra RPC `revert_assessment_red_flags_dismissal` para casos de erro (mesmo critério de permissão).
 
-Novo step **após** o `QuestionnaireStep` padrão, apenas em `ProfessionalAssessment.tsx` e `ClinicAssessment.tsx`:
+## 3. Geração de diagnóstico sob ressalva
 
-- Card "Questionários especializados sugeridos" com badges (Cardio / Geri).
-- Cada item mostra: nome, motivo da sugestão (ex.: "Paciente >65a + queixa de dispneia"), tempo estimado e **checkbox**.
-- Botões: **"Aplicar agora"** (entra no fluxo) ou **"Aplicar depois"** (salva como pendente no prontuário).
-- Se a IA não retornar sugestões, o step é pulado silenciosamente.
-- Avaliações self-service do paciente **não** são afetadas.
+`supabase/functions/generate-diagnosis/index.ts`:
+- Quando `red_flags.detected = true` **e** `red_flags_dismissed_at` é nulo: prompt instrui IA a:
+  - Retornar `hypothesis_suppressed: true` no JSON.
+  - Preencher `summary` enfatizando "sinal de alerta médico — hipótese fisioterapêutica não deve ser considerada até liberação médica".
+  - Ainda retornar uma hipótese técnica (para histórico), mas marcada como suprimida.
+- Quando dispensada: comportamento normal de profissional (acknowledge da red flag, sem suprimir).
 
-## 4. Tabela `pending_questionnaires` (nova)
+## 4. UI do profissional (prontuário)
 
-Colunas:
-```
-id, assessment_id, patient_id, professional_id, clinic_id,
-questionnaire_id, domain, suggested_reason,
-status ('pending' | 'completed' | 'skipped'),
-answers jsonb, score jsonb,
-completed_at, completed_via ('in_session' | 'patient_link' | 'manual_later'),
-created_at, share_token (para link público)
-```
-+ GRANTs + RLS (fisio dono / membro da clínica / paciente dono).
+`AssessmentSummaryView.tsx`, `AssessmentView.tsx`, `ProDashboard.tsx`, `PatientEvolutionDashboard.tsx`, `ClinicSecretaryDashboard.tsx`:
 
-## 5. Prontuário — card "Questionários pendentes"
+- Banner âmbar/vermelho no topo do prontuário listando as red flags marcadas.
+- Se NÃO dispensada: hipótese diagnóstica exibida com overlay/badge "Sob ressalva — requer aval médico" e botão **"Dispensar red flag"** (abre dialog pedindo justificativa obrigatória ≥20 chars; opção "encaminhamento médico em andamento", "atestado/aval recebido", "outro").
+- Se dispensada: banner muda para "Red flag dispensada em DD/MM/AAAA por Dr(a). X — motivo: …" + botão discreto "Reverter dispensa".
+- Secretária vê o banner mas não vê o botão de dispensar (apenas leitura).
 
-Em `PatientDetailDialog` (e equivalente da clínica):
-- Card com badge de contador.
-- Para cada pendente, duas ações:
-  - **"Preencher agora"** abre modal com o questionário no consultório.
-  - **"Enviar link ao paciente"** gera short-link com `share_token` e copia para WhatsApp.
-- Nova rota pública `/q/:token` para o paciente responder sem login; ao salvar, marca como completo.
+## 5. PDF
 
-## 6. Regeneração automática da impressão clínica
+`src/utils/generatePdf.ts` (`renderRedFlagsCard` já criado):
+- Sempre renderiza o card de red flags se houver itens marcados.
+- Quando dispensada: adiciona linha "Dispensada em DD/MM/AAAA por Dr(a). X — Motivo: …" no card (sem sumir do PDF — auditoria permanente).
+- Quando NÃO dispensada: adiciona aviso forte "Hipótese diagnóstica sob ressalva — necessário aval médico antes de iniciar tratamento" e a seção de hipótese principal mostra esse mesmo aviso no lugar do destaque normal.
 
-Ao marcar um questionário como `completed`:
-- Setar flag `assessment.needs_reimpression = true`.
-- O frontend, ao abrir o prontuário, detecta a flag e dispara `generate-clinical-impression`, substituindo a impressão atual (mantendo histórico/versão).
-- Decisão técnica: flag + disparo no front, em vez de webhook assíncrono — mais simples e evita custo de `pg_net`.
+## 6. Notificação ao profissional
 
-## 7. Integração com diagnóstico e tratamento
+Quando uma avaliação por link pro/clínica é concluída com `red_flags.detected = true`:
+- Toast/badge na lista de pacientes ("⚠ Red flag pendente de dispensa").
+- (Opcional, fora deste plano): e-mail/push. Por ora apenas indicador visual no dashboard.
 
-- `generate-diagnosis` e `generate-treatment` passam a receber `specialty_scores` no prompt quando existirem.
-- A `PEDRO_KNOWLEDGE_BASE` continua sendo injetada condicionalmente como hoje.
+## 7. Fluxo do paciente final — sem mudança
 
-## 8. PDF
+`Assessment.tsx` (auto-serviço básica/premium) continua chamando `RedFlagAlert` e encerrando a avaliação. Sem botão "continuar mesmo assim".
 
-Scores especializados concluídos entram em uma nova seção **"Avaliação funcional especializada"**, abaixo dos questionários padrão, respeitando o limite de 158mm.
+## 8. Página de suporte + memória
 
-## 9. Páginas de suporte
-
-Atualizar `Support.tsx` + `ClinicSupport.tsx` (pt/en/es) com a nova funcionalidade, conforme regra de manutenção.
+- Atualizar `Support.tsx` e `ClinicSupport.tsx` (pt/en/es) com a nova regra (red flags em links pro/clínica não interrompem mais; profissional precisa dispensar para liberar hipótese).
+- Atualizar `mem://features/safety-screening` para refletir a nova distinção entre fluxo paciente final (interrompe) e fluxo pro/clínica (continua sob ressalva + dispensa).
 
 ---
 
 ## Detalhes técnicos
 
-- Step de seleção custa, no máximo, ~5s extras (apenas checkboxes).
-- Self-service do paciente segue inalterado — questionários especializados nunca aparecem fora do fluxo manual PRO/Clínica.
-- 1 nova tabela com GRANTs e RLS; nenhuma dependência nova.
+### Migração SQL
+```sql
+ALTER TABLE public.assessments
+  ADD COLUMN red_flags_dismissed_at timestamptz,
+  ADD COLUMN red_flags_dismissed_by uuid,
+  ADD COLUMN red_flags_dismissed_by_name text,
+  ADD COLUMN red_flags_dismissed_reason text;
+```
+Mais duas RPCs security definer (`dismiss_assessment_red_flags`, `revert_assessment_red_flags_dismissal`) com validação de permissão por clínica/profissional.
 
----
+### Componentes novos
+- `RedFlagContinueDialog.tsx` — modal intermediário no fluxo pro/clínica ("continuar avaliação" / "encerrar agora").
+- `DismissRedFlagDialog.tsx` — dialog com select de motivo + textarea de justificativa obrigatória.
 
-## Arquivos afetados
+### Arquivos editados
+- `src/pages/ProfessionalAssessment.tsx`, `src/pages/ClinicAssessment.tsx` — novo handler de continuar.
+- `src/components/assessment/AssessmentSummaryView.tsx` — banner + supressão da hipótese.
+- `src/pages/AssessmentView.tsx` + dashboards (Pro, Secretary, Evolution) — banner e botão de dispensar.
+- `src/utils/generatePdf.ts` — card de red flag com linha de dispensa.
+- `supabase/functions/generate-diagnosis/index.ts` — prompt condicional para hipótese suprimida.
+- `src/pages/Support.tsx`, `src/pages/ClinicSupport.tsx` (3 idiomas).
 
-**Novos**
-- `src/data/specialtyQuestionnaires.ts`
-- `src/components/assessment/SpecialtyQuestionnaireSelector.tsx`
-- `src/components/assessment/PendingQuestionnairesCard.tsx`
-- `src/pages/PublicQuestionnaire.tsx` (rota `/q/:token`)
-- `supabase/functions/suggest-specialty-questionnaires/index.ts`
-- Migration: `pending_questionnaires` + GRANTs + RLS + flag `needs_reimpression`
-
-**Editados**
-- `src/pages/ProfessionalAssessment.tsx`, `src/pages/ClinicAssessment.tsx` (novo step)
-- `src/components/dashboard/PatientDetailDialog.tsx` (card de pendentes + trigger de regeneração)
-- `supabase/functions/generate-diagnosis/index.ts`, `generate-treatment/index.ts` (consumir `specialty_scores`)
-- `supabase/functions/generate-clinical-impression/index.ts` (consumir novos scores)
-- `src/utils/generatePdf.ts` (nova seção)
-- `src/App.tsx` (rota pública)
-- `Support.tsx` + `ClinicSupport.tsx` + `src/locales/{pt,en,es}.json`
-
----
-
-## Fora do escopo
-- Auto-regeneração via webhook (ficará com flag + disparo no front).
-- Aplicação dos questionários especializados em modo self-service do paciente.
+### Fora de escopo
+- E-mail/push de notificação de red flag (fica como melhoria futura).
+- Upload de atestado médico como anexo de dispensa (pode entrar depois via `patient_files`).
+- Mudança no fluxo do paciente final (mantido como interrupção).
