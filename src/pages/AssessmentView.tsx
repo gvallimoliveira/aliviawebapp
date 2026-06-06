@@ -77,6 +77,11 @@ function translateKey(key: string, isPt: boolean): string {
   };
   const entry = map[key];
   if (entry) return isPt ? entry[0] : entry[1];
+  // Fallback: bare values like "sudden"/"gradual"/"trauma" stored by manual assessment
+  const suffix = "." + key;
+  for (const k of Object.keys(map)) {
+    if (k.endsWith(suffix)) return isPt ? map[k][0] : map[k][1];
+  }
   return key;
 }
 
