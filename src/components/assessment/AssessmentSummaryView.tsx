@@ -81,13 +81,18 @@ const AssessmentSummaryView = ({
   const funcTests = testResults.filter((r) => r.testId && !r.questionnaireId);
   const qResults: QuestionnaireResult[] = testResults.filter((r: any) => r.questionnaireId);
 
-  const rawRf = assessment.red_flags;
+  const rawRf = assessment.red_flags as any;
   const rfFromDiagnosis = (diagnosis as any).redFlags ?? (diagnosis as any).red_flags;
   let redFlagsList: string[] = [];
   if (Array.isArray(rfFromDiagnosis)) {
     redFlagsList = rfFromDiagnosis.filter((x: any) => typeof x === "string");
   }
-  if (redFlagsList.length === 0 && rawRf && typeof rawRf === "object" && !Array.isArray(rawRf)) {
+  // Shape A: { detected: string[] } (manual flow / pro-clinic links)
+  if (redFlagsList.length === 0 && rawRf && typeof rawRf === "object" && Array.isArray(rawRf.detected)) {
+    redFlagsList = rawRf.detected.filter((x: any) => typeof x === "string");
+  }
+  // Shape B: { key: true } (legacy patient flow)
+  if (redFlagsList.length === 0 && rawRf && typeof rawRf === "object" && !Array.isArray(rawRf) && !("detected" in rawRf)) {
     redFlagsList = Object.entries(rawRf)
       .filter(([, v]) => v === true)
       .map(([k]) => t(k) || k);
@@ -95,7 +100,7 @@ const AssessmentSummaryView = ({
   const redFlagsDetected =
     redFlagsList.length > 0 ||
     (rawRf && typeof rawRf === "object" && !Array.isArray(rawRf)
-      ? Object.values(rawRf).some((v) => v === true)
+      ? (Array.isArray(rawRf.detected) ? rawRf.detected.length > 0 : Object.values(rawRf).some((v) => v === true))
       : !!rawRf);
   const isDismissed = !!assessment.red_flags_dismissed_at;
   const dismissedByName = assessment.red_flags_dismissed_by_name as string | undefined;
