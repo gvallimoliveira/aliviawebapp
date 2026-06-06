@@ -537,9 +537,12 @@ const AppointmentEditorDialog = ({
                     <SelectTrigger className="mt-1 text-xs h-9"><SelectValue placeholder={t("schedule.select_patient_ph")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
-                      {knownPatients.map(p => (
-                        <SelectItem key={p.email} value={p.email}>{p.name} ({p.email})</SelectItem>
-                      ))}
+                      {knownPatients.map(p => {
+                        const k = patientKeyOf(p);
+                        return (
+                          <SelectItem key={k} value={k}>{p.name}{p.email ? ` (${p.email})` : ""}</SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
