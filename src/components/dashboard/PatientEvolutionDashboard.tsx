@@ -797,6 +797,11 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
             painRegions: a.pain_regions,
             testResults: a.test_results,
             redFlags: (a.red_flags as any)?.detected,
+            redFlagsDismissal: (a as any).red_flags_dismissed_at ? {
+              dismissedAt: (a as any).red_flags_dismissed_at,
+              dismissedByName: (a as any).red_flags_dismissed_by_name,
+              reason: (a as any).red_flags_dismissed_reason,
+            } : undefined,
             professionalNotes: noteIncludeInPdf[a.id] ? (notes[a.id] || undefined) : undefined,
           });
           const date = new Date(a.created_at).toISOString().slice(0, 10);
