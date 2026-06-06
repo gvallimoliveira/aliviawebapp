@@ -683,17 +683,22 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         if (error) throw error;
         savedId = data?.id;
 
-        // Attach any unlinked voice notes from this professional in the last hour to this assessment
+        // Attach any unlinked voice notes from this professional for this patient
+        // (matched by name) to the freshly-created assessment. We don't gate by
+        // a tight time window because the professional may finalize days after
+        // recording (draft resumed from cloud backup).
         if (savedId && user?.id) {
-          const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-          await supabase
+          const trimmedName = (patientName || "").trim();
+          let q = supabase
             .from("assessment_voice_notes")
             .update({ assessment_id: savedId })
             .eq("created_by", user.id)
             .eq("professional_id", professionalId)
-            .is("assessment_id", null)
-            .gte("created_at", cutoff);
+            .is("assessment_id", null);
+          if (trimmedName) q = q.ilike("patient_name", trimmedName);
+          await q;
         }
+
       }
 
       // Persist scheduled specialty questionnaires as pending rows tied to this assessment.
