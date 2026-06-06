@@ -325,13 +325,16 @@ const AppointmentEditorDialog = ({
   const lastEvoEntry = appointmentEvoEntries[appointmentEvoEntries.length - 1] || null;
 
   // ---- Handlers ----
+  const patientKeyOf = (p: { name: string; email: string }) =>
+    p.email ? `email:${p.email.toLowerCase()}` : `name:${p.name.toLowerCase()}`;
+
   const handleSelectPatient = (key: string) => {
     setSelectedPatientKey(key);
     setEmailWarning(false);
     if (key === "__new__") {
       setFormName(""); setFormEmail("");
     } else {
-      const p = knownPatients.find(k => k.email === key);
+      const p = knownPatients.find(k => patientKeyOf(k) === key);
       if (p) { setFormName(p.name); setFormEmail(p.email); }
     }
   };
