@@ -199,8 +199,13 @@ const AppointmentEditorDialog = ({
   const [formAddress, setFormAddress] = useState("");
   const [selectedPatientKey, setSelectedPatientKey] = useState<string>(() => {
     if (!initialApt) return "__new__";
-    const match = knownPatients.find(p => p.email === initialApt.patient_email);
-    return match ? match.email : "__new__";
+    const em = (initialApt.patient_email || "").toLowerCase();
+    const nm = (initialApt.patient_name || "").toLowerCase();
+    const match = knownPatients.find(p =>
+      (em && p.email.toLowerCase() === em) || (!em && nm && p.name.toLowerCase() === nm)
+    );
+    if (!match) return "__new__";
+    return match.email ? `email:${match.email.toLowerCase()}` : `name:${match.name.toLowerCase()}`;
   });
   const [emailWarning, setEmailWarning] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -325,13 +330,16 @@ const AppointmentEditorDialog = ({
   const lastEvoEntry = appointmentEvoEntries[appointmentEvoEntries.length - 1] || null;
 
   // ---- Handlers ----
+  const patientKeyOf = (p: { name: string; email: string }) =>
+    p.email ? `email:${p.email.toLowerCase()}` : `name:${p.name.toLowerCase()}`;
+
   const handleSelectPatient = (key: string) => {
     setSelectedPatientKey(key);
     setEmailWarning(false);
     if (key === "__new__") {
       setFormName(""); setFormEmail("");
     } else {
-      const p = knownPatients.find(k => k.email === key);
+      const p = knownPatients.find(k => patientKeyOf(k) === key);
       if (p) { setFormName(p.name); setFormEmail(p.email); }
     }
   };
@@ -534,9 +542,12 @@ const AppointmentEditorDialog = ({
                     <SelectTrigger className="mt-1 text-xs h-9"><SelectValue placeholder={t("schedule.select_patient_ph")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
-                      {knownPatients.map(p => (
-                        <SelectItem key={p.email} value={p.email}>{p.name} ({p.email})</SelectItem>
-                      ))}
+                      {knownPatients.map(p => {
+                        const k = patientKeyOf(p);
+                        return (
+                          <SelectItem key={k} value={k}>{p.name}{p.email ? ` (${p.email})` : ""}</SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
