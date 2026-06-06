@@ -443,55 +443,45 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     if (isSimulated) return;
     const fetchPatients = async () => {
       const map = new Map<string, KnownPatient>();
+      const addEntry = (name?: string | null, email?: string | null) => {
+        const nm = (name || "").trim();
+        const em = (email || "").trim();
+        if (!nm && !em) return;
+        const key = em ? em.toLowerCase() : `name:${nm.toLowerCase()}`;
+        if (!map.has(key)) map.set(key, { name: nm || em, email: em });
+      };
       if (clinicId) {
-        // Fetch patients from clinic assessments
+        const { data: patientsData } = await (supabase.from("patients" as any) as any)
+          .select("full_name, email")
+          .eq("clinic_id", clinicId);
+        (patientsData as any[] | null)?.forEach((p) => addEntry(p.full_name, p.email));
         const { data: assessData } = await supabase
           .from("assessments")
           .select("patient_name, patient_email")
           .eq("clinic_id", clinicId)
           .not("patient_email", "is", null);
-        if (assessData) {
-          assessData.forEach((a) => {
-            if (a.patient_email && a.patient_name) {
-              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
-            }
-          });
-        }
+        assessData?.forEach((a) => addEntry(a.patient_name, a.patient_email));
         const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
           .select("patient_name, patient_email")
           .eq("clinic_id", clinicId)
           .not("patient_email", "is", null);
-        if (aptData) {
-          (aptData as any[]).forEach((a) => {
-            if (a.patient_email && a.patient_name && !map.has(a.patient_email)) {
-              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
-            }
-          });
-        }
+        (aptData as any[] | null)?.forEach((a) => addEntry(a.patient_name, a.patient_email));
       } else if (professionalId) {
+        const { data: patientsData } = await (supabase.from("patients" as any) as any)
+          .select("full_name, email")
+          .eq("professional_id", professionalId);
+        (patientsData as any[] | null)?.forEach((p) => addEntry(p.full_name, p.email));
         const { data: assessData } = await supabase
           .from("assessments")
           .select("patient_name, patient_email")
           .eq("professional_id", professionalId)
           .not("patient_email", "is", null);
-        if (assessData) {
-          assessData.forEach((a) => {
-            if (a.patient_email && a.patient_name) {
-              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
-            }
-          });
-        }
+        assessData?.forEach((a) => addEntry(a.patient_name, a.patient_email));
         const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
           .select("patient_name, patient_email")
           .eq("professional_id", professionalId)
           .not("patient_email", "is", null);
-        if (aptData) {
-          (aptData as any[]).forEach((a) => {
-            if (a.patient_email && a.patient_name && !map.has(a.patient_email)) {
-              map.set(a.patient_email, { name: a.patient_name, email: a.patient_email });
-            }
-          });
-        }
+        (aptData as any[] | null)?.forEach((a) => addEntry(a.patient_name, a.patient_email));
       }
       setKnownPatients(Array.from(map.values()));
     };
