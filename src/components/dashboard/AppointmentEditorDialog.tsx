@@ -199,8 +199,13 @@ const AppointmentEditorDialog = ({
   const [formAddress, setFormAddress] = useState("");
   const [selectedPatientKey, setSelectedPatientKey] = useState<string>(() => {
     if (!initialApt) return "__new__";
-    const match = knownPatients.find(p => p.email === initialApt.patient_email);
-    return match ? match.email : "__new__";
+    const em = (initialApt.patient_email || "").toLowerCase();
+    const nm = (initialApt.patient_name || "").toLowerCase();
+    const match = knownPatients.find(p =>
+      (em && p.email.toLowerCase() === em) || (!em && nm && p.name.toLowerCase() === nm)
+    );
+    if (!match) return "__new__";
+    return match.email ? `email:${match.email.toLowerCase()}` : `name:${match.name.toLowerCase()}`;
   });
   const [emailWarning, setEmailWarning] = useState(false);
   const [saving, setSaving] = useState(false);
