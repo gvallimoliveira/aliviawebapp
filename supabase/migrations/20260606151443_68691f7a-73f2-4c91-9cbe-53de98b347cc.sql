@@ -1,0 +1,1 @@
+ALTER TABLE public.assessment_voice_notes ADD COLUMN IF NOT EXISTS patient_name text; CREATE INDEX IF NOT EXISTS idx_voice_notes_pro_patient_name ON public.assessment_voice_notes (professional_id, lower(patient_name)) WHERE assessment_id IS NULL;

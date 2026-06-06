@@ -25,6 +25,7 @@ export type Database = {
           id: string
           language: string | null
           patient_id: string | null
+          patient_name: string | null
           professional_id: string | null
           status: string
           summary: Json | null
@@ -41,6 +42,7 @@ export type Database = {
           id?: string
           language?: string | null
           patient_id?: string | null
+          patient_name?: string | null
           professional_id?: string | null
           status?: string
           summary?: Json | null
@@ -57,6 +59,7 @@ export type Database = {
           id?: string
           language?: string | null
           patient_id?: string | null
+          patient_name?: string | null
           professional_id?: string | null
           status?: string
           summary?: Json | null
