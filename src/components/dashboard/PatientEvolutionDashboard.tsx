@@ -798,8 +798,8 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
             testResults: a.test_results,
             redFlags: (a.red_flags as any)?.detected,
             redFlagsDismissal: (a as any).red_flags_dismissed_at ? {
-              dismissedAt: (a as any).red_flags_dismissed_at,
-              dismissedByName: (a as any).red_flags_dismissed_by_name,
+              at: (a as any).red_flags_dismissed_at,
+              by: (a as any).red_flags_dismissed_by_name,
               reason: (a as any).red_flags_dismissed_reason,
             } : undefined,
             professionalNotes: noteIncludeInPdf[a.id] ? (notes[a.id] || undefined) : undefined,
