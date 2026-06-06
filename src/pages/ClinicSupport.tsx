@@ -54,7 +54,7 @@ const categories: ToolCategory[] = [
         key: "red_flags",
         icon: AlertTriangle,
         title: "Triagem automática de Red Flags",
-        desc: "O sistema cruza sintomas e responde com alertas de sinais de alarme (sinais neurológicos, viscerais, oncológicos). A avaliação é interrompida com orientação de encaminhamento médico quando necessário.",
+        desc: "O sistema cruza sintomas e responde com alertas de sinais de alarme (neurológicos, viscerais, oncológicos). Em links de clínica e na avaliação manual, a avaliação NÃO é interrompida: o sinal de alarme fica registrado no prontuário/PDF e a hipótese diagnóstica vem destacada como 'sob ressalva — requer aval médico'. Qualquer terapeuta da clínica pode dispensar a red flag (ex.: paciente com acompanhamento médico ativo) registrando justificativa; o histórico fica visível como 'Dispensada em DD/MM por Dr(a). X'. Em avaliações feitas pelo próprio paciente final (sem profissional), o fluxo continua interrompendo por segurança.",
       },
       {
         key: "agenda_import",
