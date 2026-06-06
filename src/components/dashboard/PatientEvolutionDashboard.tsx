@@ -532,7 +532,6 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     try {
       // Delete related data for each assessment
       for (const aid of assessmentIds) {
-        // Delete exercise program items & programs
         const { data: programs } = await (supabase as any)
           .from("exercise_programs")
           .select("id")
@@ -544,7 +543,6 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
             await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
           }
         }
-        // Delete notes, referrals, follow-ups
         await supabase.from("professional_notes").delete().eq("professional_id", professionalId).eq("assessment_id", aid);
         await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", aid);
       }
@@ -554,14 +552,38 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         await supabase.from("assessments").delete().eq("id", aid);
       }
 
+      // Delete patient record(s) from patients table (handles patients with no assessments)
+      const group: any = patients.find((p: any) => p.groupKey === groupKey);
+      const patientRec = group?.patientRecord;
+      if (patientRec?.id) {
+        await (supabase as any).from("patients").delete().eq("id", patientRec.id);
+      } else if (clinicId || professionalId) {
+        let q: any = (supabase as any).from("patients").delete();
+        if (clinicId) q = q.eq("clinic_id", clinicId);
+        else q = q.eq("professional_id", professionalId);
+        if (group?.email) {
+          q = q.ilike("email", group.email);
+        } else if (group?.name) {
+          q = q.ilike("full_name", group.name);
+        }
+        await q;
+      }
+
       // Also remove from hidden if applicable
       await (supabase.from("professional_hidden_patients" as any) as any)
         .delete()
         .eq("professional_id", professionalId)
         .eq("patient_email", groupKey);
+      if (clinicId) {
+        await (supabase.from("clinic_hidden_patients" as any) as any)
+          .delete()
+          .eq("clinic_id", clinicId)
+          .eq("patient_email", groupKey);
+      }
 
       setSelectedEmail(null);
       onAssessmentsDeleted?.(assessmentIds);
+      window.dispatchEvent(new CustomEvent("reload-pro-patients"));
       toast({ title: "Paciente e dados excluídos permanentemente" });
     } catch (err: any) {
       console.error("Delete patient error:", err);
