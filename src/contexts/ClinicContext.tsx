@@ -160,10 +160,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // mode. This drives a conversion CTA to subscribe to PRO.
   const canAccessProDemo = !hasProfessionalProfile && memberships.length > 0;
 
-  // total contexts = personal (always) + professional (real OR demo) + each clinic
+  // total contexts = personal (always) + professional (real OR demo OR pending signup) + each clinic
   const availableContextsCount = useMemo(
-    () => 1 + (hasProfessionalProfile || canAccessProDemo ? 1 : 0) + memberships.length,
-    [hasProfessionalProfile, canAccessProDemo, memberships.length]
+    () => 1 + (hasProfessionalProfile || canAccessProDemo || pendingProfessionalSignup ? 1 : 0) + memberships.length,
+    [hasProfessionalProfile, canAccessProDemo, pendingProfessionalSignup, memberships.length]
   );
 
   // Auto-pick when only one possible context exists (just personal) — no need to show modal
