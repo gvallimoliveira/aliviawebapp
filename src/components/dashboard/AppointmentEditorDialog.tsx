@@ -208,6 +208,7 @@ const AppointmentEditorDialog = ({
     if (!match) return "__new__";
     return match.email ? `email:${match.email.toLowerCase()}` : `name:${match.name.toLowerCase()}`;
   });
+  const [patientPickerOpen, setPatientPickerOpen] = useState(false);
   const [emailWarning, setEmailWarning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
