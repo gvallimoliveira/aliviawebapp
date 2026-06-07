@@ -318,7 +318,13 @@ const Dashboard = () => {
         .limit(1);
       const hasAnyClinic = Array.isArray(myMembers) && myMembers.length > 0;
 
-      if (effectiveOrigin === "professional" && !nextProfessional && !hasAnyClinic) {
+      // Skip flag: usuário clicou em "Pular por agora" no /professional/register.
+      // Não redirecionar mais; ele segue no painel pessoal com banner persistente.
+      const skipped = profileResult.status === "fulfilled"
+        ? !!(profileResult.value.data as any)?.professional_register_skipped
+        : false;
+
+      if (effectiveOrigin === "professional" && !nextProfessional && !hasAnyClinic && !skipped) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
         navigate("/professional/register", { replace: true });
         return;
@@ -331,7 +337,7 @@ const Dashboard = () => {
       // Both pro-origin + existing clinic memberships: surface the selector
       // modal with an extra "Cadastrar como profissional" option instead of
       // auto-redirecting (preserves user's choice).
-      if (effectiveOrigin === "professional" && !nextProfessional && hasAnyClinic) {
+      if (effectiveOrigin === "professional" && !nextProfessional && hasAnyClinic && !skipped) {
         setPendingProfessionalSignup(true);
       }
 
