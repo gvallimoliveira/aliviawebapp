@@ -165,16 +165,18 @@ const ClinicTrialBanner = () => {
  *  guarantee that the underlying content cannot be interacted with. */
 export const ClinicTrialBlockOverlay = () => {
   const { isTrialExpired, hasSubscription } = useClinicTrial();
-  const { activeClinic } = useClinic();
+  const { activeClinic, isClinicOwner, setActiveContext, availableContextsCount } = useClinic();
   const navigate = useNavigate();
 
   if (!activeClinic || hasSubscription || !isTrialExpired) return null;
+
+  const ownerView = isClinicOwner;
 
   return (
     <div
       className="absolute inset-0 z-50 bg-background/85 backdrop-blur-sm rounded-xl flex items-center justify-center pointer-events-auto min-h-[280px]"
       onClickCapture={(e) => {
-        // Allow only clicks on the "Assinar agora" CTA inside this overlay
+        // Allow only clicks on the "Assinar agora" / "Trocar perfil" CTA inside this overlay
         const target = e.target as HTMLElement;
         if (!target.closest("[data-trial-cta]")) {
           e.stopPropagation();
@@ -188,14 +190,31 @@ export const ClinicTrialBlockOverlay = () => {
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
           <Lock className="h-7 w-7 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-bold text-foreground">Trial expirado</h3>
+        <h3 className="text-lg font-bold text-foreground">
+          {ownerView ? "Trial expirado" : "Clínica com acesso pausado"}
+        </h3>
         <p className="text-sm text-muted-foreground">
-          O período de teste de {TRIAL_DAYS} dias terminou. Assine para desbloquear todas as funcionalidades da clínica.
+          {ownerView
+            ? `O período de teste de ${TRIAL_DAYS} dias terminou. Assine para desbloquear todas as funcionalidades da clínica.`
+            : "O proprietário precisa reativar a assinatura. Sua conta Aliv.iA continua ativa — você pode usar seu perfil pessoal enquanto isso."}
         </p>
-        <Button data-trial-cta onClick={() => navigate("/clinica#planos")} className="gap-2 rounded-xl">
-          <Crown className="h-4 w-4" />
-          Assinar agora
-        </Button>
+        {ownerView ? (
+          <Button data-trial-cta onClick={() => navigate("/clinica#planos")} className="gap-2 rounded-xl">
+            <Crown className="h-4 w-4" />
+            Assinar agora
+          </Button>
+        ) : (
+          availableContextsCount > 1 && (
+            <Button
+              data-trial-cta
+              variant="outline"
+              onClick={() => setActiveContext("personal")}
+              className="rounded-xl"
+            >
+              Ir para minha conta pessoal
+            </Button>
+          )
+        )}
       </div>
     </div>
   );
