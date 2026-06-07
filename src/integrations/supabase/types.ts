@@ -1587,6 +1587,7 @@ export type Database = {
           social_media: string | null
           specialties: string[] | null
           state: string
+          subscription_grace_until: string | null
           subscription_status: string
           subscription_stripe_id: string | null
           terms_accepted_at: string | null
@@ -1620,6 +1621,7 @@ export type Database = {
           social_media?: string | null
           specialties?: string[] | null
           state: string
+          subscription_grace_until?: string | null
           subscription_status?: string
           subscription_stripe_id?: string | null
           terms_accepted_at?: string | null
@@ -1653,6 +1655,7 @@ export type Database = {
           social_media?: string | null
           specialties?: string[] | null
           state?: string
+          subscription_grace_until?: string | null
           subscription_status?: string
           subscription_stripe_id?: string | null
           terms_accepted_at?: string | null
