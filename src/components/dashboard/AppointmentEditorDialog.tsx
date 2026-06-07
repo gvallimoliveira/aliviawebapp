@@ -16,9 +16,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import {
-  CalendarIcon, Loader2, Trash2, Pencil, Check, ChevronRight,
+  CalendarIcon, Loader2, Trash2, Pencil, Check, ChevronRight, ChevronsUpDown,
   CheckCircle2, XCircle, AlertCircle, Clock,
 } from "lucide-react";
 import { formatCpf, formatPhone } from "@/utils/masks";
@@ -207,6 +208,7 @@ const AppointmentEditorDialog = ({
     if (!match) return "__new__";
     return match.email ? `email:${match.email.toLowerCase()}` : `name:${match.name.toLowerCase()}`;
   });
+  const [patientPickerOpen, setPatientPickerOpen] = useState(false);
   const [emailWarning, setEmailWarning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
@@ -538,20 +540,68 @@ const AppointmentEditorDialog = ({
 
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
-                  <Select value={selectedPatientKey} onValueChange={handleSelectPatient}>
-                    <SelectTrigger className="mt-1 text-xs h-9"><SelectValue placeholder={t("schedule.select_patient_ph")} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__new__">{t("schedule.new_patient")}</SelectItem>
-                      {[...knownPatients]
-                        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
-                        .map(p => {
-                          const k = patientKeyOf(p);
-                          return (
-                            <SelectItem key={k} value={k}>{p.name}{p.email ? ` (${p.email})` : ""}</SelectItem>
-                          );
-                        })}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={patientPickerOpen} onOpenChange={setPatientPickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        role="combobox"
+                        aria-expanded={patientPickerOpen}
+                        className="w-full justify-between mt-1 h-9 text-xs font-normal"
+                      >
+                        <span className="truncate">
+                          {selectedPatientKey === "__new__"
+                            ? t("schedule.new_patient")
+                            : (() => {
+                                const p = knownPatients.find(k => patientKeyOf(k) === selectedPatientKey);
+                                return p ? `${p.name}${p.email ? ` (${p.email})` : ""}` : t("schedule.select_patient_ph");
+                              })()}
+                        </span>
+                        <ChevronsUpDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-2" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                      <Command
+                        filter={(value, search) => {
+                          if (!search) return 1;
+                          return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                        }}
+                      >
+                        <CommandInput placeholder={isPt ? "Digite o nome para buscar..." : language === "es" ? "Escribe el nombre para buscar..." : "Type the name to search..."} className="h-9 text-xs" />
+                        <CommandList>
+                          <CommandEmpty>{isPt ? "Nenhum paciente encontrado" : language === "es" ? "Ningún paciente encontrado" : "No patient found"}</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="__novo paciente__"
+                              onSelect={() => { handleSelectPatient("__new__"); setPatientPickerOpen(false); }}
+                              className="text-xs"
+                            >
+                              <Check className={cn("mr-2 h-3.5 w-3.5", selectedPatientKey === "__new__" ? "opacity-100" : "opacity-0")} />
+                              {t("schedule.new_patient")}
+                            </CommandItem>
+                            {[...knownPatients]
+                              .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+                              .map(p => {
+                                const k = patientKeyOf(p);
+                                const label = `${p.name}${p.email ? ` ${p.email}` : ""}`;
+                                return (
+                                  <CommandItem
+                                    key={k}
+                                    value={label}
+                                    onSelect={() => { handleSelectPatient(k); setPatientPickerOpen(false); }}
+                                    className="text-xs"
+                                  >
+                                    <Check className={cn("mr-2 h-3.5 w-3.5", selectedPatientKey === k ? "opacity-100" : "opacity-0")} />
+                                    <span className="truncate">{p.name}{p.email ? <span className="text-muted-foreground"> · {p.email}</span> : null}</span>
+                                  </CommandItem>
+                                );
+                              })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">
