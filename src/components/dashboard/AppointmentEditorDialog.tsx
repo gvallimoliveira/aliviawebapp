@@ -561,7 +561,7 @@ const AppointmentEditorDialog = ({
                         <ChevronsUpDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-2" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                    <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start" side="bottom" avoidCollisions={false}>
                       <Command
                         filter={(value, search) => {
                           if (!search) return 1;
