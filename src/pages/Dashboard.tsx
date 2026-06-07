@@ -629,6 +629,9 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         )}
+        {profile?.signup_origin === "professional" && !professional && (
+          <SoloUpgradeBanner hasActiveProSubscription={false} />
+        )}
         <PushOptInBanner />
         <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
         <WelcomeSection
