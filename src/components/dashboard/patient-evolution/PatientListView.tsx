@@ -68,6 +68,8 @@ export default function PatientListView(props: any) {
     isDemo,
   } = props;
 
+  const [sortMode, setSortMode] = useState<"alpha" | "recent">("alpha");
+
   return (
     <div className="space-y-3">
       <div className="mb-2 space-y-3">
