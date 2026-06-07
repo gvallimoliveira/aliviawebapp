@@ -59,14 +59,26 @@ const ProfessionalSearch = () => {
 
   const fetchProfessionals = async () => {
     setLoading(true);
-    // Vitrine pública: apenas profissionais aprovados E com assinatura ativa
-    // (cadastros sem pagamento ficam fora — eles só podem usar o sistema
-    // bloqueado/CTA, mas não aparecem para pacientes).
+    // Vitrine pública: profissionais aprovados E ativos, com qualquer forma
+    // válida de acesso PRO — assinatura ativa, parceiro institucional,
+    // tratamento vitalício, Premium concedido, acesso anual vigente OU
+    // período de tolerância de 7 dias após queda da assinatura.
+    const nowIso = new Date().toISOString();
     let query = (supabase.from("professionals" as any) as any)
       .select("*")
       .eq("active", true)
       .eq("approved", true)
-      .eq("subscription_status", "active");
+      .or(
+        [
+          "subscription_status.eq.active",
+          "is_partner.eq.true",
+          "is_partner_account.eq.true",
+          "lifetime_treatment.eq.true",
+          "premium_granted.eq.true",
+          `pro_access_expires_at.gt.${nowIso}`,
+          `subscription_grace_until.gt.${nowIso}`,
+        ].join(",")
+      );
 
     if (stateFilter) query = query.eq("state", stateFilter);
     if (cityFilter) query = query.ilike("city", `%${cityFilter}%`);
