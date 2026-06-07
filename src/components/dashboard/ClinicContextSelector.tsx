@@ -1,21 +1,27 @@
 import { useClinic } from "@/contexts/ClinicContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building2, User, Stethoscope } from "lucide-react";
+import { Building2, User, Stethoscope, UserPlus } from "lucide-react";
 
 const ClinicContextSelector = () => {
-  const { memberships, activeClinic, activeContext, setActiveContext, hasProfessionalProfile, availableContextsCount, canAccessProDemo } = useClinic();
+  const {
+    memberships, activeClinic, activeContext, setActiveContext,
+    hasProfessionalProfile, availableContextsCount, canAccessProDemo,
+    pendingProfessionalSignup,
+  } = useClinic();
   const { language } = useLanguage();
+  const navigate = useNavigate();
 
   // Hide selector when only one context exists
   if (availableContextsCount < 2) return null;
 
   const lang = language as "pt" | "en" | "es";
   const labels = {
-    pt: { solo: "Conta pessoal", pro: "Profissional autônomo", demo: "Demo" },
-    en: { solo: "Personal account", pro: "Autonomous professional", demo: "Demo" },
-    es: { solo: "Cuenta personal", pro: "Profesional autónomo", demo: "Demo" },
+    pt: { solo: "Conta pessoal", pro: "Profissional autônomo", demo: "Demo", proRegister: "Cadastrar como profissional", pending: "Pendente" },
+    en: { solo: "Personal account", pro: "Autonomous professional", demo: "Demo", proRegister: "Register as professional", pending: "Pending" },
+    es: { solo: "Cuenta personal", pro: "Profesional autónomo", demo: "Demo", proRegister: "Registrarse como profesional", pending: "Pendiente" },
   }[lang];
 
   const currentValue =
@@ -28,6 +34,10 @@ const ClinicContextSelector = () => {
     if (v === "solo") setActiveContext("personal");
     else if (v === "pro") setActiveContext("professional");
     else if (v === "pro_demo") setActiveContext("professional_demo");
+    else if (v === "pro_register") {
+      try { sessionStorage.removeItem("signupOrigin"); } catch {}
+      navigate("/professional/register");
+    }
     else setActiveContext("clinic", v);
   };
 
@@ -63,6 +73,17 @@ const ClinicContextSelector = () => {
               </span>
             </SelectItem>
           )}
+          {pendingProfessionalSignup && !hasProfessionalProfile && (
+            <SelectItem value="pro_register">
+              <span className="flex items-center gap-2">
+                <UserPlus className="h-3.5 w-3.5 text-primary" />
+                {labels.proRegister}
+                <Badge variant="outline" className="ml-1 text-[10px] py-0 px-1.5 bg-amber-500/10 text-amber-700 border-amber-500/20">
+                  {labels.pending}
+                </Badge>
+              </span>
+            </SelectItem>
+          )}
           {memberships.map((m) => (
             <SelectItem key={m.clinic_id} value={m.clinic_id}>
               <span className="flex items-center gap-2">
@@ -78,3 +99,4 @@ const ClinicContextSelector = () => {
 };
 
 export default ClinicContextSelector;
+

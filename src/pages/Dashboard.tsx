@@ -21,6 +21,7 @@ import PartnerPasswordBanner from "@/components/dashboard/PartnerPasswordBanner"
 import ConfirmEmailBanner from "@/components/dashboard/ConfirmEmailBanner";
 import InstallAppCard from "@/components/InstallAppCard";
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
+import SoloUpgradeBanner from "@/components/dashboard/SoloUpgradeBanner";
 import ClinicTrialBanner, { ClinicTrialBlockOverlay, useClinicTrial } from "@/components/dashboard/ClinicTrialBanner";
 // Lazy — only rendered when the corresponding tab/section opens
 const PainDiary = lazy(() => import("@/components/dashboard/PainDiary"));
@@ -334,10 +335,12 @@ const Dashboard = () => {
         navigate("/clinica#pricing", { replace: true });
         return;
       }
-      // Both pro-origin + existing clinic memberships: surface the selector
-      // modal with an extra "Cadastrar como profissional" option instead of
-      // auto-redirecting (preserves user's choice).
-      if (effectiveOrigin === "professional" && !nextProfessional && hasAnyClinic && !skipped) {
+      // Sempre que a origem é "profissional" e ainda não existe linha em
+      // public.professionals, mantemos o flag ligado para que o seletor de
+      // contexto e o CTA de assinatura PRO fiquem permanentemente visíveis
+      // — tanto no caso autônomo quanto vinculado a clínica — até o usuário
+      // concluir o cadastro ou assinar.
+      if (effectiveOrigin === "professional" && !nextProfessional) {
         setPendingProfessionalSignup(true);
       }
 
@@ -625,6 +628,9 @@ const Dashboard = () => {
               </Button>
             </CardContent>
           </Card>
+        )}
+        {profile?.signup_origin === "professional" && !professional && (
+          <SoloUpgradeBanner hasActiveProSubscription={false} />
         )}
         <PushOptInBanner />
         <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
