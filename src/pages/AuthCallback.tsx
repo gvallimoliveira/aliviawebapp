@@ -101,14 +101,21 @@ const AuthCallback = () => {
           // Persist signup_origin captured before the OAuth redirect so the
           // Dashboard knows whether to send the user to the professional /
           // clinic flow even on a fresh device where sessionStorage might
-          // not survive the round-trip.
+          // not survive the round-trip. Prioriza ?signup_origin= da URL
+          // (sobrevive ao redirect em qualquer browser/PWA) e cai para
+          // sessionStorage como fallback.
           try {
-            const origin = sessionStorage.getItem("signupOrigin");
+            const urlOrigin = searchParams.get("signup_origin");
+            let storedOrigin: string | null = null;
+            try { storedOrigin = sessionStorage.getItem("signupOrigin"); } catch {}
+            const origin = urlOrigin || storedOrigin;
             if (origin && session.user?.id) {
               await (supabase as any)
                 .from("profiles")
                 .update({ signup_origin: origin })
                 .eq("user_id", session.user.id);
+              // Mantém em sessionStorage para o Dashboard consumir logo após.
+              try { sessionStorage.setItem("signupOrigin", origin); } catch {}
             }
           } catch { /* noop */ }
 
