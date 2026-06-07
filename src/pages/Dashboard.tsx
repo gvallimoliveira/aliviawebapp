@@ -334,10 +334,12 @@ const Dashboard = () => {
         navigate("/clinica#pricing", { replace: true });
         return;
       }
-      // Both pro-origin + existing clinic memberships: surface the selector
-      // modal with an extra "Cadastrar como profissional" option instead of
-      // auto-redirecting (preserves user's choice).
-      if (effectiveOrigin === "professional" && !nextProfessional && hasAnyClinic && !skipped) {
+      // Sempre que a origem é "profissional" e ainda não existe linha em
+      // public.professionals, mantemos o flag ligado para que o seletor de
+      // contexto e o CTA de assinatura PRO fiquem permanentemente visíveis
+      // — tanto no caso autônomo quanto vinculado a clínica — até o usuário
+      // concluir o cadastro ou assinar.
+      if (effectiveOrigin === "professional" && !nextProfessional) {
         setPendingProfessionalSignup(true);
       }
 
