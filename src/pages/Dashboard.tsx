@@ -114,7 +114,7 @@ function buildOnboardingSteps(
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, ready: authReady } = useAuth();
   const { t, toggleLanguage, language } = useLanguage();
-  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary, isClinicOwner } = useClinic();
+  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary, isClinicOwner, setPendingProfessionalSignup } = useClinic();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
@@ -327,6 +327,12 @@ const Dashboard = () => {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
         navigate("/clinica#pricing", { replace: true });
         return;
+      }
+      // Both pro-origin + existing clinic memberships: surface the selector
+      // modal with an extra "Cadastrar como profissional" option instead of
+      // auto-redirecting (preserves user's choice).
+      if (effectiveOrigin === "professional" && !nextProfessional && hasAnyClinic) {
+        setPendingProfessionalSignup(true);
       }
 
 
