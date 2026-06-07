@@ -59,7 +59,15 @@ const ProfessionalSearch = () => {
 
   const fetchProfessionals = async () => {
     setLoading(true);
-    let query = (supabase.from("professionals" as any) as any).select("*").eq("active", true);
+    // Vitrine pública: apenas profissionais aprovados E com assinatura ativa
+    // (cadastros sem pagamento ficam fora — eles só podem usar o sistema
+    // bloqueado/CTA, mas não aparecem para pacientes).
+    let query = (supabase.from("professionals" as any) as any)
+      .select("*")
+      .eq("active", true)
+      .eq("approved", true)
+      .eq("subscription_status", "active");
+
     if (stateFilter) query = query.eq("state", stateFilter);
     if (cityFilter) query = query.ilike("city", `%${cityFilter}%`);
     const { data } = await query.order("full_name");

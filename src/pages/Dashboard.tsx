@@ -295,18 +295,28 @@ const Dashboard = () => {
       // Honra a origem do cadastro (landing profissional/clínica) mesmo se o
       // redirectTo da rota /auth tiver sido perdido (refresh, troca de aba
       // Login↔Signup, OAuth callback). Consumimos a flag uma única vez.
+      // Fallback persistente: se sessionStorage tiver sumido (ex.: usuário
+      // voltou em outro dispositivo/aba), usamos profiles.signup_origin
+      // gravado no momento do cadastro.
       let signupOrigin: string | null = null;
       try { signupOrigin = sessionStorage.getItem("signupOrigin"); } catch {}
-      if (signupOrigin === "professional" && !nextProfessional) {
+      const persistedOrigin =
+        profileResult.status === "fulfilled"
+          ? (profileResult.value.data as any)?.signup_origin ?? null
+          : null;
+      const effectiveOrigin = signupOrigin || persistedOrigin;
+
+      if (effectiveOrigin === "professional" && !nextProfessional) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
         navigate("/professional/register", { replace: true });
         return;
       }
-      if (signupOrigin === "clinic") {
+      if (effectiveOrigin === "clinic") {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
         navigate("/clinica", { replace: true });
         return;
       }
+
 
       // Do not bounce clinic therapists (no own PRO profile) to the
       // registration flow — they may simply be exploring the demo mode.

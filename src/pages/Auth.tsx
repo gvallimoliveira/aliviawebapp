@@ -11,6 +11,8 @@ import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle }
 import { useToast } from "@/hooks/use-toast";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { isValidEmailFormat, suggestEmailFix } from "@/lib/emailValidation";
+import { supabase } from "@/integrations/supabase/client";
+
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -127,10 +129,28 @@ const Auth = () => {
         return;
       }
       const { error, session } = await signUp(normalizedEmail, password, fullName);
+      // Persiste a origem do cadastro em profiles.signup_origin para que o
+      // Dashboard saiba o contexto mesmo se sessionStorage sumir (refresh,
+      // outro dispositivo, OAuth callback).
+      const persistSignupOrigin = async () => {
+        try {
+          let origin: string | null = null;
+          try { origin = sessionStorage.getItem("signupOrigin"); } catch {}
+          if (!origin) return;
+          const { data: sess } = await supabase.auth.getSession();
+          const uid = sess.session?.user?.id;
+          if (!uid) return;
+          await (supabase as any)
+            .from("profiles")
+            .update({ signup_origin: origin })
+            .eq("user_id", uid);
+        } catch {}
+      };
       if (error) {
         toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
         setLoading(false);
       } else if (session) {
+        await persistSignupOrigin();
         toast({ title: t("auth.welcome"), description: t("auth.account_created") });
         redirectingRef.current = true;
         navigate(redirectTo, { replace: true });
@@ -145,11 +165,13 @@ const Auth = () => {
           });
           setLoading(false);
         } else {
+          await persistSignupOrigin();
           toast({ title: t("auth.welcome"), description: t("auth.account_created") });
           redirectingRef.current = true;
           navigate(redirectTo, { replace: true });
         }
       }
+
     } catch (err: any) {
       toast({
         title: t("auth.error"),
