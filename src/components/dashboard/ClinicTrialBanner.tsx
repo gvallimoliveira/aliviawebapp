@@ -34,7 +34,7 @@ export const useClinicTrial = () => {
 };
 
 const ClinicTrialBanner = () => {
-  const { activeClinic } = useClinic();
+  const { activeClinic, isClinicOwner, setActiveContext, availableContextsCount } = useClinic();
   const { daysLeft, daysUsed, isTrialActive, isTrialExpired, hasSubscription } = useClinicTrial();
   const navigate = useNavigate();
 
@@ -47,6 +47,39 @@ const ClinicTrialBanner = () => {
   const progressPercent = Math.min(100, (daysUsed / TRIAL_DAYS) * 100);
 
   if (isTrialExpired) {
+    // Terapeuta/secretária não pode reativar — orienta a trocar de perfil em vez de oferecer assinatura.
+    if (!isClinicOwner) {
+      return (
+        <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/30 overflow-hidden relative">
+          <CardContent className="py-6 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 shrink-0">
+                <AlertTriangle className="h-6 w-6 text-amber-600" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <h3 className="text-lg font-bold text-foreground">
+                  Esta clínica está com o acesso pausado
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  O proprietário precisa reativar a assinatura do Aliv.iA Clinic para liberar
+                  novamente os recursos da clínica. Sua conta Aliv.iA continua ativa — você pode
+                  trocar para seu perfil pessoal ou profissional enquanto isso.
+                </p>
+              </div>
+            </div>
+            {availableContextsCount > 1 && (
+              <Button
+                variant="outline"
+                className="w-full rounded-xl"
+                onClick={() => setActiveContext("personal")}
+              >
+                Ir para minha conta pessoal
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
     return (
       <Card className="border-destructive/50 bg-gradient-to-br from-destructive/5 via-background to-destructive/10 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-24 h-24 bg-destructive/5 rounded-full -translate-y-1/2 translate-x-1/2" />
