@@ -306,14 +306,26 @@ const Dashboard = () => {
           : null;
       const effectiveOrigin = signupOrigin || persistedOrigin;
 
-      if (effectiveOrigin === "professional" && !nextProfessional) {
+      // Verifica memberships de clínica para decidir o destino. Se o usuário
+      // veio da landing profissional MAS já tem convites/clínicas, NÃO
+      // bloqueamos com auto-redirect — deixamos o seletor de perfil aparecer
+      // (com opção extra "Cadastrar como profissional" no modal).
+      const { data: myMembers } = await supabase
+        .from("clinic_members")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .limit(1);
+      const hasAnyClinic = Array.isArray(myMembers) && myMembers.length > 0;
+
+      if (effectiveOrigin === "professional" && !nextProfessional && !hasAnyClinic) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
         navigate("/professional/register", { replace: true });
         return;
       }
-      if (effectiveOrigin === "clinic") {
+      if (effectiveOrigin === "clinic" && !hasAnyClinic) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
-        navigate("/clinica", { replace: true });
+        navigate("/clinica#pricing", { replace: true });
         return;
       }
 
