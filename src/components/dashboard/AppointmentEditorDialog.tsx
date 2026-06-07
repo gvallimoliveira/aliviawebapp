@@ -212,6 +212,7 @@ const AppointmentEditorDialog = ({
   const [emailWarning, setEmailWarning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
+  const patientPickerContainerRef = useRef<HTMLDivElement | null>(null);
 
   // ---- Evolution state ----
   const hasEvolutionContext = !!(currentApt?.patient_email && (currentApt?.professional_id || professionalId));
@@ -226,6 +227,19 @@ const AppointmentEditorDialog = ({
   const aliveRef = useRef(true);
 
   useEffect(() => () => { aliveRef.current = false; }, []);
+
+  useEffect(() => {
+    if (!patientPickerOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!patientPickerContainerRef.current?.contains(event.target as Node)) {
+        setPatientPickerOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [patientPickerOpen]);
 
   // ---- Load patient extras + evolution on mount (component is keyed by parent) ----
   useEffect(() => {
@@ -538,70 +552,72 @@ const AppointmentEditorDialog = ({
                   </div>
                 )}
 
-                <div>
+                <div className="relative" ref={patientPickerContainerRef}>
                   <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
-                  <Popover open={patientPickerOpen} onOpenChange={setPatientPickerOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        role="combobox"
-                        aria-expanded={patientPickerOpen}
-                        className="w-full justify-between mt-1 h-9 text-xs font-normal"
-                      >
-                        <span className="truncate">
-                          {selectedPatientKey === "__new__"
-                            ? t("schedule.new_patient")
-                            : (() => {
-                                const p = knownPatients.find(k => patientKeyOf(k) === selectedPatientKey);
-                                return p ? `${p.name}${p.email ? ` (${p.email})` : ""}` : t("schedule.select_patient_ph");
-                              })()}
-                        </span>
-                        <ChevronsUpDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-2" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start" side="bottom" avoidCollisions={false}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    role="combobox"
+                    aria-expanded={patientPickerOpen}
+                    onClick={() => setPatientPickerOpen((prev) => !prev)}
+                    className="w-full justify-between mt-1 h-9 text-xs font-normal"
+                  >
+                    <span className="truncate">
+                      {selectedPatientKey === "__new__"
+                        ? t("schedule.new_patient")
+                        : (() => {
+                            const p = knownPatients.find(k => patientKeyOf(k) === selectedPatientKey);
+                            return p ? `${p.name}${p.email ? ` (${p.email})` : ""}` : t("schedule.select_patient_ph");
+                          })()}
+                    </span>
+                    <ChevronsUpDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-2" />
+                  </Button>
+                  {patientPickerOpen && (
+                    <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border bg-popover text-popover-foreground shadow-md">
                       <Command
+                        className="rounded-md"
                         filter={(value, search) => {
                           if (!search) return 1;
                           return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
                         }}
                       >
                         <CommandInput placeholder={isPt ? "Digite o nome para buscar..." : language === "es" ? "Escribe el nombre para buscar..." : "Type the name to search..."} className="h-9 text-xs" />
-                        <CommandList className="max-h-[180px]">
-                          <CommandEmpty>{isPt ? "Nenhum paciente encontrado" : language === "es" ? "Ningún paciente encontrado" : "No patient found"}</CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem
-                              value="__novo paciente__"
-                              onSelect={() => { handleSelectPatient("__new__"); setPatientPickerOpen(false); }}
-                              className="text-xs"
-                            >
-                              <Check className={cn("mr-2 h-3.5 w-3.5", selectedPatientKey === "__new__" ? "opacity-100" : "opacity-0")} />
-                              {t("schedule.new_patient")}
-                            </CommandItem>
-                            {[...knownPatients]
-                              .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
-                              .map(p => {
-                                const k = patientKeyOf(p);
-                                const label = `${p.name}${p.email ? ` ${p.email}` : ""}`;
-                                return (
-                                  <CommandItem
-                                    key={k}
-                                    value={label}
-                                    onSelect={() => { handleSelectPatient(k); setPatientPickerOpen(false); }}
-                                    className="text-xs"
-                                  >
-                                    <Check className={cn("mr-2 h-3.5 w-3.5", selectedPatientKey === k ? "opacity-100" : "opacity-0")} />
-                                    <span className="truncate">{p.name}{p.email ? <span className="text-muted-foreground"> · {p.email}</span> : null}</span>
-                                  </CommandItem>
-                                );
-                              })}
-                          </CommandGroup>
-                        </CommandList>
+                        <div className="max-h-[180px] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
+                          <CommandList className="max-h-none overflow-visible">
+                            <CommandEmpty>{isPt ? "Nenhum paciente encontrado" : language === "es" ? "Ningún paciente encontrado" : "No patient found"}</CommandEmpty>
+                            <CommandGroup>
+                              <CommandItem
+                                value="__novo paciente__"
+                                onSelect={() => { handleSelectPatient("__new__"); setPatientPickerOpen(false); }}
+                                className="text-xs"
+                              >
+                                <Check className={cn("mr-2 h-3.5 w-3.5", selectedPatientKey === "__new__" ? "opacity-100" : "opacity-0")} />
+                                {t("schedule.new_patient")}
+                              </CommandItem>
+                              {[...knownPatients]
+                                .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+                                .map(p => {
+                                  const k = patientKeyOf(p);
+                                  const label = `${p.name}${p.email ? ` ${p.email}` : ""}`;
+                                  return (
+                                    <CommandItem
+                                      key={k}
+                                      value={label}
+                                      onSelect={() => { handleSelectPatient(k); setPatientPickerOpen(false); }}
+                                      className="text-xs"
+                                    >
+                                      <Check className={cn("mr-2 h-3.5 w-3.5", selectedPatientKey === k ? "opacity-100" : "opacity-0")} />
+                                      <span className="truncate">{p.name}{p.email ? <span className="text-muted-foreground"> · {p.email}</span> : null}</span>
+                                    </CommandItem>
+                                  );
+                                })}
+                            </CommandGroup>
+                          </CommandList>
+                        </div>
                       </Command>
-                    </PopoverContent>
-                  </Popover>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">
