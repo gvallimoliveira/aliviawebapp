@@ -1672,6 +1672,7 @@ export type Database = {
           id: string
           occupation: string | null
           preferred_language: string | null
+          professional_register_skipped: boolean
           sex: string | null
           signup_origin: string | null
           updated_at: string
@@ -1684,6 +1685,7 @@ export type Database = {
           id?: string
           occupation?: string | null
           preferred_language?: string | null
+          professional_register_skipped?: boolean
           sex?: string | null
           signup_origin?: string | null
           updated_at?: string
@@ -1696,6 +1698,7 @@ export type Database = {
           id?: string
           occupation?: string | null
           preferred_language?: string | null
+          professional_register_skipped?: boolean
           sex?: string | null
           signup_origin?: string | null
           updated_at?: string
