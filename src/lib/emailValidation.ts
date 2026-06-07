@@ -25,7 +25,7 @@ const COMMON_DOMAINS = [
 ];
 
 // RFC-lite check: enough to reject obvious typos without false negatives.
-const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function isValidEmailFormat(email: string): boolean {
   return EMAIL_RE.test(email.trim());
