@@ -569,6 +569,25 @@ const Dashboard = () => {
       <main className={cn("container py-8 px-4 space-y-8", activeTab === "agenda" ? "max-w-7xl" : "max-w-4xl")}>
         <ClinicContextSelector />
         <PartnerPasswordBanner isPartner={professional?.is_partner} userId={user?.id} />
+        {professional?.subscription_grace_until && new Date(professional.subscription_grace_until) > new Date() && professional?.subscription_status !== "active" && (
+          <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/30">
+            <CardContent className="py-4 px-4 flex items-start gap-3">
+              <Sparkles className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">
+                <p className="font-semibold text-amber-900 dark:text-amber-200">
+                  Sua assinatura PRO caiu — você tem 7 dias de tolerância.
+                </p>
+                <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                  Você continua visível na vitrine pública até{" "}
+                  {new Date(professional.subscription_grace_until).toLocaleDateString("pt-BR")}. Regularize sua assinatura para não ser removido.
+                </p>
+              </div>
+              <Button size="sm" className="rounded-xl shrink-0" onClick={() => navigate("/professional#pricing")}>
+                Reativar
+              </Button>
+            </CardContent>
+          </Card>
+        )}
         <ConfirmEmailBanner user={user} />
         <PushOptInBanner />
         <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
