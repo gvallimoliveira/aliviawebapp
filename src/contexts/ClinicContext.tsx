@@ -48,6 +48,11 @@ interface ClinicContextType {
   canManageClinic: boolean;
   // Pro demo: clinic therapist without own PRO profile can preview the autonomous mode
   canAccessProDemo: boolean;
+  // Set by Dashboard when the user came from the professional landing but
+  // hasn't filled the professional registration yet. Surfaces an extra
+  // "Cadastrar como profissional" option in the context selection modal.
+  pendingProfessionalSignup: boolean;
+  setPendingProfessionalSignup: (v: boolean) => void;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
