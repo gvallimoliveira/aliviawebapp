@@ -131,17 +131,11 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setActiveContextState("personal");
         setActiveClinicIdState(null);
         setHasRestoredFromStorage(true);
-      } else if (mapped.length > 0) {
-        // No explicit choice yet but the user belongs to one or more
-        // clinics: pre-select the first clinic so the dashboard opens
-        // in the most relevant context (the reason they were invited
-        // in the first place). The selection modal will still appear
-        // when there are 2+ contexts so the user can switch.
-        const first = mapped[0];
-        setActiveContextState("clinic");
-        setActiveClinicIdState(first.clinic_id);
-        setHasRestoredFromStorage(false);
       } else {
+        // Sem escolha explícita ainda: mantém "personal" e deixa o
+        // ContextSelectionModal aparecer quando houver 2+ contextos.
+        // Isto evita que telas abertas antes da escolha mostrem dados
+        // da clínica errada (quando há múltiplas memberships).
         setActiveContextState("personal");
         setActiveClinicIdState(null);
         setHasRestoredFromStorage(false);
