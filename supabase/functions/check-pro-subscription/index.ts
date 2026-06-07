@@ -42,7 +42,7 @@ serve(async (req) => {
     // Check if user is a partner or has annual access first
     const { data: proData } = await supabaseClient
       .from("professionals")
-      .select("id, is_partner, subscription_status, pro_access_expires_at, premium_granted")
+      .select("id, is_partner, subscription_status, pro_access_expires_at, premium_granted, subscription_grace_until")
       .eq("user_id", user.id)
       .maybeSingle();
 
