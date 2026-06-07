@@ -153,9 +153,20 @@ serve(async (req) => {
       subscription_stripe_id: subscriptionId,
     };
 
-    // Auto-approve professional when they subscribe
+    let graceUntilOut: string | null = null;
     if (hasActiveSub) {
       updatePayload.approved = true;
+      updatePayload.subscription_grace_until = null; // clear any prior grace
+    } else {
+      const wasActive = proData?.subscription_status === "active";
+      const existingGrace = (proData as any)?.subscription_grace_until ? new Date((proData as any).subscription_grace_until) : null;
+      const stillInGrace = existingGrace && existingGrace > new Date();
+      if (wasActive && !stillInGrace) {
+        graceUntilOut = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        updatePayload.subscription_grace_until = graceUntilOut;
+      } else if (stillInGrace) {
+        graceUntilOut = existingGrace!.toISOString();
+      }
     }
 
     await supabaseClient
@@ -166,6 +177,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       subscription_end: subscriptionEnd,
+      grace_until: graceUntilOut,
       premium_granted: proData?.premium_granted || false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
