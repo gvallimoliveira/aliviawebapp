@@ -25,7 +25,8 @@ const Auth = () => {
   const { t, toggleLanguage, language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectTo = (location.state as any)?.redirectTo || "/dashboard";
+  const redirectQuery = new URLSearchParams(location.search).get("redirect");
+  const redirectTo = (location.state as any)?.redirectTo || redirectQuery || "/dashboard";
   const { toast } = useToast();
   const redirectingRef = useRef(false);
 
