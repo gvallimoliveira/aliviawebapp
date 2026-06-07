@@ -212,6 +212,7 @@ const AppointmentEditorDialog = ({
   const [emailWarning, setEmailWarning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
+  const patientPickerContainerRef = useRef<HTMLDivElement | null>(null);
 
   // ---- Evolution state ----
   const hasEvolutionContext = !!(currentApt?.patient_email && (currentApt?.professional_id || professionalId));
@@ -226,6 +227,19 @@ const AppointmentEditorDialog = ({
   const aliveRef = useRef(true);
 
   useEffect(() => () => { aliveRef.current = false; }, []);
+
+  useEffect(() => {
+    if (!patientPickerOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!patientPickerContainerRef.current?.contains(event.target as Node)) {
+        setPatientPickerOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [patientPickerOpen]);
 
   // ---- Load patient extras + evolution on mount (component is keyed by parent) ----
   useEffect(() => {
