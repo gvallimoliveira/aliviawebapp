@@ -93,7 +93,8 @@ const ContextSelectionModal = () => {
               className="w-full justify-start gap-3 h-auto py-4 px-4 border-primary/30"
               onClick={() => {
                 try { sessionStorage.removeItem("signupOrigin"); } catch {}
-                setPendingProfessionalSignup(false);
+                // Mantém pendingProfessionalSignup ligado: o seletor e o CTA
+                // continuam visíveis até o usuário concluir o cadastro PRO.
                 dismissContextSelection();
                 navigate("/professional/register");
               }}
