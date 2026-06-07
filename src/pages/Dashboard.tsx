@@ -114,7 +114,7 @@ function buildOnboardingSteps(
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, ready: authReady } = useAuth();
   const { t, toggleLanguage, language } = useLanguage();
-  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary, isClinicOwner } = useClinic();
+  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary, isClinicOwner, setPendingProfessionalSignup } = useClinic();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
@@ -306,15 +306,33 @@ const Dashboard = () => {
           : null;
       const effectiveOrigin = signupOrigin || persistedOrigin;
 
-      if (effectiveOrigin === "professional" && !nextProfessional) {
+      // Verifica memberships de clínica para decidir o destino. Se o usuário
+      // veio da landing profissional MAS já tem convites/clínicas, NÃO
+      // bloqueamos com auto-redirect — deixamos o seletor de perfil aparecer
+      // (com opção extra "Cadastrar como profissional" no modal).
+      const { data: myMembers } = await supabase
+        .from("clinic_members")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .limit(1);
+      const hasAnyClinic = Array.isArray(myMembers) && myMembers.length > 0;
+
+      if (effectiveOrigin === "professional" && !nextProfessional && !hasAnyClinic) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
         navigate("/professional/register", { replace: true });
         return;
       }
-      if (effectiveOrigin === "clinic") {
+      if (effectiveOrigin === "clinic" && !hasAnyClinic) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
-        navigate("/clinica", { replace: true });
+        navigate("/clinica#pricing", { replace: true });
         return;
+      }
+      // Both pro-origin + existing clinic memberships: surface the selector
+      // modal with an extra "Cadastrar como profissional" option instead of
+      // auto-redirecting (preserves user's choice).
+      if (effectiveOrigin === "professional" && !nextProfessional && hasAnyClinic) {
+        setPendingProfessionalSignup(true);
       }
 
 
@@ -551,6 +569,25 @@ const Dashboard = () => {
       <main className={cn("container py-8 px-4 space-y-8", activeTab === "agenda" ? "max-w-7xl" : "max-w-4xl")}>
         <ClinicContextSelector />
         <PartnerPasswordBanner isPartner={professional?.is_partner} userId={user?.id} />
+        {professional?.subscription_grace_until && new Date(professional.subscription_grace_until) > new Date() && professional?.subscription_status !== "active" && (
+          <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/30">
+            <CardContent className="py-4 px-4 flex items-start gap-3">
+              <Sparkles className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">
+                <p className="font-semibold text-amber-900 dark:text-amber-200">
+                  Sua assinatura PRO caiu — você tem 7 dias de tolerância.
+                </p>
+                <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                  Você continua visível na vitrine pública até{" "}
+                  {new Date(professional.subscription_grace_until).toLocaleDateString("pt-BR")}. Regularize sua assinatura para não ser removido.
+                </p>
+              </div>
+              <Button size="sm" className="rounded-xl shrink-0" onClick={() => navigate("/professional#pricing")}>
+                Reativar
+              </Button>
+            </CardContent>
+          </Card>
+        )}
         <ConfirmEmailBanner user={user} />
         <PushOptInBanner />
         <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />

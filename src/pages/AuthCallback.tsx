@@ -98,6 +98,20 @@ const AuthCallback = () => {
         if (cancelled) return;
 
         if (session) {
+          // Persist signup_origin captured before the OAuth redirect so the
+          // Dashboard knows whether to send the user to the professional /
+          // clinic flow even on a fresh device where sessionStorage might
+          // not survive the round-trip.
+          try {
+            const origin = sessionStorage.getItem("signupOrigin");
+            if (origin && session.user?.id) {
+              await (supabase as any)
+                .from("profiles")
+                .update({ signup_origin: origin })
+                .eq("user_id", session.user.id);
+            }
+          } catch { /* noop */ }
+
           // Clean any leftover hash/query so refresh doesn't re-trigger
           window.history.replaceState({}, document.title, "/auth/callback");
           setStatus("success");

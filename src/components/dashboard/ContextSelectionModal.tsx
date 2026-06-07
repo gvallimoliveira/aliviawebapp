@@ -1,12 +1,14 @@
 import { useClinic } from "@/contexts/ClinicContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Stethoscope } from "lucide-react";
+import { Building2, User, Stethoscope, UserPlus } from "lucide-react";
 
 const ContextSelectionModal = () => {
-  const { memberships, needsContextSelection, setActiveContext, dismissContextSelection, hasProfessionalProfile, canAccessProDemo } = useClinic();
+  const { memberships, needsContextSelection, setActiveContext, dismissContextSelection, hasProfessionalProfile, canAccessProDemo, pendingProfessionalSignup, setPendingProfessionalSignup } = useClinic();
   const { language } = useLanguage();
+  const navigate = useNavigate();
 
   if (!needsContextSelection) return null;
 
@@ -18,6 +20,7 @@ const ContextSelectionModal = () => {
       solo: "Conta pessoal", soloDesc: "Acessar meu painel pessoal",
       pro: "Profissional autônomo", proDesc: "Atender meus pacientes particulares",
       proDemo: "Profissional autônomo (Demo)", proDemoDesc: "Conhecer o painel PRO com dados de exemplo",
+      proRegister: "Cadastrar como profissional", proRegisterDesc: "Concluir seu cadastro PRO (bloqueado até assinar)",
     },
     en: {
       title: "How would you like to proceed?",
@@ -25,6 +28,7 @@ const ContextSelectionModal = () => {
       solo: "Personal account", soloDesc: "Access my personal dashboard",
       pro: "Autonomous professional", proDesc: "Manage my private patients",
       proDemo: "Autonomous professional (Demo)", proDemoDesc: "Preview the PRO dashboard with sample data",
+      proRegister: "Register as professional", proRegisterDesc: "Finish your PRO sign-up (locked until you subscribe)",
     },
     es: {
       title: "¿Cómo desea acceder?",
@@ -32,6 +36,7 @@ const ContextSelectionModal = () => {
       solo: "Cuenta personal", soloDesc: "Acceder a mi panel personal",
       pro: "Profesional autónomo", proDesc: "Atender mis pacientes particulares",
       proDemo: "Profesional autónomo (Demo)", proDemoDesc: "Conocer el panel PRO con datos de ejemplo",
+      proRegister: "Registrarse como profesional", proRegisterDesc: "Completar su registro PRO (bloqueado hasta suscribirse)",
     },
   }[lang];
 
@@ -79,6 +84,24 @@ const ContextSelectionModal = () => {
                   <p className="font-medium">{labels.proDemo}</p>
                   <p className="text-xs text-muted-foreground">{labels.proDemoDesc}</p>
                 </div>
+              </div>
+            </Button>
+          )}
+          {pendingProfessionalSignup && !hasProfessionalProfile && (
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 h-auto py-4 px-4 border-primary/30"
+              onClick={() => {
+                try { sessionStorage.removeItem("signupOrigin"); } catch {}
+                setPendingProfessionalSignup(false);
+                dismissContextSelection();
+                navigate("/professional/register");
+              }}
+            >
+              <UserPlus className="h-5 w-5 shrink-0 text-primary" />
+              <div className="text-left">
+                <p className="font-medium">{labels.proRegister}</p>
+                <p className="text-xs text-muted-foreground">{labels.proRegisterDesc}</p>
               </div>
             </Button>
           )}

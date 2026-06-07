@@ -48,6 +48,11 @@ interface ClinicContextType {
   canManageClinic: boolean;
   // Pro demo: clinic therapist without own PRO profile can preview the autonomous mode
   canAccessProDemo: boolean;
+  // Set by Dashboard when the user came from the professional landing but
+  // hasn't filled the professional registration yet. Surfaces an extra
+  // "Cadastrar como profissional" option in the context selection modal.
+  pendingProfessionalSignup: boolean;
+  setPendingProfessionalSignup: (v: boolean) => void;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
@@ -72,6 +77,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [loading, setLoading] = useState(true);
   const [contextDismissed, setContextDismissed] = useState(false);
   const [hasRestoredFromStorage, setHasRestoredFromStorage] = useState(false);
+  const [pendingProfessionalSignup, setPendingProfessionalSignup] = useState(false);
 
   const fetchMemberships = useCallback(async () => {
     if (!user) { setMemberships([]); setLoading(false); return; }
@@ -169,7 +175,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Auto-pick when only one possible context exists (just personal) — no need to show modal
   // Show modal if 2+ contexts and user hasn't chosen yet
   const needsContextSelection =
-    !loading && availableContextsCount >= 2 && !hasRestoredFromStorage && !contextDismissed;
+    !loading
+    && (availableContextsCount >= 2 || pendingProfessionalSignup)
+    && !hasRestoredFromStorage
+    && !contextDismissed;
 
   const dismissContextSelection = () => setContextDismissed(true);
 
@@ -228,6 +237,8 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isClinicTherapist,
         canManageClinic,
         canAccessProDemo,
+        pendingProfessionalSignup,
+        setPendingProfessionalSignup,
       }}
     >
       {children}
