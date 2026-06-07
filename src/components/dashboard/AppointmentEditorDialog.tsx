@@ -16,9 +16,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import {
-  CalendarIcon, Loader2, Trash2, Pencil, Check, ChevronRight,
+  CalendarIcon, Loader2, Trash2, Pencil, Check, ChevronRight, ChevronsUpDown,
   CheckCircle2, XCircle, AlertCircle, Clock,
 } from "lucide-react";
 import { formatCpf, formatPhone } from "@/utils/masks";
