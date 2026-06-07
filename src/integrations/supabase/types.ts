@@ -1670,6 +1670,7 @@ export type Database = {
           occupation: string | null
           preferred_language: string | null
           sex: string | null
+          signup_origin: string | null
           updated_at: string
           user_id: string
         }
@@ -1681,6 +1682,7 @@ export type Database = {
           occupation?: string | null
           preferred_language?: string | null
           sex?: string | null
+          signup_origin?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1692,6 +1694,7 @@ export type Database = {
           occupation?: string | null
           preferred_language?: string | null
           sex?: string | null
+          signup_origin?: string | null
           updated_at?: string
           user_id?: string
         }
