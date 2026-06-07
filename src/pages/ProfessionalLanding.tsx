@@ -161,6 +161,7 @@ const ProfessionalLanding = () => {
               if (user) {
                 navigate("/dashboard?tab=professional");
               } else {
+                try { sessionStorage.setItem("signupOrigin", "professional"); } catch {}
                 navigate("/auth", { state: { redirectTo: "/dashboard?tab=professional" } });
               }
             }}>
