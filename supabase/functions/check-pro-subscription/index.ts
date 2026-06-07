@@ -89,14 +89,35 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
+    // Helper: when a previously-active subscription drops, give the pro a
+    // 7-day tolerance window so they stay visible in the public directory
+    // (with a warning) instead of vanishing instantly from patients' views.
+    const applyGraceIfNeeded = async (current: { subscription_status?: string | null; subscription_grace_until?: string | null } | null) => {
+      const wasActive = current?.subscription_status === "active";
+      const existingGrace = current?.subscription_grace_until ? new Date(current.subscription_grace_until) : null;
+      const stillInGrace = existingGrace && existingGrace > new Date();
+      if (wasActive && !stillInGrace) {
+        const graceUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        await supabaseClient
+          .from("professionals")
+          .update({ subscription_status: "inactive", subscription_stripe_id: null, subscription_grace_until: graceUntil })
+          .eq("user_id", user.id);
+        return { graceUntil };
+      }
+      return { graceUntil: existingGrace && stillInGrace ? existingGrace.toISOString() : null };
+    };
+
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
-      await supabaseClient
-        .from("professionals")
-        .update({ subscription_status: "inactive", subscription_stripe_id: null })
-        .eq("user_id", user.id);
-      return new Response(JSON.stringify({ subscribed: false }), {
+      const { graceUntil } = await applyGraceIfNeeded(proData);
+      if (!graceUntil && proData?.subscription_status === "active") {
+        await supabaseClient
+          .from("professionals")
+          .update({ subscription_status: "inactive", subscription_stripe_id: null })
+          .eq("user_id", user.id);
+      }
+      return new Response(JSON.stringify({ subscribed: false, grace_until: graceUntil }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
