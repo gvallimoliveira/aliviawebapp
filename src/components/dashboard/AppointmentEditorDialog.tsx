@@ -569,7 +569,7 @@ const AppointmentEditorDialog = ({
                         }}
                       >
                         <CommandInput placeholder={isPt ? "Digite o nome para buscar..." : language === "es" ? "Escribe el nombre para buscar..." : "Type the name to search..."} className="h-9 text-xs" />
-                        <CommandList>
+                        <CommandList className="max-h-[180px]">
                           <CommandEmpty>{isPt ? "Nenhum paciente encontrado" : language === "es" ? "Ningún paciente encontrado" : "No patient found"}</CommandEmpty>
                           <CommandGroup>
                             <CommandItem
