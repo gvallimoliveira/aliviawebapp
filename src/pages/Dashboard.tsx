@@ -595,6 +595,37 @@ const Dashboard = () => {
           </Card>
         )}
         <ConfirmEmailBanner user={user} />
+        {profile?.professional_register_skipped && !professional && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="py-4 px-4 flex items-start gap-3">
+              <Stethoscope className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">
+                <p className="font-semibold text-foreground">
+                  Cadastro profissional pendente
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Você ainda não concluiu seu cadastro PRO. Sem ele, você não aparece na vitrine
+                  de profissionais nem libera o painel PRO. Você pode concluir quando quiser.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                className="rounded-xl shrink-0"
+                onClick={async () => {
+                  try {
+                    await (supabase as any)
+                      .from("profiles")
+                      .update({ professional_register_skipped: false })
+                      .eq("user_id", user!.id);
+                  } catch {}
+                  navigate("/professional/register");
+                }}
+              >
+                Completar cadastro
+              </Button>
+            </CardContent>
+          </Card>
+        )}
         <PushOptInBanner />
         <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
         <WelcomeSection
