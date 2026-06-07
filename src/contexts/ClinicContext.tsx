@@ -175,7 +175,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Auto-pick when only one possible context exists (just personal) — no need to show modal
   // Show modal if 2+ contexts and user hasn't chosen yet
   const needsContextSelection =
-    !loading && availableContextsCount >= 2 && !hasRestoredFromStorage && !contextDismissed;
+    !loading
+    && (availableContextsCount >= 2 || pendingProfessionalSignup)
+    && !hasRestoredFromStorage
+    && !contextDismissed;
 
   const dismissContextSelection = () => setContextDismissed(true);
 
