@@ -20,6 +20,7 @@ const ContextSelectionModal = () => {
       solo: "Conta pessoal", soloDesc: "Acessar meu painel pessoal",
       pro: "Profissional autônomo", proDesc: "Atender meus pacientes particulares",
       proDemo: "Profissional autônomo (Demo)", proDemoDesc: "Conhecer o painel PRO com dados de exemplo",
+      proRegister: "Cadastrar como profissional", proRegisterDesc: "Concluir seu cadastro PRO (bloqueado até assinar)",
     },
     en: {
       title: "How would you like to proceed?",
@@ -27,6 +28,7 @@ const ContextSelectionModal = () => {
       solo: "Personal account", soloDesc: "Access my personal dashboard",
       pro: "Autonomous professional", proDesc: "Manage my private patients",
       proDemo: "Autonomous professional (Demo)", proDemoDesc: "Preview the PRO dashboard with sample data",
+      proRegister: "Register as professional", proRegisterDesc: "Finish your PRO sign-up (locked until you subscribe)",
     },
     es: {
       title: "¿Cómo desea acceder?",
@@ -34,6 +36,7 @@ const ContextSelectionModal = () => {
       solo: "Cuenta personal", soloDesc: "Acceder a mi panel personal",
       pro: "Profesional autónomo", proDesc: "Atender mis pacientes particulares",
       proDemo: "Profesional autónomo (Demo)", proDemoDesc: "Conocer el panel PRO con datos de ejemplo",
+      proRegister: "Registrarse como profesional", proRegisterDesc: "Completar su registro PRO (bloqueado hasta suscribirse)",
     },
   }[lang];
 
