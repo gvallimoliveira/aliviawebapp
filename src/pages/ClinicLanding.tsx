@@ -82,10 +82,12 @@ const ClinicLanding = () => {
           toast.success("Trial de 15 dias ativado! Enviamos um link para definir sua senha.", { duration: 8000 });
         } else if (data.already_exists) {
           toast.info("Você já possui uma clínica! Faça login.");
-          navigate("/auth?redirect=/dashboard");
+          try { sessionStorage.setItem("signupOrigin", "clinic"); } catch {}
+          navigate("/auth", { state: { redirectTo: "/dashboard" } });
         } else {
           toast.success("Trial de 15 dias ativado!");
-          navigate("/auth?redirect=/dashboard");
+          try { sessionStorage.setItem("signupOrigin", "clinic"); } catch {}
+          navigate("/auth", { state: { redirectTo: "/dashboard" } });
         }
         setTrialForm(null);
       }
@@ -97,7 +99,11 @@ const ClinicLanding = () => {
   };
 
   const handleSubscribe = async (tier: "small" | "medium" | "large") => {
-    if (!user) { navigate("/auth?redirect=/clinica"); return; }
+    if (!user) {
+      try { sessionStorage.setItem("signupOrigin", "clinic"); } catch {}
+      navigate("/auth", { state: { redirectTo: "/clinica" } });
+      return;
+    }
     setSubscribeLoading(tier);
     try {
       const plan = billingAnnual ? "annual" : "monthly";
