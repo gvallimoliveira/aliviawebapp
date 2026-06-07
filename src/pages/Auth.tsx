@@ -11,6 +11,8 @@ import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle }
 import { useToast } from "@/hooks/use-toast";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { isValidEmailFormat, suggestEmailFix } from "@/lib/emailValidation";
+import { supabase } from "@/integrations/supabase/client";
+
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
