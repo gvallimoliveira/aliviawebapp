@@ -125,10 +125,37 @@ export default function PatientListView(props: any) {
               {status === "all" ? (language === "pt" ? "Todos" : "All") : status === "active" ? (language === "pt" ? "Ativos" : "Active") : (language === "pt" ? "Inativos (30d+)" : "Inactive (30d+)")}
             </Button>
           ))}
+          <div className="ml-auto flex items-center gap-1">
+            <Button
+              variant={sortMode === "alpha" ? "default" : "outline"}
+              size="sm"
+              className="text-xs rounded-xl h-7 gap-1"
+              onClick={() => setSortMode("alpha")}
+              title={language === "pt" ? "Ordem alfabética" : language === "es" ? "Orden alfabético" : "Alphabetical"}
+            >
+              <ArrowDownAZ className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">A-Z</span>
+            </Button>
+            <Button
+              variant={sortMode === "recent" ? "default" : "outline"}
+              size="sm"
+              className="text-xs rounded-xl h-7 gap-1"
+              onClick={() => setSortMode("recent")}
+              title={language === "pt" ? "Avaliação mais recente" : language === "es" ? "Evaluación más reciente" : "Most recent assessment"}
+            >
+              <ArrowDownWideNarrow className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{language === "pt" ? "Recentes" : language === "es" ? "Recientes" : "Recent"}</span>
+            </Button>
+          </div>
         </div>
       </div>
 
-      {patients.filter((p: any) => {
+      {[...patients].sort((a: any, b: any) => {
+        if (sortMode === "recent") {
+          return new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime();
+        }
+        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      }).filter((p: any) => {
         const isHidden = hiddenKeys.has(p.groupKey);
         if (isHidden && !showHidden) return false;
         if (statusFilter !== "all") {
