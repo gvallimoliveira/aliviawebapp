@@ -318,7 +318,13 @@ const Dashboard = () => {
         .limit(1);
       const hasAnyClinic = Array.isArray(myMembers) && myMembers.length > 0;
 
-      if (effectiveOrigin === "professional" && !nextProfessional && !hasAnyClinic) {
+      // Skip flag: usuário clicou em "Pular por agora" no /professional/register.
+      // Não redirecionar mais; ele segue no painel pessoal com banner persistente.
+      const skipped = profileResult.status === "fulfilled"
+        ? !!(profileResult.value.data as any)?.professional_register_skipped
+        : false;
+
+      if (effectiveOrigin === "professional" && !nextProfessional && !hasAnyClinic && !skipped) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
         navigate("/professional/register", { replace: true });
         return;
@@ -331,7 +337,7 @@ const Dashboard = () => {
       // Both pro-origin + existing clinic memberships: surface the selector
       // modal with an extra "Cadastrar como profissional" option instead of
       // auto-redirecting (preserves user's choice).
-      if (effectiveOrigin === "professional" && !nextProfessional && hasAnyClinic) {
+      if (effectiveOrigin === "professional" && !nextProfessional && hasAnyClinic && !skipped) {
         setPendingProfessionalSignup(true);
       }
 
@@ -589,6 +595,37 @@ const Dashboard = () => {
           </Card>
         )}
         <ConfirmEmailBanner user={user} />
+        {profile?.professional_register_skipped && !professional && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="py-4 px-4 flex items-start gap-3">
+              <Stethoscope className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">
+                <p className="font-semibold text-foreground">
+                  Cadastro profissional pendente
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Você ainda não concluiu seu cadastro PRO. Sem ele, você não aparece na vitrine
+                  de profissionais nem libera o painel PRO. Você pode concluir quando quiser.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                className="rounded-xl shrink-0"
+                onClick={async () => {
+                  try {
+                    await (supabase as any)
+                      .from("profiles")
+                      .update({ professional_register_skipped: false })
+                      .eq("user_id", user!.id);
+                  } catch {}
+                  navigate("/professional/register");
+                }}
+              >
+                Completar cadastro
+              </Button>
+            </CardContent>
+          </Card>
+        )}
         <PushOptInBanner />
         <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
         <WelcomeSection

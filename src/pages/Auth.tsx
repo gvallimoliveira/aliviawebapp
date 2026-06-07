@@ -186,8 +186,17 @@ const Auth = () => {
     if (loading) return;
     setLoading(true);
     try {
+      // Propaga signup_origin pela URL de callback. sessionStorage não é
+      // confiável em redirects OAuth em alguns mobile browsers, então a
+      // query string é o canal mais seguro.
+      let originParam: string | null = null;
+      try { originParam = sessionStorage.getItem("signupOrigin"); } catch {}
+      const redirectUri = originParam
+        ? `${window.location.origin}/auth/callback?signup_origin=${encodeURIComponent(originParam)}`
+        : window.location.origin;
+
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: redirectUri,
       });
 
       if (result.error) {
