@@ -292,6 +292,22 @@ const Dashboard = () => {
 
       setProfessional(nextProfessional);
 
+      // Honra a origem do cadastro (landing profissional/clínica) mesmo se o
+      // redirectTo da rota /auth tiver sido perdido (refresh, troca de aba
+      // Login↔Signup, OAuth callback). Consumimos a flag uma única vez.
+      let signupOrigin: string | null = null;
+      try { signupOrigin = sessionStorage.getItem("signupOrigin"); } catch {}
+      if (signupOrigin === "professional" && !nextProfessional) {
+        try { sessionStorage.removeItem("signupOrigin"); } catch {}
+        navigate("/professional/register", { replace: true });
+        return;
+      }
+      if (signupOrigin === "clinic") {
+        try { sessionStorage.removeItem("signupOrigin"); } catch {}
+        navigate("/clinica", { replace: true });
+        return;
+      }
+
       // Do not bounce clinic therapists (no own PRO profile) to the
       // registration flow — they may simply be exploring the demo mode.
       if (!nextProfessional && tabFromUrl === "professional" && activeContext !== "professional_demo") {
