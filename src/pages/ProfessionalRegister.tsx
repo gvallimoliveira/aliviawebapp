@@ -729,6 +729,31 @@ const ProfessionalRegister = () => {
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 {existing ? t("prof.update") : t("prof.register")}
               </Button>
+              {!existing && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full rounded-xl"
+                  disabled={saving}
+                  onClick={async () => {
+                    if (!user) return;
+                    try {
+                      await (supabase as any)
+                        .from("profiles")
+                        .update({ professional_register_skipped: true })
+                        .eq("user_id", user.id);
+                      try { sessionStorage.removeItem("signupOrigin"); } catch {}
+                    } catch {}
+                    toast({
+                      title: "Você pode concluir depois",
+                      description: "Sem o cadastro PRO, você não aparece na vitrine nem acessa o painel profissional.",
+                    });
+                    navigate("/dashboard", { replace: true });
+                  }}
+                >
+                  Pular por agora
+                </Button>
+              )}
             </form>
           </CardContent>
         </Card>
