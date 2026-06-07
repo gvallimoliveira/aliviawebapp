@@ -87,6 +87,24 @@ const ContextSelectionModal = () => {
               </div>
             </Button>
           )}
+          {pendingProfessionalSignup && !hasProfessionalProfile && (
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 h-auto py-4 px-4 border-primary/30"
+              onClick={() => {
+                try { sessionStorage.removeItem("signupOrigin"); } catch {}
+                setPendingProfessionalSignup(false);
+                dismissContextSelection();
+                navigate("/professional/register");
+              }}
+            >
+              <UserPlus className="h-5 w-5 shrink-0 text-primary" />
+              <div className="text-left">
+                <p className="font-medium">{labels.proRegister}</p>
+                <p className="text-xs text-muted-foreground">{labels.proRegisterDesc}</p>
+              </div>
+            </Button>
+          )}
           {memberships.map((m) => (
             <Button
               key={m.clinic_id}
