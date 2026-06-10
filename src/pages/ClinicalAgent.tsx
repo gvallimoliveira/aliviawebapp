@@ -69,11 +69,12 @@ const ClinicalAgent = () => {
   useEffect(() => {
     if (!user || !hasAccess) return;
     (async () => {
-      const thRes: any = await supabase.from("agent_threads")
+      const sb = supabase as any;
+      const thRes: any = await sb.from("agent_threads")
         .select("id, title, patient_id, archived, updated_at")
         .eq("user_id", user.id).eq("archived", false)
         .order("updated_at", { ascending: false });
-      const ptRes: any = await supabase.from("patients")
+      const ptRes: any = await sb.from("patients")
         .select("id, full_name").eq("user_id", user.id).order("full_name");
       const th = thRes.data as Thread[] | null;
       const pt = ptRes.data as Array<{ id: string; full_name: string }> | null;
