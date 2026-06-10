@@ -228,6 +228,19 @@ const ClinicalAgent = () => {
     setShowPatientPicker(false);
   };
 
+  const saveTitle = async () => {
+    if (!activeThread) return;
+    const newTitle = titleDraft.trim().slice(0, 120);
+    if (!newTitle || newTitle === activeThread.title) { setEditingTitle(false); return; }
+    setActiveThread({ ...activeThread, title: newTitle });
+    setThreads(prev => prev.map(t => t.id === activeThread.id ? { ...t, title: newTitle } : t));
+    setEditingTitle(false);
+    const { error } = await supabase.functions.invoke("clinical-agent-threads", {
+      body: { action: "rename", thread_id: activeThread.id, title: newTitle },
+    });
+    if (error) toast.error("Não foi possível renomear");
+  };
+
   const send = async () => {
     if (!input.trim() || !activeThread || sending) return;
     const text = input.trim();
