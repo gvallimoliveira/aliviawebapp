@@ -464,7 +464,7 @@ const AssessmentView = () => {
 
         {/* Editar (manual) + Excluir. Voltar + Nova Avaliação ficam no rodapé. */}
         {!isDemo && user && (
-          <div className="flex items-center justify-end gap-2 flex-wrap">
+          <div className="flex items-center justify-end gap-2 flex-wrap -mt-1">
             {assessment.anamnesis_data?.manualEntry && (assessment.professional_id || assessment.clinic_id) && (
               <Button
                 variant="outline"
@@ -493,9 +493,7 @@ const AssessmentView = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
           </div>
-
         )}
 
         {editOpen && assessment && (
@@ -510,6 +508,7 @@ const AssessmentView = () => {
             onSaved={() => setReloadKey((k) => k + 1)}
           />
         )}
+
 
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
