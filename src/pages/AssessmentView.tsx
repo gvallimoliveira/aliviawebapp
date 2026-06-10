@@ -8,7 +8,8 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2, Trash2, ChevronRight, User, Pencil } from "lucide-react";
+import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2, Trash2, ChevronRight, User, Pencil, Brain } from "lucide-react";
+import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import ManualAssessmentModal from "@/components/dashboard/ManualAssessmentModal";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -98,6 +99,7 @@ const AssessmentView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { t, language, toggleLanguage } = useLanguage();
+  const { hasAccess: hasAgentAccess } = useClinicalAgentAccess();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const patientParam = searchParams.get("patient");
@@ -471,6 +473,24 @@ const AssessmentView = () => {
               >
                 <Pencil className="h-4 w-4" />
                 {isPt ? "Editar avaliação" : "Edit assessment"}
+              </Button>
+            )}
+            {hasAgentAccess && !isDemo && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  try {
+                    const seed = `Discutir caso (anonimizado):\n- Hipótese atual: ${getDisplayHypothesis(assessment as any) || (assessment as any)?.diagnosis?.condition || "—"}\n- Regiões de dor: ${regions.join(", ") || "—"}\n- Dor (0-10): ${(assessment as any)?.pain_score ?? "—"}\n- Tipo de avaliação: ${(assessment as any)?.type || "—"}\n\nO que você sugere como próximos passos baseados em evidências?`;
+                    sessionStorage.setItem("agent_seed_input", seed);
+                  } catch {}
+                  navigate("/agente");
+                }}
+                title={isPt ? "Discutir este caso com o agente clínico (dados anonimizados)" : "Discuss with clinical agent"}
+              >
+                <Brain className="h-4 w-4" />
+                {isPt ? "Discutir com agente" : "Discuss with agent"}
               </Button>
             )}
             <Button

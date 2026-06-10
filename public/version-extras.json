@@ -1,5 +1,5 @@
 {
-  "requiresReinstall": false,
-  "reinstallReason": "",
-  "releaseNotes": ""
+  "requiresReinstall": true,
+  "reinstallReason": "Nova aba 'Agente' no admin e botão 'Discutir com agente' no prontuário (beta interno).",
+  "releaseNotes": "Agente de Raciocínio Clínico (beta): curadoria de base de conhecimento no admin e atalho no prontuário."
 }

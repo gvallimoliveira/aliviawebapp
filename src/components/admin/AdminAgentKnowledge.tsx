@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ interface Article {
 }
 
 export default function AdminAgentKnowledge() {
+  const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<"pending" | "approved">("pending");
   const [nicheFilter, setNicheFilter] = useState<string>("all");
   const [ingestNiche, setIngestNiche] = useState<string>(AGENT_NICHES[0].slug);
@@ -36,21 +38,24 @@ export default function AdminAgentKnowledge() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const fetchList = async () => {
+    if (!user) return;
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("agent-knowledge", {
         body: { action: "list", status, niche: nicheFilter !== "all" ? nicheFilter : undefined },
       });
-      if (error) throw error;
+      if (error) throw new Error(error.message || "Falha ao consultar artigos");
+      if (data?.error) throw new Error(data.error);
       setArticles(data?.articles || []);
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      console.error("[AdminAgentKnowledge] list error", e);
+      toast({ title: "Erro ao listar artigos", description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, [status, nicheFilter]);
+  useEffect(() => { if (!authLoading && user) fetchList(); /* eslint-disable-next-line */ }, [status, nicheFilter, authLoading, user?.id]);
 
   const handleIngest = async () => {
     setIngesting(true);

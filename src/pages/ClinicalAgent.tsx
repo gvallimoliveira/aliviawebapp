@@ -65,6 +65,17 @@ const ClinicalAgent = () => {
     }
   }, [checked, hasAccess, navigate]);
 
+  // Seed input from sessionStorage (set by "Discutir com agente" on prontuário)
+  useEffect(() => {
+    try {
+      const seed = sessionStorage.getItem("agent_seed_input");
+      if (seed) {
+        setInput(seed);
+        sessionStorage.removeItem("agent_seed_input");
+      }
+    } catch {}
+  }, []);
+
   // Load threads + patients
   useEffect(() => {
     if (!user || !hasAccess) return;
