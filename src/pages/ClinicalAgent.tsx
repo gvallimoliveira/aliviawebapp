@@ -83,10 +83,13 @@ const ClinicalAgent = () => {
     if (!user || !hasAccess) return;
     (async () => {
       const sb = supabase as any;
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
       const thRes: any = await sb.from("agent_threads")
         .select("id, title, patient_id, archived, updated_at")
         .eq("user_id", user.id).eq("archived", false)
+        .gte("updated_at", sevenDaysAgo)
         .order("updated_at", { ascending: false });
+
 
       // Load patients matching the user's professional/clinic context
       // (patients table uses professional_id and clinic_id, NOT user_id)
