@@ -310,12 +310,19 @@ const ClinicalAgent = () => {
   }
   if (!hasAccess) return null;
 
-  const ThreadList = () => (
+  const ThreadList = ({ withClose = false }: { withClose?: boolean }) => (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border/40">
-        <Button onClick={() => createThread(null)} className="w-full gap-2" size="sm">
+      <div className="p-3 border-b border-border/40 flex items-center gap-2">
+        <Button onClick={() => createThread(null)} className="flex-1 gap-2" size="sm">
           <Plus className="h-4 w-4" /> Nova conversa
         </Button>
+        {withClose && (
+          <SheetClose asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Fechar">
+              <X className="h-5 w-5" />
+            </Button>
+          </SheetClose>
+        )}
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
@@ -340,7 +347,8 @@ const ClinicalAgent = () => {
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteThread(t.id); }}
-                  className="opacity-0 group-hover:opacity-100 transition p-1 hover:text-destructive"
+                  className="opacity-60 md:opacity-0 md:group-hover:opacity-100 transition p-1 hover:text-destructive"
+                  aria-label="Excluir conversa"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
