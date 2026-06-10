@@ -30,6 +30,8 @@ import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
 import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessmentLinks";
 import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
+import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
+
 
 const SUBSCALE_COLORS = [
   "hsl(210, 70%, 55%)",
@@ -170,6 +172,8 @@ const GenerateHypothesisCard = ({ assessment, isDemo, onGenerated }: GenerateHyp
 
 export default function PatientDetailView(props: any) {
   const navigate = useNavigate();
+  const { hasAccess: hasAgentAccess } = useClinicalAgentAccess();
+
   const {
     t,
     language,
@@ -269,7 +273,7 @@ export default function PatientDetailView(props: any) {
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
           {((!readOnly || allowManualAssessment) || isDemo) && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
-          {(latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2) && (
+          {(latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2 || (hasAgentAccess && !isDemo)) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1.5 shrink-0" title={language === "pt" ? "Mais ações" : "More actions"}>
@@ -280,6 +284,21 @@ export default function PatientDetailView(props: any) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="text-[11px] text-muted-foreground">{language === "pt" ? "Outras ações" : "Other actions"}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {hasAgentAccess && !isDemo && (
+                  <DropdownMenuItem onSelect={() => {
+                    try {
+                      const latest = latestWithDiagnosis || patient.assessments?.[0];
+                      const hypothesis = latest?.final_hypothesis || latest?.diagnosis?.hypothesis || latest?.diagnosis?.condition || "—";
+                      const regions = Array.isArray(latest?.pain_regions) ? latest.pain_regions.join(", ") : "—";
+                      const seed = `Discutir caso do paciente ${patient.name} (anonimizado):\n- Hipótese atual: ${hypothesis}\n- Regiões de dor: ${regions || "—"}\n- Dor (0-10): ${latest?.pain_score ?? "—"}\n\nO que você sugere como próximos passos baseados em evidências?`;
+                      sessionStorage.setItem("agent_seed_input", seed);
+                    } catch {}
+                    navigate("/agente");
+                  }}>
+                    <Brain className="h-4 w-4 mr-2" /> {language === "pt" ? "Falar com agente" : "Talk to agent"}
+                  </DropdownMenuItem>
+                )}
+
                 {latestWithDiagnosis && (
                   <DropdownMenuItem onSelect={() => { (async () => { const link = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id); const { createShortAppLink } = await import("@/lib/shortLink"); const short = await createShortAppLink(link); await navigator.clipboard.writeText(short); toast({ title: "Link de reavaliação copiado!" }); })(); }}>
                     <RotateCcw className="h-4 w-4 mr-2" /> Reavaliação
