@@ -37,6 +37,8 @@ import SoloUpgradeBanner from "./SoloUpgradeBanner";
 import ExportDataCard from "./ExportDataCard";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
+import { Brain } from "lucide-react";
 
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp, FileArchive } from "lucide-react";
