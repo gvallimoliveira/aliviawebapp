@@ -43,6 +43,16 @@ serve(async (req) => {
     const body = await req.json();
     const action = body?.action;
 
+    if (action === "access_status") {
+      return new Response(JSON.stringify({
+        hasAccess: allowed,
+        isVip: !!vip,
+        globalEnabled: cfg?.value === true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "create") {
       const { patient_id, clinic_id, title } = body;
       // Validate patient ownership if provided
