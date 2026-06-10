@@ -414,7 +414,40 @@ const ClinicalAgent = () => {
 
 
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold truncate">{activeThread?.title || (creatingThread ? "Criando conversa…" : "Agente Clínico")}</h1>
+            {editingTitle && activeThread ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  autoFocus
+                  value={titleDraft}
+                  onChange={e => setTitleDraft(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") { e.preventDefault(); saveTitle(); }
+                    if (e.key === "Escape") setEditingTitle(false);
+                  }}
+                  onBlur={saveTitle}
+                  className="h-7 text-sm font-semibold px-2"
+                  maxLength={120}
+                />
+                <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={saveTitle}>
+                  <Check className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!activeThread) return;
+                  setTitleDraft(activeThread.title || "");
+                  setEditingTitle(true);
+                }}
+                className="group flex items-center gap-1.5 min-w-0 max-w-full text-left"
+                disabled={!activeThread}
+                title="Renomear conversa"
+              >
+                <h1 className="text-sm font-semibold truncate">{activeThread?.title || (creatingThread ? "Criando conversa…" : "Agente Clínico")}</h1>
+                {activeThread && <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60 shrink-0" />}
+              </button>
+            )}
             {linkedPatient && (
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Badge variant="secondary" className="text-[10px] gap-1">
