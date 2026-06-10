@@ -420,17 +420,21 @@ const ClinicalAgent = () => {
                 );
               }
               return (
-                <div key={m.id} className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown>{text}</ReactMarkdown>
-                  {m.citations && m.citations.length > 0 && (
-                    <div className="not-prose mt-2 flex flex-wrap gap-1">
-                      {m.citations.map(c => (
-                        <Badge key={c.id} variant="outline" className="text-[10px]">
-                          {(c.authors?.split(",")[0] || "—")}, {c.year || "—"} · PEDro {c.pedro_score ?? "—"}
-                        </Badge>
-                      ))}
+                <div key={m.id} className="flex justify-start">
+                  <div className="max-w-[85%] bg-muted text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm shadow-sm">
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2">
+                      <ReactMarkdown>{text}</ReactMarkdown>
                     </div>
-                  )}
+                    {m.citations && m.citations.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {m.citations.map(c => (
+                          <Badge key={c.id} variant="outline" className="text-[10px] bg-background/60">
+                            {(c.authors?.split(",")[0] || "—")}, {c.year || "—"} · PEDro {c.pedro_score ?? "—"}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
