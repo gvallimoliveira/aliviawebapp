@@ -99,6 +99,7 @@ const AssessmentView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { t, language, toggleLanguage } = useLanguage();
+  const { hasAccess: hasAgentAccess } = useClinicalAgentAccess();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const patientParam = searchParams.get("patient");
