@@ -440,59 +440,62 @@ const AssessmentView = () => {
             </span>
           </div>
         )}
-        {/* Breadcrumb trail */}
-        {assessment.patient_name && (
-          <nav aria-label="breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground -mb-2 flex-wrap">
-            <button
-              onClick={goBack}
-              className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
-              title={isPt ? "Voltar para o paciente" : "Back to patient"}
-            >
-              <User className="h-3 w-3" />
-              <span className="font-medium">{assessment.patient_name}</span>
-            </button>
-            <ChevronRight className="h-3 w-3 opacity-50" />
-            <span className="capitalize">
-              {assessment.type === "premium" ? (isPt ? "Avaliação Premium" : "Premium Assessment") : assessment.type === "professional" ? (isPt ? "Avaliação Pro" : "Pro Assessment") : (isPt ? "Avaliação" : "Assessment")}
-            </span>
-            <ChevronRight className="h-3 w-3 opacity-50" />
-            <span>
-              {new Date(assessment.created_at).toLocaleDateString(isPt ? "pt-BR" : "en-US", { day: "2-digit", month: "short", year: "numeric" })}
-            </span>
-          </nav>
-        )}
-
-        {/* Editar (manual) + Excluir. Voltar + Nova Avaliação ficam no rodapé. */}
-        {!isDemo && user && (
-          <div className="flex items-center justify-end gap-2 flex-wrap -mt-1">
-            {assessment.anamnesis_data?.manualEntry && (assessment.professional_id || assessment.clinic_id) && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setEditOpen(true)}
-              >
-                <Pencil className="h-4 w-4" />
-                {isPt ? "Editar avaliação" : "Edit assessment"}
-              </Button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="px-2" aria-label={isPt ? "Mais ações" : "More actions"}>
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem
-                  disabled={deleting}
-                  onClick={() => setDeleteDialogOpen(true)}
-                  className="text-destructive focus:text-destructive"
+        {/* Breadcrumb + ações na mesma linha para evitar gap vertical */}
+        {(assessment.patient_name || (!isDemo && user)) && (
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            {assessment.patient_name ? (
+              <nav aria-label="breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap min-w-0">
+                <button
+                  onClick={goBack}
+                  className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                  title={isPt ? "Voltar para o paciente" : "Back to patient"}
                 >
-                  {deleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
-                  {isPt ? "Excluir avaliação" : "Delete assessment"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <User className="h-3 w-3" />
+                  <span className="font-medium">{assessment.patient_name}</span>
+                </button>
+                <ChevronRight className="h-3 w-3 opacity-50" />
+                <span className="capitalize">
+                  {assessment.type === "premium" ? (isPt ? "Avaliação Premium" : "Premium Assessment") : assessment.type === "professional" ? (isPt ? "Avaliação Pro" : "Pro Assessment") : (isPt ? "Avaliação" : "Assessment")}
+                </span>
+                <ChevronRight className="h-3 w-3 opacity-50" />
+                <span>
+                  {new Date(assessment.created_at).toLocaleDateString(isPt ? "pt-BR" : "en-US", { day: "2-digit", month: "short", year: "numeric" })}
+                </span>
+              </nav>
+            ) : <span />}
+
+            {!isDemo && user && (
+              <div className="flex items-center justify-end gap-2 shrink-0">
+                {assessment.anamnesis_data?.manualEntry && (assessment.professional_id || assessment.clinic_id) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setEditOpen(true)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    {isPt ? "Editar avaliação" : "Edit assessment"}
+                  </Button>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="px-2" aria-label={isPt ? "Mais ações" : "More actions"}>
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem
+                      disabled={deleting}
+                      onClick={() => setDeleteDialogOpen(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      {deleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                      {isPt ? "Excluir avaliação" : "Delete assessment"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
           </div>
         )}
 
