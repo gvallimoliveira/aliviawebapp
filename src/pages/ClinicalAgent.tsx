@@ -516,9 +516,10 @@ const ClinicalAgent = () => {
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
               }}
               placeholder="Pergunte ao agente…"
-              className="min-h-[44px] max-h-[160px] resize-none rounded-xl text-sm"
+              className="min-h-[44px] max-h-[160px] resize-none rounded-xl"
+              style={{ fontSize: "16px" }}
               rows={1}
-              disabled={sending || !activeThread}
+              disabled={sending || !activeThread || creatingThread}
             />
             <Button
               size="icon"
