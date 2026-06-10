@@ -54,10 +54,13 @@ const ClinicalAgent = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [creatingThread, setCreatingThread] = useState(false);
   const [loadingThreads, setLoadingThreads] = useState(true);
   const [patients, setPatients] = useState<Array<{ id: string; full_name: string }>>([]);
   const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [showCitations, setShowCitations] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [generatingHep, setGeneratingHep] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Access gate
