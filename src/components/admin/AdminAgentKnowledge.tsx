@@ -55,7 +55,7 @@ export default function AdminAgentKnowledge() {
     }
   };
 
-  useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, [status, nicheFilter]);
+  useEffect(() => { if (!authLoading && user) fetchList(); /* eslint-disable-next-line */ }, [status, nicheFilter, authLoading, user?.id]);
 
   const handleIngest = async () => {
     setIngesting(true);
