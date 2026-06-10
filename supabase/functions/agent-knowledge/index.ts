@@ -158,16 +158,29 @@ serve(async (req) => {
       }
       const prompt = `Você é um curador de evidências em fisioterapia.
 
-Liste ${count} estudos REAIS, de alta qualidade, da base PEDro (https://pedro.org.au) para o nicho:
+Liste ${count} estudos REAIS, de alta qualidade (preferencialmente indexados na base PEDro) para o nicho:
 "${NICHE_DESCRIPTIONS[niche]}"
 
 CRITÉRIOS OBRIGATÓRIOS:
 - PEDro score ≥ 7/10 (se RCT). Para revisões sistemáticas/meta-análises, pode listar mesmo sem PEDro (usar 8 como padrão).
 - Priorize meta-análises, revisões sistemáticas e RCTs recentes (últimos 15 anos).
-- NÃO invente estudos. Se não tiver certeza do estudo, NÃO inclua.
-- Para cada estudo: title, authors (Sobrenome A, Sobrenome B), year (int), journal, pedro_score (int 0-10), study_type ("RCT" | "Systematic Review" | "Meta-analysis"), abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado), key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável), doi (se souber), source_url (URL da PEDro/PubMed se souber, senão null).
+- NÃO invente estudos. Se não tiver certeza absoluta da existência do estudo, NÃO o inclua.
+- NÃO gere URLs para PEDro (search.pedro.org.au, pedro.org.au/...) — os IDs internos da PEDro não são previsíveis e qualquer link fabricado retorna 404. Use SOMENTE DOI e/ou PMID verificáveis.
+- Campos por estudo:
+  • title (string)
+  • authors (string "Sobrenome A, Sobrenome B")
+  • year (int)
+  • journal (string)
+  • pedro_score (int 0-10)
+  • study_type ("RCT" | "Systematic Review" | "Meta-analysis")
+  • abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado)
+  • key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável)
+  • doi (string, formato "10.xxxx/yyyy" — sem "https://doi.org/". Null se não souber.)
+  • pmid (string apenas numérica, ex: "31234567". Null se não souber.)
+- NÃO inclua o campo "url" / "source_url".
 
 Responda APENAS um JSON array. Sem texto adicional.`;
+
 
       const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
