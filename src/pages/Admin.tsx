@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, ShieldCheck, Loader2, LayoutDashboard, Users, UserCheck, FileText, MessageSquare, Mail } from "lucide-react";
+import { Trash2, Plus, ShieldCheck, Loader2, LayoutDashboard, Users, UserCheck, FileText, MessageSquare, Mail, Brain } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import ProfessionalManagement from "@/components/admin/ProfessionalManagement";
@@ -19,6 +19,7 @@ import PartnerManagement from "@/components/admin/PartnerManagement";
 import BlogManagement from "@/components/admin/BlogManagement";
 import SupportTicketManagement from "@/components/admin/SupportTicketManagement";
 import LeadManagement from "@/components/admin/LeadManagement";
+import AdminAgentKnowledge from "@/components/admin/AdminAgentKnowledge";
 
 interface VipUser {
   id: string;
@@ -243,6 +244,10 @@ const Admin = () => {
               <Mail className="h-3.5 w-3.5" />
               Leads
             </TabsTrigger>
+            <TabsTrigger value="agent" className="gap-1.5">
+              <Brain className="h-3.5 w-3.5" />
+              Agente
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -346,6 +351,10 @@ const Admin = () => {
 
           <TabsContent value="leads">
             <LeadManagement language={language} />
+          </TabsContent>
+
+          <TabsContent value="agent">
+            <AdminAgentKnowledge />
           </TabsContent>
         </Tabs>
       </main>
