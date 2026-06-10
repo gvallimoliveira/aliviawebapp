@@ -483,21 +483,6 @@ const AssessmentView = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                {hasAgentAccess && !isDemo && (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      try {
-                        const seed = `Discutir caso (anonimizado):\n- Hipótese atual: ${getDisplayHypothesis(assessment as any) || (assessment as any)?.diagnosis?.condition || "—"}\n- Regiões de dor: ${regions.join(", ") || "—"}\n- Dor (0-10): ${(assessment as any)?.pain_score ?? "—"}\n- Tipo de avaliação: ${(assessment as any)?.type || "—"}\n\nO que você sugere como próximos passos baseados em evidências?`;
-                        sessionStorage.setItem("agent_seed_input", seed);
-                      } catch {}
-                      navigate("/agente");
-                    }}
-                  >
-                    <Brain className="h-4 w-4 mr-2" />
-                    {isPt ? "Discutir com agente" : "Discuss with agent"}
-                  </DropdownMenuItem>
-                )}
-                {hasAgentAccess && !isDemo && <DropdownMenuSeparator />}
                 <DropdownMenuItem
                   disabled={deleting}
                   onClick={() => setDeleteDialogOpen(true)}
@@ -508,6 +493,7 @@ const AssessmentView = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
           </div>
 
         )}
