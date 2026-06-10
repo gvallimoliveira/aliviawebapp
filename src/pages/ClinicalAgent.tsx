@@ -47,6 +47,7 @@ const ClinicalAgent = () => {
   const [searchParams] = useSearchParams();
   const initialPatientId = searchParams.get("patient");
   const { hasAccess, isBetaInternal, checked } = useClinicalAgentAccess();
+  const { activeClinic, isClinicMode } = useClinic();
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
