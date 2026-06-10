@@ -8,7 +8,8 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2, Trash2, ChevronRight, User, Pencil, Brain } from "lucide-react";
+import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2, Trash2, ChevronRight, User, Pencil, Brain, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import ManualAssessmentModal from "@/components/dashboard/ManualAssessmentModal";
 import {
@@ -463,7 +464,7 @@ const AssessmentView = () => {
 
         {/* Editar (manual) + Excluir. Voltar + Nova Avaliação ficam no rodapé. */}
         {!isDemo && user && (
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 flex-wrap">
             {assessment.anamnesis_data?.manualEntry && (assessment.professional_id || assessment.clinic_id) && (
               <Button
                 variant="outline"
@@ -475,35 +476,40 @@ const AssessmentView = () => {
                 {isPt ? "Editar avaliação" : "Edit assessment"}
               </Button>
             )}
-            {hasAgentAccess && !isDemo && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => {
-                  try {
-                    const seed = `Discutir caso (anonimizado):\n- Hipótese atual: ${getDisplayHypothesis(assessment as any) || (assessment as any)?.diagnosis?.condition || "—"}\n- Regiões de dor: ${regions.join(", ") || "—"}\n- Dor (0-10): ${(assessment as any)?.pain_score ?? "—"}\n- Tipo de avaliação: ${(assessment as any)?.type || "—"}\n\nO que você sugere como próximos passos baseados em evidências?`;
-                    sessionStorage.setItem("agent_seed_input", seed);
-                  } catch {}
-                  navigate("/agente");
-                }}
-                title={isPt ? "Discutir este caso com o agente clínico (dados anonimizados)" : "Discuss with clinical agent"}
-              >
-                <Brain className="h-4 w-4" />
-                {isPt ? "Discutir com agente" : "Discuss with agent"}
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-              disabled={deleting}
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              {isPt ? "Excluir avaliação" : "Delete assessment"}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="px-2" aria-label={isPt ? "Mais ações" : "More actions"}>
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {hasAgentAccess && !isDemo && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      try {
+                        const seed = `Discutir caso (anonimizado):\n- Hipótese atual: ${getDisplayHypothesis(assessment as any) || (assessment as any)?.diagnosis?.condition || "—"}\n- Regiões de dor: ${regions.join(", ") || "—"}\n- Dor (0-10): ${(assessment as any)?.pain_score ?? "—"}\n- Tipo de avaliação: ${(assessment as any)?.type || "—"}\n\nO que você sugere como próximos passos baseados em evidências?`;
+                        sessionStorage.setItem("agent_seed_input", seed);
+                      } catch {}
+                      navigate("/agente");
+                    }}
+                  >
+                    <Brain className="h-4 w-4 mr-2" />
+                    {isPt ? "Discutir com agente" : "Discuss with agent"}
+                  </DropdownMenuItem>
+                )}
+                {hasAgentAccess && !isDemo && <DropdownMenuSeparator />}
+                <DropdownMenuItem
+                  disabled={deleting}
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  {deleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                  {isPt ? "Excluir avaliação" : "Delete assessment"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
+
         )}
 
         {editOpen && assessment && (
