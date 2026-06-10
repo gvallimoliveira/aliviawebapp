@@ -407,8 +407,8 @@ const ClinicalAgent = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72">
-              <ThreadList />
+            <SheetContent side="left" className="p-0 w-[85vw] max-w-xs [&>button]:hidden">
+              <ThreadList withClose />
             </SheetContent>
           </Sheet>
 
