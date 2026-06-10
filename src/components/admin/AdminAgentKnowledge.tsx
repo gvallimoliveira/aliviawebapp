@@ -28,6 +28,7 @@ interface Article {
 }
 
 export default function AdminAgentKnowledge() {
+  const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<"pending" | "approved">("pending");
   const [nicheFilter, setNicheFilter] = useState<string>("all");
   const [ingestNiche, setIngestNiche] = useState<string>(AGENT_NICHES[0].slug);
@@ -37,15 +38,18 @@ export default function AdminAgentKnowledge() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const fetchList = async () => {
+    if (!user) return;
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("agent-knowledge", {
         body: { action: "list", status, niche: nicheFilter !== "all" ? nicheFilter : undefined },
       });
-      if (error) throw error;
+      if (error) throw new Error(error.message || "Falha ao consultar artigos");
+      if (data?.error) throw new Error(data.error);
       setArticles(data?.articles || []);
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      console.error("[AdminAgentKnowledge] list error", e);
+      toast({ title: "Erro ao listar artigos", description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
