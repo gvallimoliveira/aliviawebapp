@@ -377,7 +377,7 @@ const ClinicalAgent = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <Sheet>
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
                 <Menu className="h-5 w-5" />
@@ -390,7 +390,7 @@ const ClinicalAgent = () => {
 
 
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold truncate">{activeThread?.title || "Agente Clínico"}</h1>
+            <h1 className="text-sm font-semibold truncate">{activeThread?.title || (creatingThread ? "Criando conversa…" : "Agente Clínico")}</h1>
             {linkedPatient && (
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Badge variant="secondary" className="text-[10px] gap-1">
@@ -406,6 +406,20 @@ const ClinicalAgent = () => {
           {activeThread && !linkedPatient && (
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowPatientPicker(true)}>
               <UserPlus className="h-3.5 w-3.5" /> Vincular paciente
+            </Button>
+          )}
+
+          {activeThread && linkedPatient && (
+            <Button
+              variant="default"
+              size="sm"
+              className="gap-1.5"
+              onClick={generateHep}
+              disabled={generatingHep}
+              title="Gera um HEP real (com link) baseado na última avaliação deste paciente"
+            >
+              {generatingHep ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              Gerar HEP
             </Button>
           )}
 
