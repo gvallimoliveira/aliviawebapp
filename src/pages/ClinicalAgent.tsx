@@ -154,17 +154,53 @@ const ClinicalAgent = () => {
   }, [activeThread?.id]);
 
   const createThread = async (patient_id: string | null) => {
-    const { data, error } = await supabase.functions.invoke("clinical-agent-threads", {
-      body: { action: "create", patient_id },
-    });
-    if (error || data?.error) {
-      toast.error("Não foi possível criar a conversa");
-      return;
+    setSheetOpen(false);
+    setCreatingThread(true);
+    setMessages([]);
+    setActiveThread(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("clinical-agent-threads", {
+        body: { action: "create", patient_id },
+      });
+      if (error || data?.error) {
+        toast.error("Não foi possível criar a conversa");
+        return;
+      }
+      const newThread = data.thread as Thread;
+      setThreads(prev => [newThread, ...prev]);
+      setActiveThread(newThread);
+      navigate(`/agente/${newThread.id}`, { replace: true });
+    } finally {
+      setCreatingThread(false);
     }
-    const newThread = data.thread as Thread;
-    setThreads(prev => [newThread, ...prev]);
-    setActiveThread(newThread);
-    navigate(`/agente/${newThread.id}`, { replace: true });
+  };
+
+  const generateHep = async () => {
+    if (!activeThread?.patient_id || generatingHep) return;
+    setGeneratingHep(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("agent-generate-hep", {
+        body: { thread_id: activeThread.id, patient_id: activeThread.patient_id },
+      });
+      if (error || data?.error) {
+        const code = data?.error || error?.message;
+        if (code === "no_assessment") toast.error("Este paciente ainda não tem avaliação. Faça uma avaliação antes.");
+        else if (code === "no_professional") toast.error("Apenas profissionais com perfil PRO podem gerar HEP.");
+        else toast.error("Não foi possível gerar o HEP agora.");
+        return;
+      }
+      toast.success("HEP gerado!");
+      // Reload messages to include the assistant note with the link
+      const { data: msgs } = await supabase
+        .from("agent_messages")
+        .select("id, role, parts, citations, created_at")
+        .eq("thread_id", activeThread.id)
+        .order("created_at", { ascending: true });
+      setMessages((msgs || []) as any);
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    } finally {
+      setGeneratingHep(false);
+    }
   };
 
   const deleteThread = async (id: string) => {
