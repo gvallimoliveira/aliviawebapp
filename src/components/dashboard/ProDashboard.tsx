@@ -956,7 +956,6 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </Card>
       ))}
 
-      {/* Generate Link — hidden when in clinic tab layout (has own tab) */}
       {/* Clinical Agent launcher (beta — gated) */}
       {hasAgentAccess && !isSimulated && (
         <Card
