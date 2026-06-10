@@ -87,12 +87,30 @@ const ClinicalAgent = () => {
         .select("id, title, patient_id, archived, updated_at")
         .eq("user_id", user.id).eq("archived", false)
         .order("updated_at", { ascending: false });
-      const ptRes: any = await sb.from("patients")
-        .select("id, full_name").eq("user_id", user.id).order("full_name");
+
+      // Load patients matching the user's professional/clinic context
+      // (patients table uses professional_id and clinic_id, NOT user_id)
+      let professionalId: string | null = null;
+      const { data: proRow } = await sb.from("professionals")
+        .select("id").eq("user_id", user.id).maybeSingle();
+      professionalId = proRow?.id || null;
+
+      const clinicId = isClinicMode && activeClinic ? activeClinic.clinic_id : null;
+
+      let pt: Array<{ id: string; full_name: string }> = [];
+      if (clinicId) {
+        const { data } = await sb.from("patients")
+          .select("id, full_name").eq("clinic_id", clinicId).order("full_name");
+        pt = data || [];
+      } else if (professionalId) {
+        const { data } = await sb.from("patients")
+          .select("id, full_name").eq("professional_id", professionalId).order("full_name");
+        pt = data || [];
+      }
+
       const th = thRes.data as Thread[] | null;
-      const pt = ptRes.data as Array<{ id: string; full_name: string }> | null;
       setThreads(th || []);
-      setPatients(pt || []);
+      setPatients(pt);
       setLoadingThreads(false);
 
       // Bootstrap thread selection
@@ -104,7 +122,6 @@ const ClinicalAgent = () => {
           navigate("/agente", { replace: true });
         }
       } else if (initialPatientId) {
-        // create thread linked to this patient
         await createThread(initialPatientId);
       } else if ((th || []).length > 0) {
         navigate(`/agente/${th![0].id}`, { replace: true });
@@ -112,7 +129,7 @@ const ClinicalAgent = () => {
         await createThread(null);
       }
     })();
-  }, [user, hasAccess]);
+  }, [user, hasAccess, isClinicMode, activeClinic?.clinic_id]);
 
   // Load messages when active thread changes
   useEffect(() => {
