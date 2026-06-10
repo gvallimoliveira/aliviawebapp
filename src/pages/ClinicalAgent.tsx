@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,6 +47,7 @@ const ClinicalAgent = () => {
   const [searchParams] = useSearchParams();
   const initialPatientId = searchParams.get("patient");
   const { hasAccess, isBetaInternal, checked } = useClinicalAgentAccess();
+  const { activeClinic, isClinicMode } = useClinic();
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
@@ -85,12 +87,30 @@ const ClinicalAgent = () => {
         .select("id, title, patient_id, archived, updated_at")
         .eq("user_id", user.id).eq("archived", false)
         .order("updated_at", { ascending: false });
-      const ptRes: any = await sb.from("patients")
-        .select("id, full_name").eq("user_id", user.id).order("full_name");
+
+      // Load patients matching the user's professional/clinic context
+      // (patients table uses professional_id and clinic_id, NOT user_id)
+      let professionalId: string | null = null;
+      const { data: proRow } = await sb.from("professionals")
+        .select("id").eq("user_id", user.id).maybeSingle();
+      professionalId = proRow?.id || null;
+
+      const clinicId = isClinicMode && activeClinic ? activeClinic.clinic_id : null;
+
+      let pt: Array<{ id: string; full_name: string }> = [];
+      if (clinicId) {
+        const { data } = await sb.from("patients")
+          .select("id, full_name").eq("clinic_id", clinicId).order("full_name");
+        pt = data || [];
+      } else if (professionalId) {
+        const { data } = await sb.from("patients")
+          .select("id, full_name").eq("professional_id", professionalId).order("full_name");
+        pt = data || [];
+      }
+
       const th = thRes.data as Thread[] | null;
-      const pt = ptRes.data as Array<{ id: string; full_name: string }> | null;
       setThreads(th || []);
-      setPatients(pt || []);
+      setPatients(pt);
       setLoadingThreads(false);
 
       // Bootstrap thread selection
@@ -102,7 +122,6 @@ const ClinicalAgent = () => {
           navigate("/agente", { replace: true });
         }
       } else if (initialPatientId) {
-        // create thread linked to this patient
         await createThread(initialPatientId);
       } else if ((th || []).length > 0) {
         navigate(`/agente/${th![0].id}`, { replace: true });
@@ -110,7 +129,7 @@ const ClinicalAgent = () => {
         await createThread(null);
       }
     })();
-  }, [user, hasAccess]);
+  }, [user, hasAccess, isClinicMode, activeClinic?.clinic_id]);
 
   // Load messages when active thread changes
   useEffect(() => {
@@ -305,6 +324,15 @@ const ClinicalAgent = () => {
       <main className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Header */}
         <header className="border-b border-border/40 bg-card/60 backdrop-blur-sm px-4 py-3 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-9 w-9 shrink-0"
+            onClick={() => navigate("/dashboard")}
+            title="Voltar ao dashboard"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
@@ -315,6 +343,7 @@ const ClinicalAgent = () => {
               <ThreadList />
             </SheetContent>
           </Sheet>
+
 
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold truncate">{activeThread?.title || "Agente Clínico"}</h1>
@@ -391,17 +420,21 @@ const ClinicalAgent = () => {
                 );
               }
               return (
-                <div key={m.id} className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown>{text}</ReactMarkdown>
-                  {m.citations && m.citations.length > 0 && (
-                    <div className="not-prose mt-2 flex flex-wrap gap-1">
-                      {m.citations.map(c => (
-                        <Badge key={c.id} variant="outline" className="text-[10px]">
-                          {(c.authors?.split(",")[0] || "—")}, {c.year || "—"} · PEDro {c.pedro_score ?? "—"}
-                        </Badge>
-                      ))}
+                <div key={m.id} className="flex justify-start">
+                  <div className="max-w-[85%] bg-muted text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm shadow-sm">
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2">
+                      <ReactMarkdown>{text}</ReactMarkdown>
                     </div>
-                  )}
+                    {m.citations && m.citations.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {m.citations.map(c => (
+                          <Badge key={c.id} variant="outline" className="text-[10px] bg-background/60">
+                            {(c.authors?.split(",")[0] || "—")}, {c.year || "—"} · PEDro {c.pedro_score ?? "—"}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
