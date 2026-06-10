@@ -338,15 +338,15 @@ const ClinicalAgent = () => {
 
   return (
     <div className="h-screen w-full flex bg-background overflow-hidden relative">
-      {/* Background logo (dessaturada) */}
+      {/* Background logo (suave) */}
       <div
-        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04] z-0"
+        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.08] z-0"
         aria-hidden
       >
         <img
           src={logoAlivia}
           alt=""
-          className="w-[60vmin] max-w-[600px] grayscale"
+          className="w-[70vmin] max-w-[640px]"
         />
       </div>
 
