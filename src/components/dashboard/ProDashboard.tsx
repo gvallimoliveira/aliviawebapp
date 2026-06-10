@@ -37,6 +37,8 @@ import SoloUpgradeBanner from "./SoloUpgradeBanner";
 import ExportDataCard from "./ExportDataCard";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
+import { Brain } from "lucide-react";
 
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp, FileArchive } from "lucide-react";
@@ -121,6 +123,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { hasAccess: hasAgentAccess, isBetaInternal: agentBetaInternal } = useClinicalAgentAccess();
 
   const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean } | null>(null);
   const [subLoading, setSubLoading] = useState(true);
@@ -952,6 +955,29 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           </CardContent>
         </Card>
       ))}
+
+      {/* Clinical Agent launcher (beta — gated) */}
+      {hasAgentAccess && !isSimulated && (
+        <Card
+          className="cursor-pointer border-primary/30 bg-gradient-to-br from-primary/[0.06] to-transparent hover:border-primary/60 hover:shadow-md transition-all group"
+          onClick={() => navigate("/agente")}
+        >
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <Brain className="h-4 w-4 text-primary" />
+              </div>
+              Agente de Raciocínio Clínico
+              <Badge variant="outline" className="ml-1 text-[10px] border-primary/30 text-primary">
+                {agentBetaInternal ? "Beta interno" : "Beta"}
+              </Badge>
+            </CardTitle>
+            <CardDescription className="text-sm">
+              Converse com o agente para apoiar raciocínio clínico, discutir pacientes (com anonimização automática) e gerar rascunhos de HEP baseados em evidências.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       {/* Generate Link — hidden when in clinic tab layout (has own tab) */}
       {!isSimulated && !hideForClinicTabs && (
