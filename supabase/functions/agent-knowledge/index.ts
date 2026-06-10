@@ -214,6 +214,21 @@ Responda APENAS um JSON array. Sem texto adicional.`;
           if (!it.title || isNaN(pedro) || pedro < 7) continue;
           const text = [it.title, it.abstract, it.key_findings].filter(Boolean).join("\n\n");
           const vec = await embed(LOVABLE_API_KEY, text);
+          // Clean DOI (strip any url prefix the model may have added)
+          const cleanDoi = typeof it.doi === "string"
+            ? it.doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "").trim() || null
+            : null;
+          const pmid = typeof it.pmid === "string" || typeof it.pmid === "number"
+            ? String(it.pmid).replace(/[^0-9]/g, "") || null
+            : null;
+          // Verifiable source URL: prefer DOI, then PubMed PMID, then PubMed title search.
+          // We intentionally never store fabricated PEDro deep-links.
+          const sourceUrl = cleanDoi
+            ? `https://doi.org/${cleanDoi}`
+            : pmid
+              ? `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`
+              : `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(String(it.title))}`;
+
           const row: any = {
             title: String(it.title).slice(0, 500),
             authors: it.authors || null,
@@ -224,8 +239,8 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             niche_tags: [niche],
             abstract: it.abstract || null,
             key_findings: it.key_findings || null,
-            doi: it.doi || null,
-            source_url: it.source_url || null,
+            doi: cleanDoi,
+            source_url: sourceUrl,
             approved: false,
             added_by: user.id,
           };
