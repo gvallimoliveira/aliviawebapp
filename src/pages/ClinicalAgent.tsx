@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
