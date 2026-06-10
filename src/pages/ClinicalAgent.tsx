@@ -316,7 +316,7 @@ const ClinicalAgent = () => {
                 className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition ${
                   active ? "bg-primary/10 text-foreground" : "hover:bg-muted/50 text-muted-foreground"
                 }`}
-                onClick={() => { setActiveThread(t); navigate(`/agente/${t.id}`); }}
+                onClick={() => { setActiveThread(t); setSheetOpen(false); navigate(`/agente/${t.id}`); }}
               >
                 <div className="flex-1 min-w-0">
                   <div className="truncate font-medium">{t.title}</div>
