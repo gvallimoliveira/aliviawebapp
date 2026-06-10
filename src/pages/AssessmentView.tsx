@@ -482,7 +482,7 @@ const AssessmentView = () => {
                 className="gap-1.5"
                 onClick={() => {
                   try {
-                    const seed = `Discutir caso (anonimizado):\n- Hipótese atual: ${getDisplayHypothesis(assessment as any)?.text || (assessment as any)?.diagnosis?.condition || "—"}\n- Regiões de dor: ${regions.join(", ") || "—"}\n- Dor (0-10): ${(assessment as any)?.pain_score ?? "—"}\n- Tipo de avaliação: ${(assessment as any)?.type || "—"}\n\nO que você sugere como próximos passos baseados em evidências?`;
+                    const seed = `Discutir caso (anonimizado):\n- Hipótese atual: ${getDisplayHypothesis(assessment as any) || (assessment as any)?.diagnosis?.condition || "—"}\n- Regiões de dor: ${regions.join(", ") || "—"}\n- Dor (0-10): ${(assessment as any)?.pain_score ?? "—"}\n- Tipo de avaliação: ${(assessment as any)?.type || "—"}\n\nO que você sugere como próximos passos baseados em evidências?`;
                     sessionStorage.setItem("agent_seed_input", seed);
                   } catch {}
                   navigate("/agente");
