@@ -54,10 +54,13 @@ const ClinicalAgent = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [creatingThread, setCreatingThread] = useState(false);
   const [loadingThreads, setLoadingThreads] = useState(true);
   const [patients, setPatients] = useState<Array<{ id: string; full_name: string }>>([]);
   const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [showCitations, setShowCitations] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [generatingHep, setGeneratingHep] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Access gate
@@ -151,17 +154,53 @@ const ClinicalAgent = () => {
   }, [activeThread?.id]);
 
   const createThread = async (patient_id: string | null) => {
-    const { data, error } = await supabase.functions.invoke("clinical-agent-threads", {
-      body: { action: "create", patient_id },
-    });
-    if (error || data?.error) {
-      toast.error("Não foi possível criar a conversa");
-      return;
+    setSheetOpen(false);
+    setCreatingThread(true);
+    setMessages([]);
+    setActiveThread(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("clinical-agent-threads", {
+        body: { action: "create", patient_id },
+      });
+      if (error || data?.error) {
+        toast.error("Não foi possível criar a conversa");
+        return;
+      }
+      const newThread = data.thread as Thread;
+      setThreads(prev => [newThread, ...prev]);
+      setActiveThread(newThread);
+      navigate(`/agente/${newThread.id}`, { replace: true });
+    } finally {
+      setCreatingThread(false);
     }
-    const newThread = data.thread as Thread;
-    setThreads(prev => [newThread, ...prev]);
-    setActiveThread(newThread);
-    navigate(`/agente/${newThread.id}`, { replace: true });
+  };
+
+  const generateHep = async () => {
+    if (!activeThread?.patient_id || generatingHep) return;
+    setGeneratingHep(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("agent-generate-hep", {
+        body: { thread_id: activeThread.id, patient_id: activeThread.patient_id },
+      });
+      if (error || data?.error) {
+        const code = data?.error || error?.message;
+        if (code === "no_assessment") toast.error("Este paciente ainda não tem avaliação. Faça uma avaliação antes.");
+        else if (code === "no_professional") toast.error("Apenas profissionais com perfil PRO podem gerar HEP.");
+        else toast.error("Não foi possível gerar o HEP agora.");
+        return;
+      }
+      toast.success("HEP gerado!");
+      // Reload messages to include the assistant note with the link
+      const { data: msgs } = await supabase
+        .from("agent_messages")
+        .select("id, role, parts, citations, created_at")
+        .eq("thread_id", activeThread.id)
+        .order("created_at", { ascending: true });
+      setMessages((msgs || []) as any);
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    } finally {
+      setGeneratingHep(false);
+    }
   };
 
   const deleteThread = async (id: string) => {
@@ -277,7 +316,7 @@ const ClinicalAgent = () => {
                 className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition ${
                   active ? "bg-primary/10 text-foreground" : "hover:bg-muted/50 text-muted-foreground"
                 }`}
-                onClick={() => { setActiveThread(t); navigate(`/agente/${t.id}`); }}
+                onClick={() => { setActiveThread(t); setSheetOpen(false); navigate(`/agente/${t.id}`); }}
               >
                 <div className="flex-1 min-w-0">
                   <div className="truncate font-medium">{t.title}</div>
@@ -299,15 +338,15 @@ const ClinicalAgent = () => {
 
   return (
     <div className="h-screen w-full flex bg-background overflow-hidden relative">
-      {/* Background logo (dessaturada) */}
+      {/* Background logo (suave) */}
       <div
-        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04] z-0"
+        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.08] z-0"
         aria-hidden
       >
         <img
           src={logoAlivia}
           alt=""
-          className="w-[60vmin] max-w-[600px] grayscale"
+          className="w-[70vmin] max-w-[640px]"
         />
       </div>
 
@@ -338,7 +377,7 @@ const ClinicalAgent = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <Sheet>
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
                 <Menu className="h-5 w-5" />
@@ -351,7 +390,7 @@ const ClinicalAgent = () => {
 
 
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold truncate">{activeThread?.title || "Agente Clínico"}</h1>
+            <h1 className="text-sm font-semibold truncate">{activeThread?.title || (creatingThread ? "Criando conversa…" : "Agente Clínico")}</h1>
             {linkedPatient && (
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Badge variant="secondary" className="text-[10px] gap-1">
@@ -367,6 +406,20 @@ const ClinicalAgent = () => {
           {activeThread && !linkedPatient && (
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowPatientPicker(true)}>
               <UserPlus className="h-3.5 w-3.5" /> Vincular paciente
+            </Button>
+          )}
+
+          {activeThread && linkedPatient && (
+            <Button
+              variant="default"
+              size="sm"
+              className="gap-1.5"
+              onClick={generateHep}
+              disabled={generatingHep}
+              title="Gera um HEP real (com link) baseado na última avaliação deste paciente"
+            >
+              {generatingHep ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              Gerar HEP
             </Button>
           )}
 
@@ -427,8 +480,21 @@ const ClinicalAgent = () => {
               return (
                 <div key={m.id} className="flex justify-start">
                   <div className="max-w-[85%] bg-muted text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm shadow-sm">
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2">
-                      <ReactMarkdown>{text}</ReactMarkdown>
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2 prose-a:text-primary prose-a:font-medium">
+                      <ReactMarkdown
+                        components={{
+                          a: ({ href, children }) => (
+                            <a
+                              href={href || "#"}
+                              target={href?.startsWith("http") ? "_blank" : undefined}
+                              rel="noopener noreferrer"
+                              className="text-primary underline underline-offset-2 hover:text-primary/80"
+                            >
+                              {children}
+                            </a>
+                          ),
+                        }}
+                      >{text}</ReactMarkdown>
                     </div>
                     {m.citations && m.citations.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
@@ -463,9 +529,10 @@ const ClinicalAgent = () => {
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
               }}
               placeholder="Pergunte ao agente…"
-              className="min-h-[44px] max-h-[160px] resize-none rounded-xl text-sm"
+              className="min-h-[44px] max-h-[160px] resize-none rounded-xl"
+              style={{ fontSize: "16px" }}
               rows={1}
-              disabled={sending || !activeThread}
+              disabled={sending || !activeThread || creatingThread}
             />
             <Button
               size="icon"

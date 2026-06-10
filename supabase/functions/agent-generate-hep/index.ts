@@ -1,0 +1,245 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const MODEL = "google/gemini-2.5-flash";
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+  try {
+    const authHeader = req.headers.get("Authorization") || "";
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const { data: { user } } = await userClient.auth.getUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { thread_id, patient_id } = await req.json();
+    if (!thread_id || !patient_id) {
+      return new Response(JSON.stringify({ error: "missing_params" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate thread ownership
+    const { data: thread } = await adminClient
+      .from("agent_threads").select("id, user_id, patient_id")
+      .eq("id", thread_id).maybeSingle();
+    if (!thread || thread.user_id !== user.id) {
+      return new Response(JSON.stringify({ error: "thread_not_found" }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Find professional record of the user (required for exercise_programs.professional_id)
+    const { data: pro } = await adminClient
+      .from("professionals").select("id, full_name").eq("user_id", user.id).maybeSingle();
+    if (!pro) {
+      return new Response(JSON.stringify({ error: "no_professional" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Load patient + last assessment
+    const { data: patient } = await adminClient
+      .from("patients").select("id, full_name, birth_date, gender, professional_id, clinic_id")
+      .eq("id", patient_id).maybeSingle();
+    if (!patient) {
+      return new Response(JSON.stringify({ error: "patient_not_found" }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: assessment } = await adminClient
+      .from("assessments")
+      .select("id, anamnesis_data, diagnosis, final_hypothesis_override, pain_score, pain_regions")
+      .eq("patient_id", patient_id)
+      .order("created_at", { ascending: false })
+      .limit(1).maybeSingle();
+    if (!assessment) {
+      return new Response(JSON.stringify({ error: "no_assessment" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Load exercise library (compact)
+    const { data: library } = await adminClient
+      .from("exercise_library")
+      .select("id, name_pt, body_region, category, difficulty");
+
+    const lib = library || [];
+    if (lib.length === 0) {
+      return new Response(JSON.stringify({ error: "library_empty" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Recent conversation context (last 10 messages)
+    const { data: history } = await adminClient
+      .from("agent_messages").select("role, parts")
+      .eq("thread_id", thread_id)
+      .order("created_at", { ascending: false }).limit(10);
+    const convo = (history || []).reverse().map((m: any) => {
+      const text = Array.isArray(m.parts)
+        ? m.parts.filter((p: any) => p.type === "text").map((p: any) => p.text).join(" ")
+        : "";
+      return `[${m.role}] ${text.slice(0, 400)}`;
+    }).join("\n");
+
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "ai_not_configured" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const hypothesis = assessment.final_hypothesis_override || (assessment.diagnosis as any)?.hypothesis || "Não definida";
+    const chiefComplaint = (assessment.anamnesis_data as any)?.chiefComplaint || "";
+    const painRegions = assessment.pain_regions || [];
+
+    const libIndex = lib.map((e: any) =>
+      `${e.id}|${e.name_pt}|${e.body_region}|${e.category}|${e.difficulty}`
+    ).join("\n");
+
+    const prompt = `Você é fisioterapeuta. Selecione 5 a 8 exercícios da BIBLIOTECA abaixo para compor um HEP (programa de exercícios domiciliares) para o paciente, considerando hipótese, queixa, regiões de dor e a conversa recente entre o profissional e o agente.
+
+PACIENTE: ${patient.full_name} (${patient.gender || "—"})
+HIPÓTESE: ${hypothesis}
+QUEIXA PRINCIPAL: ${chiefComplaint}
+REGIÕES DE DOR: ${JSON.stringify(painRegions)}
+DOR (EVA): ${assessment.pain_score ?? "—"}
+
+CONVERSA RECENTE:
+${convo || "(sem histórico)"}
+
+BIBLIOTECA DE EXERCÍCIOS (id|nome|região|categoria|dificuldade):
+${libIndex}
+
+REGRAS:
+- Use APENAS ids existentes na biblioteca.
+- Priorize a região da queixa e o nível de dor (se EVA ≥ 6, comece com exercícios de mobilidade/dor; evite cargas altas).
+- Cubra mobilidade → ativação → fortalecimento progressivo.
+- Inclua sets, reps e frequência realistas (3x/semana, 1x ao dia, etc).
+- Observações curtas (máx 120 caracteres) explicando o objetivo.
+
+Responda APENAS em JSON válido no formato:
+{
+  "items": [
+    { "exercise_id": "uuid", "sets": "3", "reps": "12", "frequency": "3x/semana", "observations": "..." }
+  ],
+  "notes": "Orientação geral curta para o paciente (3-5 frases)."
+}`;
+
+    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: "Você é fisioterapeuta. Responda apenas JSON válido." },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    if (!aiResp.ok) {
+      const errText = await aiResp.text();
+      console.error("[agent-hep] AI error", aiResp.status, errText);
+      return new Response(JSON.stringify({ error: "ai_error" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const aiJson = await aiResp.json();
+    let parsed: any;
+    try {
+      parsed = JSON.parse(aiJson.choices?.[0]?.message?.content || "{}");
+    } catch {
+      parsed = {};
+    }
+
+    const validIds = new Set(lib.map((e: any) => e.id));
+    const items = (parsed.items || [])
+      .filter((it: any) => it?.exercise_id && validIds.has(it.exercise_id))
+      .slice(0, 10);
+
+    if (items.length === 0) {
+      return new Response(JSON.stringify({ error: "ai_no_items" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Create the program
+    const { data: program, error: progErr } = await adminClient
+      .from("exercise_programs")
+      .insert({
+        professional_id: pro.id,
+        assessment_id: assessment.id,
+        patient_name: patient.full_name,
+        notes: parsed.notes || null,
+      })
+      .select("id, token")
+      .single();
+    if (progErr || !program) {
+      console.error("[agent-hep] program insert", progErr);
+      return new Response(JSON.stringify({ error: "program_failed" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const itemsToInsert = items.map((it: any, idx: number) => ({
+      program_id: program.id,
+      exercise_id: it.exercise_id,
+      sets: String(it.sets || "3"),
+      reps: String(it.reps || "10"),
+      frequency: String(it.frequency || "3x/semana"),
+      observations: it.observations ? String(it.observations).slice(0, 240) : null,
+      sort_order: idx,
+    }));
+    await adminClient.from("exercise_program_items").insert(itemsToInsert);
+
+    const hepUrl = `/hep/${program.token}`;
+
+    // Post assistant message in the thread with the link
+    const message = `✅ **HEP gerado com sucesso** com ${items.length} exercícios baseados na última avaliação de ${patient.full_name}.
+
+[👉 Abrir HEP](${hepUrl})
+
+${parsed.notes ? `**Orientação:** ${parsed.notes}` : ""}
+
+Você pode editar o HEP a partir do prontuário do paciente.`;
+
+    await adminClient.from("agent_messages").insert({
+      thread_id, role: "assistant",
+      parts: [{ type: "text", text: message }],
+    });
+    await adminClient.from("agent_threads")
+      .update({ updated_at: new Date().toISOString() }).eq("id", thread_id);
+
+    return new Response(JSON.stringify({
+      url: hepUrl, token: program.token, items_count: items.length,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+  } catch (err: any) {
+    console.error("[agent-generate-hep] fatal", err);
+    return new Response(JSON.stringify({ error: err?.message || "Unknown" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
