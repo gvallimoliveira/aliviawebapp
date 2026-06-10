@@ -8,7 +8,8 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2, Trash2, ChevronRight, User, Pencil } from "lucide-react";
+import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2, Trash2, ChevronRight, User, Pencil, Brain } from "lucide-react";
+import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import ManualAssessmentModal from "@/components/dashboard/ManualAssessmentModal";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
