@@ -655,7 +655,10 @@ const Dashboard = () => {
         {isClinicMode && activeClinic ? (
           /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid" style={{ gridTemplateColumns: canManageClinic ? "repeat(5, 1fr)" : "repeat(4, 1fr)" }}>
+            <TabsList
+              className="w-full grid"
+              style={{ gridTemplateColumns: `repeat(${(canManageClinic ? 5 : 4) + (hasAgentAccess ? 1 : 0)}, 1fr)` }}
+            >
               <TabsTrigger value="agenda" className="gap-1.5 text-xs" data-onboarding="clinic-tab-agenda">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
@@ -670,6 +673,15 @@ const Dashboard = () => {
               <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                 <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
+              {hasAgentAccess && (
+                <TabsTrigger
+                  value="__agente__"
+                  className="gap-1.5 text-xs"
+                  onClick={(e) => { e.preventDefault(); navigate("/agente"); }}
+                >
+                  <Brain className="h-4 w-4" /><span className="hidden sm:inline">Agente</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger value="clinic" className="gap-1.5 text-xs" data-onboarding="clinic-tab-clinic">
                 <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Clínica</span>
               </TabsTrigger>
