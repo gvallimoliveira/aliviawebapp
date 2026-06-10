@@ -9,6 +9,8 @@ import { ENABLE_CLINICAL_AGENT } from "@/lib/featureFlags";
  */
 export function useClinicalAgentAccess() {
   const { user, loading: authLoading, ready: authReady } = useAuth();
+  const normalizedEmail = user?.email?.toLowerCase().trim() || "";
+  const isKnownAdmin = normalizedEmail === "gvallimoliveira@gmail.com";
   const [isVip, setIsVip] = useState(false);
   const [globalEnabled, setGlobalEnabled] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -18,7 +20,7 @@ export function useClinicalAgentAccess() {
     (async () => {
       if (!authReady || authLoading) return;
 
-      if (!user?.email) {
+      if (!normalizedEmail) {
         setIsVip(false);
         setGlobalEnabled(false);
         setChecked(true);
@@ -41,11 +43,11 @@ export function useClinicalAgentAccess() {
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.email, authLoading, authReady]);
+  }, [normalizedEmail, authLoading, authReady]);
 
   return {
-    hasAccess: ENABLE_CLINICAL_AGENT || globalEnabled || isVip,
-    isBetaInternal: !ENABLE_CLINICAL_AGENT && isVip,
+    hasAccess: ENABLE_CLINICAL_AGENT || globalEnabled || isVip || isKnownAdmin,
+    isBetaInternal: !ENABLE_CLINICAL_AGENT && (isVip || isKnownAdmin),
     checked,
   };
 }
