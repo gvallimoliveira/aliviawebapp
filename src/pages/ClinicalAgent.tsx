@@ -7,13 +7,14 @@ import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive,
+  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
@@ -61,6 +62,8 @@ const ClinicalAgent = () => {
   const [showCitations, setShowCitations] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [generatingHep, setGeneratingHep] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Access gate
@@ -225,6 +228,19 @@ const ClinicalAgent = () => {
     setShowPatientPicker(false);
   };
 
+  const saveTitle = async () => {
+    if (!activeThread) return;
+    const newTitle = titleDraft.trim().slice(0, 120);
+    if (!newTitle || newTitle === activeThread.title) { setEditingTitle(false); return; }
+    setActiveThread({ ...activeThread, title: newTitle });
+    setThreads(prev => prev.map(t => t.id === activeThread.id ? { ...t, title: newTitle } : t));
+    setEditingTitle(false);
+    const { error } = await supabase.functions.invoke("clinical-agent-threads", {
+      body: { action: "rename", thread_id: activeThread.id, title: newTitle },
+    });
+    if (error) toast.error("Não foi possível renomear");
+  };
+
   const send = async () => {
     if (!input.trim() || !activeThread || sending) return;
     const text = input.trim();
@@ -294,12 +310,19 @@ const ClinicalAgent = () => {
   }
   if (!hasAccess) return null;
 
-  const ThreadList = () => (
+  const ThreadList = ({ withClose = false }: { withClose?: boolean }) => (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border/40">
-        <Button onClick={() => createThread(null)} className="w-full gap-2" size="sm">
+      <div className="p-3 border-b border-border/40 flex items-center gap-2">
+        <Button onClick={() => createThread(null)} className="flex-1 gap-2" size="sm">
           <Plus className="h-4 w-4" /> Nova conversa
         </Button>
+        {withClose && (
+          <SheetClose asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Fechar">
+              <X className="h-5 w-5" />
+            </Button>
+          </SheetClose>
+        )}
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
@@ -324,7 +347,8 @@ const ClinicalAgent = () => {
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteThread(t.id); }}
-                  className="opacity-0 group-hover:opacity-100 transition p-1 hover:text-destructive"
+                  className="opacity-60 md:opacity-0 md:group-hover:opacity-100 transition p-1 hover:text-destructive"
+                  aria-label="Excluir conversa"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -383,14 +407,47 @@ const ClinicalAgent = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72">
-              <ThreadList />
+            <SheetContent side="left" className="p-0 w-[85vw] max-w-xs [&>button]:hidden">
+              <ThreadList withClose />
             </SheetContent>
           </Sheet>
 
 
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold truncate">{activeThread?.title || (creatingThread ? "Criando conversa…" : "Agente Clínico")}</h1>
+            {editingTitle && activeThread ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  autoFocus
+                  value={titleDraft}
+                  onChange={e => setTitleDraft(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") { e.preventDefault(); saveTitle(); }
+                    if (e.key === "Escape") setEditingTitle(false);
+                  }}
+                  onBlur={saveTitle}
+                  className="h-7 text-sm font-semibold px-2"
+                  maxLength={120}
+                />
+                <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={saveTitle}>
+                  <Check className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!activeThread) return;
+                  setTitleDraft(activeThread.title || "");
+                  setEditingTitle(true);
+                }}
+                className="group flex items-center gap-1.5 min-w-0 max-w-full text-left"
+                disabled={!activeThread}
+                title="Renomear conversa"
+              >
+                <h1 className="text-sm font-semibold truncate">{activeThread?.title || (creatingThread ? "Criando conversa…" : "Agente Clínico")}</h1>
+                {activeThread && <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60 shrink-0" />}
+              </button>
+            )}
             {linkedPatient && (
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Badge variant="secondary" className="text-[10px] gap-1">
