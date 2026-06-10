@@ -7,13 +7,14 @@ import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive,
+  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
