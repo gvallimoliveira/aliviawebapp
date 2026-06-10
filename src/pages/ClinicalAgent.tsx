@@ -124,10 +124,12 @@ const ClinicalAgent = () => {
       } else if (initialPatientId) {
         await createThread(initialPatientId);
       } else if ((th || []).length > 0) {
+        setActiveThread(th![0]);
         navigate(`/agente/${th![0].id}`, { replace: true });
       } else {
         await createThread(null);
       }
+
     })();
   }, [user, hasAccess, isClinicMode, activeClinic?.clinic_id]);
 
