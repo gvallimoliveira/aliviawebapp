@@ -128,15 +128,12 @@ serve(async (req) => {
 
     if (action === "attach_patient") {
       const { thread_id, patient_id } = body;
-      if (patient_id) {
-        const { data: pat } = await adminClient
-          .from("patients").select("user_id").eq("id", patient_id).maybeSingle();
-        if (!pat || pat.user_id !== user.id) {
-          return new Response(JSON.stringify({ error: "patient_forbidden" }), {
-            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
+      if (patient_id && !(await userOwnsPatient(patient_id))) {
+        return new Response(JSON.stringify({ error: "patient_forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
+
       const { error } = await adminClient.from("agent_threads")
         .update({ patient_id: patient_id || null })
         .eq("id", thread_id).eq("user_id", user.id);
