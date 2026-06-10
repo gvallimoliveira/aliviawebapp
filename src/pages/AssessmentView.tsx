@@ -475,6 +475,24 @@ const AssessmentView = () => {
                 {isPt ? "Editar avaliação" : "Edit assessment"}
               </Button>
             )}
+            {hasAgentAccess && !isDemo && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  try {
+                    const seed = `Discutir caso (anonimizado):\n- Hipótese atual: ${getDisplayHypothesis(assessment as any)?.text || (assessment as any)?.diagnosis?.condition || "—"}\n- Regiões de dor: ${regions.join(", ") || "—"}\n- Dor (0-10): ${(assessment as any)?.pain_score ?? "—"}\n- Tipo de avaliação: ${(assessment as any)?.type || "—"}\n\nO que você sugere como próximos passos baseados em evidências?`;
+                    sessionStorage.setItem("agent_seed_input", seed);
+                  } catch {}
+                  navigate("/agente");
+                }}
+                title={isPt ? "Discutir este caso com o agente clínico (dados anonimizados)" : "Discuss with clinical agent"}
+              >
+                <Brain className="h-4 w-4" />
+                {isPt ? "Discutir com agente" : "Discuss with agent"}
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
