@@ -14,6 +14,158 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_messages: {
+        Row: {
+          citations: Json | null
+          created_at: string
+          id: string
+          parts: Json
+          role: string
+          thread_id: string
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          citations?: Json | null
+          created_at?: string
+          id?: string
+          parts?: Json
+          role: string
+          thread_id: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          citations?: Json | null
+          created_at?: string
+          id?: string
+          parts?: Json
+          role?: string
+          thread_id?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "agent_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_settings: {
+        Row: {
+          anonymize_enabled: boolean
+          created_at: string
+          preferred_niches: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anonymize_enabled?: boolean
+          created_at?: string
+          preferred_niches?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anonymize_enabled?: boolean
+          created_at?: string
+          preferred_niches?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      agent_threads: {
+        Row: {
+          archived: boolean
+          clinic_id: string | null
+          created_at: string
+          id: string
+          patient_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean
+          clinic_id?: string | null
+          created_at?: string
+          id?: string
+          patient_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean
+          clinic_id?: string | null
+          created_at?: string
+          id?: string
+          patient_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_threads_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_threads_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_usage_daily: {
+        Row: {
+          message_count: number
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          message_count?: number
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          message_count?: number
+          updated_at?: string
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      app_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       assessment_voice_notes: {
         Row: {
           assessment_id: string | null
@@ -967,6 +1119,66 @@ export type Database = {
           notes?: string | null
           professional_id?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      knowledge_articles: {
+        Row: {
+          abstract: string | null
+          added_by: string | null
+          approved: boolean
+          authors: string | null
+          created_at: string
+          doi: string | null
+          embedding: string | null
+          id: string
+          journal: string | null
+          key_findings: string | null
+          niche_tags: string[]
+          pedro_score: number | null
+          source_url: string | null
+          study_type: string | null
+          title: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          abstract?: string | null
+          added_by?: string | null
+          approved?: boolean
+          authors?: string | null
+          created_at?: string
+          doi?: string | null
+          embedding?: string | null
+          id?: string
+          journal?: string | null
+          key_findings?: string | null
+          niche_tags?: string[]
+          pedro_score?: number | null
+          source_url?: string | null
+          study_type?: string | null
+          title: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          abstract?: string | null
+          added_by?: string | null
+          approved?: boolean
+          authors?: string | null
+          created_at?: string
+          doi?: string | null
+          embedding?: string | null
+          id?: string
+          journal?: string | null
+          key_findings?: string | null
+          niche_tags?: string[]
+          pedro_score?: number | null
+          source_url?: string | null
+          study_type?: string | null
+          title?: string
+          updated_at?: string
+          year?: number | null
         }
         Relationships: []
       }
@@ -2347,6 +2559,27 @@ export type Database = {
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
+      }
+      match_knowledge_articles: {
+        Args: {
+          match_count?: number
+          min_pedro?: number
+          niche_filter?: string[]
+          query_embedding: string
+        }
+        Returns: {
+          authors: string
+          doi: string
+          id: string
+          journal: string
+          key_findings: string
+          pedro_score: number
+          similarity: number
+          source_url: string
+          study_type: string
+          title: string
+          year: number
+        }[]
       }
       revert_assessment_red_flags_dismissal: {
         Args: { _assessment_id: string }
