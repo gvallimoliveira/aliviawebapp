@@ -53,17 +53,33 @@ serve(async (req) => {
       });
     }
 
+    async function userOwnsPatient(patient_id: string): Promise<boolean> {
+      const { data: pat } = await adminClient
+        .from("patients")
+        .select("professional_id, clinic_id")
+        .eq("id", patient_id)
+        .maybeSingle();
+      if (!pat) return false;
+      if (pat.professional_id) {
+        const { data: pro } = await adminClient
+          .from("professionals").select("user_id").eq("id", pat.professional_id).maybeSingle();
+        if (pro?.user_id === user.id) return true;
+      }
+      if (pat.clinic_id) {
+        const { data: mem } = await adminClient
+          .from("clinic_members").select("id")
+          .eq("clinic_id", pat.clinic_id).eq("user_id", user.id).maybeSingle();
+        if (mem) return true;
+      }
+      return false;
+    }
+
     if (action === "create") {
       const { patient_id, clinic_id, title } = body;
-      // Validate patient ownership if provided
-      if (patient_id) {
-        const { data: pat } = await adminClient
-          .from("patients").select("user_id").eq("id", patient_id).maybeSingle();
-        if (!pat || pat.user_id !== user.id) {
-          return new Response(JSON.stringify({ error: "patient_forbidden" }), {
-            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
+      if (patient_id && !(await userOwnsPatient(patient_id))) {
+        return new Response(JSON.stringify({ error: "patient_forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
       const { data, error } = await adminClient.from("agent_threads").insert({
         user_id: user.id,
@@ -76,6 +92,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     if (action === "rename") {
       const { thread_id, title } = body;
