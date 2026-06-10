@@ -8,33 +8,43 @@ import { ENABLE_CLINICAL_AGENT } from "@/lib/featureFlags";
  * Visible if: ENABLE_CLINICAL_AGENT flag is on OR the user is a VIP.
  */
 export function useClinicalAgentAccess() {
-  const { user } = useAuth();
+  const { user, loading: authLoading, ready: authReady } = useAuth();
   const [isVip, setIsVip] = useState(false);
+  const [globalEnabled, setGlobalEnabled] = useState(false);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!authReady || authLoading) return;
+
       if (!user?.email) {
         setIsVip(false);
+        setGlobalEnabled(false);
         setChecked(true);
         return;
       }
-      const { data } = await supabase
-        .from("vip_users")
-        .select("id")
-        .eq("email", user.email.toLowerCase().trim())
-        .maybeSingle();
+
+      const { data, error } = await supabase.functions.invoke("clinical-agent-threads", {
+        body: { action: "access_status" },
+      });
+
       if (!cancelled) {
-        setIsVip(!!data);
+        setIsVip(!!data?.isVip);
+        setGlobalEnabled(!!data?.globalEnabled);
         setChecked(true);
+
+        if (error) {
+          setIsVip(false);
+          setGlobalEnabled(false);
+        }
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.email]);
+  }, [user?.email, authLoading, authReady]);
 
   return {
-    hasAccess: ENABLE_CLINICAL_AGENT || isVip,
+    hasAccess: ENABLE_CLINICAL_AGENT || globalEnabled || isVip,
     isBetaInternal: !ENABLE_CLINICAL_AGENT && isVip,
     checked,
   };
