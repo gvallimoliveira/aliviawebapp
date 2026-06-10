@@ -52,8 +52,9 @@ import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import {
   Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon, Building2,
-  Link2, Copy, Check, Activity, Sparkles,
+  Link2, Copy, Check, Activity, Sparkles, Brain,
 } from "lucide-react";
+import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
@@ -117,6 +118,7 @@ const Dashboard = () => {
   const { t, toggleLanguage, language } = useLanguage();
   const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary, isClinicOwner, setPendingProfessionalSignup } = useClinic();
   const navigate = useNavigate();
+  const { hasAccess: hasAgentAccess } = useClinicalAgentAccess();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
   const convFromUrl = searchParams.get("conv");
@@ -653,7 +655,10 @@ const Dashboard = () => {
         {isClinicMode && activeClinic ? (
           /* ── Clinic Mode: 5 tabs matching demo layout ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid" style={{ gridTemplateColumns: canManageClinic ? "repeat(5, 1fr)" : "repeat(4, 1fr)" }}>
+            <TabsList
+              className="w-full grid"
+              style={{ gridTemplateColumns: `repeat(${(canManageClinic ? 5 : 4) + (hasAgentAccess ? 1 : 0)}, 1fr)` }}
+            >
               <TabsTrigger value="agenda" className="gap-1.5 text-xs" data-onboarding="clinic-tab-agenda">
                 <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
               </TabsTrigger>
@@ -668,6 +673,15 @@ const Dashboard = () => {
               <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                 <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
+              {hasAgentAccess && (
+                <TabsTrigger
+                  value="__agente__"
+                  className="gap-1.5 text-xs"
+                  onClick={(e) => { e.preventDefault(); navigate("/agente"); }}
+                >
+                  <Brain className="h-4 w-4" /><span className="hidden sm:inline">Agente</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger value="clinic" className="gap-1.5 text-xs" data-onboarding="clinic-tab-clinic">
                 <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Clínica</span>
               </TabsTrigger>
@@ -885,7 +899,10 @@ const Dashboard = () => {
             const showInsightsTab = (isProDemo || (hasProAccess && !!professional?.id));
             return (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="w-full grid" style={{ gridTemplateColumns: showInsightsTab ? "repeat(4, 1fr)" : "repeat(3, 1fr)" }}>
+                <TabsList
+                  className="w-full grid"
+                  style={{ gridTemplateColumns: `repeat(${(showInsightsTab ? 4 : 3) + (hasAgentAccess ? 1 : 0)}, 1fr)` }}
+                >
                   <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
                     <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
                   </TabsTrigger>
@@ -900,6 +917,15 @@ const Dashboard = () => {
                   <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                     <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
                   </TabsTrigger>
+                  {hasAgentAccess && (
+                    <TabsTrigger
+                      value="__agente__"
+                      className="gap-1.5 text-xs"
+                      onClick={(e) => { e.preventDefault(); navigate("/agente"); }}
+                    >
+                      <Brain className="h-4 w-4" /><span className="hidden sm:inline">Agente</span>
+                    </TabsTrigger>
+                  )}
                 </TabsList>
                 <TabsContent value="professional" className="space-y-6">
                   {isProDemo && <DemoUpsellBanner section="pro-patients" variant="pro" />}
