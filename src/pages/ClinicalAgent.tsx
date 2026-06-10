@@ -1,0 +1,499 @@
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import {
+  Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
+  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive,
+} from "lucide-react";
+import logoAlivia from "@/assets/logo-alivia.png";
+
+type Thread = {
+  id: string;
+  title: string;
+  patient_id: string | null;
+  archived: boolean;
+  updated_at: string;
+};
+
+type Message = {
+  id: string;
+  role: "user" | "assistant";
+  parts: Array<{ type: string; text?: string }>;
+  citations: Array<{ id: string; title: string; authors?: string; year?: number; pedro_score?: number; doi?: string; source_url?: string }> | null;
+  created_at: string;
+};
+
+const PROMPT_STARTERS = [
+  "Discutir hipótese deste paciente",
+  "Sugerir testes funcionais",
+  "Revisar o HEP atual",
+  "/evidência dor lombar crônica",
+];
+
+const ClinicalAgent = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { threadId } = useParams();
+  const [searchParams] = useSearchParams();
+  const initialPatientId = searchParams.get("patient");
+  const { hasAccess, isBetaInternal, checked } = useClinicalAgentAccess();
+
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [activeThread, setActiveThread] = useState<Thread | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [loadingThreads, setLoadingThreads] = useState(true);
+  const [patients, setPatients] = useState<Array<{ id: string; full_name: string }>>([]);
+  const [showPatientPicker, setShowPatientPicker] = useState(false);
+  const [showCitations, setShowCitations] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Access gate
+  useEffect(() => {
+    if (checked && !hasAccess) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [checked, hasAccess, navigate]);
+
+  // Load threads + patients
+  useEffect(() => {
+    if (!user || !hasAccess) return;
+    (async () => {
+      const [{ data: th }, { data: pt }] = await Promise.all([
+        supabase.from("agent_threads").select("id, title, patient_id, archived, updated_at")
+          .eq("user_id", user.id).eq("archived", false).order("updated_at", { ascending: false }),
+        supabase.from("patients").select("id, full_name").eq("user_id", user.id).order("full_name"),
+      ]);
+      setThreads(th || []);
+      setPatients(pt || []);
+      setLoadingThreads(false);
+
+      // Bootstrap thread selection
+      if (threadId) {
+        const found = (th || []).find(t => t.id === threadId);
+        if (found) {
+          setActiveThread(found);
+        } else {
+          navigate("/agente", { replace: true });
+        }
+      } else if (initialPatientId) {
+        // create thread linked to this patient
+        await createThread(initialPatientId);
+      } else if ((th || []).length > 0) {
+        navigate(`/agente/${th![0].id}`, { replace: true });
+      } else {
+        await createThread(null);
+      }
+    })();
+  }, [user, hasAccess]);
+
+  // Load messages when active thread changes
+  useEffect(() => {
+    if (!activeThread) { setMessages([]); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("agent_messages")
+        .select("id, role, parts, citations, created_at")
+        .eq("thread_id", activeThread.id)
+        .order("created_at", { ascending: true });
+      setMessages((data || []) as any);
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    })();
+  }, [activeThread?.id]);
+
+  const createThread = async (patient_id: string | null) => {
+    const { data, error } = await supabase.functions.invoke("clinical-agent-threads", {
+      body: { action: "create", patient_id },
+    });
+    if (error || data?.error) {
+      toast.error("Não foi possível criar a conversa");
+      return;
+    }
+    const newThread = data.thread as Thread;
+    setThreads(prev => [newThread, ...prev]);
+    setActiveThread(newThread);
+    navigate(`/agente/${newThread.id}`, { replace: true });
+  };
+
+  const deleteThread = async (id: string) => {
+    if (!confirm("Excluir esta conversa?")) return;
+    await supabase.functions.invoke("clinical-agent-threads", {
+      body: { action: "delete", thread_id: id },
+    });
+    setThreads(prev => prev.filter(t => t.id !== id));
+    if (activeThread?.id === id) {
+      navigate("/agente", { replace: true });
+      setActiveThread(null);
+    }
+  };
+
+  const attachPatient = async (patient_id: string | null) => {
+    if (!activeThread) return;
+    await supabase.functions.invoke("clinical-agent-threads", {
+      body: { action: "attach_patient", thread_id: activeThread.id, patient_id },
+    });
+    setActiveThread({ ...activeThread, patient_id });
+    setThreads(prev => prev.map(t => t.id === activeThread.id ? { ...t, patient_id } : t));
+    setShowPatientPicker(false);
+  };
+
+  const send = async () => {
+    if (!input.trim() || !activeThread || sending) return;
+    const text = input.trim();
+    setInput("");
+    setSending(true);
+
+    // Optimistic user message
+    const optimistic: Message = {
+      id: `tmp-${Date.now()}`,
+      role: "user",
+      parts: [{ type: "text", text }],
+      citations: null,
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, optimistic]);
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+
+    const { data, error } = await supabase.functions.invoke("clinical-agent-chat", {
+      body: { thread_id: activeThread.id, message: text },
+    });
+
+    if (error || data?.error) {
+      setMessages(prev => prev.filter(m => m.id !== optimistic.id));
+      const code = data?.error || error?.message;
+      if (code === "quota_exceeded") {
+        toast.error(`Limite diário atingido (${data?.limit || 30} mensagens). Volte amanhã.`);
+      } else if (code === "ai_credits_exhausted") {
+        toast.error("Créditos de IA esgotados. Entre em contato com o admin.");
+      } else if (code === "ai_rate_limit") {
+        toast.error("Muitas requisições. Aguarde alguns segundos.");
+      } else {
+        toast.error("Erro ao enviar mensagem.");
+      }
+      setSending(false);
+      return;
+    }
+
+    // Reload messages from server (gets persisted IDs + assistant + citations)
+    const { data: msgs } = await supabase
+      .from("agent_messages")
+      .select("id, role, parts, citations, created_at")
+      .eq("thread_id", activeThread.id)
+      .order("created_at", { ascending: true });
+    setMessages((msgs || []) as any);
+    setSending(false);
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+
+    // Refresh thread title if changed
+    const { data: th } = await supabase.from("agent_threads")
+      .select("id, title, patient_id, archived, updated_at")
+      .eq("user_id", user!.id).eq("archived", false).order("updated_at", { ascending: false });
+    setThreads(th || []);
+    const updated = (th || []).find(t => t.id === activeThread.id);
+    if (updated) setActiveThread(updated);
+  };
+
+  const linkedPatient = patients.find(p => p.id === activeThread?.patient_id);
+  const allCitations = messages.flatMap(m => m.citations || []);
+  const uniqueCitations = Array.from(new Map(allCitations.map(c => [c.id, c])).values());
+
+  if (!checked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+  if (!hasAccess) return null;
+
+  const ThreadList = () => (
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b border-border/40">
+        <Button onClick={() => createThread(null)} className="w-full gap-2" size="sm">
+          <Plus className="h-4 w-4" /> Nova conversa
+        </Button>
+      </div>
+      <ScrollArea className="flex-1">
+        <div className="p-2 space-y-1">
+          {loadingThreads ? (
+            <div className="p-4 text-center text-xs text-muted-foreground">Carregando…</div>
+          ) : threads.length === 0 ? (
+            <div className="p-4 text-center text-xs text-muted-foreground">Nenhuma conversa ainda.</div>
+          ) : threads.map(t => {
+            const p = patients.find(pp => pp.id === t.patient_id);
+            const active = t.id === activeThread?.id;
+            return (
+              <div
+                key={t.id}
+                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition ${
+                  active ? "bg-primary/10 text-foreground" : "hover:bg-muted/50 text-muted-foreground"
+                }`}
+                onClick={() => { setActiveThread(t); navigate(`/agente/${t.id}`); }}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-medium">{t.title}</div>
+                  {p && <div className="text-[10px] text-primary/80 truncate">📋 {p.full_name}</div>}
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteThread(t.id); }}
+                  className="opacity-0 group-hover:opacity-100 transition p-1 hover:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+
+  return (
+    <div className="h-screen w-full flex bg-background overflow-hidden relative">
+      {/* Background logo (dessaturada) */}
+      <div
+        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04] z-0"
+        aria-hidden
+      >
+        <img
+          src={logoAlivia}
+          alt=""
+          className="w-[60vmin] max-w-[600px] grayscale"
+        />
+      </div>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-72 border-r border-border/40 bg-card/60 backdrop-blur-sm relative z-10 flex-col">
+        <div className="p-4 border-b border-border/40 flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/dashboard")}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h2 className="text-sm font-semibold">Agente Clínico</h2>
+            <Badge variant="outline" className="h-4 text-[9px] px-1.5 mt-0.5">BETA</Badge>
+          </div>
+        </div>
+        <ThreadList />
+      </aside>
+
+      {/* Main chat */}
+      <main className="flex-1 flex flex-col relative z-10 min-w-0">
+        {/* Header */}
+        <header className="border-b border-border/40 bg-card/60 backdrop-blur-sm px-4 py-3 flex items-center gap-2">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-72">
+              <ThreadList />
+            </SheetContent>
+          </Sheet>
+
+          <div className="flex-1 min-w-0">
+            <h1 className="text-sm font-semibold truncate">{activeThread?.title || "Agente Clínico"}</h1>
+            {linkedPatient && (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Badge variant="secondary" className="text-[10px] gap-1">
+                  📋 {linkedPatient.full_name}
+                  <button onClick={() => attachPatient(null)} className="hover:text-destructive">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              </div>
+            )}
+          </div>
+
+          {activeThread && !linkedPatient && (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowPatientPicker(true)}>
+              <UserPlus className="h-3.5 w-3.5" /> Vincular paciente
+            </Button>
+          )}
+
+          {uniqueCitations.length > 0 && (
+            <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setShowCitations(true)}>
+              <BookOpen className="h-3.5 w-3.5" /> {uniqueCitations.length}
+            </Button>
+          )}
+        </header>
+
+        {isBetaInternal && (
+          <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            Modo interno (VIP) — recurso ainda não liberado para o público.
+          </div>
+        )}
+
+        {/* Messages */}
+        <ScrollArea className="flex-1">
+          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+            {messages.length === 0 && (
+              <div className="text-center py-12 space-y-4">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Vamos raciocinar juntos?</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Discuta casos clínicos com base em evidências (PEDro ≥ 7).<br/>
+                    Dados do paciente são anonimizados antes do processamento.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 justify-center pt-4">
+                  {PROMPT_STARTERS.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setInput(s)}
+                      className="px-3 py-1.5 rounded-full text-xs border border-border/60 hover:bg-primary/10 hover:border-primary/40 transition"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {messages.map(m => {
+              const text = m.parts.filter(p => p.type === "text").map(p => p.text).join("\n");
+              if (m.role === "user") {
+                return (
+                  <div key={m.id} className="flex justify-end">
+                    <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2.5 text-sm whitespace-pre-wrap">
+                      {text}
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div key={m.id} className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown>{text}</ReactMarkdown>
+                  {m.citations && m.citations.length > 0 && (
+                    <div className="not-prose mt-2 flex flex-wrap gap-1">
+                      {m.citations.map(c => (
+                        <Badge key={c.id} variant="outline" className="text-[10px]">
+                          {(c.authors?.split(",")[0] || "—")}, {c.year || "—"} · PEDro {c.pedro_score ?? "—"}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {sending && (
+              <div className="flex gap-1 items-center text-muted-foreground text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" /> Pensando…
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+        </ScrollArea>
+
+        {/* Composer */}
+        <div className="border-t border-border/40 bg-card/80 backdrop-blur-sm p-3">
+          <div className="max-w-3xl mx-auto flex items-end gap-2">
+            <Textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+              }}
+              placeholder="Pergunte ao agente…"
+              className="min-h-[44px] max-h-[160px] resize-none rounded-xl text-sm"
+              rows={1}
+              disabled={sending || !activeThread}
+            />
+            <Button
+              size="icon"
+              className="h-11 w-11 rounded-xl shrink-0"
+              onClick={send}
+              disabled={!input.trim() || sending || !activeThread}
+            >
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </div>
+          <p className="max-w-3xl mx-auto text-[10px] text-muted-foreground mt-2 px-1">
+            Dados do paciente são anonimizados antes do processamento por IA. Este é um apoio ao raciocínio — a decisão clínica é sua.
+          </p>
+        </div>
+      </main>
+
+      {/* Patient picker modal */}
+      {showPatientPicker && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowPatientPicker(false)}>
+          <div className="bg-background rounded-2xl shadow-xl w-full max-w-md max-h-[70vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-border/40 flex items-center justify-between">
+              <h3 className="font-semibold text-sm">Vincular paciente</h3>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowPatientPicker(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <ScrollArea className="flex-1">
+              <div className="p-2">
+                {patients.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-muted-foreground">Nenhum paciente cadastrado.</div>
+                ) : patients.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => attachPatient(p.id)}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-primary/10 text-sm"
+                  >
+                    {p.full_name}
+                  </button>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+      )}
+
+      {/* Citations panel */}
+      {showCitations && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowCitations(false)}>
+          <div className="bg-background rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-border/40 flex items-center justify-between">
+              <h3 className="font-semibold text-sm flex items-center gap-2"><BookOpen className="h-4 w-4" /> Evidências citadas</h3>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowCitations(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-3">
+                {uniqueCitations.map(c => (
+                  <div key={c.id} className="border border-border/40 rounded-lg p-3 space-y-1">
+                    <div className="text-sm font-medium">{c.title}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {c.authors || "—"} · {c.year || "—"} · <span className="text-primary">PEDro {c.pedro_score ?? "—"}</span>
+                    </div>
+                    {(c.doi || c.source_url) && (
+                      <a
+                        href={c.source_url || `https://doi.org/${c.doi}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Abrir →
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ClinicalAgent;
