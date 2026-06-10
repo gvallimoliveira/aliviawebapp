@@ -73,14 +73,6 @@ async function loadPatientContext(adminClient: any, patientId: string, userId: s
     .order("created_at", { ascending: false })
     .limit(3);
 
-  const { data: diary } = await adminClient
-    .from("pain_diary_entries")
-    .select("created_at, pain_score, notes")
-    .eq("patient_id", patientId)
-    .order("created_at", { ascending: false })
-    .limit: 7 ? undefined : undefined;
-
-  // fallback if .limit chain above failed (Deno strictness)
   const diaryQuery = await adminClient
     .from("pain_diary_entries")
     .select("created_at, pain_score, notes")
