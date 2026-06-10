@@ -158,16 +158,29 @@ serve(async (req) => {
       }
       const prompt = `Você é um curador de evidências em fisioterapia.
 
-Liste ${count} estudos REAIS, de alta qualidade, da base PEDro (https://pedro.org.au) para o nicho:
+Liste ${count} estudos REAIS, de alta qualidade (preferencialmente indexados na base PEDro) para o nicho:
 "${NICHE_DESCRIPTIONS[niche]}"
 
 CRITÉRIOS OBRIGATÓRIOS:
 - PEDro score ≥ 7/10 (se RCT). Para revisões sistemáticas/meta-análises, pode listar mesmo sem PEDro (usar 8 como padrão).
 - Priorize meta-análises, revisões sistemáticas e RCTs recentes (últimos 15 anos).
-- NÃO invente estudos. Se não tiver certeza do estudo, NÃO inclua.
-- Para cada estudo: title, authors (Sobrenome A, Sobrenome B), year (int), journal, pedro_score (int 0-10), study_type ("RCT" | "Systematic Review" | "Meta-analysis"), abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado), key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável), doi (se souber), source_url (URL da PEDro/PubMed se souber, senão null).
+- NÃO invente estudos. Se não tiver certeza absoluta da existência do estudo, NÃO o inclua.
+- NÃO gere URLs para PEDro (search.pedro.org.au, pedro.org.au/...) — os IDs internos da PEDro não são previsíveis e qualquer link fabricado retorna 404. Use SOMENTE DOI e/ou PMID verificáveis.
+- Campos por estudo:
+  • title (string)
+  • authors (string "Sobrenome A, Sobrenome B")
+  • year (int)
+  • journal (string)
+  • pedro_score (int 0-10)
+  • study_type ("RCT" | "Systematic Review" | "Meta-analysis")
+  • abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado)
+  • key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável)
+  • doi (string, formato "10.xxxx/yyyy" — sem "https://doi.org/". Null se não souber.)
+  • pmid (string apenas numérica, ex: "31234567". Null se não souber.)
+- NÃO inclua o campo "url" / "source_url".
 
 Responda APENAS um JSON array. Sem texto adicional.`;
+
 
       const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -201,6 +214,21 @@ Responda APENAS um JSON array. Sem texto adicional.`;
           if (!it.title || isNaN(pedro) || pedro < 7) continue;
           const text = [it.title, it.abstract, it.key_findings].filter(Boolean).join("\n\n");
           const vec = await embed(LOVABLE_API_KEY, text);
+          // Clean DOI (strip any url prefix the model may have added)
+          const cleanDoi = typeof it.doi === "string"
+            ? it.doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "").trim() || null
+            : null;
+          const pmid = typeof it.pmid === "string" || typeof it.pmid === "number"
+            ? String(it.pmid).replace(/[^0-9]/g, "") || null
+            : null;
+          // Verifiable source URL: prefer DOI, then PubMed PMID, then PubMed title search.
+          // We intentionally never store fabricated PEDro deep-links.
+          const sourceUrl = cleanDoi
+            ? `https://doi.org/${cleanDoi}`
+            : pmid
+              ? `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`
+              : `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(String(it.title))}`;
+
           const row: any = {
             title: String(it.title).slice(0, 500),
             authors: it.authors || null,
@@ -211,8 +239,8 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             niche_tags: [niche],
             abstract: it.abstract || null,
             key_findings: it.key_findings || null,
-            doi: it.doi || null,
-            source_url: it.source_url || null,
+            doi: cleanDoi,
+            source_url: sourceUrl,
             approved: false,
             added_by: user.id,
           };

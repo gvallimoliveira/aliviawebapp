@@ -203,17 +203,21 @@ export default function AdminAgentKnowledge() {
                     {(a.niche_tags || []).map((t) => (
                       <Badge key={t} variant="outline" className="text-[10px]">{AGENT_NICHE_LABEL[t] || t}</Badge>
                     ))}
-                    {a.source_url && (
-                      <a href={a.source_url} target="_blank" rel="noreferrer"
-                         className="text-xs text-primary hover:underline inline-flex items-center gap-1 ml-auto">
-                        Fonte <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
-                    {a.doi && (
-                      <a href={`https://doi.org/${a.doi}`} target="_blank" rel="noreferrer"
-                         className="text-xs text-muted-foreground hover:underline">DOI</a>
-                    )}
+                    {(() => {
+                      const cleanDoi = a.doi?.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
+                      const href = cleanDoi
+                        ? `https://doi.org/${cleanDoi}`
+                        : `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(a.title)}`;
+                      const label = cleanDoi ? "DOI" : "PubMed";
+                      return (
+                        <a href={href} target="_blank" rel="noreferrer"
+                           className="text-xs text-primary hover:underline inline-flex items-center gap-1 ml-auto">
+                          {label} <ExternalLink className="h-3 w-3" />
+                        </a>
+                      );
+                    })()}
                   </div>
+
 
                   {status === "pending" && (
                     <div className="flex gap-2 mt-3 justify-end">
