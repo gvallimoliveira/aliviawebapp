@@ -324,6 +324,15 @@ const ClinicalAgent = () => {
       <main className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Header */}
         <header className="border-b border-border/40 bg-card/60 backdrop-blur-sm px-4 py-3 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-9 w-9 shrink-0"
+            onClick={() => navigate("/dashboard")}
+            title="Voltar ao dashboard"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
@@ -334,6 +343,7 @@ const ClinicalAgent = () => {
               <ThreadList />
             </SheetContent>
           </Sheet>
+
 
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold truncate">{activeThread?.title || "Agente Clínico"}</h1>
