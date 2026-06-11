@@ -291,7 +291,7 @@ const ClinicalAgent = () => {
   };
 
   const deleteThread = async (id: string) => {
-    if (!confirm("Excluir esta conversa?")) return;
+
     await supabase.functions.invoke("clinical-agent-threads", {
       body: { action: "delete", thread_id: id },
     });
