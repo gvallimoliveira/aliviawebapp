@@ -58,21 +58,36 @@ serve(async (req) => {
     }
 
     // Load patient + last assessment
-    const { data: patient } = await adminClient
-      .from("patients").select("id, full_name, birth_date, gender, professional_id, clinic_id")
+    const { data: patient, error: patientErr } = await adminClient
+      .from("patients").select("id, full_name, birth_date, email, professional_id, clinic_id")
       .eq("id", patient_id).maybeSingle();
+    if (patientErr) console.error("[agent-hep] patient query", patientErr);
     if (!patient) {
       return new Response(JSON.stringify({ error: "patient_not_found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { data: assessment } = await adminClient
+    // Match assessments by email (preferred) or name, scoped to professional/clinic
+    let assessmentQuery = adminClient
       .from("assessments")
-      .select("id, anamnesis_data, diagnosis, final_hypothesis_override, pain_score, pain_regions")
-      .eq("patient_id", patient_id)
+      .select("id, anamnesis_data, diagnosis, final_hypothesis, pain_score, pain_regions")
       .order("created_at", { ascending: false })
-      .limit(1).maybeSingle();
+      .limit(1);
+
+    if (patient.email) {
+      assessmentQuery = assessmentQuery.eq("patient_email", patient.email);
+    } else {
+      assessmentQuery = assessmentQuery.eq("patient_name", patient.full_name);
+    }
+    if (patient.clinic_id) {
+      assessmentQuery = assessmentQuery.eq("clinic_id", patient.clinic_id);
+    } else if (patient.professional_id) {
+      assessmentQuery = assessmentQuery.eq("professional_id", patient.professional_id);
+    }
+
+    const { data: assessment, error: assessErr } = await assessmentQuery.maybeSingle();
+    if (assessErr) console.error("[agent-hep] assessment query", assessErr);
     if (!assessment) {
       return new Response(JSON.stringify({ error: "no_assessment" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
