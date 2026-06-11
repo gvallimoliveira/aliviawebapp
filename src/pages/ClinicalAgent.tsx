@@ -95,10 +95,18 @@ function ThreadRow({
     setTimeout(() => { dragging.current = false; }, 0);
   };
   const onTouchCancel = () => {
-    setOffset(revealed ? -REVEAL : 0);
+    // Treat like touchend: keep the reveal if the user dragged past the threshold
+    // (some tablets fire touchcancel when the gesture overlaps native scroll)
+    if (dragging.current) {
+      const shouldReveal = offset < -REVEAL / 2;
+      setRevealed(shouldReveal);
+      setOffset(shouldReveal ? -REVEAL : 0);
+    } else {
+      setOffset(revealed ? -REVEAL : 0);
+    }
     startX.current = null;
     startY.current = null;
-    dragging.current = false;
+    setTimeout(() => { dragging.current = false; }, 0);
   };
   const handleClick = () => {
     if (didSwipe.current) {
@@ -108,23 +116,31 @@ function ThreadRow({
     if (revealed) { setRevealed(false); setOffset(0); return; }
     onOpen();
   };
-  const actionTranslate = Math.max(0, REVEAL + offset);
-  const actionVisible = revealed || offset <= -6;
+  const exposure = Math.max(0, -offset); // px of red area currently exposed
+  const actionVisible = revealed || exposure >= 6;
+  const iconProgress = Math.min(1, exposure / REVEAL);
 
   return (
     <div className="relative overflow-hidden rounded-lg">
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="absolute inset-y-0 right-0 z-0 w-[72px] flex items-center justify-center bg-destructive text-destructive-foreground transition-transform duration-200 ease-out"
+        className="absolute inset-y-0 right-0 z-0 w-[72px] flex items-center justify-center bg-destructive text-destructive-foreground"
         style={{
-          transform: `translateX(${actionTranslate}px)`,
           opacity: actionVisible ? 1 : 0,
           pointerEvents: actionVisible ? "auto" : "none",
+          transition: "opacity 120ms ease-out",
         }}
         aria-label="Excluir conversa"
       >
-        <Trash2 className="h-5 w-5" />
+        <Trash2
+          className="h-5 w-5"
+          style={{
+            opacity: 0.4 + 0.6 * iconProgress,
+            transform: `scale(${0.7 + 0.3 * iconProgress})`,
+            transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease-out",
+          }}
+        />
       </button>
       <div
         className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${
