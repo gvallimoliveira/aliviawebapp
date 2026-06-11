@@ -970,6 +970,7 @@ const Dashboard = () => {
                       </>
                     ) : (
                       <InsightsTab professionalId={professional.id} />
+                      <ProMetricsSection professionalId={professional.id} />
                     )}
                   </TabsContent>
                 )}
