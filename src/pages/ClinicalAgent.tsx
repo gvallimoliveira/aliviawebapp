@@ -291,15 +291,17 @@ const ClinicalAgent = () => {
   };
 
   const deleteThread = async (id: string) => {
-
-    await supabase.functions.invoke("clinical-agent-threads", {
-      body: { action: "delete", thread_id: id },
-    });
     setThreads(prev => prev.filter(t => t.id !== id));
     if (activeThread?.id === id) {
       navigate("/agente", { replace: true });
       setActiveThread(null);
     }
+    const { error } = await supabase.functions.invoke("clinical-agent-threads", {
+      body: { action: "delete", thread_id: id },
+    });
+    if (error) toast.error("Não foi possível excluir.");
+    else toast.success("Conversa excluída");
+
   };
 
   const attachPatient = async (patient_id: string | null) => {
