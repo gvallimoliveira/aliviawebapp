@@ -135,7 +135,7 @@ function scrub(t: any): any {
 async function loadPatientContext(adminClient: any, patientId: string, userId: string) {
   const { data: patient } = await adminClient
     .from("patients")
-    .select("id, full_name, email, birth_date")
+    .select("id, full_name, email, birth_date, professional_id, clinic_id")
     .eq("id", patientId)
     .maybeSingle();
   if (!patient) return null;
@@ -153,28 +153,34 @@ async function loadPatientContext(adminClient: any, patientId: string, userId: s
       patient.email ? `patient_email.eq.${patient.email.replace(/,/g, "%2C")}` : null,
       patient.full_name ? `patient_name.eq.${patient.full_name.replace(/,/g, "%2C")}` : null,
     ].filter(Boolean).join(","))
-    .eq("professional_id", professional?.id || "00000000-0000-0000-0000-000000000000")
     .order("created_at", { ascending: false })
     .limit(5);
+
+  const scopedAssessments = (assessments || []).filter((a: any) => {
+    if (patient.clinic_id) return a.clinic_id === patient.clinic_id;
+    if (patient.professional_id) return a.professional_id === patient.professional_id;
+    if (professional?.id) return a.professional_id === professional.id;
+    return true;
+  });
 
   const { data: heps } = await adminClient
     .from("exercise_programs")
     .select("id, patient_name, notes, created_at, expires_at, assessment_id")
-    .eq("patient_name", patient.full_name)
+    .in("assessment_id", scopedAssessments.map((a: any) => a.id).length ? scopedAssessments.map((a: any) => a.id) : ["00000000-0000-0000-0000-000000000000"])
     .order("created_at", { ascending: false })
     .limit(3);
 
   const diaryQuery = await adminClient
     .from("pain_diary_entries")
     .select("logged_at, created_at, pain_score, notes, assessment_id")
-    .in("assessment_id", (assessments || []).map((a: any) => a.id).length ? (assessments || []).map((a: any) => a.id) : ["00000000-0000-0000-0000-000000000000"])
+    .in("assessment_id", scopedAssessments.map((a: any) => a.id).length ? scopedAssessments.map((a: any) => a.id) : ["00000000-0000-0000-0000-000000000000"])
     .order("logged_at", { ascending: false })
     .limit(7);
 
   const noteQuery = await adminClient
     .from("professional_notes")
     .select("assessment_id, content, created_at, include_in_pdf")
-    .in("assessment_id", (assessments || []).map((a: any) => a.id).length ? (assessments || []).map((a: any) => a.id) : ["00000000-0000-0000-0000-000000000000"])
+    .in("assessment_id", scopedAssessments.map((a: any) => a.id).length ? scopedAssessments.map((a: any) => a.id) : ["00000000-0000-0000-0000-000000000000"])
     .order("created_at", { ascending: false })
     .limit(5);
 
@@ -183,7 +189,7 @@ async function loadPatientContext(adminClient: any, patientId: string, userId: s
     ? Math.floor((Date.now() - new Date(patient.birth_date).getTime()) / (365.25 * 86400000))
     : null;
 
-  const compactAssessments = (assessments || []).map(compactAssessmentForPrompt);
+  const compactAssessments = scopedAssessments.map(compactAssessmentForPrompt);
   const latestAssessment = compactAssessments[0] || null;
 
   return {
