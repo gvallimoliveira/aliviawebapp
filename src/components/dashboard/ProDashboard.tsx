@@ -139,12 +139,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const isSimulated = isSimulatedProp !== undefined ? isSimulatedProp : isSimulatedInternal;
   const [addPatientOpen, setAddPatientOpen] = useState(false);
   const [patientDetailOpen, setPatientDetailOpen] = useState(false);
-  const [metricsCollapsed, setMetricsCollapsed] = useState<boolean>(() => {
-    try { return localStorage.getItem("aliviA:metricsCollapsed:pro") === "1"; } catch { return false; }
-  });
-  useEffect(() => {
-    try { localStorage.setItem("aliviA:metricsCollapsed:pro", metricsCollapsed ? "1" : "0"); } catch {}
-  }, [metricsCollapsed]);
+  // metricsCollapsed removed: metrics now live in the Insights tab.
   const [clinicTherapists, setClinicTherapists] = useState<any[]>([]);
   const [assignTargetByAssessment, setAssignTargetByAssessment] = useState<Record<string, string>>({});
   const [assigningAssessmentId, setAssigningAssessmentId] = useState<string | null>(null);
