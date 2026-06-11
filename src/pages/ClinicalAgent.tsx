@@ -692,7 +692,7 @@ const ClinicalAgent = () => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <ScrollArea className="flex-1">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
               <div className="p-2">
                 {patients.length === 0 ? (
                   <div className="p-6 text-center text-xs text-muted-foreground">Nenhum paciente cadastrado.</div>
@@ -706,7 +706,7 @@ const ClinicalAgent = () => {
                   </button>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         </div>
       )}
