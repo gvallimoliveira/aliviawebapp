@@ -334,27 +334,17 @@ const ClinicalAgent = () => {
             const p = patients.find(pp => pp.id === t.patient_id);
             const active = t.id === activeThread?.id;
             return (
-              <div
+              <ThreadRow
                 key={t.id}
-                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition ${
-                  active ? "bg-primary/10 text-foreground" : "hover:bg-muted/50 text-muted-foreground"
-                }`}
-                onClick={() => { setActiveThread(t); setSheetOpen(false); navigate(`/agente/${t.id}`); }}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="truncate font-medium">{t.title}</div>
-                  {p && <div className="text-[10px] text-primary/80 truncate">📋 {p.full_name}</div>}
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); deleteThread(t.id); }}
-                  className="opacity-60 md:opacity-0 md:group-hover:opacity-100 transition p-1 hover:text-destructive"
-                  aria-label="Excluir conversa"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
+                thread={t}
+                patientName={p?.full_name}
+                active={active}
+                onOpen={() => { setActiveThread(t); setSheetOpen(false); navigate(`/agente/${t.id}`); }}
+                onDelete={() => deleteThread(t.id)}
+              />
             );
           })}
+
         </div>
       </ScrollArea>
     </div>
