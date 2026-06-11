@@ -39,6 +39,7 @@ const ProSchedule = lazy(() => import("@/components/dashboard/ProSchedule"));
 const DailySummaryCard = lazy(() => import("@/components/dashboard/DailySummaryCard"));
 const ClinicOwnerDashboard = lazy(() => import("@/components/dashboard/ClinicOwnerDashboard"));
 const InsightsTab = lazy(() => import("@/components/dashboard/insights/InsightsTab"));
+const ProMetricsSection = lazy(() => import("@/components/dashboard/ProMetricsSection"));
 const FeedbackSurveyCard = lazy(() => import("@/components/dashboard/FeedbackSurveyCard"));
 const FeedbackResultsCard = lazy(() => import("@/components/dashboard/FeedbackResultsCard"));
 const ExportDataCard = lazy(() => import("@/components/dashboard/ExportDataCard"));
@@ -732,6 +733,7 @@ const Dashboard = () => {
                   <InsightsTab clinicId={activeClinic.clinic_id} fullClinicMode />
                   <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={language} />
                   <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={language} />
+                  <ProMetricsSection clinicId={activeClinic.clinic_id} />
                   <ClinicTrialBlockOverlay />
                 </div>
               </TabsContent>
@@ -967,7 +969,10 @@ const Dashboard = () => {
                         <DemoInsightsMock variant="pro" />
                       </>
                     ) : (
-                      <InsightsTab professionalId={professional.id} />
+                      <>
+                        <InsightsTab professionalId={professional.id} />
+                        <ProMetricsSection professionalId={professional.id} />
+                      </>
                     )}
                   </TabsContent>
                 )}
