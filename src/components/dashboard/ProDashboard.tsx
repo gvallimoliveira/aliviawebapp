@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
-import ProAnalyticsCharts from "./ProAnalyticsCharts";
+// ProAnalyticsCharts moved to the Insights tab (see ProMetricsSection).
 import ProScheduleCard from "./ProScheduleCard";
 import ClinicVolumeAlert from "./ClinicVolumeAlert";
 import SoloUpgradeBanner from "./SoloUpgradeBanner";
