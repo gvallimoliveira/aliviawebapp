@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, User, Stethoscope, MessageCircle } from "lucide-react";
 import ConversationList from "@/components/chat/ConversationList";
 import ContactClinicButton from "@/components/chat/ContactClinicButton";
+import ReceivedReferralsCard from "@/components/dashboard/ReceivedReferralsCard";
 
 interface MessagesTabProps {
   professional?: any;
@@ -114,6 +115,11 @@ const MessagesTab = ({
             <ContactClinicButton key={c.id} clinicId={c.id} clinicName={c.name} />
           ))}
         </div>
+      )}
+
+      {/* Referrals received from patients — shown above professional conversations */}
+      {professional?.id && (
+        <ReceivedReferralsCard professionalId={professional.id} />
       )}
 
       {/* Filter "Pacientes" → mode="professional" (conversations WITH patients)

@@ -718,34 +718,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       {isClinicMode && activeClinic && (
         <ClinicVolumeAlert clinicId={activeClinic.clinic_id} />
       )}
-      {/* Welcome card for new subscribers — only when there are no real patient assessments yet */}
-      {showWelcome && subscription?.subscribed && patientAssessments.length === 0 && (
-        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <CardContent className="py-6 space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 shrink-0">
-                <Sparkles className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1 space-y-2">
-                <h3 className="text-lg font-bold text-foreground">Bem-vindo ao Painel Profissional! 🎉</h3>
-                <p className="text-sm text-muted-foreground">
-                  Sua assinatura está ativa. Como você ainda não tem pacientes cadastrados, que tal conhecer o ambiente com dados simulados?
-                </p>
-                <div className="flex items-center gap-3 pt-1">
-                  <Button onClick={handleStartSimulated} className="rounded-xl gap-2">
-                    <Play className="h-4 w-4" />
-                    Conhecer ambiente simulado
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={handleDismissWelcome}>
-                    Pular
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Simulated welcome card removed — the demo experience now lives only on
+          the public landing pages (/profissionais/demo and /clinica/demo). */}
 
       {/* Demo mode header — clearly identifies this is a preview */}
       {isDemoMode ? (
@@ -843,23 +817,12 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Simulated toggle */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50">
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {isSimulated ? "Painel Simulado" : "Painel Pro"}
-                  </span>
-                  <Switch
-                    checked={isSimulated}
-                    onCheckedChange={setIsSimulated}
-                    className="scale-90"
-                  />
-                </div>
-                <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl">
+                <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl h-8">
                   <Settings className="h-3.5 w-3.5" />
                   {t("pro.edit_profile")}
                 </Button>
                 {!clinicCoversAccess && !subscription?.is_partner && (
-                  <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl">
+                  <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl h-8">
                     {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
                     {t("pro.manage_subscription")}
                   </Button>
@@ -867,20 +830,6 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
               </div>
             </CardContent>
           </Card>
-
-          {/* Simulated mode banner */}
-          {isSimulated && (
-            <Card className="border-amber-200 bg-amber-500/5">
-              <CardContent className="py-3 px-5 flex items-center gap-3">
-                <ToggleLeft className="h-5 w-5 text-amber-600 shrink-0" />
-                <p className="text-sm text-amber-800">
-                  <span className="font-semibold">Modo simulado ativo.</span> Você está visualizando dados fictícios para conhecer a plataforma. Desative o toggle para ver seus dados reais.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Backup / export moved to the bottom of the dashboard for less visual weight */}
 
         </>
       )}
@@ -1093,81 +1042,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           Professional tab focused on day-to-day clinical work.
           See <ProMetricsSection /> rendered at the bottom of Insights. */}
 
-      {/* Referrals Section — only in real mode */}
-      {!isSimulated && referrals.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-primary" />
-              {t("prof.referrals_title")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {referrals.map((r: any) => {
-              const patientName = referralProfiles[r.patient_user_id] || t("prof.referral_from_patient");
-              const date = new Date(r.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
-              const isPending = r.status === "pending";
-              const isAccepted = r.status === "accepted";
-              const statusBadge = isPending
-                ? <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-yellow-300 text-yellow-700 bg-yellow-50">{t("prof.referral_status_pending")}</Badge>
-                : isAccepted
-                ? <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-emerald-300 text-emerald-700 bg-emerald-50">{t("prof.referral_status_accepted")}</Badge>
-                : <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-red-300 text-red-600 bg-red-50">{t("prof.referral_status_declined")}</Badge>;
-
-              return (
-                <div key={r.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border/60 bg-muted/20">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-foreground">{patientName}</span>
-                      {statusBadge}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />{date}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {isPending && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 px-2 rounded-lg gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                          disabled={referralActionLoading === r.id}
-                          onClick={() => handleReferralAction(r.id, "accepted")}
-                        >
-                          <CheckCircle className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline text-xs">{t("prof.referral_accept")}</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 px-2 rounded-lg gap-1 text-red-500 border-red-200 hover:bg-red-50"
-                          disabled={referralActionLoading === r.id}
-                          onClick={() => handleReferralAction(r.id, "declined")}
-                        >
-                          <XCircle className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline text-xs">{t("prof.referral_decline")}</span>
-                        </Button>
-                      </>
-                    )}
-                    {(isPending || isAccepted) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 px-2 rounded-lg gap-1"
-                        onClick={() => handleReferralMessage(r.patient_user_id)}
-                      >
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline text-xs">{t("prof.referral_send_message")}</span>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
+      {/* Referrals received moved to the Messages tab (see ReceivedReferralsCard). */}
 
       {/* Discreet backup/export — positioned above patient list to remain reachable with many patients */}
       {!isDemoMode && !isSimulated && (
