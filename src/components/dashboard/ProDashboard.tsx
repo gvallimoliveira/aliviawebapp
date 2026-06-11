@@ -718,34 +718,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       {isClinicMode && activeClinic && (
         <ClinicVolumeAlert clinicId={activeClinic.clinic_id} />
       )}
-      {/* Welcome card for new subscribers — only when there are no real patient assessments yet */}
-      {showWelcome && subscription?.subscribed && patientAssessments.length === 0 && (
-        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <CardContent className="py-6 space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 shrink-0">
-                <Sparkles className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1 space-y-2">
-                <h3 className="text-lg font-bold text-foreground">Bem-vindo ao Painel Profissional! 🎉</h3>
-                <p className="text-sm text-muted-foreground">
-                  Sua assinatura está ativa. Como você ainda não tem pacientes cadastrados, que tal conhecer o ambiente com dados simulados?
-                </p>
-                <div className="flex items-center gap-3 pt-1">
-                  <Button onClick={handleStartSimulated} className="rounded-xl gap-2">
-                    <Play className="h-4 w-4" />
-                    Conhecer ambiente simulado
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={handleDismissWelcome}>
-                    Pular
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Simulated welcome card removed — the demo experience now lives only on
+          the public landing pages (/profissionais/demo and /clinica/demo). */}
 
       {/* Demo mode header — clearly identifies this is a preview */}
       {isDemoMode ? (
