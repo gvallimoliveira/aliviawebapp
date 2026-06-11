@@ -61,7 +61,13 @@ const ProScheduleCard = ({ professionalId, onNavigateToSchedule }: ProScheduleCa
   const lang = language as "pt" | "en" | "es";
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [collapsed, setCollapsed] = useState(false);
+  const storageKey = `aliviA:scheduleCardCollapsed:${professionalId}`;
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem(storageKey) === "1"; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, collapsed ? "1" : "0"); } catch {}
+  }, [collapsed, storageKey]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const upcomingRef = useRef<HTMLDivElement | null>(null);
 
