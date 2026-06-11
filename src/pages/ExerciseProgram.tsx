@@ -393,7 +393,7 @@ const ExerciseProgram = () => {
               <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
             )}
             <span className="text-sm font-semibold text-foreground truncate max-w-[180px]">
-              {program?.professional?.clinic_name || program?.professional?.full_name || "Aliv.iA"}
+              {program?.professional?.full_name || program?.professional?.clinic_name || "Aliv.iA"}
             </span>
           </div>
           <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
