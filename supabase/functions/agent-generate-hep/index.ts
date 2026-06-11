@@ -134,7 +134,7 @@ serve(async (req) => {
 
     const prompt = `Você é fisioterapeuta. Selecione 5 a 8 exercícios da BIBLIOTECA abaixo para compor um HEP (programa de exercícios domiciliares) para o paciente, considerando hipótese, queixa, regiões de dor e a conversa recente entre o profissional e o agente.
 
-PACIENTE: ${patient.full_name} (${patient.gender || "—"})
+PACIENTE: ${patient.full_name}
 HIPÓTESE: ${hypothesis}
 QUEIXA PRINCIPAL: ${chiefComplaint}
 REGIÕES DE DOR: ${JSON.stringify(painRegions)}
