@@ -733,6 +733,7 @@ const Dashboard = () => {
                   <InsightsTab clinicId={activeClinic.clinic_id} fullClinicMode />
                   <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={language} />
                   <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={language} />
+                  <ProMetricsSection clinicId={activeClinic.clinic_id} />
                   <ClinicTrialBlockOverlay />
                 </div>
               </TabsContent>
