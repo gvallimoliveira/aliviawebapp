@@ -40,6 +40,90 @@ const PROMPT_STARTERS = [
   "Revisar o HEP atual",
   "/evidência dor lombar crônica",
 ];
+function ThreadRow({
+  thread, patientName, active, onOpen, onDelete,
+}: {
+  thread: Thread;
+  patientName?: string;
+  active: boolean;
+  onOpen: () => void;
+  onDelete: () => void;
+}) {
+  const [offset, setOffset] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+  const startX = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
+  const dragging = useRef(false);
+  const REVEAL = 72;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+    dragging.current = false;
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (startX.current == null) return;
+    const dx = e.touches[0].clientX - startX.current;
+    const dy = e.touches[0].clientY - (startY.current ?? 0);
+    if (!dragging.current) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) dragging.current = true;
+      else return;
+    }
+    const base = revealed ? -REVEAL : 0;
+    const next = Math.min(0, Math.max(-REVEAL - 20, base + dx));
+    setOffset(next);
+  };
+  const onTouchEnd = () => {
+    if (dragging.current) {
+      const shouldReveal = offset < -REVEAL / 2;
+      setRevealed(shouldReveal);
+      setOffset(shouldReveal ? -REVEAL : 0);
+    }
+    startX.current = null;
+    startY.current = null;
+    setTimeout(() => { dragging.current = false; }, 0);
+  };
+  const handleClick = () => {
+    if (revealed) { setRevealed(false); setOffset(0); return; }
+    onOpen();
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-lg">
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        className="absolute inset-y-0 right-0 w-[72px] flex items-center justify-center bg-destructive text-destructive-foreground"
+        aria-label="Excluir conversa"
+      >
+        <Trash2 className="h-5 w-5" />
+      </button>
+      <div
+        className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${
+          active ? "bg-primary/10 text-foreground" : "bg-background hover:bg-muted/50 text-muted-foreground"
+        }`}
+        style={{ transform: `translateX(${offset}px)`, transition: dragging.current ? "none" : "transform 180ms ease" }}
+        onClick={handleClick}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="truncate font-medium">{thread.title}</div>
+          {patientName && <div className="text-[10px] text-primary/80 truncate">📋 {patientName}</div>}
+        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="hidden md:block opacity-0 group-hover:opacity-100 transition p-1 hover:text-destructive"
+          aria-label="Excluir conversa"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 
 const ClinicalAgent = () => {
   const { user } = useAuth();
