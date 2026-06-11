@@ -124,7 +124,7 @@ serve(async (req) => {
       });
     }
 
-    const hypothesis = assessment.final_hypothesis_override || (assessment.diagnosis as any)?.hypothesis || "Não definida";
+    const hypothesis = (assessment as any).final_hypothesis || (assessment.diagnosis as any)?.hypothesis || "Não definida";
     const chiefComplaint = (assessment.anamnesis_data as any)?.chiefComplaint || "";
     const painRegions = assessment.pain_regions || [];
 
