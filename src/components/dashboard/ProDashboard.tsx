@@ -843,23 +843,12 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Simulated toggle */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50">
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {isSimulated ? "Painel Simulado" : "Painel Pro"}
-                  </span>
-                  <Switch
-                    checked={isSimulated}
-                    onCheckedChange={setIsSimulated}
-                    className="scale-90"
-                  />
-                </div>
-                <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl">
+                <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl h-8">
                   <Settings className="h-3.5 w-3.5" />
                   {t("pro.edit_profile")}
                 </Button>
                 {!clinicCoversAccess && !subscription?.is_partner && (
-                  <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl">
+                  <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl h-8">
                     {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
                     {t("pro.manage_subscription")}
                   </Button>
@@ -867,20 +856,6 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
               </div>
             </CardContent>
           </Card>
-
-          {/* Simulated mode banner */}
-          {isSimulated && (
-            <Card className="border-amber-200 bg-amber-500/5">
-              <CardContent className="py-3 px-5 flex items-center gap-3">
-                <ToggleLeft className="h-5 w-5 text-amber-600 shrink-0" />
-                <p className="text-sm text-amber-800">
-                  <span className="font-semibold">Modo simulado ativo.</span> Você está visualizando dados fictícios para conhecer a plataforma. Desative o toggle para ver seus dados reais.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Backup / export moved to the bottom of the dashboard for less visual weight */}
 
         </>
       )}
