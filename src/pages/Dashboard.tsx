@@ -969,8 +969,10 @@ const Dashboard = () => {
                         <DemoInsightsMock variant="pro" />
                       </>
                     ) : (
-                      <InsightsTab professionalId={professional.id} />
-                      <ProMetricsSection professionalId={professional.id} />
+                      <>
+                        <InsightsTab professionalId={professional.id} />
+                        <ProMetricsSection professionalId={professional.id} />
+                      </>
                     )}
                   </TabsContent>
                 )}
