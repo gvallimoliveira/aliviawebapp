@@ -39,6 +39,7 @@ const ProSchedule = lazy(() => import("@/components/dashboard/ProSchedule"));
 const DailySummaryCard = lazy(() => import("@/components/dashboard/DailySummaryCard"));
 const ClinicOwnerDashboard = lazy(() => import("@/components/dashboard/ClinicOwnerDashboard"));
 const InsightsTab = lazy(() => import("@/components/dashboard/insights/InsightsTab"));
+const ProMetricsSection = lazy(() => import("@/components/dashboard/ProMetricsSection"));
 const FeedbackSurveyCard = lazy(() => import("@/components/dashboard/FeedbackSurveyCard"));
 const FeedbackResultsCard = lazy(() => import("@/components/dashboard/FeedbackResultsCard"));
 const ExportDataCard = lazy(() => import("@/components/dashboard/ExportDataCard"));
