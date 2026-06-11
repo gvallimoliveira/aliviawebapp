@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Video, MapPin, ExternalLink, ChevronRight } from "lucide-react";
+import { Calendar, Clock, Video, MapPin, ExternalLink, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +61,9 @@ const ProScheduleCard = ({ professionalId, onNavigateToSchedule }: ProScheduleCa
   const lang = language as "pt" | "en" | "es";
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const upcomingRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const today = format(new Date(), "yyyy-MM-dd");
@@ -75,78 +78,127 @@ const ProScheduleCard = ({ professionalId, onNavigateToSchedule }: ProScheduleCa
       });
   }, [professionalId]);
 
-  // Compute which service types are present today
+  // Identify the "current or next" appointment to surface first
+  const nowMinutes = (() => {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  })();
+  const upcomingId = (() => {
+    const upcoming = appointments.find((a: any) => {
+      const [hh, mm] = (a.appointment_time || "00:00").split(":").map(Number);
+      return hh * 60 + mm >= nowMinutes - 60 && a.status !== "completed" && a.status !== "cancelled";
+    });
+    return (upcoming || appointments[0])?.id;
+  })();
+
+  // Auto-scroll the upcoming row into view inside the scroll container
+  useEffect(() => {
+    if (collapsed || !upcomingRef.current || !scrollRef.current) return;
+    const container = scrollRef.current;
+    const target = upcomingRef.current;
+    container.scrollTo({ top: target.offsetTop - container.offsetTop, behavior: "auto" });
+  }, [collapsed, appointments.length, upcomingId]);
+
   const activeServices = new Set(appointments.map((a: any) => a.service_type || "fisioterapia"));
 
   return (
-    <Card
-      className="border-primary/20 cursor-pointer hover:border-primary/40 transition-colors"
-      onClick={onNavigateToSchedule}
-    >
+    <Card className="border-primary/20">
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            className="flex items-center gap-2 flex-1 text-left"
+            onClick={() => setCollapsed((v) => !v)}
+            aria-expanded={!collapsed}
+          >
             <Calendar className="h-4 w-4 text-primary" />
-            {t("schedule.today_title")}
-          </CardTitle>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </div>
-        <CardDescription className="text-xs">
-          {appointments.length > 0
-            ? `${appointments.length} ${t("schedule.appointments_count")}`
-            : t("schedule.no_appointments")}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="h-16 flex items-center justify-center">
-            <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-          </div>
-        ) : appointments.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-3">{t("schedule.empty_day")}</p>
-        ) : (
-          <>
-            <div className="max-h-[140px] overflow-y-auto space-y-1.5 pr-1">
-              {appointments.map((apt: any) => {
-                const Icon = TYPE_ICONS[apt.type] || MapPin;
-                const colorClass = TYPE_COLORS[apt.type] || TYPE_COLORS.in_person;
-                const svcBorder = SERVICE_BORDER[apt.service_type || "fisioterapia"] || "";
-                const statusBg = STATUS_BG[apt.status] || STATUS_BG.scheduled;
-                return (
-                  <div
-                    key={apt.id}
-                    className={cn("flex items-center gap-2.5 p-2 rounded-lg border border-border/40", statusBg, svcBorder)}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-xs font-semibold text-foreground tabular-nums">
-                        {apt.appointment_time?.slice(0, 5)}
-                      </span>
-                    </div>
-                    <span className="text-xs text-foreground truncate flex-1">{apt.patient_name}</span>
-                    <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${colorClass}`}>
-                      <Icon className="h-2.5 w-2.5 mr-0.5" />
-                      {t(`schedule.type_${apt.type}`)}
-                    </Badge>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Service type legend */}
-            {activeServices.size > 0 && (
-              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/30 flex-wrap">
-                {Array.from(activeServices).map((svc) => (
-                  <span key={svc} className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                    <span className={cn("w-1.5 h-1.5 rounded-full", SERVICE_DOT[svc] || "bg-muted-foreground")} />
-                    {SERVICE_LABELS[svc]?.[lang] || svc}
-                  </span>
-                ))}
-              </div>
+            <CardTitle className="text-base">{t("schedule.today_title")}</CardTitle>
+            {collapsed ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
             )}
-          </>
+          </button>
+          <button
+            type="button"
+            onClick={onNavigateToSchedule}
+            className="p-1 -m-1 rounded hover:bg-muted/40 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={t("schedule.today_title") as string}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+        {!collapsed && (
+          <CardDescription className="text-xs">
+            {appointments.length > 0
+              ? `${appointments.length} ${t("schedule.appointments_count")}`
+              : t("schedule.no_appointments")}
+          </CardDescription>
         )}
-      </CardContent>
+      </CardHeader>
+      {!collapsed && (
+        <CardContent>
+          {loading ? (
+            <div className="h-16 flex items-center justify-center">
+              <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+          ) : appointments.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-3">{t("schedule.empty_day")}</p>
+          ) : (
+            <>
+              {/* Native scroll: ~2 cards visible (each row ~40px + 6px gap) */}
+              <div
+                ref={scrollRef}
+                className="overflow-y-auto space-y-1.5 pr-1"
+                style={{ maxHeight: "92px" }}
+              >
+                {appointments.map((apt: any) => {
+                  const Icon = TYPE_ICONS[apt.type] || MapPin;
+                  const colorClass = TYPE_COLORS[apt.type] || TYPE_COLORS.in_person;
+                  const svcBorder = SERVICE_BORDER[apt.service_type || "fisioterapia"] || "";
+                  const statusBg = STATUS_BG[apt.status] || STATUS_BG.scheduled;
+                  const isUpcoming = apt.id === upcomingId;
+                  return (
+                    <div
+                      key={apt.id}
+                      ref={isUpcoming ? upcomingRef : undefined}
+                      className={cn(
+                        "flex items-center gap-2.5 p-2 rounded-lg border border-border/40",
+                        statusBg,
+                        svcBorder,
+                        isUpcoming && "ring-1 ring-primary/40"
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs font-semibold text-foreground tabular-nums">
+                          {apt.appointment_time?.slice(0, 5)}
+                        </span>
+                      </div>
+                      <span className="text-xs text-foreground truncate flex-1">{apt.patient_name}</span>
+                      <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${colorClass}`}>
+                        <Icon className="h-2.5 w-2.5 mr-0.5" />
+                        {t(`schedule.type_${apt.type}`)}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+              {activeServices.size > 0 && (
+                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/30 flex-wrap">
+                  {Array.from(activeServices).map((svc) => (
+                    <span key={svc} className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                      <span className={cn("w-1.5 h-1.5 rounded-full", SERVICE_DOT[svc] || "bg-muted-foreground")} />
+                      {SERVICE_LABELS[svc]?.[lang] || svc}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 };
