@@ -54,12 +54,22 @@ function ThreadRow({
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
   const dragging = useRef(false);
+  const didSwipe = useRef(false);
   const REVEAL = 72;
+
+  useEffect(() => {
+    if (!active) {
+      setOffset(0);
+      setRevealed(false);
+      didSwipe.current = false;
+    }
+  }, [active]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
     dragging.current = false;
+    didSwipe.current = false;
   };
   const onTouchMove = (e: React.TouchEvent) => {
     if (startX.current == null) return;
@@ -69,8 +79,9 @@ function ThreadRow({
       if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) dragging.current = true;
       else return;
     }
+    didSwipe.current = true;
     const base = revealed ? -REVEAL : 0;
-    const next = Math.min(0, Math.max(-REVEAL - 20, base + dx));
+    const next = Math.min(0, Math.max(-REVEAL, base + dx));
     setOffset(next);
   };
   const onTouchEnd = () => {
@@ -83,17 +94,34 @@ function ThreadRow({
     startY.current = null;
     setTimeout(() => { dragging.current = false; }, 0);
   };
+  const onTouchCancel = () => {
+    setOffset(revealed ? -REVEAL : 0);
+    startX.current = null;
+    startY.current = null;
+    dragging.current = false;
+  };
   const handleClick = () => {
+    if (didSwipe.current) {
+      didSwipe.current = false;
+      return;
+    }
     if (revealed) { setRevealed(false); setOffset(0); return; }
     onOpen();
   };
+  const actionTranslate = Math.max(0, REVEAL + offset);
+  const actionVisible = revealed || offset <= -6;
 
   return (
     <div className="relative overflow-hidden rounded-lg">
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="absolute inset-y-0 right-0 w-[72px] flex items-center justify-center bg-destructive text-destructive-foreground"
+        className="absolute inset-y-0 right-0 z-0 w-[72px] flex items-center justify-center bg-destructive text-destructive-foreground transition-transform duration-200 ease-out"
+        style={{
+          transform: `translateX(${actionTranslate}px)`,
+          opacity: actionVisible ? 1 : 0,
+          pointerEvents: actionVisible ? "auto" : "none",
+        }}
         aria-label="Excluir conversa"
       >
         <Trash2 className="h-5 w-5" />
@@ -102,11 +130,12 @@ function ThreadRow({
         className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${
           active ? "bg-primary/10 text-foreground" : "bg-background hover:bg-muted/50 text-muted-foreground"
         }`}
-        style={{ transform: `translateX(${offset}px)`, transition: dragging.current ? "none" : "transform 180ms ease" }}
+        style={{ transform: `translateX(${offset}px)`, transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)", willChange: "transform", touchAction: "pan-y" }}
         onClick={handleClick}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchCancel}
       >
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{thread.title}</div>

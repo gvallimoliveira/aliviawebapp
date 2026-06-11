@@ -1,6 +1,87 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+function normalizeAnamnesis(raw: any) {
+  if (!raw || typeof raw !== "object") return raw;
+  const src = raw as Record<string, any>;
+  const out: Record<string, any> = { ...src };
+  const map: Record<string, string> = {
+    chief_complaint: "chiefComplaint",
+    chief_complaints: "chiefComplaints",
+    aggravating_factors: "aggravatingFactors",
+    relieving_factors: "relievingFactors",
+    previous_surgeries: "previousSurgeries",
+    previous_treatments: "previousTreatments",
+    pain_type: "painType",
+    pain_types: "painTypes",
+    pain_duration: "painDuration",
+    functional_tests: "functionalTests",
+  };
+  for (const [snake, camel] of Object.entries(map)) {
+    if (src[snake] !== undefined && out[camel] === undefined) out[camel] = src[snake];
+  }
+  if (!out.chiefComplaints && out.chiefComplaint) out.chiefComplaints = [out.chiefComplaint];
+  if (!out.painTypes && out.painType) out.painTypes = [out.painType];
+  return out;
+}
+
+function normalizeTestResults(raw: any): any[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "object") {
+    if (Array.isArray(raw.questionnaires)) return raw.questionnaires;
+    if (Array.isArray(raw.results)) return raw.results;
+  }
+  return [];
+}
+
+function extractFunctionalTestsText(assessment: any): string {
+  const a = normalizeAnamnesis(assessment?.anamnesis_data || {});
+  return scrub(
+    a?.functionalTests ||
+    a?.functional_tests ||
+    assessment?.test_results?.functional_tests ||
+    assessment?.test_results?.functionalTests ||
+    "",
+  );
+}
+
+function summarizeQuestionnaires(results: any[]): any[] {
+  return results
+    .map((item: any) => ({
+      id: item?.questionnaireId || item?.id || item?.name,
+      name: item?.questionnaireName || item?.name || item?.questionnaireId || "Questionário",
+      score: item?.percentageScore ?? item?.score ?? item?.value ?? null,
+      classification: item?.classification || item?.severity || null,
+    }))
+    .filter((item: any) => item.id || item.score != null || item.classification);
+}
+
+function compactAssessmentForPrompt(a: any) {
+  const anamnesis = normalizeAnamnesis(a.anamnesis_data || {});
+  const diagnosis = a.diagnosis || {};
+  const impression = diagnosis?.clinicalImpression || {};
+  const questionnaires = summarizeQuestionnaires(normalizeTestResults(a.test_results));
+  return {
+    date: a.created_at?.slice(0, 10),
+    pain_score: a.pain_score,
+    pain_regions: a.pain_regions || [],
+    chief_complaints: anamnesis?.chiefComplaints || (anamnesis?.chiefComplaint ? [anamnesis.chiefComplaint] : []),
+    aggravating_factors: anamnesis?.aggravatingFactors || [],
+    relieving_factors: anamnesis?.relievingFactors || [],
+    pain_duration: anamnesis?.painDuration || anamnesis?.onset || null,
+    functional_tests_text: extractFunctionalTestsText(a),
+    questionnaires,
+    hypothesis: a.final_hypothesis || diagnosis?.hypothesis || diagnosis?.condition || null,
+    reasoning: scrub(diagnosis?.reasoning || ""),
+    summary: scrub(impression?.overview || diagnosis?.summary || ""),
+    therapeutic_objectives: impression?.therapeuticObjectives || [],
+    treatment_plan_summary: Array.isArray(a.treatment_plan?.phases)
+      ? a.treatment_plan.phases.map((phase: any) => phase?.goal || phase?.title || phase?.id).filter(Boolean)
+      : [],
+  };
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -54,54 +135,87 @@ function scrub(t: any): any {
 async function loadPatientContext(adminClient: any, patientId: string, userId: string) {
   const { data: patient } = await adminClient
     .from("patients")
-    .select("id, full_name, birth_date, gender")
+    .select("id, full_name, email, birth_date, professional_id, clinic_id")
     .eq("id", patientId)
     .maybeSingle();
   if (!patient) return null;
 
+  const { data: professional } = await adminClient
+    .from("professionals")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
   const { data: assessments } = await adminClient
     .from("assessments")
-    .select("id, created_at, pain_score, pain_regions, anamnesis_data, diagnosis, final_hypothesis_override, treatment_plan, questionnaire_results, clinical_impression")
-    .eq("patient_id", patientId)
+    .select("id, created_at, pain_score, pain_regions, anamnesis_data, test_results, diagnosis, final_hypothesis, treatment_plan, professional_id, clinic_id, patient_name, patient_email")
+    .or([
+      patient.email ? `patient_email.eq.${patient.email.replace(/,/g, "%2C")}` : null,
+      patient.full_name ? `patient_name.eq.${patient.full_name.replace(/,/g, "%2C")}` : null,
+    ].filter(Boolean).join(","))
     .order("created_at", { ascending: false })
     .limit(5);
 
+  const scopedAssessments = (assessments || []).filter((a: any) => {
+    if (patient.clinic_id) return a.clinic_id === patient.clinic_id;
+    if (patient.professional_id) return a.professional_id === patient.professional_id;
+    if (professional?.id) return a.professional_id === professional.id;
+    return true;
+  });
+
   const { data: heps } = await adminClient
     .from("exercise_programs")
-    .select("id, name, created_at, status")
-    .eq("patient_id", patientId)
+    .select("id, patient_name, notes, created_at, expires_at, assessment_id")
+    .in("assessment_id", scopedAssessments.map((a: any) => a.id).length ? scopedAssessments.map((a: any) => a.id) : ["00000000-0000-0000-0000-000000000000"])
     .order("created_at", { ascending: false })
     .limit(3);
 
   const diaryQuery = await adminClient
     .from("pain_diary_entries")
-    .select("created_at, pain_score, notes")
-    .eq("patient_id", patientId)
-    .order("created_at", { ascending: false })
+    .select("logged_at, created_at, pain_score, notes, assessment_id")
+    .in("assessment_id", scopedAssessments.map((a: any) => a.id).length ? scopedAssessments.map((a: any) => a.id) : ["00000000-0000-0000-0000-000000000000"])
+    .order("logged_at", { ascending: false })
     .limit(7);
+
+  const noteQuery = await adminClient
+    .from("professional_notes")
+    .select("assessment_id, content, created_at, include_in_pdf")
+    .in("assessment_id", scopedAssessments.map((a: any) => a.id).length ? scopedAssessments.map((a: any) => a.id) : ["00000000-0000-0000-0000-000000000000"])
+    .order("created_at", { ascending: false })
+    .limit(5);
 
   const label = `${initials(patient.full_name)} #${shortHash(patient.id)}`;
   const age = patient.birth_date
     ? Math.floor((Date.now() - new Date(patient.birth_date).getTime()) / (365.25 * 86400000))
     : null;
 
+  const compactAssessments = scopedAssessments.map(compactAssessmentForPrompt);
+  const latestAssessment = compactAssessments[0] || null;
+
   return {
     label,
     age,
-    gender: patient.gender,
-    assessments: (assessments || []).map((a: any) => ({
-      date: a.created_at?.slice(0, 10),
-      pain_score: a.pain_score,
-      pain_regions: a.pain_regions,
-      hypothesis: a.final_hypothesis_override || a.diagnosis?.hypothesis,
-      summary: scrub(a.clinical_impression?.overview || a.diagnosis?.summary || ""),
-      questionnaires: a.questionnaire_results,
-      chief_complaint: scrub(a.anamnesis_data?.chiefComplaint),
+    gender: normalizeAnamnesis(latestAssessment ? (assessments?.[0]?.anamnesis_data || {}) : {})?.sex || null,
+    latest_assessment: latestAssessment,
+    assessments: compactAssessments,
+    active_heps: (heps || []).map((h: any) => ({
+      title: `HEP ${h.created_at?.slice(0, 10) || ""}`.trim(),
+      status: h.expires_at && new Date(h.expires_at).getTime() < Date.now() ? "expired" : "active",
+      date: h.created_at?.slice(0, 10),
+      notes: scrub(h.notes || ""),
+      assessment_id: h.assessment_id,
     })),
-    active_heps: (heps || []).map((h: any) => ({ name: h.name, status: h.status, date: h.created_at?.slice(0,10) })),
     recent_pain_diary: (diaryQuery.data || []).map((d: any) => ({
-      date: d.created_at?.slice(0, 10),
+      date: d.logged_at || d.created_at?.slice(0, 10),
       pain: d.pain_score,
+      notes: scrub(d.notes || ""),
+      assessment_id: d.assessment_id,
+    })),
+    clinician_notes: (noteQuery.data || []).map((n: any) => ({
+      date: n.created_at?.slice(0, 10),
+      assessment_id: n.assessment_id,
+      include_in_pdf: n.include_in_pdf,
+      content: scrub(n.content || "").slice(0, 500),
     })),
   };
 }
@@ -160,9 +274,11 @@ function buildSystemPrompt(patientCtx: any, evidence: any[]) {
     ? `\n\nPACIENTE EM DISCUSSÃO (anonimizado):
 - Identificador: ${patientCtx.label}
 - Idade: ${patientCtx.age ?? "—"} | Gênero: ${patientCtx.gender ?? "—"}
-- Últimas avaliações: ${JSON.stringify(patientCtx.assessments)}
+- Avaliação mais recente: ${JSON.stringify(patientCtx.latest_assessment)}
+- Histórico recente de avaliações: ${JSON.stringify(patientCtx.assessments)}
 - HEPs ativos: ${JSON.stringify(patientCtx.active_heps)}
-- Diário de dor recente: ${JSON.stringify(patientCtx.recent_pain_diary)}`
+- Diário de dor recente: ${JSON.stringify(patientCtx.recent_pain_diary)}
+- Anotações clínicas do profissional: ${JSON.stringify(patientCtx.clinician_notes)}`
     : "";
 
   return `Você é o Agente de Raciocínio Clínico da Aliv.iA, um assistente conversacional para fisioterapeutas.
@@ -170,7 +286,7 @@ function buildSystemPrompt(patientCtx: any, evidence: any[]) {
 ESTILO DE CONVERSA (MUITO IMPORTANTE):
 - Este é um BATE-PAPO objetivo, não um relatório. Mensagens curtas, em tom acolhedor e direto, em pt-BR.
 ${patientCtx
-  ? `- HÁ PACIENTE VINCULADO. Você JÁ TEM acesso ao prontuário (avaliações, queixa, dor, regiões, hipótese, questionários, HEPs, diário). USE esses dados imediatamente — NÃO pergunte coisas que já estão no contexto (região, dor, queixa, idade, hipótese). Cite os dados ("com base na avaliação de DD/MM, dor X/10 em região Y, hipótese Z..."). Se faltar UM detalhe específico para refinar a conduta, faça no máximo 1 pergunta curta e direta sobre esse ponto.`
+  ? `- HÁ PACIENTE VINCULADO. Você JÁ TEM acesso ao prontuário (diagnóstico, impressão clínica, métricas de dor, regiões, questionários, testes funcionais, plano, HEPs, diário e anotações). USE esses dados imediatamente — NÃO pergunte coisas que já estão no contexto. Cite os dados concretamente ("com base na avaliação de DD/MM, dor X/10 em região Y, hipótese Z, questionário W..."). Se faltar UM detalhe específico para refinar a conduta, faça no máximo 1 pergunta curta e direta sobre esse ponto.`
   : `- Antes de entregar orientações, condutas, programas ou explanações longas, FAÇA 1 a 3 perguntas pertinentes para refinar o contexto clínico (mecanismo, tempo, irritabilidade, fatores de melhora/piora, objetivo do paciente, exames já feitos, achados de testes, etc.). Uma pergunta de cada vez sempre que possível.`}
 - Só pule a fase de perguntas quando o usuário fizer uma demanda direta e específica (ex.: "gere um HEP para...", "me dê critérios de progressão para...", "qual a evidência sobre X?"). Nesses casos, responda objetivamente já.
 - Quando já tiver contexto suficiente, entregue diretrizes claras e acionáveis (bullets curtos), e ofereça o próximo passo ("quer que eu sugira testes?", "quer um HEP?").
