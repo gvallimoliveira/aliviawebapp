@@ -117,6 +117,11 @@ const MessagesTab = ({
         </div>
       )}
 
+      {/* Referrals received from patients — shown above professional conversations */}
+      {professional?.id && (
+        <ReceivedReferralsCard professionalId={professional.id} />
+      )}
+
       {/* Filter "Pacientes" → mode="professional" (conversations WITH patients)
           Filter "Profissionais" → mode="patient" (conversations WITH professionals) */}
       {(msgFilter === "all" || msgFilter === "patient") && professional && (
