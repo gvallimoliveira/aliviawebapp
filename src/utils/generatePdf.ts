@@ -159,10 +159,18 @@ function drawResponsibleBlock(
   doc.setFont("Inter", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
-  const crefitoTxt = prof.crefito
-    ? `CREFITO: ${prof.crefito}`
-    : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
-  doc.text(crefitoTxt, PAGE_WIDTH / 2, y, { align: "center" });
+  let credentialTxt: string;
+  if (prof.isStudent) {
+    const pieces = ["Alivia Acadêmico"];
+    if (prof.studentInstitution) pieces.push(prof.studentInstitution);
+    if (prof.studentPeriod) pieces.push(prof.studentPeriod);
+    credentialTxt = pieces.join(" · ");
+  } else {
+    credentialTxt = prof.crefito
+      ? `CREFITO: ${prof.crefito}`
+      : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
+  }
+  doc.text(credentialTxt, PAGE_WIDTH / 2, y, { align: "center" });
   y += 4;
 
   const today = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US");
