@@ -40,6 +40,7 @@ const roleLabels: Record<ClinicRole, Record<string, string>> = {
   owner: { pt: "Proprietário", en: "Owner", es: "Propietario" },
   admin: { pt: "Administrador", en: "Administrator", es: "Administrador" },
   therapist: { pt: "Fisioterapeuta", en: "Therapist", es: "Fisioterapeuta" },
+  intern: { pt: "Estagiário (Acadêmico)", en: "Intern (Academic)", es: "Practicante (Académico)" },
   secretary: { pt: "Secretária", en: "Secretary", es: "Secretaria" },
   osteopath: { pt: "Osteopata", en: "Osteopath", es: "Osteópata" },
   pilates_instructor: { pt: "Prof. Pilates", en: "Pilates Instructor", es: "Prof. Pilates" },
