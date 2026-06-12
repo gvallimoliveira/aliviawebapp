@@ -170,6 +170,15 @@ function drawResponsibleBlock(
       ? `CREFITO: ${prof.crefito}`
       : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
   }
+  // Guard against overflow beyond PDF margins on very long academic labels
+  const credMaxW = CONTENT_WIDTH - 4;
+  if (doc.getTextWidth(credentialTxt) > credMaxW) {
+    const ell = "…";
+    while (credentialTxt.length > 1 && doc.getTextWidth(credentialTxt + ell) > credMaxW) {
+      credentialTxt = credentialTxt.slice(0, -1);
+    }
+    credentialTxt = credentialTxt.replace(/[\s·]+$/, "") + ell;
+  }
   doc.text(credentialTxt, PAGE_WIDTH / 2, y, { align: "center" });
   y += 4;
 
