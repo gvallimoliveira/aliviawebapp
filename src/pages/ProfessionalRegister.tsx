@@ -14,6 +14,7 @@ import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X,
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { formatCpf } from "@/utils/masks";
+import { isFallbackVip } from "@/lib/vipEmails";
 
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -97,7 +98,7 @@ const ProfessionalRegister = () => {
         : Promise.resolve({ data: null }),
     ]).then(([profRes, vipRes]: any[]) => {
       const data = profRes?.data;
-      setIsVip(!!vipRes?.data);
+      setIsVip(!!vipRes?.data || isFallbackVip(user.email));
       if (data) {
         setExisting(data);
         setForm({

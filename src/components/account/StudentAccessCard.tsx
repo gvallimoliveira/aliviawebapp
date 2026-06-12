@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Loader2, Lock, Sparkles } from "lucide-react";
+import { isFallbackVip } from "@/lib/vipEmails";
 
 /**
  * "Acesso Estudante" — toggle that turns a regular professional account into an
@@ -88,7 +89,7 @@ const StudentAccessCard = () => {
       ]);
 
       const data = profRes.data as any;
-      setIsVip(!!vipRes?.data);
+      setIsVip(!!vipRes?.data || isFallbackVip(user.email));
 
       if (data) {
         setHasProfRecord(true);
