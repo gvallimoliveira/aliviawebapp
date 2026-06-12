@@ -452,6 +452,13 @@ const ProfessionalAssessment = () => {
                 ? `Evaluación realizada por ${professional.full_name}, estudiante de fisioterapia${professional.student_institution ? ` (${professional.student_institution})` : ""}.`
                 : `Assessment conducted by ${professional.full_name}, physiotherapy student${professional.student_institution ? ` (${professional.student_institution})` : ""}.`}
             </p>
+            <p className="text-xs font-medium mt-2 border-t border-amber-500/20 pt-2">
+              {language === "pt"
+                ? "Documento de caráter acadêmico — sem valor profissional. Se necessário, busque orientação de um fisioterapeuta formado e habilitado."
+                : language === "es"
+                ? "Documento de carácter académico — sin valor profesional. Si es necesario, busque orientación de un fisioterapeuta formado y habilitado."
+                : "Academic document — no professional value. If needed, seek guidance from a qualified physiotherapist."}
+            </p>
           </div>
         )}
         {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
