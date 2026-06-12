@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Users, UserPlus, Mail, Trash2, Crown, Shield, Stethoscope as StethIcon, ClipboardList } from "lucide-react";
+import { Users, UserPlus, Mail, Trash2, Crown, Shield, Stethoscope as StethIcon, ClipboardList, GraduationCap } from "lucide-react";
 import ClinicSettingsCard from "./ClinicSettingsCard";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -24,6 +24,9 @@ interface Member {
   accepted_at: string | null;
   full_name: string | null;
   email: string | null;
+  is_student?: boolean | null;
+  student_institution?: string | null;
+  student_period?: string | null;
 }
 
 interface Invitation {
@@ -151,13 +154,25 @@ const ClinicTeamManagement = () => {
           {members.map((m) => (
             <div key={m.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border/50 bg-muted/30">
               <div className="flex items-center gap-3 min-w-0">
-                {roleIcon(m.role)}
+                {m.is_student ? <GraduationCap className="h-3.5 w-3.5 text-primary" /> : roleIcon(m.role)}
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{m.full_name || m.email || "—"}</p>
                   {m.full_name && m.email && (
                     <p className="text-xs text-muted-foreground truncate">{m.email}</p>
                   )}
-                  <Badge variant="outline" className="text-[10px] mt-1">{roleLabels[m.role][lang]}</Badge>
+                  <div className="flex flex-wrap items-center gap-1 mt-1">
+                    <Badge variant="outline" className="text-[10px]">{roleLabels[m.role][lang]}</Badge>
+                    {m.is_student && (
+                      <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30 hover:bg-primary/15">
+                        {lang === "pt" ? "Estagiário (Acadêmico)" : lang === "es" ? "Practicante (Académico)" : "Intern (Academic)"}
+                      </Badge>
+                    )}
+                  </div>
+                  {m.is_student && (m.student_institution || m.student_period) && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                      {[m.student_institution, m.student_period].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
                 </div>
               </div>
               {canManage && m.user_id !== user?.id && (
@@ -262,6 +277,14 @@ const ClinicTeamManagement = () => {
                {lang === "pt"
                  ? "Se o e-mail já tiver cadastro, será adicionado diretamente. Caso contrário, será vinculado automaticamente quando criar conta."
                  : "If the email already has an account, they'll be added directly. Otherwise, they'll be linked automatically upon signup."}
+             </p>
+             <p className="text-xs text-primary/80 text-center flex items-center justify-center gap-1.5 bg-primary/5 border border-primary/20 rounded-md px-3 py-2">
+               <GraduationCap className="h-3.5 w-3.5 shrink-0" />
+               {lang === "pt"
+                 ? "Estudantes (sem CREFITO) podem ser adicionados como Fisioterapeuta — o selo Acadêmico é aplicado automaticamente nos PDFs e links."
+                 : lang === "es"
+                 ? "Los estudiantes (sin CREFITO) pueden añadirse como Fisioterapeuta — el sello Académico se aplica automáticamente en los PDF y enlaces."
+                 : "Students (without CREFITO) can be added as Therapist — the Academic stamp is applied automatically on PDFs and links."}
              </p>
           </CardContent>
         </Card>

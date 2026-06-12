@@ -677,6 +677,17 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
               {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
               {billingAnnual ? "Assinar plano anual" : "Assinar plano mensal"}
             </Button>
+
+            {professional?.is_student && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs space-y-1">
+                <p className="font-semibold text-primary flex items-center gap-1.5">
+                  🎓 Aluno Alivia Acadêmico
+                </p>
+                <p className="text-muted-foreground leading-relaxed">
+                  No checkout, clique em <span className="font-medium text-foreground">"Adicionar código promocional"</span> e digite <span className="font-mono font-semibold text-primary">SOUIBMR</span> para 50% de desconto enquanto sua assinatura estiver ativa (válido até 19/06).
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -709,6 +720,21 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   // Active subscriber dashboard
   return (
     <div className="space-y-6">
+      {/* Academic mode banner — student professionals */}
+      {!isDemoMode && professional?.is_student && (
+        <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-background px-4 py-2.5 flex items-center gap-2.5 flex-wrap">
+          <Badge className="bg-primary/15 text-primary border-primary/40 text-[10px] uppercase tracking-wide hover:bg-primary/20">
+            🎓 Alivia Acadêmico
+          </Badge>
+          <span className="text-xs text-muted-foreground">
+            Modo estudante ativo
+            {professional.student_institution ? ` · ${professional.student_institution}` : ""}
+            {professional.student_period ? ` · ${professional.student_period}` : ""}
+            {" "}— PDFs e links públicos exibem o selo acadêmico.
+          </span>
+        </div>
+      )}
+
       {/* Solo upgrade banner — therapist without own Pro subscription */}
       {!isClinicMode && (
         <SoloUpgradeBanner hasActiveProSubscription={professional.subscription_status === "active"} />

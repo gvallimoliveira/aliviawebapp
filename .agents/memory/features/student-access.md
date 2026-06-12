@@ -13,3 +13,17 @@ Estudantes ativam "Acesso Estudante" em /minha-conta (StudentAccessCard). Ao ati
 - Link público de avaliação (`ProfessionalAssessment.tsx`) mostra banner âmbar identificando avaliação acadêmica.
 - `CrefitoCompletionBanner` é ocultado para estudantes.
 - RPC `get_public_professional_assessment_link` retorna `is_student, student_institution, student_period`.
+
+CREFITO trigger (`validate_crefito_format`):
+- Estudante (`is_student=true`): CREFITO opcional.
+- Profissional formado: CREFITO OBRIGATÓRIO (raise quando null/vazio) e formato `123456-F` validado.
+
+Clínica (estagiário):
+- Estudante pode ser adicionado à equipe da clínica com role `therapist` normalmente.
+- RPC `get_clinic_members_with_details` devolve `is_student, student_institution, student_period`.
+- `ClinicTeamManagement` exibe badge "Estagiário (Acadêmico)" + instituição/período ao lado do papel; ícone troca para GraduationCap.
+- PDFs gerados pelo estagiário herdam o selo Alivia Acadêmico via `getResponsibleProfessional`.
+
+Dashboard PRO:
+- Badge "🎓 Alivia Acadêmico" no topo do dashboard ativo quando `professional.is_student=true` (mostra instituição/período).
+- Tela de upgrade (assinatura inativa) mostra aviso destacando o cupom `SOUIBMR` (50% off) para estudantes.

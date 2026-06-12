@@ -2376,8 +2376,11 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_student: boolean
           role: Database["public"]["Enums"]["clinic_role"]
           status: string
+          student_institution: string
+          student_period: string
           user_id: string
         }[]
       }

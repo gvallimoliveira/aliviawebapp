@@ -294,6 +294,10 @@ const faqKeys = [
     a: "Você define papéis: Dono(a) vê tudo (financeiro, equipe, todos os pacientes); Secretária gerencia agenda e cadastros, mas não vê prontuário clínico; Fisioterapeuta vê apenas seus próprios pacientes e a agenda da clínica.",
   },
   {
+    q: "Posso adicionar estudantes de fisioterapia como estagiários na minha clínica?",
+    a: "Sim. Estudantes ativam o modo 'Acesso Estudante — Alivia Acadêmico' em Minha Conta (informam nome, instituição e período) e ficam isentos do CREFITO. Você os adiciona à equipe normalmente como Fisioterapeuta, e o sistema marca automaticamente o membro com o selo 'Estagiário (Acadêmico)' na tela da Equipe. Todos os PDFs gerados por esse estagiário saem com o selo 'Alivia Acadêmico · Instituição · Período' no lugar do CREFITO, deixando claro para o paciente que aquela avaliação foi feita por um aluno em formação. O estagiário não aparece na busca pública do marketplace e segue usando o link institucional da clínica como qualquer outro membro.",
+  },
+  {
     q: "Preciso enviar o link de pré-avaliação institucional ou posso usar meu link pessoal?",
     a: "Em modo Clínica, a equipe deve usar sempre o link institucional da clínica. Isso garante que o paciente seja vinculado ao prontuário compartilhado da clínica e não ao perfil pessoal do profissional. Evita também uso indevido dos recursos da clínica para pacientes particulares.",
   },
