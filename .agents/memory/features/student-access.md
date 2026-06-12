@@ -4,7 +4,7 @@ description: Modo Estudante para alunos de fisioterapia sem CREFITO; libera ferr
 type: feature
 ---
 
-Estudantes ativam "Acesso Estudante" em /minha-conta (StudentAccessCard). Ao ativar:
+Estudantes ativam o modo por DUAS rotas equivalentes: (1) toggle "Sou estudante — Alivia Acadêmico" no topo do modal `/professional/register` (campos CREFITO/CPF/Instagram somem; aparecem Instituição + Período); (2) card "Acesso Estudante" em /minha-conta (StudentAccessCard). Ao ativar:
 - `professionals.is_student = true`, `crefito = null` permitido (trigger pula validação).
 - `professionals.approved` é forçado para false → fica fora do marketplace (ProfessionalSearch filtra `is_student=false`).
 - Mini-form coleta: full_name, student_institution, student_period.
