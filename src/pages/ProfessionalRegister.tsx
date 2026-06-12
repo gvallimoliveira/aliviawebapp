@@ -264,6 +264,78 @@ const ProfessionalRegister = () => {
       toast({ title: t("prof.required_fields"), variant: "destructive" });
       return;
     }
+
+    // ───────── Alivia Acadêmico branch ─────────
+    // Student mode skips CREFITO / CPF / social_media validations.
+    if (isStudent) {
+      if (!studentInstitution.trim() || !studentPeriod.trim()) {
+        toast({
+          title: "Dados acadêmicos obrigatórios",
+          description: "Informe a instituição e o período atual.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!termsAccepted) {
+        toast({
+          title: "Confirmação obrigatória",
+          description: "Você precisa confirmar que os dados informados são verídicos.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setSaving(true);
+      try {
+        let photoUrl: string | null = null;
+        if (photoFile) photoUrl = await uploadPhoto();
+        let logoUrl: string | null = null;
+        if (logoFile) logoUrl = await uploadLogo();
+
+        // VIPs keep their CREFITO when toggling; non-students inserting fresh have crefito=null.
+        const studentPayload: any = {
+          full_name: form.full_name.trim(),
+          city: form.city.trim(),
+          state: form.state,
+          bio: form.bio,
+          phone: form.phone,
+          email: form.email || user.email || null,
+          social_media: form.social_media || null,
+          specialties: form.specialties,
+          clinic_name: form.clinic_name,
+          clinic_address: form.clinic_address,
+          user_id: user.id,
+          is_student: true,
+          student_institution: studentInstitution.trim(),
+          student_period: studentPeriod.trim(),
+          approved: false, // students never appear in the marketplace
+          active: true,
+          terms_accepted_at: new Date().toISOString(),
+        };
+        if (photoUrl) studentPayload.profile_photo_url = photoUrl;
+        if (logoUrl) studentPayload.logo_url = logoUrl;
+        // First-time student insert: CREFITO must be null so trigger skips validation.
+        if (!existing) studentPayload.crefito = null;
+
+        if (existing) {
+          await (supabase.from("professionals" as any) as any).update(studentPayload).eq("id", existing.id);
+        } else {
+          await (supabase.from("professionals" as any) as any).insert(studentPayload);
+        }
+        // Clear the "skipped" flag if it was set
+        try {
+          await (supabase as any).from("profiles").update({ professional_register_skipped: false }).eq("user_id", user.id);
+        } catch { /* noop */ }
+        toast({ title: "Cadastro acadêmico salvo!", description: "Você está no modo Alivia Acadêmico." });
+        navigate("/dashboard?tab=professional");
+      } catch (err: any) {
+        toast({ title: t("prof.error"), description: err?.message, variant: "destructive" });
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // ───────── Standard professional branch (unchanged) ─────────
     const normalizedCrefito = form.crefito.trim().toUpperCase();
     if (!normalizedCrefito) {
       toast({ title: t("prof.crefito_required"), variant: "destructive" });
@@ -292,7 +364,6 @@ const ProfessionalRegister = () => {
     }
     setSaving(true);
     try {
-      // Check for duplicate CREFITO
       const { data: dupCheck } = await (supabase.from("professionals" as any) as any)
         .select("id, user_id")
         .eq("crefito", normalizedCrefito)
@@ -302,7 +373,6 @@ const ProfessionalRegister = () => {
         setSaving(false);
         return;
       }
-      // Check for duplicate CPF
       const { data: cpfDup } = await (supabase.from("professionals" as any) as any)
         .select("id, user_id")
         .eq("cpf", cpfDigits)
@@ -317,13 +387,9 @@ const ProfessionalRegister = () => {
         return;
       }
       let photoUrl: string | null = null;
-      if (photoFile) {
-        photoUrl = await uploadPhoto();
-      }
+      if (photoFile) photoUrl = await uploadPhoto();
       let logoUrl: string | null = null;
-      if (logoFile) {
-        logoUrl = await uploadLogo();
-      }
+      if (logoFile) logoUrl = await uploadLogo();
 
       const payload: any = {
         ...form,
@@ -331,14 +397,13 @@ const ProfessionalRegister = () => {
         cpf: cpfDigits,
         user_id: user.id,
         approved: true,
+        is_student: false,
+        student_institution: null,
+        student_period: null,
         terms_accepted_at: new Date().toISOString(),
       };
-      if (photoUrl) {
-        payload.profile_photo_url = photoUrl;
-      }
-      if (logoUrl) {
-        payload.logo_url = logoUrl;
-      }
+      if (photoUrl) payload.profile_photo_url = photoUrl;
+      if (logoUrl) payload.logo_url = logoUrl;
 
       if (existing) {
         await (supabase.from("professionals" as any) as any).update(payload).eq("id", existing.id);
