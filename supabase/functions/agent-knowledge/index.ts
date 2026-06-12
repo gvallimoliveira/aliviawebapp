@@ -103,11 +103,20 @@ serve(async (req) => {
 
     // ---------- APPROVE ----------
     if (action === "approve") {
+      // Backfill embedding if missing so the article is actually usable by RAG
+      const { data: cur } = await adminClient.from("knowledge_articles")
+        .select("title, abstract, key_findings, embedding").eq("id", body.id).maybeSingle();
+      const patch: any = { approved: true, updated_at: new Date().toISOString() };
+      let embeddingBackfilled = false;
+      if (cur && !cur.embedding) {
+        const text = [cur.title, cur.abstract, cur.key_findings].filter(Boolean).join("\n\n");
+        const vec = text ? await embed(LOVABLE_API_KEY, text) : null;
+        if (vec) { patch.embedding = vec; embeddingBackfilled = true; }
+      }
       const { error } = await adminClient.from("knowledge_articles")
-        .update({ approved: true, updated_at: new Date().toISOString() })
-        .eq("id", body.id);
+        .update(patch).eq("id", body.id);
       if (error) throw error;
-      return new Response(JSON.stringify({ ok: true }), {
+      return new Response(JSON.stringify({ ok: true, embeddingBackfilled }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
