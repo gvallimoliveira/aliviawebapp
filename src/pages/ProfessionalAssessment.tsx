@@ -437,6 +437,20 @@ const ProfessionalAssessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
+        {professional?.is_student && (
+          <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+            <p className="font-semibold">
+              {language === "pt" ? "Alivia Acadêmico" : language === "es" ? "Alivia Académico" : "Alivia Academic"}
+            </p>
+            <p className="text-xs opacity-90 mt-0.5">
+              {language === "pt"
+                ? `Avaliação conduzida por ${professional.full_name}, estudante de fisioterapia${professional.student_institution ? ` (${professional.student_institution}` + (professional.student_period ? ` · ${professional.student_period})` : ")") : ""}.`
+                : language === "es"
+                ? `Evaluación realizada por ${professional.full_name}, estudiante de fisioterapia${professional.student_institution ? ` (${professional.student_institution})` : ""}.`
+                : `Assessment conducted by ${professional.full_name}, physiotherapy student${professional.student_institution ? ` (${professional.student_institution})` : ""}.`}
+            </p>
+          </div>
+        )}
         {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
           <AssessmentStepper currentStep={step} mode="professional" />
         )}
