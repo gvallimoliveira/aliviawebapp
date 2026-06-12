@@ -278,6 +278,14 @@ const ClinicTeamManagement = () => {
                  ? "Se o e-mail já tiver cadastro, será adicionado diretamente. Caso contrário, será vinculado automaticamente quando criar conta."
                  : "If the email already has an account, they'll be added directly. Otherwise, they'll be linked automatically upon signup."}
              </p>
+             <p className="text-xs text-primary/80 text-center flex items-center justify-center gap-1.5 bg-primary/5 border border-primary/20 rounded-md px-3 py-2">
+               <GraduationCap className="h-3.5 w-3.5 shrink-0" />
+               {lang === "pt"
+                 ? "Estudantes (sem CREFITO) podem ser adicionados como Fisioterapeuta — o selo Acadêmico é aplicado automaticamente nos PDFs e links."
+                 : lang === "es"
+                 ? "Los estudiantes (sin CREFITO) pueden añadirse como Fisioterapeuta — el sello Académico se aplica automáticamente en los PDF y enlaces."
+                 : "Students (without CREFITO) can be added as Therapist — the Academic stamp is applied automatically on PDFs and links."}
+             </p>
           </CardContent>
         </Card>
       )}
