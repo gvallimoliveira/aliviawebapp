@@ -253,6 +253,7 @@ const ClinicTeamManagement = () => {
                     <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>
                     <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>
                     <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
+                    <SelectItem value="intern">{roleLabels.intern[lang]}</SelectItem>
                     <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
                     <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
                     <SelectItem value="pilates_instructor">{roleLabels.pilates_instructor[lang]}</SelectItem>
