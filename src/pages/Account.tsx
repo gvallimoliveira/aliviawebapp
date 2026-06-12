@@ -13,6 +13,7 @@ import { Loader2, KeyRound, User, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import SignatureManager from "@/components/account/SignatureManager";
+import StudentAccessCard from "@/components/account/StudentAccessCard";
 
 const Account = () => {
   const { user, loading: authLoading } = useAuth();
