@@ -82,6 +82,11 @@ export interface ResponsibleProfessional {
   /** Optional signature image as data URL (PNG with transparent bg).
    *  When present, rendered above the signature line. */
   signatureImageDataUrl?: string;
+  /** Student access flag. When true, PDF shows "Alivia Acadêmico" disclaimer
+   *  instead of CREFITO and adds a top banner identifying the academic report. */
+  isStudent?: boolean;
+  studentInstitution?: string;
+  studentPeriod?: string;
 }
 
 interface PdfOptions {
@@ -154,10 +159,18 @@ function drawResponsibleBlock(
   doc.setFont("Inter", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
-  const crefitoTxt = prof.crefito
-    ? `CREFITO: ${prof.crefito}`
-    : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
-  doc.text(crefitoTxt, PAGE_WIDTH / 2, y, { align: "center" });
+  let credentialTxt: string;
+  if (prof.isStudent) {
+    const pieces = ["Alivia Acadêmico"];
+    if (prof.studentInstitution) pieces.push(prof.studentInstitution);
+    if (prof.studentPeriod) pieces.push(prof.studentPeriod);
+    credentialTxt = pieces.join(" · ");
+  } else {
+    credentialTxt = prof.crefito
+      ? `CREFITO: ${prof.crefito}`
+      : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
+  }
+  doc.text(credentialTxt, PAGE_WIDTH / 2, y, { align: "center" });
   y += 4;
 
   const today = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US");
@@ -1301,6 +1314,27 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   }
 
   y = 48;
+
+  // ── Academic disclaimer banner (student access) ──
+  if (responsibleProfessional?.isStudent) {
+    const bannerH = 10;
+    drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, bannerH, 3, COLORS.accent, COLORS.accentDark);
+    doc.setFont("Inter", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...COLORS.accentDark);
+    const studentSuffix = [
+      responsibleProfessional.name,
+      responsibleProfessional.studentInstitution,
+      responsibleProfessional.studentPeriod,
+    ].filter(Boolean).join(" · ");
+    const bannerLabel = isPt
+      ? `Alivia Acadêmico · Avaliação realizada por estudante — ${studentSuffix}`
+      : `Alivia Academic · Assessment by student — ${studentSuffix}`;
+    const truncated = doc.splitTextToSize(bannerLabel, CONTENT_WIDTH - 12)[0];
+    doc.text(truncated, PAGE_WIDTH / 2, y + 6.5, { align: "center" });
+    y += bannerH + 4;
+  }
+
 
   // ── Patient Info ──
   if (userName) {

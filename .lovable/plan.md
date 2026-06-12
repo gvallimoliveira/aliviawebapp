@@ -1,182 +1,112 @@
-# Agente de Raciocínio Clínico — Plano (Beta, em standby)
+# Plano — Alivia Acadêmico + Cupom souibmr
 
-Funcionalidade nova para terapeutas PRO e equipes de Clínica: um chat dedicado, humanizado, com IA que apoia raciocínio clínico baseado em evidências, com vínculo opcional a paciente do prontuário e geração de HEP em rascunho.
-
-**Status inicial:** construído mas desativado por feature flag (`ENABLE_CLINICAL_AGENT = false`) + flag por usuário em `vip_users` para meus testes. Quando você liberar, vira beta visível com selo "Beta" para todos PRO + Clínica.
+Objetivo: liberar a palestra de amanhã com duas funcionalidades de baixo risco, reaproveitando ao máximo o que já existe (assinatura PRO, dashboard, PDFs, links de avaliação).
 
 ---
 
-## 1. Nome e identidade
+## 1. Modo "Acesso Estudante" em Minha Conta
 
-Sem nome confirmado. Sugestões para você escolher depois (não bloqueia o build — começo com placeholder "Agente Clínico Aliv.iA"):
+### Conceito
 
-- **Sócrates** — método de perguntas, alinha com "raciocínio em conjunto"
-- **Aliv** — extensão direta da marca
-- **Íris** — leve, neutro, fácil de lembrar
-- **Núcleo** — remete a centro de decisão clínica
+O estudante continua sendo um registro na tabela `professionals` (para reaproveitar 100% do fluxo PRO: dashboard, agenda, prontuário, PDFs, links, agente de raciocínio, etc.), mas marcado como `is_student=true`. Isso evita criar um segundo tipo de usuário e mantém o risco mínimo.
 
-Avatar: ilustração custom (gerada), não Sparkles genérico.
+A diferença para o profissional comum:
 
----
+- **CREFITO deixa de ser obrigatório** (validação ignorada quando `is_student=true`).
+- **Não aparece na busca pública** (`active=false` e `approved=false` por padrão — já é o comportamento atual de novos cadastros).
+- **Não pode receber pacientes via marketplace** nem ser vinculado a uma clínica como terapeuta responsável (bloqueio simples).
+- **Disclaimer "Alivia Acadêmico"** aparece em PDFs, link de avaliação e cabeçalho do dashboard, sempre com o nome do estudante e instituição.
 
-## 2. Onde fica no app (UX)
+### Onde fica o toggle
 
-- **Nova rota dedicada:** `/agente` (chat em tela cheia, sem outras informações na página).
-- **Entrada:** novo item no menu/sidebar do Dashboard chamado **"Agente Clínico"** com badge **"Beta"** dourado, visível apenas em contexto **PRO autônomo** e **Clínica** (oculto no perfil paciente).
-- **Atalho contextual:** botão "Discutir este caso com o Agente" dentro do prontuário do paciente (`AssessmentView`) que abre `/agente?patient=<id>` já criando uma thread vinculada.
-- **Layout do chat:**
-  - Background: logo Aliv.iA grande, centralizada, opacidade ~6%, tom dessaturado (cinza-teal). Gradiente sutil cream→white por trás.
-  - Coluna esquerda (desktop) / drawer (mobile): lista de threads, com chip do paciente vinculado quando houver.
-  - Centro: mensagens (markdown render), bolhas do usuário em teal, respostas do agente sem bolha (texto direto na superfície warm).
-  - Topo: nome da thread + chip paciente + botão "Anexar paciente"/"Trocar paciente".
-  - Composer fixo embaixo, com textarea expansível, botão de microfone (reaproveita transcribe-anamnesis) e botão "Gerar HEP" como ação especial.
+Na página `src/pages/Account.tsx`, novo card "Acesso Estudante" com:
 
-Visual aprovado pela mem `style/visual-direction` (warm, teal, rounded). Sem alterar core do app.
+- Switch "Sou estudante de fisioterapia".
+- Ao ativar, abre um mini-form: **nome completo**, **instituição de ensino**, **período atual** (1º a 10º).
+- Salva e cria/atualiza o registro em `professionals` com `is_student=true`, `crefito=null`, `full_name`, e novos campos `student_institution`, `student_period`.
+- Pode desativar depois (toggle off) — apenas alterna a flag; dados permanecem.
 
----
+### Backend (1 migração pequena)
 
-## 3. Acesso e permissões
+Na tabela `professionals`:
 
-- **Quem vê:** PRO ativo OR membro de clínica ativa (qualquer papel exceto secretária pura). VIP sempre.
-- **Quem NÃO vê:** paciente, profissional sem assinatura, secretária administrativa.
-- **Beta:** banner explicativo no topo na 1ª visita ("Versão beta — ainda estamos alimentando a base de evidências. Use como apoio, não como substituto clínico.").
-- **Cota:** 30 mensagens/dia por terapeuta (configurável). Contador em `agent_usage_daily(user_id, date, message_count)`. Aviso aos 25, bloqueio aos 30 com CTA "voltar amanhã".
+- `is_student boolean default false`
+- `student_institution text`
+- `student_period text`
 
----
+Ajuste no trigger `validate_crefito_format()` para pular validação quando `is_student = true` ou `crefito is null`.
 
-## 4. Conversas (threads)
+### Pontos de uso do disclaimer
 
-- Múltiplas threads por terapeuta.
-- Cada thread pode ser **livre** (discussão geral) ou **vinculada a um paciente** (puxa contexto automaticamente).
-- Rota: `/agente/:threadId`. `/agente` resolve a thread mais recente ou cria nova.
-- Persistência em banco (database-backed, conforme `chat-agent-ui-contract`).
-- Sidebar lista threads ordenadas por `updated_at`, com título auto-gerado pela IA após 3ª mensagem.
-- Ações por thread: renomear, arquivar, excluir.
+- `src/utils/generatePdf.ts` — bloco de rodapé/assinatura: substitui CREFITO por "Alivia Acadêmico · {Instituição} · {Período}".
+- `src/pages/ProfessionalAssessment.tsx` (link público de avaliação) — banner sutil "Avaliação acadêmica — Alivia Acadêmico".
+- `src/lib/getResponsibleProfessional.ts` — quando `is_student`, devolve label "{Nome} — Alivia Acadêmico" em vez de "CREFITO {...}".
+- `CrefitoCompletionBanner.tsx` — não mostrar para estudantes.
+
+### Restrições adicionais (segurança/UX)
+
+- Bloquear `professionals.approved = true` enquanto `is_student=true` (não entra no marketplace).
+- Bloquear convite como terapeuta de clínica institucional (apenas dono/secretário podem; estudante fica como "Solo").
 
 ---
 
-## 5. Vínculo com prontuário
+## 2. Cupom Stripe `souibmr` — 50% enquanto assinatura ativa
 
-Ao vincular paciente, o agente recebe (anonimizado — ver §8):
+### Características do cupom
 
-- Anamnese (queixa, evolução, fatores, atividades).
-- Regiões de dor + escores (EVA/regional).
-- Diagnóstico atual + hipótese final (com override se houver).
-- Resultados de questionários funcionais.
-- Impressão clínica e objetivos terapêuticos já gerados.
-- Linha do tempo (todas avaliações + dor diary recente).
-- HEPs ativos.
+- `id`: `souibmr`
+- `percent_off`: 50
+- `duration`: `forever` (mantém 50% off em todas as renovações enquanto a assinatura existir; cancelou = perde).
+- `redeem_by`: 7 dias a partir de amanhã (janela de resgate da palestra).
+- `applies_to`: ambos os preços PRO (mensal `price_1TJ4252HgVhVBE8URcx5fMZB` e anual `price_1TJ42L2HgVhVBE8U2fhXuqYT`).
+- Promotion code visível: `SOUIBMR` (case-insensitive).
 
-Contexto injetado como system message estruturada a cada turno (não na mensagem do usuário), com limite de tokens e resumo automático se >8k tokens.
+### Aplicação no checkout — reaproveitamento máximo
 
----
+Em `supabase/functions/create-pro-subscription/index.ts`, adicionar **uma linha** na criação da sessão:
 
-## 6. Geração de HEP pelo agente
+```
+allow_promotion_codes: true,
+```
 
-- Botão **"Gerar programa HEP"** no composer (só ativa quando thread tem paciente vinculado).
-- Agente devolve programa estruturado (lista de exercícios com séries/reps/progressão), salvo em `exercise_programs` com status `draft_from_agent`.
-- **Não envia link ao paciente automaticamente.** Aparece como card no chat: "Rascunho criado — revisar e publicar" → abre editor HEP existente.
-- Após revisão e clique em "Publicar", vira HEP normal: link funcional + entrada no prontuário com tag "Origem: Agente Clínico (revisado por &nbsp;)".
-- Versão original do agente fica preservada em `exercise_programs.agent_draft_json` para auditoria.
+Assim o estudante digita `SOUIBMR` no próprio checkout do Stripe e o desconto aplica automaticamente, sem mexer no frontend nem na lógica de assinatura. Funciona para mensal e anual.
 
----
+Opcional (UX): mostrar um aviso pequeno "Tem um cupom? Aplique no checkout" na tela de upgrade PRO quando `is_student=true`.
 
-## 7. Base de conhecimento (evidências)
+### Branding/comunicação
 
-**Estratégia para beta:** RAG interno + curadoria por nicho via PEDro.
-
-- Nova tabela `knowledge_articles` (id, title, authors, year, journal, pedro_score, study_type, niche_tags[], abstract, key_findings, doi, embedding vector(768), added_by_admin, created_at).
-- Filtro obrigatório: `pedro_score >= 7`, prioriza `study_type IN ('meta_analysis','systematic_review')`.
-- Pipeline admin (rota `/admin/knowledge`): você define nichos (lombalgia, ombro, joelho etc.); edge function `harvest-pedro-articles` faz scraping/busca na PEDro DB, extrai metadados, calcula embeddings via `google/gemini-embedding-001`, salva candidatos pendentes para aprovação manual.
-- No chat: edge function faz embedding da pergunta, retorna top-K artigos relevantes do nicho da conversa, injeta como contexto no prompt e o agente cita com `[Autor, ano, PEDro X]`.
-- Mesma base alimenta no futuro outras decisões da IA (treatment, diagnosis), conforme sua visão.
-
-**Fase 1 (build inicial):** schema + admin UI vazia + RAG ligado mas com base vazia (agente responde apenas com STEPS/D.I.F.I até você popular). Harvester PEDro fica como esqueleto para você ativar nicho a nicho.
+Nada além do cupom — o desconto vitalício é nativo do Stripe (`duration: forever`).
 
 ---
 
-## 8. Privacidade (LGPD)
+## Riscos e mitigação
 
-- Antes de enviar dados do paciente ao modelo: substituir nome completo por iniciais + ID curto (ex: "M.S. #a3f"), remover CPF/telefone/e-mail/endereço.
-- Função util `anonymizePatientContext()` aplicada em todo edge function do agente.
-- Disclaimer fixo no chat: "Dados do paciente são anonimizados antes do processamento por IA."
-- Conversas e mensagens com RLS estrita: apenas autor da thread vê (mesmo dentro da clínica — discussão clínica é pessoal, não compartilhada por padrão).
 
----
+| Risco                                 | Mitigação                                                                                  |
+| ------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Quebrar fluxo PRO atual               | Toda lógica nova condicionada a `is_student=true`; default `false` preserva comportamento. |
+| Estudante aparecendo no marketplace   | Forçar `approved=false` e bloquear toggle de aprovação enquanto estudante.                 |
+| Validação CREFITO travando salvamento | Trigger atualizado para pular quando `is_student=true`.                                    |
+| Cupom usado fora da palestra          | `redeem_by` de 7 dias limita janela.                                                       |
+| PDFs já emitidos antes do toggle      | Não afeta — disclaimer só vale para PDFs gerados depois.                                   |
 
-## 9. Stack técnica
-
-- **Frontend:** AI Elements (instalar `conversation message prompt-input shimmer tool`), `useChat` da `@ai-sdk/react`, `DefaultChatTransport` apontando para edge function.
-- **Backend:** edge function `clinical-agent-chat` com `streamText`, modelo padrão `google/gemini-3-flash-preview`, `toUIMessageStreamResponse({ originalMessages, onFinish })` salvando assistant message em `agent_messages`.
-- **Tools do agente** (AI SDK `tool()`):
-  - `fetch_patient_context(patient_id)` — re-puxa contexto se a conversa estender.
-  - `search_evidence(query, niche?)` — RAG na `knowledge_articles`.
-  - `propose_hep_draft(patient_id, items[])` — cria rascunho (needs approval: false, mas marca como draft).
-- `stopWhen: stepCountIs(50)`.
-- Gateway via `createLovableAiGatewayProvider` (LOVABLE_API_KEY).
 
 ---
 
-## 10. Tabelas novas (migration única)
+## Ordem de implementação (quando aprovar)
 
-- `agent_threads` (id, user_id, clinic_id?, patient_id?, title, archived, created_at, updated_at)
-- `agent_messages` (id, thread_id, role, parts jsonb, tokens_in, tokens_out, created_at)
-- `agent_usage_daily` (user_id, date, message_count) PK composta
-- `knowledge_articles` (campos da §7) + extensão `pgvector` se ainda não habilitada
-- `agent_settings` (user_id, anonymize_enabled, preferred_niches[]) — defaults seguros
-
-RLS: todas escopadas a `auth.uid()`. GRANTs para `authenticated` e `service_role`. Sem acesso `anon`.
-
----
-
-## 11. Feature flag e standby
-
-- `src/lib/featureFlags.ts`: adicionar `export const ENABLE_CLINICAL_AGENT = false;`
-- Sidebar/menu só renderiza item se `ENABLE_CLINICAL_AGENT || isVip(user)`.
-- Rota `/agente` registrada mas redireciona para `/dashboard` se flag off (exceto VIP).
-- Edge function deployada mas só responde se chamador for VIP ou flag global ligada (verifica via tabela `app_config`).
-- Quando você pedir "libera", troco a flag para `true` em 1 commit.
+1. Migração: 3 colunas + ajuste do trigger CREFITO.
+2. Card "Acesso Estudante" em `Account.tsx` (toggle + mini-form).
+3. Pontos de disclaimer: `generatePdf.ts`, `getResponsibleProfessional.ts`, banner do link público.
+4. Bloqueios (`approved`, convite de clínica) e ocultar `CrefitoCompletionBanner` para estudantes.
+5. `allow_promotion_codes: true` em `create-pro-subscription`.
+6. Criar cupom `souibmr` no Stripe via ferramenta (50% forever, redeem_by 7 dias).
 
 ---
 
-## 12. Otimizações sugeridas (para você avaliar)
+## Pontos para você confirmar antes de eu implementar
 
-1. **Sugestões iniciais (prompt starters):** chips clicáveis como "Discutir hipótese deste paciente", "Sugerir testes funcionais", "Revisar HEP atual", "O que diz a literatura sobre [X]?".
-2. **Pin de mensagens importantes** dentro da thread (vira card no prontuário do paciente).
-3. **Exportar conversa em PDF** anexado ao prontuário (útil para clínica documentar raciocínio).
-4. **Modo "explicação para paciente"** — agente reescreve resposta técnica em linguagem leiga, copiável para WhatsApp.
-5. **Comando `/evidência <tema>**` que força busca RAG mesmo fora de discussão de caso.
-6. **Histórico de citações** — painel lateral mostra todos artigos citados na thread, com link DOI.
-7. **Alertas de red flag** — se na conversa surgir descrição compatível com bandeira vermelha, agente injeta aviso destacado + sugere encaminhamento.
-8. **Memória do terapeuta** (longo prazo): preferências de abordagem, abreviações pessoais, salvas em `agent_settings`.
-
-Não implemento todas no build inicial — proponho **1, 4,5 e 7** já no MVP beta; **3, 6** no segundo ciclo; **2, 8** depois.
-
----
-
-## 13. Suporte e i18n
-
-Atualizar `Support.tsx`, `ClinicSupport.tsx` em pt/en/es com seção "Agente Clínico (Beta)" — apenas quando você liberar a flag. No build inicial deixo strings prontas em `locales/*.json` mas sem renderizar.
-
----
-
-## 14. Escopo do build inicial (o que entrego nesta primeira leva)
-
-1. Migration com 5 tabelas + RLS + GRANTs + `pgvector`.
-2. Feature flag + gate na sidebar/rota (standby total).
-3. Rota `/agente/:threadId?` com layout dedicado (background logo dessaturada, AI Elements).
-4. Sidebar de threads + criar/arquivar/excluir + título auto-gerado.
-5. Vínculo paciente (modal de seleção + chip + injeção de contexto anonimizado).
-6. Edge function `clinical-agent-chat` com streaming, tools `fetch_patient_context` / `search_evidence` (RAG vazio inicialmente) / `propose_hep_draft`.
-7. Cota diária + contador + aviso.
-8. Botão "Gerar HEP" → cria rascunho → card no chat → abre editor existente para revisão/publicação.
-9. Atalho "Discutir com o Agente" no `AssessmentView`.
-10. Disclaimer beta + disclaimer de anonimização.
-11. Admin shell `/admin/knowledge` (CRUD manual de artigos, sem harvester PEDro ainda — fica como TODO marcado).
-12. Prompt starters (sugestão 1) + comando `/evidência` (sugestão 5) + injeção de aviso red flag (sugestão 7).
-
-**Fora desta leva (próximos ciclos):** harvester PEDro automatizado, exportar PDF, modo paciente, memória de longo prazo, pin de mensagens.
-
----
-
-Posso prosseguir com este plano ou quer ajustar algo (nome, escopo da leva, ordem das sugestões, layout)?
+1. **Estudante continua como `professionals` row** (com `is_student=true`), apenas oculto do marketplace e sem CREFITO — ok? Ou você prefere de fato **nenhuma** linha em `professionals` (custo: replicar muita lógica)?
+2. **Mini-form**: nome, instituição, período — algum campo a mais? (ex.: cidade, previsão de formatura?)
+3. **Disclaimer no PDF**: posição preferida — substituir o bloco do CREFITO (rodapé/assinatura) ou adicionar uma faixa no topo? Ambos 
+4. **Cupom 50% forever**: confirmo `duration: forever` (mantém desconto em toda renovação enquanto a assinatura não for cancelada). Ok?

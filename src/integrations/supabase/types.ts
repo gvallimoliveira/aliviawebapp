@@ -1781,13 +1781,14 @@ export type Database = {
           clinic_name: string | null
           cpf: string | null
           created_at: string
-          crefito: string
+          crefito: string | null
           default_session_price: number | null
           email: string | null
           full_name: string
           id: string
           is_partner: boolean
           is_partner_account: boolean
+          is_student: boolean
           lifetime_treatment: boolean
           logo_url: string | null
           monthly_revenue_goal: number | null
@@ -1799,6 +1800,8 @@ export type Database = {
           social_media: string | null
           specialties: string[] | null
           state: string
+          student_institution: string | null
+          student_period: string | null
           subscription_grace_until: string | null
           subscription_status: string
           subscription_stripe_id: string | null
@@ -1815,13 +1818,14 @@ export type Database = {
           clinic_name?: string | null
           cpf?: string | null
           created_at?: string
-          crefito: string
+          crefito?: string | null
           default_session_price?: number | null
           email?: string | null
           full_name: string
           id?: string
           is_partner?: boolean
           is_partner_account?: boolean
+          is_student?: boolean
           lifetime_treatment?: boolean
           logo_url?: string | null
           monthly_revenue_goal?: number | null
@@ -1833,6 +1837,8 @@ export type Database = {
           social_media?: string | null
           specialties?: string[] | null
           state: string
+          student_institution?: string | null
+          student_period?: string | null
           subscription_grace_until?: string | null
           subscription_status?: string
           subscription_stripe_id?: string | null
@@ -1849,13 +1855,14 @@ export type Database = {
           clinic_name?: string | null
           cpf?: string | null
           created_at?: string
-          crefito?: string
+          crefito?: string | null
           default_session_price?: number | null
           email?: string | null
           full_name?: string
           id?: string
           is_partner?: boolean
           is_partner_account?: boolean
+          is_student?: boolean
           lifetime_treatment?: boolean
           logo_url?: string | null
           monthly_revenue_goal?: number | null
@@ -1867,6 +1874,8 @@ export type Database = {
           social_media?: string | null
           specialties?: string[] | null
           state?: string
+          student_institution?: string | null
+          student_period?: string | null
           subscription_grace_until?: string | null
           subscription_status?: string
           subscription_stripe_id?: string | null
@@ -2531,7 +2540,10 @@ export type Database = {
           full_name: string
           has_access: boolean
           id: string
+          is_student: boolean
           logo_url: string
+          student_institution: string
+          student_period: string
           user_id: string
         }[]
       }

@@ -34,9 +34,14 @@ const CrefitoCompletionBanner = () => {
     (async () => {
       const { data } = await supabase
         .from("professionals")
-        .select("id, full_name, crefito")
+        .select("id, full_name, crefito, is_student")
         .eq("user_id", user.id)
         .maybeSingle();
+      // Hide for students: they don't need CREFITO (Alivia Acadêmico mode)
+      if ((data as any)?.is_student) {
+        setNeedsCrefito(false);
+        return;
+      }
       if (!data || !data.crefito) {
         setNeedsCrefito(true);
         setHasProfRecord(!!data);
