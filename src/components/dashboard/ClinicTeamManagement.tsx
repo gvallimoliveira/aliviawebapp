@@ -164,9 +164,9 @@ const ClinicTeamManagement = () => {
                   )}
                   <div className="flex flex-wrap items-center gap-1 mt-1">
                     <Badge variant="outline" className="text-[10px]">{roleLabels[m.role][lang]}</Badge>
-                    {m.is_student && (
+                    {(m.is_student && m.role !== "intern") && (
                       <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30 hover:bg-primary/15">
-                        {lang === "pt" ? "Estagiário (Acadêmico)" : lang === "es" ? "Practicante (Académico)" : "Intern (Academic)"}
+                        {lang === "pt" ? "Acadêmico" : lang === "es" ? "Académico" : "Academic"}
                       </Badge>
                     )}
                   </div>
