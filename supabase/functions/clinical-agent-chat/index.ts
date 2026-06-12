@@ -456,27 +456,63 @@ serve(async (req) => {
       .update({ updated_at: new Date().toISOString() })
       .eq("id", thread_id);
 
-    if (thread.title === "Nova conversa" && (history?.length || 0) >= 2) {
-      // generate title (cheap, non-blocking)
+    // Auto-title while the user hasn't renamed (sentinel: title === "Nova conversa").
+    // We refine on every turn until ~3 exchanges, so the title reflects the topic
+    // as it crystallizes instead of being locked to the very first message.
+    const turnsSoFar = (history?.length || 0) + 2; // + current user + current assistant
+    if (thread.title === "Nova conversa" && turnsSoFar <= 8) {
       try {
+        // Build a compact transcript from the last few turns for richer keywords.
+        const recent = [
+          ...(history || []).slice(-4).map((m: any) => ({
+            role: m.role,
+            text: Array.isArray(m.parts)
+              ? m.parts.filter((p: any) => p.type === "text").map((p: any) => p.text).join(" ")
+              : String(m.parts || ""),
+          })),
+          { role: "user", text: userMsg },
+          { role: "assistant", text: assistantText },
+        ]
+          .map(t => `${t.role === "user" ? "P" : "A"}: ${(t.text || "").replace(/\s+/g, " ").slice(0, 400)}`)
+          .join("\n");
+
         const titleResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
           body: JSON.stringify({
             model: "google/gemini-2.5-flash-lite",
             messages: [
-              { role: "system", content: "Gere um título curto (máx 6 palavras, pt-BR) para esta conversa clínica. Responda apenas o título." },
-              { role: "user", content: `Mensagem: ${userMsg.slice(0, 300)}` },
+              {
+                role: "system",
+                content:
+                  "Você nomeia conversas clínicas de fisioterapia para um histórico de chat. " +
+                  "Gere um título curto de 3 a 6 palavras em pt-BR contendo APENAS as palavras-chave " +
+                  "clínicas centrais da conversa: região anatômica, hipótese/diagnóstico, e " +
+                  "intervenção ou pergunta principal quando houver. " +
+                  "Regras estritas: sem aspas, sem ponto final, sem emojis, sem prefixos genéricos " +
+                  "('Discussão sobre', 'Caso de', 'Dúvida sobre', 'Conversa', 'Paciente com'). " +
+                  "Use Title Case. Exemplos válidos: 'Lombalgia Crônica · McKenzie', " +
+                  "'Tendinopatia Patelar · HSR', 'Cervicalgia Pós-Whiplash', 'HEP Pós-LCA Fase 2'. " +
+                  "Responda SOMENTE o título.",
+              },
+              { role: "user", content: `Transcrição:\n${recent}` },
             ],
           }),
         });
         if (titleResp.ok) {
           const tj = await titleResp.json();
-          const title = (tj.choices?.[0]?.message?.content || "").trim().replace(/^["']|["']$/g, "").slice(0, 80);
-          if (title) await adminClient.from("agent_threads").update({ title }).eq("id", thread_id);
+          let title = (tj.choices?.[0]?.message?.content || "").trim();
+          // Strip wrapping quotes, trailing punctuation, generic prefixes.
+          title = title.replace(/^["'`]+|["'`.]+$/g, "").trim();
+          title = title.replace(/^(discuss[aã]o sobre|caso de|d[uú]vida sobre|conversa( sobre)?|paciente com)\s*[:\-–—]?\s*/i, "");
+          title = title.slice(0, 80);
+          if (title && title.toLowerCase() !== "nova conversa") {
+            await adminClient.from("agent_threads").update({ title }).eq("id", thread_id);
+          }
         }
       } catch {}
     }
+
 
     return new Response(JSON.stringify({
       assistant: assistantText,
