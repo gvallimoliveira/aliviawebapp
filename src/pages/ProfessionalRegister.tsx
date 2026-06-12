@@ -857,13 +857,17 @@ const ProfessionalRegister = () => {
                 />
                 <label htmlFor="terms-truth-pro" className="text-xs text-muted-foreground leading-relaxed cursor-pointer flex-1">
                   <ShieldCheck className="inline h-3.5 w-3.5 text-primary mr-1 -mt-0.5" />
-                  Declaro, sob minha responsabilidade, que todos os dados informados (nome, CREFITO e CPF) são verídicos e correspondem ao meu cadastro profissional ativo. Estou ciente de que informações falsas podem levar à suspensão imediata da conta.
+                  {isStudent
+                    ? "Declaro, sob minha responsabilidade, que sou estudante regularmente matriculado(a) na instituição informada e que os dados acima são verídicos. Estou ciente de que informações falsas podem levar à suspensão imediata da conta."
+                    : "Declaro, sob minha responsabilidade, que todos os dados informados (nome, CREFITO e CPF) são verídicos e correspondem ao meu cadastro profissional ativo. Estou ciente de que informações falsas podem levar à suspensão imediata da conta."}
                 </label>
               </div>
 
               <Button type="submit" className="w-full rounded-xl py-5" disabled={saving || !termsAccepted}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                {existing ? t("prof.update") : t("prof.register")}
+                {isStudent
+                  ? (existing ? "Atualizar cadastro acadêmico" : "Entrar no modo Alivia Acadêmico")
+                  : (existing ? t("prof.update") : t("prof.register"))}
               </Button>
               {!existing && (
                 <Button
