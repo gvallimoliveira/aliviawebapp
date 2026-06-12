@@ -82,6 +82,7 @@ serve(async (req) => {
       mode: sessionMode,
       success_url: successUrl,
       cancel_url: `${origin}/dashboard?subscription=cancelled`,
+      allow_promotion_codes: true,
       metadata: {
         user_id: user.id,
         plan,
