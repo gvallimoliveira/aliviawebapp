@@ -1349,7 +1349,21 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
       truncated = truncated.replace(/[\s·]+$/, "") + ell;
     }
     doc.text(truncated, PAGE_WIDTH / 2, y + 6.5, { align: "center" });
-    y += bannerH + 4;
+    y += bannerH + 2;
+
+    // Strong academic disclaimer for student reports
+    const academicDisclaimer = isPt
+      ? "Documento de caráter exclusivamente acadêmico — sem valor profissional. As informações deste relatório não substituem uma consulta fisioterapêutica. Se necessário, busque orientação de um fisioterapeuta formado e habilitado."
+      : "Document of exclusively academic nature — no professional value. The information in this report does not replace a physiotherapy consultation. If needed, seek guidance from a qualified physiotherapist.";
+    y = drawTextCard(doc, y, academicDisclaimer, {
+      fill: [255, 251, 235],
+      stroke: COLORS.yellow,
+      padX: 6,
+      padY: 5,
+      body: { font: "Inter", weight: "normal", size: 8, lineHeight: 3.8, textColor: COLORS.yellow },
+      label: { text: isPt ? "AVISO ACADÊMICO" : "ACADEMIC NOTICE", color: COLORS.yellow, size: 8 },
+    });
+    y += 2;
   }
 
 
