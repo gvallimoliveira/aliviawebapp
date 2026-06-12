@@ -76,6 +76,14 @@ const ProfessionalRegister = () => {
   });
   const [termsAccepted, setTermsAccepted] = useState(false);
 
+  // Alivia Acadêmico (student mode) — secondary entry point right in the registration modal
+  const [isStudent, setIsStudent] = useState(false);
+  const [studentInstitution, setStudentInstitution] = useState("");
+  const [studentPeriod, setStudentPeriod] = useState("");
+  const [isVip, setIsVip] = useState(false);
+  // Lock when the existing professional already has a CREFITO and is not VIP
+  const studentLocked = !!(existing?.crefito && String(existing.crefito).trim().length > 0) && !isVip;
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
