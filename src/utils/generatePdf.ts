@@ -82,6 +82,11 @@ export interface ResponsibleProfessional {
   /** Optional signature image as data URL (PNG with transparent bg).
    *  When present, rendered above the signature line. */
   signatureImageDataUrl?: string;
+  /** Student access flag. When true, PDF shows "Alivia Acadêmico" disclaimer
+   *  instead of CREFITO and adds a top banner identifying the academic report. */
+  isStudent?: boolean;
+  studentInstitution?: string;
+  studentPeriod?: string;
 }
 
 interface PdfOptions {
