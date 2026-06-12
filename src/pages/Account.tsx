@@ -184,6 +184,10 @@ const Account = () => {
           <SignatureManager />
         </div>
 
+        <div className="mt-6">
+          <StudentAccessCard />
+        </div>
+
         <div className="mt-6 flex justify-center">
           <AppVersionBadge />
         </div>
