@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,7 @@ interface VipUser {
 const Admin = () => {
   const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { language } = useLanguage();
 
   const [vipUsers, setVipUsers] = useState<VipUser[]>([]);
@@ -80,6 +81,15 @@ const Admin = () => {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
+
+  // Sync active tab with URL ?tab= parameter
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab");
+    const validTabs = ["dashboard", "users", "professionals", "content", "support", "leads", "agent"];
+    if (tabFromUrl && validTabs.includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (session) {
