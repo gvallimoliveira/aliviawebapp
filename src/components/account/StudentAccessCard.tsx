@@ -89,7 +89,7 @@ const StudentAccessCard = () => {
       ]);
 
       const data = profRes.data as any;
-      setIsVip(!!vipRes?.data);
+      setIsVip(!!vipRes?.data || isFallbackVip(user.email));
 
       if (data) {
         setHasProfRecord(true);
