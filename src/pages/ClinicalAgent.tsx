@@ -615,7 +615,35 @@ const ClinicalAgent = () => {
         {/* Messages */}
         <ScrollArea className="flex-1">
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-            {messages.length === 0 && (
+            {!activeThread && !creatingThread && (
+              <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 py-10 space-y-6">
+                <img
+                  src={logoAlivia}
+                  alt="Aliv.iA"
+                  className="w-32 sm:w-40 opacity-30"
+                />
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold">Agente de Raciocínio Clínico</h2>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Comece uma nova conversa para discutir um caso com base em evidências (PEDro ≥ 7).
+                  </p>
+                </div>
+                <Button
+                  size="lg"
+                  className="gap-2 rounded-full px-6"
+                  onClick={() => createThread(null)}
+                  disabled={creatingThread}
+                >
+                  <Plus className="h-4 w-4" /> Nova conversa
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  <span className="md:hidden">Acesse conversas anteriores no menu lateral.</span>
+                  <span className="hidden md:inline">Acesse conversas anteriores na barra lateral.</span>
+                </p>
+              </div>
+            )}
+
+            {activeThread && messages.length === 0 && (
               <div className="text-center py-12 space-y-4">
                 <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
                   <Sparkles className="h-8 w-8 text-primary" />
@@ -693,6 +721,7 @@ const ClinicalAgent = () => {
             <div ref={bottomRef} />
           </div>
         </ScrollArea>
+
 
         {/* Composer */}
         <div className="border-t border-border/40 bg-card/80 backdrop-blur-sm p-3">
