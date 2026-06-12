@@ -62,7 +62,10 @@ const ProfessionalAssessment = () => {
 
       const professionalData = Array.isArray(data) ? data[0] : data;
 
-      if (error || !professionalData || !professionalData.approved || !professionalData.active || !professionalData.has_access) {
+      // Students never have `approved=true` (academic mode), but their links must still work.
+      // The "sob ressalva" disclaimer is shown downstream in the report/PDF.
+      const isApprovedOrStudent = professionalData?.approved || professionalData?.is_student;
+      if (error || !professionalData || !isApprovedOrStudent || !professionalData.active || !professionalData.has_access) {
         setStep("inactive");
         return;
       }
