@@ -3,6 +3,6 @@
 
 export const ENABLE_VIDEO_CALL = true;
 
-// Clinical reasoning AI agent (beta). Standby until manually enabled.
+// Clinical reasoning AI agent. Liberado para profissionais, estudantes e clínicas.
 // VIP users always bypass this flag (see useClinicalAgentAccess hook).
-export const ENABLE_CLINICAL_AGENT = false;
+export const ENABLE_CLINICAL_AGENT = true;
