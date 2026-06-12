@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X, Plus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X, Plus, ShieldCheck, GraduationCap, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { formatCpf } from "@/utils/masks";
 
 import logoAlivia from "@/assets/logo-alivia.png";
@@ -75,44 +76,55 @@ const ProfessionalRegister = () => {
   });
   const [termsAccepted, setTermsAccepted] = useState(false);
 
+  // Alivia Acadêmico (student mode) — secondary entry point right in the registration modal
+  const [isStudent, setIsStudent] = useState(false);
+  const [studentInstitution, setStudentInstitution] = useState("");
+  const [studentPeriod, setStudentPeriod] = useState("");
+  const [isVip, setIsVip] = useState(false);
+  // Lock when the existing professional already has a CREFITO and is not VIP
+  const studentLocked = !!(existing?.crefito && String(existing.crefito).trim().length > 0) && !isVip;
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("professionals" as any)
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }: any) => {
-        if (data) {
-          setExisting(data);
-          setForm({
-            full_name: data.full_name || "",
-            crefito: data.crefito || "",
-            cpf: data.cpf ? formatCpf(data.cpf) : "",
-            social_media: data.social_media || "",
-            specialties: data.specialties || [],
-            city: data.city || "",
-            state: data.state || "",
-            bio: data.bio || "",
-            phone: data.phone || "",
-            email: data.email || "",
-            clinic_name: data.clinic_name || "",
-            clinic_address: data.clinic_address || "",
-          });
-          if (data.terms_accepted_at) setTermsAccepted(true);
-          if (data.profile_photo_url) {
-            setPhotoPreview(data.profile_photo_url);
-          }
-          if (data.logo_url) {
-            setLogoPreview(data.logo_url);
-          }
+    Promise.all([
+      supabase.from("professionals" as any).select("*").eq("user_id", user.id).maybeSingle() as any,
+      user.email
+        ? (supabase.from("vip_users" as any) as any).select("id").eq("email", user.email.toLowerCase()).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]).then(([profRes, vipRes]: any[]) => {
+      const data = profRes?.data;
+      setIsVip(!!vipRes?.data);
+      if (data) {
+        setExisting(data);
+        setForm({
+          full_name: data.full_name || "",
+          crefito: data.crefito || "",
+          cpf: data.cpf ? formatCpf(data.cpf) : "",
+          social_media: data.social_media || "",
+          specialties: data.specialties || [],
+          city: data.city || "",
+          state: data.state || "",
+          bio: data.bio || "",
+          phone: data.phone || "",
+          email: data.email || "",
+          clinic_name: data.clinic_name || "",
+          clinic_address: data.clinic_address || "",
+        });
+        if (data.terms_accepted_at) setTermsAccepted(true);
+        if (data.profile_photo_url) setPhotoPreview(data.profile_photo_url);
+        if (data.logo_url) setLogoPreview(data.logo_url);
+        if (data.is_student) {
+          setIsStudent(true);
+          setStudentInstitution(data.student_institution || "");
+          setStudentPeriod(data.student_period || "");
         }
-        setLoadingProfile(false);
-      });
+      }
+      setLoadingProfile(false);
+    });
   }, [user]);
 
   const toggleSpecialty = (s: string) => {
@@ -252,6 +264,78 @@ const ProfessionalRegister = () => {
       toast({ title: t("prof.required_fields"), variant: "destructive" });
       return;
     }
+
+    // ───────── Alivia Acadêmico branch ─────────
+    // Student mode skips CREFITO / CPF / social_media validations.
+    if (isStudent) {
+      if (!studentInstitution.trim() || !studentPeriod.trim()) {
+        toast({
+          title: "Dados acadêmicos obrigatórios",
+          description: "Informe a instituição e o período atual.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!termsAccepted) {
+        toast({
+          title: "Confirmação obrigatória",
+          description: "Você precisa confirmar que os dados informados são verídicos.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setSaving(true);
+      try {
+        let photoUrl: string | null = null;
+        if (photoFile) photoUrl = await uploadPhoto();
+        let logoUrl: string | null = null;
+        if (logoFile) logoUrl = await uploadLogo();
+
+        // VIPs keep their CREFITO when toggling; non-students inserting fresh have crefito=null.
+        const studentPayload: any = {
+          full_name: form.full_name.trim(),
+          city: form.city.trim(),
+          state: form.state,
+          bio: form.bio,
+          phone: form.phone,
+          email: form.email || user.email || null,
+          social_media: form.social_media || null,
+          specialties: form.specialties,
+          clinic_name: form.clinic_name,
+          clinic_address: form.clinic_address,
+          user_id: user.id,
+          is_student: true,
+          student_institution: studentInstitution.trim(),
+          student_period: studentPeriod.trim(),
+          approved: false, // students never appear in the marketplace
+          active: true,
+          terms_accepted_at: new Date().toISOString(),
+        };
+        if (photoUrl) studentPayload.profile_photo_url = photoUrl;
+        if (logoUrl) studentPayload.logo_url = logoUrl;
+        // First-time student insert: CREFITO must be null so trigger skips validation.
+        if (!existing) studentPayload.crefito = null;
+
+        if (existing) {
+          await (supabase.from("professionals" as any) as any).update(studentPayload).eq("id", existing.id);
+        } else {
+          await (supabase.from("professionals" as any) as any).insert(studentPayload);
+        }
+        // Clear the "skipped" flag if it was set
+        try {
+          await (supabase as any).from("profiles").update({ professional_register_skipped: false }).eq("user_id", user.id);
+        } catch { /* noop */ }
+        toast({ title: "Cadastro acadêmico salvo!", description: "Você está no modo Alivia Acadêmico." });
+        navigate("/dashboard?tab=professional");
+      } catch (err: any) {
+        toast({ title: t("prof.error"), description: err?.message, variant: "destructive" });
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // ───────── Standard professional branch (unchanged) ─────────
     const normalizedCrefito = form.crefito.trim().toUpperCase();
     if (!normalizedCrefito) {
       toast({ title: t("prof.crefito_required"), variant: "destructive" });
@@ -280,7 +364,6 @@ const ProfessionalRegister = () => {
     }
     setSaving(true);
     try {
-      // Check for duplicate CREFITO
       const { data: dupCheck } = await (supabase.from("professionals" as any) as any)
         .select("id, user_id")
         .eq("crefito", normalizedCrefito)
@@ -290,7 +373,6 @@ const ProfessionalRegister = () => {
         setSaving(false);
         return;
       }
-      // Check for duplicate CPF
       const { data: cpfDup } = await (supabase.from("professionals" as any) as any)
         .select("id, user_id")
         .eq("cpf", cpfDigits)
@@ -305,13 +387,9 @@ const ProfessionalRegister = () => {
         return;
       }
       let photoUrl: string | null = null;
-      if (photoFile) {
-        photoUrl = await uploadPhoto();
-      }
+      if (photoFile) photoUrl = await uploadPhoto();
       let logoUrl: string | null = null;
-      if (logoFile) {
-        logoUrl = await uploadLogo();
-      }
+      if (logoFile) logoUrl = await uploadLogo();
 
       const payload: any = {
         ...form,
@@ -319,14 +397,13 @@ const ProfessionalRegister = () => {
         cpf: cpfDigits,
         user_id: user.id,
         approved: true,
+        is_student: false,
+        student_institution: null,
+        student_period: null,
         terms_accepted_at: new Date().toISOString(),
       };
-      if (photoUrl) {
-        payload.profile_photo_url = photoUrl;
-      }
-      if (logoUrl) {
-        payload.logo_url = logoUrl;
-      }
+      if (photoUrl) payload.profile_photo_url = photoUrl;
+      if (logoUrl) payload.logo_url = logoUrl;
 
       if (existing) {
         await (supabase.from("professionals" as any) as any).update(payload).eq("id", existing.id);
@@ -425,6 +502,55 @@ const ProfessionalRegister = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* ─────── Alivia Acadêmico toggle ─────── */}
+              <div className={`rounded-xl border p-3 ${isStudent ? "bg-primary/5 border-primary/40" : "bg-muted/30 border-border"}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="shrink-0 mt-0.5 rounded-full bg-primary/15 p-1.5">
+                      <GraduationCap className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold">Sou estudante — Alivia Acadêmico</p>
+                        {isVip && (
+                          <Badge className="text-[10px] bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-100 gap-1">
+                            <Sparkles className="h-3 w-3" /> VIP · alternância livre
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                        Estudantes de fisioterapia sem CREFITO. Libera todas as ferramentas do plano profissional; relatórios e links exibem o selo acadêmico.
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={isStudent}
+                    onCheckedChange={setIsStudent}
+                    disabled={studentLocked}
+                    aria-label="Ativar modo acadêmico"
+                  />
+                </div>
+                {studentLocked && (
+                  <p className="mt-2 text-[11px] text-amber-700 leading-relaxed">
+                    Sua conta já está cadastrada como fisioterapeuta formado (CREFITO informado). O modo Estudante não pode ser ativado.
+                  </p>
+                )}
+              </div>
+
+              {/* Student-only academic fields */}
+              {isStudent && (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Instituição de ensino *</Label>
+                    <Input value={studentInstitution} onChange={(e) => setStudentInstitution(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Período atual *</Label>
+                    <Input value={studentPeriod} onChange={(e) => setStudentPeriod(e.target.value)} placeholder="Ex.: 5º período" />
+                  </div>
+                </div>
+              )}
+
               {/* Profile Photo Upload */}
               <div className="flex flex-col items-center gap-3">
                 <div className="relative group">
@@ -549,52 +675,62 @@ const ProfessionalRegister = () => {
                 </button>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              {isStudent ? (
                 <div className="space-y-2">
                   <Label>{t("prof.full_name")} *</Label>
                   <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("prof.crefito")} *</Label>
-                  <Input
-                    value={form.crefito}
-                    onChange={(e) => setForm({ ...form, crefito: e.target.value.toUpperCase() })}
-                    placeholder="000000-F"
-                    maxLength={8}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">{t("prof.crefito_invalid_format")}</p>
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{t("prof.full_name")} *</Label>
+                      <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("prof.crefito")} *</Label>
+                      <Input
+                        value={form.crefito}
+                        onChange={(e) => setForm({ ...form, crefito: e.target.value.toUpperCase() })}
+                        placeholder="000000-F"
+                        maxLength={8}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">{t("prof.crefito_invalid_format")}</p>
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label>CPF *</Label>
-                <Input
-                  value={form.cpf}
-                  onChange={(e) => setForm({ ...form, cpf: formatCpf(e.target.value) })}
-                  placeholder="000.000.000-00"
-                  inputMode="numeric"
-                  maxLength={14}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Usado apenas para validar sua identidade e evitar cadastros duplicados. Não é exibido publicamente.
-                </p>
-              </div>
+                  <div className="space-y-2">
+                    <Label>CPF *</Label>
+                    <Input
+                      value={form.cpf}
+                      onChange={(e) => setForm({ ...form, cpf: formatCpf(e.target.value) })}
+                      placeholder="000.000.000-00"
+                      inputMode="numeric"
+                      maxLength={14}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Usado apenas para validar sua identidade e evitar cadastros duplicados. Não é exibido publicamente.
+                    </p>
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">
-                  <Instagram className="h-4 w-4 text-muted-foreground" />
-                  {t("prof.social_media")} *
-                </Label>
-                <Input
-                  value={form.social_media}
-                  onChange={(e) => setForm({ ...form, social_media: e.target.value })}
-                  placeholder="@seu_perfil"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">{t("prof.social_media_hint")}</p>
-              </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5">
+                      <Instagram className="h-4 w-4 text-muted-foreground" />
+                      {t("prof.social_media")} *
+                    </Label>
+                    <Input
+                      value={form.social_media}
+                      onChange={(e) => setForm({ ...form, social_media: e.target.value })}
+                      placeholder="@seu_perfil"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">{t("prof.social_media_hint")}</p>
+                  </div>
+                </>
+              )}
+
 
               <div className="space-y-2">
                 <Label>{t("prof.specialties")}</Label>
@@ -721,13 +857,17 @@ const ProfessionalRegister = () => {
                 />
                 <label htmlFor="terms-truth-pro" className="text-xs text-muted-foreground leading-relaxed cursor-pointer flex-1">
                   <ShieldCheck className="inline h-3.5 w-3.5 text-primary mr-1 -mt-0.5" />
-                  Declaro, sob minha responsabilidade, que todos os dados informados (nome, CREFITO e CPF) são verídicos e correspondem ao meu cadastro profissional ativo. Estou ciente de que informações falsas podem levar à suspensão imediata da conta.
+                  {isStudent
+                    ? "Declaro, sob minha responsabilidade, que sou estudante regularmente matriculado(a) na instituição informada e que os dados acima são verídicos. Estou ciente de que informações falsas podem levar à suspensão imediata da conta."
+                    : "Declaro, sob minha responsabilidade, que todos os dados informados (nome, CREFITO e CPF) são verídicos e correspondem ao meu cadastro profissional ativo. Estou ciente de que informações falsas podem levar à suspensão imediata da conta."}
                 </label>
               </div>
 
               <Button type="submit" className="w-full rounded-xl py-5" disabled={saving || !termsAccepted}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                {existing ? t("prof.update") : t("prof.register")}
+                {isStudent
+                  ? (existing ? "Atualizar cadastro acadêmico" : "Entrar no modo Alivia Acadêmico")
+                  : (existing ? t("prof.update") : t("prof.register"))}
               </Button>
               {!existing && (
                 <Button
