@@ -52,6 +52,7 @@ const roleLabels: Record<ClinicRole, Record<string, string>> = {
 const roleIcon = (role: ClinicRole) => {
   if (role === "owner") return <Crown className="h-3.5 w-3.5" />;
   if (role === "admin") return <Shield className="h-3.5 w-3.5" />;
+  if (role === "intern") return <GraduationCap className="h-3.5 w-3.5 text-primary" />;
   if (role === "therapist" || role === "osteopath" || role === "doctor" || role === "rpg_specialist" || role === "massage_therapist" || role === "pilates_instructor") return <StethIcon className="h-3.5 w-3.5" />;
   return <ClipboardList className="h-3.5 w-3.5" />;
 };
