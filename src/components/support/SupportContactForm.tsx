@@ -68,9 +68,14 @@ export default function SupportContactForm() {
       });
       if (error) throw error;
 
-      // Notify admins via push notification (fire-and-forget)
+      // Notify admins via push + email (fire-and-forget)
       supabase.functions.invoke("notify-admin-support", {
-        body: { subject: subject.trim() },
+        body: {
+          subject: subject.trim(),
+          message: message.trim(),
+          userEmail: user.email,
+          userName: (user.user_metadata as any)?.full_name || user.email,
+        },
       }).catch(() => {});
 
       toast({ description: t("support.contact.success") });

@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, Stethoscope, Crown, RotateCcw, Building2, Star, Briefcase, ClipboardList, UserCog } from "lucide-react";
+import AdminSupportInboxButton from "./AdminSupportInboxButton";
+
 
 
 interface WelcomeSectionProps {
@@ -49,7 +51,12 @@ const WelcomeSection = ({
   const renderBadge = () => {
     const isAdmin = userEmail === "gvallimoliveira@gmail.com";
     if (isAdmin) {
-      return <Badge className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 gap-1 cursor-pointer hover:bg-destructive/80 transition-colors" onClick={() => navigate("/admin")}><Shield className="h-3 w-3" />Admin</Badge>;
+      return (
+        <div className="flex items-center gap-1.5">
+          <Badge className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 gap-1 cursor-pointer hover:bg-destructive/80 transition-colors" onClick={() => navigate("/admin")}><Shield className="h-3 w-3" />Admin</Badge>
+          <AdminSupportInboxButton userEmail={userEmail} />
+        </div>
+      );
     }
 
     // Clinic role badge (owner / secretary / therapist) when in clinic context
