@@ -98,7 +98,7 @@ const ProfessionalRegister = () => {
         : Promise.resolve({ data: null }),
     ]).then(([profRes, vipRes]: any[]) => {
       const data = profRes?.data;
-      setIsVip(!!vipRes?.data);
+      setIsVip(!!vipRes?.data || isFallbackVip(user.email));
       if (data) {
         setExisting(data);
         setForm({
