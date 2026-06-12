@@ -154,13 +154,25 @@ const ClinicTeamManagement = () => {
           {members.map((m) => (
             <div key={m.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border/50 bg-muted/30">
               <div className="flex items-center gap-3 min-w-0">
-                {roleIcon(m.role)}
+                {m.is_student ? <GraduationCap className="h-3.5 w-3.5 text-primary" /> : roleIcon(m.role)}
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{m.full_name || m.email || "—"}</p>
                   {m.full_name && m.email && (
                     <p className="text-xs text-muted-foreground truncate">{m.email}</p>
                   )}
-                  <Badge variant="outline" className="text-[10px] mt-1">{roleLabels[m.role][lang]}</Badge>
+                  <div className="flex flex-wrap items-center gap-1 mt-1">
+                    <Badge variant="outline" className="text-[10px]">{roleLabels[m.role][lang]}</Badge>
+                    {m.is_student && (
+                      <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30 hover:bg-primary/15">
+                        {lang === "pt" ? "Estagiário (Acadêmico)" : lang === "es" ? "Practicante (Académico)" : "Intern (Academic)"}
+                      </Badge>
+                    )}
+                  </div>
+                  {m.is_student && (m.student_institution || m.student_period) && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                      {[m.student_institution, m.student_period].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
                 </div>
               </div>
               {canManage && m.user_id !== user?.id && (
