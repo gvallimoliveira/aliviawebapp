@@ -90,38 +90,41 @@ const ProfessionalRegister = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("professionals" as any)
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }: any) => {
-        if (data) {
-          setExisting(data);
-          setForm({
-            full_name: data.full_name || "",
-            crefito: data.crefito || "",
-            cpf: data.cpf ? formatCpf(data.cpf) : "",
-            social_media: data.social_media || "",
-            specialties: data.specialties || [],
-            city: data.city || "",
-            state: data.state || "",
-            bio: data.bio || "",
-            phone: data.phone || "",
-            email: data.email || "",
-            clinic_name: data.clinic_name || "",
-            clinic_address: data.clinic_address || "",
-          });
-          if (data.terms_accepted_at) setTermsAccepted(true);
-          if (data.profile_photo_url) {
-            setPhotoPreview(data.profile_photo_url);
-          }
-          if (data.logo_url) {
-            setLogoPreview(data.logo_url);
-          }
+    Promise.all([
+      supabase.from("professionals" as any).select("*").eq("user_id", user.id).maybeSingle() as any,
+      user.email
+        ? (supabase.from("vip_users" as any) as any).select("id").eq("email", user.email.toLowerCase()).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]).then(([profRes, vipRes]: any[]) => {
+      const data = profRes?.data;
+      setIsVip(!!vipRes?.data);
+      if (data) {
+        setExisting(data);
+        setForm({
+          full_name: data.full_name || "",
+          crefito: data.crefito || "",
+          cpf: data.cpf ? formatCpf(data.cpf) : "",
+          social_media: data.social_media || "",
+          specialties: data.specialties || [],
+          city: data.city || "",
+          state: data.state || "",
+          bio: data.bio || "",
+          phone: data.phone || "",
+          email: data.email || "",
+          clinic_name: data.clinic_name || "",
+          clinic_address: data.clinic_address || "",
+        });
+        if (data.terms_accepted_at) setTermsAccepted(true);
+        if (data.profile_photo_url) setPhotoPreview(data.profile_photo_url);
+        if (data.logo_url) setLogoPreview(data.logo_url);
+        if (data.is_student) {
+          setIsStudent(true);
+          setStudentInstitution(data.student_institution || "");
+          setStudentPeriod(data.student_period || "");
         }
-        setLoadingProfile(false);
-      });
+      }
+      setLoadingProfile(false);
+    });
   }, [user]);
 
   const toggleSpecialty = (s: string) => {
