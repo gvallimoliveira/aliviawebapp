@@ -40,6 +40,7 @@ const roleLabels: Record<ClinicRole, Record<string, string>> = {
   owner: { pt: "Proprietário", en: "Owner", es: "Propietario" },
   admin: { pt: "Administrador", en: "Administrator", es: "Administrador" },
   therapist: { pt: "Fisioterapeuta", en: "Therapist", es: "Fisioterapeuta" },
+  intern: { pt: "Estagiário (Acadêmico)", en: "Intern (Academic)", es: "Practicante (Académico)" },
   secretary: { pt: "Secretária", en: "Secretary", es: "Secretaria" },
   osteopath: { pt: "Osteopata", en: "Osteopath", es: "Osteópata" },
   pilates_instructor: { pt: "Prof. Pilates", en: "Pilates Instructor", es: "Prof. Pilates" },
@@ -51,6 +52,7 @@ const roleLabels: Record<ClinicRole, Record<string, string>> = {
 const roleIcon = (role: ClinicRole) => {
   if (role === "owner") return <Crown className="h-3.5 w-3.5" />;
   if (role === "admin") return <Shield className="h-3.5 w-3.5" />;
+  if (role === "intern") return <GraduationCap className="h-3.5 w-3.5 text-primary" />;
   if (role === "therapist" || role === "osteopath" || role === "doctor" || role === "rpg_specialist" || role === "massage_therapist" || role === "pilates_instructor") return <StethIcon className="h-3.5 w-3.5" />;
   return <ClipboardList className="h-3.5 w-3.5" />;
 };
@@ -162,9 +164,9 @@ const ClinicTeamManagement = () => {
                   )}
                   <div className="flex flex-wrap items-center gap-1 mt-1">
                     <Badge variant="outline" className="text-[10px]">{roleLabels[m.role][lang]}</Badge>
-                    {m.is_student && (
+                    {(m.is_student && m.role !== "intern") && (
                       <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30 hover:bg-primary/15">
-                        {lang === "pt" ? "Estagiário (Acadêmico)" : lang === "es" ? "Practicante (Académico)" : "Intern (Academic)"}
+                        {lang === "pt" ? "Acadêmico" : lang === "es" ? "Académico" : "Academic"}
                       </Badge>
                     )}
                   </div>
@@ -185,6 +187,7 @@ const ClinicTeamManagement = () => {
                       <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>
                       <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>
                       <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
+                      <SelectItem value="intern">{roleLabels.intern[lang]}</SelectItem>
                       <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
                       <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
                       <SelectItem value="pilates_instructor">{roleLabels.pilates_instructor[lang]}</SelectItem>
@@ -250,6 +253,7 @@ const ClinicTeamManagement = () => {
                     <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>
                     <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>
                     <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
+                    <SelectItem value="intern">{roleLabels.intern[lang]}</SelectItem>
                     <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
                     <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
                     <SelectItem value="pilates_instructor">{roleLabels.pilates_instructor[lang]}</SelectItem>

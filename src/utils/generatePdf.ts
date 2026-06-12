@@ -170,6 +170,15 @@ function drawResponsibleBlock(
       ? `CREFITO: ${prof.crefito}`
       : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
   }
+  // Guard against overflow beyond PDF margins on very long academic labels
+  const credMaxW = CONTENT_WIDTH - 4;
+  if (doc.getTextWidth(credentialTxt) > credMaxW) {
+    const ell = "…";
+    while (credentialTxt.length > 1 && doc.getTextWidth(credentialTxt + ell) > credMaxW) {
+      credentialTxt = credentialTxt.slice(0, -1);
+    }
+    credentialTxt = credentialTxt.replace(/[\s·]+$/, "") + ell;
+  }
   doc.text(credentialTxt, PAGE_WIDTH / 2, y, { align: "center" });
   y += 4;
 
@@ -1330,7 +1339,15 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     const bannerLabel = isPt
       ? `Alivia Acadêmico · Avaliação realizada por estudante — ${studentSuffix}`
       : `Alivia Academic · Assessment by student — ${studentSuffix}`;
-    const truncated = doc.splitTextToSize(bannerLabel, CONTENT_WIDTH - 12)[0];
+    const maxBannerW = CONTENT_WIDTH - 12;
+    let truncated = bannerLabel;
+    if (doc.getTextWidth(truncated) > maxBannerW) {
+      const ell = "…";
+      while (truncated.length > 1 && doc.getTextWidth(truncated + ell) > maxBannerW) {
+        truncated = truncated.slice(0, -1);
+      }
+      truncated = truncated.replace(/[\s·]+$/, "") + ell;
+    }
     doc.text(truncated, PAGE_WIDTH / 2, y + 6.5, { align: "center" });
     y += bannerH + 4;
   }

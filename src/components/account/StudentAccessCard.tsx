@@ -8,12 +8,17 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { GraduationCap, Loader2, Lock, Sparkles } from "lucide-react";
 
 /**
  * "Acesso Estudante" — toggle that turns a regular professional account into an
  * Alivia Acadêmico account: CREFITO becomes optional, marketplace listing is
  * disabled, and PDFs/links display the academic disclaimer.
+ *
+ * Lock rule: once a professional has registered with a CREFITO, the toggle is
+ * disabled (cannot become a student) — UNLESS the e-mail is in `vip_users`,
+ * in which case alternating is free for testing both modes without losing data.
  */
 const StudentAccessCard = () => {
   const { user } = useAuth();
@@ -24,6 +29,8 @@ const StudentAccessCard = () => {
   const [saving, setSaving] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
   const [hasProfRecord, setHasProfRecord] = useState(false);
+  const [hasCrefito, setHasCrefito] = useState(false);
+  const [isVip, setIsVip] = useState(false);
   const [fullName, setFullName] = useState("");
   const [institution, setInstitution] = useState("");
   const [period, setPeriod] = useState("");
@@ -42,6 +49,10 @@ const StudentAccessCard = () => {
         disabled: "Acesso estudante desativado.",
         required: "Preencha nome, instituição e período.",
         error: "Erro ao salvar",
+        locked_title: "Conta profissional com CREFITO",
+        locked_desc: "Sua conta já está cadastrada como fisioterapeuta formado. O modo Estudante não pode ser ativado.",
+        vip_badge: "VIP · alternância livre",
+        vip_desc: "Conta de teste: alternar não apaga seu CREFITO nem seus dados.",
       }
     : {
         title: "Student Access — Alivia Academic",
@@ -56,22 +67,36 @@ const StudentAccessCard = () => {
         disabled: "Student access disabled.",
         required: "Fill name, institution and term.",
         error: "Save error",
+        locked_title: "Professional account with CREFITO",
+        locked_desc: "Your account is already registered as a licensed therapist. Student mode cannot be enabled.",
+        vip_badge: "VIP · free toggle",
+        vip_desc: "Test account: toggling does not erase your CREFITO or data.",
       };
 
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const { data } = await supabase
-        .from("professionals")
-        .select("id, full_name, is_student, student_institution, student_period")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const [profRes, vipRes] = await Promise.all([
+        supabase
+          .from("professionals")
+          .select("id, full_name, crefito, is_student, student_institution, student_period")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        user.email
+          ? supabase.from("vip_users").select("id").eq("email", user.email.toLowerCase()).maybeSingle()
+          : Promise.resolve({ data: null } as any),
+      ]);
+
+      const data = profRes.data as any;
+      setIsVip(!!vipRes?.data);
+
       if (data) {
         setHasProfRecord(true);
-        setIsStudent(!!(data as any).is_student);
+        setIsStudent(!!data.is_student);
+        setHasCrefito(!!(data.crefito && String(data.crefito).trim().length > 0));
         setFullName(data.full_name || "");
-        setInstitution((data as any).student_institution || "");
-        setPeriod((data as any).student_period || "");
+        setInstitution(data.student_institution || "");
+        setPeriod(data.student_period || "");
       } else {
         const { data: prof } = await supabase
           .from("profiles")
@@ -82,10 +107,14 @@ const StudentAccessCard = () => {
       }
       setLoading(false);
     })();
-  }, [user?.id]);
+  }, [user?.id, user?.email]);
+
+  // Hard lock when CREFITO is present and user is not VIP.
+  const locked = hasCrefito && !isVip;
 
   const handleSave = async () => {
     if (!user?.id) return;
+    if (locked) return;
     if (isStudent && (!fullName.trim() || !institution.trim() || !period.trim())) {
       toast({ title: t.required, variant: "destructive" });
       return;
@@ -93,6 +122,8 @@ const StudentAccessCard = () => {
     setSaving(true);
     try {
       if (hasProfRecord) {
+        // IMPORTANT: never touch the existing `crefito` here so VIP testers
+        // can flip the switch without losing their professional registration.
         const { error } = await supabase
           .from("professionals")
           .update({
@@ -100,7 +131,6 @@ const StudentAccessCard = () => {
             student_institution: isStudent ? institution.trim() : null,
             student_period: isStudent ? period.trim() : null,
             full_name: fullName.trim() || undefined,
-            // Students must not appear in the marketplace
             ...(isStudent ? { approved: false } : {}),
           } as any)
           .eq("user_id", user.id);
@@ -138,43 +168,61 @@ const StudentAccessCard = () => {
         <CardTitle className="text-base flex items-center gap-2">
           <GraduationCap className="h-4 w-4 text-primary" />
           {t.title}
+          {isVip && (
+            <Badge className="ml-1 text-[10px] bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-100 gap-1">
+              <Sparkles className="h-3 w-3" />
+              {t.vip_badge}
+            </Badge>
+          )}
         </CardTitle>
-        <CardDescription>{t.desc}</CardDescription>
+        <CardDescription>{isVip ? `${t.desc} ${t.vip_desc}` : t.desc}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
-          <Label htmlFor="student-toggle" className="text-sm font-medium cursor-pointer">
-            {t.toggle}
-          </Label>
-          <Switch id="student-toggle" checked={isStudent} onCheckedChange={setIsStudent} />
-        </div>
-
-        {isStudent && (
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="student-name" className="text-xs text-muted-foreground">{t.name}</Label>
-              <Input id="student-name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="student-inst" className="text-xs text-muted-foreground">{t.institution}</Label>
-              <Input id="student-inst" value={institution} onChange={(e) => setInstitution(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="student-period" className="text-xs text-muted-foreground">{t.period}</Label>
-              <Input
-                id="student-period"
-                value={period}
-                placeholder={t.period_placeholder}
-                onChange={(e) => setPeriod(e.target.value)}
-              />
+        {locked ? (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+            <Lock className="h-4 w-4 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold">{t.locked_title}</p>
+              <p className="opacity-90">{t.locked_desc}</p>
             </div>
           </div>
-        )}
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+              <Label htmlFor="student-toggle" className="text-sm font-medium cursor-pointer">
+                {t.toggle}
+              </Label>
+              <Switch id="student-toggle" checked={isStudent} onCheckedChange={setIsStudent} />
+            </div>
 
-        <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2">
-          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          {t.save}
-        </Button>
+            {isStudent && (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="student-name" className="text-xs text-muted-foreground">{t.name}</Label>
+                  <Input id="student-name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="student-inst" className="text-xs text-muted-foreground">{t.institution}</Label>
+                  <Input id="student-inst" value={institution} onChange={(e) => setInstitution(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="student-period" className="text-xs text-muted-foreground">{t.period}</Label>
+                  <Input
+                    id="student-period"
+                    value={period}
+                    placeholder={t.period_placeholder}
+                    onChange={(e) => setPeriod(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
+            <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2">
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              {t.save}
+            </Button>
+          </>
+        )}
       </CardContent>
     </Card>
   );
