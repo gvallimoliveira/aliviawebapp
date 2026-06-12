@@ -31,6 +31,7 @@ interface VipUser {
 const Admin = () => {
   const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { language } = useLanguage();
 
   const [vipUsers, setVipUsers] = useState<VipUser[]>([]);
