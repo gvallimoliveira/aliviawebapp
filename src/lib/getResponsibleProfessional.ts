@@ -55,6 +55,9 @@ export async function resolveResponsibleProfessional(opts: {
     full_name?: string | null;
     crefito?: string | null;
     signature_image_url?: string | null;
+    is_student?: boolean | null;
+    student_institution?: string | null;
+    student_period?: string | null;
   } | null;
   clinicId?: string | null;
   clinicOwnerUserId?: string | null;
@@ -62,27 +65,41 @@ export async function resolveResponsibleProfessional(opts: {
   includeSignature?: boolean;
 }): Promise<ResponsibleProfessional | undefined> {
   const wantSig = opts.includeSignature ?? isAutoSignEnabled();
-  let resolved: { name: string; crefito?: string; signaturePath?: string | null } | null = null;
+  let resolved: {
+    name: string;
+    crefito?: string;
+    signaturePath?: string | null;
+    isStudent?: boolean;
+    studentInstitution?: string;
+    studentPeriod?: string;
+  } | null = null;
 
-  if (opts.ownProfessional?.full_name && opts.ownProfessional?.crefito) {
+  // Students don't need a CREFITO to be considered the responsible
+  if (opts.ownProfessional?.full_name && (opts.ownProfessional?.crefito || opts.ownProfessional?.is_student)) {
     resolved = {
       name: opts.ownProfessional.full_name,
-      crefito: opts.ownProfessional.crefito,
+      crefito: opts.ownProfessional.crefito ?? undefined,
       signaturePath: opts.ownProfessional.signature_image_url ?? null,
+      isStudent: !!opts.ownProfessional.is_student,
+      studentInstitution: opts.ownProfessional.student_institution ?? undefined,
+      studentPeriod: opts.ownProfessional.student_period ?? undefined,
     };
   }
 
   if (!resolved && opts.userId) {
     const { data: mine } = await supabase
       .from("professionals")
-      .select("full_name, crefito, signature_image_url")
+      .select("full_name, crefito, signature_image_url, is_student, student_institution, student_period")
       .eq("user_id", opts.userId)
       .maybeSingle();
-    if (mine?.full_name && mine?.crefito) {
+    if (mine?.full_name && (mine?.crefito || (mine as any)?.is_student)) {
       resolved = {
         name: mine.full_name,
-        crefito: mine.crefito,
+        crefito: mine.crefito ?? undefined,
         signaturePath: (mine as any).signature_image_url ?? null,
+        isStudent: !!(mine as any).is_student,
+        studentInstitution: (mine as any).student_institution ?? undefined,
+        studentPeriod: (mine as any).student_period ?? undefined,
       };
     }
   }
@@ -100,7 +117,7 @@ export async function resolveResponsibleProfessional(opts: {
     if (ownerUserId) {
       const { data: owner } = await supabase
         .from("professionals")
-        .select("full_name, crefito, signature_image_url")
+        .select("full_name, crefito, signature_image_url, is_student, student_institution, student_period")
         .eq("user_id", ownerUserId)
         .maybeSingle();
       if (owner?.full_name) {
@@ -108,6 +125,9 @@ export async function resolveResponsibleProfessional(opts: {
           name: owner.full_name,
           crefito: owner.crefito || undefined,
           signaturePath: (owner as any).signature_image_url ?? null,
+          isStudent: !!(owner as any).is_student,
+          studentInstitution: (owner as any).student_institution ?? undefined,
+          studentPeriod: (owner as any).student_period ?? undefined,
         };
       }
     }
@@ -118,6 +138,9 @@ export async function resolveResponsibleProfessional(opts: {
       name: opts.ownProfessional.full_name,
       crefito: opts.ownProfessional.crefito || undefined,
       signaturePath: opts.ownProfessional.signature_image_url ?? null,
+      isStudent: !!opts.ownProfessional.is_student,
+      studentInstitution: opts.ownProfessional.student_institution ?? undefined,
+      studentPeriod: opts.ownProfessional.student_period ?? undefined,
     };
   }
 
@@ -133,5 +156,8 @@ export async function resolveResponsibleProfessional(opts: {
     name: resolved.name,
     crefito: resolved.crefito,
     signatureImageDataUrl,
+    isStudent: resolved.isStudent,
+    studentInstitution: resolved.studentInstitution,
+    studentPeriod: resolved.studentPeriod,
   };
 }
