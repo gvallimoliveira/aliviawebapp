@@ -1,4 +1,4 @@
-# Plano — Alivia Acadêmico + Cupom souibmr
+# Plano — Alivia Acadêmico + Cupom souibmr (IMPLEMENTADO)
 
 Objetivo: liberar a palestra de amanhã com duas funcionalidades de baixo risco, reaproveitando ao máximo o que já existe (assinatura PRO, dashboard, PDFs, links de avaliação).
 
