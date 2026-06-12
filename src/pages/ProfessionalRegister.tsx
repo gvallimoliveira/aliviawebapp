@@ -502,6 +502,55 @@ const ProfessionalRegister = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* ─────── Alivia Acadêmico toggle ─────── */}
+              <div className={`rounded-xl border p-3 ${isStudent ? "bg-primary/5 border-primary/40" : "bg-muted/30 border-border"}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="shrink-0 mt-0.5 rounded-full bg-primary/15 p-1.5">
+                      <GraduationCap className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold">Sou estudante — Alivia Acadêmico</p>
+                        {isVip && (
+                          <Badge className="text-[10px] bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-100 gap-1">
+                            <Sparkles className="h-3 w-3" /> VIP · alternância livre
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                        Estudantes de fisioterapia sem CREFITO. Libera todas as ferramentas do plano profissional; relatórios e links exibem o selo acadêmico.
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={isStudent}
+                    onCheckedChange={setIsStudent}
+                    disabled={studentLocked}
+                    aria-label="Ativar modo acadêmico"
+                  />
+                </div>
+                {studentLocked && (
+                  <p className="mt-2 text-[11px] text-amber-700 leading-relaxed">
+                    Sua conta já está cadastrada como fisioterapeuta formado (CREFITO informado). O modo Estudante não pode ser ativado.
+                  </p>
+                )}
+              </div>
+
+              {/* Student-only academic fields */}
+              {isStudent && (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Instituição de ensino *</Label>
+                    <Input value={studentInstitution} onChange={(e) => setStudentInstitution(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Período atual *</Label>
+                    <Input value={studentPeriod} onChange={(e) => setStudentPeriod(e.target.value)} placeholder="Ex.: 5º período" />
+                  </div>
+                </div>
+              )}
+
               {/* Profile Photo Upload */}
               <div className="flex flex-col items-center gap-3">
                 <div className="relative group">
