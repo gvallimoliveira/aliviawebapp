@@ -677,6 +677,17 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
               {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
               {billingAnnual ? "Assinar plano anual" : "Assinar plano mensal"}
             </Button>
+
+            {professional?.is_student && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs space-y-1">
+                <p className="font-semibold text-primary flex items-center gap-1.5">
+                  🎓 Aluno Alivia Acadêmico
+                </p>
+                <p className="text-muted-foreground leading-relaxed">
+                  No checkout, clique em <span className="font-medium text-foreground">"Adicionar código promocional"</span> e digite <span className="font-mono font-semibold text-primary">SOUIBMR</span> para 50% de desconto enquanto sua assinatura estiver ativa (válido até 19/06).
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
