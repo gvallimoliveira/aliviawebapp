@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X, Plus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Loader2, UserPlus, Instagram, Link2, Copy, Check, Camera, X, Plus, ShieldCheck, GraduationCap, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { formatCpf } from "@/utils/masks";
 
 import logoAlivia from "@/assets/logo-alivia.png";
