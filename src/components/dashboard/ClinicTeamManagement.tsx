@@ -24,6 +24,9 @@ interface Member {
   accepted_at: string | null;
   full_name: string | null;
   email: string | null;
+  is_student?: boolean | null;
+  student_institution?: string | null;
+  student_period?: string | null;
 }
 
 interface Invitation {
