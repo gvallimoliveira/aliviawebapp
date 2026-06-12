@@ -675,52 +675,62 @@ const ProfessionalRegister = () => {
                 </button>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              {isStudent ? (
                 <div className="space-y-2">
                   <Label>{t("prof.full_name")} *</Label>
                   <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("prof.crefito")} *</Label>
-                  <Input
-                    value={form.crefito}
-                    onChange={(e) => setForm({ ...form, crefito: e.target.value.toUpperCase() })}
-                    placeholder="000000-F"
-                    maxLength={8}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">{t("prof.crefito_invalid_format")}</p>
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{t("prof.full_name")} *</Label>
+                      <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("prof.crefito")} *</Label>
+                      <Input
+                        value={form.crefito}
+                        onChange={(e) => setForm({ ...form, crefito: e.target.value.toUpperCase() })}
+                        placeholder="000000-F"
+                        maxLength={8}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">{t("prof.crefito_invalid_format")}</p>
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label>CPF *</Label>
-                <Input
-                  value={form.cpf}
-                  onChange={(e) => setForm({ ...form, cpf: formatCpf(e.target.value) })}
-                  placeholder="000.000.000-00"
-                  inputMode="numeric"
-                  maxLength={14}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Usado apenas para validar sua identidade e evitar cadastros duplicados. Não é exibido publicamente.
-                </p>
-              </div>
+                  <div className="space-y-2">
+                    <Label>CPF *</Label>
+                    <Input
+                      value={form.cpf}
+                      onChange={(e) => setForm({ ...form, cpf: formatCpf(e.target.value) })}
+                      placeholder="000.000.000-00"
+                      inputMode="numeric"
+                      maxLength={14}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Usado apenas para validar sua identidade e evitar cadastros duplicados. Não é exibido publicamente.
+                    </p>
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">
-                  <Instagram className="h-4 w-4 text-muted-foreground" />
-                  {t("prof.social_media")} *
-                </Label>
-                <Input
-                  value={form.social_media}
-                  onChange={(e) => setForm({ ...form, social_media: e.target.value })}
-                  placeholder="@seu_perfil"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">{t("prof.social_media_hint")}</p>
-              </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5">
+                      <Instagram className="h-4 w-4 text-muted-foreground" />
+                      {t("prof.social_media")} *
+                    </Label>
+                    <Input
+                      value={form.social_media}
+                      onChange={(e) => setForm({ ...form, social_media: e.target.value })}
+                      placeholder="@seu_perfil"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">{t("prof.social_media_hint")}</p>
+                  </div>
+                </>
+              )}
+
 
               <div className="space-y-2">
                 <Label>{t("prof.specialties")}</Label>
