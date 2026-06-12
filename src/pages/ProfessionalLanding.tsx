@@ -36,7 +36,7 @@ const fadeUp = {
 
 const ProfessionalLanding = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
 
