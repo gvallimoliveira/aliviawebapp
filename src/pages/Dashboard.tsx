@@ -922,14 +922,15 @@ const Dashboard = () => {
                     <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
                   </TabsTrigger>
                   {hasAgentAccess && (
-                    <TabsTrigger
-                      value="__agente__"
-                      className="gap-1.5 text-xs"
-                      onClick={(e) => { e.preventDefault(); navigate("/agente"); }}
+                    <button
+                      type="button"
+                      onClick={() => navigate("/agente")}
+                      className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-background/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <Brain className="h-4 w-4" /><span className="hidden sm:inline">Agente</span>
-                    </TabsTrigger>
+                    </button>
                   )}
+
                 </TabsList>
                 <TabsContent value="professional" className="space-y-6">
                   {isProDemo && <DemoUpsellBanner section="pro-patients" variant="pro" />}
