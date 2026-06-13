@@ -3,7 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building2, User, Stethoscope, UserPlus } from "lucide-react";
+import { Building2, User, Stethoscope, UserPlus, GraduationCap } from "lucide-react";
 
 const ClinicContextSelector = () => {
   const {
