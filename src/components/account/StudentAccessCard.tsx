@@ -236,9 +236,19 @@ const StudentAccessCard = () => {
               </div>
             )}
 
+            {needsCrefitoFlow && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs text-foreground space-y-2">
+                <p className="font-semibold flex items-center gap-1.5">
+                  <GraduationCap className="h-4 w-4 text-primary" />
+                  {t.graduate_title}
+                </p>
+                <p className="opacity-90">{t.graduate_desc}</p>
+              </div>
+            )}
+
             <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t.save}
+              {needsCrefitoFlow ? t.graduate_cta : t.save}
             </Button>
           </>
         )}
