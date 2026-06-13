@@ -9,7 +9,7 @@ const ClinicContextSelector = () => {
   const {
     memberships, activeClinic, activeContext, setActiveContext,
     hasProfessionalProfile, availableContextsCount, canAccessProDemo,
-    pendingProfessionalSignup,
+    pendingProfessionalSignup, isStudentProfessional,
   } = useClinic();
   const { language } = useLanguage();
   const navigate = useNavigate();
