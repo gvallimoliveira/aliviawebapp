@@ -68,10 +68,14 @@ const ContextSelectionModal = () => {
               className="w-full justify-start gap-3 h-auto py-4 px-4"
               onClick={() => setActiveContext("professional")}
             >
-              <Stethoscope className="h-5 w-5 shrink-0 text-primary" />
+              {isStudentProfessional ? (
+                <GraduationCap className="h-5 w-5 shrink-0 text-primary" />
+              ) : (
+                <Stethoscope className="h-5 w-5 shrink-0 text-primary" />
+              )}
               <div className="text-left">
-                <p className="font-medium">{labels.pro}</p>
-                <p className="text-xs text-muted-foreground">{labels.proDesc}</p>
+                <p className="font-medium">{isStudentProfessional ? labels.student : labels.pro}</p>
+                <p className="text-xs text-muted-foreground">{isStudentProfessional ? labels.studentDesc : labels.proDesc}</p>
               </div>
             </Button>
           )}
