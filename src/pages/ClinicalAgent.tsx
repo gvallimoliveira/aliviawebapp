@@ -261,7 +261,7 @@ const ClinicalAgent = () => {
 
   // Load threads + patients
   useEffect(() => {
-    if (!user || !hasAccess) return;
+    if (!user || !hasAccess || !hasActivePlan) return;
     (async () => {
       const sb = supabase as any;
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -312,7 +312,7 @@ const ClinicalAgent = () => {
 
 
     })();
-  }, [user, hasAccess, isClinicMode, activeClinic?.clinic_id]);
+  }, [user, hasAccess, hasActivePlan, isClinicMode, activeClinic?.clinic_id]);
 
   // Load messages when active thread changes
   useEffect(() => {
@@ -475,14 +475,97 @@ const ClinicalAgent = () => {
   const allCitations = messages.flatMap(m => m.citations || []);
   const uniqueCitations = Array.from(new Map(allCitations.map(c => [c.id, c])).values());
 
-  if (!checked) {
+  if (!checked || !subState.checked) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
-  if (!hasAccess) return null;
+
+  // CTA screen — agent feature exists, but the user has no active plan.
+  // We render a brief description + subscribe button instead of redirecting,
+  // matching the pattern used by the other gated tabs.
+  if (hasAccess && !hasActivePlan) {
+    return (
+      <div className="min-h-screen w-full bg-background flex flex-col">
+        <header className="border-b border-border/40 bg-card/60 backdrop-blur-sm px-4 py-3 flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate("/dashboard")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <h1 className="text-base font-semibold">Agente de Raciocínio Clínico</h1>
+            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">Beta</Badge>
+          </div>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center p-4">
+          <Card className="max-w-lg w-full border-primary/30 bg-gradient-to-br from-primary/[0.06] to-transparent">
+            <CardContent className="p-6 md:p-8 space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                  <Brain className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    Recurso exclusivo do plano PRO
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                  </h2>
+                  <p className="text-xs text-muted-foreground">Disponível para profissionais, estudantes e clínicas assinantes.</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-foreground/90 leading-relaxed">
+                Converse com um agente clínico baseado em evidências para apoiar seu raciocínio,
+                discutir casos de pacientes (com anonimização automática) e gerar rascunhos de
+                programas de exercícios (HEP) ancorados em literatura científica.
+              </p>
+
+              <ul className="text-sm text-muted-foreground space-y-1.5">
+                <li className="flex gap-2"><Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Discussão clínica com base em estudos (PEDro ≥ 7)</li>
+                <li className="flex gap-2"><BookOpen className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Citações verificáveis das evidências</li>
+                <li className="flex gap-2"><UserPlus className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Geração de HEP personalizada</li>
+              </ul>
+
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <Button
+                  onClick={handleStartSubscription}
+                  disabled={subscribing}
+                  className="flex-1 gap-2"
+                  size="lg"
+                >
+                  {subscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  Assinar plano PRO
+                </Button>
+                <Button variant="outline" size="lg" onClick={() => navigate("/dashboard")}>
+                  Voltar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    // Feature truly unavailable (flag off and not VIP). Same minimal CTA layout.
+    return (
+      <div className="min-h-screen w-full bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-6 text-center space-y-3">
+            <Brain className="h-8 w-8 mx-auto text-muted-foreground" />
+            <h2 className="text-lg font-semibold">Agente em beta fechado</h2>
+            <p className="text-sm text-muted-foreground">
+              Esta funcionalidade ainda não está disponível para o seu perfil.
+            </p>
+            <Button onClick={() => navigate("/dashboard")} className="w-full">Voltar ao painel</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const ThreadList = ({ withClose = false }: { withClose?: boolean }) => (
     <div className="flex flex-col h-full">
