@@ -231,25 +231,42 @@ CRITÉRIOS OBRIGATÓRIOS:
 Responda APENAS um JSON array. Sem texto adicional.`;
 
 
-      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-pro",
-          messages: [
-            { role: "system", content: "Você é um bibliotecário científico rigoroso. Responde apenas JSON válido." },
-            { role: "user", content: prompt },
-          ],
-        }),
-      });
+      const callAi = async (model: string) => {
+        return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: "Você é um bibliotecário científico rigoroso. Responde apenas JSON válido." },
+              { role: "user", content: prompt },
+            ],
+          }),
+        });
+      };
 
-      if (!aiResp.ok) {
-        const t = await aiResp.text();
-        console.error("[ingest] AI error", aiResp.status, t);
-        if (aiResp.status === 429) return new Response(JSON.stringify({ error: "ai_rate_limit" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        if (aiResp.status === 402) return new Response(JSON.stringify({ error: "ai_credits_exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const modelChain = ["google/gemini-2.5-pro", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"];
+      let aiResp: Response | null = null;
+      let usedModel = "";
+      let lastStatus = 0;
+      let lastBody = "";
+      for (const m of modelChain) {
+        const r = await callAi(m);
+        if (r.ok) { aiResp = r; usedModel = m; break; }
+        lastStatus = r.status;
+        lastBody = await r.text();
+        console.warn(`[ingest] ${m} returned ${r.status}: ${lastBody.slice(0, 200)}`);
+        // Only fall back on credit/rate issues; other errors are fatal
+        if (r.status !== 402 && r.status !== 429) break;
+      }
+
+      if (!aiResp) {
+        console.error("[ingest] all models failed", lastStatus, lastBody);
+        if (lastStatus === 429) return new Response(JSON.stringify({ error: "ai_rate_limit" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (lastStatus === 402) return new Response(JSON.stringify({ error: "ai_credits_exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         return new Response(JSON.stringify({ error: "ai_error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
+      console.log(`[ingest] using model ${usedModel} for niche ${niche}`);
 
       const aiJson = await aiResp.json();
       const raw = aiJson.choices?.[0]?.message?.content || "";
