@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Loader2, Lock, Sparkles } from "lucide-react";
 import { isFallbackVip } from "@/lib/vipEmails";
-import { isFallbackVip } from "@/lib/vipEmails";
 
 /**
  * "Acesso Estudante" — toggle that turns a regular professional account into an
