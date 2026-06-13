@@ -24,6 +24,7 @@ import { isFallbackVip } from "@/lib/vipEmails";
  */
 const StudentAccessCard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const isPt = language === "pt";
 
