@@ -57,8 +57,8 @@ const ClinicContextSelector = () => {
           {hasProfessionalProfile && (
             <SelectItem value="pro">
               <span className="flex items-center gap-2">
-                <Stethoscope className="h-3.5 w-3.5" />
-                {labels.pro}
+                {isStudentProfessional ? <GraduationCap className="h-3.5 w-3.5" /> : <Stethoscope className="h-3.5 w-3.5" />}
+                {isStudentProfessional ? labels.student : labels.pro}
               </span>
             </SelectItem>
           )}
