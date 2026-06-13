@@ -190,7 +190,7 @@ const ClinicDemo = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="w-full grid grid-cols-5">
+          <TabsList className="w-full grid grid-cols-6">
             <TabsTrigger value="agenda" className="gap-1.5 text-xs">
               <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">Agenda</span>
             </TabsTrigger>
@@ -202,6 +202,9 @@ const ClinicDemo = () => {
             </TabsTrigger>
             <TabsTrigger value="messages" className="gap-1.5 text-xs">
               <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">Mensagens</span>
+            </TabsTrigger>
+            <TabsTrigger value="agente" className="gap-1.5 text-xs">
+              <Brain className="h-4 w-4" /><span className="hidden sm:inline">Agente</span>
             </TabsTrigger>
             <TabsTrigger value="clinic" className="gap-1.5 text-xs">
               <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Clínica</span>
