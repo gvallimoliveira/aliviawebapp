@@ -16,7 +16,7 @@ import {
   Building2, Calendar as CalendarIcon, Stethoscope, Users, MessageCircle, Crown,
   Link2, Copy, Check, MapPin, Video, ExternalLink, ChevronLeft, ChevronRight,
   Plus, User, Sparkles, ArrowLeft, GripVertical, Activity, HelpCircle, LogOut,
-  Settings, UserPlus, Palette, Image as ImageIcon, BarChart3,
+  Settings, UserPlus, Palette, Image as ImageIcon, BarChart3, Brain,
 } from "lucide-react";
 import { format, addDays, startOfWeek, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
