@@ -238,6 +238,8 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         canAccessProDemo,
         pendingProfessionalSignup,
         setPendingProfessionalSignup,
+        isStudentProfessional,
+        setIsStudentProfessional,
       }}
     >
       {children}
