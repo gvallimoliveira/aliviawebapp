@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,7 @@ import { isFallbackVip } from "@/lib/vipEmails";
  */
 const StudentAccessCard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const isPt = language === "pt";
 
@@ -50,6 +52,9 @@ const StudentAccessCard = () => {
         disabled: "Acesso estudante desativado.",
         required: "Preencha nome, instituição e período.",
         error: "Erro ao salvar",
+        graduate_title: "Concluiu o curso? Cadastre seu CREFITO",
+        graduate_desc: "Para sair do modo Acadêmico você precisa cadastrar seu CREFITO no formulário profissional. Vamos te levar lá agora.",
+        graduate_cta: "Cadastrar CREFITO agora",
         locked_title: "Conta profissional com CREFITO",
         locked_desc: "Sua conta já está cadastrada como fisioterapeuta formado. O modo Estudante não pode ser ativado.",
         vip_badge: "VIP · alternância livre",
@@ -68,6 +73,9 @@ const StudentAccessCard = () => {
         disabled: "Student access disabled.",
         required: "Fill name, institution and term.",
         error: "Save error",
+        graduate_title: "Graduated? Register your CREFITO",
+        graduate_desc: "To leave Academic mode you must register your CREFITO in the professional form. We'll take you there now.",
+        graduate_cta: "Register CREFITO now",
         locked_title: "Professional account with CREFITO",
         locked_desc: "Your account is already registered as a licensed therapist. Student mode cannot be enabled.",
         vip_badge: "VIP · free toggle",
@@ -113,9 +121,19 @@ const StudentAccessCard = () => {
   // Hard lock when CREFITO is present and user is not VIP.
   const locked = hasCrefito && !isVip;
 
+  // Wanting to leave student mode without a CREFITO on file → DB trigger
+  // would reject the update. Send the user to the professional registration
+  // form so they can input their CREFITO (with skip option still available).
+  const needsCrefitoFlow = !isStudent && hasProfRecord && !hasCrefito;
+
   const handleSave = async () => {
     if (!user?.id) return;
     if (locked) return;
+    if (needsCrefitoFlow) {
+      try { sessionStorage.setItem("signupOrigin", "professional"); } catch {}
+      navigate("/professional/register");
+      return;
+    }
     if (isStudent && (!fullName.trim() || !institution.trim() || !period.trim())) {
       toast({ title: t.required, variant: "destructive" });
       return;
@@ -218,9 +236,19 @@ const StudentAccessCard = () => {
               </div>
             )}
 
+            {needsCrefitoFlow && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs text-foreground space-y-2">
+                <p className="font-semibold flex items-center gap-1.5">
+                  <GraduationCap className="h-4 w-4 text-primary" />
+                  {t.graduate_title}
+                </p>
+                <p className="opacity-90">{t.graduate_desc}</p>
+              </div>
+            )}
+
             <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t.save}
+              {needsCrefitoFlow ? t.graduate_cta : t.save}
             </Button>
           </>
         )}
