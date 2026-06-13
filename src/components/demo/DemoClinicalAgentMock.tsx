@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Brain, Plus, MessageSquare, Sparkles, Dumbbell, ClipboardList,
-  UserPlus, BookOpen, Stethoscope, ChevronRight, Send, Lock,
+  UserPlus, BookOpen, Stethoscope, ChevronRight, Send, Lock, ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
