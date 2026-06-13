@@ -35,11 +35,15 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { email: user.email });
 
-    // Parse plan type from body
+    // Parse plan type and optional coupon from body
     let plan: "monthly" | "annual" = "monthly";
+    let couponCode: string | undefined;
     try {
       const body = await req.json();
       if (body?.plan === "annual") plan = "annual";
+      if (typeof body?.coupon === "string" && body.coupon.trim()) {
+        couponCode = body.coupon.trim().toUpperCase();
+      }
     } catch {
       // Default to monthly
     }
