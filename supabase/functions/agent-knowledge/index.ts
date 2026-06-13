@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 const NICHE_DESCRIPTIONS: Record<string, string> = {
+  // Núcleo original
   tendinopatias_geral: "Tendinopatias em geral — fisiopatologia, exercício terapêutico, HSR/HIMA, carga.",
   tendinopatia_patelar: "Tendinopatia patelar (jumper's knee) — diagnóstico, VISA-P, HSR, exercício isométrico/excêntrico.",
   tendinopatia_manguito_rotador_epicondilopatia: "Tendinopatia do manguito rotador e epicondilopatias laterais/mediais — exercício, carga progressiva, testes clínicos.",
@@ -18,6 +19,45 @@ const NICHE_DESCRIPTIONS: Record<string, string> = {
   eletroestimulacao_tens_musculoesqueletico: "TENS, NMES, eletroanalgesia em dor musculoesquelética — parâmetros, evidências, indicações.",
   conflito_subacromial_testes_ombro: "Síndrome do impacto / conflito subacromial — cluster de testes ortopédicos (Hawkins, Neer, Jobe, Lift-off etc.), acurácia, testes funcionais.",
   radiculopatia_lombar_cervical: "Radiculopatias lombar e cervical — exame clínico, McKenzie, tração, exercício, manejo conservador.",
+
+  // Ombro / cintura escapular
+  capsulite_adesiva_ombro_congelado: "Capsulite adesiva (ombro congelado) — estágios, mobilização, hidrodilatação, exercícios ativos vs. passivos, corticoide intra-articular.",
+  exercicios_pendulares_codman_revisao: "Exercícios pendulares de Codman — evidência atual de eficácia, comparações com mobilização ativa/HSR/exercícios escapulares e questionamento de relevância clínica contemporânea.",
+  instabilidade_glenoumeral_pos_luxacao: "Instabilidade glenoumeral anterior/posterior e reabilitação pós-luxação — protocolos conservadores vs. cirúrgicos, retorno ao esporte.",
+  pos_artroscopia_manguito_rotador: "Reabilitação pós-artroscopia de manguito rotador — fases, timing de carga, mobilização precoce vs. tardia.",
+
+  // Coluna
+  lombalgia_cronica_inespecifica: "Lombalgia crônica inespecífica — McKenzie, exercícios de controle motor, Pilates clínico, terapia cognitivo-funcional.",
+  cervicalgia_mecanica_cefaleia_cervicogenica: "Cervicalgia mecânica e cefaleia cervicogênica — DNF, mobilização Mulligan, terapia manual, exercício.",
+  estenose_lombar_degenerativa: "Estenose lombar degenerativa — tratamento conservador, exercício em flexão, marcha, programas multimodais.",
+  espondilolistese_atletas_jovens: "Espondilolistese ístmica/degenerativa e dor lombar em atletas jovens — estabilização, retorno ao esporte.",
+
+  // Quadril / joelho
+  sindrome_dolorosa_femoropatelar: "Síndrome dolorosa femoropatelar (SDFP) — fortalecimento de quadril vs. quadríceps, exercício, taping, palmilhas.",
+  osteoartrite_joelho_quadril_glad: "Osteoartrite de joelho e quadril — exercício terapêutico, programa GLA:D, educação, controle de peso.",
+  lca_pre_pos_reconstrucao_retorno_esporte: "Lesão do LCA — reabilitação pré e pós-reconstrução, critérios de retorno ao esporte, prevenção de re-lesão.",
+  lesoes_meniscais_conservador_vs_cirurgico: "Lesões meniscais degenerativas e traumáticas — tratamento conservador vs. meniscectomia/reparo.",
+  trato_iliotibial_dor_trocanterica_gtps: "Síndrome do trato iliotibial e síndrome dolorosa do trocânter maior (GTPS) — exercício, carga, terapia manual.",
+
+  // Pé / tornozelo
+  entorse_tornozelo_instabilidade_cronica: "Entorse lateral de tornozelo e instabilidade crônica — propriocepção, controle neuromuscular, balance training.",
+  disfuncao_tibial_posterior_pe_plano: "Disfunção do tendão tibial posterior e pé plano adquirido do adulto — exercício excêntrico, órteses.",
+
+  // Mão / punho / cotovelo
+  sindrome_tunel_carpo: "Síndrome do túnel do carpo — tratamento conservador (deslizamento neural, splinting) vs. cirúrgico.",
+  pos_fratura_radio_distal: "Reabilitação pós-fratura de rádio distal — mobilização precoce, ganho de ADM, força preensão.",
+
+  // Cabeça / face
+  dtm_disfuncao_temporomandibular: "Disfunção temporomandibular (DTM) — terapia manual, exercícios, educação, dry needling.",
+
+  // Transversais / adjuvantes
+  ondas_de_choque_eswt_tendinopatias: "Terapia por ondas de choque extracorpóreas (ESWT) — focal vs. radial, parâmetros, evidência em tendinopatias.",
+  dry_needling_vs_terapia_manual: "Dry needling vs. terapia manual em pontos-gatilho e dor musculoesquelética — eficácia comparativa.",
+  blood_flow_restriction_bfr: "Blood Flow Restriction (BFR) training — parâmetros de pressão, ganhos de força/hipertrofia em reabilitação MSK.",
+  educacao_neurociencia_da_dor_pne: "Educação em neurociência da dor (PNE/Explain Pain) — efeitos em dor crônica musculoesquelética.",
+  exercicio_climaterio_pos_menopausa_msk: "Exercício terapêutico no climatério e pós-menopausa — dor musculoesquelética, osteopenia, treino de força e impacto.",
+  lesoes_musculares_retorno_ao_esporte: "Lesões musculares (estiramentos) — classificação, protocolos de reabilitação, critérios de retorno ao esporte.",
+  bursite_trocanterica_tendinopatia_glutea: "Bursite trocantérica e tendinopatia glútea — exercício de carga progressiva, terapia manual, ondas de choque.",
 };
 
 async function isVip(adminClient: any, email?: string): Promise<boolean> {
