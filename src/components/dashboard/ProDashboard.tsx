@@ -365,7 +365,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     setCheckoutLoading(true);
     try {
       let coupon: string | undefined;
-      if (typeof window !== "undefined") {
+      const isDesktop = typeof window !== "undefined" && window.innerWidth >= 1024;
+      if (isDesktop) {
         const input = window.prompt(
           "Tem um cupom de desconto? Digite o código (ou deixe em branco):",
           ""
