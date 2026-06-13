@@ -19,9 +19,9 @@ const ClinicContextSelector = () => {
 
   const lang = language as "pt" | "en" | "es";
   const labels = {
-    pt: { solo: "Conta pessoal", pro: "Profissional autônomo", demo: "Demo", proRegister: "Cadastrar como profissional", pending: "Pendente" },
-    en: { solo: "Personal account", pro: "Autonomous professional", demo: "Demo", proRegister: "Register as professional", pending: "Pending" },
-    es: { solo: "Cuenta personal", pro: "Profesional autónomo", demo: "Demo", proRegister: "Registrarse como profesional", pending: "Pendiente" },
+    pt: { solo: "Conta pessoal", pro: "Profissional autônomo", student: "Modo Acadêmico", demo: "Demo", proRegister: "Cadastrar como profissional", pending: "Pendente" },
+    en: { solo: "Personal account", pro: "Autonomous professional", student: "Academic Mode", demo: "Demo", proRegister: "Register as professional", pending: "Pending" },
+    es: { solo: "Cuenta personal", pro: "Profesional autónomo", student: "Modo Académico", demo: "Demo", proRegister: "Registrarse como profesional", pending: "Pendiente" },
   }[lang];
 
   const currentValue =
