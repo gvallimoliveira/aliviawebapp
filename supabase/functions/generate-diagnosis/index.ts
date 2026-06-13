@@ -501,14 +501,14 @@ Assessment mode: ${isBasic ? "Basic (provide only hypothesis, confidence, summar
 
 Generate the diagnostic hypothesis in valid JSON format.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const callAi = (model: string) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -517,10 +517,24 @@ Generate the diagnostic hypothesis in valid JSON format.`;
       }),
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("AI Gateway error:", error);
-      throw new Error(`AI Gateway error: ${response.status}`);
+    const modelChain = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite", "google/gemini-2.5-pro"];
+    let response: Response | null = null;
+    let lastStatus = 0;
+    let lastBody = "";
+    for (const m of modelChain) {
+      const r = await callAi(m);
+      if (r.ok) { response = r; console.log(`[generate-diagnosis] using ${m}`); break; }
+      lastStatus = r.status;
+      lastBody = await r.text();
+      console.warn(`[generate-diagnosis] ${m} failed ${r.status}: ${lastBody.slice(0,200)}`);
+      if (r.status !== 402 && r.status !== 429) break;
+    }
+    if (!response) {
+      console.error("AI Gateway error (all models):", lastStatus, lastBody);
+      const errCode = lastStatus === 402 ? "ai_credits_exhausted" : lastStatus === 429 ? "ai_rate_limit" : "ai_error";
+      return new Response(JSON.stringify({ error: errCode, status: lastStatus }), {
+        status: lastStatus || 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const aiResult = await response.json();
