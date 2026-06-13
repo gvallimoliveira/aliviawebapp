@@ -73,7 +73,23 @@ serve(async (req) => {
 
     const successUrl = `${origin}/dashboard?subscription=success`;
 
-    const session = await stripe.checkout.sessions.create({
+    // Try to pre-apply coupon if provided
+    let discounts: Array<{ promotion_code: string }> | undefined;
+    if (couponCode) {
+      try {
+        const pcs = await stripe.promotionCodes.list({ code: couponCode, active: true, limit: 1 });
+        if (pcs.data.length > 0) {
+          discounts = [{ promotion_code: pcs.data[0].id }];
+          logStep("Promotion code pre-applied", { code: couponCode, id: pcs.data[0].id });
+        } else {
+          logStep("Promotion code not found or inactive", { code: couponCode });
+        }
+      } catch (e) {
+        logStep("Promotion code lookup failed", { error: String(e) });
+      }
+    }
+
+    const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       payment_method_types: ["card"],
@@ -86,13 +102,20 @@ serve(async (req) => {
       mode: sessionMode,
       success_url: successUrl,
       cancel_url: `${origin}/dashboard?subscription=cancelled`,
-      allow_promotion_codes: true,
       metadata: {
         user_id: user.id,
         plan,
         type: plan === "annual" ? "pro_annual" : "pro_subscription",
       },
-    });
+    };
+
+    if (discounts) {
+      sessionParams.discounts = discounts;
+    } else {
+      sessionParams.allow_promotion_codes = true;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     logStep("Checkout session created", { sessionId: session.id });
 
