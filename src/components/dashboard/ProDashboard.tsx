@@ -364,8 +364,16 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const handleSubscribe = async (plan: "monthly" | "annual" = "monthly") => {
     setCheckoutLoading(true);
     try {
+      let coupon: string | undefined;
+      if (typeof window !== "undefined") {
+        const input = window.prompt(
+          "Tem um cupom de desconto? Digite o código (ou deixe em branco):",
+          ""
+        );
+        if (input && input.trim()) coupon = input.trim().toUpperCase();
+      }
       const { data, error } = await supabase.functions.invoke("create-pro-subscription", {
-        body: { plan },
+        body: { plan, coupon },
       });
       if (error) throw error;
       if (data?.url) window.location.href = data.url;
