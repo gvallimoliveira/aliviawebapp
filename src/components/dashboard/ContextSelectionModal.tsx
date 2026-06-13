@@ -3,10 +3,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Stethoscope, UserPlus } from "lucide-react";
+import { Building2, User, Stethoscope, UserPlus, GraduationCap } from "lucide-react";
 
 const ContextSelectionModal = () => {
-  const { memberships, needsContextSelection, setActiveContext, dismissContextSelection, hasProfessionalProfile, canAccessProDemo, pendingProfessionalSignup, setPendingProfessionalSignup } = useClinic();
+  const { memberships, needsContextSelection, setActiveContext, dismissContextSelection, hasProfessionalProfile, canAccessProDemo, pendingProfessionalSignup, setPendingProfessionalSignup, isStudentProfessional } = useClinic();
   const { language } = useLanguage();
   const navigate = useNavigate();
 
