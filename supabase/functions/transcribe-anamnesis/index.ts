@@ -76,12 +76,10 @@ function audioFormatFromMime(mime: string): string {
   return "webm";
 }
 
+import { callAiWithFallback } from "../_shared/ai-fallback.ts";
+
 async function callAI(apiKey: string, body: any): Promise<any> {
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify(body),
-  });
+  const resp = await callAiWithFallback(apiKey, body);
   if (!resp.ok) {
     const errText = await resp.text();
     console.error("AI gateway error:", resp.status, errText);

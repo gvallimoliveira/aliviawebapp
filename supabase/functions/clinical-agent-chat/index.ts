@@ -411,11 +411,7 @@ serve(async (req) => {
       { role: "user", content: userMsg },
     ];
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
-      body: JSON.stringify({ model: MODEL, messages }),
-    });
+    const aiResp = await callAiWithFallback(LOVABLE_API_KEY, { messages });
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();

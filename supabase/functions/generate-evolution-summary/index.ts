@@ -50,66 +50,50 @@ Last assessment (${last.date}):
 Total assessments in period: ${assessments.length}
 `;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "evolution_summary",
-              description: "Return structured evolution summary",
-              parameters: {
-                type: "object",
-                properties: {
-                  narrative: {
-                    type: "string",
-                    description: "Clinical narrative summarizing the evolution between assessments",
-                  },
-                  painChange: {
-                    type: "string",
-                    description: "Brief description of pain score change",
-                  },
-                  questionnaireChanges: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        name: { type: "string" },
-                        firstScore: { type: "number" },
-                        lastScore: { type: "number" },
-                        changePercent: { type: "number" },
-                      },
-                      required: ["name", "firstScore", "lastScore", "changePercent"],
+    const { callAiWithFallback } = await import("../_shared/ai-fallback.ts");
+    const response = await callAiWithFallback(LOVABLE_API_KEY, {
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "evolution_summary",
+            description: "Return structured evolution summary",
+            parameters: {
+              type: "object",
+              properties: {
+                narrative: { type: "string", description: "Clinical narrative summarizing the evolution between assessments" },
+                painChange: { type: "string", description: "Brief description of pain score change" },
+                questionnaireChanges: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      firstScore: { type: "number" },
+                      lastScore: { type: "number" },
+                      changePercent: { type: "number" },
                     },
-                  },
-                  conclusion: {
-                    type: "string",
-                    description: "Brief conclusion about the clinical progression",
-                  },
-                  recommendation: {
-                    type: "string",
-                    enum: ["discharge", "continue", "reassess"],
-                    description: "Clinical recommendation based on evolution",
+                    required: ["name", "firstScore", "lastScore", "changePercent"],
                   },
                 },
-                required: ["narrative", "painChange", "conclusion", "recommendation"],
-                additionalProperties: false,
+                conclusion: { type: "string", description: "Brief conclusion about the clinical progression" },
+                recommendation: {
+                  type: "string",
+                  enum: ["discharge", "continue", "reassess"],
+                  description: "Clinical recommendation based on evolution",
+                },
               },
+              required: ["narrative", "painChange", "conclusion", "recommendation"],
+              additionalProperties: false,
             },
           },
-        ],
-        tool_choice: { type: "function", function: { name: "evolution_summary" } },
-      }),
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "evolution_summary" } },
     });
 
     if (!response.ok) {
