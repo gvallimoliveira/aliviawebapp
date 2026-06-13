@@ -3,13 +3,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building2, User, Stethoscope, UserPlus } from "lucide-react";
+import { Building2, User, Stethoscope, UserPlus, GraduationCap } from "lucide-react";
 
 const ClinicContextSelector = () => {
   const {
     memberships, activeClinic, activeContext, setActiveContext,
     hasProfessionalProfile, availableContextsCount, canAccessProDemo,
-    pendingProfessionalSignup,
+    pendingProfessionalSignup, isStudentProfessional,
   } = useClinic();
   const { language } = useLanguage();
   const navigate = useNavigate();
@@ -19,9 +19,9 @@ const ClinicContextSelector = () => {
 
   const lang = language as "pt" | "en" | "es";
   const labels = {
-    pt: { solo: "Conta pessoal", pro: "Profissional autônomo", demo: "Demo", proRegister: "Cadastrar como profissional", pending: "Pendente" },
-    en: { solo: "Personal account", pro: "Autonomous professional", demo: "Demo", proRegister: "Register as professional", pending: "Pending" },
-    es: { solo: "Cuenta personal", pro: "Profesional autónomo", demo: "Demo", proRegister: "Registrarse como profesional", pending: "Pendiente" },
+    pt: { solo: "Conta pessoal", pro: "Profissional autônomo", student: "Modo Acadêmico", demo: "Demo", proRegister: "Cadastrar como profissional", pending: "Pendente" },
+    en: { solo: "Personal account", pro: "Autonomous professional", student: "Academic Mode", demo: "Demo", proRegister: "Register as professional", pending: "Pending" },
+    es: { solo: "Cuenta personal", pro: "Profesional autónomo", student: "Modo Académico", demo: "Demo", proRegister: "Registrarse como profesional", pending: "Pendiente" },
   }[lang];
 
   const currentValue =
@@ -57,8 +57,8 @@ const ClinicContextSelector = () => {
           {hasProfessionalProfile && (
             <SelectItem value="pro">
               <span className="flex items-center gap-2">
-                <Stethoscope className="h-3.5 w-3.5" />
-                {labels.pro}
+                {isStudentProfessional ? <GraduationCap className="h-3.5 w-3.5" /> : <Stethoscope className="h-3.5 w-3.5" />}
+                {isStudentProfessional ? labels.student : labels.pro}
               </span>
             </SelectItem>
           )}

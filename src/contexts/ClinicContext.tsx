@@ -38,6 +38,10 @@ interface ClinicContextType {
   // New: unified context selector
   hasProfessionalProfile: boolean;
   setHasProfessionalProfile: (v: boolean) => void;
+  // True when the professional profile is in Alivia Acadêmico (student) mode.
+  // Drives label/icon swap in ContextSelectionModal & ClinicContextSelector.
+  isStudentProfessional: boolean;
+  setIsStudentProfessional: (v: boolean) => void;
   activeContext: ActiveContextType;
   setActiveContext: (type: ActiveContextType, clinicId?: string | null) => void;
   availableContextsCount: number;
@@ -78,6 +82,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [contextDismissed, setContextDismissed] = useState(false);
   const [hasRestoredFromStorage, setHasRestoredFromStorage] = useState(false);
   const [pendingProfessionalSignup, setPendingProfessionalSignup] = useState(false);
+  const [isStudentProfessional, setIsStudentProfessional] = useState(false);
 
   const fetchMemberships = useCallback(async () => {
     if (!user) { setMemberships([]); setLoading(false); return; }
@@ -233,6 +238,8 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         canAccessProDemo,
         pendingProfessionalSignup,
         setPendingProfessionalSignup,
+        isStudentProfessional,
+        setIsStudentProfessional,
       }}
     >
       {children}

@@ -3,10 +3,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Stethoscope, UserPlus } from "lucide-react";
+import { Building2, User, Stethoscope, UserPlus, GraduationCap } from "lucide-react";
 
 const ContextSelectionModal = () => {
-  const { memberships, needsContextSelection, setActiveContext, dismissContextSelection, hasProfessionalProfile, canAccessProDemo, pendingProfessionalSignup, setPendingProfessionalSignup } = useClinic();
+  const { memberships, needsContextSelection, setActiveContext, dismissContextSelection, hasProfessionalProfile, canAccessProDemo, pendingProfessionalSignup, setPendingProfessionalSignup, isStudentProfessional } = useClinic();
   const { language } = useLanguage();
   const navigate = useNavigate();
 
@@ -19,6 +19,7 @@ const ContextSelectionModal = () => {
       desc: "Você tem mais de um perfil. Escolha o contexto de uso:",
       solo: "Conta pessoal", soloDesc: "Acessar meu painel pessoal",
       pro: "Profissional autônomo", proDesc: "Atender meus pacientes particulares",
+      student: "Modo Acadêmico", studentDesc: "Usar ferramentas Alivia Acadêmico",
       proDemo: "Profissional autônomo (Demo)", proDemoDesc: "Conhecer o painel PRO com dados de exemplo",
       proRegister: "Cadastrar como profissional", proRegisterDesc: "Concluir seu cadastro PRO (bloqueado até assinar)",
     },
@@ -27,6 +28,7 @@ const ContextSelectionModal = () => {
       desc: "You have multiple profiles. Choose your context:",
       solo: "Personal account", soloDesc: "Access my personal dashboard",
       pro: "Autonomous professional", proDesc: "Manage my private patients",
+      student: "Academic Mode", studentDesc: "Use Alivia Academic tools",
       proDemo: "Autonomous professional (Demo)", proDemoDesc: "Preview the PRO dashboard with sample data",
       proRegister: "Register as professional", proRegisterDesc: "Finish your PRO sign-up (locked until you subscribe)",
     },
@@ -35,6 +37,7 @@ const ContextSelectionModal = () => {
       desc: "Tiene varios perfiles. Elija el contexto:",
       solo: "Cuenta personal", soloDesc: "Acceder a mi panel personal",
       pro: "Profesional autónomo", proDesc: "Atender mis pacientes particulares",
+      student: "Modo Académico", studentDesc: "Usar las herramientas Alivia Académico",
       proDemo: "Profesional autónomo (Demo)", proDemoDesc: "Conocer el panel PRO con datos de ejemplo",
       proRegister: "Registrarse como profesional", proRegisterDesc: "Completar su registro PRO (bloqueado hasta suscribirse)",
     },
@@ -65,10 +68,14 @@ const ContextSelectionModal = () => {
               className="w-full justify-start gap-3 h-auto py-4 px-4"
               onClick={() => setActiveContext("professional")}
             >
-              <Stethoscope className="h-5 w-5 shrink-0 text-primary" />
+              {isStudentProfessional ? (
+                <GraduationCap className="h-5 w-5 shrink-0 text-primary" />
+              ) : (
+                <Stethoscope className="h-5 w-5 shrink-0 text-primary" />
+              )}
               <div className="text-left">
-                <p className="font-medium">{labels.pro}</p>
-                <p className="text-xs text-muted-foreground">{labels.proDesc}</p>
+                <p className="font-medium">{isStudentProfessional ? labels.student : labels.pro}</p>
+                <p className="text-xs text-muted-foreground">{isStudentProfessional ? labels.studentDesc : labels.proDesc}</p>
               </div>
             </Button>
           )}

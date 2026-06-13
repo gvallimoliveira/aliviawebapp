@@ -1,0 +1,2 @@
+UPDATE public.app_config SET value = 'true'::jsonb, updated_at = now() WHERE key = 'clinical_agent_enabled';
+INSERT INTO public.app_config (key, value) VALUES ('clinical_agent_enabled', 'true'::jsonb) ON CONFLICT (key) DO UPDATE SET value = 'true'::jsonb, updated_at = now();
