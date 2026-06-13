@@ -8,13 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Stethoscope, Calendar as CalendarIcon, Sparkles, MessageCircle,
-  Crown, ArrowLeft, HelpCircle, User,
+  Crown, ArrowLeft, HelpCircle, User, Brain,
 } from "lucide-react";
 import ProDashboard from "@/components/dashboard/ProDashboard";
 import DemoUpsellBanner from "@/components/demo/DemoUpsellBanner";
 import DemoInsightsMock from "@/components/demo/DemoInsightsMock";
 import DemoMessagesMock from "@/components/demo/DemoMessagesMock";
 import DemoDailySummaryMock from "@/components/demo/DemoDailySummaryMock";
+import DemoClinicalAgentMock from "@/components/demo/DemoClinicalAgentMock";
+
 import { setSeo } from "@/lib/seo";
 
 const ProSchedule = lazy(() => import("@/components/dashboard/ProSchedule"));
@@ -123,7 +125,7 @@ const ProfessionalDemo = () => {
         </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className="w-full grid grid-cols-5">
             <TabsTrigger value="professional" className="gap-1.5 text-xs">
               <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">Pacientes</span>
             </TabsTrigger>
@@ -135,6 +137,9 @@ const ProfessionalDemo = () => {
             </TabsTrigger>
             <TabsTrigger value="messages" className="gap-1.5 text-xs">
               <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">Mensagens</span>
+            </TabsTrigger>
+            <TabsTrigger value="agente" className="gap-1.5 text-xs">
+              <Brain className="h-4 w-4" /><span className="hidden sm:inline">Agente</span>
             </TabsTrigger>
           </TabsList>
 
@@ -163,6 +168,11 @@ const ProfessionalDemo = () => {
           <TabsContent value="messages" className="space-y-6">
             <DemoUpsellBanner section="pro-messages" variant="pro" />
             <DemoMessagesMock />
+          </TabsContent>
+
+          <TabsContent value="agente" className="space-y-6">
+            <DemoUpsellBanner section="pro-agent" variant="pro" />
+            <DemoClinicalAgentMock />
           </TabsContent>
         </Tabs>
       </main>
