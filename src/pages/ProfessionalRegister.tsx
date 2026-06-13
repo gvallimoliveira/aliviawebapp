@@ -538,9 +538,12 @@ const ProfessionalRegister = () => {
                 )}
               </div>
 
-              {/* Student-only academic fields */}
+              {/* Student-only academic + essentials (movidos para cima para evitar confusão) */}
               {isStudent && (
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-3">
+                  <p className="text-[11px] uppercase tracking-wide text-primary font-semibold">
+                    Dados obrigatórios — Acadêmico
+                  </p>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Instituição de ensino *</Label>
                     <Input value={studentInstitution} onChange={(e) => setStudentInstitution(e.target.value)} />
@@ -549,6 +552,33 @@ const ProfessionalRegister = () => {
                     <Label className="text-xs">Período atual *</Label>
                     <Input value={studentPeriod} onChange={(e) => setStudentPeriod(e.target.value)} placeholder="Ex.: 5º período" />
                   </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Nome completo *</Label>
+                    <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Cidade *</Label>
+                      <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Estado (UF) *</Label>
+                      <select
+                        value={form.state}
+                        onChange={(e) => setForm({ ...form, state: e.target.value })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        required
+                      >
+                        <option value="">{t("prof.select_state")}</option>
+                        {STATES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Os demais campos abaixo (foto, logo, especialidades, bio, contato) são opcionais no modo acadêmico.
+                  </p>
                 </div>
               )}
 
