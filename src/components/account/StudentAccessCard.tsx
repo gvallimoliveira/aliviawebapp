@@ -121,9 +121,19 @@ const StudentAccessCard = () => {
   // Hard lock when CREFITO is present and user is not VIP.
   const locked = hasCrefito && !isVip;
 
+  // Wanting to leave student mode without a CREFITO on file → DB trigger
+  // would reject the update. Send the user to the professional registration
+  // form so they can input their CREFITO (with skip option still available).
+  const needsCrefitoFlow = !isStudent && hasProfRecord && !hasCrefito;
+
   const handleSave = async () => {
     if (!user?.id) return;
     if (locked) return;
+    if (needsCrefitoFlow) {
+      try { sessionStorage.setItem("signupOrigin", "professional"); } catch {}
+      navigate("/professional/register");
+      return;
+    }
     if (isStudent && (!fullName.trim() || !institution.trim() || !period.trim())) {
       toast({ title: t.required, variant: "destructive" });
       return;
