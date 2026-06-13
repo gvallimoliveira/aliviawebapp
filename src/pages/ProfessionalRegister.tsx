@@ -706,12 +706,12 @@ const ProfessionalRegister = () => {
                 </button>
               </div>
 
-              {isStudent ? (
+              {isStudent ? null : (
                 <div className="space-y-2">
                   <Label>{t("prof.full_name")} *</Label>
                   <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
                 </div>
-              ) : (
+              )}
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
