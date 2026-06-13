@@ -826,26 +826,28 @@ const ProfessionalRegister = () => {
                 )}
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>{t("prof.city")} *</Label>
-                  <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
+              {!isStudent && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>{t("prof.city")} *</Label>
+                    <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("prof.state")} *</Label>
+                    <select
+                      value={form.state}
+                      onChange={(e) => setForm({ ...form, state: e.target.value })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      required
+                    >
+                      <option value="">{t("prof.select_state")}</option>
+                      {STATES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("prof.state")} *</Label>
-                  <select
-                    value={form.state}
-                    onChange={(e) => setForm({ ...form, state: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    required
-                  >
-                    <option value="">{t("prof.select_state")}</option>
-                    {STATES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              )}
 
               <div className="space-y-2">
                 <Label>{t("prof.bio")}</Label>
