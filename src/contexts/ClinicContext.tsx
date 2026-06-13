@@ -82,6 +82,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [contextDismissed, setContextDismissed] = useState(false);
   const [hasRestoredFromStorage, setHasRestoredFromStorage] = useState(false);
   const [pendingProfessionalSignup, setPendingProfessionalSignup] = useState(false);
+  const [isStudentProfessional, setIsStudentProfessional] = useState(false);
 
   const fetchMemberships = useCallback(async () => {
     if (!user) { setMemberships([]); setLoading(false); return; }
