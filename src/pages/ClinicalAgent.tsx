@@ -7,6 +7,7 @@ import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check,
+  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check, Brain, Lock,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
@@ -195,12 +196,57 @@ const ClinicalAgent = () => {
   const [titleDraft, setTitleDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Access gate
+  // Subscription gate — instead of redirecting when there's no active plan,
+  // we render a CTA screen (same pattern as the other gated tabs).
+  const [subState, setSubState] = useState<{ checked: boolean; subscribed: boolean; isPartner: boolean }>({
+    checked: false, subscribed: false, isPartner: false,
+  });
+  const [subscribing, setSubscribing] = useState(false);
+
   useEffect(() => {
-    if (checked && !hasAccess) {
-      navigate("/dashboard", { replace: true });
+    if (!user) return;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("check-pro-subscription");
+        setSubState({
+          checked: true,
+          subscribed: !!data?.subscribed,
+          isPartner: !!data?.is_partner,
+        });
+      } catch {
+        setSubState({ checked: true, subscribed: false, isPartner: false });
+      }
+    })();
+  }, [user?.id]);
+
+  const clinicCoversAccess = !!(activeClinic &&
+    (activeClinic.subscription_status === "active" || activeClinic.subscription_status === "trialing"));
+  const hasActivePlan =
+    subState.subscribed || subState.isPartner || clinicCoversAccess || isBetaInternal;
+
+  const handleStartSubscription = async () => {
+    setSubscribing(true);
+    try {
+      let coupon: string | undefined;
+      const isDesktop = typeof window !== "undefined" && window.innerWidth >= 1024;
+      if (isDesktop) {
+        const input = window.prompt(
+          "Tem um cupom de desconto? Digite o código (ou deixe em branco):",
+          ""
+        );
+        if (input && input.trim()) coupon = input.trim().toUpperCase();
+      }
+      const { data, error } = await supabase.functions.invoke("create-pro-subscription", {
+        body: { plan: "monthly", coupon },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+    } catch {
+      toast.error("Não foi possível abrir o checkout. Tente novamente.");
+    } finally {
+      setSubscribing(false);
     }
-  }, [checked, hasAccess, navigate]);
+  };
 
   // Seed input from sessionStorage (set by "Discutir com agente" on prontuário)
   useEffect(() => {
