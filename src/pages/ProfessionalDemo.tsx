@@ -169,6 +169,11 @@ const ProfessionalDemo = () => {
             <DemoUpsellBanner section="pro-messages" variant="pro" />
             <DemoMessagesMock />
           </TabsContent>
+
+          <TabsContent value="agente" className="space-y-6">
+            <DemoUpsellBanner section="pro-agent" variant="pro" />
+            <DemoClinicalAgentMock />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
