@@ -6,8 +6,9 @@ import { useNavigate } from "react-router-dom";
 
 type Section =
   | "agenda" | "patients" | "insights" | "messages" | "clinic"
-  | "management" | "feedback" | "team" | "link"
-  | "pro-agenda" | "pro-insights" | "pro-messages" | "pro-patients";
+  | "management" | "feedback" | "team" | "link" | "agente"
+  | "pro-agenda" | "pro-insights" | "pro-messages" | "pro-patients" | "pro-agent";
+
 
 interface Props {
   section: Section;
