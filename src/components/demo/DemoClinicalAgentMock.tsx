@@ -324,6 +324,7 @@ const DemoClinicalAgentMock = () => {
   const openThread = (id: string) => {
     setActiveId(id);
     setIsNew(false);
+    setMobileView("chat");
   };
 
   const startNew = () => {
@@ -339,6 +340,7 @@ const DemoClinicalAgentMock = () => {
     setThreads((prev) => [thread, ...prev]);
     setActiveId(id);
     setIsNew(true);
+    setMobileView("chat");
   };
 
   const pickSuggestion = (text: string) => {
