@@ -39,33 +39,24 @@ Rules:
 - Return ONLY the JSON array, no other text
 - If no appointments found, return an empty array []`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: [
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${mimeType || "image/png"};base64,${imageBase64}`,
-                },
-              },
-              {
-                type: "text",
-                text: "Extract all appointments from this schedule screenshot. Return only the JSON array.",
-              },
-            ],
-          },
-        ],
-      }),
+    const { callAiWithFallback } = await import("../_shared/ai-fallback.ts");
+    const response = await callAiWithFallback(LOVABLE_API_KEY, {
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:${mimeType || "image/png"};base64,${imageBase64}` },
+            },
+            {
+              type: "text",
+              text: "Extract all appointments from this schedule screenshot. Return only the JSON array.",
+            },
+          ],
+        },
+      ],
     });
 
     if (!response.ok) {

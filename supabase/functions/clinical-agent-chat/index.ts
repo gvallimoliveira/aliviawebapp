@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 
 function normalizeAnamnesis(raw: any) {
   if (!raw || typeof raw !== "object") return raw;
@@ -411,11 +412,7 @@ serve(async (req) => {
       { role: "user", content: userMsg },
     ];
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
-      body: JSON.stringify({ model: MODEL, messages }),
-    });
+    const aiResp = await callAiWithFallback(LOVABLE_API_KEY, { messages });
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();

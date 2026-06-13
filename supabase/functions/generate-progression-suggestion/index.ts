@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -169,58 +170,44 @@ Exercise data (last 14 days):
 
 Generate a progression suggestion.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "progression_suggestion",
-              description: "Return structured progression suggestion",
-              parameters: {
-                type: "object",
-                properties: {
-                  phase: {
-                    type: "string",
-                    enum: ["maintain", "progress", "reduce"],
-                    description: "Recommended phase: maintain current level, progress to harder, or reduce intensity",
-                  },
-                  title: {
-                    type: "string",
-                    description: "Short title for the suggestion (max 60 chars)",
-                  },
-                  message: {
-                    type: "string",
-                    description: "Detailed suggestion message (2-4 sentences)",
-                  },
-                  tips: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "2-3 specific actionable tips",
-                  },
-                  confidence: {
-                    type: "string",
-                    enum: ["low", "medium", "high"],
-                    description: "Confidence level based on data availability",
-                  },
+    const response = await callAiWithFallback(LOVABLE_API_KEY, {
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "progression_suggestion",
+            description: "Return structured progression suggestion",
+            parameters: {
+              type: "object",
+              properties: {
+                phase: {
+                  type: "string",
+                  enum: ["maintain", "progress", "reduce"],
+                  description: "Recommended phase: maintain current level, progress to harder, or reduce intensity",
                 },
-                required: ["phase", "title", "message", "tips", "confidence"],
+                title: { type: "string", description: "Short title for the suggestion (max 60 chars)" },
+                message: { type: "string", description: "Detailed suggestion message (2-4 sentences)" },
+                tips: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "2-3 specific actionable tips",
+                },
+                confidence: {
+                  type: "string",
+                  enum: ["low", "medium", "high"],
+                  description: "Confidence level based on data availability",
+                },
               },
+              required: ["phase", "title", "message", "tips", "confidence"],
             },
           },
-        ],
-        tool_choice: { type: "function", function: { name: "progression_suggestion" } },
-      }),
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "progression_suggestion" } },
     });
 
     if (!response.ok) {
