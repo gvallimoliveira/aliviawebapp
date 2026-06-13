@@ -62,10 +62,11 @@ const ProfessionalAssessment = () => {
 
       const professionalData = Array.isArray(data) ? data[0] : data;
 
-      // Students never have `approved=true` (academic mode), but their links must still work.
-      // The "sob ressalva" disclaimer is shown downstream in the report/PDF.
-      const isApprovedOrStudent = professionalData?.approved || professionalData?.is_student;
-      if (error || !professionalData || !isApprovedOrStudent || !professionalData.active || !professionalData.has_access) {
+      // Access is gated server-side via `has_access` (covers approved pros, students,
+      // partners, admins, lifetime, premium_granted, active subs). The client only
+      // needs to confirm the professional is active and has access. The "sob ressalva"
+      // disclaimer is shown downstream in the report/PDF for non-approved cases.
+      if (error || !professionalData || !professionalData.active || !professionalData.has_access) {
         setStep("inactive");
         return;
       }
