@@ -425,6 +425,13 @@ const ClinicDemo = () => {
             <DemoMessagesMock />
           </TabsContent>
 
+          {/* ─── Agente ─── */}
+          <TabsContent value="agente" className="space-y-5">
+            <DemoUpsellBanner section="agente" />
+            <DemoClinicalAgentMock />
+          </TabsContent>
+
+
           {/* ─── Clínica (sub-tabs) ─── */}
           <TabsContent value="clinic" className="space-y-5">
             <DemoUpsellBanner section="clinic" />
