@@ -311,6 +311,7 @@ const DemoClinicalAgentMock = () => {
   const [activeId, setActiveId] = useState<string>(PREBAKED[0].id);
   const [isNew, setIsNew] = useState(false);
   const [pending, setPending] = useState(false);
+  const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const active = useMemo(() => threads.find((t) => t.id === activeId), [threads, activeId]);
