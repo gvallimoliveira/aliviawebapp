@@ -117,7 +117,7 @@ function buildOnboardingSteps(
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, ready: authReady } = useAuth();
   const { t, toggleLanguage, language } = useLanguage();
-  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary, isClinicOwner, setPendingProfessionalSignup } = useClinic();
+  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary, isClinicOwner, setPendingProfessionalSignup, setIsStudentProfessional } = useClinic();
   const navigate = useNavigate();
   const { hasAccess: hasAgentAccess } = useClinicalAgentAccess();
   const [searchParams, setSearchParams] = useSearchParams();
