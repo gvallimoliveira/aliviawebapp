@@ -419,7 +419,21 @@ const ProfessionalAssessment = () => {
             <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
             <span className="text-xl font-bold text-foreground">Aliv.iA</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {reassessmentId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/dashboard")}
+                className="gap-1.5 rounded-full"
+                title={language === "pt" ? "Voltar ao painel" : language === "es" ? "Volver al panel" : "Back to dashboard"}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {language === "pt" ? "Painel" : language === "es" ? "Panel" : "Dashboard"}
+                </span>
+              </Button>
+            )}
             {/* Professional logo (white-label) */}
             {professional?.logo_url && (
               <img
@@ -428,13 +442,13 @@ const ProfessionalAssessment = () => {
                 className="h-9 w-9 rounded-full object-cover border border-border"
               />
             )}
-            <span className="text-xs font-medium px-3 py-1 rounded-full bg-blue-500/10 text-blue-600">
+            <span className="hidden sm:inline-flex text-xs font-medium px-3 py-1 rounded-full bg-blue-500/10 text-blue-600">
               <Stethoscope className="h-3 w-3 inline mr-1" />
               {t("pro.badge_professional")}
             </span>
             <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
               <Globe className="h-4 w-4" />
-              {t("nav.language")}
+              <span className="hidden sm:inline">{t("nav.language")}</span>
             </Button>
           </div>
         </div>
