@@ -558,10 +558,10 @@ const Assessment = () => {
         title: language === "pt" ? "Sem conexão" : language === "es" ? "Sin conexión" : "Offline",
         description:
           language === "pt"
-            ? "Vamos gerar seu diagnóstico assim que a internet voltar."
+            ? "Vamos gerar sua hipótese preliminar assim que a internet voltar."
             : language === "es"
-            ? "Generaremos tu diagnóstico cuando vuelva la conexión."
-            : "We'll generate your diagnosis as soon as you're back online.",
+            ? "Generaremos tu hipótesis preliminar cuando vuelva la conexión."
+            : "We'll generate your preliminary hypothesis as soon as you're back online.",
       });
       return;
     }
