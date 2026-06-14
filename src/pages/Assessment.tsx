@@ -715,11 +715,41 @@ const Assessment = () => {
         )}
 
         {step === "welcome" && (
-          <WelcomeStep mode={mode as "basic" | "premium"} onContinue={(data) => {
-            if (data?.email) setCapturedEmail(data.email);
-            if (data?.name) setCapturedName(data.name);
-            setStep("redflags");
-          }} />
+          <WelcomeStep
+            mode={mode as "basic" | "premium"}
+            onContinue={(data) => {
+              if (data?.email) setCapturedEmail(data.email);
+              if (data?.name) setCapturedName(data.name);
+              setStep("redflags");
+            }}
+            onRestart={() => {
+              // Wipe the auto-saved draft and reset every piece of the
+              // in-memory assessment so the user starts truly from scratch.
+              clearDraft();
+              setAnamnesisData(null);
+              setTestResults([]);
+              setQuestionnaireResults([]);
+              setDiagnosis(null);
+              setTreatmentPlan(null);
+              setAssessmentId(null);
+              setAdditionalInfo("");
+              setHasRetried(false);
+              setCapturedEmail(null);
+              setCapturedName(null);
+              setIsUpgradeFlow(false);
+              setExtraQuestionnaireRegions([]);
+              setPendingAIAction(null);
+              setStep("welcome");
+              toast({
+                title: language === "pt" ? "Autoavaliação reiniciada" : language === "es" ? "Autoevaluación reiniciada" : "Self-assessment restarted",
+                description: language === "pt"
+                  ? "Recomeçamos do zero."
+                  : language === "es"
+                  ? "Comenzamos desde cero."
+                  : "We've started over from scratch.",
+              });
+            }}
+          />
         )}
 
         {step === "payment_check" && premiumAccess !== null && !premiumAccess.has_access && (
@@ -894,6 +924,7 @@ const Assessment = () => {
           <RedFlagScreening
             onPass={() => setStep("anamnesis")}
             onFlagged={() => setStep("redflag_alert")}
+            onBack={() => setStep("welcome")}
           />
         )}
         {step === "redflag_alert" && <RedFlagAlert />}

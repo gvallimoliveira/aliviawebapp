@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Globe, Loader2, ChevronRight, Building2, AlertTriangle, User, CheckCircle2 } from "lucide-react";
+import { Globe, Loader2, ChevronRight, Building2, AlertTriangle, User, CheckCircle2, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -491,6 +491,15 @@ const ClinicAssessment = () => {
             mode="professional"
             professionalName={clinic.name}
             onContinue={() => setStep("patient_info")}
+            onRestart={() => {
+              setAnamnesisData(null);
+              setQuestionnaireResults([]);
+              setAssessmentId(null);
+              setPatientName(linkedPatient?.name || "");
+              setPatientEmail(linkedPatient?.email || "");
+              setRedFlagData(null);
+              setStep("welcome");
+            }}
           />
         )}
 
@@ -554,15 +563,27 @@ const ClinicAssessment = () => {
               </CardContent>
             </Card>
 
-            <Button
-              onClick={handlePatientInfoContinue}
-              disabled={!patientName.trim()}
-              className="w-full rounded-xl gap-2"
-              size="lg"
-            >
-              {t("patient_info.continue")}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep("welcome")}
+                className="rounded-xl gap-2 sm:w-auto"
+                size="lg"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {language === "es" ? "Atrás" : language === "en" ? "Back" : "Voltar"}
+              </Button>
+              <Button
+                onClick={handlePatientInfoContinue}
+                disabled={!patientName.trim()}
+                className="flex-1 rounded-xl gap-2"
+                size="lg"
+              >
+                {t("patient_info.continue")}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </motion.div>
         )}
 
@@ -571,6 +592,7 @@ const ClinicAssessment = () => {
             onPass={() => setStep("anamnesis")}
             onFlagged={() => setStep("redflag_continue")}
             onFlaggedWithData={handleRedFlagged}
+            onBack={() => setStep("patient_info")}
           />
         )}
         {step === "redflag_continue" && redFlagData && (

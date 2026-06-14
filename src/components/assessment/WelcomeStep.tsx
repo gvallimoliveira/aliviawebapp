@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail, User, AlertCircle, ShieldCheck } from "lucide-react";
+import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail, User, AlertCircle, ShieldCheck, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,11 +14,18 @@ export interface WelcomeStepProps {
   mode: "basic" | "premium" | "professional";
   professionalName?: string;
   onContinue: (data?: { email?: string; name?: string }) => void;
+  /**
+   * Optional callback to reset the entire assessment from scratch.
+   * When provided, a "Restart self-assessment" button is shown below the
+   * primary CTA so users who walked back from a later step (or whose draft
+   * was auto-restored) can intentionally start over.
+   */
+  onRestart?: () => void;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) => {
+const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeStepProps) => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const isPt = language === "pt";
@@ -306,6 +313,7 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
+          className="flex flex-col items-center gap-3"
         >
           <Button
             onClick={handleContinue}
@@ -325,6 +333,24 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
               </>
             )}
           </Button>
+
+          {onRestart && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onRestart}
+              disabled={isTransitioning}
+              className="gap-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {language === "es"
+                ? "Reiniciar autoevaluación"
+                : language === "en"
+                ? "Restart self-assessment"
+                : "Recomeçar autoavaliação"}
+            </Button>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -332,3 +358,4 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
 };
 
 export default WelcomeStep;
+

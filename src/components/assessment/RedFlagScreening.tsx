@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, ShieldAlert, ChevronRight } from "lucide-react";
+import { AlertTriangle, ShieldAlert, ChevronRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -9,10 +9,11 @@ interface RedFlagScreeningProps {
   onPass: () => void;
   onFlagged: () => void;
   onFlaggedWithData?: (flaggedItems: Record<string, boolean>) => void;
+  onBack?: () => void;
 }
 
-const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData }: RedFlagScreeningProps) => {
-  const { t } = useLanguage();
+const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData, onBack }: RedFlagScreeningProps) => {
+  const { t, language } = useLanguage();
   const [answers, setAnswers] = useState<Record<string, boolean | null>>({});
 
   const questions = [
@@ -91,12 +92,23 @@ const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData }: RedFlagScree
         ))}
       </div>
 
-      <div className="flex justify-center pt-4">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+        {onBack && (
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={onBack}
+            className="gap-2 rounded-xl px-6 w-full sm:w-auto order-2 sm:order-1"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {language === "es" ? "Atrás" : language === "en" ? "Back" : "Voltar"}
+          </Button>
+        )}
         <Button
           size="lg"
           onClick={handleContinue}
           disabled={!allAnswered}
-          className="gap-2 rounded-xl px-8"
+          className="gap-2 rounded-xl px-8 w-full sm:w-auto order-1 sm:order-2"
         >
           {t("redflags.continue")}
           <ChevronRight className="h-4 w-4" />
