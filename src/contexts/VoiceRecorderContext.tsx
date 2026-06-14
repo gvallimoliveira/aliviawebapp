@@ -92,13 +92,14 @@ const GlobalVoiceRecorderFAB = () => {
   const [seconds, setSeconds] = useState(0);
   const [showHint, setShowHint] = useState(false);
 
-  // Drag-to-reposition. `pos` is the bottom-right offset in px.
-  // Defaults match the previous static placement.
-  const [pos, setPos] = useState<{ right: number; bottom: number }>(() => ({
-    right: 16,
-    bottom: typeof window !== "undefined" && window.innerWidth >= 640 ? 24 : 80,
+  // Drag-to-reposition. `pos` is the top-right offset in px.
+  // Default: near the top-right corner of the manual assessment modal,
+  // just below the modal close button so it doesn't overlap.
+  const [pos, setPos] = useState<{ right: number; top: number }>(() => ({
+    right: 24,
+    top: 72,
   }));
-  const dragRef = useRef<{ startX: number; startY: number; startRight: number; startBottom: number; moved: boolean; pointerId: number; captured: boolean } | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; startRight: number; startTop: number; moved: boolean; pointerId: number; captured: boolean } | null>(null);
 
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -435,7 +436,7 @@ const GlobalVoiceRecorderFAB = () => {
       startX: e.clientX,
       startY: e.clientY,
       startRight: pos.right,
-      startBottom: pos.bottom,
+      startTop: pos.top,
       moved: false,
       pointerId: e.pointerId,
       captured: false,
@@ -457,8 +458,8 @@ const GlobalVoiceRecorderFAB = () => {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const nextRight = Math.max(8, Math.min(vw - 80, d.startRight - dx));
-    const nextBottom = Math.max(8, Math.min(vh - 80, d.startBottom - dy));
-    setPos({ right: nextRight, bottom: nextBottom });
+    const nextTop = Math.max(8, Math.min(vh - 80, d.startTop + dy));
+    setPos({ right: nextRight, top: nextTop });
   };
   const onDragPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
@@ -475,7 +476,7 @@ const GlobalVoiceRecorderFAB = () => {
       onPointerMove={onDragPointerMove}
       onPointerUp={onDragPointerUp}
       onPointerCancel={onDragPointerUp}
-      style={{ right: pos.right, bottom: pos.bottom }}
+      style={{ right: pos.right, top: pos.top }}
       className="fixed z-[200] flex flex-col items-end gap-2 pointer-events-auto"
     >
       {showHint && state === "idle" && (
