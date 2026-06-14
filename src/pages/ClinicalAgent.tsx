@@ -52,32 +52,41 @@ function ThreadRow({
 }) {
   return (
     <div
-      className={`flex items-center gap-2 rounded-xl border p-1 transition-colors ${
+      className={`w-full rounded-2xl border px-2 py-2 transition-colors ${
         active
           ? "border-primary/30 bg-primary/10"
           : "border-border/50 bg-card/70 hover:bg-muted/40"
       }`}
     >
-      <button
-        type="button"
-        onClick={onOpen}
-        className={`min-w-0 flex-1 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-          active ? "text-foreground" : "text-muted-foreground"
-        }`}
-      >
-        <div className="flex-1 min-w-0">
-          <div className="truncate font-medium">{thread.title}</div>
-          {patientName && <div className="text-[10px] text-primary/80 truncate">📋 {patientName}</div>}
-        </div>
-      </button>
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background/90 text-muted-foreground shadow-sm transition-colors hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-        aria-label="Excluir conversa"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_2.75rem] items-center gap-2">
+        <button
+          type="button"
+          onClick={onOpen}
+          className={`min-w-0 w-full rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+            active ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          <div className="min-w-0">
+            <div className="truncate font-medium text-[15px] leading-5">{thread.title}</div>
+            {patientName && (
+              <div className="mt-1 truncate text-xs text-primary/80">📋 {patientName}</div>
+            )}
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-xl border border-destructive/20 bg-destructive/10 text-destructive shadow-sm transition-colors hover:bg-destructive/15 active:scale-[0.98]"
+          aria-label="Excluir conversa"
+          title="Excluir conversa"
+        >
+          <Trash2 className="h-4.5 w-4.5" />
+        </button>
+      </div>
     </div>
   );
 }
