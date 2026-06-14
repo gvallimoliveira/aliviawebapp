@@ -68,10 +68,10 @@ const PatientDemoDialogs = ({
               <Lock className="h-6 w-6 text-primary" />
             </div>
             <DialogTitle className="text-center">
-              {assessmentDialog === "premium" ? "Avaliação Premium" : "Avaliação básica"}
+              {assessmentDialog === "premium" ? "Autoavaliação Premium" : "Autoavaliação básica"}
             </DialogTitle>
             <DialogDescription className="text-center pt-1">
-              Você está no <strong>modo demonstração</strong>. Para iniciar uma avaliação real:
+              Você está no <strong>modo demonstração</strong>. Para iniciar uma autoavaliação real:
             </DialogDescription>
           </DialogHeader>
 
@@ -79,7 +79,7 @@ const PatientDemoDialogs = ({
             <div className="flex items-start gap-3 rounded-lg border border-border/60 p-3">
               <ClipboardList className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-foreground">Avaliação básica (gratuita)</p>
+                <p className="text-sm font-medium text-foreground">Autoavaliação básica (gratuita)</p>
                 <p className="text-xs text-muted-foreground">
                   Acesse pela landing page e faça sua triagem inicial sem custo.
                 </p>
@@ -88,9 +88,9 @@ const PatientDemoDialogs = ({
             <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/[0.03] p-3">
               <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-foreground">Avaliação Premium</p>
+                <p className="text-sm font-medium text-foreground">Autoavaliação Premium</p>
                 <p className="text-xs text-muted-foreground">
-                  Diagnóstico aprofundado, plano de tratamento, diário de dor e comparativo de evolução —
+                  Hipótese preliminar aprofundada, plano de tratamento, diário de dor e comparativo de evolução —
                   disponível com a assinatura Premium.
                 </p>
               </div>
@@ -99,7 +99,7 @@ const PatientDemoDialogs = ({
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => { closeAssessmentDialog(); goBasic(); }} className="rounded-xl">
-              Iniciar avaliação básica
+              Iniciar autoavaliação básica
             </Button>
             <Button onClick={() => { closeAssessmentDialog(); goSubscribe(); }} className="rounded-xl gap-1.5">
               <Crown className="h-4 w-4" /> Assinar Premium
@@ -181,7 +181,7 @@ const PatientDemoDialogs = ({
                   <section className="rounded-lg border border-primary/20 bg-primary/[0.03] p-4 space-y-2">
                     <div className="flex items-center gap-2">
                       <Brain className="h-4 w-4 text-primary" />
-                      <h4 className="text-sm font-semibold text-foreground">Hipótese diagnóstica (IA)</h4>
+                      <h4 className="text-sm font-semibold text-foreground">Hipótese preliminar (IA)</h4>
                       <Badge variant="outline" className="text-[10px] ml-auto bg-emerald-500/10 text-emerald-700 border-emerald-200">
                         Confiança: {openAssessment.confidence}
                       </Badge>
@@ -310,7 +310,7 @@ const PatientDemoDialogs = ({
                   <div className="rounded-lg border border-amber-300/40 bg-amber-50/40 p-3 flex items-start gap-2">
                     <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-[11px] text-amber-900/80">
-                      Esta é uma visualização ilustrativa do prontuário. No app real, cada avaliação
+                      Esta é uma visualização ilustrativa do prontuário. No app real, cada autoavaliação
                       gera um <strong>PDF clínico completo</strong> que pode ser compartilhado com seu fisioterapeuta.
                     </p>
                   </div>

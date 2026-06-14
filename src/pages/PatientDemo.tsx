@@ -65,7 +65,7 @@ const PatientDemo = () => {
 
     setSeo({
       title: "Demo Premium — Aliv.iA",
-      description: "Veja como funciona o painel Premium do paciente Aliv.iA com avaliações, diário de dor e exercícios.",
+      description: "Veja como funciona o painel Premium do paciente Aliv.iA com autoavaliações, diário de dor e exercícios.",
       url: `${window.location.origin}/para-pacientes/demo`,
       type: "website",
     });
