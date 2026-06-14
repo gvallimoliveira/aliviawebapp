@@ -185,7 +185,7 @@ async function loadPatientContext(adminClient: any, patientId: string, userId: s
     .order("created_at", { ascending: false })
     .limit(5);
 
-  const label = `${initials(patient.full_name)} #${shortHash(patient.id)}`;
+  const label = initials(patient.full_name);
   const age = patient.birth_date
     ? Math.floor((Date.now() - new Date(patient.birth_date).getTime()) / (365.25 * 86400000))
     : null;
@@ -272,8 +272,8 @@ function buildSystemPrompt(patientCtx: any, evidence: any[]) {
     : "\n\n(Base de evidências vazia neste nicho — responda com base em STEPS/D.I.F.I e diretrizes gerais, sinalize a ausência ao usuário.)";
 
   const pat = patientCtx
-    ? `\n\nPACIENTE EM DISCUSSÃO (anonimizado):
-- Identificador: ${patientCtx.label}
+    ? `\n\nPACIENTE EM DISCUSSÃO (anonimizado por iniciais):
+- Refira-se ao paciente SEMPRE pelas iniciais "${patientCtx.label}" (NUNCA use hashes, códigos #xxxx, "Paciente X" ou nomes completos).
 - Idade: ${patientCtx.age ?? "—"} | Gênero: ${patientCtx.gender ?? "—"}
 - Avaliação mais recente: ${JSON.stringify(patientCtx.latest_assessment)}
 - Histórico recente de avaliações: ${JSON.stringify(patientCtx.assessments)}
@@ -435,10 +435,22 @@ serve(async (req) => {
     const aiJson = await aiResp.json();
     const assistantText = aiJson.choices?.[0]?.message?.content || "";
 
-    const citations = evidence.map((e: any) => ({
-      id: e.id, title: e.title, authors: e.authors, year: e.year,
-      pedro_score: e.pedro_score, doi: e.doi, source_url: e.source_url,
-    }));
+    // Only attach citations actually referenced in the assistant text.
+    // Heuristic: match by first author surname + year, or title fragment.
+    const txtLower = (assistantText || "").toLowerCase();
+    const citations = evidence
+      .filter((e: any) => {
+        const year = String(e.year ?? "").trim();
+        const firstAuthor = String(e.authors ?? "").split(/[,;]/)[0].trim().split(/\s+/)[0]?.toLowerCase() || "";
+        const titleFrag = String(e.title ?? "").toLowerCase().slice(0, 40);
+        if (year && firstAuthor && txtLower.includes(firstAuthor) && txtLower.includes(year)) return true;
+        if (titleFrag && txtLower.includes(titleFrag)) return true;
+        return false;
+      })
+      .map((e: any) => ({
+        id: e.id, title: e.title, authors: e.authors, year: e.year,
+        pedro_score: e.pedro_score, doi: e.doi, source_url: e.source_url,
+      }));
 
     await adminClient.from("agent_messages").insert({
       thread_id, role: "assistant",
