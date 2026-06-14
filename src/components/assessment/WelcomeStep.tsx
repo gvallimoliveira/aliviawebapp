@@ -25,7 +25,7 @@ export interface WelcomeStepProps {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) => {
+const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeStepProps) => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const isPt = language === "pt";
