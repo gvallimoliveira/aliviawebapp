@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
+import EmergencyBanner from "@/components/EmergencyBanner";
 
 
 interface Diagnosis {
@@ -295,6 +296,10 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         <AlertTriangle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
         <p className="text-xs text-muted-foreground">{diagnosis.disclaimer}</p>
       </div>
+
+      {/* Emergency banner — always visible on patient-facing result */}
+      <EmergencyBanner />
+
 
       {/* Actions */}
       {!hideFooterActions && (
