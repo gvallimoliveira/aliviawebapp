@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail, User, AlertCircle } from "lucide-react";
+import { ClipboardList, Stethoscope, Activity, ArrowRight, Loader2, Mail, User, AlertCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import logoAlivia from "@/assets/logo-alivia.png";
+
+const CONSENT_KEY = "alivia_self_assessment_consent_v1";
 
 export interface WelcomeStepProps {
   mode: "basic" | "premium" | "professional";
