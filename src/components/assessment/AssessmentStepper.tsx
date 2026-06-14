@@ -12,14 +12,14 @@ const PREMIUM_STEPS: Step[] = [
   { id: "anamnesis", label_pt: "Anamnese", label_en: "Anamnesis" },
   { id: "questionnaire", label_pt: "Questionários", label_en: "Questionnaires" },
   { id: "functional_tests", label_pt: "Testes", label_en: "Tests" },
-  { id: "result", label_pt: "Diagnóstico", label_en: "Diagnosis" },
+  { id: "result", label_pt: "Hipótese", label_en: "Hypothesis" },
   { id: "treatment", label_pt: "Tratamento", label_en: "Treatment" },
 ];
 
 const BASIC_STEPS: Step[] = [
   { id: "redflags", label_pt: "Triagem", label_en: "Screening" },
   { id: "anamnesis", label_pt: "Anamnese", label_en: "Anamnesis" },
-  { id: "result", label_pt: "Diagnóstico", label_en: "Diagnosis" },
+  { id: "result", label_pt: "Hipótese", label_en: "Hypothesis" },
 ];
 
 const PROFESSIONAL_STEPS: Step[] = [
