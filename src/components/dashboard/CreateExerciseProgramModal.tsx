@@ -20,6 +20,7 @@ import {
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { HEP_TEMPLATES, type HepTemplate } from "@/data/hepTemplates";
+import { openWhatsAppDeferred } from "@/lib/whatsappShare";
 
 interface SavedTemplate {
   id: string;
@@ -542,10 +543,23 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
   const handleWhatsApp = async () => {
     if (!generatedLink) return;
-    const { createShortAppLink } = await import("@/lib/shortLink");
-    const short = await createShortAppLink(generatedLink, { ttlSeconds: 60 * 60 * 24 * 90 });
-    const text = `Olá ${patientName}! Preparei seu programa de exercícios domiciliares. Acesse aqui: ${short}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    // Reserve the WhatsApp tab synchronously inside the user gesture
+    // so mobile browsers don't block the popup after the awaited shortlink call.
+    const wa = openWhatsAppDeferred();
+    try {
+      const { createShortAppLink } = await import("@/lib/shortLink");
+      const short = await createShortAppLink(generatedLink, { ttlSeconds: 60 * 60 * 24 * 90 });
+      const text = `Olá ${patientName}! Preparei seu programa de exercícios domiciliares. Acesse aqui: ${short}`;
+      wa.send(text);
+    } catch (err) {
+      console.error("[hep] whatsapp share failed", err);
+      wa.abort();
+      toast({
+        title: "Não foi possível abrir o WhatsApp",
+        description: "Tente novamente em alguns segundos.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleClose = () => {
