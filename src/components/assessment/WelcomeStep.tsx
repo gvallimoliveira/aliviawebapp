@@ -91,7 +91,7 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
         },
         {
           icon: <Activity className="h-5 w-5 text-primary" />,
-          text: isPt ? "Diagnóstico detalhado + plano de tratamento" : "Detailed diagnosis + treatment plan",
+          text: isPt ? "Hipótese preliminar detalhada + plano de tratamento" : "Detailed preliminary hypothesis + treatment plan",
         },
       ]
     : mode === "professional"
@@ -120,7 +120,7 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
         },
         {
           icon: <Activity className="h-5 w-5 text-primary" />,
-          text: isPt ? "Diagnóstico inicial" : "Initial diagnosis",
+          text: isPt ? "Hipótese preliminar inicial" : "Initial preliminary hypothesis",
         },
       ];
 
