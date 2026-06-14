@@ -232,6 +232,15 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        title={t("session_notes.repeat_today") || "Repetir evolução hoje"}
+                        onClick={() => handleRepeat(note)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEdit(note)}>
                         <Pencil className="h-3 w-3" />
                       </Button>
