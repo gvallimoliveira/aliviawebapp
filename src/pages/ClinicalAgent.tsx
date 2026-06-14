@@ -50,140 +50,34 @@ function ThreadRow({
   onOpen: () => void;
   onDelete: () => void;
 }) {
-  const [offset, setOffset] = useState(0);
-  const [revealed, setRevealed] = useState(false);
-  const startX = useRef<number | null>(null);
-  const startY = useRef<number | null>(null);
-  const dragging = useRef(false);
-  const didSwipe = useRef(false);
-  const pointerId = useRef<number | null>(null);
-  const offsetRef = useRef(0);
-  const revealedRef = useRef(false);
-  const rowRef = useRef<HTMLDivElement | null>(null);
-  const REVEAL = 72;
-
-  const setSwipeOffset = (next: number) => {
-    offsetRef.current = next;
-    setOffset(next);
-  };
-
-  const setSwipeRevealed = (next: boolean) => {
-    revealedRef.current = next;
-    setRevealed(next);
-  };
-
-  useEffect(() => {
-    if (!active) {
-      setSwipeOffset(0);
-      setSwipeRevealed(false);
-      didSwipe.current = false;
-    }
-  }, [active]);
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    // Only handle touch/pen — leave mouse alone so desktop hover/click stays clean.
-    if (e.pointerType === "mouse") return;
-    startX.current = e.clientX;
-    startY.current = e.clientY;
-    dragging.current = false;
-    didSwipe.current = false;
-    pointerId.current = e.pointerId;
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (startX.current == null || pointerId.current !== e.pointerId) return;
-    const dx = e.clientX - startX.current;
-    const dy = e.clientY - (startY.current ?? 0);
-    if (!dragging.current) {
-      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
-        dragging.current = true;
-        try { rowRef.current?.setPointerCapture(e.pointerId); } catch { /* ignore */ }
-      } else {
-        return;
-      }
-    }
-    didSwipe.current = true;
-    const base = revealedRef.current ? -REVEAL : 0;
-    const next = Math.min(0, Math.max(-REVEAL, base + dx));
-    setSwipeOffset(next);
-  };
-  const onPointerEnd = (e: React.PointerEvent) => {
-    if (pointerId.current !== e.pointerId) return;
-    if (dragging.current) {
-      const shouldReveal = offsetRef.current <= -REVEAL * 0.35;
-      setSwipeRevealed(shouldReveal);
-      setSwipeOffset(shouldReveal ? -REVEAL : 0);
-    }
-    try { rowRef.current?.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
-    startX.current = null;
-    startY.current = null;
-    pointerId.current = null;
-    setTimeout(() => { dragging.current = false; }, 0);
-  };
-  const handleClick = () => {
-    if (didSwipe.current) {
-      didSwipe.current = false;
-      return;
-    }
-    if (revealedRef.current) { setSwipeRevealed(false); setSwipeOffset(0); return; }
-    onOpen();
-  };
-  const exposure = Math.max(0, -offset);
-  const iconProgress = Math.min(1, exposure / REVEAL);
-  const trayOffset = Math.max(0, REVEAL - exposure);
-
   return (
-    <div className="relative overflow-hidden rounded-lg select-none" style={{ touchAction: "pan-y" }}>
+    <div
+      className={`flex items-center gap-2 rounded-xl border p-1 transition-colors ${
+        active
+          ? "border-primary/30 bg-primary/10"
+          : "border-border/50 bg-card/70 hover:bg-muted/40"
+      }`}
+    >
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="absolute inset-y-0 right-0 z-10 flex w-[72px] items-center justify-center rounded-lg bg-destructive text-destructive-foreground shadow-sm"
-        style={{
-          opacity: 1,
-          pointerEvents: revealed || exposure >= REVEAL * 0.5 ? "auto" : "none",
-          transform: `translate3d(${trayOffset}px, 0, 0)`,
-          transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 120ms ease-out",
-        }}
-        aria-label="Excluir conversa"
-      >
-        <Trash2
-          className="h-5 w-5"
-          style={{
-            opacity: 0.4 + 0.6 * iconProgress,
-            transform: `scale(${0.7 + 0.3 * iconProgress})`,
-            transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease-out",
-          }}
-        />
-      </button>
-      <div
-        ref={rowRef}
-        className={`group relative z-20 flex w-full items-center gap-2 rounded-lg px-3 py-2 cursor-pointer text-sm transition-colors ${
-          active ? "bg-primary/10 text-foreground" : "bg-background hover:bg-muted/50 text-muted-foreground"
+        onClick={onOpen}
+        className={`min-w-0 flex-1 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+          active ? "text-foreground" : "text-muted-foreground"
         }`}
-        style={{
-          transform: `translate3d(${offset}px, 0, 0)`,
-          transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)",
-          willChange: "transform",
-          touchAction: "pan-y",
-          boxShadow: revealed ? "0 0 0 1px hsl(var(--destructive) / 0.12)" : undefined,
-        }}
-        onClick={handleClick}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerEnd}
-        onPointerCancel={onPointerEnd}
       >
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{thread.title}</div>
           {patientName && <div className="text-[10px] text-primary/80 truncate">📋 {patientName}</div>}
         </div>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="hidden lg:flex items-center justify-center shrink-0 h-7 w-7 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 lg:opacity-0 lg:group-hover:opacity-100 transition"
-          aria-label="Excluir conversa"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
+      </button>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background/90 text-muted-foreground shadow-sm transition-colors hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+        aria-label="Excluir conversa"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
     </div>
   );
 }
