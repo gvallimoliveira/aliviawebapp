@@ -248,6 +248,60 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
           </motion.div>
         )}
 
+        {requiresConsent && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.75 }}
+            className="w-full max-w-sm space-y-2"
+          >
+            <label
+              htmlFor="self-assess-consent"
+              className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                consentError
+                  ? "border-destructive bg-destructive/5"
+                  : "border-border bg-muted/40 hover:bg-muted/60"
+              }`}
+            >
+              <Checkbox
+                id="self-assess-consent"
+                checked={consent}
+                onCheckedChange={(v) => {
+                  setConsent(v === true);
+                  if (v === true) setConsentError(false);
+                }}
+                className="mt-0.5"
+              />
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                  <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                  {language === "es"
+                    ? "Reconozco que es una autoevaluación"
+                    : language === "en"
+                    ? "I acknowledge this is a self-assessment"
+                    : "Reconheço que esta é uma autoavaliação"}
+                </div>
+                <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                  {language === "es"
+                    ? "Yo mismo respondo el cuestionario, guiado por el método del app. El resultado no es un diagnóstico médico ni sustituye una consulta presencial. En caso de emergencia, llamaré al 192 (SAMU)."
+                    : language === "en"
+                    ? "I am answering this questionnaire myself, guided by the app's method. The result is not a medical diagnosis and does not replace an in-person consultation. In an emergency, I will call 192 (SAMU — Brazil)."
+                    : "Eu mesmo(a) respondo este questionário, guiado(a) pelo método do app. O resultado não é diagnóstico médico nem substitui consulta presencial. Em caso de emergência, ligarei 192 (SAMU)."}
+                </p>
+              </div>
+            </label>
+            {consentError && (
+              <p className="text-xs text-destructive text-left">
+                {language === "es"
+                  ? "Marca el consentimiento para continuar."
+                  : language === "en"
+                  ? "Please confirm the consent to continue."
+                  : "Marque o consentimento para continuar."}
+              </p>
+            )}
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -255,7 +309,7 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
         >
           <Button
             onClick={handleContinue}
-            disabled={isTransitioning}
+            disabled={isTransitioning || (requiresConsent && !consent)}
             size="lg"
             className="rounded-xl gap-2 px-8 transition-all duration-300"
           >
@@ -266,7 +320,7 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
               </>
             ) : (
               <>
-                {isPt ? "Começar avaliação" : "Start assessment"}
+                {isPt ? "Começar autoavaliação" : "Start self-assessment"}
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
