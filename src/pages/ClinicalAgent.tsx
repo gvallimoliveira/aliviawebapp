@@ -188,6 +188,7 @@ const ClinicalAgent = () => {
   const [creatingThread, setCreatingThread] = useState(false);
   const [loadingThreads, setLoadingThreads] = useState(true);
   const [patients, setPatients] = useState<Array<{ id: string; full_name: string }>>([]);
+  const [resolvedLinkedPatient, setResolvedLinkedPatient] = useState<{ id: string; full_name: string } | null>(null);
   const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [showCitations, setShowCitations] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -249,16 +250,36 @@ const ClinicalAgent = () => {
     }
   };
 
-  // Seed input from sessionStorage (set by "Discutir com agente" on prontuário)
   useEffect(() => {
-    try {
-      const seed = sessionStorage.getItem("agent_seed_input");
-      if (seed) {
-        setInput(seed);
-        sessionStorage.removeItem("agent_seed_input");
+    const patientId = activeThread?.patient_id;
+    if (!patientId) {
+      setResolvedLinkedPatient(null);
+      return;
+    }
+
+    const patientFromList = patients.find((patient) => patient.id === patientId) || null;
+    if (patientFromList) {
+      setResolvedLinkedPatient(patientFromList);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("patients")
+        .select("id, full_name")
+        .eq("id", patientId)
+        .maybeSingle();
+
+      if (!cancelled) {
+        setResolvedLinkedPatient(data || null);
       }
-    } catch {}
-  }, []);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeThread?.patient_id, patients]);
 
   // Load threads + patients
   useEffect(() => {
@@ -492,7 +513,7 @@ const ClinicalAgent = () => {
     if (updated) setActiveThread(updated);
   };
 
-  const linkedPatient = patients.find(p => p.id === activeThread?.patient_id);
+  const linkedPatient = resolvedLinkedPatient;
   const allCitations = messages.flatMap(m => m.citations || []);
   const uniqueCitations = Array.from(new Map(allCitations.map(c => [c.id, c])).values());
 

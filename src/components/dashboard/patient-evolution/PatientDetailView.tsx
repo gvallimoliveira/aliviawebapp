@@ -286,13 +286,6 @@ export default function PatientDetailView(props: any) {
                 <DropdownMenuSeparator />
                 {hasAgentAccess && !isDemo && (
                   <DropdownMenuItem onSelect={async () => {
-                    try {
-                      const latest = latestWithDiagnosis || patient.assessments?.[0];
-                      const hypothesis = latest?.final_hypothesis || latest?.diagnosis?.hypothesis || latest?.diagnosis?.condition || "—";
-                      const regions = Array.isArray(latest?.pain_regions) ? latest.pain_regions.join(", ") : "—";
-                      const seed = `Discutir caso do paciente ${patient.name} (anonimizado):\n- Hipótese atual: ${hypothesis}\n- Regiões de dor: ${regions || "—"}\n- Dor (0-10): ${latest?.pain_score ?? "—"}\n\nO que você sugere como próximos passos baseados em evidências?`;
-                      sessionStorage.setItem("agent_seed_input", seed);
-                    } catch {}
                     // Look up the patients-table id from email + professional/clinic
                     // so the agent thread can be linked to this patient.
                     let patientDbId: string | null = null;
