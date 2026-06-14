@@ -491,6 +491,15 @@ const ClinicAssessment = () => {
             mode="professional"
             professionalName={clinic.name}
             onContinue={() => setStep("patient_info")}
+            onRestart={() => {
+              setAnamnesisData(null);
+              setQuestionnaireResults([]);
+              setAssessmentId(null);
+              setPatientName(linkedPatient?.name || "");
+              setPatientEmail(linkedPatient?.email || "");
+              setRedFlagData(null);
+              setStep("welcome");
+            }}
           />
         )}
 
