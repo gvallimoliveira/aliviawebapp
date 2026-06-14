@@ -286,22 +286,40 @@ export default function PatientDetailView(props: any) {
                 <DropdownMenuSeparator />
                 {hasAgentAccess && !isDemo && (
                   <DropdownMenuItem onSelect={async () => {
-                    // Look up the patients-table id from email + professional/clinic
-                    // so the agent thread can be linked to this patient.
                     let patientDbId: string | null = null;
                     try {
                       const sb = supabase as any;
-                      let q = sb.from("patients").select("id").eq("email", patient.email).limit(1);
-                      if (clinicId) q = q.eq("clinic_id", clinicId);
-                      else if (professionalId) q = q.eq("professional_id", professionalId);
-                      const { data } = await q.maybeSingle();
-                      patientDbId = data?.id || null;
-                      // Fallback: look up by email only when the scoped query misses
-                      // (assessment may have been created in another context).
+                      patientDbId = patient?.patientRecord?.id || null;
+
                       if (!patientDbId) {
-                        const { data: fb } = await sb.from("patients")
-                          .select("id").eq("email", patient.email).limit(1).maybeSingle();
-                        patientDbId = fb?.id || null;
+                        let lookup = sb.from("patients").select("id").limit(1);
+                        if (patient.email) {
+                          lookup = lookup.eq("email", patient.email);
+                        } else {
+                          lookup = lookup.eq("full_name", patient.name);
+                        }
+                        if (clinicId) lookup = lookup.eq("clinic_id", clinicId);
+                        else if (professionalId) lookup = lookup.eq("professional_id", professionalId);
+
+                        const { data } = await lookup.maybeSingle();
+                        patientDbId = data?.id || null;
+                      }
+
+                      if (!patientDbId && (patient.name || patient.email)) {
+                        const payload: Record<string, string> = {
+                          full_name: patient.name || patient.email || "Paciente",
+                        };
+
+                        if (patient.email) payload.email = patient.email;
+                        if (clinicId) payload.clinic_id = clinicId;
+                        else if (professionalId) payload.professional_id = professionalId;
+
+                        const { data: created } = await sb.from("patients")
+                          .insert(payload)
+                          .select("id")
+                          .single();
+
+                        patientDbId = created?.id || null;
                       }
                     } catch {}
                     if (!patientDbId) {
