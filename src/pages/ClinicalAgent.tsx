@@ -342,10 +342,11 @@ const ClinicalAgent = () => {
           .limit(1)
           .maybeSingle();
         if (existing) {
-          // Ensure it shows in the sidebar even if outside the 7-day window.
-          setThreads(prev => prev.find(t => t.id === existing.id) ? prev : [existing as Thread, ...prev]);
-          setActiveThread(existing as Thread);
-          navigate(`/agente/${existing.id}`, { replace: true });
+          const existingThread = existing as Thread;
+          setThreads(prev => prev.find(t => t.id === existingThread.id) ? prev : [existingThread, ...prev]);
+          const linkedThread = await ensureThreadPatientLink(existingThread, initialPatientId);
+          setActiveThread(linkedThread);
+          navigate(`/agente/${linkedThread.id}`, { replace: true });
         } else {
           await createThread(initialPatientId);
         }
