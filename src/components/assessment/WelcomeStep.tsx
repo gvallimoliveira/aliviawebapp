@@ -358,9 +358,6 @@ const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeS
 };
 
 export default WelcomeStep;
-      </motion.div>
-    </AnimatePresence>
-  );
-};
+
 
 export default WelcomeStep;
