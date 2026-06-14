@@ -27,10 +27,19 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
   const [name, setName] = useState("");
   const [emailError, setEmailError] = useState("");
   const [nameError, setNameError] = useState("");
+  // Only patient self-assessments require the explicit consent.
+  // Professional/clinic flows already have a clinical responsible party.
+  const requiresConsent = mode === "basic" || mode === "premium";
+  const [consent, setConsent] = useState(false);
+  const [consentError, setConsentError] = useState(false);
 
   const needsEmail = mode === "basic" && !user;
 
   const handleContinue = () => {
+    if (requiresConsent && !consent) {
+      setConsentError(true);
+      return;
+    }
     if (needsEmail) {
       let hasError = false;
       const trimmedName = name.trim();
@@ -51,6 +60,14 @@ const WelcomeStep = ({ mode, professionalName, onContinue }: WelcomeStepProps) =
         setEmailError("");
       }
       if (hasError) return;
+    }
+    if (requiresConsent) {
+      try {
+        localStorage.setItem(
+          CONSENT_KEY,
+          JSON.stringify({ ts: new Date().toISOString(), mode, lang: language }),
+        );
+      } catch { /* storage may be unavailable */ }
     }
     setIsTransitioning(true);
     setTimeout(() => onContinue(needsEmail ? { email: email.trim(), name: name.trim() } : undefined), 600);
