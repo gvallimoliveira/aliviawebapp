@@ -195,6 +195,7 @@ const ClinicalAgent = () => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const bootstrappedRef = useRef(false);
 
   // Subscription gate — instead of redirecting when there's no active plan,
   // we render a CTA screen (same pattern as the other gated tabs).
@@ -297,7 +298,10 @@ const ClinicalAgent = () => {
       setPatients(pt);
       setLoadingThreads(false);
 
-      // Bootstrap thread selection
+      // Bootstrap thread selection (run once per mount)
+      if (bootstrappedRef.current) return;
+      bootstrappedRef.current = true;
+
       if (threadId) {
         const found = (th || []).find(t => t.id === threadId);
         if (found) {
@@ -306,7 +310,24 @@ const ClinicalAgent = () => {
           navigate("/agente", { replace: true });
         }
       } else if (initialPatientId) {
-        await createThread(initialPatientId);
+        // Look for an existing (non-archived) thread linked to this patient,
+        // ignoring the 7-day window so older threads can be resumed.
+        const { data: existing } = await sb.from("agent_threads")
+          .select("id, title, patient_id, archived, updated_at")
+          .eq("user_id", user.id)
+          .eq("patient_id", initialPatientId)
+          .eq("archived", false)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (existing) {
+          // Ensure it shows in the sidebar even if outside the 7-day window.
+          setThreads(prev => prev.find(t => t.id === existing.id) ? prev : [existing as Thread, ...prev]);
+          setActiveThread(existing as Thread);
+          navigate(`/agente/${existing.id}`, { replace: true });
+        } else {
+          await createThread(initialPatientId);
+        }
       }
       // Otherwise: stay on welcome screen — user picks "Nova conversa" or an existing thread.
 
