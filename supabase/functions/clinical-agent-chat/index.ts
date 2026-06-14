@@ -435,10 +435,22 @@ serve(async (req) => {
     const aiJson = await aiResp.json();
     const assistantText = aiJson.choices?.[0]?.message?.content || "";
 
-    const citations = evidence.map((e: any) => ({
-      id: e.id, title: e.title, authors: e.authors, year: e.year,
-      pedro_score: e.pedro_score, doi: e.doi, source_url: e.source_url,
-    }));
+    // Only attach citations actually referenced in the assistant text.
+    // Heuristic: match by first author surname + year, or title fragment.
+    const txtLower = (assistantText || "").toLowerCase();
+    const citations = evidence
+      .filter((e: any) => {
+        const year = String(e.year ?? "").trim();
+        const firstAuthor = String(e.authors ?? "").split(/[,;]/)[0].trim().split(/\s+/)[0]?.toLowerCase() || "";
+        const titleFrag = String(e.title ?? "").toLowerCase().slice(0, 40);
+        if (year && firstAuthor && txtLower.includes(firstAuthor) && txtLower.includes(year)) return true;
+        if (titleFrag && txtLower.includes(titleFrag)) return true;
+        return false;
+      })
+      .map((e: any) => ({
+        id: e.id, title: e.title, authors: e.authors, year: e.year,
+        pedro_score: e.pedro_score, doi: e.doi, source_url: e.source_url,
+      }));
 
     await adminClient.from("agent_messages").insert({
       thread_id, role: "assistant",
