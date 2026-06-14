@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, ShieldAlert, ChevronRight } from "lucide-react";
+import { AlertTriangle, ShieldAlert, ChevronRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -9,10 +9,11 @@ interface RedFlagScreeningProps {
   onPass: () => void;
   onFlagged: () => void;
   onFlaggedWithData?: (flaggedItems: Record<string, boolean>) => void;
+  onBack?: () => void;
 }
 
-const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData }: RedFlagScreeningProps) => {
-  const { t } = useLanguage();
+const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData, onBack }: RedFlagScreeningProps) => {
+  const { t, language } = useLanguage();
   const [answers, setAnswers] = useState<Record<string, boolean | null>>({});
 
   const questions = [
