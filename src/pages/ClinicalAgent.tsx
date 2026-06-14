@@ -57,13 +57,25 @@ function ThreadRow({
   const dragging = useRef(false);
   const didSwipe = useRef(false);
   const pointerId = useRef<number | null>(null);
+  const offsetRef = useRef(0);
+  const revealedRef = useRef(false);
   const rowRef = useRef<HTMLDivElement | null>(null);
   const REVEAL = 72;
 
+  const setSwipeOffset = (next: number) => {
+    offsetRef.current = next;
+    setOffset(next);
+  };
+
+  const setSwipeRevealed = (next: boolean) => {
+    revealedRef.current = next;
+    setRevealed(next);
+  };
+
   useEffect(() => {
     if (!active) {
-      setOffset(0);
-      setRevealed(false);
+      setSwipeOffset(0);
+      setSwipeRevealed(false);
       didSwipe.current = false;
     }
   }, [active]);
@@ -90,16 +102,16 @@ function ThreadRow({
       }
     }
     didSwipe.current = true;
-    const base = revealed ? -REVEAL : 0;
+    const base = revealedRef.current ? -REVEAL : 0;
     const next = Math.min(0, Math.max(-REVEAL, base + dx));
-    setOffset(next);
+    setSwipeOffset(next);
   };
   const onPointerEnd = (e: React.PointerEvent) => {
     if (pointerId.current !== e.pointerId) return;
     if (dragging.current) {
-      const shouldReveal = offset < -REVEAL / 2;
-      setRevealed(shouldReveal);
-      setOffset(shouldReveal ? -REVEAL : 0);
+      const shouldReveal = offsetRef.current <= -REVEAL * 0.35;
+      setSwipeRevealed(shouldReveal);
+      setSwipeOffset(shouldReveal ? -REVEAL : 0);
     }
     try { rowRef.current?.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
     startX.current = null;
@@ -112,23 +124,24 @@ function ThreadRow({
       didSwipe.current = false;
       return;
     }
-    if (revealed) { setRevealed(false); setOffset(0); return; }
+    if (revealedRef.current) { setSwipeRevealed(false); setSwipeOffset(0); return; }
     onOpen();
   };
   const exposure = Math.max(0, -offset);
-  const actionVisible = revealed || exposure >= 6;
   const iconProgress = Math.min(1, exposure / REVEAL);
+  const trayOffset = Math.max(0, REVEAL - exposure);
 
   return (
-    <div className="relative overflow-hidden rounded-lg" style={{ touchAction: "pan-y" }}>
+    <div className="relative overflow-hidden rounded-lg select-none" style={{ touchAction: "pan-y" }}>
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="absolute inset-y-0 right-0 z-0 w-[72px] flex items-center justify-center bg-destructive text-destructive-foreground"
+        className="absolute inset-y-0 right-0 z-10 flex w-[72px] items-center justify-center rounded-lg bg-destructive text-destructive-foreground shadow-sm"
         style={{
-          opacity: actionVisible ? 1 : 0,
-          pointerEvents: actionVisible ? "auto" : "none",
-          transition: "opacity 120ms ease-out",
+          opacity: 1,
+          pointerEvents: revealed || exposure >= REVEAL * 0.5 ? "auto" : "none",
+          transform: `translate3d(${trayOffset}px, 0, 0)`,
+          transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 120ms ease-out",
         }}
         aria-label="Excluir conversa"
       >
@@ -143,10 +156,16 @@ function ThreadRow({
       </button>
       <div
         ref={rowRef}
-        className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${
+        className={`group relative z-20 flex w-full items-center gap-2 rounded-lg px-3 py-2 cursor-pointer text-sm transition-colors ${
           active ? "bg-primary/10 text-foreground" : "bg-background hover:bg-muted/50 text-muted-foreground"
         }`}
-        style={{ transform: `translateX(${offset}px)`, transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)", willChange: "transform", touchAction: "pan-y" }}
+        style={{
+          transform: `translate3d(${offset}px, 0, 0)`,
+          transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)",
+          willChange: "transform",
+          touchAction: "pan-y",
+          boxShadow: revealed ? "0 0 0 1px hsl(var(--destructive) / 0.12)" : undefined,
+        }}
         onClick={handleClick}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -159,7 +178,7 @@ function ThreadRow({
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="hidden md:flex items-center justify-center shrink-0 h-7 w-7 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 md:opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition"
+          className="hidden lg:flex items-center justify-center shrink-0 h-7 w-7 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 lg:opacity-0 lg:group-hover:opacity-100 transition"
           aria-label="Excluir conversa"
         >
           <Trash2 className="h-4 w-4" />
