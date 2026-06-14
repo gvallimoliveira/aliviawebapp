@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  NotebookPen, Plus, CalendarIcon, Loader2, Trash2, Pencil, ChevronDown, ChevronUp,
+  NotebookPen, Plus, CalendarIcon, Loader2, Trash2, Pencil, ChevronDown, ChevronUp, Copy,
 } from "lucide-react";
 
 interface SessionNote {
