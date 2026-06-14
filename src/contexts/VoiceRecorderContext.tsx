@@ -92,13 +92,14 @@ const GlobalVoiceRecorderFAB = () => {
   const [seconds, setSeconds] = useState(0);
   const [showHint, setShowHint] = useState(false);
 
-  // Drag-to-reposition. `pos` is the bottom-right offset in px.
-  // Defaults match the previous static placement.
-  const [pos, setPos] = useState<{ right: number; bottom: number }>(() => ({
-    right: 16,
-    bottom: typeof window !== "undefined" && window.innerWidth >= 640 ? 24 : 80,
+  // Drag-to-reposition. `pos` is the top-right offset in px.
+  // Default: near the top-right corner of the manual assessment modal,
+  // just below the modal close button so it doesn't overlap.
+  const [pos, setPos] = useState<{ right: number; top: number }>(() => ({
+    right: 24,
+    top: 72,
   }));
-  const dragRef = useRef<{ startX: number; startY: number; startRight: number; startBottom: number; moved: boolean; pointerId: number; captured: boolean } | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; startRight: number; startTop: number; moved: boolean; pointerId: number; captured: boolean } | null>(null);
 
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
