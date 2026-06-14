@@ -570,6 +570,7 @@ const ProfessionalAssessment = () => {
             onPass={() => setStep("anamnesis")}
             onFlagged={() => setStep("redflag_continue")}
             onFlaggedWithData={handleRedFlagged}
+            onBack={() => setStep("patient_info")}
           />
         )}
         {step === "redflag_continue" && redFlagData && (
