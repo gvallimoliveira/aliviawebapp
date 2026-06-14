@@ -924,6 +924,7 @@ const Assessment = () => {
           <RedFlagScreening
             onPass={() => setStep("anamnesis")}
             onFlagged={() => setStep("redflag_alert")}
+            onBack={() => setStep("welcome")}
           />
         )}
         {step === "redflag_alert" && <RedFlagAlert />}
