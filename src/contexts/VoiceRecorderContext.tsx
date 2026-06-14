@@ -436,7 +436,7 @@ const GlobalVoiceRecorderFAB = () => {
       startX: e.clientX,
       startY: e.clientY,
       startRight: pos.right,
-      startBottom: pos.bottom,
+      startTop: pos.top,
       moved: false,
       pointerId: e.pointerId,
       captured: false,
@@ -458,8 +458,8 @@ const GlobalVoiceRecorderFAB = () => {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const nextRight = Math.max(8, Math.min(vw - 80, d.startRight - dx));
-    const nextBottom = Math.max(8, Math.min(vh - 80, d.startBottom - dy));
-    setPos({ right: nextRight, bottom: nextBottom });
+    const nextTop = Math.max(8, Math.min(vh - 80, d.startTop + dy));
+    setPos({ right: nextRight, top: nextTop });
   };
   const onDragPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
