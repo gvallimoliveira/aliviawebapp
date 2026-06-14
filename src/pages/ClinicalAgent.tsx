@@ -392,6 +392,21 @@ const ClinicalAgent = () => {
     }
   };
 
+  const ensureThreadPatientLink = async (thread: Thread, patientId: string) => {
+    if (thread.patient_id === patientId) return thread;
+
+    const { error } = await supabase.functions.invoke("clinical-agent-threads", {
+      body: { action: "attach_patient", thread_id: thread.id, patient_id: patientId },
+    });
+
+    if (error) throw error;
+
+    const linkedThread = { ...thread, patient_id: patientId };
+    setThreads((prev) => prev.map((item) => (item.id === thread.id ? linkedThread : item)));
+    setActiveThread((prev) => (prev?.id === thread.id ? linkedThread : prev));
+    return linkedThread;
+  };
+
   const generateHep = async () => {
     if (!activeThread?.patient_id || generatingHep) return;
     setGeneratingHep(true);
@@ -436,6 +451,11 @@ const ClinicalAgent = () => {
 
   const attachPatient = async (patient_id: string | null) => {
     if (!activeThread) return;
+    if (patient_id) {
+      await ensureThreadPatientLink(activeThread, patient_id);
+      setShowPatientPicker(false);
+      return;
+    }
     await supabase.functions.invoke("clinical-agent-threads", {
       body: { action: "attach_patient", thread_id: activeThread.id, patient_id },
     });
