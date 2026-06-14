@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
+import EmergencyBanner from "@/components/EmergencyBanner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -541,6 +542,9 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
           </CardContent>
         </Card>
       )}
+
+      {/* Emergency banner — patient-facing reminder */}
+      <EmergencyBanner />
 
       {/* Actions */}
       <div className="flex justify-between pt-4">

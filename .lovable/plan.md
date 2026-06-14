@@ -1,65 +1,48 @@
-## 1. PDF Acadêmico — auditoria de margens
+## Objetivo
+Aplicar todas as medidas de proteção jurídica sugeridas + renomear "Diagnóstico" → "Hipótese preliminar" em todo o app voltado ao paciente.
 
-Validação do banner "Alivia Acadêmico" em `generatePdf.ts` (linhas 1318–1336):
+## Escopo de mudanças
 
-- Usa `MARGIN` e `CONTENT_WIDTH` (158mm), idênticos ao bloco do paciente e demais cards. ✓
-- Altura fixa 10mm + 4mm de respiro abaixo — mesmo padrão dos outros blocos. ✓
-- Texto cortado via `splitTextToSize(label, CONTENT_WIDTH - 12)[0]` evita overflow horizontal. ✓
-- Bloco do responsável técnico (linhas 162–174) substitui CREFITO por linha única "Alivia Acadêmico · Instituição · Período" sem alterar Y/spacing. ✓
+### 1. Checkbox de consentimento obrigatório (antes da autoavaliação)
+- **Arquivo:** `src/components/assessment/WelcomeStep.tsx`
+- Adicionar checkbox: *"Li e compreendo que esta é uma autoavaliação preenchida por mim, guiada pelo método do app, e que não substitui consulta presencial. [Ver termos]"*
+- Botão "Iniciar" só fica habilitado após marcação.
+- Persistir consentimento em `localStorage` (`alivia_self_assessment_consent_v1` com timestamp) para auditoria local.
+- Não aplica em fluxo de clínica/profissional (já têm responsável clínico).
 
-Ajuste único de segurança: trocar o truncamento bruto por um truncamento com reticências para nomes/instituições muito longos, mantendo a mesma altura e largura úteis.
+### 2. Disclaimer fixo no PDF
+- **Arquivo:** `src/utils/generatePdf.ts`
+- Adicionar rodapé/seção fixa em PDFs gerados a partir de autoavaliação do paciente:
+  *"Este relatório foi gerado a partir de uma autoavaliação preenchida pelo próprio usuário, processada por sistema automatizado baseado em método clínico. Não constitui diagnóstico médico nem substitui consulta presencial. Em caso de emergência, ligue 192 (SAMU)."*
+- Só inclui quando `type === 'premium'` ou autoavaliação sem profissional vinculado.
 
-## 2. Trava de acesso estudante (com exceção VIP)
+### 3. Renomear "Diagnóstico" → "Hipótese preliminar" (paciente)
+Substituições em UI voltada ao paciente:
+- `src/locales/pt.json`, `en.json`, `es.json` — chaves de `diagnosis.*`, labels de cards, títulos.
+  - PT: "Diagnóstico" → "Hipótese preliminar"; "Diagnóstico Preliminar" → "Hipótese Preliminar"
+  - EN: "Diagnosis" → "Preliminary Hypothesis"
+  - ES: "Diagnóstico" → "Hipótesis preliminar"
+- `src/components/assessment/DiagnosisResult.tsx` — títulos visíveis.
+- `src/components/assessment/AssessmentSummaryView.tsx` — labels.
+- `src/components/dashboard/AssessmentComparison.tsx` — já usa "hypothesis".
+- **Não alterar:** nomes de colunas/tabelas/funções/edge functions (`diagnosis`, `generate-diagnosis`, etc.) para não quebrar backend.
+- **Não alterar:** UI exclusivamente profissional/clínica (mantém "diagnóstico"/"hipótese clínica" conforme já está) — risco de confundir clínico.
 
-Regra:
-- Conta profissional **com CREFITO preenchido** não pode ativar `is_student` — exceto se o e-mail estiver em `vip_users`.
-- Conta VIP pode alternar livremente o toggle sem perder dados (mantém `crefito`, `professionals.*`, avaliações, pacientes etc.).
-- O toggle só persiste o campo `is_student` (+ `student_institution` / `student_period`); nunca apaga `crefito` ao desativar.
+### 4. Aviso persistente de emergência
+- **Arquivo novo:** `src/components/EmergencyBanner.tsx` — faixa discreta com ícone telefone:
+  *"Emergência? Ligue 192 (SAMU)"* + link tel:.
+- Renderizar:
+  - Rodapé do `DiagnosisResult.tsx` (sempre que mostrar hipótese ao paciente).
+  - Rodapé do `TreatmentPlan.tsx`.
+  - `SelfAssessmentDisclaimerSection.tsx` (já tem texto — só reforçar com ícone clicável `tel:192`).
 
-UI (`StudentAccessCard.tsx`):
-- No load, buscar VIP via `supabase.from('vip_users').select('id').eq('email', user.email).maybeSingle()`.
-- Se `crefito` existe **e** não é VIP → toggle aparece desabilitado com aviso "Conta profissional já possui CREFITO. Modo acadêmico não disponível.".
-- Se VIP → exibe badge discreta "VIP · alternância livre" + texto "Modo de teste: alternar não apaga seu CREFITO nem dados".
+## Detalhes técnicos
+- Sem mudanças de schema, sem migrations.
+- Sem mexer em edge functions.
+- Sem mexer em fluxos de pagamento.
+- i18n: garantir que todas as 3 línguas tenham a chave atualizada para evitar fallback exibindo a chave.
+- Build esperado: zero erros TypeScript.
 
-Backend (`validate_crefito_format` trigger, migration):
-- Manter regra atual (estudante pode ter CREFITO null, profissional precisa de CREFITO).
-- Adicionar guarda: ao tentar setar `is_student = true` em uma linha que já tem `crefito IS NOT NULL`, permitir somente se o e-mail estiver em `vip_users`. Caso contrário, `RAISE EXCEPTION`.
-- Update preserva `crefito` (não zerar).
-
-## 3. Papel "Estagiário" na clínica
-
-Adicionar valor `intern` ao enum `clinic_role` e tratá-lo em todo lugar como equivalente a `therapist` (mesmas permissões, mesma quota, mesmo acesso a pacientes/avaliações).
-
-Migration:
-- `ALTER TYPE public.clinic_role ADD VALUE IF NOT EXISTS 'intern';`
-- Atualizar todas as policies/funções que listam `'therapist'` para incluir `'intern'` (search-replace cirúrgico nas policies vivas via `DROP POLICY` + recriar, e em funções como `get_clinic_members_with_details`, contagem de terapeutas, `try_direct_clinic_add`, etc.).
-- Não mexe em dados existentes — ninguém é `intern` até o owner escolher.
-
-UI:
-- `ClinicTeamManagement.tsx`: adicionar opção "Estagiário (Acadêmico)" no `Select` de papéis (invite + edição de membro). Label PT/EN/ES.
-- Quando o membro tem `role='intern'` **ou** `is_student=true`, mostrar o badge atual "Estagiário (Acadêmico)".
-- Manter ícone `GraduationCap` para ambos.
-- Atualizar `roleLabels` para incluir `intern`.
-
-Observação: não removo o badge automático para `is_student=true` quando o owner deixou como `therapist` — fica retrocompatível.
-
-## 4. Documentação
-
-- Atualizar `mem://features/student-access` com a regra de bloqueio para CREFITO, exceção VIP e novo papel `intern`.
-- Atualizar `Support.tsx` + `ClinicSupport.tsx` (pt/en/es) mencionando "Estagiário" como papel para alunos.
-
-## Arquivos tocados
-
-- `supabase/migrations/<novo>.sql` — enum `intern`, policies, trigger de bloqueio CREFITO×is_student.
-- `src/components/account/StudentAccessCard.tsx` — VIP check + lock.
-- `src/components/dashboard/ClinicTeamManagement.tsx` — novo papel no select + label.
-- `src/utils/generatePdf.ts` — só truncamento com reticências do banner.
-- `src/pages/Support.tsx`, `src/pages/ClinicSupport.tsx`, `src/locales/{pt,en,es}.json` — referência ao papel Estagiário.
-- `.agents/memory/features/student-access.md` — atualização.
-
-## Riscos & mitigação
-
-- Enum nova: feita em migração isolada, antes das policies. `ADD VALUE IF NOT EXISTS` é idempotente.
-- Policies: cada `DROP POLICY` é seguido imediatamente de `CREATE POLICY` com a mesma regra + `intern`. Sem janela de buraco.
-- Trigger CREFITO×is_student: só impede mudança nova; updates que não tocam `is_student` continuam funcionando.
-- VIPs: read direto da tabela `vip_users` por e-mail (já usado em outros lugares do app).
+## Fora do escopo (preservado)
+- Termos técnicos em prontuário profissional, edge functions, nomes de tabelas/colunas (`diagnosis` no DB), nomes de arquivos.
+- Fluxo de clínica/profissional (já tem responsável clínico identificado).

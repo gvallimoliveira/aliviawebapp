@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Info, UserCheck, FileText } from "lucide-react";
+import { Info, UserCheck, FileText, PhoneCall } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
@@ -94,6 +94,14 @@ const SelfAssessmentDisclaimerSection = () => {
           <p className="mt-8 text-xs leading-relaxed text-muted-foreground/80">
             {legal}
           </p>
+
+          <a
+            href="tel:192"
+            className="mt-5 inline-flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive/5 px-4 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <PhoneCall className="h-3.5 w-3.5" aria-hidden="true" />
+            {t("selfassess.emergency") || "Emergência? Ligue 192 (SAMU)"}
+          </a>
         </motion.div>
       </div>
     </section>
