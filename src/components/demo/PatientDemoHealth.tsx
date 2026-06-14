@@ -298,7 +298,7 @@ const PatientDemoHealth = ({ goBasic, goSubscribe }: PatientDemoHealthProps) => 
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary group-hover:bg-primary/10 transition-colors">
                   <ClipboardList className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-                Nova autoautoavaliação básica
+                Nova autoavaliação básica
               </CardTitle>
               <CardDescription className="text-sm">Triagem rápida e gratuita da sua dor</CardDescription>
             </CardHeader>
