@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Globe, Loader2, ChevronRight, Stethoscope, AlertTriangle, User, CheckCircle2 } from "lucide-react";
+import { Globe, Loader2, ChevronRight, Stethoscope, AlertTriangle, User, CheckCircle2, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
