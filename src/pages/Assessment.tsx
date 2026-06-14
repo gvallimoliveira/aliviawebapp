@@ -787,7 +787,7 @@ const Assessment = () => {
               {[
                 { icon: ClipboardList, label: t("payment.feature_5") || "Questionários validados (KOOS, SPADI, ODI)", color: "text-primary" },
                 { icon: Activity, label: t("payment.feature_1") || "Testes funcionais guiados por vídeo", color: "text-primary" },
-                { icon: FileText, label: t("payment.feature_2") || "Diagnóstico com explicação detalhada", color: "text-primary" },
+                { icon: FileText, label: t("payment.feature_2") || "Hipótese preliminar com explicação detalhada", color: "text-primary" },
                 { icon: TrendingUp, label: t("payment.feature_3") || "Plano de tratamento em 3 fases", color: "text-primary" },
                 { icon: Star, label: t("payment.feature_4") || "Exercícios com vídeos do YouTube", color: "text-primary" },
                 { icon: Shield, label: language === "pt" ? "Dados seguros e criptografados" : language === "es" ? "Datos seguros y encriptados" : "Secure & encrypted data", color: "text-primary" },
