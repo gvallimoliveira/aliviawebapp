@@ -81,7 +81,7 @@ const PatientDemoContent = () => {
                   </Badge>
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  3 avaliações realizadas · Acompanhamento de lombalgia radicular ciática
+                  3 autoavaliações realizadas · Acompanhamento de lombalgia radicular ciática
                 </p>
               </div>
             </div>

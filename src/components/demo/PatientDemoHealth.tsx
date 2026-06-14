@@ -21,7 +21,7 @@ interface PatientDemoHealthProps {
 const DEMO_ASSESSMENTS = [
   {
     id: "demo-pa-1",
-    label: "Avaliação inicial",
+    label: "Autoavaliação inicial",
     type: "premium",
     created_at: "2026-03-12T10:00:00Z",
     status: "completed",
@@ -61,7 +61,7 @@ const DEMO_ASSESSMENTS = [
   },
   {
     id: "demo-pa-2",
-    label: "Reavaliação intermediária",
+    label: "Reautoavaliação intermediária",
     type: "premium",
     created_at: "2026-04-15T10:00:00Z",
     status: "completed",
@@ -101,7 +101,7 @@ const DEMO_ASSESSMENTS = [
   },
   {
     id: "demo-pa-3",
-    label: "Reavaliação de alta",
+    label: "Reautoavaliação de alta",
     type: "premium",
     created_at: "2026-05-20T10:00:00Z",
     status: "completed",
@@ -134,7 +134,7 @@ const DEMO_ASSESSMENTS = [
     ],
     plan: [
       "Fase 3 (S7-10): retorno ao esporte — progressão para corrida e musculação plena",
-      "Manutenção: HEP 3x/sem + 1 sessão quinzenal de reavaliação",
+      "Manutenção: HEP 3x/sem + 1 sessão quinzenal de reautoavaliação",
       "Educação em prevenção de recidiva e ergonomia",
       "Alta clínica programada",
     ],
@@ -284,7 +284,7 @@ const PatientDemoHealth = ({ goBasic, goSubscribe }: PatientDemoHealthProps) => 
                     <ChevronRight className="h-3 w-3 text-muted-foreground" />
                     <span className={`text-lg font-bold ${metric.color}`}>{metric.values[2]}{metric.unit}</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground">3 avaliações · ~10 semanas</p>
+                  <p className="text-[10px] text-muted-foreground">3 autoavaliações · ~10 semanas</p>
                 </div>
               ))}
             </div>
@@ -298,7 +298,7 @@ const PatientDemoHealth = ({ goBasic, goSubscribe }: PatientDemoHealthProps) => 
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary group-hover:bg-primary/10 transition-colors">
                   <ClipboardList className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-                Nova avaliação básica
+                Nova autoautoavaliação básica
               </CardTitle>
               <CardDescription className="text-sm">Triagem rápida e gratuita da sua dor</CardDescription>
             </CardHeader>
@@ -310,9 +310,9 @@ const PatientDemoHealth = ({ goBasic, goSubscribe }: PatientDemoHealthProps) => 
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <Sparkles className="h-4 w-4 text-primary" />
                 </div>
-                Nova avaliação Premium
+                Nova autoavaliação Premium
               </CardTitle>
-              <CardDescription className="text-sm">Diagnóstico aprofundado, PDF clínico, plano de tratamento</CardDescription>
+              <CardDescription className="text-sm">Hipótese preliminar aprofundada, PDF clínico, plano de tratamento</CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -450,7 +450,7 @@ const PatientDemoHealth = ({ goBasic, goSubscribe }: PatientDemoHealthProps) => 
         <div>
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
             <FileText className="h-5 w-5 text-muted-foreground" />
-            Histórico de avaliações
+            Histórico de autoavaliações
           </h2>
           <div className="space-y-3">
             {DEMO_ASSESSMENTS.map((assessment) => {
@@ -498,13 +498,13 @@ const PatientDemoHealth = ({ goBasic, goSubscribe }: PatientDemoHealthProps) => 
             <div className="space-y-2">
               <h3 className="text-xl font-bold text-foreground">Pronto para entender sua dor de verdade?</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Crie sua conta gratuitamente e comece pela avaliação básica.
+                Crie sua conta gratuitamente e comece pela autoavaliação básica.
                 Faça upgrade para o Premium quando quiser acompanhar sua evolução completa.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
               <Button variant="outline" onClick={goBasic} className="rounded-xl">
-                Fazer avaliação básica grátis
+                Fazer autoavaliação básica grátis
               </Button>
               <Button onClick={goSubscribe} className="rounded-xl gap-1.5">
                 <Crown className="h-4 w-4" /> Assinar Premium
