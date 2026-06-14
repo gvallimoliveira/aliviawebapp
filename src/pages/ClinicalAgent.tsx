@@ -120,15 +120,15 @@ function ThreadRow({
   const iconProgress = Math.min(1, exposure / REVEAL);
 
   return (
-    <div className="relative overflow-hidden rounded-lg" style={{ touchAction: "pan-y" }}>
+    <div className="relative overflow-hidden rounded-lg select-none" style={{ touchAction: "pan-y" }}>
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="absolute inset-y-0 right-0 z-0 w-[72px] flex items-center justify-center bg-destructive text-destructive-foreground"
+        className="absolute inset-y-0 right-0 z-10 flex w-[72px] items-center justify-center rounded-lg bg-destructive text-destructive-foreground shadow-sm"
         style={{
           opacity: actionVisible ? 1 : 0,
           pointerEvents: actionVisible ? "auto" : "none",
-          transition: "opacity 120ms ease-out",
+          transition: dragging.current ? "none" : "opacity 120ms ease-out",
         }}
         aria-label="Excluir conversa"
       >
@@ -143,10 +143,16 @@ function ThreadRow({
       </button>
       <div
         ref={rowRef}
-        className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${
+        className={`group relative z-20 flex w-full items-center gap-2 rounded-lg px-3 py-2 cursor-pointer text-sm transition-colors ${
           active ? "bg-primary/10 text-foreground" : "bg-background hover:bg-muted/50 text-muted-foreground"
         }`}
-        style={{ transform: `translateX(${offset}px)`, transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)", willChange: "transform", touchAction: "pan-y" }}
+        style={{
+          transform: `translate3d(${offset}px, 0, 0)`,
+          transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)",
+          willChange: "transform",
+          touchAction: "pan-y",
+          boxShadow: revealed ? "0 0 0 1px hsl(var(--destructive) / 0.12)" : undefined,
+        }}
         onClick={handleClick}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -159,7 +165,7 @@ function ThreadRow({
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="hidden md:flex items-center justify-center shrink-0 h-7 w-7 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 md:opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition"
+          className="hidden lg:flex items-center justify-center shrink-0 h-7 w-7 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 lg:opacity-0 lg:group-hover:opacity-100 transition"
           aria-label="Excluir conversa"
         >
           <Trash2 className="h-4 w-4" />
