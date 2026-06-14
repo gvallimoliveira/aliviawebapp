@@ -41,6 +41,9 @@ interface Program {
     full_name: string;
     logo_url: string | null;
     clinic_name: string | null;
+    is_student?: boolean | null;
+    student_institution?: string | null;
+    student_period?: string | null;
   };
 }
 
