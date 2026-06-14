@@ -115,7 +115,7 @@ const ExerciseProgram = () => {
 
       const { data: prog, error } = await (supabase as any)
         .from("exercise_programs")
-        .select("id, patient_name, notes, created_at, expires_at, professional:professionals(full_name, logo_url, clinic_name)")
+        .select("id, patient_name, notes, created_at, expires_at, professional:professionals(full_name, logo_url, clinic_name, is_student, student_institution, student_period)")
         .eq("token", token)
         .maybeSingle();
 
