@@ -476,7 +476,7 @@ const GlobalVoiceRecorderFAB = () => {
       onPointerMove={onDragPointerMove}
       onPointerUp={onDragPointerUp}
       onPointerCancel={onDragPointerUp}
-      style={{ right: pos.right, bottom: pos.bottom }}
+      style={{ right: pos.right, top: pos.top }}
       className="fixed z-[200] flex flex-col items-end gap-2 pointer-events-auto"
     >
       {showHint && state === "idle" && (
