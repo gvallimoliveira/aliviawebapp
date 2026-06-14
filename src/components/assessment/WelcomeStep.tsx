@@ -359,5 +359,3 @@ const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeS
 
 export default WelcomeStep;
 
-
-export default WelcomeStep;
