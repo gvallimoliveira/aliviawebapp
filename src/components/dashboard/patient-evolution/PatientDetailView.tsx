@@ -303,7 +303,17 @@ export default function PatientDetailView(props: any) {
                       else if (professionalId) q = q.eq("professional_id", professionalId);
                       const { data } = await q.maybeSingle();
                       patientDbId = data?.id || null;
+                      // Fallback: look up by email only when the scoped query misses
+                      // (assessment may have been created in another context).
+                      if (!patientDbId) {
+                        const { data: fb } = await sb.from("patients")
+                          .select("id").eq("email", patient.email).limit(1).maybeSingle();
+                        patientDbId = fb?.id || null;
+                      }
                     } catch {}
+                    if (!patientDbId) {
+                      toast({ title: language === "pt" ? "Paciente ainda não vinculado ao agente" : language === "es" ? "Paciente aún no vinculado al agente" : "Patient not yet linked to the agent" });
+                    }
                     navigate(patientDbId ? `/agente?patient=${patientDbId}` : "/agente");
                   }}>
                     <Brain className="h-4 w-4 mr-2" /> {language === "pt" ? "Falar com o Agente Clínico" : language === "es" ? "Hablar con el Agente Clínico" : "Talk to Clinical Agent"}
