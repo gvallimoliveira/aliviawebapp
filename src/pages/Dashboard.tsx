@@ -435,15 +435,27 @@ const Dashboard = () => {
   }, [activeTab, activeContext, activeClinic, professional, isClinicMode]);
 
 
-  // Sync professional profile flag & auto-switch on first load only
+  // Sync professional profile flag
   useEffect(() => {
     setHasProfessionalProfile(!!professional);
     setIsStudentProfessional(!!(professional as any)?.is_student);
-    if (!hasAutoSwitchedPro && professional && tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
-      setHasAutoSwitchedPro(true);
+  }, [professional]);
+
+  // Auto-switch to "professional" context once on first load when arriving
+  // via ?tab=professional. We mark `hasAutoSwitchedPro` as soon as the
+  // professional profile is loaded — regardless of whether we actually
+  // switched — so subsequent manual context changes by the user (via the
+  // ClinicContextSelector) are never reverted by this effect. Without this,
+  // switching professional → personal would take two clicks because the
+  // effect would snap back to "professional" before the URL's `tab` param
+  // had a chance to update.
+  useEffect(() => {
+    if (hasAutoSwitchedPro || !professional) return;
+    if (tabFromUrl === "professional" && activeContext !== "professional" && activeContext !== "clinic") {
       setActiveContext("professional");
     }
-  }, [professional, tabFromUrl, setHasProfessionalProfile]);
+    setHasAutoSwitchedPro(true);
+  }, [professional, tabFromUrl, hasAutoSwitchedPro, activeContext]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
