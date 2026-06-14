@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Info, UserCheck, FileText } from "lucide-react";
+import { Info, UserCheck, FileText, PhoneCall } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
