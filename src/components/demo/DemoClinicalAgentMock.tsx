@@ -257,6 +257,114 @@ const NEW_CASCADES: Cascade[] = [
   },
 ];
 
+// ───────── Scripted replies to follow-up suggestions ─────────
+// Each suggestion gets a real, specific answer; then a farewell with PRO CTA closes the loop.
+const SCRIPTED_REPLIES: Record<string, Msg> = {
+  // t1 — Lombalgia
+  "Quando reavaliar ODI?": {
+    role: "assistant",
+    text: "Reavalie o **ODI a cada 4 semanas**. Diferença mínima clinicamente importante: **10 pontos**. Combine com NPRS e teste de centralização para decidir progressão.",
+  },
+  "Critérios de alta": {
+    role: "assistant",
+    text: "Critérios sugeridos: **ODI < 20%**, NPRS ≤ 2/10 nas AVDs, retorno completo às atividades funcionais e **autogestão** demonstrada (paciente sabe regredir/progredir HEP sozinho).",
+  },
+  "E se a dor voltar?": {
+    role: "assistant",
+    text: "Recidiva leve: **regredir 1 fase** do HEP por 5–7 dias + reforçar preferência direcional. Se piora >50% ou novo sintoma neurológico, reavaliação presencial imediata.",
+  },
+  // t2 — Tendinopatia patelar
+  "Como progredir na semana 5?": {
+    role: "assistant",
+    text: "Semana 5–8: aumentar para **80–85% 1RM, 4x6 reps**, tempo 3-0-3 mantido. Introduzir agachamento com barra. Monitorar dor 24h pós-treino (regra do <3/10).",
+  },
+  "Indicador de sobrecarga": {
+    role: "assistant",
+    text: "Sinais: **dor >5/10 durante exercício**, dor matinal aumentando >2 pontos, ou piora funcional progressiva por 3 sessões. Reduzir carga em 20% e reavaliar.",
+  },
+  "Devo suspender corrida?": {
+    role: "assistant",
+    text: "Não suspender totalmente. **Reduzir volume em 30–50%** e manter terreno plano. Suspender apenas se dor durante corrida >3/10 ou claudicação.",
+  },
+  // t3 — Ombro
+  "Quando iniciar fortalecimento progressivo?": {
+    role: "assistant",
+    text: "Quando: **dor noturna ausente**, ADM ativa indolor >120° de flexão e teste isométrico de RE indolor a 30°. Tipicamente 2–3 semanas na fase analgésica.",
+  },
+  "Critério para encaminhar imagem": {
+    role: "assistant",
+    text: "Encaminhar **USG/RM** se: trauma agudo com fraqueza significativa, ausência de progresso após 6 semanas de conservador, ou suspeita de ruptura completa (drop arm +).",
+  },
+  "Educação em dor para paciente": {
+    role: "assistant",
+    text: "Mensagens-chave: **dor ≠ dano tecidual**, movimento é seguro e necessário, sono e estresse modulam dor. Use analogias (sistema de alarme calibrado).",
+  },
+  // t4 — Red flags cervical
+  "Modelo de carta de encaminhamento": {
+    role: "assistant",
+    text: "*\"Encaminho a/o paciente [nome], [idade] anos, com quadro de cervicalgia associada a parestesia bilateral em MMSS e perda de destreza fina, sugestivos de **mielopatia cervical degenerativa**. Solicito avaliação neurocirúrgica com **RM de coluna cervical** em caráter de urgência. Terapia manual cervical suspensa. À disposição.\"*",
+  },
+  "Como reavaliar pós-cirurgia?": {
+    role: "assistant",
+    text: "Pós-op: aguardar liberação do cirurgião (geralmente 4–6 sem). Reavaliar **mJOA**, **Nurick** e testes de marcha. Reabilitação focada em propriocepção cervical, equilíbrio e força de MMSS progressiva.",
+  },
+  "Outros red flags em cervical": {
+    role: "assistant",
+    text: "Sinais de alerta cervical: **drop attack**, disfagia/disartria, nistagmo, ataxia, **5 D's e 3 N's** (insuficiência vertebrobasilar), febre + dor noturna constante (infecção/neoplasia), trauma de alto impacto.",
+  },
+  // cascade tails
+  "Critério de retorno à corrida": {
+    role: "assistant",
+    text: "Critérios: **single leg squat sem valgo**, salto unipodal indolor x10, força de abdutores ≥85% do contralateral e ausência de dor nas AVDs. Retorno gradual com **regra dos 10%/semana**.",
+  },
+  "E se a dor não ceder?": {
+    role: "assistant",
+    text: "Após 6 semanas sem melhora: reavaliar hipótese (descartar plica, condromalácia grau III, Hoffa), considerar **USG/RM**, e investigar fatores psicossociais (catastrofização, cinesiofobia).",
+  },
+  "Sugere outro PROM?": {
+    role: "assistant",
+    text: "Para dor femoropatelar: **KOOS-PF** (específico) ou **AKPS/Kujala**. Combine com NPRS para dor e escala de cinesiofobia (TSK-11) se suspeitar de medo do movimento.",
+  },
+  "Progressão para fase 2": {
+    role: "assistant",
+    text: "Fase 2 (resistência, 3–6 sem): bird-dog dinâmico 3x12, prancha lateral 3x30s, dead bug com carga, ponte unipodal 3x10. Frequência 4–5x/sem.",
+  },
+  "Como medir adesão?": {
+    role: "assistant",
+    text: "Use o **HEP no app** (registro automático) + autorreporte semanal. Meta: ≥80% das sessões. Se <60%, conversar sobre barreiras (tempo, dor, motivação) e simplificar o programa.",
+  },
+  "Critérios para retorno ao esporte": {
+    role: "assistant",
+    text: "Pós-LCA: **≥9 meses**, LSI ≥90% em força de quadríceps, bateria de saltos (hop tests) ≥90%, ACL-RSI ≥65 e ausência de derrame. Retorno faseado com treino de agilidade.",
+  },
+  "PROM ideal para LCA": {
+    role: "assistant",
+    text: "**KOOS** (5 subescalas) + **IKDC** subjetivo são padrão-ouro. Adicionar **ACL-RSI** para prontidão psicológica antes do retorno ao esporte.",
+  },
+  "Diferença entre cirúrgico e conservador": {
+    role: "assistant",
+    text: "Evidência atual (KANON, Frobell): em pacientes não-atletas, **reabilitação inicial + cirurgia tardia se necessário** tem resultados equivalentes a cirurgia precoce. Decisão compartilhada considerando demanda esportiva e instabilidade funcional.",
+  },
+  "Gerar resumo agora": {
+    role: "assistant",
+    text: "**Resumo para o paciente:**\n• Sua dor é real, mas **não significa dano novo**.\n• O sistema nervoso pode ficar 'mais sensível' — como um alarme calibrado demais.\n• **Movimento é remédio**, mesmo quando dói um pouco.\n• Sono, estresse e humor mudam a percepção de dor.\n• Progresso vem em ondas — recaídas são normais.",
+  },
+  "Como medir crenças?": {
+    role: "assistant",
+    text: "Use **PCS** (catastrofização), **TSK-11** (cinesiofobia) e **PSEQ** (autoeficácia). Reavalie a cada 4–6 semanas — mudança nessas escalas costuma preceder melhora funcional.",
+  },
+  "Combinar com exercício?": {
+    role: "assistant",
+    text: "Sim — **PNE + exercício graduado** tem efeito superior a qualquer um isolado. Use exposição gradual a movimentos temidos e reforce sucessos com feedback positivo durante a sessão.",
+  },
+};
+
+const FAREWELL_MSG: Msg = {
+  role: "assistant",
+  text: "👀 Esta foi uma simulação. No modo real, eu cruzaria estes pontos com o **histórico do paciente** e a **base de evidências PEDro ≥ 7** atualizada, gerando HEP/testes prontos para o painel. **Assine PRO** para usar com seus pacientes reais.",
+};
+
+
 // ───────── UI ─────────
 function ToolCard({ tool }: { tool: Tool }) {
   const base = "mt-2 rounded-lg border bg-muted/30 p-3 text-xs space-y-1.5";
@@ -366,19 +474,19 @@ const DemoClinicalAgentMock = () => {
         }, 700 * (idx + 1));
       });
     } else {
-      setTimeout(() => {
-        setThreads((prev) => prev.map((t) => t.id === active.id
-          ? {
-              ...t,
-              messages: [...t.messages, {
-                role: "assistant",
-                text: "👀 Esta é uma simulação do agente. No modo real, eu acessaria o histórico do paciente, evidência atualizada (PEDro ≥ 7) e geraria HEP/testes prontos para o painel. Assine PRO para usar com seus pacientes reais.",
-              }],
-            }
-          : t));
-        setPending(false);
-      }, 900);
+      // Play a real scripted reply (if available) and then the farewell + PRO CTA.
+      const reply = SCRIPTED_REPLIES[text];
+      const steps: Msg[] = reply ? [reply, FAREWELL_MSG] : [FAREWELL_MSG];
+      steps.forEach((step, idx) => {
+        setTimeout(() => {
+          setThreads((prev) => prev.map((t) => t.id === active.id
+            ? { ...t, messages: [...t.messages, step] }
+            : t));
+          if (idx === steps.length - 1) setPending(false);
+        }, 800 * (idx + 1));
+      });
     }
+
   };
 
   return (
