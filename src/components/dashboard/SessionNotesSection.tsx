@@ -113,6 +113,28 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
     }
   };
 
+  const handleRepeat = async (note: SessionNote) => {
+    if (isDemo) { toast({ title: "Demo: anotações não são salvas" }); return; }
+    const today = format(new Date(), "yyyy-MM-dd");
+    const exists = notes.some((n) => n.session_date === today && n.content === note.content);
+    if (exists) {
+      toast({ title: t("session_notes.repeat_duplicate") || "Evolução idêntica já registrada hoje" });
+      return;
+    }
+    try {
+      await (supabase.from("session_notes" as any) as any).insert({
+        professional_id: professionalId,
+        patient_email: patientEmail,
+        session_date: today,
+        content: note.content,
+      });
+      toast({ title: t("session_notes.repeated") || "Evolução repetida na data de hoje" });
+      fetchNotes();
+    } catch {
+      toast({ title: t("session_notes.error"), variant: "destructive" });
+    }
+  };
+
   const startEdit = (note: SessionNote) => {
     setEditingNote(note);
     setFormDate(new Date(note.session_date + "T12:00:00"));
