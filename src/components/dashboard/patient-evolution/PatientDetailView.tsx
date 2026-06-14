@@ -368,7 +368,7 @@ export default function PatientDetailView(props: any) {
                 )}
 
                 {latestWithDiagnosis && (
-                  <DropdownMenuItem onSelect={() => { (async () => { const link = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id); const { createShortAppLink } = await import("@/lib/shortLink"); const short = await createShortAppLink(link); await navigator.clipboard.writeText(short); toast({ title: "Link de reavaliação copiado!" }); })(); }}>
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openReassessmentLinkDialog(); }}>
                     <RotateCcw className="h-4 w-4 mr-2" /> Reavaliação
                   </DropdownMenuItem>
                 )}
