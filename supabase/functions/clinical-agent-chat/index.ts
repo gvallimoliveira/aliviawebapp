@@ -185,7 +185,7 @@ async function loadPatientContext(adminClient: any, patientId: string, userId: s
     .order("created_at", { ascending: false })
     .limit(5);
 
-  const label = `${initials(patient.full_name)} #${shortHash(patient.id)}`;
+  const label = initials(patient.full_name);
   const age = patient.birth_date
     ? Math.floor((Date.now() - new Date(patient.birth_date).getTime()) / (365.25 * 86400000))
     : null;
