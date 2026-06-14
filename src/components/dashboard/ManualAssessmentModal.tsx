@@ -755,7 +755,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
-      <DialogContent
+      <DialogContent data-manual-assessment-modal=""
         className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0"
         onPointerDownOutside={(e) => {
           // Keep the modal open when the user interacts with the floating
