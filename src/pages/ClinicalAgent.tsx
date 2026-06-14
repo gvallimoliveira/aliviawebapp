@@ -84,7 +84,7 @@ function ThreadRow({
           aria-label="Excluir conversa"
           title="Excluir conversa"
         >
-          <Trash2 className="h-4.5 w-4.5" />
+          <Trash2 className="h-4 w-4" />
         </button>
       </div>
     </div>
