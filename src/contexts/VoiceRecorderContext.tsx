@@ -126,6 +126,27 @@ const GlobalVoiceRecorderFAB = () => {
     };
   }, []);
 
+  // When a manual-assessment session starts, snap the FAB inside the modal
+  // (top-right, below the close button) so it isn't left floating in the
+  // dark overlay margin.
+  useEffect(() => {
+    if (!session) {
+      autoPositionedRef.current = false;
+      return;
+    }
+    if (autoPositionedRef.current) return;
+    const dialog = document.querySelector(
+      "[data-manual-assessment-modal]"
+    ) as HTMLElement | null;
+    if (!dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    setPos({
+      right: Math.max(24, window.innerWidth - rect.right + 24),
+      top: Math.max(24, rect.top + 64),
+    });
+    autoPositionedRef.current = true;
+  }, [session]);
+
   const startTick = () => {
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = window.setInterval(() => {
