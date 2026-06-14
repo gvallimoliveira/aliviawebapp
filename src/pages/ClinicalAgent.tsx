@@ -160,10 +160,10 @@ function ThreadRow({
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="hidden md:block opacity-0 group-hover:opacity-100 transition p-1 hover:text-destructive"
+          className="hidden md:flex items-center justify-center shrink-0 h-7 w-7 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 md:opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition"
           aria-label="Excluir conversa"
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 className="h-4 w-4" />
         </button>
       </div>
     </div>
