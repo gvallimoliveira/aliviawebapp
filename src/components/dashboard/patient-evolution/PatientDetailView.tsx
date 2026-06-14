@@ -285,7 +285,7 @@ export default function PatientDetailView(props: any) {
                 <DropdownMenuLabel className="text-[11px] text-muted-foreground">{language === "pt" ? "Outras ações" : "Other actions"}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {hasAgentAccess && !isDemo && (
-                  <DropdownMenuItem onSelect={() => {
+                  <DropdownMenuItem onSelect={async () => {
                     try {
                       const latest = latestWithDiagnosis || patient.assessments?.[0];
                       const hypothesis = latest?.final_hypothesis || latest?.diagnosis?.hypothesis || latest?.diagnosis?.condition || "—";
@@ -293,9 +293,20 @@ export default function PatientDetailView(props: any) {
                       const seed = `Discutir caso do paciente ${patient.name} (anonimizado):\n- Hipótese atual: ${hypothesis}\n- Regiões de dor: ${regions || "—"}\n- Dor (0-10): ${latest?.pain_score ?? "—"}\n\nO que você sugere como próximos passos baseados em evidências?`;
                       sessionStorage.setItem("agent_seed_input", seed);
                     } catch {}
-                    navigate("/agente");
+                    // Look up the patients-table id from email + professional/clinic
+                    // so the agent thread can be linked to this patient.
+                    let patientDbId: string | null = null;
+                    try {
+                      const sb = supabase as any;
+                      let q = sb.from("patients").select("id").eq("email", patient.email).limit(1);
+                      if (clinicId) q = q.eq("clinic_id", clinicId);
+                      else if (professionalId) q = q.eq("professional_id", professionalId);
+                      const { data } = await q.maybeSingle();
+                      patientDbId = data?.id || null;
+                    } catch {}
+                    navigate(patientDbId ? `/agente?patient=${patientDbId}` : "/agente");
                   }}>
-                    <Brain className="h-4 w-4 mr-2" /> {language === "pt" ? "Falar com agente" : "Talk to agent"}
+                    <Brain className="h-4 w-4 mr-2" /> {language === "pt" ? "Falar com o Agente Clínico" : language === "es" ? "Hablar con el Agente Clínico" : "Talk to Clinical Agent"}
                   </DropdownMenuItem>
                 )}
 
