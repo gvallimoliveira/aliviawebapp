@@ -99,6 +99,7 @@ const GlobalVoiceRecorderFAB = () => {
     right: 24,
     top: 72,
   }));
+  const autoPositionedRef = useRef(false);
   const dragRef = useRef<{ startX: number; startY: number; startRight: number; startTop: number; moved: boolean; pointerId: number; captured: boolean } | null>(null);
 
   const recRef = useRef<MediaRecorder | null>(null);
