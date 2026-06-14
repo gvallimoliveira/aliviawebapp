@@ -248,6 +248,40 @@ export default function PatientDetailView(props: any) {
 
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
   const [summaryDialogOpen, setSummaryDialogOpen] = React.useState(false);
+  const [reassessDialog, setReassessDialog] = React.useState<{ open: boolean; loading: boolean; link: string; error: string | null }>({ open: false, loading: false, link: "", error: null });
+
+  const openReassessmentLinkDialog = React.useCallback(async () => {
+    if (!latestWithDiagnosis) return;
+    if (!professionalId && !clinicId) {
+      toast({ title: "Não foi possível gerar o link", description: "Contexto profissional/clínica ausente.", variant: "destructive" });
+      return;
+    }
+    setReassessDialog({ open: true, loading: true, link: "", error: null });
+    try {
+      const longLink = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id);
+      const short = await createShortAppLink(longLink);
+      setReassessDialog({ open: true, loading: false, link: short || longLink, error: null });
+    } catch (err: any) {
+      console.error("[reassessment] failed to build link", err);
+      setReassessDialog({ open: true, loading: false, link: "", error: err?.message || "Erro ao gerar o link de reavaliação." });
+    }
+  }, [latestWithDiagnosis, professionalId, clinicId, toast]);
+
+  const copyReassessLink = async () => {
+    if (!reassessDialog.link) return;
+    try {
+      await navigator.clipboard.writeText(reassessDialog.link);
+      toast({ title: "Link copiado!" });
+    } catch {
+      toast({ title: "Não foi possível copiar automaticamente", description: "Selecione e copie o link manualmente.", variant: "destructive" });
+    }
+  };
+
+  const shareReassessWhatsApp = () => {
+    if (!reassessDialog.link) return;
+    const wa = openWhatsAppDeferred();
+    wa.send(`Olá ${patient?.name || ""}! Segue o link da sua reavaliação: ${reassessDialog.link}`);
+  };
 
   return (
     <div className="space-y-5">
