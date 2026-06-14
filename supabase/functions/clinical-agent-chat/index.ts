@@ -272,8 +272,8 @@ function buildSystemPrompt(patientCtx: any, evidence: any[]) {
     : "\n\n(Base de evidências vazia neste nicho — responda com base em STEPS/D.I.F.I e diretrizes gerais, sinalize a ausência ao usuário.)";
 
   const pat = patientCtx
-    ? `\n\nPACIENTE EM DISCUSSÃO (anonimizado):
-- Identificador: ${patientCtx.label}
+    ? `\n\nPACIENTE EM DISCUSSÃO (anonimizado por iniciais):
+- Refira-se ao paciente SEMPRE pelas iniciais "${patientCtx.label}" (NUNCA use hashes, códigos #xxxx, "Paciente X" ou nomes completos).
 - Idade: ${patientCtx.age ?? "—"} | Gênero: ${patientCtx.gender ?? "—"}
 - Avaliação mais recente: ${JSON.stringify(patientCtx.latest_assessment)}
 - Histórico recente de avaliações: ${JSON.stringify(patientCtx.assessments)}
