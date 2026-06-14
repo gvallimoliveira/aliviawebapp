@@ -14,6 +14,13 @@ export interface WelcomeStepProps {
   mode: "basic" | "premium" | "professional";
   professionalName?: string;
   onContinue: (data?: { email?: string; name?: string }) => void;
+  /**
+   * Optional callback to reset the entire assessment from scratch.
+   * When provided, a "Restart self-assessment" button is shown below the
+   * primary CTA so users who walked back from a later step (or whose draft
+   * was auto-restored) can intentionally start over.
+   */
+  onRestart?: () => void;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
