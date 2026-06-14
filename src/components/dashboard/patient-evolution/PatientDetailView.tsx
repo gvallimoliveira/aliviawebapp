@@ -29,6 +29,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
 import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessmentLinks";
+import { createShortAppLink } from "@/lib/shortLink";
+import { openWhatsAppDeferred } from "@/lib/whatsappShare";
 import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 
@@ -246,6 +248,40 @@ export default function PatientDetailView(props: any) {
 
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
   const [summaryDialogOpen, setSummaryDialogOpen] = React.useState(false);
+  const [reassessDialog, setReassessDialog] = React.useState<{ open: boolean; loading: boolean; link: string; error: string | null }>({ open: false, loading: false, link: "", error: null });
+
+  const openReassessmentLinkDialog = React.useCallback(async () => {
+    if (!latestWithDiagnosis) return;
+    if (!professionalId && !clinicId) {
+      toast({ title: "Não foi possível gerar o link", description: "Contexto profissional/clínica ausente.", variant: "destructive" });
+      return;
+    }
+    setReassessDialog({ open: true, loading: true, link: "", error: null });
+    try {
+      const longLink = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id);
+      const short = await createShortAppLink(longLink);
+      setReassessDialog({ open: true, loading: false, link: short || longLink, error: null });
+    } catch (err: any) {
+      console.error("[reassessment] failed to build link", err);
+      setReassessDialog({ open: true, loading: false, link: "", error: err?.message || "Erro ao gerar o link de reavaliação." });
+    }
+  }, [latestWithDiagnosis, professionalId, clinicId, toast]);
+
+  const copyReassessLink = async () => {
+    if (!reassessDialog.link) return;
+    try {
+      await navigator.clipboard.writeText(reassessDialog.link);
+      toast({ title: "Link copiado!" });
+    } catch {
+      toast({ title: "Não foi possível copiar automaticamente", description: "Selecione e copie o link manualmente.", variant: "destructive" });
+    }
+  };
+
+  const shareReassessWhatsApp = () => {
+    if (!reassessDialog.link) return;
+    const wa = openWhatsAppDeferred();
+    wa.send(`Olá ${patient?.name || ""}! Segue o link da sua reavaliação: ${reassessDialog.link}`);
+  };
 
   return (
     <div className="space-y-5">
@@ -332,7 +368,7 @@ export default function PatientDetailView(props: any) {
                 )}
 
                 {latestWithDiagnosis && (
-                  <DropdownMenuItem onSelect={() => { (async () => { const link = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id); const { createShortAppLink } = await import("@/lib/shortLink"); const short = await createShortAppLink(link); await navigator.clipboard.writeText(short); toast({ title: "Link de reavaliação copiado!" }); })(); }}>
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openReassessmentLinkDialog(); }}>
                     <RotateCcw className="h-4 w-4 mr-2" /> Reavaliação
                   </DropdownMenuItem>
                 )}
@@ -441,6 +477,32 @@ export default function PatientDetailView(props: any) {
       <Dialog open={reassignOpen} onOpenChange={setReassignOpen}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Atribuir fisioterapeuta</DialogTitle><DialogDescription>Todas as avaliações deste paciente passarão a ser do fisio escolhido. O paciente pode atender com mais de um — basta repetir o processo quando trocar de profissional.</DialogDescription></DialogHeader><div className="space-y-2 max-h-[50vh] overflow-y-auto">{clinicTherapists.map((p: any) => <button key={p.id} type="button" onClick={() => setReassignTargetId(p.id)} className={`w-full text-left p-3 rounded-md border transition-colors ${reassignTargetId === p.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted"}`}><div className="flex items-center gap-2"><UserCog className="h-4 w-4 text-muted-foreground" /><span className="font-medium text-sm">{p.full_name}</span></div></button>)}{clinicTherapists.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum fisioterapeuta ativo na clínica.</p>}</div><DialogFooter><Button variant="outline" onClick={() => setReassignOpen(false)} disabled={reassigning}>Cancelar</Button><Button onClick={() => patient && handleReassignPatient(patient.assessments.map((a: any) => a.id), reassignTargetId)} disabled={!reassignTargetId || reassigning}>{reassigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar"}</Button></DialogFooter></DialogContent></Dialog>
 
       <CreateExerciseProgramModal open={hepModalOpen} onOpenChange={(open) => { setHepModalOpen(open); if (!open) setEditingHepId(null); }} professionalId={professionalId} patientName={patient.name} assessmentId={latestWithDiagnosis?.id} editProgramId={editingHepId} clinicId={clinicId} demoMode={isDemo} />
+
+      <Dialog open={reassessDialog.open} onOpenChange={(open) => setReassessDialog((s) => ({ ...s, open }))}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><RotateCcw className="h-4 w-4 text-primary" /> Link de reavaliação</DialogTitle>
+            <DialogDescription>
+              {patient?.name ? `Para ${patient.name}. ` : ""}Compartilhe com o paciente para que ele responda uma nova avaliação reaproveitando os dados anteriores.
+            </DialogDescription>
+          </DialogHeader>
+          {reassessDialog.loading ? (
+            <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Gerando link…</div>
+          ) : reassessDialog.error ? (
+            <div className="text-sm text-destructive py-2">{reassessDialog.error}</div>
+          ) : (
+            <div className="space-y-3">
+              <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs break-all font-mono select-all">{reassessDialog.link}</div>
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" className="gap-1.5" onClick={copyReassessLink}><Copy className="h-3.5 w-3.5" /> Copiar</Button>
+                <Button size="sm" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={shareReassessWhatsApp}><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</Button>
+                <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => window.open(reassessDialog.link, "_blank", "noopener,noreferrer")}><ExternalLink className="h-3.5 w-3.5" /> Abrir</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
 
       {manualAssessmentOpen && (
         <ManualAssessmentModal
