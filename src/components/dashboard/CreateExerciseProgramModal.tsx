@@ -20,6 +20,7 @@ import {
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { HEP_TEMPLATES, type HepTemplate } from "@/data/hepTemplates";
+import { openWhatsAppDeferred } from "@/lib/whatsappShare";
 
 interface SavedTemplate {
   id: string;
