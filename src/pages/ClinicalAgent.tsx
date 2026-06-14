@@ -56,6 +56,8 @@ function ThreadRow({
   const startY = useRef<number | null>(null);
   const dragging = useRef(false);
   const didSwipe = useRef(false);
+  const pointerId = useRef<number | null>(null);
+  const rowRef = useRef<HTMLDivElement | null>(null);
   const REVEAL = 72;
 
   useEffect(() => {
@@ -66,47 +68,43 @@ function ThreadRow({
     }
   }, [active]);
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    startX.current = e.touches[0].clientX;
-    startY.current = e.touches[0].clientY;
+  const onPointerDown = (e: React.PointerEvent) => {
+    // Only handle touch/pen — leave mouse alone so desktop hover/click stays clean.
+    if (e.pointerType === "mouse") return;
+    startX.current = e.clientX;
+    startY.current = e.clientY;
     dragging.current = false;
     didSwipe.current = false;
+    pointerId.current = e.pointerId;
   };
-  const onTouchMove = (e: React.TouchEvent) => {
-    if (startX.current == null) return;
-    const dx = e.touches[0].clientX - startX.current;
-    const dy = e.touches[0].clientY - (startY.current ?? 0);
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (startX.current == null || pointerId.current !== e.pointerId) return;
+    const dx = e.clientX - startX.current;
+    const dy = e.clientY - (startY.current ?? 0);
     if (!dragging.current) {
-      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) dragging.current = true;
-      else return;
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+        dragging.current = true;
+        try { rowRef.current?.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+      } else {
+        return;
+      }
     }
     didSwipe.current = true;
     const base = revealed ? -REVEAL : 0;
     const next = Math.min(0, Math.max(-REVEAL, base + dx));
     setOffset(next);
   };
-  const onTouchEnd = () => {
+  const onPointerEnd = (e: React.PointerEvent) => {
+    if (pointerId.current !== e.pointerId) return;
     if (dragging.current) {
       const shouldReveal = offset < -REVEAL / 2;
       setRevealed(shouldReveal);
       setOffset(shouldReveal ? -REVEAL : 0);
     }
+    try { rowRef.current?.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
     startX.current = null;
     startY.current = null;
-    setTimeout(() => { dragging.current = false; }, 0);
-  };
-  const onTouchCancel = () => {
-    // Treat like touchend: keep the reveal if the user dragged past the threshold
-    // (some tablets fire touchcancel when the gesture overlaps native scroll)
-    if (dragging.current) {
-      const shouldReveal = offset < -REVEAL / 2;
-      setRevealed(shouldReveal);
-      setOffset(shouldReveal ? -REVEAL : 0);
-    } else {
-      setOffset(revealed ? -REVEAL : 0);
-    }
-    startX.current = null;
-    startY.current = null;
+    pointerId.current = null;
     setTimeout(() => { dragging.current = false; }, 0);
   };
   const handleClick = () => {
@@ -117,12 +115,12 @@ function ThreadRow({
     if (revealed) { setRevealed(false); setOffset(0); return; }
     onOpen();
   };
-  const exposure = Math.max(0, -offset); // px of red area currently exposed
+  const exposure = Math.max(0, -offset);
   const actionVisible = revealed || exposure >= 6;
   const iconProgress = Math.min(1, exposure / REVEAL);
 
   return (
-    <div className="relative overflow-hidden rounded-lg">
+    <div className="relative overflow-hidden rounded-lg" style={{ touchAction: "pan-y" }}>
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
@@ -144,15 +142,16 @@ function ThreadRow({
         />
       </button>
       <div
+        ref={rowRef}
         className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${
           active ? "bg-primary/10 text-foreground" : "bg-background hover:bg-muted/50 text-muted-foreground"
         }`}
         style={{ transform: `translateX(${offset}px)`, transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)", willChange: "transform", touchAction: "pan-y" }}
         onClick={handleClick}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onTouchCancel={onTouchCancel}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerEnd}
+        onPointerCancel={onPointerEnd}
       >
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{thread.title}</div>
