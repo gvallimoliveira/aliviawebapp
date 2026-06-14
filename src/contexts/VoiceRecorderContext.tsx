@@ -99,6 +99,7 @@ const GlobalVoiceRecorderFAB = () => {
     right: 24,
     top: 72,
   }));
+  const autoPositionedRef = useRef(false);
   const dragRef = useRef<{ startX: number; startY: number; startRight: number; startTop: number; moved: boolean; pointerId: number; captured: boolean } | null>(null);
 
   const recRef = useRef<MediaRecorder | null>(null);
@@ -124,6 +125,27 @@ const GlobalVoiceRecorderFAB = () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
+
+  // When a manual-assessment session starts, snap the FAB inside the modal
+  // (top-right, below the close button) so it isn't left floating in the
+  // dark overlay margin.
+  useEffect(() => {
+    if (!session) {
+      autoPositionedRef.current = false;
+      return;
+    }
+    if (autoPositionedRef.current) return;
+    const dialog = document.querySelector(
+      "[data-manual-assessment-modal]"
+    ) as HTMLElement | null;
+    if (!dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    setPos({
+      right: Math.max(24, window.innerWidth - rect.right + 24),
+      top: Math.max(24, rect.top + 64),
+    });
+    autoPositionedRef.current = true;
+  }, [session]);
 
   const startTick = () => {
     if (tickRef.current) clearInterval(tickRef.current);
