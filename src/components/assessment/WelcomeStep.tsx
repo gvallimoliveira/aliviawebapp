@@ -313,6 +313,7 @@ const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeS
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
+          className="flex flex-col items-center gap-3"
         >
           <Button
             onClick={handleContinue}
@@ -332,7 +333,31 @@ const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeS
               </>
             )}
           </Button>
+
+          {onRestart && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onRestart}
+              disabled={isTransitioning}
+              className="gap-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {language === "es"
+                ? "Reiniciar autoevaluación"
+                : language === "en"
+                ? "Restart self-assessment"
+                : "Recomeçar autoavaliação"}
+            </Button>
+          )}
         </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+export default WelcomeStep;
       </motion.div>
     </AnimatePresence>
   );
