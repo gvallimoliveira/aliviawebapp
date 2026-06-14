@@ -778,7 +778,7 @@ const Assessment = () => {
               <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed">
                 {premiumAccess.assessments_used && premiumAccess.assessments_used >= 2
                   ? (t("payment.limit_reached_desc") || "Você já realizou 2 avaliações neste período. Faça um novo pagamento para continuar.")
-                  : (t("payment.unlock_desc") || "Inclui anamnese completa, testes funcionais, diagnóstico detalhado com explicação e plano de tratamento personalizado por fases.")}
+                  : (t("payment.unlock_desc") || "Inclui anamnese completa, testes funcionais, hipótese preliminar detalhada com explicação e plano de tratamento personalizado por fases.")}
               </p>
             </div>
 
