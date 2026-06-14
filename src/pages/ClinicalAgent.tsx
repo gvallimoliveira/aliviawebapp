@@ -128,7 +128,6 @@ function ThreadRow({
     onOpen();
   };
   const exposure = Math.max(0, -offset);
-  const actionVisible = revealed || exposure >= 6;
   const iconProgress = Math.min(1, exposure / REVEAL);
   const trayOffset = Math.max(0, REVEAL - exposure);
 
@@ -139,8 +138,8 @@ function ThreadRow({
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
         className="absolute inset-y-0 right-0 z-10 flex w-[72px] items-center justify-center rounded-lg bg-destructive text-destructive-foreground shadow-sm"
         style={{
-          opacity: actionVisible ? 1 : 0,
-          pointerEvents: actionVisible ? "auto" : "none",
+          opacity: 1,
+          pointerEvents: revealed || exposure >= REVEAL * 0.5 ? "auto" : "none",
           transform: `translate3d(${trayOffset}px, 0, 0)`,
           transition: dragging.current ? "none" : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 120ms ease-out",
         }}
