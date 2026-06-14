@@ -558,10 +558,10 @@ const Assessment = () => {
         title: language === "pt" ? "Sem conexão" : language === "es" ? "Sin conexión" : "Offline",
         description:
           language === "pt"
-            ? "Vamos gerar seu diagnóstico assim que a internet voltar."
+            ? "Vamos gerar sua hipótese preliminar assim que a internet voltar."
             : language === "es"
-            ? "Generaremos tu diagnóstico cuando vuelva la conexión."
-            : "We'll generate your diagnosis as soon as you're back online.",
+            ? "Generaremos tu hipótesis preliminar cuando vuelva la conexión."
+            : "We'll generate your preliminary hypothesis as soon as you're back online.",
       });
       return;
     }
@@ -778,7 +778,7 @@ const Assessment = () => {
               <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed">
                 {premiumAccess.assessments_used && premiumAccess.assessments_used >= 2
                   ? (t("payment.limit_reached_desc") || "Você já realizou 2 avaliações neste período. Faça um novo pagamento para continuar.")
-                  : (t("payment.unlock_desc") || "Inclui anamnese completa, testes funcionais, diagnóstico detalhado com explicação e plano de tratamento personalizado por fases.")}
+                  : (t("payment.unlock_desc") || "Inclui anamnese completa, testes funcionais, hipótese preliminar detalhada com explicação e plano de tratamento personalizado por fases.")}
               </p>
             </div>
 
@@ -787,7 +787,7 @@ const Assessment = () => {
               {[
                 { icon: ClipboardList, label: t("payment.feature_5") || "Questionários validados (KOOS, SPADI, ODI)", color: "text-primary" },
                 { icon: Activity, label: t("payment.feature_1") || "Testes funcionais guiados por vídeo", color: "text-primary" },
-                { icon: FileText, label: t("payment.feature_2") || "Diagnóstico com explicação detalhada", color: "text-primary" },
+                { icon: FileText, label: t("payment.feature_2") || "Hipótese preliminar com explicação detalhada", color: "text-primary" },
                 { icon: TrendingUp, label: t("payment.feature_3") || "Plano de tratamento em 3 fases", color: "text-primary" },
                 { icon: Star, label: t("payment.feature_4") || "Exercícios com vídeos do YouTube", color: "text-primary" },
                 { icon: Shield, label: language === "pt" ? "Dados seguros e criptografados" : language === "es" ? "Datos seguros y encriptados" : "Secure & encrypted data", color: "text-primary" },
