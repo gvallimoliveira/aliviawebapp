@@ -195,6 +195,7 @@ const ClinicalAgent = () => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const bootstrappedRef = useRef(false);
 
   // Subscription gate — instead of redirecting when there's no active plan,
   // we render a CTA screen (same pattern as the other gated tabs).
