@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  NotebookPen, Plus, CalendarIcon, Loader2, Trash2, Pencil, ChevronDown, ChevronUp,
+  NotebookPen, Plus, CalendarIcon, Loader2, Trash2, Pencil, ChevronDown, ChevronUp, Copy,
 } from "lucide-react";
 
 interface SessionNote {
@@ -110,6 +110,28 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
       toast({ title: t("session_notes.error"), variant: "destructive" });
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleRepeat = async (note: SessionNote) => {
+    if (isDemo) { toast({ title: "Demo: anotações não são salvas" }); return; }
+    const today = format(new Date(), "yyyy-MM-dd");
+    const exists = notes.some((n) => n.session_date === today && n.content === note.content);
+    if (exists) {
+      toast({ title: t("session_notes.repeat_duplicate") || "Evolução idêntica já registrada hoje" });
+      return;
+    }
+    try {
+      await (supabase.from("session_notes" as any) as any).insert({
+        professional_id: professionalId,
+        patient_email: patientEmail,
+        session_date: today,
+        content: note.content,
+      });
+      toast({ title: t("session_notes.repeated") || "Evolução repetida na data de hoje" });
+      fetchNotes();
+    } catch {
+      toast({ title: t("session_notes.error"), variant: "destructive" });
     }
   };
 
@@ -210,6 +232,15 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        title={t("session_notes.repeat_today") || "Repetir evolução hoje"}
+                        onClick={() => handleRepeat(note)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEdit(note)}>
                         <Pencil className="h-3 w-3" />
                       </Button>
