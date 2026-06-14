@@ -406,6 +406,27 @@ const ExerciseProgram = () => {
       </header>
 
       <main className="container max-w-lg py-6 px-4 space-y-5">
+        {program?.professional?.is_student && (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+            <p className="font-semibold">
+              {language === "pt" ? "Alivia Acadêmico" : language === "es" ? "Alivia Académico" : "Alivia Academic"}
+            </p>
+            <p className="text-xs opacity-90 mt-0.5">
+              {language === "pt"
+                ? `Programa elaborado por ${program.professional.full_name}, estudante de fisioterapia${program.professional.student_institution ? ` (${program.professional.student_institution}` + (program.professional.student_period ? ` · ${program.professional.student_period})` : ")") : ""}.`
+                : language === "es"
+                ? `Programa elaborado por ${program.professional.full_name}, estudiante de fisioterapia${program.professional.student_institution ? ` (${program.professional.student_institution})` : ""}.`
+                : `Program prepared by ${program.professional.full_name}, physiotherapy student${program.professional.student_institution ? ` (${program.professional.student_institution})` : ""}.`}
+            </p>
+            <p className="text-xs font-medium mt-2 border-t border-amber-500/20 pt-2">
+              {language === "pt"
+                ? "Documento de caráter acadêmico — sem valor profissional. Se necessário, busque orientação de um fisioterapeuta formado e habilitado."
+                : language === "es"
+                ? "Documento de carácter académico — sin valor profesional. Si es necesario, busque orientación de un fisioterapeuta formado y habilitado."
+                : "Academic document — no professional value. If needed, seek guidance from a qualified physiotherapist."}
+            </p>
+          </div>
+        )}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mx-auto">
             <Dumbbell className="h-7 w-7 text-primary" />
