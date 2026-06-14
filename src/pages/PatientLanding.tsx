@@ -73,8 +73,8 @@ const PatientLanding = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Aliv.iA — Avaliação de Dor com Inteligência Artificial",
-      description: "Entenda sua dor com precisão clínica. Diagnóstico preliminar e plano de tratamento personalizado em minutos, baseado em evidência científica.",
+      title: "Aliv.iA — Autoavaliação de Dor com Inteligência Artificial",
+      description: "Entenda sua dor com precisão clínica. Hipótese preliminar e plano de tratamento personalizado em minutos, com autoavaliação guiada e baseada em evidência científica.",
       url: "https://aliviawebapp.com.br/para-pacientes",
       type: "website",
     });

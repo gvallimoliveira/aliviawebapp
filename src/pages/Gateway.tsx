@@ -39,8 +39,8 @@ const Gateway = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Aliv.iA — Avaliação Musculoesquelética com IA",
-      description: "Sistema de raciocínio clínico com IA: avaliação musculoesquelética, diagnóstico preliminar e plano de tratamento personalizado em minutos.",
+      title: "Aliv.iA — Autoavaliação Musculoesquelética com IA",
+      description: "Sistema de raciocínio clínico com IA: autoavaliação musculoesquelética, hipótese preliminar e plano de tratamento personalizado em minutos.",
       url: "https://aliviawebapp.com.br",
       type: "website",
     });
