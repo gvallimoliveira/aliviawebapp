@@ -474,19 +474,19 @@ const DemoClinicalAgentMock = () => {
         }, 700 * (idx + 1));
       });
     } else {
-      setTimeout(() => {
-        setThreads((prev) => prev.map((t) => t.id === active.id
-          ? {
-              ...t,
-              messages: [...t.messages, {
-                role: "assistant",
-                text: "👀 Esta é uma simulação do agente. No modo real, eu acessaria o histórico do paciente, evidência atualizada (PEDro ≥ 7) e geraria HEP/testes prontos para o painel. Assine PRO para usar com seus pacientes reais.",
-              }],
-            }
-          : t));
-        setPending(false);
-      }, 900);
+      // Play a real scripted reply (if available) and then the farewell + PRO CTA.
+      const reply = SCRIPTED_REPLIES[text];
+      const steps: Msg[] = reply ? [reply, FAREWELL_MSG] : [FAREWELL_MSG];
+      steps.forEach((step, idx) => {
+        setTimeout(() => {
+          setThreads((prev) => prev.map((t) => t.id === active.id
+            ? { ...t, messages: [...t.messages, step] }
+            : t));
+          if (idx === steps.length - 1) setPending(false);
+        }, 800 * (idx + 1));
+      });
     }
+
   };
 
   return (
