@@ -16,6 +16,7 @@ import Footer from "@/components/Footer";
 import StickyCTA from "@/components/StickyCTA";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import LgpdBadge from "@/components/LgpdBadge";
+import SelfAssessmentDisclaimerSection from "@/components/SelfAssessmentDisclaimerSection";
 import InstallAppSection from "@/components/InstallAppSection";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
 import { showNavOverlay, subscribeNavOverlay } from "@/lib/navigationOverlay";
@@ -212,6 +213,7 @@ const PatientLanding = () => {
             </span>
           </Link>
         </div>
+        <SelfAssessmentDisclaimerSection />
         <HighlightsSection />
         <ComparisonSection />
         <MethodologySection />
