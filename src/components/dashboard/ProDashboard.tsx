@@ -1177,6 +1177,21 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         onAdded={() => loadPatientAssessments()}
       />
 
+      {/* Install app instructions dialog */}
+      <Dialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "pt"
+                ? "Instalar Aliv.iA no seu dispositivo"
+                : language === "es"
+                  ? "Instalar Aliv.iA en tu dispositivo"
+                  : "Install Aliv.iA on your device"}
+            </DialogTitle>
+          </DialogHeader>
+          <InstallAppGuide />
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
