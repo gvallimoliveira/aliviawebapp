@@ -759,20 +759,30 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
             {/* Plan area */}
             {!isClinicMode && professional?.subscription_status !== "active" && (
-              <button
-                type="button"
-                onClick={() => navigate("/dashboard?tab=pro&subscribe=true")}
-                className="flex items-center gap-3 p-4 text-left hover:bg-primary/[0.03] transition-colors group"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0 group-hover:bg-primary/20 transition-colors">
-                  <Crown className="h-5 w-5 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Plano Profissional</p>
-                  <p className="text-xs text-muted-foreground truncate">Link exclusivo · Painel · Pacientes particulares</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
-              </button>
+              <div className="flex items-start gap-2 p-4">
+                <button
+                  type="button"
+                  onClick={() => navigate("/dashboard?tab=pro&subscribe=true")}
+                  className="flex items-center gap-3 flex-1 text-left hover:bg-primary/[0.03] transition-colors group rounded-xl p-2 -m-2"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <Crown className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">Plano Profissional</p>
+                    <p className="text-xs text-muted-foreground truncate">Link exclusivo · Painel · Pacientes particulares</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInstallDialogOpen(true)}
+                  className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border bg-muted/30 hover:bg-muted/50 transition-colors shrink-0 w-[72px] h-[72px]"
+                >
+                  <Smartphone className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground leading-tight text-center">Instalar app</span>
+                </button>
+              </div>
             )}
             {/* Agent area */}
             {hasAgentAccess && !isSimulated && (
