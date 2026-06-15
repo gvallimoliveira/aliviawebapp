@@ -44,6 +44,7 @@ const PAGES_WITH_HEADER = [
   "/admin",
   "/conta",
   "/clinica",
+  "/dashboard",
 ];
 
 const LABELS = {
