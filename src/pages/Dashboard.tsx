@@ -260,19 +260,27 @@ const Dashboard = () => {
   // Auto-scroll to the schedule grid when the Agenda tab becomes active
   useEffect(() => {
     if (activeTab !== "agenda") return;
+    let cancelled = false;
+    let attempts = 0;
     const scrollToAgenda = () => {
+      if (cancelled) return;
       const el = document.getElementById("agenda-schedule-anchor");
-      if (!el) return;
+      if (!el) {
+        if (attempts++ < 30) window.setTimeout(scrollToAgenda, 80);
+        return;
+      }
       const top = el.getBoundingClientRect().top + window.scrollY - 12;
       window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      // Run a couple of follow-ups in case late-mounting children shift layout
+      if (attempts++ < 6) window.setTimeout(scrollToAgenda, 200);
     };
-    const t1 = window.setTimeout(scrollToAgenda, 80);
-    const t2 = window.setTimeout(scrollToAgenda, 350);
+    const t0 = window.setTimeout(scrollToAgenda, 60);
     return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+      cancelled = true;
+      window.clearTimeout(t0);
     };
   }, [activeTab]);
+
 
 
   useEffect(() => {
