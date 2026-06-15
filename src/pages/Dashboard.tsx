@@ -617,7 +617,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className={cn("container py-8 px-4 space-y-8", activeTab === "agenda" ? "max-w-7xl" : "max-w-4xl")}>
+      <main className="container py-8 px-4 space-y-8 max-w-7xl">
         <ClinicContextSelector />
         <PartnerPasswordBanner isPartner={professional?.is_partner} userId={user?.id} />
         {professional?.subscription_grace_until && new Date(professional.subscription_grace_until) > new Date() && professional?.subscription_status !== "active" && (
