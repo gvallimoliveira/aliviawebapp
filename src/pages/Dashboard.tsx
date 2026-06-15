@@ -19,7 +19,7 @@ import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import PushOptInBanner from "@/components/PushOptInBanner";
 import PartnerPasswordBanner from "@/components/dashboard/PartnerPasswordBanner";
 import ConfirmEmailBanner from "@/components/dashboard/ConfirmEmailBanner";
-import InstallAppCard from "@/components/InstallAppCard";
+
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
 import SoloUpgradeBanner from "@/components/dashboard/SoloUpgradeBanner";
 import ClinicTrialBanner, { ClinicTrialBlockOverlay, useClinicTrial } from "@/components/dashboard/ClinicTrialBanner";
