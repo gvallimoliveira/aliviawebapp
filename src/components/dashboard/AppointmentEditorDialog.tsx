@@ -417,6 +417,23 @@ const AppointmentEditorDialog = ({
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;
+
+      // Also mirror to session_notes so it appears in the patient's evolution record
+      if (currentApt.patient_email) {
+        try {
+          await (supabase.from("session_notes" as any) as any).insert({
+            professional_id: effectiveProId,
+            clinic_id: clinicId || null,
+            patient_email: normalizeEvolutionEmail(currentApt.patient_email),
+            appointment_id: currentApt.id,
+            session_date: currentApt.appointment_date,
+            content: evoText.trim(),
+          });
+        } catch (mirrorErr) {
+          console.warn("[evolution] failed to mirror to session_notes", mirrorErr);
+        }
+      }
+
       if (!aliveRef.current) return;
       setEvoExistingContent(newContent);
       setEvoText("");
@@ -441,6 +458,17 @@ const AppointmentEditorDialog = ({
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;
+
+      // Mirror delete to session_notes (best-effort): remove matching entry for this appointment
+      try {
+        const targetContent = lastEvoEntry.content?.trim();
+        let delQ: any = (supabase.from("session_notes" as any) as any).delete().eq("appointment_id", currentApt.id);
+        if (targetContent) delQ = delQ.eq("content", targetContent);
+        await delQ;
+      } catch (mirrorErr) {
+        console.warn("[evolution] failed to mirror delete to session_notes", mirrorErr);
+      }
+
       if (!aliveRef.current) return;
       setEvoExistingContent(remaining);
       toast({ title: isPt ? "Última evolução excluída" : language === "es" ? "Última evolución eliminada" : "Last evolution deleted" });
