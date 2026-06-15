@@ -745,6 +745,8 @@ const Dashboard = () => {
             {/* Pacientes */}
             <TabsContent value="patients" className="space-y-6">
               <ClinicTrialBanner />
+              <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
+
               <div className="relative">
                 {isClinicSecretary || canManageClinic ? (
                   <ClinicSecretaryDashboard />
