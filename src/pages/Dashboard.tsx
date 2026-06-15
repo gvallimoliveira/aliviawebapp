@@ -705,23 +705,16 @@ const Dashboard = () => {
             {/* Agenda */}
             <TabsContent value="agenda" className="space-y-6">
               <ClinicTrialBanner />
-              <div className="relative">
-                <DailySummaryCard
+              <div className="relative" id="agenda-schedule-anchor">
+                <ProSchedule
                   professionalId={professional?.id}
                   clinicId={activeClinic.clinic_id}
-                  onNavigateToAgenda={() => {}}
-                  onNavigateToPatients={() => setActiveTab("patients")}
+                  isSimulated={isSimulated}
                 />
-                <div className="mt-6">
-                  <ProSchedule
-                    professionalId={professional?.id}
-                    clinicId={activeClinic.clinic_id}
-                    isSimulated={isSimulated}
-                  />
-                </div>
                 <ClinicTrialBlockOverlay />
               </div>
             </TabsContent>
+
 
             {/* Pacientes */}
             <TabsContent value="patients" className="space-y-6">
