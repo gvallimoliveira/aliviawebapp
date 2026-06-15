@@ -27,6 +27,7 @@ import {
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
   MessageCircle, CheckCircle, XCircle, UserCheck, Play, ToggleLeft,
+  Smartphone,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
@@ -42,6 +43,13 @@ import { Brain } from "lucide-react";
 
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp, FileArchive } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import InstallAppGuide from "@/components/InstallAppGuide";
 
 const PendingReviewAlert = ({ assessments, language, navigate, onMarkReviewed }: { assessments: any[]; language: string; navigate: any; onMarkReviewed: (id: string) => void }) => {
   const [expanded, setExpanded] = useState(false);
