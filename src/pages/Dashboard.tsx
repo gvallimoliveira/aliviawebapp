@@ -19,7 +19,7 @@ import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import PushOptInBanner from "@/components/PushOptInBanner";
 import PartnerPasswordBanner from "@/components/dashboard/PartnerPasswordBanner";
 import ConfirmEmailBanner from "@/components/dashboard/ConfirmEmailBanner";
-import InstallAppCard from "@/components/InstallAppCard";
+
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
 import SoloUpgradeBanner from "@/components/dashboard/SoloUpgradeBanner";
 import ClinicTrialBanner, { ClinicTrialBlockOverlay, useClinicTrial } from "@/components/dashboard/ClinicTrialBanner";
@@ -745,8 +745,6 @@ const Dashboard = () => {
             {/* Pacientes */}
             <TabsContent value="patients" className="space-y-6">
               <ClinicTrialBanner />
-              <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
-
               <div className="relative">
                 {isClinicSecretary || canManageClinic ? (
                   <ClinicSecretaryDashboard />
@@ -967,8 +965,6 @@ const Dashboard = () => {
                 </TabsList>
                 <TabsContent value="professional" className="space-y-6">
                   {isProDemo && <DemoUpsellBanner section="pro-patients" variant="pro" />}
-                  <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
-
                   <ProDashboard
                     professional={proStub}
                     isSimulated={isProDemo ? true : isSimulated}

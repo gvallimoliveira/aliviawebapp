@@ -744,9 +744,51 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </div>
       )}
 
-      {/* Solo upgrade banner — therapist without own Pro subscription */}
-      {!isClinicMode && (
-        <SoloUpgradeBanner hasActiveProSubscription={professional.subscription_status === "active"} />
+      {/* Combined plan + agent card — single card, two independently clickable areas */}
+      {((!isClinicMode && professional?.subscription_status !== "active") || (hasAgentAccess && !isSimulated)) && (
+        <Card className="border-primary/20 overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
+            {/* Plan area */}
+            {!isClinicMode && professional?.subscription_status !== "active" && (
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard?tab=pro&subscribe=true")}
+                className="flex items-center gap-3 p-4 text-left hover:bg-primary/[0.03] transition-colors group"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <Crown className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Plano Profissional</p>
+                  <p className="text-xs text-muted-foreground truncate">Link exclusivo · Painel · Pacientes particulares</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
+              </button>
+            )}
+            {/* Agent area */}
+            {hasAgentAccess && !isSimulated && (
+              <button
+                type="button"
+                onClick={() => navigate("/agente")}
+                className="flex items-center gap-3 p-4 text-left hover:bg-primary/[0.03] transition-colors group"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <Brain className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                    Agente Clínico
+                    <Badge variant="outline" className="text-[10px] border-primary/30 text-primary px-1 py-0">
+                      {agentBetaInternal ? "Beta interno" : "Beta"}
+                    </Badge>
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">Raciocínio clínico · Anonimização · HEP</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
+              </button>
+            )}
+          </div>
+        </Card>
       )}
 
       {/* Clinic volume alert — only for owner in clinic mode */}
@@ -935,28 +977,6 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </Card>
       ))}
 
-      {/* Clinical Agent launcher (beta — gated) */}
-      {hasAgentAccess && !isSimulated && (
-        <Card
-          className="cursor-pointer border-primary/30 bg-gradient-to-br from-primary/[0.06] to-transparent hover:border-primary/60 hover:shadow-md transition-all group"
-          onClick={() => navigate("/agente")}
-        >
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <Brain className="h-4 w-4 text-primary" />
-              </div>
-              Agente de Raciocínio Clínico
-              <Badge variant="outline" className="ml-1 text-[10px] border-primary/30 text-primary">
-                {agentBetaInternal ? "Beta interno" : "Beta"}
-              </Badge>
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Converse com o agente para apoiar raciocínio clínico, discutir pacientes (com anonimização automática) e gerar rascunhos de HEP baseados em evidências.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
 
       {/* Generate Link — hidden when in clinic tab layout (has own tab) */}
       {!isSimulated && !hideForClinicTabs && (
@@ -996,13 +1016,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </Card>
       )}
 
-      {/* Schedule Card — hidden when in clinic tab layout (has own tab) */}
-      {!isSimulated && !hideForClinicTabs && (
-        <ProScheduleCard
-          professionalId={professional.id}
-          onNavigateToSchedule={() => navigate("/dashboard?tab=agenda")}
-        />
-      )}
+      {/* Schedule Card hidden per request — kept in codebase, not rendered here */}
 
       {/* Clinic-only: unassigned assessments needing triage */}
       {!isSimulated && isClinicMode && unassignedClinicAssessments.length > 0 && (
