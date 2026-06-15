@@ -156,6 +156,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     else setIsSimulatedInternal(val);
   };
   const [billingAnnual, setBillingAnnual] = useState(true);
+  const [installDialogOpen, setInstallDialogOpen] = useState(false);
 
   // Welcome card for new subscribers
   const [showWelcome, setShowWelcome] = useState(() => {
