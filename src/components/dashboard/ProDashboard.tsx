@@ -882,6 +882,15 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setInstallDialogOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl h-8 px-3 text-xs font-medium border border-emerald-200/60 bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-700 hover:from-emerald-100 hover:to-teal-100 hover:shadow-sm transition-all shadow-sm"
+                  aria-label="Instalar app"
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">App</span>
+                </button>
                 <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl h-8">
                   <Settings className="h-3.5 w-3.5" />
                   {t("pro.edit_profile")}
