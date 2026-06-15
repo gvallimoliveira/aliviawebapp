@@ -946,22 +946,14 @@ const Dashboard = () => {
                     isDemoMode={isProDemo}
                   />
                 </TabsContent>
-                <TabsContent value="agenda" className="space-y-6">
+                <TabsContent value="agenda" className="space-y-6" id="agenda-schedule-anchor">
                   {isProDemo ? (
                     <>
                       <DemoUpsellBanner section="pro-agenda" variant="pro" />
-                      <DemoDailySummaryMock professionalId={proStub.id} />
                       <ProSchedule professionalId={proStub.id} isSimulated={true} />
                     </>
                   ) : hasProAccess ? (
-                    <>
-                      <DailySummaryCard
-                        professionalId={proStub.id}
-                        onNavigateToAgenda={() => {}}
-                        onNavigateToPatients={() => setActiveTab("professional")}
-                      />
-                      <ProSchedule professionalId={proStub.id} isSimulated={isSimulated} />
-                    </>
+                    <ProSchedule professionalId={proStub.id} isSimulated={isSimulated} />
                   ) : (
                     <ProLockedCard
                       title="Agenda exclusiva do plano PRO"
@@ -969,6 +961,7 @@ const Dashboard = () => {
                     />
                   )}
                 </TabsContent>
+
                 {showInsightsTab && (
                   <TabsContent value="insights" className="space-y-6">
                     {isProDemo ? (
