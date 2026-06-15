@@ -257,6 +257,24 @@ const Dashboard = () => {
     };
   }, [activeTab]);
 
+  // Auto-scroll to the schedule grid when the Agenda tab becomes active
+  useEffect(() => {
+    if (activeTab !== "agenda") return;
+    const scrollToAgenda = () => {
+      const el = document.getElementById("agenda-schedule-anchor");
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - 12;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    };
+    const t1 = window.setTimeout(scrollToAgenda, 80);
+    const t2 = window.setTimeout(scrollToAgenda, 350);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [activeTab]);
+
+
   useEffect(() => {
     if (!authReady) return;
     if (!user) {
@@ -705,23 +723,16 @@ const Dashboard = () => {
             {/* Agenda */}
             <TabsContent value="agenda" className="space-y-6">
               <ClinicTrialBanner />
-              <div className="relative">
-                <DailySummaryCard
+              <div className="relative" id="agenda-schedule-anchor">
+                <ProSchedule
                   professionalId={professional?.id}
                   clinicId={activeClinic.clinic_id}
-                  onNavigateToAgenda={() => {}}
-                  onNavigateToPatients={() => setActiveTab("patients")}
+                  isSimulated={isSimulated}
                 />
-                <div className="mt-6">
-                  <ProSchedule
-                    professionalId={professional?.id}
-                    clinicId={activeClinic.clinic_id}
-                    isSimulated={isSimulated}
-                  />
-                </div>
                 <ClinicTrialBlockOverlay />
               </div>
             </TabsContent>
+
 
             {/* Pacientes */}
             <TabsContent value="patients" className="space-y-6">
@@ -953,22 +964,14 @@ const Dashboard = () => {
                     isDemoMode={isProDemo}
                   />
                 </TabsContent>
-                <TabsContent value="agenda" className="space-y-6">
+                <TabsContent value="agenda" className="space-y-6" id="agenda-schedule-anchor">
                   {isProDemo ? (
                     <>
                       <DemoUpsellBanner section="pro-agenda" variant="pro" />
-                      <DemoDailySummaryMock professionalId={proStub.id} />
                       <ProSchedule professionalId={proStub.id} isSimulated={true} />
                     </>
                   ) : hasProAccess ? (
-                    <>
-                      <DailySummaryCard
-                        professionalId={proStub.id}
-                        onNavigateToAgenda={() => {}}
-                        onNavigateToPatients={() => setActiveTab("professional")}
-                      />
-                      <ProSchedule professionalId={proStub.id} isSimulated={isSimulated} />
-                    </>
+                    <ProSchedule professionalId={proStub.id} isSimulated={isSimulated} />
                   ) : (
                     <ProLockedCard
                       title="Agenda exclusiva do plano PRO"
@@ -976,6 +979,7 @@ const Dashboard = () => {
                     />
                   )}
                 </TabsContent>
+
                 {showInsightsTab && (
                   <TabsContent value="insights" className="space-y-6">
                     {isProDemo ? (
