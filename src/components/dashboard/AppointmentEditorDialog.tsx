@@ -417,6 +417,23 @@ const AppointmentEditorDialog = ({
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;
+
+      // Also mirror to session_notes so it appears in the patient's evolution record
+      if (currentApt.patient_email) {
+        try {
+          await (supabase.from("session_notes" as any) as any).insert({
+            professional_id: effectiveProId,
+            clinic_id: clinicId || null,
+            patient_email: normalizeEvolutionEmail(currentApt.patient_email),
+            appointment_id: currentApt.id,
+            session_date: currentApt.appointment_date,
+            content: evoText.trim(),
+          });
+        } catch (mirrorErr) {
+          console.warn("[evolution] failed to mirror to session_notes", mirrorErr);
+        }
+      }
+
       if (!aliveRef.current) return;
       setEvoExistingContent(newContent);
       setEvoText("");
