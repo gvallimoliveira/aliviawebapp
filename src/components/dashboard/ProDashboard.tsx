@@ -755,41 +755,41 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
       {/* Combined plan + agent card — single card, two independently clickable areas */}
       {((!isClinicMode && professional?.subscription_status !== "active") || (hasAgentAccess && !isSimulated)) && (
-        <Card className="border-primary/20 overflow-hidden">
-          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
+        <Card className="border-primary/20 overflow-hidden relative">
+          {/* Install app minicard — always visible top-right */}
+          <button
+            type="button"
+            onClick={() => setInstallDialogOpen(true)}
+            className="absolute top-3 right-3 z-10 flex flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background/80 backdrop-blur hover:bg-muted/60 transition-colors w-[64px] h-[64px] shadow-sm"
+            aria-label="Instalar app"
+          >
+            <Smartphone className="h-5 w-5 text-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground leading-tight text-center">Instalar app</span>
+          </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border pr-20 sm:pr-0">
             {/* Plan area */}
             {!isClinicMode && professional?.subscription_status !== "active" && (
-              <div className="flex items-start gap-2 p-4">
-                <button
-                  type="button"
-                  onClick={() => navigate("/dashboard?tab=pro&subscribe=true")}
-                  className="flex items-center gap-3 flex-1 text-left hover:bg-primary/[0.03] transition-colors group rounded-xl p-2 -m-2"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <Crown className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground">Plano Profissional</p>
-                    <p className="text-xs text-muted-foreground truncate">Link exclusivo · Painel · Pacientes particulares</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInstallDialogOpen(true)}
-                  className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border bg-muted/30 hover:bg-muted/50 transition-colors shrink-0 w-[72px] h-[72px]"
-                >
-                  <Smartphone className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground leading-tight text-center">Instalar app</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard?tab=pro&subscribe=true")}
+                className="flex items-center gap-3 p-4 text-left hover:bg-primary/[0.03] transition-colors group sm:pr-20"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <Crown className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Plano Profissional</p>
+                  <p className="text-xs text-muted-foreground truncate">Link exclusivo · Painel · Pacientes particulares</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
+              </button>
             )}
             {/* Agent area */}
             {hasAgentAccess && !isSimulated && (
               <button
                 type="button"
                 onClick={() => navigate("/agente")}
-                className="flex items-center gap-3 p-4 text-left hover:bg-primary/[0.03] transition-colors group"
+                className="flex items-center gap-3 p-4 text-left hover:bg-primary/[0.03] transition-colors group sm:pr-20"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0 group-hover:bg-primary/20 transition-colors">
                   <Brain className="h-5 w-5 text-primary" />
@@ -809,6 +809,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           </div>
         </Card>
       )}
+
 
       {/* Clinic volume alert — only for owner in clinic mode */}
       {isClinicMode && activeClinic && (
