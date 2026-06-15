@@ -1016,13 +1016,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </Card>
       )}
 
-      {/* Schedule Card — hidden when in clinic tab layout (has own tab) */}
-      {!isSimulated && !hideForClinicTabs && (
-        <ProScheduleCard
-          professionalId={professional.id}
-          onNavigateToSchedule={() => navigate("/dashboard?tab=agenda")}
-        />
-      )}
+      {/* Schedule Card hidden per request — kept in codebase, not rendered here */}
 
       {/* Clinic-only: unassigned assessments needing triage */}
       {!isSimulated && isClinicMode && unassignedClinicAssessments.length > 0 && (
