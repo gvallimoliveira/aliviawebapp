@@ -78,40 +78,40 @@ const Header = () => {
           </button>
         </nav>
 
-        {/* Desktop actions */}
-        <div className="hidden md:flex items-center gap-3">
-          {user ? (
-            <>
-              <Button variant="ghost" size="icon" onClick={() => go("/admin")} title="Admin">
-                <ShieldCheck className="h-4 w-4" />
+        {/* Actions + hamburger */}
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3">
+            {user ? (
+              <>
+                <Button variant="ghost" size="icon" onClick={() => go("/admin")} title="Admin">
+                  <ShieldCheck className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => go("/conta")} title={language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}>
+                  <UserCog className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => go("/dashboard")}>
+                  {t("nav.dashboard")}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => go("/auth")}>
+                {t("nav.login")}
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => go("/conta")} title={language === "pt" ? "Minha Conta" : language === "es" ? "Mi Cuenta" : "My Account"}>
-                <UserCog className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => go("/dashboard")}>
-                {t("nav.dashboard")}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <Button variant="outline" size="sm" onClick={() => go("/auth")}>
-              {t("nav.login")}
-            </Button>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Mobile hamburger */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
       {/* Mobile side menu */}
