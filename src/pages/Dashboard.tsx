@@ -53,7 +53,7 @@ import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import {
   Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon, Building2,
-  Link2, Copy, Check, Activity, Sparkles, Brain,
+  Link2, Copy, Check, Activity, Sparkles, Brain, Menu,
 } from "lucide-react";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Input } from "@/components/ui/input";
