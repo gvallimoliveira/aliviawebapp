@@ -458,6 +458,17 @@ const AppointmentEditorDialog = ({
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;
+
+      // Mirror delete to session_notes (best-effort): remove matching entry for this appointment
+      try {
+        const targetContent = lastEvoEntry.content?.trim();
+        let delQ: any = (supabase.from("session_notes" as any) as any).delete().eq("appointment_id", currentApt.id);
+        if (targetContent) delQ = delQ.eq("content", targetContent);
+        await delQ;
+      } catch (mirrorErr) {
+        console.warn("[evolution] failed to mirror delete to session_notes", mirrorErr);
+      }
+
       if (!aliveRef.current) return;
       setEvoExistingContent(remaining);
       toast({ title: isPt ? "Última evolução excluída" : language === "es" ? "Última evolución eliminada" : "Last evolution deleted" });
