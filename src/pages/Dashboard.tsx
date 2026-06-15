@@ -675,7 +675,7 @@ const Dashboard = () => {
           <SoloUpgradeBanner hasActiveProSubscription={false} />
         )}
         <PushOptInBanner />
-        <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
+
         <WelcomeSection
           profileName={
             profile?.full_name?.trim() ||
