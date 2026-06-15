@@ -613,6 +613,14 @@ const Dashboard = () => {
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 hidden md:inline-flex">
               <LogOut className="h-4 w-4" />{t("nav.logout")}
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.dispatchEvent(new Event("alivia:open-global-menu"))}
+              aria-label="Menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </header>
