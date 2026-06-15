@@ -257,6 +257,24 @@ const Dashboard = () => {
     };
   }, [activeTab]);
 
+  // Auto-scroll to the schedule grid when the Agenda tab becomes active
+  useEffect(() => {
+    if (activeTab !== "agenda") return;
+    const scrollToAgenda = () => {
+      const el = document.getElementById("agenda-schedule-anchor");
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - 12;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    };
+    const t1 = window.setTimeout(scrollToAgenda, 80);
+    const t2 = window.setTimeout(scrollToAgenda, 350);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [activeTab]);
+
+
   useEffect(() => {
     if (!authReady) return;
     if (!user) {
