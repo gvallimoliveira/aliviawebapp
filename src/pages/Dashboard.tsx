@@ -967,6 +967,8 @@ const Dashboard = () => {
                 </TabsList>
                 <TabsContent value="professional" className="space-y-6">
                   {isProDemo && <DemoUpsellBanner section="pro-patients" variant="pro" />}
+                  <InstallAppCard dismissKey="alivia_install_card_dismissed_dashboard" variant="subtle" />
+
                   <ProDashboard
                     professional={proStub}
                     isSimulated={isProDemo ? true : isSimulated}
