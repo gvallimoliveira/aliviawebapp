@@ -44,6 +44,7 @@ const PAGES_WITH_HEADER = [
   "/admin",
   "/conta",
   "/clinica",
+  "/dashboard",
 ];
 
 const LABELS = {
@@ -145,6 +146,12 @@ const GlobalMobileMenu = () => {
     document.body.scrollLeft = 0;
     window.scrollTo({ top: 0, left: 0 });
   }, [path]);
+
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("alivia:open-global-menu", handler);
+    return () => window.removeEventListener("alivia:open-global-menu", handler);
+  }, []);
 
   const navigateAfterSheetClose = (target: string) => {
     const performNavigation = () => {

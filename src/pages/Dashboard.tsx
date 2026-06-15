@@ -53,7 +53,7 @@ import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import {
   Globe, HelpCircle, LogOut, Heart, Stethoscope, MessageCircle, Calendar as CalendarIcon, Building2,
-  Link2, Copy, Check, Activity, Sparkles, Brain,
+  Link2, Copy, Check, Activity, Sparkles, Brain, Menu,
 } from "lucide-react";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Input } from "@/components/ui/input";
@@ -612,6 +612,14 @@ const Dashboard = () => {
             </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 hidden md:inline-flex">
               <LogOut className="h-4 w-4" />{t("nav.logout")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.dispatchEvent(new Event("alivia:open-global-menu"))}
+              aria-label="Menu"
+            >
+              <Menu className="h-5 w-5" />
             </Button>
           </div>
         </div>
