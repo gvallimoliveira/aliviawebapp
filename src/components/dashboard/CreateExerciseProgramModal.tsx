@@ -706,7 +706,20 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           </DialogHeader>
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 pb-4">
+        <div
+          ref={scrollContainerRef}
+          onDragOver={handleContainerDragOver}
+          onDragLeave={(e) => {
+            // stop if leaving the container entirely
+            const rect = scrollContainerRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+              stopAutoScroll();
+            }
+          }}
+          onDrop={stopAutoScroll}
+          className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 pb-4"
+        >
           <div className="space-y-4 pt-2">
           {draft.hasDraft && draft.draftMeta && (
             <DraftResumeBanner
