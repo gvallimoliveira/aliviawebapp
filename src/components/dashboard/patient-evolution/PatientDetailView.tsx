@@ -285,7 +285,7 @@ export default function PatientDetailView(props: any) {
         const { data: created, error } = await sb
           .from("patients")
           .insert(payload)
-          .select("id, full_name, email, cpf, birth_date, phone, address")
+          .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation")
           .single();
         if (error) throw error;
         row = created;
