@@ -1099,17 +1099,9 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const latestAssessment = patient ? patient.assessments[patient.assessments.length - 1] : null;
   const latestAnamnesisFields = latestAssessment ? getAnamnesisFields(latestAssessment) : [];
 
-  // Empty state
-  if (patients.length === 0) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="py-8 text-center">
-          <Activity className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">{t("pro.no_patients")}</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Empty state is now rendered INSIDE PatientListView so header + add button stay visible.
+
+
 
   // Patient list view
   if (!patient) {
