@@ -286,6 +286,56 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const [overSelectedIdx, setOverSelectedIdx] = useState<number | null>(null);
   const [dragCustomIdx, setDragCustomIdx] = useState<number | null>(null);
   const [overCustomIdx, setOverCustomIdx] = useState<number | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const autoScrollRafRef = useRef<number | null>(null);
+  const autoScrollSpeedRef = useRef<number>(0);
+
+  const stopAutoScroll = () => {
+    if (autoScrollRafRef.current !== null) {
+      cancelAnimationFrame(autoScrollRafRef.current);
+      autoScrollRafRef.current = null;
+    }
+    autoScrollSpeedRef.current = 0;
+  };
+
+  const runAutoScroll = () => {
+    const el = scrollContainerRef.current;
+    if (!el || autoScrollSpeedRef.current === 0) {
+      autoScrollRafRef.current = null;
+      return;
+    }
+    el.scrollTop += autoScrollSpeedRef.current;
+    autoScrollRafRef.current = requestAnimationFrame(runAutoScroll);
+  };
+
+  const handleContainerDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const edge = 60; // px from edge that triggers scroll
+    const maxSpeed = 18;
+    const y = e.clientY;
+    let speed = 0;
+    if (y < rect.top + edge) {
+      const intensity = (rect.top + edge - y) / edge;
+      speed = -Math.max(2, Math.min(maxSpeed, intensity * maxSpeed));
+    } else if (y > rect.bottom - edge) {
+      const intensity = (y - (rect.bottom - edge)) / edge;
+      speed = Math.max(2, Math.min(maxSpeed, intensity * maxSpeed));
+    }
+    autoScrollSpeedRef.current = speed;
+    if (speed !== 0 && autoScrollRafRef.current === null) {
+      autoScrollRafRef.current = requestAnimationFrame(runAutoScroll);
+    }
+  };
+
+  useEffect(() => {
+    if (dragSelectedIdx === null && dragCustomIdx === null) {
+      stopAutoScroll();
+    }
+  }, [dragSelectedIdx, dragCustomIdx]);
+
+  useEffect(() => () => stopAutoScroll(), []);
 
   const reorder = <T,>(arr: T[], from: number, to: number): T[] => {
     if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return arr;
