@@ -307,6 +307,8 @@ export default function PatientDetailView(props: any) {
         birth_date: row.birth_date ?? null,
         phone: row.phone ?? null,
         address: row.address ?? null,
+        sex: row.sex ?? null,
+        occupation: row.occupation ?? null,
       });
       setRegistrationModalOpen(true);
     } catch (err: any) {
