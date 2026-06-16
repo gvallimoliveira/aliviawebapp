@@ -34,6 +34,7 @@ import { createShortAppLink } from "@/lib/shortLink";
 import { openWhatsAppDeferred } from "@/lib/whatsappShare";
 import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
+import { useClinic } from "@/contexts/ClinicContext";
 
 
 const SUBSCALE_COLORS = [
