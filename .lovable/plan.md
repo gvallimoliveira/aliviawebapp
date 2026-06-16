@@ -1,66 +1,42 @@
-# Adicionar ação "Dados cadastrais" no prontuário do paciente
+## Causa raiz
 
-## Objetivo
+Dois bugs combinados produzem o sintoma do vídeo (múltiplos toasts "Avaliação concluída" ao salvar edição de dados cadastrais):
 
-Permitir que o profissional consulte e edite os dados cadastrais (nome, e-mail, CPF, nascimento, telefone, endereço) diretamente do prontuário, sem precisar voltar para a lista de pacientes.
+1. **`AddPatientModal.handleSave`** dispara `UPDATE` em **todas** as `assessments` do paciente (e em `professional_appointments`) sempre que se salva uma edição, mesmo que `patient_name`/`patient_email` não tenham mudado. Cada linha atualizada gera um evento Realtime.
+2. **`useRealtimeNotifications`** detecta "tornou-se concluída" comparando `payload.old.status !== "completed"`. Mas o Supabase Realtime só envia em `old` as colunas da REPLICA IDENTITY (PK por padrão), então `old.status` é sempre `undefined`. Resultado: **qualquer** UPDATE numa avaliação já concluída dispara o toast — não apenas a transição real para "completed".
 
-## Onde entra
+## Correções
 
-No `DropdownMenu` "Mais ações" do cabeçalho de cada paciente em `src/components/dashboard/patient-evolution/PatientDetailView.tsx`, junto de:
+### 1. `src/hooks/useRealtimeNotifications.ts`
+Endurecer a checagem de transição para evitar falsos positivos:
+- Só disparar o toast "Avaliação concluída" quando `payload.old.status` estiver **presente** (não undefined) **e** for diferente de `"completed"`, **e** `row.status === "completed"`.
+- Isso elimina a notificação espúria em qualquer UPDATE sobre rows já completas, vinda de qualquer fluxo (edição de cadastro, reavaliação, ajustes manuais etc.).
 
-- Falar com o Agente Clínico
-- Reavaliação
-- Relatório de Evolução
+### 2. `src/components/dashboard/AddPatientModal.tsx` (handleSave, ramo `isEdit`)
+- Só executar o `UPDATE` em `assessments` / `professional_appointments` se **realmente houve mudança** em `full_name` ou `email`. Comparar com os valores originais de `editPatient.full_name` / `editPatient.email`.
+- Quando nada mudou nesses dois campos, **não tocar** em `assessments` nem em `professional_appointments` — apenas atualizar a linha do paciente.
+- Esta mudança é defensiva (reduz writes desnecessários e eventos Realtime) e complementa a correção no listener.
 
-Nova entrada (primeira da lista, antes do Agente Clínico):
+### 3. Verificação
+Após editar:
+- Salvar sem alterar nome/email → nenhum toast espúrio (correção 2 evita o UPDATE; correção 1 garante segurança caso outro fluxo dispare).
+- Salvar alterando nome → toasts de "concluída" continuam **não** disparando (correção 1), mas os registros relacionados são atualizados corretamente.
+- Concluir uma avaliação de verdade (status passa de pending → completed) → toast continua funcionando normalmente, pois `old.status` virá como `"pending"` (já presente nos eventos legítimos de transição, e ainda que viesse `undefined` por replica identity, deixamos passar somente quando explicitamente diferente — ver nota técnica).
 
-- **"Dados cadastrais"** (ícone `UserCog`) — disponível para qualquer paciente, em modo solo e clínica (exceto demo).
+## Nota técnica sobre o listener
 
-## Como funciona o clique
+A regra final será:
+```ts
+const oldStatus = oldRow?.status;
+const becameCompleted =
+  oldStatus !== undefined &&
+  oldStatus !== "completed" &&
+  row.status === "completed";
+```
+Se quisermos suportar também o caso em que a REPLICA IDENTITY não envia `old.status` mas a transição é real, a alternativa seria ativar `REPLICA IDENTITY FULL` em `assessments`. **Não** vou propor essa mudança de schema agora porque (a) aumenta payload do Realtime para todas as outras telas, e (b) a transição "completed" no app já é acompanhada por outras rotas (a tela do profissional faz refetch quando o paciente envia). Mantemos a checagem estrita no client — sem falsos positivos é melhor que toast duplicado.
 
-1. Ao abrir o item, faz uma busca em `patients` pelo escopo correto:
-  - `clinic_id = clinicId` **ou** `professional_id = professionalId`
-  - filtro por `email = patient.email` (fallback `full_name = patient.name` quando não há e-mail)
-2. Se encontrar, carrega o registro completo (`id, full_name, email, cpf, birth_date, phone, address`) e abre o `AddPatientModal` em **modo edição** (prop `editPatient` já existente).
-3. Se não encontrar (paciente legado, criado só via avaliação), cria o registro mínimo com `full_name`/`email` no mesmo escopo e abre o modal em modo edição para o usuário completar os dados.
-4. Ao salvar, o `AddPatientModal` já dispara `reload-pro-patients` e propaga nome/e-mail para `assessments` e `professional_appointments` — não precisa de mudança extra.
+## Arquivos a editar
+- `src/hooks/useRealtimeNotifications.ts` — endurecer condição `becameCompleted`.
+- `src/components/dashboard/AddPatientModal.tsx` — condicionar UPDATE de `assessments` / `professional_appointments` a mudança real de nome/email.
 
-## Estados locais a adicionar no `PatientDetailView`
-
-- `registrationModalOpen: boolean`
-- `registrationPatient: PatientToEdit | null`
-- `registrationLoading: boolean` (para desabilitar o item enquanto busca)
-
-## Permissões / escopo
-
-- Não aparece em `isDemo` (demo profissional / paciente).
-- Em clínica, qualquer membro com acesso ao prontuário pode editar (mesmo critério já usado para os outros itens do dropdown).
-- Modo paciente (`PatientDetailView` é usado só pelo profissional) — sem mudança.
-
-## Internacionalização
-
-Labels em pt/en/es, inline no item (mesmo padrão dos outros itens do menu):
-
-- pt: "Dados cadastrais"
-- en: "Patient details"
-- es: "Datos del paciente"
-
-## Arquivos afetados
-
-- `src/components/dashboard/patient-evolution/PatientDetailView.tsx` — novo `DropdownMenuItem`, lookup/insert do paciente, estados e render do `AddPatientModal` reutilizado.
-- (Nenhum outro arquivo precisa mudar — `AddPatientModal` já suporta edição via prop `editPatient`.)
-
-## Fora de escopo
-
-- Não alteramos o `AddPatientModal` (apenas o reutilizamos).
-- Não criamos botão fora do prontuário (a lista de pacientes já tem o botão "Editar cadastro" próprio).
-- Sem mudanças de banco/RLS — as policies de `patients` já cobrem leitura e update por `professional_id`/`clinic_id`.
-
-## Perguntas
-
-Antes de implementar, preciso confirmar **uma** decisão:
-
-**Quando o paciente ainda não tem registro em `patients` (existe só pelo histórico de avaliações), o que prefere?**
-
-- (A) Criar automaticamente o cadastro no escopo atual e abrir o modal para completar — fluxo mais fluido, sem mensagens. *(recomendado, é o mesmo padrão já usado pelo botão "Falar com Agente Clínico")*
-- &nbsp;
+Nenhuma migração de banco necessária.
