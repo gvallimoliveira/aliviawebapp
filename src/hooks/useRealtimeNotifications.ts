@@ -106,8 +106,8 @@ export function useRealtimeNotifications() {
               const ad = row.anamnesis_data;
               if (ad && typeof ad === "object" && (ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder)) return;
 
-              const row: any = payload.new;
-              if (!row) return;
+
+
               const name = row.patient_name || "Paciente";
               toast("Nova avaliação recebida", {
                 description: `${name} iniciou uma avaliação para você.`,
