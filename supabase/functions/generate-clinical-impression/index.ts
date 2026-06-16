@@ -54,10 +54,11 @@ Rules:
 - Onset: ${anamnesisData?.onset || "N/A"}
 - Pain regions: ${(painRegions || []).join(", ") || "N/A"}
 - Pain types: ${(anamnesisData?.painTypes || []).join(", ") || "N/A"}
-- Pain score (VAS): ${painScore ?? "N/A"}/10
+- Pain score (VAS, overall/average): ${painScore ?? "N/A"}/10
 - Pain score mode: ${anamnesisData?.painScoreMode || "general"}
-${anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion ? `- Pain scores per region: ${Object.entries(anamnesisData.painScoresPerRegion).map(([k, v]) => `${k}: ${v}/10`).join(", ")}` : ""}
-- Evolution: ${anamnesisData?.evolution || "N/A"}
+${anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0 ? `- **PAIN INTENSITY PER REGION (use as primary pain input; overall score is just an average):**
+${Object.entries(anamnesisData.painScoresPerRegion).map(([k, v]) => `    • ${k}: ${v}/10`).join("\n")}
+- When summarizing, explicitly mention which body region(s) carry the highest pain scores and let that asymmetry guide the clinical picture — do not collapse everything into the overall average.` : ""}
 - Aggravating factors: ${anamnesisData?.aggravatingFactors || "N/A"}
 - Relieving factors: ${anamnesisData?.relievingFactors || "N/A"}
 - Activity level: ${anamnesisData?.activityLevel || "N/A"}
