@@ -384,9 +384,9 @@ const ExerciseProgram = () => {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-14 items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {window.history.length > 1 && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigate(-1)}>
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
@@ -395,13 +395,24 @@ const ExerciseProgram = () => {
             ) : (
               <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
             )}
-            <span className="text-sm font-semibold text-foreground truncate max-w-[180px]">
+            <span className="text-sm font-semibold text-foreground truncate">
               {program?.professional?.full_name || program?.professional?.clinic_name || "Aliv.iA"}
             </span>
           </div>
-          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
-            <Globe className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="gap-1.5 text-xs"
+              title={language === "pt" ? "Ir para Aliv.iA" : language === "es" ? "Ir a Aliv.iA" : "Go to Aliv.iA"}
+            >
+              {language === "pt" ? "Aliv.iA" : "Aliv.iA"}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
+              <Globe className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
