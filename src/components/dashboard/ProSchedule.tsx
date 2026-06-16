@@ -571,21 +571,13 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         }
       } else {
         await (supabase.from("professional_appointments" as any) as any).insert(payload);
-        if (extras.selectedPatientKey === "__new__" && trimmedEmail && (clinicId || effectiveProfId)) {
-          let existQ = supabase.from("assessments").select("id").eq("patient_email", trimmedEmail);
-          if (clinicId) existQ = existQ.eq("clinic_id", clinicId);
-          else if (effectiveProfId) existQ = existQ.eq("professional_id", effectiveProfId);
-          const { data: existing } = await existQ.limit(1);
-          if (!existing || existing.length === 0) {
-            const assessmentInsert: any = {
-              type: "professional", status: "completed",
-              patient_name: payload.patient_name, patient_email: trimmedEmail,
-              anamnesis_data: { externalPatient: true },
-            };
-            if (effectiveProfId) assessmentInsert.professional_id = effectiveProfId;
-            if (clinicId) assessmentInsert.clinic_id = clinicId;
-            await supabase.from("assessments").insert(assessmentInsert);
-            window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+        if (extras.selectedPatientKey === "__new__" && payload.patient_name && (clinicId || effectiveProfId)) {
+          // Cadastra o paciente na tabela `patients` para aparecer na aba Profissional.
+          // NÃO cria mais um assessment placeholder com status "completed" — isso disparava
+          // o toast de "Avaliação concluída" e fazia o card mostrar uma avaliação fantasma.
+          await (supabase.from("patients" as any) as any).upsert(patientRow, { ignoreDuplicates: true });
+          window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+          if (trimmedEmail) {
             toast({
               title: t("schedule.patient_created"),
               description: t("schedule.suggest_pre_assessment"),
@@ -593,11 +585,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             });
           }
         }
-        if (extras.selectedPatientKey === "__new__" && payload.patient_name && (clinicId || effectiveProfId)) {
-          await (supabase.from("patients" as any) as any).upsert(patientRow, { ignoreDuplicates: true });
-          window.dispatchEvent(new CustomEvent("reload-pro-patients"));
-        }
       }
+
       toast({ title: isEdit ? t("schedule.updated") : t("schedule.created") });
       closeAppointmentModal();
       setKnownPatients((prev) => {

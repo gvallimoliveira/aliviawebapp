@@ -103,6 +103,11 @@ export function useRealtimeNotifications() {
             (payload) => {
               const row: any = payload.new;
               if (!row) return;
+              const ad = row.anamnesis_data;
+              if (ad && typeof ad === "object" && (ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder)) return;
+
+
+
               const name = row.patient_name || "Paciente";
               toast("Nova avaliação recebida", {
                 description: `${name} iniciou uma avaliação para você.`,
@@ -127,11 +132,14 @@ export function useRealtimeNotifications() {
               const oldRow: any = payload.old;
               const row: any = payload.new;
               if (!row) return;
+              const ad = row.anamnesis_data;
+              if (ad && typeof ad === "object" && (ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder)) return;
               const oldStatus = oldRow?.status;
               const becameCompleted =
                 oldStatus !== undefined &&
                 oldStatus !== "completed" &&
                 row.status === "completed";
+
               if (!becameCompleted) return;
               const name = row.patient_name || "Paciente";
               toast("Avaliação concluída", {

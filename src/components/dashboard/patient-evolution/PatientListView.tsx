@@ -151,6 +151,14 @@ export default function PatientListView(props: any) {
       </div>
 
       {(() => {
+        const isPlaceholderAssessment = (a: any) => {
+          const ad = a?.anamnesis_data;
+          if (!ad || typeof ad !== "object") return false;
+          return !!(ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder);
+        };
+        const realAssessmentsOf = (p: any) =>
+          (p.assessments || []).filter((a: any) => !isPlaceholderAssessment(a));
+
         const filteredPatients = [...patients].sort((a: any, b: any) => {
           if (sortMode === "recent") {
             return new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime();
@@ -175,6 +183,8 @@ export default function PatientListView(props: any) {
 
         const VISIBLE_LIMIT = 8;
         const isScrollable = filteredPatients.length > VISIBLE_LIMIT;
+        const isEmpty = filteredPatients.length === 0;
+        const hasSearch = !!searchQuery.trim();
 
         return (
           <>
@@ -196,6 +206,32 @@ export default function PatientListView(props: any) {
                 </span>
               )}
             </div>
+            {isEmpty ? (
+              <Card className="border-dashed">
+                <CardContent className="py-10 text-center space-y-3">
+                  <Activity className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                  <p className="text-sm text-muted-foreground">
+                    {hasSearch
+                      ? (language === "pt"
+                          ? "Nenhum paciente encontrado para a busca."
+                          : language === "es"
+                          ? "Ningún paciente encontrado para la búsqueda."
+                          : "No patients found for your search.")
+                      : t("pro.no_patients")}
+                  </p>
+                  {!hasSearch && !readOnly && (
+                    <Button
+                      size="sm"
+                      className="gap-1.5 rounded-xl"
+                      onClick={() => { setEditPatientData(null); setAddPatientOpen(true); }}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      {t("pro.add_patient")}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
             <div
               className={`space-y-3 ${
                 isScrollable
@@ -203,15 +239,18 @@ export default function PatientListView(props: any) {
                   : ""
               }`}
             >
+
               {filteredPatients.map((p: any) => {
-                const firstScore = p.assessments[0]?.pain_score;
-                const lastScore = p.assessments[p.assessments.length - 1]?.pain_score;
+                const realAssessments = realAssessmentsOf(p);
+                const firstScore = realAssessments[0]?.pain_score;
+                const lastScore = realAssessments[realAssessments.length - 1]?.pain_score;
                 const trend = firstScore != null && lastScore != null ? (lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable") : null;
                 const isHidden = hiddenKeys.has(p.groupKey);
                 const patientRec = p.patientRecord;
                 const isIncomplete = patientRec && (!patientRec.email || !patientRec.cpf || !patientRec.phone);
-                const isImportedOnly = !patientRec && p.assessments.length === 0;
+                const isImportedOnly = !patientRec && realAssessments.length === 0;
                 const showIncomplete = isIncomplete || isImportedOnly;
+
                 const startLongPress = () => {
                   longPressFiredRef.current = false;
                   longPressTimerRef.current = setTimeout(() => {
@@ -226,7 +265,7 @@ export default function PatientListView(props: any) {
                     longPressTimerRef.current = null;
                   }
                 };
-                const patientAdherence = p.assessments.reduce((acc: { total: number; completed: number }, a: any) => {
+                const patientAdherence = realAssessments.reduce((acc: { total: number; completed: number }, a: any) => {
                   const adh = exerciseAdherence[a.id];
                   if (adh) {
                     acc.total += adh.total;
@@ -236,6 +275,7 @@ export default function PatientListView(props: any) {
                 }, { total: 0, completed: 0 });
                 const pct = patientAdherence.total > 0 ? Math.round((patientAdherence.completed / patientAdherence.total) * 100) : null;
                 const color = pct == null ? "" : pct >= 70 ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : pct >= 40 ? "bg-amber-500/10 text-amber-600 border-amber-200" : "bg-destructive/10 text-destructive border-destructive/20";
+
 
                 return (
                   <Card
@@ -258,13 +298,16 @@ export default function PatientListView(props: any) {
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-muted-foreground" />{p.name}</p>
                             {isHidden && <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">Arquivado</Badge>}
-                            <Badge variant="outline" className="text-[10px]">{p.assessments.length} {t("pro.assessments_count")}</Badge>
+                            {realAssessments.length > 0 && (
+                              <Badge variant="outline" className="text-[10px]">{realAssessments.length} {t("pro.assessments_count")}</Badge>
+                            )}
                             {trend === "improving" && <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200">Melhorando</Badge>}
                             {trend === "worsening" && <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">Piorando</Badge>}
                             {trend === "stable" && <Badge variant="outline" className="text-[10px]">Estável</Badge>}
-                            {p.assessments.some((a: any) => a.treatment_plan) ? (
+                            {realAssessments.some((a: any) => a.treatment_plan) ? (
                               <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1"><FileCheck className="h-3 w-3" /> Tratamento Liberado</Badge>
-                            ) : p.assessments.some((a: any) => a.diagnosis) ? (
+                            ) : realAssessments.some((a: any) => a.diagnosis) ? (
+
                               <Badge
                                 variant="outline"
                                 role="button"
@@ -351,7 +394,9 @@ export default function PatientListView(props: any) {
                 );
               })}
             </div>
+            )}
           </>
+
         );
       })()}
 

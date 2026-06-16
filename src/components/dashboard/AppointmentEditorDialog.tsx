@@ -300,19 +300,20 @@ const AppointmentEditorDialog = ({
 
           if (!assessmentId) {
             const ins: any = {
-              type: "professional", status: "completed", user_id: null,
+              type: "professional", status: "draft", user_id: null,
               professional_id: clinicId ? null : effectiveProId,
               clinic_id: clinicId || null,
               payment_status: "covered",
               patient_name: apt.patient_name || null,
               patient_email: evolutionEmail,
-              anamnesis_data: { quickEvolutionOnly: true, source: "schedule", appointment_id: apt.id },
+              anamnesis_data: { quickEvolutionOnly: true, placeholder: true, source: "schedule", appointment_id: apt.id },
               created_at: aptCreatedAt,
             };
             const { data: created, error } = await supabase.from("assessments").insert(ins).select("id").single();
             if (error) throw error;
             assessmentId = created.id;
           }
+
 
           const { data: existingRows } = await supabase.from("professional_notes")
             .select("content, professional_id, updated_at")
