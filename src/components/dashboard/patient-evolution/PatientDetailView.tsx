@@ -587,6 +587,19 @@ export default function PatientDetailView(props: any) {
         />
       )}
 
+      {registrationModalOpen && registrationPatient && (professionalId || clinicId) && (
+        <AddPatientModal
+          open={registrationModalOpen}
+          onOpenChange={setRegistrationModalOpen}
+          professionalId={professionalId || ""}
+          clinicId={clinicId || null}
+          editPatient={registrationPatient}
+          onAdded={() => {
+            window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+          }}
+        />
+      )}
+
       {(() => {
         const target = latestWithDiagnosis || latestAssessment;
         if (!target) return null;
