@@ -281,6 +281,34 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     setCustomExercises(customExercises.filter((c) => c.tempId !== tempId));
   };
 
+  // ---------- Drag-and-drop reorder (native HTML5) ----------
+  const [dragSelectedIdx, setDragSelectedIdx] = useState<number | null>(null);
+  const [overSelectedIdx, setOverSelectedIdx] = useState<number | null>(null);
+  const [dragCustomIdx, setDragCustomIdx] = useState<number | null>(null);
+  const [overCustomIdx, setOverCustomIdx] = useState<number | null>(null);
+
+  const reorder = <T,>(arr: T[], from: number, to: number): T[] => {
+    if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return arr;
+    const copy = arr.slice();
+    const [moved] = copy.splice(from, 1);
+    copy.splice(to, 0, moved);
+    return copy;
+  };
+
+  const onSelectedDrop = (toIdx: number) => {
+    if (dragSelectedIdx === null) return;
+    setSelected((prev) => reorder(prev, dragSelectedIdx, toIdx));
+    setDragSelectedIdx(null);
+    setOverSelectedIdx(null);
+  };
+
+  const onCustomDrop = (toIdx: number) => {
+    if (dragCustomIdx === null) return;
+    setCustomExercises((prev) => reorder(prev, dragCustomIdx, toIdx));
+    setDragCustomIdx(null);
+    setOverCustomIdx(null);
+  };
+
   const totalCount = selected.length + customExercises.filter(c => c.name.trim()).length;
 
   const applyTemplate = (tpl: HepTemplate) => {
