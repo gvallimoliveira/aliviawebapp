@@ -298,13 +298,16 @@ export default function PatientListView(props: any) {
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-muted-foreground" />{p.name}</p>
                             {isHidden && <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">Arquivado</Badge>}
-                            <Badge variant="outline" className="text-[10px]">{p.assessments.length} {t("pro.assessments_count")}</Badge>
+                            {realAssessments.length > 0 && (
+                              <Badge variant="outline" className="text-[10px]">{realAssessments.length} {t("pro.assessments_count")}</Badge>
+                            )}
                             {trend === "improving" && <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200">Melhorando</Badge>}
                             {trend === "worsening" && <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">Piorando</Badge>}
                             {trend === "stable" && <Badge variant="outline" className="text-[10px]">Estável</Badge>}
-                            {p.assessments.some((a: any) => a.treatment_plan) ? (
+                            {realAssessments.some((a: any) => a.treatment_plan) ? (
                               <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1"><FileCheck className="h-3 w-3" /> Tratamento Liberado</Badge>
-                            ) : p.assessments.some((a: any) => a.diagnosis) ? (
+                            ) : realAssessments.some((a: any) => a.diagnosis) ? (
+
                               <Badge
                                 variant="outline"
                                 role="button"
