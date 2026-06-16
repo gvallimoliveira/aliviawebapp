@@ -241,14 +241,16 @@ export default function PatientListView(props: any) {
             >
 
               {filteredPatients.map((p: any) => {
-                const firstScore = p.assessments[0]?.pain_score;
-                const lastScore = p.assessments[p.assessments.length - 1]?.pain_score;
+                const realAssessments = realAssessmentsOf(p);
+                const firstScore = realAssessments[0]?.pain_score;
+                const lastScore = realAssessments[realAssessments.length - 1]?.pain_score;
                 const trend = firstScore != null && lastScore != null ? (lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable") : null;
                 const isHidden = hiddenKeys.has(p.groupKey);
                 const patientRec = p.patientRecord;
                 const isIncomplete = patientRec && (!patientRec.email || !patientRec.cpf || !patientRec.phone);
-                const isImportedOnly = !patientRec && p.assessments.length === 0;
+                const isImportedOnly = !patientRec && realAssessments.length === 0;
                 const showIncomplete = isIncomplete || isImportedOnly;
+
                 const startLongPress = () => {
                   longPressFiredRef.current = false;
                   longPressTimerRef.current = setTimeout(() => {
