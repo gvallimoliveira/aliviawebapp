@@ -1,36 +1,66 @@
-## Problema
+# Adicionar ação "Dados cadastrais" no prontuário do paciente
 
-1. **Disclaimer acadêmico ausente no link do HEP.** O link `/hep/:token` (página `ExerciseProgram.tsx`) não mostra o aviso "Alivia Acadêmico — Documento de caráter acadêmico, sem valor profissional", mesmo quando o profissional está com `is_student = true`. O selo já é aplicado corretamente no PDF de relatório (`generatePdf.ts`) e na página de avaliação profissional (`ProfessionalAssessment.tsx`), mas não foi propagado para o HEP.
+## Objetivo
 
-2. **Botão "Enviar via WhatsApp" do HEP não abre o WhatsApp no mobile.** No `CreateExerciseProgramModal.tsx`, `handleWhatsApp` faz `await createShortAppLink(...)` **antes** de chamar `window.open(...)`. Isso quebra o "user-gesture" no Safari/Chrome mobile e o popup é bloqueado silenciosamente. Os relatórios já contornam isso usando `openWhatsAppDeferred()` em `src/lib/whatsappShare.ts`, que reserva a aba de forma síncrona dentro do clique e só navega depois.
+Permitir que o profissional consulte e edite os dados cadastrais (nome, e-mail, CPF, nascimento, telefone, endereço) diretamente do prontuário, sem precisar voltar para a lista de pacientes.
 
-## Ajustes
+## Onde entra
 
-### 1. `src/pages/ExerciseProgram.tsx` — exibir banner acadêmico
+No `DropdownMenu` "Mais ações" do cabeçalho de cada paciente em `src/components/dashboard/patient-evolution/PatientDetailView.tsx`, junto de:
 
-- Estender o tipo `Program.professional` com `is_student`, `student_institution`, `student_period`.
-- No `select(...)` da query de `exercise_programs`, incluir esses três campos do join `professionals(...)`.
-- Renderizar, logo no início do `<main>` (antes do cabeçalho centralizado), o mesmo bloco amarelo já usado em `ProfessionalAssessment.tsx` (linhas 444–464), traduzido para pt/en/es, quando `program?.professional?.is_student === true`. Texto idêntico ao do PDF/avaliação para manter consistência.
-- Não tocar no fluxo demo (`token === "demo-shoulder"`): manter `is_student: false` no mock.
+- Falar com o Agente Clínico
+- Reavaliação
+- Relatório de Evolução
 
-### 2. `src/components/dashboard/CreateExerciseProgramModal.tsx` — WhatsApp confiável no mobile
+Nova entrada (primeira da lista, antes do Agente Clínico):
 
-- Importar `openWhatsAppDeferred` de `@/lib/whatsappShare`.
-- Reescrever `handleWhatsApp` para:
-  1. Chamar `const wa = openWhatsAppDeferred();` **sincronamente** dentro do handler do clique (reserva a aba durante o gesto do usuário).
-  2. Em seguida `await createShortAppLink(...)`.
-  3. Em sucesso: `wa.send(\`Olá ${patientName}! Preparei seu programa de exercícios domiciliares. Acesse aqui: ${short}\`)`.
-  4. Em erro: `wa.abort()` + toast de erro (sem alterar UX atual além de mostrar mensagem de falha).
-- Não alterar `handleCopy` nem outros handlers.
+- **"Dados cadastrais"** (ícone `UserCog`) — disponível para qualquer paciente, em modo solo e clínica (exceto demo).
 
-### 3. Não alterar
+## Como funciona o clique
 
-- `PatientDetailView.tsx` já chama `window.open(wa.me/...)` direto no clique sem `await` — funciona, deixar como está.
-- Edge function `agent-generate-hep` apenas posta o link no chat do agente; não há botão WhatsApp lá. Sem mudanças.
-- PDF/relatórios e demais fluxos de share permanecem intactos.
+1. Ao abrir o item, faz uma busca em `patients` pelo escopo correto:
+  - `clinic_id = clinicId` **ou** `professional_id = professionalId`
+  - filtro por `email = patient.email` (fallback `full_name = patient.name` quando não há e-mail)
+2. Se encontrar, carrega o registro completo (`id, full_name, email, cpf, birth_date, phone, address`) e abre o `AddPatientModal` em **modo edição** (prop `editPatient` já existente).
+3. Se não encontrar (paciente legado, criado só via avaliação), cria o registro mínimo com `full_name`/`email` no mesmo escopo e abre o modal em modo edição para o usuário completar os dados.
+4. Ao salvar, o `AddPatientModal` já dispara `reload-pro-patients` e propaga nome/e-mail para `assessments` e `professional_appointments` — não precisa de mudança extra.
 
-## Validação
+## Estados locais a adicionar no `PatientDetailView`
 
-- Abrir um HEP gerado por uma conta com `is_student = true` → banner amarelo "Alivia Acadêmico" aparece no topo, com nome/instituição/período.
-- Abrir um HEP de um fisioterapeuta formado → sem banner (comportamento atual).
-- No modal pós-criação do HEP em desktop e mobile, clicar "Enviar via WhatsApp" → abre `wa.me` com o texto preenchido (mobile redireciona para o app instalado, igual aos relatórios).
+- `registrationModalOpen: boolean`
+- `registrationPatient: PatientToEdit | null`
+- `registrationLoading: boolean` (para desabilitar o item enquanto busca)
+
+## Permissões / escopo
+
+- Não aparece em `isDemo` (demo profissional / paciente).
+- Em clínica, qualquer membro com acesso ao prontuário pode editar (mesmo critério já usado para os outros itens do dropdown).
+- Modo paciente (`PatientDetailView` é usado só pelo profissional) — sem mudança.
+
+## Internacionalização
+
+Labels em pt/en/es, inline no item (mesmo padrão dos outros itens do menu):
+
+- pt: "Dados cadastrais"
+- en: "Patient details"
+- es: "Datos del paciente"
+
+## Arquivos afetados
+
+- `src/components/dashboard/patient-evolution/PatientDetailView.tsx` — novo `DropdownMenuItem`, lookup/insert do paciente, estados e render do `AddPatientModal` reutilizado.
+- (Nenhum outro arquivo precisa mudar — `AddPatientModal` já suporta edição via prop `editPatient`.)
+
+## Fora de escopo
+
+- Não alteramos o `AddPatientModal` (apenas o reutilizamos).
+- Não criamos botão fora do prontuário (a lista de pacientes já tem o botão "Editar cadastro" próprio).
+- Sem mudanças de banco/RLS — as policies de `patients` já cobrem leitura e update por `professional_id`/`clinic_id`.
+
+## Perguntas
+
+Antes de implementar, preciso confirmar **uma** decisão:
+
+**Quando o paciente ainda não tem registro em `patients` (existe só pelo histórico de avaliações), o que prefere?**
+
+- (A) Criar automaticamente o cadastro no escopo atual e abrir o modal para completar — fluxo mais fluido, sem mensagens. *(recomendado, é o mesmo padrão já usado pelo botão "Falar com Agente Clínico")*
+- &nbsp;
