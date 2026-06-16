@@ -250,6 +250,70 @@ export default function PatientDetailView(props: any) {
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
   const [summaryDialogOpen, setSummaryDialogOpen] = React.useState(false);
   const [reassessDialog, setReassessDialog] = React.useState<{ open: boolean; loading: boolean; link: string; error: string | null }>({ open: false, loading: false, link: "", error: null });
+  const [registrationModalOpen, setRegistrationModalOpen] = React.useState(false);
+  const [registrationPatient, setRegistrationPatient] = React.useState<PatientToEdit | null>(null);
+  const [registrationLoading, setRegistrationLoading] = React.useState(false);
+
+  const openRegistrationModal = React.useCallback(async () => {
+    if (registrationLoading) return;
+    setRegistrationLoading(true);
+    try {
+      const sb = supabase as any;
+      let row: any = patient?.patientRecord || null;
+
+      if (!row?.id) {
+        let lookup = sb.from("patients").select("id, full_name, email, cpf, birth_date, phone, address").limit(1);
+        if (patient?.email) lookup = lookup.eq("email", patient.email);
+        else lookup = lookup.eq("full_name", patient.name);
+        if (clinicId) lookup = lookup.eq("clinic_id", clinicId);
+        else if (professionalId) lookup = lookup.eq("professional_id", professionalId);
+        const { data } = await lookup.maybeSingle();
+        row = data || null;
+      }
+
+      if (!row?.id && (patient?.name || patient?.email)) {
+        const payload: Record<string, any> = { full_name: patient.name || patient.email || "Paciente" };
+        if (patient?.email) payload.email = patient.email;
+        if (clinicId) payload.clinic_id = clinicId;
+        else if (professionalId) payload.professional_id = professionalId;
+        const { data: created, error } = await sb
+          .from("patients")
+          .insert(payload)
+          .select("id, full_name, email, cpf, birth_date, phone, address")
+          .single();
+        if (error) throw error;
+        row = created;
+      }
+
+      if (!row?.id) {
+        toast({
+          title: language === "pt" ? "Não foi possível abrir o cadastro" : language === "es" ? "No se pudo abrir el registro" : "Could not open patient details",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setRegistrationPatient({
+        id: row.id,
+        full_name: row.full_name || patient.name || "",
+        email: row.email ?? patient.email ?? null,
+        cpf: row.cpf ?? null,
+        birth_date: row.birth_date ?? null,
+        phone: row.phone ?? null,
+        address: row.address ?? null,
+      });
+      setRegistrationModalOpen(true);
+    } catch (err: any) {
+      console.error("[registration modal] failed", err);
+      toast({
+        title: language === "pt" ? "Erro ao carregar cadastro" : language === "es" ? "Error al cargar el registro" : "Failed to load patient details",
+        description: err?.message,
+        variant: "destructive",
+      });
+    } finally {
+      setRegistrationLoading(false);
+    }
+  }, [registrationLoading, patient, clinicId, professionalId, toast, language]);
 
   const openReassessmentLinkDialog = React.useCallback(async () => {
     if (!latestWithDiagnosis) return;
