@@ -388,7 +388,9 @@ export default function PatientListView(props: any) {
                 );
               })}
             </div>
+            )}
           </>
+
         );
       })()}
 
