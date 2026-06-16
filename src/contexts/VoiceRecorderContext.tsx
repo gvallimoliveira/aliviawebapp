@@ -251,6 +251,38 @@ const GlobalVoiceRecorderFAB = () => {
     stopTick();
   };
 
+  // Auto-finalize when the host screen (e.g. ManualAssessmentModal) detaches
+  // mid-recording. This ensures any partial audio captured so far is uploaded,
+  // transcribed and saved to the chart — instead of waiting for the user to
+  // press Stop or for the next 3-min rotation.
+  const prevSessionRef = useRef<VoiceRecorderSession | null>(null);
+  useEffect(() => {
+    const hadSession = !!prevSessionRef.current;
+    const hasSession = !!session;
+    prevSessionRef.current = session;
+    if (hadSession && !hasSession && (state === "recording" || state === "paused")) {
+      try {
+        if (recRef.current?.state === "paused") {
+          recRef.current.resume();
+        }
+      } catch {}
+      finalStopRef.current = true;
+      if (recRef.current && recRef.current.state !== "inactive") {
+        recRef.current.stop();
+      }
+      stopTick();
+      toast({
+        title: isPt ? "Gravação finalizada" : "Recording finalized",
+        description: isPt
+          ? "Avaliação encerrada — processando transcrição parcial e enviando ao prontuário."
+          : "Assessment closed — processing partial transcript and saving to chart.",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+
+
   const cancelRecording = () => {
     chunksRef.current = [];
     if (recRef.current && recRef.current.state !== "inactive") {
