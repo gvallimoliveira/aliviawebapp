@@ -15,7 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload, Sparkles, Save, X, BookmarkPlus,
+  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload, Sparkles, Save, X, BookmarkPlus, GripVertical,
 } from "lucide-react";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
@@ -279,6 +279,34 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
   const removeCustom = (tempId: string) => {
     setCustomExercises(customExercises.filter((c) => c.tempId !== tempId));
+  };
+
+  // ---------- Drag-and-drop reorder (native HTML5) ----------
+  const [dragSelectedIdx, setDragSelectedIdx] = useState<number | null>(null);
+  const [overSelectedIdx, setOverSelectedIdx] = useState<number | null>(null);
+  const [dragCustomIdx, setDragCustomIdx] = useState<number | null>(null);
+  const [overCustomIdx, setOverCustomIdx] = useState<number | null>(null);
+
+  const reorder = <T,>(arr: T[], from: number, to: number): T[] => {
+    if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return arr;
+    const copy = arr.slice();
+    const [moved] = copy.splice(from, 1);
+    copy.splice(to, 0, moved);
+    return copy;
+  };
+
+  const onSelectedDrop = (toIdx: number) => {
+    if (dragSelectedIdx === null) return;
+    setSelected((prev) => reorder(prev, dragSelectedIdx, toIdx));
+    setDragSelectedIdx(null);
+    setOverSelectedIdx(null);
+  };
+
+  const onCustomDrop = (toIdx: number) => {
+    if (dragCustomIdx === null) return;
+    setCustomExercises((prev) => reorder(prev, dragCustomIdx, toIdx));
+    setDragCustomIdx(null);
+    setOverCustomIdx(null);
   };
 
   const totalCount = selected.length + customExercises.filter(c => c.name.trim()).length;
@@ -908,10 +936,20 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 <PenLine className="h-3.5 w-3.5" />
                 Exercícios manuais
               </p>
-              {customExercises.map((c) => (
-                <Card key={c.tempId} className="overflow-hidden border-dashed">
+              {customExercises.map((c, idx) => (
+                <Card
+                  key={c.tempId}
+                  className={`overflow-hidden border-dashed transition-all ${dragCustomIdx === idx ? "opacity-50" : ""} ${overCustomIdx === idx && dragCustomIdx !== idx ? "ring-2 ring-primary" : ""}`}
+                  draggable
+                  onDragStart={(e) => { setDragCustomIdx(idx); e.dataTransfer.effectAllowed = "move"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overCustomIdx !== idx) setOverCustomIdx(idx); }}
+                  onDragLeave={() => { if (overCustomIdx === idx) setOverCustomIdx(null); }}
+                  onDrop={(e) => { e.preventDefault(); onCustomDrop(idx); }}
+                  onDragEnd={() => { setDragCustomIdx(null); setOverCustomIdx(null); }}
+                >
                   <CardContent className="py-2.5 px-3 space-y-2">
                     <div className="flex items-center gap-2">
+                      <GripVertical className="h-4 w-4 text-muted-foreground/60 shrink-0 cursor-grab active:cursor-grabbing" />
                       <Input
                         placeholder="Nome do exercício *"
                         value={c.name}
@@ -957,11 +995,29 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           {/* Selected library exercises config */}
           {selected.length > 0 && (
             <div className="space-y-3 border-t pt-3">
-              <p className="text-sm font-semibold text-foreground">{selected.length} exercício(s) do banco selecionado(s)</p>
-              {selected.map((s) => (
-                <Card key={s.exercise.id} className="overflow-hidden">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-foreground">{selected.length} exercício(s) do banco selecionado(s)</p>
+                {selected.length > 1 && (
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <GripVertical className="h-3 w-3" />
+                    {language === "en" ? "Drag to reorder" : "Arraste para reordenar"}
+                  </p>
+                )}
+              </div>
+              {selected.map((s, idx) => (
+                <Card
+                  key={s.exercise.id}
+                  className={`overflow-hidden transition-all ${dragSelectedIdx === idx ? "opacity-50" : ""} ${overSelectedIdx === idx && dragSelectedIdx !== idx ? "ring-2 ring-primary" : ""}`}
+                  draggable
+                  onDragStart={(e) => { setDragSelectedIdx(idx); e.dataTransfer.effectAllowed = "move"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overSelectedIdx !== idx) setOverSelectedIdx(idx); }}
+                  onDragLeave={() => { if (overSelectedIdx === idx) setOverSelectedIdx(null); }}
+                  onDrop={(e) => { e.preventDefault(); onSelectedDrop(idx); }}
+                  onDragEnd={() => { setDragSelectedIdx(null); setOverSelectedIdx(null); }}
+                >
                   <CardContent className="py-2.5 px-3 space-y-2">
                     <div className="flex items-start gap-2">
+                      <GripVertical className="h-4 w-4 text-muted-foreground/60 mt-0.5 shrink-0 cursor-grab active:cursor-grabbing" />
                       <p className="text-sm font-medium text-foreground flex-1 min-w-0">{getName(s.exercise)}</p>
                       <Button
                         type="button"
