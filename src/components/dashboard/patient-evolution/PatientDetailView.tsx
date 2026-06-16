@@ -631,9 +631,7 @@ export default function PatientDetailView(props: any) {
           editPatient={registrationPatient}
           readOnly
           canEdit={canEditRegistration}
-          onAdded={() => {
-            window.dispatchEvent(new CustomEvent("reload-pro-patients"));
-          }}
+          onAdded={handleRegistrationSaved}
         />
       )}
 
