@@ -936,10 +936,20 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 <PenLine className="h-3.5 w-3.5" />
                 Exercícios manuais
               </p>
-              {customExercises.map((c) => (
-                <Card key={c.tempId} className="overflow-hidden border-dashed">
+              {customExercises.map((c, idx) => (
+                <Card
+                  key={c.tempId}
+                  className={`overflow-hidden border-dashed transition-all ${dragCustomIdx === idx ? "opacity-50" : ""} ${overCustomIdx === idx && dragCustomIdx !== idx ? "ring-2 ring-primary" : ""}`}
+                  draggable
+                  onDragStart={(e) => { setDragCustomIdx(idx); e.dataTransfer.effectAllowed = "move"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overCustomIdx !== idx) setOverCustomIdx(idx); }}
+                  onDragLeave={() => { if (overCustomIdx === idx) setOverCustomIdx(null); }}
+                  onDrop={(e) => { e.preventDefault(); onCustomDrop(idx); }}
+                  onDragEnd={() => { setDragCustomIdx(null); setOverCustomIdx(null); }}
+                >
                   <CardContent className="py-2.5 px-3 space-y-2">
                     <div className="flex items-center gap-2">
+                      <GripVertical className="h-4 w-4 text-muted-foreground/60 shrink-0 cursor-grab active:cursor-grabbing" />
                       <Input
                         placeholder="Nome do exercício *"
                         value={c.name}
