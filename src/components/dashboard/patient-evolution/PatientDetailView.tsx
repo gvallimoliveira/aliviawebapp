@@ -177,6 +177,11 @@ const GenerateHypothesisCard = ({ assessment, isDemo, onGenerated }: GenerateHyp
 export default function PatientDetailView(props: any) {
   const navigate = useNavigate();
   const { hasAccess: hasAgentAccess } = useClinicalAgentAccess();
+  const { isClinicMode, canManageClinic } = useClinic();
+  // Regra de permissão para Dados Cadastrais:
+  // - Modo profissional (solo): sem restrição → pode editar.
+  // - Modo clínica: somente owner/admin/secretary podem editar (canManageClinic).
+  const canEditRegistration = isClinicMode ? canManageClinic : true;
 
   const {
     t,
