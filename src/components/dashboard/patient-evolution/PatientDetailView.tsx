@@ -374,7 +374,7 @@ export default function PatientDetailView(props: any) {
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
           {((!readOnly || allowManualAssessment) || isDemo) && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
-          {(latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2 || (hasAgentAccess && !isDemo)) && (
+          {(latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2 || (hasAgentAccess && !isDemo) || !isDemo) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1.5 shrink-0" title={language === "pt" ? "Mais ações" : "More actions"}>
@@ -385,6 +385,12 @@ export default function PatientDetailView(props: any) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="text-[11px] text-muted-foreground">{language === "pt" ? "Outras ações" : "Other actions"}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {!isDemo && (
+                  <DropdownMenuItem disabled={registrationLoading} onSelect={(e) => { e.preventDefault(); openRegistrationModal(); }}>
+                    {registrationLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <UserCog className="h-4 w-4 mr-2" />}
+                    {language === "pt" ? "Dados cadastrais" : language === "es" ? "Datos del paciente" : "Patient details"}
+                  </DropdownMenuItem>
+                )}
                 {hasAgentAccess && !isDemo && (
                   <DropdownMenuItem onSelect={async () => {
                     let patientDbId: string | null = null;
