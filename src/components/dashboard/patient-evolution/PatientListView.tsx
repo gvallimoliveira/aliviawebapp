@@ -265,7 +265,7 @@ export default function PatientListView(props: any) {
                     longPressTimerRef.current = null;
                   }
                 };
-                const patientAdherence = p.assessments.reduce((acc: { total: number; completed: number }, a: any) => {
+                const patientAdherence = realAssessments.reduce((acc: { total: number; completed: number }, a: any) => {
                   const adh = exerciseAdherence[a.id];
                   if (adh) {
                     acc.total += adh.total;
@@ -275,6 +275,7 @@ export default function PatientListView(props: any) {
                 }, { total: 0, completed: 0 });
                 const pct = patientAdherence.total > 0 ? Math.round((patientAdherence.completed / patientAdherence.total) * 100) : null;
                 const color = pct == null ? "" : pct >= 70 ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : pct >= 40 ? "bg-amber-500/10 text-amber-600 border-amber-200" : "bg-destructive/10 text-destructive border-destructive/20";
+
 
                 return (
                   <Card
