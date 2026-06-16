@@ -990,24 +990,47 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
                 {isClinicMode && activeClinic
                   ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
                   : `${getPublicOrigin()}/assessment/professional/${professional.id}`}
               </code>
-              <Button onClick={() => {
-                const link = isClinicMode && activeClinic
-                  ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
-                  : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
-                navigator.clipboard.writeText(link);
-                setLinkCopied(true);
-                toast({ title: t("referral.copied") });
-                setTimeout(() => setLinkCopied(false), 2000);
-              }} variant="outline" className="gap-1.5 rounded-xl shrink-0">
-                {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-                {linkCopied ? t("referral.copied") : t("referral.copy_link")}
-              </Button>
+              <div className="flex gap-2 shrink-0">
+                <Button onClick={() => {
+                  const link = isClinicMode && activeClinic
+                    ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
+                    : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
+                  navigator.clipboard.writeText(link);
+                  setLinkCopied(true);
+                  toast({ title: t("referral.copied") });
+                  setTimeout(() => setLinkCopied(false), 2000);
+                }} variant="outline" className="gap-1.5 rounded-xl">
+                  {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                  {linkCopied ? t("referral.copied") : t("referral.copy_link")}
+                </Button>
+                <Button
+                  onClick={async () => {
+                    const link = isClinicMode && activeClinic
+                      ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
+                      : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
+                    const ownerName = isClinicMode && activeClinic
+                      ? (activeClinic as any).clinics?.name || "nossa clínica"
+                      : professional?.full_name || "seu fisioterapeuta";
+                    const message = language === "pt"
+                      ? `Olá! 👋\n\nSou ${ownerName} e gostaria de convidar você para realizar sua *pré-avaliação online* pelo Aliv.iA, nosso sistema de raciocínio clínico.\n\nÉ rápido (cerca de 10 minutos), 100% seguro e me ajuda a entender seu quadro *antes* da nossa consulta — assim ganhamos tempo no atendimento e o seu tratamento começa mais direcionado.\n\n👉 Acesse: ${link}\n\nQualquer dúvida, é só me chamar por aqui.`
+                      : language === "es"
+                        ? `¡Hola! 👋\n\nSoy ${ownerName} y me gustaría invitarte a realizar tu *pre-evaluación online* a través de Aliv.iA, nuestro sistema de razonamiento clínico.\n\nEs rápido (unos 10 minutos), 100% seguro y me ayuda a entender tu caso *antes* de nuestra consulta — así ganamos tiempo y tu tratamiento empieza más enfocado.\n\n👉 Accede: ${link}\n\nCualquier duda, escríbeme por aquí.`
+                        : `Hi! 👋\n\nI'm ${ownerName} and I'd like to invite you to complete your *online pre-assessment* on Aliv.iA, our clinical reasoning system.\n\nIt's quick (about 10 minutes), fully secure and helps me understand your case *before* our appointment — saving time and making your treatment more targeted from day one.\n\n👉 Open: ${link}\n\nAny questions, just message me here.`;
+                    const { shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
+                    await shareTextOrOpenWhatsApp(message, "Aliv.iA");
+                  }}
+                  className="gap-1.5 rounded-xl bg-[#25D366] text-white hover:bg-[#1FB855]"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
