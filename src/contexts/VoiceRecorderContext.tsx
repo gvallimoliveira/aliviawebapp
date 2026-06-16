@@ -22,7 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 
-const CHUNK_DURATION_SEC = 10 * 60;     // rotate every 10 min — persist progressively
+const CHUNK_DURATION_SEC = 3 * 60;      // rotate every 3 min — keep transcript flowing into the chart
 const MAX_TOTAL_DURATION_SEC = 60 * 60; // hard cap: 1h
 const MAX_INLINE_SIZE = 4 * 1024 * 1024;
 const MIN_KEEP_SEC = 20;
