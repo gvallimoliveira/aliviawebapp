@@ -985,11 +985,29 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           {/* Selected library exercises config */}
           {selected.length > 0 && (
             <div className="space-y-3 border-t pt-3">
-              <p className="text-sm font-semibold text-foreground">{selected.length} exercício(s) do banco selecionado(s)</p>
-              {selected.map((s) => (
-                <Card key={s.exercise.id} className="overflow-hidden">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-foreground">{selected.length} exercício(s) do banco selecionado(s)</p>
+                {selected.length > 1 && (
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <GripVertical className="h-3 w-3" />
+                    {language === "en" ? "Drag to reorder" : "Arraste para reordenar"}
+                  </p>
+                )}
+              </div>
+              {selected.map((s, idx) => (
+                <Card
+                  key={s.exercise.id}
+                  className={`overflow-hidden transition-all ${dragSelectedIdx === idx ? "opacity-50" : ""} ${overSelectedIdx === idx && dragSelectedIdx !== idx ? "ring-2 ring-primary" : ""}`}
+                  draggable
+                  onDragStart={(e) => { setDragSelectedIdx(idx); e.dataTransfer.effectAllowed = "move"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overSelectedIdx !== idx) setOverSelectedIdx(idx); }}
+                  onDragLeave={() => { if (overSelectedIdx === idx) setOverSelectedIdx(null); }}
+                  onDrop={(e) => { e.preventDefault(); onSelectedDrop(idx); }}
+                  onDragEnd={() => { setDragSelectedIdx(null); setOverSelectedIdx(null); }}
+                >
                   <CardContent className="py-2.5 px-3 space-y-2">
                     <div className="flex items-start gap-2">
+                      <GripVertical className="h-4 w-4 text-muted-foreground/60 mt-0.5 shrink-0 cursor-grab active:cursor-grabbing" />
                       <p className="text-sm font-medium text-foreground flex-1 min-w-0">{getName(s.exercise)}</p>
                       <Button
                         type="button"
