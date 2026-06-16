@@ -31,7 +31,7 @@ interface AddPatientModalProps {
   onOpenChange: (open: boolean) => void;
   professionalId: string;
   clinicId?: string | null;
-  onAdded: () => void;
+  onAdded: () => void | Promise<void>;
   editPatient?: PatientToEdit | null;
   onCreateManualAssessment?: (patient: { name: string; email?: string }) => void;
   /** When true, modal opens in read-only mode; user can switch to edit only if canEdit is true. */
