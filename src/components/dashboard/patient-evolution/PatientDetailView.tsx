@@ -268,7 +268,7 @@ export default function PatientDetailView(props: any) {
       let row: any = patient?.patientRecord || null;
 
       if (!row?.id) {
-        let lookup = sb.from("patients").select("id, full_name, email, cpf, birth_date, phone, address").limit(1);
+        let lookup = sb.from("patients").select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation").limit(1);
         if (patient?.email) lookup = lookup.eq("email", patient.email);
         else lookup = lookup.eq("full_name", patient.name);
         if (clinicId) lookup = lookup.eq("clinic_id", clinicId);
