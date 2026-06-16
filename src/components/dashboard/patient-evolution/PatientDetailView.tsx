@@ -602,6 +602,8 @@ export default function PatientDetailView(props: any) {
           professionalId={professionalId || ""}
           clinicId={clinicId || null}
           editPatient={registrationPatient}
+          readOnly
+          canEdit={canEditRegistration}
           onAdded={() => {
             window.dispatchEvent(new CustomEvent("reload-pro-patients"));
           }}
