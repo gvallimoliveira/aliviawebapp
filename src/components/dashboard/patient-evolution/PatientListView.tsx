@@ -150,173 +150,210 @@ export default function PatientListView(props: any) {
         </div>
       </div>
 
-      {[...patients].sort((a: any, b: any) => {
-        if (sortMode === "recent") {
-          return new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime();
-        }
-        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
-      }).filter((p: any) => {
-        const isHidden = hiddenKeys.has(p.groupKey);
-        if (isHidden && !showHidden) return false;
-        if (statusFilter !== "all") {
-          const daysSinceLast = Math.floor((Date.now() - new Date(p.lastDate).getTime()) / (1000 * 60 * 60 * 24));
-          const isActive = daysSinceLast <= 30;
-          if (statusFilter === "active" && !isActive) return false;
-          if (statusFilter === "inactive" && isActive) return false;
-        }
-        if (!searchQuery.trim()) return true;
-        const q = searchQuery.toLowerCase().replace(/[.\-/()\s]/g, "");
-        const rec = p.patientRecord;
-        const cpfRaw = (rec?.cpf || "").replace(/\D/g, "");
-        const phoneRaw = (rec?.phone || "").replace(/\D/g, "");
-        return p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || cpfRaw.includes(q) || phoneRaw.includes(q);
-      }).map((p: any) => {
-        const firstScore = p.assessments[0]?.pain_score;
-        const lastScore = p.assessments[p.assessments.length - 1]?.pain_score;
-        const trend = firstScore != null && lastScore != null ? (lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable") : null;
-        const isHidden = hiddenKeys.has(p.groupKey);
-        const patientRec = p.patientRecord;
-        const isIncomplete = patientRec && (!patientRec.email || !patientRec.cpf || !patientRec.phone);
-        const isImportedOnly = !patientRec && p.assessments.length === 0;
-        const showIncomplete = isIncomplete || isImportedOnly;
-        const startLongPress = () => {
-          longPressFiredRef.current = false;
-          longPressTimerRef.current = setTimeout(() => {
-            longPressTimerRef.current = null;
-            longPressFiredRef.current = true;
-            setLongPressPatient({ groupKey: p.groupKey, name: p.name });
-          }, 400);
-        };
-        const cancelLongPress = () => {
-          if (longPressTimerRef.current) {
-            clearTimeout(longPressTimerRef.current);
-            longPressTimerRef.current = null;
+      {(() => {
+        const filteredPatients = [...patients].sort((a: any, b: any) => {
+          if (sortMode === "recent") {
+            return new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime();
           }
-        };
-        const patientAdherence = p.assessments.reduce((acc: { total: number; completed: number }, a: any) => {
-          const adh = exerciseAdherence[a.id];
-          if (adh) {
-            acc.total += adh.total;
-            acc.completed += adh.completed;
+          return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+        }).filter((p: any) => {
+          const isHidden = hiddenKeys.has(p.groupKey);
+          if (isHidden && !showHidden) return false;
+          if (statusFilter !== "all") {
+            const daysSinceLast = Math.floor((Date.now() - new Date(p.lastDate).getTime()) / (1000 * 60 * 60 * 24));
+            const isActive = daysSinceLast <= 30;
+            if (statusFilter === "active" && !isActive) return false;
+            if (statusFilter === "inactive" && isActive) return false;
           }
-          return acc;
-        }, { total: 0, completed: 0 });
-        const pct = patientAdherence.total > 0 ? Math.round((patientAdherence.completed / patientAdherence.total) * 100) : null;
-        const color = pct == null ? "" : pct >= 70 ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : pct >= 40 ? "bg-amber-500/10 text-amber-600 border-amber-200" : "bg-destructive/10 text-destructive border-destructive/20";
+          if (!searchQuery.trim()) return true;
+          const q = searchQuery.toLowerCase().replace(/[.\-/()\s]/g, "");
+          const rec = p.patientRecord;
+          const cpfRaw = (rec?.cpf || "").replace(/\D/g, "");
+          const phoneRaw = (rec?.phone || "").replace(/\D/g, "");
+          return p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || cpfRaw.includes(q) || phoneRaw.includes(q);
+        });
+
+        const VISIBLE_LIMIT = 8;
+        const isScrollable = filteredPatients.length > VISIBLE_LIMIT;
 
         return (
-          <Card
-            key={p.groupKey}
-            className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
-            onClick={() => {
-              if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
-              setSelectedEmail(p.email || p.groupKey);
-            }}
-            onTouchStart={readOnly ? undefined : startLongPress}
-            onTouchEnd={readOnly ? undefined : cancelLongPress}
-            onTouchMove={readOnly ? undefined : cancelLongPress}
-            onMouseDown={readOnly ? undefined : startLongPress}
-            onMouseUp={readOnly ? undefined : cancelLongPress}
-            onMouseLeave={readOnly ? undefined : cancelLongPress}
-          >
-            <CardContent className="py-3 px-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-muted-foreground" />{p.name}</p>
-                    {isHidden && <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">Arquivado</Badge>}
-                    <Badge variant="outline" className="text-[10px]">{p.assessments.length} {t("pro.assessments_count")}</Badge>
-                    {trend === "improving" && <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200">Melhorando</Badge>}
-                    {trend === "worsening" && <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">Piorando</Badge>}
-                    {trend === "stable" && <Badge variant="outline" className="text-[10px]">Estável</Badge>}
-                    {p.assessments.some((a: any) => a.treatment_plan) ? (
-                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1"><FileCheck className="h-3 w-3" /> Tratamento Liberado</Badge>
-                    ) : p.assessments.some((a: any) => a.diagnosis) ? (
-                      <Badge
-                        variant="outline"
-                        role="button"
-                        tabIndex={0}
-                        title={language === "pt" ? "Clique para adquirir o plano de tratamento" : language === "es" ? "Clic para adquirir el plan de tratamiento" : "Click to acquire the treatment plan"}
-                        className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1 cursor-pointer hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
-                        onClick={(e) => { e.stopPropagation(); handleAcquireBadgeClick({ name: p.name, email: p.email, assessments: p.assessments }); }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAcquireBadgeClick({ name: p.name, email: p.email, assessments: p.assessments });
-                          }
-                        }}
-                      >
-                        <Lock className="h-3 w-3" /> {language === "pt" ? "Adquirir Tratamento" : language === "es" ? "Adquirir Tratamiento" : "Unlock Treatment"}
-                      </Badge>
-                    ) : null}
-                    {showIncomplete && !readOnly && (
-                      <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-200 gap-1 cursor-pointer hover:bg-orange-500/20 transition-colors" onClick={(e) => {
-                        e.stopPropagation();
-                        const rec = patientRec || { id: "", full_name: p.name, email: p.email || null };
-                        setEditPatientData(rec);
-                        setAddPatientOpen(true);
-                      }}>
-                        <Pencil className="h-3 w-3" />
-                        {language === "pt" ? "Completar cadastro" : "Complete registration"}
-                      </Badge>
-                    )}
-                    {pct != null && <Badge variant="outline" className={`text-[10px] gap-1 ${color}`}><Dumbbell className="h-3 w-3" /> {pct}% {language === "pt" ? "adesão" : "adherence"}</Badge>}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {p.email}</span>
-                    <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{t("pro.last_assessment")}: {new Date(p.lastDate).toLocaleDateString("pt-BR")}</span>
-                  </div>
-                </div>
-                <div className="flex w-full flex-wrap items-center gap-1 pt-1 shrink-0 sm:w-auto sm:flex-nowrap sm:justify-end sm:self-auto sm:pt-0 -mr-1 sm:mr-0">
-                  {(!readOnly || allowManualAssessment) && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Nova avaliação manual" : "New manual assessment"} onClick={(e) => { e.stopPropagation(); setManualAssessmentTarget({ name: p.name, email: p.email || "" }); }}>
-                      <FilePlus className="h-4 w-4 text-primary" />
-                    </Button>
-                  )}
-                  {(!readOnly || allowAssessmentLink) && patientRec && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Copiar link de avaliação personalizado" : "Copy personalized assessment link"} onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        const token = await ensurePatientAssessmentToken(patientRec);
-                        const link = buildPersonalizedAssessmentLink({ professionalId, clinicId }, token);
-                        const { createShortAppLink } = await import("@/lib/shortLink");
-                        const short = await createShortAppLink(link);
-                        await navigator.clipboard.writeText(short);
-                        toast({ title: language === "pt" ? "Link copiado!" : "Link copied!", description: language === "pt" ? "Envie ao paciente. A avaliação será vinculada automaticamente a este card." : "Send to the patient. The assessment will be auto-linked to this card." });
-                      } catch (err: any) {
-                        toast({ title: "Erro", description: err.message, variant: "destructive" });
-                      }
-                    }}>
-                      <Link2 className="h-4 w-4 text-primary" />
-                    </Button>
-                  )}
-                  {(!readOnly || allowQuickNote) && !isHidden && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Nota rápida" : "Quick note"} onClick={(e) => {
-                      e.stopPropagation();
-                      const emailKey = p.email || `imported:${p.groupKey || p.name}`;
-                      setQuickNotePatient({ groupKey: p.groupKey, email: emailKey, name: p.name });
-                      setQuickNoteContent("");
-                    }}>
-                      <NotebookPen className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  )}
-                  {( !readOnly || canAddPatient) && (isHidden ? (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Restaurar paciente" disabled={archiving === p.groupKey} onClick={(e) => handleRestorePatient(p.groupKey, e)}>
-                      {archiving === p.groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-muted-foreground" />}
-                    </Button>
-                  ) : (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Arquivar paciente" disabled={archiving === p.groupKey} onClick={(e) => handleArchivePatient(p.groupKey, e)}>
-                      {archiving === p.groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
-                    </Button>
-                  ))}
-                  <ChevronRight className="hidden sm:block h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
+              <span>
+                {language === "pt"
+                  ? `Mostrando ${filteredPatients.length} ${filteredPatients.length === 1 ? "paciente" : "pacientes"}`
+                  : language === "es"
+                  ? `Mostrando ${filteredPatients.length} ${filteredPatients.length === 1 ? "paciente" : "pacientes"}`
+                  : `Showing ${filteredPatients.length} ${filteredPatients.length === 1 ? "patient" : "patients"}`}
+              </span>
+              {isScrollable && (
+                <span className="hidden sm:inline text-[11px] opacity-70">
+                  {language === "pt"
+                    ? "Role para ver mais ou use a busca"
+                    : language === "es"
+                    ? "Desplázate o usa la búsqueda"
+                    : "Scroll for more or use search"}
+                </span>
+              )}
+            </div>
+            <div
+              className={`space-y-3 ${
+                isScrollable
+                  ? "max-h-[640px] sm:max-h-[640px] max-h-[70vh] overflow-y-auto pr-1 rounded-xl border border-border/40 p-2 bg-background/40"
+                  : ""
+              }`}
+            >
+              {filteredPatients.map((p: any) => {
+                const firstScore = p.assessments[0]?.pain_score;
+                const lastScore = p.assessments[p.assessments.length - 1]?.pain_score;
+                const trend = firstScore != null && lastScore != null ? (lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable") : null;
+                const isHidden = hiddenKeys.has(p.groupKey);
+                const patientRec = p.patientRecord;
+                const isIncomplete = patientRec && (!patientRec.email || !patientRec.cpf || !patientRec.phone);
+                const isImportedOnly = !patientRec && p.assessments.length === 0;
+                const showIncomplete = isIncomplete || isImportedOnly;
+                const startLongPress = () => {
+                  longPressFiredRef.current = false;
+                  longPressTimerRef.current = setTimeout(() => {
+                    longPressTimerRef.current = null;
+                    longPressFiredRef.current = true;
+                    setLongPressPatient({ groupKey: p.groupKey, name: p.name });
+                  }, 400);
+                };
+                const cancelLongPress = () => {
+                  if (longPressTimerRef.current) {
+                    clearTimeout(longPressTimerRef.current);
+                    longPressTimerRef.current = null;
+                  }
+                };
+                const patientAdherence = p.assessments.reduce((acc: { total: number; completed: number }, a: any) => {
+                  const adh = exerciseAdherence[a.id];
+                  if (adh) {
+                    acc.total += adh.total;
+                    acc.completed += adh.completed;
+                  }
+                  return acc;
+                }, { total: 0, completed: 0 });
+                const pct = patientAdherence.total > 0 ? Math.round((patientAdherence.completed / patientAdherence.total) * 100) : null;
+                const color = pct == null ? "" : pct >= 70 ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : pct >= 40 ? "bg-amber-500/10 text-amber-600 border-amber-200" : "bg-destructive/10 text-destructive border-destructive/20";
+
+                return (
+                  <Card
+                    key={p.groupKey}
+                    className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
+                    onClick={() => {
+                      if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
+                      setSelectedEmail(p.email || p.groupKey);
+                    }}
+                    onTouchStart={readOnly ? undefined : startLongPress}
+                    onTouchEnd={readOnly ? undefined : cancelLongPress}
+                    onTouchMove={readOnly ? undefined : cancelLongPress}
+                    onMouseDown={readOnly ? undefined : startLongPress}
+                    onMouseUp={readOnly ? undefined : cancelLongPress}
+                    onMouseLeave={readOnly ? undefined : cancelLongPress}
+                  >
+                    <CardContent className="py-3 px-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-muted-foreground" />{p.name}</p>
+                            {isHidden && <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">Arquivado</Badge>}
+                            <Badge variant="outline" className="text-[10px]">{p.assessments.length} {t("pro.assessments_count")}</Badge>
+                            {trend === "improving" && <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200">Melhorando</Badge>}
+                            {trend === "worsening" && <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">Piorando</Badge>}
+                            {trend === "stable" && <Badge variant="outline" className="text-[10px]">Estável</Badge>}
+                            {p.assessments.some((a: any) => a.treatment_plan) ? (
+                              <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1"><FileCheck className="h-3 w-3" /> Tratamento Liberado</Badge>
+                            ) : p.assessments.some((a: any) => a.diagnosis) ? (
+                              <Badge
+                                variant="outline"
+                                role="button"
+                                tabIndex={0}
+                                title={language === "pt" ? "Clique para adquirir o plano de tratamento" : language === "es" ? "Clic para adquirir el plan de tratamiento" : "Click to acquire the treatment plan"}
+                                className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1 cursor-pointer hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                                onClick={(e) => { e.stopPropagation(); handleAcquireBadgeClick({ name: p.name, email: p.email, assessments: p.assessments }); }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAcquireBadgeClick({ name: p.name, email: p.email, assessments: p.assessments });
+                                  }
+                                }}
+                              >
+                                <Lock className="h-3 w-3" /> {language === "pt" ? "Adquirir Tratamento" : language === "es" ? "Adquirir Tratamiento" : "Unlock Treatment"}
+                              </Badge>
+                            ) : null}
+                            {showIncomplete && !readOnly && (
+                              <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-200 gap-1 cursor-pointer hover:bg-orange-500/20 transition-colors" onClick={(e) => {
+                                e.stopPropagation();
+                                const rec = patientRec || { id: "", full_name: p.name, email: p.email || null };
+                                setEditPatientData(rec);
+                                setAddPatientOpen(true);
+                              }}>
+                                <Pencil className="h-3 w-3" />
+                                {language === "pt" ? "Completar cadastro" : "Complete registration"}
+                              </Badge>
+                            )}
+                            {pct != null && <Badge variant="outline" className={`text-[10px] gap-1 ${color}`}><Dumbbell className="h-3 w-3" /> {pct}% {language === "pt" ? "adesão" : "adherence"}</Badge>}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {p.email}</span>
+                            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{t("pro.last_assessment")}: {new Date(p.lastDate).toLocaleDateString("pt-BR")}</span>
+                          </div>
+                        </div>
+                        <div className="flex w-full flex-wrap items-center gap-1 pt-1 shrink-0 sm:w-auto sm:flex-nowrap sm:justify-end sm:self-auto sm:pt-0 -mr-1 sm:mr-0">
+                          {(!readOnly || allowManualAssessment) && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Nova avaliação manual" : "New manual assessment"} onClick={(e) => { e.stopPropagation(); setManualAssessmentTarget({ name: p.name, email: p.email || "" }); }}>
+                              <FilePlus className="h-4 w-4 text-primary" />
+                            </Button>
+                          )}
+                          {(!readOnly || allowAssessmentLink) && patientRec && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Copiar link de avaliação personalizado" : "Copy personalized assessment link"} onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                const token = await ensurePatientAssessmentToken(patientRec);
+                                const link = buildPersonalizedAssessmentLink({ professionalId, clinicId }, token);
+                                const { createShortAppLink } = await import("@/lib/shortLink");
+                                const short = await createShortAppLink(link);
+                                await navigator.clipboard.writeText(short);
+                                toast({ title: language === "pt" ? "Link copiado!" : "Link copied!", description: language === "pt" ? "Envie ao paciente. A avaliação será vinculada automaticamente a este card." : "Send to the patient. The assessment will be auto-linked to this card." });
+                              } catch (err: any) {
+                                toast({ title: "Erro", description: err.message, variant: "destructive" });
+                              }
+                            }}>
+                              <Link2 className="h-4 w-4 text-primary" />
+                            </Button>
+                          )}
+                          {(!readOnly || allowQuickNote) && !isHidden && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Nota rápida" : "Quick note"} onClick={(e) => {
+                              e.stopPropagation();
+                              const emailKey = p.email || `imported:${p.groupKey || p.name}`;
+                              setQuickNotePatient({ groupKey: p.groupKey, email: emailKey, name: p.name });
+                              setQuickNoteContent("");
+                            }}>
+                              <NotebookPen className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                          {( !readOnly || canAddPatient) && (isHidden ? (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" title="Restaurar paciente" disabled={archiving === p.groupKey} onClick={(e) => handleRestorePatient(p.groupKey, e)}>
+                              {archiving === p.groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-muted-foreground" />}
+                            </Button>
+                          ) : (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" title="Arquivar paciente" disabled={archiving === p.groupKey} onClick={(e) => handleArchivePatient(p.groupKey, e)}>
+                              {archiving === p.groupKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
+                            </Button>
+                          ))}
+                          <ChevronRight className="hidden sm:block h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </>
         );
-      })}
+      })()}
 
       <AddPatientModal
         open={addPatientOpen}
