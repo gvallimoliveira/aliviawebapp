@@ -125,9 +125,11 @@ const AddPatientModal = ({
     if (!name.trim()) return;
     setSaving(true);
     try {
+      const nextName = name.trim();
+      const nextEmail = email.trim() || null;
       const patientRow: any = {
-        full_name: name.trim(),
-        email: email.trim() || null,
+        full_name: nextName,
+        email: nextEmail,
         cpf: cpf.replace(/\D/g, "") || null,
         birth_date: birthDate || null,
         phone: phone.replace(/\D/g, "") || null,
@@ -142,14 +144,18 @@ const AddPatientModal = ({
           .eq("id", editPatient!.id);
         if (error) throw error;
 
-        const oldEmail = editPatient!.email;
-        if (oldEmail) {
+        const oldName = (editPatient!.full_name || "").trim();
+        const oldEmail = (editPatient!.email || "").trim();
+        const nameChanged = oldName !== nextName;
+        const emailChanged = oldEmail !== (nextEmail || "");
+
+        if (oldEmail && (nameChanged || emailChanged)) {
           await supabase.from("assessments")
-            .update({ patient_name: name.trim(), patient_email: email.trim() || oldEmail } as any)
+            .update({ patient_name: nextName, patient_email: nextEmail || oldEmail } as any)
             .eq(clinicId ? "clinic_id" : "professional_id", clinicId || professionalId)
             .eq("patient_email", oldEmail);
           await (supabase.from("professional_appointments" as any) as any)
-            .update({ patient_name: name.trim(), patient_email: email.trim() || null })
+            .update({ patient_name: nextName, patient_email: nextEmail })
             .eq(clinicId ? "clinic_id" : "professional_id", clinicId || professionalId)
             .eq("patient_email", oldEmail);
         }
@@ -170,7 +176,7 @@ const AddPatientModal = ({
             const assessmentRow: any = {
               type: "professional",
               status: "completed",
-              patient_name: name.trim(),
+              patient_name: nextName,
               patient_email: email.trim(),
               anamnesis_data: { externalPatient: true },
             };
@@ -181,8 +187,8 @@ const AddPatientModal = ({
         }
       }
 
-      const savedName = name.trim();
-      const savedEmail = email.trim();
+      const savedName = nextName;
+      const savedEmail = nextEmail || "";
 
       if (!isEdit && onCreateManualAssessment) {
         toast({
