@@ -31,7 +31,7 @@ interface AddPatientModalProps {
   onOpenChange: (open: boolean) => void;
   professionalId: string;
   clinicId?: string | null;
-  onAdded: () => void;
+  onAdded: () => void | Promise<void>;
   editPatient?: PatientToEdit | null;
   onCreateManualAssessment?: (patient: { name: string; email?: string }) => void;
   /** When true, modal opens in read-only mode; user can switch to edit only if canEdit is true. */
@@ -204,13 +204,13 @@ const AddPatientModal = ({
             : tr("Paciente adicionado!", "Patient added!", "¡Paciente agregado!"),
         });
       }
-      onAdded();
+      await Promise.resolve(onAdded());
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
       // Após salvar em modo edição vindo de readOnly, volta para visualização
+      // mantendo o modal aberto. Os campos locais já contêm os valores recém-salvos
+      // e serão re-sincronizados quando o pai atualizar editPatient.
       if (readOnly) {
         setViewMode("view");
-        // Atualiza editPatient local (não temos setter externo) — fecha modal por consistência
-        handleClose();
       } else {
         handleClose();
       }

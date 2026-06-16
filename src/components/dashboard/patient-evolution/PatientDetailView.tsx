@@ -260,22 +260,47 @@ export default function PatientDetailView(props: any) {
   const [registrationPatient, setRegistrationPatient] = React.useState<PatientToEdit | null>(null);
   const [registrationLoading, setRegistrationLoading] = React.useState(false);
 
+  const fetchPatientRow = React.useCallback(async (id?: string | null) => {
+    const sb = supabase as any;
+    if (id) {
+      const { data } = await sb
+        .from("patients")
+        .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation")
+        .eq("id", id)
+        .maybeSingle();
+      if (data) return data;
+    }
+    let lookup = sb
+      .from("patients")
+      .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation")
+      .limit(1);
+    if (patient?.email) lookup = lookup.eq("email", patient.email);
+    else lookup = lookup.eq("full_name", patient.name);
+    if (clinicId) lookup = lookup.eq("clinic_id", clinicId);
+    else if (professionalId) lookup = lookup.eq("professional_id", professionalId);
+    const { data } = await lookup.maybeSingle();
+    return data || null;
+  }, [patient?.email, patient?.name, clinicId, professionalId]);
+
+  const mapRowToPatient = React.useCallback((row: any): PatientToEdit => ({
+    id: row.id,
+    full_name: row.full_name || patient?.name || "",
+    email: row.email ?? patient?.email ?? null,
+    cpf: row.cpf ?? null,
+    birth_date: row.birth_date ?? null,
+    phone: row.phone ?? null,
+    address: row.address ?? null,
+    sex: row.sex ?? null,
+    occupation: row.occupation ?? null,
+  }), [patient?.name, patient?.email]);
+
   const openRegistrationModal = React.useCallback(async () => {
     if (registrationLoading) return;
     setRegistrationLoading(true);
     try {
       const sb = supabase as any;
-      let row: any = patient?.patientRecord || null;
-
-      if (!row?.id) {
-        let lookup = sb.from("patients").select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation").limit(1);
-        if (patient?.email) lookup = lookup.eq("email", patient.email);
-        else lookup = lookup.eq("full_name", patient.name);
-        if (clinicId) lookup = lookup.eq("clinic_id", clinicId);
-        else if (professionalId) lookup = lookup.eq("professional_id", professionalId);
-        const { data } = await lookup.maybeSingle();
-        row = data || null;
-      }
+      // Sempre busca a versão mais recente do banco (sem cache)
+      let row: any = await fetchPatientRow(patient?.patientRecord?.id);
 
       if (!row?.id && (patient?.name || patient?.email)) {
         const payload: Record<string, any> = { full_name: patient.name || patient.email || "Paciente" };
@@ -299,17 +324,7 @@ export default function PatientDetailView(props: any) {
         return;
       }
 
-      setRegistrationPatient({
-        id: row.id,
-        full_name: row.full_name || patient.name || "",
-        email: row.email ?? patient.email ?? null,
-        cpf: row.cpf ?? null,
-        birth_date: row.birth_date ?? null,
-        phone: row.phone ?? null,
-        address: row.address ?? null,
-        sex: row.sex ?? null,
-        occupation: row.occupation ?? null,
-      });
+      setRegistrationPatient(mapRowToPatient(row));
       setRegistrationModalOpen(true);
     } catch (err: any) {
       console.error("[registration modal] failed", err);
@@ -321,7 +336,19 @@ export default function PatientDetailView(props: any) {
     } finally {
       setRegistrationLoading(false);
     }
-  }, [registrationLoading, patient, clinicId, professionalId, toast, language]);
+  }, [registrationLoading, patient, clinicId, professionalId, toast, language, fetchPatientRow, mapRowToPatient]);
+
+  // Após salvar dentro do modal, sincroniza estado com o banco para refletir imediatamente no próximo open
+  const handleRegistrationSaved = React.useCallback(async () => {
+    try {
+      const row = await fetchPatientRow(registrationPatient?.id);
+      if (row?.id) setRegistrationPatient(mapRowToPatient(row));
+    } catch (err) {
+      console.error("[registration modal] refresh after save failed", err);
+    }
+    window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+  }, [fetchPatientRow, mapRowToPatient, registrationPatient?.id]);
+
 
   const openReassessmentLinkDialog = React.useCallback(async () => {
     if (!latestWithDiagnosis) return;
@@ -604,9 +631,7 @@ export default function PatientDetailView(props: any) {
           editPatient={registrationPatient}
           readOnly
           canEdit={canEditRegistration}
-          onAdded={() => {
-            window.dispatchEvent(new CustomEvent("reload-pro-patients"));
-          }}
+          onAdded={handleRegistrationSaved}
         />
       )}
 

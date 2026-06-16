@@ -326,7 +326,7 @@ export default function PatientListView(props: any) {
         }}
         professionalId={professionalId}
         clinicId={clinicId}
-        onAdded={() => window.dispatchEvent(new CustomEvent("reload-pro-patients"))}
+        onAdded={() => { window.dispatchEvent(new CustomEvent("reload-pro-patients")); }}
         editPatient={editPatientData}
         onCreateManualAssessment={(p: any) => setManualAssessmentTarget(p)}
       />
