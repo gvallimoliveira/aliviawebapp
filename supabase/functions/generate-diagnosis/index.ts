@@ -466,7 +466,11 @@ Response format (JSON):
 - Aggravating factors: ${anamnesisData.aggravatingFactors || "Not specified"}
 - Relieving factors: ${anamnesisData.relievingFactors || "Not specified"}
 - Activity level: ${anamnesisData.activityLevel}
-- Pain score (0-10): ${anamnesisData.painScore}
+- Pain score (0-10) — general/overall: ${anamnesisData.painScore}
+- Pain score mode: ${painScoreMode}${painScoreMode === "per_region" && Object.keys(painScoresPerRegion).length > 0 ? `
+- **PAIN INTENSITY PER BODY REGION (USE THIS AS PRIMARY PAIN INPUT — the general score above is only an average/reference):**
+${Object.entries(painScoresPerRegion).map(([k, v]) => `    • ${k}: ${v}/10`).join("\n")}
+- MANDATORY: When per-region scores are provided, your clinical reasoning, hypothesis selection, severity grading and prioritization of objectives MUST be driven by which regions carry the highest pain scores, not by the overall average. Explicitly reference the most painful region(s) in the summary/reasoning and let the score asymmetry guide differential diagnosis (e.g. unilateral vs bilateral, proximal vs distal, dominant pain generator vs referred pain).` : ""}
 - Pain duration: ${anamnesisData.painDuration || "Not specified"}
 - Sex: ${anamnesisData.sex || "Not specified"}
 - Age range: ${anamnesisData.ageRange || "Not specified"}
@@ -484,8 +488,6 @@ Response format (JSON):
 - Visual aura: ${hasVisualAura || "N/A"}
 - Nausea during crises: ${hasNausea || "N/A"}
 - Headache crisis frequency: ${headacheCrisisFrequency || "N/A"}
-- Pain score mode: ${painScoreMode}
-${painScoreMode === "per_region" && Object.keys(painScoresPerRegion).length > 0 ? `- Pain scores per region: ${Object.entries(painScoresPerRegion).map(([k, v]) => `${k}: ${v}/10`).join(", ")}` : ""}
 
 ${additionalInfo ? `Additional information provided by the patient (USE THIS to refine your hypothesis and potentially increase confidence):
 ${additionalInfo}` : ""}
