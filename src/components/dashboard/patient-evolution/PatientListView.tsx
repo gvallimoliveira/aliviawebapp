@@ -151,6 +151,14 @@ export default function PatientListView(props: any) {
       </div>
 
       {(() => {
+        const isPlaceholderAssessment = (a: any) => {
+          const ad = a?.anamnesis_data;
+          if (!ad || typeof ad !== "object") return false;
+          return !!(ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder);
+        };
+        const realAssessmentsOf = (p: any) =>
+          (p.assessments || []).filter((a: any) => !isPlaceholderAssessment(a));
+
         const filteredPatients = [...patients].sort((a: any, b: any) => {
           if (sortMode === "recent") {
             return new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime();
@@ -175,6 +183,8 @@ export default function PatientListView(props: any) {
 
         const VISIBLE_LIMIT = 8;
         const isScrollable = filteredPatients.length > VISIBLE_LIMIT;
+        const isEmpty = filteredPatients.length === 0;
+        const hasSearch = !!searchQuery.trim();
 
         return (
           <>
@@ -196,6 +206,32 @@ export default function PatientListView(props: any) {
                 </span>
               )}
             </div>
+            {isEmpty ? (
+              <Card className="border-dashed">
+                <CardContent className="py-10 text-center space-y-3">
+                  <Activity className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                  <p className="text-sm text-muted-foreground">
+                    {hasSearch
+                      ? (language === "pt"
+                          ? "Nenhum paciente encontrado para a busca."
+                          : language === "es"
+                          ? "Ningún paciente encontrado para la búsqueda."
+                          : "No patients found for your search.")
+                      : t("pro.no_patients")}
+                  </p>
+                  {!hasSearch && !readOnly && (
+                    <Button
+                      size="sm"
+                      className="gap-1.5 rounded-xl"
+                      onClick={() => { setEditPatientData(null); setAddPatientOpen(true); }}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      {t("pro.add_patient")}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
             <div
               className={`space-y-3 ${
                 isScrollable
@@ -203,6 +239,7 @@ export default function PatientListView(props: any) {
                   : ""
               }`}
             >
+
               {filteredPatients.map((p: any) => {
                 const firstScore = p.assessments[0]?.pain_score;
                 const lastScore = p.assessments[p.assessments.length - 1]?.pain_score;
