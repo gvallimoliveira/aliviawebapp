@@ -1427,8 +1427,10 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          occupation: string | null
           phone: string | null
           professional_id: string | null
+          sex: string | null
           updated_at: string
         }
         Insert: {
@@ -1441,8 +1443,10 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          occupation?: string | null
           phone?: string | null
           professional_id?: string | null
+          sex?: string | null
           updated_at?: string
         }
         Update: {
@@ -1455,8 +1459,10 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          occupation?: string | null
           phone?: string | null
           professional_id?: string | null
+          sex?: string | null
           updated_at?: string
         }
         Relationships: [

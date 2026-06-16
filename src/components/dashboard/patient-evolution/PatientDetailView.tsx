@@ -34,6 +34,7 @@ import { createShortAppLink } from "@/lib/shortLink";
 import { openWhatsAppDeferred } from "@/lib/whatsappShare";
 import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
+import { useClinic } from "@/contexts/ClinicContext";
 
 
 const SUBSCALE_COLORS = [
@@ -176,6 +177,11 @@ const GenerateHypothesisCard = ({ assessment, isDemo, onGenerated }: GenerateHyp
 export default function PatientDetailView(props: any) {
   const navigate = useNavigate();
   const { hasAccess: hasAgentAccess } = useClinicalAgentAccess();
+  const { isClinicMode, canManageClinic } = useClinic();
+  // Regra de permissão para Dados Cadastrais:
+  // - Modo profissional (solo): sem restrição → pode editar.
+  // - Modo clínica: somente owner/admin/secretary podem editar (canManageClinic).
+  const canEditRegistration = isClinicMode ? canManageClinic : true;
 
   const {
     t,
@@ -262,7 +268,7 @@ export default function PatientDetailView(props: any) {
       let row: any = patient?.patientRecord || null;
 
       if (!row?.id) {
-        let lookup = sb.from("patients").select("id, full_name, email, cpf, birth_date, phone, address").limit(1);
+        let lookup = sb.from("patients").select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation").limit(1);
         if (patient?.email) lookup = lookup.eq("email", patient.email);
         else lookup = lookup.eq("full_name", patient.name);
         if (clinicId) lookup = lookup.eq("clinic_id", clinicId);
@@ -279,7 +285,7 @@ export default function PatientDetailView(props: any) {
         const { data: created, error } = await sb
           .from("patients")
           .insert(payload)
-          .select("id, full_name, email, cpf, birth_date, phone, address")
+          .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation")
           .single();
         if (error) throw error;
         row = created;
@@ -301,6 +307,8 @@ export default function PatientDetailView(props: any) {
         birth_date: row.birth_date ?? null,
         phone: row.phone ?? null,
         address: row.address ?? null,
+        sex: row.sex ?? null,
+        occupation: row.occupation ?? null,
       });
       setRegistrationModalOpen(true);
     } catch (err: any) {
@@ -594,6 +602,8 @@ export default function PatientDetailView(props: any) {
           professionalId={professionalId || ""}
           clinicId={clinicId || null}
           editPatient={registrationPatient}
+          readOnly
+          canEdit={canEditRegistration}
           onAdded={() => {
             window.dispatchEvent(new CustomEvent("reload-pro-patients"));
           }}
