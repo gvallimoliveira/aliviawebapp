@@ -33,7 +33,20 @@ const NEVER_RESTORE_PREFIXES = [
   "/complete-profile",
   "/upgrade-welcome",
   "/clear-cache",
+  "/limpar-cache",
   "/admin",
+  // Public / shareable read-only routes — typically opened from an
+  // external link (WhatsApp, e-mail). Restoring them would "trap" the
+  // user on the shared link the next time they open the domain.
+  "/hep/",
+  "/assessment/view/",
+  "/assessment/professional/",
+  "/assessment/clinic/",
+  "/feedback/",
+  "/q/",
+  "/blog",
+  "/verificar-email",
+  "/auth/callback",
   "/", // landing/gateway — no point restoring it
 ];
 
