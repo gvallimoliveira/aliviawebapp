@@ -52,7 +52,7 @@ export default function CasosDeEstudo() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/40 bg-card/60 backdrop-blur-sm px-4 py-3 flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate("/dashboard")}>
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <GraduationCap className="h-5 w-5 text-primary" />
