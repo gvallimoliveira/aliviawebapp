@@ -41,8 +41,8 @@ const ProfessionalAssessment = () => {
   const patientToken = searchParams.get("patient");
   const resumeId = searchParams.get("resume");
   const stepsParam = searchParams.get("steps");
-  const enabledSteps = React.useMemo(() => parseStepsParam(stepsParam), [stepsParam]);
-  const reassessAnamSubs = React.useMemo(
+  const enabledSteps = useMemo(() => parseStepsParam(stepsParam), [stepsParam]);
+  const reassessAnamSubs = useMemo(
     () => (enabledSteps ? ANAMNESIS_SUB_IDS.filter((id) => enabledSteps.has(id)) : null),
     [enabledSteps],
   );
