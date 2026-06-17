@@ -518,7 +518,16 @@ const ClinicAssessment = () => {
 
       <main className="container max-w-2xl py-8 px-4">
         {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
-          <AssessmentStepper currentStep={step} mode="professional" />
+          <AssessmentStepper
+            currentStep={step}
+            mode="professional"
+            enabledStepIds={reassessmentId ? [
+              ...(reassessHasRedflags ? ["redflags"] : []),
+              ...(reassessHasAnamnesis ? ["anamnesis"] : []),
+              ...(reassessHasQuestionnaire ? ["questionnaire"] : []),
+              "result",
+            ] : undefined}
+          />
         )}
 
         {step === "resume_summary" && (
