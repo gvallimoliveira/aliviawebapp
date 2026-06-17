@@ -326,7 +326,9 @@ const ClinicalAgent = () => {
         .eq("thread_id", activeThread.id)
         .order("created_at", { ascending: true });
       setMessages((data || []) as any);
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      if ((data || []).length > 0) {
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 100);
+      }
     })();
   }, [activeThread?.id]);
 
@@ -635,7 +637,7 @@ const ClinicalAgent = () => {
   }
 
   const ThreadList = ({ withClose = false }: { withClose?: boolean }) => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0 h-full">
       <div className="p-3 border-b border-border/40 flex items-center gap-2">
         <Button onClick={() => createThread(null)} className="flex-1 gap-2" size="sm">
           <Plus className="h-4 w-4" /> Nova conversa
@@ -705,7 +707,7 @@ const ClinicalAgent = () => {
       {/* Main chat */}
       <main className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Header */}
-        <header className="border-b border-border/40 bg-card/60 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3 flex flex-col gap-2 md:flex-row md:items-center">
+        <header className="sticky top-0 z-20 border-b border-border/40 bg-card/95 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3 flex flex-col gap-2 md:flex-row md:items-center">
           <div className="flex min-w-0 items-center gap-1.5 md:gap-2 md:flex-1">
             <Button
               variant="ghost"
