@@ -291,7 +291,11 @@ const ProfessionalAssessment = () => {
     setStep("redflag_alert");
   };
 
-  const handleAnamnesisComplete = async (data: AnamnesisData) => {
+  const handleAnamnesisComplete = async (rawData: AnamnesisData) => {
+    // For reassessment, merge skipped sub-sections from the original assessment.
+    const data = (reassessmentId && originalAssessment)
+      ? (mergeAnamnesisWithOriginal(rawData, originalAssessment, enabledSteps) as AnamnesisData)
+      : rawData;
     setAnamnesisData(data);
     const id = await createAssessment();
     if (id) {
@@ -301,7 +305,13 @@ const ProfessionalAssessment = () => {
         pain_score: data.painScore,
       });
     }
-    setStep("questionnaire");
+    if (reassessHasQuestionnaire) {
+      setStep("questionnaire");
+    } else {
+      // Skip questionnaire: reuse original test_results if any
+      const origTests = (originalAssessment?.test_results as any) || [];
+      generateDiagnosis(data, origTests, id);
+    }
   };
 
   const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
@@ -313,7 +323,8 @@ const ProfessionalAssessment = () => {
   };
 
   const handleQuestionnaireSkip = () => {
-    generateDiagnosis(anamnesisData!, [], assessmentId);
+    const fallback = reassessmentId ? ((originalAssessment?.test_results as any) || []) : [];
+    generateDiagnosis(anamnesisData!, fallback, assessmentId);
   };
 
   const invokeDiagnosisWithRetry = async (bodyData: any, attempts = 3): Promise<any> => {
