@@ -462,7 +462,19 @@ const ClinicalAgent = () => {
       .order("created_at", { ascending: true });
     setMessages((msgs || []) as any);
     setSending(false);
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    // Scroll to the START of the newest assistant message so the user can read
+    // it from the top — avoid auto-jumping to the bottom of long responses.
+    setTimeout(() => {
+      const lastAssistant = [...(msgs || [])].reverse().find((m: any) => m.role === "assistant") as any;
+      if (lastAssistant?.id) {
+        const el = document.getElementById(`msg-${lastAssistant.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+      }
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
 
     // Refresh thread title if changed
     const { data: th } = await supabase.from("agent_threads")
@@ -632,7 +644,7 @@ const ClinicalAgent = () => {
   );
 
   return (
-    <div className="h-screen w-full flex bg-background overflow-hidden relative">
+    <div className="h-[100dvh] w-full flex bg-background overflow-hidden relative">
       {/* Background logo (suave) */}
       <div
         className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.08] z-0"
@@ -850,7 +862,7 @@ const ClinicalAgent = () => {
               const quizPart = m.parts.find(p => p.type === "quiz" && p.quiz) as any;
               if (m.role === "user") {
                 return (
-                  <div key={m.id} className="flex justify-end">
+                  <div key={m.id} id={`msg-${m.id}`} className="flex justify-end scroll-mt-4">
                     <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2.5 text-sm whitespace-pre-wrap">
                       {text}
                     </div>
@@ -858,7 +870,7 @@ const ClinicalAgent = () => {
                 );
               }
               return (
-                <div key={m.id} className="flex justify-start">
+                <div key={m.id} id={`msg-${m.id}`} className="flex justify-start scroll-mt-4">
                   <div className="max-w-[85%] w-full bg-muted text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm shadow-sm">
                     {text && (
                       <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2 prose-a:text-primary prose-a:font-medium">
