@@ -864,6 +864,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           </Card>
         </>
       )}
+
+      {!isDemoMode && (
         <>
           {/* Status bar */}
           <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
