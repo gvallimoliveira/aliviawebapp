@@ -355,12 +355,19 @@ export default function PatientDetailView(props: any) {
 
   const openReassessmentLinkDialog = React.useCallback(() => {
     if (!latestWithDiagnosis) return;
+    if (isDemo) {
+      toast({
+        title: "Isto é uma simulação 🎬",
+        description: "No modo demonstração não geramos links reais de reavaliação. Assine o plano PRO para enviar reavaliações de verdade aos seus pacientes.",
+      });
+      return;
+    }
     if (!professionalId && !clinicId) {
       toast({ title: "Não foi possível gerar o link", description: "Contexto profissional/clínica ausente.", variant: "destructive" });
       return;
     }
     setReassessConfigOpen(true);
-  }, [latestWithDiagnosis, professionalId, clinicId, toast]);
+  }, [latestWithDiagnosis, professionalId, clinicId, toast, isDemo]);
 
   const buildReassessLinkWithSteps = React.useCallback(async (steps: ReassessStepId[]) => {
     if (!latestWithDiagnosis) return;

@@ -154,7 +154,6 @@ const ProfessionalDemo = () => {
 
           <TabsContent value="agenda" className="space-y-6">
             <DemoUpsellBanner section="pro-agenda" variant="pro" />
-            <DemoDailySummaryMock professionalId={proStub.id} />
             <Suspense fallback={<SectionFallback />}>
               <ProSchedule professionalId={proStub.id} isSimulated={true} />
             </Suspense>
