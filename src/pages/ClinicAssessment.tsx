@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Globe, Loader2, ChevronRight, Building2, AlertTriangle, User, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -19,6 +19,14 @@ import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import ResumeSummary from "@/components/assessment/ResumeSummary";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
+import {
+  parseStepsParam,
+  hasAnyAnamnesisSub,
+  isStepEnabled,
+  mergeAnamnesisWithOriginal,
+  buildAnamnesisFromOriginal,
+  ANAMNESIS_SUB_IDS,
+} from "@/lib/reassessmentSteps";
 
 type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
@@ -31,6 +39,15 @@ const ClinicAssessment = () => {
   const reassessmentId = searchParams.get("reassessment");
   const patientToken = searchParams.get("patient");
   const resumeId = searchParams.get("resume");
+  const stepsParam = searchParams.get("steps");
+  const enabledSteps = useMemo(() => parseStepsParam(stepsParam), [stepsParam]);
+  const reassessAnamSubs = useMemo(
+    () => (enabledSteps ? ANAMNESIS_SUB_IDS.filter((id) => enabledSteps.has(id)) : null),
+    [enabledSteps],
+  );
+  const reassessHasAnamnesis = hasAnyAnamnesisSub(enabledSteps);
+  const reassessHasQuestionnaire = isStepEnabled(enabledSteps, "questionnaire");
+  const reassessHasRedflags = isStepEnabled(enabledSteps, "redflags");
 
   const [step, setStep] = useState<ClinicStep>("loading_check");
   const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null; brand_color: string | null } | null>(null);
@@ -278,7 +295,10 @@ const ClinicAssessment = () => {
     setStep("redflag_alert");
   };
 
-  const handleAnamnesisComplete = async (data: AnamnesisData) => {
+  const handleAnamnesisComplete = async (rawData: AnamnesisData) => {
+    const data = (reassessmentId && originalAssessment)
+      ? (mergeAnamnesisWithOriginal(rawData, originalAssessment, enabledSteps) as AnamnesisData)
+      : rawData;
     setAnamnesisData(data);
     const id = await createAssessment();
     if (id) {
@@ -288,7 +308,12 @@ const ClinicAssessment = () => {
         pain_score: data.painScore,
       });
     }
-    setStep("questionnaire");
+    if (reassessHasQuestionnaire) {
+      setStep("questionnaire");
+    } else {
+      const origTests = (originalAssessment?.test_results as any) || [];
+      generateDiagnosis(data, origTests, id);
+    }
   };
 
   const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
@@ -300,7 +325,8 @@ const ClinicAssessment = () => {
   };
 
   const handleQuestionnaireSkip = () => {
-    generateDiagnosis(anamnesisData!, [], assessmentId);
+    const fallback = reassessmentId ? ((originalAssessment?.test_results as any) || []) : [];
+    generateDiagnosis(anamnesisData!, fallback, assessmentId);
   };
 
   const invokeDiagnosisWithRetry = async (bodyData: any, attempts = 3): Promise<any> => {
@@ -400,9 +426,28 @@ const ClinicAssessment = () => {
     }
   };
 
-  const handlePatientInfoContinue = () => {
+  const handlePatientInfoContinue = async () => {
     if (reassessmentId && originalAssessment) {
-      setStep("anamnesis");
+      if (reassessHasAnamnesis) {
+        setStep("anamnesis");
+      } else {
+        const data = buildAnamnesisFromOriginal(originalAssessment) as AnamnesisData;
+        setAnamnesisData(data);
+        const id = await createAssessment();
+        if (id) {
+          await updateAssessment(id, {
+            anamnesis_data: data as any,
+            pain_regions: data.painRegions,
+            pain_score: data.painScore,
+          });
+        }
+        if (reassessHasQuestionnaire) {
+          setStep("questionnaire");
+        } else {
+          const origTests = (originalAssessment?.test_results as any) || [];
+          generateDiagnosis(data, origTests, id);
+        }
+      }
     } else {
       setStep("redflags");
     }
@@ -473,7 +518,16 @@ const ClinicAssessment = () => {
 
       <main className="container max-w-2xl py-8 px-4">
         {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
-          <AssessmentStepper currentStep={step} mode="professional" />
+          <AssessmentStepper
+            currentStep={step}
+            mode="professional"
+            enabledStepIds={reassessmentId ? [
+              ...(reassessHasRedflags ? ["redflags"] : []),
+              ...(reassessHasAnamnesis ? ["anamnesis"] : []),
+              ...(reassessHasQuestionnaire ? ["questionnaire"] : []),
+              "result",
+            ] : undefined}
+          />
         )}
 
         {step === "resume_summary" && (
@@ -616,7 +670,7 @@ const ClinicAssessment = () => {
             mode="professional"
             onComplete={handleAnamnesisComplete}
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
-            draftScopeKey={`clinic:${clinicId}:${patientToken || reassessmentId || "anon"}`}
+            draftScopeKey={`clinic:${clinicId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`}
             initialPainRegions={prefilledRegions}
             initialChiefComplaints={prefilledComplaints}
             initialOnset={prefilledOnset}
@@ -624,6 +678,7 @@ const ClinicAssessment = () => {
             initialSurgeryDetails={prefilledSurgeryDetails}
             initialActivityLevel={prefilledActivityLevel}
             initialHasGymAccess={prefilledGymAccess}
+            enabledSubs={reassessAnamSubs || undefined}
           />
         )}
 
@@ -631,7 +686,7 @@ const ClinicAssessment = () => {
           <QuestionnaireStep
             painRegions={anamnesisData.painRegions}
             onComplete={handleQuestionnaireComplete}
-            onBack={() => setStep("anamnesis")}
+            onBack={() => reassessHasAnamnesis ? setStep("anamnesis") : setStep("patient_info")}
             onSkip={handleQuestionnaireSkip}
             previousAnswers={previousQuestionnaireAnswers}
           />

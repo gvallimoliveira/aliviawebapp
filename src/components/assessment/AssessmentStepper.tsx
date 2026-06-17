@@ -48,11 +48,15 @@ const STEP_MAP: Record<string, string> = {
 interface AssessmentStepperProps {
   currentStep: string;
   mode: "basic" | "premium" | "professional";
+  enabledStepIds?: string[];
 }
 
-const AssessmentStepper = ({ currentStep, mode }: AssessmentStepperProps) => {
+const AssessmentStepper = ({ currentStep, mode, enabledStepIds }: AssessmentStepperProps) => {
   const { language } = useLanguage();
-  const steps = mode === "premium" ? PREMIUM_STEPS : mode === "professional" ? PROFESSIONAL_STEPS : BASIC_STEPS;
+  const baseSteps = mode === "premium" ? PREMIUM_STEPS : mode === "professional" ? PROFESSIONAL_STEPS : BASIC_STEPS;
+  const steps = enabledStepIds && enabledStepIds.length > 0
+    ? baseSteps.filter((s) => enabledStepIds.includes(s.id))
+    : baseSteps;
   const mappedStep = STEP_MAP[currentStep] || currentStep;
   const currentIndex = steps.findIndex((s) => s.id === mappedStep);
 

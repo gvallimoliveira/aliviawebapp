@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Globe, Loader2, ChevronRight, Stethoscope, AlertTriangle, User, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -19,6 +19,15 @@ import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import ResumeSummary from "@/components/assessment/ResumeSummary";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
+import {
+  parseStepsParam,
+  hasAnyAnamnesisSub,
+  isStepEnabled,
+  mergeAnamnesisWithOriginal,
+  buildAnamnesisFromOriginal,
+  ANAMNESIS_SUB_IDS,
+  type ReassessStepId,
+} from "@/lib/reassessmentSteps";
 
 type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
@@ -31,6 +40,15 @@ const ProfessionalAssessment = () => {
   const reassessmentId = searchParams.get("reassessment");
   const patientToken = searchParams.get("patient");
   const resumeId = searchParams.get("resume");
+  const stepsParam = searchParams.get("steps");
+  const enabledSteps = useMemo(() => parseStepsParam(stepsParam), [stepsParam]);
+  const reassessAnamSubs = useMemo(
+    () => (enabledSteps ? ANAMNESIS_SUB_IDS.filter((id) => enabledSteps.has(id)) : null),
+    [enabledSteps],
+  );
+  const reassessHasAnamnesis = hasAnyAnamnesisSub(enabledSteps);
+  const reassessHasQuestionnaire = isStepEnabled(enabledSteps, "questionnaire");
+  const reassessHasRedflags = isStepEnabled(enabledSteps, "redflags");
 
   const [step, setStep] = useState<ProfStep>("loading_check");
   const [professional, setProfessional] = useState<any>(null);
@@ -273,7 +291,11 @@ const ProfessionalAssessment = () => {
     setStep("redflag_alert");
   };
 
-  const handleAnamnesisComplete = async (data: AnamnesisData) => {
+  const handleAnamnesisComplete = async (rawData: AnamnesisData) => {
+    // For reassessment, merge skipped sub-sections from the original assessment.
+    const data = (reassessmentId && originalAssessment)
+      ? (mergeAnamnesisWithOriginal(rawData, originalAssessment, enabledSteps) as AnamnesisData)
+      : rawData;
     setAnamnesisData(data);
     const id = await createAssessment();
     if (id) {
@@ -283,7 +305,13 @@ const ProfessionalAssessment = () => {
         pain_score: data.painScore,
       });
     }
-    setStep("questionnaire");
+    if (reassessHasQuestionnaire) {
+      setStep("questionnaire");
+    } else {
+      // Skip questionnaire: reuse original test_results if any
+      const origTests = (originalAssessment?.test_results as any) || [];
+      generateDiagnosis(data, origTests, id);
+    }
   };
 
   const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
@@ -295,7 +323,8 @@ const ProfessionalAssessment = () => {
   };
 
   const handleQuestionnaireSkip = () => {
-    generateDiagnosis(anamnesisData!, [], assessmentId);
+    const fallback = reassessmentId ? ((originalAssessment?.test_results as any) || []) : [];
+    generateDiagnosis(anamnesisData!, fallback, assessmentId);
   };
 
   const invokeDiagnosisWithRetry = async (bodyData: any, attempts = 3): Promise<any> => {
@@ -377,10 +406,30 @@ const ProfessionalAssessment = () => {
     }
   };
 
-  // For reassessment, skip red flags and go straight to anamnesis
-  const handlePatientInfoContinue = () => {
+  // For reassessment, skip red flags. Route based on which steps the professional enabled.
+  const handlePatientInfoContinue = async () => {
     if (reassessmentId && originalAssessment) {
-      setStep("anamnesis");
+      if (reassessHasAnamnesis) {
+        setStep("anamnesis");
+      } else {
+        // No anamnesis sub-steps enabled — reuse the original anamnesis entirely
+        const data = buildAnamnesisFromOriginal(originalAssessment) as AnamnesisData;
+        setAnamnesisData(data);
+        const id = await createAssessment();
+        if (id) {
+          await updateAssessment(id, {
+            anamnesis_data: data as any,
+            pain_regions: data.painRegions,
+            pain_score: data.painScore,
+          });
+        }
+        if (reassessHasQuestionnaire) {
+          setStep("questionnaire");
+        } else {
+          const origTests = (originalAssessment?.test_results as any) || [];
+          generateDiagnosis(data, origTests, id);
+        }
+      }
     } else {
       setStep("redflags");
     }
@@ -477,7 +526,16 @@ const ProfessionalAssessment = () => {
           </div>
         )}
         {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
-          <AssessmentStepper currentStep={step} mode="professional" />
+          <AssessmentStepper
+            currentStep={step}
+            mode="professional"
+            enabledStepIds={reassessmentId ? [
+              ...(reassessHasRedflags ? ["redflags"] : []),
+              ...(reassessHasAnamnesis ? ["anamnesis"] : []),
+              ...(reassessHasQuestionnaire ? ["questionnaire"] : []),
+              "result",
+            ] : undefined}
+          />
         )}
 
         {step === "resume_summary" && (
@@ -620,7 +678,7 @@ const ProfessionalAssessment = () => {
             mode="professional"
             onComplete={handleAnamnesisComplete}
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
-            draftScopeKey={`pro:${professionalId}:${patientToken || reassessmentId || "anon"}`}
+            draftScopeKey={`pro:${professionalId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`}
             initialPainRegions={prefilledRegions}
             initialChiefComplaints={prefilledComplaints}
             initialOnset={prefilledOnset}
@@ -628,6 +686,7 @@ const ProfessionalAssessment = () => {
             initialSurgeryDetails={prefilledSurgeryDetails}
             initialActivityLevel={prefilledActivityLevel}
             initialHasGymAccess={prefilledGymAccess}
+            enabledSubs={reassessAnamSubs || undefined}
           />
         )}
 
@@ -635,7 +694,7 @@ const ProfessionalAssessment = () => {
           <QuestionnaireStep
             painRegions={anamnesisData.painRegions}
             onComplete={handleQuestionnaireComplete}
-            onBack={() => setStep("anamnesis")}
+            onBack={() => reassessHasAnamnesis ? setStep("anamnesis") : setStep("patient_info")}
             onSkip={handleQuestionnaireSkip}
             previousAnswers={previousQuestionnaireAnswers}
           />

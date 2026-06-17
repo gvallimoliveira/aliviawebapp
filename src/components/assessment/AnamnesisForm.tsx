@@ -70,9 +70,15 @@ interface AnamnesisFormProps {
   initialHasGymAccess?: string;
   /** Optional stable key (e.g. token, professionalId+email) to persist draft across reloads. */
   draftScopeKey?: string | null;
+  /**
+   * Optional sub-step filter for reassessment links. When provided, only the listed
+   * groups are shown to the patient. Possible values: "complaint", "painmap",
+   * "surgery", "painscore", "activity". If undefined, every step is shown (default).
+   */
+  enabledSubs?: string[];
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, draftScopeKey }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, draftScopeKey, enabledSubs }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -349,19 +355,33 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
   };
 
   const buildStepSequence = (): StepId[] => {
+    // Map each StepId to a sub-group for reassessment filtering.
+    const groupOf = (id: StepId): "complaint" | "painmap" | "surgery" | "painscore" | "activity" | "identity" => {
+      switch (id) {
+        case "painmap": return "painmap";
+        case "surgery": return "surgery";
+        case "painscore": return "painscore";
+        case "gym": return "activity";
+        case "sex_age": return "identity"; // identity is always kept
+        default: return "complaint"; // complaint, onset, region_detail, migraine_screening, paintype, evolution, factors, duration, pain_frequency
+      }
+    };
+    const allowGroup = (g: string): boolean => {
+      if (!enabledSubs || enabledSubs.length === 0) return true; // default = full
+      if (g === "identity") return true; // always keep
+      return enabledSubs.includes(g);
+    };
+
     const base: StepId[] = ["complaint", "onset", "surgery", "painmap"];
-    // Add region_detail if applicable
     if (needsRegionDetail()) {
       base.push("region_detail");
     }
-    // Add migraine screening if cervical + headache
     if (needsMigraineScreening()) {
       base.push("migraine_screening");
     }
-    // Always show sex_age step (includes CPF + birth_date for pre-assessment)
     base.push("sex_age");
     base.push("paintype", "evolution", "factors", "duration", "pain_frequency", "gym", "painscore");
-    return base;
+    return base.filter((id) => allowGroup(groupOf(id)));
   };
 
   const stepSequence = buildStepSequence();
