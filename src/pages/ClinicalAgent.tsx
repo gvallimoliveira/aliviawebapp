@@ -799,6 +799,17 @@ const ClinicalAgent = () => {
 
           <MentorCommandsPopover onPick={(c) => setInput((prev) => (prev ? `${prev} ${c}` : c))} />
 
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            title="Casos de estudo (pacientes fictícios criados pelo agente)"
+            aria-label="Casos de estudo"
+            onClick={() => navigate("/casos-de-estudo")}
+          >
+            <GraduationCap className="h-4 w-4" />
+          </Button>
+
           {uniqueCitations.length > 0 && (
             <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setShowCitations(true)}>
               <BookOpen className="h-3.5 w-3.5" /> {uniqueCitations.length}
