@@ -462,7 +462,19 @@ const ClinicalAgent = () => {
       .order("created_at", { ascending: true });
     setMessages((msgs || []) as any);
     setSending(false);
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    // Scroll to the START of the newest assistant message so the user can read
+    // it from the top — avoid auto-jumping to the bottom of long responses.
+    setTimeout(() => {
+      const lastAssistant = [...(msgs || [])].reverse().find((m: any) => m.role === "assistant") as any;
+      if (lastAssistant?.id) {
+        const el = document.getElementById(`msg-${lastAssistant.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+      }
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
 
     // Refresh thread title if changed
     const { data: th } = await supabase.from("agent_threads")
