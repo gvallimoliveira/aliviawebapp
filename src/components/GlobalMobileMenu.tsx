@@ -36,6 +36,7 @@ const HIDDEN_PATH_PREFIXES = [
 
 const PAGES_WITH_HEADER = [
   "/",
+  "/agente",
   "/para-pacientes",
   "/landing-legacy",
   "/profissionais",

@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check, Brain, Lock, GraduationCap, Terminal,
+  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Pencil, Check, Brain, Lock, GraduationCap, Terminal, Home,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
@@ -687,29 +687,30 @@ const ClinicalAgent = () => {
       {/* Main chat */}
       <main className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Header */}
-        <header className="border-b border-border/40 bg-card/60 backdrop-blur-sm px-4 py-3 flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden h-9 w-9 shrink-0"
-            onClick={() => navigate("/dashboard")}
-            title="Voltar ao dashboard"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-[85vw] max-w-xs [&>button]:hidden">
-              <ThreadList withClose />
-            </SheetContent>
-          </Sheet>
+        <header className="border-b border-border/40 bg-card/60 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3 flex flex-col gap-2 md:flex-row md:items-center">
+          <div className="flex min-w-0 items-center gap-1.5 md:gap-2 md:flex-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-9 w-9 shrink-0"
+              onClick={() => navigate("/dashboard")}
+              title="Voltar ao dashboard"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 shrink-0" title="Conversas" aria-label="Conversas">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-[85vw] max-w-xs [&>button]:hidden">
+                <ThreadList withClose />
+              </SheetContent>
+            </Sheet>
 
 
-          <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0">
             {editingTitle && activeThread ? (
               <div className="flex items-center gap-1">
                 <Input
@@ -755,10 +756,23 @@ const ClinicalAgent = () => {
               </div>
             )}
           </div>
+          </div>
+
+          <div className="flex w-full min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain pb-0.5 md:w-auto md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-9 w-9 shrink-0"
+              title="Menu geral"
+              aria-label="Menu geral"
+              onClick={() => window.dispatchEvent(new Event("alivia:open-global-menu"))}
+            >
+              <Home className="h-4 w-4" />
+            </Button>
 
           {activeThread && !linkedPatient && (
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowPatientPicker(true)}>
-              <UserPlus className="h-3.5 w-3.5" /> Vincular paciente
+            <Button variant="outline" size="sm" className="h-9 shrink-0 gap-1.5 px-2 md:px-3" onClick={() => setShowPatientPicker(true)} title="Vincular paciente">
+              <UserPlus className="h-3.5 w-3.5" /> <span className="hidden md:inline">Vincular paciente</span>
             </Button>
           )}
 
@@ -766,13 +780,13 @@ const ClinicalAgent = () => {
             <Button
               variant="default"
               size="sm"
-              className="gap-1.5"
+              className="h-9 shrink-0 gap-1.5 px-2 md:px-3"
               onClick={generateHep}
               disabled={generatingHep}
               title="Gera um HEP real (com link) baseado na última avaliação deste paciente"
             >
               {generatingHep ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-              Gerar HEP
+              <span className="hidden md:inline">Gerar HEP</span>
             </Button>
           )}
 
@@ -780,7 +794,7 @@ const ClinicalAgent = () => {
             <Button
               variant={activeThread.mentor_mode ? "default" : "outline"}
               size="sm"
-              className="gap-1.5"
+              className="h-9 shrink-0 gap-1.5 px-2 md:px-3"
               title="Modo Mentor (persona Professor para alunos do Alivia Acadêmico)"
               onClick={async () => {
                 const next = !activeThread.mentor_mode;
@@ -793,7 +807,7 @@ const ClinicalAgent = () => {
               }}
             >
               <GraduationCap className="h-3.5 w-3.5" />
-              {activeThread.mentor_mode ? "Mentor on" : "Mentor"}
+              <span className="hidden md:inline">{activeThread.mentor_mode ? "Mentor on" : "Mentor"}</span>
             </Button>
           )}
 
@@ -802,7 +816,7 @@ const ClinicalAgent = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9"
+            className="h-9 w-9 shrink-0"
             title="Casos de estudo (pacientes fictícios criados pelo agente)"
             aria-label="Casos de estudo"
             onClick={() => navigate("/casos-de-estudo")}
@@ -811,10 +825,11 @@ const ClinicalAgent = () => {
           </Button>
 
           {uniqueCitations.length > 0 && (
-            <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setShowCitations(true)}>
+            <Button variant="ghost" size="sm" className="h-9 shrink-0 gap-1.5 px-2 md:px-3" onClick={() => setShowCitations(true)} title="Evidências citadas">
               <BookOpen className="h-3.5 w-3.5" /> {uniqueCitations.length}
             </Button>
           )}
+          </div>
         </header>
 
         {isBetaInternal && (
