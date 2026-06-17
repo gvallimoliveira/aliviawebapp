@@ -144,7 +144,6 @@ const ProfessionalDemo = () => {
           </TabsList>
 
           <TabsContent value="professional" className="space-y-6">
-            <DemoUpsellBanner section="pro-patients" variant="pro" />
             <ProDashboard
               professional={proStub}
               isSimulated={true}
