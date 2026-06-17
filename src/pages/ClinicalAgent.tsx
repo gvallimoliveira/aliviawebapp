@@ -862,7 +862,7 @@ const ClinicalAgent = () => {
               const quizPart = m.parts.find(p => p.type === "quiz" && p.quiz) as any;
               if (m.role === "user") {
                 return (
-                  <div key={m.id} className="flex justify-end">
+                  <div key={m.id} id={`msg-${m.id}`} className="flex justify-end scroll-mt-4">
                     <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2.5 text-sm whitespace-pre-wrap">
                       {text}
                     </div>
@@ -870,7 +870,7 @@ const ClinicalAgent = () => {
                 );
               }
               return (
-                <div key={m.id} className="flex justify-start">
+                <div key={m.id} id={`msg-${m.id}`} className="flex justify-start scroll-mt-4">
                   <div className="max-w-[85%] w-full bg-muted text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm shadow-sm">
                     {text && (
                       <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2 prose-a:text-primary prose-a:font-medium">
