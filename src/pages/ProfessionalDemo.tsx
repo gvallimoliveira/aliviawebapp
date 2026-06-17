@@ -14,7 +14,7 @@ import ProDashboard from "@/components/dashboard/ProDashboard";
 import DemoUpsellBanner from "@/components/demo/DemoUpsellBanner";
 import DemoInsightsMock from "@/components/demo/DemoInsightsMock";
 import DemoMessagesMock from "@/components/demo/DemoMessagesMock";
-import DemoDailySummaryMock from "@/components/demo/DemoDailySummaryMock";
+
 import DemoClinicalAgentMock from "@/components/demo/DemoClinicalAgentMock";
 
 import { setSeo } from "@/lib/seo";
@@ -154,7 +154,6 @@ const ProfessionalDemo = () => {
 
           <TabsContent value="agenda" className="space-y-6">
             <DemoUpsellBanner section="pro-agenda" variant="pro" />
-            <DemoDailySummaryMock professionalId={proStub.id} />
             <Suspense fallback={<SectionFallback />}>
               <ProSchedule professionalId={proStub.id} isSimulated={true} />
             </Suspense>
