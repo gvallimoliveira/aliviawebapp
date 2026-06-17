@@ -71,8 +71,8 @@ export default function AcademicTracks() {
     }
   };
 
-  const studyWithMentor = (mod: Module) => {
-    const cmd = mod.suggested_command || `/professor ${mod.title}`;
+  const studyWithMentor = (track: Track, mod: Module) => {
+    const cmd = `/trilha ${track.niche} ${mod.order_index}`;
     navigate(`/agente?seed=${encodeURIComponent(cmd)}`);
   };
 
@@ -146,8 +146,8 @@ export default function AcademicTracks() {
                             </div>
                             {m.summary && <p className="text-xs text-muted-foreground mb-2">{m.summary}</p>}
                             <div className="flex flex-wrap gap-2">
-                              <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => studyWithMentor(m)}>
-                                <GraduationCap className="h-3.5 w-3.5" /> Estudar com Mentor
+                              <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => studyWithMentor(t, m)}>
+                                <GraduationCap className="h-3.5 w-3.5" /> Aula com Mentor
                               </Button>
                               <Button
                                 size="sm"
