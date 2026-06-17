@@ -1636,6 +1636,7 @@ export type Database = {
           full_name: string
           id: string
           is_study_case: boolean
+          notes: string | null
           occupation: string | null
           phone: string | null
           professional_id: string | null
@@ -1653,6 +1654,7 @@ export type Database = {
           full_name: string
           id?: string
           is_study_case?: boolean
+          notes?: string | null
           occupation?: string | null
           phone?: string | null
           professional_id?: string | null
@@ -1670,6 +1672,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_study_case?: boolean
+          notes?: string | null
           occupation?: string | null
           phone?: string | null
           professional_id?: string | null
