@@ -26,21 +26,22 @@ type Thread = {
   patient_id: string | null;
   archived: boolean;
   updated_at: string;
+  mentor_mode?: boolean;
 };
 
 type Message = {
   id: string;
   role: "user" | "assistant";
-  parts: Array<{ type: string; text?: string }>;
+  parts: Array<{ type: string; text?: string; quiz?: Quiz }>;
   citations: Array<{ id: string; title: string; authors?: string; year?: number; pedro_score?: number; doi?: string; source_url?: string }> | null;
   created_at: string;
 };
 
 const PROMPT_STARTERS = [
   "Discutir hipótese deste paciente",
-  "Sugerir testes funcionais",
-  "Revisar o HEP atual",
-  "/evidência dor lombar crônica",
+  "/professor",
+  "/quiz tendinopatia patelar",
+  "/caso lombalgia crônica",
 ];
 function ThreadRow({
   thread, patientName, active, onOpen, onDelete,
@@ -210,7 +211,7 @@ const ClinicalAgent = () => {
       const sb = supabase as any;
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
       const thRes: any = await sb.from("agent_threads")
-        .select("id, title, patient_id, archived, updated_at")
+        .select("id, title, patient_id, archived, updated_at, mentor_mode")
         .eq("user_id", user.id).eq("archived", false)
         .gte("updated_at", sevenDaysAgo)
         .order("updated_at", { ascending: false });
