@@ -735,6 +735,27 @@ const ClinicalAgent = () => {
             </Button>
           )}
 
+          {activeThread && (
+            <Button
+              variant={activeThread.mentor_mode ? "default" : "outline"}
+              size="sm"
+              className="gap-1.5"
+              title="Modo Mentor (persona Professor para alunos do Alivia Acadêmico)"
+              onClick={async () => {
+                const next = !activeThread.mentor_mode;
+                setActiveThread({ ...activeThread, mentor_mode: next });
+                setThreads(prev => prev.map(t => t.id === activeThread.id ? { ...t, mentor_mode: next } : t));
+                await supabase.functions.invoke("clinical-agent-threads", {
+                  body: { action: "set_mentor_mode", thread_id: activeThread.id, mentor_mode: next },
+                });
+                toast.success(next ? "🎓 Modo Mentor ativado" : "Modo Mentor desligado");
+              }}
+            >
+              <GraduationCap className="h-3.5 w-3.5" />
+              {activeThread.mentor_mode ? "Mentor on" : "Mentor"}
+            </Button>
+          )}
+
           {uniqueCitations.length > 0 && (
             <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setShowCitations(true)}>
               <BookOpen className="h-3.5 w-3.5" /> {uniqueCitations.length}
