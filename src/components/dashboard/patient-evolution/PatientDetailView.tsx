@@ -258,6 +258,7 @@ export default function PatientDetailView(props: any) {
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
   const [summaryDialogOpen, setSummaryDialogOpen] = React.useState(false);
   const [reassessDialog, setReassessDialog] = React.useState<{ open: boolean; loading: boolean; link: string; error: string | null }>({ open: false, loading: false, link: "", error: null });
+  const [reassessConfigOpen, setReassessConfigOpen] = React.useState(false);
   const [registrationModalOpen, setRegistrationModalOpen] = React.useState(false);
   const [registrationPatient, setRegistrationPatient] = React.useState<PatientToEdit | null>(null);
   const [registrationLoading, setRegistrationLoading] = React.useState(false);
