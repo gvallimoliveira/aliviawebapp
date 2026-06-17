@@ -79,7 +79,16 @@ export default function QuizCard({ quiz, threadId }: { quiz: Quiz; threadId?: st
             const total = (agg || []).reduce((s: number, r: any) => s + (r.xp || 0), 0);
             await awardBadgesIfEligible(supabase, uid, niche, total);
           }
-          toast.success(`+${xp} XP${niche ? ` (${niche})` : ""}`);
+          toast.success(
+            `🎉 Você pontuou +${xp} XP${niche ? ` em ${niche}` : ""}!`,
+            {
+              description: "Verifique em Minha conta sua evolução.",
+              action: {
+                label: "Minha conta",
+                onClick: () => navigate("/conta"),
+              },
+            }
+          );
         }
         setSaved(true);
       } catch (e) {
