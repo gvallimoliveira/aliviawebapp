@@ -686,6 +686,7 @@ Deno.serve(async (req) => {
         thread_id, role: "assistant",
         parts: [{ type: "text", text: intro }, { type: "quiz", quiz }],
       });
+      await setSlashTitle("Quiz", quiz.topic);
       return new Response(JSON.stringify({ assistant: intro, quiz, citations: [], quota }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
