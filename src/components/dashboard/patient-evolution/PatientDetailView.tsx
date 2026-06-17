@@ -353,22 +353,28 @@ export default function PatientDetailView(props: any) {
   }, [fetchPatientRow, mapRowToPatient, registrationPatient?.id]);
 
 
-  const openReassessmentLinkDialog = React.useCallback(async () => {
+  const openReassessmentLinkDialog = React.useCallback(() => {
     if (!latestWithDiagnosis) return;
     if (!professionalId && !clinicId) {
       toast({ title: "Não foi possível gerar o link", description: "Contexto profissional/clínica ausente.", variant: "destructive" });
       return;
     }
+    setReassessConfigOpen(true);
+  }, [latestWithDiagnosis, professionalId, clinicId, toast]);
+
+  const buildReassessLinkWithSteps = React.useCallback(async (steps: ReassessStepId[]) => {
+    if (!latestWithDiagnosis) return;
+    setReassessConfigOpen(false);
     setReassessDialog({ open: true, loading: true, link: "", error: null });
     try {
-      const longLink = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id);
+      const longLink = buildReassessmentLink({ professionalId, clinicId }, latestWithDiagnosis.id, steps);
       const short = await createShortAppLink(longLink);
       setReassessDialog({ open: true, loading: false, link: short || longLink, error: null });
     } catch (err: any) {
       console.error("[reassessment] failed to build link", err);
       setReassessDialog({ open: true, loading: false, link: "", error: err?.message || "Erro ao gerar o link de reavaliação." });
     }
-  }, [latestWithDiagnosis, professionalId, clinicId, toast]);
+  }, [latestWithDiagnosis, professionalId, clinicId]);
 
   const copyReassessLink = async () => {
     if (!reassessDialog.link) return;
