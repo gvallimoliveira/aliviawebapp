@@ -466,7 +466,7 @@ const ClinicalAgent = () => {
 
     // Refresh thread title if changed
     const { data: th } = await supabase.from("agent_threads")
-      .select("id, title, patient_id, archived, updated_at")
+      .select("id, title, patient_id, archived, updated_at, mentor_mode")
       .eq("user_id", user!.id).eq("archived", false).order("updated_at", { ascending: false });
     setThreads(th || []);
     const updated = (th || []).find(t => t.id === activeThread.id);

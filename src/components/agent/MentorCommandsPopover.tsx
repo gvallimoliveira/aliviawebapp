@@ -13,7 +13,7 @@ const COMMANDS: Cmd[] = [
   { icon: FileQuestion, cmd: "/quiz [tema] [n]", desc: "Quiz interativo com gabarito comentado (ex.: /quiz tendinopatia patelar 5)." },
   { icon: UserPlus, cmd: "/caso [tema]", desc: "Cria um paciente fictício completo na aba 'Casos de estudo' para você praticar." },
   { icon: Languages, cmd: "/traduzir [link ou texto]", desc: "Tradução PT-BR do artigo + PICO e nível de evidência estimado." },
-  { icon: Route, cmd: "/trilha [tema]", desc: "Abre a trilha de conhecimento daquele nicho (módulos sequenciais)." },
+  { icon: Route, cmd: "/trilha [tema] [1-5]", desc: "Entrega uma aula didática do módulo escolhido da trilha (ex.: /trilha ombro 1)." },
 ];
 
 export default function MentorCommandsPopover({
