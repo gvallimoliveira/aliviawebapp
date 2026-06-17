@@ -24,7 +24,12 @@ export const buildGeneralAssessmentLink = (ctx: AssessmentLinkContext) =>
 export const buildReassessmentLink = (
   ctx: AssessmentLinkContext,
   reassessmentId: string,
-) => `${baseUrl(ctx)}?reassessment=${reassessmentId}`;
+  steps?: string[] | null,
+) => {
+  const params = new URLSearchParams({ reassessment: reassessmentId });
+  if (steps && steps.length > 0) params.set("steps", steps.join(","));
+  return `${baseUrl(ctx)}?${params.toString()}`;
+};
 
 export const buildPersonalizedAssessmentLink = (
   ctx: AssessmentLinkContext,
