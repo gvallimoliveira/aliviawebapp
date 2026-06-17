@@ -406,10 +406,30 @@ const ProfessionalAssessment = () => {
     }
   };
 
-  // For reassessment, skip red flags and go straight to anamnesis
-  const handlePatientInfoContinue = () => {
+  // For reassessment, skip red flags. Route based on which steps the professional enabled.
+  const handlePatientInfoContinue = async () => {
     if (reassessmentId && originalAssessment) {
-      setStep("anamnesis");
+      if (reassessHasAnamnesis) {
+        setStep("anamnesis");
+      } else {
+        // No anamnesis sub-steps enabled — reuse the original anamnesis entirely
+        const data = buildAnamnesisFromOriginal(originalAssessment) as AnamnesisData;
+        setAnamnesisData(data);
+        const id = await createAssessment();
+        if (id) {
+          await updateAssessment(id, {
+            anamnesis_data: data as any,
+            pain_regions: data.painRegions,
+            pain_score: data.painScore,
+          });
+        }
+        if (reassessHasQuestionnaire) {
+          setStep("questionnaire");
+        } else {
+          const origTests = (originalAssessment?.test_results as any) || [];
+          generateDiagnosis(data, origTests, id);
+        }
+      }
     } else {
       setStep("redflags");
     }
