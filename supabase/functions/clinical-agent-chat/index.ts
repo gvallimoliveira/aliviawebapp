@@ -741,6 +741,7 @@ Agora me conte: por onde você começaria a avaliação? Quais testes especiais 
         thread_id, role: "assistant", parts: [{ type: "text", text: reply }],
       });
       await logXp(adminClient, user.id, "case", slash.topic, detectNicheSrv(slash.topic), 50);
+      await setSlashTitle("Caso", sc.full_name || slash.topic);
       return new Response(JSON.stringify({
         assistant: reply, study_case_id: inserted?.id, citations: [], quota,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
