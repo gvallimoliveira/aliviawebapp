@@ -835,6 +835,7 @@ Regras: nunca invente dados; se faltar informação, sinalize com "(não informa
         thread_id, role: "assistant", parts: [{ type: "text", text: assistantText }],
       });
       await logXp(adminClient, user.id, "translation", input, detectNicheSrv(input), 15);
+      await setSlashTitle("Tradução", (input.match(/https?:\/\/\S+/)?.[0] || input).slice(0, 60));
       return new Response(JSON.stringify({ assistant: assistantText, citations: [], quota }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
