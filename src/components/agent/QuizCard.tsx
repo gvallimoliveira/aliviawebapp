@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, GraduationCap, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { detectNiche, awardBadgesIfEligible } from "@/lib/academicNiche";
 
 type Question = {
   type: "multiple_choice" | "open";
@@ -47,14 +48,37 @@ export default function QuizCard({ quiz, threadId }: { quiz: Quiz; threadId?: st
     setFinished(true);
     if (!saved && mcTotal > 0) {
       try {
+        const uid = (await supabase.auth.getUser()).data.user?.id;
+        if (!uid) return;
         await (supabase as any).from("academic_quiz_results").insert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: uid,
           thread_id: threadId || null,
           topic: quiz.topic.slice(0, 200),
           total_questions: mcTotal,
           correct: score,
           score_pct: pct,
         });
+        const xp = score * 10;
+        const niche = detectNiche(quiz.topic);
+        if (xp > 0) {
+          await (supabase as any).from("academic_xp_log").insert({
+            user_id: uid,
+            source: "quiz",
+            source_ref: quiz.topic.slice(0, 200),
+            niche,
+            xp,
+          });
+          if (niche) {
+            const { data: agg } = await (supabase as any)
+              .from("academic_xp_log")
+              .select("xp")
+              .eq("user_id", uid)
+              .eq("niche", niche);
+            const total = (agg || []).reduce((s: number, r: any) => s + (r.xp || 0), 0);
+            await awardBadgesIfEligible(supabase, uid, niche, total);
+          }
+          toast.success(`+${xp} XP${niche ? ` (${niche})` : ""}`);
+        }
         setSaved(true);
       } catch (e) {
         console.warn("[quiz] save failed", e);
