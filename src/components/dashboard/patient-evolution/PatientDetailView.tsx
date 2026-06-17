@@ -596,6 +596,13 @@ export default function PatientDetailView(props: any) {
 
       <CreateExerciseProgramModal open={hepModalOpen} onOpenChange={(open) => { setHepModalOpen(open); if (!open) setEditingHepId(null); }} professionalId={professionalId} patientName={patient.name} assessmentId={latestWithDiagnosis?.id} editProgramId={editingHepId} clinicId={clinicId} demoMode={isDemo} />
 
+      <ReassessmentConfigDialog
+        open={reassessConfigOpen}
+        onOpenChange={setReassessConfigOpen}
+        onConfirm={buildReassessLinkWithSteps}
+        patientName={patient?.name}
+      />
+
       <Dialog open={reassessDialog.open} onOpenChange={(open) => setReassessDialog((s) => ({ ...s, open }))}>
         <DialogContent className="max-w-md">
           <DialogHeader>
