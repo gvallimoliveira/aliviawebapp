@@ -103,6 +103,8 @@ const ClinicalAgent = () => {
   const { threadId } = useParams();
   const [searchParams] = useSearchParams();
   const initialPatientId = searchParams.get("patient");
+  const initialSeed = searchParams.get("seed");
+  const seedConsumedRef = useRef(false);
   const { hasAccess, isBetaInternal, checked } = useClinicalAgentAccess();
   const { activeClinic, isClinicMode } = useClinic();
 
@@ -296,6 +298,17 @@ const ClinicalAgent = () => {
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     })();
   }, [activeThread?.id]);
+
+  // Seed input from ?seed=... (used by Trilhas / Desempenho links)
+  useEffect(() => {
+    if (!initialSeed || seedConsumedRef.current) return;
+    seedConsumedRef.current = true;
+    setInput(initialSeed);
+    if (!activeThread && hasAccess && hasActivePlan) {
+      createThread(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSeed, hasAccess, hasActivePlan]);
 
   const createThread = async (patient_id: string | null) => {
     setSheetOpen(false);
