@@ -14,6 +14,7 @@ import { toast } from "@/hooks/use-toast";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import SignatureManager from "@/components/account/SignatureManager";
 import StudentAccessCard from "@/components/account/StudentAccessCard";
+import AcademicPerformanceCard from "@/components/account/AcademicPerformanceCard";
 
 const Account = () => {
   const { user, loading: authLoading } = useAuth();
@@ -186,6 +187,10 @@ const Account = () => {
 
         <div className="mt-6">
           <StudentAccessCard />
+        </div>
+
+        <div className="mt-6">
+          <AcademicPerformanceCard />
         </div>
 
         <div className="mt-6 flex justify-center">

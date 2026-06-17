@@ -321,12 +321,14 @@ type SlashCommand =
   | { kind: "professor"; enable: boolean | null }
   | { kind: "quiz"; topic: string; n: number }
   | { kind: "caso"; topic: string }
+  | { kind: "traduzir"; payload: string }
+  | { kind: "trilha"; topic: string }
   | null;
 
 function parseSlash(raw: string): SlashCommand {
   const t = raw.trim();
   if (!t.startsWith("/")) return null;
-  const m = t.match(/^\/(professor|mentor|quiz|caso)\b\s*(.*)$/i);
+  const m = t.match(/^\/(professor|mentor|quiz|caso|traduzir|traducao|tradução|trilha)\b\s*([\s\S]*)$/i);
   if (!m) return null;
   const cmd = m[1].toLowerCase();
   const rest = (m[2] || "").trim();
@@ -344,7 +346,37 @@ function parseSlash(raw: string): SlashCommand {
   if (cmd === "caso") {
     return { kind: "caso", topic: rest || "uma disfunção musculoesquelética comum" };
   }
+  if (cmd === "traduzir" || cmd === "traducao" || cmd === "tradução") {
+    return { kind: "traduzir", payload: rest };
+  }
+  if (cmd === "trilha") {
+    return { kind: "trilha", topic: rest };
+  }
   return null;
+}
+
+const NICHE_KEYWORDS: Record<string, string[]> = {
+  ombro: ["ombro", "shoulder", "manguito", "rotator", "subacromial"],
+  lombar: ["lombar", "lombalgia", "lumbar", "low back", "hérnia", "ciática"],
+  quadril: ["quadril", "hip", "femoroacetabular", "trocanter"],
+  joelho: ["joelho", "knee", "patelar", "lca", "acl", "menisc"],
+  cervical: ["cervical", "cervicalgia", "neck", "whiplash"],
+};
+function detectNicheSrv(text: string): string | null {
+  const t = (text || "").toLowerCase();
+  for (const [n, kws] of Object.entries(NICHE_KEYWORDS)) {
+    if (kws.some((k) => t.includes(k))) return n;
+  }
+  return null;
+}
+async function logXp(adminClient: any, userId: string, source: string, ref: string, niche: string | null, xp: number) {
+  try {
+    await adminClient.from("academic_xp_log").insert({
+      user_id: userId, source, source_ref: ref.slice(0, 200), niche, xp,
+    });
+  } catch (e) {
+    console.warn("[xp] insert failed", e);
+  }
 }
 
 function safeJsonExtract(text: string): any | null {
@@ -640,9 +672,88 @@ Agora me conte: por onde você começaria a avaliação? Quais testes especiais 
       await adminClient.from("agent_messages").insert({
         thread_id, role: "assistant", parts: [{ type: "text", text: reply }],
       });
+      await logXp(adminClient, user.id, "case", slash.topic, detectNicheSrv(slash.topic), 50);
       return new Response(JSON.stringify({
         assistant: reply, study_case_id: inserted?.id, citations: [], quota,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // /trilha — abre a página de Trilhas com link contextual
+    if (slash?.kind === "trilha") {
+      const niche = detectNicheSrv(slash.topic) || slash.topic.trim().toLowerCase() || "";
+      const reply = niche
+        ? `📚 Trilha de **${niche}** disponível. Acesse seus módulos sequenciais (conceito → biomecânica → avaliação → tratamento → caso clínico) em **[Trilhas de Conhecimento](/trilhas)**.\n\nCada módulo concluído rende **+30 XP** e contribui para sua jornada "Mestre do ${niche.charAt(0).toUpperCase() + niche.slice(1)}".`
+        : `📚 Veja todas as trilhas disponíveis em **[Trilhas de Conhecimento](/trilhas)**.`;
+      await adminClient.from("agent_messages").insert({
+        thread_id, role: "assistant", parts: [{ type: "text", text: reply }],
+      });
+      return new Response(JSON.stringify({ assistant: reply, citations: [], quota }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // /traduzir — tradução PT-BR + PICO + nível de evidência
+    if (slash?.kind === "traduzir") {
+      const input = slash.payload.slice(0, 4000);
+      if (!input) {
+        const err = "Use `/traduzir [link do artigo OU texto colado]`. Eu traduzo para pt-BR e extraio PICO + nível de evidência.";
+        await adminClient.from("agent_messages").insert({
+          thread_id, role: "assistant", parts: [{ type: "text", text: err }],
+        });
+        return new Response(JSON.stringify({ assistant: err, citations: [], quota }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const sys = `Você é um tradutor científico e revisor metodológico de fisioterapia.
+Receberá um link de artigo (DOI/PubMed/arXiv) OU um trecho colado.
+Quando o input for apenas um link, baseie-se no que você já sabe sobre o artigo (título/abstract); se não conhecer, peça o abstract.
+
+Responda em pt-BR com este formato em markdown:
+
+### Resumo executivo
+3-5 linhas com o que o estudo investigou, achou e conclui.
+
+### PICO
+- **População:** ...
+- **Intervenção:** ...
+- **Comparação:** ...
+- **Desfecho:** ...
+
+### Nível de evidência
+Classifique (Oxford CEBM 1-5) e, se for ensaio clínico, estime o **PEDro** (0-10) com 1 linha de justificativa.
+
+### Aplicabilidade clínica
+2-4 bullets curtos: para quem serve, limitações, como aplicar na prática.
+
+### Tradução (se houver texto colado)
+Tradução fiel e fluente do trecho.
+
+Regras: nunca invente dados; se faltar informação, sinalize com "(não informado no input)".`;
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-pro",
+          messages: [
+            { role: "system", content: sys },
+            { role: "user", content: input },
+          ],
+        }),
+      });
+      let assistantText = "Não consegui traduzir agora. Tente novamente em alguns segundos.";
+      if (resp.ok) {
+        const j = await resp.json();
+        assistantText = j.choices?.[0]?.message?.content || assistantText;
+      } else {
+        console.error("[traduzir] gateway error", resp.status);
+      }
+      await adminClient.from("agent_messages").insert({
+        thread_id, role: "assistant", parts: [{ type: "text", text: assistantText }],
+      });
+      await logXp(adminClient, user.id, "translation", input, detectNicheSrv(input), 15);
+      return new Response(JSON.stringify({ assistant: assistantText, citations: [], quota }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Patient context (if linked)

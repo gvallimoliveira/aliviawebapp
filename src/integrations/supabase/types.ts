@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_badges: {
+        Row: {
+          awarded_at: string
+          id: string
+          level: string
+          niche: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          id?: string
+          level: string
+          niche: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          id?: string
+          level?: string
+          niche?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       academic_quiz_results: {
         Row: {
           correct: number
@@ -54,6 +78,146 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      academic_track_modules: {
+        Row: {
+          created_at: string
+          id: string
+          order_index: number
+          suggested_command: string | null
+          summary: string | null
+          title: string
+          track_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_index: number
+          suggested_command?: string | null
+          summary?: string | null
+          title: string
+          track_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          suggested_command?: string | null
+          summary?: string | null
+          title?: string
+          track_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_track_modules_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "academic_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academic_tracks: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          niche: string
+          slug: string
+          title: string
+          total_modules: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          niche: string
+          slug: string
+          title: string
+          total_modules?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          niche?: string
+          slug?: string
+          title?: string
+          total_modules?: number
+        }
+        Relationships: []
+      }
+      academic_user_progress: {
+        Row: {
+          completed_at: string
+          id: string
+          module_id: string
+          track_id: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          module_id: string
+          track_id: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          module_id?: string
+          track_id?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_user_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "academic_track_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academic_user_progress_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "academic_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academic_xp_log: {
+        Row: {
+          created_at: string
+          id: string
+          niche: string | null
+          source: string
+          source_ref: string | null
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          niche?: string | null
+          source: string
+          source_ref?: string | null
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          niche?: string | null
+          source?: string
+          source_ref?: string | null
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
       }
       agent_messages: {
         Row: {
