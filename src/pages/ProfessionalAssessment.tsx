@@ -19,6 +19,15 @@ import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import ResumeSummary from "@/components/assessment/ResumeSummary";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
+import {
+  parseStepsParam,
+  hasAnyAnamnesisSub,
+  isStepEnabled,
+  mergeAnamnesisWithOriginal,
+  buildAnamnesisFromOriginal,
+  ANAMNESIS_SUB_IDS,
+  type ReassessStepId,
+} from "@/lib/reassessmentSteps";
 
 type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
