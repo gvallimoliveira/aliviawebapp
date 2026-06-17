@@ -232,28 +232,46 @@ const ClinicalAgent = () => {
 
       const clinicId = isClinicMode && activeClinic ? activeClinic.clinic_id : null;
 
-      // Load hidden (archived) patient emails so they don't appear in the picker
-      const hiddenEmails = new Set<string>();
+      // Load hidden (archived) patient keys. The dashboard archives patients by
+      // groupKey = (email || full_name), and stores that string in patient_email.
+      // Mirror the same logic here so archived patients disappear from the picker
+      // even when their patients-table row has no email.
+      const hiddenKeys = new Set<string>();
       if (clinicId) {
         const { data: hid } = await sb.from("clinic_hidden_patients")
           .select("patient_email").eq("clinic_id", clinicId);
-        (hid || []).forEach((h: any) => hiddenEmails.add(h.patient_email));
+        (hid || []).forEach((h: any) => hiddenKeys.add(h.patient_email));
       } else if (professionalId) {
         const { data: hid } = await sb.from("professional_hidden_patients")
           .select("patient_email").eq("professional_id", professionalId);
-        (hid || []).forEach((h: any) => hiddenEmails.add(h.patient_email));
+        (hid || []).forEach((h: any) => hiddenKeys.add(h.patient_email));
       }
 
-      let pt: Array<{ id: string; full_name: string }> = [];
+      let raw: Array<{ id: string; full_name: string; email: string | null; created_at: string }> = [];
       if (clinicId) {
         const { data } = await sb.from("patients")
-          .select("id, full_name, email").eq("clinic_id", clinicId).order("full_name");
-        pt = (data || []).filter((p: any) => !hiddenEmails.has(p.email));
+          .select("id, full_name, email, created_at").eq("clinic_id", clinicId).order("full_name");
+        raw = (data || []) as any;
       } else if (professionalId) {
         const { data } = await sb.from("patients")
-          .select("id, full_name, email").eq("professional_id", professionalId).order("full_name");
-        pt = (data || []).filter((p: any) => !hiddenEmails.has(p.email));
+          .select("id, full_name, email, created_at").eq("professional_id", professionalId).order("full_name");
+        raw = (data || []) as any;
       }
+
+      // Deduplicate by groupKey (email || full_name), keep most recent record,
+      // and drop anything the user has archived.
+      const dedup = new Map<string, { id: string; full_name: string; created_at: string }>();
+      for (const p of raw) {
+        const key = (p.email && p.email.trim()) || (p.full_name && p.full_name.trim()) || p.id;
+        if (hiddenKeys.has(key)) continue;
+        const existing = dedup.get(key);
+        if (!existing || new Date(p.created_at).getTime() > new Date(existing.created_at).getTime()) {
+          dedup.set(key, { id: p.id, full_name: p.full_name, created_at: p.created_at });
+        }
+      }
+      const pt = Array.from(dedup.values())
+        .map(({ id, full_name }) => ({ id, full_name }))
+        .sort((a, b) => a.full_name.localeCompare(b.full_name, "pt-BR"));
 
       const th = thRes.data as Thread[] | null;
       setThreads(th || []);
