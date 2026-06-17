@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Pencil, Check, Brain, Lock, GraduationCap, Terminal, Home,
+  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Pencil, Check, Brain, Lock, GraduationCap, Terminal, Home, BookText,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
@@ -821,7 +821,7 @@ const ClinicalAgent = () => {
             aria-label="Casos de estudo"
             onClick={() => navigate("/casos-de-estudo")}
           >
-            <GraduationCap className="h-4 w-4" />
+            <BookText className="h-4 w-4" />
           </Button>
 
           {uniqueCitations.length > 0 && (
