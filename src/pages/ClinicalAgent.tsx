@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
@@ -15,7 +16,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check, Brain, Lock, GraduationCap,
+  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check, Brain, Lock, GraduationCap, Terminal,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
@@ -836,6 +837,40 @@ const ClinicalAgent = () => {
                 >
                   <Plus className="h-4 w-4" /> Nova conversa
                 </Button>
+                <div className="w-full max-w-md">
+                  <CollapsibleSection
+                    storageKey="agent-shortcuts-open"
+                    defaultOpen={true}
+                    header={(
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <Terminal className="h-4 w-4 text-primary shrink-0" />
+                        <span>Atalhos rápidos</span>
+                      </div>
+                    )}
+                  >
+                    <div className="flex flex-wrap gap-2 justify-center pt-1">
+                      {[
+                        "/professor",
+                        "/evidencia lombar",
+                        "/quiz joelho",
+                        "/caso tendinopatia patelar",
+                        "/traduzir https://pubmed.ncbi.nlm.nih.gov/...",
+                        "/trilha ombro 1",
+                      ].map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => {
+                            setInput(s);
+                            if (!activeThread) createThread(null);
+                          }}
+                          className="px-3 py-1.5 rounded-full text-xs border border-border/60 hover:bg-primary/10 hover:border-primary/40 transition"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </CollapsibleSection>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   <span className="md:hidden">Acesse conversas anteriores no menu lateral.</span>
                   <span className="hidden md:inline">Acesse conversas anteriores na barra lateral.</span>
