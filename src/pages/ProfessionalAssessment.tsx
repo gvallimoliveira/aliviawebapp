@@ -678,7 +678,7 @@ const ProfessionalAssessment = () => {
             mode="professional"
             onComplete={handleAnamnesisComplete}
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
-            draftScopeKey={`pro:${professionalId}:${patientToken || reassessmentId || "anon"}`}
+            draftScopeKey={`pro:${professionalId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`}
             initialPainRegions={prefilledRegions}
             initialChiefComplaints={prefilledComplaints}
             initialOnset={prefilledOnset}
@@ -686,6 +686,7 @@ const ProfessionalAssessment = () => {
             initialSurgeryDetails={prefilledSurgeryDetails}
             initialActivityLevel={prefilledActivityLevel}
             initialHasGymAccess={prefilledGymAccess}
+            enabledSubs={reassessAnamSubs || undefined}
           />
         )}
 
@@ -693,7 +694,7 @@ const ProfessionalAssessment = () => {
           <QuestionnaireStep
             painRegions={anamnesisData.painRegions}
             onComplete={handleQuestionnaireComplete}
-            onBack={() => setStep("anamnesis")}
+            onBack={() => reassessHasAnamnesis ? setStep("anamnesis") : setStep("patient_info")}
             onSkip={handleQuestionnaireSkip}
             previousAnswers={previousQuestionnaireAnswers}
           />
