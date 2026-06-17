@@ -34,6 +34,7 @@ const StudentAccessCard = () => {
   const [hasProfRecord, setHasProfRecord] = useState(false);
   const [hasCrefito, setHasCrefito] = useState(false);
   const [isVip, setIsVip] = useState(false);
+  const [hasProAccess, setHasProAccess] = useState(false);
   const [fullName, setFullName] = useState("");
   const [institution, setInstitution] = useState("");
   const [period, setPeriod] = useState("");
