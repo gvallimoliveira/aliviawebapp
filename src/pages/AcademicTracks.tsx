@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, ArrowLeft, GraduationCap, CheckCircle2, Sparkles, Route as RouteIcon } from "lucide-react";
+import { Loader2, ArrowLeft, GraduationCap, CheckCircle2, Sparkles, Route as RouteIcon, User } from "lucide-react";
 import { toast } from "sonner";
 import { awardBadgesIfEligible } from "@/lib/academicNiche";
 
@@ -62,7 +62,16 @@ export default function AcademicTracks() {
       const total = (agg || []).reduce((s: number, r: any) => s + (r.xp || 0), 0);
       await awardBadgesIfEligible(supabase, user.id, track.niche, total);
       setProgress(prev => new Set([...prev, mod.id]));
-      toast.success(`✅ Módulo concluído! +30 XP em ${track.niche}`);
+      toast.success(
+        `🎉 Módulo concluído! +30 XP em ${track.niche}`,
+        {
+          description: "Verifique em Minha conta sua evolução.",
+          action: {
+            label: "Minha conta",
+            onClick: () => navigate("/conta"),
+          },
+        }
+      );
     } catch (e) {
       console.error(e);
       toast.error("Não foi possível registrar a conclusão.");

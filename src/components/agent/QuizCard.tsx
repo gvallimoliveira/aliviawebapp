@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, GraduationCap, RefreshCw } from "lucide-react";
+import { CheckCircle2, XCircle, GraduationCap, RefreshCw, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { detectNiche, awardBadgesIfEligible } from "@/lib/academicNiche";
@@ -24,6 +25,7 @@ export type Quiz = {
 };
 
 export default function QuizCard({ quiz, threadId }: { quiz: Quiz; threadId?: string }) {
+  const navigate = useNavigate();
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [finished, setFinished] = useState(false);
@@ -77,7 +79,16 @@ export default function QuizCard({ quiz, threadId }: { quiz: Quiz; threadId?: st
             const total = (agg || []).reduce((s: number, r: any) => s + (r.xp || 0), 0);
             await awardBadgesIfEligible(supabase, uid, niche, total);
           }
-          toast.success(`+${xp} XP${niche ? ` (${niche})` : ""}`);
+          toast.success(
+            `🎉 Você pontuou +${xp} XP${niche ? ` em ${niche}` : ""}!`,
+            {
+              description: "Verifique em Minha conta sua evolução.",
+              action: {
+                label: "Minha conta",
+                onClick: () => navigate("/conta"),
+              },
+            }
+          );
         }
         setSaved(true);
       } catch (e) {
