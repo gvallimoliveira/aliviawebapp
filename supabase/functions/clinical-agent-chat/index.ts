@@ -436,6 +436,24 @@ async function logXp(adminClient: any, userId: string, source: string, ref: stri
     await adminClient.from("academic_xp_log").insert({
       user_id: userId, source, source_ref: ref.slice(0, 200), niche, xp,
     });
+    if (niche) {
+      const { data: agg } = await adminClient
+        .from("academic_xp_log")
+        .select("xp")
+        .eq("user_id", userId)
+        .eq("niche", niche);
+      const total = (agg || []).reduce((s: number, r: any) => s + (r.xp || 0), 0);
+      const order = ["aprendiz", "praticante", "especialista", "mestre"];
+      const thresholds = [0, 101, 301, 701];
+      let topIdx = 0;
+      for (let i = 0; i < thresholds.length; i++) if (total >= thresholds[i]) topIdx = i;
+      for (let i = 0; i <= topIdx; i++) {
+        await adminClient
+          .from("academic_badges")
+          .insert({ user_id: userId, niche, level: order[i] })
+          .then(() => null, () => null);
+      }
+    }
   } catch (e) {
     console.warn("[xp] insert failed", e);
   }
