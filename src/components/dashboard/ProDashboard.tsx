@@ -786,76 +786,84 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       {/* Simulated welcome card removed — the demo experience now lives only on
           the public landing pages (/profissionais/demo and /clinica/demo). */}
 
-      {/* Demo mode header — clearly identifies this is a preview */}
-      {isDemoMode ? (
-        <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <CardContent className="py-5 px-5 relative">
-            <div className="flex items-start gap-4 flex-wrap">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 shrink-0">
-                <Sparkles className="h-6 w-6 text-primary" />
+      {/* Demo mode — link de pré-avaliação em evidência */}
+      {isDemoMode && (
+        <>
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <CardContent className="py-4 px-5 relative flex items-start gap-3 flex-wrap">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 shrink-0">
+                <Link2 className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-[200px] space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg font-bold text-foreground">Modo Demonstração</h3>
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide">
-                    Demo
-                  </Badge>
+                  <p className="text-sm font-semibold text-foreground">Seu link de pré-avaliação</p>
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-300/40 text-[10px] uppercase">Demo</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Você está conhecendo o <span className="font-semibold text-foreground">Painel Profissional Autônomo</span> com dados de exemplo.
-                  Assine o plano PRO para atender pacientes particulares com seu link próprio, agenda, mensagens e relatórios em PDF.
+                <p className="text-xs text-muted-foreground">
+                  Cada profissional PRO recebe um link único para enviar aos pacientes. Eles preenchem anamnese, mapa de dor e questionários antes da consulta — e o prontuário já chega pronto na sua agenda.
                 </p>
-                <div className="flex items-center gap-2 pt-1 flex-wrap">
-                  <Button onClick={() => user ? handleSubscribe("annual") : navigate("/profissionais#planos")} disabled={checkoutLoading} className="rounded-xl gap-2">
-                    {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
-                    Plano anual ({PRO_PLAN_ANNUAL_PRICE_FORMATTED})
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                  <code className="text-[11px] text-foreground truncate flex-1">{getPublicOrigin()}/assessment/professional/demo</code>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2"
+                    onClick={() => {
+                      const link = `${getPublicOrigin()}/assessment/professional/demo`;
+                      navigator.clipboard.writeText(link);
+                      toast({ title: "Link copiado!", description: "Abra em outra aba para ver o onboarding do paciente." });
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="outline" onClick={() => user ? handleSubscribe("monthly") : navigate("/profissionais#planos")} disabled={checkoutLoading} className="rounded-xl gap-2">
-                    {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    Plano mensal ({PRO_PLAN_PRICE_FORMATTED})
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-lg gap-1.5 text-[11px]"
+                    onClick={() => window.open(`${getPublicOrigin()}/assessment/professional/demo`, "_blank")}
+                  >
+                    Abrir
                   </Button>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                {/* Demo: link de pré-avaliação simulado */}
-                <div className="mt-4 rounded-xl border border-dashed border-primary/40 bg-background/60 p-3 space-y-2">
+          <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <CardContent className="py-5 px-5 relative">
+              <div className="flex items-start gap-4 flex-wrap">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 shrink-0">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 min-w-[200px] space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-300/40 text-[10px] uppercase">Demo</Badge>
-                    <p className="text-sm font-semibold text-foreground">Seu link de pré-avaliação</p>
+                    <h3 className="text-lg font-bold text-foreground">Modo Demonstração</h3>
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide">
+                      Demo
+                    </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Cada profissional PRO recebe um link único para enviar aos pacientes. Eles preenchem anamnese, mapa de dor e questionários antes da consulta — e o prontuário já chega pronto na sua agenda.
+                  <p className="text-sm text-muted-foreground">
+                    Você está conhecendo o <span className="font-semibold text-foreground">Painel Profissional Autônomo</span> com dados de exemplo.
+                    Assine o plano PRO para atender pacientes particulares com seu link próprio, agenda, mensagens e relatórios em PDF.
                   </p>
-                  <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
-                    <Link2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                    <code className="text-[11px] text-foreground truncate flex-1">{getPublicOrigin()}/assessment/professional/demo</code>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2"
-                      onClick={() => {
-                        const link = `${getPublicOrigin()}/assessment/professional/demo`;
-                        navigator.clipboard.writeText(link);
-                        toast({ title: "Link copiado!", description: "Abra em outra aba para ver o onboarding do paciente." });
-                      }}
-                    >
-                      <Copy className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    <Button onClick={() => user ? handleSubscribe("annual") : navigate("/profissionais#planos")} disabled={checkoutLoading} className="rounded-xl gap-2">
+                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+                      Plano anual ({PRO_PLAN_ANNUAL_PRICE_FORMATTED})
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 rounded-lg gap-1.5 text-[11px]"
-                      onClick={() => window.open(`${getPublicOrigin()}/assessment/professional/demo`, "_blank")}
-                    >
-                      Abrir
+                    <Button variant="outline" onClick={() => user ? handleSubscribe("monthly") : navigate("/profissionais#planos")} disabled={checkoutLoading} className="rounded-xl gap-2">
+                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      Plano mensal ({PRO_PLAN_PRICE_FORMATTED})
                     </Button>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
+            </CardContent>
+          </Card>
+        </>
+      )}
         <>
           {/* Status bar */}
           <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
