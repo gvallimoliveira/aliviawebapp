@@ -617,6 +617,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Auto-title helper for slash commands (only if user hasn't renamed)
+    async function setSlashTitle(prefix: string, topic: string) {
+      if (thread.title && thread.title !== "Nova conversa") return;
+      const t = `${prefix}: ${topic}`.slice(0, 80);
+      await adminClient.from("agent_threads").update({ title: t }).eq("id", thread_id);
+    }
+
+
     // ===== Slash commands =====
     const slash = parseSlash(message);
     if (slash?.kind === "professor") {
