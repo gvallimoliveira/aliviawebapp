@@ -1,97 +1,105 @@
-# Modo Acadêmico — Agente Clínico como Mentor
+# Fase 2 — Modo Acadêmico (Mentor, Trilhas e Gamificação)
 
-Disponível para **estudantes (is_student=true) + profissionais PRO assinantes**. Bloqueado para demais (mostra CTA já existente).
+Esta fase complementa a Fase 1 (`/professor`, `/quiz`, `/caso`) adicionando descoberta, performance, trilhas de estudo, tradução de artigos e gamificação.
 
-## 1. Persona `/professor` no chat
+## 1. Popover "Comandos do Mentor" no agente
 
-**Onde:** `supabase/functions/clinical-agent-chat/index.ts`
+**Arquivo:** novo `src/components/agent/MentorCommandsPopover.tsx` + integração em `ClinicalAgent.tsx`.
 
-- Detectar comando `/professor` (ou toggle persistente "Modo Mentor 🎓" no header do chat que injeta a persona em todas as mensagens da thread).
-- Quando ativo, **substituir/concatenar system prompt** com persona didática:
-  - Tom de preceptor experiente, paciente, socrático.
-  - Sempre revisa anatomia/biomecânica/fisiopatologia básica antes de avançar.
-  - Cita evidência (PEDro ≥7 da base já existente em `agent_knowledge`).
-  - Termina respostas com "❓ Quer que eu aprofunde em X, gere um quiz ou um caso clínico?"
-- Persistir flag `mentor_mode` na thread (coluna nova em `agent_threads`) para sobreviver a reloads.
-- Badge visual "🎓 Modo Mentor" no header da conversa.
+- Botão `HelpCircle` no header (visível só p/ estudantes ou PRO).
+- Popover lista todos os comandos com descrição curta e exemplo clicável (insere no input):
+  - `/professor` — alterna persona mentor
+  - `/quiz [tema] [n]` — quiz interativo
+  - `/caso [tema]` — gera paciente fictício
+  - `/traduzir [link ou texto]` — tradução PT-BR com PICO + nível de evidência
+  - `/trilha [tema]` — abre/cria trilha de estudo
+- Mensagem de boas-vindas atualizada apresentando os comandos uma vez por thread.
 
-## 2. `/quiz` — efêmero no chat
+## 2. Comando `/traduzir`
 
-**Onde:** mesmo edge function + UI nova em `ClinicalAgent.tsx`.
+**Arquivo:** `supabase/functions/clinical-agent-chat/index.ts`.
 
-- Comando: `/quiz [tema opcional] [n=5]`. Sem tema, agente pergunta.
-- LLM gera JSON estruturado (usando `Output.object` do AI SDK — schema pequeno: array de questões com `{enunciado, tipo: 'multipla'|'discursiva', alternativas?, gabarito, justificativa}`).
-- Renderizar componente `QuizCard` no chat (tipo tool-result):
-  - Uma questão por vez, radio buttons para múltipla / textarea para discursiva.
-  - Botão "Próxima" → "Finalizar".
-  - Ao finalizar: **score** (X/N), barra de progresso, e gabarito **só das que errou** com justificativa comentada.
-  - Discursivas: enviar resposta do aluno + gabarito de volta ao agente para correção qualitativa ("parcial", "completa", "incorreta") com feedback.
-- Botão "Tentar outro quiz" e "Estudar este tema" (vira pergunta normal pro agente).
-- **Sem persistência** — apenas anexado como `parts` na mensagem do agente naquela thread.
+- Detecta `/traduzir` no início da mensagem.
+- Aceita URL (DOI/PubMed/arXiv) ou texto colado.
+- Prompt especializado: tradução fiel PT-BR + bloco estruturado:
+  - Resumo executivo (3-5 linhas)
+  - PICO (População, Intervenção, Comparação, Desfecho)
+  - Nível de evidência (Oxford/PEDro estimado)
+  - Aplicabilidade clínica
+- Resposta em markdown normal (sem componente especial).
 
-## 3. `/caso` — paciente fictício em aba separada
+## 3. Trilhas de conhecimento por nicho
 
-**Onde:** schema + listagem de pacientes + edge function.
+**Schema novo:**
 
-### Schema
-- Nova coluna `patients.is_study_case boolean default false` (migration + GRANT preservados).
-- Casos de estudo **não entram** em contadores de KPI/clínica, follow-up, billing.
-
-### Edge function
-- Comando `/caso [tema]`: LLM gera JSON com dados completos do paciente (nome fictício, idade, queixa, HMA, exames, achados) + um "roteiro pedagógico" salvo em `patients.notes`.
-- Insere row em `patients` com `is_study_case=true`, vinculada ao `professional_id` do aluno.
-- Retorna no chat: "Criei o caso da Maria, 34a, com tendinopatia patelar. Vá em **Pacientes → Casos de estudo** e me conte: por onde você começaria a avaliação? 🎓"
-
-### Listagem de pacientes
-- Em `ProDashboard` / lista de pacientes: nova aba/tab "🎓 Casos de estudo" separada da lista real.
-- Filtros: `is_study_case=false` por padrão, `=true` na nova aba.
-- Card visual diferenciado (borda âmbar, badge "Caso de estudo").
-- Botão "Excluir todos os casos" para limpeza rápida.
-
-## 4. Histórico de desempenho acadêmico
-
-**Onde:** `/minha-conta` (Account.tsx) + nova tabela.
-
-### Schema mínimo (mesmo com quiz efêmero, salvamos só o agregado final)
 ```
-academic_quiz_results (
-  id uuid pk,
-  user_id uuid fk auth.users,
-  topic text,
-  total_questions int,
-  correct int,
-  score_pct numeric,
-  created_at timestamptz default now()
-)
+academic_tracks (id, slug, title, niche, description, total_modules, created_at)
+academic_track_modules (id, track_id, order_index, title, summary, suggested_command)
+academic_user_progress (id, user_id, track_id, module_id, completed_at, xp_earned)
 ```
-GRANT select/insert para `authenticated` (próprio user via RLS `auth.uid()=user_id`).
 
-### UI
-- Card "🎓 Meu desempenho acadêmico" no StudentAccessCard ou aba dedicada.
-- Mostra: total de quizzes feitos, % médio, top 3 temas mais fortes, top 3 mais fracos, gráfico de evolução (últimos 10 quizzes).
-- CTA "Treinar tema fraco" → abre agente com `/quiz [tema]` pré-preenchido.
+- Seed inicial com 5 trilhas (Ombro, Lombar,quadril, Joelho, Cervical), cada uma com 5 módulos  
+(conceito → biomecânica → avaliação → tratamento → caso clínico final).
+- GRANT padrão + RLS (`auth.uid() = user_id` em progress; tracks/modules `SELECT to authenticated`).
 
-## 5. Onboarding / descoberta dos comandos
+**Arquivo:** novo `src/pages/AcademicTracks.tsx` (rota `/trilhas`) + card de entrada em `Account.tsx`/`StudentAccessCard.tsx`.
 
-- No header do `ClinicalAgent`, quando `is_student || (isPro && hasProAccess)`: chip clicável "💡 Comandos do Mentor" abre popover listando `/professor`, `/quiz`, `/caso` com exemplos.
-- Mensagem de boas-vindas da thread (quando vazia) inclui os 3 comandos para estudantes.
+- Lista trilhas em cards com barra de progresso.
+- Detalhe da trilha: módulos sequenciais; cada módulo tem botão "Estudar com Mentor"
+que abre o agente com comando pré-preenchido (ex: `/professor avaliação do manguito rotador`).
+- Conclui módulo manualmente ("Marquei como concluído") → gera XP.
 
-## Detalhes técnicos
+## 4. Gamificação XP + Badges
 
-- **AI SDK + Lovable AI Gateway** já em uso. Modelo: `google/gemini-3-flash-preview` (default) para chat; `google/gemini-2.5-pro` para `/quiz` (qualidade da geração estruturada).
-- Schema do quiz com `Output.object` enxuto (sem enums longos, sem deep nesting) para evitar limite do Gemini.
-- Atualizar `Support.tsx` + `ClinicSupport.tsx` em **pt/en/es** com a nova feature (regra de memória).
-- Atualizar memória `mem://features/clinical-agent` (criar) descrevendo os 3 comandos.
+**Schema novo:**
 
-## Não incluído nesta onda (fica para depois)
-Trilhas por nicho, gamificação/XP/badges, simulado cronometrado, biblioteca compartilhada por instituição, modo "explique no 3º período" vs "residência", flashcards, `/defender`, `/traduzir-artigo`, PDF didático.
+```
+academic_xp_log (id, user_id, source, source_ref, xp, created_at)
+academic_badges (id, user_id, badge_slug, niche, level, awarded_at)
+```
 
-## Arquivos afetados (estimativa)
-- `supabase/migrations/<nova>.sql` (is_study_case + academic_quiz_results)
-- `supabase/functions/clinical-agent-chat/index.ts` (comandos + persona)
-- `src/pages/ClinicalAgent.tsx` (toggle mentor, render quiz)
-- `src/components/agent/QuizCard.tsx` (novo)
-- `src/components/agent/MentorCommandsPopover.tsx` (novo)
-- Lista de pacientes (componente atual) — adicionar tab "Casos de estudo"
-- `src/pages/Account.tsx` + `StudentAccessCard.tsx` (card desempenho)
-- `src/pages/Support.tsx` + `ClinicSupport.tsx` + locales pt/en/es
+- Fontes de XP:
+  - `/quiz` → +10 XP por acerto (gravado pelo QuizCard)
+  - `/caso` resolvido → +50 XP
+  - módulo de trilha concluído → +30 XP
+  - `/traduzir` artigo → +15 XP
+- Níveis por nicho (somando XP do nicho):
+  - 0-100: "Aprendiz do {nicho}"
+  - 101-300: "Praticante do {nicho}"
+  - 301-700: "Especialista do {nicho}"
+  - 701+: "Mestre do {nicho}"
+- Badge é inserido ao cruzar threshold (via trigger ou check no client após gravação).
+
+## 5. Card de desempenho em /minha-conta
+
+**Arquivo:** `src/pages/Account.tsx` (ou `StudentAccessCard.tsx`).
+
+- Aparece se `is_student=true` OU `is_pro`.
+- Mostra:
+  - XP total e nível geral
+  - Lista de badges por nicho ("Mestre do Ombro", "Praticante da Lombar")
+  - Mini chart de quizzes (média % por tema, top 3 fortes/fracos) usando `academic_quiz_results`
+  - CTA "Treinar tema fraco" → abre agente com `/quiz [tema]`
+  - CTA "Ver trilhas" → `/trilhas`
+
+## 6. Atualização das páginas de Suporte (pt/en/es)
+
+**Arquivos:** `src/pages/Support.tsx`, `src/pages/ClinicSupport.tsx` + locales `pt.json`, `en.json`, `es.json`.
+
+- Nova seção "Modo Acadêmico" descrevendo:
+  - Comandos do agente (/professor, /quiz, /caso, /traduzir, /trilha)
+  - Casos de estudo (aba separada)
+  - Trilhas e XP/Badges
+  - Card de desempenho em Minha Conta
+
+## Ordem de execução
+
+1. Migração: trilhas + módulos + progress + xp_log + badges + seed.
+2. Edge function: adicionar `/traduzir` ao parser.
+3. Componentes UI: `MentorCommandsPopover`, `AcademicTracks`, atualizações em `Account` e `ClinicalAgent`.
+4. QuizCard: gravar XP em `academic_xp_log` ao finalizar.
+5. Suporte (pt/en/es).
+
+## Fora de escopo
+
+Flashcards, `/defender`, simulado cronometrado, biblioteca compartilhada, PDF didático, ranking público entre alunos.
