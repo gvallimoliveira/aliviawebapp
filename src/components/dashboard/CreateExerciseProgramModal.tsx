@@ -289,6 +289,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const autoScrollRafRef = useRef<number | null>(null);
   const autoScrollSpeedRef = useRef<number>(0);
+  const touchDragRef = useRef<{ list: "selected" | "custom"; fromIdx: number } | null>(null);
 
   const stopAutoScroll = () => {
     if (autoScrollRafRef.current !== null) {
@@ -308,13 +309,12 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     autoScrollRafRef.current = requestAnimationFrame(runAutoScroll);
   };
 
-  const handleContainerDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const updateAutoScrollFromY = (y: number) => {
     const el = scrollContainerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const edge = 60; // px from edge that triggers scroll
-    const maxSpeed = 18;
-    const y = e.clientY;
+    const edge = 70;
+    const maxSpeed = 20;
     let speed = 0;
     if (y < rect.top + edge) {
       const intensity = (rect.top + edge - y) / edge;
@@ -329,6 +329,10 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     }
   };
 
+  const handleContainerDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    updateAutoScrollFromY(e.clientY);
+  };
+
   useEffect(() => {
     if (dragSelectedIdx === null && dragCustomIdx === null) {
       stopAutoScroll();
@@ -336,6 +340,81 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   }, [dragSelectedIdx, dragCustomIdx]);
 
   useEffect(() => () => stopAutoScroll(), []);
+
+  // ---------- Touch-based drag (mobile/tablet) ----------
+  const startTouchDrag = (list: "selected" | "custom", idx: number) => (e: React.TouchEvent) => {
+    e.stopPropagation();
+    touchDragRef.current = { list, fromIdx: idx };
+    if (list === "selected") setDragSelectedIdx(idx);
+    else setDragCustomIdx(idx);
+  };
+
+  useEffect(() => {
+    if (dragSelectedIdx === null && dragCustomIdx === null) return;
+
+    const findOverIdx = (clientX: number, clientY: number, list: "selected" | "custom"): number | null => {
+      const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
+      if (!el) return null;
+      const card = el.closest<HTMLElement>(`[data-drag-list="${list}"]`);
+      if (!card) return null;
+      const idxStr = card.dataset.dragIdx;
+      if (!idxStr) return null;
+      return Number(idxStr);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      const drag = touchDragRef.current;
+      if (!drag) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      e.preventDefault();
+      updateAutoScrollFromY(touch.clientY);
+      const overIdx = findOverIdx(touch.clientX, touch.clientY, drag.list);
+      if (drag.list === "selected") {
+        setOverSelectedIdx(overIdx);
+      } else {
+        setOverCustomIdx(overIdx);
+      }
+    };
+
+    const onTouchEnd = () => {
+      const drag = touchDragRef.current;
+      stopAutoScroll();
+      if (drag) {
+        if (drag.list === "selected") {
+          const to = overSelectedIdxRef.current;
+          if (to !== null && to !== drag.fromIdx) {
+            setSelected((prev) => reorder(prev, drag.fromIdx, to));
+          }
+          setDragSelectedIdx(null);
+          setOverSelectedIdx(null);
+        } else {
+          const to = overCustomIdxRef.current;
+          if (to !== null && to !== drag.fromIdx) {
+            setCustomExercises((prev) => reorder(prev, drag.fromIdx, to));
+          }
+          setDragCustomIdx(null);
+          setOverCustomIdx(null);
+        }
+      }
+      touchDragRef.current = null;
+    };
+
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("touchend", onTouchEnd);
+    document.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [dragSelectedIdx, dragCustomIdx]);
+
+  // Refs to read the latest "over" indices inside touchend without re-binding
+  const overSelectedIdxRef = useRef<number | null>(null);
+  const overCustomIdxRef = useRef<number | null>(null);
+  useEffect(() => { overSelectedIdxRef.current = overSelectedIdx; }, [overSelectedIdx]);
+  useEffect(() => { overCustomIdxRef.current = overCustomIdx; }, [overCustomIdx]);
 
   const reorder = <T,>(arr: T[], from: number, to: number): T[] => {
     if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return arr;
@@ -1002,6 +1081,8 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               {customExercises.map((c, idx) => (
                 <Card
                   key={c.tempId}
+                  data-drag-list="custom"
+                  data-drag-idx={idx}
                   className={`overflow-hidden border-dashed transition-all ${dragCustomIdx === idx ? "opacity-50" : ""} ${overCustomIdx === idx && dragCustomIdx !== idx ? "ring-2 ring-primary" : ""}`}
                   draggable
                   onDragStart={(e) => { setDragCustomIdx(idx); e.dataTransfer.effectAllowed = "move"; }}
@@ -1012,7 +1093,11 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 >
                   <CardContent className="py-2.5 px-3 space-y-2">
                     <div className="flex items-center gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground/60 shrink-0 cursor-grab active:cursor-grabbing" />
+                      <GripVertical
+                        className="h-5 w-5 text-muted-foreground/60 shrink-0 cursor-grab active:cursor-grabbing"
+                        style={{ touchAction: "none" }}
+                        onTouchStart={startTouchDrag("custom", idx)}
+                      />
                       <Input
                         placeholder="Nome do exercício *"
                         value={c.name}
@@ -1070,6 +1155,8 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               {selected.map((s, idx) => (
                 <Card
                   key={s.exercise.id}
+                  data-drag-list="selected"
+                  data-drag-idx={idx}
                   className={`overflow-hidden transition-all ${dragSelectedIdx === idx ? "opacity-50" : ""} ${overSelectedIdx === idx && dragSelectedIdx !== idx ? "ring-2 ring-primary" : ""}`}
                   draggable
                   onDragStart={(e) => { setDragSelectedIdx(idx); e.dataTransfer.effectAllowed = "move"; }}
@@ -1080,7 +1167,11 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 >
                   <CardContent className="py-2.5 px-3 space-y-2">
                     <div className="flex items-start gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground/60 mt-0.5 shrink-0 cursor-grab active:cursor-grabbing" />
+                      <GripVertical
+                        className="h-5 w-5 text-muted-foreground/60 mt-0.5 shrink-0 cursor-grab active:cursor-grabbing"
+                        style={{ touchAction: "none" }}
+                        onTouchStart={startTouchDrag("selected", idx)}
+                      />
                       <p className="text-sm font-medium text-foreground flex-1 min-w-0">{getName(s.exercise)}</p>
                       <Button
                         type="button"
