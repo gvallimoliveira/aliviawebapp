@@ -1155,6 +1155,8 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               {selected.map((s, idx) => (
                 <Card
                   key={s.exercise.id}
+                  data-drag-list="selected"
+                  data-drag-idx={idx}
                   className={`overflow-hidden transition-all ${dragSelectedIdx === idx ? "opacity-50" : ""} ${overSelectedIdx === idx && dragSelectedIdx !== idx ? "ring-2 ring-primary" : ""}`}
                   draggable
                   onDragStart={(e) => { setDragSelectedIdx(idx); e.dataTransfer.effectAllowed = "move"; }}
@@ -1165,7 +1167,11 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 >
                   <CardContent className="py-2.5 px-3 space-y-2">
                     <div className="flex items-start gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground/60 mt-0.5 shrink-0 cursor-grab active:cursor-grabbing" />
+                      <GripVertical
+                        className="h-5 w-5 text-muted-foreground/60 mt-0.5 shrink-0 cursor-grab active:cursor-grabbing"
+                        style={{ touchAction: "none" }}
+                        onTouchStart={startTouchDrag("selected", idx)}
+                      />
                       <p className="text-sm font-medium text-foreground flex-1 min-w-0">{getName(s.exercise)}</p>
                       <Button
                         type="button"
