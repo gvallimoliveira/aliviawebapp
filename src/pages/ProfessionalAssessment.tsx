@@ -40,6 +40,15 @@ const ProfessionalAssessment = () => {
   const reassessmentId = searchParams.get("reassessment");
   const patientToken = searchParams.get("patient");
   const resumeId = searchParams.get("resume");
+  const stepsParam = searchParams.get("steps");
+  const enabledSteps = React.useMemo(() => parseStepsParam(stepsParam), [stepsParam]);
+  const reassessAnamSubs = React.useMemo(
+    () => (enabledSteps ? ANAMNESIS_SUB_IDS.filter((id) => enabledSteps.has(id)) : null),
+    [enabledSteps],
+  );
+  const reassessHasAnamnesis = hasAnyAnamnesisSub(enabledSteps);
+  const reassessHasQuestionnaire = isStepEnabled(enabledSteps, "questionnaire");
+  const reassessHasRedflags = isStepEnabled(enabledSteps, "redflags");
 
   const [step, setStep] = useState<ProfStep>("loading_check");
   const [professional, setProfessional] = useState<any>(null);
