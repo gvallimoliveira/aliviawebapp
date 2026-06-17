@@ -321,12 +321,14 @@ type SlashCommand =
   | { kind: "professor"; enable: boolean | null }
   | { kind: "quiz"; topic: string; n: number }
   | { kind: "caso"; topic: string }
+  | { kind: "traduzir"; payload: string }
+  | { kind: "trilha"; topic: string }
   | null;
 
 function parseSlash(raw: string): SlashCommand {
   const t = raw.trim();
   if (!t.startsWith("/")) return null;
-  const m = t.match(/^\/(professor|mentor|quiz|caso)\b\s*(.*)$/i);
+  const m = t.match(/^\/(professor|mentor|quiz|caso|traduzir|traducao|tradução|trilha)\b\s*([\s\S]*)$/i);
   if (!m) return null;
   const cmd = m[1].toLowerCase();
   const rest = (m[2] || "").trim();
@@ -344,7 +346,37 @@ function parseSlash(raw: string): SlashCommand {
   if (cmd === "caso") {
     return { kind: "caso", topic: rest || "uma disfunção musculoesquelética comum" };
   }
+  if (cmd === "traduzir" || cmd === "traducao" || cmd === "tradução") {
+    return { kind: "traduzir", payload: rest };
+  }
+  if (cmd === "trilha") {
+    return { kind: "trilha", topic: rest };
+  }
   return null;
+}
+
+const NICHE_KEYWORDS: Record<string, string[]> = {
+  ombro: ["ombro", "shoulder", "manguito", "rotator", "subacromial"],
+  lombar: ["lombar", "lombalgia", "lumbar", "low back", "hérnia", "ciática"],
+  quadril: ["quadril", "hip", "femoroacetabular", "trocanter"],
+  joelho: ["joelho", "knee", "patelar", "lca", "acl", "menisc"],
+  cervical: ["cervical", "cervicalgia", "neck", "whiplash"],
+};
+function detectNicheSrv(text: string): string | null {
+  const t = (text || "").toLowerCase();
+  for (const [n, kws] of Object.entries(NICHE_KEYWORDS)) {
+    if (kws.some((k) => t.includes(k))) return n;
+  }
+  return null;
+}
+async function logXp(adminClient: any, userId: string, source: string, ref: string, niche: string | null, xp: number) {
+  try {
+    await adminClient.from("academic_xp_log").insert({
+      user_id: userId, source, source_ref: ref.slice(0, 200), niche, xp,
+    });
+  } catch (e) {
+    console.warn("[xp] insert failed", e);
+  }
 }
 
 function safeJsonExtract(text: string): any | null {
