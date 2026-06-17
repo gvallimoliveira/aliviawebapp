@@ -386,7 +386,10 @@ export default function PatientDetailView(props: any) {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => props.setSelectedEmail(null)} className="gap-1.5 -ml-2"><ArrowLeft className="h-4 w-4" /> {t("pro.back_to_patients")}</Button>
+        <Button variant="ghost" size="sm" onClick={() => props.setSelectedEmail(null)} className="gap-2 rounded-full bg-primary/5 px-4 py-2 text-primary border border-primary/20 hover:bg-primary/10 hover:border-primary/30 hover:shadow-sm transition-all shadow-sm">
+          <ArrowLeft className="h-4 w-4" />
+          <span className="font-medium">{t("pro.back_to_patients")}</span>
+        </Button>
         <Button variant="ghost" size="sm" className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10" disabled={!!deletingPatient} onClick={() => setDeleteConfirmPatient({ groupKey: patient.groupKey, name: patient.name, assessmentIds: patient.assessments.map((a: any) => a.id) })}>
           {deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}Excluir paciente
         </Button>
