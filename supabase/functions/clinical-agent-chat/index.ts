@@ -264,7 +264,7 @@ async function searchEvidence(adminClient: any, lovableKey: string, query: strin
 }
 
 // ---- System prompt ----
-function buildSystemPrompt(patientCtx: any, evidence: any[]) {
+function buildSystemPrompt(patientCtx: any, evidence: any[], mentorMode = false) {
   const ev = evidence.length
     ? `\n\nEVIDÊNCIAS RELEVANTES (use e cite no formato [Autor, ano, PEDro X]):\n${evidence
         .map((e: any) => `- ${e.title} (${e.authors || "—"}, ${e.year || "—"}, PEDro ${e.pedro_score ?? "—"}) — ${e.key_findings || e.journal || ""}`)
@@ -280,6 +280,16 @@ function buildSystemPrompt(patientCtx: any, evidence: any[]) {
 - HEPs ativos: ${JSON.stringify(patientCtx.active_heps)}
 - Diário de dor recente: ${JSON.stringify(patientCtx.recent_pain_diary)}
 - Anotações clínicas do profissional: ${JSON.stringify(patientCtx.clinician_notes)}`
+    : "";
+
+  const mentor = mentorMode
+    ? `\n\n🎓 MODO MENTOR ATIVADO (persona Professor para alunos do Alivia Acadêmico):
+- Você é um PRECEPTOR experiente, paciente, socrático e apaixonado por ensinar fisioterapia.
+- Antes de avançar para condutas, REVISE conceitos fundamentais relevantes (anatomia funcional, biomecânica, fisiopatologia, raciocínio clínico).
+- Use linguagem didática, analogias claras e perguntas que estimulem o aluno a pensar ("Antes de eu te dar a resposta, o que você imaginaria para esse caso?").
+- Estruture explicações em: 1) conceito-base, 2) aplicação clínica, 3) armadilha comum, 4) próximo passo de estudo.
+- Cite evidência sempre que possível (PEDro ≥ 7) e ensine o aluno a interpretar os achados, não apenas a copiá-los.
+- Encoraje. Termine respostas com convites: "Quer que eu crie um quiz sobre isso? (/quiz [tema]) Ou um caso clínico fictício para você praticar? (/caso [tema])"`
     : "";
 
   return `Você é o Agente de Raciocínio Clínico da Aliv.iA, um assistente conversacional para fisioterapeutas.
@@ -303,7 +313,157 @@ PRINCÍPIOS CLÍNICOS:
 LIMITES:
 - Versão BETA — base de evidências em construção. Se vazia neste nicho, sinalize e siga em STEPS/D.I.F.I.
 - Nunca diagnostique de forma definitiva. Use "hipótese provável", "consistente com".
-- Para dor severa (EVA ≥ 7) com sinais sistêmicos, sugira reavaliação médica.${pat}${ev}`;
+- Para dor severa (EVA ≥ 7) com sinais sistêmicos, sugira reavaliação médica.${pat}${ev}${mentor}`;
+}
+
+// ---- Slash command parsing ----
+type SlashCommand =
+  | { kind: "professor"; enable: boolean | null }
+  | { kind: "quiz"; topic: string; n: number }
+  | { kind: "caso"; topic: string }
+  | null;
+
+function parseSlash(raw: string): SlashCommand {
+  const t = raw.trim();
+  if (!t.startsWith("/")) return null;
+  const m = t.match(/^\/(professor|mentor|quiz|caso)\b\s*(.*)$/i);
+  if (!m) return null;
+  const cmd = m[1].toLowerCase();
+  const rest = (m[2] || "").trim();
+  if (cmd === "professor" || cmd === "mentor") {
+    if (/^(off|desligar|sair|parar)\b/i.test(rest)) return { kind: "professor", enable: false };
+    if (/^(on|ligar|ativar)\b/i.test(rest)) return { kind: "professor", enable: true };
+    return { kind: "professor", enable: null }; // toggle
+  }
+  if (cmd === "quiz") {
+    const nMatch = rest.match(/\b(\d+)\s*(quest[oõ]es?|q)?\b/i);
+    const n = nMatch ? Math.min(10, Math.max(2, parseInt(nMatch[1]))) : 5;
+    const topic = rest.replace(/\b\d+\s*(quest[oõ]es?|q)?\b/i, "").trim() || "tema geral de fisioterapia";
+    return { kind: "quiz", topic, n };
+  }
+  if (cmd === "caso") {
+    return { kind: "caso", topic: rest || "uma disfunção musculoesquelética comum" };
+  }
+  return null;
+}
+
+function safeJsonExtract(text: string): any | null {
+  if (!text) return null;
+  try { return JSON.parse(text); } catch {}
+  const m = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (m) { try { return JSON.parse(m[1]); } catch {} }
+  const first = text.indexOf("{");
+  const last = text.lastIndexOf("}");
+  if (first >= 0 && last > first) {
+    try { return JSON.parse(text.slice(first, last + 1)); } catch {}
+  }
+  return null;
+}
+
+async function generateQuiz(apiKey: string, topic: string, n: number, mentorMode: boolean): Promise<any | null> {
+  const sys = `Você é um professor de fisioterapia. Gere um quiz educativo sobre o tema solicitado.
+
+Responda SOMENTE com JSON válido, sem markdown, sem texto antes/depois, neste formato EXATO:
+{
+  "topic": "string curta com o tema",
+  "questions": [
+    {
+      "type": "multiple_choice",
+      "question": "enunciado clínico claro",
+      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+      "correct": "A",
+      "explanation": "explicação concisa (2-4 linhas) do porquê, citando conceito-chave"
+    },
+    {
+      "type": "open",
+      "question": "pergunta discursiva curta",
+      "model_answer": "resposta esperada em 3-5 linhas",
+      "key_points": ["ponto 1", "ponto 2", "ponto 3"]
+    }
+  ]
+}
+
+Regras:
+- Gere exatamente ${n} questões, misturando múltipla escolha e discursivas (predominância de múltipla escolha).
+- Cada múltipla escolha tem 4 alternativas (A-D) e UMA correta.
+- Linguagem em pt-BR, clínica, fiel à evidência atual.
+- Dificuldade média-alta, estilo COFFITO/residência.
+- NUNCA gere alternativas absurdas ou pegadinhas injustas.`;
+
+  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-pro",
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: `Tema: ${topic}\nNúmero de questões: ${n}` },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!resp.ok) {
+    console.error("[quiz] gateway error", resp.status, await resp.text().catch(() => ""));
+    return null;
+  }
+  const j = await resp.json();
+  const txt = j.choices?.[0]?.message?.content || "";
+  const parsed = safeJsonExtract(txt);
+  if (!parsed || !Array.isArray(parsed.questions) || parsed.questions.length === 0) return null;
+  parsed.questions = parsed.questions.slice(0, n).map((q: any) => ({
+    type: q.type === "open" ? "open" : "multiple_choice",
+    question: String(q.question || "").slice(0, 600),
+    options: Array.isArray(q.options) ? q.options.slice(0, 4).map((o: any) => String(o).slice(0, 200)) : undefined,
+    correct: q.correct ? String(q.correct).trim().charAt(0).toUpperCase() : undefined,
+    explanation: q.explanation ? String(q.explanation).slice(0, 600) : undefined,
+    model_answer: q.model_answer ? String(q.model_answer).slice(0, 800) : undefined,
+    key_points: Array.isArray(q.key_points) ? q.key_points.slice(0, 6).map((k: any) => String(k).slice(0, 200)) : undefined,
+  }));
+  return { topic: parsed.topic || topic, questions: parsed.questions };
+}
+
+async function generateStudyCase(apiKey: string, topic: string): Promise<any | null> {
+  const sys = `Você é um professor de fisioterapia criando um caso clínico fictício para ensino.
+
+Responda SOMENTE com JSON válido, sem markdown, sem texto antes/depois, neste formato EXATO:
+{
+  "full_name": "nome fictício realista pt-BR",
+  "age": 30,
+  "sex": "M ou F",
+  "chief_complaint": "queixa principal em 1 frase",
+  "history": "história clínica detalhada (5-10 linhas): tempo, mecanismo, fatores agravantes/atenuantes, tratamentos prévios, comorbidades",
+  "examination_findings": "achados do exame físico relevantes (testes especiais, ADM, força, palpação)",
+  "teaching_questions": [
+    "pergunta socrática 1 para o aluno refletir",
+    "pergunta 2",
+    "pergunta 3"
+  ]
+}
+
+Regras:
+- Caso realista e clinicamente coerente sobre o tema fornecido.
+- Nome fictício (não use celebridades nem nomes reais conhecidos).
+- pt-BR, linguagem clínica.`;
+  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: `Tema: ${topic}` },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!resp.ok) {
+    console.error("[caso] gateway error", resp.status);
+    return null;
+  }
+  const j = await resp.json();
+  const parsed = safeJsonExtract(j.choices?.[0]?.message?.content || "");
+  if (!parsed?.full_name || !parsed?.chief_complaint) return null;
+  return parsed;
 }
 
 // ---- Main handler ----
@@ -357,13 +517,35 @@ serve(async (req) => {
     // Validate thread ownership + load context
     const { data: thread } = await adminClient
       .from("agent_threads")
-      .select("id, user_id, patient_id, title")
+      .select("id, user_id, patient_id, title, mentor_mode")
       .eq("id", thread_id)
       .maybeSingle();
     if (!thread || thread.user_id !== user.id) {
       return new Response(JSON.stringify({ error: "Thread not found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ===== Slash commands =====
+    const slash = parseSlash(message);
+    if (slash?.kind === "professor") {
+      const userMsgTxt = scrub(message).slice(0, 4000);
+      await adminClient.from("agent_messages").insert({
+        thread_id, role: "user", parts: [{ type: "text", text: userMsgTxt }],
+      });
+      const next = slash.enable == null ? !thread.mentor_mode : slash.enable;
+      await adminClient.from("agent_threads")
+        .update({ mentor_mode: next, updated_at: new Date().toISOString() })
+        .eq("id", thread_id);
+      const assistantText = next
+        ? "🎓 **Modo Mentor ativado.** A partir de agora vou agir como seu preceptor — revisando conceitos-base, fazendo perguntas socráticas e estimulando seu raciocínio.\n\nQuer começar com:\n- `/quiz [tema]` — quiz com gabarito comentado\n- `/caso [tema]` — caso clínico fictício no seu prontuário para você praticar\n- Ou simplesmente me pergunte sobre qualquer tema clínico."
+        : "Modo Mentor desligado. Voltei à dinâmica padrão de discussão clínica.";
+      await adminClient.from("agent_messages").insert({
+        thread_id, role: "assistant", parts: [{ type: "text", text: assistantText }],
+      });
+      return new Response(JSON.stringify({
+        assistant: assistantText, citations: [], mentor_mode: next, quota: { used: 0, limit: DAILY_QUOTA },
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Quota
@@ -388,6 +570,81 @@ serve(async (req) => {
       thread_id, role: "user", parts: [{ type: "text", text: userMsg }],
     });
 
+    // /quiz
+    if (slash?.kind === "quiz") {
+      const quiz = await generateQuiz(LOVABLE_API_KEY, slash.topic, slash.n, !!thread.mentor_mode);
+      if (!quiz) {
+        const err = "Não consegui gerar o quiz agora. Tente novamente em alguns segundos ou refine o tema.";
+        await adminClient.from("agent_messages").insert({
+          thread_id, role: "assistant", parts: [{ type: "text", text: err }],
+        });
+        return new Response(JSON.stringify({ assistant: err, citations: [], quota }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const intro = `🎓 Aqui está seu quiz sobre **${quiz.topic}** (${quiz.questions.length} questões). Responda cada uma e clique em "Finalizar" para ver o gabarito comentado.`;
+      await adminClient.from("agent_messages").insert({
+        thread_id, role: "assistant",
+        parts: [{ type: "text", text: intro }, { type: "quiz", quiz }],
+      });
+      return new Response(JSON.stringify({ assistant: intro, quiz, citations: [], quota }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // /caso
+    if (slash?.kind === "caso") {
+      const sc = await generateStudyCase(LOVABLE_API_KEY, slash.topic);
+      if (!sc) {
+        const err = "Não consegui gerar o caso clínico agora. Tente novamente.";
+        await adminClient.from("agent_messages").insert({
+          thread_id, role: "assistant", parts: [{ type: "text", text: err }],
+        });
+        return new Response(JSON.stringify({ assistant: err, citations: [], quota }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: pro } = await adminClient.from("professionals")
+        .select("id").eq("user_id", user.id).maybeSingle();
+      const teachingBlock = [
+        "🎓 CASO DE ESTUDO (paciente fictício para aprendizado)",
+        `Tema: ${slash.topic}`,
+        "",
+        "História:",
+        sc.history,
+        "",
+        "Exame físico:",
+        sc.examination_findings,
+        "",
+        "Perguntas para reflexão:",
+        ...(sc.teaching_questions || []).map((q: string, i: number) => `${i + 1}. ${q}`),
+      ].join("\n");
+      const ageNum = typeof sc.age === "number" ? sc.age : parseInt(String(sc.age || "30")) || 30;
+      const birthDate = new Date(Date.now() - ageNum * 365.25 * 86400000).toISOString().slice(0, 10);
+      const { data: inserted, error: insErr } = await adminClient.from("patients").insert({
+        full_name: sc.full_name,
+        birth_date: birthDate,
+        professional_id: pro?.id || null,
+        is_study_case: true,
+        notes: teachingBlock,
+      } as any).select("id").maybeSingle();
+      if (insErr) console.error("[caso] insert error", insErr);
+
+      const reply = `🎓 Criei o caso de estudo: **${sc.full_name}**, ${ageNum} anos${sc.sex ? ` (${sc.sex})` : ""}.
+
+**Queixa principal:** ${sc.chief_complaint}
+
+Acesse o caso completo em **[Pacientes → Casos de estudo](/casos-de-estudo)**.
+
+Agora me conte: por onde você começaria a avaliação? Quais testes especiais aplicaria? Que hipóteses precisamos descartar primeiro?`;
+      await adminClient.from("agent_messages").insert({
+        thread_id, role: "assistant", parts: [{ type: "text", text: reply }],
+      });
+      return new Response(JSON.stringify({
+        assistant: reply, study_case_id: inserted?.id, citations: [], quota,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // Patient context (if linked)
     let patientCtx = null;
     if (thread.patient_id) {
@@ -399,7 +656,7 @@ serve(async (req) => {
       .from("agent_settings").select("preferred_niches").eq("user_id", user.id).maybeSingle();
     const evidence = await searchEvidence(adminClient, LOVABLE_API_KEY, userMsg, settings?.preferred_niches);
 
-    const systemPrompt = buildSystemPrompt(patientCtx, evidence);
+    const systemPrompt = buildSystemPrompt(patientCtx, evidence, !!thread.mentor_mode);
 
     const messages = [
       { role: "system", content: systemPrompt },

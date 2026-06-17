@@ -28,7 +28,6 @@ serve(async (req) => {
       });
     }
 
-    // Access gate (VIP or global flag)
     const [{ data: vip }, { data: cfg }] = await Promise.all([
       adminClient.from("vip_users").select("id").eq("email", (user.email || "").toLowerCase().trim()).maybeSingle(),
       adminClient.from("app_config").select("value").eq("key", "clinical_agent_enabled").maybeSingle(),
@@ -93,6 +92,16 @@ serve(async (req) => {
       });
     }
 
+    if (action === "set_mentor_mode") {
+      const { thread_id, mentor_mode } = body;
+      const { error } = await adminClient.from("agent_threads")
+        .update({ mentor_mode: !!mentor_mode })
+        .eq("id", thread_id).eq("user_id", user.id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ ok: true, mentor_mode: !!mentor_mode }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (action === "rename") {
       const { thread_id, title } = body;

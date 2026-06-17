@@ -15,9 +15,10 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check, Brain, Lock,
+  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check, Brain, Lock, GraduationCap,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
+import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
 
 type Thread = {
   id: string;

@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_quiz_results: {
+        Row: {
+          correct: number
+          created_at: string
+          id: string
+          score_pct: number
+          thread_id: string | null
+          topic: string
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          correct: number
+          created_at?: string
+          id?: string
+          score_pct: number
+          thread_id?: string | null
+          topic?: string
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          correct?: number
+          created_at?: string
+          id?: string
+          score_pct?: number
+          thread_id?: string | null
+          topic?: string
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_quiz_results_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "agent_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_messages: {
         Row: {
           citations: Json | null
@@ -85,6 +126,7 @@ export type Database = {
           clinic_id: string | null
           created_at: string
           id: string
+          mentor_mode: boolean
           patient_id: string | null
           title: string
           updated_at: string
@@ -95,6 +137,7 @@ export type Database = {
           clinic_id?: string | null
           created_at?: string
           id?: string
+          mentor_mode?: boolean
           patient_id?: string | null
           title?: string
           updated_at?: string
@@ -105,6 +148,7 @@ export type Database = {
           clinic_id?: string | null
           created_at?: string
           id?: string
+          mentor_mode?: boolean
           patient_id?: string | null
           title?: string
           updated_at?: string
@@ -1427,6 +1471,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          is_study_case: boolean
           occupation: string | null
           phone: string | null
           professional_id: string | null
@@ -1443,6 +1488,7 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          is_study_case?: boolean
           occupation?: string | null
           phone?: string | null
           professional_id?: string | null
@@ -1459,6 +1505,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          is_study_case?: boolean
           occupation?: string | null
           phone?: string | null
           professional_id?: string | null

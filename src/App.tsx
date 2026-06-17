@@ -53,6 +53,7 @@ const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const PendingQuestionnaire = lazy(() => import("./pages/PendingQuestionnaire"));
 const ClinicalAgent = lazy(() => import("./pages/ClinicalAgent"));
+const CasosDeEstudo = lazy(() => import("./pages/CasosDeEstudo"));
 
 const queryClient = new QueryClient();
 
@@ -130,6 +131,7 @@ const App = () => {
                   <Route path="/q/:token" element={<PendingQuestionnaire />} />
                   <Route path="/agente" element={<ClinicalAgent />} />
                   <Route path="/agente/:threadId" element={<ClinicalAgent />} />
+                  <Route path="/casos-de-estudo" element={<CasosDeEstudo />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
