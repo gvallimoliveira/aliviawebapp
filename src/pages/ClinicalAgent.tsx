@@ -821,7 +821,7 @@ const ClinicalAgent = () => {
             aria-label="Casos de estudo"
             onClick={() => navigate("/casos-de-estudo")}
           >
-            <GraduationCap className="h-4 w-4" />
+            <BookText className="h-4 w-4" />
           </Button>
 
           {uniqueCitations.length > 0 && (
