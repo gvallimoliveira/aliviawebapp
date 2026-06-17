@@ -54,6 +54,7 @@ const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const PendingQuestionnaire = lazy(() => import("./pages/PendingQuestionnaire"));
 const ClinicalAgent = lazy(() => import("./pages/ClinicalAgent"));
 const CasosDeEstudo = lazy(() => import("./pages/CasosDeEstudo"));
+const AcademicTracks = lazy(() => import("./pages/AcademicTracks"));
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,7 @@ const App = () => {
                   <Route path="/agente" element={<ClinicalAgent />} />
                   <Route path="/agente/:threadId" element={<ClinicalAgent />} />
                   <Route path="/casos-de-estudo" element={<CasosDeEstudo />} />
+                  <Route path="/trilhas" element={<AcademicTracks />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
