@@ -47,6 +47,7 @@ const DemoUpsellBanner = lazy(() => import("@/components/demo/DemoUpsellBanner")
 const DemoInsightsMock = lazy(() => import("@/components/demo/DemoInsightsMock"));
 const DemoMessagesMock = lazy(() => import("@/components/demo/DemoMessagesMock"));
 const DemoDailySummaryMock = lazy(() => import("@/components/demo/DemoDailySummaryMock"));
+import TryProDemoCard from "@/components/dashboard/TryProDemoCard";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
