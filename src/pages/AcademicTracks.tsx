@@ -61,7 +61,6 @@ export default function AcademicTracks() {
       const { data: agg } = await sb.from("academic_xp_log").select("xp").eq("user_id", user.id).eq("niche", track.niche);
       const total = (agg || []).reduce((s: number, r: any) => s + (r.xp || 0), 0);
       await awardBadgesIfEligible(supabase, user.id, track.niche, total);
-      setBody:
       setProgress(prev => new Set([...prev, mod.id]));
       toast.success(
         `🎉 Módulo concluído! +30 XP em ${track.niche}`,
