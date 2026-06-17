@@ -484,22 +484,19 @@ Regras:
 - Dificuldade média-alta, estilo COFFITO/residência.
 - NUNCA gere alternativas absurdas ou pegadinhas injustas.`;
 
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-pro",
-      messages: [
-        { role: "system", content: sys },
-        { role: "user", content: `Tema: ${topic}\nNúmero de questões: ${n}` },
-      ],
-      response_format: { type: "json_object" },
-    }),
-  });
+  const resp = await callAiWithFallback(apiKey, {
+    messages: [
+      { role: "system", content: sys },
+      { role: "user", content: `Tema: ${topic}\nNúmero de questões: ${n}` },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.4,
+  }, ["google/gemini-3-flash-preview", "google/gemini-2.5-flash", "google/gemini-2.5-pro"]);
   if (!resp.ok) {
     console.error("[quiz] gateway error", resp.status, await resp.text().catch(() => ""));
     return null;
   }
+
   const j = await resp.json();
   const txt = j.choices?.[0]?.message?.content || "";
   const parsed = safeJsonExtract(txt);
