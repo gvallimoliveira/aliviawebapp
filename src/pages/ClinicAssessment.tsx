@@ -295,7 +295,10 @@ const ClinicAssessment = () => {
     setStep("redflag_alert");
   };
 
-  const handleAnamnesisComplete = async (data: AnamnesisData) => {
+  const handleAnamnesisComplete = async (rawData: AnamnesisData) => {
+    const data = (reassessmentId && originalAssessment)
+      ? (mergeAnamnesisWithOriginal(rawData, originalAssessment, enabledSteps) as AnamnesisData)
+      : rawData;
     setAnamnesisData(data);
     const id = await createAssessment();
     if (id) {
@@ -305,7 +308,12 @@ const ClinicAssessment = () => {
         pain_score: data.painScore,
       });
     }
-    setStep("questionnaire");
+    if (reassessHasQuestionnaire) {
+      setStep("questionnaire");
+    } else {
+      const origTests = (originalAssessment?.test_results as any) || [];
+      generateDiagnosis(data, origTests, id);
+    }
   };
 
   const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
@@ -317,7 +325,8 @@ const ClinicAssessment = () => {
   };
 
   const handleQuestionnaireSkip = () => {
-    generateDiagnosis(anamnesisData!, [], assessmentId);
+    const fallback = reassessmentId ? ((originalAssessment?.test_results as any) || []) : [];
+    generateDiagnosis(anamnesisData!, fallback, assessmentId);
   };
 
   const invokeDiagnosisWithRetry = async (bodyData: any, attempts = 3): Promise<any> => {
