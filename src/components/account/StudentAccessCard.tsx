@@ -250,6 +250,25 @@ const StudentAccessCard = () => {
               </div>
             )}
 
+            {isStudent && !hasProAccess && !isVip && (
+              <div className="rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50 via-amber-50/60 to-background px-3.5 py-3 text-xs space-y-2.5">
+                <p className="font-semibold text-amber-900 flex items-center gap-1.5">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  {t.no_sub_title}
+                </p>
+                <p className="text-amber-900/85 leading-relaxed">{t.no_sub_desc}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-full gap-2 rounded-lg"
+                  onClick={() => navigate("/profissionais")}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  {t.no_sub_cta}
+                </Button>
+              </div>
+            )}
+
             {needsCrefitoFlow && (
               <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs text-foreground space-y-2">
                 <p className="font-semibold flex items-center gap-1.5">
