@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Loader2, Lock, Sparkles } from "lucide-react";
+import { GraduationCap, Loader2, Lock, Sparkles, AlertTriangle, CreditCard } from "lucide-react";
 import { isFallbackVip } from "@/lib/vipEmails";
 
 /**
@@ -34,6 +34,7 @@ const StudentAccessCard = () => {
   const [hasProfRecord, setHasProfRecord] = useState(false);
   const [hasCrefito, setHasCrefito] = useState(false);
   const [isVip, setIsVip] = useState(false);
+  const [hasProAccess, setHasProAccess] = useState(false);
   const [fullName, setFullName] = useState("");
   const [institution, setInstitution] = useState("");
   const [period, setPeriod] = useState("");
@@ -59,6 +60,9 @@ const StudentAccessCard = () => {
         locked_desc: "Sua conta já está cadastrada como fisioterapeuta formado. O modo Estudante não pode ser ativado.",
         vip_badge: "VIP · alternância livre",
         vip_desc: "Conta de teste: alternar não apaga seu CREFITO nem seus dados.",
+        no_sub_title: "O selo acadêmico não substitui a assinatura PRO",
+        no_sub_desc: "O modo Alivia Acadêmico é apenas um identificador visual nos PDFs e links públicos. Para liberar as ferramentas PRO (painel de pacientes, IA clínica, programas de exercício, prontuário) você precisa de uma assinatura ativa — estudantes têm 50% OFF com o cupom SOUIBMR no checkout.",
+        no_sub_cta: "Ver planos com desconto acadêmico",
       }
     : {
         title: "Student Access — Alivia Academic",
@@ -80,6 +84,9 @@ const StudentAccessCard = () => {
         locked_desc: "Your account is already registered as a licensed therapist. Student mode cannot be enabled.",
         vip_badge: "VIP · free toggle",
         vip_desc: "Test account: toggling does not erase your CREFITO or data.",
+        no_sub_title: "The academic seal does not replace a PRO subscription",
+        no_sub_desc: "Alivia Academic mode is only a visual identifier on PDFs and public links. To unlock PRO tools (patient panel, clinical AI, exercise programs, chart) you need an active subscription — students get 50% OFF with coupon SOUIBMR at checkout.",
+        no_sub_cta: "See plans with student discount",
       };
 
   useEffect(() => {
@@ -88,7 +95,7 @@ const StudentAccessCard = () => {
       const [profRes, vipRes] = await Promise.all([
         supabase
           .from("professionals")
-          .select("id, full_name, crefito, is_student, student_institution, student_period")
+          .select("id, full_name, crefito, is_student, student_institution, student_period, subscription_status, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
           .eq("user_id", user.id)
           .maybeSingle(),
         user.email
@@ -106,6 +113,13 @@ const StudentAccessCard = () => {
         setFullName(data.full_name || "");
         setInstitution(data.student_institution || "");
         setPeriod(data.student_period || "");
+        setHasProAccess(
+          data.subscription_status === "active"
+          || data.is_partner === true
+          || data.lifetime_treatment === true
+          || data.premium_granted === true
+          || (data.pro_access_expires_at && new Date(data.pro_access_expires_at) > new Date())
+        );
       } else {
         const { data: prof } = await supabase
           .from("profiles")
@@ -233,6 +247,25 @@ const StudentAccessCard = () => {
                     onChange={(e) => setPeriod(e.target.value)}
                   />
                 </div>
+              </div>
+            )}
+
+            {isStudent && !hasProAccess && !isVip && (
+              <div className="rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50 via-amber-50/60 to-background px-3.5 py-3 text-xs space-y-2.5">
+                <p className="font-semibold text-amber-900 flex items-center gap-1.5">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  {t.no_sub_title}
+                </p>
+                <p className="text-amber-900/85 leading-relaxed">{t.no_sub_desc}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-full gap-2 rounded-lg"
+                  onClick={() => navigate("/profissionais")}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  {t.no_sub_cta}
+                </Button>
               </div>
             )}
 
