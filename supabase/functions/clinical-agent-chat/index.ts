@@ -322,7 +322,7 @@ type SlashCommand =
   | { kind: "quiz"; topic: string; n: number }
   | { kind: "caso"; topic: string }
   | { kind: "traduzir"; payload: string }
-  | { kind: "trilha"; topic: string }
+  | { kind: "trilha"; topic: string; level: number | null }
   | null;
 
 function parseSlash(raw: string): SlashCommand {
@@ -350,7 +350,10 @@ function parseSlash(raw: string): SlashCommand {
     return { kind: "traduzir", payload: rest };
   }
   if (cmd === "trilha") {
-    return { kind: "trilha", topic: rest };
+    const levelMatch = rest.match(/\b(?:n[ií]vel|modulo|m[oó]dulo|aula|fase)?\s*([1-5])\b/i);
+    const level = levelMatch ? parseInt(levelMatch[1], 10) : null;
+    const topic = rest.replace(/\b(?:n[ií]vel|modulo|m[oó]dulo|aula|fase)?\s*[1-5]\b/i, "").trim();
+    return { kind: "trilha", topic, level };
   }
   return null;
 }
@@ -368,6 +371,51 @@ function detectNicheSrv(text: string): string | null {
     if (kws.some((k) => t.includes(k))) return n;
   }
   return null;
+}
+
+const TRACK_MODULES = [
+  { level: 1, title: "Conceitos fundamentais", focus: "anatomia funcional, biomecânica básica, capacidade de carga e quadros clínicos comuns" },
+  { level: 2, title: "Avaliação clínica", focus: "anamnese direcionada, red flags, irritabilidade, testes clínicos e medidas funcionais" },
+  { level: 3, title: "Raciocínio diagnóstico", focus: "hipóteses diferenciais, padrões de apresentação, decisão sobre exames e integração STEPS/D.I.F.I" },
+  { level: 4, title: "Tratamento baseado em evidência", focus: "educação, exercício terapêutico, progressão de carga, terapia manual quando pertinente e critérios de evolução" },
+  { level: 5, title: "Caso clínico aplicado", focus: "mini caso guiado, tomada de decisão, erros comuns e próximos passos de estudo" },
+];
+
+function nicheLabel(niche: string) {
+  return niche.charAt(0).toUpperCase() + niche.slice(1);
+}
+
+async function generateTrackLesson(apiKey: string, niche: string, level: number): Promise<string | null> {
+  const module = TRACK_MODULES.find((m) => m.level === level) || TRACK_MODULES[0];
+  const sys = `Você é o Mentor Acadêmico da Aliv.iA, um professor/preceptor de fisioterapia.
+
+TAREFA: entregar uma aula curta, didática e estruturada de uma trilha de conhecimento.
+
+Regras obrigatórias:
+- NÃO trate como anamnese e NÃO peça queixa, tempo de dor ou dados de paciente.
+- NÃO aja como se fosse discussão de caso real, exceto no nível 5, onde você cria um mini caso fictício dentro da própria resposta.
+- Ensine o conteúdo diretamente para aluno/profissional, em pt-BR, com tom acolhedor e preciso.
+- Use a metodologia STEPS e D.I.F.I quando fizer sentido.
+- Estruture em markdown com: título, objetivo do módulo, conceitos essenciais, aplicação clínica, armadilha comum, exercício de fixação e próximo passo.
+- Seja completo o suficiente para estudar, mas adequado para chat mobile: blocos curtos, bullets claros.
+- No final, diga como avançar: /trilha ${niche} ${Math.min(level + 1, 5)} ou /quiz ${niche}.
+
+Módulo ${module.level}/5: ${module.title}
+Foco: ${module.focus}`;
+
+  const resp = await callAiWithFallback(apiKey, {
+    messages: [
+      { role: "system", content: sys },
+      { role: "user", content: `Crie a aula do nível ${level}/5 da trilha de ${niche}.` },
+    ],
+    temperature: 0.45,
+  }, ["google/gemini-3-flash-preview", "google/gemini-2.5-flash", "google/gemini-2.5-pro"]);
+  if (!resp.ok) {
+    console.error("[trilha] gateway error", resp.status, await resp.text().catch(() => ""));
+    return null;
+  }
+  const j = await resp.json();
+  return j.choices?.[0]?.message?.content || null;
 }
 async function logXp(adminClient: any, userId: string, source: string, ref: string, niche: string | null, xp: number) {
   try {
