@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, ArrowLeft, GraduationCap, CheckCircle2, Sparkles, Route as RouteIcon } from "lucide-react";
+import { Loader2, ArrowLeft, GraduationCap, CheckCircle2, Sparkles, Route as RouteIcon, User } from "lucide-react";
 import { toast } from "sonner";
 import { awardBadgesIfEligible } from "@/lib/academicNiche";
 
