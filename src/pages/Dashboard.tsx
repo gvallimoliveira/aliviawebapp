@@ -903,6 +903,7 @@ const Dashboard = () => {
               || professional.premium_granted === true
               || (professional.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
             );
+            const isStudentLocked = !!professional?.is_student && !hasProAccess;
             const ProLockedCard = ({ title, desc }: { title: string; desc: string }) => (
               <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
                 <CardContent className="py-10 text-center space-y-4">
@@ -911,8 +912,18 @@ const Dashboard = () => {
                     <p className="text-base font-semibold text-foreground">{title}</p>
                     <p className="text-sm text-muted-foreground max-w-md mx-auto">{desc}</p>
                   </div>
+                  {isStudentLocked && (
+                    <div className="mx-auto max-w-md rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 text-left text-xs space-y-1.5">
+                      <p className="font-semibold text-amber-900 flex items-center gap-1.5">
+                        🎓 Selo Alivia Acadêmico não libera assinatura
+                      </p>
+                      <p className="text-amber-900/85 leading-relaxed">
+                        O modo Acadêmico é só um identificador visual nos seus PDFs e links. Para usar as ferramentas PRO, assine o plano profissional e mantenha o modo Acadêmico ativo enquanto ainda não tem CREFITO — estudantes pagam <span className="font-mono font-semibold">50% OFF</span> com o cupom <span className="font-mono font-semibold">SOUIBMR</span>.
+                      </p>
+                    </div>
+                  )}
                   <Button onClick={() => setActiveTab("professional")} variant="outline" className="rounded-xl">
-                    Ver opções de assinatura
+                    {isStudentLocked ? "Ver planos com desconto acadêmico" : "Ver opções de assinatura"}
                   </Button>
                 </CardContent>
               </Card>
