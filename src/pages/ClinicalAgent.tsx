@@ -829,6 +829,7 @@ const ClinicalAgent = () => {
 
             {messages.map(m => {
               const text = m.parts.filter(p => p.type === "text").map(p => p.text).join("\n");
+              const quizPart = m.parts.find(p => p.type === "quiz" && p.quiz) as any;
               if (m.role === "user") {
                 return (
                   <div key={m.id} className="flex justify-end">
@@ -840,23 +841,26 @@ const ClinicalAgent = () => {
               }
               return (
                 <div key={m.id} className="flex justify-start">
-                  <div className="max-w-[85%] bg-muted text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm shadow-sm">
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2 prose-a:text-primary prose-a:font-medium">
-                      <ReactMarkdown
-                        components={{
-                          a: ({ href, children }) => (
-                            <a
-                              href={href || "#"}
-                              target={href?.startsWith("http") ? "_blank" : undefined}
-                              rel="noopener noreferrer"
-                              className="text-primary underline underline-offset-2 hover:text-primary/80"
-                            >
-                              {children}
-                            </a>
-                          ),
-                        }}
-                      >{text}</ReactMarkdown>
-                    </div>
+                  <div className="max-w-[85%] w-full bg-muted text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm shadow-sm">
+                    {text && (
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2 prose-a:text-primary prose-a:font-medium">
+                        <ReactMarkdown
+                          components={{
+                            a: ({ href, children }) => (
+                              <a
+                                href={href || "#"}
+                                target={href?.startsWith("http") ? "_blank" : undefined}
+                                rel="noopener noreferrer"
+                                className="text-primary underline underline-offset-2 hover:text-primary/80"
+                              >
+                                {children}
+                              </a>
+                            ),
+                          }}
+                        >{text}</ReactMarkdown>
+                      </div>
+                    )}
+                    {quizPart?.quiz && <QuizCard quiz={quizPart.quiz} threadId={activeThread?.id} />}
                     {m.citations && m.citations.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {m.citations.map(c => (
