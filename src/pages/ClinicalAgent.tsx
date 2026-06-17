@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
+import MentorCommandsPopover from "@/components/agent/MentorCommandsPopover";
 
 type Thread = {
   id: string;
@@ -42,6 +43,8 @@ const PROMPT_STARTERS = [
   "/professor",
   "/quiz tendinopatia patelar",
   "/caso lombalgia crônica",
+  "/traduzir https://pubmed.ncbi.nlm.nih.gov/...",
+  "/trilha ombro",
 ];
 function ThreadRow({
   thread, patientName, active, onOpen, onDelete,
@@ -755,6 +758,8 @@ const ClinicalAgent = () => {
               {activeThread.mentor_mode ? "Mentor on" : "Mentor"}
             </Button>
           )}
+
+          <MentorCommandsPopover onPick={(c) => setInput((prev) => (prev ? `${prev} ${c}` : c))} />
 
           {uniqueCitations.length > 0 && (
             <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setShowCitations(true)}>
