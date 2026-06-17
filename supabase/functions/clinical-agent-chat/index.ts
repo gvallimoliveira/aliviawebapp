@@ -617,6 +617,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Auto-title helper for slash commands (only if user hasn't renamed)
+    async function setSlashTitle(prefix: string, topic: string) {
+      if (thread.title && thread.title !== "Nova conversa") return;
+      const t = `${prefix}: ${topic}`.slice(0, 80);
+      await adminClient.from("agent_threads").update({ title: t }).eq("id", thread_id);
+    }
+
+
     // ===== Slash commands =====
     const slash = parseSlash(message);
     if (slash?.kind === "professor") {
@@ -678,6 +686,7 @@ Deno.serve(async (req) => {
         thread_id, role: "assistant",
         parts: [{ type: "text", text: intro }, { type: "quiz", quiz }],
       });
+      await setSlashTitle("Quiz", quiz.topic);
       return new Response(JSON.stringify({ assistant: intro, quiz, citations: [], quota }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -732,6 +741,7 @@ Agora me conte: por onde você começaria a avaliação? Quais testes especiais 
         thread_id, role: "assistant", parts: [{ type: "text", text: reply }],
       });
       await logXp(adminClient, user.id, "case", slash.topic, detectNicheSrv(slash.topic), 50);
+      await setSlashTitle("Caso", sc.full_name || slash.topic);
       return new Response(JSON.stringify({
         assistant: reply, study_case_id: inserted?.id, citations: [], quota,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -760,6 +770,7 @@ Agora me conte: por onde você começaria a avaliação? Quais testes especiais 
       await adminClient.from("agent_threads")
         .update({ mentor_mode: true, updated_at: new Date().toISOString() })
         .eq("id", thread_id);
+      await setSlashTitle("Trilha", `${nicheLabel(niche)} N${level}`);
       return new Response(JSON.stringify({ assistant: reply, citations: [], quota }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -824,6 +835,7 @@ Regras: nunca invente dados; se faltar informação, sinalize com "(não informa
         thread_id, role: "assistant", parts: [{ type: "text", text: assistantText }],
       });
       await logXp(adminClient, user.id, "translation", input, detectNicheSrv(input), 15);
+      await setSlashTitle("Tradução", (input.match(/https?:\/\/\S+/)?.[0] || input).slice(0, 60));
       return new Response(JSON.stringify({ assistant: assistantText, citations: [], quota }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
