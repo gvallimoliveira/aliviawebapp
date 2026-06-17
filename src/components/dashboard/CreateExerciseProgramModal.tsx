@@ -1081,6 +1081,8 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               {customExercises.map((c, idx) => (
                 <Card
                   key={c.tempId}
+                  data-drag-list="custom"
+                  data-drag-idx={idx}
                   className={`overflow-hidden border-dashed transition-all ${dragCustomIdx === idx ? "opacity-50" : ""} ${overCustomIdx === idx && dragCustomIdx !== idx ? "ring-2 ring-primary" : ""}`}
                   draggable
                   onDragStart={(e) => { setDragCustomIdx(idx); e.dataTransfer.effectAllowed = "move"; }}
@@ -1091,7 +1093,11 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 >
                   <CardContent className="py-2.5 px-3 space-y-2">
                     <div className="flex items-center gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground/60 shrink-0 cursor-grab active:cursor-grabbing" />
+                      <GripVertical
+                        className="h-5 w-5 text-muted-foreground/60 shrink-0 cursor-grab active:cursor-grabbing"
+                        style={{ touchAction: "none" }}
+                        onTouchStart={startTouchDrag("custom", idx)}
+                      />
                       <Input
                         placeholder="Nome do exercício *"
                         value={c.name}
