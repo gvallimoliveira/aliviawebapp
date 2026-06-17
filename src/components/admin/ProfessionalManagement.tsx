@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Users, Search, Trash2 } from "lucide-react";
+import { Loader2, Users, Search, Trash2, GraduationCap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {
