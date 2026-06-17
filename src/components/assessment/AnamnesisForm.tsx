@@ -70,9 +70,15 @@ interface AnamnesisFormProps {
   initialHasGymAccess?: string;
   /** Optional stable key (e.g. token, professionalId+email) to persist draft across reloads. */
   draftScopeKey?: string | null;
+  /**
+   * Optional sub-step filter for reassessment links. When provided, only the listed
+   * groups are shown to the patient. Possible values: "complaint", "painmap",
+   * "surgery", "painscore", "activity". If undefined, every step is shown (default).
+   */
+  enabledSubs?: string[];
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, draftScopeKey }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, draftScopeKey, enabledSubs }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
