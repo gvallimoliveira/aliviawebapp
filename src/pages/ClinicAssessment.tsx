@@ -39,6 +39,15 @@ const ClinicAssessment = () => {
   const reassessmentId = searchParams.get("reassessment");
   const patientToken = searchParams.get("patient");
   const resumeId = searchParams.get("resume");
+  const stepsParam = searchParams.get("steps");
+  const enabledSteps = useMemo(() => parseStepsParam(stepsParam), [stepsParam]);
+  const reassessAnamSubs = useMemo(
+    () => (enabledSteps ? ANAMNESIS_SUB_IDS.filter((id) => enabledSteps.has(id)) : null),
+    [enabledSteps],
+  );
+  const reassessHasAnamnesis = hasAnyAnamnesisSub(enabledSteps);
+  const reassessHasQuestionnaire = isStepEnabled(enabledSteps, "questionnaire");
+  const reassessHasRedflags = isStepEnabled(enabledSteps, "redflags");
 
   const [step, setStep] = useState<ClinicStep>("loading_check");
   const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null; brand_color: string | null } | null>(null);
