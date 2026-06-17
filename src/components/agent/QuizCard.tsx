@@ -25,6 +25,7 @@ export type Quiz = {
 };
 
 export default function QuizCard({ quiz, threadId }: { quiz: Quiz; threadId?: string }) {
+  const navigate = useNavigate();
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [finished, setFinished] = useState(false);
