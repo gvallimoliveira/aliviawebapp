@@ -1,65 +1,97 @@
-# Reavaliação Customizada — Seleção de Etapas
+# Modo Acadêmico — Agente Clínico como Mentor
 
-## Objetivo
+Disponível para **estudantes (is_student=true) + profissionais PRO assinantes**. Bloqueado para demais (mostra CTA já existente).
 
-Permitir ao profissional/clínica escolher, antes de gerar o link de reavaliação, **quais etapas** o paciente irá preencher. Hoje a reavaliação envia o paciente por todo o fluxo (dados → anamnese → questionários). A ideia é poder, por exemplo, pedir "só os questionários" quando o foco clínico do momento for apenas a evolução das métricas.
+## 1. Persona `/professor` no chat
 
-## Comportamento desejado
+**Onde:** `supabase/functions/clinical-agent-chat/index.ts`
 
-1. No menu "Mais" do prontuário, ao clicar em **Reavaliação**, em vez de gerar o link direto, abre primeiro um modal **"Configurar reavaliação"**.
-2. O modal apresenta as etapas como checkboxes:
-  - **Dados do paciente** — *obrigatório, sempre marcado e desabilitado* (necessário para vincular a avaliação ao paciente).
-  - **Anamnese** (queixa principal, mapa de dor, EVA, cirurgias, atividade) — opcional - porém cada uma dessas métricas pode ser selecionada ou não individualmente. Ou seja, posso escolher apenas mapa de dor dentre os subgrupos da anamnese. 
-  - **Questionários validados** — opcional.
-  - *(Opcional, baixa prioridade)* **Triagem de Red Flags** — opcional. Hoje a reavaliação já pula essa etapa por padrão; manteremos esse comportamento (desmarcado por padrão).
-3. Pelo menos uma etapa opcional precisa estar marcada (caso contrário botão "Gerar link" fica desabilitado, com aviso suave).
-4. Ao confirmar, o link é gerado normalmente (curto/longo, copy + WhatsApp como hoje), mas carrega as etapas selecionadas embutidas.
-5. No fluxo do paciente:
-  - Etapas **desmarcadas** são puladas (não aparecem no Stepper nem na navegação).
-  - Etapas **marcadas** seguem com o mesmo pré-preenchimento e destaque de respostas anteriores que existem hoje.
-  - Ao finalizar, a nova `assessment` é salva com:
-    - Os dados novos das etapas marcadas.
-    - **Cópia** dos dados da avaliação original nas etapas puladas (anamnese, pain_regions, test_results), garantindo que o prontuário e o PDF continuem completos.
-6. O Stepper passa a mostrar apenas as etapas presentes na reavaliação, mantendo a contagem coerente.
+- Detectar comando `/professor` (ou toggle persistente "Modo Mentor 🎓" no header do chat que injeta a persona em todas as mensagens da thread).
+- Quando ativo, **substituir/concatenar system prompt** com persona didática:
+  - Tom de preceptor experiente, paciente, socrático.
+  - Sempre revisa anatomia/biomecânica/fisiopatologia básica antes de avançar.
+  - Cita evidência (PEDro ≥7 da base já existente em `agent_knowledge`).
+  - Termina respostas com "❓ Quer que eu aprofunde em X, gere um quiz ou um caso clínico?"
+- Persistir flag `mentor_mode` na thread (coluna nova em `agent_threads`) para sobreviver a reloads.
+- Badge visual "🎓 Modo Mentor" no header da conversa.
 
-## Onde mexer
+## 2. `/quiz` — efêmero no chat
 
-### Frontend
+**Onde:** mesmo edge function + UI nova em `ClinicalAgent.tsx`.
 
-- `src/components/dashboard/patient-evolution/PatientDetailView.tsx`
-  - Novo state `reassessConfigDialog` (aberto pelo item de menu "Reavaliação").
-  - Função `openReassessmentLinkDialog` passa a abrir o modal de configuração; nova função `confirmAndBuildReassessLink(steps)` gera o link só após confirmação.
-- `src/components/dashboard/patient-evolution/ReassessmentConfigDialog.tsx` *(novo)*
-  - Checkboxes (shadcn `Checkbox`) para anamnese, questionários, (red flags).
-  - Item "Dados do paciente" sempre marcado e `disabled`.
-  - Botões "Cancelar" / "Gerar link".
-- `src/lib/assessmentLinks.ts`
-  - `buildReassessmentLink(ctx, reassessmentId, steps?)` aceita lista de etapas e adiciona `&steps=anamnesis,questionnaire` (omitindo se for o padrão completo, para compatibilidade).
-- `src/pages/ProfessionalAssessment.tsx` e `src/pages/ClinicAssessment.tsx`
-  - Ler `searchParams.get("steps")` → set `enabledSteps: Set<string>`.
-  - Lógica de transição entre passos respeita `enabledSteps`:
-    - `patient_info` → próximo passo marcado (anamnese se incluída, senão pular para finalização/diagnóstico).
-    - `anamnesis` → próximo (questionário se incluído, senão finalizar).
-  - Botão "Voltar" também respeita as etapas.
-  - Ao salvar a `assessment` final, para cada etapa **não marcada**, copiar do `originalAssessment` os campos correspondentes (`anamnesis_data`, `pain_regions`, `test_results`, etc.). Isso preserva a visualização atual no prontuário/PDF.
-- `src/components/assessment/AssessmentStepper.tsx`
-  - Aceitar prop opcional `enabledStepIds?: string[]` para filtrar a lista de passos exibida (sem alterar o restante do comportamento).
+- Comando: `/quiz [tema opcional] [n=5]`. Sem tema, agente pergunta.
+- LLM gera JSON estruturado (usando `Output.object` do AI SDK — schema pequeno: array de questões com `{enunciado, tipo: 'multipla'|'discursiva', alternativas?, gabarito, justificativa}`).
+- Renderizar componente `QuizCard` no chat (tipo tool-result):
+  - Uma questão por vez, radio buttons para múltipla / textarea para discursiva.
+  - Botão "Próxima" → "Finalizar".
+  - Ao finalizar: **score** (X/N), barra de progresso, e gabarito **só das que errou** com justificativa comentada.
+  - Discursivas: enviar resposta do aluno + gabarito de volta ao agente para correção qualitativa ("parcial", "completa", "incorreta") com feedback.
+- Botão "Tentar outro quiz" e "Estudar este tema" (vira pergunta normal pro agente).
+- **Sem persistência** — apenas anexado como `parts` na mensagem do agente naquela thread.
 
-### Sem mudanças de backend
+## 3. `/caso` — paciente fictício em aba separada
 
-- Nenhuma alteração em tabelas/edge functions: a customização vive 100% em parâmetros de URL + cópia client-side dos dados originais ao salvar.
+**Onde:** schema + listagem de pacientes + edge function.
 
-## Pontos de cautela
+### Schema
+- Nova coluna `patients.is_study_case boolean default false` (migration + GRANT preservados).
+- Casos de estudo **não entram** em contadores de KPI/clínica, follow-up, billing.
 
-- **Compatibilidade**: links antigos (sem `steps=`) continuam fazendo a reavaliação completa como hoje.
-- **Pré-preenchimento existente** (campos da anamnese, mapa de dor, respostas anteriores destacadas nos questionários) **permanece inalterado** quando a etapa é mantida — única mudança é poder ocultar a etapa inteira.
-- **Geração de diagnóstico/IA**: continua recebendo um payload completo, porque preenchemos os campos faltantes com a avaliação anterior antes de chamar `generate-diagnosis`.
-- **Stepper / textos "etapa X de Y"**: serão recalculados a partir das etapas habilitadas.
-- **Reassessment continua skipping Red Flags** por padrão (mantém comportamento atual); o checkbox de Red Flags é meramente opcional e fica desmarcado por default.
-- **Validação no modal**: bloquear "Gerar link" se nenhuma etapa opcional estiver marcada (não faria sentido mandar só "dados do paciente").
+### Edge function
+- Comando `/caso [tema]`: LLM gera JSON com dados completos do paciente (nome fictício, idade, queixa, HMA, exames, achados) + um "roteiro pedagógico" salvo em `patients.notes`.
+- Insere row em `patients` com `is_study_case=true`, vinculada ao `professional_id` do aluno.
+- Retorna no chat: "Criei o caso da Maria, 34a, com tendinopatia patelar. Vá em **Pacientes → Casos de estudo** e me conte: por onde você começaria a avaliação? 🎓"
 
-## Fora do escopo
+### Listagem de pacientes
+- Em `ProDashboard` / lista de pacientes: nova aba/tab "🎓 Casos de estudo" separada da lista real.
+- Filtros: `is_study_case=false` por padrão, `=true` na nova aba.
+- Card visual diferenciado (borda âmbar, badge "Caso de estudo").
+- Botão "Excluir todos os casos" para limpeza rápida.
 
-- Alterações no fluxo de primeira avaliação.
-- Alterações nas etapas internas (red flag screening, anamnese, questionários) em si.
-- Mudanças no PDF/prontuário — eles continuam funcionando como hoje pois os campos não preenchidos são herdados da avaliação anterior.
+## 4. Histórico de desempenho acadêmico
+
+**Onde:** `/minha-conta` (Account.tsx) + nova tabela.
+
+### Schema mínimo (mesmo com quiz efêmero, salvamos só o agregado final)
+```
+academic_quiz_results (
+  id uuid pk,
+  user_id uuid fk auth.users,
+  topic text,
+  total_questions int,
+  correct int,
+  score_pct numeric,
+  created_at timestamptz default now()
+)
+```
+GRANT select/insert para `authenticated` (próprio user via RLS `auth.uid()=user_id`).
+
+### UI
+- Card "🎓 Meu desempenho acadêmico" no StudentAccessCard ou aba dedicada.
+- Mostra: total de quizzes feitos, % médio, top 3 temas mais fortes, top 3 mais fracos, gráfico de evolução (últimos 10 quizzes).
+- CTA "Treinar tema fraco" → abre agente com `/quiz [tema]` pré-preenchido.
+
+## 5. Onboarding / descoberta dos comandos
+
+- No header do `ClinicalAgent`, quando `is_student || (isPro && hasProAccess)`: chip clicável "💡 Comandos do Mentor" abre popover listando `/professor`, `/quiz`, `/caso` com exemplos.
+- Mensagem de boas-vindas da thread (quando vazia) inclui os 3 comandos para estudantes.
+
+## Detalhes técnicos
+
+- **AI SDK + Lovable AI Gateway** já em uso. Modelo: `google/gemini-3-flash-preview` (default) para chat; `google/gemini-2.5-pro` para `/quiz` (qualidade da geração estruturada).
+- Schema do quiz com `Output.object` enxuto (sem enums longos, sem deep nesting) para evitar limite do Gemini.
+- Atualizar `Support.tsx` + `ClinicSupport.tsx` em **pt/en/es** com a nova feature (regra de memória).
+- Atualizar memória `mem://features/clinical-agent` (criar) descrevendo os 3 comandos.
+
+## Não incluído nesta onda (fica para depois)
+Trilhas por nicho, gamificação/XP/badges, simulado cronometrado, biblioteca compartilhada por instituição, modo "explique no 3º período" vs "residência", flashcards, `/defender`, `/traduzir-artigo`, PDF didático.
+
+## Arquivos afetados (estimativa)
+- `supabase/migrations/<nova>.sql` (is_study_case + academic_quiz_results)
+- `supabase/functions/clinical-agent-chat/index.ts` (comandos + persona)
+- `src/pages/ClinicalAgent.tsx` (toggle mentor, render quiz)
+- `src/components/agent/QuizCard.tsx` (novo)
+- `src/components/agent/MentorCommandsPopover.tsx` (novo)
+- Lista de pacientes (componente atual) — adicionar tab "Casos de estudo"
+- `src/pages/Account.tsx` + `StudentAccessCard.tsx` (card desempenho)
+- `src/pages/Support.tsx` + `ClinicSupport.tsx` + locales pt/en/es

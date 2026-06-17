@@ -15,9 +15,10 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check, Brain, Lock,
+  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Archive, Pencil, Check, Brain, Lock, GraduationCap,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
+import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
 
 type Thread = {
   id: string;
@@ -25,21 +26,22 @@ type Thread = {
   patient_id: string | null;
   archived: boolean;
   updated_at: string;
+  mentor_mode?: boolean;
 };
 
 type Message = {
   id: string;
   role: "user" | "assistant";
-  parts: Array<{ type: string; text?: string }>;
+  parts: Array<{ type: string; text?: string; quiz?: Quiz }>;
   citations: Array<{ id: string; title: string; authors?: string; year?: number; pedro_score?: number; doi?: string; source_url?: string }> | null;
   created_at: string;
 };
 
 const PROMPT_STARTERS = [
   "Discutir hipótese deste paciente",
-  "Sugerir testes funcionais",
-  "Revisar o HEP atual",
-  "/evidência dor lombar crônica",
+  "/professor",
+  "/quiz tendinopatia patelar",
+  "/caso lombalgia crônica",
 ];
 function ThreadRow({
   thread, patientName, active, onOpen, onDelete,
@@ -209,7 +211,7 @@ const ClinicalAgent = () => {
       const sb = supabase as any;
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
       const thRes: any = await sb.from("agent_threads")
-        .select("id, title, patient_id, archived, updated_at")
+        .select("id, title, patient_id, archived, updated_at, mentor_mode")
         .eq("user_id", user.id).eq("archived", false)
         .gte("updated_at", sevenDaysAgo)
         .order("updated_at", { ascending: false });
@@ -733,6 +735,27 @@ const ClinicalAgent = () => {
             </Button>
           )}
 
+          {activeThread && (
+            <Button
+              variant={activeThread.mentor_mode ? "default" : "outline"}
+              size="sm"
+              className="gap-1.5"
+              title="Modo Mentor (persona Professor para alunos do Alivia Acadêmico)"
+              onClick={async () => {
+                const next = !activeThread.mentor_mode;
+                setActiveThread({ ...activeThread, mentor_mode: next });
+                setThreads(prev => prev.map(t => t.id === activeThread.id ? { ...t, mentor_mode: next } : t));
+                await supabase.functions.invoke("clinical-agent-threads", {
+                  body: { action: "set_mentor_mode", thread_id: activeThread.id, mentor_mode: next },
+                });
+                toast.success(next ? "🎓 Modo Mentor ativado" : "Modo Mentor desligado");
+              }}
+            >
+              <GraduationCap className="h-3.5 w-3.5" />
+              {activeThread.mentor_mode ? "Mentor on" : "Mentor"}
+            </Button>
+          )}
+
           {uniqueCitations.length > 0 && (
             <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setShowCitations(true)}>
               <BookOpen className="h-3.5 w-3.5" /> {uniqueCitations.length}
@@ -806,6 +829,7 @@ const ClinicalAgent = () => {
 
             {messages.map(m => {
               const text = m.parts.filter(p => p.type === "text").map(p => p.text).join("\n");
+              const quizPart = m.parts.find(p => p.type === "quiz" && p.quiz) as any;
               if (m.role === "user") {
                 return (
                   <div key={m.id} className="flex justify-end">
@@ -817,23 +841,26 @@ const ClinicalAgent = () => {
               }
               return (
                 <div key={m.id} className="flex justify-start">
-                  <div className="max-w-[85%] bg-muted text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm shadow-sm">
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2 prose-a:text-primary prose-a:font-medium">
-                      <ReactMarkdown
-                        components={{
-                          a: ({ href, children }) => (
-                            <a
-                              href={href || "#"}
-                              target={href?.startsWith("http") ? "_blank" : undefined}
-                              rel="noopener noreferrer"
-                              className="text-primary underline underline-offset-2 hover:text-primary/80"
-                            >
-                              {children}
-                            </a>
-                          ),
-                        }}
-                      >{text}</ReactMarkdown>
-                    </div>
+                  <div className="max-w-[85%] w-full bg-muted text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm shadow-sm">
+                    {text && (
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2 prose-a:text-primary prose-a:font-medium">
+                        <ReactMarkdown
+                          components={{
+                            a: ({ href, children }) => (
+                              <a
+                                href={href || "#"}
+                                target={href?.startsWith("http") ? "_blank" : undefined}
+                                rel="noopener noreferrer"
+                                className="text-primary underline underline-offset-2 hover:text-primary/80"
+                              >
+                                {children}
+                              </a>
+                            ),
+                          }}
+                        >{text}</ReactMarkdown>
+                      </div>
+                    )}
+                    {quizPart?.quiz && <QuizCard quiz={quizPart.quiz} threadId={activeThread?.id} />}
                     {m.citations && m.citations.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {m.citations.map(c => (
