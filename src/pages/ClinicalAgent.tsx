@@ -512,6 +512,27 @@ const ClinicalAgent = () => {
                 <li className="flex gap-2"><UserPlus className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Geração de HEP personalizada</li>
               </ul>
 
+
+              <div className="rounded-xl border border-primary/30 bg-primary/[0.04] p-3 flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <p className="text-xs font-semibold text-foreground">Quer sentir a dinâmica antes de assinar?</p>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Abra o modo demonstração e explore pacientes simulados, agenda, insights e o Agente — sem assinatura.
+                  </p>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 text-xs text-primary"
+                    onClick={() => navigate("/profissionais/demo")}
+                  >
+                    Abrir demo profissional →
+                  </Button>
+                </div>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <Button
                   onClick={handleStartSubscription}
@@ -526,6 +547,7 @@ const ClinicalAgent = () => {
                   Voltar
                 </Button>
               </div>
+
             </CardContent>
           </Card>
         </main>

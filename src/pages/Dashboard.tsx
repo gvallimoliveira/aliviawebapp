@@ -47,6 +47,7 @@ const DemoUpsellBanner = lazy(() => import("@/components/demo/DemoUpsellBanner")
 const DemoInsightsMock = lazy(() => import("@/components/demo/DemoInsightsMock"));
 const DemoMessagesMock = lazy(() => import("@/components/demo/DemoMessagesMock"));
 const DemoDailySummaryMock = lazy(() => import("@/components/demo/DemoDailySummaryMock"));
+import TryProDemoCard from "@/components/dashboard/TryProDemoCard";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
@@ -984,6 +985,7 @@ const Dashboard = () => {
                 </TabsList>
                 <TabsContent value="professional" className="space-y-6">
                   {isProDemo && <DemoUpsellBanner section="pro-patients" variant="pro" />}
+                  {!isProDemo && !hasProAccess && <TryProDemoCard section="Pacientes" />}
                   <ProDashboard
                     professional={proStub}
                     isSimulated={isProDemo ? true : isSimulated}
@@ -1000,10 +1002,13 @@ const Dashboard = () => {
                   ) : hasProAccess ? (
                     <ProSchedule professionalId={proStub.id} isSimulated={isSimulated} />
                   ) : (
-                    <ProLockedCard
-                      title="Agenda exclusiva do plano PRO"
-                      desc="Para agendar atendimentos, organizar sua semana e ver o resumo diário, ative sua assinatura PRO. O acesso de parceiro habilitado para você cobre apenas o perfil de Clínica."
-                    />
+                    <>
+                      <TryProDemoCard section="Agenda" />
+                      <ProLockedCard
+                        title="Agenda exclusiva do plano PRO"
+                        desc="Para agendar atendimentos, organizar sua semana e ver o resumo diário, ative sua assinatura PRO. O acesso de parceiro habilitado para você cobre apenas o perfil de Clínica."
+                      />
+                    </>
                   )}
                 </TabsContent>
 
@@ -1036,12 +1041,16 @@ const Dashboard = () => {
                       canInitiateAsProfessional={true}
                     />
                   ) : (
-                    <ProLockedCard
-                      title="Mensagens são parte do plano PRO"
-                      desc="O chat com pacientes está disponível apenas para profissionais com assinatura PRO ativa. Seu acesso atual cobre o perfil de Clínica."
-                    />
+                    <>
+                      <TryProDemoCard section="Mensagens" />
+                      <ProLockedCard
+                        title="Mensagens são parte do plano PRO"
+                        desc="O chat com pacientes está disponível apenas para profissionais com assinatura PRO ativa. Seu acesso atual cobre o perfil de Clínica."
+                      />
+                    </>
                   )}
                 </TabsContent>
+
 
               </Tabs>
             );
