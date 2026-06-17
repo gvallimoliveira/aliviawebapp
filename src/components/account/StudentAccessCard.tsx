@@ -60,6 +60,9 @@ const StudentAccessCard = () => {
         locked_desc: "Sua conta já está cadastrada como fisioterapeuta formado. O modo Estudante não pode ser ativado.",
         vip_badge: "VIP · alternância livre",
         vip_desc: "Conta de teste: alternar não apaga seu CREFITO nem seus dados.",
+        no_sub_title: "O selo acadêmico não substitui a assinatura PRO",
+        no_sub_desc: "O modo Alivia Acadêmico é apenas um identificador visual nos PDFs e links públicos. Para liberar as ferramentas PRO (painel de pacientes, IA clínica, programas de exercício, prontuário) você precisa de uma assinatura ativa — estudantes têm 50% OFF com o cupom SOUIBMR no checkout.",
+        no_sub_cta: "Ver planos com desconto acadêmico",
       }
     : {
         title: "Student Access — Alivia Academic",
@@ -81,6 +84,9 @@ const StudentAccessCard = () => {
         locked_desc: "Your account is already registered as a licensed therapist. Student mode cannot be enabled.",
         vip_badge: "VIP · free toggle",
         vip_desc: "Test account: toggling does not erase your CREFITO or data.",
+        no_sub_title: "The academic seal does not replace a PRO subscription",
+        no_sub_desc: "Alivia Academic mode is only a visual identifier on PDFs and public links. To unlock PRO tools (patient panel, clinical AI, exercise programs, chart) you need an active subscription — students get 50% OFF with coupon SOUIBMR at checkout.",
+        no_sub_cta: "See plans with student discount",
       };
 
   useEffect(() => {
