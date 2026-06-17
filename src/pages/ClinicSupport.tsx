@@ -6,7 +6,7 @@ import {
   ClipboardList, AlertTriangle, FileText, Image as ImageIcon, Brain,
   MessageCircle, Video, Bell, BookOpen, TrendingUp, Shield, CreditCard,
   UserCog, Stethoscope, FileCheck, Sparkles, Heart, Layers, Mic, Archive,
-  Lightbulb,
+  Lightbulb, GraduationCap,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -145,6 +145,12 @@ const categories: ToolCategory[] = [
         icon: TrendingUp,
         title: "Relatório de evolução para alta",
         desc: "Gera um documento comparativo final com ganhos objetivos e narrativa clínica. Ideal para alta, prestação de contas e fechamento de pacote.",
+      },
+      {
+        key: "academic_mentor",
+        icon: GraduationCap,
+        title: "Modo acadêmico e trilhas do Mentor",
+        desc: "Alunos e profissionais PRO podem estudar pelo Agente com /professor, /quiz, /caso, /traduzir e /trilha [tema] [1-5]. As trilhas entregam aulas didáticas por módulo — conceitos, avaliação, diagnóstico, tratamento e caso aplicado — com XP por conclusão.",
       },
     ],
   },

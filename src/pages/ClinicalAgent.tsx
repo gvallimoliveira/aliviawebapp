@@ -44,7 +44,7 @@ const PROMPT_STARTERS = [
   "/quiz tendinopatia patelar",
   "/caso lombalgia crônica",
   "/traduzir https://pubmed.ncbi.nlm.nih.gov/...",
-  "/trilha ombro",
+  "/trilha ombro 1",
 ];
 function ThreadRow({
   thread, patientName, active, onOpen, onDelete,
