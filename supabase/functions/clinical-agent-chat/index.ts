@@ -770,6 +770,7 @@ Agora me conte: por onde você começaria a avaliação? Quais testes especiais 
       await adminClient.from("agent_threads")
         .update({ mentor_mode: true, updated_at: new Date().toISOString() })
         .eq("id", thread_id);
+      await setSlashTitle("Trilha", `${nicheLabel(niche)} N${level}`);
       return new Response(JSON.stringify({ assistant: reply, citations: [], quota }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
