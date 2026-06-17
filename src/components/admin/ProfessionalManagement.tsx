@@ -165,16 +165,25 @@ const ProfessionalManagement = ({ language }: Props) => {
                   <TableCell className="font-medium">{p.full_name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-sm font-semibold">{p.crefito || "—"}</span>
-                      {p.crefito && (
-                        <a
-                          href="https://www.coffito.gov.br/nsite/?page_id=2350"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline"
-                        >
-                          {language === "pt" ? "Verificar" : "Verify"}
-                        </a>
+                      {p.is_student ? (
+                        <Badge variant="outline" className="text-[10px] border-primary/40 text-primary bg-primary/5 gap-1">
+                          <GraduationCap className="h-3 w-3" />
+                          Alivia Acadêmico
+                        </Badge>
+                      ) : p.crefito ? (
+                        <>
+                          <span className="font-mono text-sm font-semibold">{p.crefito}</span>
+                          <a
+                            href="https://www.coffito.gov.br/nsite/?page_id=2350"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline"
+                          >
+                            {language === "pt" ? "Verificar" : "Verify"}
+                          </a>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </div>
                   </TableCell>
