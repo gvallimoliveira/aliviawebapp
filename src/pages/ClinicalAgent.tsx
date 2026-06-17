@@ -644,7 +644,7 @@ const ClinicalAgent = () => {
   );
 
   return (
-    <div className="h-screen w-full flex bg-background overflow-hidden relative">
+    <div className="h-[100dvh] w-full flex bg-background overflow-hidden relative">
       {/* Background logo (suave) */}
       <div
         className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.08] z-0"
