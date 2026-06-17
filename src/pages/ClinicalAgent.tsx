@@ -231,15 +231,27 @@ const ClinicalAgent = () => {
 
       const clinicId = isClinicMode && activeClinic ? activeClinic.clinic_id : null;
 
+      // Load hidden (archived) patient emails so they don't appear in the picker
+      const hiddenEmails = new Set<string>();
+      if (clinicId) {
+        const { data: hid } = await sb.from("clinic_hidden_patients")
+          .select("patient_email").eq("clinic_id", clinicId);
+        (hid || []).forEach((h: any) => hiddenEmails.add(h.patient_email));
+      } else if (professionalId) {
+        const { data: hid } = await sb.from("professional_hidden_patients")
+          .select("patient_email").eq("professional_id", professionalId);
+        (hid || []).forEach((h: any) => hiddenEmails.add(h.patient_email));
+      }
+
       let pt: Array<{ id: string; full_name: string }> = [];
       if (clinicId) {
         const { data } = await sb.from("patients")
-          .select("id, full_name").eq("clinic_id", clinicId).order("full_name");
-        pt = data || [];
+          .select("id, full_name, email").eq("clinic_id", clinicId).order("full_name");
+        pt = (data || []).filter((p: any) => !hiddenEmails.has(p.email));
       } else if (professionalId) {
         const { data } = await sb.from("patients")
-          .select("id, full_name").eq("professional_id", professionalId).order("full_name");
-        pt = data || [];
+          .select("id, full_name, email").eq("professional_id", professionalId).order("full_name");
+        pt = (data || []).filter((p: any) => !hiddenEmails.has(p.email));
       }
 
       const th = thRes.data as Thread[] | null;
