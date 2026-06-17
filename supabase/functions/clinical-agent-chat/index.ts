@@ -726,15 +726,29 @@ Agora me conte: por onde você começaria a avaliação? Quais testes especiais 
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // /trilha — abre a página de Trilhas com link contextual
+    // /trilha — entrega aula didática do módulo, não anamnese/caso
     if (slash?.kind === "trilha") {
-      const niche = detectNicheSrv(slash.topic) || slash.topic.trim().toLowerCase() || "";
-      const reply = niche
-        ? `📚 Trilha de **${niche}** disponível. Acesse seus módulos sequenciais (conceito → biomecânica → avaliação → tratamento → caso clínico) em **[Trilhas de Conhecimento](/trilhas)**.\n\nCada módulo concluído rende **+30 XP** e contribui para sua jornada "Mestre do ${niche.charAt(0).toUpperCase() + niche.slice(1)}".`
-        : `📚 Veja todas as trilhas disponíveis em **[Trilhas de Conhecimento](/trilhas)**.`;
+      const niche = detectNicheSrv(slash.topic) || slash.topic.trim().toLowerCase();
+      if (!niche) {
+        const reply = `📚 Escolha uma trilha para eu iniciar uma aula didática: **ombro, lombar, quadril, joelho ou cervical**.\n\nExemplo: \`/trilha ombro 1\``;
+        await adminClient.from("agent_messages").insert({
+          thread_id, role: "assistant", parts: [{ type: "text", text: reply }],
+        });
+        return new Response(JSON.stringify({ assistant: reply, citations: [], quota }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const level = slash.level || 1;
+      const lesson = await generateTrackLesson(LOVABLE_API_KEY, niche, level);
+      const module = TRACK_MODULES.find((m) => m.level === level) || TRACK_MODULES[0];
+      const reply = lesson || `# Trilha do ${nicheLabel(niche)} · Nível ${level}/5\n\n## ${module.title}\n\nHoje o foco é **${module.focus}**.\n\n### Objetivo do módulo\nEntender os conceitos que sustentam o raciocínio clínico antes de discutir conduta.\n\n### Próximo passo\nUse \`/trilha ${niche} ${Math.min(level + 1, 5)}\` para avançar ou \`/quiz ${niche}\` para testar sua fixação.`;
       await adminClient.from("agent_messages").insert({
         thread_id, role: "assistant", parts: [{ type: "text", text: reply }],
       });
+      await adminClient.from("agent_threads")
+        .update({ mentor_mode: true, updated_at: new Date().toISOString() })
+        .eq("id", thread_id);
       return new Response(JSON.stringify({ assistant: reply, citations: [], quota }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
