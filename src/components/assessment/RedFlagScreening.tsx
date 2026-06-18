@@ -53,7 +53,7 @@ const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData, onAnswered, on
         onFlagged();
       }
     } else {
-      onPass();
+      onPass(boolMap);
     }
   };
 
