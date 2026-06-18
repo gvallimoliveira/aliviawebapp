@@ -147,7 +147,7 @@
   "redflags.night_pain": "¿Siente dolor intenso que empeora de noche y no mejora en ninguna posición?",
   "redflags.cancer": "¿Tiene historial personal de cáncer?",
   "redflags.numbness_progressive": "¿Siente entumecimiento o debilidad progresiva en brazos o piernas?",
-  "redflags.recent_surgery": "¿Se realizó cirugía en la zona del dolor en los últimos 3 meses?",
+  "redflags.recent_surgery": "¿Se realizó cirugía en la zona del dolor con colocación de placas y/o tornillos o prótesis?",
   "redflags.yes": "Sí",
   "redflags.no": "No",
   "redflags.continue": "Continuar",

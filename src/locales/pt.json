@@ -147,7 +147,7 @@
   "redflags.night_pain": "Sente dor intensa que piora à noite e não melhora em nenhuma posição?",
   "redflags.cancer": "Possui histórico pessoal de câncer?",
   "redflags.numbness_progressive": "Está sentindo dormência ou fraqueza progressiva nos braços ou pernas?",
-  "redflags.recent_surgery": "Realizou cirurgia na região da dor nos últimos 3 meses?",
+  "redflags.recent_surgery": "Realizou cirurgia na região de dor com colocação de placas e/ou parafusos ou prótese?",
   "redflags.yes": "Sim",
   "redflags.no": "Não",
   "redflags.continue": "Continuar",

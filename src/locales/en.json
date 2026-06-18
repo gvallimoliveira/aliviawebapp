@@ -147,7 +147,7 @@
   "redflags.night_pain": "Do you have intense pain that worsens at night and doesn't improve in any position?",
   "redflags.cancer": "Do you have a personal history of cancer?",
   "redflags.numbness_progressive": "Are you experiencing progressive numbness or weakness in your arms or legs?",
-  "redflags.recent_surgery": "Have you had surgery in the pain area in the last 3 months?",
+  "redflags.recent_surgery": "Have you had surgery in the pain area with placement of plates and/or screws or a prosthesis?",
   "redflags.yes": "Yes",
   "redflags.no": "No",
   "redflags.continue": "Continue",
