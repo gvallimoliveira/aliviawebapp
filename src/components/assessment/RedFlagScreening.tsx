@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface RedFlagScreeningProps {
+  onPass: (answers?: Record<string, boolean>) => void;
   onPass: () => void;
   onFlagged: () => void;
   onFlaggedWithData?: (flaggedItems: Record<string, boolean>) => void;
