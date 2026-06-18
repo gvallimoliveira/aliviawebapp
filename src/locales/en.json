@@ -437,7 +437,7 @@
   "faq.faq5.q": "Can I redo the self-assessment?",
   "faq.faq5.a": "Yes! With the premium version, you can redo the self-assessment once within 7 days of purchase, allowing you to track your progress and adjust treatment as needed.",
   "faq.faq6.q": "What if the screening detects red flags?",
-  "faq.faq6.a": "The safety screening is an integral part of every assessment — not a separate step. If signs such as severe trauma, unexplained weight loss, relentless night pain, or progressive numbness are detected, the assessment is concluded at that point as a health prerogative. This means the assessment is considered completed, and referral to a physician for in-person investigation is essential. Your safety always comes first.",
+  "faq.faq6.a": "Your safety comes first. In the premium self-assessment, the red flag screening happens BEFORE payment. If you answer YES to any critical question, the flow is interrupted immediately, you are guided to seek in-person medical evaluation, and you are NOT charged. The screening questions and answers are stored on your profile and shown in the PDF as proof. For monthly subscribers, this case does not consume a self-assessment from your plan.",
   "faq.faq7.q": "Why can't I select all the body regions I want?",
   "faq.faq7.a": "The system uses clinical reasoning based on kinetic chains — structures that are biomechanically connected. Regions from the same body segment (e.g., shoulder and elbow) can be assessed together because they influence each other. Regions from different segments (e.g., foot and neck) require separate assessments to ensure diagnostic accuracy and a precise treatment plan.",
   "followup.opt_in_title": "Email follow-up",
