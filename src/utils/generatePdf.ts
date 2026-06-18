@@ -74,6 +74,8 @@ interface AnamnesisData {
   headacheCrisisFrequency?: string;
   painScoreMode?: string;
   painScoresPerRegion?: Record<string, number>;
+  /** Joint mobility / Range of Motion table (manual assessment). */
+  romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
 }
 
 export interface ResponsibleProfessional {
