@@ -438,6 +438,7 @@
   "faq.faq5.q": "Posso refazer a autoavaliação?",
   "faq.faq5.a": "Sim! Na versão premium, você pode refazer a autoavaliação uma vez em até 7 dias após a compra, permitindo acompanhar a evolução da sua dor e ajustar o tratamento conforme necessário.",
   "faq.faq6.q": "E se a triagem identificar sinais de alerta (red flags)?",
+  "faq.faq6.a": "Sua segurança vem primeiro. Por isso, na autoavaliação premium a triagem de sinais de alerta acontece ANTES do pagamento. Se você responder SIM a qualquer pergunta crítica, o fluxo é interrompido na hora, você recebe orientação para procurar avaliação médica presencial e NÃO é cobrado(a). As perguntas e respostas dessa triagem ficam registradas no seu perfil e no PDF, como prova do preenchimento. Para assinantes mensais, esse caso não consome uma autoavaliação do plano.",
   "faq.faq7.q": "Por que não consigo selecionar todas as regiões que quero?",
   "faq.faq7.a": "O sistema utiliza raciocínio clínico baseado em cadeias cinéticas — estruturas que se conectam biomecanicamente. Regiões do mesmo segmento corporal (ex: ombro e cotovelo) podem ser avaliadas juntas, pois influenciam uma à outra. Já regiões de segmentos distintos (ex: pé e cervical) precisam de avaliações separadas para garantir precisão no diagnóstico e no plano de tratamento. Isso garante que cada avaliação seja focada e clinicamente relevante.",
   "followup.opt_in_title": "Acompanhamento por email",
