@@ -457,6 +457,91 @@ function renderRedFlagsCard(
   });
 }
 
+/**
+ * Renders a probatory Q&A table for the red-flag screening.
+ * Used to prove the user consciously answered each safety question before
+ * the assessment continued (or before payment). Renders even when no flag
+ * was triggered, so the report always documents the screening took place.
+ */
+function renderRedFlagsAuditTable(
+  doc: jsPDF,
+  y: number,
+  answers: Array<{ key?: string; question: string; answer: "yes" | "no" }> | undefined,
+  answeredAt: string | undefined,
+  isPt: boolean,
+): number {
+  if (!answers || answers.length === 0) return y;
+
+  const title = isPt
+    ? "Registro da Triagem de Sinais de Alerta"
+    : "Safety Screening Record";
+  const subtitle = isPt
+    ? "Perguntas e respostas confirmadas pelo paciente. Documento probatório do preenchimento."
+    : "Questions and answers confirmed by the patient. Probatory record of completion.";
+  const yesLabel = isPt ? "SIM" : "YES";
+  const noLabel = isPt ? "NÃO" : "NO";
+
+  y = checkPage(doc, y, 30);
+  y += 4;
+  y = renderSectionTitle(doc, y, title, COLORS.foreground);
+
+  doc.setFont("Inter", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.muted);
+  const dateText = answeredAt
+    ? (isPt
+        ? `Preenchido em ${new Date(answeredAt).toLocaleString("pt-BR")}`
+        : `Completed on ${new Date(answeredAt).toLocaleString("en-US")}`)
+    : "";
+  doc.text(subtitle, SECTION_X, y);
+  y += 4;
+  if (dateText) {
+    doc.text(dateText, SECTION_X, y);
+    y += 5;
+  } else {
+    y += 1;
+  }
+
+  const qWidth = SECTION_TEXT_W - 22;
+  const answerColX = SECTION_X + qWidth + 4;
+  doc.setFont("Inter", "normal");
+  doc.setFontSize(9);
+
+  answers.forEach((entry, i) => {
+    const isYes = entry.answer === "yes";
+    const number = `${i + 1}.`;
+    const lines = doc.splitTextToSize(`${number} ${entry.question}`, qWidth);
+    const rowH = Math.max(7, lines.length * 4.2 + 3);
+    y = checkPage(doc, y, rowH + 2);
+
+    // Row background — light yellow when YES, neutral when NO
+    drawRoundedRect(
+      doc,
+      MARGIN,
+      y,
+      CONTENT_WIDTH,
+      rowH,
+      2,
+      isYes ? [253, 244, 220] : [250, 248, 244],
+      COLORS.border,
+    );
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(lines, SECTION_X, y + 4.5);
+
+    // Answer badge
+    drawBadge(
+      doc,
+      isYes ? yesLabel : noLabel,
+      answerColX,
+      y + 2,
+      isYes ? COLORS.red : COLORS.green,
+      COLORS.white,
+    );
+    y += rowH + 1.5;
+  });
+
+  return y + 3;
+
 async function loadLogoBase64(): Promise<string | null> {
   try {
     const { default: logoUrl } = await import("@/assets/logo-alivia.png");
