@@ -27,6 +27,7 @@ import ExitIntentPopup from "@/components/ExitIntentPopup";
 import OfflineBanner from "@/components/assessment/OfflineBanner";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { saveDraft, getDraft, clearDraft } from "@/lib/sessionPersistence";
+import { buildRedFlagPayload, type RedFlagPayload } from "@/lib/redFlags";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "final_notes" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
@@ -103,6 +104,13 @@ const Assessment = () => {
   const [isUpgradeFlow, setIsUpgradeFlow] = useState(false);
   const [premiumAccess, setPremiumAccess] = useState<{ has_access: boolean; can_redo: boolean; assessments_used?: number; max_assessments?: number; payment_id?: string; available_discount?: { discount_percent: number } | null } | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
+  // Premium pre-payment red-flag screening. "screening" gates the paywall; "blocked" shows guidance; "passed" unlocks the normal premium flow.
+  const [premiumPreScreen, setPremiumPreScreen] = useState<"screening" | "blocked" | "passed">(
+    mode === "premium" ? "screening" : "passed",
+  );
+  // Probatory record of what the user answered on the red-flag screening (persisted on assessments.red_flags).
+  const [redFlagAnswers, setRedFlagAnswers] = useState<Record<string, boolean>>({});
+  const [redFlagPayload, setRedFlagPayload] = useState<RedFlagPayload | null>(null);
   // Offline mode: track network and queue AI calls that need to wait.
   const online = useOnlineStatus();
   // "diagnosis" = run generateDiagnosis once back online (uses last anamnesis+tests)
@@ -282,10 +290,9 @@ const Assessment = () => {
     }
   }, [authLoading, mode, user, navigate]);
 
-  // Check premium payment status
+  // Check premium payment status — only AFTER the red-flag pre-screening passes.
   useEffect(() => {
-    if (mode === "premium" && user && step === "payment_check") {
-      // Check if user came from exit intent discount flow
+    if (mode === "premium" && user && step === "payment_check" && premiumPreScreen === "passed") {
       const exitIntentPending = sessionStorage.getItem("exit-intent-discount-pending");
       if (exitIntentPending) {
         sessionStorage.removeItem("exit-intent-discount-pending");
@@ -294,7 +301,7 @@ const Assessment = () => {
         checkPremiumAccess();
       }
     }
-  }, [mode, user, step]);
+  }, [mode, user, step, premiumPreScreen]);
 
   const getBasicUpgradePayload = () => {
     const upgradeData = getUpgradeData();
@@ -452,6 +459,7 @@ const Assessment = () => {
           patient_email: capturedEmail || user?.email || null,
           payment_status: mode === "premium" ? "covered" : "pending",
           original_assessment_id: mode === "premium" ? premiumAccess?.payment_id || null : null,
+          red_flags: redFlagPayload as any,
         })
         .select("id")
         .single();
