@@ -728,7 +728,8 @@ const Assessment = () => {
             onContinue={(data) => {
               if (data?.email) setCapturedEmail(data.email);
               if (data?.name) setCapturedName(data.name);
-              setStep("redflags");
+              // If premium already passed the pre-payment screening, skip the second run.
+              setStep(redFlagPayload?.outcome === "passed" ? "anamnesis" : "redflags");
             }}
             onRestart={() => {
               // Wipe the auto-saved draft and reset every piece of the
