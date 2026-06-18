@@ -103,6 +103,10 @@ interface PdfOptions {
   redFlags?: string[];
   /** When set, indicates the red flag was professionally dismissed (medical clearance). */
   redFlagsDismissal?: { at?: string; by?: string; reason?: string } | null;
+  /** Full Q&A audit (assessment.red_flags?.answers) — rendered as a probatory table. */
+  redFlagAnswers?: Array<{ key?: string; question: string; answer: "yes" | "no" }>;
+  /** ISO timestamp when the red-flag screening was completed (assessment.red_flags?.answered_at). */
+  redFlagsAnsweredAt?: string;
   professionalNotes?: string;
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
@@ -1059,6 +1063,10 @@ interface BasicReportOptions {
   redFlags?: string[];
   /** When set, indicates the red flag was professionally dismissed. */
   redFlagsDismissal?: { at?: string; by?: string; reason?: string } | null;
+  /** Full Q&A audit (assessment.red_flags?.answers). */
+  redFlagAnswers?: Array<{ key?: string; question: string; answer: "yes" | "no" }>;
+  /** ISO timestamp when the red-flag screening was completed. */
+  redFlagsAnsweredAt?: string;
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
