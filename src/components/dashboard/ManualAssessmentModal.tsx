@@ -354,6 +354,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
     setSpecialtyApplied(Array.isArray(an?.specialtyResults) ? an.specialtyResults : []);
     setFunctionalTests(an.functionalTests || "");
+    setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(5));
     const dx = a.diagnosis || {};
     setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
     const ci = dx.clinicalImpression;
