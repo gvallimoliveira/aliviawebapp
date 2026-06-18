@@ -7,7 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 interface RedFlagScreeningProps {
   onPass: (answers?: Record<string, boolean>) => void;
-  onPass: () => void;
+  
   onFlagged: () => void;
   onFlaggedWithData?: (flaggedItems: Record<string, boolean>) => void;
   /** Always fires (pass or flagged) with the full boolean map. Use this to persist Q&A. */
