@@ -771,19 +771,19 @@ const Assessment = () => {
                 ? "Antes de comenzar, 5 preguntas rápidas para asegurar que la autoevaluación es segura para usted ahora. No se le cobrará hasta completar esta etapa."
                 : "Before we start, 5 quick questions to make sure the self-assessment is safe for you right now. You won't be charged until this step is complete."
             }
-            onAnswered={(ans) => {
-              setRedFlagAnswers(ans);
-            }}
-            onPass={() => {
-              const payload = buildRedFlagPayload(redFlagAnswers, language, "passed");
+            onAnswered={(ans) => setRedFlagAnswers(ans)}
+            onPass={(ans) => {
+              const finalAns = ans || redFlagAnswers;
+              const payload = buildRedFlagPayload(finalAns, language, "passed");
+              setRedFlagAnswers(finalAns);
               setRedFlagPayload(payload);
               setPremiumPreScreen("passed");
             }}
-            onFlagged={async () => {
-              const payload = buildRedFlagPayload(redFlagAnswers, language, "blocked_premium_payment");
+            onFlaggedWithData={async (ans) => {
+              const payload = buildRedFlagPayload(ans, language, "blocked_premium_payment");
+              setRedFlagAnswers(ans);
               setRedFlagPayload(payload);
               setPremiumPreScreen("blocked");
-              // Persist an audit row so we have proof the user reached this screen without being charged.
               if (user?.id) {
                 try {
                   await supabase.from("assessments").insert({
@@ -799,6 +799,7 @@ const Assessment = () => {
                 }
               }
             }}
+            onFlagged={() => setPremiumPreScreen("blocked")}
             onBack={() => navigate("/")}
           />
         )}
