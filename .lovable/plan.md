@@ -1,105 +1,88 @@
-# Fase 2 — Modo Acadêmico (Mentor, Trilhas e Gamificação)
+# Triagem de Red Flags pré-pagamento + registro probatório
 
-Esta fase complementa a Fase 1 (`/professor`, `/quiz`, `/caso`) adicionando descoberta, performance, trilhas de estudo, tradução de artigos e gamificação.
+## Objetivo
+1. Impedir que o paciente pague a Premium quando há sinais de alerta clínico — encaminhando para assistência médica antes da cobrança.
+2. Persistir no banco e no PDF as perguntas e respostas exatas da triagem, com timestamp, para servir como prova de que o usuário preencheu conscientemente.
 
-## 1. Popover "Comandos do Mentor" no agente
+## Decisão de UX (recap da discussão)
+Adotaremos a **Opção A híbrida**: triagem antes do pagamento, com enquadramento positivo, tela de encaminhamento bem feita e opção de revisar respostas antes do bloqueio definitivo. Fluxo PRO/Clínica permanece como está (continua sob ressalva).
 
-**Arquivo:** novo `src/components/agent/MentorCommandsPopover.tsx` + integração em `ClinicalAgent.tsx`.
+## Mudanças por área
 
-- Botão `HelpCircle` no header (visível só p/ estudantes ou PRO).
-- Popover lista todos os comandos com descrição curta e exemplo clicável (insere no input):
-  - `/professor` — alterna persona mentor
-  - `/quiz [tema] [n]` — quiz interativo
-  - `/caso [tema]` — gera paciente fictício
-  - `/traduzir [link ou texto]` — tradução PT-BR com PICO + nível de evidência
-  - `/trilha [tema]` — abre/cria trilha de estudo
-- Mensagem de boas-vindas atualizada apresentando os comandos uma vez por thread.
+### 1. Fluxo Premium self-service (`src/pages/Assessment.tsx`)
+- Quando `mode === "premium"` e o usuário está logado: o passo inicial passa a ser **`redflags`** em vez de `payment_check`.
+- Texto introdutório da etapa adaptado: "Antes de começar, 5 perguntas rápidas para garantir que a autoavaliação é segura para você agora" (i18n nos 3 idiomas).
+- Se passar (todas "não") → segue para `payment_check` (gate de pagamento atual, sem alterações).
+- Se marcar qualquer "sim" → vai para `redflag_alert` (tela já existente), com:
+  - Botão **"Revisar minhas respostas"** que volta para `redflags` mantendo as respostas.
+  - Botão **"Buscar profissional"** que leva para `/professional-search`.
+  - Link SAMU 192 (componente `EmergencyBanner` já existente).
+  - Campo opcional de e-mail "Quero retomar quando estiver liberado(a) clinicamente" (apenas registra; sem disparo automático nesta fase).
+- **Nenhuma cobrança ocorre** até passar pela triagem.
 
-## 2. Comando `/traduzir`
+### 2. Fluxo Basic (gratuito)
+- Mantém ordem atual (já é triagem antes de qualquer custo). Apenas se beneficia do registro probatório no banco/PDF.
 
-**Arquivo:** `supabase/functions/clinical-agent-chat/index.ts`.
+### 3. Fluxo PRO / Clínica / Manual
+- **Não muda.** Continua aplicando a regra "sob ressalva" já documentada na memória do projeto.
 
-- Detecta `/traduzir` no início da mensagem.
-- Aceita URL (DOI/PubMed/arXiv) ou texto colado.
-- Prompt especializado: tradução fiel PT-BR + bloco estruturado:
-  - Resumo executivo (3-5 linhas)
-  - PICO (População, Intervenção, Comparação, Desfecho)
-  - Nível de evidência (Oxford/PEDro estimado)
-  - Aplicabilidade clínica
-- Resposta em markdown normal (sem componente especial).
+### 4. Persistência probatória (banco)
+A coluna `assessments.red_flags` (jsonb) já existe. Vamos padronizar o formato salvo, incluindo prova de preenchimento:
 
-## 3. Trilhas de conhecimento por nicho
-
-**Schema novo:**
-
-```
-academic_tracks (id, slug, title, niche, description, total_modules, created_at)
-academic_track_modules (id, track_id, order_index, title, summary, suggested_command)
-academic_user_progress (id, user_id, track_id, module_id, completed_at, xp_earned)
-```
-
-- Seed inicial com 5 trilhas (Ombro, Lombar,quadril, Joelho, Cervical), cada uma com 5 módulos  
-(conceito → biomecânica → avaliação → tratamento → caso clínico final).
-- GRANT padrão + RLS (`auth.uid() = user_id` em progress; tracks/modules `SELECT to authenticated`).
-
-**Arquivo:** novo `src/pages/AcademicTracks.tsx` (rota `/trilhas`) + card de entrada em `Account.tsx`/`StudentAccessCard.tsx`.
-
-- Lista trilhas em cards com barra de progresso.
-- Detalhe da trilha: módulos sequenciais; cada módulo tem botão "Estudar com Mentor"
-que abre o agente com comando pré-preenchido (ex: `/professor avaliação do manguito rotador`).
-- Conclui módulo manualmente ("Marquei como concluído") → gera XP.
-
-## 4. Gamificação XP + Badges
-
-**Schema novo:**
-
-```
-academic_xp_log (id, user_id, source, source_ref, xp, created_at)
-academic_badges (id, user_id, badge_slug, niche, level, awarded_at)
+```json
+{
+  "version": 1,
+  "answered_at": "2026-06-18T14:22:01Z",
+  "language": "pt",
+  "user_agent": "...",
+  "answers": [
+    { "key": "redflags.trauma", "question": "...texto exato exibido...", "answer": "no" },
+    { "key": "redflags.recent_surgery", "question": "Realizou cirurgia...", "answer": "yes" }
+  ],
+  "any_positive": true,
+  "outcome": "blocked_premium_payment" | "passed" | "dismissed_by_professional"
+}
 ```
 
-- Fontes de XP:
-  - `/quiz` → +10 XP por acerto (gravado pelo QuizCard)
-  - `/caso` resolvido → +50 XP
-  - módulo de trilha concluído → +30 XP
-  - `/traduzir` artigo → +15 XP
-- Níveis por nicho (somando XP do nicho):
-  - 0-100: "Aprendiz do {nicho}"
-  - 101-300: "Praticante do {nicho}"
-  - 301-700: "Especialista do {nicho}"
-  - 701+: "Mestre do {nicho}"
-- Badge é inserido ao cruzar threshold (via trigger ou check no client após gravação).
+Para casos pré-pagamento bloqueados, criamos um registro leve em `assessments` com `status = 'red_flagged'`, `type = 'premium'`, `payment_status = 'pending'`, sem cobrança — serve como auditoria. Isso já é compatível com o CHECK constraint atual.
 
-## 5. Card de desempenho em /minha-conta
+### 5. PDF do relatório (`src/utils/generatePdf.ts`)
+Nova seção **"Triagem de sinais de alerta (Red Flags)"** sempre presente quando `assessment.red_flags` existir, contendo:
+- Data/hora do preenchimento.
+- Tabela: Pergunta | Resposta (Sim/Não).
+- Quando houver "Sim": bloco destacado com a recomendação dada ao paciente + nota "O paciente reconheceu ter lido a orientação de buscar assistência médica antes de prosseguir".
+- Quando dispensado por profissional: nome, data e justificativa (campos `red_flags_dismissed_*` já existentes).
+- Respeitar margem útil de 158mm e regras anti-órfão de título (memória de PDF).
 
-**Arquivo:** `src/pages/Account.tsx` (ou `StudentAccessCard.tsx`).
+### 6. Internacionalização
+Adicionar chaves em `pt.json`, `en.json`, `es.json`:
+- `redflags.premium_intro` (enquadramento positivo)
+- `redflags.review_answers`
+- `redflags.want_followup_email`
+- `redflags.pdf_section_title`
+- `redflags.pdf_acknowledgement`
 
-- Aparece se `is_student=true` OU `is_pro`.
-- Mostra:
-  - XP total e nível geral
-  - Lista de badges por nicho ("Mestre do Ombro", "Praticante da Lombar")
-  - Mini chart de quizzes (média % por tema, top 3 fortes/fracos) usando `academic_quiz_results`
-  - CTA "Treinar tema fraco" → abre agente com `/quiz [tema]`
-  - CTA "Ver trilhas" → `/trilhas`
+### 7. Componentes a alterar
+- `src/pages/Assessment.tsx` — reordenação de passos no modo premium.
+- `src/components/assessment/RedFlagScreening.tsx` — montar payload com `question` (texto traduzido exibido) + `key` + `answer`; aceitar respostas pré-preenchidas ao voltar.
+- `src/components/assessment/RedFlagContinueScreen.tsx` — adicionar botão "Revisar respostas" e campo opcional de e-mail.
+- `src/utils/generatePdf.ts` — nova seção.
+- `src/locales/{pt,en,es}.json` — chaves novas.
 
-## 6. Atualização das páginas de Suporte (pt/en/es)
+## Detalhes técnicos
+- Não precisa de migração: `red_flags jsonb` já existe.
+- O envio do payload acontece no `handleRedFlagComplete` existente; passa a chamar um upsert em `assessments` antes do gate de pagamento no fluxo premium (registro leve, sem cobrança).
+- RLS atual de `assessments` já cobre `user_id = auth.uid()`, então o registro pré-pagamento pertence corretamente ao usuário logado.
+- Sem alterações em edge functions de pagamento — a função `create-payment` simplesmente não é chamada se a triagem bloquear.
 
-**Arquivos:** `src/pages/Support.tsx`, `src/pages/ClinicSupport.tsx` + locales `pt.json`, `en.json`, `es.json`.
+## Fora de escopo (deixar para depois, se quiser)
+- Disparo automático de e-mail de retorno (Lovable Cloud transactional).
+- Dashboard administrativo das triagens bloqueadas.
+- Estorno automático (descartado na conversa).
 
-- Nova seção "Modo Acadêmico" descrevendo:
-  - Comandos do agente (/professor, /quiz, /caso, /traduzir, /trilha)
-  - Casos de estudo (aba separada)
-  - Trilhas e XP/Badges
-  - Card de desempenho em Minha Conta
-
-## Ordem de execução
-
-1. Migração: trilhas + módulos + progress + xp_log + badges + seed.
-2. Edge function: adicionar `/traduzir` ao parser.
-3. Componentes UI: `MentorCommandsPopover`, `AcademicTracks`, atualizações em `Account` e `ClinicalAgent`.
-4. QuizCard: gravar XP em `academic_xp_log` ao finalizar.
-5. Suporte (pt/en/es).
-
-## Fora de escopo
-
-Flashcards, `/defender`, simulado cronometrado, biblioteca compartilhada, PDF didático, ranking público entre alunos.
+## Validação após implementação
+- Premium logado + todas "não" → continua até pagamento normalmente.
+- Premium logado + 1 "sim" → vê tela de encaminhamento, sem cobrança; pode revisar e mudar respostas.
+- Basic + qualquer "sim" → comportamento atual mantido.
+- PDF gerado mostra a seção de triagem com Q&A exatos.
+- Registro no banco contém `answers[]` com texto da pergunta exibido.

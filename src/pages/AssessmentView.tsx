@@ -188,6 +188,8 @@ const AssessmentView = () => {
           anamnesisData: assessment.anamnesis_data || undefined,
           redFlags: (assessment.red_flags as any)?.detected,
           redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
+          redFlagAnswers: (assessment.red_flags as any)?.answers,
+          redFlagsAnsweredAt: (assessment.red_flags as any)?.answered_at,
         });
         const url = URL.createObjectURL(pdfBlob);
         const a = document.createElement("a");
@@ -207,6 +209,8 @@ const AssessmentView = () => {
           testResults: assessment.test_results,
           redFlags: (assessment.red_flags as any)?.detected,
           redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
+          redFlagAnswers: (assessment.red_flags as any)?.answers,
+          redFlagsAnsweredAt: (assessment.red_flags as any)?.answered_at,
         });
       }
     } catch {
@@ -236,6 +240,8 @@ const AssessmentView = () => {
           anamnesisData: assessment.anamnesis_data || undefined,
           redFlags: (assessment.red_flags as any)?.detected,
           redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
+          redFlagAnswers: (assessment.red_flags as any)?.answers,
+          redFlagsAnsweredAt: (assessment.red_flags as any)?.answered_at,
         });
       } else {
         pdfBlob = await generateAssessmentPdfBlob({
@@ -249,6 +255,8 @@ const AssessmentView = () => {
           testResults: assessment.test_results,
           redFlags: (assessment.red_flags as any)?.detected,
           redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
+          redFlagAnswers: (assessment.red_flags as any)?.answers,
+          redFlagsAnsweredAt: (assessment.red_flags as any)?.answered_at,
         });
       }
 
