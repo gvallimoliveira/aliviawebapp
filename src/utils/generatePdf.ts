@@ -541,6 +541,9 @@ function renderRedFlagsAuditTable(
   });
 
   return y + 3;
+}
+
+
 
 async function loadLogoBase64(): Promise<string | null> {
   try {
