@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import EmergencyBanner from "@/components/EmergencyBanner";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface RedFlagAlertProps {
   mode?: "default" | "professional";
@@ -19,6 +21,7 @@ interface RedFlagAlertProps {
 const RedFlagAlert = ({ mode = "default", flaggedItems, professionalName, onReview, onSeekHelp }: RedFlagAlertProps) => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const isProfessional = mode === "professional";
   const positiveFlags = flaggedItems
@@ -27,6 +30,24 @@ const RedFlagAlert = ({ mode = "default", flaggedItems, professionalName, onRevi
 
   const handleSeekHelp = () => {
     if (onSeekHelp) return onSeekHelp();
+    if (!user) {
+      toast({
+        title:
+          language === "pt"
+            ? "Faça login para buscar um profissional"
+            : language === "es"
+            ? "Inicia sesión para buscar un profesional"
+            : "Sign in to find a professional",
+        description:
+          language === "pt"
+            ? "Crie sua conta ou entre para acessar a lista de profissionais parceiros."
+            : language === "es"
+            ? "Crea tu cuenta o inicia sesión para acceder a la lista de profesionales."
+            : "Create an account or log in to access the list of partner professionals.",
+      });
+      navigate("/auth?redirect=/professional-search");
+      return;
+    }
     navigate("/professional-search");
   };
 
