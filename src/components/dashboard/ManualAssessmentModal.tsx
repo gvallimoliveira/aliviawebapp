@@ -850,6 +850,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                           <SelectItem value="sudden">{isPt ? "Súbito" : "Sudden"}</SelectItem>
                           <SelectItem value="gradual">{isPt ? "Gradual" : "Gradual"}</SelectItem>
                           <SelectItem value="trauma">{isPt ? "Trauma" : "Trauma"}</SelectItem>
+                          <SelectItem value="post_surgery">{isPt ? "Pós-operatório" : "Post-operative"}</SelectItem>
                         </SelectContent>
                       </Select>
                     </DemoShield>

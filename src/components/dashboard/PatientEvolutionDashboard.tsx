@@ -84,6 +84,7 @@ function translateKey(key: string): string {
     "anamnesis.onset.sudden": "Início súbito",
     "anamnesis.onset.gradual": "Início gradual",
     "anamnesis.onset.trauma": "Trauma / Lesão",
+    "anamnesis.onset.post_surgery": "Pós-operatório",
     "anamnesis.pain_type.local": "Dor local",
     "anamnesis.pain_type.radiating": "Dor irradiada",
     "anamnesis.pain_type.burning": "Queimação",

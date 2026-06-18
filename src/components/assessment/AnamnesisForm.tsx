@@ -433,7 +433,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">{t("anamnesis.onset_title")}</h3>
             <div className="grid gap-3">
-              {["anamnesis.onset.sudden", "anamnesis.onset.gradual", "anamnesis.onset.trauma"].map((o) => (
+              {["anamnesis.onset.sudden", "anamnesis.onset.gradual", "anamnesis.onset.trauma", "anamnesis.onset.post_surgery"].map((o) => (
                 <Card key={o} className={`cursor-pointer transition-all ${data.onset === o ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, onset: o })}>
                   <CardContent className="py-3 px-4"><span className="text-sm font-medium">{t(o)}</span></CardContent>
                 </Card>
