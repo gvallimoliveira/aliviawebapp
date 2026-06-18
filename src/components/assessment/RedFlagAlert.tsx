@@ -1,24 +1,34 @@
 import { motion } from "framer-motion";
-import { AlertTriangle, ArrowLeft, Stethoscope } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Stethoscope, RotateCcw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import EmergencyBanner from "@/components/EmergencyBanner";
 
 interface RedFlagAlertProps {
   mode?: "default" | "professional";
   flaggedItems?: Record<string, boolean>;
   professionalName?: string;
+  /** Patient mode: lets the user reopen the screening to revise answers (avoids false positives). */
+  onReview?: () => void;
+  /** Patient mode: send the user to find a professional/medical follow-up. */
+  onSeekHelp?: () => void;
 }
 
-const RedFlagAlert = ({ mode = "default", flaggedItems, professionalName }: RedFlagAlertProps) => {
-  const { t } = useLanguage();
+const RedFlagAlert = ({ mode = "default", flaggedItems, professionalName, onReview, onSeekHelp }: RedFlagAlertProps) => {
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   const isProfessional = mode === "professional";
   const positiveFlags = flaggedItems
     ? Object.entries(flaggedItems).filter(([, v]) => v === true).map(([k]) => k)
     : [];
+
+  const handleSeekHelp = () => {
+    if (onSeekHelp) return onSeekHelp();
+    navigate("/professional-search");
+  };
 
   return (
     <motion.div
@@ -43,6 +53,23 @@ const RedFlagAlert = ({ mode = "default", flaggedItems, professionalName }: RedF
               ? t("redflag_alert.pro_message").replace("{name}", professionalName || t("pro.anonymous_patient"))
               : t("redflag_alert.message")}
           </p>
+
+          {!isProfessional && positiveFlags.length > 0 && (
+            <div className="text-left bg-destructive/5 rounded-lg p-4 space-y-2 border border-destructive/20">
+              <p className="text-sm font-semibold text-destructive">
+                {language === "pt" ? "Sinais marcados como SIM" : language === "es" ? "Señales marcadas como SÍ" : "Items marked YES"}
+              </p>
+              <ul className="space-y-1">
+                {positiveFlags.map((key) => (
+                  <li key={key} className="text-sm text-foreground flex items-start gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-destructive" />
+                    {t(key)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {isProfessional && positiveFlags.length > 0 && (
             <div className="text-left bg-yellow-100/50 rounded-lg p-4 space-y-2">
               <p className="text-sm font-semibold text-yellow-800">{t("redflag_alert.pro_items_title")}</p>
@@ -56,11 +83,27 @@ const RedFlagAlert = ({ mode = "default", flaggedItems, professionalName }: RedF
               </ul>
             </div>
           )}
+
           <p className="text-sm text-muted-foreground">
             {isProfessional ? t("redflag_alert.pro_recommendation") : t("redflag_alert.recommendation")}
           </p>
+
+          {!isProfessional && <EmergencyBanner />}
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Button variant="outline" onClick={() => navigate("/")} className="gap-2">
+            {!isProfessional && onReview && (
+              <Button variant="outline" onClick={onReview} className="gap-2">
+                <RotateCcw className="h-4 w-4" />
+                {language === "pt" ? "Revisar minhas respostas" : language === "es" ? "Revisar mis respuestas" : "Review my answers"}
+              </Button>
+            )}
+            {!isProfessional && (
+              <Button onClick={handleSeekHelp} className="gap-2">
+                <Search className="h-4 w-4" />
+                {language === "pt" ? "Buscar profissional" : language === "es" ? "Buscar profesional" : "Find a professional"}
+              </Button>
+            )}
+            <Button variant={isProfessional ? "outline" : "ghost"} onClick={() => navigate("/")} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               {t("redflag_alert.back")}
             </Button>
