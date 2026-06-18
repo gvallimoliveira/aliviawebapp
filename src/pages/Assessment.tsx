@@ -760,7 +760,57 @@ const Assessment = () => {
           />
         )}
 
-        {step === "payment_check" && premiumAccess !== null && !premiumAccess.has_access && (
+        {step === "payment_check" && mode === "premium" && premiumPreScreen === "screening" && (
+          <RedFlagScreening
+            initialAnswers={redFlagAnswers}
+            introOverride={
+              language === "pt"
+                ? "Antes de iniciar, 5 perguntas rápidas para garantir que a autoavaliação é segura para você agora. Você não será cobrado(a) até concluirmos esta etapa."
+                : language === "es"
+                ? "Antes de comenzar, 5 preguntas rápidas para asegurar que la autoevaluación es segura para usted ahora. No se le cobrará hasta completar esta etapa."
+                : "Before we start, 5 quick questions to make sure the self-assessment is safe for you right now. You won't be charged until this step is complete."
+            }
+            onAnswered={(ans) => {
+              setRedFlagAnswers(ans);
+            }}
+            onPass={() => {
+              const payload = buildRedFlagPayload(redFlagAnswers, language, "passed");
+              setRedFlagPayload(payload);
+              setPremiumPreScreen("passed");
+            }}
+            onFlagged={async () => {
+              const payload = buildRedFlagPayload(redFlagAnswers, language, "blocked_premium_payment");
+              setRedFlagPayload(payload);
+              setPremiumPreScreen("blocked");
+              // Persist an audit row so we have proof the user reached this screen without being charged.
+              if (user?.id) {
+                try {
+                  await supabase.from("assessments").insert({
+                    type: "premium",
+                    status: "red_flagged",
+                    user_id: user.id,
+                    patient_email: user.email || null,
+                    payment_status: "pending",
+                    red_flags: payload as any,
+                  });
+                } catch (err) {
+                  console.error("Failed to record red-flag block:", err);
+                }
+              }
+            }}
+            onBack={() => navigate("/")}
+          />
+        )}
+
+        {step === "payment_check" && mode === "premium" && premiumPreScreen === "blocked" && (
+          <RedFlagAlert
+            flaggedItems={redFlagAnswers}
+            onReview={() => setPremiumPreScreen("screening")}
+            onSeekHelp={() => navigate("/professional-search")}
+          />
+        )}
+
+        {step === "payment_check" && premiumPreScreen === "passed" && premiumAccess !== null && !premiumAccess.has_access && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -921,7 +971,7 @@ const Assessment = () => {
           </motion.div>
         )}
 
-        {step === "payment_check" && premiumAccess === null && (
+        {step === "payment_check" && premiumPreScreen === "passed" && premiumAccess === null && (
           <div className="text-center py-20">
             <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
             <p className="text-muted-foreground mt-4">{t("payment.checking") || "Verificando acesso..."}</p>
@@ -930,12 +980,26 @@ const Assessment = () => {
 
         {step === "redflags" && (
           <RedFlagScreening
-            onPass={() => setStep("anamnesis")}
-            onFlagged={() => setStep("redflag_alert")}
+            initialAnswers={redFlagAnswers}
+            onAnswered={(ans) => setRedFlagAnswers(ans)}
+            onPass={() => {
+              setRedFlagPayload(buildRedFlagPayload(redFlagAnswers, language, "passed"));
+              setStep("anamnesis");
+            }}
+            onFlagged={() => {
+              setRedFlagPayload(buildRedFlagPayload(redFlagAnswers, language, "blocked_premium_payment"));
+              setStep("redflag_alert");
+            }}
             onBack={() => setStep("welcome")}
           />
         )}
-        {step === "redflag_alert" && <RedFlagAlert />}
+        {step === "redflag_alert" && (
+          <RedFlagAlert
+            flaggedItems={redFlagAnswers}
+            onReview={() => setStep("redflags")}
+            onSeekHelp={() => navigate("/professional-search")}
+          />
+        )}
         {step === "anamnesis" && (
           <AnamnesisForm
             mode={mode}
