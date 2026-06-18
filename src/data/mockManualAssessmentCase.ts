@@ -28,6 +28,15 @@ export const MOCK_MANUAL_CASE = {
   // Red flags
   redFlagsChecked: [] as string[],
 
+  // Mobilidade articular (ADM)
+  romTable: [
+    { joint: "Flexão lombar", leftValue: "40°", rightValue: "40°" },
+    { joint: "Extensão lombar", leftValue: "15°", rightValue: "15°" },
+    { joint: "Rotação de tronco", leftValue: "25°", rightValue: "30°" },
+    { joint: "Flexão de quadril", leftValue: "100°", rightValue: "110°" },
+    { joint: "Abdução de quadril", leftValue: "30°", rightValue: "38°" },
+  ],
+
   // Testes funcionais (texto livre)
   functionalTests:
     "- ADM lombar: flexão limitada (~50% do esperado), reproduz dor no terço final.\n- Extensão lombar: dolorosa em amplitude máxima, sem irradiação.\n- Slump test: negativo bilateral.\n- Lasègue: negativo bilateral (0-70°).\n- Força MMII: grau 5 simétrico.\n- Glúteo médio (Trendelenburg): positivo à direita.\n- Teste de prancha frontal: 28s (abaixo do esperado para idade/sexo).\n- Mobilidade de quadril (FABER): leve restrição à direita, sem dor.",
