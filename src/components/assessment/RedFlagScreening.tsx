@@ -9,12 +9,20 @@ interface RedFlagScreeningProps {
   onPass: () => void;
   onFlagged: () => void;
   onFlaggedWithData?: (flaggedItems: Record<string, boolean>) => void;
+  /** Always fires (pass or flagged) with the full boolean map. Use this to persist Q&A. */
+  onAnswered?: (answers: Record<string, boolean>) => void;
   onBack?: () => void;
+  /** Pre-populate answers (e.g. when user clicks "Review answers" after flag). */
+  initialAnswers?: Record<string, boolean>;
+  /** Override the default subtitle (e.g. positive framing before payment). */
+  introOverride?: string;
 }
 
-const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData, onBack }: RedFlagScreeningProps) => {
+const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData, onAnswered, onBack, initialAnswers, introOverride }: RedFlagScreeningProps) => {
   const { t, language } = useLanguage();
-  const [answers, setAnswers] = useState<Record<string, boolean | null>>({});
+  const [answers, setAnswers] = useState<Record<string, boolean | null>>(
+    () => (initialAnswers ? { ...initialAnswers } : {}),
+  );
 
   const questions = [
     "redflags.trauma",
@@ -35,9 +43,11 @@ const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData, onBack }: RedF
   const hasRedFlag = Object.values(answers).some((v) => v === true);
 
   const handleContinue = () => {
+    const boolMap = answers as Record<string, boolean>;
+    if (onAnswered) onAnswered(boolMap);
     if (hasRedFlag) {
       if (onFlaggedWithData) {
-        onFlaggedWithData(answers as Record<string, boolean>);
+        onFlaggedWithData(boolMap);
       } else {
         onFlagged();
       }
@@ -58,7 +68,7 @@ const RedFlagScreening = ({ onPass, onFlagged, onFlaggedWithData, onBack }: RedF
           {t("redflags.title")}
         </div>
         <p className="text-muted-foreground text-sm max-w-lg mx-auto">
-          {t("redflags.subtitle")}
+          {introOverride ?? t("redflags.subtitle")}
         </p>
       </div>
 
