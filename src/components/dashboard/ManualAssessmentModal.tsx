@@ -175,6 +175,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
+  const [romTable, setRomTable] = useState<RomRow[]>(createInitialRomRows(5));
   const [testSuggestions, setTestSuggestions] = useState<Array<{ name: string; category: string; rationale: string }>>([]);
   const [suggestingTests, setSuggestingTests] = useState(false);
   const [addedSuggestions, setAddedSuggestions] = useState<Set<string>>(new Set());
