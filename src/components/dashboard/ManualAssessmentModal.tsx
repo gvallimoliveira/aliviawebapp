@@ -450,6 +450,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     // Per-region pain scores (used by Comparação de Dor por Região).
     painScoresPerRegion,
     functionalTests, // free-text observations from Step 4 (kept inside anamnesis_data so it persists and shows up in views)
+    romTable: sanitizeRomRows(romTable), // Joint mobility / ROM table
     patientName,
     patientEmail: patientEmail || null,
     // Specialty (cardio/geri) results applied inline during this session.
