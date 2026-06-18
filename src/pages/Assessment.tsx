@@ -984,14 +984,18 @@ const Assessment = () => {
           <RedFlagScreening
             initialAnswers={redFlagAnswers}
             onAnswered={(ans) => setRedFlagAnswers(ans)}
-            onPass={() => {
-              setRedFlagPayload(buildRedFlagPayload(redFlagAnswers, language, "passed"));
+            onPass={(ans) => {
+              const finalAns = ans || redFlagAnswers;
+              setRedFlagAnswers(finalAns);
+              setRedFlagPayload(buildRedFlagPayload(finalAns, language, "passed"));
               setStep("anamnesis");
             }}
-            onFlagged={() => {
-              setRedFlagPayload(buildRedFlagPayload(redFlagAnswers, language, "blocked_premium_payment"));
+            onFlaggedWithData={(ans) => {
+              setRedFlagAnswers(ans);
+              setRedFlagPayload(buildRedFlagPayload(ans, language, "continued_under_reservation"));
               setStep("redflag_alert");
             }}
+            onFlagged={() => setStep("redflag_alert")}
             onBack={() => setStep("welcome")}
           />
         )}
