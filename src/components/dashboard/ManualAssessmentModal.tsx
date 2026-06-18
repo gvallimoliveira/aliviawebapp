@@ -284,7 +284,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     step, chiefComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation,
     painScore, painType, painRegions, painScoresPerRegion, redFlagsChecked, questionnaireResults,
-    functionalTests, clinicalImpression, diagnosisText, treatmentText,
+    functionalTests, romTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
   };
   const draft = useAutosaveDraft<typeof draftState>({
