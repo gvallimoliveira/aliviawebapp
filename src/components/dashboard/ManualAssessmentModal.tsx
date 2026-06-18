@@ -1080,7 +1080,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
             {/* STEP 4: TESTES */}
             {step === 4 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
+                {/* ROM / Joint Mobility table — positioned BEFORE free-text functional tests */}
+                <DemoShield
+                  on={demoMode}
+                  onAutofill={() =>
+                    autofill(romTable, MOCK_MANUAL_CASE.romTable, setRomTable, createInitialRomRows(5))
+                  }
+                >
+                  <RomTable
+                    value={romTable}
+                    onChange={setRomTable}
+                    lang={isPt ? "pt" : "en"}
+                  />
+                </DemoShield>
+
                 <div>
                   <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(functionalTests, MOCK_MANUAL_CASE.functionalTests, setFunctionalTests, "")}>
