@@ -1374,7 +1374,7 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, redFlags, redFlagsDismissal, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, redFlags, redFlagsDismissal, redFlagAnswers, redFlagsAnsweredAt, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
   const doc = createPdfDoc();
   const isPt = language === "pt";
   let y = MARGIN;
@@ -1502,6 +1502,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
 
   // Red flags (documented but non-blocking when professional supervised)
   y = renderRedFlagsCard(doc, y, redFlags, isPt, redFlagsDismissal);
+  y = renderRedFlagsAuditTable(doc, y, redFlagAnswers, redFlagsAnsweredAt, isPt);
 
   // Explanation
   if (diagnosis.explanation) {
