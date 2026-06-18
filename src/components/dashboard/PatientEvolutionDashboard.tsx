@@ -84,6 +84,7 @@ function translateKey(key: string): string {
     "anamnesis.onset.sudden": "Início súbito",
     "anamnesis.onset.gradual": "Início gradual",
     "anamnesis.onset.trauma": "Trauma / Lesão",
+    "anamnesis.onset.post_surgery": "Pós-operatório",
     "anamnesis.pain_type.local": "Dor local",
     "anamnesis.pain_type.radiating": "Dor irradiada",
     "anamnesis.pain_type.burning": "Queimação",
@@ -126,7 +127,13 @@ function translateKey(key: string): string {
     "anamnesis.trauma.yes": "Sim",
     "anamnesis.trauma.no": "Não",
   };
-  return map[key] || key;
+  if (map[key]) return map[key];
+  // Fallback: bare values like "sudden"/"gradual"/"trauma"/"post_surgery" stored by manual assessment
+  const suffix = "." + key;
+  for (const k of Object.keys(map)) {
+    if (k.endsWith(suffix)) return map[k];
+  }
+  return key;
 }
 
 interface PatientEvolutionDashboardProps {

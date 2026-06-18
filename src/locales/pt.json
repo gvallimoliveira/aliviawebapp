@@ -183,6 +183,7 @@
   "anamnesis.onset.sudden": "Início súbito (de repente)",
   "anamnesis.onset.gradual": "Início gradual (foi piorando aos poucos)",
   "anamnesis.onset.trauma": "Após trauma ou esforço específico",
+  "anamnesis.onset.post_surgery": "Após cirurgia (pós-operatório)",
   "anamnesis.pain_type_title": "Que tipo de dor você sente?",
   "anamnesis.pain_type_subtitle": "Selecione todos que se aplicam",
   "anamnesis.pain_type.local": "Pontual / Localizada",

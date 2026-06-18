@@ -183,6 +183,7 @@
   "anamnesis.onset.sudden": "Sudden onset (all at once)",
   "anamnesis.onset.gradual": "Gradual onset (slowly worsening)",
   "anamnesis.onset.trauma": "After trauma or specific effort",
+  "anamnesis.onset.post_surgery": "After surgery (post-operative)",
   "anamnesis.pain_type_title": "What type of pain do you feel?",
   "anamnesis.pain_type_subtitle": "Select all that apply",
   "anamnesis.pain_type.local": "Local / Pinpointed",
