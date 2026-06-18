@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import EmergencyBanner from "@/components/EmergencyBanner";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface RedFlagAlertProps {
   mode?: "default" | "professional";
