@@ -25,6 +25,7 @@ import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { MOCK_MANUAL_CASE } from "@/data/mockManualAssessmentCase";
 import SpecialtyQuestionnairesPanel, { type SpecialtyAppliedResult, type SpecialtyPanelHandle } from "./SpecialtyQuestionnairesPanel";
+import RomTable, { createInitialRomRows, sanitizeRomRows, type RomRow } from "@/components/assessment/RomTable";
 
 /**
  * In demo mode, wraps a form control with a transparent click overlay that
@@ -174,6 +175,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
+  const [romTable, setRomTable] = useState<RomRow[]>(createInitialRomRows(5));
   const [testSuggestions, setTestSuggestions] = useState<Array<{ name: string; category: string; rationale: string }>>([]);
   const [suggestingTests, setSuggestingTests] = useState(false);
   const [addedSuggestions, setAddedSuggestions] = useState<Set<string>>(new Set());
@@ -282,7 +284,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     step, chiefComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation,
     painScore, painType, painRegions, painScoresPerRegion, redFlagsChecked, questionnaireResults,
-    functionalTests, clinicalImpression, diagnosisText, treatmentText,
+    functionalTests, romTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
   };
   const draft = useAutosaveDraft<typeof draftState>({
@@ -312,6 +314,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setRedFlagsChecked(p.redFlagsChecked ?? []);
     setQuestionnaireResults(p.questionnaireResults ?? []);
     setFunctionalTests(p.functionalTests ?? "");
+    setRomTable(Array.isArray(p.romTable) && p.romTable.length > 0 ? p.romTable : createInitialRomRows(5));
     setClinicalImpression(p.clinicalImpression ?? "");
     setDiagnosisText(p.diagnosisText ?? "");
     setTreatmentText(p.treatmentText ?? "");
@@ -351,6 +354,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
     setSpecialtyApplied(Array.isArray(an?.specialtyResults) ? an.specialtyResults : []);
     setFunctionalTests(an.functionalTests || "");
+    setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(5));
     const dx = a.diagnosis || {};
     setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
     const ci = dx.clinicalImpression;
@@ -446,6 +450,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     // Per-region pain scores (used by Comparação de Dor por Região).
     painScoresPerRegion,
     functionalTests, // free-text observations from Step 4 (kept inside anamnesis_data so it persists and shows up in views)
+    romTable: sanitizeRomRows(romTable), // Joint mobility / ROM table
     patientName,
     patientEmail: patientEmail || null,
     // Specialty (cardio/geri) results applied inline during this session.
@@ -1075,7 +1080,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
             {/* STEP 4: TESTES */}
             {step === 4 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
+                {/* ROM / Joint Mobility table — positioned BEFORE free-text functional tests */}
+                <DemoShield
+                  on={demoMode}
+                  onAutofill={() =>
+                    autofill(romTable, MOCK_MANUAL_CASE.romTable, setRomTable, createInitialRomRows(5))
+                  }
+                >
+                  <RomTable
+                    value={romTable}
+                    onChange={setRomTable}
+                    lang={isPt ? "pt" : "en"}
+                  />
+                </DemoShield>
+
                 <div>
                   <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(functionalTests, MOCK_MANUAL_CASE.functionalTests, setFunctionalTests, "")}>

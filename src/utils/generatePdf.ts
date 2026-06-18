@@ -74,6 +74,8 @@ interface AnamnesisData {
   headacheCrisisFrequency?: string;
   painScoreMode?: string;
   painScoresPerRegion?: Record<string, number>;
+  /** Joint mobility / Range of Motion table (manual assessment). */
+  romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
 }
 
 export interface ResponsibleProfessional {
@@ -834,6 +836,93 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
   return y;
 }
 
+// ── Render Joint Mobility / ROM Table ──
+function renderRomTableSection(
+  doc: jsPDF,
+  y: number,
+  rows: Array<{ joint: string; leftValue: string; rightValue: string }> | undefined,
+  isPt: boolean,
+  language: string,
+): number {
+  if (!rows || rows.length === 0) return y;
+  const cleaned = rows
+    .map((r) => ({
+      joint: (r?.joint || "").trim(),
+      leftValue: (r?.leftValue || "").trim(),
+      rightValue: (r?.rightValue || "").trim(),
+    }))
+    .filter((r) => r.joint || r.leftValue || r.rightValue);
+  if (cleaned.length === 0) return y;
+
+  const title =
+    language === "es"
+      ? "Movilidad Articular (ADM)"
+      : isPt
+        ? "Mobilidade Articular (ADM)"
+        : "Joint Mobility (ROM)";
+  const colJoint =
+    language === "es" ? "Articulación / Movimiento" : isPt ? "Articulação / Movimento" : "Joint / Movement";
+  const colLeft = language === "es" ? "Izquierda" : isPt ? "Esquerda" : "Left";
+  const colRight = language === "es" ? "Derecha" : isPt ? "Direita" : "Right";
+
+  // Reserve space for title + header + 2 rows to avoid orphan
+  y = checkPage(doc, y, 14 + 8 + 16);
+  y = renderSectionTitle(doc, y, title, COLORS.primary);
+
+  // Column widths within SECTION_TEXT_W (158mm)
+  const valueColW = 28;
+  const jointColW = SECTION_TEXT_W - valueColW * 2;
+  const xJoint = SECTION_X;
+  const xLeft = SECTION_X + jointColW;
+  const xRight = SECTION_X + jointColW + valueColW;
+  const headerH = 7;
+
+  // Header row
+  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, headerH, 1.5, COLORS.primaryLight, COLORS.border);
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.primary);
+  doc.text(colJoint, xJoint, y + 4.8);
+  doc.text(colLeft, xLeft + valueColW / 2, y + 4.8, { align: "center" });
+  doc.text(colRight, xRight + valueColW / 2, y + 4.8, { align: "center" });
+  y += headerH;
+
+  doc.setFont("Inter", "normal");
+  doc.setFontSize(9);
+
+  cleaned.forEach((r, i) => {
+    const jointLines = doc.splitTextToSize(r.joint || "—", jointColW - 3);
+    const rowH = Math.max(7, jointLines.length * 4.2 + 2.5);
+    y = checkPage(doc, y, rowH + 1);
+
+    // Zebra background
+    drawRoundedRect(
+      doc,
+      MARGIN,
+      y,
+      CONTENT_WIDTH,
+      rowH,
+      0.8,
+      i % 2 === 1 ? [248, 246, 242] : COLORS.white,
+      COLORS.border,
+    );
+
+    doc.setTextColor(...COLORS.foreground);
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(9);
+    doc.text(jointLines, xJoint, y + 4.5);
+
+    doc.setFont("Inter", "bold");
+    doc.setTextColor(...COLORS.primary);
+    doc.text(r.leftValue || "—", xLeft + valueColW / 2, y + 4.5, { align: "center" });
+    doc.text(r.rightValue || "—", xRight + valueColW / 2, y + 4.5, { align: "center" });
+
+    y += rowH + 0.5;
+  });
+
+  return y + 4;
+}
+
 // ── Render Pain Map Images Section ──
 async function renderPainMapSection(doc: jsPDF, y: number, painRegions: string[], isPt: boolean): Promise<number> {
   const images = await generatePainMapImages(painRegions);
@@ -1591,6 +1680,11 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   // ── Test Results (Questionnaires) — right after anamnesis ──
   if (testResults) {
     y = renderTestResultsSection(doc, y, testResults, isPt);
+  }
+
+  // ── Joint Mobility (ROM) — before pain map / VAS ──
+  if (anamnesisData?.romTable && anamnesisData.romTable.length > 0) {
+    y = renderRomTableSection(doc, y, anamnesisData.romTable, isPt, language);
   }
 
   // ── Pain Map ──

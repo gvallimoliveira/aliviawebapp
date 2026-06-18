@@ -33,6 +33,7 @@ import { Separator } from "@/components/ui/separator";
 import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PendingQuestionnairesCard from "@/components/assessment/PendingQuestionnairesCard";
+import RomTable, { sanitizeRomRows } from "@/components/assessment/RomTable";
 
 // Translate i18n keys for display
 function translateKey(key: string, isPt: boolean): string {
@@ -878,6 +879,33 @@ const AssessmentView = () => {
                       value={translateKey(anamnesis.ageRange, isPt)}
                     />
                   )}
+                </div>
+              </CollapsibleSection>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Joint Mobility (ROM) — manual assessment only */}
+        {sanitizeRomRows(anamnesis?.romTable).length > 0 && (
+          <Card>
+            <CardContent className="py-3">
+              <CollapsibleSection
+                storageKey={`assessment:${assessment.id}:rom`}
+                defaultOpen
+                header={
+                  <div className="text-base font-semibold flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-primary" />
+                    {isPt ? "Mobilidade Articular (ADM)" : "Joint Mobility (ROM)"}
+                  </div>
+                }
+              >
+                <div className="py-2">
+                  <RomTable
+                    value={anamnesis.romTable}
+                    readOnly
+                    bare
+                    lang={isPt ? "pt" : language === "es" ? "es" : "en"}
+                  />
                 </div>
               </CollapsibleSection>
             </CardContent>
