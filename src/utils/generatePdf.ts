@@ -1682,6 +1682,11 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     y = renderTestResultsSection(doc, y, testResults, isPt);
   }
 
+  // ── Joint Mobility (ROM) — before pain map / VAS ──
+  if (anamnesisData?.romTable && anamnesisData.romTable.length > 0) {
+    y = renderRomTableSection(doc, y, anamnesisData.romTable, isPt, language);
+  }
+
   // ── Pain Map ──
   const regions = painRegions || anamnesisData?.painRegions;
   if (regions && regions.length > 0) {
