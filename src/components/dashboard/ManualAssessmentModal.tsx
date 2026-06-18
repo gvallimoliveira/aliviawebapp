@@ -314,6 +314,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setRedFlagsChecked(p.redFlagsChecked ?? []);
     setQuestionnaireResults(p.questionnaireResults ?? []);
     setFunctionalTests(p.functionalTests ?? "");
+    setRomTable(Array.isArray(p.romTable) && p.romTable.length > 0 ? p.romTable : createInitialRomRows(5));
     setClinicalImpression(p.clinicalImpression ?? "");
     setDiagnosisText(p.diagnosisText ?? "");
     setTreatmentText(p.treatmentText ?? "");
