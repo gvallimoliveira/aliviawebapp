@@ -82,7 +82,7 @@ export function usePushNotifications() {
       }
 
       const subJson = sub.toJSON();
-      await (supabase.from("push_subscriptions" as any) as any).upsert(
+      const { error } = await (supabase.from("push_subscriptions" as any) as any).upsert(
         {
           user_id: user.id,
           endpoint: subJson.endpoint,
@@ -91,6 +91,7 @@ export function usePushNotifications() {
         },
         { onConflict: "user_id,endpoint" }
       );
+      if (error) throw error;
 
       setSubscribed(true);
       setLoading(false);
@@ -100,7 +101,7 @@ export function usePushNotifications() {
       setLoading(false);
       return false;
     }
-  }, [isSupported, user]);
+  }, [ensurePushSwRegistration, isSupported, user]);
 
   const unsubscribe = useCallback(async () => {
     if (!isSupported || !user) return;
