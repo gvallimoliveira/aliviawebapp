@@ -4,6 +4,7 @@ import { CheckCircle, Loader2, Clock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ClinicalThinkingSkeleton from "@/components/assessment/ClinicalThinkingSkeleton";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
