@@ -1101,6 +1101,60 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               />
             )}
 
+            {/* Banner de questionários pendentes vinculados a esta avaliação */}
+            {isEditing && pendingCount && pendingCount.total > 0 && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 space-y-2">
+                <div className="flex items-start gap-2">
+                  <ClipboardList className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">
+                      {isPt
+                        ? `Questionários pendentes (${pendingCount.total - pendingCount.pending} de ${pendingCount.total} respondidos)`
+                        : `Pending questionnaires (${pendingCount.total - pendingCount.pending} of ${pendingCount.total} answered)`}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {isPt
+                        ? "Link para o paciente preencher os questionários ligados a esta avaliação."
+                        : "Link for the patient to complete the questionnaires linked to this assessment."}
+                    </p>
+                  </div>
+                </div>
+                {pendingShareUrl && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <code className="text-[11px] bg-background border rounded px-2 py-1 flex-1 truncate min-w-[140px]">{pendingShareUrl}</code>
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs gap-1" onClick={() => { navigator.clipboard.writeText(pendingShareUrl); toast({ title: isPt ? "Link copiado" : "Link copied" }); }}>
+                      <Copy className="h-3 w-3" /> {isPt ? "Copiar" : "Copy"}
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs gap-1" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent((isPt ? "Olá! Por favor, responda os questionários da sua avaliação: " : "Hi! Please answer your assessment questionnaires: ") + pendingShareUrl)}`, "_blank")}>
+                      <MessageCircle className="h-3 w-3" /> WhatsApp
+                    </Button>
+                    {pendingCount.pending > 0 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                        onClick={async () => {
+                          if (!editAssessment?.id) return;
+                          if (!confirm(isPt ? "Encerrar pendência? Os questionários não respondidos ficarão indisponíveis para o paciente." : "Cancel pending? Unanswered questionnaires will become unavailable to the patient.")) return;
+                          await supabase
+                            .from("pending_questionnaires" as any)
+                            .update({ status: "cancelled" })
+                            .eq("assessment_id", editAssessment.id)
+                            .eq("status", "pending");
+                          setPendingCount({ total: pendingCount.total, pending: 0 });
+                          toast({ title: isPt ? "Pendência encerrada" : "Pending cancelled" });
+                        }}
+                      >
+                        <X className="h-3 w-3" /> {isPt ? "Encerrar" : "Cancel"}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+
+
             {/* Demo voice recorder: floating FAB mock lives at the end of DialogContent */}
 
 
