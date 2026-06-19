@@ -368,8 +368,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainType(p.painType ?? "");
     setPainRegions(p.painRegions ?? []);
     setPainScoresPerRegion(p.painScoresPerRegion ?? {});
+    setPainTypesPerRegion((p as any).painTypesPerRegion ?? {});
     setRedFlagsChecked(p.redFlagsChecked ?? []);
+    setAdditionalClinicalNotes((p as any).additionalClinicalNotes ?? "");
     setQuestionnaireResults(p.questionnaireResults ?? []);
+    setDeferQuestionnaires(Boolean((p as any).deferQuestionnaires));
     setFunctionalTests(p.functionalTests ?? "");
     setRomTable(Array.isArray(p.romTable) && p.romTable.length > 0 ? p.romTable : createInitialRomRows(2));
     setStrengthTable(Array.isArray(p.strengthTable) && p.strengthTable.length > 0 ? p.strengthTable : createInitialStrengthRows(2));
