@@ -927,6 +927,25 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </DemoShield>
                   </div>
                 </div>
+                <div>
+                  <Label className="text-xs">{isPt ? "Exames complementares" : "Complementary exams"}</Label>
+                  <Textarea
+                    value={complementaryExams}
+                    onChange={(e) => setComplementaryExams(e.target.value.slice(0, 2000))}
+                    rows={3}
+                    placeholder={isPt
+                      ? "Ex.: RM lombar (2025) — protrusão discal L4-L5 sem compressão radicular; Rx de joelho normal"
+                      : "E.g. Lumbar MRI (2025) — L4-L5 disc protrusion without root compression; Knee X-ray normal"}
+                    className="mt-1 text-sm"
+                    disabled={demoMode}
+                    maxLength={2000}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {isPt
+                      ? "Liste exames de imagem, laboratoriais ou outros relevantes."
+                      : "List imaging, lab or other relevant exams."}
+                  </p>
+                </div>
               </div>
             )}
 
