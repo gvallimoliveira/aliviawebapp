@@ -114,17 +114,7 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Dumbbell className="h-4 w-4 text-primary" /> Dinamometria
-        </CardTitle>
-        <CardDescription className="text-xs">
-          Anexe um laudo/foto da dinamometria ou registre os valores manualmente — opcional.
-          Os dados são salvos na avaliação mais recente ({fmtDate(target.created_at)}) e entram
-          no raciocínio clínico da IA.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-5">
         <StrengthTable
           value={rows}
           onChange={readOnly ? undefined : setRows}
@@ -134,7 +124,10 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
           disableImport={isDemo}
         />
         {!readOnly && (
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] text-muted-foreground">
+              Salvo na avaliação de {fmtDate(target.created_at)}.
+            </p>
             <Button
               size="sm"
               onClick={handleSave}
