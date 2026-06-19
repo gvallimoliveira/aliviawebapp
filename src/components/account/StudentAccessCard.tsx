@@ -46,6 +46,7 @@ const StudentAccessCard = () => {
         title: "Acesso Estudante — Alivia Acadêmico",
         desc: "Para estudantes de fisioterapia ainda sem CREFITO. Libera todas as ferramentas do plano profissional; relatórios e links exibem o selo acadêmico com seu nome.",
         toggle: "Sou estudante de fisioterapia",
+        toggle_hint: "Desative para cadastrar seu CREFITO e ter acesso ao painel exclusivamente profissional",
         name: "Nome completo",
         institution: "Instituição de ensino",
         period: "Período atual",
@@ -76,6 +77,7 @@ const StudentAccessCard = () => {
         title: "Student Access — Alivia Academic",
         desc: "For physiotherapy students without a CREFITO yet. Unlocks every professional tool; reports and links show the academic disclaimer with your name.",
         toggle: "I am a physiotherapy student",
+        toggle_hint: "Disable to register your CREFITO and access the exclusively professional panel",
         name: "Full name",
         institution: "Institution",
         period: "Current term",
@@ -253,6 +255,9 @@ const StudentAccessCard = () => {
               </Label>
               <Switch id="student-toggle" checked={isStudent} onCheckedChange={setIsStudent} />
             </div>
+            {isStudent && (
+              <p className="text-xs text-muted-foreground -mt-2 ml-3">{t.toggle_hint}</p>
+            )}
 
             {isStudent && hasCrefito && (
               <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
