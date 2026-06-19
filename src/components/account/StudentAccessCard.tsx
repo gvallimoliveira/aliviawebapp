@@ -38,6 +38,7 @@ const StudentAccessCard = () => {
   const [fullName, setFullName] = useState("");
   const [institution, setInstitution] = useState("");
   const [period, setPeriod] = useState("");
+  const [activeMode, setActiveMode] = useState<"professional" | "student">("professional");
 
   const t = isPt
     ? {
