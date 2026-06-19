@@ -15,6 +15,7 @@ import ManualAssessmentModal from "../ManualAssessmentModal";
 import AddPatientModal, { type PatientToEdit } from "../AddPatientModal";
 import FinalHypothesisEditor from "../FinalHypothesisEditor";
 import PatientFilesSection from "../PatientFilesSection";
+import StrengthTable, { sanitizeStrengthRows, computeAsymmetry, type StrengthRow } from "@/components/assessment/StrengthTable";
 import PatientPhotosSection from "../PatientPhotosSection";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import RegionPainComparison from "../RegionPainComparison";
@@ -786,6 +787,94 @@ export default function PatientDetailView(props: any) {
 
       {/* Notas de sessão */}
       {selectedEmail && <SessionNotesSection professionalId={professionalId} patientEmail={selectedEmail} isDemo={isDemo} />}
+
+      {/* Dinamometria — histórico (consolidado das avaliações com força registrada) */}
+      {(() => {
+        const assessmentsWithStrength = (patient?.assessments || [])
+          .filter((a: any) => sanitizeStrengthRows(a?.anamnesis_data?.strengthTable).length > 0)
+          .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        if (assessmentsWithStrength.length === 0) return null;
+        const latest = assessmentsWithStrength[assessmentsWithStrength.length - 1];
+        const latestRows: StrengthRow[] = sanitizeStrengthRows(latest.anamnesis_data.strengthTable);
+        const dateFmt = (d: string) => new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "2-digit" });
+        // Build movement → series for the mini history table (across assessments)
+        const movementSeries = new Map<string, Array<{ date: string; L: string; R: string; asym: number | null }>>();
+        assessmentsWithStrength.forEach((a: any) => {
+          const rows: StrengthRow[] = sanitizeStrengthRows(a.anamnesis_data.strengthTable);
+          rows.forEach((r) => {
+            const key = r.movement;
+            const arr = movementSeries.get(key) || [];
+            arr.push({ date: dateFmt(a.created_at), L: r.leftValue, R: r.rightValue, asym: computeAsymmetry(r.leftValue, r.rightValue) });
+            movementSeries.set(key, arr);
+          });
+        });
+        const hasMultiple = assessmentsWithStrength.length >= 2;
+        return (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Dumbbell className="h-4 w-4 text-primary" />
+                Dinamometria — Histórico
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Última medição em {dateFmt(latest.created_at)} • {assessmentsWithStrength.length} avaliação(ões) com força registrada
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <StrengthTable
+                value={latestRows}
+                readOnly
+                bare
+                lang="pt"
+              />
+              {hasMultiple && (
+                <CollapsibleSection
+                  storageKey={`patient:${patient?.email || patient?.groupKey}:strength-history`}
+                  defaultOpen={false}
+                  header={
+                    <div className="text-sm font-semibold flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      Evolução por movimento
+                    </div>
+                  }
+                >
+                  <div className="space-y-3 pt-3">
+                    {Array.from(movementSeries.entries()).map(([movement, series]) => (
+                      <div key={movement} className="rounded-lg border border-border p-3">
+                        <p className="text-xs font-semibold text-foreground mb-2">{movement}</p>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="text-left text-[10px] uppercase tracking-wide text-muted-foreground border-b border-border">
+                                <th className="py-1.5 pr-3 font-medium">Data</th>
+                                <th className="py-1.5 px-2 font-medium text-center">Esq (kgf)</th>
+                                <th className="py-1.5 px-2 font-medium text-center">Dir (kgf)</th>
+                                <th className="py-1.5 pl-2 font-medium text-center">Assim.</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {series.map((s, i) => (
+                                <tr key={i} className="border-b border-border/50 last:border-0">
+                                  <td className="py-1.5 pr-3 text-muted-foreground">{s.date}</td>
+                                  <td className="py-1.5 px-2 text-center font-mono">{s.L || "—"}</td>
+                                  <td className="py-1.5 px-2 text-center font-mono">{s.R || "—"}</td>
+                                  <td className="py-1.5 pl-2 text-center font-mono">
+                                    {s.asym == null ? "—" : `${s.asym}%`}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleSection>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Arquivos e fotos (bloco documental) */}
       {selectedEmail && <PatientFilesSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} isDemo={isDemo} />}

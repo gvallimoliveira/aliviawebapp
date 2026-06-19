@@ -34,6 +34,7 @@ import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PendingQuestionnairesCard from "@/components/assessment/PendingQuestionnairesCard";
 import RomTable, { sanitizeRomRows } from "@/components/assessment/RomTable";
+import StrengthTable, { sanitizeStrengthRows } from "@/components/assessment/StrengthTable";
 
 // Translate i18n keys for display
 function translateKey(key: string, isPt: boolean): string {
@@ -918,6 +919,33 @@ const AssessmentView = () => {
                 <div className="py-2">
                   <RomTable
                     value={anamnesis.romTable}
+                    readOnly
+                    bare
+                    lang={isPt ? "pt" : language === "es" ? "es" : "en"}
+                  />
+                </div>
+              </CollapsibleSection>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Dynamometry / Muscle strength — manual assessment only */}
+        {sanitizeStrengthRows(anamnesis?.strengthTable).length > 0 && (
+          <Card>
+            <CardContent className="py-3">
+              <CollapsibleSection
+                storageKey={`assessment:${assessment.id}:strength`}
+                defaultOpen
+                header={
+                  <div className="text-base font-semibold flex items-center gap-2">
+                    <Dumbbell className="h-4 w-4 text-primary" />
+                    {isPt ? "Dinamometria (Força Muscular)" : language === "es" ? "Dinamometría (Fuerza Muscular)" : "Dynamometry (Muscle Strength)"}
+                  </div>
+                }
+              >
+                <div className="py-2">
+                  <StrengthTable
+                    value={anamnesis.strengthTable}
                     readOnly
                     bare
                     lang={isPt ? "pt" : language === "es" ? "es" : "en"}

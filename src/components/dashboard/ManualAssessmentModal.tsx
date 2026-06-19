@@ -26,6 +26,7 @@ import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { MOCK_MANUAL_CASE } from "@/data/mockManualAssessmentCase";
 import SpecialtyQuestionnairesPanel, { type SpecialtyAppliedResult, type SpecialtyPanelHandle } from "./SpecialtyQuestionnairesPanel";
 import RomTable, { createInitialRomRows, sanitizeRomRows, type RomRow } from "@/components/assessment/RomTable";
+import StrengthTable, { createInitialStrengthRows, sanitizeStrengthRows, type StrengthRow } from "@/components/assessment/StrengthTable";
 
 /**
  * In demo mode, wraps a form control with a transparent click overlay that
@@ -178,6 +179,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
   const [romTable, setRomTable] = useState<RomRow[]>(createInitialRomRows(2));
+  const [strengthTable, setStrengthTable] = useState<StrengthRow[]>(createInitialStrengthRows(2));
   const [testSuggestions, setTestSuggestions] = useState<Array<{ name: string; category: string; rationale: string }>>([]);
   const [suggestingTests, setSuggestingTests] = useState(false);
   const [addedSuggestions, setAddedSuggestions] = useState<Set<string>>(new Set());
@@ -286,7 +288,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
     painScore, painType, painRegions, painScoresPerRegion, redFlagsChecked, questionnaireResults,
-    functionalTests, romTable, clinicalImpression, diagnosisText, treatmentText,
+    functionalTests, romTable, strengthTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
   };
   const draft = useAutosaveDraft<typeof draftState>({
@@ -319,6 +321,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setQuestionnaireResults(p.questionnaireResults ?? []);
     setFunctionalTests(p.functionalTests ?? "");
     setRomTable(Array.isArray(p.romTable) && p.romTable.length > 0 ? p.romTable : createInitialRomRows(2));
+    setStrengthTable(Array.isArray(p.strengthTable) && p.strengthTable.length > 0 ? p.strengthTable : createInitialStrengthRows(2));
     setClinicalImpression(p.clinicalImpression ?? "");
     setDiagnosisText(p.diagnosisText ?? "");
     setTreatmentText(p.treatmentText ?? "");
@@ -365,6 +368,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setSpecialtyApplied(Array.isArray(an?.specialtyResults) ? an.specialtyResults : []);
     setFunctionalTests(an.functionalTests || "");
     setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(2));
+    setStrengthTable(Array.isArray(an.strengthTable) && an.strengthTable.length > 0 ? an.strengthTable : createInitialStrengthRows(2));
     const dx = a.diagnosis || {};
     setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
     const ci = dx.clinicalImpression;
@@ -463,6 +467,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     painScoresPerRegion,
     functionalTests, // free-text observations from Step 4 (kept inside anamnesis_data so it persists and shows up in views)
     romTable: sanitizeRomRows(romTable), // Joint mobility / ROM table
+    strengthTable: sanitizeStrengthRows(strengthTable), // Dynamometry / muscle strength
     patientName,
     patientEmail: patientEmail || null,
     // Specialty (cardio/geri) results applied inline during this session.
@@ -1138,6 +1143,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     lang={isPt ? "pt" : "en"}
                   />
                 </DemoShield>
+
+                {/* Dynamometry (muscle strength) table — manual or AI-extracted from image/PDF */}
+                <StrengthTable
+                  value={strengthTable}
+                  onChange={setStrengthTable}
+                  lang={isPt ? "pt" : language === "es" ? "es" : "en"}
+                  disableImport={demoMode}
+                />
+
 
                 <div>
                   <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>

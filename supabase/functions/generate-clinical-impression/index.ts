@@ -76,6 +76,10 @@ ${Object.entries(anamnesisData.painScoresPerRegion).map(([k, v]) => `    • ${k
 - Diagnostic hypothesis: ${diagnosis?.hypothesis || "N/A"}
 - Diagnostic summary: ${diagnosis?.summary || "N/A"}
 - Questionnaire results: ${JSON.stringify(questionnaireResults || [])}${timelineBlock}
+${Array.isArray(anamnesisData?.romTable) && anamnesisData.romTable.length > 0 ? `- Joint mobility (ROM):
+${anamnesisData.romTable.filter((r: any) => r?.joint || r?.leftValue || r?.rightValue).map((r: any) => `    • ${r.joint || "?"}: L ${r.leftValue || "—"} | R ${r.rightValue || "—"}`).join("\n")}` : ""}
+${Array.isArray(anamnesisData?.strengthTable) && anamnesisData.strengthTable.length > 0 ? `- Dynamometry (muscle strength, kgf) — weigh asymmetries > 20% as a sign of inhibition/weakness (D.I.F.I):
+${anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue).map((r: any) => `    • ${r.movement || "?"}: L ${r.leftValue || "—"} kgf | R ${r.rightValue || "—"} kgf`).join("\n")}` : ""}
 
 Generate the clinical impression now.`;
 
