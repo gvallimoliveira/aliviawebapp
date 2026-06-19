@@ -146,12 +146,12 @@ const WelcomeSection = ({
     <div data-onboarding="patient-welcome" className="flex items-center justify-between">
       <div>
         <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-xl md:text-3xl font-bold text-foreground">
             {t("dashboard.welcome")}{profileName ? `, ${profileName}` : ""}
           </h1>
           {renderBadge()}
         </div>
-        <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
+        <p className="hidden md:block text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
       </div>
       {showRestart && (
         <Button variant="ghost" size="sm" onClick={onRestart} className="gap-1.5 text-xs text-muted-foreground">

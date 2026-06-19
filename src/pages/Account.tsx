@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, KeyRound, User, Mail, ArrowLeft } from "lucide-react";
+import { Loader2, KeyRound, User, Mail, ArrowLeft, RotateCcw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import SignatureManager from "@/components/account/SignatureManager";
@@ -192,6 +192,37 @@ const Account = () => {
         <div className="mt-6">
           <AcademicPerformanceCard />
         </div>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Tour de boas-vindas
+            </CardTitle>
+            <CardDescription>
+              Refazer o tour guiado do painel para revisar os principais recursos.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => {
+                try {
+                  Object.keys(localStorage)
+                    .filter((k) => k.startsWith("onboarding_") && k.endsWith("_completed_v2"))
+                    .forEach((k) => localStorage.removeItem(k));
+                  toast({ title: "Tour reiniciado", description: "Abrindo o painel..." });
+                } catch {}
+                navigate("/dashboard");
+              }}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Reiniciar tour
+            </Button>
+          </CardContent>
+        </Card>
 
         <div className="mt-6 flex justify-center">
           <AppVersionBadge />
