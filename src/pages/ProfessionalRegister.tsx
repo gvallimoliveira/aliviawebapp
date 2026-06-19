@@ -576,9 +576,6 @@ const ProfessionalRegister = () => {
                       </select>
                     </div>
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Os demais campos abaixo (foto, logo, especialidades, bio, contato) são opcionais no modo acadêmico.
-                  </p>
                 </div>
               )}
 
@@ -670,44 +667,44 @@ const ProfessionalRegister = () => {
               </Dialog>
 
               {/* Logo Upload */}
-              <div className="flex flex-col items-center gap-3 pt-2 border-t border-border/40">
-                <Label className="text-sm font-medium text-foreground">{t("prof.logo_label") || "Logo da Clínica / Empresa"}</Label>
-                <div className="relative group">
-                  <div className="h-20 w-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-muted/20 overflow-hidden">
-                    {logoPreview ? (
-                      <img src={logoPreview} alt="Logo" className="h-full w-full object-contain" />
-                    ) : (
-                      <span className="text-xs text-muted-foreground text-center px-1">Logo</span>
-                    )}
-                  </div>
-                  {logoPreview && (
-                    <button
-                      type="button"
-                      onClick={() => { setLogoFile(null); setLogoPreview(null); }}
-                      className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg"
-                  className="hidden"
-                  onChange={handleLogoSelect}
-                />
-                <button
-                  type="button"
-                  onClick={() => logoInputRef.current?.click()}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {logoPreview ? "Alterar logo" : "Adicionar logo profissional"}
-                </button>
-              </div>
-
               {!isStudent && (
                 <>
+                  <div className="flex flex-col items-center gap-3 pt-2 border-t border-border/40">
+                    <Label className="text-sm font-medium text-foreground">{t("prof.logo_label") || "Logo da Clínica / Empresa"}</Label>
+                    <div className="relative group">
+                      <div className="h-20 w-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-muted/20 overflow-hidden">
+                        {logoPreview ? (
+                          <img src={logoPreview} alt="Logo" className="h-full w-full object-contain" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground text-center px-1">Logo</span>
+                        )}
+                      </div>
+                      {logoPreview && (
+                        <button
+                          type="button"
+                          onClick={() => { setLogoFile(null); setLogoPreview(null); }}
+                          className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      className="hidden"
+                      onChange={handleLogoSelect}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {logoPreview ? "Alterar logo" : "Adicionar logo profissional"}
+                    </button>
+                  </div>
+
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label>{t("prof.full_name")} *</Label>
@@ -754,127 +751,124 @@ const ProfessionalRegister = () => {
                     />
                     <p className="text-xs text-muted-foreground">{t("prof.social_media_hint")}</p>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label>{t("prof.specialties")}</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {SPECIALTIES.map((s) => (
+                        <Badge
+                          key={s}
+                          variant={form.specialties.includes(s) ? "default" : "outline"}
+                          className="cursor-pointer"
+                          onClick={() => toggleSpecialty(s)}
+                        >
+                          {t(`prof.spec.${s}`)}
+                        </Badge>
+                      ))}
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer gap-1"
+                        onClick={() => setShowCustomSpecialty(true)}
+                      >
+                        <Plus className="h-3 w-3" />
+                        {t("prof.spec.other")}
+                      </Badge>
+                    </div>
+                    {showCustomSpecialty && (
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          value={customSpecialtyInput}
+                          onChange={(e) => setCustomSpecialtyInput(e.target.value)}
+                          placeholder={t("prof.spec.other_placeholder")}
+                          className="max-w-xs"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              const val = customSpecialtyInput.trim();
+                              if (val && !form.specialties.includes(val)) {
+                                setForm({ ...form, specialties: [...form.specialties, val] });
+                              }
+                              setCustomSpecialtyInput("");
+                              setShowCustomSpecialty(false);
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            const val = customSpecialtyInput.trim();
+                            if (val && !form.specialties.includes(val)) {
+                              setForm({ ...form, specialties: [...form.specialties, val] });
+                            }
+                            setCustomSpecialtyInput("");
+                            setShowCustomSpecialty(false);
+                          }}
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                    {form.specialties.filter(s => !SPECIALTIES.includes(s)).length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {form.specialties.filter(s => !SPECIALTIES.includes(s)).map(s => (
+                          <Badge key={s} variant="default" className="cursor-pointer gap-1" onClick={() => toggleSpecialty(s)}>
+                            {s} <X className="h-3 w-3" />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{t("prof.city")} *</Label>
+                      <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("prof.state")} *</Label>
+                      <select
+                        value={form.state}
+                        onChange={(e) => setForm({ ...form, state: e.target.value })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        required
+                      >
+                        <option value="">{t("prof.select_state")}</option>
+                        {STATES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t("prof.bio")}</Label>
+                    <Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{t("prof.phone")}</Label>
+                      <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("prof.email_prof")}</Label>
+                      <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{t("prof.clinic_name")}</Label>
+                      <Input value={form.clinic_name} onChange={(e) => setForm({ ...form, clinic_name: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("prof.clinic_address")}</Label>
+                      <Input value={form.clinic_address} onChange={(e) => setForm({ ...form, clinic_address: e.target.value })} />
+                    </div>
+                  </div>
                 </>
               )}
-
-
-              <div className="space-y-2">
-                <Label>{t("prof.specialties")}</Label>
-                <div className="flex flex-wrap gap-2">
-                  {SPECIALTIES.map((s) => (
-                    <Badge
-                      key={s}
-                      variant={form.specialties.includes(s) ? "default" : "outline"}
-                      className="cursor-pointer"
-                      onClick={() => toggleSpecialty(s)}
-                    >
-                      {t(`prof.spec.${s}`)}
-                    </Badge>
-                  ))}
-                  <Badge
-                    variant="outline"
-                    className="cursor-pointer gap-1"
-                    onClick={() => setShowCustomSpecialty(true)}
-                  >
-                    <Plus className="h-3 w-3" />
-                    {t("prof.spec.other")}
-                  </Badge>
-                </div>
-                {showCustomSpecialty && (
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      value={customSpecialtyInput}
-                      onChange={(e) => setCustomSpecialtyInput(e.target.value)}
-                      placeholder={t("prof.spec.other_placeholder")}
-                      className="max-w-xs"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          const val = customSpecialtyInput.trim();
-                          if (val && !form.specialties.includes(val)) {
-                            setForm({ ...form, specialties: [...form.specialties, val] });
-                          }
-                          setCustomSpecialtyInput("");
-                          setShowCustomSpecialty(false);
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => {
-                        const val = customSpecialtyInput.trim();
-                        if (val && !form.specialties.includes(val)) {
-                          setForm({ ...form, specialties: [...form.specialties, val] });
-                        }
-                        setCustomSpecialtyInput("");
-                        setShowCustomSpecialty(false);
-                      }}
-                    >
-                      <Check className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-                {form.specialties.filter(s => !SPECIALTIES.includes(s)).length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {form.specialties.filter(s => !SPECIALTIES.includes(s)).map(s => (
-                      <Badge key={s} variant="default" className="cursor-pointer gap-1" onClick={() => toggleSpecialty(s)}>
-                        {s} <X className="h-3 w-3" />
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {!isStudent && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>{t("prof.city")} *</Label>
-                    <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("prof.state")} *</Label>
-                    <select
-                      value={form.state}
-                      onChange={(e) => setForm({ ...form, state: e.target.value })}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      required
-                    >
-                      <option value="">{t("prof.select_state")}</option>
-                      {STATES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label>{t("prof.bio")}</Label>
-                <Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>{t("prof.phone")}</Label>
-                  <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t("prof.email_prof")}</Label>
-                  <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>{t("prof.clinic_name")}</Label>
-                  <Input value={form.clinic_name} onChange={(e) => setForm({ ...form, clinic_name: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t("prof.clinic_address")}</Label>
-                  <Input value={form.clinic_address} onChange={(e) => setForm({ ...form, clinic_address: e.target.value })} />
-                </div>
-              </div>
 
               <div className="flex items-start gap-2.5 rounded-xl border border-border bg-muted/30 p-3">
                 <Checkbox
