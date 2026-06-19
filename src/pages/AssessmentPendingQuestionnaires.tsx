@@ -158,7 +158,21 @@ export default function AssessmentPendingQuestionnaires() {
           </CardHeader>
         </Card>
 
-        {allDone || (generalDone && specialtyPending.length === 0) ? (
+        {totalCount === 0 ? (
+          <Card>
+            <CardContent className="pt-6 pb-6 text-center space-y-2">
+              <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto" />
+              <p className="font-semibold text-sm">
+                {isPt ? "Nenhum questionário pendente" : "No pending questionnaires"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isPt
+                  ? "Este link não tem questionários a responder no momento. Fale com seu profissional se acha que isso é um engano."
+                  : "This link has no questionnaires to answer right now. Contact your professional if you believe this is a mistake."}
+              </p>
+            </CardContent>
+          </Card>
+        ) : allDone || (generalDone && specialtyPending.length === 0) ? (
           <Card>
             <CardContent className="pt-6 pb-6 text-center space-y-3">
               <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
