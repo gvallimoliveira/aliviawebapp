@@ -227,10 +227,10 @@ const ClinicalAgent = () => {
 
       // Load patients matching the user's professional/clinic context
       // (patients table uses professional_id and clinic_id, NOT user_id)
-      let professionalId: string | null = null;
       const { data: proRow } = await sb.from("professionals")
         .select("id").eq("user_id", user.id).maybeSingle();
-      professionalId = proRow?.id || null;
+      const myProfessionalId = proRow?.id || "";
+      setProfessionalId(myProfessionalId);
 
       const clinicId = isClinicMode && activeClinic ? activeClinic.clinic_id : null;
 
