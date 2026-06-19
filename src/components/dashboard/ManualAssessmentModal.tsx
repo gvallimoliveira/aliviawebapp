@@ -905,13 +905,71 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         }
       }
 
+      // Quando o fisio optou por enviar os questionários para o paciente
+      // preencher depois, inserimos uma linha "general" por questionário
+      // aplicável (baseado nas regiões marcadas) vinculada à mesma avaliação.
+      let createdGeneralPending = 0;
+      if (savedId && deferQuestionnaires && painRegions.length > 0) {
+        try {
+          const applicable = getApplicableQuestionnaires(painRegions);
+          // Evita duplicidade quando o fisio edita uma avaliação que já tem
+          // pendentes gerais: busca os existentes desta avaliação primeiro.
+          const { data: existing } = await supabase
+            .from("pending_questionnaires" as any)
+            .select("questionnaire_id, domain")
+            .eq("assessment_id", savedId);
+          const seen = new Set(
+            (existing || [])
+              .filter((r: any) => r.domain === "general")
+              .map((r: any) => r.questionnaire_id),
+          );
+          const rows = applicable
+            .filter((q) => !seen.has(q.id))
+            .map((q) => ({
+              assessment_id: savedId,
+              professional_id: clinicId ? null : professionalId,
+              clinic_id: clinicId || null,
+              questionnaire_id: q.id,
+              domain: "general",
+              suggested_reason: isPt
+                ? `Aplicável às regiões: ${painRegions.join(", ")}`
+                : `Applies to regions: ${painRegions.join(", ")}`,
+              status: "pending",
+            }));
+          if (rows.length > 0) {
+            await supabase.from("pending_questionnaires" as any).insert(rows);
+            createdGeneralPending = rows.length;
+          }
+        } catch (err) {
+          console.warn("deferred general questionnaires insert failed:", err);
+        }
+      }
+
       toast({ title: isEditing ? (isPt ? "Avaliação atualizada!" : "Assessment updated!") : (isPt ? "Avaliação criada!" : "Assessment created!") });
       if (!isEditing) void draft.discard();
       clearManualAssessmentSession();
       if (savedId) onSaved?.(savedId);
+
+      // Se há pendências (gerais ou de especialidade), gera o link único e
+      // abre o diálogo de compartilhamento ANTES de fechar o modal para que o
+      // fisio copie/envie de uma vez.
+      if (savedId && (createdGeneralPending > 0 || deferQuestionnaires)) {
+        try {
+          const longUrl = `${getPublicOrigin()}/avaliacao/pendentes/${savedId}`;
+          const shortUrl = await createShortAppLink(longUrl);
+          setPendingShareUrl(shortUrl || longUrl);
+          setPendingShareOpen(true);
+          // Não fecha o modal — usuário fecha após copiar o link.
+          return;
+        } catch (err) {
+          console.warn("pending share link generation failed", err);
+        }
+      }
+
       onOpenChange(false);
       resetForm();
       if (navigateAfter && savedId && !isEditing) navigate(`/assessment/view/${savedId}?from=professional`);
+
     } catch (err: any) {
       console.error("Save assessment error:", err);
       toast({ title: isPt ? "Erro ao salvar" : "Save error", description: err.message, variant: "destructive" });
