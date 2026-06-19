@@ -929,6 +929,33 @@ const AssessmentView = () => {
           </Card>
         )}
 
+        {/* Dynamometry / Muscle strength — manual assessment only */}
+        {sanitizeStrengthRows(anamnesis?.strengthTable).length > 0 && (
+          <Card>
+            <CardContent className="py-3">
+              <CollapsibleSection
+                storageKey={`assessment:${assessment.id}:strength`}
+                defaultOpen
+                header={
+                  <div className="text-base font-semibold flex items-center gap-2">
+                    <Dumbbell className="h-4 w-4 text-primary" />
+                    {isPt ? "Dinamometria (Força Muscular)" : language === "es" ? "Dinamometría (Fuerza Muscular)" : "Dynamometry (Muscle Strength)"}
+                  </div>
+                }
+              >
+                <div className="py-2">
+                  <StrengthTable
+                    value={anamnesis.strengthTable}
+                    readOnly
+                    bare
+                    lang={isPt ? "pt" : language === "es" ? "es" : "en"}
+                  />
+                </div>
+              </CollapsibleSection>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Pain Map Visual */}
         {painRegions.length > 0 && (
           <Card>
