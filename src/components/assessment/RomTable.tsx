@@ -248,7 +248,7 @@ export default function RomTable({
         ))}
       </div>
 
-      {/* Header */}
+      {/* Header (desktop only) */}
       <div className="hidden sm:grid grid-cols-[1fr_120px_120px_36px] gap-2 px-1 pb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
         <div>{s(lang, "colJoint")}</div>
         <div className="text-center">{s(lang, "colLeft")}</div>
@@ -256,41 +256,80 @@ export default function RomTable({
         <div />
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-2 sm:space-y-1.5">
         {rows.map((row, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-[1fr_88px_88px_32px] sm:grid-cols-[1fr_120px_120px_36px] gap-1.5 sm:gap-2 items-center group"
-          >
-            <Input
-              value={row.joint}
-              onChange={(e) => update(i, "joint", e.target.value)}
-              placeholder={s(lang, "placeholderJoint")}
-              className="h-9 text-sm"
-            />
-            <Input
-              value={row.leftValue}
-              onChange={(e) => update(i, "leftValue", e.target.value)}
-              placeholder={s(lang, "placeholderValue")}
-              className="h-9 text-sm text-center font-mono"
-            />
-            <Input
-              value={row.rightValue}
-              onChange={(e) => update(i, "rightValue", e.target.value)}
-              placeholder={s(lang, "placeholderValue")}
-              className="h-9 text-sm text-center font-mono"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => removeRow(i)}
-              aria-label={s(lang, "removeRow")}
-              title={s(lang, "removeRow")}
-              className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+          <div key={i} className="group">
+            {/* Mobile: stacked label on top, two values + delete on bottom */}
+            <div className="sm:hidden rounded-xl border border-border bg-background/40 p-2 space-y-1.5">
+              <Input
+                value={row.joint}
+                onChange={(e) => update(i, "joint", e.target.value)}
+                placeholder={s(lang, "placeholderJoint")}
+                className="h-9 text-sm"
+              />
+              <div className="grid grid-cols-[1fr_1fr_36px] gap-1.5 items-center">
+                <Input
+                  value={row.leftValue}
+                  onChange={(e) => update(i, "leftValue", e.target.value)}
+                  placeholder={`${s(lang, "colLeft")}`}
+                  inputMode="numeric"
+                  className="h-9 text-sm text-center font-mono"
+                />
+                <Input
+                  value={row.rightValue}
+                  onChange={(e) => update(i, "rightValue", e.target.value)}
+                  placeholder={`${s(lang, "colRight")}`}
+                  inputMode="numeric"
+                  className="h-9 text-sm text-center font-mono"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeRow(i)}
+                  aria-label={s(lang, "removeRow")}
+                  title={s(lang, "removeRow")}
+                  className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Desktop: single row */}
+            <div className="hidden sm:grid grid-cols-[1fr_120px_120px_36px] gap-2 items-center">
+              <Input
+                value={row.joint}
+                onChange={(e) => update(i, "joint", e.target.value)}
+                placeholder={s(lang, "placeholderJoint")}
+                className="h-9 text-sm"
+              />
+              <Input
+                value={row.leftValue}
+                onChange={(e) => update(i, "leftValue", e.target.value)}
+                placeholder={s(lang, "placeholderValue")}
+                inputMode="numeric"
+                className="h-9 text-sm text-center font-mono"
+              />
+              <Input
+                value={row.rightValue}
+                onChange={(e) => update(i, "rightValue", e.target.value)}
+                placeholder={s(lang, "placeholderValue")}
+                inputMode="numeric"
+                className="h-9 text-sm text-center font-mono"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeRow(i)}
+                aria-label={s(lang, "removeRow")}
+                title={s(lang, "removeRow")}
+                className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         ))}
       </div>
