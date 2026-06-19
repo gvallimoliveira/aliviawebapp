@@ -334,7 +334,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     const a = editAssessment;
     const an = a.anamnesis_data || {};
     setStep(0);
-    setChiefComplaint(an.chiefComplaint || an.customComplaint || (Array.isArray(an.chiefComplaints) ? an.chiefComplaints[0] : "") || "");
+    // Only use customComplaint as fallback for chiefComplaint if chiefComplaint is missing
+    // (legacy rows duplicated both fields). Otherwise customComplaint is its own field.
+    setChiefComplaint(an.chiefComplaint || (Array.isArray(an.chiefComplaints) ? an.chiefComplaints[0] : "") || an.customComplaint || "");
+    setAdditionalComplaint(
+      an.customComplaint && an.customComplaint !== an.chiefComplaint ? an.customComplaint : ""
+    );
     setHistory(an.history || "");
     setDuration(an.duration || an.painDuration || "");
     setOnset(an.onset || "");
@@ -344,6 +349,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPreviousSurgeries(an.previousSurgeries || an.previousTreatments || "");
     setComorbidities(an.comorbidities || "");
     setOccupation(an.occupation || "");
+    setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
     setPainType(an.painType || (Array.isArray(an.painTypes) ? an.painTypes[0] : "") || "");
     setPainRegions(Array.isArray(a.pain_regions) ? a.pain_regions : []);
