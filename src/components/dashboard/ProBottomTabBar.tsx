@@ -32,6 +32,20 @@ const ProBottomTabBar = ({ activeTab, onChangeTab, hasAgentAccess, professionalI
   const isAgenda = activeTab === "agenda";
   const isAgent = location.pathname.startsWith("/agente");
 
+  const scrollToPatientsList = () => {
+    const scroll = () => {
+      const el = document.querySelector('[data-onboarding="pro-patients"]');
+      if (!el) return false;
+      const y = el.getBoundingClientRect().top + window.scrollY - 86;
+      window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+      return true;
+    };
+
+    [80, 220, 480].forEach((delay) => {
+      window.setTimeout(scroll, delay);
+    });
+  };
+
   const goTab = (tab: string) => {
     // When returning to the Patients list, clear any open patient detail so
     // the user lands on the list (not on the last opened prontuário).
@@ -41,6 +55,9 @@ const ProBottomTabBar = ({ activeTab, onChangeTab, hasAgentAccess, professionalI
         next.delete("patient");
         setSearchParams(next, { replace: true });
       }
+      onChangeTab("professional");
+      scrollToPatientsList();
+      return;
     }
     onChangeTab(tab);
     window.scrollTo({ top: 0, behavior: "smooth" });
