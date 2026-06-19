@@ -206,6 +206,12 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const initialPatient = searchParams.get("patient");
   const [selectedEmail, setSelectedEmail] = useState<string | null>(initialPatient);
   useEffect(() => { onSelectionChange?.(selectedEmail); }, [selectedEmail, onSelectionChange]);
+  // Sync with URL: if the `patient` query param is removed (e.g. user taps
+  // the Patients tab in the bottom bar), collapse back to the list view.
+  const patientParam = searchParams.get("patient");
+  useEffect(() => {
+    setSelectedEmail((prev) => (patientParam ?? null) === prev ? prev : (patientParam ?? null));
+  }, [patientParam]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [notes, setNotes] = useState<Record<string, string>>({});
