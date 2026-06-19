@@ -821,17 +821,16 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         .eq("id", assessmentId)
         .single();
       if (error || !a) throw error || new Error("not found");
-      // O gerador do PDF exige uma hipótese diagnóstica para renderizar a
-      // primeira seção. Se a avaliação ainda não tem diagnóstico (ex.: fisio
-      // salvou parcialmente, sem clicar em "Gerar diagnóstico"), interrompe
-      // com mensagem amigável em vez de quebrar com "null is not an object".
-      if (!a.diagnosis || typeof (a.diagnosis as any)?.hypothesis !== "string") {
-        throw new Error(
-          isPt
-            ? "Gere o diagnóstico (etapa final) antes de baixar o PDF resumo."
-            : "Generate the diagnosis (final step) before downloading the summary PDF.",
-        );
-      }
+      const rawDiagnosis = (a.diagnosis && typeof a.diagnosis === "object") ? (a.diagnosis as any) : {};
+      const diagnosisForPdf = {
+        ...rawDiagnosis,
+        hypothesis: String(rawDiagnosis.hypothesis || rawDiagnosis.summary || rawDiagnosis.text || (isPt ? "Hipótese em construção" : "Hypothesis in progress")),
+        summary: String(rawDiagnosis.summary || rawDiagnosis.text || rawDiagnosis.clinicalImpression?.overview || (isPt ? "Resumo clínico não registrado." : "Clinical summary not recorded.")),
+        confidence: rawDiagnosis.confidence || "moderate",
+        disclaimer: rawDiagnosis.disclaimer || (isPt
+          ? "Resumo gerado a partir da avaliação manual registrada pelo profissional."
+          : "Summary generated from the professional manual assessment."),
+      };
       let proLogoUrl: string | undefined;
       let clinicLogoUrl: string | undefined;
       let clinicName: string | undefined;
@@ -845,7 +844,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       }
       const { generateAssessmentPdf } = await import("@/utils/generatePdf");
       await generateAssessmentPdf({
-        diagnosis: a.diagnosis,
+        diagnosis: diagnosisForPdf,
         treatmentPlan: a.treatment_plan,
         language: isPt ? "pt" : "en",
         userName: a.patient_name || (isPt ? "Paciente" : "Patient"),
