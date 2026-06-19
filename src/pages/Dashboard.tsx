@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useNavigate, useSearchParams } from "react-router-dom";
