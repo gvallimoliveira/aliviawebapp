@@ -796,6 +796,61 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setAddedSuggestions((prev) => new Set(prev).add(s.name));
   };
 
+  /**
+   * Gera e baixa um PDF-resumo da avaliação salva (anamnese, red flags,
+   * observações adicionais, hipótese e plano) para o fisio compartilhar com o
+   * paciente. Reusa o mesmo gerador do dashboard, garantindo branding
+   * (logo do profissional ou da clínica) quando disponível.
+   */
+  const handleDownloadSummaryPdf = async (assessmentId: string) => {
+    if (!assessmentId || generatingSummaryPdf) return;
+    setGeneratingSummaryPdf(true);
+    try {
+      const { data: a, error } = await supabase
+        .from("assessments")
+        .select("*")
+        .eq("id", assessmentId)
+        .single();
+      if (error || !a) throw error || new Error("not found");
+      let proLogoUrl: string | undefined;
+      let clinicLogoUrl: string | undefined;
+      let clinicName: string | undefined;
+      if (clinicId) {
+        const { data: c } = await supabase.from("clinics").select("logo_url, name").eq("id", clinicId).maybeSingle();
+        clinicLogoUrl = (c as any)?.logo_url || undefined;
+        clinicName = (c as any)?.name || undefined;
+      } else if (professionalId) {
+        const { data: p } = await supabase.from("professionals").select("logo_url").eq("id", professionalId).maybeSingle();
+        proLogoUrl = (p as any)?.logo_url || undefined;
+      }
+      const { generateAssessmentPdf } = await import("@/utils/generatePdf");
+      await generateAssessmentPdf({
+        diagnosis: a.diagnosis,
+        treatmentPlan: a.treatment_plan,
+        language: isPt ? "pt" : "en",
+        userName: a.patient_name || (isPt ? "Paciente" : "Patient"),
+        anamnesisData: a.anamnesis_data,
+        painRegions: a.pain_regions,
+        testResults: a.test_results,
+        redFlags: (a.red_flags as any)?.detected,
+        professionalLogoUrl: proLogoUrl,
+        clinicLogoUrl,
+        clinicName,
+      } as any);
+      toast({ title: isPt ? "PDF gerado" : "PDF generated" });
+    } catch (err: any) {
+      console.error("summary pdf error:", err);
+      toast({
+        title: isPt ? "Erro ao gerar PDF" : "PDF error",
+        description: err?.message || (isPt ? "Tente novamente em instantes." : "Please try again."),
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingSummaryPdf(false);
+    }
+  };
+
+
   const handleSave = async (navigateAfter: boolean = false) => {
     if (demoMode) { demoUpsellToast(); return; }
     if (!patientName.trim()) {
