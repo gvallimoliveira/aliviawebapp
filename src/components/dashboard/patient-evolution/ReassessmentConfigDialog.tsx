@@ -44,6 +44,15 @@ const ReassessmentConfigDialog = ({ open, onOpenChange, onConfirm, loading, pati
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      // Vínculo: questionários dependem do mapa de dor (as regiões marcadas
+      // definem quais questionários serão aplicados). Se ativar questionário,
+      // força painmap ON. Se desligar painmap, remove questionário.
+      if (id === "questionnaire" && next.has("questionnaire")) {
+        next.add("painmap");
+      }
+      if (id === "painmap" && !next.has("painmap")) {
+        next.delete("questionnaire");
+      }
       return next;
     });
   };
