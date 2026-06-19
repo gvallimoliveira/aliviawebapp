@@ -205,6 +205,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [pendingShareOpen, setPendingShareOpen] = useState(false);
   // Quantidade atual de pendências (em modo edição) — preenchido em useEffect.
   const [pendingCount, setPendingCount] = useState<{ total: number; pending: number } | null>(null);
+  // ID da avaliação salva — usado pelo botão "Baixar PDF resumo" no diálogo de envio.
+  const [pendingSavedAssessmentId, setPendingSavedAssessmentId] = useState<string | null>(null);
+  const [generatingSummaryPdf, setGeneratingSummaryPdf] = useState(false);
   const [specialtyApplied, setSpecialtyApplied] = useState<SpecialtyAppliedResult[]>([]);
   const specialtyPanelRef = useRef<SpecialtyPanelHandle | null>(null);
 
