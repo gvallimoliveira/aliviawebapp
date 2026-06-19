@@ -169,6 +169,14 @@ const StudentAccessCard = () => {
     }
     setSaving(true);
     try {
+      // Compute effective active mode:
+      // - if student access is being disabled → force 'professional'
+      // - if no CREFITO and student=true → must be 'student'
+      // - otherwise honor user choice
+      const effectiveMode: "professional" | "student" =
+        !isStudent ? "professional"
+        : (!hasCrefito ? "student" : activeMode);
+
       if (hasProfRecord) {
         // IMPORTANT: never touch the existing `crefito` here so VIP testers
         // can flip the switch without losing their professional registration.
@@ -176,10 +184,11 @@ const StudentAccessCard = () => {
           .from("professionals")
           .update({
             is_student: isStudent,
+            active_profile_mode: effectiveMode,
             student_institution: isStudent ? institution.trim() : null,
             student_period: isStudent ? period.trim() : null,
             full_name: fullName.trim() || undefined,
-            ...(isStudent ? { approved: false } : {}),
+            ...(effectiveMode === "student" ? { approved: false } : {}),
           } as any)
           .eq("user_id", user.id);
         if (error) throw error;
@@ -194,12 +203,14 @@ const StudentAccessCard = () => {
           active: true,
           approved: false,
           is_student: isStudent,
+          active_profile_mode: effectiveMode,
           student_institution: isStudent ? institution.trim() : null,
           student_period: isStudent ? period.trim() : null,
         } as any);
         if (error) throw error;
         setHasProfRecord(true);
       }
+      setActiveMode(effectiveMode);
       toast({ title: isStudent ? t.saved : t.disabled });
     } catch (e: any) {
       toast({ title: t.error, description: e?.message, variant: "destructive" });
