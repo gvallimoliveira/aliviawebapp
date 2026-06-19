@@ -956,6 +956,106 @@ function renderRomTableSection(
   return y + 4;
 }
 
+// ── Render Dynamometry / Muscle Strength Table ──
+function renderStrengthTableSection(
+  doc: jsPDF,
+  y: number,
+  rows: Array<{ movement: string; leftValue: string; rightValue: string; unit?: string }> | undefined,
+  isPt: boolean,
+  language: string,
+): number {
+  if (!rows || rows.length === 0) return y;
+  const cleaned = rows
+    .map((r) => ({
+      movement: (r?.movement || "").trim(),
+      leftValue: (r?.leftValue || "").trim(),
+      rightValue: (r?.rightValue || "").trim(),
+    }))
+    .filter((r) => r.movement || r.leftValue || r.rightValue);
+  if (cleaned.length === 0) return y;
+
+  const title =
+    language === "es"
+      ? "Dinamometría — Fuerza Muscular (kgf)"
+      : isPt
+        ? "Dinamometria — Força Muscular (kgf)"
+        : "Dynamometry — Muscle Strength (kgf)";
+  const colMov =
+    language === "es" ? "Movimiento evaluado" : isPt ? "Movimento testado" : "Tested movement";
+  const colLeft = language === "es" ? "Izquierda" : isPt ? "Esquerda" : "Left";
+  const colRight = language === "es" ? "Derecha" : isPt ? "Direita" : "Right";
+  const colAsym = language === "es" ? "Asimetría" : isPt ? "Assimetria" : "Asymmetry";
+
+  // Reserve title + header + 2 rows.
+  y = checkPage(doc, y, 14 + 8 + 16);
+  y = renderSectionTitle(doc, y, title, COLORS.primary);
+
+  const valueColW = 22;
+  const asymColW = 22;
+  const movColW = SECTION_TEXT_W - valueColW * 2 - asymColW;
+  const xMov = SECTION_X;
+  const xLeft = xMov + movColW;
+  const xRight = xLeft + valueColW;
+  const xAsym = xRight + valueColW;
+  const headerH = 7;
+
+  drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, headerH, 1.5, COLORS.primaryLight, COLORS.border);
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.primary);
+  doc.text(colMov, xMov, y + 4.8);
+  doc.text(colLeft, xLeft + valueColW / 2, y + 4.8, { align: "center" });
+  doc.text(colRight, xRight + valueColW / 2, y + 4.8, { align: "center" });
+  doc.text(colAsym, xAsym + asymColW / 2, y + 4.8, { align: "center" });
+  y += headerH;
+
+  doc.setFont("Inter", "normal");
+  doc.setFontSize(9);
+
+  cleaned.forEach((r, i) => {
+    const movLines = doc.splitTextToSize(r.movement || "—", movColW - 3);
+    const rowH = Math.max(7, movLines.length * 4.2 + 2.5);
+    y = checkPage(doc, y, rowH + 1);
+
+    drawRoundedRect(
+      doc,
+      MARGIN,
+      y,
+      CONTENT_WIDTH,
+      rowH,
+      0.8,
+      i % 2 === 1 ? [248, 246, 242] : COLORS.white,
+      COLORS.border,
+    );
+
+    doc.setTextColor(...COLORS.foreground);
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(9);
+    doc.text(movLines, xMov, y + 4.5);
+
+    doc.setFont("Inter", "bold");
+    doc.setTextColor(...COLORS.primary);
+    doc.text(r.leftValue || "—", xLeft + valueColW / 2, y + 4.5, { align: "center" });
+    doc.text(r.rightValue || "—", xRight + valueColW / 2, y + 4.5, { align: "center" });
+
+    // Asymmetry calc
+    const L = parseFloat(r.leftValue.replace(",", "."));
+    const R = parseFloat(r.rightValue.replace(",", "."));
+    let asymText = "—";
+    if (isFinite(L) && isFinite(R) && L > 0 && R > 0) {
+      const pct = Math.round((Math.abs(L - R) / Math.max(L, R)) * 100);
+      asymText = `${pct}%`;
+    }
+    doc.setFont("Inter", "normal");
+    doc.setTextColor(...COLORS.muted);
+    doc.text(asymText, xAsym + asymColW / 2, y + 4.5, { align: "center" });
+
+    y += rowH + 0.5;
+  });
+
+  return y + 4;
+}
+
 // ── Render Pain Map Images Section ──
 async function renderPainMapSection(doc: jsPDF, y: number, painRegions: string[], isPt: boolean): Promise<number> {
   const images = await generatePainMapImages(painRegions);
