@@ -1672,15 +1672,20 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                             : `Questionnaires already answered${pendingCount && pendingCount.pending === 0 && pendingCount.total > 0 ? " (via patient link)" : ""}`}
                         </div>
                         <ul className="text-xs text-foreground/80 space-y-1 pl-1">
-                          {questionnaireResults.map((r: any) => (
-                            <li key={r.questionnaireId} className="flex items-center justify-between gap-2 border-b border-emerald-200/40 last:border-0 py-1">
-                              <span className="truncate">{r.questionnaireName}</span>
-                              <span className="font-mono text-[11px] text-emerald-900 dark:text-emerald-200 shrink-0">
-                                {typeof r.totalScore === "number" ? r.totalScore.toFixed(1) : "—"}
-                                {r.interpretation ? ` · ${r.interpretation}` : ""}
-                              </span>
-                            </li>
-                          ))}
+                          {questionnaireResults.map((r: any) => {
+                            const displayScore = typeof r.percentageScore === "number"
+                              ? `${r.percentageScore}%`
+                              : (typeof r.totalScore === "number" ? `${r.totalScore}/${r.maxScore || "—"}` : "—");
+                            const interpretation = isPt ? r.interpretation_pt : r.interpretation_en;
+                            return (
+                              <li key={r.questionnaireId} className="flex items-center justify-between gap-2 border-b border-emerald-200/40 last:border-0 py-1">
+                                <span className="truncate">{r.questionnaireName}</span>
+                                <span className="font-mono text-[11px] text-emerald-900 dark:text-emerald-200 shrink-0">
+                                  {displayScore}{interpretation ? ` · ${interpretation}` : ""}
+                                </span>
+                              </li>
+                            );
+                          })}
                         </ul>
                         <p className="text-[11px] text-muted-foreground">
                           {isPt
