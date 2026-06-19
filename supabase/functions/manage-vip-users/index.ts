@@ -383,7 +383,7 @@ serve(async (req) => {
 
       const { data: pro, error: proErr } = await supabaseClient
         .from("professionals")
-        .select("id, user_id, full_name, is_partner")
+        .select("id, user_id, full_name, is_partner, crefito")
         .eq("id", professional_id)
         .single();
 
