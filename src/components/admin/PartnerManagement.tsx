@@ -103,6 +103,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     pro_label: "PRO",
     clinic_label: "Clinic",
     premium_label: "Premium",
+    academic_label: "Academic",
     resend_pwd: "Resend password",
     resend_sent: "Password reset email re-sent!",
     resend_no_user: "This partner has no Auth account yet.",
