@@ -252,7 +252,7 @@ serve(async (req) => {
     if (action === "get_partner_details") {
       const { data: partners, error } = await supabaseClient
         .from("professionals")
-        .select("id, full_name, email, city, state, is_partner, is_partner_account, premium_granted, user_id, is_student, student_institution, student_period, crefito")
+        .select("id, full_name, email, city, state, is_partner, is_partner_account, premium_granted, user_id, is_student, active_profile_mode, student_institution, student_period, crefito")
         .eq("is_partner_account", true)
         .order("full_name");
 
@@ -275,6 +275,7 @@ serve(async (req) => {
           is_partner_account: p.is_partner_account,
           premium_granted: p.premium_granted,
           is_student: !!p.is_student,
+          active_profile_mode: p.active_profile_mode || (p.is_student ? "student" : "professional"),
           student_institution: p.student_institution || null,
           student_period: p.student_period || null,
           has_clinic: !!clinic,
