@@ -750,6 +750,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         relieving && `Alivia com: ${relieving}`,
         occupation && `Ocupação: ${occupation}`,
         comorbidities && `Comorbidades: ${comorbidities}`,
+        additionalClinicalNotes && `Observações clínicas adicionais: ${additionalClinicalNotes}`,
       ].filter(Boolean).join("\n");
 
       const { data, error } = await supabase.functions.invoke("suggest-functional-tests", {
