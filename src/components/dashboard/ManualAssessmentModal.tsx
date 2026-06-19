@@ -925,7 +925,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setChiefComplaint(""); setHistory(""); setDuration(""); setOnset("");
     setAggravating(""); setRelieving(""); setMedications(""); setPreviousSurgeries("");
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
-    setPainRegions([]); setPainScoresPerRegion({}); setRedFlagsChecked([]); setQuestionnaireResults([]);
+    setPainRegions([]); setPainScoresPerRegion({}); setPainTypesPerRegion({});
+    setRedFlagsChecked([]); setAdditionalClinicalNotes("");
+    setQuestionnaireResults([]); setDeferQuestionnaires(false);
+    setPendingShareUrl(null); setPendingShareOpen(false); setPendingCount(null);
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
     setDiagnosisText(""); setTreatmentText(""); setAiDiagnosis(null); setAiTreatment(null);
     setSpecialtyApplied([]);
