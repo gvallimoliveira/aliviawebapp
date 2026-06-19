@@ -76,6 +76,10 @@ interface AnamnesisData {
   painScoresPerRegion?: Record<string, number>;
   /** Joint mobility / Range of Motion table (manual assessment). */
   romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
+  /** Free-text clinical history (manual assessment anamnesis). */
+  history?: string;
+  /** Free-text complementary exams (imaging, lab, etc.). */
+  complementaryExams?: string;
 }
 
 export interface ResponsibleProfessional {
@@ -730,7 +734,7 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
   if (anamnesis.chiefComplaint) {
     fields.push({ label: isPt ? "Queixa Principal" : "Chief Complaint", value: translateKey(anamnesis.chiefComplaint, isPt) });
   }
-  if (anamnesis.customComplaint) {
+  if (anamnesis.customComplaint && anamnesis.customComplaint !== anamnesis.chiefComplaint) {
     fields.push({ label: isPt ? "Queixa Adicional" : "Additional Complaint", value: anamnesis.customComplaint });
   }
   if (anamnesis.onset) {
@@ -830,6 +834,33 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
       doc.text(valueLines, SECTION_X + 4, y);
     }
     y += valueLines.length * 3.5 + 2;
+  }
+
+  // Long-text blocks (Histórico, Exames complementares) rendered below the grid
+  const longBlocks: { label: string; value: string }[] = [];
+  if (anamnesis.history) {
+    longBlocks.push({ label: isPt ? "Histórico" : "History", value: anamnesis.history });
+  }
+  if (anamnesis.complementaryExams) {
+    longBlocks.push({ label: isPt ? "Exames Complementares" : "Complementary Exams", value: anamnesis.complementaryExams });
+  }
+  for (const block of longBlocks) {
+    y += 2;
+    y = checkPage(doc, y, 14);
+    doc.setFont("Inter", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(`${block.label}:`, SECTION_X, y);
+    y += 4;
+    doc.setFont("Inter", "normal");
+    doc.setTextColor(...COLORS.muted);
+    const lines = doc.splitTextToSize(block.value, SECTION_TEXT_W);
+    for (const line of lines) {
+      y = checkPage(doc, y, 5);
+      doc.text(line, SECTION_X, y);
+      y += 3.8;
+    }
+    y += 1;
   }
 
   y += 4;

@@ -880,6 +880,22 @@ const AssessmentView = () => {
                     />
                   )}
                 </div>
+                {anamnesis.history && (
+                  <div className="pt-3 mt-3 border-t border-border">
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">
+                      {isPt ? "Histórico" : "History"}
+                    </div>
+                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{anamnesis.history}</p>
+                  </div>
+                )}
+                {anamnesis.complementaryExams && (
+                  <div className="pt-3 mt-3 border-t border-border">
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">
+                      {isPt ? "Exames Complementares" : "Complementary Exams"}
+                    </div>
+                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{anamnesis.complementaryExams}</p>
+                  </div>
+                )}
               </CollapsibleSection>
             </CardContent>
           </Card>

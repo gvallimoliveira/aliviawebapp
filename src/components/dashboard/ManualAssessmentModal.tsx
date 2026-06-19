@@ -144,6 +144,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Anamnese
   const [chiefComplaint, setChiefComplaint] = useState("");
+  const [additionalComplaint, setAdditionalComplaint] = useState("");
   const [history, setHistory] = useState("");
   const [duration, setDuration] = useState("");
   const [onset, setOnset] = useState("");
@@ -153,6 +154,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [previousSurgeries, setPreviousSurgeries] = useState("");
   const [comorbidities, setComorbidities] = useState("");
   const [occupation, setOccupation] = useState("");
+  const [complementaryExams, setComplementaryExams] = useState("");
 
   // Dor
   const [painScore, setPainScore] = useState<number>(5);
@@ -281,8 +283,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     ? `${professionalId}:${(patientEmail || patientName || "").toLowerCase().trim()}`
     : null;
   const draftState = {
-    step, chiefComplaint, history, duration, onset, aggravating, relieving,
-    medications, previousSurgeries, comorbidities, occupation,
+    step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
+    medications, previousSurgeries, comorbidities, occupation, complementaryExams,
     painScore, painType, painRegions, painScoresPerRegion, redFlagsChecked, questionnaireResults,
     functionalTests, romTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
@@ -298,6 +300,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     if (!p) return;
     setStep(p.step ?? 0);
     setChiefComplaint(p.chiefComplaint ?? "");
+    setAdditionalComplaint(p.additionalComplaint ?? "");
     setHistory(p.history ?? "");
     setDuration(p.duration ?? "");
     setOnset(p.onset ?? "");
@@ -307,6 +310,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPreviousSurgeries(p.previousSurgeries ?? "");
     setComorbidities(p.comorbidities ?? "");
     setOccupation(p.occupation ?? "");
+    setComplementaryExams(p.complementaryExams ?? "");
     setPainScore(p.painScore ?? 5);
     setPainType(p.painType ?? "");
     setPainRegions(p.painRegions ?? []);
@@ -330,7 +334,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     const a = editAssessment;
     const an = a.anamnesis_data || {};
     setStep(0);
-    setChiefComplaint(an.chiefComplaint || an.customComplaint || (Array.isArray(an.chiefComplaints) ? an.chiefComplaints[0] : "") || "");
+    // Only use customComplaint as fallback for chiefComplaint if chiefComplaint is missing
+    // (legacy rows duplicated both fields). Otherwise customComplaint is its own field.
+    setChiefComplaint(an.chiefComplaint || (Array.isArray(an.chiefComplaints) ? an.chiefComplaints[0] : "") || an.customComplaint || "");
+    setAdditionalComplaint(
+      an.customComplaint && an.customComplaint !== an.chiefComplaint ? an.customComplaint : ""
+    );
     setHistory(an.history || "");
     setDuration(an.duration || an.painDuration || "");
     setOnset(an.onset || "");
@@ -340,6 +349,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPreviousSurgeries(an.previousSurgeries || an.previousTreatments || "");
     setComorbidities(an.comorbidities || "");
     setOccupation(an.occupation || "");
+    setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
     setPainType(an.painType || (Array.isArray(an.painTypes) ? an.painTypes[0] : "") || "");
     setPainRegions(Array.isArray(a.pain_regions) ? a.pain_regions : []);
@@ -433,7 +443,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     // and the legacy single string for backward compatibility.
     chiefComplaints: chiefComplaint ? [chiefComplaint] : [],
     chiefComplaint,
-    customComplaint: chiefComplaint,
+    customComplaint: additionalComplaint,
+    additionalComplaint,
     history,
     duration,
     painDuration: duration,
@@ -445,6 +456,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     previousTreatments: previousSurgeries,
     comorbidities,
     occupation,
+    complementaryExams,
     painType,
     painTypes: painType ? [painType] : [],
     // Per-region pain scores (used by Comparação de Dor por Região).
@@ -834,6 +846,18 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   </DemoShield>
                 </div>
                 <div>
+                  <Label className="text-xs">{isPt ? "Queixa adicional" : "Additional complaint"}</Label>
+                  <Textarea
+                    value={additionalComplaint}
+                    onChange={(e) => setAdditionalComplaint(e.target.value.slice(0, 300))}
+                    rows={2}
+                    placeholder={isPt ? "Ex.: também refere formigamento ocasional na panturrilha" : "E.g. also reports occasional calf tingling"}
+                    className="mt-1 text-sm"
+                    disabled={demoMode}
+                    maxLength={300}
+                  />
+                </div>
+                <div>
                   <Label className="text-xs">{isPt ? "Histórico" : "History"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(history, MOCK_MANUAL_CASE.history, setHistory, "")}>
                     <Textarea value={history} onChange={(e) => setHistory(e.target.value)} rows={3} className="mt-1 text-sm" />
@@ -902,6 +926,26 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       <Input value={occupation} onChange={(e) => setOccupation(e.target.value)} className="mt-1 text-sm h-9" />
                     </DemoShield>
                   </div>
+                </div>
+                <div>
+                  <Label className="text-xs">{isPt ? "Exames complementares" : "Complementary exams"}</Label>
+                  <DemoShield on={demoMode} onAutofill={() => autofill(complementaryExams, MOCK_MANUAL_CASE.complementaryExams, setComplementaryExams, "")}>
+                    <Textarea
+                      value={complementaryExams}
+                      onChange={(e) => setComplementaryExams(e.target.value.slice(0, 2000))}
+                      rows={3}
+                      placeholder={isPt
+                        ? "Ex.: RM lombar (2025) — protrusão discal L4-L5 sem compressão radicular; Rx de joelho normal"
+                        : "E.g. Lumbar MRI (2025) — L4-L5 disc protrusion without root compression; Knee X-ray normal"}
+                      className="mt-1 text-sm"
+                      maxLength={2000}
+                    />
+                  </DemoShield>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {isPt
+                      ? "Liste exames de imagem, laboratoriais ou outros relevantes."
+                      : "List imaging, lab or other relevant exams."}
+                  </p>
                 </div>
               </div>
             )}
