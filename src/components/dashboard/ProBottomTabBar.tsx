@@ -89,19 +89,19 @@ const ProBottomTabBar = ({ activeTab, onChangeTab, hasAgentAccess, professionalI
             ariaLabel={L.patients}
           />
           {/* Central elevated CTA */}
-          <div className="relative flex items-start justify-center -mt-5">
+          <div className="relative flex items-start justify-center -mt-4">
             <button
               type="button"
               aria-label={L.assess}
               onClick={() => setPickerOpen(true)}
               className={cn(
                 "flex flex-col items-center justify-center",
-                "h-14 w-14 rounded-full bg-primary text-primary-foreground",
+                "h-12 w-12 rounded-full bg-primary text-primary-foreground",
                 "shadow-lg shadow-primary/30 ring-4 ring-background",
                 "active:scale-95 transition-transform",
               )}
             >
-              <Stethoscope className="h-6 w-6" />
+              <Stethoscope className="h-5 w-5" />
             </button>
             <span className="absolute -bottom-0.5 text-[10px] font-semibold text-primary">
               {L.assess}
