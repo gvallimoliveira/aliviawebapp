@@ -488,6 +488,24 @@ serve(async (req) => {
           .update(updates)
           .eq("id", professional_id);
         if (error) throw error;
+      } else if (access_type === "academic") {
+        // Marca/desmarca parceiro como Acadêmico (Alivia Acadêmico).
+        // Service role bypassa a trava do trigger validate_crefito_format,
+        // então CREFITO é preservado e podemos alternar livremente.
+        const updates: Record<string, any> = {
+          is_student: enabled,
+        };
+        if (enabled) {
+          updates.is_partner_account = true;
+          updates.approved = false; // tira do marketplace
+          if (body.student_institution) updates.student_institution = body.student_institution;
+          if (body.student_period) updates.student_period = body.student_period;
+        }
+        const { error } = await supabaseClient
+          .from("professionals")
+          .update(updates)
+          .eq("id", professional_id);
+        if (error) throw error;
       } else {
         return new Response(JSON.stringify({ error: "Invalid access_type" }), {
           status: 400,
