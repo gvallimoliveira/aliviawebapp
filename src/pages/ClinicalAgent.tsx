@@ -653,7 +653,7 @@ const ClinicalAgent = () => {
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
           {loadingThreads ? (
-            <div className="p-4 text-center text-xs text-muted-foreground">Carregando…</div>
+            <div className="p-4 text-center text-xs text-muted-foreground">Carregando suas conversas com o agente…</div>
           ) : threads.length === 0 ? (
             <div className="p-4 text-center text-xs text-muted-foreground">Nenhuma conversa ainda.</div>
           ) : threads.map(t => {
