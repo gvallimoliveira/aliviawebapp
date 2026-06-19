@@ -311,6 +311,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     scopeKey: draftScopeKey,
     state: draftState,
     enabled: open && !isEditing && !demoMode,
+    // Autosave agressivo: ~300ms de debounce + flush em visibilitychange/pagehide
+    // (já implementado no hook). Garante que cada alteração curta sobreviva à
+    // troca de aplicativo no celular, sem martelar a nuvem.
+    debounceMs: 300,
   });
   const handleRestoreDraft = () => {
     const p = draft.restore();
