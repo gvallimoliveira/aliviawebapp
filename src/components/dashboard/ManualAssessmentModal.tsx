@@ -1144,6 +1144,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   />
                 </DemoShield>
 
+                {/* Dynamometry (muscle strength) table — manual or AI-extracted from image/PDF */}
+                <StrengthTable
+                  value={strengthTable}
+                  onChange={setStrengthTable}
+                  lang={isPt ? "pt" : language === "es" ? "es" : "en"}
+                  disableImport={demoMode}
+                />
+
+
                 <div>
                   <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(functionalTests, MOCK_MANUAL_CASE.functionalTests, setFunctionalTests, "")}>
