@@ -490,7 +490,9 @@ const Dashboard = () => {
   // Sync professional profile flag
   useEffect(() => {
     setHasProfessionalProfile(!!professional);
-    setIsStudentProfessional(!!(professional as any)?.is_student);
+    const mode = (professional as any)?.active_profile_mode
+      ?? ((professional as any)?.is_student ? "student" : "professional");
+    setIsStudentProfessional(mode === "student");
   }, [professional]);
 
   // Auto-switch to "professional" context once on first load when arriving
