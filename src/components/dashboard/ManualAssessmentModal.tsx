@@ -400,6 +400,91 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   }, [open, editAssessment]);
   useEffect(() => { if (!open) prefilledIdRef.current = null; }, [open]);
 
+  // ── Persistência da sessão do modal ───────────────────────────────────────
+  // Grava em localStorage que existe uma avaliação manual em andamento, para
+  // que o ManualAssessmentResumer reabra automaticamente caso o app seja
+  // descarregado pelo SO (tela bloqueada, troca de app, reload da PWA).
+  const sessionTrackingEnabled = open && !demoMode;
+  useEffect(() => {
+    if (!sessionTrackingEnabled) return;
+    saveManualAssessmentSession({
+      professionalId,
+      clinicId: clinicId ?? null,
+      patientName,
+      patientEmail: patientEmail ?? null,
+      editAssessmentId: editAssessment?.id ?? null,
+      userId: user?.id ?? null,
+      openedAt: Date.now(),
+    });
+    // Refresh marker periodically and on visibility change so TTL stays fresh.
+    const refresh = () => saveManualAssessmentSession({
+      professionalId,
+      clinicId: clinicId ?? null,
+      patientName,
+      patientEmail: patientEmail ?? null,
+      editAssessmentId: editAssessment?.id ?? null,
+      userId: user?.id ?? null,
+      openedAt: Date.now(),
+    });
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("pagehide", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("pagehide", refresh);
+    };
+  }, [sessionTrackingEnabled, professionalId, clinicId, patientName, patientEmail, editAssessment?.id, user?.id]);
+
+  // ── Screen Wake Lock (best-effort) ────────────────────────────────────────
+  // Evita que a tela bloqueie enquanto o fisio está medindo ADM/força.
+  // Silencioso quando o navegador não suporta ou o usuário nega.
+  useEffect(() => {
+    if (!open || demoMode) return;
+    let wakeLock: any = null;
+    let cancelled = false;
+    const request = async () => {
+      try {
+        const wl = (navigator as any).wakeLock;
+        if (!wl?.request) return;
+        wakeLock = await wl.request("screen");
+        if (cancelled && wakeLock) {
+          try { await wakeLock.release(); } catch { /* noop */ }
+          wakeLock = null;
+        }
+      } catch {
+        /* noop */
+      }
+    };
+    void request();
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && !wakeLock) void request();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      if (wakeLock) {
+        try { wakeLock.release(); } catch { /* noop */ }
+      }
+    };
+  }, [open, demoMode]);
+
+  // ── Confirmação ao sair sem finalizar ─────────────────────────────────────
+  const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const requestClose = () => {
+    if (demoMode) {
+      onOpenChange(false);
+      return;
+    }
+    setConfirmExitOpen(true);
+  };
+  const confirmExit = () => {
+    setConfirmExitOpen(false);
+    clearManualAssessmentSession();
+    resetForm();
+    onOpenChange(false);
+  };
+
+
 
 
 
