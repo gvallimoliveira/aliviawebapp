@@ -877,18 +877,35 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     : ["Anamnesis", "Pain & Map", "Red Flags", "Questionnaires", "Tests & ROM", "Dynamometry", "Diagnosis"];
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
+    <>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (o) { onOpenChange(true); return; }
+        // Solicitação de fechar (X do canto, ESC capturado se chegar aqui):
+        // sempre confirma antes de descartar o trabalho em andamento.
+        if (demoMode) { resetForm(); onOpenChange(false); return; }
+        setConfirmExitOpen(true);
+      }}
+    >
       <DialogContent data-manual-assessment-modal=""
         className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0"
+        onEscapeKeyDown={(e) => {
+          // ESC nunca fecha — usuário precisa clicar no X e confirmar.
+          if (!demoMode) e.preventDefault();
+        }}
         onPointerDownOutside={(e) => {
-          // Keep the modal open when the user interacts with the floating
-          // voice-recorder FAB (rendered as a sibling portal on document.body).
+          // Cliques fora do modal NUNCA fecham (usuário pediu persistência
+          // a qualquer custo enquanto mede ADM/força com outros apps abertos).
+          // Exceção mantida: FAB do gravador de voz é portal externo.
           const target = e.target as HTMLElement | null;
-          if (target?.closest?.("[data-voice-recorder-fab]")) e.preventDefault();
+          if (target?.closest?.("[data-voice-recorder-fab]")) { e.preventDefault(); return; }
+          if (!demoMode) e.preventDefault();
         }}
         onInteractOutside={(e) => {
           const target = e.target as HTMLElement | null;
-          if (target?.closest?.("[data-voice-recorder-fab]")) e.preventDefault();
+          if (target?.closest?.("[data-voice-recorder-fab]")) { e.preventDefault(); return; }
+          if (!demoMode) e.preventDefault();
         }}
       >
         <div className="px-6 pt-6 pb-2 shrink-0">
