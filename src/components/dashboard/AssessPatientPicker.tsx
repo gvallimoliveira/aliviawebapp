@@ -194,7 +194,7 @@ const AssessPatientPicker = ({ open, onOpenChange, professionalId, clinicId, isD
         onOpenChange={setAddOpen}
         professionalId={professionalId}
         clinicId={clinicId || null}
-        onAdded={() => window.dispatchEvent(new CustomEvent("reload-pro-patients"))}
+        onAdded={() => { window.dispatchEvent(new CustomEvent("reload-pro-patients")); }}
         onCreateManualAssessment={(p) => {
           setTarget({ name: p.name, email: p.email });
           onOpenChange(false);
