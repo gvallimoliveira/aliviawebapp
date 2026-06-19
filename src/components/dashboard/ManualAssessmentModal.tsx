@@ -1672,7 +1672,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                             : `Questionnaires already answered${pendingCount && pendingCount.pending === 0 && pendingCount.total > 0 ? " (via patient link)" : ""}`}
                         </div>
                         <ul className="text-xs text-foreground/80 space-y-1 pl-1">
-                          {questionnaireResults.map((r: any) => {
+                          {questionnaireResults.map((r: QuestionnaireResult) => {
                             const displayScore = typeof r.percentageScore === "number"
                               ? `${r.percentageScore}%`
                               : (typeof r.totalScore === "number" ? `${r.totalScore}/${r.maxScore || "—"}` : "—");
