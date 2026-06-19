@@ -1909,7 +1909,62 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    {/* Diálogo pós-save: link de questionários pendentes pronto para envio */}
+    <AlertDialog
+      open={pendingShareOpen}
+      onOpenChange={(o) => {
+        setPendingShareOpen(o);
+        if (!o) {
+          onOpenChange(false);
+          resetForm();
+        }
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <LinkIcon className="h-4 w-4 text-primary" />
+            {isPt ? "Link de questionários pendentes pronto" : "Pending questionnaires link ready"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {isPt
+              ? "Compartilhe este link com o paciente. As respostas voltam vinculadas à mesma avaliação — você pode reabrir a avaliação a qualquer momento para ver o progresso."
+              : "Share this link with the patient. Answers come back attached to the same assessment — you can reopen it any time to see progress."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {pendingShareUrl && (
+          <div className="space-y-2">
+            <code className="text-xs bg-muted border rounded px-2 py-2 block break-all">{pendingShareUrl}</code>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => { navigator.clipboard.writeText(pendingShareUrl); toast({ title: isPt ? "Link copiado" : "Link copied" }); }}
+              >
+                <Copy className="h-3.5 w-3.5" /> {isPt ? "Copiar" : "Copy"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent((isPt ? "Olá! Por favor, responda os questionários da sua avaliação: " : "Hi! Please answer your assessment questionnaires: ") + pendingShareUrl)}`, "_blank")}
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+              </Button>
+            </div>
+          </div>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogAction onClick={() => setPendingShareOpen(false)}>
+            {isPt ? "Concluir" : "Done"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
+
   );
 };
 
