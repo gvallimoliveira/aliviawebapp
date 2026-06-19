@@ -125,6 +125,7 @@ const ClinicalAgent = () => {
   const [generatingHep, setGeneratingHep] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const [professionalId, setProfessionalId] = useState<string>("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const bootstrappedRef = useRef(false);
 
