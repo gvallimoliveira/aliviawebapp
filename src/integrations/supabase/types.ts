@@ -1994,6 +1994,7 @@ export type Database = {
       professionals: {
         Row: {
           active: boolean
+          active_profile_mode: string
           approved: boolean
           bio: string | null
           city: string
@@ -2031,6 +2032,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          active_profile_mode?: string
           approved?: boolean
           bio?: string | null
           city: string
@@ -2068,6 +2070,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          active_profile_mode?: string
           approved?: boolean
           bio?: string | null
           city?: string
