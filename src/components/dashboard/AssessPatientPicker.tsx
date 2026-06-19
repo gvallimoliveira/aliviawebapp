@@ -74,6 +74,25 @@ const AssessPatientPicker = ({ open, onOpenChange, professionalId, clinicId, isD
     let cancelled = false;
     const load = async () => {
       setLoading(true);
+
+      // Load archived (hidden) patient_emails to exclude them from the picker
+      const hiddenEmails = new Set<string>();
+      try {
+        if (clinicId) {
+          const { data: hid } = await (supabase.from("clinic_hidden_patients" as any) as any)
+            .select("patient_email")
+            .eq("clinic_id", clinicId);
+          (hid || []).forEach((h: any) => h?.patient_email && hiddenEmails.add(String(h.patient_email).toLowerCase()));
+        } else {
+          const { data: hid } = await (supabase.from("professional_hidden_patients" as any) as any)
+            .select("patient_email")
+            .eq("professional_id", professionalId);
+          (hid || []).forEach((h: any) => h?.patient_email && hiddenEmails.add(String(h.patient_email).toLowerCase()));
+        }
+      } catch {
+        // non-blocking — fall through with empty hidden set
+      }
+
       let query = (supabase.from("patients" as any) as any)
         .select("id, full_name, email, phone, created_at, updated_at")
         .eq("is_study_case", false)
@@ -86,7 +105,10 @@ const AssessPatientPicker = ({ open, onOpenChange, professionalId, clinicId, isD
       }
       const { data } = await query;
       if (!cancelled) {
-        setPatients((data as PatientRow[]) || []);
+        const rows = ((data as PatientRow[]) || []).filter(
+          (p) => !p.email || !hiddenEmails.has(String(p.email).toLowerCase()),
+        );
+        setPatients(rows);
         setLoading(false);
       }
     };
@@ -98,6 +120,7 @@ const AssessPatientPicker = ({ open, onOpenChange, professionalId, clinicId, isD
       window.removeEventListener("reload-pro-patients", handler);
     };
   }, [open, professionalId, clinicId, isDemo]);
+
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
