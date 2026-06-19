@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -82,7 +82,7 @@ type OnboardingContext = "personal" | "professional" | "clinic";
 
 function buildOnboardingSteps(
   context: OnboardingContext,
-  opts: { subscriptionType?: "monthly" | "single" | null; canManageClinic?: boolean } = {}
+  opts: { subscriptionType?: "monthly" | "single" | null; canManageClinic?: boolean; hasAgentAccess?: boolean } = {}
 ): OnboardingStep[] {
   if (context === "clinic") {
     const steps: OnboardingStep[] = [
@@ -97,11 +97,18 @@ function buildOnboardingSteps(
   }
 
   if (context === "professional") {
-    return [
-      { targetId: "pro-tab-trigger", titleKey: "onboarding.pro_tab.title", descriptionKey: "onboarding.pro_tab.desc", position: "bottom" },
-      { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom" },
-      { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom" },
+    const steps: OnboardingStep[] = [
+      { targetId: "pro-tab-trigger", titleKey: "onboarding.pro_tab.title", descriptionKey: "onboarding.pro_tab.desc", position: "bottom", tab: "professional" },
+      { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom", tab: "professional" },
+      { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom", tab: "professional" },
+      { targetId: "pro-tab-agenda", titleKey: "onboarding.pro.agenda.title", descriptionKey: "onboarding.pro.agenda.desc", position: "bottom", tab: "agenda" },
+      { targetId: "pro-tab-insights", titleKey: "onboarding.pro.insights.title", descriptionKey: "onboarding.pro.insights.desc", position: "bottom", tab: "insights" },
+      { targetId: "pro-tab-messages", titleKey: "onboarding.pro.messages.title", descriptionKey: "onboarding.pro.messages.desc", position: "bottom", tab: "messages" },
     ];
+    if (opts.hasAgentAccess) {
+      steps.push({ targetId: "pro-tab-agent", titleKey: "onboarding.pro.agent.title", descriptionKey: "onboarding.pro.agent.desc", position: "bottom", tab: "professional" });
+    }
+    return steps;
   }
 
   // personal
@@ -164,11 +171,32 @@ const Dashboard = () => {
     () => buildOnboardingSteps(onboardingContext, {
       subscriptionType: premiumAccess?.subscription_type,
       canManageClinic,
+      hasAgentAccess,
     }),
-    [onboardingContext, premiumAccess?.subscription_type, canManageClinic]
+    [onboardingContext, premiumAccess?.subscription_type, canManageClinic, hasAgentAccess]
   );
   const onboardingStorageKey = `onboarding_${onboardingContext}_completed_v2`;
   const onboarding = useOnboarding(onboardingStorageKey, onboardingSteps);
+
+  // While the professional tour is active, mirror each step's `tab` into the
+  // dashboard so the user actually sees the area being described. When the
+  // tour ends, return to the main "professional" tab.
+  const tourPrevTabRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (onboardingContext !== "professional") return;
+    if (onboarding.isActive) {
+      const targetTab = onboarding.step?.tab;
+      if (targetTab) {
+        if (tourPrevTabRef.current === null) tourPrevTabRef.current = activeTab;
+        if (targetTab !== activeTab) setActiveTab(targetTab);
+      }
+    } else if (tourPrevTabRef.current !== null) {
+      setActiveTab("professional");
+      tourPrevTabRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboarding.currentStep, onboarding.isActive, onboardingContext]);
+
 
   useEffect(() => {
     if (!authReady || authLoading) return;
@@ -963,21 +991,22 @@ const Dashboard = () => {
                   <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
                     <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
                   </TabsTrigger>
-                  <TabsTrigger value="agenda" className="gap-1.5 text-xs">
+                  <TabsTrigger value="agenda" className="gap-1.5 text-xs" data-onboarding="pro-tab-agenda">
                     <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
                   </TabsTrigger>
                   {showInsightsTab && (
-                    <TabsTrigger value="insights" className="gap-1.5 text-xs">
+                    <TabsTrigger value="insights" className="gap-1.5 text-xs" data-onboarding="pro-tab-insights">
                       <Sparkles className="h-4 w-4" /><span className="hidden sm:inline">Insights</span>
                     </TabsTrigger>
                   )}
-                  <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
+                  <TabsTrigger value="messages" className="gap-1.5 relative text-xs" data-onboarding="pro-tab-messages">
                     <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
                   </TabsTrigger>
                   {hasAgentAccess && (
                     <button
                       type="button"
                       onClick={() => navigate("/agente")}
+                      data-onboarding="pro-tab-agent"
                       className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-background/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <Brain className="h-4 w-4" /><span className="hidden sm:inline">Agente</span>
