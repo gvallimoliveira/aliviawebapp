@@ -17,7 +17,7 @@ import QuickActions from "@/components/dashboard/QuickActions";
 import AssessmentHistory from "@/components/dashboard/AssessmentHistory";
 import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import PushOptInBanner from "@/components/PushOptInBanner";
-import PartnerPasswordBanner from "@/components/dashboard/PartnerPasswordBanner";
+
 import ConfirmEmailBanner from "@/components/dashboard/ConfirmEmailBanner";
 
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
@@ -629,7 +629,7 @@ const Dashboard = () => {
 
       <main className="container py-8 px-4 space-y-8 max-w-7xl">
         <ClinicContextSelector />
-        <PartnerPasswordBanner isPartner={professional?.is_partner} userId={user?.id} />
+        
         {professional?.subscription_grace_until && new Date(professional.subscription_grace_until) > new Date() && professional?.subscription_status !== "active" && (
           <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/30">
             <CardContent className="py-4 px-4 flex items-start gap-3">

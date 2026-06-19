@@ -12,7 +12,7 @@ import LgpdBadge from "@/components/LgpdBadge";
 import logoAlivia from "@/assets/logo-alivia.png";
 import guilhermePhoto from "@/assets/guilherme-founder.jpeg";
 import AppVersionBadge from "@/components/AppVersionBadge";
-import InstallAppCard from "@/components/InstallAppCard";
+
 import MobileNavSheet from "@/components/MobileNavSheet";
 
 const fadeUp = {
@@ -352,9 +352,6 @@ const Gateway = () => {
           </motion.div>
         </div>
 
-        <div className="container max-w-2xl mt-8 mb-4">
-          <InstallAppCard variant="subtle" />
-        </div>
       </main>
 
       <LgpdBadge />
