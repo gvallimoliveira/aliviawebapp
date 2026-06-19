@@ -19,6 +19,8 @@ export const MOCK_MANUAL_CASE = {
   previousSurgeries: "Nega cirurgias prévias.",
   comorbidities: "Sobrepeso (IMC 27,4). Nega HAS/DM.",
   occupation: "Analista administrativo (home office, ~9h/dia sentado).",
+  complementaryExams:
+    "RM lombar (2024): protrusão discal L4-L5 e L5-S1 sem compressão radicular significativa. Exames laboratoriais (hemograma, PCR, VHS) sem alterações relevantes.",
 
   // Dor & mapa
   painScore: 6,
