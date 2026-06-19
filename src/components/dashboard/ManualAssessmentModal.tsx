@@ -1243,7 +1243,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs">{isPt ? "Tipo de dor" : "Pain type"}</Label>
+                  <Label className="text-xs">
+                    {painRegions.length > 1
+                      ? (isPt ? "Tipo de dor padrão" : "Default pain type")
+                      : (isPt ? "Tipo de dor" : "Pain type")}
+                  </Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(painType, MOCK_MANUAL_CASE.painType, setPainType, "")}>
                     <Select value={painType} onValueChange={setPainType}>
                       <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
@@ -1257,6 +1261,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       </SelectContent>
                     </Select>
                   </DemoShield>
+                  {painRegions.length > 1 && (
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {isPt
+                        ? "Com mais de uma região marcada, defina o tipo de dor específico de cada uma logo abaixo."
+                        : "With multiple regions marked, define the specific pain type for each one below."}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
