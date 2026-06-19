@@ -443,7 +443,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     // and the legacy single string for backward compatibility.
     chiefComplaints: chiefComplaint ? [chiefComplaint] : [],
     chiefComplaint,
-    customComplaint: chiefComplaint,
+    customComplaint: additionalComplaint,
+    additionalComplaint,
     history,
     duration,
     painDuration: duration,
@@ -455,6 +456,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     previousTreatments: previousSurgeries,
     comorbidities,
     occupation,
+    complementaryExams,
     painType,
     painTypes: painType ? [painType] : [],
     // Per-region pain scores (used by Comparação de Dor por Região).
