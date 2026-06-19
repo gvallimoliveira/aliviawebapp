@@ -629,7 +629,7 @@ const Dashboard = () => {
 
       <main className="container py-8 px-4 space-y-8 max-w-7xl">
         <ClinicContextSelector />
-        <PartnerPasswordBanner isPartner={professional?.is_partner} userId={user?.id} />
+        
         {professional?.subscription_grace_until && new Date(professional.subscription_grace_until) > new Date() && professional?.subscription_status !== "active" && (
           <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/30">
             <CardContent className="py-4 px-4 flex items-start gap-3">
