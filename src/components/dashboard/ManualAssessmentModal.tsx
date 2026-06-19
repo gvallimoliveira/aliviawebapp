@@ -821,6 +821,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         .eq("id", assessmentId)
         .single();
       if (error || !a) throw error || new Error("not found");
+      // O gerador do PDF exige uma hipótese diagnóstica para renderizar a
+      // primeira seção. Se a avaliação ainda não tem diagnóstico (ex.: fisio
+      // salvou parcialmente, sem clicar em "Gerar diagnóstico"), interrompe
+      // com mensagem amigável em vez de quebrar com "null is not an object".
+      if (!a.diagnosis || typeof (a.diagnosis as any)?.hypothesis !== "string") {
+        throw new Error(
+          isPt
+            ? "Gere o diagnóstico (etapa final) antes de baixar o PDF resumo."
+            : "Generate the diagnosis (final step) before downloading the summary PDF.",
+        );
+      }
       let proLogoUrl: string | undefined;
       let clinicLogoUrl: string | undefined;
       let clinicName: string | undefined;
