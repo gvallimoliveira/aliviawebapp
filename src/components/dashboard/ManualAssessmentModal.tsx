@@ -616,8 +616,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     complementaryExams,
     painType,
     painTypes: painType ? [painType] : [],
-    // Per-region pain scores (used by Comparação de Dor por Região).
+    // Per-region pain scores e tipos (usados pela Comparação de Dor por Região
+    // e pelo prompt da IA quando há múltiplas regiões marcadas).
     painScoresPerRegion,
+    painTypesPerRegion,
+    // Observações clínicas livres anotadas após as red flags. A IA usa este
+    // texto para refinar a impressão clínica, o diagnóstico e a sugestão de
+    // testes funcionais.
+    additionalClinicalNotes: additionalClinicalNotes || undefined,
     functionalTests, // free-text observations from Step 4 (kept inside anamnesis_data so it persists and shows up in views)
     romTable: sanitizeRomRows(romTable), // Joint mobility / ROM table
     strengthTable: sanitizeStrengthRows(strengthTable), // Dynamometry / muscle strength
