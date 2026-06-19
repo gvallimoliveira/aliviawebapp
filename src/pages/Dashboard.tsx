@@ -697,7 +697,7 @@ const Dashboard = () => {
           professional={professional}
           premiumAccess={premiumAccess}
           onRestart={onboarding.restart}
-          showRestart={!onboarding.isActive}
+          showRestart={false}
           activeTab={activeTab}
         />
 
