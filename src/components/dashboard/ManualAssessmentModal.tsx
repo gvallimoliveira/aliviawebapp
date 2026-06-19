@@ -848,6 +848,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
       toast({ title: isEditing ? (isPt ? "Avaliação atualizada!" : "Assessment updated!") : (isPt ? "Avaliação criada!" : "Assessment created!") });
       if (!isEditing) void draft.discard();
+      clearManualAssessmentSession();
       if (savedId) onSaved?.(savedId);
       onOpenChange(false);
       resetForm();
