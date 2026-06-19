@@ -16,6 +16,7 @@ import RedFlagContinueScreen from "@/components/assessment/RedFlagContinueScreen
 import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/AnamnesisForm";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
+import ClinicalThinkingSkeleton from "@/components/assessment/ClinicalThinkingSkeleton";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import ResumeSummary from "@/components/assessment/ResumeSummary";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
