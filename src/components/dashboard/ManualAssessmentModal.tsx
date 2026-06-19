@@ -1334,8 +1334,47 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </div>
                   </div>
                 )}
+
+                {/* Per-region pain TYPE — appears only with 2+ marked regions */}
+                {painRegions.length > 1 && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                    <Label className="text-xs font-semibold text-foreground">
+                      {isPt ? "Tipo de dor por região" : "Pain type per region"}
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground -mt-1">
+                      {isPt
+                        ? "Caracterize a dor de cada região marcada. Útil para diferenciar dor mecânica de irradiação neural, queimação etc."
+                        : "Characterize pain at each marked region. Helps differentiate mechanical pain from neural radiation, burning, etc."}
+                    </p>
+                    <div className="space-y-2 pt-1">
+                      {painRegions.map((id) => {
+                        const lbl = regionLabelMap[id];
+                        const v = painTypesPerRegion[id] || painType || "";
+                        return (
+                          <div key={id} className="flex items-center gap-3">
+                            <span className="text-xs text-foreground w-32 shrink-0 truncate">
+                              {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
+                            </span>
+                            <Select value={v} onValueChange={(val) => setRegionPainType(id, val)} disabled={demoMode}>
+                              <SelectTrigger className="h-8 text-xs flex-1"><SelectValue placeholder="—" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="local">{isPt ? "Local" : "Local"}</SelectItem>
+                                <SelectItem value="radiating">{isPt ? "Irradiada" : "Radiating"}</SelectItem>
+                                <SelectItem value="burning">{isPt ? "Queimação" : "Burning"}</SelectItem>
+                                <SelectItem value="tingling">{isPt ? "Formigamento" : "Tingling"}</SelectItem>
+                                <SelectItem value="throbbing">{isPt ? "Latejante" : "Throbbing"}</SelectItem>
+                                <SelectItem value="stabbing">{isPt ? "Pontada" : "Stabbing"}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+
 
             {/* STEP 2: RED FLAGS */}
             {step === 2 && (
