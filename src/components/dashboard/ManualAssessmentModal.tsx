@@ -432,9 +432,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     });
     document.addEventListener("visibilitychange", refresh);
     window.addEventListener("pagehide", refresh);
+    window.addEventListener("beforeunload", refresh);
+    window.addEventListener("blur", refresh);
+    // freeze é disparado pelo iOS antes de descarregar a aba — última
+    // chance de gravar o marcador para que o Resumer reabra ao voltar.
+    document.addEventListener("freeze", refresh);
     return () => {
       document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("pagehide", refresh);
+      window.removeEventListener("beforeunload", refresh);
+      window.removeEventListener("blur", refresh);
+      document.removeEventListener("freeze", refresh);
     };
   }, [sessionTrackingEnabled, professionalId, clinicId, patientName, patientEmail, editAssessment?.id, user?.id]);
 
