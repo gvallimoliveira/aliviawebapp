@@ -254,9 +254,9 @@ const ClinicalAgent = () => {
         const { data } = await sb.from("patients")
           .select("id, full_name, email, created_at").eq("clinic_id", clinicId).order("full_name");
         raw = (data || []) as any;
-      } else if (professionalId) {
+      } else if (myProfessionalId) {
         const { data } = await sb.from("patients")
-          .select("id, full_name, email, created_at").eq("professional_id", professionalId).order("full_name");
+          .select("id, full_name, email, created_at").eq("professional_id", myProfessionalId).order("full_name");
         raw = (data || []) as any;
       }
 
