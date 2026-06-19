@@ -1009,6 +1009,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           const longUrl = `${getPublicOrigin()}/avaliacao/pendentes/${savedId}`;
           const shortUrl = await createShortAppLink(longUrl);
           setPendingShareUrl(shortUrl || longUrl);
+          setPendingSavedAssessmentId(savedId);
           setPendingShareOpen(true);
           // Não fecha o modal — usuário fecha após copiar o link.
           return;
