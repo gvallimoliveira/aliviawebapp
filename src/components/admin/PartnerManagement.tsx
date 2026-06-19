@@ -534,6 +534,11 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRe
           <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
             <GraduationCap className="h-3 w-3" />
             🎓 Alivia Acadêmico
+            {partner.active_profile_mode && (
+              <span className="text-[10px] text-muted-foreground ml-1">
+                · {language === "pt" ? "operando como" : "operating as"} <strong>{partner.active_profile_mode === "student" ? (language === "pt" ? "Acadêmico" : "Academic") : (language === "pt" ? "Profissional" : "Professional")}</strong>
+              </span>
+            )}
           </p>
         )}
       </div>
