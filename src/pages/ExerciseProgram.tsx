@@ -42,6 +42,7 @@ interface Program {
     logo_url: string | null;
     clinic_name: string | null;
     is_student?: boolean | null;
+    active_profile_mode?: string | null;
     student_institution?: string | null;
     student_period?: string | null;
   };
