@@ -53,6 +53,7 @@ const ClearCache = lazy(() => import("./pages/ClearCache"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const PendingQuestionnaire = lazy(() => import("./pages/PendingQuestionnaire"));
+const AssessmentPendingQuestionnaires = lazy(() => import("./pages/AssessmentPendingQuestionnaires"));
 const ClinicalAgent = lazy(() => import("./pages/ClinicalAgent"));
 const CasosDeEstudo = lazy(() => import("./pages/CasosDeEstudo"));
 const AcademicTracks = lazy(() => import("./pages/AcademicTracks"));
