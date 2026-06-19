@@ -707,7 +707,7 @@ const ClinicalAgent = () => {
       </aside>
 
       {/* Main chat */}
-      <main className="flex-1 flex flex-col relative z-10 min-w-0">
+      <main className="flex-1 flex flex-col relative z-10 min-w-0 pb-20 md:pb-0">
         {/* Header */}
         <header className="sticky top-0 z-20 border-b border-border/40 bg-card/95 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3 flex flex-col gap-2 md:flex-row md:items-center">
           <div className="flex min-w-0 items-center gap-1.5 md:gap-2 md:flex-1">
