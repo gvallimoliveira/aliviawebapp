@@ -5,6 +5,8 @@ export interface OnboardingStep {
   titleKey: string;
   descriptionKey: string;
   position?: "top" | "bottom" | "left" | "right";
+  /** Optional dashboard tab to switch to while this step is visible. */
+  tab?: string;
 }
 
 export const useOnboarding = (storageKey: string, steps: OnboardingStep[]) => {
