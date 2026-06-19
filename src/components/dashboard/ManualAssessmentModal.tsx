@@ -801,6 +801,26 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       toast({ title: isPt ? "Nome do paciente é obrigatório" : "Patient name required", variant: "destructive" });
       return;
     }
+    // Bloqueia o salvamento quando o fisio mudou as regiões de dor mas há
+    // questionários pendentes gerados a partir das regiões anteriores. Isso
+    // mantém o conjunto de questionários sempre sincronizado com o mapa.
+    if (isEditing && pendingCount && pendingCount.pending > 0) {
+      const original = (editAssessment?.pain_regions || []) as string[];
+      const changed =
+        original.length !== painRegions.length ||
+        original.some((r) => !painRegions.includes(r)) ||
+        painRegions.some((r) => !original.includes(r));
+      if (changed) {
+        toast({
+          title: isPt ? "Sincronize os questionários pendentes" : "Sync pending questionnaires first",
+          description: isPt
+            ? `Há ${pendingCount.pending} questionário(s) pendente(s) ligado(s) às regiões anteriores. Use "Encerrar" no banner de pendentes (no topo) para cancelar — ao salvar, novos serão gerados conforme as regiões atuais — ou restaure as regiões originais.`
+            : `There are ${pendingCount.pending} pending questionnaires tied to the previous regions. Use "Cancel" on the pending banner (top) to clear them — new ones will be generated for the current regions on save — or restore the original regions.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
     setSaving(true);
     try {
       const row: any = {
