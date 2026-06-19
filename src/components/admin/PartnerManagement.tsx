@@ -504,16 +504,17 @@ interface PartnerCardProps {
   partner: PartnerDetail;
   t: Record<string, string>;
   togglingMap: Record<string, boolean>;
-  onToggle: (id: string, type: "pro" | "clinic" | "premium", enabled: boolean) => void;
+  onToggle: (id: string, type: "pro" | "clinic" | "premium" | "academic", enabled: boolean) => void;
   onResendPassword: (partner: PartnerDetail) => void;
   onRequestRemove: () => void;
 }
 
 const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRequestRemove }: PartnerCardProps) => {
-  const toggles: { type: "pro" | "clinic" | "premium"; label: string; icon: React.ReactNode; checked: boolean }[] = [
+  const toggles: { type: "pro" | "clinic" | "premium" | "academic"; label: string; icon: React.ReactNode; checked: boolean }[] = [
     { type: "pro", label: t.pro_label, icon: <Stethoscope className="h-3.5 w-3.5" />, checked: partner.is_partner },
     { type: "clinic", label: t.clinic_label, icon: <Building2 className="h-3.5 w-3.5" />, checked: partner.clinic_active },
     { type: "premium", label: t.premium_label, icon: <Star className="h-3.5 w-3.5" />, checked: partner.premium_granted },
+    { type: "academic", label: t.academic_label, icon: <GraduationCap className="h-3.5 w-3.5" />, checked: partner.is_student },
   ];
   const removeKey = `${partner.id}_remove`;
 
@@ -526,6 +527,12 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRe
           <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
             <Building2 className="h-3 w-3" />
             {partner.clinic_name}
+          </p>
+        )}
+        {partner.is_student && (
+          <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
+            <GraduationCap className="h-3 w-3" />
+            🎓 Alivia Acadêmico
           </p>
         )}
       </div>
