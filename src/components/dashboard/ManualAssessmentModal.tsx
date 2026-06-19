@@ -1209,6 +1209,18 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     <Button size="sm" variant="outline" className="h-7 px-2 text-xs gap-1" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent((isPt ? "Olá! Por favor, responda os questionários da sua avaliação: " : "Hi! Please answer your assessment questionnaires: ") + pendingShareUrl)}`, "_blank")}>
                       <MessageCircle className="h-3 w-3" /> WhatsApp
                     </Button>
+                    {editAssessment?.id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-xs gap-1"
+                        disabled={generatingSummaryPdf}
+                        onClick={() => handleDownloadSummaryPdf(editAssessment.id)}
+                      >
+                        {generatingSummaryPdf ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                        {isPt ? "PDF resumo" : "Summary PDF"}
+                      </Button>
+                    )}
                     {pendingCount.pending > 0 && (
                       <Button
                         size="sm"
