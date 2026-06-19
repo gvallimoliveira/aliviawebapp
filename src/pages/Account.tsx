@@ -15,6 +15,8 @@ import AppVersionBadge from "@/components/AppVersionBadge";
 import SignatureManager from "@/components/account/SignatureManager";
 import StudentAccessCard from "@/components/account/StudentAccessCard";
 import AcademicPerformanceCard from "@/components/account/AcademicPerformanceCard";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { Bell, BellOff, Send, Smartphone } from "lucide-react";
 
 const Account = () => {
   const { user, loading: authLoading } = useAuth();
@@ -25,6 +27,8 @@ const Account = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [testingPush, setTestingPush] = useState(false);
+  const push = usePushNotifications();
 
   const t = isPt ? {
     title: "Minha Conta",
@@ -44,6 +48,18 @@ const Account = () => {
     back: "Voltar",
     not_signed: "Você precisa estar logado para acessar esta página.",
     sign_in: "Fazer login",
+    notifications: "Notificações",
+    notifications_desc: "Controle os avisos de mensagens, avaliações e videochamadas neste dispositivo.",
+    push_enabled: "Ativas neste dispositivo",
+    push_disabled: "Inativas neste dispositivo",
+    push_unsupported: "Este navegador não suporta notificações push.",
+    push_denied: "A permissão foi bloqueada no navegador. Libere nas configurações do site/celular e volte aqui.",
+    push_ios_install: "No iPhone, instale o app na Tela de Início e abra pelo ícone para ativar notificações em segundo plano.",
+    enable_push: "Ativar notificações",
+    disable_push: "Desativar",
+    test_push: "Enviar teste",
+    test_sent: "Notificação de teste enviada.",
+    test_error: "Não foi possível enviar o teste agora.",
   } : {
     title: "My Account",
     desc: "Manage your access information",
@@ -62,7 +78,27 @@ const Account = () => {
     back: "Back",
     not_signed: "You must be signed in to access this page.",
     sign_in: "Sign in",
+    notifications: "Notifications",
+    notifications_desc: "Control message, assessment and video-call alerts on this device.",
+    push_enabled: "Enabled on this device",
+    push_disabled: "Disabled on this device",
+    push_unsupported: "This browser does not support push notifications.",
+    push_denied: "Permission was blocked in the browser. Allow it in site/device settings and come back here.",
+    push_ios_install: "On iPhone, install the app to the Home Screen and open it from the icon to enable background notifications.",
+    enable_push: "Enable notifications",
+    disable_push: "Disable",
+    test_push: "Send test",
+    test_sent: "Test notification sent.",
+    test_error: "Could not send the test right now.",
   };
+
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+  const isStandalone =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true);
+  const iosNeedsInstall = isIOS && !isStandalone;
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
