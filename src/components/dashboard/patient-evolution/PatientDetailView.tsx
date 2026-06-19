@@ -16,6 +16,7 @@ import AddPatientModal, { type PatientToEdit } from "../AddPatientModal";
 import FinalHypothesisEditor from "../FinalHypothesisEditor";
 import PatientFilesSection from "../PatientFilesSection";
 import StrengthTable, { sanitizeStrengthRows, computeAsymmetry, type StrengthRow } from "@/components/assessment/StrengthTable";
+import PatientStrengthSection from "./PatientStrengthSection";
 import PatientPhotosSection from "../PatientPhotosSection";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import RegionPainComparison from "../RegionPainComparison";
