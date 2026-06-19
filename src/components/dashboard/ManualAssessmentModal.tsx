@@ -1398,8 +1398,29 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </p>
                   </div>
                 )}
+
+                {/* Observações clínicas adicionais — texto livre que alimenta a IA */}
+                <div className="pt-2 border-t border-border/60">
+                  <Label className="text-xs">{isPt ? "Observações clínicas adicionais (opcional)" : "Additional clinical observations (optional)"}</Label>
+                  <Textarea
+                    value={additionalClinicalNotes}
+                    onChange={(e) => setAdditionalClinicalNotes(e.target.value)}
+                    rows={4}
+                    placeholder={isPt
+                      ? "Registre achados relevantes que não se encaixam nos campos acima: contexto familiar, suspeita clínica específica, compensações observadas, sinais comportamentais, fatores de adesão, etc."
+                      : "Record relevant findings that don't fit the fields above: family context, specific clinical suspicion, observed compensations, behavioral signs, adherence factors, etc."}
+                    className="mt-1 text-sm"
+                    disabled={demoMode}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {isPt
+                      ? "Estas observações são utilizadas pela IA ao gerar a impressão clínica, o diagnóstico e a sugestão de testes funcionais."
+                      : "These observations are used by the AI when generating the clinical impression, diagnosis and functional test suggestions."}
+                  </p>
+                </div>
               </div>
             )}
+
 
             {/* STEP 3: QUESTIONÁRIOS — mesmo fluxo da avaliação premium/link */}
             {step === 3 && (
