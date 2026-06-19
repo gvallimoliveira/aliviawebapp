@@ -1165,7 +1165,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-6">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-6">
           <div className="space-y-4 py-4">
             {demoMode && (
               <div className="rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-900/15 px-4 py-3 text-xs text-amber-900 dark:text-amber-200">
