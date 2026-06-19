@@ -1820,6 +1820,11 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     y = renderRomTableSection(doc, y, anamnesisData.romTable, isPt, language);
   }
 
+  // ── Dynamometry / Muscle Strength — right after ROM ──
+  if (anamnesisData?.strengthTable && anamnesisData.strengthTable.length > 0) {
+    y = renderStrengthTableSection(doc, y, anamnesisData.strengthTable, isPt, language);
+  }
+
   // ── Pain Map ──
   const regions = painRegions || anamnesisData?.painRegions;
   if (regions && regions.length > 0) {
