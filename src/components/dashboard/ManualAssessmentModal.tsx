@@ -2034,7 +2034,24 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               >
                 <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
               </Button>
+              {pendingSavedAssessmentId && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="gap-1.5"
+                  disabled={generatingSummaryPdf}
+                  onClick={() => handleDownloadSummaryPdf(pendingSavedAssessmentId)}
+                >
+                  {generatingSummaryPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                  {isPt ? "Baixar PDF resumo" : "Download summary PDF"}
+                </Button>
+              )}
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              {isPt
+                ? "Opcional: anexe o PDF junto com o link, ou envie apenas o link — fica a seu critério."
+                : "Optional: attach the PDF along with the link, or send just the link — your choice."}
+            </p>
           </div>
         )}
         <AlertDialogFooter>
