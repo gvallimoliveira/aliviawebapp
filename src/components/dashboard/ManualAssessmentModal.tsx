@@ -1242,8 +1242,25 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 5: DIAGNÓSTICO */}
+            {/* STEP 5: DINAMOMETRIA (opcional) */}
             {step === 5 && (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground leading-relaxed">
+                  {isPt
+                    ? "Etapa opcional. Registre dinamometria (força muscular em kgf) manualmente ou importe de imagem/PDF. Pode ser preenchida agora ou posteriormente, editando esta avaliação."
+                    : "Optional step. Record dynamometry (muscle strength in kgf) manually or import from image/PDF. Can be filled now or later by editing this assessment."}
+                </div>
+                <StrengthTable
+                  value={strengthTable}
+                  onChange={setStrengthTable}
+                  lang={isPt ? "pt" : language === "es" ? "es" : "en"}
+                  disableImport={demoMode}
+                />
+              </div>
+            )}
+
+            {/* STEP 6: DIAGNÓSTICO */}
+            {step === 6 && (
               <div className="space-y-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
