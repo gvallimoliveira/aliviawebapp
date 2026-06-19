@@ -252,7 +252,7 @@ serve(async (req) => {
     if (action === "get_partner_details") {
       const { data: partners, error } = await supabaseClient
         .from("professionals")
-        .select("id, full_name, email, city, state, is_partner, is_partner_account, premium_granted, user_id")
+        .select("id, full_name, email, city, state, is_partner, is_partner_account, premium_granted, user_id, is_student, student_institution, student_period, crefito")
         .eq("is_partner_account", true)
         .order("full_name");
 
@@ -274,6 +274,9 @@ serve(async (req) => {
           is_partner: p.is_partner,
           is_partner_account: p.is_partner_account,
           premium_granted: p.premium_granted,
+          is_student: !!p.is_student,
+          student_institution: p.student_institution || null,
+          student_period: p.student_period || null,
           has_clinic: !!clinic,
           clinic_active: clinic?.subscription_status === "active" || clinic?.subscription_status === "trialing",
           clinic_id: clinic?.id || null,
@@ -480,6 +483,24 @@ serve(async (req) => {
       } else if (access_type === "premium") {
         const updates: Record<string, any> = { premium_granted: enabled };
         if (enabled) updates.is_partner_account = true; // mantém na lista
+        const { error } = await supabaseClient
+          .from("professionals")
+          .update(updates)
+          .eq("id", professional_id);
+        if (error) throw error;
+      } else if (access_type === "academic") {
+        // Marca/desmarca parceiro como Acadêmico (Alivia Acadêmico).
+        // Service role bypassa a trava do trigger validate_crefito_format,
+        // então CREFITO é preservado e podemos alternar livremente.
+        const updates: Record<string, any> = {
+          is_student: enabled,
+        };
+        if (enabled) {
+          updates.is_partner_account = true;
+          updates.approved = false; // tira do marketplace
+          if (body.student_institution) updates.student_institution = body.student_institution;
+          if (body.student_period) updates.student_period = body.student_period;
+        }
         const { error } = await supabaseClient
           .from("professionals")
           .update(updates)

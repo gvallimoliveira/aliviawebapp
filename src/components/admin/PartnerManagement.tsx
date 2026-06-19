@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Handshake, Plus, Loader2, Stethoscope, Building2, Star, KeyRound, Trash2, Crown, X } from "lucide-react";
+import { Handshake, Plus, Loader2, Stethoscope, Building2, Star, KeyRound, Trash2, Crown, X, GraduationCap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface PartnerDetail {
@@ -19,6 +19,7 @@ interface PartnerDetail {
   is_partner: boolean;
   is_partner_account: boolean;
   premium_granted: boolean;
+  is_student: boolean;
   has_clinic: boolean;
   clinic_active: boolean;
   clinic_id: string | null;
@@ -69,6 +70,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     pro_label: "PRO",
     clinic_label: "Clínica",
     premium_label: "Premium",
+    academic_label: "Acadêmico",
     resend_pwd: "Reenviar senha",
     resend_sent: "E-mail de redefinição reenviado!",
     resend_no_user: "Esse parceiro ainda não tem conta no Auth.",
@@ -101,6 +103,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     pro_label: "PRO",
     clinic_label: "Clinic",
     premium_label: "Premium",
+    academic_label: "Academic",
     resend_pwd: "Resend password",
     resend_sent: "Password reset email re-sent!",
     resend_no_user: "This partner has no Auth account yet.",
@@ -273,7 +276,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     }
   };
 
-  const handleToggle = async (partnerId: string, accessType: "pro" | "clinic" | "premium", enabled: boolean) => {
+  const handleToggle = async (partnerId: string, accessType: "pro" | "clinic" | "premium" | "academic", enabled: boolean) => {
     if (accessType === "clinic" && enabled) {
       const partner = partners.find(p => p.id === partnerId);
       if (partner && !partner.has_clinic) {
@@ -290,6 +293,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
       if (accessType === "pro") return { ...p, is_partner: enabled };
       if (accessType === "clinic") return { ...p, clinic_active: enabled, has_clinic: enabled ? true : p.has_clinic };
       if (accessType === "premium") return { ...p, premium_granted: enabled };
+      if (accessType === "academic") return { ...p, is_student: enabled };
       return p;
     }));
 
@@ -500,16 +504,17 @@ interface PartnerCardProps {
   partner: PartnerDetail;
   t: Record<string, string>;
   togglingMap: Record<string, boolean>;
-  onToggle: (id: string, type: "pro" | "clinic" | "premium", enabled: boolean) => void;
+  onToggle: (id: string, type: "pro" | "clinic" | "premium" | "academic", enabled: boolean) => void;
   onResendPassword: (partner: PartnerDetail) => void;
   onRequestRemove: () => void;
 }
 
 const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRequestRemove }: PartnerCardProps) => {
-  const toggles: { type: "pro" | "clinic" | "premium"; label: string; icon: React.ReactNode; checked: boolean }[] = [
+  const toggles: { type: "pro" | "clinic" | "premium" | "academic"; label: string; icon: React.ReactNode; checked: boolean }[] = [
     { type: "pro", label: t.pro_label, icon: <Stethoscope className="h-3.5 w-3.5" />, checked: partner.is_partner },
     { type: "clinic", label: t.clinic_label, icon: <Building2 className="h-3.5 w-3.5" />, checked: partner.clinic_active },
     { type: "premium", label: t.premium_label, icon: <Star className="h-3.5 w-3.5" />, checked: partner.premium_granted },
+    { type: "academic", label: t.academic_label, icon: <GraduationCap className="h-3.5 w-3.5" />, checked: partner.is_student },
   ];
   const removeKey = `${partner.id}_remove`;
 
@@ -522,6 +527,12 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRe
           <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
             <Building2 className="h-3 w-3" />
             {partner.clinic_name}
+          </p>
+        )}
+        {partner.is_student && (
+          <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
+            <GraduationCap className="h-3 w-3" />
+            🎓 Alivia Acadêmico
           </p>
         )}
       </div>
