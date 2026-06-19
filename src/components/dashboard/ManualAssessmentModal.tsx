@@ -846,6 +846,18 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   </DemoShield>
                 </div>
                 <div>
+                  <Label className="text-xs">{isPt ? "Queixa adicional" : "Additional complaint"}</Label>
+                  <Textarea
+                    value={additionalComplaint}
+                    onChange={(e) => setAdditionalComplaint(e.target.value.slice(0, 300))}
+                    rows={2}
+                    placeholder={isPt ? "Ex.: também refere formigamento ocasional na panturrilha" : "E.g. also reports occasional calf tingling"}
+                    className="mt-1 text-sm"
+                    disabled={demoMode}
+                    maxLength={300}
+                  />
+                </div>
+                <div>
                   <Label className="text-xs">{isPt ? "Histórico" : "History"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(history, MOCK_MANUAL_CASE.history, setHistory, "")}>
                     <Textarea value={history} onChange={(e) => setHistory(e.target.value)} rows={3} className="mt-1 text-sm" />
