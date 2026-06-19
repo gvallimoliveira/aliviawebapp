@@ -1,61 +1,28 @@
-## Objetivo
+## Adicionar toggle "Acadêmico" no painel admin de Parceiros
 
-Garantir que o modal de **Avaliação Manual** nunca seja perdido quando o usuário:
-- bloqueia a tela do celular,
-- abre outro app em paralelo (goniômetro, dinamômetro, calculadora etc.),
-- sofre um reload forçado da PWA pelo sistema operacional.
+Hoje o admin pode liberar PRO / Clínica / Premium para parceiros, mas não consegue marcar um parceiro como Acadêmico — o trigger `validate_crefito_format` bloqueia a transição quando o profissional já tem CREFITO (a exceção VIP só vale para o próprio usuário VIP, não para o admin liberando para terceiros).
 
-O modal só fecha quando o usuário **finaliza** a avaliação ou **explicitamente** decide sair.
+Vou adicionar um 4º switch **"Acadêmico"** em cada card de parceiro, ao lado de PRO / Clínica / Premium, que o admin pode alternar livremente — mesmo se o parceiro já tiver CREFITO. O CREFITO é preservado (não é apagado), apenas marcamos `is_student=true`, forçamos `approved=false` (sai do marketplace) e coletamos instituição/período opcionalmente.
 
-## Comportamento esperado
+### O que muda
 
-1. Enquanto o modal estiver aberto:
-   - **ESC** e **clique fora** deixam de fechar o modal (já existe parcial p/ FAB de voz — vamos estender).
-   - O botão **X** do canto passa a pedir confirmação: *"Sair da avaliação? Seus dados ficam salvos como rascunho."* (`Continuar editando` / `Sair`).
-   - (Opcional, best-effort) ativar **Screen Wake Lock API** enquanto o modal está visível, para reduzir bloqueio automático de tela durante medições.
+**Banco (migration)**
+- Atualizar `validate_crefito_format` para também aceitar transições feitas por admin: adicionar bypass quando `auth.uid()` pertencer a `vip_users` (admin alternando para terceiros, não só para si mesmo). Hoje a função compara com o e-mail da própria row; passa a aceitar também o e-mail do caller via `auth.users.id = auth.uid()`.
 
-2. Ao abrir o modal, é gravado um **marcador de sessão** em `localStorage` (`alivia:manual-assessment:session`) contendo: `professionalId`, `clinicId`, `patientName`, `patientEmail`, `editAssessmentId` (se edição), `openedAt`. Atualizado também em `visibilitychange` / `pagehide` (o autosave de rascunho já existe e continua intacto).
+**Edge function `manage-vip-users`**
+- Estender `toggle_partner_access` para aceitar `access_type: "academic"`. Quando `enabled=true`: atualiza `professionals` setando `is_student=true`, `approved=false`, e opcionalmente `student_institution` / `student_period` se vierem no payload. Quando `enabled=false`: `is_student=false` e restaura `approved` conforme regra atual (true se tiver CREFITO+CPF preenchidos).
+- Estender `get_partner_details` para retornar `is_student`, `student_institution`, `student_period`.
 
-3. Ao iniciar o app (após login, dentro de `AuthProvider`), um novo componente **`ManualAssessmentResumer`** detecta o marcador e:
-   - reabre o modal automaticamente com o mesmo `patientName/Email/professionalId/clinicId`;
-   - se `editAssessmentId` existir, busca a avaliação no Supabase e injeta como `editAssessment`;
-   - o `useAutosaveDraft` existente repõe o estado do formulário a partir do rascunho local + nuvem (`scopeKey` permanece o mesmo).
-   - Mostra um toast curto: *"Retomando sua avaliação manual…"*.
+**UI `src/components/admin/PartnerManagement.tsx`**
+- Adicionar campo `is_student` na interface `PartnerDetail`.
+- Adicionar 4º toggle "Acadêmico" (ícone `GraduationCap`) no `PartnerCard`, junto com PRO/Clínica/Premium.
+- Adicionar tipo `"academic"` na assinatura de `onToggle` e em `handleToggle`.
+- Labels pt/en: "Acadêmico" / "Academic".
+- Quando o toggle Acadêmico aparece como ativo, mostrar um pequeno badge "🎓 Alivia Acadêmico" abaixo do nome do parceiro (similar ao badge de clínica).
 
-4. O marcador é **removido** quando:
-   - usuário confirma "Sair" no modal,
-   - a avaliação é finalizada/salva com sucesso,
-   - usuário descarta o rascunho na barra de retomada.
+### O que NÃO muda
 
-5. Cenários **não** afetados (continuam como hoje):
-   - Botões "Nova avaliação manual" no prontuário, lista de pacientes ou bottom menu: continuam abrindo do zero / oferecendo retomada via banner atual.
-   - Reload manual com `Ctrl+R` no desktop e fluxo de logout.
-
-## Mudanças técnicas
-
-**Novo arquivo** `src/lib/manualAssessmentSession.ts`
-- `saveSession(meta)`, `getSession()`, `clearSession()` — wrapper fino sobre `localStorage` com TTL de 12h.
-
-**`src/components/dashboard/ManualAssessmentModal.tsx`**
-- `useEffect`: `saveSession(...)` quando `open === true`; `clearSession()` quando `open === false` **e** a saída foi confirmada (sucesso do save ou confirmação do usuário).
-- `<Dialog>`: adicionar `onEscapeKeyDown={(e) => e.preventDefault()}` e expandir o `onPointerDownOutside` / `onInteractOutside` para sempre `preventDefault()` (já há a exceção do FAB — viramos a regra: nada fora do botão X fecha).
-- Novo `ConfirmExitDialog` interno acionado pelo X (custom close button substitui o `DialogClose` padrão do shadcn).
-- Hook `useScreenWakeLock(open)` (novo, opcional, com try/catch — silencioso se o navegador não suportar).
-- No `handleSave` final / `onSaved`: `clearSession()`.
-
-**Novo arquivo** `src/components/dashboard/ManualAssessmentResumer.tsx`
-- Montado uma única vez via `App.tsx` dentro de `<AuthProvider>` (e antes do `<BrowserRouter>` não é necessário — pode ficar dentro).
-- Lê `getSession()`; se válida e usuário autenticado, carrega `editAssessment` (se ID) e renderiza `<ManualAssessmentModal open ... />`. Fecha → `clearSession()`.
-- Mostra `toast` curto na primeira montagem com sessão ativa.
-
-**`src/App.tsx`**
-- Adicionar `<ManualAssessmentResumer />` ao lado de `<RealtimeNotifier />`.
-
-**Sem mudanças** em: `useAutosaveDraft`, edge functions, schema do banco, `sessionPersistence` (rota), service workers.
-
-## Riscos & mitigação
-
-- **Reabrir sobre outra tela em uso (ex.: usuário foi para Conta):** aceitável — usuário pediu explicitamente persistência "a qualquer custo". O modal já é fullscreen-like e tem o botão Sair com confirmação.
-- **Marcador "preso" após bug:** TTL de 12h + botão "Sair" sempre limpa. Também limpamos em `onSaved`.
-- **Wake Lock negado pelo navegador:** ignorado silenciosamente.
-- **Modal duplicado** (Resumer + pai já abrindo): Resumer checa se já existe `[data-manual-assessment-modal]` no DOM antes de montar.
+- PRO, Clínica e Premium continuam funcionando exatamente como hoje — toggles independentes. O admin pode ter PRO **e** Acadêmico ligados ao mesmo tempo se quiser (o badge acadêmico no dashboard do parceiro já trata isso).
+- CREFITO do parceiro nunca é apagado.
+- Fluxo de auto-criação de conta por e-mail (Plus button no topo) continua igual; depois de criar, o admin liga o toggle Acadêmico no card.
+- Memory `student-access` continua válida; a trava do trigger para usuários comuns (não-VIP, não-admin) permanece intacta.
