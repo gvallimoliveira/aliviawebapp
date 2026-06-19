@@ -451,7 +451,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Conta pendentes vinculados a esta avaliação (modo edição) para exibir o
   // banner com o link consolidado e botão de cancelar pendência.
   useEffect(() => {
-    if (!open || !editAssessment?.id || demoMode) { setPendingCount(null); return; }
+    if (!open || !editAssessment?.id || demoMode) { setPendingCount(null); setPendingSavedAssessmentId(null); return; }
+    setPendingSavedAssessmentId(editAssessment.id);
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
