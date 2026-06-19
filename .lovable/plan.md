@@ -1,28 +1,69 @@
-## Adicionar toggle "Acadêmico" no painel admin de Parceiros
 
-Hoje o admin pode liberar PRO / Clínica / Premium para parceiros, mas não consegue marcar um parceiro como Acadêmico — o trigger `validate_crefito_format` bloqueia a transição quando o profissional já tem CREFITO (a exceção VIP só vale para o próprio usuário VIP, não para o admin liberando para terceiros).
+## Como o sistema enxerga hoje
 
-Vou adicionar um 4º switch **"Acadêmico"** em cada card de parceiro, ao lado de PRO / Clínica / Premium, que o admin pode alternar livremente — mesmo se o parceiro já tiver CREFITO. O CREFITO é preservado (não é apagado), apenas marcamos `is_student=true`, forçamos `approved=false` (sai do marketplace) e coletamos instituição/período opcionalmente.
+Existe **uma única linha** em `professionals` por usuário. O modo Acadêmico é apenas a flag booleana `is_student` nessa linha. Ou seja:
 
-### O que muda
+- `is_student = false` → o parceiro é tratado como **Profissional** em todo lugar (PDF mostra CREFITO, aparece no marketplace se aprovado, links públicos saem como avaliação profissional).
+- `is_student = true` → tudo passa a se comportar como **Acadêmico**: banner âmbar no PDF ("Alivia Acadêmico · Instituição · Período"), bloco do responsável mostra instituição/período no lugar do CREFITO, link público de avaliação vira acadêmico, marketplace é forçado a `approved=false`.
 
-**Banco (migration)**
-- Atualizar `validate_crefito_format` para também aceitar transições feitas por admin: adicionar bypass quando `auth.uid()` pertencer a `vip_users` (admin alternando para terceiros, não só para si mesmo). Hoje a função compara com o e-mail da própria row; passa a aceitar também o e-mail do caller via `auth.users.id = auth.uid()`.
+Quem decide isso hoje é o `getResponsibleProfessional` lendo `is_student` direto do banco. Não há "modo ativo" — o estado da flag **é** o perfil.
 
-**Edge function `manage-vip-users`**
-- Estender `toggle_partner_access` para aceitar `access_type: "academic"`. Quando `enabled=true`: atualiza `professionals` setando `is_student=true`, `approved=false`, e opcionalmente `student_institution` / `student_period` se vierem no payload. Quando `enabled=false`: `is_student=false` e restaura `approved` conforme regra atual (true se tiver CREFITO+CPF preenchidos).
-- Estender `get_partner_details` para retornar `is_student`, `student_institution`, `student_period`.
+**Implicação prática do toggle admin que acabamos de criar:** se você ligar Acadêmico para um parceiro que já tem PRO ativo, o PDF e os links **passam imediatamente a sair como acadêmicos**, mesmo com a assinatura PRO viva. Ligar os dois "ao mesmo tempo" no estado atual significa: acesso liberado às ferramentas PRO (porque `subscription_status` permanece ativo), mas identidade visível = Acadêmico. Não há como o parceiro escolher.
 
-**UI `src/components/admin/PartnerManagement.tsx`**
-- Adicionar campo `is_student` na interface `PartnerDetail`.
-- Adicionar 4º toggle "Acadêmico" (ícone `GraduationCap`) no `PartnerCard`, junto com PRO/Clínica/Premium.
-- Adicionar tipo `"academic"` na assinatura de `onToggle` e em `handleToggle`.
-- Labels pt/en: "Acadêmico" / "Academic".
-- Quando o toggle Acadêmico aparece como ativo, mostrar um pequeno badge "🎓 Alivia Acadêmico" abaixo do nome do parceiro (similar ao badge de clínica).
+## O que você quer
 
-### O que NÃO muda
+Permitir que o parceiro com PRO + Acadêmico liberados **escolha qual perfil está ativo** (e qual identidade vai para PDF/links/marketplace), podendo alternar quando quiser. Sem perder dados de nenhum dos dois.
 
-- PRO, Clínica e Premium continuam funcionando exatamente como hoje — toggles independentes. O admin pode ter PRO **e** Acadêmico ligados ao mesmo tempo se quiser (o badge acadêmico no dashboard do parceiro já trata isso).
-- CREFITO do parceiro nunca é apagado.
-- Fluxo de auto-criação de conta por e-mail (Plus button no topo) continua igual; depois de criar, o admin liga o toggle Acadêmico no card.
-- Memory `student-access` continua válida; a trava do trigger para usuários comuns (não-VIP, não-admin) permanece intacta.
+## Mudanças propostas
+
+### 1. Banco — novo campo `active_profile_mode`
+
+Adicionar coluna em `professionals`:
+- `active_profile_mode TEXT` com valores `'professional' | 'student'`, default `'professional'`.
+- Migration preenche linhas existentes: se `is_student=true` hoje → `'student'`; senão → `'professional'`.
+- Trigger garante coerência: só pode setar `'student'` se `is_student=true`; só pode setar `'professional'` se tem CREFITO **ou** é VIP.
+
+`is_student` deixa de ser "estou no modo acadêmico agora" e passa a significar **"acesso acadêmico liberado"** (capacidade). `active_profile_mode` indica qual está em uso.
+
+### 2. Resolução do responsável (`getResponsibleProfessional`)
+
+Trocar a leitura de `is_student` por `active_profile_mode === 'student'`. PDFs, links públicos e RPCs (`get_public_professional_assessment_link`, `get_clinic_members_with_details`) passam a refletir o modo ativo, não a capacidade.
+
+### 3. Painel admin (`PartnerManagement.tsx`)
+
+- Os 4 toggles continuam significando **liberação de acesso** (capacidades): PRO, Clínica, Premium, Acadêmico.
+- Adicionar legenda curta no card explicando: "O parceiro escolhe qual perfil exibir em /minha-conta quando tiver mais de um liberado."
+
+### 4. UI do parceiro — seletor de perfil ativo
+
+Em `StudentAccessCard.tsx` (ou novo card `ProfileModeCard.tsx` ao lado), quando o parceiro tem **PRO + Acadêmico liberados simultaneamente**:
+- Mostrar um RadioGroup: "Perfil ativo agora" → Profissional / Acadêmico.
+- Salvar grava `active_profile_mode`.
+- Feedback explicando o impacto: "Esta escolha define o que aparece no seu PDF, no link público de avaliação e no marketplace."
+
+Quando só um está liberado, não mostra o seletor (modo é fixo).
+
+### 5. Badge no Dashboard / ClinicContextSelector
+
+A lógica `isStudentProfessional` que hoje lê `is_student` passa a ler `active_profile_mode === 'student'`. Assim o ícone 🎓 só aparece quando o parceiro está **operando** como acadêmico.
+
+### 6. Regra de "perfil padrão pós-liberação"
+
+Conforme você sugeriu: na primeira liberação, o `active_profile_mode` reflete o cadastro que o parceiro completou:
+- Se ele se cadastrou como profissional (tem CREFITO) e admin liga Acadêmico depois → permanece `'professional'`; ele decide quando mudar.
+- Se ele se cadastrou como estudante e admin liga PRO depois → permanece `'student'`.
+- Migration inicial respeita esse princípio usando o `is_student` atual como dica.
+
+## Resumo do que muda para você como admin
+
+- Liberar Acadêmico **não rouba mais** a identidade do parceiro PRO — apenas habilita a opção.
+- O parceiro vê o seletor em /minha-conta e escolhe; pode alternar sempre.
+- PDF, links e marketplace seguem o modo ativo selecionado.
+
+## Pontos técnicos
+
+- Migration: nova coluna + trigger + backfill.
+- Edge function `manage-vip-users` continua igual (toggle = capacidade); opcionalmente expor `active_profile_mode` no `get_partner_details` para o admin ver em qual modo o parceiro está agora.
+- `StudentAccessCard` ganha lógica de "tenho os dois" e renderiza o radio.
+- Componentes que hoje filtram por `is_student` (PDF, banner dashboard, ProfessionalSearch marketplace) trocam para `active_profile_mode`.
+- `ProfessionalSearch` continua escondendo quem está em modo acadêmico (`active_profile_mode='student'`), mesmo que tenha CREFITO.
