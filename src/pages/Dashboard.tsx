@@ -954,6 +954,7 @@ const Dashboard = () => {
             } : professional;
             const showInsightsTab = (isProDemo || (hasProAccess && !!professional?.id));
             return (
+              <>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <TabsList
                   className="w-full grid"
