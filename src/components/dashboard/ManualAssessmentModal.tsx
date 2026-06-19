@@ -300,6 +300,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     if (!p) return;
     setStep(p.step ?? 0);
     setChiefComplaint(p.chiefComplaint ?? "");
+    setAdditionalComplaint(p.additionalComplaint ?? "");
     setHistory(p.history ?? "");
     setDuration(p.duration ?? "");
     setOnset(p.onset ?? "");
