@@ -1387,44 +1387,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             {/* STEP 1: DOR */}
             {step === 1 && (
               <div className="space-y-4">
-                <div>
-                  <Label className="text-xs">{isPt ? "Intensidade geral da dor (0-10)" : "Overall pain intensity (0-10)"}: <span className="font-bold text-primary">{painScore}</span></Label>
-                  <DemoShield on={demoMode} onAutofill={() => autofill(painScore, MOCK_MANUAL_CASE.painScore, setPainScore, 5)}>
-                    <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="mt-2" />
-                  </DemoShield>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    {isPt
-                      ? "Valor padrão atribuído a cada nova região marcada. Ajuste a nota individual de cada região logo abaixo."
-                      : "Default score for each newly marked region. Adjust per-region scores below."}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs">
-                    {painRegions.length > 1
-                      ? (isPt ? "Tipo de dor padrão" : "Default pain type")
-                      : (isPt ? "Tipo de dor" : "Pain type")}
-                  </Label>
-                  <DemoShield on={demoMode} onAutofill={() => autofill(painType, MOCK_MANUAL_CASE.painType, setPainType, "")}>
-                    <Select value={painType} onValueChange={setPainType}>
-                      <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="local">{isPt ? "Local" : "Local"}</SelectItem>
-                        <SelectItem value="radiating">{isPt ? "Irradiada" : "Radiating"}</SelectItem>
-                        <SelectItem value="burning">{isPt ? "Queimação" : "Burning"}</SelectItem>
-                        <SelectItem value="tingling">{isPt ? "Formigamento" : "Tingling"}</SelectItem>
-                        <SelectItem value="throbbing">{isPt ? "Latejante" : "Throbbing"}</SelectItem>
-                        <SelectItem value="stabbing">{isPt ? "Pontada" : "Stabbing"}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </DemoShield>
-                  {painRegions.length > 1 && (
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      {isPt
-                        ? "Com mais de uma região marcada, defina o tipo de dor específico de cada uma logo abaixo."
-                        : "With multiple regions marked, define the specific pain type for each one below."}
-                    </p>
-                  )}
-                </div>
+                {/* 1) Marcar regiões PRIMEIRO — o tipo/intensidade global só
+                    aparece quando há 0 ou 1 região marcada; com 2+ regiões, a
+                    IA trabalha exclusivamente com as notas e tipos por região
+                    para evitar diluir o quadro clínico em valores genéricos. */}
                 <div>
                   <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => toggleRegion("")}>
@@ -1454,11 +1420,50 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   )}
                 </div>
 
+                {/* 2a) Caminho "global" — só com 0 ou 1 região marcada */}
+                {painRegions.length <= 1 && (
+                  <>
+                    <div>
+                      <Label className="text-xs">{isPt ? "Intensidade da dor (0-10)" : "Pain intensity (0-10)"}: <span className="font-bold text-primary">{painScore}</span></Label>
+                      <DemoShield on={demoMode} onAutofill={() => autofill(painScore, MOCK_MANUAL_CASE.painScore, setPainScore, 5)}>
+                        <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="mt-2" />
+                      </DemoShield>
+                    </div>
+                    <div>
+                      <Label className="text-xs">{isPt ? "Tipo de dor" : "Pain type"}</Label>
+                      <DemoShield on={demoMode} onAutofill={() => autofill(painType, MOCK_MANUAL_CASE.painType, setPainType, "")}>
+                        <Select value={painType} onValueChange={setPainType}>
+                          <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="local">{isPt ? "Local" : "Local"}</SelectItem>
+                            <SelectItem value="radiating">{isPt ? "Irradiada" : "Radiating"}</SelectItem>
+                            <SelectItem value="burning">{isPt ? "Queimação" : "Burning"}</SelectItem>
+                            <SelectItem value="tingling">{isPt ? "Formigamento" : "Tingling"}</SelectItem>
+                            <SelectItem value="throbbing">{isPt ? "Latejante" : "Throbbing"}</SelectItem>
+                            <SelectItem value="stabbing">{isPt ? "Pontada" : "Stabbing"}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </DemoShield>
+                    </div>
+                  </>
+                )}
+
+                {/* 2b) Caminho "por região" — 2+ regiões; ignora intensidade/tipo global */}
+                {painRegions.length > 1 && (
+                  <div className="rounded-md border border-amber-300/60 bg-amber-50 p-2.5 text-[11px] text-amber-900">
+                    {isPt
+                      ? "Mais de uma região marcada — a intensidade e o tipo de dor são definidos individualmente abaixo. A IA usará apenas essas informações específicas, ignorando notas globais."
+                      : "Multiple regions marked — pain intensity and type are set individually below. The AI will use only this granular data and ignore global scores."}
+                  </div>
+                )}
+
                 {/* Per-region pain sliders — appear only after the user marks regions */}
                 {painRegions.length > 0 && (
                   <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
                     <Label className="text-xs font-semibold text-foreground">
-                      {isPt ? "Nota de dor por região (0-10)" : "Pain score per region (0-10)"}
+                      {painRegions.length > 1
+                        ? (isPt ? "Nota de dor por região (0-10)" : "Pain score per region (0-10)")
+                        : (isPt ? "Confirme a nota da região marcada (0-10)" : "Confirm the marked region score (0-10)")}
                     </Label>
                     <p className="text-[11px] text-muted-foreground -mt-1">
                       {isPt
@@ -1505,7 +1510,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     <div className="space-y-2 pt-1">
                       {painRegions.map((id) => {
                         const lbl = regionLabelMap[id];
-                        const v = painTypesPerRegion[id] || painType || "";
+                        const v = painTypesPerRegion[id] || "";
                         return (
                           <div key={id} className="flex items-center gap-3">
                             <span className="text-xs text-foreground w-32 shrink-0 truncate">
