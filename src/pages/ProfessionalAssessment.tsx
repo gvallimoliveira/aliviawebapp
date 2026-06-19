@@ -505,7 +505,7 @@ const ProfessionalAssessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
-        {professional?.is_student && (
+        {(professional as any)?.active_profile_mode === "student" && (
           <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
             <p className="font-semibold">
               {language === "pt" ? "Alivia Acadêmico" : language === "es" ? "Alivia Académico" : "Alivia Academic"}
