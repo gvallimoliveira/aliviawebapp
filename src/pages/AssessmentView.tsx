@@ -830,6 +830,20 @@ const AssessmentView = () => {
                       value={anamnesis.painTypes.map((p: string) => translateKey(p, isPt)).join(", ")}
                     />
                   )}
+                  {anamnesis.painTypesPerRegion && Object.keys(anamnesis.painTypesPerRegion).length > 1 && (
+                    <AnamnesisField
+                      label={isPt ? "Tipo de Dor por Região" : "Pain Type per Region"}
+                      value={Object.entries(anamnesis.painTypesPerRegion)
+                        .map(([region, type]) => `${region}: ${translateKey(String(type), isPt)}`)
+                        .join(" · ")}
+                    />
+                  )}
+                  {anamnesis.additionalClinicalNotes && (
+                    <AnamnesisField
+                      label={isPt ? "Observações Clínicas Adicionais" : "Additional Clinical Notes"}
+                      value={anamnesis.additionalClinicalNotes}
+                    />
+                  )}
                   {anamnesis.evolution && (
                     <AnamnesisField
                       label={isPt ? "Evolução" : "Evolution"}

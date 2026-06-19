@@ -16,8 +16,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus, Mic, Lock, Crown } from "lucide-react";
-import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
+import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus, Mic, Lock, Crown, Link as LinkIcon, Copy, MessageCircle, X, ClipboardList } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { questionnaires, getApplicableQuestionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
+import { createShortAppLink } from "@/lib/shortLink";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { regionsByView } from "@/components/assessment/painMapData";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import { useVoiceRecorderSession } from "@/contexts/VoiceRecorderContext";
@@ -182,12 +185,26 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // `anamnesis_data.painScoresPerRegion`) and to derive the aggregate
   // `pain_score` saved on the row (max of per-region scores).
   const [painScoresPerRegion, setPainScoresPerRegion] = useState<Record<string, number>>({});
+  // Per-region pain type (local, radiating, burning…). Shown only when 2+
+  // regions are marked, defaults to the global `painType` for each new region.
+  const [painTypesPerRegion, setPainTypesPerRegion] = useState<Record<string, string>>({});
 
   // Red Flags
   const [redFlagsChecked, setRedFlagsChecked] = useState<string[]>([]);
+  // Observações clínicas adicionais (campo livre exibido após as red flags).
+  // Persistido em anamnesis_data.additionalClinicalNotes e usado pela IA.
+  const [additionalClinicalNotes, setAdditionalClinicalNotes] = useState("");
 
   // Questionários (mesmo fluxo da avaliação premium/link)
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+  // Quando ligado, os questionários ficam pendentes e são enviados ao paciente
+  // via link único após salvar a avaliação. Auto-sugerido com 3+ regiões.
+  const [deferQuestionnaires, setDeferQuestionnaires] = useState(false);
+  // Resultado do envio: link consolidado para o paciente preencher depois.
+  const [pendingShareUrl, setPendingShareUrl] = useState<string | null>(null);
+  const [pendingShareOpen, setPendingShareOpen] = useState(false);
+  // Quantidade atual de pendências (em modo edição) — preenchido em useEffect.
+  const [pendingCount, setPendingCount] = useState<{ total: number; pending: number } | null>(null);
   const [specialtyApplied, setSpecialtyApplied] = useState<SpecialtyAppliedResult[]>([]);
   const specialtyPanelRef = useRef<SpecialtyPanelHandle | null>(null);
 
@@ -254,12 +271,26 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         if (!next.includes(id)) delete out[id];
         return out;
       });
+      setPainTypesPerRegion((m) => {
+        const out = { ...m };
+        if (next.includes(id) && out[id] === undefined && painType) out[id] = painType;
+        if (!next.includes(id)) delete out[id];
+        return out;
+      });
+      // Sugere automaticamente "enviar depois" quando há 3+ regiões.
+      if (next.length >= 3 && !deferQuestionnaires && questionnaireResults.length === 0) {
+        setDeferQuestionnaires(true);
+      }
       return next;
     });
   };
 
   const setRegionPainScore = (id: string, v: number) => {
     setPainScoresPerRegion((m) => ({ ...m, [id]: v }));
+  };
+
+  const setRegionPainType = (id: string, v: string) => {
+    setPainTypesPerRegion((m) => ({ ...m, [id]: v }));
   };
 
   // ── Demo-mode helpers ──────────────────────────────────────────────────────
@@ -302,7 +333,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const draftState = {
     step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
-    painScore, painType, painRegions, painScoresPerRegion, redFlagsChecked, questionnaireResults,
+    painScore, painType, painRegions, painScoresPerRegion, painTypesPerRegion,
+    redFlagsChecked, additionalClinicalNotes, questionnaireResults, deferQuestionnaires,
     functionalTests, romTable, strengthTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
   };
@@ -336,8 +368,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainType(p.painType ?? "");
     setPainRegions(p.painRegions ?? []);
     setPainScoresPerRegion(p.painScoresPerRegion ?? {});
+    setPainTypesPerRegion((p as any).painTypesPerRegion ?? {});
     setRedFlagsChecked(p.redFlagsChecked ?? []);
+    setAdditionalClinicalNotes((p as any).additionalClinicalNotes ?? "");
     setQuestionnaireResults(p.questionnaireResults ?? []);
+    setDeferQuestionnaires(Boolean((p as any).deferQuestionnaires));
     setFunctionalTests(p.functionalTests ?? "");
     setRomTable(Array.isArray(p.romTable) && p.romTable.length > 0 ? p.romTable : createInitialRomRows(2));
     setStrengthTable(Array.isArray(p.strengthTable) && p.strengthTable.length > 0 ? p.strengthTable : createInitialStrengthRows(2));
@@ -382,7 +417,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             ? (an.pain_scores_per_region as Record<string, number>)
             : {}),
     );
+    setPainTypesPerRegion(
+      an.painTypesPerRegion && typeof an.painTypesPerRegion === "object"
+        ? (an.painTypesPerRegion as Record<string, string>)
+        : {},
+    );
     setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
+    setAdditionalClinicalNotes(an.additionalClinicalNotes || "");
     setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
     setSpecialtyApplied(Array.isArray(an?.specialtyResults) ? an.specialtyResults : []);
     setFunctionalTests(an.functionalTests || "");
@@ -403,6 +444,32 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setTreatmentText(tx?.text || tx?.summary || "");
   }, [open, editAssessment]);
   useEffect(() => { if (!open) prefilledIdRef.current = null; }, [open]);
+
+  // Conta pendentes vinculados a esta avaliação (modo edição) para exibir o
+  // banner com o link consolidado e botão de cancelar pendência.
+  useEffect(() => {
+    if (!open || !editAssessment?.id || demoMode) { setPendingCount(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("pending_questionnaires" as any)
+        .select("status")
+        .eq("assessment_id", editAssessment.id);
+      if (cancelled || error) return;
+      const total = (data || []).length;
+      const pending = (data || []).filter((r: any) => r.status === "pending").length;
+      setPendingCount({ total, pending });
+      if (total > 0) {
+        try {
+          const longUrl = `${getPublicOrigin()}/avaliacao/pendentes/${editAssessment.id}`;
+          const shortUrl = await createShortAppLink(longUrl);
+          if (!cancelled) setPendingShareUrl(shortUrl || longUrl);
+        } catch { /* silencioso */ }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, editAssessment?.id, demoMode]);
+
 
   // ── Persistência da sessão do modal ───────────────────────────────────────
   // Grava em localStorage que existe uma avaliação manual em andamento, para
@@ -575,8 +642,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     complementaryExams,
     painType,
     painTypes: painType ? [painType] : [],
-    // Per-region pain scores (used by Comparação de Dor por Região).
+    // Per-region pain scores e tipos (usados pela Comparação de Dor por Região
+    // e pelo prompt da IA quando há múltiplas regiões marcadas).
     painScoresPerRegion,
+    painTypesPerRegion,
+    // Observações clínicas livres anotadas após as red flags. A IA usa este
+    // texto para refinar a impressão clínica, o diagnóstico e a sugestão de
+    // testes funcionais.
+    additionalClinicalNotes: additionalClinicalNotes || undefined,
     functionalTests, // free-text observations from Step 4 (kept inside anamnesis_data so it persists and shows up in views)
     romTable: sanitizeRomRows(romTable), // Joint mobility / ROM table
     strengthTable: sanitizeStrengthRows(strengthTable), // Dynamometry / muscle strength
@@ -677,6 +750,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         relieving && `Alivia com: ${relieving}`,
         occupation && `Ocupação: ${occupation}`,
         comorbidities && `Comorbidades: ${comorbidities}`,
+        additionalClinicalNotes && `Observações clínicas adicionais: ${additionalClinicalNotes}`,
       ].filter(Boolean).join("\n");
 
       const { data, error } = await supabase.functions.invoke("suggest-functional-tests", {
@@ -858,13 +932,71 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         }
       }
 
+      // Quando o fisio optou por enviar os questionários para o paciente
+      // preencher depois, inserimos uma linha "general" por questionário
+      // aplicável (baseado nas regiões marcadas) vinculada à mesma avaliação.
+      let createdGeneralPending = 0;
+      if (savedId && deferQuestionnaires && painRegions.length > 0) {
+        try {
+          const applicable = getApplicableQuestionnaires(painRegions);
+          // Evita duplicidade quando o fisio edita uma avaliação que já tem
+          // pendentes gerais: busca os existentes desta avaliação primeiro.
+          const { data: existing } = await supabase
+            .from("pending_questionnaires" as any)
+            .select("questionnaire_id, domain")
+            .eq("assessment_id", savedId);
+          const seen = new Set(
+            (existing || [])
+              .filter((r: any) => r.domain === "general")
+              .map((r: any) => r.questionnaire_id),
+          );
+          const rows = applicable
+            .filter((q) => !seen.has(q.id))
+            .map((q) => ({
+              assessment_id: savedId,
+              professional_id: clinicId ? null : professionalId,
+              clinic_id: clinicId || null,
+              questionnaire_id: q.id,
+              domain: "general",
+              suggested_reason: isPt
+                ? `Aplicável às regiões: ${painRegions.join(", ")}`
+                : `Applies to regions: ${painRegions.join(", ")}`,
+              status: "pending",
+            }));
+          if (rows.length > 0) {
+            await supabase.from("pending_questionnaires" as any).insert(rows);
+            createdGeneralPending = rows.length;
+          }
+        } catch (err) {
+          console.warn("deferred general questionnaires insert failed:", err);
+        }
+      }
+
       toast({ title: isEditing ? (isPt ? "Avaliação atualizada!" : "Assessment updated!") : (isPt ? "Avaliação criada!" : "Assessment created!") });
       if (!isEditing) void draft.discard();
       clearManualAssessmentSession();
       if (savedId) onSaved?.(savedId);
+
+      // Se há pendências (gerais ou de especialidade), gera o link único e
+      // abre o diálogo de compartilhamento ANTES de fechar o modal para que o
+      // fisio copie/envie de uma vez.
+      if (savedId && (createdGeneralPending > 0 || deferQuestionnaires)) {
+        try {
+          const longUrl = `${getPublicOrigin()}/avaliacao/pendentes/${savedId}`;
+          const shortUrl = await createShortAppLink(longUrl);
+          setPendingShareUrl(shortUrl || longUrl);
+          setPendingShareOpen(true);
+          // Não fecha o modal — usuário fecha após copiar o link.
+          return;
+        } catch (err) {
+          console.warn("pending share link generation failed", err);
+        }
+      }
+
       onOpenChange(false);
       resetForm();
       if (navigateAfter && savedId && !isEditing) navigate(`/assessment/view/${savedId}?from=professional`);
+
     } catch (err: any) {
       console.error("Save assessment error:", err);
       toast({ title: isPt ? "Erro ao salvar" : "Save error", description: err.message, variant: "destructive" });
@@ -878,7 +1010,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setChiefComplaint(""); setHistory(""); setDuration(""); setOnset("");
     setAggravating(""); setRelieving(""); setMedications(""); setPreviousSurgeries("");
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
-    setPainRegions([]); setPainScoresPerRegion({}); setRedFlagsChecked([]); setQuestionnaireResults([]);
+    setPainRegions([]); setPainScoresPerRegion({}); setPainTypesPerRegion({});
+    setRedFlagsChecked([]); setAdditionalClinicalNotes("");
+    setQuestionnaireResults([]); setDeferQuestionnaires(false);
+    setPendingShareUrl(null); setPendingShareOpen(false); setPendingCount(null);
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
     setDiagnosisText(""); setTreatmentText(""); setAiDiagnosis(null); setAiTreatment(null);
     setSpecialtyApplied([]);
@@ -967,6 +1102,60 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               />
             )}
 
+            {/* Banner de questionários pendentes vinculados a esta avaliação */}
+            {isEditing && pendingCount && pendingCount.total > 0 && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 space-y-2">
+                <div className="flex items-start gap-2">
+                  <ClipboardList className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">
+                      {isPt
+                        ? `Questionários pendentes (${pendingCount.total - pendingCount.pending} de ${pendingCount.total} respondidos)`
+                        : `Pending questionnaires (${pendingCount.total - pendingCount.pending} of ${pendingCount.total} answered)`}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {isPt
+                        ? "Link para o paciente preencher os questionários ligados a esta avaliação."
+                        : "Link for the patient to complete the questionnaires linked to this assessment."}
+                    </p>
+                  </div>
+                </div>
+                {pendingShareUrl && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <code className="text-[11px] bg-background border rounded px-2 py-1 flex-1 truncate min-w-[140px]">{pendingShareUrl}</code>
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs gap-1" onClick={() => { navigator.clipboard.writeText(pendingShareUrl); toast({ title: isPt ? "Link copiado" : "Link copied" }); }}>
+                      <Copy className="h-3 w-3" /> {isPt ? "Copiar" : "Copy"}
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs gap-1" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent((isPt ? "Olá! Por favor, responda os questionários da sua avaliação: " : "Hi! Please answer your assessment questionnaires: ") + pendingShareUrl)}`, "_blank")}>
+                      <MessageCircle className="h-3 w-3" /> WhatsApp
+                    </Button>
+                    {pendingCount.pending > 0 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                        onClick={async () => {
+                          if (!editAssessment?.id) return;
+                          if (!confirm(isPt ? "Encerrar pendência? Os questionários não respondidos ficarão indisponíveis para o paciente." : "Cancel pending? Unanswered questionnaires will become unavailable to the patient.")) return;
+                          await supabase
+                            .from("pending_questionnaires" as any)
+                            .update({ status: "cancelled" })
+                            .eq("assessment_id", editAssessment.id)
+                            .eq("status", "pending");
+                          setPendingCount({ total: pendingCount.total, pending: 0 });
+                          toast({ title: isPt ? "Pendência encerrada" : "Pending cancelled" });
+                        }}
+                      >
+                        <X className="h-3 w-3" /> {isPt ? "Encerrar" : "Cancel"}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+
+
             {/* Demo voice recorder: floating FAB mock lives at the end of DialogContent */}
 
 
@@ -995,7 +1184,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 <div>
                   <Label className="text-xs">{isPt ? "Histórico" : "History"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(history, MOCK_MANUAL_CASE.history, setHistory, "")}>
-                    <Textarea value={history} onChange={(e) => setHistory(e.target.value)} rows={3} className="mt-1 text-sm" />
+                    <Textarea
+                      value={history}
+                      onChange={(e) => setHistory(e.target.value)}
+                      rows={6}
+                      placeholder={isPt
+                        ? "Descreva como o quadro começou, evolução, tratamentos anteriores, contexto ocupacional e qualquer informação relevante sobre o caso clínico."
+                        : "Describe how the condition started, its evolution, prior treatments, occupational context and any relevant clinical information."}
+                      className="mt-1 text-sm min-h-[150px] resize-y"
+                    />
                   </DemoShield>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1101,7 +1298,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs">{isPt ? "Tipo de dor" : "Pain type"}</Label>
+                  <Label className="text-xs">
+                    {painRegions.length > 1
+                      ? (isPt ? "Tipo de dor padrão" : "Default pain type")
+                      : (isPt ? "Tipo de dor" : "Pain type")}
+                  </Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(painType, MOCK_MANUAL_CASE.painType, setPainType, "")}>
                     <Select value={painType} onValueChange={setPainType}>
                       <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
@@ -1115,6 +1316,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       </SelectContent>
                     </Select>
                   </DemoShield>
+                  {painRegions.length > 1 && (
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {isPt
+                        ? "Com mais de uma região marcada, defina o tipo de dor específico de cada uma logo abaixo."
+                        : "With multiple regions marked, define the specific pain type for each one below."}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
@@ -1181,8 +1389,47 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </div>
                   </div>
                 )}
+
+                {/* Per-region pain TYPE — appears only with 2+ marked regions */}
+                {painRegions.length > 1 && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                    <Label className="text-xs font-semibold text-foreground">
+                      {isPt ? "Tipo de dor por região" : "Pain type per region"}
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground -mt-1">
+                      {isPt
+                        ? "Caracterize a dor de cada região marcada. Útil para diferenciar dor mecânica de irradiação neural, queimação etc."
+                        : "Characterize pain at each marked region. Helps differentiate mechanical pain from neural radiation, burning, etc."}
+                    </p>
+                    <div className="space-y-2 pt-1">
+                      {painRegions.map((id) => {
+                        const lbl = regionLabelMap[id];
+                        const v = painTypesPerRegion[id] || painType || "";
+                        return (
+                          <div key={id} className="flex items-center gap-3">
+                            <span className="text-xs text-foreground w-32 shrink-0 truncate">
+                              {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
+                            </span>
+                            <Select value={v} onValueChange={(val) => setRegionPainType(id, val)} disabled={demoMode}>
+                              <SelectTrigger className="h-8 text-xs flex-1"><SelectValue placeholder="—" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="local">{isPt ? "Local" : "Local"}</SelectItem>
+                                <SelectItem value="radiating">{isPt ? "Irradiada" : "Radiating"}</SelectItem>
+                                <SelectItem value="burning">{isPt ? "Queimação" : "Burning"}</SelectItem>
+                                <SelectItem value="tingling">{isPt ? "Formigamento" : "Tingling"}</SelectItem>
+                                <SelectItem value="throbbing">{isPt ? "Latejante" : "Throbbing"}</SelectItem>
+                                <SelectItem value="stabbing">{isPt ? "Pontada" : "Stabbing"}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+
 
             {/* STEP 2: RED FLAGS */}
             {step === 2 && (
@@ -1206,8 +1453,29 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </p>
                   </div>
                 )}
+
+                {/* Observações clínicas adicionais — texto livre que alimenta a IA */}
+                <div className="pt-2 border-t border-border/60">
+                  <Label className="text-xs">{isPt ? "Observações clínicas adicionais (opcional)" : "Additional clinical observations (optional)"}</Label>
+                  <Textarea
+                    value={additionalClinicalNotes}
+                    onChange={(e) => setAdditionalClinicalNotes(e.target.value)}
+                    rows={4}
+                    placeholder={isPt
+                      ? "Registre achados relevantes que não se encaixam nos campos acima: contexto familiar, suspeita clínica específica, compensações observadas, sinais comportamentais, fatores de adesão, etc."
+                      : "Record relevant findings that don't fit the fields above: family context, specific clinical suspicion, observed compensations, behavioral signs, adherence factors, etc."}
+                    className="mt-1 text-sm"
+                    disabled={demoMode}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {isPt
+                      ? "Estas observações são utilizadas pela IA ao gerar a impressão clínica, o diagnóstico e a sugestão de testes funcionais."
+                      : "These observations are used by the AI when generating the clinical impression, diagnosis and functional test suggestions."}
+                  </p>
+                </div>
               </div>
             )}
+
 
             {/* STEP 3: QUESTIONÁRIOS — mesmo fluxo da avaliação premium/link */}
             {step === 3 && (
@@ -1219,19 +1487,78 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       : "Select at least one pain region in the previous step to load the applicable questionnaires."}
                   </div>
                 ) : (
-                  <QuestionnaireStep
-                    painRegions={painRegions}
-                    previousAnswers={undefined}
-                    demoMode={demoMode}
-                    autofillAnswers={demoMode ? MOCK_MANUAL_CASE.questionnaireAnswers : undefined}
-                    onComplete={(results) => {
-                      setQuestionnaireResults(results);
-                      setStep((s) => Math.min(STEPS.length - 1, s + 1));
-                    }}
-                    onBack={() => setStep((s) => Math.max(0, s - 1))}
-                    onSkip={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
-                  />
+                  <>
+                    {/* Toggle: aplicar agora ou enviar link para o paciente preencher depois */}
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-start gap-3">
+                      <Switch
+                        checked={deferQuestionnaires}
+                        onCheckedChange={setDeferQuestionnaires}
+                        disabled={demoMode}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <p className="text-sm font-semibold text-foreground">
+                          {isPt
+                            ? "Enviar questionários para o paciente preencher depois"
+                            : "Send questionnaires for the patient to complete later"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          {isPt
+                            ? "Útil quando há várias regiões marcadas e a aplicação em consulta ficaria longa. Ao salvar, geramos um link único que reúne TODOS os questionários aplicáveis (e os de especialidade já agendados). As respostas voltam vinculadas a esta mesma avaliação — não cria uma reavaliação nova."
+                            : "Useful when many regions are marked and applying everything in-session would take too long. On save we generate a single link that bundles ALL applicable questionnaires (plus any specialty ones already scheduled). Answers come back attached to THIS assessment — no new reassessment is created."}
+                        </p>
+                        {painRegions.length >= 3 && (
+                          <p className="text-[11px] text-primary font-medium">
+                            {isPt
+                              ? "Sugerido automaticamente: você marcou 3+ regiões."
+                              : "Auto-suggested: you marked 3+ regions."}
+                          </p>
+                        )}
+                      </div>
+                    </div>
 
+                    {deferQuestionnaires ? (
+                      <div className="rounded-md border bg-muted/30 p-3 space-y-2">
+                        <div className="flex items-center gap-2 text-xs font-semibold">
+                          <ClipboardList className="h-3.5 w-3.5 text-primary" />
+                          {isPt ? "Serão enviados ao paciente:" : "Will be sent to the patient:"}
+                        </div>
+                        <ul className="text-xs text-muted-foreground space-y-1 pl-1">
+                          {getApplicableQuestionnaires(painRegions).map((q) => (
+                            <li key={q.id} className="flex items-center gap-2">
+                              <span className="w-1 h-1 rounded-full bg-primary/60" />
+                              <span>{isPt ? q.fullName_pt : q.fullName_en}</span>
+                            </li>
+                          ))}
+                          {getApplicableQuestionnaires(painRegions).length === 0 && (
+                            <li className="italic">
+                              {isPt
+                                ? "Nenhum questionário geral aplicável às regiões marcadas."
+                                : "No general questionnaire applies to the marked regions."}
+                            </li>
+                          )}
+                        </ul>
+                        <p className="text-[11px] text-muted-foreground">
+                          {isPt
+                            ? "O link aparecerá assim que você concluir a avaliação. Você também encontra esse link sempre que reabrir a avaliação para edição."
+                            : "The link appears as soon as you finish the assessment. You can also find it whenever you reopen the assessment for editing."}
+                        </p>
+                      </div>
+                    ) : (
+                      <QuestionnaireStep
+                        painRegions={painRegions}
+                        previousAnswers={undefined}
+                        demoMode={demoMode}
+                        autofillAnswers={demoMode ? MOCK_MANUAL_CASE.questionnaireAnswers : undefined}
+                        onComplete={(results) => {
+                          setQuestionnaireResults(results);
+                          setStep((s) => Math.min(STEPS.length - 1, s + 1));
+                        }}
+                        onBack={() => setStep((s) => Math.max(0, s - 1))}
+                        onSkip={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+                      />
+                    )}
+                  </>
                 )}
                 {questionnaireResults.length > 0 && (
                   <div className="text-xs text-muted-foreground p-2 rounded bg-primary/5 border border-primary/20">
@@ -1583,7 +1910,62 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    {/* Diálogo pós-save: link de questionários pendentes pronto para envio */}
+    <AlertDialog
+      open={pendingShareOpen}
+      onOpenChange={(o) => {
+        setPendingShareOpen(o);
+        if (!o) {
+          onOpenChange(false);
+          resetForm();
+        }
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <LinkIcon className="h-4 w-4 text-primary" />
+            {isPt ? "Link de questionários pendentes pronto" : "Pending questionnaires link ready"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {isPt
+              ? "Compartilhe este link com o paciente. As respostas voltam vinculadas à mesma avaliação — você pode reabrir a avaliação a qualquer momento para ver o progresso."
+              : "Share this link with the patient. Answers come back attached to the same assessment — you can reopen it any time to see progress."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {pendingShareUrl && (
+          <div className="space-y-2">
+            <code className="text-xs bg-muted border rounded px-2 py-2 block break-all">{pendingShareUrl}</code>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => { navigator.clipboard.writeText(pendingShareUrl); toast({ title: isPt ? "Link copiado" : "Link copied" }); }}
+              >
+                <Copy className="h-3.5 w-3.5" /> {isPt ? "Copiar" : "Copy"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent((isPt ? "Olá! Por favor, responda os questionários da sua avaliação: " : "Hi! Please answer your assessment questionnaires: ") + pendingShareUrl)}`, "_blank")}
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+              </Button>
+            </div>
+          </div>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogAction onClick={() => setPendingShareOpen(false)}>
+            {isPt ? "Concluir" : "Done"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
+
   );
 };
 

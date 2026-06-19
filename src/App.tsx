@@ -53,6 +53,7 @@ const ClearCache = lazy(() => import("./pages/ClearCache"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const PendingQuestionnaire = lazy(() => import("./pages/PendingQuestionnaire"));
+const AssessmentPendingQuestionnaires = lazy(() => import("./pages/AssessmentPendingQuestionnaires"));
 const ClinicalAgent = lazy(() => import("./pages/ClinicalAgent"));
 const CasosDeEstudo = lazy(() => import("./pages/CasosDeEstudo"));
 const AcademicTracks = lazy(() => import("./pages/AcademicTracks"));
@@ -132,6 +133,7 @@ const App = () => {
                   <Route path="/verificar-email" element={<VerifyEmail />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/q/:token" element={<PendingQuestionnaire />} />
+                  <Route path="/avaliacao/pendentes/:assessmentId" element={<AssessmentPendingQuestionnaires />} />
                   <Route path="/agente" element={<ClinicalAgent />} />
                   <Route path="/agente/:threadId" element={<ClinicalAgent />} />
                   <Route path="/casos-de-estudo" element={<CasosDeEstudo />} />

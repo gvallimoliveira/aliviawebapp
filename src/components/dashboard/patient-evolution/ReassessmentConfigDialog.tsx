@@ -44,6 +44,15 @@ const ReassessmentConfigDialog = ({ open, onOpenChange, onConfirm, loading, pati
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      // Vínculo: questionários dependem do mapa de dor (as regiões marcadas
+      // definem quais questionários serão aplicados). Se ativar questionário,
+      // força painmap ON. Se desligar painmap, remove questionário.
+      if (id === "questionnaire" && next.has("questionnaire")) {
+        next.add("painmap");
+      }
+      if (id === "painmap" && !next.has("painmap")) {
+        next.delete("questionnaire");
+      }
       return next;
     });
   };
@@ -121,6 +130,9 @@ const ReassessmentConfigDialog = ({ open, onOpenChange, onConfirm, loading, pati
           {/* Outras etapas */}
           <div className="space-y-2">
             <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide">Outras etapas</h4>
+            <p className="text-[11px] text-muted-foreground -mt-1">
+              Os questionários são aplicados conforme as <strong>regiões marcadas no mapa de dor</strong>, por isso só podem ser ativados em conjunto com a etapa "Mapa de dor". Marcar questionários liga o mapa automaticamente; desmarcar o mapa também remove os questionários.
+            </p>
             <div className="space-y-2">
               {otherOptions.map((opt) => {
                 const Icon = opt.icon;
