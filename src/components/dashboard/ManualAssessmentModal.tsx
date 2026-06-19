@@ -144,6 +144,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Anamnese
   const [chiefComplaint, setChiefComplaint] = useState("");
+  const [additionalComplaint, setAdditionalComplaint] = useState("");
   const [history, setHistory] = useState("");
   const [duration, setDuration] = useState("");
   const [onset, setOnset] = useState("");
@@ -153,6 +154,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [previousSurgeries, setPreviousSurgeries] = useState("");
   const [comorbidities, setComorbidities] = useState("");
   const [occupation, setOccupation] = useState("");
+  const [complementaryExams, setComplementaryExams] = useState("");
 
   // Dor
   const [painScore, setPainScore] = useState<number>(5);
