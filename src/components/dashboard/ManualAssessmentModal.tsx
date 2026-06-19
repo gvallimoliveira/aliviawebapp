@@ -368,6 +368,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setSpecialtyApplied(Array.isArray(an?.specialtyResults) ? an.specialtyResults : []);
     setFunctionalTests(an.functionalTests || "");
     setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(2));
+    setStrengthTable(Array.isArray(an.strengthTable) && an.strengthTable.length > 0 ? an.strengthTable : createInitialStrengthRows(2));
     const dx = a.diagnosis || {};
     setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
     const ci = dx.clinicalImpression;
