@@ -1103,6 +1103,23 @@ const ClinicalAgent = () => {
           </div>
         </div>
       )}
+
+      <ProBottomTabBar
+        activeTab="agent"
+        onChangeTab={(tab) => {
+          if (tab === "professional" || tab === "patients") {
+            navigate("/dashboard?tab=professional");
+          } else if (tab === "agenda") {
+            navigate("/dashboard?tab=agenda");
+          } else if (tab === "insights" || tab === "messages" || tab === "clinic") {
+            navigate(`/dashboard?tab=${tab}`);
+          }
+        }}
+        hasAgentAccess={hasAccess}
+        professionalId={professionalId}
+        clinicId={activeClinic?.clinic_id || null}
+      />
+      <div className="md:hidden h-20" aria-hidden="true" />
     </div>
   );
 };
