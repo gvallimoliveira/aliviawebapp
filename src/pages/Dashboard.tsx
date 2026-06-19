@@ -171,8 +171,9 @@ const Dashboard = () => {
     () => buildOnboardingSteps(onboardingContext, {
       subscriptionType: premiumAccess?.subscription_type,
       canManageClinic,
+      hasAgentAccess,
     }),
-    [onboardingContext, premiumAccess?.subscription_type, canManageClinic]
+    [onboardingContext, premiumAccess?.subscription_type, canManageClinic, hasAgentAccess]
   );
   const onboardingStorageKey = `onboarding_${onboardingContext}_completed_v2`;
   const onboarding = useOnboarding(onboardingStorageKey, onboardingSteps);
