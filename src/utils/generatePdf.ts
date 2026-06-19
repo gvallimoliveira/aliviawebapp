@@ -76,6 +76,10 @@ interface AnamnesisData {
   painScoresPerRegion?: Record<string, number>;
   /** Joint mobility / Range of Motion table (manual assessment). */
   romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
+  /** Free-text clinical history (manual assessment anamnesis). */
+  history?: string;
+  /** Free-text complementary exams (imaging, lab, etc.). */
+  complementaryExams?: string;
 }
 
 export interface ResponsibleProfessional {
