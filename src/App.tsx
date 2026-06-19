@@ -133,6 +133,7 @@ const App = () => {
                   <Route path="/verificar-email" element={<VerifyEmail />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/q/:token" element={<PendingQuestionnaire />} />
+                  <Route path="/avaliacao/pendentes/:assessmentId" element={<AssessmentPendingQuestionnaires />} />
                   <Route path="/agente" element={<ClinicalAgent />} />
                   <Route path="/agente/:threadId" element={<ClinicalAgent />} />
                   <Route path="/casos-de-estudo" element={<CasosDeEstudo />} />
