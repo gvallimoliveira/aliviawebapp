@@ -271,12 +271,26 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         if (!next.includes(id)) delete out[id];
         return out;
       });
+      setPainTypesPerRegion((m) => {
+        const out = { ...m };
+        if (next.includes(id) && out[id] === undefined && painType) out[id] = painType;
+        if (!next.includes(id)) delete out[id];
+        return out;
+      });
+      // Sugere automaticamente "enviar depois" quando há 3+ regiões.
+      if (next.length >= 3 && !deferQuestionnaires && questionnaireResults.length === 0) {
+        setDeferQuestionnaires(true);
+      }
       return next;
     });
   };
 
   const setRegionPainScore = (id: string, v: number) => {
     setPainScoresPerRegion((m) => ({ ...m, [id]: v }));
+  };
+
+  const setRegionPainType = (id: string, v: string) => {
+    setPainTypesPerRegion((m) => ({ ...m, [id]: v }));
   };
 
   // ── Demo-mode helpers ──────────────────────────────────────────────────────
