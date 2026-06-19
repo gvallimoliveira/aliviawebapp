@@ -130,6 +130,9 @@ const ReassessmentConfigDialog = ({ open, onOpenChange, onConfirm, loading, pati
           {/* Outras etapas */}
           <div className="space-y-2">
             <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide">Outras etapas</h4>
+            <p className="text-[11px] text-muted-foreground -mt-1">
+              Os questionários são aplicados conforme as <strong>regiões marcadas no mapa de dor</strong>, por isso só podem ser ativados em conjunto com a etapa "Mapa de dor". Marcar questionários liga o mapa automaticamente; desmarcar o mapa também remove os questionários.
+            </p>
             <div className="space-y-2">
               {otherOptions.map((opt) => {
                 const Icon = opt.icon;
