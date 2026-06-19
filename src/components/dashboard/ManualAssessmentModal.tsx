@@ -185,12 +185,26 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // `anamnesis_data.painScoresPerRegion`) and to derive the aggregate
   // `pain_score` saved on the row (max of per-region scores).
   const [painScoresPerRegion, setPainScoresPerRegion] = useState<Record<string, number>>({});
+  // Per-region pain type (local, radiating, burning…). Shown only when 2+
+  // regions are marked, defaults to the global `painType` for each new region.
+  const [painTypesPerRegion, setPainTypesPerRegion] = useState<Record<string, string>>({});
 
   // Red Flags
   const [redFlagsChecked, setRedFlagsChecked] = useState<string[]>([]);
+  // Observações clínicas adicionais (campo livre exibido após as red flags).
+  // Persistido em anamnesis_data.additionalClinicalNotes e usado pela IA.
+  const [additionalClinicalNotes, setAdditionalClinicalNotes] = useState("");
 
   // Questionários (mesmo fluxo da avaliação premium/link)
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+  // Quando ligado, os questionários ficam pendentes e são enviados ao paciente
+  // via link único após salvar a avaliação. Auto-sugerido com 3+ regiões.
+  const [deferQuestionnaires, setDeferQuestionnaires] = useState(false);
+  // Resultado do envio: link consolidado para o paciente preencher depois.
+  const [pendingShareUrl, setPendingShareUrl] = useState<string | null>(null);
+  const [pendingShareOpen, setPendingShareOpen] = useState(false);
+  // Quantidade atual de pendências (em modo edição) — preenchido em useEffect.
+  const [pendingCount, setPendingCount] = useState<{ total: number; pending: number } | null>(null);
   const [specialtyApplied, setSpecialtyApplied] = useState<SpecialtyAppliedResult[]>([]);
   const specialtyPanelRef = useRef<SpecialtyPanelHandle | null>(null);
 
