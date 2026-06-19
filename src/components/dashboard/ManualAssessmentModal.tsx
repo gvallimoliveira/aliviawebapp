@@ -114,7 +114,8 @@ const STEPS = [
   { id: "dor", label: "Dor & Mapa" },
   { id: "redflags", label: "Red Flags" },
   { id: "questionarios", label: "Questionários" },
-  { id: "testes", label: "Testes" },
+  { id: "testes", label: "Testes & ADM" },
+  { id: "dinamometria", label: "Dinamometria" },
   { id: "diagnostico", label: "Diagnóstico" },
 ];
 
