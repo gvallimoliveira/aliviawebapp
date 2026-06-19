@@ -95,6 +95,12 @@ const StudentAccessCard = () => {
         no_sub_title: "The academic seal does not replace a PRO subscription",
         no_sub_desc: "Alivia Academic mode is only a visual identifier on PDFs and public links. To unlock PRO tools (patient panel, clinical AI, exercise programs, chart) you need an active subscription — students get 50% OFF with coupon SOUIBMR at checkout.",
         no_sub_cta: "See plans with student discount",
+        mode_title: "Active profile right now",
+        mode_desc: "Defines what appears on your PDFs, your public assessment link and the marketplace. You can switch anytime.",
+        mode_pro: "Professional",
+        mode_pro_desc: "PDFs and links show CREFITO; listed on the marketplace.",
+        mode_student: "Academic",
+        mode_student_desc: "PDFs and links show the Alivia Academic seal; hidden from marketplace.",
       };
 
   useEffect(() => {
