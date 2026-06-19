@@ -48,6 +48,7 @@ const DemoInsightsMock = lazy(() => import("@/components/demo/DemoInsightsMock")
 const DemoMessagesMock = lazy(() => import("@/components/demo/DemoMessagesMock"));
 const DemoDailySummaryMock = lazy(() => import("@/components/demo/DemoDailySummaryMock"));
 import TryProDemoCard from "@/components/dashboard/TryProDemoCard";
+import ProBottomTabBar from "@/components/dashboard/ProBottomTabBar";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
@@ -1053,6 +1054,16 @@ const Dashboard = () => {
 
 
               </Tabs>
+              <ProBottomTabBar
+                activeTab={activeTab}
+                onChangeTab={setActiveTab}
+                hasAgentAccess={hasAgentAccess}
+                professionalId={proStub.id}
+                clinicId={activeClinic?.clinic_id || null}
+                isDemo={isProDemo}
+              />
+              <div className="md:hidden h-20" aria-hidden="true" />
+              </>
             );
           })()
         ) : (
