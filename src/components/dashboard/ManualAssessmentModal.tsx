@@ -310,6 +310,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPreviousSurgeries(p.previousSurgeries ?? "");
     setComorbidities(p.comorbidities ?? "");
     setOccupation(p.occupation ?? "");
+    setComplementaryExams(p.complementaryExams ?? "");
     setPainScore(p.painScore ?? 5);
     setPainType(p.painType ?? "");
     setPainRegions(p.painRegions ?? []);
