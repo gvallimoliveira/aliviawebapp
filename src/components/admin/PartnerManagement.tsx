@@ -70,6 +70,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     pro_label: "PRO",
     clinic_label: "Clínica",
     premium_label: "Premium",
+    academic_label: "Acadêmico",
     resend_pwd: "Reenviar senha",
     resend_sent: "E-mail de redefinição reenviado!",
     resend_no_user: "Esse parceiro ainda não tem conta no Auth.",
