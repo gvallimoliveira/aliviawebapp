@@ -1,3 +1,8 @@
+---
+name: pwa-modal-persistence
+description: Estratégia completa para fazer um modal/workflow longo sobreviver a troca de app, tela bloqueada, kill do SO e reload em PWA/React. Inclui sessão localStorage, wake lock, autosave agressivo e componente resumer brute-force.
+---
+
 # Persistência de Modal / Workflow em PWA/React
 
 ## Quando usar
