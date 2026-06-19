@@ -821,17 +821,16 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         .eq("id", assessmentId)
         .single();
       if (error || !a) throw error || new Error("not found");
-      // O gerador do PDF exige uma hipótese diagnóstica para renderizar a
-      // primeira seção. Se a avaliação ainda não tem diagnóstico (ex.: fisio
-      // salvou parcialmente, sem clicar em "Gerar diagnóstico"), interrompe
-      // com mensagem amigável em vez de quebrar com "null is not an object".
-      if (!a.diagnosis || typeof (a.diagnosis as any)?.hypothesis !== "string") {
-        throw new Error(
-          isPt
-            ? "Gere o diagnóstico (etapa final) antes de baixar o PDF resumo."
-            : "Generate the diagnosis (final step) before downloading the summary PDF.",
-        );
-      }
+      const rawDiagnosis = (a.diagnosis && typeof a.diagnosis === "object") ? (a.diagnosis as any) : {};
+      const diagnosisForPdf = {
+        ...rawDiagnosis,
+        hypothesis: String(rawDiagnosis.hypothesis || rawDiagnosis.summary || rawDiagnosis.text || (isPt ? "Hipótese em construção" : "Hypothesis in progress")),
+        summary: String(rawDiagnosis.summary || rawDiagnosis.text || rawDiagnosis.clinicalImpression?.overview || (isPt ? "Resumo clínico não registrado." : "Clinical summary not recorded.")),
+        confidence: rawDiagnosis.confidence || "moderate",
+        disclaimer: rawDiagnosis.disclaimer || (isPt
+          ? "Resumo gerado a partir da avaliação manual registrada pelo profissional."
+          : "Summary generated from the professional manual assessment."),
+      };
       let proLogoUrl: string | undefined;
       let clinicLogoUrl: string | undefined;
       let clinicName: string | undefined;
@@ -843,9 +842,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         const { data: p } = await supabase.from("professionals").select("logo_url").eq("id", professionalId).maybeSingle();
         proLogoUrl = (p as any)?.logo_url || undefined;
       }
-      const { generateAssessmentPdf } = await import("@/utils/generatePdf");
-      await generateAssessmentPdf({
-        diagnosis: a.diagnosis,
+      const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
+      const blob = await generateAssessmentPdfBlob({
+        diagnosis: diagnosisForPdf,
         treatmentPlan: a.treatment_plan,
         language: isPt ? "pt" : "en",
         userName: a.patient_name || (isPt ? "Paciente" : "Patient"),
@@ -857,6 +856,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         clinicLogoUrl,
         clinicName,
       } as any);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `AliviA_Resumo_${(a.patient_name || "Paciente").replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       toast({ title: isPt ? "PDF gerado" : "PDF generated" });
     } catch (err: any) {
       console.error("summary pdf error:", err);
@@ -1009,25 +1016,24 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       }
 
       // Persist scheduled specialty questionnaires as pending rows tied to this assessment.
+      let createdSpecialtyPending = 0;
       if (savedId) {
         const pendingItems = specialtyPanelRef.current?.getScheduled() || [];
         const toInsert = pendingItems.filter((p) => !p.share_token);
         if (toInsert.length > 0) {
-          try {
-            await supabase.from("pending_questionnaires" as any).insert(
-              toInsert.map((p) => ({
-                assessment_id: savedId,
-                professional_id: clinicId ? null : professionalId,
-                clinic_id: clinicId || null,
-                questionnaire_id: p.questionnaireId,
-                domain: p.domain,
-                suggested_reason: p.suggestedReason,
-                status: "pending",
-              })),
-            );
-          } catch (err) {
-            console.warn("pending questionnaires insert failed:", err);
-          }
+          const { error: specialtyPendingError } = await supabase.from("pending_questionnaires" as any).insert(
+            toInsert.map((p) => ({
+              assessment_id: savedId,
+              professional_id: clinicId ? null : professionalId,
+              clinic_id: clinicId || null,
+              questionnaire_id: p.questionnaireId,
+              domain: p.domain,
+              suggested_reason: p.suggestedReason,
+              status: "pending",
+            })),
+          );
+          if (specialtyPendingError) throw specialtyPendingError;
+          createdSpecialtyPending = toInsert.length;
         }
       }
 
@@ -1036,38 +1042,34 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       // aplicável (baseado nas regiões marcadas) vinculada à mesma avaliação.
       let createdGeneralPending = 0;
       if (savedId && deferQuestionnaires && painRegions.length > 0) {
-        try {
-          const applicable = getApplicableQuestionnaires(painRegions);
-          // Evita duplicidade quando o fisio edita uma avaliação que já tem
-          // pendentes gerais: busca os existentes desta avaliação primeiro.
-          const { data: existing } = await supabase
-            .from("pending_questionnaires" as any)
-            .select("questionnaire_id, domain")
-            .eq("assessment_id", savedId);
-          const seen = new Set(
-            (existing || [])
-              .filter((r: any) => r.domain === "general")
-              .map((r: any) => r.questionnaire_id),
-          );
-          const rows = applicable
-            .filter((q) => !seen.has(q.id))
-            .map((q) => ({
-              assessment_id: savedId,
-              professional_id: clinicId ? null : professionalId,
-              clinic_id: clinicId || null,
-              questionnaire_id: q.id,
-              domain: "general",
-              suggested_reason: isPt
-                ? `Aplicável às regiões: ${painRegions.join(", ")}`
-                : `Applies to regions: ${painRegions.join(", ")}`,
-              status: "pending",
-            }));
-          if (rows.length > 0) {
-            await supabase.from("pending_questionnaires" as any).insert(rows);
-            createdGeneralPending = rows.length;
-          }
-        } catch (err) {
-          console.warn("deferred general questionnaires insert failed:", err);
+        const applicable = getApplicableQuestionnaires(painRegions);
+        const { data: existing, error: existingError } = await supabase
+          .from("pending_questionnaires" as any)
+          .select("questionnaire_id, domain")
+          .eq("assessment_id", savedId);
+        if (existingError) throw existingError;
+        const seen = new Set(
+          (existing || [])
+            .filter((r: any) => r.domain === "general")
+            .map((r: any) => r.questionnaire_id),
+        );
+        const rows = applicable
+          .filter((q) => !seen.has(q.id))
+          .map((q) => ({
+            assessment_id: savedId,
+            professional_id: clinicId ? null : professionalId,
+            clinic_id: clinicId || null,
+            questionnaire_id: q.id,
+            domain: "general",
+            suggested_reason: isPt
+              ? `Aplicável às regiões: ${painRegions.join(", ")}`
+              : `Applies to regions: ${painRegions.join(", ")}`,
+            status: "pending",
+          }));
+        if (rows.length > 0) {
+          const { error: generalPendingError } = await supabase.from("pending_questionnaires" as any).insert(rows);
+          if (generalPendingError) throw generalPendingError;
+          createdGeneralPending = rows.length;
         }
       }
 
@@ -1079,7 +1081,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       // Se há pendências (gerais ou de especialidade), gera o link único e
       // abre o diálogo de compartilhamento ANTES de fechar o modal para que o
       // fisio copie/envie de uma vez.
-      if (savedId && (createdGeneralPending > 0 || deferQuestionnaires)) {
+      if (savedId && (createdGeneralPending > 0 || createdSpecialtyPending > 0)) {
         try {
           const longUrl = `${getPublicOrigin()}/avaliacao/pendentes/${savedId}`;
           const shortUrl = await createShortAppLink(longUrl);
