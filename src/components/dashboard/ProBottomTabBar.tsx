@@ -56,11 +56,11 @@ const ProBottomTabBar = ({ activeTab, onChangeTab, hasAgentAccess, professionalI
       aria-label={ariaLabel}
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center justify-center gap-0.5 min-h-[56px] px-2 transition-colors",
+        "flex flex-col items-center justify-center gap-[2px] min-h-[50px] px-2 transition-colors",
         active ? "text-primary" : "text-muted-foreground hover:text-foreground",
       )}
     >
-      <Icon className={cn("h-5 w-5", active && "stroke-[2.4]")} />
+      <Icon className={cn("h-[18px] w-[18px]", active && "stroke-[2.4]")} />
       <span className={cn("text-[10px] leading-none font-medium", active && "font-semibold")}>{label}</span>
     </button>
   );
