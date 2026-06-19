@@ -276,7 +276,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     }
   };
 
-  const handleToggle = async (partnerId: string, accessType: "pro" | "clinic" | "premium", enabled: boolean) => {
+  const handleToggle = async (partnerId: string, accessType: "pro" | "clinic" | "premium" | "academic", enabled: boolean) => {
     if (accessType === "clinic" && enabled) {
       const partner = partners.find(p => p.id === partnerId);
       if (partner && !partner.has_clinic) {
@@ -293,6 +293,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
       if (accessType === "pro") return { ...p, is_partner: enabled };
       if (accessType === "clinic") return { ...p, clinic_active: enabled, has_clinic: enabled ? true : p.has_clinic };
       if (accessType === "premium") return { ...p, premium_granted: enabled };
+      if (accessType === "academic") return { ...p, is_student: enabled };
       return p;
     }));
 
