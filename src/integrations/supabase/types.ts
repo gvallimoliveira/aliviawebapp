@@ -2596,6 +2596,7 @@ export type Database = {
         Args: { _clinic_id: string }
         Returns: {
           accepted_at: string
+          active_profile_mode: string
           email: string
           full_name: string
           id: string
@@ -2762,6 +2763,7 @@ export type Database = {
         Args: { _professional_id: string }
         Returns: {
           active: boolean
+          active_profile_mode: string
           approved: boolean
           full_name: string
           has_access: boolean
