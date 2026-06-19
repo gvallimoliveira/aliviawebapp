@@ -1242,13 +1242,28 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 5: DINAMOMETRIA (opcional) */}
+            {/* STEP 5: DINAMOMETRIA (opcional — pode ser pulada e preenchida depois no prontuário) */}
             {step === 5 && (
               <div className="space-y-4">
-                <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground leading-relaxed">
-                  {isPt
-                    ? "Etapa opcional. Registre dinamometria (força muscular em kgf) manualmente ou importe de imagem/PDF. Pode ser preenchida agora ou posteriormente, editando esta avaliação."
-                    : "Optional step. Record dynamometry (muscle strength in kgf) manually or import from image/PDF. Can be filled now or later by editing this assessment."}
+                <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground leading-relaxed flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span>
+                    {isPt
+                      ? "Etapa opcional. Registre dinamometria (força muscular em kgf) manualmente ou importe de imagem/PDF. Se não houver dados de força, pule esta etapa — a IA seguirá o raciocínio sem essa peça e você pode anexar depois no prontuário do paciente."
+                      : "Optional step. Record dynamometry (muscle strength in kgf) manually or import from image/PDF. If you have no strength data, skip this step — the AI will reason without it and you can attach later in the patient record."}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setStrengthTable(createInitialStrengthRows(2));
+                      setStep((s) => Math.min(STEPS.length - 1, s + 1));
+                    }}
+                    className="shrink-0"
+                  >
+                    {isPt ? "Pular esta etapa" : "Skip this step"}
+                    <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
                 </div>
                 <StrengthTable
                   value={strengthTable}
@@ -1258,6 +1273,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 />
               </div>
             )}
+
 
             {/* STEP 6: DIAGNÓSTICO */}
             {step === 6 && (

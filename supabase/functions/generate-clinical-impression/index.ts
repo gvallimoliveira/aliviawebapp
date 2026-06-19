@@ -78,8 +78,8 @@ ${Object.entries(anamnesisData.painScoresPerRegion).map(([k, v]) => `    • ${k
 - Questionnaire results: ${JSON.stringify(questionnaireResults || [])}${timelineBlock}
 ${Array.isArray(anamnesisData?.romTable) && anamnesisData.romTable.length > 0 ? `- Joint mobility (ROM):
 ${anamnesisData.romTable.filter((r: any) => r?.joint || r?.leftValue || r?.rightValue).map((r: any) => `    • ${r.joint || "?"}: L ${r.leftValue || "—"} | R ${r.rightValue || "—"}`).join("\n")}` : ""}
-${Array.isArray(anamnesisData?.strengthTable) && anamnesisData.strengthTable.length > 0 ? `- Dynamometry (muscle strength, kgf) — weigh asymmetries > 20% as a sign of inhibition/weakness (D.I.F.I):
-${anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue).map((r: any) => `    • ${r.movement || "?"}: L ${r.leftValue || "—"} kgf | R ${r.rightValue || "—"} kgf`).join("\n")}` : ""}
+${Array.isArray(anamnesisData?.strengthTable) && anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue).length > 0 ? `- Dynamometry (muscle strength, kgf) — weigh asymmetries > 20% as a sign of inhibition/weakness (D.I.F.I):
+${anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue).map((r: any) => `    • ${r.movement || "?"}: L ${r.leftValue || "—"} kgf | R ${r.rightValue || "—"} kgf`).join("\n")}` : `- Dynamometry: NOT RECORDED — do not infer or invent strength values; reason from the data above without speculating about objective strength.`}
 
 Generate the clinical impression now.`;
 
