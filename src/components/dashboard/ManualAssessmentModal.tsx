@@ -145,6 +145,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   const [step, setStep] = useState(0);
 
+  // Ref to the scrollable content area — used to force scroll-to-top
+  // whenever the user advances/returns between steps so fields near the top
+  // never get missed because of a prior scroll position.
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (el) el.scrollTo({ top: 0, behavior: "auto" });
+  }, [step]);
+
   // Attach a voice-recorder session at the App-level FAB while the modal is
   // open. Lives outside the modal subtree so step navigation never resets it.
   // Skipped in demo mode — the FAB is replaced by an inline mock.
