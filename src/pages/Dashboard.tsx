@@ -97,11 +97,18 @@ function buildOnboardingSteps(
   }
 
   if (context === "professional") {
-    return [
-      { targetId: "pro-tab-trigger", titleKey: "onboarding.pro_tab.title", descriptionKey: "onboarding.pro_tab.desc", position: "bottom" },
-      { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom" },
-      { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom" },
+    const steps: OnboardingStep[] = [
+      { targetId: "pro-tab-trigger", titleKey: "onboarding.pro_tab.title", descriptionKey: "onboarding.pro_tab.desc", position: "bottom", tab: "professional" },
+      { targetId: "pro-link", titleKey: "onboarding.pro.step2.title", descriptionKey: "onboarding.pro.step2.desc", position: "bottom", tab: "professional" },
+      { targetId: "pro-patients", titleKey: "onboarding.pro.step3.title", descriptionKey: "onboarding.pro.step3.desc", position: "bottom", tab: "professional" },
+      { targetId: "pro-tab-agenda", titleKey: "onboarding.pro.agenda.title", descriptionKey: "onboarding.pro.agenda.desc", position: "bottom", tab: "agenda" },
+      { targetId: "pro-tab-insights", titleKey: "onboarding.pro.insights.title", descriptionKey: "onboarding.pro.insights.desc", position: "bottom", tab: "insights" },
+      { targetId: "pro-tab-messages", titleKey: "onboarding.pro.messages.title", descriptionKey: "onboarding.pro.messages.desc", position: "bottom", tab: "messages" },
     ];
+    if (opts.hasAgentAccess) {
+      steps.push({ targetId: "pro-tab-agent", titleKey: "onboarding.pro.agent.title", descriptionKey: "onboarding.pro.agent.desc", position: "bottom", tab: "professional" });
+    }
+    return steps;
   }
 
   // personal
