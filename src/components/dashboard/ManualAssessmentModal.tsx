@@ -1129,7 +1129,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 <div>
                   <Label className="text-xs">{isPt ? "Histórico" : "History"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(history, MOCK_MANUAL_CASE.history, setHistory, "")}>
-                    <Textarea value={history} onChange={(e) => setHistory(e.target.value)} rows={3} className="mt-1 text-sm" />
+                    <Textarea
+                      value={history}
+                      onChange={(e) => setHistory(e.target.value)}
+                      rows={6}
+                      placeholder={isPt
+                        ? "Descreva como o quadro começou, evolução, tratamentos anteriores, contexto ocupacional e qualquer informação relevante sobre o caso clínico."
+                        : "Describe how the condition started, its evolution, prior treatments, occupational context and any relevant clinical information."}
+                      className="mt-1 text-sm min-h-[150px] resize-y"
+                    />
                   </DemoShield>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
