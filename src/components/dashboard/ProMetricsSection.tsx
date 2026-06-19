@@ -79,7 +79,25 @@ const ProMetricsSection = ({ professionalId, clinicId }: Props) => {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      {/* Mobile: horizontal peek carousel */}
+      <div className="md:hidden -mx-4 overflow-x-auto snap-x snap-mandatory scrollbar-none">
+        <div className="flex gap-3 px-4 pb-1">
+          <Card className="snap-start shrink-0 basis-[40%]">
+            <CardContent className="py-4 text-center">
+              <p className="text-2xl font-bold text-foreground">{assessments.length}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{t("pro.total_assessments")}</p>
+            </CardContent>
+          </Card>
+          <Card className="snap-start shrink-0 basis-[40%]">
+            <CardContent className="py-4 text-center">
+              <p className="text-2xl font-bold text-primary">{thisMonth}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{t("pro.this_month")}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      {/* Desktop / tablet: grid */}
+      <div className="hidden md:grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="py-4 text-center">
             <p className="text-3xl font-bold text-foreground">{assessments.length}</p>
