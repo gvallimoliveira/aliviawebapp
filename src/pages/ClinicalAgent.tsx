@@ -1119,7 +1119,6 @@ const ClinicalAgent = () => {
         professionalId={professionalId}
         clinicId={activeClinic?.clinic_id || null}
       />
-      <div className="md:hidden h-20" aria-hidden="true" />
     </div>
   );
 };
