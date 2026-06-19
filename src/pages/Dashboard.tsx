@@ -178,6 +178,26 @@ const Dashboard = () => {
   const onboardingStorageKey = `onboarding_${onboardingContext}_completed_v2`;
   const onboarding = useOnboarding(onboardingStorageKey, onboardingSteps);
 
+  // While the professional tour is active, mirror each step's `tab` into the
+  // dashboard so the user actually sees the area being described. When the
+  // tour ends, return to the main "professional" tab.
+  const tourPrevTabRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (onboardingContext !== "professional") return;
+    if (onboarding.isActive) {
+      const targetTab = onboarding.step?.tab;
+      if (targetTab) {
+        if (tourPrevTabRef.current === null) tourPrevTabRef.current = activeTab;
+        if (targetTab !== activeTab) setActiveTab(targetTab);
+      }
+    } else if (tourPrevTabRef.current !== null) {
+      setActiveTab("professional");
+      tourPrevTabRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboarding.currentStep, onboarding.isActive, onboardingContext]);
+
+
   useEffect(() => {
     if (!authReady || authLoading) return;
     if (!user) navigate("/auth", { replace: true });
