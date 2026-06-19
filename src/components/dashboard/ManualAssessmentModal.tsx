@@ -1145,13 +1145,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   />
                 </DemoShield>
 
-                {/* Dynamometry (muscle strength) table — manual or AI-extracted from image/PDF */}
-                <StrengthTable
-                  value={strengthTable}
-                  onChange={setStrengthTable}
-                  lang={isPt ? "pt" : language === "es" ? "es" : "en"}
-                  disableImport={demoMode}
-                />
+
+
 
 
                 <div>
