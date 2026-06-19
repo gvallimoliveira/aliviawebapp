@@ -417,7 +417,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             ? (an.pain_scores_per_region as Record<string, number>)
             : {}),
     );
+    setPainTypesPerRegion(
+      an.painTypesPerRegion && typeof an.painTypesPerRegion === "object"
+        ? (an.painTypesPerRegion as Record<string, string>)
+        : {},
+    );
     setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
+    setAdditionalClinicalNotes(an.additionalClinicalNotes || "");
     setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
     setSpecialtyApplied(Array.isArray(an?.specialtyResults) ? an.specialtyResults : []);
     setFunctionalTests(an.functionalTests || "");
