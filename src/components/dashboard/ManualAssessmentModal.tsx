@@ -177,7 +177,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
-  const [romTable, setRomTable] = useState<RomRow[]>(createInitialRomRows(5));
+  const [romTable, setRomTable] = useState<RomRow[]>(createInitialRomRows(2));
   const [testSuggestions, setTestSuggestions] = useState<Array<{ name: string; category: string; rationale: string }>>([]);
   const [suggestingTests, setSuggestingTests] = useState(false);
   const [addedSuggestions, setAddedSuggestions] = useState<Set<string>>(new Set());
@@ -318,7 +318,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setRedFlagsChecked(p.redFlagsChecked ?? []);
     setQuestionnaireResults(p.questionnaireResults ?? []);
     setFunctionalTests(p.functionalTests ?? "");
-    setRomTable(Array.isArray(p.romTable) && p.romTable.length > 0 ? p.romTable : createInitialRomRows(5));
+    setRomTable(Array.isArray(p.romTable) && p.romTable.length > 0 ? p.romTable : createInitialRomRows(2));
     setClinicalImpression(p.clinicalImpression ?? "");
     setDiagnosisText(p.diagnosisText ?? "");
     setTreatmentText(p.treatmentText ?? "");
@@ -364,7 +364,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
     setSpecialtyApplied(Array.isArray(an?.specialtyResults) ? an.specialtyResults : []);
     setFunctionalTests(an.functionalTests || "");
-    setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(5));
+    setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(2));
     const dx = a.diagnosis || {};
     setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
     const ci = dx.clinicalImpression;
@@ -1129,7 +1129,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 <DemoShield
                   on={demoMode}
                   onAutofill={() =>
-                    autofill(romTable, MOCK_MANUAL_CASE.romTable, setRomTable, createInitialRomRows(5))
+                    autofill(romTable, MOCK_MANUAL_CASE.romTable, setRomTable, createInitialRomRows(2))
                   }
                 >
                   <RomTable

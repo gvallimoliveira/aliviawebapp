@@ -12,7 +12,7 @@ export type RomRow = {
 
 export const EMPTY_ROM_ROW: RomRow = { joint: "", leftValue: "", rightValue: "" };
 
-export const createInitialRomRows = (n = 5): RomRow[] =>
+export const createInitialRomRows = (n = 2): RomRow[] =>
   Array.from({ length: n }, () => ({ ...EMPTY_ROM_ROW }));
 
 /** Removes blank rows for persistence / display. */
