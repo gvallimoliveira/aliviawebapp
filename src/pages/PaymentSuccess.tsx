@@ -4,6 +4,7 @@ import { CheckCircle, Loader2, Clock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ClinicalThinkingSkeleton from "@/components/assessment/ClinicalThinkingSkeleton";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -173,12 +174,8 @@ const PaymentSuccess = () => {
   // Pro treatment: generating treatment
   if (isProTreatment && verified && (generatingTreatment || !treatmentDone)) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">{t("treatment.processing") || "Gerando seu plano de tratamento..."}</p>
-          <p className="text-xs text-muted-foreground/60">{t("treatment.processing_desc")}</p>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <ClinicalThinkingSkeleton phase="treatment" lang={language} />
       </div>
     );
   }
