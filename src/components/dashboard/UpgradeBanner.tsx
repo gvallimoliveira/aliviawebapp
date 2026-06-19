@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Crown, Clock, Sparkles, Bell, X, Loader2, Stethoscope } from "lucide-react";
+import { Crown, Clock, Sparkles, Loader2, Stethoscope } from "lucide-react";
 
 interface PremiumAccess {
   has_access: boolean;
@@ -21,19 +21,9 @@ interface UpgradeBannerProps {
   premiumAccess: PremiumAccess | null;
   premiumLoading: boolean;
   professional?: any;
-  push: {
-    isSupported: boolean;
-    subscribed: boolean;
-    dismissed: boolean;
-    permission: string;
-    loading: boolean;
-    ready: boolean;
-    subscribe: () => void;
-    dismiss: () => void;
-  };
 }
 
-const UpgradeBanner = ({ premiumAccess, premiumLoading, professional, push }: UpgradeBannerProps) => {
+const UpgradeBanner = ({ premiumAccess, premiumLoading, professional }: UpgradeBannerProps) => {
   const { t } = useLanguage();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
@@ -205,32 +195,6 @@ const UpgradeBanner = ({ premiumAccess, premiumLoading, professional, push }: Up
                 {upgradeLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Crown className="h-3.5 w-3.5" />}
                 {t("dashboard.upgrade_to_monthly")}
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Push Notification Opt-in */}
-      {push.ready && push.isSupported && !push.subscribed && !push.dismissed && push.permission !== "denied" && (
-        <Card className="border-primary/20 bg-primary/[0.02]">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                <Bell className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">{t("push.opt_in_title")}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{t("push.opt_in_desc")}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Button size="sm" onClick={() => push.subscribe()} disabled={push.loading} className="gap-1.5">
-                  <Bell className="h-3.5 w-3.5" />
-                  {t("push.enable")}
-                </Button>
-                <Button variant="ghost" size="icon" onClick={push.dismiss} className="h-8 w-8">
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>
