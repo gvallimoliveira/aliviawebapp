@@ -243,9 +243,9 @@ const ClinicalAgent = () => {
         const { data: hid } = await sb.from("clinic_hidden_patients")
           .select("patient_email").eq("clinic_id", clinicId);
         (hid || []).forEach((h: any) => hiddenKeys.add(h.patient_email));
-      } else if (professionalId) {
+      } else if (myProfessionalId) {
         const { data: hid } = await sb.from("professional_hidden_patients")
-          .select("patient_email").eq("professional_id", professionalId);
+          .select("patient_email").eq("professional_id", myProfessionalId);
         (hid || []).forEach((h: any) => hiddenKeys.add(h.patient_email));
       }
 
