@@ -205,6 +205,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [pendingShareOpen, setPendingShareOpen] = useState(false);
   // Quantidade atual de pendências (em modo edição) — preenchido em useEffect.
   const [pendingCount, setPendingCount] = useState<{ total: number; pending: number } | null>(null);
+  // ID da avaliação salva — usado pelo botão "Baixar PDF resumo" no diálogo de envio.
+  const [pendingSavedAssessmentId, setPendingSavedAssessmentId] = useState<string | null>(null);
+  const [generatingSummaryPdf, setGeneratingSummaryPdf] = useState(false);
   const [specialtyApplied, setSpecialtyApplied] = useState<SpecialtyAppliedResult[]>([]);
   const specialtyPanelRef = useRef<SpecialtyPanelHandle | null>(null);
 
@@ -448,7 +451,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Conta pendentes vinculados a esta avaliação (modo edição) para exibir o
   // banner com o link consolidado e botão de cancelar pendência.
   useEffect(() => {
-    if (!open || !editAssessment?.id || demoMode) { setPendingCount(null); return; }
+    if (!open || !editAssessment?.id || demoMode) { setPendingCount(null); setPendingSavedAssessmentId(null); return; }
+    setPendingSavedAssessmentId(editAssessment.id);
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
@@ -792,11 +796,86 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setAddedSuggestions((prev) => new Set(prev).add(s.name));
   };
 
+  /**
+   * Gera e baixa um PDF-resumo da avaliação salva (anamnese, red flags,
+   * observações adicionais, hipótese e plano) para o fisio compartilhar com o
+   * paciente. Reusa o mesmo gerador do dashboard, garantindo branding
+   * (logo do profissional ou da clínica) quando disponível.
+   */
+  const handleDownloadSummaryPdf = async (assessmentId: string) => {
+    if (!assessmentId || generatingSummaryPdf) return;
+    setGeneratingSummaryPdf(true);
+    try {
+      const { data: a, error } = await supabase
+        .from("assessments")
+        .select("*")
+        .eq("id", assessmentId)
+        .single();
+      if (error || !a) throw error || new Error("not found");
+      let proLogoUrl: string | undefined;
+      let clinicLogoUrl: string | undefined;
+      let clinicName: string | undefined;
+      if (clinicId) {
+        const { data: c } = await supabase.from("clinics").select("logo_url, name").eq("id", clinicId).maybeSingle();
+        clinicLogoUrl = (c as any)?.logo_url || undefined;
+        clinicName = (c as any)?.name || undefined;
+      } else if (professionalId) {
+        const { data: p } = await supabase.from("professionals").select("logo_url").eq("id", professionalId).maybeSingle();
+        proLogoUrl = (p as any)?.logo_url || undefined;
+      }
+      const { generateAssessmentPdf } = await import("@/utils/generatePdf");
+      await generateAssessmentPdf({
+        diagnosis: a.diagnosis,
+        treatmentPlan: a.treatment_plan,
+        language: isPt ? "pt" : "en",
+        userName: a.patient_name || (isPt ? "Paciente" : "Patient"),
+        anamnesisData: a.anamnesis_data,
+        painRegions: a.pain_regions,
+        testResults: a.test_results,
+        redFlags: (a.red_flags as any)?.detected,
+        professionalLogoUrl: proLogoUrl,
+        clinicLogoUrl,
+        clinicName,
+      } as any);
+      toast({ title: isPt ? "PDF gerado" : "PDF generated" });
+    } catch (err: any) {
+      console.error("summary pdf error:", err);
+      toast({
+        title: isPt ? "Erro ao gerar PDF" : "PDF error",
+        description: err?.message || (isPt ? "Tente novamente em instantes." : "Please try again."),
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingSummaryPdf(false);
+    }
+  };
+
+
   const handleSave = async (navigateAfter: boolean = false) => {
     if (demoMode) { demoUpsellToast(); return; }
     if (!patientName.trim()) {
       toast({ title: isPt ? "Nome do paciente é obrigatório" : "Patient name required", variant: "destructive" });
       return;
+    }
+    // Bloqueia o salvamento quando o fisio mudou as regiões de dor mas há
+    // questionários pendentes gerados a partir das regiões anteriores. Isso
+    // mantém o conjunto de questionários sempre sincronizado com o mapa.
+    if (isEditing && pendingCount && pendingCount.pending > 0) {
+      const original = (editAssessment?.pain_regions || []) as string[];
+      const changed =
+        original.length !== painRegions.length ||
+        original.some((r) => !painRegions.includes(r)) ||
+        painRegions.some((r) => !original.includes(r));
+      if (changed) {
+        toast({
+          title: isPt ? "Sincronize os questionários pendentes" : "Sync pending questionnaires first",
+          description: isPt
+            ? `Há ${pendingCount.pending} questionário(s) pendente(s) ligado(s) às regiões anteriores. Use "Encerrar" no banner de pendentes (no topo) para cancelar — ao salvar, novos serão gerados conforme as regiões atuais — ou restaure as regiões originais.`
+            : `There are ${pendingCount.pending} pending questionnaires tied to the previous regions. Use "Cancel" on the pending banner (top) to clear them — new ones will be generated for the current regions on save — or restore the original regions.`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
     setSaving(true);
     try {
@@ -985,6 +1064,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           const longUrl = `${getPublicOrigin()}/avaliacao/pendentes/${savedId}`;
           const shortUrl = await createShortAppLink(longUrl);
           setPendingShareUrl(shortUrl || longUrl);
+          setPendingSavedAssessmentId(savedId);
           setPendingShareOpen(true);
           // Não fecha o modal — usuário fecha após copiar o link.
           return;
@@ -1129,6 +1209,18 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     <Button size="sm" variant="outline" className="h-7 px-2 text-xs gap-1" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent((isPt ? "Olá! Por favor, responda os questionários da sua avaliação: " : "Hi! Please answer your assessment questionnaires: ") + pendingShareUrl)}`, "_blank")}>
                       <MessageCircle className="h-3 w-3" /> WhatsApp
                     </Button>
+                    {editAssessment?.id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-xs gap-1"
+                        disabled={generatingSummaryPdf}
+                        onClick={() => handleDownloadSummaryPdf(editAssessment.id)}
+                      >
+                        {generatingSummaryPdf ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                        {isPt ? "PDF resumo" : "Summary PDF"}
+                      </Button>
+                    )}
                     {pendingCount.pending > 0 && (
                       <Button
                         size="sm"
@@ -1954,7 +2046,24 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               >
                 <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
               </Button>
+              {pendingSavedAssessmentId && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="gap-1.5"
+                  disabled={generatingSummaryPdf}
+                  onClick={() => handleDownloadSummaryPdf(pendingSavedAssessmentId)}
+                >
+                  {generatingSummaryPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                  {isPt ? "Baixar PDF resumo" : "Download summary PDF"}
+                </Button>
+              )}
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              {isPt
+                ? "Opcional: anexe o PDF junto com o link, ou envie apenas o link — fica a seu critério."
+                : "Optional: attach the PDF along with the link, or send just the link — your choice."}
+            </p>
           </div>
         )}
         <AlertDialogFooter>
