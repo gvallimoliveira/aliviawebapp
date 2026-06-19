@@ -734,7 +734,7 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
   if (anamnesis.chiefComplaint) {
     fields.push({ label: isPt ? "Queixa Principal" : "Chief Complaint", value: translateKey(anamnesis.chiefComplaint, isPt) });
   }
-  if (anamnesis.customComplaint) {
+  if (anamnesis.customComplaint && anamnesis.customComplaint !== anamnesis.chiefComplaint) {
     fields.push({ label: isPt ? "Queixa Adicional" : "Additional Complaint", value: anamnesis.customComplaint });
   }
   if (anamnesis.onset) {
