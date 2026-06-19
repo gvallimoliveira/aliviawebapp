@@ -21,6 +21,7 @@ import {
 import logoAlivia from "@/assets/logo-alivia.png";
 import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
 import MentorCommandsPopover from "@/components/agent/MentorCommandsPopover";
+import ProBottomTabBar from "@/components/dashboard/ProBottomTabBar";
 
 type Thread = {
   id: string;
@@ -124,6 +125,7 @@ const ClinicalAgent = () => {
   const [generatingHep, setGeneratingHep] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const [professionalId, setProfessionalId] = useState<string>("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const bootstrappedRef = useRef(false);
 
@@ -225,10 +227,10 @@ const ClinicalAgent = () => {
 
       // Load patients matching the user's professional/clinic context
       // (patients table uses professional_id and clinic_id, NOT user_id)
-      let professionalId: string | null = null;
       const { data: proRow } = await sb.from("professionals")
         .select("id").eq("user_id", user.id).maybeSingle();
-      professionalId = proRow?.id || null;
+      const myProfessionalId = proRow?.id || "";
+      setProfessionalId(myProfessionalId);
 
       const clinicId = isClinicMode && activeClinic ? activeClinic.clinic_id : null;
 
@@ -241,9 +243,9 @@ const ClinicalAgent = () => {
         const { data: hid } = await sb.from("clinic_hidden_patients")
           .select("patient_email").eq("clinic_id", clinicId);
         (hid || []).forEach((h: any) => hiddenKeys.add(h.patient_email));
-      } else if (professionalId) {
+      } else if (myProfessionalId) {
         const { data: hid } = await sb.from("professional_hidden_patients")
-          .select("patient_email").eq("professional_id", professionalId);
+          .select("patient_email").eq("professional_id", myProfessionalId);
         (hid || []).forEach((h: any) => hiddenKeys.add(h.patient_email));
       }
 
@@ -252,9 +254,9 @@ const ClinicalAgent = () => {
         const { data } = await sb.from("patients")
           .select("id, full_name, email, created_at").eq("clinic_id", clinicId).order("full_name");
         raw = (data || []) as any;
-      } else if (professionalId) {
+      } else if (myProfessionalId) {
         const { data } = await sb.from("patients")
-          .select("id, full_name, email, created_at").eq("professional_id", professionalId).order("full_name");
+          .select("id, full_name, email, created_at").eq("professional_id", myProfessionalId).order("full_name");
         raw = (data || []) as any;
       }
 
@@ -1101,6 +1103,23 @@ const ClinicalAgent = () => {
           </div>
         </div>
       )}
+
+      <ProBottomTabBar
+        activeTab="agent"
+        onChangeTab={(tab) => {
+          if (tab === "professional" || tab === "patients") {
+            navigate("/dashboard?tab=professional");
+          } else if (tab === "agenda") {
+            navigate("/dashboard?tab=agenda");
+          } else if (tab === "insights" || tab === "messages" || tab === "clinic") {
+            navigate(`/dashboard?tab=${tab}`);
+          }
+        }}
+        hasAgentAccess={hasAccess}
+        professionalId={professionalId}
+        clinicId={activeClinic?.clinic_id || null}
+      />
+      <div className="md:hidden h-20" aria-hidden="true" />
     </div>
   );
 };
