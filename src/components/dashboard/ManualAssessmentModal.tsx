@@ -1432,19 +1432,78 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       : "Select at least one pain region in the previous step to load the applicable questionnaires."}
                   </div>
                 ) : (
-                  <QuestionnaireStep
-                    painRegions={painRegions}
-                    previousAnswers={undefined}
-                    demoMode={demoMode}
-                    autofillAnswers={demoMode ? MOCK_MANUAL_CASE.questionnaireAnswers : undefined}
-                    onComplete={(results) => {
-                      setQuestionnaireResults(results);
-                      setStep((s) => Math.min(STEPS.length - 1, s + 1));
-                    }}
-                    onBack={() => setStep((s) => Math.max(0, s - 1))}
-                    onSkip={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
-                  />
+                  <>
+                    {/* Toggle: aplicar agora ou enviar link para o paciente preencher depois */}
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-start gap-3">
+                      <Switch
+                        checked={deferQuestionnaires}
+                        onCheckedChange={setDeferQuestionnaires}
+                        disabled={demoMode}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <p className="text-sm font-semibold text-foreground">
+                          {isPt
+                            ? "Enviar questionários para o paciente preencher depois"
+                            : "Send questionnaires for the patient to complete later"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          {isPt
+                            ? "Útil quando há várias regiões marcadas e a aplicação em consulta ficaria longa. Ao salvar, geramos um link único que reúne TODOS os questionários aplicáveis (e os de especialidade já agendados). As respostas voltam vinculadas a esta mesma avaliação — não cria uma reavaliação nova."
+                            : "Useful when many regions are marked and applying everything in-session would take too long. On save we generate a single link that bundles ALL applicable questionnaires (plus any specialty ones already scheduled). Answers come back attached to THIS assessment — no new reassessment is created."}
+                        </p>
+                        {painRegions.length >= 3 && (
+                          <p className="text-[11px] text-primary font-medium">
+                            {isPt
+                              ? "Sugerido automaticamente: você marcou 3+ regiões."
+                              : "Auto-suggested: you marked 3+ regions."}
+                          </p>
+                        )}
+                      </div>
+                    </div>
 
+                    {deferQuestionnaires ? (
+                      <div className="rounded-md border bg-muted/30 p-3 space-y-2">
+                        <div className="flex items-center gap-2 text-xs font-semibold">
+                          <ClipboardList className="h-3.5 w-3.5 text-primary" />
+                          {isPt ? "Serão enviados ao paciente:" : "Will be sent to the patient:"}
+                        </div>
+                        <ul className="text-xs text-muted-foreground space-y-1 pl-1">
+                          {getApplicableQuestionnaires(painRegions).map((q) => (
+                            <li key={q.id} className="flex items-center gap-2">
+                              <span className="w-1 h-1 rounded-full bg-primary/60" />
+                              <span>{isPt ? q.fullName_pt : q.fullName_en}</span>
+                            </li>
+                          ))}
+                          {getApplicableQuestionnaires(painRegions).length === 0 && (
+                            <li className="italic">
+                              {isPt
+                                ? "Nenhum questionário geral aplicável às regiões marcadas."
+                                : "No general questionnaire applies to the marked regions."}
+                            </li>
+                          )}
+                        </ul>
+                        <p className="text-[11px] text-muted-foreground">
+                          {isPt
+                            ? "O link aparecerá assim que você concluir a avaliação. Você também encontra esse link sempre que reabrir a avaliação para edição."
+                            : "The link appears as soon as you finish the assessment. You can also find it whenever you reopen the assessment for editing."}
+                        </p>
+                      </div>
+                    ) : (
+                      <QuestionnaireStep
+                        painRegions={painRegions}
+                        previousAnswers={undefined}
+                        demoMode={demoMode}
+                        autofillAnswers={demoMode ? MOCK_MANUAL_CASE.questionnaireAnswers : undefined}
+                        onComplete={(results) => {
+                          setQuestionnaireResults(results);
+                          setStep((s) => Math.min(STEPS.length - 1, s + 1));
+                        }}
+                        onBack={() => setStep((s) => Math.max(0, s - 1))}
+                        onSkip={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+                      />
+                    )}
+                  </>
                 )}
                 {questionnaireResults.length > 0 && (
                   <div className="text-xs text-muted-foreground p-2 rounded bg-primary/5 border border-primary/20">
