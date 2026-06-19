@@ -1548,6 +1548,30 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       </DialogContent>
 
     </Dialog>
+
+    <AlertDialog open={confirmExitOpen} onOpenChange={setConfirmExitOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {isPt ? "Sair da avaliação?" : "Leave assessment?"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {isPt
+              ? "Seus dados ficam salvos como rascunho. Você pode retomar de onde parou ao reabrir esta avaliação."
+              : "Your data stays saved as a draft. You can resume from where you left off when reopening this assessment."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+            {isPt ? "Continuar editando" : "Keep editing"}
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={confirmExit}>
+            {isPt ? "Sair" : "Leave"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
 
