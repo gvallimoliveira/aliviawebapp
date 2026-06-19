@@ -445,6 +445,32 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   }, [open, editAssessment]);
   useEffect(() => { if (!open) prefilledIdRef.current = null; }, [open]);
 
+  // Conta pendentes vinculados a esta avaliação (modo edição) para exibir o
+  // banner com o link consolidado e botão de cancelar pendência.
+  useEffect(() => {
+    if (!open || !editAssessment?.id || demoMode) { setPendingCount(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("pending_questionnaires" as any)
+        .select("status")
+        .eq("assessment_id", editAssessment.id);
+      if (cancelled || error) return;
+      const total = (data || []).length;
+      const pending = (data || []).filter((r: any) => r.status === "pending").length;
+      setPendingCount({ total, pending });
+      if (total > 0) {
+        try {
+          const longUrl = `${getPublicOrigin()}/avaliacao/pendentes/${editAssessment.id}`;
+          const shortUrl = await createShortAppLink(longUrl);
+          if (!cancelled) setPendingShareUrl(shortUrl || longUrl);
+        } catch { /* silencioso */ }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, editAssessment?.id, demoMode]);
+
+
   // ── Persistência da sessão do modal ───────────────────────────────────────
   // Grava em localStorage que existe uma avaliação manual em andamento, para
   // que o ManualAssessmentResumer reabra automaticamente caso o app seja
