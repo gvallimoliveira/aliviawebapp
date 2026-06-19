@@ -502,7 +502,7 @@ ${questionnaireResults.map((q: any) => `- ${q.questionnaireName} (${q.questionna
 ${Array.isArray(anamnesisData?.romTable) && anamnesisData.romTable.length > 0 ? `Joint mobility / ROM (range of motion):
 ${anamnesisData.romTable.filter((r: any) => r?.joint || r?.leftValue || r?.rightValue).map((r: any) => `- ${r.joint || "?"}: L ${r.leftValue || "—"} | R ${r.rightValue || "—"}`).join("\n")}` : ""}
 
-${Array.isArray(anamnesisData?.strengthTable) && anamnesisData.strengthTable.length > 0 ? `Dynamometry (muscle strength, kgf):
+${Array.isArray(anamnesisData?.strengthTable) && anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue).length > 0 ? `Dynamometry (muscle strength, kgf):
 ${anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue).map((r: any) => {
   const L = parseFloat(String(r.leftValue || "").replace(",", "."));
   const R = parseFloat(String(r.rightValue || "").replace(",", "."));
@@ -513,7 +513,10 @@ ${anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || 
 INTERPRETATION RULES for dynamometry:
 - Treat asymmetries > 20% as a strong sign of muscle INHIBITION/WEAKNESS in the D.I.F.I framework. Reflect this in the hypothesis reasoning and in the prioritized objectives.
 - Compare strength values with the painful regions reported above. Weakness on the symptomatic side, with concordant pain, supports a primary contractile (tendon/muscle) generator.
-- Bilateral low values (both sides clearly below reference for sex/age) suggest deconditioning rather than focal pathology.` : ""}
+- Bilateral low values (both sides clearly below reference for sex/age) suggest deconditioning rather than focal pathology.` : `Dynamometry: NOT RECORDED for this patient.
+- Do NOT assume, infer or invent strength values. Base reasoning solely on the available exam findings, ROM, functional tests and questionnaires.
+- You may briefly note in the explanation that objective strength data could refine the hypothesis if collected in a future session, but do not let its absence weaken the rest of the reasoning.`}
+
 
 Assessment mode: ${isBasic ? "Basic (provide only hypothesis, confidence, summary and disclaimer)" : isProfessional ? "Professional triage (provide only hypothesis, confidence, summary and disclaimer. The disclaimer MUST state this is a preliminary hypothesis for triage and the definitive diagnosis is the responsibility of the attending physiotherapist)" : "Premium (provide full detailed analysis including functional test findings and questionnaire-based functional profile)"}
 
