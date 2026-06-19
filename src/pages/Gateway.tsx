@@ -352,9 +352,6 @@ const Gateway = () => {
           </motion.div>
         </div>
 
-        <div className="container max-w-2xl mt-8 mb-4">
-          <InstallAppCard variant="subtle" />
-        </div>
       </main>
 
       <LgpdBadge />
