@@ -283,8 +283,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     ? `${professionalId}:${(patientEmail || patientName || "").toLowerCase().trim()}`
     : null;
   const draftState = {
-    step, chiefComplaint, history, duration, onset, aggravating, relieving,
-    medications, previousSurgeries, comorbidities, occupation,
+    step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
+    medications, previousSurgeries, comorbidities, occupation, complementaryExams,
     painScore, painType, painRegions, painScoresPerRegion, redFlagsChecked, questionnaireResults,
     functionalTests, romTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
