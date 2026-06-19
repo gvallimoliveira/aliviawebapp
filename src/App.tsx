@@ -88,6 +88,7 @@ const App = () => {
               <ScrollToTop />
               <GlobalMobileMenu />
               <RealtimeNotifier />
+              <ManualAssessmentResumer />
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Gateway />} />
