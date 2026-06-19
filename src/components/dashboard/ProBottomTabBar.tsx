@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Users, CalendarDays, Brain, Stethoscope } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -24,6 +24,7 @@ const ProBottomTabBar = ({ activeTab, onChangeTab, hasAgentAccess, professionalI
   const { language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const L = LABELS[(language as "pt" | "en" | "es") || "pt"] || LABELS.pt;
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -32,6 +33,15 @@ const ProBottomTabBar = ({ activeTab, onChangeTab, hasAgentAccess, professionalI
   const isAgent = location.pathname.startsWith("/agente");
 
   const goTab = (tab: string) => {
+    // When returning to the Patients list, clear any open patient detail so
+    // the user lands on the list (not on the last opened prontuário).
+    if (tab === "professional" || tab === "patients") {
+      if (searchParams.get("patient")) {
+        const next = new URLSearchParams(searchParams);
+        next.delete("patient");
+        setSearchParams(next, { replace: true });
+      }
+    }
     onChangeTab(tab);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
