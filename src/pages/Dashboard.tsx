@@ -16,7 +16,6 @@ import WelcomeSection from "@/components/dashboard/WelcomeSection";
 import QuickActions from "@/components/dashboard/QuickActions";
 import AssessmentHistory from "@/components/dashboard/AssessmentHistory";
 import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
-import PushOptInBanner from "@/components/PushOptInBanner";
 
 import ConfirmEmailBanner from "@/components/dashboard/ConfirmEmailBanner";
 
@@ -50,7 +49,6 @@ const DemoDailySummaryMock = lazy(() => import("@/components/demo/DemoDailySumma
 import TryProDemoCard from "@/components/dashboard/TryProDemoCard";
 import ProBottomTabBar from "@/components/dashboard/ProBottomTabBar";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { ENABLE_VIDEO_CALL } from "@/lib/featureFlags";
 import {
@@ -156,8 +154,6 @@ const Dashboard = () => {
   const [allConversationIds, setAllConversationIds] = useState<string[]>([]);
   const [hasAutoSwitchedPro, setHasAutoSwitchedPro] = useState(false);
   const [clinicSubTab, setClinicSubTab] = useState<string>("team");
-
-  const push = usePushNotifications();
 
   // Tutorial estritamente ligado ao contexto ativo. Cada modo tem sua
   // própria chave de "concluído" — assim aparece UMA ÚNICA vez no
@@ -587,7 +583,7 @@ const Dashboard = () => {
 
   const renderClientContent = () => (
     <>
-      <UpgradeBanner premiumAccess={premiumAccess} premiumLoading={premiumLoading} professional={professional} push={push} />
+      <UpgradeBanner premiumAccess={premiumAccess} premiumLoading={premiumLoading} professional={professional} />
       
       {/* Evolution Summary Card */}
       <EvolutionSummary assessments={assessments} />
@@ -712,7 +708,6 @@ const Dashboard = () => {
         {profile?.signup_origin === "professional" && !professional && (
           <SoloUpgradeBanner hasActiveProSubscription={false} />
         )}
-        <PushOptInBanner />
 
         <WelcomeSection
           profileName={

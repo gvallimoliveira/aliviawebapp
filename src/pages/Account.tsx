@@ -15,6 +15,8 @@ import AppVersionBadge from "@/components/AppVersionBadge";
 import SignatureManager from "@/components/account/SignatureManager";
 import StudentAccessCard from "@/components/account/StudentAccessCard";
 import AcademicPerformanceCard from "@/components/account/AcademicPerformanceCard";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { Bell, BellOff, Send, Smartphone } from "lucide-react";
 
 const Account = () => {
   const { user, loading: authLoading } = useAuth();
@@ -25,6 +27,8 @@ const Account = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [testingPush, setTestingPush] = useState(false);
+  const push = usePushNotifications();
 
   const t = isPt ? {
     title: "Minha Conta",
@@ -44,6 +48,18 @@ const Account = () => {
     back: "Voltar",
     not_signed: "Você precisa estar logado para acessar esta página.",
     sign_in: "Fazer login",
+    notifications: "Notificações",
+    notifications_desc: "Controle os avisos de mensagens, avaliações e videochamadas neste dispositivo.",
+    push_enabled: "Ativas neste dispositivo",
+    push_disabled: "Inativas neste dispositivo",
+    push_unsupported: "Este navegador não suporta notificações push.",
+    push_denied: "A permissão foi bloqueada no navegador. Libere nas configurações do site/celular e volte aqui.",
+    push_ios_install: "No iPhone, instale o app na Tela de Início e abra pelo ícone para ativar notificações em segundo plano.",
+    enable_push: "Ativar notificações",
+    disable_push: "Desativar",
+    test_push: "Enviar teste",
+    test_sent: "Notificação de teste enviada.",
+    test_error: "Não foi possível enviar o teste agora.",
   } : {
     title: "My Account",
     desc: "Manage your access information",
@@ -62,7 +78,27 @@ const Account = () => {
     back: "Back",
     not_signed: "You must be signed in to access this page.",
     sign_in: "Sign in",
+    notifications: "Notifications",
+    notifications_desc: "Control message, assessment and video-call alerts on this device.",
+    push_enabled: "Enabled on this device",
+    push_disabled: "Disabled on this device",
+    push_unsupported: "This browser does not support push notifications.",
+    push_denied: "Permission was blocked in the browser. Allow it in site/device settings and come back here.",
+    push_ios_install: "On iPhone, install the app to the Home Screen and open it from the icon to enable background notifications.",
+    enable_push: "Enable notifications",
+    disable_push: "Disable",
+    test_push: "Send test",
+    test_sent: "Test notification sent.",
+    test_error: "Could not send the test right now.",
   };
+
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+  const isStandalone =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true);
+  const iosNeedsInstall = isIOS && !isStandalone;
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +120,30 @@ const Account = () => {
     setPassword("");
     setConfirmPassword("");
     toast({ title: "✅", description: t.saved });
+  };
+
+  const handleTestPush = async () => {
+    if (!user) return;
+    setTestingPush(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-push-notification", {
+        body: {
+          user_id: user.id,
+          title: "Aliv.iA",
+          body: "Teste de notificação recebido com sucesso.",
+          url: "/dashboard",
+          kind: "test",
+          tag: `push-test-${user.id}`,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "✅", description: t.test_sent });
+    } catch (error) {
+      console.error("Push test failed:", error);
+      toast({ title: t.error, description: t.test_error, variant: "destructive" });
+    } finally {
+      setTestingPush(false);
+    }
   };
 
   if (authLoading) {
@@ -135,6 +195,66 @@ const Account = () => {
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">{t.email}</Label>
               <p className="text-foreground font-medium">{user.email}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              {push.subscribed ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+              {t.notifications}
+            </CardTitle>
+            <CardDescription>{t.notifications_desc}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
+              <Smartphone className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div className="space-y-1 text-sm">
+                <p className="font-medium text-foreground">
+                  {push.subscribed ? t.push_enabled : t.push_disabled}
+                </p>
+                {push.permission === "denied" && (
+                  <p className="text-xs text-muted-foreground">{t.push_denied}</p>
+                )}
+                {iosNeedsInstall && (
+                  <p className="text-xs text-muted-foreground">{t.push_ios_install}</p>
+                )}
+                {!push.isSupported && !iosNeedsInstall && (
+                  <p className="text-xs text-muted-foreground">{t.push_unsupported}</p>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {!push.subscribed ? (
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  onClick={async () => {
+                    const ok = await push.subscribe();
+                    if (ok) toast({ title: "✅", description: t.push_enabled });
+                  }}
+                  disabled={push.loading || push.permission === "denied" || iosNeedsInstall || !push.isSupported}
+                >
+                  {push.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
+                  {t.enable_push}
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" className="gap-2" onClick={push.unsubscribe} disabled={push.loading}>
+                  {push.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellOff className="h-4 w-4" />}
+                  {t.disable_push}
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={handleTestPush}
+                disabled={!push.subscribed || testingPush}
+              >
+                {testingPush ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {t.test_push}
+              </Button>
             </div>
           </CardContent>
         </Card>
