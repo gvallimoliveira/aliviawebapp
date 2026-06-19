@@ -42,6 +42,7 @@ interface Program {
     logo_url: string | null;
     clinic_name: string | null;
     is_student?: boolean | null;
+    active_profile_mode?: string | null;
     student_institution?: string | null;
     student_period?: string | null;
   };
@@ -115,7 +116,7 @@ const ExerciseProgram = () => {
 
       const { data: prog, error } = await (supabase as any)
         .from("exercise_programs")
-        .select("id, patient_name, notes, created_at, expires_at, professional:professionals(full_name, logo_url, clinic_name, is_student, student_institution, student_period)")
+        .select("id, patient_name, notes, created_at, expires_at, professional:professionals(full_name, logo_url, clinic_name, is_student, active_profile_mode, student_institution, student_period)")
         .eq("token", token)
         .maybeSingle();
 
@@ -417,7 +418,7 @@ const ExerciseProgram = () => {
       </header>
 
       <main className="container max-w-lg py-6 px-4 space-y-5">
-        {program?.professional?.is_student && (
+        {(program?.professional?.active_profile_mode ?? (program?.professional?.is_student ? "student" : "professional")) === "student" && (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
             <p className="font-semibold">
               {language === "pt" ? "Alivia Acadêmico" : language === "es" ? "Alivia Académico" : "Alivia Academic"}

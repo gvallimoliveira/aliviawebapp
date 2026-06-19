@@ -68,7 +68,7 @@ const ProfessionalSearch = () => {
       .select("*")
       .eq("active", true)
       .eq("approved", true)
-      .eq("is_student", false)
+      .eq("active_profile_mode", "professional")
       .or(
         [
           "subscription_status.eq.active",

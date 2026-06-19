@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Loader2, Lock, Sparkles, AlertTriangle, CreditCard } from "lucide-react";
+import { GraduationCap, Loader2, Lock, Sparkles, AlertTriangle, CreditCard, Stethoscope } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { isFallbackVip } from "@/lib/vipEmails";
 
 /**
@@ -38,6 +39,7 @@ const StudentAccessCard = () => {
   const [fullName, setFullName] = useState("");
   const [institution, setInstitution] = useState("");
   const [period, setPeriod] = useState("");
+  const [activeMode, setActiveMode] = useState<"professional" | "student">("professional");
 
   const t = isPt
     ? {
@@ -63,6 +65,12 @@ const StudentAccessCard = () => {
         no_sub_title: "O selo acadêmico não substitui a assinatura PRO",
         no_sub_desc: "O modo Alivia Acadêmico é apenas um identificador visual nos PDFs e links públicos. Para liberar as ferramentas PRO (painel de pacientes, IA clínica, programas de exercício, prontuário) você precisa de uma assinatura ativa — estudantes têm 50% OFF com o cupom SOUIBMR no checkout.",
         no_sub_cta: "Ver planos com desconto acadêmico",
+        mode_title: "Perfil ativo agora",
+        mode_desc: "Define o que aparece nos seus PDFs, no link público de avaliação e no marketplace. Você pode alternar quando quiser.",
+        mode_pro: "Profissional",
+        mode_pro_desc: "PDFs e links exibem CREFITO; aparece no marketplace.",
+        mode_student: "Acadêmico",
+        mode_student_desc: "PDFs e links exibem o selo Alivia Acadêmico; sai do marketplace.",
       }
     : {
         title: "Student Access — Alivia Academic",
@@ -87,6 +95,12 @@ const StudentAccessCard = () => {
         no_sub_title: "The academic seal does not replace a PRO subscription",
         no_sub_desc: "Alivia Academic mode is only a visual identifier on PDFs and public links. To unlock PRO tools (patient panel, clinical AI, exercise programs, chart) you need an active subscription — students get 50% OFF with coupon SOUIBMR at checkout.",
         no_sub_cta: "See plans with student discount",
+        mode_title: "Active profile right now",
+        mode_desc: "Defines what appears on your PDFs, your public assessment link and the marketplace. You can switch anytime.",
+        mode_pro: "Professional",
+        mode_pro_desc: "PDFs and links show CREFITO; listed on the marketplace.",
+        mode_student: "Academic",
+        mode_student_desc: "PDFs and links show the Alivia Academic seal; hidden from marketplace.",
       };
 
   useEffect(() => {
@@ -95,7 +109,7 @@ const StudentAccessCard = () => {
       const [profRes, vipRes] = await Promise.all([
         supabase
           .from("professionals")
-          .select("id, full_name, crefito, is_student, student_institution, student_period, subscription_status, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
+          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, subscription_status, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
           .eq("user_id", user.id)
           .maybeSingle(),
         user.email
@@ -109,6 +123,7 @@ const StudentAccessCard = () => {
       if (data) {
         setHasProfRecord(true);
         setIsStudent(!!data.is_student);
+        setActiveMode((data.active_profile_mode ?? (data.is_student ? "student" : "professional")) as "professional" | "student");
         setHasCrefito(!!(data.crefito && String(data.crefito).trim().length > 0));
         setFullName(data.full_name || "");
         setInstitution(data.student_institution || "");
@@ -154,6 +169,14 @@ const StudentAccessCard = () => {
     }
     setSaving(true);
     try {
+      // Compute effective active mode:
+      // - if student access is being disabled → force 'professional'
+      // - if no CREFITO and student=true → must be 'student'
+      // - otherwise honor user choice
+      const effectiveMode: "professional" | "student" =
+        !isStudent ? "professional"
+        : (!hasCrefito ? "student" : activeMode);
+
       if (hasProfRecord) {
         // IMPORTANT: never touch the existing `crefito` here so VIP testers
         // can flip the switch without losing their professional registration.
@@ -161,10 +184,11 @@ const StudentAccessCard = () => {
           .from("professionals")
           .update({
             is_student: isStudent,
+            active_profile_mode: effectiveMode,
             student_institution: isStudent ? institution.trim() : null,
             student_period: isStudent ? period.trim() : null,
             full_name: fullName.trim() || undefined,
-            ...(isStudent ? { approved: false } : {}),
+            ...(effectiveMode === "student" ? { approved: false } : {}),
           } as any)
           .eq("user_id", user.id);
         if (error) throw error;
@@ -179,12 +203,14 @@ const StudentAccessCard = () => {
           active: true,
           approved: false,
           is_student: isStudent,
+          active_profile_mode: effectiveMode,
           student_institution: isStudent ? institution.trim() : null,
           student_period: isStudent ? period.trim() : null,
         } as any);
         if (error) throw error;
         setHasProfRecord(true);
       }
+      setActiveMode(effectiveMode);
       toast({ title: isStudent ? t.saved : t.disabled });
     } catch (e: any) {
       toast({ title: t.error, description: e?.message, variant: "destructive" });
@@ -227,6 +253,51 @@ const StudentAccessCard = () => {
               </Label>
               <Switch id="student-toggle" checked={isStudent} onCheckedChange={setIsStudent} />
             </div>
+
+            {isStudent && hasCrefito && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+                <div>
+                  <p className="text-sm font-semibold flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    {t.mode_title}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t.mode_desc}</p>
+                </div>
+                <RadioGroup
+                  value={activeMode}
+                  onValueChange={(v) => setActiveMode(v as "professional" | "student")}
+                  className="space-y-2"
+                >
+                  <label
+                    htmlFor="mode-pro"
+                    className={`flex items-start gap-2 rounded-md border px-3 py-2 cursor-pointer transition ${activeMode === "professional" ? "border-primary bg-primary/10" : "border-border bg-background hover:bg-muted/40"}`}
+                  >
+                    <RadioGroupItem value="professional" id="mode-pro" className="mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        <Stethoscope className="h-3.5 w-3.5" />
+                        {t.mode_pro}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">{t.mode_pro_desc}</p>
+                    </div>
+                  </label>
+                  <label
+                    htmlFor="mode-student"
+                    className={`flex items-start gap-2 rounded-md border px-3 py-2 cursor-pointer transition ${activeMode === "student" ? "border-primary bg-primary/10" : "border-border bg-background hover:bg-muted/40"}`}
+                  >
+                    <RadioGroupItem value="student" id="mode-student" className="mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        <GraduationCap className="h-3.5 w-3.5" />
+                        {t.mode_student}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">{t.mode_student_desc}</p>
+                    </div>
+                  </label>
+                </RadioGroup>
+              </div>
+            )}
+
 
             {isStudent && (
               <div className="space-y-3">

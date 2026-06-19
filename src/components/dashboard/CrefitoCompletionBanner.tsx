@@ -34,11 +34,13 @@ const CrefitoCompletionBanner = () => {
     (async () => {
       const { data } = await supabase
         .from("professionals")
-        .select("id, full_name, crefito, is_student")
+        .select("id, full_name, crefito, is_student, active_profile_mode")
         .eq("user_id", user.id)
         .maybeSingle();
-      // Hide for students: they don't need CREFITO (Alivia Acadêmico mode)
-      if ((data as any)?.is_student) {
+      // Hide for students operating in academic mode (don't need CREFITO).
+      const activeMode = (data as any)?.active_profile_mode
+        ?? ((data as any)?.is_student ? "student" : "professional");
+      if (activeMode === "student") {
         setNeedsCrefito(false);
         return;
       }

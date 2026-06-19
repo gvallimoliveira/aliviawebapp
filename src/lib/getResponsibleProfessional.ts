@@ -56,6 +56,7 @@ export async function resolveResponsibleProfessional(opts: {
     crefito?: string | null;
     signature_image_url?: string | null;
     is_student?: boolean | null;
+    active_profile_mode?: string | null;
     student_institution?: string | null;
     student_period?: string | null;
   } | null;
@@ -65,6 +66,11 @@ export async function resolveResponsibleProfessional(opts: {
   includeSignature?: boolean;
 }): Promise<ResponsibleProfessional | undefined> {
   const wantSig = opts.includeSignature ?? isAutoSignEnabled();
+  // Active mode wins over capability: a partner with both PRO+Academic
+  // liberated only shows as student when active_profile_mode === 'student'.
+  const isActiveStudent = (row: any) =>
+    (row?.active_profile_mode ?? (row?.is_student ? "student" : "professional")) === "student";
+
   let resolved: {
     name: string;
     crefito?: string;
@@ -80,7 +86,7 @@ export async function resolveResponsibleProfessional(opts: {
       name: opts.ownProfessional.full_name,
       crefito: opts.ownProfessional.crefito ?? undefined,
       signaturePath: opts.ownProfessional.signature_image_url ?? null,
-      isStudent: !!opts.ownProfessional.is_student,
+      isStudent: isActiveStudent(opts.ownProfessional),
       studentInstitution: opts.ownProfessional.student_institution ?? undefined,
       studentPeriod: opts.ownProfessional.student_period ?? undefined,
     };
@@ -89,7 +95,7 @@ export async function resolveResponsibleProfessional(opts: {
   if (!resolved && opts.userId) {
     const { data: mine } = await supabase
       .from("professionals")
-      .select("full_name, crefito, signature_image_url, is_student, student_institution, student_period")
+      .select("full_name, crefito, signature_image_url, is_student, active_profile_mode, student_institution, student_period")
       .eq("user_id", opts.userId)
       .maybeSingle();
     if (mine?.full_name && (mine?.crefito || (mine as any)?.is_student)) {
@@ -97,7 +103,7 @@ export async function resolveResponsibleProfessional(opts: {
         name: mine.full_name,
         crefito: mine.crefito ?? undefined,
         signaturePath: (mine as any).signature_image_url ?? null,
-        isStudent: !!(mine as any).is_student,
+        isStudent: isActiveStudent(mine),
         studentInstitution: (mine as any).student_institution ?? undefined,
         studentPeriod: (mine as any).student_period ?? undefined,
       };
@@ -117,7 +123,7 @@ export async function resolveResponsibleProfessional(opts: {
     if (ownerUserId) {
       const { data: owner } = await supabase
         .from("professionals")
-        .select("full_name, crefito, signature_image_url, is_student, student_institution, student_period")
+        .select("full_name, crefito, signature_image_url, is_student, active_profile_mode, student_institution, student_period")
         .eq("user_id", ownerUserId)
         .maybeSingle();
       if (owner?.full_name) {
@@ -125,7 +131,7 @@ export async function resolveResponsibleProfessional(opts: {
           name: owner.full_name,
           crefito: owner.crefito || undefined,
           signaturePath: (owner as any).signature_image_url ?? null,
-          isStudent: !!(owner as any).is_student,
+          isStudent: isActiveStudent(owner),
           studentInstitution: (owner as any).student_institution ?? undefined,
           studentPeriod: (owner as any).student_period ?? undefined,
         };
@@ -138,7 +144,7 @@ export async function resolveResponsibleProfessional(opts: {
       name: opts.ownProfessional.full_name,
       crefito: opts.ownProfessional.crefito || undefined,
       signaturePath: opts.ownProfessional.signature_image_url ?? null,
-      isStudent: !!opts.ownProfessional.is_student,
+      isStudent: isActiveStudent(opts.ownProfessional),
       studentInstitution: opts.ownProfessional.student_institution ?? undefined,
       studentPeriod: opts.ownProfessional.student_period ?? undefined,
     };

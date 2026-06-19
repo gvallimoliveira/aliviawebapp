@@ -34,3 +34,11 @@ Clínica (papel Estagiário):
 Dashboard PRO:
 - Badge "🎓 Alivia Acadêmico" no topo do dashboard ativo quando `professional.is_student=true` (mostra instituição/período).
 - Tela de upgrade (assinatura inativa) mostra aviso destacando o cupom `SOUIBMR` (50% off) para estudantes.
+
+---
+
+## Dual perfil (PRO + Acadêmico simultâneos)
+
+A partir da migração `active_profile_mode`, `is_student` virou **capacidade** ("acesso acadêmico liberado") e `active_profile_mode` (`'professional' | 'student'`) define qual identidade está em uso. Quando o parceiro tem CREFITO **e** `is_student=true`, ele escolhe o modo ativo via RadioGroup em `StudentAccessCard` (/minha-conta). Toggle do admin (PartnerManagement) liga/desliga apenas a capacidade; nunca força o modo. Trigger `validate_active_profile_mode` garante coerência: `mode='student'` exige `is_student=true`; ao desligar `is_student`, o modo volta automaticamente para `'professional'`.
+
+Consumidores que decidem identidade visível (PDF, links públicos, marketplace `ProfessionalSearch`, banner em `ProDashboard`, `getResponsibleProfessional`, banners em `ProfessionalAssessment` e `ExerciseProgram`) leem `active_profile_mode` com fallback para `is_student`. RPCs `get_public_professional_assessment_link` e `get_clinic_members_with_details` retornam `active_profile_mode`. Admin (`get_partner_details`) também devolve `active_profile_mode` para exibir "operando como..." no card do parceiro.

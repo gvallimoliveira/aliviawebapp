@@ -20,6 +20,7 @@ interface PartnerDetail {
   is_partner_account: boolean;
   premium_granted: boolean;
   is_student: boolean;
+  active_profile_mode?: string | null;
   has_clinic: boolean;
   clinic_active: boolean;
   clinic_id: string | null;
@@ -71,6 +72,9 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     clinic_label: "Clínica",
     premium_label: "Premium",
     academic_label: "Acadêmico",
+    operating_as: "operando como",
+    mode_professional: "Profissional",
+    mode_student: "Acadêmico",
     resend_pwd: "Reenviar senha",
     resend_sent: "E-mail de redefinição reenviado!",
     resend_no_user: "Esse parceiro ainda não tem conta no Auth.",
@@ -104,6 +108,9 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     clinic_label: "Clinic",
     premium_label: "Premium",
     academic_label: "Academic",
+    operating_as: "operating as",
+    mode_professional: "Professional",
+    mode_student: "Academic",
     resend_pwd: "Resend password",
     resend_sent: "Password reset email re-sent!",
     resend_no_user: "This partner has no Auth account yet.",
@@ -533,6 +540,11 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRe
           <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
             <GraduationCap className="h-3 w-3" />
             🎓 Alivia Acadêmico
+            {partner.active_profile_mode && (
+              <span className="text-[10px] text-muted-foreground ml-1">
+                · {t.operating_as} <strong>{partner.active_profile_mode === "student" ? t.mode_student : t.mode_professional}</strong>
+              </span>
+            )}
           </p>
         )}
       </div>
