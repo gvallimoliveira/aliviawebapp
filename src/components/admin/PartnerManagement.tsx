@@ -20,6 +20,7 @@ interface PartnerDetail {
   is_partner_account: boolean;
   premium_granted: boolean;
   is_student: boolean;
+  active_profile_mode?: string | null;
   has_clinic: boolean;
   clinic_active: boolean;
   clinic_id: string | null;
