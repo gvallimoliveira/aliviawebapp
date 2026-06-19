@@ -842,8 +842,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         const { data: p } = await supabase.from("professionals").select("logo_url").eq("id", professionalId).maybeSingle();
         proLogoUrl = (p as any)?.logo_url || undefined;
       }
-      const { generateAssessmentPdf } = await import("@/utils/generatePdf");
-      await generateAssessmentPdf({
+      const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
+      const blob = await generateAssessmentPdfBlob({
         diagnosis: diagnosisForPdf,
         treatmentPlan: a.treatment_plan,
         language: isPt ? "pt" : "en",
@@ -856,6 +856,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         clinicLogoUrl,
         clinicName,
       } as any);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `AliviA_Resumo_${(a.patient_name || "Paciente").replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       toast({ title: isPt ? "PDF gerado" : "PDF generated" });
     } catch (err: any) {
       console.error("summary pdf error:", err);
