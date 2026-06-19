@@ -1235,11 +1235,7 @@ const Assessment = () => {
           </>
         )}
         {step === "loading_treatment" && (
-          <div className="text-center py-20 space-y-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-            <h2 className="text-2xl font-bold text-foreground">{t("treatment.processing")}</h2>
-            <p className="text-muted-foreground">{t("treatment.processing_desc")}</p>
-          </div>
+          <ClinicalThinkingSkeleton phase="treatment" lang={language} />
         )}
         {step === "treatment" && treatmentPlan && (
           <TreatmentPlan
