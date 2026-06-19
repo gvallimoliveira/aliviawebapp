@@ -254,6 +254,51 @@ const StudentAccessCard = () => {
               <Switch id="student-toggle" checked={isStudent} onCheckedChange={setIsStudent} />
             </div>
 
+            {isStudent && hasCrefito && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+                <div>
+                  <p className="text-sm font-semibold flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    {t.mode_title}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t.mode_desc}</p>
+                </div>
+                <RadioGroup
+                  value={activeMode}
+                  onValueChange={(v) => setActiveMode(v as "professional" | "student")}
+                  className="space-y-2"
+                >
+                  <label
+                    htmlFor="mode-pro"
+                    className={`flex items-start gap-2 rounded-md border px-3 py-2 cursor-pointer transition ${activeMode === "professional" ? "border-primary bg-primary/10" : "border-border bg-background hover:bg-muted/40"}`}
+                  >
+                    <RadioGroupItem value="professional" id="mode-pro" className="mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        <Stethoscope className="h-3.5 w-3.5" />
+                        {t.mode_pro}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">{t.mode_pro_desc}</p>
+                    </div>
+                  </label>
+                  <label
+                    htmlFor="mode-student"
+                    className={`flex items-start gap-2 rounded-md border px-3 py-2 cursor-pointer transition ${activeMode === "student" ? "border-primary bg-primary/10" : "border-border bg-background hover:bg-muted/40"}`}
+                  >
+                    <RadioGroupItem value="student" id="mode-student" className="mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        <GraduationCap className="h-3.5 w-3.5" />
+                        {t.mode_student}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">{t.mode_student_desc}</p>
+                    </div>
+                  </label>
+                </RadioGroup>
+              </div>
+            )}
+
+
             {isStudent && (
               <div className="space-y-3">
                 <div className="space-y-1.5">
