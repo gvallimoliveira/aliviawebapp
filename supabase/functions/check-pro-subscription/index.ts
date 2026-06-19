@@ -42,7 +42,7 @@ serve(async (req) => {
     // Check if user is a partner or has annual access first
     const { data: proData } = await supabaseClient
       .from("professionals")
-      .select("id, is_partner, subscription_status, pro_access_expires_at, premium_granted, subscription_grace_until")
+      .select("id, is_partner, is_student, subscription_status, pro_access_expires_at, premium_granted, subscription_grace_until")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -55,6 +55,14 @@ serve(async (req) => {
           .eq("user_id", user.id);
       }
       return new Response(JSON.stringify({ subscribed: true, is_partner: true, premium_granted: proData.premium_granted }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Student access (Alivia Acadêmico) — admin-granted, no Stripe involved.
+    if (proData?.is_student) {
+      logStep("User has academic access — granting PRO tools without Stripe");
+      return new Response(JSON.stringify({ subscribed: true, is_student: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
