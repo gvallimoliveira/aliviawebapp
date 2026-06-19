@@ -542,7 +542,7 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRe
             🎓 Alivia Acadêmico
             {partner.active_profile_mode && (
               <span className="text-[10px] text-muted-foreground ml-1">
-                · {language === "pt" ? "operando como" : "operating as"} <strong>{partner.active_profile_mode === "student" ? (language === "pt" ? "Acadêmico" : "Academic") : (language === "pt" ? "Profissional" : "Professional")}</strong>
+                · {t.operating_as} <strong>{partner.active_profile_mode === "student" ? t.mode_student : t.mode_professional}</strong>
               </span>
             )}
           </p>
