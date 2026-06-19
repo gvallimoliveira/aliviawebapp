@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Handshake, Plus, Loader2, Stethoscope, Building2, Star, KeyRound, Trash2, Crown, X } from "lucide-react";
+import { Handshake, Plus, Loader2, Stethoscope, Building2, Star, KeyRound, Trash2, Crown, X, GraduationCap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface PartnerDetail {
