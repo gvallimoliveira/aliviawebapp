@@ -1663,6 +1663,42 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                             : "The link appears as soon as you finish the assessment. You can also find it whenever you reopen the assessment for editing."}
                         </p>
                       </div>
+                    ) : isEditing && questionnaireResults.length > 0 ? (
+                      <div className="rounded-md border border-emerald-200 bg-emerald-50/60 dark:bg-emerald-950/20 p-3 space-y-2">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+                          <ClipboardList className="h-3.5 w-3.5" />
+                          {isPt
+                            ? `Questionários já respondidos${pendingCount && pendingCount.pending === 0 && pendingCount.total > 0 ? " (via link enviado ao paciente)" : ""}`
+                            : `Questionnaires already answered${pendingCount && pendingCount.pending === 0 && pendingCount.total > 0 ? " (via patient link)" : ""}`}
+                        </div>
+                        <ul className="text-xs text-foreground/80 space-y-1 pl-1">
+                          {questionnaireResults.map((r: any) => (
+                            <li key={r.questionnaireId} className="flex items-center justify-between gap-2 border-b border-emerald-200/40 last:border-0 py-1">
+                              <span className="truncate">{r.questionnaireName}</span>
+                              <span className="font-mono text-[11px] text-emerald-900 dark:text-emerald-200 shrink-0">
+                                {typeof r.totalScore === "number" ? r.totalScore.toFixed(1) : "—"}
+                                {r.interpretation ? ` · ${r.interpretation}` : ""}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="text-[11px] text-muted-foreground">
+                          {isPt
+                            ? "As respostas estão salvas nesta avaliação e serão consideradas pela IA. Não é necessário reaplicar."
+                            : "Answers are saved to this assessment and will be used by the AI. No need to reapply."}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs text-muted-foreground"
+                          onClick={() => {
+                            if (!confirm(isPt ? "Reaplicar e sobrescrever as respostas atuais?" : "Reapply and overwrite current answers?")) return;
+                            setQuestionnaireResults([]);
+                          }}
+                        >
+                          {isPt ? "Reaplicar manualmente" : "Reapply manually"}
+                        </Button>
+                      </div>
                     ) : (
                       <QuestionnaireStep
                         painRegions={painRegions}
@@ -1679,7 +1715,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     )}
                   </>
                 )}
-                {questionnaireResults.length > 0 && (
+                {!isEditing && questionnaireResults.length > 0 && (
                   <div className="text-xs text-muted-foreground p-2 rounded bg-primary/5 border border-primary/20">
                     {isPt ? "Já aplicados: " : "Already applied: "}
                     {questionnaireResults.map((r) => r.questionnaireName).join(", ")}
