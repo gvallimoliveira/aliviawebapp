@@ -122,6 +122,30 @@ const Account = () => {
     toast({ title: "✅", description: t.saved });
   };
 
+  const handleTestPush = async () => {
+    if (!user) return;
+    setTestingPush(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-push-notification", {
+        body: {
+          user_id: user.id,
+          title: "Aliv.iA",
+          body: "Teste de notificação recebido com sucesso.",
+          url: "/dashboard",
+          kind: "test",
+          tag: `push-test-${user.id}`,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "✅", description: t.test_sent });
+    } catch (error) {
+      console.error("Push test failed:", error);
+      toast({ title: t.error, description: t.test_error, variant: "destructive" });
+    } finally {
+      setTestingPush(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
