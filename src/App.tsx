@@ -16,6 +16,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ClinicProvider } from "@/contexts/ClinicContext";
 import { VoiceRecorderProvider } from "@/contexts/VoiceRecorderContext";
 import RealtimeNotifier from "@/components/RealtimeNotifier";
+import ManualAssessmentResumer from "@/components/dashboard/ManualAssessmentResumer";
 
 const Gateway = lazy(() => import("./pages/Gateway"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -87,6 +88,7 @@ const App = () => {
               <ScrollToTop />
               <GlobalMobileMenu />
               <RealtimeNotifier />
+              <ManualAssessmentResumer />
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Gateway />} />

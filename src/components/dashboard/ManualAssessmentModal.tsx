@@ -27,6 +27,20 @@ import { MOCK_MANUAL_CASE } from "@/data/mockManualAssessmentCase";
 import SpecialtyQuestionnairesPanel, { type SpecialtyAppliedResult, type SpecialtyPanelHandle } from "./SpecialtyQuestionnairesPanel";
 import RomTable, { createInitialRomRows, sanitizeRomRows, type RomRow } from "@/components/assessment/RomTable";
 import StrengthTable, { createInitialStrengthRows, sanitizeStrengthRows, type StrengthRow } from "@/components/assessment/StrengthTable";
+import {
+  saveManualAssessmentSession,
+  clearManualAssessmentSession,
+} from "@/lib/manualAssessmentSession";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /**
  * In demo mode, wraps a form control with a transparent click overlay that
@@ -385,6 +399,91 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setTreatmentText(tx?.text || tx?.summary || "");
   }, [open, editAssessment]);
   useEffect(() => { if (!open) prefilledIdRef.current = null; }, [open]);
+
+  // ── Persistência da sessão do modal ───────────────────────────────────────
+  // Grava em localStorage que existe uma avaliação manual em andamento, para
+  // que o ManualAssessmentResumer reabra automaticamente caso o app seja
+  // descarregado pelo SO (tela bloqueada, troca de app, reload da PWA).
+  const sessionTrackingEnabled = open && !demoMode;
+  useEffect(() => {
+    if (!sessionTrackingEnabled) return;
+    saveManualAssessmentSession({
+      professionalId,
+      clinicId: clinicId ?? null,
+      patientName,
+      patientEmail: patientEmail ?? null,
+      editAssessmentId: editAssessment?.id ?? null,
+      userId: user?.id ?? null,
+      openedAt: Date.now(),
+    });
+    // Refresh marker periodically and on visibility change so TTL stays fresh.
+    const refresh = () => saveManualAssessmentSession({
+      professionalId,
+      clinicId: clinicId ?? null,
+      patientName,
+      patientEmail: patientEmail ?? null,
+      editAssessmentId: editAssessment?.id ?? null,
+      userId: user?.id ?? null,
+      openedAt: Date.now(),
+    });
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("pagehide", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("pagehide", refresh);
+    };
+  }, [sessionTrackingEnabled, professionalId, clinicId, patientName, patientEmail, editAssessment?.id, user?.id]);
+
+  // ── Screen Wake Lock (best-effort) ────────────────────────────────────────
+  // Evita que a tela bloqueie enquanto o fisio está medindo ADM/força.
+  // Silencioso quando o navegador não suporta ou o usuário nega.
+  useEffect(() => {
+    if (!open || demoMode) return;
+    let wakeLock: any = null;
+    let cancelled = false;
+    const request = async () => {
+      try {
+        const wl = (navigator as any).wakeLock;
+        if (!wl?.request) return;
+        wakeLock = await wl.request("screen");
+        if (cancelled && wakeLock) {
+          try { await wakeLock.release(); } catch { /* noop */ }
+          wakeLock = null;
+        }
+      } catch {
+        /* noop */
+      }
+    };
+    void request();
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && !wakeLock) void request();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      if (wakeLock) {
+        try { wakeLock.release(); } catch { /* noop */ }
+      }
+    };
+  }, [open, demoMode]);
+
+  // ── Confirmação ao sair sem finalizar ─────────────────────────────────────
+  const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const requestClose = () => {
+    if (demoMode) {
+      onOpenChange(false);
+      return;
+    }
+    setConfirmExitOpen(true);
+  };
+  const confirmExit = () => {
+    setConfirmExitOpen(false);
+    clearManualAssessmentSession();
+    resetForm();
+    onOpenChange(false);
+  };
+
 
 
 
@@ -749,6 +848,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
       toast({ title: isEditing ? (isPt ? "Avaliação atualizada!" : "Assessment updated!") : (isPt ? "Avaliação criada!" : "Assessment created!") });
       if (!isEditing) void draft.discard();
+      clearManualAssessmentSession();
       if (savedId) onSaved?.(savedId);
       onOpenChange(false);
       resetForm();
@@ -777,18 +877,35 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     : ["Anamnesis", "Pain & Map", "Red Flags", "Questionnaires", "Tests & ROM", "Dynamometry", "Diagnosis"];
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
+    <>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (o) { onOpenChange(true); return; }
+        // Solicitação de fechar (X do canto, ESC capturado se chegar aqui):
+        // sempre confirma antes de descartar o trabalho em andamento.
+        if (demoMode) { resetForm(); onOpenChange(false); return; }
+        setConfirmExitOpen(true);
+      }}
+    >
       <DialogContent data-manual-assessment-modal=""
         className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0"
+        onEscapeKeyDown={(e) => {
+          // ESC nunca fecha — usuário precisa clicar no X e confirmar.
+          if (!demoMode) e.preventDefault();
+        }}
         onPointerDownOutside={(e) => {
-          // Keep the modal open when the user interacts with the floating
-          // voice-recorder FAB (rendered as a sibling portal on document.body).
+          // Cliques fora do modal NUNCA fecham (usuário pediu persistência
+          // a qualquer custo enquanto mede ADM/força com outros apps abertos).
+          // Exceção mantida: FAB do gravador de voz é portal externo.
           const target = e.target as HTMLElement | null;
-          if (target?.closest?.("[data-voice-recorder-fab]")) e.preventDefault();
+          if (target?.closest?.("[data-voice-recorder-fab]")) { e.preventDefault(); return; }
+          if (!demoMode) e.preventDefault();
         }}
         onInteractOutside={(e) => {
           const target = e.target as HTMLElement | null;
-          if (target?.closest?.("[data-voice-recorder-fab]")) e.preventDefault();
+          if (target?.closest?.("[data-voice-recorder-fab]")) { e.preventDefault(); return; }
+          if (!demoMode) e.preventDefault();
         }}
       >
         <div className="px-6 pt-6 pb-2 shrink-0">
@@ -1431,6 +1548,30 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       </DialogContent>
 
     </Dialog>
+
+    <AlertDialog open={confirmExitOpen} onOpenChange={setConfirmExitOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {isPt ? "Sair da avaliação?" : "Leave assessment?"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {isPt
+              ? "Seus dados ficam salvos como rascunho. Você pode retomar de onde parou ao reabrir esta avaliação."
+              : "Your data stays saved as a draft. You can resume from where you left off when reopening this assessment."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+            {isPt ? "Continuar editando" : "Keep editing"}
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={confirmExit}>
+            {isPt ? "Sair" : "Leave"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
 
