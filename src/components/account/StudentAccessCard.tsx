@@ -65,6 +65,12 @@ const StudentAccessCard = () => {
         no_sub_title: "O selo acadêmico não substitui a assinatura PRO",
         no_sub_desc: "O modo Alivia Acadêmico é apenas um identificador visual nos PDFs e links públicos. Para liberar as ferramentas PRO (painel de pacientes, IA clínica, programas de exercício, prontuário) você precisa de uma assinatura ativa — estudantes têm 50% OFF com o cupom SOUIBMR no checkout.",
         no_sub_cta: "Ver planos com desconto acadêmico",
+        mode_title: "Perfil ativo agora",
+        mode_desc: "Define o que aparece nos seus PDFs, no link público de avaliação e no marketplace. Você pode alternar quando quiser.",
+        mode_pro: "Profissional",
+        mode_pro_desc: "PDFs e links exibem CREFITO; aparece no marketplace.",
+        mode_student: "Acadêmico",
+        mode_student_desc: "PDFs e links exibem o selo Alivia Acadêmico; sai do marketplace.",
       }
     : {
         title: "Student Access — Alivia Academic",
