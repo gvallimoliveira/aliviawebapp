@@ -82,7 +82,7 @@ type OnboardingContext = "personal" | "professional" | "clinic";
 
 function buildOnboardingSteps(
   context: OnboardingContext,
-  opts: { subscriptionType?: "monthly" | "single" | null; canManageClinic?: boolean } = {}
+  opts: { subscriptionType?: "monthly" | "single" | null; canManageClinic?: boolean; hasAgentAccess?: boolean } = {}
 ): OnboardingStep[] {
   if (context === "clinic") {
     const steps: OnboardingStep[] = [
