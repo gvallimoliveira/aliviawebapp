@@ -331,7 +331,7 @@ ${testResults && testResults.length > 0 ? `Functional test results:
 - Painful/Uncomfortable tests: ${painfulTests.join(", ") || "None"}
 - Normal tests: ${normalTests.join(", ") || "None"}` : "No functional tests performed."}
 
-${Array.isArray(anamnesisData?.strengthTable) && anamnesisData.strengthTable.length > 0 ? `Dynamometry (muscle strength, kgf):
+${Array.isArray(anamnesisData?.strengthTable) && anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue).length > 0 ? `Dynamometry (muscle strength, kgf):
 ${anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue).map((r: any) => {
   const L = parseFloat(String(r.leftValue || "").replace(",", "."));
   const R = parseFloat(String(r.rightValue || "").replace(",", "."));
@@ -339,7 +339,7 @@ ${anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || 
   return `- ${r.movement || "?"}: L ${r.leftValue || "—"} kgf | R ${r.rightValue || "—"} kgf | Asymmetry ${asym}`;
 }).join("\n")}
 
-USE these strength values to CALIBRATE the initial load of STEPS phases 3–6: start at ~50–60% of the WEAKER side's measured value for the targeted movement; on movements with asymmetry > 20%, prioritize unilateral work on the weaker side before bilateral loading.` : ""}
+USE these strength values to CALIBRATE the initial load of STEPS phases 3–6: start at ~50–60% of the WEAKER side's measured value for the targeted movement; on movements with asymmetry > 20%, prioritize unilateral work on the weaker side before bilateral loading.` : `Dynamometry: NOT RECORDED — calibrate initial loads conservatively from clinical reasoning (pain score, functional tests, ROM). Do NOT invent strength numbers; progress loads based on tolerance and RPE.`}
 
 Generate a personalized 3-phase treatment plan in valid JSON format. Focus exercises on the affected regions, address deficits found in functional tests, and target the most impaired functional areas identified by the validated questionnaires. Remember: use "searchQueryPro" and "searchQueryShorts" instead of "videoUrls" or "searchQuery" for each exercise.`;
 
