@@ -988,6 +988,12 @@ const Dashboard = () => {
                 <TabsContent value="professional" className="space-y-6">
                   {isProDemo && <DemoUpsellBanner section="pro-patients" variant="pro" />}
                   {!isProDemo && !hasProAccess && <TryProDemoCard section="Pacientes" />}
+                  {/* Mobile KPI peek — Insights tab is not in bottom bar, so show KPIs here on mobile */}
+                  {!isProDemo && hasProAccess && (
+                    <div className="md:hidden">
+                      <ProMetricsSection professionalId={proStub.id} />
+                    </div>
+                  )}
                   <ProDashboard
                     professional={proStub}
                     isSimulated={isProDemo ? true : isSimulated}
