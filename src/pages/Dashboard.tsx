@@ -756,6 +756,10 @@ const Dashboard = () => {
             <TabsContent value="patients" className="space-y-6">
               <ClinicTrialBanner />
               <div className="relative">
+                {/* Mobile KPI peek — Insights tab not in bottom bar */}
+                <div className="md:hidden mb-4">
+                  <ProMetricsSection clinicId={activeClinic.clinic_id} />
+                </div>
                 {isClinicSecretary || canManageClinic ? (
                   <ClinicSecretaryDashboard />
                 ) : professional ? (
