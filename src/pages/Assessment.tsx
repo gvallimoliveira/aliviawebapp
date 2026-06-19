@@ -21,6 +21,7 @@ import DiagnosisResult from "@/components/assessment/DiagnosisResult";
 import TreatmentPlan from "@/components/assessment/TreatmentPlan";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
+import ClinicalThinkingSkeleton from "@/components/assessment/ClinicalThinkingSkeleton";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
