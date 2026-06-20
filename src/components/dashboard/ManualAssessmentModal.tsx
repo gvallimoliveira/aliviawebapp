@@ -95,6 +95,32 @@ const REGION_GROUPS_DEF: { key: string; label_pt: string; label_en: string; matc
     match: (id) => id.includes("shin") || id.includes("calf") || id.includes("ankle") || id.includes("foot") },
 ];
 
+/**
+ * IDs excluídos da tabela de seleção simplificada (1ª etapa do mapa).
+ * Remove vistas laterais (left/right) e duplicatas da vista posterior
+ * que já são cobertas pela vista frontal + refinamento anatômico.
+ */
+const SIMPLIFIED_EXCLUDED_IDS = new Set<string>([
+  // Vista lateral esquerda
+  "head_left", "cervical_left", "shoulder_left", "arm_left", "elbow_left",
+  "forearm_left", "hand_left", "thoracic_left", "lumbar_left", "hip_left",
+  "thigh_left", "knee_left", "shin_left", "ankle_left", "foot_left",
+  // Vista lateral direita
+  "head_right", "cervical_right", "shoulder_right", "arm_right", "elbow_right",
+  "forearm_right", "hand_right", "thoracic_right", "lumbar_right", "hip_right",
+  "thigh_right", "knee_right", "shin_right", "ankle_right", "foot_right",
+  // Vista posterior — duplicatas de cabeça, pescoço e membros
+  "head_back", "cervical",
+  "left_shoulder_back", "right_shoulder_back",
+  "left_arm_back", "right_arm_back",
+  "left_elbow_back", "right_elbow_back",
+  "left_forearm_back", "right_forearm_back",
+  "left_hand_back", "right_hand_back",
+  "left_knee_back", "right_knee_back",
+  "left_ankle_back", "right_ankle_back",
+  "left_foot_back", "right_foot_back",
+]);
+
 interface ManualAssessmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -247,11 +273,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [treatmentText, setTreatmentText] = useState("");
   const [aiTreatment, setAiTreatment] = useState<any | null>(null);
 
-  // Build region groups: dedupe by id, sort alphabetically by current language label
+  // Build region groups: dedupe by id, sort alphabetically by current language label.
+  // Uses SIMPLIFIED_EXCLUDED_IDS to remove lateral-view duplicates and back-view
+  // duplicates already covered by front-view + anatomical refinement chips.
   const regionGroups: RegionGroup[] = (() => {
     const seen = new Map<string, { label_pt: string; label_en: string }>();
     for (const view of Object.values(regionsByView)) {
       for (const r of view) {
+        if (SIMPLIFIED_EXCLUDED_IDS.has(r.id)) continue;
         if (!seen.has(r.id)) seen.set(r.id, { label_pt: r.label_pt, label_en: r.label_en });
       }
     }
@@ -269,7 +298,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const regionLabelMap: Record<string, { label_pt: string; label_en: string }> = (() => {
     const m: Record<string, { label_pt: string; label_en: string }> = {};
     for (const view of Object.values(regionsByView)) {
-      for (const r of view) if (!m[r.id]) m[r.id] = { label_pt: r.label_pt, label_en: r.label_en };
+      for (const r of view) {
+        if (SIMPLIFIED_EXCLUDED_IDS.has(r.id)) continue;
+        if (!m[r.id]) m[r.id] = { label_pt: r.label_pt, label_en: r.label_en };
+      }
     }
     return m;
   })();
@@ -479,22 +511,42 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
     setPainType(an.painType || (Array.isArray(an.painTypes) ? an.painTypes[0] : "") || "");
-    setPainRegions(Array.isArray(a.pain_regions) ? a.pain_regions : []);
+    setPainRegions(
+      Array.isArray(a.pain_regions)
+        ? a.pain_regions.filter((id: string) => !SIMPLIFIED_EXCLUDED_IDS.has(id))
+        : [],
+    );
     setPainScoresPerRegion(
       an.painScoresPerRegion && typeof an.painScoresPerRegion === "object"
-        ? (an.painScoresPerRegion as Record<string, number>)
+        ? Object.fromEntries(
+            Object.entries(an.painScoresPerRegion as Record<string, number>).filter(
+              ([id]) => !SIMPLIFIED_EXCLUDED_IDS.has(id),
+            ),
+          )
         : (an.pain_scores_per_region && typeof an.pain_scores_per_region === "object"
-            ? (an.pain_scores_per_region as Record<string, number>)
+            ? Object.fromEntries(
+                Object.entries(an.pain_scores_per_region as Record<string, number>).filter(
+                  ([id]) => !SIMPLIFIED_EXCLUDED_IDS.has(id),
+                ),
+              )
             : {}),
     );
     setPainTypesPerRegion(
       an.painTypesPerRegion && typeof an.painTypesPerRegion === "object"
-        ? (an.painTypesPerRegion as Record<string, string>)
+        ? Object.fromEntries(
+            Object.entries(an.painTypesPerRegion as Record<string, string>).filter(
+              ([id]) => !SIMPLIFIED_EXCLUDED_IDS.has(id),
+            ),
+          )
         : {},
     );
     setPainRegionRefinements(
       an.painRegionRefinements && typeof an.painRegionRefinements === "object"
-        ? (an.painRegionRefinements as Record<string, string[]>)
+        ? Object.fromEntries(
+            Object.entries(an.painRegionRefinements as Record<string, string[]>).filter(
+              ([id]) => !SIMPLIFIED_EXCLUDED_IDS.has(id),
+            ),
+          )
         : {},
     );
     setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
