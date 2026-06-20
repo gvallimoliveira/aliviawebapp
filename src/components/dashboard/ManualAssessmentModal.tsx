@@ -274,6 +274,49 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     return m;
   })();
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Refinamento anatômico por região (planos e eixos do corpo humano).
+  // - Esqueleto AXIAL (linha média, sem medial/lateral): cabeça, cervical,
+  //   torácica, lombar, tórax, abdômen → lado D / lado E / central.
+  // - Esqueleto APENDICULAR (membros, simétricos e afastados da linha média):
+  //   medial/lateral, anterior/posterior e proximal/distal (multi-seleção).
+  // Os valores são persistidos em anamnesis_data.painRegionRefinements e
+  // anexados ao label das regiões no payload da IA.
+  // ─────────────────────────────────────────────────────────────────────────
+  const AXIAL_KEYWORDS = ["head", "cervical", "thoracic", "lower_back", "lumbar", "chest", "abdomen"];
+  const isAxialRegion = (id: string) => AXIAL_KEYWORDS.some((k) => id.includes(k));
+  const AXIAL_AXES: { value: string; label_pt: string; label_en: string }[] = [
+    { value: "right_side", label_pt: "Lado direito", label_en: "Right side" },
+    { value: "left_side", label_pt: "Lado esquerdo", label_en: "Left side" },
+    { value: "central", label_pt: "Central", label_en: "Central" },
+  ];
+  const APPENDICULAR_AXES: { value: string; label_pt: string; label_en: string }[] = [
+    { value: "medial", label_pt: "Medial", label_en: "Medial" },
+    { value: "lateral", label_pt: "Lateral", label_en: "Lateral" },
+    { value: "anterior", label_pt: "Anterior", label_en: "Anterior" },
+    { value: "posterior", label_pt: "Posterior", label_en: "Posterior" },
+    { value: "proximal", label_pt: "Proximal", label_en: "Proximal" },
+    { value: "distal", label_pt: "Distal", label_en: "Distal" },
+  ];
+  const getRefinementAxes = (id: string) => (isAxialRegion(id) ? AXIAL_AXES : APPENDICULAR_AXES);
+  const toggleRegionRefinement = (regionId: string, axisValue: string) => {
+    setPainRegionRefinements((prev) => {
+      const current = prev[regionId] || [];
+      const next = current.includes(axisValue)
+        ? current.filter((v) => v !== axisValue)
+        : [...current, axisValue];
+      const out = { ...prev };
+      if (next.length === 0) delete out[regionId];
+      else out[regionId] = next;
+      return out;
+    });
+  };
+  const refinementLabel = (regionId: string, value: string) => {
+    const axes = getRefinementAxes(regionId);
+    const ax = axes.find((a) => a.value === value);
+    return ax ? (isPt ? ax.label_pt : ax.label_en) : value;
+  };
+
   const toggleRegion = (id: string) => {
     if (demoMode) {
       // In demo mode, clicking any region toggles the mock pain regions as a group.
@@ -294,6 +337,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         const out = { ...m };
         if (next.includes(id) && out[id] === undefined && painType) out[id] = painType;
         if (!next.includes(id)) delete out[id];
+        return out;
+      });
+      // Limpa refinamentos quando a região é desmarcada
+      setPainRegionRefinements((m) => {
+        if (next.includes(id)) return m;
+        const out = { ...m };
+        delete out[id];
         return out;
       });
       // Sugere automaticamente "enviar depois" quando há 3+ regiões.
