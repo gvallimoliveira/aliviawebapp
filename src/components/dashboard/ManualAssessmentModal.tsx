@@ -1927,8 +1927,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             )}
 
 
-            {/* STEP 6: DIAGNÓSTICO */}
-            {step === 6 && (
+            {/* STEP 9: DIAGNÓSTICO */}
+            {step === 9 && (
               <div className="space-y-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
