@@ -42,35 +42,49 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { fileBase64, mimeType, fileName, language } = await req.json();
-    if (!fileBase64 || !mimeType) {
+    const body = await req.json();
+    const { language } = body;
+    // Accept either an array `files` (preferred, up to 5) or a single file (legacy).
+    const rawFiles: Array<{ fileBase64: string; mimeType: string; fileName?: string }> =
+      Array.isArray(body.files) && body.files.length > 0
+        ? body.files
+        : body.fileBase64 && body.mimeType
+          ? [{ fileBase64: body.fileBase64, mimeType: body.mimeType, fileName: body.fileName }]
+          : [];
+
+    if (rawFiles.length === 0) {
       return new Response(JSON.stringify({ error: "Missing file payload." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const files = rawFiles.slice(0, 5);
 
     const isPt = language === "pt";
     const isEs = language === "es";
     const langLabel = isEs ? "español" : isPt ? "português brasileiro" : "English";
 
-    const dataUrl = `data:${mimeType};base64,${fileBase64}`;
-    const isPdf = mimeType === "application/pdf";
+    const fileList = files
+      .map((f, i) => `${i + 1}. ${f.fileName || (f.mimeType === "application/pdf" ? "external.pdf" : "image")}`)
+      .join("\n");
 
     const userContent: any[] = [
       {
         type: "text",
-        text: `Você está recebendo uma avaliação fisioterapêutica externa (${isPdf ? "PDF" : "imagem"}${fileName ? ` — arquivo: ${fileName}` : ""}). Extraia e estruture os dados clínicos seguindo rigorosamente o schema da ferramenta. Responda em ${langLabel}.`,
+        text: `Você está recebendo ${files.length === 1 ? "uma avaliação fisioterapêutica externa" : `${files.length} arquivos que compõem em conjunto uma avaliação fisioterapêutica externa`}. Considere TODOS os arquivos abaixo como partes complementares de um mesmo caso (podem ser páginas, exames, laudos ou fotos adicionais) e consolide as informações em UMA ÚNICA estrutura de saída.\n\nArquivos:\n${fileList}\n\nExtraia e estruture os dados clínicos seguindo rigorosamente o schema da ferramenta. Responda em ${langLabel}.`,
       },
     ];
 
-    if (isPdf) {
-      userContent.push({
-        type: "file",
-        file: { filename: fileName || "external.pdf", file_data: dataUrl },
-      });
-    } else {
-      userContent.push({ type: "image_url", image_url: { url: dataUrl } });
+    for (const f of files) {
+      const dataUrl = `data:${f.mimeType};base64,${f.fileBase64}`;
+      if (f.mimeType === "application/pdf") {
+        userContent.push({
+          type: "file",
+          file: { filename: f.fileName || "external.pdf", file_data: dataUrl },
+        });
+      } else {
+        userContent.push({ type: "image_url", image_url: { url: dataUrl } });
+      }
     }
 
     const systemPrompt = `You are a clinical physiotherapy expert reading an EXTERNAL assessment (PDF or photo) that another professional or facility produced. Your job is to map the content to Aliv.iA's native assessment schema so it can be saved as a regular assessment in the chart.
