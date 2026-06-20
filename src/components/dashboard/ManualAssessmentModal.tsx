@@ -890,6 +890,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     patientEmail: patientEmail || null,
     // Specialty (cardio/geri) results applied inline during this session.
     specialtyResults: specialtyApplied.length > 0 ? specialtyApplied : undefined,
+    // External-source metadata (set when this assessment was created from an
+    // AI-interpreted PDF/image upload). Kept inside anamnesis_data so PDF,
+    // AssessmentView and downstream AI calls can detect/render it.
+    ...(externalSource
+      ? {
+          source: externalSource.source,
+          externalSourceFileId: externalSource.externalSourceFileId || null,
+          aiInterpretedFields: externalSource.aiInterpretedFields || [],
+        }
+      : {}),
+    ...(additionalExternalInfo ? { additionalExternalInfo } : {}),
   });
 
   const generateAIDiagnosis = async () => {
