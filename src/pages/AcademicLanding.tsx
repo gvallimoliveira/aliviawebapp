@@ -230,7 +230,7 @@ const COPY = {
       { q: "¿Tendré que pagar de nuevo cuando me gradúe?", a: "No. Tu suscripción sigue activa tras la colegiatura. Solo actualizas el registro en \"Mi cuenta\"." },
       { q: "¿Puedo atender pacientes reales con Alivia Académico?", a: "Puedes practicar evaluación, pero toda conducta clínica en paciente real requiere supervisión de un fisioterapeuta colegiado." },
       { q: "¿El modo mentor es solo texto o guía el caso?", a: "Guía. Te interrumpe en el momento adecuado, sugiere el próximo test y explica el porqué." },
-      { q: "¿Cuáles son las rutas de conocimiento?", a: "Hoy 10 nichos iniciales filtrados por PEDro ≥ 7." },
+      { q: "¿Cuáles son las rutas de conocimiento?", a: "Hoy 8 rutas: 3 de base (Anatomía, Biomecánica, Kinesiología) y 5 clínicas (hombro, lumbar, cervical, cadera, rodilla), todas filtradas por PEDro ≥ 7." },
       { q: "¿Y si no logro mantener el estudio? ¿Puedo cancelar?", a: "En el plan mensual cancelas cuando quieras. El anual es pago único sin reembolso parcial." },
       { q: "¿En qué se diferencia Alivia de un curso?", a: "Los cursos dan teoría. Alivia te obliga a aplicarla en un flujo real de evaluación." },
     ],
