@@ -390,6 +390,16 @@ const Auth = () => {
                     {language === "pt" ? "Escolher outro perfil" : language === "es" ? "Elegir otro perfil" : "Choose another profile"}
                   </button>
                 )}
+                {!isLogin && !isForgotPassword && signupProfile === "student" && (
+                  <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/60 px-3 py-2.5 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                    <Sparkles className="h-4 w-4 mt-0.5 shrink-0" />
+                    <p className="leading-relaxed">
+                      {profileLabels.studentNote}{" "}
+                      <span className="font-semibold tracking-wide">{profileLabels.studentNoteCoupon}</span>
+                      {profileLabels.studentNoteTail}
+                    </p>
+                  </div>
+                )}
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
