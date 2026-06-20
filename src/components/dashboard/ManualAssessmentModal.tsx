@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus, Mic, Lock, Crown, Link as LinkIcon, Copy, MessageCircle, X, ClipboardList } from "lucide-react";
+import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus, Mic, Lock, Crown, Link as LinkIcon, Copy, MessageCircle, X, ClipboardList, Search } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { questionnaires, getApplicableQuestionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { createShortAppLink } from "@/lib/shortLink";
@@ -230,6 +230,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // proximal/distal nos membros; lado D/E/central nas regiões axiais).
   // Multi-seleção: ex. ["medial","posterior"] para "cotovelo direito medial posterior".
   const [painRegionRefinements, setPainRegionRefinements] = useState<Record<string, string[]>>({});
+
+  // Busca rápida por região na etapa de seleção do mapa de dor.
+  const [regionSearch, setRegionSearch] = useState("");
 
   // Red Flags
   const [redFlagsChecked, setRedFlagsChecked] = useState<string[]>([]);
@@ -1552,27 +1555,79 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             {step === 2 && (
               <div className="space-y-4">
                 <div>
-                  <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
+                  <Label className="text-xs mb-2 block">
+                    {isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}
+                  </Label>
+
+                  {/* Busca rápida por região */}
+                  <div className="relative mb-2">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      value={regionSearch}
+                      onChange={(e) => setRegionSearch(e.target.value)}
+                      placeholder={isPt ? "Buscar região (ex: ombro, cervical, lombar...)" : "Search region (e.g. shoulder, cervical, lumbar...)"}
+                      className="pl-8 h-9 text-sm"
+                    />
+                  </div>
+
                   <DemoShield on={demoMode} onAutofill={() => toggleRegion("")}>
                     <div className="max-h-[60vh] overflow-y-auto border rounded-md p-2 space-y-3">
-                      {regionGroups.map((g) => (
-                        <div key={g.key}>
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
-                            {isPt ? g.label_pt : g.label_en}
+                      {(() => {
+                        const q = regionSearch
+                          .normalize("NFD")
+                          .replace(/[\u0300-\u036f]/g, "")
+                          .toLowerCase();
+                        const filtered = regionGroups
+                          .map((g) => {
+                            const matchedIds = q
+                              ? g.ids.filter((id) => {
+                                  const lbl = regionLabelMap[id];
+                                  const text = isPt ? lbl.label_pt : lbl.label_en;
+                                  return text
+                                    .normalize("NFD")
+                                    .replace(/[\u0300-\u036f]/g, "")
+                                    .toLowerCase()
+                                    .includes(q);
+                                })
+                              : g.ids;
+                            const groupMatches = q
+                              ? (isPt ? g.label_pt : g.label_en)
+                                  .normalize("NFD")
+                                  .replace(/[\u0300-\u036f]/g, "")
+                                  .toLowerCase()
+                                  .includes(q)
+                              : true;
+                            // Se o grupo casa com a busca, mostre todas as regiões dele;
+                            // senão, mostre apenas as regiões que casam.
+                            const idsToShow = groupMatches ? g.ids : matchedIds;
+                            return { ...g, ids: idsToShow };
+                          })
+                          .filter((g) => g.ids.length > 0);
+                        return filtered.length === 0 ? (
+                          <p className="text-xs text-muted-foreground text-center py-4">
+                            {isPt ? "Nenhuma região encontrada." : "No region found."}
                           </p>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-                            {g.ids.map((id) => {
-                              const lbl = regionLabelMap[id];
-                              return (
-                                <label key={id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
-                                  <Checkbox checked={painRegions.includes(id)} onCheckedChange={() => toggleRegion(id)} />
-                                  <span>{isPt ? lbl.label_pt : lbl.label_en}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
+                        ) : (
+                          filtered.map((g) => (
+                            <div key={g.key}>
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
+                                {isPt ? g.label_pt : g.label_en}
+                              </p>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                                {g.ids.map((id) => {
+                                  const lbl = regionLabelMap[id];
+                                  return (
+                                    <label key={id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                                      <Checkbox checked={painRegions.includes(id)} onCheckedChange={() => toggleRegion(id)} />
+                                      <span>{isPt ? lbl.label_pt : lbl.label_en}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))
+                        );
+                      })()}
                     </div>
                   </DemoShield>
                   {painRegions.length > 0 && (
