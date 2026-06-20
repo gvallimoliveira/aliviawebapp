@@ -2330,6 +2330,23 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     <Textarea value={diagnosisText} onChange={(e) => setDiagnosisText(e.target.value)} rows={8} className="mt-1 text-sm" />
                   </DemoShield>
                 </div>
+                {(externalSource || additionalExternalInfo) && (
+                  <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 space-y-2">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Sparkles className="h-3 w-3 text-primary" />
+                      {isPt ? "Informações externas adicionais" : "Additional external info"}
+                    </Label>
+                    <Textarea
+                      value={additionalExternalInfo}
+                      onChange={(e) => setAdditionalExternalInfo(e.target.value)}
+                      rows={4}
+                      placeholder={isPt
+                        ? "Tudo o que a IA encontrou no arquivo externo e não coube nos nossos campos pré-definidos. Edite à vontade."
+                        : "Anything the AI found in the external file that doesn't fit our predefined fields. Edit freely."}
+                      className="text-sm bg-background"
+                    />
+                  </div>
+                )}
               </div>
             )}
 
