@@ -1603,31 +1603,6 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             )}
 
 
-            {/* STEP 3: RED FLAGS */}
-            {step === 3 && (
-              <div className="space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  {isPt ? "Marque qualquer sinal de alerta presente no paciente:" : "Check any warning signs present in the patient:"}
-                </p>
-                {RED_FLAGS_PT.map((rf) => (
-                  <label key={rf} className="flex items-start gap-2 p-2 rounded-md border hover:bg-muted/30 cursor-pointer">
-                    <Checkbox checked={redFlagsChecked.includes(rf)} onCheckedChange={() => toggleRedFlag(rf)} className="mt-0.5" />
-                    <span className="text-sm">{rf}</span>
-                  </label>
-                ))}
-                {redFlagsChecked.length > 0 && (
-                  <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 text-destructive border border-destructive/30">
-                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                    <p className="text-xs">
-                      {isPt
-                        ? `${redFlagsChecked.length} sinal(is) de alerta detectado(s). Considere encaminhamento médico.`
-                        : `${redFlagsChecked.length} warning sign(s) detected. Consider medical referral.`}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* STEP 4: OBSERVAÇÕES CLÍNICAS ADICIONAIS — texto livre que
                 alimenta a IA. Etapa própria para dar espaço amplo de escrita. */}
             {step === 4 && (
