@@ -100,6 +100,7 @@
   "auth.signup_desc": "Regístrese para acceder a la evaluación premium",
   "auth.signup_desc_professional": "Regístrese para usar el razonamiento clínico con sus pacientes",
   "auth.signup_desc_clinic": "Regístrese para gestionar evaluaciones de su equipo",
+  "auth.signup_desc_student": "Regístrese para usar todas las herramientas profesionales con el sello Alivia Académico",
   "auth.name": "Nombre completo",
   "auth.name_placeholder": "Su nombre",
   "auth.email": "Correo electrónico",
