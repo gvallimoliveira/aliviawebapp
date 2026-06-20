@@ -1400,17 +1400,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             )}
 
 
-            {/* STEP 1: DOR */}
+            {/* STEP 1: MAPA DE DOR — apenas seleção das regiões. Intensidade e
+                tipo de dor vão na etapa seguinte (já contextualizados pelas
+                regiões marcadas aqui). */}
             {step === 1 && (
               <div className="space-y-4">
-                {/* 1) Marcar regiões PRIMEIRO — o tipo/intensidade global só
-                    aparece quando há 0 ou 1 região marcada; com 2+ regiões, a
-                    IA trabalha exclusivamente com as notas e tipos por região
-                    para evitar diluir o quadro clínico em valores genéricos. */}
                 <div>
                   <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => toggleRegion("")}>
-                    <div className="max-h-80 overflow-y-auto border rounded-md p-2 space-y-3">
+                    <div className="max-h-[60vh] overflow-y-auto border rounded-md p-2 space-y-3">
                       {regionGroups.map((g) => (
                         <div key={g.key}>
                           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
@@ -1434,9 +1432,30 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   {painRegions.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">{painRegions.length} {isPt ? "selecionadas" : "selected"}</p>
                   )}
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    {isPt
+                      ? "Na próxima etapa você define a intensidade e o tipo de dor para cada região marcada aqui."
+                      : "In the next step you set intensity and pain type for each region marked here."}
+                  </p>
                 </div>
+              </div>
+            )}
 
-                {/* 2a) Caminho "global" — só com 0 ou 1 região marcada */}
+            {/* STEP 2: INTENSIDADE & TIPO DE DOR — relacionados às regiões
+                marcadas no mapa. Com 0 ou 1 região, usa a versão global; com
+                2+ regiões, exige nota e tipo por região (mais sensível à
+                evolução clínica). */}
+            {step === 2 && (
+              <div className="space-y-4">
+                {painRegions.length === 0 && (
+                  <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                    {isPt
+                      ? "Nenhuma região marcada no mapa. Você ainda pode registrar uma intensidade e tipo de dor global, ou voltar para marcar regiões específicas."
+                      : "No region marked on the map. You can still record a global intensity and pain type, or go back to mark specific regions."}
+                  </div>
+                )}
+
+                {/* Caminho "global" — só com 0 ou 1 região marcada */}
                 {painRegions.length <= 1 && (
                   <>
                     <div>
@@ -1468,7 +1487,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   </>
                 )}
 
-                {/* 2b) Caminho "por região" — 2+ regiões; ignora intensidade/tipo global */}
+                {/* Caminho "por região" — 2+ regiões; ignora intensidade/tipo global */}
                 {painRegions.length > 1 && (
                   <div className="rounded-md border border-amber-300/60 bg-amber-50 p-2.5 text-[11px] text-amber-900">
                     {isPt
