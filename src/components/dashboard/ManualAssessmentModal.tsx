@@ -1492,19 +1492,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                         const lbl = regionLabelMap[id];
                         const v = painScoresPerRegion[id] ?? painScore;
                         return (
-                          <div key={id} className="flex items-center gap-3">
-                            <span className="text-xs text-foreground w-32 shrink-0 truncate">
+                          <div key={id} className="flex items-center gap-2">
+                            <span className="text-xs text-foreground w-28 sm:w-32 shrink-0 truncate">
                               {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
                             </span>
+                            <Button type="button" variant="outline" size="icon" className="h-8 w-8 shrink-0" disabled={demoMode || v <= 0} onClick={() => setRegionPainScore(id, Math.max(0, v - 1))} aria-label="−1">−</Button>
                             <Slider
                               value={[v]}
                               onValueChange={(arr) => setRegionPainScore(id, arr[0])}
                               min={0}
                               max={10}
                               step={1}
-                              className="flex-1"
+                              className="flex-1 min-w-0"
                               disabled={demoMode}
                             />
+                            <Button type="button" variant="outline" size="icon" className="h-8 w-8 shrink-0" disabled={demoMode || v >= 10} onClick={() => setRegionPainScore(id, Math.min(10, v + 1))} aria-label="+1">+</Button>
                             <span className="text-xs font-bold text-primary tabular-nums w-8 text-right">{v}/10</span>
                           </div>
                         );
