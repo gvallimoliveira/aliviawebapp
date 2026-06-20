@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle, Stethoscope, Building2 } from "lucide-react";
+import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle, Stethoscope, Building2, GraduationCap, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { isValidEmailFormat, suggestEmailFix } from "@/lib/emailValidation";
@@ -17,8 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  // null = mostrar seletor de perfil (3 cards) antes do form de cadastro.
-  const [signupProfile, setSignupProfile] = useState<"personal" | "professional" | "clinic" | null>(null);
+  // null = mostrar seletor de perfil (4 cards) antes do form de cadastro.
+  const [signupProfile, setSignupProfile] = useState<"personal" | "professional" | "student" | "clinic" | null>(null);
   const [email, setEmail] = useState("");
   const [emailConfirm, setEmailConfirm] = useState("");
   const [password, setPassword] = useState("");
@@ -253,8 +253,13 @@ const Auth = () => {
               personalDesc: "Sou paciente / tenho uma dor para resolver",
               professional: "Profissional",
               professionalDesc: "Sou fisioterapeuta autônomo",
+              student: "Estudante",
+              studentDesc: "Sou aluno de fisioterapia (Alivia Acadêmico)",
               clinic: "Clínica",
               clinicDesc: "Gerencio uma clínica ou equipe",
+              studentNote: "Mesma assinatura do plano Profissional, com 50% OFF pelo cupom",
+              studentNoteCoupon: "SOUIBMR",
+              studentNoteTail: ". Modo acadêmico já vem ativado no próximo passo — seus PDFs e link público exibirão o selo Alivia Acadêmico com sua instituição e período.",
             },
             en: {
               title: "Create your account",
@@ -265,8 +270,13 @@ const Auth = () => {
               personalDesc: "I am a patient with pain to solve",
               professional: "Professional",
               professionalDesc: "I am an autonomous physiotherapist",
+              student: "Student",
+              studentDesc: "I am a physiotherapy student (Alivia Academic)",
               clinic: "Clinic",
               clinicDesc: "I manage a clinic or team",
+              studentNote: "Same subscription as the Professional plan, with 50% OFF using coupon",
+              studentNoteCoupon: "SOUIBMR",
+              studentNoteTail: ". Academic mode is already enabled in the next step — your PDFs and public link will show the Alivia Academic seal with your institution and term.",
             },
             es: {
               title: "Crea tu cuenta",
@@ -277,22 +287,36 @@ const Auth = () => {
               personalDesc: "Soy paciente / tengo dolor para resolver",
               professional: "Profesional",
               professionalDesc: "Soy fisioterapeuta autónomo",
+              student: "Estudiante",
+              studentDesc: "Soy estudiante de fisioterapia (Alivia Académico)",
               clinic: "Clínica",
               clinicDesc: "Gestiono una clínica o equipo",
+              studentNote: "Misma suscripción que el plan Profesional, con 50% OFF usando el cupón",
+              studentNoteCoupon: "SOUIBMR",
+              studentNoteTail: ". El modo académico ya viene activado en el siguiente paso — tus PDFs y enlace público mostrarán el sello Alivia Académico con tu institución y período.",
             },
           }[language as "pt" | "en" | "es"];
 
-          const pickProfile = (profile: "personal" | "professional" | "clinic") => {
+          const pickProfile = (profile: "personal" | "professional" | "student" | "clinic") => {
             try {
+              sessionStorage.removeItem("forceStudentMode");
+              sessionStorage.removeItem("forceProfessionalMode");
               if (profile === "personal") sessionStorage.removeItem("signupOrigin");
-              else if (profile === "professional") sessionStorage.setItem("signupOrigin", "professional");
-              else sessionStorage.setItem("signupOrigin", "clinic");
+              else if (profile === "professional") {
+                sessionStorage.setItem("signupOrigin", "professional");
+                sessionStorage.setItem("forceProfessionalMode", "1");
+              } else if (profile === "student") {
+                // Estudante usa o mesmo fluxo do profissional, mas com o
+                // toggle "Sou estudante" pré-ativado em /professional/register.
+                sessionStorage.setItem("signupOrigin", "professional");
+                sessionStorage.setItem("forceStudentMode", "1");
+              } else sessionStorage.setItem("signupOrigin", "clinic");
             } catch {}
             setSignupProfile(profile);
           };
 
           return (
-        <Card className={`w-full ${showChooser ? "max-w-2xl" : "max-w-md"} border-border/50 shadow-lg`}>
+        <Card className={`w-full ${showChooser ? "max-w-3xl" : "max-w-md"} border-border/50 shadow-lg`}>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">
               {isForgotPassword
@@ -312,18 +336,21 @@ const Auth = () => {
                     ? profileLabels.desc
                     : signupProfile === "professional"
                       ? t("auth.signup_desc_professional")
-                      : signupProfile === "clinic"
-                        ? t("auth.signup_desc_clinic")
-                        : t("auth.signup_desc")}
+                      : signupProfile === "student"
+                        ? t("auth.signup_desc_student")
+                        : signupProfile === "clinic"
+                          ? t("auth.signup_desc_clinic")
+                          : t("auth.signup_desc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {showChooser ? (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {([
                     { id: "personal", icon: User, label: profileLabels.personal, desc: profileLabels.personalDesc },
                     { id: "professional", icon: Stethoscope, label: profileLabels.professional, desc: profileLabels.professionalDesc },
+                    { id: "student", icon: GraduationCap, label: profileLabels.student, desc: profileLabels.studentDesc },
                     { id: "clinic", icon: Building2, label: profileLabels.clinic, desc: profileLabels.clinicDesc },
                   ] as const).map(({ id, icon: Icon, label, desc }) => (
                     <button
@@ -362,6 +389,16 @@ const Auth = () => {
                     <ArrowLeft className="h-3.5 w-3.5" />
                     {language === "pt" ? "Escolher outro perfil" : language === "es" ? "Elegir otro perfil" : "Choose another profile"}
                   </button>
+                )}
+                {!isLogin && !isForgotPassword && signupProfile === "student" && (
+                  <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/60 px-3 py-2.5 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                    <Sparkles className="h-4 w-4 mt-0.5 shrink-0" />
+                    <p className="leading-relaxed">
+                      {profileLabels.studentNote}{" "}
+                      <span className="font-semibold tracking-wide">{profileLabels.studentNoteCoupon}</span>
+                      {profileLabels.studentNoteTail}
+                    </p>
+                  </div>
                 )}
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
