@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  // null = mostrar seletor de perfil (3 cards) antes do form de cadastro.
+  const [signupProfile, setSignupProfile] = useState<"personal" | "professional" | "clinic" | null>(null);
   const [email, setEmail] = useState("");
   const [emailConfirm, setEmailConfirm] = useState("");
   const [password, setPassword] = useState("");
