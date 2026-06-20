@@ -161,7 +161,12 @@ const StudentAccessCard = () => {
     if (!user?.id) return;
     if (locked) return;
     if (needsCrefitoFlow) {
-      try { sessionStorage.setItem("signupOrigin", "professional"); } catch {}
+      try {
+        sessionStorage.setItem("signupOrigin", "professional");
+        // Signal the registration page to open in professional mode even if
+        // the existing record still has is_student=true in the DB.
+        sessionStorage.setItem("forceProfessionalMode", "1");
+      } catch {}
       navigate("/professional/register");
       return;
     }
