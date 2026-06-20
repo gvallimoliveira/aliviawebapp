@@ -554,8 +554,12 @@ const Auth = () => {
                 </button>
               )}
             </div>
+              </>
+            )}
           </CardContent>
         </Card>
+          );
+        })()}
       </main>
     </div>
   );
