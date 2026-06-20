@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import ReferralBanner from "@/components/ReferralBanner";
 import { motion } from "framer-motion";
-import { User, UserCog, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users, Building2, Mail, Sparkles, Calendar } from "lucide-react";
+import { User, UserCog, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users, Building2, Mail, Sparkles, Calendar, GraduationCap, Lightbulb, BookOpen, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -160,43 +160,35 @@ const Gateway = () => {
 
           {/* About section moved after cards for both mobile and desktop */}
 
-          {/* Two cards */}
+          {/* 2x2 cards grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {/* Patient Card */}
             <motion.div
               initial="hidden" animate="visible" variants={fadeUp} custom={3}
-              className="group rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 md:p-8 text-left hover:shadow-xl hover:border-primary/30 transition-all duration-300 flex flex-col cursor-pointer"
+              className="group rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-xl hover:border-primary/30 transition-all duration-300 flex flex-col cursor-pointer"
               onClick={() => navigate("/para-pacientes")}
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-4">
                 <User className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-xl font-bold text-foreground mb-2">{t("gateway.patient.title")}</h2>
-              <p className="text-sm text-muted-foreground mb-5">{t("gateway.patient.desc")}</p>
-              <ul className="space-y-2.5 mb-6 flex-1">
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
+              <h2 className="text-lg font-bold text-foreground mb-2">{t("gateway.patient.title")}</h2>
+              <p className="text-sm text-muted-foreground mb-4">{t("gateway.patient.desc")}</p>
+              <ul className="space-y-2 mb-5 flex-1">
+                <li className="flex items-start gap-2 text-sm text-foreground">
                   <Shield className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.patient.bullet1")}
                 </li>
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
+                <li className="flex items-start gap-2 text-sm text-foreground">
                   <Clock className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.patient.bullet2")}
                 </li>
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
+                <li className="flex items-start gap-2 text-sm text-foreground">
                   <Activity className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.patient.bullet3")}
                 </li>
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
-                  <ClipboardList className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  {t("gateway.patient.bullet4")}
-                </li>
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
+                <li className="flex items-start gap-2 text-sm text-foreground">
                   <FileText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.patient.bullet5")}
-                </li>
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
-                  <Users className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  {t("gateway.patient.bullet6")}
                 </li>
               </ul>
               <Button
@@ -212,7 +204,7 @@ const Gateway = () => {
             {/* Professional Card */}
             <motion.div
               initial="hidden" animate="visible" variants={fadeUp} custom={4}
-              className="group rounded-2xl border-2 border-primary/30 bg-primary/[0.03] backdrop-blur-sm p-6 md:p-8 text-left hover:shadow-xl hover:shadow-primary/10 hover:border-primary/50 transition-all duration-300 flex flex-col cursor-pointer relative"
+              className="group rounded-2xl border-2 border-primary/30 bg-primary/[0.03] backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-xl hover:shadow-primary/10 hover:border-primary/50 transition-all duration-300 flex flex-col cursor-pointer relative"
               onClick={() => navigate("/profissionais")}
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -220,33 +212,25 @@ const Gateway = () => {
                   <Stethoscope className="h-3 w-3" /> PRO
                 </span>
               </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 mb-5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 mb-4">
                 <Stethoscope className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-xl font-bold text-foreground mb-2">{t("gateway.pro.title")}</h2>
-              <p className="text-sm text-muted-foreground mb-5">{t("gateway.pro.desc")}</p>
-              <ul className="space-y-2.5 mb-6 flex-1">
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
+              <h2 className="text-lg font-bold text-foreground mb-2">{t("gateway.pro.title")}</h2>
+              <p className="text-sm text-muted-foreground mb-4">{t("gateway.pro.desc")}</p>
+              <ul className="space-y-2 mb-5 flex-1">
+                <li className="flex items-start gap-2 text-sm text-foreground">
                   <FileText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.pro.bullet1")}
                 </li>
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
+                <li className="flex items-start gap-2 text-sm text-foreground">
                   <Brain className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.pro.bullet2")}
                 </li>
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
-                  <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  {t("gateway.pro.bullet3")}
-                </li>
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
+                <li className="flex items-start gap-2 text-sm text-foreground">
                   <BarChart3 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.pro.bullet4")}
                 </li>
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
-                  <Activity className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  {t("gateway.pro.bullet5")}
-                </li>
-                <li className="flex items-start gap-2.5 text-sm text-foreground">
+                <li className="flex items-start gap-2 text-sm text-foreground">
                   <Users className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {t("gateway.pro.bullet6")}
                 </li>
@@ -261,65 +245,104 @@ const Gateway = () => {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </motion.div>
-          </div>
 
-          {/* Clinic Card — destaque premium */}
-          <motion.div
-            initial="hidden" animate="visible" variants={fadeUp} custom={5}
-            className="relative max-w-lg mx-auto mt-10 group cursor-pointer"
-            onClick={() => navigate("/clinica")}
-          >
-            {/* Halo glow */}
-            <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-br from-primary/40 via-primary/20 to-primary/40 opacity-60 blur-md group-hover:opacity-90 transition-opacity duration-500" aria-hidden="true" />
-
-            <div className="relative rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-card via-card to-primary/5 backdrop-blur-sm p-7 text-center shadow-lg group-hover:shadow-2xl group-hover:border-primary/60 transition-all duration-300 overflow-hidden">
-              {/* Decorative corner shapes */}
-              <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/10 blur-2xl" aria-hidden="true" />
-              <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-primary/5 blur-2xl" aria-hidden="true" />
-
-              {/* NOVO badge */}
-              <div className="absolute top-4 right-4">
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-md">
-                  <Sparkles className="h-3 w-3" />
+            {/* Clinic Card */}
+            <motion.div
+              initial="hidden" animate="visible" variants={fadeUp} custom={5}
+              className="group relative rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-card via-card to-primary/5 backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-xl hover:border-primary/60 transition-all duration-300 flex flex-col cursor-pointer overflow-hidden"
+              onClick={() => navigate("/clinica")}
+            >
+              <div className="absolute -top-12 -right-12 h-24 w-24 rounded-full bg-primary/10 blur-2xl" aria-hidden="true" />
+              <div className="absolute top-3 right-3">
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-md">
+                  <Sparkles className="h-2.5 w-2.5" />
                   {language === "pt" ? "Novo" : language === "es" ? "Nuevo" : "New"}
                 </span>
               </div>
-
-              <div className="relative flex justify-center mb-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 shadow-lg shadow-primary/30 ring-4 ring-primary/10">
-                  <Building2 className="h-7 w-7 text-primary-foreground" />
-                </div>
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 shadow-lg shadow-primary/30 mb-4">
+                <Building2 className="h-6 w-6 text-primary-foreground" />
               </div>
-
-              <h2 className="relative text-xl font-bold text-foreground mb-2">{t("gateway.clinic.title")}</h2>
-              <p className="relative text-sm text-muted-foreground mb-5 max-w-md mx-auto">{t("gateway.clinic.desc")}</p>
-
-              {/* Mini feature badges */}
-              <div className="relative flex flex-wrap justify-center gap-2 mb-5">
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+              <h2 className="relative text-lg font-bold text-foreground mb-2">{t("gateway.clinic.title")}</h2>
+              <p className="relative text-sm text-muted-foreground mb-4">{t("gateway.clinic.desc")}</p>
+              <div className="relative flex flex-wrap gap-1.5 mb-5 flex-1">
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                   <Users className="h-3 w-3" />
                   {language === "pt" ? "Equipe" : language === "es" ? "Equipo" : "Team"}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                   <Calendar className="h-3 w-3" />
                   {language === "pt" ? "Agenda" : language === "es" ? "Agenda" : "Schedule"}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                   <BarChart3 className="h-3 w-3" />
                   {language === "pt" ? "Gestão" : language === "es" ? "Gestión" : "Management"}
                 </span>
               </div>
-
               <Button
-                size="default"
-                className="relative rounded-xl gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md group-hover:shadow-lg transition-all pointer-events-none"
+                size="lg"
+                className="relative w-full rounded-xl gap-2 text-base bg-primary text-primary-foreground hover:bg-primary/90 pointer-events-none"
                 tabIndex={-1}
               >
                 {t("gateway.clinic.cta")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
-            </div>
-          </motion.div>
+            </motion.div>
+
+            {/* Academic Card */}
+            <motion.div
+              initial="hidden" animate="visible" variants={fadeUp} custom={6}
+              className="group relative rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-card via-card to-amber-500/5 backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-xl hover:border-amber-500/60 transition-all duration-300 flex flex-col cursor-pointer overflow-hidden"
+              onClick={() => navigate("/academico")}
+            >
+              <div className="absolute -top-12 -right-12 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl" aria-hidden="true" />
+              <div className="absolute top-3 right-3">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  {language === "pt" ? "Novo" : language === "es" ? "Nuevo" : "New"}
+                </span>
+              </div>
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/30 mb-4">
+                <GraduationCap className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="relative text-lg font-bold text-foreground mb-2">
+                {language === "pt" ? "Sou estudante de fisioterapia" : language === "es" ? "Soy estudiante de fisioterapia" : "I'm a physiotherapy student"}
+              </h2>
+              <p className="relative text-sm text-muted-foreground mb-4">
+                {language === "pt"
+                  ? "Treine seu raciocínio clínico com IA, casos simulados e mentor virtual antes de pisar no estágio."
+                  : language === "es"
+                  ? "Entrena tu razonamiento clínico con IA, casos simulados y mentor virtual antes de la práctica."
+                  : "Train your clinical reasoning with AI, simulated cases and a virtual mentor before your internship."}
+              </p>
+              <ul className="relative space-y-2 mb-5 flex-1">
+                <li className="flex items-start gap-2 text-sm text-foreground">
+                  <Brain className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                  {language === "pt" ? "Agente Clínico com IA e Modo Mentor" : language === "es" ? "Agente Clínico IA y Modo Mentor" : "Clinical AI Agent and Mentor Mode"}
+                </li>
+                <li className="flex items-start gap-2 text-sm text-foreground">
+                  <FlaskConical className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                  {language === "pt" ? "Casos clínicos simulados ilimitados" : language === "es" ? "Casos clínicos simulados ilimitados" : "Unlimited simulated clinical cases"}
+                </li>
+                <li className="flex items-start gap-2 text-sm text-foreground">
+                  <BookOpen className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                  {language === "pt" ? "Trilhas e evidências PEDro ≥ 7" : language === "es" ? "Rutas y evidencia PEDro ≥ 7" : "Tracks and PEDro ≥ 7 evidence"}
+                </li>
+                <li className="flex items-start gap-2 text-sm text-foreground">
+                  <Lightbulb className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                  {language === "pt" ? "Selo acadêmico em PDFs e migração ao obter CREFITO" : language === "es" ? "Sello académico en PDFs y migración al obtener colegiatura" : "Academic seal in PDFs and migration on licensure"}
+                </li>
+              </ul>
+              <Button
+                size="lg"
+                className="relative w-full rounded-xl gap-2 text-base bg-amber-500 text-white hover:bg-amber-600 pointer-events-none"
+                tabIndex={-1}
+              >
+                {language === "pt" ? "Conhecer Aliv.iA Acadêmico" : language === "es" ? "Conocer Alivia Académico" : "Discover Alivia Academic"}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </motion.div>
+          </div>
+
           {/* Social proof badge */}
           <motion.div
             initial="hidden" animate="visible" variants={fadeUp} custom={5}
