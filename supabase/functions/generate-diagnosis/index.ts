@@ -460,7 +460,9 @@ Response format (JSON):
 - Chief complaints: ${chiefComplaints.join(", ") || anamnesisData.customComplaint}
 - Custom complaint details: ${anamnesisData.customComplaint || "N/A"}
 - Onset: ${anamnesisData.onset}
-- Pain regions: ${anamnesisData.painRegions?.join(", ") || "Not specified"}
+- Pain regions: ${anamnesisData.painRegions?.join(", ") || "Not specified"}${anamnesisData.painRegionRefinements && Object.keys(anamnesisData.painRegionRefinements).length > 0 ? `
+- **ANATOMICAL REFINEMENT PER REGION (medial/lateral, anterior/posterior, proximal/distal for limbs; right side / left side / central for axial regions — use to localize the pain generator within each region and to drive differential diagnosis, e.g. medial vs lateral epicondylitis, anterior vs posterior knee pain, proximal vs distal hamstring lesion):**
+${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]) => `    • ${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join("\n")}` : ""}
 - Pain types: ${anamnesisData.painTypes?.join(", ") || "Not specified"}
 - Evolution: ${anamnesisData.evolution}
 - Aggravating factors: ${anamnesisData.aggravatingFactors || "Not specified"}
