@@ -52,7 +52,9 @@ Rules:
 - Chief complaint: ${anamnesisData?.chiefComplaint || "N/A"}
 - Custom complaint: ${anamnesisData?.customComplaint || "N/A"}
 - Onset: ${anamnesisData?.onset || "N/A"}
-- Pain regions: ${(painRegions || []).join(", ") || "N/A"}
+- Pain regions: ${(painRegions || []).join(", ") || "N/A"}${anamnesisData?.painRegionRefinements && Object.keys(anamnesisData.painRegionRefinements).length > 0 ? `
+- Anatomical refinement per region (medial/lateral, anterior/posterior, proximal/distal for limbs; right/left side or central for axial regions — use to characterize the pain generator more precisely in the impression):
+${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]) => `    • ${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join("\n")}` : ""}
 - Pain types: ${(anamnesisData?.painTypes || []).join(", ") || "N/A"}
 - Pain score (VAS, overall/average): ${painScore ?? "N/A"}/10
 - Pain score mode: ${anamnesisData?.painScoreMode || "general"}
