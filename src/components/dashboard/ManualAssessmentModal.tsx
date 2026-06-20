@@ -511,22 +511,42 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
     setPainType(an.painType || (Array.isArray(an.painTypes) ? an.painTypes[0] : "") || "");
-    setPainRegions(Array.isArray(a.pain_regions) ? a.pain_regions : []);
+    setPainRegions(
+      Array.isArray(a.pain_regions)
+        ? a.pain_regions.filter((id: string) => !SIMPLIFIED_EXCLUDED_IDS.has(id))
+        : [],
+    );
     setPainScoresPerRegion(
       an.painScoresPerRegion && typeof an.painScoresPerRegion === "object"
-        ? (an.painScoresPerRegion as Record<string, number>)
+        ? Object.fromEntries(
+            Object.entries(an.painScoresPerRegion as Record<string, number>).filter(
+              ([id]) => !SIMPLIFIED_EXCLUDED_IDS.has(id),
+            ),
+          )
         : (an.pain_scores_per_region && typeof an.pain_scores_per_region === "object"
-            ? (an.pain_scores_per_region as Record<string, number>)
+            ? Object.fromEntries(
+                Object.entries(an.pain_scores_per_region as Record<string, number>).filter(
+                  ([id]) => !SIMPLIFIED_EXCLUDED_IDS.has(id),
+                ),
+              )
             : {}),
     );
     setPainTypesPerRegion(
       an.painTypesPerRegion && typeof an.painTypesPerRegion === "object"
-        ? (an.painTypesPerRegion as Record<string, string>)
+        ? Object.fromEntries(
+            Object.entries(an.painTypesPerRegion as Record<string, string>).filter(
+              ([id]) => !SIMPLIFIED_EXCLUDED_IDS.has(id),
+            ),
+          )
         : {},
     );
     setPainRegionRefinements(
       an.painRegionRefinements && typeof an.painRegionRefinements === "object"
-        ? (an.painRegionRefinements as Record<string, string[]>)
+        ? Object.fromEntries(
+            Object.entries(an.painRegionRefinements as Record<string, string[]>).filter(
+              ([id]) => !SIMPLIFIED_EXCLUDED_IDS.has(id),
+            ),
+          )
         : {},
     );
     setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
