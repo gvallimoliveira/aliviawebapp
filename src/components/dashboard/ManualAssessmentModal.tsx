@@ -1418,6 +1418,23 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-6">
           <div className="space-y-4 py-4">
+            {externalSource && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">
+                      {isPt ? "Avaliação externa interpretada pela IA" : "External assessment interpreted by AI"}
+                    </p>
+                    <p className="leading-snug text-muted-foreground mt-0.5">
+                      {isPt
+                        ? `${externalSource.aiInterpretedFields?.length || 0} campo(s) pré-preenchido(s) a partir do arquivo enviado. Revise tudo antes de salvar — o conteúdo passa a fazer parte do prontuário do paciente.`
+                        : `${externalSource.aiInterpretedFields?.length || 0} field(s) pre-filled from the uploaded file. Review everything before saving — the content becomes part of the patient's chart.`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             {demoMode && (
               <div className="rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-900/15 px-4 py-3 text-xs text-amber-900 dark:text-amber-200">
                 <div className="flex items-start gap-2">
