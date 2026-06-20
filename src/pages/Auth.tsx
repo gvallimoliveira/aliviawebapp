@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle, Stethoscope, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { isValidEmailFormat, suggestEmailFix } from "@/lib/emailValidation";
@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  // null = mostrar seletor de perfil (3 cards) antes do form de cadastro.
+  const [signupProfile, setSignupProfile] = useState<"personal" | "professional" | "clinic" | null>(null);
   const [email, setEmail] = useState("");
   const [emailConfirm, setEmailConfirm] = useState("");
   const [password, setPassword] = useState("");
@@ -239,16 +241,124 @@ const Auth = () => {
       </header>
 
       <main className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-border/50 shadow-lg">
+        {(() => {
+          const showChooser = !isLogin && !isForgotPassword && signupProfile === null;
+          const profileLabels = {
+            pt: {
+              title: "Crie sua conta",
+              desc: "Escolha o perfil que melhor descreve você.",
+              loginHint: "Já tem conta?",
+              loginBtn: "Entrar",
+              personal: "Pessoal",
+              personalDesc: "Sou paciente / tenho uma dor para resolver",
+              professional: "Profissional",
+              professionalDesc: "Sou fisioterapeuta autônomo",
+              clinic: "Clínica",
+              clinicDesc: "Gerencio uma clínica ou equipe",
+            },
+            en: {
+              title: "Create your account",
+              desc: "Choose the profile that best describes you.",
+              loginHint: "Already have an account?",
+              loginBtn: "Sign in",
+              personal: "Personal",
+              personalDesc: "I am a patient with pain to solve",
+              professional: "Professional",
+              professionalDesc: "I am an autonomous physiotherapist",
+              clinic: "Clinic",
+              clinicDesc: "I manage a clinic or team",
+            },
+            es: {
+              title: "Crea tu cuenta",
+              desc: "Elige el perfil que mejor te describe.",
+              loginHint: "¿Ya tienes cuenta?",
+              loginBtn: "Entrar",
+              personal: "Personal",
+              personalDesc: "Soy paciente / tengo dolor para resolver",
+              professional: "Profesional",
+              professionalDesc: "Soy fisioterapeuta autónomo",
+              clinic: "Clínica",
+              clinicDesc: "Gestiono una clínica o equipo",
+            },
+          }[language as "pt" | "en" | "es"];
+
+          const pickProfile = (profile: "personal" | "professional" | "clinic") => {
+            try {
+              if (profile === "personal") sessionStorage.removeItem("signupOrigin");
+              else if (profile === "professional") sessionStorage.setItem("signupOrigin", "professional");
+              else sessionStorage.setItem("signupOrigin", "clinic");
+            } catch {}
+            setSignupProfile(profile);
+          };
+
+          return (
+        <Card className={`w-full ${showChooser ? "max-w-2xl" : "max-w-md"} border-border/50 shadow-lg`}>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">
-              {isForgotPassword ? t("auth.forgot_title") : isLogin ? t("auth.login_title") : t("auth.signup_title")}
+              {isForgotPassword
+                ? t("auth.forgot_title")
+                : isLogin
+                  ? t("auth.login_title")
+                  : showChooser
+                    ? profileLabels.title
+                    : t("auth.signup_title")}
             </CardTitle>
             <CardDescription>
-              {isForgotPassword ? t("auth.forgot_desc") : isLogin ? t("auth.login_desc") : t("auth.signup_desc")}
+              {isForgotPassword
+                ? t("auth.forgot_desc")
+                : isLogin
+                  ? t("auth.login_desc")
+                  : showChooser
+                    ? profileLabels.desc
+                    : t("auth.signup_desc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {showChooser ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {([
+                    { id: "personal", icon: User, label: profileLabels.personal, desc: profileLabels.personalDesc },
+                    { id: "professional", icon: Stethoscope, label: profileLabels.professional, desc: profileLabels.professionalDesc },
+                    { id: "clinic", icon: Building2, label: profileLabels.clinic, desc: profileLabels.clinicDesc },
+                  ] as const).map(({ id, icon: Icon, label, desc }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => pickProfile(id)}
+                      className="group flex flex-col items-center text-center gap-2 rounded-xl border border-border/60 bg-card hover:border-primary hover:bg-primary/5 transition-colors p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">{label}</p>
+                      <p className="text-xs text-muted-foreground leading-snug">{desc}</p>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-center text-sm text-muted-foreground">
+                  {profileLabels.loginHint}{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsLogin(true)}
+                    className="text-primary font-medium hover:underline"
+                  >
+                    {profileLabels.loginBtn}
+                  </button>
+                </p>
+              </div>
+            ) : (
+              <>
+                {!isLogin && !isForgotPassword && signupProfile && (
+                  <button
+                    type="button"
+                    onClick={() => setSignupProfile(null)}
+                    className="mb-3 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    {language === "pt" ? "Escolher outro perfil" : language === "es" ? "Elegir otro perfil" : "Choose another profile"}
+                  </button>
+                )}
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
@@ -430,7 +540,13 @@ const Auth = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setIsLogin(!isLogin)}
+                  onClick={() => {
+                    const next = !isLogin;
+                    setIsLogin(next);
+                    // Ao entrar no modo cadastro, volta sempre para o seletor
+                    // de perfil (Pessoal / Profissional / Clínica).
+                    if (!next) setSignupProfile(null);
+                  }}
                   className="text-sm text-primary hover:underline"
                   disabled={loading}
                 >
@@ -438,8 +554,12 @@ const Auth = () => {
                 </button>
               )}
             </div>
+              </>
+            )}
           </CardContent>
         </Card>
+          );
+        })()}
       </main>
     </div>
   );
