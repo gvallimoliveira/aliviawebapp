@@ -1775,10 +1775,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 4: TESTES */}
-            {step === 4 && (
+            {/* STEP 6: MOBILIDADE ARTICULAR (ADM) */}
+            {step === 6 && (
               <div className="space-y-4">
-                {/* ROM / Joint Mobility table — positioned BEFORE free-text functional tests */}
                 <DemoShield
                   on={demoMode}
                   onAutofill={() =>
@@ -1791,11 +1790,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     lang={isPt ? "pt" : "en"}
                   />
                 </DemoShield>
+                <p className="text-[11px] text-muted-foreground">
+                  {isPt
+                    ? "Os testes funcionais e observações ficam na próxima etapa."
+                    : "Functional tests and observations are on the next step."}
+                </p>
+              </div>
+            )}
 
-
-
-
-
+            {/* STEP 7: TESTES FUNCIONAIS */}
+            {step === 7 && (
+              <div className="space-y-4">
                 <div>
                   <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(functionalTests, MOCK_MANUAL_CASE.functionalTests, setFunctionalTests, "")}>
@@ -1889,8 +1894,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 5: DINAMOMETRIA (opcional — pode ser pulada e preenchida depois no prontuário) */}
-            {step === 5 && (
+            {/* STEP 8: DINAMOMETRIA (opcional — pode ser pulada e preenchida depois no prontuário) */}
+            {step === 8 && (
               <div className="space-y-4">
                 <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground leading-relaxed flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <span>
