@@ -652,12 +652,88 @@ export default function PatientDetailView(props: any) {
       {manualAssessmentOpen && (
         <ManualAssessmentModal
           open={manualAssessmentOpen}
-          onOpenChange={setManualAssessmentOpen}
+          onOpenChange={(open) => {
+            setManualAssessmentOpen(open);
+            if (!open) setExternalPrefill(null);
+          }}
+          professionalId={professionalId}
+          clinicId={clinicId}
+          patientName={patient.name}
+          patientEmail={patient.email}
+          prefillData={externalPrefill}
+          demoMode={isDemo}
+        />
+      )}
+
+      {externalUploadOpen && (
+        <ExternalAssessmentUploadModal
+          open={externalUploadOpen}
+          onOpenChange={setExternalUploadOpen}
           professionalId={professionalId}
           clinicId={clinicId}
           patientName={patient.name}
           patientEmail={patient.email}
           demoMode={isDemo}
+          onInterpreted={({ interpretation, sourceFile }) => {
+            // Constrói uma "linha de avaliação" no mesmo shape que o editAssessment
+            // espera, mas sem id — o save flow insere uma linha nova.
+            const row = {
+              patient_name: patient.name,
+              patient_email: patient.email,
+              pain_score: interpretation.painScore ?? 5,
+              pain_regions: interpretation.painRegions || [],
+              red_flags: interpretation.redFlags?.length ? { detected: interpretation.redFlags } : null,
+              test_results: (interpretation.questionnaireResults || []).map((q: any) => ({
+                questionnaireId: `external_${(q.name || "q").toLowerCase().replace(/\s+/g, "_")}`,
+                questionnaireName: q.name,
+                totalScore: typeof q.score === "number" ? q.score : undefined,
+                interpretation_pt: q.interpretation,
+                interpretation_en: q.interpretation,
+                external: true,
+              })),
+              diagnosis: interpretation.diagnosis
+                ? {
+                    ...interpretation.diagnosis,
+                    clinicalImpression: interpretation.clinicalImpression || undefined,
+                    manual: true,
+                  }
+                : null,
+              treatment_plan: null,
+              anamnesis_data: {
+                manualEntry: true,
+                source: "external_upload",
+                externalSourceFileId: sourceFile?.id || null,
+                aiInterpretedFields: interpretation.aiInterpretedFields || [],
+                additionalExternalInfo: interpretation.additionalExternalInfo || "",
+                chiefComplaint: interpretation.chiefComplaint,
+                additionalComplaint: interpretation.additionalComplaint,
+                history: interpretation.history,
+                duration: interpretation.duration,
+                onset: interpretation.onset,
+                aggravatingFactors: interpretation.aggravatingFactors,
+                relievingFactors: interpretation.relievingFactors,
+                medications: interpretation.medications,
+                previousSurgeries: interpretation.previousSurgeries,
+                comorbidities: interpretation.comorbidities,
+                occupation: interpretation.occupation,
+                complementaryExams: interpretation.complementaryExams,
+                painType: interpretation.painType,
+                painScoresPerRegion: interpretation.painScoresPerRegion,
+                painRegionRefinements: interpretation.painRegionRefinements,
+                additionalClinicalNotes: interpretation.additionalClinicalNotes,
+                romTable: interpretation.romTable,
+                strengthTable: interpretation.strengthTable,
+                functionalTests: interpretation.functionalTests,
+              },
+            };
+            setExternalPrefill({
+              markerId: `ext_${Date.now()}`,
+              row,
+              externalSourceFileId: sourceFile?.id || null,
+            });
+            setExternalUploadOpen(false);
+            setManualAssessmentOpen(true);
+          }}
         />
       )}
 
