@@ -258,6 +258,10 @@ export default function PatientDetailView(props: any) {
   } = props;
 
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
+  const [externalUploadOpen, setExternalUploadOpen] = React.useState(false);
+  // Payload entregue pelo modal de upload externo, usado para abrir o
+  // ManualAssessmentModal pré-preenchido com a interpretação da IA.
+  const [externalPrefill, setExternalPrefill] = React.useState<{ markerId: string; row: any; externalSourceFileId?: string | null } | null>(null);
   const [summaryDialogOpen, setSummaryDialogOpen] = React.useState(false);
   const [reassessDialog, setReassessDialog] = React.useState<{ open: boolean; loading: boolean; link: string; error: string | null }>({ open: false, loading: false, link: "", error: null });
   const [reassessConfigOpen, setReassessConfigOpen] = React.useState(false);
