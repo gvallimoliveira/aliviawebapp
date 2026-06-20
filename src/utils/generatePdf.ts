@@ -1836,6 +1836,21 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     y = renderAnamnesisSection(doc, y, anamnesisData, isPt);
   }
 
+  // ── Additional External Info (from external assessment upload) ──
+  if (anamnesisData?.additionalExternalInfo?.trim()) {
+    y = checkPage(doc, y, 24);
+    y = renderSectionTitle(doc, y, isPt ? "Informações Externas Adicionais" : "Additional External Information", COLORS.primary, 20);
+    y = drawTextCard(doc, y, anamnesisData.additionalExternalInfo.trim(), {
+      fill: COLORS.background,
+      stroke: COLORS.border,
+      padX: 6,
+      padY: 5,
+      body: { font: "Inter", weight: "normal", size: 9, lineHeight: 4.2, textColor: COLORS.foreground },
+      label: { text: isPt ? "CONTEÚDO DA AVALIAÇÃO EXTERNA" : "EXTERNAL ASSESSMENT CONTENT", color: COLORS.muted, size: 7 },
+    });
+    y += 4;
+  }
+
   // ── Test Results (Questionnaires) — right after anamnesis ──
   if (testResults) {
     y = renderTestResultsSection(doc, y, testResults, isPt);
