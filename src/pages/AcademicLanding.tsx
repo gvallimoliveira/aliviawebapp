@@ -162,7 +162,7 @@ const COPY = {
       { q: "Will I have to pay again when I graduate?", a: "No. Your subscription stays active after licensure. Just update your record in \"My account\" and the academic seal goes away automatically." },
       { q: "Can I treat real patients with Alivia Academic?", a: "You can practice assessment, but any clinical conduct on real patients requires supervision by a licensed physiotherapist." },
       { q: "Is Mentor mode just text or does it actually guide the case?", a: "It guides. Mentor interrupts you at the right moment, suggests next tests, asks why you ruled out a hypothesis and explains why." },
-      { q: "Which knowledge tracks exist?", a: "Today 10 initial niches: shoulder, lumbar spine, cervical, knee, hip, ankle/foot, sports, pelvic, neuro and oncology/general rehab — all filtered by PEDro ≥ 7." },
+      { q: "Which knowledge tracks exist?", a: "Today 8 tracks: 3 foundation (Anatomy, Biomechanics, Kinesiology) covering the main body regions, and 5 clinical niches (shoulder, low back, cervical, hip, knee) — all filtered by PEDro ≥ 7." },
       { q: "What if I can't keep studying? Can I cancel?", a: "On the monthly plan you can cancel anytime, no fee. The annual plan is a single payment with no partial refund." },
       { q: "How is Alivia different from a course or just studying textbooks?", a: "Courses give you theory. Alivia forces you to apply it in a real assessment flow with sequential clinical decisions, mentor feedback and correction." },
     ],
