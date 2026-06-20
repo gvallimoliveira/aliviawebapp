@@ -1138,7 +1138,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       }}
     >
       <DialogContent data-manual-assessment-modal=""
-        className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0"
+        className="max-w-3xl h-[100dvh] sm:h-[90dvh] max-h-[100dvh] flex flex-col p-0 gap-0"
         onEscapeKeyDown={(e) => {
           // ESC nunca fecha — usuário precisa clicar no X e confirmar.
           if (!demoMode) e.preventDefault();
