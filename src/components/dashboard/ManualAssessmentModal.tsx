@@ -95,6 +95,32 @@ const REGION_GROUPS_DEF: { key: string; label_pt: string; label_en: string; matc
     match: (id) => id.includes("shin") || id.includes("calf") || id.includes("ankle") || id.includes("foot") },
 ];
 
+/**
+ * IDs excluídos da tabela de seleção simplificada (1ª etapa do mapa).
+ * Remove vistas laterais (left/right) e duplicatas da vista posterior
+ * que já são cobertas pela vista frontal + refinamento anatômico.
+ */
+const SIMPLIFIED_EXCLUDED_IDS = new Set<string>([
+  // Vista lateral esquerda
+  "head_left", "cervical_left", "shoulder_left", "arm_left", "elbow_left",
+  "forearm_left", "hand_left", "thoracic_left", "lumbar_left", "hip_left",
+  "thigh_left", "knee_left", "shin_left", "ankle_left", "foot_left",
+  // Vista lateral direita
+  "head_right", "cervical_right", "shoulder_right", "arm_right", "elbow_right",
+  "forearm_right", "hand_right", "thoracic_right", "lumbar_right", "hip_right",
+  "thigh_right", "knee_right", "shin_right", "ankle_right", "foot_right",
+  // Vista posterior — duplicatas de cabeça, pescoço e membros
+  "head_back", "cervical",
+  "left_shoulder_back", "right_shoulder_back",
+  "left_arm_back", "right_arm_back",
+  "left_elbow_back", "right_elbow_back",
+  "left_forearm_back", "right_forearm_back",
+  "left_hand_back", "right_hand_back",
+  "left_knee_back", "right_knee_back",
+  "left_ankle_back", "right_ankle_back",
+  "left_foot_back", "right_foot_back",
+]);
+
 interface ManualAssessmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
