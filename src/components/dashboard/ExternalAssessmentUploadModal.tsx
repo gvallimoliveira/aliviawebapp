@@ -12,6 +12,7 @@ import { Loader2, Upload, FileText, Sparkles, AlertTriangle, FileImage, CheckCir
 import { MOCK_EXTERNAL_INTERPRETATION, type ExternalInterpretation } from "@/data/mockExternalAssessment";
 
 const MAX_SIZE_BYTES = 20 * 1024 * 1024;
+const MAX_FILES = 5;
 const ACCEPTED = ".pdf,.jpg,.jpeg,.png,.webp,.heic";
 const ACCEPTED_MIMES = new Set([
   "application/pdf",
@@ -26,10 +27,13 @@ interface ExternalAssessmentUploadModalProps {
   patientName?: string;
   patientEmail?: string;
   demoMode?: boolean;
-  /** Called when the user confirms — hands the interpretation + uploaded file ref back to the caller, which then opens the ManualAssessmentModal pre-filled. */
+  /** Called when the user confirms — hands the interpretation + uploaded file refs back to the caller, which then opens the ManualAssessmentModal pre-filled. */
   onInterpreted: (payload: {
     interpretation: ExternalInterpretation;
+    /** First/primary file (kept for backwards compatibility). */
     sourceFile?: { id: string; name: string; path: string } | null;
+    /** All uploaded files (up to 5). */
+    sourceFiles?: Array<{ id: string; name: string; path: string }>;
   }) => void;
 }
 
@@ -37,7 +41,6 @@ const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reje
   const reader = new FileReader();
   reader.onload = () => {
     const result = reader.result as string;
-    // strip "data:...;base64,"
     const idx = result.indexOf(",");
     resolve(idx >= 0 ? result.slice(idx + 1) : result);
   };
@@ -54,7 +57,7 @@ const ExternalAssessmentUploadModal = ({
   const isPt = language === "pt";
   const isEs = language === "es";
 
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [interpreting, setInterpreting] = useState(false);
   const [interpretation, setInterpretation] = useState<ExternalInterpretation | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +65,7 @@ const ExternalAssessmentUploadModal = ({
   const t = (pt: string, en: string, es?: string) => isPt ? pt : isEs && es ? es : en;
 
   const reset = () => {
-    setFile(null);
+    setFiles([]);
     setInterpretation(null);
     setInterpreting(false);
   };
@@ -72,37 +75,64 @@ const ExternalAssessmentUploadModal = ({
     onOpenChange(next);
   };
 
-  const handlePickFile = (f: File | null) => {
-    if (!f) return;
-    if (!ACCEPTED_MIMES.has(f.type) && !f.name.match(/\.(pdf|jpe?g|png|webp|heic)$/i)) {
-      toast({ title: t("Formato não suportado", "Unsupported format"), description: t("Use PDF ou imagem (JPG, PNG, WEBP, HEIC).", "Use PDF or image (JPG, PNG, WEBP, HEIC)."), variant: "destructive" });
-      return;
+  const handlePickFiles = (picked: FileList | null) => {
+    if (!picked || picked.length === 0) return;
+    const incoming = Array.from(picked);
+    const accepted: File[] = [];
+    for (const f of incoming) {
+      if (!ACCEPTED_MIMES.has(f.type) && !f.name.match(/\.(pdf|jpe?g|png|webp|heic)$/i)) {
+        toast({ title: t("Formato não suportado", "Unsupported format"), description: `${f.name}: ${t("Use PDF ou imagem (JPG, PNG, WEBP, HEIC).", "Use PDF or image (JPG, PNG, WEBP, HEIC).")}`, variant: "destructive" });
+        continue;
+      }
+      if (f.size > MAX_SIZE_BYTES) {
+        toast({ title: t("Arquivo muito grande (máx 20MB)", "File too large (max 20MB)"), description: f.name, variant: "destructive" });
+        continue;
+      }
+      accepted.push(f);
     }
-    if (f.size > MAX_SIZE_BYTES) {
-      toast({ title: t("Arquivo muito grande (máx 20MB)", "File too large (max 20MB)"), variant: "destructive" });
-      return;
-    }
-    setFile(f);
+    setFiles((prev) => {
+      const merged = [...prev];
+      for (const f of accepted) {
+        if (merged.length >= MAX_FILES) {
+          toast({ title: t(`Máximo de ${MAX_FILES} arquivos por upload`, `Maximum of ${MAX_FILES} files per upload`), variant: "destructive" });
+          break;
+        }
+        if (!merged.some((m) => m.name === f.name && m.size === f.size)) merged.push(f);
+      }
+      return merged;
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeFile = (idx: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const handleInterpret = async () => {
     if (demoMode) {
-      // Simula o tempo de processamento da IA
       setInterpreting(true);
       await new Promise((r) => setTimeout(r, 1200));
       setInterpretation(MOCK_EXTERNAL_INTERPRETATION as ExternalInterpretation);
       setInterpreting(false);
       return;
     }
-    if (!file) return;
+    if (files.length === 0) return;
     setInterpreting(true);
     try {
-      const base64 = await fileToBase64(file);
+      const payloadFiles = await Promise.all(
+        files.map(async (f) => ({
+          fileBase64: await fileToBase64(f),
+          mimeType: f.type || "application/octet-stream",
+          fileName: f.name,
+        })),
+      );
       const { data, error } = await supabase.functions.invoke("interpret-external-assessment", {
         body: {
-          fileBase64: base64,
-          mimeType: file.type || "application/octet-stream",
-          fileName: file.name,
+          files: payloadFiles,
+          // Backwards-compat single-file fields (first file)
+          fileBase64: payloadFiles[0].fileBase64,
+          mimeType: payloadFiles[0].mimeType,
+          fileName: payloadFiles[0].fileName,
           language,
         },
       });
@@ -112,8 +142,8 @@ const ExternalAssessmentUploadModal = ({
       if (!interp) throw new Error(t("Resposta inválida da IA.", "Invalid AI response."));
       if (interp.interpretable === false) {
         toast({
-          title: t("Arquivo não interpretável", "File not interpretable"),
-          description: interp.unreadableReason || t("Tente um arquivo mais legível.", "Try a clearer file."),
+          title: t("Arquivos não interpretáveis", "Files not interpretable"),
+          description: interp.unreadableReason || t("Tente arquivos mais legíveis.", "Try clearer files."),
           variant: "destructive",
         });
         setInterpreting(false);
@@ -132,42 +162,45 @@ const ExternalAssessmentUploadModal = ({
     }
   };
 
-  const uploadSourceFile = async (): Promise<{ id: string; name: string; path: string } | null> => {
-    if (!file || !user || demoMode) return null;
-    try {
-      const prefix = clinicId ? `clinic/${clinicId}` : `pro/${professionalId}`;
-      const safeEmail = patientEmail || `unknown/${user.id}`;
-      const filePath = `${prefix}/${safeEmail}/external_${Date.now()}_${file.name}`;
-      const { error: upErr } = await supabase.storage.from("patient-files").upload(filePath, file, { contentType: file.type });
-      if (upErr) throw upErr;
-      const { data: row, error: dbErr } = await supabase.from("patient_files").insert({
-        clinic_id: clinicId || null,
-        professional_id: clinicId ? null : professionalId || null,
-        patient_email: patientEmail || "",
-        patient_name: patientName || null,
-        file_name: file.name,
-        file_path: filePath,
-        file_size_bytes: file.size,
-        mime_type: file.type,
-        uploaded_by: user.id,
-        description: "external_assessment",
-      }).select("id").single();
-      if (dbErr) throw dbErr;
-      return { id: row.id, name: file.name, path: filePath };
-    } catch (err: any) {
-      console.error("uploadSourceFile failed", err);
-      toast({
-        title: t("Não foi possível salvar o arquivo original", "Could not save the original file"),
-        description: err?.message,
-      });
-      return null;
+  const uploadSourceFiles = async (): Promise<Array<{ id: string; name: string; path: string }>> => {
+    if (!user || demoMode || files.length === 0) return [];
+    const results: Array<{ id: string; name: string; path: string }> = [];
+    for (const file of files) {
+      try {
+        const prefix = clinicId ? `clinic/${clinicId}` : `pro/${professionalId}`;
+        const safeEmail = patientEmail || `unknown/${user.id}`;
+        const filePath = `${prefix}/${safeEmail}/external_${Date.now()}_${file.name}`;
+        const { error: upErr } = await supabase.storage.from("patient-files").upload(filePath, file, { contentType: file.type });
+        if (upErr) throw upErr;
+        const { data: row, error: dbErr } = await supabase.from("patient_files").insert({
+          clinic_id: clinicId || null,
+          professional_id: clinicId ? null : professionalId || null,
+          patient_email: patientEmail || "",
+          patient_name: patientName || null,
+          file_name: file.name,
+          file_path: filePath,
+          file_size_bytes: file.size,
+          mime_type: file.type,
+          uploaded_by: user.id,
+          description: "external_assessment",
+        }).select("id").single();
+        if (dbErr) throw dbErr;
+        results.push({ id: row.id, name: file.name, path: filePath });
+      } catch (err: any) {
+        console.error("uploadSourceFile failed", err);
+        toast({
+          title: t("Não foi possível salvar um arquivo original", "Could not save an original file"),
+          description: `${file.name}${err?.message ? ` — ${err.message}` : ""}`,
+        });
+      }
     }
+    return results;
   };
 
   const handleConfirm = async () => {
     if (!interpretation) return;
-    const sourceFile = await uploadSourceFile();
-    onInterpreted({ interpretation, sourceFile });
+    const sourceFiles = await uploadSourceFiles();
+    onInterpreted({ interpretation, sourceFile: sourceFiles[0] || null, sourceFiles });
     reset();
     onOpenChange(false);
   };
@@ -179,15 +212,15 @@ const ExternalAssessmentUploadModal = ({
         <div>
           <p className="text-sm font-medium text-foreground">
             {t(
-              "Envie o PDF ou imagem da avaliação externa",
-              "Upload the PDF or image of the external assessment",
-              "Envía el PDF o imagen de la evaluación externa",
+              "Envie até 5 PDFs ou imagens da avaliação externa",
+              "Upload up to 5 PDFs or images of the external assessment",
+              "Envía hasta 5 PDFs o imágenes de la evaluación externa",
             )}
           </p>
           <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
             {t(
-              "A IA vai interpretar o conteúdo, encaixar nos campos do padrão Aliv.iA e levar o que não couber para um bloco de “informações externas adicionais”. Você revisa tudo antes de salvar.",
-              "The AI will parse the content, map it to Aliv.iA's native fields and place anything that doesn't fit into an “additional external info” block. You review everything before saving.",
+              "A IA vai interpretar o conteúdo combinado de todos os arquivos, encaixar nos campos do padrão Aliv.iA e levar o que não couber para um bloco de “informações externas adicionais”. Você revisa tudo antes de salvar.",
+              "The AI will parse the combined content of all files, map it to Aliv.iA's native fields and place anything that doesn't fit into an “additional external info” block. You review everything before saving.",
             )}
           </p>
         </div>
@@ -195,25 +228,41 @@ const ExternalAssessmentUploadModal = ({
           ref={fileInputRef}
           type="file"
           accept={ACCEPTED}
+          multiple
           className="hidden"
-          onChange={(e) => handlePickFile(e.target.files?.[0] || null)}
+          onChange={(e) => handlePickFiles(e.target.files)}
         />
-        {file ? (
-          <div className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-xs">
-            {file.type.includes("pdf") ? <FileText className="h-4 w-4 text-primary" /> : <FileImage className="h-4 w-4 text-primary" />}
-            <span className="font-medium truncate max-w-[200px]">{file.name}</span>
-            <span className="text-muted-foreground">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setFile(null)} aria-label={t("Remover arquivo", "Remove file")}>
-              <X className="h-3.5 w-3.5" />
-            </Button>
+
+        {files.length > 0 && (
+          <div className="flex flex-col gap-1.5 items-stretch">
+            {files.map((f, idx) => (
+              <div key={`${f.name}-${idx}`} className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-xs">
+                {f.type.includes("pdf") ? <FileText className="h-4 w-4 text-primary shrink-0" /> : <FileImage className="h-4 w-4 text-primary shrink-0" />}
+                <span className="font-medium truncate flex-1 text-left">{f.name}</span>
+                <span className="text-muted-foreground shrink-0">{(f.size / 1024 / 1024).toFixed(2)} MB</span>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0" onClick={() => removeFile(idx)} aria-label={t("Remover arquivo", "Remove file")}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
           </div>
-        ) : (
+        )}
+
+        {files.length < MAX_FILES && (
           <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-1.5">
             <Upload className="h-4 w-4" />
-            {t("Selecionar arquivo", "Choose file")}
+            {files.length === 0
+              ? t("Selecionar arquivos", "Choose files")
+              : t(`Adicionar mais (${files.length}/${MAX_FILES})`, `Add more (${files.length}/${MAX_FILES})`)}
           </Button>
         )}
-        <p className="text-[11px] text-muted-foreground">{t("PDF, JPG, PNG, WEBP ou HEIC — até 20MB.", "PDF, JPG, PNG, WEBP or HEIC — up to 20MB.")}</p>
+
+        <p className="text-[11px] text-muted-foreground">
+          {t(
+            `PDF, JPG, PNG, WEBP ou HEIC — até 20MB cada, máx ${MAX_FILES} arquivos por upload.`,
+            `PDF, JPG, PNG, WEBP or HEIC — up to 20MB each, max ${MAX_FILES} files per upload.`,
+          )}
+        </p>
       </div>
 
       <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 flex gap-2">
@@ -240,8 +289,8 @@ const ExternalAssessmentUploadModal = ({
           </div>
           <p className="text-xs text-emerald-800/80">
             {t(
-              `A IA preencheu ${fieldCount} campo(s) a partir do arquivo. Você abrirá o formulário de avaliação manual com tudo já carregado para revisar, editar e salvar.`,
-              `The AI filled ${fieldCount} field(s) from the file. You will open the manual assessment form with everything pre-loaded, ready to review, edit and save.`,
+              `A IA preencheu ${fieldCount} campo(s) a partir de ${files.length || 1} arquivo(s). Você abrirá o formulário de avaliação manual com tudo já carregado para revisar, editar e salvar.`,
+              `The AI filled ${fieldCount} field(s) from ${files.length || 1} file(s). You will open the manual assessment form with everything pre-loaded, ready to review, edit and save.`,
             )}
           </p>
         </div>
@@ -295,8 +344,8 @@ const ExternalAssessmentUploadModal = ({
           </DialogTitle>
           <DialogDescription>
             {t(
-              "Carregue um PDF ou imagem de uma avaliação feita fora do Aliv.iA. A IA organiza dentro do nosso padrão para sua revisão.",
-              "Upload a PDF or image of an assessment done outside Aliv.iA. The AI organizes it into our native format for your review.",
+              "Carregue até 5 PDFs ou imagens de uma avaliação feita fora do Aliv.iA. A IA organiza dentro do nosso padrão para sua revisão.",
+              "Upload up to 5 PDFs or images of an assessment done outside Aliv.iA. The AI organizes it into our native format for your review.",
             )}
           </DialogDescription>
         </DialogHeader>
@@ -309,7 +358,7 @@ const ExternalAssessmentUploadModal = ({
               <Button variant="ghost" onClick={() => handleClose(false)} disabled={interpreting}>
                 {t("Cancelar", "Cancel")}
               </Button>
-              <Button onClick={handleInterpret} disabled={!file && !demoMode || interpreting} className="gap-1.5">
+              <Button onClick={handleInterpret} disabled={(files.length === 0 && !demoMode) || interpreting} className="gap-1.5">
                 {interpreting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 {interpreting ? t("Interpretando…", "Interpreting…") : t("Interpretar com IA", "Interpret with AI")}
               </Button>
