@@ -1532,6 +1532,65 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       : "In the next step you set intensity and pain type for each region marked here."}
                   </p>
                 </div>
+
+                {/* Refinamento anatômico por região (planos e eixos do corpo).
+                    Em membros (apendicular): medial/lateral, ant/post, prox/distal.
+                    Em regiões axiais (cabeça, cervical, torácica, lombar, tórax,
+                    abdômen): lado direito / lado esquerdo / central. */}
+                {painRegions.length > 0 && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3">
+                    <div>
+                      <Label className="text-xs font-semibold text-foreground">
+                        {isPt ? "Refinamento anatômico (opcional)" : "Anatomical refinement (optional)"}
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {isPt
+                          ? "Especifique a localização dentro de cada região com base nos planos e eixos do corpo. Membros aceitam medial/lateral, anterior/posterior e proximal/distal; regiões axiais (cabeça, cervical, torácica, lombar, tórax e abdômen) aceitam lado direito/esquerdo ou central."
+                          : "Refine the location inside each region using anatomical planes and axes. Limbs accept medial/lateral, anterior/posterior and proximal/distal; axial regions (head, cervical, thoracic, lumbar, chest, abdomen) accept right side / left side / central."}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      {painRegions.map((id) => {
+                        const lbl = regionLabelMap[id];
+                        const axes = getRefinementAxes(id);
+                        const selected = painRegionRefinements[id] || [];
+                        return (
+                          <div key={id} className="rounded-md border bg-card p-2">
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="text-xs font-medium text-foreground">
+                                {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
+                              </span>
+                              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {isAxialRegion(id)
+                                  ? (isPt ? "Axial" : "Axial")
+                                  : (isPt ? "Apendicular" : "Appendicular")}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {axes.map((ax) => {
+                                const active = selected.includes(ax.value);
+                                return (
+                                  <button
+                                    type="button"
+                                    key={ax.value}
+                                    onClick={() => toggleRegionRefinement(id, ax.value)}
+                                    className={`px-2.5 py-1 rounded-full text-[11px] border transition-colors ${
+                                      active
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "bg-background text-foreground border-border hover:bg-muted"
+                                    }`}
+                                  >
+                                    {isPt ? ax.label_pt : ax.label_en}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
