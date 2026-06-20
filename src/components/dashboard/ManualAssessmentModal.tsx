@@ -200,6 +200,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Per-region pain type (local, radiating, burning…). Shown only when 2+
   // regions are marked, defaults to the global `painType` for each new region.
   const [painTypesPerRegion, setPainTypesPerRegion] = useState<Record<string, string>>({});
+  // Refinamentos anatômicos por região (medial/lateral, anterior/posterior,
+  // proximal/distal nos membros; lado D/E/central nas regiões axiais).
+  // Multi-seleção: ex. ["medial","posterior"] para "cotovelo direito medial posterior".
+  const [painRegionRefinements, setPainRegionRefinements] = useState<Record<string, string[]>>({});
 
   // Red Flags
   const [redFlagsChecked, setRedFlagsChecked] = useState<string[]>([]);
@@ -270,6 +274,49 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     return m;
   })();
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Refinamento anatômico por região (planos e eixos do corpo humano).
+  // - Esqueleto AXIAL (linha média, sem medial/lateral): cabeça, cervical,
+  //   torácica, lombar, tórax, abdômen → lado D / lado E / central.
+  // - Esqueleto APENDICULAR (membros, simétricos e afastados da linha média):
+  //   medial/lateral, anterior/posterior e proximal/distal (multi-seleção).
+  // Os valores são persistidos em anamnesis_data.painRegionRefinements e
+  // anexados ao label das regiões no payload da IA.
+  // ─────────────────────────────────────────────────────────────────────────
+  const AXIAL_KEYWORDS = ["head", "cervical", "thoracic", "lower_back", "lumbar", "chest", "abdomen"];
+  const isAxialRegion = (id: string) => AXIAL_KEYWORDS.some((k) => id.includes(k));
+  const AXIAL_AXES: { value: string; label_pt: string; label_en: string }[] = [
+    { value: "right_side", label_pt: "Lado direito", label_en: "Right side" },
+    { value: "left_side", label_pt: "Lado esquerdo", label_en: "Left side" },
+    { value: "central", label_pt: "Central", label_en: "Central" },
+  ];
+  const APPENDICULAR_AXES: { value: string; label_pt: string; label_en: string }[] = [
+    { value: "medial", label_pt: "Medial", label_en: "Medial" },
+    { value: "lateral", label_pt: "Lateral", label_en: "Lateral" },
+    { value: "anterior", label_pt: "Anterior", label_en: "Anterior" },
+    { value: "posterior", label_pt: "Posterior", label_en: "Posterior" },
+    { value: "proximal", label_pt: "Proximal", label_en: "Proximal" },
+    { value: "distal", label_pt: "Distal", label_en: "Distal" },
+  ];
+  const getRefinementAxes = (id: string) => (isAxialRegion(id) ? AXIAL_AXES : APPENDICULAR_AXES);
+  const toggleRegionRefinement = (regionId: string, axisValue: string) => {
+    setPainRegionRefinements((prev) => {
+      const current = prev[regionId] || [];
+      const next = current.includes(axisValue)
+        ? current.filter((v) => v !== axisValue)
+        : [...current, axisValue];
+      const out = { ...prev };
+      if (next.length === 0) delete out[regionId];
+      else out[regionId] = next;
+      return out;
+    });
+  };
+  const refinementLabel = (regionId: string, value: string) => {
+    const axes = getRefinementAxes(regionId);
+    const ax = axes.find((a) => a.value === value);
+    return ax ? (isPt ? ax.label_pt : ax.label_en) : value;
+  };
+
   const toggleRegion = (id: string) => {
     if (demoMode) {
       // In demo mode, clicking any region toggles the mock pain regions as a group.
@@ -290,6 +337,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         const out = { ...m };
         if (next.includes(id) && out[id] === undefined && painType) out[id] = painType;
         if (!next.includes(id)) delete out[id];
+        return out;
+      });
+      // Limpa refinamentos quando a região é desmarcada
+      setPainRegionRefinements((m) => {
+        if (next.includes(id)) return m;
+        const out = { ...m };
+        delete out[id];
         return out;
       });
       // Sugere automaticamente "enviar depois" quando há 3+ regiões.
@@ -348,7 +402,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const draftState = {
     step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
-    painScore, painType, painRegions, painScoresPerRegion, painTypesPerRegion,
+    painScore, painType, painRegions, painScoresPerRegion, painTypesPerRegion, painRegionRefinements,
     redFlagsChecked, additionalClinicalNotes, questionnaireResults, deferQuestionnaires,
     functionalTests, romTable, strengthTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
@@ -384,6 +438,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainRegions(p.painRegions ?? []);
     setPainScoresPerRegion(p.painScoresPerRegion ?? {});
     setPainTypesPerRegion((p as any).painTypesPerRegion ?? {});
+    setPainRegionRefinements((p as any).painRegionRefinements ?? {});
     setRedFlagsChecked(p.redFlagsChecked ?? []);
     setAdditionalClinicalNotes((p as any).additionalClinicalNotes ?? "");
     setQuestionnaireResults(p.questionnaireResults ?? []);
@@ -435,6 +490,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainTypesPerRegion(
       an.painTypesPerRegion && typeof an.painTypesPerRegion === "object"
         ? (an.painTypesPerRegion as Record<string, string>)
+        : {},
+    );
+    setPainRegionRefinements(
+      an.painRegionRefinements && typeof an.painRegionRefinements === "object"
+        ? (an.painRegionRefinements as Record<string, string[]>)
         : {},
     );
     setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
@@ -662,6 +722,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     // e pelo prompt da IA quando há múltiplas regiões marcadas).
     painScoresPerRegion,
     painTypesPerRegion,
+    // Refinamento anatômico por região (medial/lateral, ant/post, prox/distal
+    // em membros; lado D/E/central nas regiões axiais). Anexado ao label das
+    // regiões no payload da IA para reflexão clínica mais precisa.
+    painRegionRefinements: Object.keys(painRegionRefinements).length > 0 ? painRegionRefinements : undefined,
     // Observações clínicas livres anotadas após as red flags. A IA usa este
     // texto para refinar a impressão clínica, o diagnóstico e a sugestão de
     // testes funcionais.
@@ -774,7 +838,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           anamnesis: anamnesisSummary,
           painScore,
           painType,
-          painRegions: painRegions.map((id) => regionLabelMap[id]?.[isPt ? "label_pt" : "label_en"] || id),
+          painRegions: painRegions.map((id) => {
+            const base = regionLabelMap[id]?.[isPt ? "label_pt" : "label_en"] || id;
+            const refs = painRegionRefinements[id];
+            if (!refs || refs.length === 0) return base;
+            return `${base} (${refs.map((v) => refinementLabel(id, v)).join(", ")})`;
+          }),
           redFlags: redFlagsChecked,
           questionnaireResults: questionnaireResults.map((r) => ({
             name: r.questionnaireName,
@@ -1463,6 +1532,65 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       : "In the next step you set intensity and pain type for each region marked here."}
                   </p>
                 </div>
+
+                {/* Refinamento anatômico por região (planos e eixos do corpo).
+                    Em membros (apendicular): medial/lateral, ant/post, prox/distal.
+                    Em regiões axiais (cabeça, cervical, torácica, lombar, tórax,
+                    abdômen): lado direito / lado esquerdo / central. */}
+                {painRegions.length > 0 && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3">
+                    <div>
+                      <Label className="text-xs font-semibold text-foreground">
+                        {isPt ? "Refinamento anatômico (opcional)" : "Anatomical refinement (optional)"}
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {isPt
+                          ? "Especifique a localização dentro de cada região com base nos planos e eixos do corpo. Membros aceitam medial/lateral, anterior/posterior e proximal/distal; regiões axiais (cabeça, cervical, torácica, lombar, tórax e abdômen) aceitam lado direito/esquerdo ou central."
+                          : "Refine the location inside each region using anatomical planes and axes. Limbs accept medial/lateral, anterior/posterior and proximal/distal; axial regions (head, cervical, thoracic, lumbar, chest, abdomen) accept right side / left side / central."}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      {painRegions.map((id) => {
+                        const lbl = regionLabelMap[id];
+                        const axes = getRefinementAxes(id);
+                        const selected = painRegionRefinements[id] || [];
+                        return (
+                          <div key={id} className="rounded-md border bg-card p-2">
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="text-xs font-medium text-foreground">
+                                {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
+                              </span>
+                              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {isAxialRegion(id)
+                                  ? (isPt ? "Axial" : "Axial")
+                                  : (isPt ? "Apendicular" : "Appendicular")}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {axes.map((ax) => {
+                                const active = selected.includes(ax.value);
+                                return (
+                                  <button
+                                    type="button"
+                                    key={ax.value}
+                                    onClick={() => toggleRegionRefinement(id, ax.value)}
+                                    className={`px-2.5 py-1 rounded-full text-[11px] border transition-colors ${
+                                      active
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "bg-background text-foreground border-border hover:bg-muted"
+                                    }`}
+                                  >
+                                    {isPt ? ax.label_pt : ax.label_en}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
