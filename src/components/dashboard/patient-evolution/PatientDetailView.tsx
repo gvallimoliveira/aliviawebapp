@@ -674,7 +674,7 @@ export default function PatientDetailView(props: any) {
           patientName={patient.name}
           patientEmail={patient.email}
           demoMode={isDemo}
-          onInterpreted={({ interpretation, sourceFile }) => {
+          onInterpreted={({ interpretation, sourceFile, sourceFiles }) => {
             // Constrói uma "linha de avaliação" no mesmo shape que o editAssessment
             // espera, mas sem id — o save flow insere uma linha nova.
             const row = {
