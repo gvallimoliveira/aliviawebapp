@@ -289,6 +289,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [treatmentText, setTreatmentText] = useState("");
   const [aiTreatment, setAiTreatment] = useState<any | null>(null);
 
+  // ─── Avaliação externa (upload PDF/imagem interpretado pela IA) ──────────
+  // Persistidos em anamnesis_data quando presentes. Mantidos como estado
+  // separado para que o usuário possa editar `additionalExternalInfo` e para
+  // que o banner "Avaliação externa" apareça no modal durante a revisão.
+  const [externalSource, setExternalSource] = useState<{
+    source: "external_upload";
+    externalSourceFileId?: string | null;
+    aiInterpretedFields?: string[];
+  } | null>(null);
+  const [additionalExternalInfo, setAdditionalExternalInfo] = useState("");
+
   // Build region groups: dedupe by id, sort alphabetically by current language label.
   // Uses SIMPLIFIED_EXCLUDED_IDS to remove lateral-view duplicates and back-view
   // duplicates already covered by front-view + anatomical refinement chips.
