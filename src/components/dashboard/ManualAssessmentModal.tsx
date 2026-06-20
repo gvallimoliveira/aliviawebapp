@@ -596,8 +596,82 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     const tx = a.treatment_plan || null;
     setAiTreatment(tx && typeof tx === "object" ? tx : null);
     setTreatmentText(tx?.text || tx?.summary || "");
+    // Carrega metadados de upload externo se a avaliação editada já veio do
+    // fluxo de "Upload de avaliação externa".
+    if (an?.source === "external_upload") {
+      setExternalSource({
+        source: "external_upload",
+        externalSourceFileId: an.externalSourceFileId || null,
+        aiInterpretedFields: Array.isArray(an.aiInterpretedFields) ? an.aiInterpretedFields : [],
+      });
+      setAdditionalExternalInfo(an.additionalExternalInfo || "");
+    } else {
+      setExternalSource(null);
+      setAdditionalExternalInfo("");
+    }
   }, [open, editAssessment]);
   useEffect(() => { if (!open) prefilledIdRef.current = null; }, [open]);
+
+  // ─── Prefill a partir de uma avaliação externa interpretada pela IA ──────
+  // Mesmo shape do editAssessment, porém sem id — o save flow insere uma
+  // linha nova marcada como `source: "external_upload"`.
+  const prefilledMarkerRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open || !prefillData?.markerId || editAssessment?.id) return;
+    if (prefilledMarkerRef.current === prefillData.markerId) return;
+    prefilledMarkerRef.current = prefillData.markerId;
+    const a = prefillData.row || {};
+    const an = a.anamnesis_data || {};
+    setStep(0);
+    setChiefComplaint(an.chiefComplaint || "");
+    setAdditionalComplaint(an.additionalComplaint || "");
+    setHistory(an.history || "");
+    setDuration(an.duration || "");
+    setOnset(an.onset || "");
+    setAggravating(an.aggravatingFactors || "");
+    setRelieving(an.relievingFactors || "");
+    setMedications(an.medications || "");
+    setPreviousSurgeries(an.previousSurgeries || "");
+    setComorbidities(an.comorbidities || "");
+    setOccupation(an.occupation || "");
+    setComplementaryExams(an.complementaryExams || "");
+    setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
+    setPainType(an.painType || "");
+    setPainRegions(
+      Array.isArray(a.pain_regions)
+        ? a.pain_regions.filter((id: string) => !SIMPLIFIED_EXCLUDED_IDS.has(id))
+        : [],
+    );
+    setPainScoresPerRegion(an.painScoresPerRegion && typeof an.painScoresPerRegion === "object" ? an.painScoresPerRegion : {});
+    setPainTypesPerRegion(an.painTypesPerRegion && typeof an.painTypesPerRegion === "object" ? an.painTypesPerRegion : {});
+    setPainRegionRefinements(an.painRegionRefinements && typeof an.painRegionRefinements === "object" ? an.painRegionRefinements : {});
+    setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
+    setAdditionalClinicalNotes(an.additionalClinicalNotes || "");
+    setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
+    setFunctionalTests(an.functionalTests || "");
+    setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(2));
+    setStrengthTable(Array.isArray(an.strengthTable) && an.strengthTable.length > 0 ? an.strengthTable : createInitialStrengthRows(2));
+    const dx = a.diagnosis || {};
+    setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
+    const ci = dx.clinicalImpression;
+    setAiClinicalImpression(ci?.overview ? ci : null);
+    setClinicalImpression(ci?.overview || "");
+    const dxParts: string[] = [];
+    if (dx.hypothesis) dxParts.push(String(dx.hypothesis));
+    if (dx.summary && dx.summary !== dx.hypothesis) dxParts.push("", String(dx.summary));
+    if (dx.reasoning) dxParts.push("", String(dx.reasoning));
+    setDiagnosisText(dx.text || dxParts.join("\n"));
+    setAiTreatment(null);
+    setTreatmentText("");
+    setExternalSource({
+      source: "external_upload",
+      externalSourceFileId: prefillData.externalSourceFileId || an.externalSourceFileId || null,
+      aiInterpretedFields: Array.isArray(an.aiInterpretedFields) ? an.aiInterpretedFields : [],
+    });
+    setAdditionalExternalInfo(an.additionalExternalInfo || "");
+  }, [open, prefillData, editAssessment?.id]);
+  useEffect(() => { if (!open) prefilledMarkerRef.current = null; }, [open]);
+
 
   // Conta pendentes vinculados a esta avaliação (modo edição) para exibir o
   // banner com o link consolidado e botão de cancelar pendência.
