@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import ReferralBanner from "@/components/ReferralBanner";
 import { motion } from "framer-motion";
-import { User, UserCog, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users, Building2, Mail, Sparkles, Calendar } from "lucide-react";
+import { User, UserCog, Stethoscope, ArrowRight, Activity, FileText, Clock, Target, Shield, BarChart3, Heart, Globe, LogOut, LayoutDashboard, HelpCircle, Info, Menu, ClipboardList, Brain, Users, Building2, Mail, Sparkles, Calendar, GraduationCap, Lightbulb, BookOpen, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
