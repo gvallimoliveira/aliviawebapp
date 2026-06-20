@@ -510,6 +510,23 @@ const AssessmentView = () => {
           </div>
         )}
 
+        {anamnesis?.source === "external_upload" && (
+          <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs flex items-start gap-2">
+            <Sparkles className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+            <div className="flex-1">
+              <p className="font-semibold text-foreground">
+                {isPt ? "Avaliação externa interpretada pela IA" : "External assessment interpreted by AI"}
+              </p>
+              <p className="text-muted-foreground leading-snug mt-0.5">
+                {isPt
+                  ? "Os dados abaixo foram extraídos de um arquivo enviado (PDF/imagem) e revisados pelo profissional antes de salvar."
+                  : "The data below was extracted from an uploaded file (PDF/image) and reviewed by the professional before saving."}
+              </p>
+            </div>
+          </div>
+        )}
+
+
         {editOpen && assessment && (
           <ManualAssessmentModal
             open={editOpen}
