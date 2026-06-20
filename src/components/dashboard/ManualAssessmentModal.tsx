@@ -128,9 +128,9 @@ const RED_FLAGS_PT = [
 
 const STEPS = [
   { id: "anamnese", label: "Anamnese" },
+  { id: "redflags", label: "Red Flags" },
   { id: "mapa", label: "Mapa de dor" },
   { id: "intensidade", label: "Intensidade & Tipo" },
-  { id: "redflags", label: "Red Flags" },
   { id: "observacoes", label: "Observações clínicas" },
   { id: "questionarios", label: "Questionários" },
   { id: "adm", label: "Mobilidade articular (ADM)" },
@@ -1125,8 +1125,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const stepLabels = isPt
-    ? ["Anamnese", "Mapa de dor", "Intensidade & Tipo", "Red Flags", "Observações clínicas", "Questionários", "Mobilidade articular (ADM)", "Testes funcionais", "Dinamometria", "Diagnóstico"]
-    : ["Anamnesis", "Pain map", "Intensity & Type", "Red Flags", "Clinical observations", "Questionnaires", "Joint mobility (ROM)", "Functional tests", "Dynamometry", "Diagnosis"];
+    ? ["Anamnese", "Red Flags", "Mapa de dor", "Intensidade & Tipo", "Observações clínicas", "Questionários", "Mobilidade articular (ADM)", "Testes funcionais", "Dinamometria", "Diagnóstico"]
+    : ["Anamnesis", "Red Flags", "Pain map", "Intensity & Type", "Clinical observations", "Questionnaires", "Joint mobility (ROM)", "Functional tests", "Dynamometry", "Diagnosis"];
 
   return (
     <>
@@ -1400,44 +1400,28 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             )}
 
 
-            {/* STEP 1: MAPA DE DOR — apenas seleção das regiões. Intensidade e
-                tipo de dor vão na etapa seguinte (já contextualizados pelas
-                regiões marcadas aqui). */}
+            {/* STEP 1: RED FLAGS */}
             {step === 1 && (
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
-                  <DemoShield on={demoMode} onAutofill={() => toggleRegion("")}>
-                    <div className="max-h-[60vh] overflow-y-auto border rounded-md p-2 space-y-3">
-                      {regionGroups.map((g) => (
-                        <div key={g.key}>
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
-                            {isPt ? g.label_pt : g.label_en}
-                          </p>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-                            {g.ids.map((id) => {
-                              const lbl = regionLabelMap[id];
-                              return (
-                                <label key={id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
-                                  <Checkbox checked={painRegions.includes(id)} onCheckedChange={() => toggleRegion(id)} />
-                                  <span>{isPt ? lbl.label_pt : lbl.label_en}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </DemoShield>
-                  {painRegions.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">{painRegions.length} {isPt ? "selecionadas" : "selected"}</p>
-                  )}
-                  <p className="text-[11px] text-muted-foreground mt-2">
-                    {isPt
-                      ? "Na próxima etapa você define a intensidade e o tipo de dor para cada região marcada aqui."
-                      : "In the next step you set intensity and pain type for each region marked here."}
-                  </p>
-                </div>
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  {isPt ? "Marque qualquer sinal de alerta presente no paciente:" : "Check any warning signs present in the patient:"}
+                </p>
+                {RED_FLAGS_PT.map((rf) => (
+                  <label key={rf} className="flex items-start gap-2 p-2 rounded-md border hover:bg-muted/30 cursor-pointer">
+                    <Checkbox checked={redFlagsChecked.includes(rf)} onCheckedChange={() => toggleRedFlag(rf)} className="mt-0.5" />
+                    <span className="text-sm">{rf}</span>
+                  </label>
+                ))}
+                {redFlagsChecked.length > 0 && (
+                  <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 text-destructive border border-destructive/30">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <p className="text-xs">
+                      {isPt
+                        ? `${redFlagsChecked.length} sinal(is) de alerta detectado(s). Considere encaminhamento médico.`
+                        : `${redFlagsChecked.length} warning sign(s) detected. Consider medical referral.`}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
