@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle, Stethoscope, Building2 } from "lucide-react";
+import { Globe, ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle, Stethoscope, Building2, GraduationCap, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { isValidEmailFormat, suggestEmailFix } from "@/lib/emailValidation";
