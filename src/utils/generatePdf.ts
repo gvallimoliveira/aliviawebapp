@@ -82,6 +82,14 @@ interface AnamnesisData {
   history?: string;
   /** Free-text complementary exams (imaging, lab, etc.). */
   complementaryExams?: string;
+  /** Source of the assessment — "external_upload" indicates AI-interpreted external document. */
+  source?: string;
+  /** Free-text content from the external file that didn't map to native fields. */
+  additionalExternalInfo?: string;
+  /** Field names that were filled by AI from external upload (badge metadata). */
+  aiInterpretedFields?: string[];
+  /** Reference to the original uploaded file (patient_files row id). */
+  externalSourceFileId?: string;
 }
 
 export interface ResponsibleProfessional {
