@@ -1708,6 +1708,24 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     y += 20;
   }
 
+  // ── External Assessment Banner (AI-interpreted external document) ──
+  if (anamnesisData?.source === "external_upload") {
+    const interpretedCount = anamnesisData.aiInterpretedFields?.length || 0;
+    const bannerText = isPt
+      ? `Avaliação externa interpretada por IA${interpretedCount ? ` · ${interpretedCount} campo(s) preenchido(s) automaticamente` : ""} e revisada pelo profissional antes da emissão.`
+      : `External assessment interpreted by AI${interpretedCount ? ` · ${interpretedCount} field(s) auto-filled` : ""} and reviewed by the professional before issuance.`;
+    y = drawTextCard(doc, y, bannerText, {
+      fill: COLORS.primaryLight,
+      stroke: COLORS.primary,
+      padX: 6,
+      padY: 5,
+      body: { font: "Inter", weight: "normal", size: 8, lineHeight: 3.8, textColor: COLORS.primary },
+      label: { text: isPt ? "AVALIAÇÃO EXTERNA · IA" : "EXTERNAL ASSESSMENT · AI", color: COLORS.primary, size: 8 },
+    });
+    y += 4;
+  }
+
+
   // ── Diagnosis Section (FIRST after patient info) ──
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Preliminar" : "Preliminary Hypothesis", COLORS.primary, 30);
 
