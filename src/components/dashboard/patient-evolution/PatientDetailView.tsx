@@ -12,6 +12,7 @@ import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { Separator } from "@/components/ui/separator";
 import CreateExerciseProgramModal from "../CreateExerciseProgramModal";
 import ManualAssessmentModal from "../ManualAssessmentModal";
+import ExternalAssessmentUploadModal from "../ExternalAssessmentUploadModal";
 import AddPatientModal, { type PatientToEdit } from "../AddPatientModal";
 import FinalHypothesisEditor from "../FinalHypothesisEditor";
 import PatientFilesSection from "../PatientFilesSection";
