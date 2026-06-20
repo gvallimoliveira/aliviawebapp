@@ -273,11 +273,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [treatmentText, setTreatmentText] = useState("");
   const [aiTreatment, setAiTreatment] = useState<any | null>(null);
 
-  // Build region groups: dedupe by id, sort alphabetically by current language label
+  // Build region groups: dedupe by id, sort alphabetically by current language label.
+  // Uses SIMPLIFIED_EXCLUDED_IDS to remove lateral-view duplicates and back-view
+  // duplicates already covered by front-view + anatomical refinement chips.
   const regionGroups: RegionGroup[] = (() => {
     const seen = new Map<string, { label_pt: string; label_en: string }>();
     for (const view of Object.values(regionsByView)) {
       for (const r of view) {
+        if (SIMPLIFIED_EXCLUDED_IDS.has(r.id)) continue;
         if (!seen.has(r.id)) seen.set(r.id, { label_pt: r.label_pt, label_en: r.label_en });
       }
     }
@@ -295,7 +298,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const regionLabelMap: Record<string, { label_pt: string; label_en: string }> = (() => {
     const m: Record<string, { label_pt: string; label_en: string }> = {};
     for (const view of Object.values(regionsByView)) {
-      for (const r of view) if (!m[r.id]) m[r.id] = { label_pt: r.label_pt, label_en: r.label_en };
+      for (const r of view) {
+        if (SIMPLIFIED_EXCLUDED_IDS.has(r.id)) continue;
+        if (!m[r.id]) m[r.id] = { label_pt: r.label_pt, label_en: r.label_en };
+      }
     }
     return m;
   })();
