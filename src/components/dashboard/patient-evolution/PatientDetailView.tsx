@@ -498,6 +498,13 @@ export default function PatientDetailView(props: any) {
                   </DropdownMenuItem>
                 )}
 
+                {((!readOnly || allowManualAssessment) || isDemo) && (
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setExternalUploadOpen(true); }}>
+                    <FileUp className="h-4 w-4 mr-2" />
+                    {language === "pt" ? "Upload de avaliação externa" : language === "es" ? "Subir evaluación externa" : "Upload external assessment"}
+                  </DropdownMenuItem>
+                )}
+
                 {latestWithDiagnosis && (
                   <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openReassessmentLinkDialog(); }}>
                     <RotateCcw className="h-4 w-4 mr-2" /> Reavaliação
