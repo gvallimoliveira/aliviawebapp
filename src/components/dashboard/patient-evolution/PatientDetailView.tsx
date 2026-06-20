@@ -703,6 +703,7 @@ export default function PatientDetailView(props: any) {
                 manualEntry: true,
                 source: "external_upload",
                 externalSourceFileId: sourceFile?.id || null,
+                externalSourceFileIds: (sourceFiles || []).map((f) => f.id),
                 aiInterpretedFields: interpretation.aiInterpretedFields || [],
                 additionalExternalInfo: interpretation.additionalExternalInfo || "",
                 chiefComplaint: interpretation.chiefComplaint,
