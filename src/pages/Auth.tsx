@@ -432,7 +432,13 @@ const Auth = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setIsLogin(!isLogin)}
+                  onClick={() => {
+                    const next = !isLogin;
+                    setIsLogin(next);
+                    // Ao entrar no modo cadastro, volta sempre para o seletor
+                    // de perfil (Pessoal / Profissional / Clínica).
+                    if (!next) setSignupProfile(null);
+                  }}
                   className="text-sm text-primary hover:underline"
                   disabled={loading}
                 >
