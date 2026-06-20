@@ -130,6 +130,19 @@ interface ManualAssessmentModalProps {
   patientEmail?: string;
   /** When provided, the modal edits this existing assessment instead of creating a new one. */
   editAssessment?: any | null;
+  /**
+   * When provided (and no editAssessment), pre-fills the modal with a NEW
+   * assessment built from an external source (e.g. AI-interpreted PDF/image).
+   * Save flow inserts a fresh row tagged with `source: "external_upload"`.
+   */
+  prefillData?: {
+    /** Stable marker — when it changes, the prefill effect re-runs. */
+    markerId: string;
+    /** Same shape as an assessment row (anamnesis_data, pain_regions, diagnosis, ...). */
+    row: any;
+    /** Optional: id of the patient_files row pointing to the original file. */
+    externalSourceFileId?: string | null;
+  } | null;
   /** Called after a successful save (insert or update). */
   onSaved?: (assessmentId: string) => void;
   /**
