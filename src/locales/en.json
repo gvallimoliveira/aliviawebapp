@@ -98,6 +98,8 @@
   "auth.login_desc": "Access your assessments and history",
   "auth.signup_title": "Create an account",
   "auth.signup_desc": "Sign up to access the premium assessment",
+  "auth.signup_desc_professional": "Sign up to use clinical reasoning with your patients",
+  "auth.signup_desc_clinic": "Sign up to manage assessments for your team",
   "auth.name": "Full name",
   "auth.name_placeholder": "Your name",
   "auth.email": "Email",
