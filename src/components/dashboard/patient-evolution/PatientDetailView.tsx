@@ -12,6 +12,7 @@ import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { Separator } from "@/components/ui/separator";
 import CreateExerciseProgramModal from "../CreateExerciseProgramModal";
 import ManualAssessmentModal from "../ManualAssessmentModal";
+import ExternalAssessmentUploadModal from "../ExternalAssessmentUploadModal";
 import AddPatientModal, { type PatientToEdit } from "../AddPatientModal";
 import FinalHypothesisEditor from "../FinalHypothesisEditor";
 import PatientFilesSection from "../PatientFilesSection";
@@ -26,7 +27,7 @@ import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, Archive, ArchiveRestore, ArrowLeft, Brain, ChevronRight, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
+import { Activity, Archive, ArchiveRestore, ArrowLeft, Brain, ChevronRight, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
@@ -257,6 +258,10 @@ export default function PatientDetailView(props: any) {
   } = props;
 
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
+  const [externalUploadOpen, setExternalUploadOpen] = React.useState(false);
+  // Payload entregue pelo modal de upload externo, usado para abrir o
+  // ManualAssessmentModal pré-preenchido com a interpretação da IA.
+  const [externalPrefill, setExternalPrefill] = React.useState<{ markerId: string; row: any; externalSourceFileId?: string | null } | null>(null);
   const [summaryDialogOpen, setSummaryDialogOpen] = React.useState(false);
   const [reassessDialog, setReassessDialog] = React.useState<{ open: boolean; loading: boolean; link: string; error: string | null }>({ open: false, loading: false, link: "", error: null });
   const [reassessConfigOpen, setReassessConfigOpen] = React.useState(false);
@@ -493,6 +498,13 @@ export default function PatientDetailView(props: any) {
                   </DropdownMenuItem>
                 )}
 
+                {((!readOnly || allowManualAssessment) || isDemo) && (
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setExternalUploadOpen(true); }}>
+                    <FileUp className="h-4 w-4 mr-2" />
+                    {language === "pt" ? "Upload de avaliação externa" : language === "es" ? "Subir evaluación externa" : "Upload external assessment"}
+                  </DropdownMenuItem>
+                )}
+
                 {latestWithDiagnosis && (
                   <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openReassessmentLinkDialog(); }}>
                     <RotateCcw className="h-4 w-4 mr-2" /> Reavaliação
@@ -640,12 +652,88 @@ export default function PatientDetailView(props: any) {
       {manualAssessmentOpen && (
         <ManualAssessmentModal
           open={manualAssessmentOpen}
-          onOpenChange={setManualAssessmentOpen}
+          onOpenChange={(open) => {
+            setManualAssessmentOpen(open);
+            if (!open) setExternalPrefill(null);
+          }}
+          professionalId={professionalId}
+          clinicId={clinicId}
+          patientName={patient.name}
+          patientEmail={patient.email}
+          prefillData={externalPrefill}
+          demoMode={isDemo}
+        />
+      )}
+
+      {externalUploadOpen && (
+        <ExternalAssessmentUploadModal
+          open={externalUploadOpen}
+          onOpenChange={setExternalUploadOpen}
           professionalId={professionalId}
           clinicId={clinicId}
           patientName={patient.name}
           patientEmail={patient.email}
           demoMode={isDemo}
+          onInterpreted={({ interpretation, sourceFile }) => {
+            // Constrói uma "linha de avaliação" no mesmo shape que o editAssessment
+            // espera, mas sem id — o save flow insere uma linha nova.
+            const row = {
+              patient_name: patient.name,
+              patient_email: patient.email,
+              pain_score: interpretation.painScore ?? 5,
+              pain_regions: interpretation.painRegions || [],
+              red_flags: interpretation.redFlags?.length ? { detected: interpretation.redFlags } : null,
+              test_results: (interpretation.questionnaireResults || []).map((q: any) => ({
+                questionnaireId: `external_${(q.name || "q").toLowerCase().replace(/\s+/g, "_")}`,
+                questionnaireName: q.name,
+                totalScore: typeof q.score === "number" ? q.score : undefined,
+                interpretation_pt: q.interpretation,
+                interpretation_en: q.interpretation,
+                external: true,
+              })),
+              diagnosis: interpretation.diagnosis
+                ? {
+                    ...interpretation.diagnosis,
+                    clinicalImpression: interpretation.clinicalImpression || undefined,
+                    manual: true,
+                  }
+                : null,
+              treatment_plan: null,
+              anamnesis_data: {
+                manualEntry: true,
+                source: "external_upload",
+                externalSourceFileId: sourceFile?.id || null,
+                aiInterpretedFields: interpretation.aiInterpretedFields || [],
+                additionalExternalInfo: interpretation.additionalExternalInfo || "",
+                chiefComplaint: interpretation.chiefComplaint,
+                additionalComplaint: interpretation.additionalComplaint,
+                history: interpretation.history,
+                duration: interpretation.duration,
+                onset: interpretation.onset,
+                aggravatingFactors: interpretation.aggravatingFactors,
+                relievingFactors: interpretation.relievingFactors,
+                medications: interpretation.medications,
+                previousSurgeries: interpretation.previousSurgeries,
+                comorbidities: interpretation.comorbidities,
+                occupation: interpretation.occupation,
+                complementaryExams: interpretation.complementaryExams,
+                painType: interpretation.painType,
+                painScoresPerRegion: interpretation.painScoresPerRegion,
+                painRegionRefinements: interpretation.painRegionRefinements,
+                additionalClinicalNotes: interpretation.additionalClinicalNotes,
+                romTable: interpretation.romTable,
+                strengthTable: interpretation.strengthTable,
+                functionalTests: interpretation.functionalTests,
+              },
+            };
+            setExternalPrefill({
+              markerId: `ext_${Date.now()}`,
+              row,
+              externalSourceFileId: sourceFile?.id || null,
+            });
+            setExternalUploadOpen(false);
+            setManualAssessmentOpen(true);
+          }}
         />
       )}
 

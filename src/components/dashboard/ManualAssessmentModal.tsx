@@ -130,6 +130,19 @@ interface ManualAssessmentModalProps {
   patientEmail?: string;
   /** When provided, the modal edits this existing assessment instead of creating a new one. */
   editAssessment?: any | null;
+  /**
+   * When provided (and no editAssessment), pre-fills the modal with a NEW
+   * assessment built from an external source (e.g. AI-interpreted PDF/image).
+   * Save flow inserts a fresh row tagged with `source: "external_upload"`.
+   */
+  prefillData?: {
+    /** Stable marker — when it changes, the prefill effect re-runs. */
+    markerId: string;
+    /** Same shape as an assessment row (anamnesis_data, pain_regions, diagnosis, ...). */
+    row: any;
+    /** Optional: id of the patient_files row pointing to the original file. */
+    externalSourceFileId?: string | null;
+  } | null;
   /** Called after a successful save (insert or update). */
   onSaved?: (assessmentId: string) => void;
   /**
@@ -165,7 +178,7 @@ const STEPS = [
   { id: "diagnostico", label: "Diagnóstico" },
 ];
 
-const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, editAssessment, onSaved, demoMode = false }: ManualAssessmentModalProps) => {
+const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, editAssessment, prefillData, onSaved, demoMode = false }: ManualAssessmentModalProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -275,6 +288,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Tratamento
   const [treatmentText, setTreatmentText] = useState("");
   const [aiTreatment, setAiTreatment] = useState<any | null>(null);
+
+  // ─── Avaliação externa (upload PDF/imagem interpretado pela IA) ──────────
+  // Persistidos em anamnesis_data quando presentes. Mantidos como estado
+  // separado para que o usuário possa editar `additionalExternalInfo` e para
+  // que o banner "Avaliação externa" apareça no modal durante a revisão.
+  const [externalSource, setExternalSource] = useState<{
+    source: "external_upload";
+    externalSourceFileId?: string | null;
+    aiInterpretedFields?: string[];
+  } | null>(null);
+  const [additionalExternalInfo, setAdditionalExternalInfo] = useState("");
 
   // Build region groups: dedupe by id, sort alphabetically by current language label.
   // Uses SIMPLIFIED_EXCLUDED_IDS to remove lateral-view duplicates and back-view
@@ -572,8 +596,82 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     const tx = a.treatment_plan || null;
     setAiTreatment(tx && typeof tx === "object" ? tx : null);
     setTreatmentText(tx?.text || tx?.summary || "");
+    // Carrega metadados de upload externo se a avaliação editada já veio do
+    // fluxo de "Upload de avaliação externa".
+    if (an?.source === "external_upload") {
+      setExternalSource({
+        source: "external_upload",
+        externalSourceFileId: an.externalSourceFileId || null,
+        aiInterpretedFields: Array.isArray(an.aiInterpretedFields) ? an.aiInterpretedFields : [],
+      });
+      setAdditionalExternalInfo(an.additionalExternalInfo || "");
+    } else {
+      setExternalSource(null);
+      setAdditionalExternalInfo("");
+    }
   }, [open, editAssessment]);
   useEffect(() => { if (!open) prefilledIdRef.current = null; }, [open]);
+
+  // ─── Prefill a partir de uma avaliação externa interpretada pela IA ──────
+  // Mesmo shape do editAssessment, porém sem id — o save flow insere uma
+  // linha nova marcada como `source: "external_upload"`.
+  const prefilledMarkerRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open || !prefillData?.markerId || editAssessment?.id) return;
+    if (prefilledMarkerRef.current === prefillData.markerId) return;
+    prefilledMarkerRef.current = prefillData.markerId;
+    const a = prefillData.row || {};
+    const an = a.anamnesis_data || {};
+    setStep(0);
+    setChiefComplaint(an.chiefComplaint || "");
+    setAdditionalComplaint(an.additionalComplaint || "");
+    setHistory(an.history || "");
+    setDuration(an.duration || "");
+    setOnset(an.onset || "");
+    setAggravating(an.aggravatingFactors || "");
+    setRelieving(an.relievingFactors || "");
+    setMedications(an.medications || "");
+    setPreviousSurgeries(an.previousSurgeries || "");
+    setComorbidities(an.comorbidities || "");
+    setOccupation(an.occupation || "");
+    setComplementaryExams(an.complementaryExams || "");
+    setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
+    setPainType(an.painType || "");
+    setPainRegions(
+      Array.isArray(a.pain_regions)
+        ? a.pain_regions.filter((id: string) => !SIMPLIFIED_EXCLUDED_IDS.has(id))
+        : [],
+    );
+    setPainScoresPerRegion(an.painScoresPerRegion && typeof an.painScoresPerRegion === "object" ? an.painScoresPerRegion : {});
+    setPainTypesPerRegion(an.painTypesPerRegion && typeof an.painTypesPerRegion === "object" ? an.painTypesPerRegion : {});
+    setPainRegionRefinements(an.painRegionRefinements && typeof an.painRegionRefinements === "object" ? an.painRegionRefinements : {});
+    setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
+    setAdditionalClinicalNotes(an.additionalClinicalNotes || "");
+    setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
+    setFunctionalTests(an.functionalTests || "");
+    setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(2));
+    setStrengthTable(Array.isArray(an.strengthTable) && an.strengthTable.length > 0 ? an.strengthTable : createInitialStrengthRows(2));
+    const dx = a.diagnosis || {};
+    setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
+    const ci = dx.clinicalImpression;
+    setAiClinicalImpression(ci?.overview ? ci : null);
+    setClinicalImpression(ci?.overview || "");
+    const dxParts: string[] = [];
+    if (dx.hypothesis) dxParts.push(String(dx.hypothesis));
+    if (dx.summary && dx.summary !== dx.hypothesis) dxParts.push("", String(dx.summary));
+    if (dx.reasoning) dxParts.push("", String(dx.reasoning));
+    setDiagnosisText(dx.text || dxParts.join("\n"));
+    setAiTreatment(null);
+    setTreatmentText("");
+    setExternalSource({
+      source: "external_upload",
+      externalSourceFileId: prefillData.externalSourceFileId || an.externalSourceFileId || null,
+      aiInterpretedFields: Array.isArray(an.aiInterpretedFields) ? an.aiInterpretedFields : [],
+    });
+    setAdditionalExternalInfo(an.additionalExternalInfo || "");
+  }, [open, prefillData, editAssessment?.id]);
+  useEffect(() => { if (!open) prefilledMarkerRef.current = null; }, [open]);
+
 
   // Conta pendentes vinculados a esta avaliação (modo edição) para exibir o
   // banner com o link consolidado e botão de cancelar pendência.
@@ -792,6 +890,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     patientEmail: patientEmail || null,
     // Specialty (cardio/geri) results applied inline during this session.
     specialtyResults: specialtyApplied.length > 0 ? specialtyApplied : undefined,
+    // External-source metadata (set when this assessment was created from an
+    // AI-interpreted PDF/image upload). Kept inside anamnesis_data so PDF,
+    // AssessmentView and downstream AI calls can detect/render it.
+    ...(externalSource
+      ? {
+          source: externalSource.source,
+          externalSourceFileId: externalSource.externalSourceFileId || null,
+          aiInterpretedFields: externalSource.aiInterpretedFields || [],
+        }
+      : {}),
+    ...(additionalExternalInfo ? { additionalExternalInfo } : {}),
   });
 
   const generateAIDiagnosis = async () => {
@@ -1246,6 +1355,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
     setDiagnosisText(""); setTreatmentText(""); setAiDiagnosis(null); setAiTreatment(null);
     setSpecialtyApplied([]);
+    setExternalSource(null);
+    setAdditionalExternalInfo("");
   };
 
   const stepLabels = isPt
@@ -1307,6 +1418,23 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-6">
           <div className="space-y-4 py-4">
+            {externalSource && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">
+                      {isPt ? "Avaliação externa interpretada pela IA" : "External assessment interpreted by AI"}
+                    </p>
+                    <p className="leading-snug text-muted-foreground mt-0.5">
+                      {isPt
+                        ? `${externalSource.aiInterpretedFields?.length || 0} campo(s) pré-preenchido(s) a partir do arquivo enviado. Revise tudo antes de salvar — o conteúdo passa a fazer parte do prontuário do paciente.`
+                        : `${externalSource.aiInterpretedFields?.length || 0} field(s) pre-filled from the uploaded file. Review everything before saving — the content becomes part of the patient's chart.`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             {demoMode && (
               <div className="rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-900/15 px-4 py-3 text-xs text-amber-900 dark:text-amber-200">
                 <div className="flex items-start gap-2">
@@ -2202,6 +2330,23 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     <Textarea value={diagnosisText} onChange={(e) => setDiagnosisText(e.target.value)} rows={8} className="mt-1 text-sm" />
                   </DemoShield>
                 </div>
+                {(externalSource || additionalExternalInfo) && (
+                  <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 space-y-2">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Sparkles className="h-3 w-3 text-primary" />
+                      {isPt ? "Informações externas adicionais" : "Additional external info"}
+                    </Label>
+                    <Textarea
+                      value={additionalExternalInfo}
+                      onChange={(e) => setAdditionalExternalInfo(e.target.value)}
+                      rows={4}
+                      placeholder={isPt
+                        ? "Tudo o que a IA encontrou no arquivo externo e não coube nos nossos campos pré-definidos. Edite à vontade."
+                        : "Anything the AI found in the external file that doesn't fit our predefined fields. Edit freely."}
+                      className="text-sm bg-background"
+                    />
+                  </div>
+                )}
               </div>
             )}
 
