@@ -1125,8 +1125,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const stepLabels = isPt
-    ? ["Anamnese", "Dor & Mapa", "Red Flags", "Questionários", "Testes & ADM", "Dinamometria", "Diagnóstico"]
-    : ["Anamnesis", "Pain & Map", "Red Flags", "Questionnaires", "Tests & ROM", "Dynamometry", "Diagnosis"];
+    ? ["Anamnese", "Mapa de dor", "Intensidade & Tipo", "Red Flags", "Observações clínicas", "Questionários", "Mobilidade articular (ADM)", "Testes funcionais", "Dinamometria", "Diagnóstico"]
+    : ["Anamnesis", "Pain map", "Intensity & Type", "Red Flags", "Clinical observations", "Questionnaires", "Joint mobility (ROM)", "Functional tests", "Dynamometry", "Diagnosis"];
 
   return (
     <>
