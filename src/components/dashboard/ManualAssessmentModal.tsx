@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus, Mic, Lock, Crown, Link as LinkIcon, Copy, MessageCircle, X, ClipboardList } from "lucide-react";
+import { Loader2, FileText, Sparkles, ChevronLeft, ChevronRight, Save, AlertTriangle, Cloud, Lightbulb, Plus, Mic, Lock, Crown, Link as LinkIcon, Copy, MessageCircle, X, ClipboardList, Search } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { questionnaires, getApplicableQuestionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
 import { createShortAppLink } from "@/lib/shortLink";
