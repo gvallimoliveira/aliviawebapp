@@ -310,7 +310,9 @@ Format for professionalGuidelines:
 
     const userPrompt = `Patient data:
 - Chief complaint: ${anamnesisData?.chiefComplaints?.join(", ") || anamnesisData?.chiefComplaint || anamnesisData?.customComplaint}
-- Pain regions: ${anamnesisData?.painRegions?.join(", ") || "Not specified"}
+- Pain regions: ${anamnesisData?.painRegions?.join(", ") || "Not specified"}${anamnesisData?.painRegionRefinements && Object.keys(anamnesisData.painRegionRefinements).length > 0 ? `
+- Anatomical refinement per region (use to target structures and progression — medial/lateral, anterior/posterior, proximal/distal for limbs; right/left side or central for axial regions):
+${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]) => `    • ${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join("\n")}` : ""}
 - Pain types: ${anamnesisData?.painTypes?.join(", ") || "Not specified"}
 - Pain score: ${painScore}/10
 - Evolution: ${anamnesisData?.evolution}
