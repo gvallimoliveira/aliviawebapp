@@ -1138,7 +1138,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       }}
     >
       <DialogContent data-manual-assessment-modal=""
-        className="max-w-3xl h-[95vh] sm:h-[90vh] flex flex-col p-0 gap-0"
+        className="max-w-3xl h-[100dvh] sm:h-[90dvh] max-h-[100dvh] flex flex-col p-0 gap-0"
         onEscapeKeyDown={(e) => {
           // ESC nunca fecha — usuário precisa clicar no X e confirmar.
           if (!demoMode) e.preventDefault();
@@ -1439,7 +1439,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     <div>
                       <Label className="text-xs">{isPt ? "Intensidade da dor (0-10)" : "Pain intensity (0-10)"}: <span className="font-bold text-primary">{painScore}</span></Label>
                       <DemoShield on={demoMode} onAutofill={() => autofill(painScore, MOCK_MANUAL_CASE.painScore, setPainScore, 5)}>
-                        <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="mt-2" />
+                        <div className="flex items-center gap-2 mt-2">
+                          <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" disabled={demoMode || painScore <= 0} onClick={() => setPainScore(Math.max(0, painScore - 1))} aria-label="−1">−</Button>
+                          <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="flex-1" />
+                          <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" disabled={demoMode || painScore >= 10} onClick={() => setPainScore(Math.min(10, painScore + 1))} aria-label="+1">+</Button>
+                        </div>
                       </DemoShield>
                     </div>
                     <div>
@@ -1488,19 +1492,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                         const lbl = regionLabelMap[id];
                         const v = painScoresPerRegion[id] ?? painScore;
                         return (
-                          <div key={id} className="flex items-center gap-3">
-                            <span className="text-xs text-foreground w-32 shrink-0 truncate">
+                          <div key={id} className="flex items-center gap-2">
+                            <span className="text-xs text-foreground w-28 sm:w-32 shrink-0 truncate">
                               {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
                             </span>
+                            <Button type="button" variant="outline" size="icon" className="h-8 w-8 shrink-0" disabled={demoMode || v <= 0} onClick={() => setRegionPainScore(id, Math.max(0, v - 1))} aria-label="−1">−</Button>
                             <Slider
                               value={[v]}
                               onValueChange={(arr) => setRegionPainScore(id, arr[0])}
                               min={0}
                               max={10}
                               step={1}
-                              className="flex-1"
+                              className="flex-1 min-w-0"
                               disabled={demoMode}
                             />
+                            <Button type="button" variant="outline" size="icon" className="h-8 w-8 shrink-0" disabled={demoMode || v >= 10} onClick={() => setRegionPainScore(id, Math.min(10, v + 1))} aria-label="+1">+</Button>
                             <span className="text-xs font-bold text-primary tabular-nums w-8 text-right">{v}/10</span>
                           </div>
                         );
@@ -1941,7 +1947,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           </div>
         </div>
 
-        <DialogFooter className="relative flex-row justify-between sm:justify-between border-t p-4 shrink-0 bg-background">
+        <DialogFooter className="relative flex-row justify-between sm:justify-between border-t p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shrink-0 bg-background">
           <Button variant="outline" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
             <ChevronLeft className="h-4 w-4" /> {isPt ? "Voltar" : "Back"}
           </Button>
