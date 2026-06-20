@@ -438,6 +438,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainRegions(p.painRegions ?? []);
     setPainScoresPerRegion(p.painScoresPerRegion ?? {});
     setPainTypesPerRegion((p as any).painTypesPerRegion ?? {});
+    setPainRegionRefinements((p as any).painRegionRefinements ?? {});
     setRedFlagsChecked(p.redFlagsChecked ?? []);
     setAdditionalClinicalNotes((p as any).additionalClinicalNotes ?? "");
     setQuestionnaireResults(p.questionnaireResults ?? []);
