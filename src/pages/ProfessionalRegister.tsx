@@ -99,6 +99,10 @@ const ProfessionalRegister = () => {
     ]).then(([profRes, vipRes]: any[]) => {
       const data = profRes?.data;
       setIsVip(!!vipRes?.data || isFallbackVip(user.email));
+      let forceProfessional = false;
+      let forceStudent = false;
+      try { forceProfessional = sessionStorage.getItem("forceProfessionalMode") === "1"; } catch {}
+      try { forceStudent = sessionStorage.getItem("forceStudentMode") === "1"; } catch {}
       if (data) {
         setExisting(data);
         setForm({
@@ -118,9 +122,15 @@ const ProfessionalRegister = () => {
         if (data.terms_accepted_at) setTermsAccepted(true);
         if (data.profile_photo_url) setPhotoPreview(data.profile_photo_url);
         if (data.logo_url) setLogoPreview(data.logo_url);
-        let forceProfessional = false;
-        try { forceProfessional = sessionStorage.getItem("forceProfessionalMode") === "1"; } catch {}
-        if (data.is_student && !forceProfessional) {
+        const hasCrefito = !!(data.crefito && String(data.crefito).trim().length > 0);
+        if (forceStudent && !hasCrefito) {
+          // Veio do card "Estudante" no /auth → ativa o modo acadêmico por padrão
+          // (somente quando ainda não há CREFITO cadastrado, para respeitar a trava).
+          setIsStudent(true);
+          setStudentInstitution(data.student_institution || "");
+          setStudentPeriod(data.student_period || "");
+          try { sessionStorage.removeItem("forceStudentMode"); } catch {}
+        } else if (data.is_student && !forceProfessional) {
           setIsStudent(true);
           setStudentInstitution(data.student_institution || "");
           setStudentPeriod(data.student_period || "");
@@ -129,6 +139,11 @@ const ProfessionalRegister = () => {
           setIsStudent(false);
           try { sessionStorage.removeItem("forceProfessionalMode"); } catch {}
         }
+      } else if (forceStudent) {
+        // Novo cadastro vindo do card "Estudante" — abre o formulário já com
+        // o toggle acadêmico ligado.
+        setIsStudent(true);
+        try { sessionStorage.removeItem("forceStudentMode"); } catch {}
       }
       setLoadingProfile(false);
     });
