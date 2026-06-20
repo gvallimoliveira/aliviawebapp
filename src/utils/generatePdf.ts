@@ -82,6 +82,14 @@ interface AnamnesisData {
   history?: string;
   /** Free-text complementary exams (imaging, lab, etc.). */
   complementaryExams?: string;
+  /** Source of the assessment — "external_upload" indicates AI-interpreted external document. */
+  source?: string;
+  /** Free-text content from the external file that didn't map to native fields. */
+  additionalExternalInfo?: string;
+  /** Field names that were filled by AI from external upload (badge metadata). */
+  aiInterpretedFields?: string[];
+  /** Reference to the original uploaded file (patient_files row id). */
+  externalSourceFileId?: string;
 }
 
 export interface ResponsibleProfessional {
@@ -1700,6 +1708,24 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     y += 20;
   }
 
+  // ── External Assessment Banner (AI-interpreted external document) ──
+  if (anamnesisData?.source === "external_upload") {
+    const interpretedCount = anamnesisData.aiInterpretedFields?.length || 0;
+    const bannerText = isPt
+      ? `Avaliação externa interpretada por IA${interpretedCount ? ` · ${interpretedCount} campo(s) preenchido(s) automaticamente` : ""} e revisada pelo profissional antes da emissão.`
+      : `External assessment interpreted by AI${interpretedCount ? ` · ${interpretedCount} field(s) auto-filled` : ""} and reviewed by the professional before issuance.`;
+    y = drawTextCard(doc, y, bannerText, {
+      fill: COLORS.primaryLight,
+      stroke: COLORS.primary,
+      padX: 6,
+      padY: 5,
+      body: { font: "Inter", weight: "normal", size: 8, lineHeight: 3.8, textColor: COLORS.primary },
+      label: { text: isPt ? "AVALIAÇÃO EXTERNA · IA" : "EXTERNAL ASSESSMENT · AI", color: COLORS.primary, size: 8 },
+    });
+    y += 4;
+  }
+
+
   // ── Diagnosis Section (FIRST after patient info) ──
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Preliminar" : "Preliminary Hypothesis", COLORS.primary, 30);
 
@@ -1808,6 +1834,21 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   // ── Anamnesis Section ──
   if (anamnesisData) {
     y = renderAnamnesisSection(doc, y, anamnesisData, isPt);
+  }
+
+  // ── Additional External Info (from external assessment upload) ──
+  if (anamnesisData?.additionalExternalInfo?.trim()) {
+    y = checkPage(doc, y, 24);
+    y = renderSectionTitle(doc, y, isPt ? "Informações Externas Adicionais" : "Additional External Information", COLORS.primary, 20);
+    y = drawTextCard(doc, y, anamnesisData.additionalExternalInfo.trim(), {
+      fill: COLORS.background,
+      stroke: COLORS.border,
+      padX: 6,
+      padY: 5,
+      body: { font: "Inter", weight: "normal", size: 9, lineHeight: 4.2, textColor: COLORS.foreground },
+      label: { text: isPt ? "CONTEÚDO DA AVALIAÇÃO EXTERNA" : "EXTERNAL ASSESSMENT CONTENT", color: COLORS.muted, size: 7 },
+    });
+    y += 4;
   }
 
   // ── Test Results (Questionnaires) — right after anamnesis ──
