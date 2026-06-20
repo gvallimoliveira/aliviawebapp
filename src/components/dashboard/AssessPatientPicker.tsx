@@ -75,19 +75,21 @@ const AssessPatientPicker = ({ open, onOpenChange, professionalId, clinicId, isD
     const load = async () => {
       setLoading(true);
 
-      // Load archived (hidden) patient_emails to exclude them from the picker
-      const hiddenEmails = new Set<string>();
+      // Load archived (hidden) patients. The hidden key (`patient_email` column)
+      // actually stores the dashboard `groupKey` — which may be email, full_name
+      // or id. So exclude any patient whose email OR full_name matches.
+      const hiddenKeys = new Set<string>();
       try {
         if (clinicId) {
           const { data: hid } = await (supabase.from("clinic_hidden_patients" as any) as any)
             .select("patient_email")
             .eq("clinic_id", clinicId);
-          (hid || []).forEach((h: any) => h?.patient_email && hiddenEmails.add(String(h.patient_email).toLowerCase()));
+          (hid || []).forEach((h: any) => h?.patient_email && hiddenKeys.add(String(h.patient_email).toLowerCase()));
         } else {
           const { data: hid } = await (supabase.from("professional_hidden_patients" as any) as any)
             .select("patient_email")
             .eq("professional_id", professionalId);
-          (hid || []).forEach((h: any) => h?.patient_email && hiddenEmails.add(String(h.patient_email).toLowerCase()));
+          (hid || []).forEach((h: any) => h?.patient_email && hiddenKeys.add(String(h.patient_email).toLowerCase()));
         }
       } catch {
         // non-blocking — fall through with empty hidden set
@@ -105,9 +107,13 @@ const AssessPatientPicker = ({ open, onOpenChange, professionalId, clinicId, isD
       }
       const { data } = await query;
       if (!cancelled) {
-        const rows = ((data as PatientRow[]) || []).filter(
-          (p) => !p.email || !hiddenEmails.has(String(p.email).toLowerCase()),
-        );
+        const rows = ((data as PatientRow[]) || []).filter((p) => {
+          const emailKey = p.email ? String(p.email).toLowerCase() : "";
+          const nameKey = p.full_name ? String(p.full_name).toLowerCase() : "";
+          if (emailKey && hiddenKeys.has(emailKey)) return false;
+          if (nameKey && hiddenKeys.has(nameKey)) return false;
+          return true;
+        });
         setPatients(rows);
         setLoading(false);
       }
