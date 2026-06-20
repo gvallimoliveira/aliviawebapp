@@ -1425,11 +1425,52 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 2: INTENSIDADE & TIPO DE DOR — relacionados às regiões
+            {/* STEP 2: MAPA DE DOR — apenas seleção das regiões. Intensidade e
+                tipo de dor vão na etapa seguinte (já contextualizados pelas
+                regiões marcadas aqui). */}
+            {step === 2 && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
+                  <DemoShield on={demoMode} onAutofill={() => toggleRegion("")}>
+                    <div className="max-h-[60vh] overflow-y-auto border rounded-md p-2 space-y-3">
+                      {regionGroups.map((g) => (
+                        <div key={g.key}>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
+                            {isPt ? g.label_pt : g.label_en}
+                          </p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                            {g.ids.map((id) => {
+                              const lbl = regionLabelMap[id];
+                              return (
+                                <label key={id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                                  <Checkbox checked={painRegions.includes(id)} onCheckedChange={() => toggleRegion(id)} />
+                                  <span>{isPt ? lbl.label_pt : lbl.label_en}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </DemoShield>
+                  {painRegions.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">{painRegions.length} {isPt ? "selecionadas" : "selected"}</p>
+                  )}
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    {isPt
+                      ? "Na próxima etapa você define a intensidade e o tipo de dor para cada região marcada aqui."
+                      : "In the next step you set intensity and pain type for each region marked here."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: INTENSIDADE & TIPO DE DOR — relacionados às regiões
                 marcadas no mapa. Com 0 ou 1 região, usa a versão global; com
                 2+ regiões, exige nota e tipo por região (mais sensível à
                 evolução clínica). */}
-            {step === 2 && (
+            {step === 3 && (
               <div className="space-y-4">
                 {painRegions.length === 0 && (
                   <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
