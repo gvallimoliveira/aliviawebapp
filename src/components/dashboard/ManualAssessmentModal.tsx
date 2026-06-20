@@ -1439,7 +1439,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     <div>
                       <Label className="text-xs">{isPt ? "Intensidade da dor (0-10)" : "Pain intensity (0-10)"}: <span className="font-bold text-primary">{painScore}</span></Label>
                       <DemoShield on={demoMode} onAutofill={() => autofill(painScore, MOCK_MANUAL_CASE.painScore, setPainScore, 5)}>
-                        <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="mt-2" />
+                        <div className="flex items-center gap-2 mt-2">
+                          <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" disabled={demoMode || painScore <= 0} onClick={() => setPainScore(Math.max(0, painScore - 1))} aria-label="−1">−</Button>
+                          <Slider value={[painScore]} onValueChange={(v) => setPainScore(v[0])} min={0} max={10} step={1} className="flex-1" />
+                          <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" disabled={demoMode || painScore >= 10} onClick={() => setPainScore(Math.min(10, painScore + 1))} aria-label="+1">+</Button>
+                        </div>
                       </DemoShield>
                     </div>
                     <div>
