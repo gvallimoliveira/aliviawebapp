@@ -838,7 +838,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           anamnesis: anamnesisSummary,
           painScore,
           painType,
-          painRegions: painRegions.map((id) => regionLabelMap[id]?.[isPt ? "label_pt" : "label_en"] || id),
+          painRegions: painRegions.map((id) => {
+            const base = regionLabelMap[id]?.[isPt ? "label_pt" : "label_en"] || id;
+            const refs = painRegionRefinements[id];
+            if (!refs || refs.length === 0) return base;
+            return `${base} (${refs.map((v) => refinementLabel(id, v)).join(", ")})`;
+          }),
           redFlags: redFlagsChecked,
           questionnaireResults: questionnaireResults.map((r) => ({
             name: r.questionnaireName,
