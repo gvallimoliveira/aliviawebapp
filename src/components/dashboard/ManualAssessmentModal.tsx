@@ -1941,7 +1941,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           </div>
         </div>
 
-        <DialogFooter className="relative flex-row justify-between sm:justify-between border-t p-4 shrink-0 bg-background">
+        <DialogFooter className="relative flex-row justify-between sm:justify-between border-t p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shrink-0 bg-background">
           <Button variant="outline" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
             <ChevronLeft className="h-4 w-4" /> {isPt ? "Voltar" : "Back"}
           </Button>
