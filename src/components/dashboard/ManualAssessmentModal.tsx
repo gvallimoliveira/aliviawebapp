@@ -1355,6 +1355,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
     setDiagnosisText(""); setTreatmentText(""); setAiDiagnosis(null); setAiTreatment(null);
     setSpecialtyApplied([]);
+    setExternalSource(null);
+    setAdditionalExternalInfo("");
   };
 
   const stepLabels = isPt
