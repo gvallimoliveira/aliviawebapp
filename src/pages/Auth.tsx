@@ -348,12 +348,17 @@ const Auth = () => {
                 </p>
               </div>
             ) : (
-              <></>
-            )}
-            {!showChooser && (<></>)}
-            {!showChooser && (
-              <></>
-            )}
+              <>
+                {!isLogin && !isForgotPassword && signupProfile && (
+                  <button
+                    type="button"
+                    onClick={() => setSignupProfile(null)}
+                    className="mb-3 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    {language === "pt" ? "Escolher outro perfil" : language === "es" ? "Elegir otro perfil" : "Choose another profile"}
+                  </button>
+                )}
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
