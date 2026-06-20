@@ -118,10 +118,16 @@ const ProfessionalRegister = () => {
         if (data.terms_accepted_at) setTermsAccepted(true);
         if (data.profile_photo_url) setPhotoPreview(data.profile_photo_url);
         if (data.logo_url) setLogoPreview(data.logo_url);
-        if (data.is_student) {
+        let forceProfessional = false;
+        try { forceProfessional = sessionStorage.getItem("forceProfessionalMode") === "1"; } catch {}
+        if (data.is_student && !forceProfessional) {
           setIsStudent(true);
           setStudentInstitution(data.student_institution || "");
           setStudentPeriod(data.student_period || "");
+        } else if (forceProfessional) {
+          // User came from "Cadastrar CREFITO" intending to switch to professional mode.
+          setIsStudent(false);
+          try { sessionStorage.removeItem("forceProfessionalMode"); } catch {}
         }
       }
       setLoadingProfile(false);
