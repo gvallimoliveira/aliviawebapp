@@ -844,6 +844,12 @@ const AssessmentView = () => {
                       value={anamnesis.additionalClinicalNotes}
                     />
                   )}
+                  {anamnesis.additionalExternalInfo && (
+                    <AnamnesisField
+                      label={isPt ? "Informações Externas Adicionais" : "Additional External Info"}
+                      value={anamnesis.additionalExternalInfo}
+                    />
+                  )}
                   {anamnesis.evolution && (
                     <AnamnesisField
                       label={isPt ? "Evolução" : "Evolution"}
