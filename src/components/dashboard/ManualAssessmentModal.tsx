@@ -128,10 +128,13 @@ const RED_FLAGS_PT = [
 
 const STEPS = [
   { id: "anamnese", label: "Anamnese" },
-  { id: "dor", label: "Dor & Mapa" },
+  { id: "mapa", label: "Mapa de dor" },
+  { id: "intensidade", label: "Intensidade & Tipo" },
   { id: "redflags", label: "Red Flags" },
+  { id: "observacoes", label: "Observações clínicas" },
   { id: "questionarios", label: "Questionários" },
-  { id: "testes", label: "Testes & ADM" },
+  { id: "adm", label: "Mobilidade articular (ADM)" },
+  { id: "testes", label: "Testes funcionais" },
   { id: "dinamometria", label: "Dinamometria" },
   { id: "diagnostico", label: "Diagnóstico" },
 ];
@@ -1122,8 +1125,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const stepLabels = isPt
-    ? ["Anamnese", "Dor & Mapa", "Red Flags", "Questionários", "Testes & ADM", "Dinamometria", "Diagnóstico"]
-    : ["Anamnesis", "Pain & Map", "Red Flags", "Questionnaires", "Tests & ROM", "Dynamometry", "Diagnosis"];
+    ? ["Anamnese", "Mapa de dor", "Intensidade & Tipo", "Red Flags", "Observações clínicas", "Questionários", "Mobilidade articular (ADM)", "Testes funcionais", "Dinamometria", "Diagnóstico"]
+    : ["Anamnesis", "Pain map", "Intensity & Type", "Red Flags", "Clinical observations", "Questionnaires", "Joint mobility (ROM)", "Functional tests", "Dynamometry", "Diagnosis"];
 
   return (
     <>
@@ -1397,17 +1400,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             )}
 
 
-            {/* STEP 1: DOR */}
+            {/* STEP 1: MAPA DE DOR — apenas seleção das regiões. Intensidade e
+                tipo de dor vão na etapa seguinte (já contextualizados pelas
+                regiões marcadas aqui). */}
             {step === 1 && (
               <div className="space-y-4">
-                {/* 1) Marcar regiões PRIMEIRO — o tipo/intensidade global só
-                    aparece quando há 0 ou 1 região marcada; com 2+ regiões, a
-                    IA trabalha exclusivamente com as notas e tipos por região
-                    para evitar diluir o quadro clínico em valores genéricos. */}
                 <div>
                   <Label className="text-xs mb-2 block">{isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => toggleRegion("")}>
-                    <div className="max-h-80 overflow-y-auto border rounded-md p-2 space-y-3">
+                    <div className="max-h-[60vh] overflow-y-auto border rounded-md p-2 space-y-3">
                       {regionGroups.map((g) => (
                         <div key={g.key}>
                           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
@@ -1431,9 +1432,30 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   {painRegions.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">{painRegions.length} {isPt ? "selecionadas" : "selected"}</p>
                   )}
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    {isPt
+                      ? "Na próxima etapa você define a intensidade e o tipo de dor para cada região marcada aqui."
+                      : "In the next step you set intensity and pain type for each region marked here."}
+                  </p>
                 </div>
+              </div>
+            )}
 
-                {/* 2a) Caminho "global" — só com 0 ou 1 região marcada */}
+            {/* STEP 2: INTENSIDADE & TIPO DE DOR — relacionados às regiões
+                marcadas no mapa. Com 0 ou 1 região, usa a versão global; com
+                2+ regiões, exige nota e tipo por região (mais sensível à
+                evolução clínica). */}
+            {step === 2 && (
+              <div className="space-y-4">
+                {painRegions.length === 0 && (
+                  <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                    {isPt
+                      ? "Nenhuma região marcada no mapa. Você ainda pode registrar uma intensidade e tipo de dor global, ou voltar para marcar regiões específicas."
+                      : "No region marked on the map. You can still record a global intensity and pain type, or go back to mark specific regions."}
+                  </div>
+                )}
+
+                {/* Caminho "global" — só com 0 ou 1 região marcada */}
                 {painRegions.length <= 1 && (
                   <>
                     <div>
@@ -1465,7 +1487,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   </>
                 )}
 
-                {/* 2b) Caminho "por região" — 2+ regiões; ignora intensidade/tipo global */}
+                {/* Caminho "por região" — 2+ regiões; ignora intensidade/tipo global */}
                 {painRegions.length > 1 && (
                   <div className="rounded-md border border-amber-300/60 bg-amber-50 p-2.5 text-[11px] text-amber-900">
                     {isPt
@@ -1556,8 +1578,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             )}
 
 
-            {/* STEP 2: RED FLAGS */}
-            {step === 2 && (
+            {/* STEP 3: RED FLAGS */}
+            {step === 3 && (
               <div className="space-y-3">
                 <p className="text-xs text-muted-foreground">
                   {isPt ? "Marque qualquer sinal de alerta presente no paciente:" : "Check any warning signs present in the patient:"}
@@ -1578,38 +1600,41 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </p>
                   </div>
                 )}
+              </div>
+            )}
 
-                {/* Observações clínicas adicionais — texto livre que alimenta a IA */}
-                <div className="pt-2 border-t border-border/60">
-                  <Label className="text-xs">{isPt ? "Observações clínicas adicionais (opcional)" : "Additional clinical observations (optional)"}</Label>
-                  <Textarea
-                    value={additionalClinicalNotes}
-                    onChange={(e) => setAdditionalClinicalNotes(e.target.value)}
-                    rows={4}
-                    placeholder={isPt
-                      ? "Registre achados relevantes que não se encaixam nos campos acima: contexto familiar, suspeita clínica específica, compensações observadas, sinais comportamentais, fatores de adesão, etc."
-                      : "Record relevant findings that don't fit the fields above: family context, specific clinical suspicion, observed compensations, behavioral signs, adherence factors, etc."}
-                    className="mt-1 text-sm"
-                    disabled={demoMode}
-                  />
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    {isPt
-                      ? "Estas observações são utilizadas pela IA ao gerar a impressão clínica, o diagnóstico e a sugestão de testes funcionais."
-                      : "These observations are used by the AI when generating the clinical impression, diagnosis and functional test suggestions."}
-                  </p>
-                </div>
+            {/* STEP 4: OBSERVAÇÕES CLÍNICAS ADICIONAIS — texto livre que
+                alimenta a IA. Etapa própria para dar espaço amplo de escrita. */}
+            {step === 4 && (
+              <div className="space-y-3">
+                <Label className="text-xs">{isPt ? "Observações clínicas adicionais (opcional)" : "Additional clinical observations (optional)"}</Label>
+                <Textarea
+                  value={additionalClinicalNotes}
+                  onChange={(e) => setAdditionalClinicalNotes(e.target.value)}
+                  rows={14}
+                  placeholder={isPt
+                    ? "Registre achados relevantes que não se encaixam nos campos acima: contexto familiar, suspeita clínica específica, compensações observadas, sinais comportamentais, fatores de adesão, hipóteses iniciais, raciocínio narrativo, etc."
+                    : "Record relevant findings that don't fit the fields above: family context, specific clinical suspicion, observed compensations, behavioral signs, adherence factors, initial hypotheses, narrative reasoning, etc."}
+                  className="text-sm min-h-[240px]"
+                  disabled={demoMode}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  {isPt
+                    ? "Estas observações são utilizadas pela IA ao gerar a impressão clínica, o diagnóstico e a sugestão de testes funcionais."
+                    : "These observations are used by the AI when generating the clinical impression, diagnosis and functional test suggestions."}
+                </p>
               </div>
             )}
 
 
-            {/* STEP 3: QUESTIONÁRIOS — mesmo fluxo da avaliação premium/link */}
-            {step === 3 && (
+            {/* STEP 5: QUESTIONÁRIOS — mesmo fluxo da avaliação premium/link */}
+            {step === 5 && (
               <div className="space-y-3">
                 {painRegions.length === 0 ? (
                   <div className="p-4 rounded-md border bg-muted/30 text-sm text-muted-foreground">
                     {isPt
-                      ? "Selecione ao menos uma região com dor na etapa anterior para que os questionários aplicáveis sejam carregados automaticamente."
-                      : "Select at least one pain region in the previous step to load the applicable questionnaires."}
+                      ? "Selecione ao menos uma região com dor no mapa de dor para que os questionários aplicáveis sejam carregados automaticamente."
+                      : "Select at least one pain region in the pain map step to load the applicable questionnaires."}
                   </div>
                 ) : (
                   <>
@@ -1750,10 +1775,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 4: TESTES */}
-            {step === 4 && (
+            {/* STEP 6: MOBILIDADE ARTICULAR (ADM) */}
+            {step === 6 && (
               <div className="space-y-4">
-                {/* ROM / Joint Mobility table — positioned BEFORE free-text functional tests */}
                 <DemoShield
                   on={demoMode}
                   onAutofill={() =>
@@ -1766,11 +1790,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     lang={isPt ? "pt" : "en"}
                   />
                 </DemoShield>
+                <p className="text-[11px] text-muted-foreground">
+                  {isPt
+                    ? "Os testes funcionais e observações ficam na próxima etapa."
+                    : "Functional tests and observations are on the next step."}
+                </p>
+              </div>
+            )}
 
-
-
-
-
+            {/* STEP 7: TESTES FUNCIONAIS */}
+            {step === 7 && (
+              <div className="space-y-4">
                 <div>
                   <Label className="text-xs">{isPt ? "Testes funcionais e observações" : "Functional tests and observations"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(functionalTests, MOCK_MANUAL_CASE.functionalTests, setFunctionalTests, "")}>
@@ -1864,8 +1894,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               </div>
             )}
 
-            {/* STEP 5: DINAMOMETRIA (opcional — pode ser pulada e preenchida depois no prontuário) */}
-            {step === 5 && (
+            {/* STEP 8: DINAMOMETRIA (opcional — pode ser pulada e preenchida depois no prontuário) */}
+            {step === 8 && (
               <div className="space-y-4">
                 <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground leading-relaxed flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <span>
@@ -1897,8 +1927,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             )}
 
 
-            {/* STEP 6: DIAGNÓSTICO */}
-            {step === 6 && (
+            {/* STEP 9: DIAGNÓSTICO */}
+            {step === 9 && (
               <div className="space-y-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
