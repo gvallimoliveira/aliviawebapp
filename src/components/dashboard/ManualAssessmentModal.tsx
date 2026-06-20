@@ -231,6 +231,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Multi-seleção: ex. ["medial","posterior"] para "cotovelo direito medial posterior".
   const [painRegionRefinements, setPainRegionRefinements] = useState<Record<string, string[]>>({});
 
+  // Busca rápida por região na etapa de seleção do mapa de dor.
+  const [regionSearch, setRegionSearch] = useState("");
+
   // Red Flags
   const [redFlagsChecked, setRedFlagsChecked] = useState<string[]>([]);
   // Observações clínicas adicionais (campo livre exibido após as red flags).
