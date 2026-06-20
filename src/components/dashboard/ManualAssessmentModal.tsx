@@ -200,6 +200,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Per-region pain type (local, radiating, burning…). Shown only when 2+
   // regions are marked, defaults to the global `painType` for each new region.
   const [painTypesPerRegion, setPainTypesPerRegion] = useState<Record<string, string>>({});
+  // Refinamentos anatômicos por região (medial/lateral, anterior/posterior,
+  // proximal/distal nos membros; lado D/E/central nas regiões axiais).
+  // Multi-seleção: ex. ["medial","posterior"] para "cotovelo direito medial posterior".
+  const [painRegionRefinements, setPainRegionRefinements] = useState<Record<string, string[]>>({});
 
   // Red Flags
   const [redFlagsChecked, setRedFlagsChecked] = useState<string[]>([]);
