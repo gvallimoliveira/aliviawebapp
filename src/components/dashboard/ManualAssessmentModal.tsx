@@ -722,6 +722,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     // e pelo prompt da IA quando há múltiplas regiões marcadas).
     painScoresPerRegion,
     painTypesPerRegion,
+    // Refinamento anatômico por região (medial/lateral, ant/post, prox/distal
+    // em membros; lado D/E/central nas regiões axiais). Anexado ao label das
+    // regiões no payload da IA para reflexão clínica mais precisa.
+    painRegionRefinements: Object.keys(painRegionRefinements).length > 0 ? painRegionRefinements : undefined,
     // Observações clínicas livres anotadas após as red flags. A IA usa este
     // texto para refinar a impressão clínica, o diagnóstico e a sugestão de
     // testes funcionais.
