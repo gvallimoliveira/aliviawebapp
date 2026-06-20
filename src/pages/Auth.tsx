@@ -310,7 +310,11 @@ const Auth = () => {
                   ? t("auth.login_desc")
                   : showChooser
                     ? profileLabels.desc
-                    : t("auth.signup_desc")}
+                    : signupProfile === "professional"
+                      ? t("auth.signup_desc_professional")
+                      : signupProfile === "clinic"
+                        ? t("auth.signup_desc_clinic")
+                        : t("auth.signup_desc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
