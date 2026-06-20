@@ -128,10 +128,13 @@ const RED_FLAGS_PT = [
 
 const STEPS = [
   { id: "anamnese", label: "Anamnese" },
-  { id: "dor", label: "Dor & Mapa" },
+  { id: "mapa", label: "Mapa de dor" },
+  { id: "intensidade", label: "Intensidade & Tipo" },
   { id: "redflags", label: "Red Flags" },
+  { id: "observacoes", label: "Observações clínicas" },
   { id: "questionarios", label: "Questionários" },
-  { id: "testes", label: "Testes & ADM" },
+  { id: "adm", label: "Mobilidade articular (ADM)" },
+  { id: "testes", label: "Testes funcionais" },
   { id: "dinamometria", label: "Dinamometria" },
   { id: "diagnostico", label: "Diagnóstico" },
 ];
