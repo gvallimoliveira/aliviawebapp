@@ -1627,14 +1627,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             )}
 
 
-            {/* STEP 3: QUESTIONÁRIOS — mesmo fluxo da avaliação premium/link */}
-            {step === 3 && (
+            {/* STEP 5: QUESTIONÁRIOS — mesmo fluxo da avaliação premium/link */}
+            {step === 5 && (
               <div className="space-y-3">
                 {painRegions.length === 0 ? (
                   <div className="p-4 rounded-md border bg-muted/30 text-sm text-muted-foreground">
                     {isPt
-                      ? "Selecione ao menos uma região com dor na etapa anterior para que os questionários aplicáveis sejam carregados automaticamente."
-                      : "Select at least one pain region in the previous step to load the applicable questionnaires."}
+                      ? "Selecione ao menos uma região com dor no mapa de dor para que os questionários aplicáveis sejam carregados automaticamente."
+                      : "Select at least one pain region in the pain map step to load the applicable questionnaires."}
                   </div>
                 ) : (
                   <>
