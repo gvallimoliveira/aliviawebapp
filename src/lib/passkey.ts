@@ -332,8 +332,8 @@ export async function enrollPasskey(opts: {
         extensions: { prf: {} } as AuthenticationExtensionsClientInputs,
       },
     })) as PublicKeyCredential;
-  } catch (e: any) {
-    return { ok: false, error: e?.message || "Registro cancelado." };
+  } catch (e: unknown) {
+    return { ok: false, error: getErrorMessage(e, "Registro cancelado.") };
   }
 
   if (!credential)
@@ -405,8 +405,7 @@ export async function unlockWithPasskey(): Promise<
     let refresh_token: string;
 
     if (rec.prfSalt && rec.iv && rec.ciphertext) {
-      const ext = assertion.getClientExtensionResults() as any;
-      const first = ext?.prf?.results?.first as ArrayBuffer | undefined;
+      const first = getPrfFirst(assertion);
       if (!first)
         return {
           ok: false,
@@ -448,8 +447,7 @@ export async function unlockWithPasskey(): Promise<
         (newAccess !== access_token || newRefresh !== refresh_token)
       ) {
         if (rec.prfSalt && rec.iv && rec.ciphertext) {
-          const ext = assertion.getClientExtensionResults() as any;
-          const first = ext?.prf?.results?.first as ArrayBuffer | undefined;
+          const first = getPrfFirst(assertion);
           if (first) {
             await dbPut({
               ...rec,
@@ -474,7 +472,7 @@ export async function unlockWithPasskey(): Promise<
     }
 
     return { ok: true };
-  } catch (e: any) {
-    return { ok: false, error: e?.message || "Falha na autenticação." };
+  } catch (e: unknown) {
+    return { ok: false, error: getErrorMessage(e, "Falha na autenticação.") };
   }
 }
