@@ -228,6 +228,7 @@ const StudentAccessCard = () => {
         } as any);
         if (error) throw error;
         setHasProfRecord(true);
+        if (isStudent && !isVip && fullName.trim()) setNameLocked(true);
       }
       setActiveMode(effectiveMode);
       toast({ title: isStudent ? t.saved : t.disabled });
