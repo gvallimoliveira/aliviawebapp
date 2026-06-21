@@ -146,7 +146,27 @@ export function isPasskeySupported(): boolean {
   );
 }
 
+/**
+ * WebAuthn é bloqueado em iframes cross-origin (ex.: preview do Lovable).
+ * Detecta isso para evitar SecurityError "origin of this document is not the
+ * same as its ancestors".
+ */
+export function isInCrossOriginFrame(): boolean {
+  try {
+    if (typeof window === "undefined") return false;
+    if (window.top === window.self) return false;
+    // Se conseguir ler o href do topo sem throw, é same-origin.
+    // Qualquer acesso que dispare exceção = cross-origin.
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    window.top!.location.href;
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 export async function isPlatformAuthenticatorAvailable(): Promise<boolean> {
+  if (isInCrossOriginFrame()) return false;
   if (!isPasskeySupported()) return false;
   try {
     return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
@@ -225,6 +245,12 @@ export async function enrollPasskey(opts: {
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!isPasskeySupported())
     return { ok: false, error: "WebAuthn não suportado neste navegador." };
+  if (isInCrossOriginFrame())
+    return {
+      ok: false,
+      error:
+        "A biometria não pode ser ativada dentro do preview/iframe. Abra o app em uma aba normal (ex.: aliviawebapp.com.br) e tente novamente.",
+    };
 
   const {
     data: { session },
