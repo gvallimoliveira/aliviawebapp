@@ -394,6 +394,7 @@ const Auth = () => {
                     </p>
                   </div>
                 )}
+            {isLogin && !isForgotPassword && <PasskeyUnlockButton />}
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
