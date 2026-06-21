@@ -197,7 +197,18 @@ const StudentAccessCard = () => {
         // can flip the switch without losing their professional registration.
         // Name lock: once student_name_locked=true the academic full_name
         // becomes immutable here (prevents subscription sharing by name swap).
-        const lockNameNow = isStudent && !nameLocked && !!fullName.trim() && !isVip;
+        // Name lock rule: the student can rectify the academic name ONCE
+        // (typo fix). We only mark it locked when the name was actually
+        // changed compared to the previously saved value — that consumes the
+        // single allowed ratification. The first save (when there was no
+        // previous name) does NOT lock, so the user keeps one editable
+        // opportunity afterward.
+        const nameChanged =
+          isStudent &&
+          !!fullName.trim() &&
+          !!originalName.trim() &&
+          fullName.trim() !== originalName.trim();
+        const lockNameNow = nameChanged && !nameLocked && !isVip;
         const { error } = await supabase
           .from("professionals")
           .update({
@@ -212,6 +223,7 @@ const StudentAccessCard = () => {
           .eq("user_id", user.id);
         if (error) throw error;
         if (lockNameNow) setNameLocked(true);
+        if (!nameLocked && fullName.trim()) setOriginalName(fullName.trim());
       } else {
         const { error } = await supabase.from("professionals").insert({
           user_id: user.id,
