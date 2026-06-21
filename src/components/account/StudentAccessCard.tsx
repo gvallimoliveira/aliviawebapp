@@ -37,6 +37,7 @@ const StudentAccessCard = () => {
   const [isVip, setIsVip] = useState(false);
   const [hasProAccess, setHasProAccess] = useState(false);
   const [nameLocked, setNameLocked] = useState(false);
+  const [originalName, setOriginalName] = useState("");
   const [fullName, setFullName] = useState("");
   const [institution, setInstitution] = useState("");
   const [period, setPeriod] = useState("");
