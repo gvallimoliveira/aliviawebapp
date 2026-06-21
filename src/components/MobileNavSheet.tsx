@@ -122,6 +122,9 @@ const MobileNavSheet = ({ open: controlledOpen, onOpenChange, hideTrigger, trigg
             <button onClick={() => go("/profissionais")} className={item}>
               <Stethoscope className="h-4 w-4" />{t("nav.professional")}
             </button>
+            <button onClick={() => go("/academico")} className={item}>
+              <GraduationCap className="h-4 w-4" />{L.academic}
+            </button>
             <button onClick={() => go("/clinica")} className={item}>
               <Building2 className="h-4 w-4" />{L.clinic}
             </button>
