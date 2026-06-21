@@ -20,6 +20,7 @@ import {
   GraduationCap, ArrowRight, ArrowDown, Brain, Sparkles, BookOpen,
   ClipboardList, FlaskConical, Compass, ShieldAlert, Stethoscope,
   Check, Lightbulb, FileText, Activity, MessageCircleQuestion, Workflow,
+  UserPlus,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
@@ -49,6 +50,7 @@ const COPY = {
       { icon: BookOpen, title: "Evidência de alta qualidade", desc: "Base de conhecimento filtrada por PEDro ≥ 7 e diretrizes internacionais. Estude a partir do que realmente sustenta a prática baseada em evidência." },
       { icon: Workflow, title: "Fluxo padrão-ouro de avaliação", desc: "Pratique o fluxo completo: anamnese estruturada → red flags → mapa de dor → valores de ADM (goniometria) → dinamometria com valores de força → questionários validados → hipótese → tratamento. O hábito da boa avaliação se constrói repetindo." },
       { icon: Activity, title: "Da teoria à prática, mais rápido", desc: "Cada caso usa as mesmas ferramentas que profissionais usam com pacientes reais. Você chega ao estágio sabendo o que fazer — não tentando lembrar." },
+      { icon: UserPlus, title: "Cadastre seus pacientes de estágio", desc: "Adicione os pacientes que você acompanha no estágio e tenha impressão clínica com sugestão de diagnóstico, além de poder conversar no Chat Clínico vinculando o caso real — entenda o quadro a fundo, receba sugestões de tratamento baseadas em evidência e tire qualquer dúvida na hora." },
     ],
     disclaimerTitle: "Acesso Estudante: o que muda em relação ao Profissional",
     disclaimerIntro: "O Aliv.iA Acadêmico libera as mesmas ferramentas do plano Profissional, mas com um conjunto de regras importantes para proteger você, os pacientes e a profissão:",
@@ -117,6 +119,7 @@ const COPY = {
       { icon: BookOpen, title: "High-quality evidence", desc: "Knowledge base filtered by PEDro ≥ 7 and international guidelines. Study from what really backs evidence-based practice." },
       { icon: Workflow, title: "Gold-standard assessment flow", desc: "Practice the full flow: structured anamnesis → red flags → pain map → ROM (goniometry) values → dynamometry with strength values → validated questionnaires → hypothesis → treatment." },
       { icon: Activity, title: "Theory to practice, faster", desc: "Every case uses the same tools professionals use with real patients. You arrive at internship knowing what to do." },
+      { icon: UserPlus, title: "Register your internship patients", desc: "Add the patients you follow during internship to receive AI clinical impression with diagnostic hypothesis, and chat in the Clinical Chat with the real case attached — understand the picture deeply, get evidence-based treatment suggestions and clear any doubt on the spot." },
     ],
     disclaimerTitle: "Student Access: what changes vs Professional",
     disclaimerIntro: "Alivia Academic unlocks the same tools as the Professional plan, with key rules to protect you, patients and the profession:",
@@ -185,6 +188,7 @@ const COPY = {
       { icon: BookOpen, title: "Evidencia de alta calidad", desc: "Base filtrada por PEDro ≥ 7 y directrices internacionales." },
       { icon: Workflow, title: "Flujo de evaluación estándar de oro", desc: "Practica el flujo completo: anamnesis → red flags → mapa de dolor → valores de ROM (goniometría) → dinamometría con valores de fuerza → cuestionarios → hipótesis → tratamiento." },
       { icon: Activity, title: "De la teoría a la práctica, más rápido", desc: "Cada caso usa las mismas herramientas que los profesionales usan con pacientes reales." },
+      { icon: UserPlus, title: "Registra a tus pacientes de prácticas", desc: "Agrega los pacientes que sigues en prácticas y obtén impresión clínica con sugerencia de diagnóstico, además de chatear en el Chat Clínico vinculando el caso real — entiende el cuadro a fondo, recibe sugerencias de tratamiento basadas en evidencia y aclara cualquier duda al instante." },
     ],
     disclaimerTitle: "Acceso Estudiante: qué cambia frente al Profesional",
     disclaimerIntro: "Alivia Académico libera las mismas herramientas del plan Profesional, con reglas para proteger a ti, los pacientes y la profesión:",

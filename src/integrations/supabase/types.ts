@@ -2022,6 +2022,7 @@ export type Database = {
           specialties: string[] | null
           state: string
           student_institution: string | null
+          student_name_locked: boolean
           student_period: string | null
           subscription_grace_until: string | null
           subscription_status: string
@@ -2060,6 +2061,7 @@ export type Database = {
           specialties?: string[] | null
           state: string
           student_institution?: string | null
+          student_name_locked?: boolean
           student_period?: string | null
           subscription_grace_until?: string | null
           subscription_status?: string
@@ -2098,6 +2100,7 @@ export type Database = {
           specialties?: string[] | null
           state?: string
           student_institution?: string | null
+          student_name_locked?: boolean
           student_period?: string | null
           subscription_grace_until?: string | null
           subscription_status?: string

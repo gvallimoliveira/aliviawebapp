@@ -36,6 +36,7 @@ const StudentAccessCard = () => {
   const [hasCrefito, setHasCrefito] = useState(false);
   const [isVip, setIsVip] = useState(false);
   const [hasProAccess, setHasProAccess] = useState(false);
+  const [nameLocked, setNameLocked] = useState(false);
   const [fullName, setFullName] = useState("");
   const [institution, setInstitution] = useState("");
   const [period, setPeriod] = useState("");
@@ -48,6 +49,8 @@ const StudentAccessCard = () => {
         toggle: "Sou estudante de fisioterapia",
         toggle_hint: "Desative para cadastrar seu CREFITO e ter acesso ao painel exclusivamente profissional",
         name: "Nome completo",
+        name_lock_warn: "Atenção: por segurança contra compartilhamento de assinatura, você só pode editar seu nome no modo acadêmico 1 (uma) vez. Após salvar, o nome ficará bloqueado e aparecerá fixo nos PDFs e links públicos.",
+        name_locked: "Nome bloqueado. O nome usado em relatórios acadêmicos não pode mais ser alterado para evitar compartilhamento de assinatura. Em caso de erro real (ex.: troca de nome civil), fale com o suporte.",
         institution: "Instituição de ensino",
         period: "Período atual",
         period_placeholder: "Ex.: 5º período",
@@ -79,6 +82,8 @@ const StudentAccessCard = () => {
         toggle: "I am a physiotherapy student",
         toggle_hint: "Disable to register your CREFITO and access the exclusively professional panel",
         name: "Full name",
+        name_lock_warn: "Warning: to prevent subscription sharing, you can edit your name in academic mode only once. After saving, it will be locked and shown fixed on PDFs and public links.",
+        name_locked: "Name locked. The name used on academic reports can no longer be changed to prevent subscription sharing. For a real correction (e.g. legal name change), contact support.",
         institution: "Institution",
         period: "Current term",
         period_placeholder: "e.g. 5th term",
@@ -111,7 +116,7 @@ const StudentAccessCard = () => {
       const [profRes, vipRes] = await Promise.all([
         supabase
           .from("professionals")
-          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, subscription_status, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
+          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, student_name_locked, subscription_status, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
           .eq("user_id", user.id)
           .maybeSingle(),
         user.email
@@ -130,6 +135,7 @@ const StudentAccessCard = () => {
         setFullName(data.full_name || "");
         setInstitution(data.student_institution || "");
         setPeriod(data.student_period || "");
+        setNameLocked(!!data.student_name_locked);
         setHasProAccess(
           data.subscription_status === "active"
           || data.is_partner === true
@@ -187,6 +193,9 @@ const StudentAccessCard = () => {
       if (hasProfRecord) {
         // IMPORTANT: never touch the existing `crefito` here so VIP testers
         // can flip the switch without losing their professional registration.
+        // Name lock: once student_name_locked=true the academic full_name
+        // becomes immutable here (prevents subscription sharing by name swap).
+        const lockNameNow = isStudent && !nameLocked && !!fullName.trim() && !isVip;
         const { error } = await supabase
           .from("professionals")
           .update({
@@ -194,11 +203,13 @@ const StudentAccessCard = () => {
             active_profile_mode: effectiveMode,
             student_institution: isStudent ? institution.trim() : null,
             student_period: isStudent ? period.trim() : null,
-            full_name: fullName.trim() || undefined,
+            ...(nameLocked && !isVip ? {} : { full_name: fullName.trim() || undefined }),
+            ...(lockNameNow ? { student_name_locked: true } : {}),
             ...(effectiveMode === "student" ? { approved: false } : {}),
           } as any)
           .eq("user_id", user.id);
         if (error) throw error;
+        if (lockNameNow) setNameLocked(true);
       } else {
         const { error } = await supabase.from("professionals").insert({
           user_id: user.id,
@@ -213,9 +224,11 @@ const StudentAccessCard = () => {
           active_profile_mode: effectiveMode,
           student_institution: isStudent ? institution.trim() : null,
           student_period: isStudent ? period.trim() : null,
+          ...(isStudent && !isVip && fullName.trim() ? { student_name_locked: true } : {}),
         } as any);
         if (error) throw error;
         setHasProfRecord(true);
+        if (isStudent && !isVip && fullName.trim()) setNameLocked(true);
       }
       setActiveMode(effectiveMode);
       toast({ title: isStudent ? t.saved : t.disabled });
@@ -312,8 +325,29 @@ const StudentAccessCard = () => {
             {isStudent && (
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="student-name" className="text-xs text-muted-foreground">{t.name}</Label>
-                  <Input id="student-name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                  <Label htmlFor="student-name" className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    {t.name}
+                    {nameLocked && !isVip && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  </Label>
+                  <Input
+                    id="student-name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    readOnly={nameLocked && !isVip}
+                    className={nameLocked && !isVip ? "bg-muted/50 cursor-not-allowed" : ""}
+                  />
+                  {!nameLocked && !isVip && (
+                    <p className="text-[11px] text-amber-700 leading-snug flex items-start gap-1">
+                      <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                      <span>{t.name_lock_warn}</span>
+                    </p>
+                  )}
+                  {nameLocked && !isVip && (
+                    <p className="text-[11px] text-muted-foreground leading-snug flex items-start gap-1">
+                      <Lock className="h-3 w-3 mt-0.5 shrink-0" />
+                      <span>{t.name_locked}</span>
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="student-inst" className="text-xs text-muted-foreground">{t.institution}</Label>
