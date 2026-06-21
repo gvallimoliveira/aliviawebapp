@@ -91,19 +91,23 @@ async function dbClear(): Promise<void> {
 
 // ---------- Utils ----------
 function randomBytes(len: number): Uint8Array {
-  const b = new Uint8Array(len);
+  const b = new Uint8Array(new ArrayBuffer(len));
   crypto.getRandomValues(b);
   return b;
 }
 
 function uuidToBytes(uuid: string): Uint8Array {
   const hex = uuid.replace(/-/g, "");
-  const out = new Uint8Array(16);
+  const out = new Uint8Array(new ArrayBuffer(16));
   for (let i = 0; i < 16; i += 1) {
     out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   }
   return out;
 }
+
+// Helper to satisfy strict BufferSource typings in WebAuthn/SubtleCrypto.
+const bs = (u: Uint8Array | ArrayBuffer): BufferSource =>
+  u as unknown as BufferSource;
 
 async function deriveAesKeyFromPrf(prfOutput: ArrayBuffer): Promise<CryptoKey> {
   const digest = await crypto.subtle.digest("SHA-256", prfOutput);
