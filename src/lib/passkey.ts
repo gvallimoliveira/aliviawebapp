@@ -356,7 +356,7 @@ export async function unlockWithPasskey(): Promise<
   try {
     const assertion = (await navigator.credentials.get({
       publicKey: {
-        challenge: randomBytes(32),
+        challenge: bs(randomBytes(32)),
         rpId,
         timeout: 60_000,
         userVerification: "required",
