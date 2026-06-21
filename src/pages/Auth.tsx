@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { isValidEmailFormat, suggestEmailFix } from "@/lib/emailValidation";
 import { supabase } from "@/integrations/supabase/client";
+import PasskeyUnlockButton from "@/components/auth/PasskeyUnlockButton";
 
 
 const Auth = () => {
