@@ -192,6 +192,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(data.session.user);
         setLoading(false);
         setReady(true);
+        void refreshStoredPasskeySession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
       }
 
       return { error, session: data?.session ?? null };
@@ -212,6 +216,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(data.session.user);
         setLoading(false);
         setReady(true);
+        void refreshStoredPasskeySession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
       }
 
       return { error, session: data?.session ?? null };
