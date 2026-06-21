@@ -4,22 +4,19 @@
  * Fluxo:
  *  1. Após login normal (email/senha ou Google), o usuário pode registrar
  *     um passkey ligado a este dispositivo/navegador.
- *  2. No registro, criamos uma credencial WebAuthn (resident key) com
- *     verificação biométrica + extensão PRF (quando suportada). A partir do
- *     PRF derivamos uma chave AES-GCM que criptografa a sessão Supabase
- *     (access_token + refresh_token). Tudo é salvo em IndexedDB local.
+ *  2. No registro, criamos uma credencial WebAuthn com verificação
+ *     biométrica e guardamos uma sessão local em IndexedDB. O segredo só é
+ *     reutilizado após uma assertion WebAuthn com userVerification required.
  *  3. No próximo acesso (mesmo dispositivo), `unlockWithPasskey()` pede
- *     uma assertion (digital/face), decripta a sessão e chama
- *     `supabase.auth.setSession()`.
+ *     uma assertion (digital/face) e chama `supabase.auth.setSession()`.
  *
  * Importante: este recurso NÃO substitui o login inicial — ele só
  * desbloqueia rapidamente a sessão já estabelecida neste navegador.
  *
- * Quando PRF não está disponível (Safari antigo, alguns Android),
- * caímos num modo "assertion-gated": a sessão fica em IndexedDB sem
- * criptografia adicional, e exigimos uma assertion WebAuthn bem-sucedida
- * com `userVerification: 'required'` antes de devolvê-la. A segurança
- * passa a depender do isolamento de origem do IndexedDB.
+ * Observação: usamos o modo "assertion-gated" mesmo quando PRF existe.
+ * Isso permite atualizar o refresh_token após cada login/refresh sem pedir
+ * biometria de novo. Para quick unlock, confiabilidade é essencial: se o
+ * refresh_token salvo ficar antigo/revogado, o unlock expira.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -192,13 +189,9 @@ export async function removeEnrolledPasskey(): Promise<void> {
 /**
  * Atualiza os tokens guardados no passkey local (sem pedir biometria).
  *
- * - Modo fallback (sem PRF): re-grava os tokens em plain.
- * - Modo PRF: não conseguimos re-encriptar sem uma assertion (precisaríamos
- *   da chave derivada do PRF, que só sai de um navigator.credentials.get()).
- *   Mas como mudamos o signOut para escopo LOCAL quando há passkey, o
- *   refresh_token original continua válido no servidor — então o ciphertext
- *   antigo segue funcionando. Aqui apenas atualizamos o e-mail/userId, caso
- *   tenham mudado.
+ * Re-grava os tokens atuais no registro local. Se existir um registro antigo
+ * no modo PRF, ele é migrado para o modo assertion-gated; essa migração é
+ * proposital para impedir o erro recorrente de "passkey expirado" após logout.
  */
 export async function refreshStoredPasskeySession(session: {
   access_token: string;
@@ -207,12 +200,11 @@ export async function refreshStoredPasskeySession(session: {
   try {
     const rec = await dbGet();
     if (!rec) return;
-    if (rec.prfSalt) {
-      // PRF: não re-encriptamos (sem assertion). Nada a fazer.
-      return;
-    }
     await dbPut({
       ...rec,
+      prfSalt: null,
+      iv: null,
+      ciphertext: null,
       plainSession: {
         access_token: session.access_token,
         refresh_token: session.refresh_token,
