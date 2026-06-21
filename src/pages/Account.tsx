@@ -15,6 +15,7 @@ import AppVersionBadge from "@/components/AppVersionBadge";
 import SignatureManager from "@/components/account/SignatureManager";
 import StudentAccessCard from "@/components/account/StudentAccessCard";
 import AcademicPerformanceCard from "@/components/account/AcademicPerformanceCard";
+import PasskeyAccountCard from "@/components/account/PasskeyAccountCard";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Bell, BellOff, Send, Smartphone } from "lucide-react";
 
@@ -312,6 +313,8 @@ const Account = () => {
         <div className="mt-6">
           <AcademicPerformanceCard />
         </div>
+
+        <PasskeyAccountCard />
 
         <Card className="mt-6">
           <CardHeader>
