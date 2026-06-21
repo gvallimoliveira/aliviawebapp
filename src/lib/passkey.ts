@@ -36,6 +36,10 @@ type StoredRecord = {
   createdAt: number;
 };
 
+type PrfClientExtensionResults = AuthenticationExtensionsClientOutputs & {
+  prf?: { results?: { first?: ArrayBuffer } };
+};
+
 // ---------- IndexedDB helpers ----------
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -131,6 +135,15 @@ async function decryptSession(
 ): Promise<{ access_token: string; refresh_token: string }> {
   const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
   return JSON.parse(new TextDecoder().decode(pt));
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+function getPrfFirst(assertion: PublicKeyCredential): ArrayBuffer | undefined {
+  const ext = assertion.getClientExtensionResults() as PrfClientExtensionResults;
+  return ext.prf?.results?.first;
 }
 
 // ---------- Public API ----------
