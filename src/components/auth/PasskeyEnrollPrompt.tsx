@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Fingerprint, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import {
   enrollPasskey,
   hasEnrolledPasskey,
@@ -23,6 +24,7 @@ import { toast } from "sonner";
 export default function PasskeyEnrollPrompt() {
   const { user } = useAuth();
   const { language } = useLanguage();
+  const { loading: clinicLoading, needsContextSelection, activeContext, activeClinic } = useClinic();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -34,15 +36,30 @@ export default function PasskeyEnrollPrompt() {
     // Never compete with other primary surfaces (profile selector, onboarding
     // tour, any open modal). Show one popup at a time — wait until the screen
     // is clear, then open.
+    const currentOnboardingContext = () => {
+      if (activeContext === "clinic" && activeClinic) return "clinic";
+      if (activeContext === "professional" || activeContext === "professional_demo") return "professional";
+      return "personal";
+    };
+
     const isScreenBusy = () => {
       if (typeof document === "undefined") return true;
       const path = window.location.pathname;
       // Profile selector lives at the gateway root.
       if (path === "/" || path === "/index") return true;
+      // On dashboard, biometrics is intentionally the LAST popup:
+      // 1) wait for clinic/profile context restore or selector;
+      // 2) wait for that context's first-run tutorial to finish/skip;
+      // 3) only then ask for passkey enrollment.
+      if (path === "/dashboard") {
+        if (clinicLoading || needsContextSelection) return true;
+        const onboardingKey = `onboarding_${currentOnboardingContext()}_completed_v2`;
+        if (localStorage.getItem(onboardingKey) !== "true") return true;
+      }
       // Any open Radix dialog/sheet/alert dialog blocks us.
       if (document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) return true;
       // Onboarding tour overlay marker.
-      if (document.querySelector('[data-onboarding-step], [data-onboarding-overlay]')) return true;
+      if (document.querySelector('[data-profile-context-selector], [data-onboarding-step], [data-onboarding-overlay]')) return true;
       return false;
     };
 
@@ -69,7 +86,7 @@ export default function PasskeyEnrollPrompt() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [user]);
+  }, [user, clinicLoading, needsContextSelection, activeContext, activeClinic]);
 
   if (!user) return null;
 

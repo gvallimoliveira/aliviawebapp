@@ -25,6 +25,7 @@ const OnboardingTour = ({
     <>
       {/* Semi-transparent backdrop */}
       <div
+        data-onboarding-overlay="true"
         className="fixed inset-0 z-50 bg-black/40 pointer-events-auto"
         onClick={onSkip}
       />
