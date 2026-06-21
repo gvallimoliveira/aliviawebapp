@@ -21,6 +21,21 @@ class DashboardErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[DashboardErrorBoundary]", error, info.componentStack);
+    // Stale chunk after a redeploy: the old index.html references chunk
+    // filenames that no longer exist. Trigger the global reload guard
+    // in main.tsx so the user gets the fresh manifest automatically.
+    const msg = error?.message || "";
+    if (/Importing a module script failed|Failed to fetch dynamically imported module|Loading chunk [\d]+ failed|error loading dynamically imported module/i.test(msg)) {
+      try {
+        const last = Number(sessionStorage.getItem("alivia:chunk-reload") || "0");
+        if (Date.now() - last >= 10_000) {
+          sessionStorage.setItem("alivia:chunk-reload", String(Date.now()));
+          window.location.reload();
+        }
+      } catch {
+        window.location.reload();
+      }
+    }
   }
 
   render() {
