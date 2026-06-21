@@ -221,19 +221,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    // Se existe um passkey local, fazemos signOut apenas LOCAL.
-    // Um signOut global revoga o refresh_token no servidor — o que invalida
-    // a sessão criptografada guardada na biometria e quebra o quick-unlock
-    // no próximo acesso ("sua sessão expirou"). Em modo local, o refresh
-    // token continua válido e o passkey consegue restaurar a sessão.
-    let scope: "global" | "local" = "global";
+    // Se existe um passkey local, NÃO chamamos signOut() no servidor.
+    // Mesmo scope:"local" revoga o refresh_token da sessão atual; como o
+    // quick-unlock depende desse refresh_token salvo no IndexedDB, isso era
+    // a causa-raiz do erro "passkey expirado" logo após deslogar.
+    let keepServerSessionForPasskey = false;
     try {
-      if (await hasEnrolledPasskey()) scope = "local";
+      keepServerSessionForPasskey = await hasEnrolledPasskey();
     } catch {
       /* noop */
     }
     try {
-      await supabase.auth.signOut({ scope });
+      if (!keepServerSessionForPasskey) {
+        await supabase.auth.signOut({ scope: "global" });
+      }
     } finally {
       hasAuthUpdate.current = true;
       clearLocalAuthStorage();
