@@ -188,6 +188,7 @@ const COPY = {
       { icon: BookOpen, title: "Evidencia de alta calidad", desc: "Base filtrada por PEDro ≥ 7 y directrices internacionales." },
       { icon: Workflow, title: "Flujo de evaluación estándar de oro", desc: "Practica el flujo completo: anamnesis → red flags → mapa de dolor → valores de ROM (goniometría) → dinamometría con valores de fuerza → cuestionarios → hipótesis → tratamiento." },
       { icon: Activity, title: "De la teoría a la práctica, más rápido", desc: "Cada caso usa las mismas herramientas que los profesionales usan con pacientes reales." },
+      { icon: UserPlus, title: "Registra a tus pacientes de prácticas", desc: "Agrega los pacientes que sigues en prácticas y obtén impresión clínica con sugerencia de diagnóstico, además de chatear en el Chat Clínico vinculando el caso real — entiende el cuadro a fondo, recibe sugerencias de tratamiento basadas en evidencia y aclara cualquier duda al instante." },
     ],
     disclaimerTitle: "Acceso Estudiante: qué cambia frente al Profesional",
     disclaimerIntro: "Alivia Académico libera las mismas herramientas del plan Profesional, con reglas para proteger a ti, los pacientes y la profesión:",
