@@ -134,6 +134,7 @@ const StudentAccessCard = () => {
         setActiveMode((data.active_profile_mode ?? (data.is_student ? "student" : "professional")) as "professional" | "student");
         setHasCrefito(!!(data.crefito && String(data.crefito).trim().length > 0));
         setFullName(data.full_name || "");
+        setOriginalName(data.full_name || "");
         setInstitution(data.student_institution || "");
         setPeriod(data.student_period || "");
         setNameLocked(!!data.student_name_locked);
