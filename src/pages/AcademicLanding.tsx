@@ -50,6 +50,7 @@ const COPY = {
       { icon: BookOpen, title: "Evidência de alta qualidade", desc: "Base de conhecimento filtrada por PEDro ≥ 7 e diretrizes internacionais. Estude a partir do que realmente sustenta a prática baseada em evidência." },
       { icon: Workflow, title: "Fluxo padrão-ouro de avaliação", desc: "Pratique o fluxo completo: anamnese estruturada → red flags → mapa de dor → valores de ADM (goniometria) → dinamometria com valores de força → questionários validados → hipótese → tratamento. O hábito da boa avaliação se constrói repetindo." },
       { icon: Activity, title: "Da teoria à prática, mais rápido", desc: "Cada caso usa as mesmas ferramentas que profissionais usam com pacientes reais. Você chega ao estágio sabendo o que fazer — não tentando lembrar." },
+      { icon: UserPlus, title: "Cadastre seus pacientes de estágio", desc: "Adicione os pacientes que você acompanha no estágio e tenha impressão clínica com sugestão de diagnóstico, além de poder conversar no Chat Clínico vinculando o caso real — entenda o quadro a fundo, receba sugestões de tratamento baseadas em evidência e tire qualquer dúvida na hora." },
     ],
     disclaimerTitle: "Acesso Estudante: o que muda em relação ao Profissional",
     disclaimerIntro: "O Aliv.iA Acadêmico libera as mesmas ferramentas do plano Profissional, mas com um conjunto de regras importantes para proteger você, os pacientes e a profissão:",
