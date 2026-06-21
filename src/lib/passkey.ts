@@ -123,8 +123,8 @@ async function encryptSession(
 ): Promise<{ iv: ArrayBuffer; ciphertext: ArrayBuffer }> {
   const iv = randomBytes(12);
   const data = new TextEncoder().encode(JSON.stringify(session));
-  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
-  return { iv: iv.buffer, ciphertext: ct };
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv: bs(iv) }, key, bs(data));
+  return { iv: iv.buffer as ArrayBuffer, ciphertext: ct };
 }
 
 async function decryptSession(
