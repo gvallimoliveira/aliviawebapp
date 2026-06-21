@@ -1,0 +1,1 @@
+ALTER TABLE public.professionals ADD COLUMN IF NOT EXISTS student_name_locked boolean NOT NULL DEFAULT false;
