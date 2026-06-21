@@ -49,6 +49,8 @@ const StudentAccessCard = () => {
         toggle: "Sou estudante de fisioterapia",
         toggle_hint: "Desative para cadastrar seu CREFITO e ter acesso ao painel exclusivamente profissional",
         name: "Nome completo",
+        name_lock_warn: "Atenção: por segurança contra compartilhamento de assinatura, você só pode editar seu nome no modo acadêmico 1 (uma) vez. Após salvar, o nome ficará bloqueado e aparecerá fixo nos PDFs e links públicos.",
+        name_locked: "Nome bloqueado. O nome usado em relatórios acadêmicos não pode mais ser alterado para evitar compartilhamento de assinatura. Em caso de erro real (ex.: troca de nome civil), fale com o suporte.",
         institution: "Instituição de ensino",
         period: "Período atual",
         period_placeholder: "Ex.: 5º período",
