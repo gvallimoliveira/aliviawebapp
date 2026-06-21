@@ -325,8 +325,29 @@ const StudentAccessCard = () => {
             {isStudent && (
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="student-name" className="text-xs text-muted-foreground">{t.name}</Label>
-                  <Input id="student-name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                  <Label htmlFor="student-name" className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    {t.name}
+                    {nameLocked && !isVip && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  </Label>
+                  <Input
+                    id="student-name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    readOnly={nameLocked && !isVip}
+                    className={nameLocked && !isVip ? "bg-muted/50 cursor-not-allowed" : ""}
+                  />
+                  {!nameLocked && !isVip && (
+                    <p className="text-[11px] text-amber-700 leading-snug flex items-start gap-1">
+                      <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                      <span>{t.name_lock_warn}</span>
+                    </p>
+                  )}
+                  {nameLocked && !isVip && (
+                    <p className="text-[11px] text-muted-foreground leading-snug flex items-start gap-1">
+                      <Lock className="h-3 w-3 mt-0.5 shrink-0" />
+                      <span>{t.name_locked}</span>
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="student-inst" className="text-xs text-muted-foreground">{t.institution}</Label>
