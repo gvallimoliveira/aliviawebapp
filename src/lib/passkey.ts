@@ -189,6 +189,40 @@ export async function removeEnrolledPasskey(): Promise<void> {
   await dbClear();
 }
 
+/**
+ * Atualiza os tokens guardados no passkey local (sem pedir biometria).
+ *
+ * - Modo fallback (sem PRF): re-grava os tokens em plain.
+ * - Modo PRF: não conseguimos re-encriptar sem uma assertion (precisaríamos
+ *   da chave derivada do PRF, que só sai de um navigator.credentials.get()).
+ *   Mas como mudamos o signOut para escopo LOCAL quando há passkey, o
+ *   refresh_token original continua válido no servidor — então o ciphertext
+ *   antigo segue funcionando. Aqui apenas atualizamos o e-mail/userId, caso
+ *   tenham mudado.
+ */
+export async function refreshStoredPasskeySession(session: {
+  access_token: string;
+  refresh_token: string;
+}): Promise<void> {
+  try {
+    const rec = await dbGet();
+    if (!rec) return;
+    if (rec.prfSalt) {
+      // PRF: não re-encriptamos (sem assertion). Nada a fazer.
+      return;
+    }
+    await dbPut({
+      ...rec,
+      plainSession: {
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      },
+    });
+  } catch {
+    /* noop */
+  }
+}
+
 const DISMISS_KEY = "alivia.passkey.enrollPromptDismissedAt";
 const DISMISS_FOREVER_KEY = "alivia.passkey.enrollNeverAsk";
 
@@ -431,13 +465,13 @@ export async function unlockWithPasskey(): Promise<
       refresh_token,
     });
     if (error || !data.session) {
-      // Sessão expirou — limpa o registro para forçar novo login.
-      await dbClear();
-      if (rec.userId) clearEnrolledFor(rec.userId);
+      // Sessão expirou no servidor. NÃO apagamos o passkey — após o
+      // próximo login normal o AuthContext atualiza os tokens guardados
+      // (refreshStoredPasskeySession) e o quick-unlock volta a funcionar.
       return {
         ok: false,
         error:
-          "Sua sessão expirou. Faça login com email/senha e reative o passkey.",
+          "Sua sessão expirou. Entre uma vez com email/senha — o passkey continua ativo e voltará a funcionar em seguida.",
       };
     }
 

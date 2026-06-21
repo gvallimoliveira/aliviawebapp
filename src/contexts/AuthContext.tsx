@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
+import { hasEnrolledPasskey, refreshStoredPasskeySession } from "@/lib/passkey";
 
 interface AuthContextType {
   user: User | null;
@@ -120,6 +121,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       hasAuthUpdate.current = true;
       applySession(nextSession);
       finalizeReady();
+
+      // Mantém o passkey "vivo": sempre que recebemos tokens novos
+      // (login normal, refresh automático), atualizamos o registro
+      // criptografado em IndexedDB. Sem isso, o refresh_token guardado
+      // na biometria fica defasado e o próximo unlock falha com
+      // "sua sessão expirou".
+      if (
+        nextSession?.access_token &&
+        nextSession.refresh_token &&
+        (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED")
+      ) {
+        void refreshStoredPasskeySession({
+          access_token: nextSession.access_token,
+          refresh_token: nextSession.refresh_token,
+        });
+      }
     };
 
     const {
@@ -204,8 +221,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Se existe um passkey local, fazemos signOut apenas LOCAL.
+    // Um signOut global revoga o refresh_token no servidor — o que invalida
+    // a sessão criptografada guardada na biometria e quebra o quick-unlock
+    // no próximo acesso ("sua sessão expirou"). Em modo local, o refresh
+    // token continua válido e o passkey consegue restaurar a sessão.
+    let scope: "global" | "local" = "global";
     try {
-      await supabase.auth.signOut();
+      if (await hasEnrolledPasskey()) scope = "local";
+    } catch {
+      /* noop */
+    }
+    try {
+      await supabase.auth.signOut({ scope });
     } finally {
       hasAuthUpdate.current = true;
       clearLocalAuthStorage();
