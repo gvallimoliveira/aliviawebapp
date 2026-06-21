@@ -193,6 +193,9 @@ const StudentAccessCard = () => {
       if (hasProfRecord) {
         // IMPORTANT: never touch the existing `crefito` here so VIP testers
         // can flip the switch without losing their professional registration.
+        // Name lock: once student_name_locked=true the academic full_name
+        // becomes immutable here (prevents subscription sharing by name swap).
+        const lockNameNow = isStudent && !nameLocked && !!fullName.trim() && !isVip;
         const { error } = await supabase
           .from("professionals")
           .update({
@@ -200,11 +203,13 @@ const StudentAccessCard = () => {
             active_profile_mode: effectiveMode,
             student_institution: isStudent ? institution.trim() : null,
             student_period: isStudent ? period.trim() : null,
-            full_name: fullName.trim() || undefined,
+            ...(nameLocked && !isVip ? {} : { full_name: fullName.trim() || undefined }),
+            ...(lockNameNow ? { student_name_locked: true } : {}),
             ...(effectiveMode === "student" ? { approved: false } : {}),
           } as any)
           .eq("user_id", user.id);
         if (error) throw error;
+        if (lockNameNow) setNameLocked(true);
       } else {
         const { error } = await supabase.from("professionals").insert({
           user_id: user.id,
@@ -219,6 +224,7 @@ const StudentAccessCard = () => {
           active_profile_mode: effectiveMode,
           student_institution: isStudent ? institution.trim() : null,
           student_period: isStudent ? period.trim() : null,
+          ...(isStudent && !isVip && fullName.trim() ? { student_name_locked: true } : {}),
         } as any);
         if (error) throw error;
         setHasProfRecord(true);
