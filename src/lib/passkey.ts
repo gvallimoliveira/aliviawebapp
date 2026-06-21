@@ -312,7 +312,7 @@ export async function enrollPasskey(opts: {
     userId: opts.userId,
     email: opts.email,
     credentialId,
-    prfSalt: prfOutput ? prfSalt.buffer : null,
+    prfSalt: prfOutput ? (prfSalt.buffer as ArrayBuffer) : null,
     iv: null,
     ciphertext: null,
     plainSession: null,
