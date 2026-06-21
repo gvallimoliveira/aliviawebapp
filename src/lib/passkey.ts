@@ -4,22 +4,19 @@
  * Fluxo:
  *  1. Após login normal (email/senha ou Google), o usuário pode registrar
  *     um passkey ligado a este dispositivo/navegador.
- *  2. No registro, criamos uma credencial WebAuthn (resident key) com
- *     verificação biométrica + extensão PRF (quando suportada). A partir do
- *     PRF derivamos uma chave AES-GCM que criptografa a sessão Supabase
- *     (access_token + refresh_token). Tudo é salvo em IndexedDB local.
+ *  2. No registro, criamos uma credencial WebAuthn com verificação
+ *     biométrica e guardamos uma sessão local em IndexedDB. O segredo só é
+ *     reutilizado após uma assertion WebAuthn com userVerification required.
  *  3. No próximo acesso (mesmo dispositivo), `unlockWithPasskey()` pede
- *     uma assertion (digital/face), decripta a sessão e chama
- *     `supabase.auth.setSession()`.
+ *     uma assertion (digital/face) e chama `supabase.auth.setSession()`.
  *
  * Importante: este recurso NÃO substitui o login inicial — ele só
  * desbloqueia rapidamente a sessão já estabelecida neste navegador.
  *
- * Quando PRF não está disponível (Safari antigo, alguns Android),
- * caímos num modo "assertion-gated": a sessão fica em IndexedDB sem
- * criptografia adicional, e exigimos uma assertion WebAuthn bem-sucedida
- * com `userVerification: 'required'` antes de devolvê-la. A segurança
- * passa a depender do isolamento de origem do IndexedDB.
+ * Observação: usamos o modo "assertion-gated" mesmo quando PRF existe.
+ * Isso permite atualizar o refresh_token após cada login/refresh sem pedir
+ * biometria de novo. Para quick unlock, confiabilidade é essencial: se o
+ * refresh_token salvo ficar antigo/revogado, o unlock expira.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +34,10 @@ type StoredRecord = {
   ciphertext: ArrayBuffer | null;
   plainSession: { access_token: string; refresh_token: string } | null;
   createdAt: number;
+};
+
+type PrfClientExtensionResults = AuthenticationExtensionsClientOutputs & {
+  prf?: { results?: { first?: ArrayBuffer } };
 };
 
 // ---------- IndexedDB helpers ----------
@@ -136,6 +137,15 @@ async function decryptSession(
   return JSON.parse(new TextDecoder().decode(pt));
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+function getPrfFirst(assertion: PublicKeyCredential): ArrayBuffer | undefined {
+  const ext = assertion.getClientExtensionResults() as PrfClientExtensionResults;
+  return ext.prf?.results?.first;
+}
+
 // ---------- Public API ----------
 export function isPasskeySupported(): boolean {
   return (
@@ -192,13 +202,9 @@ export async function removeEnrolledPasskey(): Promise<void> {
 /**
  * Atualiza os tokens guardados no passkey local (sem pedir biometria).
  *
- * - Modo fallback (sem PRF): re-grava os tokens em plain.
- * - Modo PRF: não conseguimos re-encriptar sem uma assertion (precisaríamos
- *   da chave derivada do PRF, que só sai de um navigator.credentials.get()).
- *   Mas como mudamos o signOut para escopo LOCAL quando há passkey, o
- *   refresh_token original continua válido no servidor — então o ciphertext
- *   antigo segue funcionando. Aqui apenas atualizamos o e-mail/userId, caso
- *   tenham mudado.
+ * Re-grava os tokens atuais no registro local. Se existir um registro antigo
+ * no modo PRF, ele é migrado para o modo assertion-gated; essa migração é
+ * proposital para impedir o erro recorrente de "passkey expirado" após logout.
  */
 export async function refreshStoredPasskeySession(session: {
   access_token: string;
@@ -207,12 +213,11 @@ export async function refreshStoredPasskeySession(session: {
   try {
     const rec = await dbGet();
     if (!rec) return;
-    if (rec.prfSalt) {
-      // PRF: não re-encriptamos (sem assertion). Nada a fazer.
-      return;
-    }
     await dbPut({
       ...rec,
+      prfSalt: null,
+      iv: null,
+      ciphertext: null,
       plainSession: {
         access_token: session.access_token,
         refresh_token: session.refresh_token,
@@ -327,8 +332,8 @@ export async function enrollPasskey(opts: {
         extensions: { prf: {} } as AuthenticationExtensionsClientInputs,
       },
     })) as PublicKeyCredential;
-  } catch (e: any) {
-    return { ok: false, error: e?.message || "Registro cancelado." };
+  } catch (e: unknown) {
+    return { ok: false, error: getErrorMessage(e, "Registro cancelado.") };
   }
 
   if (!credential)
@@ -336,63 +341,19 @@ export async function enrollPasskey(opts: {
 
   const credentialId = credential.rawId;
 
-  // Tenta usar PRF: faz um get() imediato para derivar o segredo PRF.
-  const prfSalt = randomBytes(32);
-  let prfOutput: ArrayBuffer | null = null;
-  try {
-    const assertion = (await navigator.credentials.get({
-      publicKey: {
-        challenge: bs(randomBytes(32)),
-        rpId,
-        timeout: 60_000,
-        userVerification: "required",
-        allowCredentials: [
-          {
-            id: credentialId,
-            type: "public-key",
-            transports: ["internal"],
-          },
-        ],
-        extensions: {
-          prf: { eval: { first: prfSalt } },
-        } as AuthenticationExtensionsClientInputs,
-      },
-    })) as PublicKeyCredential | null;
-
-    const ext = assertion?.getClientExtensionResults() as any;
-    const first = ext?.prf?.results?.first as ArrayBuffer | undefined;
-    if (first && first.byteLength >= 16) {
-      prfOutput = first;
-    }
-  } catch {
-    // PRF não disponível -> fallback
-  }
-
   const record: StoredRecord = {
     userId: opts.userId,
     email: opts.email,
     credentialId,
-    prfSalt: prfOutput ? (prfSalt.buffer as ArrayBuffer) : null,
+    prfSalt: null,
     iv: null,
     ciphertext: null,
-    plainSession: null,
+    plainSession: {
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    },
     createdAt: Date.now(),
   };
-
-  if (prfOutput) {
-    const key = await deriveAesKeyFromPrf(prfOutput);
-    const { iv, ciphertext } = await encryptSession(key, {
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-    });
-    record.iv = iv;
-    record.ciphertext = ciphertext;
-  } else {
-    record.plainSession = {
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-    };
-  }
 
   await dbPut(record);
   markEnrolledFor(opts.userId);
@@ -408,6 +369,8 @@ export async function unlockWithPasskey(): Promise<
 > {
   if (!isPasskeySupported())
     return { ok: false, error: "WebAuthn não suportado." };
+  if (isInCrossOriginFrame())
+    return { ok: false, error: "Abra o app em uma aba normal para usar biometria." };
   const rec = await dbGet();
   if (!rec) return { ok: false, error: "Nenhum passkey registrado." };
 
@@ -442,8 +405,7 @@ export async function unlockWithPasskey(): Promise<
     let refresh_token: string;
 
     if (rec.prfSalt && rec.iv && rec.ciphertext) {
-      const ext = assertion.getClientExtensionResults() as any;
-      const first = ext?.prf?.results?.first as ArrayBuffer | undefined;
+      const first = getPrfFirst(assertion);
       if (!first)
         return {
           ok: false,
@@ -471,7 +433,7 @@ export async function unlockWithPasskey(): Promise<
       return {
         ok: false,
         error:
-          "Sua sessão expirou. Entre uma vez com email/senha — o passkey continua ativo e voltará a funcionar em seguida.",
+          "Sua biometria precisa ser renovada. Entre uma vez com email/senha e ela voltará a funcionar automaticamente.",
       };
     }
 
@@ -485,15 +447,15 @@ export async function unlockWithPasskey(): Promise<
         (newAccess !== access_token || newRefresh !== refresh_token)
       ) {
         if (rec.prfSalt && rec.iv && rec.ciphertext) {
-          const ext = assertion.getClientExtensionResults() as any;
-          const first = ext?.prf?.results?.first as ArrayBuffer | undefined;
+          const first = getPrfFirst(assertion);
           if (first) {
-            const key = await deriveAesKeyFromPrf(first);
-            const { iv, ciphertext } = await encryptSession(key, {
-              access_token: newAccess,
-              refresh_token: newRefresh,
+            await dbPut({
+              ...rec,
+              prfSalt: null,
+              iv: null,
+              ciphertext: null,
+              plainSession: { access_token: newAccess, refresh_token: newRefresh },
             });
-            await dbPut({ ...rec, iv, ciphertext });
           }
         } else {
           await dbPut({
@@ -510,7 +472,7 @@ export async function unlockWithPasskey(): Promise<
     }
 
     return { ok: true };
-  } catch (e: any) {
-    return { ok: false, error: e?.message || "Falha na autenticação." };
+  } catch (e: unknown) {
+    return { ok: false, error: getErrorMessage(e, "Falha na autenticação.") };
   }
 }

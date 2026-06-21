@@ -1,3 +1,5 @@
 {
-  "requiresReinstall": false
+  "requiresReinstall": true,
+  "reinstallReason": "Corrigimos o login biométrico do PWA e removemos o comportamento que expirava o passkey ao sair.",
+  "releaseNotes": "Correção crítica do login biométrico"
 }
