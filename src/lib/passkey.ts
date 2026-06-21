@@ -438,11 +438,6 @@ export async function unlockWithPasskey(): Promise<
           const ext = assertion.getClientExtensionResults() as any;
           const first = ext?.prf?.results?.first as ArrayBuffer | undefined;
           if (first) {
-            const key = await deriveAesKeyFromPrf(first);
-            const { iv, ciphertext } = await encryptSession(key, {
-              access_token: newAccess,
-              refresh_token: newRefresh,
-            });
             await dbPut({
               ...rec,
               prfSalt: null,
