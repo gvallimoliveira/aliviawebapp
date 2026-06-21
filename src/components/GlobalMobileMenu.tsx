@@ -238,6 +238,10 @@ const GlobalMobileMenu = () => {
               <Stethoscope className="h-4 w-4" />
               {L.professionals}
             </button>
+            <button onClick={() => go("/academico")} className={itemCls}>
+              <GraduationCap className="h-4 w-4" />
+              {L.academic}
+            </button>
             <button onClick={() => go("/clinica")} className={itemCls}>
               <Building2 className="h-4 w-4" />
               {L.clinic}

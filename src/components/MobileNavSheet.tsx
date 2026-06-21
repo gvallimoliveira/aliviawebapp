@@ -75,9 +75,9 @@ const MobileNavSheet = ({ open: controlledOpen, onOpenChange, hideTrigger, trigg
   const groupCls = "px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70";
 
   const L = {
-    pt: { dashboard: "Meu Painel", home: "Início", explore: "Conheça o Aliv.iA", patients: "Para Pacientes", clinic: "Aliv.iA Clínica", account: "Conta & Utilidades", myAccount: "Minha Conta", install: "Instalar como App", lang: "Idioma: Português", signout: "Sair" },
-    en: { dashboard: "My Dashboard", home: "Home", explore: "Discover Aliv.iA", patients: "For Patients", clinic: "Aliv.iA Clinic", account: "Account & Utilities", myAccount: "My Account", install: "Install as App", lang: "Language: English", signout: "Sign out" },
-    es: { dashboard: "Mi Panel", home: "Inicio", explore: "Conoce Aliv.iA", patients: "Para Pacientes", clinic: "Aliv.iA Clínica", account: "Cuenta y Utilidades", myAccount: "Mi Cuenta", install: "Instalar como App", lang: "Idioma: Español", signout: "Salir" },
+    pt: { dashboard: "Meu Painel", home: "Início", explore: "Conheça o Aliv.iA", patients: "Para Pacientes", professionals: "Para Profissionais", academic: "Aliv.iA Acadêmico", clinic: "Aliv.iA Clínica", account: "Conta & Utilidades", myAccount: "Minha Conta", install: "Instalar como App", lang: "Idioma: Português", signout: "Sair" },
+    en: { dashboard: "My Dashboard", home: "Home", explore: "Discover Aliv.iA", patients: "For Patients", professionals: "For Professionals", academic: "Aliv.iA Academic", clinic: "Aliv.iA Clinic", account: "Account & Utilities", myAccount: "My Account", install: "Install as App", lang: "Language: English", signout: "Sign out" },
+    es: { dashboard: "Mi Panel", home: "Inicio", explore: "Conoce Aliv.iA", patients: "Para Pacientes", professionals: "Para Profesionales", academic: "Aliv.iA Académico", clinic: "Aliv.iA Clínica", account: "Cuenta y Utilidades", myAccount: "Mi Cuenta", install: "Instalar como App", lang: "Idioma: Español", signout: "Salir" },
   }[language as "pt" | "en" | "es"] || ({} as any);
 
   const langNext = language === "pt" ? "EN" : language === "en" ? "ES" : "PT";
