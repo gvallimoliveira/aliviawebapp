@@ -135,6 +135,7 @@ const StudentAccessCard = () => {
         setFullName(data.full_name || "");
         setInstitution(data.student_institution || "");
         setPeriod(data.student_period || "");
+        setNameLocked(!!data.student_name_locked);
         setHasProAccess(
           data.subscription_status === "active"
           || data.is_partner === true
