@@ -29,23 +29,45 @@ export default function PasskeyEnrollPrompt() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    (async () => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    // Never compete with other primary surfaces (profile selector, onboarding
+    // tour, any open modal). Show one popup at a time — wait until the screen
+    // is clear, then open.
+    const isScreenBusy = () => {
+      if (typeof document === "undefined") return true;
+      const path = window.location.pathname;
+      // Profile selector lives at the gateway root.
+      if (path === "/" || path === "/index") return true;
+      // Any open Radix dialog/sheet/alert dialog blocks us.
+      if (document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) return true;
+      // Onboarding tour overlay marker.
+      if (document.querySelector('[data-onboarding-step], [data-onboarding-overlay]')) return true;
+      return false;
+    };
+
+    const tryOpen = async () => {
+      if (cancelled) return;
       try {
         if (!shouldShowEnrollPrompt(user.id)) return;
         const platformOk = await isPlatformAuthenticatorAvailable();
         if (!platformOk) return;
         const already = await hasEnrolledPasskey();
         if (already) return;
-        // Pequeno delay para não atropelar a tela pós-login
-        setTimeout(() => {
-          if (!cancelled) setOpen(true);
-        }, 1500);
+        if (isScreenBusy()) {
+          timer = setTimeout(tryOpen, 2000);
+          return;
+        }
+        if (!cancelled) setOpen(true);
       } catch {
         /* noop */
       }
-    })();
+    };
+
+    timer = setTimeout(tryOpen, 1500);
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
     };
   }, [user]);
 
