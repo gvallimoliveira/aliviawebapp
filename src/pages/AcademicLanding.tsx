@@ -20,6 +20,7 @@ import {
   GraduationCap, ArrowRight, ArrowDown, Brain, Sparkles, BookOpen,
   ClipboardList, FlaskConical, Compass, ShieldAlert, Stethoscope,
   Check, Lightbulb, FileText, Activity, MessageCircleQuestion, Workflow,
+  UserPlus,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
