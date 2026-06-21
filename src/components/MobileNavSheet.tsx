@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  BookOpen, Building2, Globe, Heart, HelpCircle, Home, LayoutDashboard,
+  BookOpen, Building2, Globe, GraduationCap, Heart, HelpCircle, Home, LayoutDashboard,
   LogOut, Menu, ShieldCheck, Smartphone, Stethoscope, UserCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
