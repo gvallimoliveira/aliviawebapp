@@ -116,7 +116,7 @@ const StudentAccessCard = () => {
       const [profRes, vipRes] = await Promise.all([
         supabase
           .from("professionals")
-          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, subscription_status, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
+          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, student_name_locked, subscription_status, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
           .eq("user_id", user.id)
           .maybeSingle(),
         user.email
