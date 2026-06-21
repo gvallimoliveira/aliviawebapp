@@ -45,7 +45,7 @@ const ContextSelectionModal = () => {
 
   return (
     <Dialog open={needsContextSelection} onOpenChange={(open) => { if (!open) dismissContextSelection(); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent data-profile-context-selector="true" className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl">{labels.title}</DialogTitle>
           <DialogDescription>{labels.desc}</DialogDescription>
