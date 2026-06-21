@@ -246,10 +246,10 @@ export async function enrollPasskey(opts: {
   try {
     credential = (await navigator.credentials.create({
       publicKey: {
-        challenge,
+        challenge: bs(challenge),
         rp: { id: rpId, name: "Aliv.iA" },
         user: {
-          id: userIdBytes,
+          id: bs(userIdBytes),
           name: opts.email ?? opts.userId,
           displayName: opts.displayName ?? opts.email ?? "Usuário Aliv.iA",
         },
