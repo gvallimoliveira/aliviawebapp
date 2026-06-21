@@ -245,6 +245,12 @@ export async function enrollPasskey(opts: {
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!isPasskeySupported())
     return { ok: false, error: "WebAuthn não suportado neste navegador." };
+  if (isInCrossOriginFrame())
+    return {
+      ok: false,
+      error:
+        "A biometria não pode ser ativada dentro do preview/iframe. Abra o app em uma aba normal (ex.: aliviawebapp.com.br) e tente novamente.",
+    };
 
   const {
     data: { session },
