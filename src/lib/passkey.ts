@@ -465,13 +465,13 @@ export async function unlockWithPasskey(): Promise<
       refresh_token,
     });
     if (error || !data.session) {
-      // Sessão expirou — limpa o registro para forçar novo login.
-      await dbClear();
-      if (rec.userId) clearEnrolledFor(rec.userId);
+      // Sessão expirou no servidor. NÃO apagamos o passkey — após o
+      // próximo login normal o AuthContext atualiza os tokens guardados
+      // (refreshStoredPasskeySession) e o quick-unlock volta a funcionar.
       return {
         ok: false,
         error:
-          "Sua sessão expirou. Faça login com email/senha e reative o passkey.",
+          "Sua sessão expirou. Entre uma vez com email/senha — o passkey continua ativo e voltará a funcionar em seguida.",
       };
     }
 
