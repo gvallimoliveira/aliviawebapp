@@ -328,63 +328,19 @@ export async function enrollPasskey(opts: {
 
   const credentialId = credential.rawId;
 
-  // Tenta usar PRF: faz um get() imediato para derivar o segredo PRF.
-  const prfSalt = randomBytes(32);
-  let prfOutput: ArrayBuffer | null = null;
-  try {
-    const assertion = (await navigator.credentials.get({
-      publicKey: {
-        challenge: bs(randomBytes(32)),
-        rpId,
-        timeout: 60_000,
-        userVerification: "required",
-        allowCredentials: [
-          {
-            id: credentialId,
-            type: "public-key",
-            transports: ["internal"],
-          },
-        ],
-        extensions: {
-          prf: { eval: { first: prfSalt } },
-        } as AuthenticationExtensionsClientInputs,
-      },
-    })) as PublicKeyCredential | null;
-
-    const ext = assertion?.getClientExtensionResults() as any;
-    const first = ext?.prf?.results?.first as ArrayBuffer | undefined;
-    if (first && first.byteLength >= 16) {
-      prfOutput = first;
-    }
-  } catch {
-    // PRF não disponível -> fallback
-  }
-
   const record: StoredRecord = {
     userId: opts.userId,
     email: opts.email,
     credentialId,
-    prfSalt: prfOutput ? (prfSalt.buffer as ArrayBuffer) : null,
+    prfSalt: null,
     iv: null,
     ciphertext: null,
-    plainSession: null,
+    plainSession: {
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    },
     createdAt: Date.now(),
   };
-
-  if (prfOutput) {
-    const key = await deriveAesKeyFromPrf(prfOutput);
-    const { iv, ciphertext } = await encryptSession(key, {
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-    });
-    record.iv = iv;
-    record.ciphertext = ciphertext;
-  } else {
-    record.plainSession = {
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-    };
-  }
 
   await dbPut(record);
   markEnrolledFor(opts.userId);
