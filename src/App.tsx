@@ -17,6 +17,7 @@ import { ClinicProvider } from "@/contexts/ClinicContext";
 import { VoiceRecorderProvider } from "@/contexts/VoiceRecorderContext";
 import RealtimeNotifier from "@/components/RealtimeNotifier";
 import ManualAssessmentResumer from "@/components/dashboard/ManualAssessmentResumer";
+import PasskeyEnrollPrompt from "@/components/auth/PasskeyEnrollPrompt";
 
 const Gateway = lazy(() => import("./pages/Gateway"));
 const Auth = lazy(() => import("./pages/Auth"));
