@@ -121,6 +121,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       hasAuthUpdate.current = true;
       applySession(nextSession);
       finalizeReady();
+
+      // Mantém o passkey "vivo": sempre que recebemos tokens novos
+      // (login normal, refresh automático), atualizamos o registro
+      // criptografado em IndexedDB. Sem isso, o refresh_token guardado
+      // na biometria fica defasado e o próximo unlock falha com
+      // "sua sessão expirou".
+      if (
+        nextSession?.access_token &&
+        nextSession.refresh_token &&
+        (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED")
+      ) {
+        void refreshStoredPasskeySession({
+          access_token: nextSession.access_token,
+          refresh_token: nextSession.refresh_token,
+        });
+      }
     };
 
     const {
