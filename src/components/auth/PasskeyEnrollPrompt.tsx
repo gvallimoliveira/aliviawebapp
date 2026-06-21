@@ -115,7 +115,7 @@ export default function PasskeyEnrollPrompt() {
         toast.success(L.success);
         setOpen(false);
       } else {
-        toast.error(res.error || L.error);
+        toast.error((res as { error?: string }).error || L.error);
       }
     } finally {
       setBusy(false);
