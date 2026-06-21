@@ -92,6 +92,7 @@ const App = () => {
               <GlobalMobileMenu />
               <RealtimeNotifier />
               <ManualAssessmentResumer />
+              <PasskeyEnrollPrompt />
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Gateway />} />
