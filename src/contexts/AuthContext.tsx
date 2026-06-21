@@ -221,8 +221,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Se existe um passkey local, fazemos signOut apenas LOCAL.
+    // Um signOut global revoga o refresh_token no servidor — o que invalida
+    // a sessão criptografada guardada na biometria e quebra o quick-unlock
+    // no próximo acesso ("sua sessão expirou"). Em modo local, o refresh
+    // token continua válido e o passkey consegue restaurar a sessão.
+    let scope: "global" | "local" = "global";
     try {
-      await supabase.auth.signOut();
+      if (await hasEnrolledPasskey()) scope = "local";
+    } catch {
+      /* noop */
+    }
+    try {
+      await supabase.auth.signOut({ scope });
     } finally {
       hasAuthUpdate.current = true;
       clearLocalAuthStorage();
