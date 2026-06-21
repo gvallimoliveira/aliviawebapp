@@ -119,6 +119,7 @@ const COPY = {
       { icon: BookOpen, title: "High-quality evidence", desc: "Knowledge base filtered by PEDro ≥ 7 and international guidelines. Study from what really backs evidence-based practice." },
       { icon: Workflow, title: "Gold-standard assessment flow", desc: "Practice the full flow: structured anamnesis → red flags → pain map → ROM (goniometry) values → dynamometry with strength values → validated questionnaires → hypothesis → treatment." },
       { icon: Activity, title: "Theory to practice, faster", desc: "Every case uses the same tools professionals use with real patients. You arrive at internship knowing what to do." },
+      { icon: UserPlus, title: "Register your internship patients", desc: "Add the patients you follow during internship to receive AI clinical impression with diagnostic hypothesis, and chat in the Clinical Chat with the real case attached — understand the picture deeply, get evidence-based treatment suggestions and clear any doubt on the spot." },
     ],
     disclaimerTitle: "Student Access: what changes vs Professional",
     disclaimerIntro: "Alivia Academic unlocks the same tools as the Professional plan, with key rules to protect you, patients and the profession:",
