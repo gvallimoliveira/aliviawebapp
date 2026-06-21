@@ -37,6 +37,7 @@ const StudentAccessCard = () => {
   const [isVip, setIsVip] = useState(false);
   const [hasProAccess, setHasProAccess] = useState(false);
   const [nameLocked, setNameLocked] = useState(false);
+  const [originalName, setOriginalName] = useState("");
   const [fullName, setFullName] = useState("");
   const [institution, setInstitution] = useState("");
   const [period, setPeriod] = useState("");
@@ -49,8 +50,8 @@ const StudentAccessCard = () => {
         toggle: "Sou estudante de fisioterapia",
         toggle_hint: "Desative para cadastrar seu CREFITO e ter acesso ao painel exclusivamente profissional",
         name: "Nome completo",
-        name_lock_warn: "Atenção: por segurança contra compartilhamento de assinatura, você só pode editar seu nome no modo acadêmico 1 (uma) vez. Após salvar, o nome ficará bloqueado e aparecerá fixo nos PDFs e links públicos.",
-        name_locked: "Nome bloqueado. O nome usado em relatórios acadêmicos não pode mais ser alterado para evitar compartilhamento de assinatura. Em caso de erro real (ex.: troca de nome civil), fale com o suporte.",
+        name_lock_warn: "Atenção: por segurança contra compartilhamento de assinatura, você pode editar seu nome no modo acadêmico apenas 1 (uma) vez após o cadastro inicial (para corrigir erro de digitação). Após essa ratificação, o nome ficará bloqueado e aparecerá fixo nos PDFs e links públicos.",
+        name_locked: "Nome bloqueado. Você já utilizou a ratificação permitida. O nome em relatórios acadêmicos não pode mais ser alterado para evitar compartilhamento de assinatura. Em caso de erro real (ex.: troca de nome civil), fale com o suporte.",
         institution: "Instituição de ensino",
         period: "Período atual",
         period_placeholder: "Ex.: 5º período",
@@ -82,8 +83,8 @@ const StudentAccessCard = () => {
         toggle: "I am a physiotherapy student",
         toggle_hint: "Disable to register your CREFITO and access the exclusively professional panel",
         name: "Full name",
-        name_lock_warn: "Warning: to prevent subscription sharing, you can edit your name in academic mode only once. After saving, it will be locked and shown fixed on PDFs and public links.",
-        name_locked: "Name locked. The name used on academic reports can no longer be changed to prevent subscription sharing. For a real correction (e.g. legal name change), contact support.",
+        name_lock_warn: "Warning: to prevent subscription sharing, you may edit your name in academic mode only once after the initial registration (to fix typos). After this single ratification, the name will be locked and shown fixed on PDFs and public links.",
+        name_locked: "Name locked. You have already used the allowed ratification. The name on academic reports can no longer be changed to prevent subscription sharing. For a real correction (e.g. legal name change), contact support.",
         institution: "Institution",
         period: "Current term",
         period_placeholder: "e.g. 5th term",
@@ -133,6 +134,7 @@ const StudentAccessCard = () => {
         setActiveMode((data.active_profile_mode ?? (data.is_student ? "student" : "professional")) as "professional" | "student");
         setHasCrefito(!!(data.crefito && String(data.crefito).trim().length > 0));
         setFullName(data.full_name || "");
+        setOriginalName(data.full_name || "");
         setInstitution(data.student_institution || "");
         setPeriod(data.student_period || "");
         setNameLocked(!!data.student_name_locked);
@@ -195,7 +197,18 @@ const StudentAccessCard = () => {
         // can flip the switch without losing their professional registration.
         // Name lock: once student_name_locked=true the academic full_name
         // becomes immutable here (prevents subscription sharing by name swap).
-        const lockNameNow = isStudent && !nameLocked && !!fullName.trim() && !isVip;
+        // Name lock rule: the student can rectify the academic name ONCE
+        // (typo fix). We only mark it locked when the name was actually
+        // changed compared to the previously saved value — that consumes the
+        // single allowed ratification. The first save (when there was no
+        // previous name) does NOT lock, so the user keeps one editable
+        // opportunity afterward.
+        const nameChanged =
+          isStudent &&
+          !!fullName.trim() &&
+          !!originalName.trim() &&
+          fullName.trim() !== originalName.trim();
+        const lockNameNow = nameChanged && !nameLocked && !isVip;
         const { error } = await supabase
           .from("professionals")
           .update({
@@ -210,6 +223,7 @@ const StudentAccessCard = () => {
           .eq("user_id", user.id);
         if (error) throw error;
         if (lockNameNow) setNameLocked(true);
+        if (!nameLocked && fullName.trim()) setOriginalName(fullName.trim());
       } else {
         const { error } = await supabase.from("professionals").insert({
           user_id: user.id,
@@ -224,11 +238,11 @@ const StudentAccessCard = () => {
           active_profile_mode: effectiveMode,
           student_institution: isStudent ? institution.trim() : null,
           student_period: isStudent ? period.trim() : null,
-          ...(isStudent && !isVip && fullName.trim() ? { student_name_locked: true } : {}),
         } as any);
         if (error) throw error;
         setHasProfRecord(true);
-        if (isStudent && !isVip && fullName.trim()) setNameLocked(true);
+        // First save creates the name — keep editable for one ratification.
+        if (fullName.trim()) setOriginalName(fullName.trim());
       }
       setActiveMode(effectiveMode);
       toast({ title: isStudent ? t.saved : t.disabled });
