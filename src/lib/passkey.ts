@@ -356,6 +356,8 @@ export async function unlockWithPasskey(): Promise<
 > {
   if (!isPasskeySupported())
     return { ok: false, error: "WebAuthn não suportado." };
+  if (isInCrossOriginFrame())
+    return { ok: false, error: "Abra o app em uma aba normal para usar biometria." };
   const rec = await dbGet();
   if (!rec) return { ok: false, error: "Nenhum passkey registrado." };
 
@@ -419,7 +421,7 @@ export async function unlockWithPasskey(): Promise<
       return {
         ok: false,
         error:
-          "Sua sessão expirou. Entre uma vez com email/senha — o passkey continua ativo e voltará a funcionar em seguida.",
+          "Sua biometria precisa ser renovada. Entre uma vez com email/senha e ela voltará a funcionar automaticamente.",
       };
     }
 
@@ -441,7 +443,13 @@ export async function unlockWithPasskey(): Promise<
               access_token: newAccess,
               refresh_token: newRefresh,
             });
-            await dbPut({ ...rec, iv, ciphertext });
+            await dbPut({
+              ...rec,
+              prfSalt: null,
+              iv: null,
+              ciphertext: null,
+              plainSession: { access_token: newAccess, refresh_token: newRefresh },
+            });
           }
         } else {
           await dbPut({
