@@ -238,11 +238,11 @@ const StudentAccessCard = () => {
           active_profile_mode: effectiveMode,
           student_institution: isStudent ? institution.trim() : null,
           student_period: isStudent ? period.trim() : null,
-          ...(isStudent && !isVip && fullName.trim() ? { student_name_locked: true } : {}),
         } as any);
         if (error) throw error;
         setHasProfRecord(true);
-        if (isStudent && !isVip && fullName.trim()) setNameLocked(true);
+        // First save creates the name — keep editable for one ratification.
+        if (fullName.trim()) setOriginalName(fullName.trim());
       }
       setActiveMode(effectiveMode);
       toast({ title: isStudent ? t.saved : t.disabled });
