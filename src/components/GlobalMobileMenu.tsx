@@ -14,6 +14,7 @@ import {
   Heart,
   Building2,
   Smartphone,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -55,6 +56,7 @@ const LABELS = {
     groupExplore: "Conheça o Aliv.iA",
     patients: "Para Pacientes",
     professionals: "Para Profissionais",
+    academic: "Aliv.iA Acadêmico",
     clinic: "Aliv.iA Clínica",
     blog: "Blog",
     groupAccount: "Conta & Utilidades",
@@ -73,6 +75,7 @@ const LABELS = {
     groupExplore: "Discover Aliv.iA",
     patients: "For Patients",
     professionals: "For Professionals",
+    academic: "Aliv.iA Academic",
     clinic: "Aliv.iA Clinic",
     blog: "Blog",
     groupAccount: "Account & Utilities",
@@ -91,6 +94,7 @@ const LABELS = {
     groupExplore: "Conoce Aliv.iA",
     patients: "Para Pacientes",
     professionals: "Para Profesionales",
+    academic: "Aliv.iA Académico",
     clinic: "Aliv.iA Clínica",
     blog: "Blog",
     groupAccount: "Cuenta y Utilidades",
@@ -233,6 +237,10 @@ const GlobalMobileMenu = () => {
             <button onClick={() => go("/profissionais")} className={itemCls}>
               <Stethoscope className="h-4 w-4" />
               {L.professionals}
+            </button>
+            <button onClick={() => go("/academico")} className={itemCls}>
+              <GraduationCap className="h-4 w-4" />
+              {L.academic}
             </button>
             <button onClick={() => go("/clinica")} className={itemCls}>
               <Building2 className="h-4 w-4" />
