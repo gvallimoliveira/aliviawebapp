@@ -1,5 +1,5 @@
 // Shared constants for the Clinical Agent niches
-export const AGENT_NICHES: { slug: string; label: string }[] = [
+export const AGENT_NICHES: { slug: string; label: string; description?: string }[] = [
   // Núcleo original
   { slug: "tendinopatias_geral", label: "Tendinopatias (geral)" },
   { slug: "tendinopatia_patelar", label: "Tendinopatia patelar" },
@@ -52,7 +52,11 @@ export const AGENT_NICHES: { slug: string; label: string }[] = [
   { slug: "bursite_trocanterica_tendinopatia_glutea", label: "Bursite trocantérica / tendinopatia glútea" },
 
   // Cotovelo — epicondilopatias + isométricos
-  { slug: "epicondilopatias_isometricos_fisiologia", label: "Epicondilopatias (tennis + golfer's elbow) × isométricos & fisiologia" },
+  {
+    slug: "epicondilopatias_isometricos_fisiologia",
+    label: "Epicondilopatias (tennis + golfer's elbow) × isométricos & fisiologia",
+    description: "Epicondilopatias lateral e medial (tennis elbow e golfer's elbow) cruzadas com exercício isométrico, analgesia induzida por exercício, fisiologia tendínea, inibição cortical/motora, adaptação de colágeno e progressão de carga.",
+  },
 ];
 
 export const AGENT_NICHE_LABEL: Record<string, string> = Object.fromEntries(
