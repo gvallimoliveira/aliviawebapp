@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen } from "lucide-react";
+import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { AGENT_NICHES, AGENT_NICHE_LABEL } from "@/lib/agentNiches";
 
@@ -55,6 +55,7 @@ export default function AdminAgentKnowledge() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [ingesting, setIngesting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const selectedIngestNiche = useMemo(
     () => AGENT_NICHES.find((n) => n.slug === ingestNiche),
@@ -97,7 +98,7 @@ export default function AdminAgentKnowledge() {
       if (data?.error) throw new Error(data.error);
       toast({
         title: "Busca concluída",
-        description: `${data.inserted} artigo(s) adicionados à fila de revisão (de ${data.candidates} candidatos).`,
+        description: `${data.inserted} verificado(s) e adicionado(s) · ${data.rejectedUnverified ?? 0} descartado(s) por não serem confirmáveis no PubMed/Crossref (de ${data.candidates} candidatos).`,
       });
       setStatus("pending");
       setNicheFilter(ingestNiche);
@@ -106,6 +107,29 @@ export default function AdminAgentKnowledge() {
       toast({ title: "Erro na ingestão", description: e.message, variant: "destructive" });
     } finally {
       setIngesting(false);
+    }
+  };
+
+  const handleVerifyAll = async () => {
+    const scopeLabel = status === "approved" ? "aprovados" : "pendentes";
+    const nicheLabel = nicheFilter === "all" ? "todos os nichos" : (AGENT_NICHES.find(n => n.slug === nicheFilter)?.label || nicheFilter);
+    if (!confirm(`Verificar ${scopeLabel} de ${nicheLabel} no PubMed/Crossref?\n\nArtigos que não puderem ser confirmados serão REMOVIDOS automaticamente. Pode levar alguns minutos.`)) return;
+    setVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("agent-knowledge", {
+        body: { action: "verify", scope: status, niche: nicheFilter !== "all" ? nicheFilter : undefined },
+      });
+      if (error) throw new Error(await agentErrorMessage(error, "Falha ao verificar artigos."));
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: "Verificação concluída",
+        description: `${data.checked} checados · ${data.verified} confirmados · ${data.removed} removidos · ${data.updated} links atualizados.`,
+      });
+      fetchList();
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -164,7 +188,7 @@ export default function AdminAgentKnowledge() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            A IA propõe ~6 candidatos por nicho (RCTs/RS/meta-análises com PEDro ≥ 7). Todos entram como <strong>pendentes</strong> para sua revisão.
+            A IA propõe ~6 candidatos por nicho (RCTs/RS/meta-análises com PEDro ≥ 7). Cada candidato é <strong>verificado no PubMed/Crossref antes de ser salvo</strong> — estudos que não puderem ser confirmados são descartados automaticamente. Os aprovados entram como <strong>pendentes</strong> para sua revisão.
           </p>
         </CardContent>
       </Card>
@@ -177,7 +201,7 @@ export default function AdminAgentKnowledge() {
               <BookOpen className="h-5 w-5 text-primary" />
               Base de conhecimento ({counts.total})
             </CardTitle>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Select value={nicheFilter} onValueChange={setNicheFilter}>
                 <SelectTrigger className="w-[220px]">
                   <SelectValue />
@@ -189,6 +213,10 @@ export default function AdminAgentKnowledge() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" onClick={handleVerifyAll} disabled={verifying || loading} className="gap-2">
+                {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                {verifying ? "Verificando..." : "Verificar e limpar"}
+              </Button>
             </div>
           </div>
           <Tabs value={status} onValueChange={(v) => setStatus(v as any)} className="mt-3">
