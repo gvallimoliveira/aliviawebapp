@@ -237,14 +237,27 @@ serve(async (req) => {
     if (action === "list") {
       const status = body.status === "approved" ? true : body.status === "pending" ? false : null;
       let q = adminClient.from("knowledge_articles")
-        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, source_url, approved, created_at")
+        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, source_url, approved, is_favorite, created_at")
+        .order("is_favorite", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(200);
       if (status !== null) q = q.eq("approved", status);
       if (body.niche) q = q.contains("niche_tags", [body.niche]);
+      if (body.favoritesOnly) q = q.eq("is_favorite", true);
       const { data, error } = await q;
       if (error) throw error;
       return new Response(JSON.stringify({ articles: data || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- FAVORITE ----------
+    if (action === "favorite") {
+      const { error } = await adminClient.from("knowledge_articles")
+        .update({ is_favorite: !!body.value, updated_at: new Date().toISOString() })
+        .eq("id", body.id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

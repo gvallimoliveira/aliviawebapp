@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen, ShieldCheck } from "lucide-react";
+import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen, ShieldCheck, Star } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { AGENT_NICHES, AGENT_NICHE_LABEL } from "@/lib/agentNiches";
 
@@ -24,6 +24,7 @@ interface Article {
   doi: string | null;
   source_url: string | null;
   approved: boolean;
+  is_favorite?: boolean;
   created_at: string;
 }
 
@@ -51,6 +52,7 @@ export default function AdminAgentKnowledge() {
   const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<"pending" | "approved">("pending");
   const [nicheFilter, setNicheFilter] = useState<string>("all");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [ingestNiche, setIngestNiche] = useState<string>(AGENT_NICHES[0].slug);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,7 +69,7 @@ export default function AdminAgentKnowledge() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("agent-knowledge", {
-        body: { action: "list", status, niche: nicheFilter !== "all" ? nicheFilter : undefined },
+        body: { action: "list", status, niche: nicheFilter !== "all" ? nicheFilter : undefined, favoritesOnly: favoritesOnly || undefined },
       });
       if (error) throw new Error(error.message || "Falha ao consultar artigos");
       if (data?.error) throw new Error(data.error);
@@ -80,7 +82,22 @@ export default function AdminAgentKnowledge() {
     }
   };
 
-  useEffect(() => { if (!authLoading && user) fetchList(); /* eslint-disable-next-line */ }, [status, nicheFilter, authLoading, user?.id]);
+  useEffect(() => { if (!authLoading && user) fetchList(); /* eslint-disable-next-line */ }, [status, nicheFilter, favoritesOnly, authLoading, user?.id]);
+
+  const handleToggleFavorite = async (id: string, current: boolean) => {
+    // Optimistic update
+    setArticles((prev) => prev.map((x) => x.id === id ? { ...x, is_favorite: !current } : x));
+    try {
+      const { error } = await supabase.functions.invoke("agent-knowledge", {
+        body: { action: "favorite", id, value: !current },
+      });
+      if (error) throw error;
+    } catch (e: any) {
+      // Revert
+      setArticles((prev) => prev.map((x) => x.id === id ? { ...x, is_favorite: current } : x));
+      toast({ title: "Erro ao favoritar", description: e.message, variant: "destructive" });
+    }
+  };
 
   const handleIngest = async () => {
     setIngesting(true);
@@ -213,6 +230,17 @@ export default function AdminAgentKnowledge() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button
+                variant={favoritesOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFavoritesOnly((v) => !v)}
+                disabled={loading}
+                className="gap-2"
+                title="Mostrar apenas favoritos"
+              >
+                <Star className={`h-4 w-4 ${favoritesOnly ? "fill-current" : ""}`} />
+                {favoritesOnly ? "Só favoritos" : "Favoritos"}
+              </Button>
               <Button variant="outline" size="sm" onClick={handleVerifyAll} disabled={verifying || loading} className="gap-2">
                 {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                 {verifying ? "Verificando..." : "Verificar e limpar"}
@@ -239,7 +267,20 @@ export default function AdminAgentKnowledge() {
                 <div key={a.id} className="border rounded-lg p-4 bg-card hover:shadow-sm transition-shadow">
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-foreground leading-snug">{a.title}</h4>
+                      <div className="flex items-start gap-2">
+                        {a.approved && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleFavorite(a.id, !!a.is_favorite)}
+                            className="mt-0.5 shrink-0 text-muted-foreground hover:text-amber-500 transition-colors"
+                            title={a.is_favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                            aria-label={a.is_favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                          >
+                            <Star className={`h-4 w-4 ${a.is_favorite ? "fill-amber-400 text-amber-500" : ""}`} />
+                          </button>
+                        )}
+                        <h4 className="font-semibold text-foreground leading-snug">{a.title}</h4>
+                      </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         {a.authors || "—"}{a.year ? ` · ${a.year}` : ""}{a.journal ? ` · ${a.journal}` : ""}
                       </p>

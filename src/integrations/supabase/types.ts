@@ -1340,6 +1340,7 @@ export type Database = {
           doi: string | null
           embedding: string | null
           id: string
+          is_favorite: boolean
           journal: string | null
           key_findings: string | null
           niche_tags: string[]
@@ -1359,6 +1360,7 @@ export type Database = {
           doi?: string | null
           embedding?: string | null
           id?: string
+          is_favorite?: boolean
           journal?: string | null
           key_findings?: string | null
           niche_tags?: string[]
@@ -1378,6 +1380,7 @@ export type Database = {
           doi?: string | null
           embedding?: string | null
           id?: string
+          is_favorite?: boolean
           journal?: string | null
           key_findings?: string | null
           niche_tags?: string[]
