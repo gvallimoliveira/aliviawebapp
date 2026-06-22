@@ -188,7 +188,7 @@ export default function AdminAgentKnowledge() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            A IA propõe ~6 candidatos por nicho (RCTs/RS/meta-análises com PEDro ≥ 7). Todos entram como <strong>pendentes</strong> para sua revisão.
+            A IA propõe ~6 candidatos por nicho (RCTs/RS/meta-análises com PEDro ≥ 7). Cada candidato é <strong>verificado no PubMed/Crossref antes de ser salvo</strong> — estudos que não puderem ser confirmados são descartados automaticamente. Os aprovados entram como <strong>pendentes</strong> para sua revisão.
           </p>
         </CardContent>
       </Card>
@@ -201,7 +201,7 @@ export default function AdminAgentKnowledge() {
               <BookOpen className="h-5 w-5 text-primary" />
               Base de conhecimento ({counts.total})
             </CardTitle>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Select value={nicheFilter} onValueChange={setNicheFilter}>
                 <SelectTrigger className="w-[220px]">
                   <SelectValue />
@@ -213,6 +213,10 @@ export default function AdminAgentKnowledge() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" onClick={handleVerifyAll} disabled={verifying || loading} className="gap-2">
+                {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                {verifying ? "Verificando..." : "Verificar e limpar"}
+              </Button>
             </div>
           </div>
           <Tabs value={status} onValueChange={(v) => setStatus(v as any)} className="mt-3">
