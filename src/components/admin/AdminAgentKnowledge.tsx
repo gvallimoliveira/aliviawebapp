@@ -24,6 +24,7 @@ interface Article {
   doi: string | null;
   source_url: string | null;
   approved: boolean;
+  is_favorite?: boolean;
   created_at: string;
 }
 
