@@ -57,6 +57,11 @@ export const AGENT_NICHES: { slug: string; label: string; description?: string }
     label: "Epicondilopatias (tennis + golfer's elbow) × isométricos & fisiologia",
     description: "Epicondilopatias lateral e medial (tennis elbow e golfer's elbow) cruzadas com exercício isométrico, analgesia induzida por exercício, fisiologia tendínea, inibição cortical/motora, adaptação de colágeno e progressão de carga.",
   },
+  {
+    slug: "epicondilopatia_medial_golfers_elbow",
+    label: "Epicondilopatia medial (golfer's elbow)",
+    description: "Epicondilopatia medial (golfer's elbow / epitrocleíte) — fisiopatologia do tendão flexor-pronador, diagnóstico clínico, testes ortopédicos, exercício excêntrico e isométrico, HSR, ondas de choque, progressão de carga e retorno ao esporte/trabalho.",
+  },
 ];
 
 export const AGENT_NICHE_LABEL: Record<string, string> = Object.fromEntries(
