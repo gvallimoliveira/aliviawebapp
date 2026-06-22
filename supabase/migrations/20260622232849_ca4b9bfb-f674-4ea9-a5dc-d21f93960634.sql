@@ -1,0 +1,1 @@
+ALTER TABLE public.knowledge_articles ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN NOT NULL DEFAULT false; CREATE INDEX IF NOT EXISTS idx_knowledge_articles_favorite ON public.knowledge_articles(is_favorite) WHERE is_favorite = true;
