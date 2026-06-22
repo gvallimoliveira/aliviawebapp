@@ -55,6 +55,7 @@ export default function AdminAgentKnowledge() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [ingesting, setIngesting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const selectedIngestNiche = useMemo(
     () => AGENT_NICHES.find((n) => n.slug === ingestNiche),
