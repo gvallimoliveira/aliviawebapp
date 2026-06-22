@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen } from "lucide-react";
+import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { AGENT_NICHES, AGENT_NICHE_LABEL } from "@/lib/agentNiches";
 
