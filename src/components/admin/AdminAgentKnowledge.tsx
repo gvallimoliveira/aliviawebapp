@@ -230,6 +230,17 @@ export default function AdminAgentKnowledge() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button
+                variant={favoritesOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFavoritesOnly((v) => !v)}
+                disabled={loading}
+                className="gap-2"
+                title="Mostrar apenas favoritos"
+              >
+                <Star className={`h-4 w-4 ${favoritesOnly ? "fill-current" : ""}`} />
+                {favoritesOnly ? "Só favoritos" : "Favoritos"}
+              </Button>
               <Button variant="outline" size="sm" onClick={handleVerifyAll} disabled={verifying || loading} className="gap-2">
                 {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                 {verifying ? "Verificando..." : "Verificar e limpar"}
