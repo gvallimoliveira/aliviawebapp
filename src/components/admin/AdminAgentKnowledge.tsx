@@ -27,6 +27,26 @@ interface Article {
   created_at: string;
 }
 
+const agentErrorMessage = async (error: any, fallback = "Falha ao processar a solicitação") => {
+  let code = error?.message || fallback;
+  const response = error?.context;
+  if (response && typeof response.clone === "function") {
+    try {
+      const payload = await response.clone().json();
+      code = payload?.error || payload?.message || code;
+    } catch { /* keep fallback */ }
+  }
+  const messages: Record<string, string> = {
+    ai_rate_limit: "A IA está com limite temporário. Aguarde alguns minutos e tente novamente.",
+    ai_credits_exhausted: "Os créditos de IA acabaram. Recarregue os créditos do workspace para continuar.",
+    ai_error: "A IA não conseguiu concluir a busca agora. Tente novamente em instantes.",
+    Unauthorized: "Sua sessão expirou. Entre novamente e repita a busca.",
+    "Admin only": "Apenas administradores podem buscar artigos para a base do agente.",
+    "Nicho inválido": "Tema sem descrição clínica. Atualize a página e tente novamente.",
+  };
+  return messages[code] || (code === "Edge Function returned a non-2xx status code" ? fallback : code);
+};
+
 export default function AdminAgentKnowledge() {
   const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<"pending" | "approved">("pending");
@@ -36,6 +56,10 @@ export default function AdminAgentKnowledge() {
   const [loading, setLoading] = useState(false);
   const [ingesting, setIngesting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const selectedIngestNiche = useMemo(
+    () => AGENT_NICHES.find((n) => n.slug === ingestNiche),
+    [ingestNiche],
+  );
 
   const fetchList = async () => {
     if (!user) return;
@@ -61,9 +85,15 @@ export default function AdminAgentKnowledge() {
     setIngesting(true);
     try {
       const { data, error } = await supabase.functions.invoke("agent-knowledge", {
-        body: { action: "ingest", niche: ingestNiche, count: 6 },
+        body: {
+          action: "ingest",
+          niche: ingestNiche,
+          nicheLabel: selectedIngestNiche?.label,
+          nicheDescription: selectedIngestNiche?.description,
+          count: 6,
+        },
       });
-      if (error) throw error;
+      if (error) throw new Error(await agentErrorMessage(error, "Erro ao buscar artigos para este tema."));
       if (data?.error) throw new Error(data.error);
       toast({
         title: "Busca concluída",
