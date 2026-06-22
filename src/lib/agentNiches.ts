@@ -50,6 +50,9 @@ export const AGENT_NICHES: { slug: string; label: string }[] = [
   { slug: "exercicio_climaterio_pos_menopausa_msk", label: "Exercício no climatério/pós-menopausa (MSK)" },
   { slug: "lesoes_musculares_retorno_ao_esporte", label: "Lesões musculares — retorno ao esporte" },
   { slug: "bursite_trocanterica_tendinopatia_glutea", label: "Bursite trocantérica / tendinopatia glútea" },
+
+  // Cotovelo — epicondilopatias + isométricos
+  { slug: "epicondilopatias_isometricos_fisiologia", label: "Epicondilopatias (tennis + golfer's elbow) × isométricos & fisiologia" },
 ];
 
 export const AGENT_NICHE_LABEL: Record<string, string> = Object.fromEntries(
