@@ -52,6 +52,7 @@ export default function AdminAgentKnowledge() {
   const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<"pending" | "approved">("pending");
   const [nicheFilter, setNicheFilter] = useState<string>("all");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [ingestNiche, setIngestNiche] = useState<string>(AGENT_NICHES[0].slug);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
