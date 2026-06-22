@@ -58,6 +58,7 @@ const NICHE_DESCRIPTIONS: Record<string, string> = {
   exercicio_climaterio_pos_menopausa_msk: "Exercício terapêutico no climatério e pós-menopausa — dor musculoesquelética, osteopenia, treino de força e impacto.",
   lesoes_musculares_retorno_ao_esporte: "Lesões musculares (estiramentos) — classificação, protocolos de reabilitação, critérios de retorno ao esporte.",
   bursite_trocanterica_tendinopatia_glutea: "Bursite trocantérica e tendinopatia glútea — exercício de carga progressiva, terapia manual, ondas de choque.",
+  epicondilopatias_isometricos_fisiologia: "Epicondilopatias lateral e medial (tennis elbow e golfer's elbow) cruzadas com exercício isométrico, analgesia induzida por exercício, fisiologia tendínea, inibição cortical/motora, adaptação de colágeno e progressão de carga.",
 };
 
 async function isVip(adminClient: any, email?: string): Promise<boolean> {
@@ -87,6 +88,14 @@ function safeParseJson(s: string): any {
   const m = cleaned.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
   if (m) { try { return JSON.parse(m[0]); } catch {} }
   return null;
+}
+
+function getNicheDescription(body: any): string | null {
+  const slug = typeof body?.niche === "string" ? body.niche.trim() : "";
+  const savedDescription = slug ? NICHE_DESCRIPTIONS[slug] : "";
+  const incomingDescription = typeof body?.nicheDescription === "string" ? body.nicheDescription.trim() : "";
+  const incomingLabel = typeof body?.nicheLabel === "string" ? body.nicheLabel.trim() : "";
+  return savedDescription || incomingDescription || incomingLabel || null;
 }
 
 serve(async (req) => {
