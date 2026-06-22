@@ -98,6 +98,105 @@ function getNicheDescription(body: any): string | null {
   return savedDescription || incomingDescription || incomingLabel || null;
 }
 
+// ---------- VERIFICATION (PubMed / Crossref) ----------
+function normalizeTitle(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function titleSimilarity(a: string, b: string): number {
+  const ta = new Set(normalizeTitle(a).split(" ").filter((w) => w.length > 3));
+  const tb = new Set(normalizeTitle(b).split(" ").filter((w) => w.length > 3));
+  if (ta.size === 0 || tb.size === 0) return 0;
+  let inter = 0;
+  for (const w of ta) if (tb.has(w)) inter++;
+  return inter / Math.max(ta.size, tb.size);
+}
+function cleanDoiStr(doi: any): string | null {
+  if (typeof doi !== "string") return null;
+  const s = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "").trim();
+  return /^10\.\d{3,9}\/\S+$/i.test(s) ? s : null;
+}
+function cleanPmidStr(pmid: any): string | null {
+  if (pmid == null) return null;
+  const s = String(pmid).replace(/[^0-9]/g, "");
+  return s.length >= 4 ? s : null;
+}
+
+interface VerifyResult {
+  verified: boolean;
+  pmid?: string;
+  doi?: string;
+  sourceUrl?: string;
+  source?: "pubmed_doi" | "pubmed_pmid" | "pubmed_title" | "crossref_doi";
+  matchedTitle?: string;
+}
+
+async function fetchJsonSafe(url: string, timeoutMs = 9000): Promise<any | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    const r = await fetch(url, { signal: ctrl.signal, headers: { "User-Agent": "AliviA-Agent/1.0 (mailto:contato@aliviaweb.com.br)" } });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function verifyArticle(item: { title?: string; doi?: string | null; pmid?: string | null }): Promise<VerifyResult> {
+  const doi = cleanDoiStr(item.doi);
+  const pmid = cleanPmidStr(item.pmid);
+  const title = (item.title || "").trim();
+
+  // 1) DOI → PubMed
+  if (doi) {
+    const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&term=${encodeURIComponent(doi)}%5Bdoi%5D`);
+    const id = j?.esearchresult?.idlist?.[0];
+    if (id) return { verified: true, pmid: id, doi, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_doi" };
+    // Crossref fallback (DOI exists at publisher even if not indexed in PubMed)
+    const cr = await fetchJsonSafe(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+    if (cr?.message?.DOI) {
+      const crTitle = Array.isArray(cr.message.title) ? cr.message.title[0] : "";
+      return { verified: true, doi, sourceUrl: `https://doi.org/${doi}`, source: "crossref_doi", matchedTitle: crTitle };
+    }
+  }
+
+  // 2) PMID direto
+  if (pmid) {
+    const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${pmid}`);
+    const rec = j?.result?.[pmid];
+    if (rec && rec.title) {
+      const sim = title ? titleSimilarity(title, rec.title) : 1;
+      if (sim >= 0.5 || !title) {
+        return { verified: true, pmid, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, source: "pubmed_pmid", matchedTitle: rec.title };
+      }
+    }
+  }
+
+  // 3) Busca por título
+  if (title && title.length > 12) {
+    const term = normalizeTitle(title).split(" ").slice(0, 12).join(" ");
+    const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=5&term=${encodeURIComponent(term)}%5BTitle%5D`);
+    const ids: string[] = j?.esearchresult?.idlist || [];
+    if (ids.length) {
+      const sj = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${ids.join(",")}`);
+      for (const id of ids) {
+        const rec = sj?.result?.[id];
+        if (!rec) continue;
+        const sim = titleSimilarity(title, rec.title || "");
+        if (sim >= 0.7) {
+          return { verified: true, pmid: id, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_title", matchedTitle: rec.title };
+        }
+      }
+    }
+  }
+
+  return { verified: false };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
