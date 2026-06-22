@@ -98,7 +98,7 @@ export default function AdminAgentKnowledge() {
       if (data?.error) throw new Error(data.error);
       toast({
         title: "Busca concluída",
-        description: `${data.inserted} artigo(s) adicionados à fila de revisão (de ${data.candidates} candidatos).`,
+        description: `${data.inserted} verificado(s) e adicionado(s) · ${data.rejectedUnverified ?? 0} descartado(s) por não serem confirmáveis no PubMed/Crossref (de ${data.candidates} candidatos).`,
       });
       setStatus("pending");
       setNicheFilter(ingestNiche);
@@ -107,6 +107,29 @@ export default function AdminAgentKnowledge() {
       toast({ title: "Erro na ingestão", description: e.message, variant: "destructive" });
     } finally {
       setIngesting(false);
+    }
+  };
+
+  const handleVerifyAll = async () => {
+    const scopeLabel = status === "approved" ? "aprovados" : "pendentes";
+    const nicheLabel = nicheFilter === "all" ? "todos os nichos" : (AGENT_NICHES.find(n => n.slug === nicheFilter)?.label || nicheFilter);
+    if (!confirm(`Verificar ${scopeLabel} de ${nicheLabel} no PubMed/Crossref?\n\nArtigos que não puderem ser confirmados serão REMOVIDOS automaticamente. Pode levar alguns minutos.`)) return;
+    setVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("agent-knowledge", {
+        body: { action: "verify", scope: status, niche: nicheFilter !== "all" ? nicheFilter : undefined },
+      });
+      if (error) throw new Error(await agentErrorMessage(error, "Falha ao verificar artigos."));
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: "Verificação concluída",
+        description: `${data.checked} checados · ${data.verified} confirmados · ${data.removed} removidos · ${data.updated} links atualizados.`,
+      });
+      fetchList();
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setVerifying(false);
     }
   };
 
