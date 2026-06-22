@@ -69,7 +69,7 @@ export default function AdminAgentKnowledge() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("agent-knowledge", {
-        body: { action: "list", status, niche: nicheFilter !== "all" ? nicheFilter : undefined },
+        body: { action: "list", status, niche: nicheFilter !== "all" ? nicheFilter : undefined, favoritesOnly: favoritesOnly || undefined },
       });
       if (error) throw new Error(error.message || "Falha ao consultar artigos");
       if (data?.error) throw new Error(data.error);
@@ -82,7 +82,22 @@ export default function AdminAgentKnowledge() {
     }
   };
 
-  useEffect(() => { if (!authLoading && user) fetchList(); /* eslint-disable-next-line */ }, [status, nicheFilter, authLoading, user?.id]);
+  useEffect(() => { if (!authLoading && user) fetchList(); /* eslint-disable-next-line */ }, [status, nicheFilter, favoritesOnly, authLoading, user?.id]);
+
+  const handleToggleFavorite = async (id: string, current: boolean) => {
+    // Optimistic update
+    setArticles((prev) => prev.map((x) => x.id === id ? { ...x, is_favorite: !current } : x));
+    try {
+      const { error } = await supabase.functions.invoke("agent-knowledge", {
+        body: { action: "favorite", id, value: !current },
+      });
+      if (error) throw error;
+    } catch (e: any) {
+      // Revert
+      setArticles((prev) => prev.map((x) => x.id === id ? { ...x, is_favorite: current } : x));
+      toast({ title: "Erro ao favoritar", description: e.message, variant: "destructive" });
+    }
+  };
 
   const handleIngest = async () => {
     setIngesting(true);
