@@ -208,8 +208,9 @@ serve(async (req) => {
     // ---------- INGEST ----------
     if (action === "ingest") {
       const niche: string = body.niche;
+      const nicheDescription = getNicheDescription(body);
       const count = Math.min(Math.max(Number(body.count) || 6, 1), 10);
-      if (!niche || !NICHE_DESCRIPTIONS[niche]) {
+      if (!niche || !nicheDescription) {
         return new Response(JSON.stringify({ error: "Nicho inválido" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -217,7 +218,7 @@ serve(async (req) => {
       const prompt = `Você é um curador de evidências em fisioterapia.
 
 Liste ${count} estudos REAIS, de alta qualidade (preferencialmente indexados na base PEDro) para o nicho:
-"${NICHE_DESCRIPTIONS[niche]}"
+"${nicheDescription}"
 
 CRITÉRIOS OBRIGATÓRIOS:
 - PEDro score ≥ 7/10 (se RCT). Para revisões sistemáticas/meta-análises, pode listar mesmo sem PEDro (usar 8 como padrão).
