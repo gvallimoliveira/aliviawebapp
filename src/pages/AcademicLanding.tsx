@@ -53,7 +53,7 @@ const COPY = {
       { icon: Activity, title: "Da teoria à prática, mais rápido", desc: "Cada caso usa as mesmas ferramentas que profissionais usam com pacientes reais. Você chega ao estágio sabendo o que fazer — não tentando lembrar." },
     ],
     disclaimerTitle: "Acesso Estudante: o que muda em relação ao Profissional",
-    disclaimerIntro: "O Aliv.iA Acadêmico libera as mesmas ferramentas do plano Profissional, mas com um conjunto de regras importantes para proteger você, os pacientes e a profissão:",
+    disclaimerIntro: "O Aliv.iA Acadêmico usa a assinatura PRO para liberar as ferramentas, mas com um conjunto de regras importantes para proteger você, os pacientes e a profissão:",
     disclaimerItems: [
       "Todo PDF, link público de avaliação e relatório enviado leva o selo \"Alivia Acadêmico\" com sua instituição e período — fica claro que a avaliação é acadêmica, não um laudo profissional.",
       "Sua conta não aparece no marketplace público de profissionais. Você não é listado como fisioterapeuta para pacientes contratarem.",
@@ -65,13 +65,13 @@ const COPY = {
     transitionBody:
       "A transição é simples e sua assinatura continua intacta: ao se cadastrar como profissional, basta entrar em \"Minha conta\" → \"Acesso Estudante\" e adicionar seu CREFITO. No mesmo instante:",
     transitionItems: [
-      "Seu plano segue ativo — você não paga de novo, não migra de produto, não perde histórico.",
+      "Sua assinatura PRO segue ativa — você não paga de novo, não migra de produto, não perde histórico.",
       "O selo \"Alivia Acadêmico\" sai dos PDFs e links públicos automaticamente.",
       "Seu perfil passa a aparecer no marketplace público de profissionais (se você optar).",
       "Você pode ativar o modo dual: alternar entre identidade Profissional e Acadêmico quando estiver em contexto de ensino/estágio.",
     ],
     pricingTitle: "Mesma plataforma, mesmo preço do Profissional",
-    pricingDesc: "O Aliv.iA Acadêmico usa a mesma assinatura do plano Profissional — você já entra com acesso completo ao que vai usar quando se formar. Sem produto separado, sem migração.",
+    pricingDesc: "O Aliv.iA Acadêmico usa a mesma assinatura do plano Profissional. O cadastro acadêmico ativa o selo e remove a exigência de CREFITO; o acesso às ferramentas vem da assinatura PRO ativa.",
     monthly: "Mensal",
     annual: "Anual",
     save: "-30%",
@@ -91,7 +91,7 @@ const COPY = {
     cta: "Assinar Aliv.iA Acadêmico",
     faqTitle: "Perguntas frequentes",
     faqs: [
-      { q: "Eu não tenho CREFITO ainda — posso usar mesmo assim?", a: "Sim. O Aliv.iA Acadêmico foi feito exatamente para alunos de fisioterapia ainda em formação. O cadastro como estudante pede sua instituição e período, e libera todas as ferramentas com o selo acadêmico." },
+      { q: "Eu não tenho CREFITO ainda — posso usar mesmo assim?", a: "Sim. O Aliv.iA Acadêmico foi feito para alunos em formação. O cadastro como estudante pede instituição e período e ativa o selo acadêmico; para liberar as ferramentas, é necessário assinar o PRO, salvo parceiro acadêmico habilitado pelo admin." },
       { q: "Por que pagar agora se ainda sou estudante?", a: "Porque o tempo de internalização do raciocínio clínico é longo — e quem treina cedo, com ferramenta certa, chega ao mercado anos à frente. Pense menos como custo de software e mais como custo do seu próprio treino antes da prova final (a vida profissional)." },
       { q: "Vou ter que pagar de novo quando me formar?", a: "Não. Sua assinatura continua ativa após o CREFITO. Você só atualiza o registro em \"Minha conta\" e o selo acadêmico sai automaticamente. Sem novo cadastro, sem novo pagamento, sem perder histórico." },
       { q: "Posso atender paciente real com o Aliv.iA Acadêmico?", a: "Pode treinar avaliação, mas toda conduta clínica em paciente real exige supervisão de um fisioterapeuta com CREFITO ativo. Os PDFs e links públicos saem identificados como acadêmicos justamente para proteger isso." },
@@ -122,7 +122,7 @@ const COPY = {
       { icon: Activity, title: "Theory to practice, faster", desc: "Every case uses the same tools professionals use with real patients. You arrive at internship knowing what to do." },
     ],
     disclaimerTitle: "Student Access: what changes vs Professional",
-    disclaimerIntro: "Alivia Academic unlocks the same tools as the Professional plan, with key rules to protect you, patients and the profession:",
+    disclaimerIntro: "Alivia Academic uses the PRO subscription to unlock tools, with key rules to protect you, patients and the profession:",
     disclaimerItems: [
       "Every PDF, public assessment link and report carries the \"Alivia Academic\" seal with your institution and term — clearly identifying it as academic work, not a professional report.",
       "Your account does not appear in the public professional marketplace.",
@@ -134,13 +134,13 @@ const COPY = {
     transitionBody:
       "The transition is simple and your subscription stays intact: go to \"My account\" → \"Student Access\" and add your license number. Immediately:",
     transitionItems: [
-      "Your plan stays active — you don't pay again, don't migrate products, don't lose history.",
+      "Your PRO subscription stays active — you don't pay again, don't migrate products, don't lose history.",
       "The \"Alivia Academic\" seal leaves PDFs and public links automatically.",
       "Your profile becomes eligible for the public professional marketplace (if you opt in).",
       "You can enable dual mode: switch between Professional and Academic identity in teaching/internship contexts.",
     ],
     pricingTitle: "Same platform, same Professional price",
-    pricingDesc: "Alivia Academic uses the same Professional subscription — you already start with full access to what you'll use after graduating. No separate product, no migration.",
+    pricingDesc: "Alivia Academic uses the same Professional subscription. Student registration enables the academic seal and removes the license requirement; tool access comes from an active PRO subscription.",
     monthly: "Monthly",
     annual: "Annual",
     save: "-30%",
@@ -160,7 +160,7 @@ const COPY = {
     cta: "Subscribe to Alivia Academic",
     faqTitle: "Frequently asked questions",
     faqs: [
-      { q: "I don't have my license yet — can I still use it?", a: "Yes. Alivia Academic was built exactly for physiotherapy students still in training." },
+      { q: "I don't have my license yet — can I still use it?", a: "Yes. Alivia Academic was built for physiotherapy students in training. Student registration enables the academic seal; unlocking tools requires a PRO subscription, except admin-enabled academic partners." },
       { q: "Why pay now if I'm still a student?", a: "Because internalizing clinical reasoning takes years — those who train early with the right tool arrive years ahead in the market." },
       { q: "Will I have to pay again when I graduate?", a: "No. Your subscription stays active after licensure. Just update your record in \"My account\" and the academic seal goes away automatically." },
       { q: "Can I treat real patients with Alivia Academic?", a: "You can practice assessment, but any clinical conduct on real patients requires supervision by a licensed physiotherapist." },
@@ -191,7 +191,7 @@ const COPY = {
       { icon: Activity, title: "De la teoría a la práctica, más rápido", desc: "Cada caso usa las mismas herramientas que los profesionales usan con pacientes reales." },
     ],
     disclaimerTitle: "Acceso Estudiante: qué cambia frente al Profesional",
-    disclaimerIntro: "Alivia Académico libera las mismas herramientas del plan Profesional, con reglas para proteger a ti, los pacientes y la profesión:",
+    disclaimerIntro: "Alivia Académico usa la suscripción PRO para liberar herramientas, con reglas para protegerte, a los pacientes y a la profesión:",
     disclaimerItems: [
       "Todo PDF, enlace público y reporte lleva el sello \"Alivia Académico\" con tu institución y período.",
       "Tu cuenta no aparece en el marketplace público de profesionales.",
@@ -203,13 +203,13 @@ const COPY = {
     transitionBody:
       "La transición es simple y tu suscripción permanece intacta: ve a \"Mi cuenta\" → \"Acceso Estudiante\" y agrega tu número de registro. Al instante:",
     transitionItems: [
-      "Tu plan sigue activo — no pagas de nuevo, no migras de producto, no pierdes historial.",
+      "Tu suscripción PRO sigue activa — no pagas de nuevo, no migras de producto, no pierdes historial.",
       "El sello \"Alivia Académico\" sale de los PDFs y enlaces públicos automáticamente.",
       "Tu perfil pasa a ser elegible para el marketplace público de profesionales (si eliges).",
       "Puedes activar el modo dual: alternar entre identidad Profesional y Académico en contextos de enseñanza/práctica.",
     ],
     pricingTitle: "Misma plataforma, mismo precio que Profesional",
-    pricingDesc: "Alivia Académico usa la misma suscripción Profesional — ya empiezas con acceso completo a lo que usarás al graduarte.",
+    pricingDesc: "Alivia Académico usa la misma suscripción Profesional. El registro académico activa el sello y elimina la exigencia de matrícula; el acceso a herramientas viene de la suscripción PRO activa.",
     monthly: "Mensual",
     annual: "Anual",
     save: "-30%",
@@ -229,7 +229,7 @@ const COPY = {
     cta: "Suscribirme a Alivia Académico",
     faqTitle: "Preguntas frecuentes",
     faqs: [
-      { q: "Aún no tengo colegiatura — ¿puedo usarlo igual?", a: "Sí. Alivia Académico fue hecho exactamente para estudiantes de fisio en formación." },
+      { q: "Aún no tengo colegiatura — ¿puedo usarlo igual?", a: "Sí. Alivia Académico fue hecho para estudiantes en formación. El registro académico activa el sello; para liberar herramientas se necesita suscripción PRO, salvo socio académico habilitado por el admin." },
       { q: "¿Por qué pagar ahora si aún soy estudiante?", a: "Porque internalizar el razonamiento clínico toma años — quien entrena temprano llega años adelantado." },
       { q: "¿Tendré que pagar de nuevo cuando me gradúe?", a: "No. Tu suscripción sigue activa tras la colegiatura. Solo actualizas el registro en \"Mi cuenta\"." },
       { q: "¿Puedo atender pacientes reales con Alivia Académico?", a: "Puedes practicar evaluación, pero toda conducta clínica en paciente real requiere supervisión de un fisioterapeuta colegiado." },
