@@ -22,6 +22,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
 import MentorCommandsPopover from "@/components/agent/MentorCommandsPopover";
 import ProBottomTabBar from "@/components/dashboard/ProBottomTabBar";
+import AgentKnowledgeBrowser from "@/components/agent/AgentKnowledgeBrowser";
 
 type Thread = {
   id: string;
@@ -122,6 +123,7 @@ const ClinicalAgent = () => {
   const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [showCitations, setShowCitations] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const [generatingHep, setGeneratingHep] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
@@ -845,6 +847,24 @@ const ClinicalAgent = () => {
           >
             <BookText className="h-4 w-4" />
           </Button>
+
+          <Sheet open={libraryOpen} onOpenChange={setLibraryOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0"
+                title="Biblioteca de evidências do agente"
+                aria-label="Biblioteca de evidências"
+              >
+                <BookOpen className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="p-0 w-[92vw] sm:max-w-md md:max-w-lg flex flex-col [&>button]:z-30">
+              <AgentKnowledgeBrowser />
+            </SheetContent>
+          </Sheet>
+
 
           {uniqueCitations.length > 0 && (
             <Button variant="ghost" size="sm" className="h-9 shrink-0 gap-1.5 px-2 md:px-3" onClick={() => setShowCitations(true)} title="Evidências citadas">

@@ -268,17 +268,15 @@ export default function AdminAgentKnowledge() {
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2">
-                        {a.approved && (
-                          <button
-                            type="button"
-                            onClick={() => handleToggleFavorite(a.id, !!a.is_favorite)}
-                            className="mt-0.5 shrink-0 text-muted-foreground hover:text-amber-500 transition-colors"
-                            title={a.is_favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                            aria-label={a.is_favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                          >
-                            <Star className={`h-4 w-4 ${a.is_favorite ? "fill-amber-400 text-amber-500" : ""}`} />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFavorite(a.id, !!a.is_favorite)}
+                          className="mt-0.5 shrink-0 text-muted-foreground hover:text-amber-500 transition-colors"
+                          title={a.is_favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                          aria-label={a.is_favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                        >
+                          <Star className={`h-4 w-4 ${a.is_favorite ? "fill-amber-400 text-amber-500" : ""}`} />
+                        </button>
                         <h4 className="font-semibold text-foreground leading-snug">{a.title}</h4>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">

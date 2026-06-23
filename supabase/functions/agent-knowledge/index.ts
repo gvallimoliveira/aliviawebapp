@@ -224,14 +224,35 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const body = await req.json();
+    const action = body?.action;
+
+    // ---------- PUBLIC LIST (read-only, approved articles) ----------
+    // Available to any authenticated user — UI gates access by plan (PRO/clinic/academic).
+    if (action === "list_public") {
+      let q = adminClient.from("knowledge_articles")
+        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, source_url, created_at")
+        .eq("approved", true)
+        .order("year", { ascending: false, nullsFirst: false })
+        .order("pedro_score", { ascending: false, nullsFirst: false })
+        .limit(500);
+      if (body.niche) q = q.contains("niche_tags", [body.niche]);
+      const yearMin = Number(body.yearMin); if (!Number.isNaN(yearMin) && yearMin > 0) q = q.gte("year", yearMin);
+      const yearMax = Number(body.yearMax); if (!Number.isNaN(yearMax) && yearMax > 0) q = q.lte("year", yearMax);
+      const pedroMin = Number(body.pedroMin); if (!Number.isNaN(pedroMin) && pedroMin > 0) q = q.gte("pedro_score", pedroMin);
+      const { data, error } = await q;
+      if (error) throw error;
+      return new Response(JSON.stringify({ articles: data || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!(await isVip(adminClient, user.email))) {
       return new Response(JSON.stringify({ error: "Admin only" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const body = await req.json();
-    const action = body?.action;
 
     // ---------- LIST ----------
     if (action === "list") {
