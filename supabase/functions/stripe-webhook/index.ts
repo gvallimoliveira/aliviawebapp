@@ -328,14 +328,16 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
 
     case "pro_subscription": {
       if (userId) {
+        const subscriptionId = session.subscription as string || null;
         await supabase
           .from("professionals")
           .update({
             subscription_status: "active",
+            subscription_stripe_id: subscriptionId,
             approved: true,
           })
           .eq("user_id", userId);
-        log("Pro subscription fulfilled", { userId });
+        log("Pro subscription fulfilled", { userId, subscriptionId });
       }
       break;
     }
@@ -367,6 +369,7 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
           .from("professionals")
           .update({
             subscription_status: "active",
+            subscription_stripe_id: session.subscription as string || null,
             approved: true,
             pro_access_expires_at: expiresAt,
           })

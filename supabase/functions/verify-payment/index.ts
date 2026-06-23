@@ -60,6 +60,24 @@ serve(async (req) => {
 
       const paymentType = session.metadata?.type;
 
+      // Handle paid monthly PRO subscription verification
+      if (paymentType === "pro_subscription") {
+        const userId = session.metadata?.user_id;
+        if (userId) {
+          await supabaseClient
+            .from("professionals")
+            .update({
+              subscription_status: "active",
+              subscription_stripe_id: session.subscription as string || null,
+              approved: true,
+            })
+            .eq("user_id", userId);
+        }
+        return new Response(JSON.stringify({ paid: true, type: "pro_subscription" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Handle pro_treatment payment
       if (paymentType === "pro_treatment") {
         const assessmentId = session.metadata?.assessment_id;
@@ -105,6 +123,7 @@ serve(async (req) => {
             .from("professionals")
             .update({
               subscription_status: "active",
+              subscription_stripe_id: session.subscription as string || null,
               approved: true,
               pro_access_expires_at: expiresAt.toISOString(),
             })
