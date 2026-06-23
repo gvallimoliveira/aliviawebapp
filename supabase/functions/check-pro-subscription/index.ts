@@ -59,13 +59,11 @@ serve(async (req) => {
       });
     }
 
-    // Student access (Alivia Acadêmico) — admin-granted, no Stripe involved.
-    if (proData?.is_student) {
-      logStep("User has academic access — granting PRO tools without Stripe");
-      return new Response(JSON.stringify({ subscribed: true, is_student: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Alivia Acadêmico (estudantes): NÃO concede acesso PRO gratuito.
+    // Estudantes podem se cadastrar sem CREFITO, mas precisam assinar PRO
+    // como qualquer profissional para usar as funcionalidades.
+    // (proData.is_student permanece apenas como marcador de perfil acadêmico.)
+
 
     // Check annual one-time payment access
     if (proData?.pro_access_expires_at) {
