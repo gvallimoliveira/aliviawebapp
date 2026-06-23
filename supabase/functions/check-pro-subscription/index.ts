@@ -53,33 +53,31 @@ serve(async (req) => {
       });
     }
 
-    // Check professional profile first. IMPORTANT: `is_student` alone never
-    // grants PRO access. Free PRO is allowed only for admin-created Academic
-    // Partners: `is_partner=true` AND `is_student=true`.
-    const { data: proData } = await supabaseClient
-      .from("professionals")
-      .select("id, is_partner, is_student, subscription_status, pro_access_expires_at, premium_granted, subscription_grace_until")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    // Partner Access Model: qualquer profissional marcado como parceiro pelo
+    // admin tem acesso PRO liberado (acadêmico ou não). Estudantes SEM o flag
+    // de parceiro continuam precisando assinar.
+    const isPartner = proData?.is_partner === true;
 
-    const isAcademicPartner = proData?.is_partner === true && proData?.is_student === true;
-
-    if (isAcademicPartner) {
-      logStep("User is an Academic Partner — granting admin-enabled access without Stripe");
-      if (proData.subscription_status !== "active") {
+    if (isPartner) {
+      logStep("User is an admin-granted Partner — granting access without Stripe", { is_student: !!proData?.is_student });
+      if (proData?.subscription_status !== "active") {
         await supabaseClient
           .from("professionals")
           .update({ subscription_status: "active" })
           .eq("user_id", user.id);
       }
-      return new Response(JSON.stringify({ subscribed: true, is_partner: true, is_student: true, premium_granted: proData.premium_granted }), {
+      return new Response(JSON.stringify({
+        subscribed: true,
+        is_partner: true,
+        is_student: !!proData?.is_student,
+        premium_granted: proData?.premium_granted,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Alivia Acadêmico (estudantes): NÃO concede acesso PRO gratuito.
-    // Estudantes podem se cadastrar sem CREFITO, mas precisam assinar PRO
-    // como qualquer profissional para usar as funcionalidades.
+    // Alivia Acadêmico (estudantes sem flag de parceiro): NÃO concede acesso
+    // PRO gratuito. Precisam assinar como qualquer profissional.
     // (proData.is_student permanece apenas como marcador de perfil acadêmico.)
 
 
