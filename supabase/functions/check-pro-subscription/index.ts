@@ -53,6 +53,12 @@ serve(async (req) => {
       });
     }
 
+    const { data: proData } = await supabaseClient
+      .from("professionals")
+      .select("id, is_partner, is_student, subscription_status, pro_access_expires_at, premium_granted, subscription_grace_until")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
     // Partner Access Model: qualquer profissional marcado como parceiro pelo
     // admin tem acesso PRO liberado (acadêmico ou não). Estudantes SEM o flag
     // de parceiro continuam precisando assinar.
