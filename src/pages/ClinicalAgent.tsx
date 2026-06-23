@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -814,56 +815,87 @@ const ClinicalAgent = () => {
             </Button>
           )}
 
-          {activeThread && (
-            <Button
-              variant={activeThread.mentor_mode ? "default" : "outline"}
-              size="sm"
-              className="h-9 shrink-0 gap-1.5 px-2 md:px-3"
-              title="Modo Mentor (persona Professor para alunos do Alivia Acadêmico)"
-              onClick={async () => {
-                const next = !activeThread.mentor_mode;
-                setActiveThread({ ...activeThread, mentor_mode: next });
-                setThreads(prev => prev.map(t => t.id === activeThread.id ? { ...t, mentor_mode: next } : t));
-                await supabase.functions.invoke("clinical-agent-threads", {
-                  body: { action: "set_mentor_mode", thread_id: activeThread.id, mentor_mode: next },
-                });
-                toast.success(next ? "🎓 Modo Mentor ativado" : "Modo Mentor desligado");
-              }}
-            >
-              <GraduationCap className="h-3.5 w-3.5" />
-              <span className="hidden md:inline">{activeThread.mentor_mode ? "Mentor on" : "Mentor"}</span>
-            </Button>
-          )}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={activeThread?.mentor_mode ? "default" : "outline"}
+                size="sm"
+                className="h-9 shrink-0 gap-1.5 px-2 md:px-3"
+                title="Aprender: Mentor, comandos, casos de estudo e biblioteca de evidências"
+                aria-label="Menu Aprender"
+              >
+                <GraduationCap className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">
+                  {activeThread?.mentor_mode ? "Aprender · Mentor on" : "Aprender"}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80 p-2">
+              {activeThread && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const next = !activeThread.mentor_mode;
+                    setActiveThread({ ...activeThread, mentor_mode: next });
+                    setThreads(prev => prev.map(t => t.id === activeThread.id ? { ...t, mentor_mode: next } : t));
+                    await supabase.functions.invoke("clinical-agent-threads", {
+                      body: { action: "set_mentor_mode", thread_id: activeThread.id, mentor_mode: next },
+                    });
+                    toast.success(next ? "🎓 Modo Mentor ativado" : "Modo Mentor desligado");
+                  }}
+                  className="w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 hover:bg-muted text-left transition-colors"
+                >
+                  <GraduationCap className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium flex items-center gap-2">
+                      Modo Mentor
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${activeThread.mentor_mode ? "bg-primary text-primary-foreground" : "bg-muted-foreground/10 text-muted-foreground"}`}>
+                        {activeThread.mentor_mode ? "ON" : "OFF"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-snug">Persona Professor: revisa conceitos antes da conduta.</p>
+                  </div>
+                </button>
+              )}
 
-          <MentorCommandsPopover onPick={(c) => setInput((prev) => (prev ? `${prev} ${c}` : c))} />
+              <button
+                type="button"
+                onClick={() => navigate("/casos-de-estudo")}
+                className="w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 hover:bg-muted text-left transition-colors"
+              >
+                <BookText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium">Casos de estudo</div>
+                  <p className="text-[11px] text-muted-foreground leading-snug">Pacientes fictícios criados pelo agente para praticar.</p>
+                </div>
+              </button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 shrink-0"
-            title="Casos de estudo (pacientes fictícios criados pelo agente)"
-            aria-label="Casos de estudo"
-            onClick={() => navigate("/casos-de-estudo")}
-          >
-            <BookText className="h-4 w-4" />
-          </Button>
+              <button
+                type="button"
+                onClick={() => setLibraryOpen(true)}
+                className="w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 hover:bg-muted text-left transition-colors"
+              >
+                <BookOpen className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium">Biblioteca de evidências</div>
+                  <p className="text-[11px] text-muted-foreground leading-snug">Artigos aprovados (PEDro ≥ 7) por nicho clínico.</p>
+                </div>
+              </button>
+
+              <div className="my-2 border-t border-border/50" />
+              <div className="px-2.5 pb-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70">
+                Comandos do Mentor
+              </div>
+              <MentorCommandsPopover onPick={(c) => setInput((prev) => (prev ? `${prev} ${c}` : c))} />
+            </PopoverContent>
+          </Popover>
 
           <Sheet open={libraryOpen} onOpenChange={setLibraryOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 shrink-0"
-                title="Biblioteca de evidências do agente"
-                aria-label="Biblioteca de evidências"
-              >
-                <BookOpen className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
             <SheetContent side="right" className="p-0 w-[92vw] sm:max-w-md md:max-w-lg flex flex-col [&>button]:z-30">
               <AgentKnowledgeBrowser />
             </SheetContent>
           </Sheet>
+
 
 
           {uniqueCitations.length > 0 && (
