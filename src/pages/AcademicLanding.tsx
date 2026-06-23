@@ -20,7 +20,7 @@ import {
   GraduationCap, ArrowRight, ArrowDown, Brain, Sparkles, BookOpen,
   ClipboardList, FlaskConical, Compass, ShieldAlert, Stethoscope,
   Check, Lightbulb, FileText, Activity, MessageCircleQuestion, Workflow,
-  UserPlus,
+  UserPlus, Filter, Star, ShieldCheck,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
@@ -356,6 +356,128 @@ const AcademicLanding = () => {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Biblioteca de Evidências por Nicho — destaque flagship Acadêmico */}
+      <section className="py-16 md:py-24 relative overflow-hidden">
+        <div className="blur-blob absolute -top-32 -left-32 h-[420px] w-[420px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="blur-blob absolute -bottom-32 -right-32 h-[420px] w-[420px] rounded-full bg-accent/20 blur-3xl pointer-events-none" />
+        <div className="container relative max-w-6xl mx-auto px-4">
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
+            className="text-center mb-10"
+          >
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 mb-5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-bold text-primary tracking-wider uppercase">
+                {language === "pt" ? "Recurso Exclusivo · Beta" : language === "en" ? "Exclusive Feature · Beta" : "Recurso Exclusivo · Beta"}
+              </span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight mb-4 max-w-3xl mx-auto">
+              {language === "pt"
+                ? "Sua biblioteca pessoal de evidência — segmentada por nicho clínico"
+                : language === "en"
+                ? "Your personal evidence library — sorted by clinical niche"
+                : "Tu biblioteca personal de evidencia — segmentada por nicho clínico"}
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              {language === "pt"
+                ? "Estude pelos mesmos artigos curados (PEDro ≥ 7) que treinam a IA do Aliv.iA. Tudo dentro da página do Agente Clínico — sem caçar PDF, sem precisar abrir 12 abas."
+                : language === "en"
+                ? "Study from the same curated papers (PEDro ≥ 7) that train the Aliv.iA AI. All inside the Clinical Agent page — no PDF hunting, no 12 tabs open."
+                : "Estudia con los mismos artículos curados (PEDro ≥ 7) que entrenan la IA de Aliv.iA. Todo dentro del Agente Clínico."}
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}
+            className="rounded-3xl border-2 border-primary/30 bg-gradient-to-br from-primary/8 via-card to-accent/10 p-6 md:p-10 shadow-xl shadow-primary/5"
+          >
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Mock UI */}
+              <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-foreground">
+                      {language === "pt" ? "Biblioteca de Evidências" : language === "en" ? "Evidence Library" : "Biblioteca de Evidencia"}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="border-primary/30 text-primary text-[10px]">BETA</Badge>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {["Ombro", "Lombar", "Cervical", "Quadril", "Joelho", "+5"].map((n) => (
+                    <span key={n} className={`rounded-full text-xs px-2.5 py-1 ${n === "Ombro" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{n}</span>
+                  ))}
+                </div>
+                <div className="flex gap-2 mb-4 text-xs">
+                  <span className="rounded-md border border-border bg-background px-2 py-1 flex items-center gap-1"><Filter className="h-3 w-3" /> {language === "pt" ? "Ano: 2020+" : language === "en" ? "Year: 2020+" : "Año: 2020+"}</span>
+                  <span className="rounded-md border border-border bg-background px-2 py-1 flex items-center gap-1"><Filter className="h-3 w-3" /> PEDro ≥ 7</span>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { t: "HSR vs Eccentric loading in rotator cuff…", y: "2024 · PEDro 8" },
+                    { t: "Scapular dyskinesis: clinical reasoning…", y: "2023 · PEDro 9" },
+                    { t: "Subacromial pain: graded exposure…", y: "2022 · PEDro 7" },
+                  ].map((s, i) => (
+                    <div key={i} className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-background p-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{s.t}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{s.y}</p>
+                      </div>
+                      <Star className={`h-4 w-4 shrink-0 ${i === 0 ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bullets */}
+              <div className="flex flex-col justify-center">
+                <ul className="space-y-4">
+                  {[
+                    {
+                      icon: BookOpen,
+                      title: language === "pt" ? "Segmentado por nicho clínico" : language === "en" ? "Sorted by clinical niche" : "Segmentado por nicho clínico",
+                      desc: language === "pt" ? "Ombro, lombar, cervical, quadril, joelho — e mais entram conforme a curadoria avança." : language === "en" ? "Shoulder, low back, cervical, hip, knee — and more as curation grows." : "Hombro, lumbar, cervical, cadera, rodilla — y más a medida que la curaduría crece.",
+                    },
+                    {
+                      icon: Filter,
+                      title: language === "pt" ? "Filtros de ano e nota PEDro" : language === "en" ? "Year and PEDro score filters" : "Filtros de año y nota PEDro",
+                      desc: language === "pt" ? "Foque no que é mais recente e mais robusto, sem ler resumo por resumo." : language === "en" ? "Focus on what's most recent and most robust, without scanning abstract by abstract." : "Enfócate en lo más reciente y más robusto.",
+                    },
+                    {
+                      icon: Star,
+                      title: language === "pt" ? "Favorite e acesse em 1 clique" : language === "en" ? "Favorite and access in 1 click" : "Marca favoritos y accede en 1 clic",
+                      desc: language === "pt" ? "Monte seu próprio núcleo de leitura por nicho de estudo." : language === "en" ? "Build your own reading core per study niche." : "Arma tu propio núcleo de lectura por nicho.",
+                    },
+                    {
+                      icon: ShieldCheck,
+                      title: language === "pt" ? "A mesma base que treina a IA" : language === "en" ? "Same base that trains the AI" : "La misma base que entrena la IA",
+                      desc: language === "pt" ? "Quando o Agente cita evidência, ela vem daqui. Você estuda o que ele pensa." : language === "en" ? "When the Agent cites evidence, it comes from here. You study what it thinks." : "Cuando el Agente cita evidencia, viene de aquí.",
+                    },
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 shrink-0">
+                        <item.icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground text-sm">{item.title}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{item.desc}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground italic mt-6 leading-relaxed">
+                  {language === "pt"
+                    ? "Versão beta: nichos sem artigos aprovados ainda exibem aviso de curadoria em andamento — novos estudos entram continuamente."
+                    : language === "en"
+                    ? "Beta: niches without approved studies show a curation-in-progress notice — new studies are added continuously."
+                    : "Beta: nichos sin artículos aprobados muestran aviso de curaduría en curso — nuevos estudios entran continuamente."}
+                </p>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 

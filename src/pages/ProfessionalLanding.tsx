@@ -22,6 +22,7 @@ import {
   LayoutDashboard, Brain, User, FileBarChart, Zap,
   RefreshCw, Dumbbell, Palette, TrendingUp, GraduationCap,
   BarChart3, ListChecks, ShieldCheck, DollarSign, Timer, Users,
+  BookOpen, Filter, Star, Sparkles,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
@@ -303,6 +304,66 @@ const ProfessionalLanding = () => {
                   ? "Al suscribirte al Plan Profesional, puedes activar el modo Alivia Académico y usar todas las herramientas PRO con sello académico — ideal para práctica supervisada y pasantías."
                   : "By subscribing to the Professional Plan, you can activate Alivia Academic mode and use all PRO tools with an academic seal — ideal for supervised practice and internships."}
               </p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Biblioteca de Evidências por Nicho — destaque PRO */}
+      <section className="py-14 md:py-20">
+        <div className="container max-w-5xl mx-auto px-4">
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
+            className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 p-6 md:p-10"
+          >
+            <div className="blur-blob absolute -top-20 -right-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+            <div className="relative grid md:grid-cols-[1.2fr_1fr] gap-8 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 mb-4">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-semibold text-primary tracking-wide uppercase">
+                    {language === "pt" ? "Novidade PRO · Beta" : language === "es" ? "Novedad PRO · Beta" : "PRO update · Beta"}
+                  </span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3 leading-tight">
+                  {language === "pt"
+                    ? "Biblioteca de Evidências por Nicho — direto dentro do Agente Clínico"
+                    : language === "es"
+                    ? "Biblioteca de Evidencia por Nicho — dentro del Agente Clínico"
+                    : "Evidence Library by Niche — inside the Clinical Agent"}
+                </h2>
+                <p className="text-base text-muted-foreground leading-relaxed mb-5">
+                  {language === "pt"
+                    ? "Os mesmos artigos curados (PEDro ≥ 7) que alimentam a IA agora ficam disponíveis para você consultar, filtrar e favoritar. Acesse pela página do Agente, segmentado por nicho, com filtros de ano e nota PEDro — sem precisar abrir outra aba ou caçar PDF."
+                    : language === "es"
+                    ? "Los mismos artículos curados (PEDro ≥ 7) que alimentan la IA ahora están disponibles para consultar, filtrar y marcar como favoritos. Accede desde la página del Agente, segmentado por nicho, con filtros de año y nota PEDro."
+                    : "The same curated studies (PEDro ≥ 7) that power the AI are now yours to browse, filter and favorite — right from the Clinical Agent page, sorted by niche with year and PEDro score filters."}
+                </p>
+                <ul className="grid sm:grid-cols-2 gap-2.5 text-sm text-foreground">
+                  <li className="flex items-start gap-2"><BookOpen className="h-4 w-4 text-primary mt-0.5 shrink-0" />{language === "pt" ? "Segmentado por nicho clínico" : language === "es" ? "Segmentado por nicho clínico" : "Sorted by clinical niche"}</li>
+                  <li className="flex items-start gap-2"><Filter className="h-4 w-4 text-primary mt-0.5 shrink-0" />{language === "pt" ? "Filtros de ano e nota PEDro" : language === "es" ? "Filtros de año y nota PEDro" : "Year and PEDro score filters"}</li>
+                  <li className="flex items-start gap-2"><Star className="h-4 w-4 text-primary mt-0.5 shrink-0" />{language === "pt" ? "Favorite estudos para acesso rápido" : language === "es" ? "Marca favoritos para acceso rápido" : "Favorite studies for quick access"}</li>
+                  <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />{language === "pt" ? "Mesma base usada pela IA do Aliv.iA" : language === "es" ? "Misma base usada por la IA de Aliv.iA" : "Same base the Aliv.iA AI uses"}</li>
+                </ul>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-card/90 backdrop-blur-sm p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{language === "pt" ? "Nichos atuais" : language === "es" ? "Nichos actuales" : "Current niches"}</span>
+                  <Badge variant="outline" className="border-primary/30 text-primary text-[10px]">BETA</Badge>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {["Ombro", "Lombar", "Cervical", "Quadril", "Joelho", "Tornozelo", "Cotovelo", "Punho", "Pélvica", "Temporomandibular"].map((n) => (
+                    <span key={n} className="rounded-full bg-primary/10 text-primary text-xs px-2.5 py-1">{n}</span>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-4 leading-relaxed">
+                  {language === "pt"
+                    ? "Novos nichos entram conforme novos artigos são aprovados na curadoria."
+                    : language === "es"
+                    ? "Nuevos nichos se incorporan a medida que se aprueban más artículos."
+                    : "New niches are added as more studies clear curation."}
+                </p>
+              </div>
             </div>
           </motion.div>
         </div>
