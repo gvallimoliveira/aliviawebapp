@@ -634,10 +634,14 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     !!professional?.subscription_stripe_id
     || (professional?.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
   );
+  // Grace period: assinatura caiu mas mantemos acesso ao dashboard por 7 dias
+  // (mesma janela usada em check-pro-subscription e exibida no banner).
+  const inGracePeriod = !!professional?.subscription_grace_until
+    && new Date(professional.subscription_grace_until) > new Date();
   const isPartner = professional?.is_partner === true;
   const isAcademicPartner = professional?.is_partner_account === true && professional?.is_student === true;
   const isVipAdmin = isFallbackVip(user?.email);
-  const hasEffectiveProAccess = isVipAdmin || !!subscription?.subscribed || hasPaidProSubscription || isPartner || isAcademicPartner;
+  const hasEffectiveProAccess = isVipAdmin || !!subscription?.subscribed || hasPaidProSubscription || inGracePeriod || isPartner || isAcademicPartner;
 
   // ── Plan Selection Screen (mandatory for new registrants without subscription) ──
   if (!isDemoMode && !clinicCoversAccess && !hasEffectiveProAccess) {
