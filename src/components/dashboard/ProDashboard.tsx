@@ -634,9 +634,9 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     !!professional?.subscription_stripe_id
     || (professional?.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
   );
-  const isAcademicPartner = professional?.is_partner === true && professional?.is_student === true;
+  const isPartner = professional?.is_partner === true;
   const isVipAdmin = isFallbackVip(user?.email);
-  const hasEffectiveProAccess = isVipAdmin || !!subscription?.subscribed || hasPaidProSubscription || isAcademicPartner;
+  const hasEffectiveProAccess = isVipAdmin || !!subscription?.subscribed || hasPaidProSubscription || isPartner;
 
   // ── Plan Selection Screen (mandatory for new registrants without subscription) ──
   if (!isDemoMode && !clinicCoversAccess && !hasEffectiveProAccess) {

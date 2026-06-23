@@ -933,11 +933,11 @@ const Dashboard = () => {
                 || (professional.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
               )
             );
-            const isAcademicPartner = !!professional && professional.is_partner === true && professional.is_student === true;
+            const isPartner = !!professional && professional.is_partner === true;
             const isVipAdmin = isFallbackVip(user?.email);
             const hasProAccess = isVipAdmin || (!isProDemo && !!professional && (
               hasPaidProSubscription
-              || isAcademicPartner
+              || isPartner
             ));
             const isStudentLocked = !!professional?.is_student && !hasProAccess;
             const ProLockedCard = ({ title, desc }: { title: string; desc: string }) => (
