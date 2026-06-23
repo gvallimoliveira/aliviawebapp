@@ -158,7 +158,7 @@ const ClinicalAgent = () => {
   const clinicCoversAccess = !!(activeClinic &&
     (activeClinic.subscription_status === "active" || activeClinic.subscription_status === "trialing"));
   const hasActivePlan =
-    subState.subscribed || subState.isPartner || clinicCoversAccess || isBetaInternal;
+    subState.subscribed || subState.isPartner || clinicCoversAccess;
 
   const handleStartSubscription = async () => {
     setSubscribing(true);

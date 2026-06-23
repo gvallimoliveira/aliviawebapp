@@ -72,7 +72,6 @@ const ProfessionalSearch = () => {
         [
           "and(subscription_status.eq.active,subscription_stripe_id.not.is.null)",
           `pro_access_expires_at.gt.${nowIso}`,
-          `subscription_grace_until.gt.${nowIso}`,
         ].join(",")
       );
 

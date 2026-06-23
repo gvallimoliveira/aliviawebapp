@@ -4,7 +4,7 @@ description: Modo Estudante para alunos sem CREFITO; identifica o cadastro como 
 type: feature
 ---
 
-⚠️ **Acesso PRO NÃO é gratuito para estudantes.** `is_student=true` apenas marca o perfil como acadêmico (selo, identificação no PDF, papel intern na clínica). Para usar funcionalidades PRO, o estudante precisa de assinatura ativa, lifetime, premium_granted ou cobertura por clínica — mesma regra de qualquer profissional. `check-pro-subscription` NÃO retorna `subscribed:true` por ser estudante; `ProDashboard` mostra a tela de upgrade normalmente; `Dashboard.tsx` não inclui `is_student` em `hasProAccess`.
+⚠️ **Acesso PRO NÃO é gratuito para estudantes.** `is_student=true` apenas marca o perfil como acadêmico (selo, identificação no PDF, papel intern na clínica). Para usar funcionalidades PRO, estudante e profissional precisam de assinatura PRO ativa paga (`subscription_status='active'` com `subscription_stripe_id` ou `pro_access_expires_at` pago vigente). `lifetime_treatment` e `premium_granted` NÃO substituem assinatura do painel PRO. Única exceção gratuita: **parceiro acadêmico** (`is_partner=true` E `is_student=true`) habilitado pelo admin. `check-pro-subscription` NÃO retorna `subscribed:true` por ser estudante; só retorna para assinatura Stripe ativa, anual pago vigente ou parceiro acadêmico.
 
 
 Estudantes ativam o modo por DUAS rotas equivalentes: (1) toggle "Sou estudante — Alivia Acadêmico" no topo do modal `/professional/register` (campos CREFITO/CPF/Instagram somem; aparecem Instituição + Período); (2) card "Acesso Estudante" em /minha-conta (StudentAccessCard). Ao ativar:
