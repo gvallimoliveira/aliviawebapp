@@ -870,9 +870,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                     <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
                       {clinicCoversAccess
                         ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
-                        : subscription?.is_partner ? t("pro.badge_partner")
-                        : (subscription?.is_student || (professional as any)?.is_student) ? "Acadêmico"
-                        : t("dashboard.active")}
+                        : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
                     </Badge>
                   </p>
                   {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
