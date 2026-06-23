@@ -630,7 +630,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     (activeClinic.subscription_status === "active" || activeClinic.subscription_status === "trialing");
 
   // ── Plan Selection Screen (mandatory for new registrants without subscription) ──
-  if (!isDemoMode && !clinicCoversAccess && !subscription?.subscribed && !(professional as any)?.is_student && (isSubscribeFlow || professional.subscription_status === "inactive")) {
+  if (!isDemoMode && !clinicCoversAccess && !subscription?.subscribed && (isSubscribeFlow || professional.subscription_status === "inactive")) {
     return (
       <div className="space-y-6 max-w-lg mx-auto py-4">
         <div className="text-center space-y-2">
@@ -870,9 +870,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                     <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
                       {clinicCoversAccess
                         ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
-                        : subscription?.is_partner ? t("pro.badge_partner")
-                        : (subscription?.is_student || (professional as any)?.is_student) ? "Acadêmico"
-                        : t("dashboard.active")}
+                        : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
                     </Badge>
                   </p>
                   {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
@@ -897,7 +895,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                   <Settings className="h-3.5 w-3.5" />
                   {t("pro.edit_profile")}
                 </Button>
-                {!clinicCoversAccess && !subscription?.is_partner && !subscription?.is_student && !(professional as any)?.is_student && (
+                {!clinicCoversAccess && !subscription?.is_partner && (
                   <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl h-8">
                     {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
                     {t("pro.manage_subscription")}

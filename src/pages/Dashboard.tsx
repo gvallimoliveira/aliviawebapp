@@ -928,7 +928,6 @@ const Dashboard = () => {
               || professional.is_partner === true
               || professional.lifetime_treatment === true
               || professional.premium_granted === true
-              || professional.is_student === true
               || (professional.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
             );
             const isStudentLocked = !!professional?.is_student && !hasProAccess;

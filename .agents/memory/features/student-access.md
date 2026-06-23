@@ -1,8 +1,11 @@
 ---
 name: Student Access (Alivia Acadêmico)
-description: Modo Estudante para alunos de fisioterapia sem CREFITO; libera ferramentas PRO com selo acadêmico, com trava para profissionais já formados (exceção VIP) e papel Estagiário na clínica.
+description: Modo Estudante para alunos sem CREFITO; identifica o cadastro como acadêmico (selo no PDF/marketplace) mas NÃO concede acesso PRO — estudante precisa assinar PRO igual a qualquer profissional.
 type: feature
 ---
+
+⚠️ **Acesso PRO NÃO é gratuito para estudantes.** `is_student=true` apenas marca o perfil como acadêmico (selo, identificação no PDF, papel intern na clínica). Para usar funcionalidades PRO, o estudante precisa de assinatura ativa, lifetime, premium_granted ou cobertura por clínica — mesma regra de qualquer profissional. `check-pro-subscription` NÃO retorna `subscribed:true` por ser estudante; `ProDashboard` mostra a tela de upgrade normalmente; `Dashboard.tsx` não inclui `is_student` em `hasProAccess`.
+
 
 Estudantes ativam o modo por DUAS rotas equivalentes: (1) toggle "Sou estudante — Alivia Acadêmico" no topo do modal `/professional/register` (campos CREFITO/CPF/Instagram somem; aparecem Instituição + Período); (2) card "Acesso Estudante" em /minha-conta (StudentAccessCard). Ao ativar:
 - `professionals.is_student = true`, `crefito = null` permitido (trigger pula validação).
