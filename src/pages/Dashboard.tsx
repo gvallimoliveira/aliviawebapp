@@ -494,8 +494,19 @@ const Dashboard = () => {
   // independentemente de active_profile_mode (campo legado que podia ficar
   // dessincronizado em contas criadas pelo card acadêmico vs. botão pro).
   useEffect(() => {
-    setHasProfessionalProfile(!!professional);
-    setIsStudentProfessional(!!(professional as any)?.is_student);
+    // Stub rows criados ao aceitar convite de clínica (terapeuta) têm
+    // active=false e sem crefito/assinatura — não devem suprimir o modo
+    // "Profissional Autônomo (Demo)" no seletor de contexto.
+    const p: any = professional;
+    const isRealProProfile = !!p && (
+      p.active === true
+      || !!p.crefito
+      || !!p.subscription_stripe_id
+      || p.is_partner === true
+      || p.is_partner_account === true
+    );
+    setHasProfessionalProfile(isRealProProfile);
+    setIsStudentProfessional(!!p?.is_student);
   }, [professional]);
 
   // Auto-switch to "professional" context once on first load when arriving
