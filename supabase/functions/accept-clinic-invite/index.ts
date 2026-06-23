@@ -103,6 +103,39 @@ serve(async (req) => {
       .delete()
       .eq("id", invitation.id);
 
+    // Garantir que terapeutas tenham linha própria em `professionals` —
+    // sem isso, PDFs/relatórios assinados pelo terapeuta caem no fallback
+    // do dono da clínica (CREFITO errado, e selo acadêmico vazado se o
+    // dono estiver em modo estudante). Criamos um stub não-aprovado e
+    // sem assinatura — o terapeuta completa o cadastro depois.
+    if (invitation.role === "therapist") {
+      const { data: existingPro } = await supabaseAdmin
+        .from("professionals")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!existingPro) {
+        const fullName =
+          (user.user_metadata as any)?.full_name?.trim() ||
+          (user.user_metadata as any)?.name?.trim() ||
+          (user.email?.split("@")[0] ?? "Profissional");
+        await supabaseAdmin.from("professionals").insert({
+          user_id: user.id,
+          full_name: fullName,
+          email: user.email,
+          city: "—",
+          state: "—",
+          active: false,
+          approved: false,
+          is_student: false,
+          active_profile_mode: "professional",
+          subscription_status: "inactive",
+        });
+        logStep("Stub professional row created for invited therapist", { userId: user.id });
+      }
+    }
+
     // Get clinic info
     const { data: clinic } = await supabaseAdmin
       .from("clinics")
