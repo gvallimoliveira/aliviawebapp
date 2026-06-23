@@ -933,10 +933,11 @@ const Dashboard = () => {
               )
             );
             const isAcademicPartner = !!professional && professional.is_partner === true && professional.is_student === true;
-            const hasProAccess = !isProDemo && !!professional && (
+            const isVipAdmin = isFallbackVip(user?.email);
+            const hasProAccess = isVipAdmin || (!isProDemo && !!professional && (
               hasPaidProSubscription
               || isAcademicPartner
-            );
+            ));
             const isStudentLocked = !!professional?.is_student && !hasProAccess;
             const ProLockedCard = ({ title, desc }: { title: string; desc: string }) => (
               <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
