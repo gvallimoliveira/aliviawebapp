@@ -2797,6 +2797,10 @@ export type Database = {
           user_name: string
         }[]
       }
+      has_active_pro_subscription: {
+        Args: { _professional_id: string }
+        Returns: boolean
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_clinic_member: {
         Args: { _clinic_id: string; _user_id: string }
@@ -2839,6 +2843,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["clinic_role"]
         }
         Returns: string
+      }
+      user_has_active_pro_subscription: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {

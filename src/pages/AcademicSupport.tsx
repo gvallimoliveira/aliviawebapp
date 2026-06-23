@@ -29,9 +29,9 @@ const tools = [
     icon: GraduationCap,
     title: { pt: "Modo Estudante (Alivia Acadêmico)", en: "Student Mode (Alivia Academic)", es: "Modo Estudiante (Alivia Académico)" },
     desc: {
-      pt: "Ativa o selo acadêmico no seu perfil e libera ferramentas PRO sem exigir CREFITO. Pode ser ligado no cadastro ou em /conta > 'Acesso Estudante'. Quando ativo, sua conta fica fora do marketplace público (você só atende dentro de avaliações supervisionadas).",
-      en: "Enables the academic seal on your profile and unlocks PRO tools without requiring a license number. Toggle it during signup or under /conta > 'Student Access'. While active, your account stays out of the public marketplace.",
-      es: "Activa el sello académico en tu perfil y desbloquea herramientas PRO sin exigir matrícula. Se activa en el registro o en /conta > 'Acceso Estudiante'. Mientras esté activo, tu cuenta queda fuera del marketplace público.",
+      pt: "Ativa o selo acadêmico no seu perfil sem exigir CREFITO. As ferramentas PRO só liberam com assinatura ativa, exceto quando o admin marca a conta como parceiro acadêmico. Quando ativo, sua conta fica fora do marketplace público.",
+      en: "Enables the academic seal on your profile without requiring a license number. PRO tools unlock only with an active subscription, except when admin marks the account as an academic partner. While active, your account stays out of the public marketplace.",
+      es: "Activa el sello académico en tu perfil sin exigir matrícula. Las herramientas PRO solo se desbloquean con suscripción activa, excepto cuando el admin marca la cuenta como socio académico. Mientras esté activo, tu cuenta queda fuera del marketplace público.",
     },
   },
   {
@@ -96,9 +96,9 @@ const faqKeys = [
       es: "Soy estudiante y no tengo matrícula. ¿Puedo usarlo?",
     },
     a: {
-      pt: "Sim. Ao se cadastrar em /professional/register, ative o toggle 'Sou estudante — Alivia Acadêmico' no topo do modal. Os campos de CREFITO/CPF somem e aparecem Instituição e Período. Você ganha acesso completo às ferramentas com selo acadêmico.",
-      en: "Yes. On /professional/register, toggle 'I'm a student — Alivia Academic' at the top of the modal. License/ID fields disappear and Institution + Term appear. You get full access to the tools with an academic seal.",
-      es: "Sí. En /professional/register activa 'Soy estudiante — Alivia Académico' en la parte superior. Los campos de matrícula desaparecen y aparecen Institución y Período. Acceso completo con sello académico.",
+      pt: "Sim. Ao se cadastrar em /professional/register, ative o toggle 'Sou estudante — Alivia Acadêmico'. Os campos de CREFITO/CPF somem e aparecem Instituição e Período. O selo acadêmico fica ativo, mas o acesso às ferramentas exige assinatura PRO ativa — salvo parceiro acadêmico habilitado pelo admin.",
+      en: "Yes. On /professional/register, toggle 'I'm a student — Alivia Academic'. License/ID fields disappear and Institution + Term appear. The academic seal becomes active, but tool access requires an active PRO subscription — except admin-enabled academic partners.",
+      es: "Sí. En /professional/register activa 'Soy estudiante — Alivia Académico'. Los campos de matrícula desaparecen y aparecen Institución y Período. El sello académico queda activo, pero el acceso a herramientas exige suscripción PRO activa — salvo socio académico habilitado por el admin.",
     },
   },
   {

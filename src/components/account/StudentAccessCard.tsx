@@ -46,7 +46,7 @@ const StudentAccessCard = () => {
   const t = isPt
     ? {
         title: "Acesso Estudante — Alivia Acadêmico",
-        desc: "Para estudantes de fisioterapia ainda sem CREFITO. Libera todas as ferramentas do plano profissional; relatórios e links exibem o selo acadêmico com seu nome.",
+        desc: "Para estudantes de fisioterapia ainda sem CREFITO. Ativa o selo acadêmico; as ferramentas profissionais só liberam com assinatura PRO ativa, exceto parceiro acadêmico habilitado pelo admin.",
         toggle: "Sou estudante de fisioterapia",
         toggle_hint: "Desative para cadastrar seu CREFITO e ter acesso ao painel exclusivamente profissional",
         name: "Nome completo",
@@ -79,7 +79,7 @@ const StudentAccessCard = () => {
       }
     : {
         title: "Student Access — Alivia Academic",
-        desc: "For physiotherapy students without a CREFITO yet. Unlocks every professional tool; reports and links show the academic disclaimer with your name.",
+        desc: "For physiotherapy students without a CREFITO yet. Enables the academic seal; professional tools unlock only with an active PRO subscription, except admin-enabled academic partners.",
         toggle: "I am a physiotherapy student",
         toggle_hint: "Disable to register your CREFITO and access the exclusively professional panel",
         name: "Full name",
@@ -117,7 +117,7 @@ const StudentAccessCard = () => {
       const [profRes, vipRes] = await Promise.all([
         supabase
           .from("professionals")
-          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, student_name_locked, subscription_status, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
+          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, student_name_locked, subscription_status, subscription_stripe_id, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
           .eq("user_id", user.id)
           .maybeSingle(),
         user.email
@@ -138,13 +138,12 @@ const StudentAccessCard = () => {
         setInstitution(data.student_institution || "");
         setPeriod(data.student_period || "");
         setNameLocked(!!data.student_name_locked);
-        setHasProAccess(
-          data.subscription_status === "active"
-          || data.is_partner === true
-          || data.lifetime_treatment === true
-          || data.premium_granted === true
+        const hasPaidProSubscription = data.subscription_status === "active" && (
+          !!data.subscription_stripe_id
           || (data.pro_access_expires_at && new Date(data.pro_access_expires_at) > new Date())
         );
+        const isAcademicPartner = data.is_partner === true && data.is_student === true;
+        setHasProAccess(hasPaidProSubscription || isAcademicPartner);
       } else {
         const { data: prof } = await supabase
           .from("profiles")

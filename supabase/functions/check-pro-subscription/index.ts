@@ -39,22 +39,26 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { email: user.email });
 
-    // Check if user is a partner or has annual access first
+    // Check professional profile first. IMPORTANT: `is_student` alone never
+    // grants PRO access. Free PRO is allowed only for admin-created Academic
+    // Partners: `is_partner=true` AND `is_student=true`.
     const { data: proData } = await supabaseClient
       .from("professionals")
       .select("id, is_partner, is_student, subscription_status, pro_access_expires_at, premium_granted, subscription_grace_until")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (proData?.is_partner) {
-      logStep("User is a partner — granting access without Stripe");
+    const isAcademicPartner = proData?.is_partner === true && proData?.is_student === true;
+
+    if (isAcademicPartner) {
+      logStep("User is an Academic Partner — granting admin-enabled access without Stripe");
       if (proData.subscription_status !== "active") {
         await supabaseClient
           .from("professionals")
           .update({ subscription_status: "active" })
           .eq("user_id", user.id);
       }
-      return new Response(JSON.stringify({ subscribed: true, is_partner: true, premium_granted: proData.premium_granted }), {
+      return new Response(JSON.stringify({ subscribed: true, is_partner: true, is_student: true, premium_granted: proData.premium_granted }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -65,7 +69,7 @@ serve(async (req) => {
     // (proData.is_student permanece apenas como marcador de perfil acadêmico.)
 
 
-    // Check annual one-time payment access
+    // Check annual one-time payment access (legacy paid access marker)
     if (proData?.pro_access_expires_at) {
       const expiresAt = new Date(proData.pro_access_expires_at);
       const now = new Date();

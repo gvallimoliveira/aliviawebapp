@@ -629,8 +629,15 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const clinicCoversAccess = isClinicMode && activeClinic &&
     (activeClinic.subscription_status === "active" || activeClinic.subscription_status === "trialing");
 
+  const hasPaidProSubscription = professional?.subscription_status === "active" && (
+    !!professional?.subscription_stripe_id
+    || (professional?.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
+  );
+  const isAcademicPartner = professional?.is_partner === true && professional?.is_student === true;
+  const hasEffectiveProAccess = !!subscription?.subscribed || hasPaidProSubscription || isAcademicPartner;
+
   // ── Plan Selection Screen (mandatory for new registrants without subscription) ──
-  if (!isDemoMode && !clinicCoversAccess && !subscription?.subscribed && (isSubscribeFlow || professional.subscription_status === "inactive")) {
+  if (!isDemoMode && !clinicCoversAccess && !hasEffectiveProAccess) {
     return (
       <div className="space-y-6 max-w-lg mx-auto py-4">
         <div className="text-center space-y-2">

@@ -59,10 +59,9 @@ const ProfessionalSearch = () => {
 
   const fetchProfessionals = async () => {
     setLoading(true);
-    // Vitrine pública: profissionais aprovados E ativos, com qualquer forma
-    // válida de acesso PRO — assinatura ativa, parceiro institucional,
-    // tratamento vitalício, Premium concedido, acesso anual vigente OU
-    // período de tolerância de 7 dias após queda da assinatura.
+    // Vitrine pública: profissionais aprovados E ativos, com assinatura PRO
+    // paga válida. O modo acadêmico sai do marketplace; parceiro não acadêmico
+    // não recebe mais vitrine gratuita.
     const nowIso = new Date().toISOString();
     let query = (supabase.from("professionals" as any) as any)
       .select("*")
@@ -71,13 +70,8 @@ const ProfessionalSearch = () => {
       .eq("active_profile_mode", "professional")
       .or(
         [
-          "subscription_status.eq.active",
-          "is_partner.eq.true",
-          "is_partner_account.eq.true",
-          "lifetime_treatment.eq.true",
-          "premium_granted.eq.true",
+          "and(subscription_status.eq.active,subscription_stripe_id.not.is.null)",
           `pro_access_expires_at.gt.${nowIso}`,
-          `subscription_grace_until.gt.${nowIso}`,
         ].join(",")
       );
 
