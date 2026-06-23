@@ -946,12 +946,12 @@ const Dashboard = () => {
                         🎓 Selo Alivia Acadêmico não libera assinatura
                       </p>
                       <p className="text-amber-900/85 leading-relaxed">
-                        O modo Acadêmico é só um identificador visual nos seus PDFs e links. Para usar as ferramentas PRO, assine o plano profissional e mantenha o modo Acadêmico ativo enquanto ainda não tem CREFITO — estudantes pagam <span className="font-mono font-semibold">50% OFF</span> com o cupom <span className="font-mono font-semibold">SOUIBMR</span>.
+                        O modo Acadêmico é só um identificador visual nos seus PDFs e links. Para usar as ferramentas PRO, assine o plano profissional e mantenha o modo Acadêmico ativo enquanto ainda não tem CREFITO.
                       </p>
                     </div>
                   )}
                   <Button onClick={() => setActiveTab("professional")} variant="outline" className="rounded-xl">
-                    {isStudentLocked ? "Ver planos com desconto acadêmico" : "Ver opções de assinatura"}
+                    Ver opções de assinatura
                   </Button>
                 </CardContent>
               </Card>
