@@ -157,6 +157,7 @@ export default function AgentKnowledgeBrowser() {
                 Nenhum artigo encontrado para esses filtros.
               </p>
             )
+          ) : (
             <>
               <p className="text-[11px] text-muted-foreground px-1">
                 {filtered.length} artigo{filtered.length === 1 ? "" : "s"}
