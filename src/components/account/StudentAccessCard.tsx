@@ -390,17 +390,49 @@ const StudentAccessCard = () => {
                   {t.no_sub_title}
                 </p>
                 <p className="text-amber-900/85 leading-relaxed">{t.no_sub_desc}</p>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="w-full gap-2 rounded-lg"
-                  onClick={() => navigate("/profissionais")}
-                >
-                  <CreditCard className="h-4 w-4" />
-                  {t.no_sub_cta}
-                </Button>
+                <div className="rounded-lg bg-amber-100/70 border border-amber-200 px-2.5 py-2 flex gap-1.5 text-amber-900/90 leading-relaxed">
+                  <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <p>{t.no_sub_note}</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="flex-1 gap-2 rounded-lg"
+                    onClick={async () => {
+                      try {
+                        const { data, error } = await supabase.functions.invoke("create-pro-subscription", { body: { plan: "annual" } });
+                        if (error) throw error;
+                        if (data?.url) window.location.href = data.url;
+                      } catch {
+                        toast({ title: t.error, variant: "destructive" });
+                      }
+                    }}
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    {t.no_sub_cta}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 gap-2 rounded-lg"
+                    onClick={async () => {
+                      try {
+                        const { data, error } = await supabase.functions.invoke("create-pro-subscription", { body: { plan: "monthly" } });
+                        if (error) throw error;
+                        if (data?.url) window.location.href = data.url;
+                      } catch {
+                        toast({ title: t.error, variant: "destructive" });
+                      }
+                    }}
+                  >
+                    {t.no_sub_cta_monthly}
+                  </Button>
+                </div>
               </div>
             )}
+
 
             {needsCrefitoFlow && (
               <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs text-foreground space-y-2">
