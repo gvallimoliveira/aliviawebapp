@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Loader2, Lock, Sparkles, AlertTriangle, CreditCard, Stethoscope } from "lucide-react";
+import { GraduationCap, Loader2, Lock, Sparkles, AlertTriangle, CreditCard, Stethoscope, Info } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { isFallbackVip } from "@/lib/vipEmails";
 
@@ -69,7 +69,9 @@ const StudentAccessCard = () => {
         vip_desc: "Conta de teste: alternar não apaga seu CREFITO nem seus dados.",
         no_sub_title: "O selo acadêmico não substitui a assinatura PRO",
         no_sub_desc: "O modo Alivia Acadêmico é apenas um identificador visual nos PDFs e links públicos. Para liberar as ferramentas PRO (painel de pacientes, IA clínica, programas de exercício, prontuário) você precisa de uma assinatura ativa.",
-        no_sub_cta: "Ver opções de assinatura",
+        no_sub_note: "É a mesma assinatura PRO do fisioterapeuta formado — mesmo produto, mesmo preço. Enquanto você não cadastrar seu CREFITO, seu perfil continua identificado como Alivia Acadêmico em PDFs e links públicos. Ao registrar o CREFITO depois, o selo acadêmico some automaticamente e a conta passa a operar como Profissional, sem nova cobrança.",
+        no_sub_cta: "Assinar PRO (anual)",
+        no_sub_cta_monthly: "Ver plano mensal",
         mode_title: "Perfil ativo agora",
         mode_desc: "Define o que aparece nos seus PDFs, no link público de avaliação e no marketplace. Você pode alternar quando quiser.",
         mode_pro: "Profissional",
@@ -102,7 +104,9 @@ const StudentAccessCard = () => {
         vip_desc: "Test account: toggling does not erase your CREFITO or data.",
         no_sub_title: "The academic seal does not replace a PRO subscription",
         no_sub_desc: "Alivia Academic mode is only a visual identifier on PDFs and public links. To unlock PRO tools (patient panel, clinical AI, exercise programs, chart) you need an active subscription.",
-        no_sub_cta: "See subscription options",
+        no_sub_note: "This is the same PRO subscription used by licensed physiotherapists — same product, same price. As long as you don't register your CREFITO, your profile stays labeled as Alivia Academic on PDFs and public links. When you later add a CREFITO, the academic seal is removed automatically and the account starts operating as Professional, with no extra charge.",
+        no_sub_cta: "Subscribe to PRO (annual)",
+        no_sub_cta_monthly: "See monthly plan",
         mode_title: "Active profile right now",
         mode_desc: "Defines what appears on your PDFs, your public assessment link and the marketplace. You can switch anytime.",
         mode_pro: "Professional",
@@ -386,17 +390,49 @@ const StudentAccessCard = () => {
                   {t.no_sub_title}
                 </p>
                 <p className="text-amber-900/85 leading-relaxed">{t.no_sub_desc}</p>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="w-full gap-2 rounded-lg"
-                  onClick={() => navigate("/profissionais")}
-                >
-                  <CreditCard className="h-4 w-4" />
-                  {t.no_sub_cta}
-                </Button>
+                <div className="rounded-lg bg-amber-100/70 border border-amber-200 px-2.5 py-2 flex gap-1.5 text-amber-900/90 leading-relaxed">
+                  <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <p>{t.no_sub_note}</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="flex-1 gap-2 rounded-lg"
+                    onClick={async () => {
+                      try {
+                        const { data, error } = await supabase.functions.invoke("create-pro-subscription", { body: { plan: "annual" } });
+                        if (error) throw error;
+                        if (data?.url) window.location.href = data.url;
+                      } catch {
+                        toast({ title: t.error, variant: "destructive" });
+                      }
+                    }}
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    {t.no_sub_cta}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 gap-2 rounded-lg"
+                    onClick={async () => {
+                      try {
+                        const { data, error } = await supabase.functions.invoke("create-pro-subscription", { body: { plan: "monthly" } });
+                        if (error) throw error;
+                        if (data?.url) window.location.href = data.url;
+                      } catch {
+                        toast({ title: t.error, variant: "destructive" });
+                      }
+                    }}
+                  >
+                    {t.no_sub_cta_monthly}
+                  </Button>
+                </div>
               </div>
             )}
+
 
             {needsCrefitoFlow && (
               <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs text-foreground space-y-2">
