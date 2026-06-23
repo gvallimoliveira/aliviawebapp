@@ -33,7 +33,7 @@ Clínica (papel Estagiário):
 
 Dashboard PRO:
 - Badge "🎓 Alivia Acadêmico" no topo do dashboard ativo quando `professional.is_student=true` (mostra instituição/período).
-- Tela de upgrade (assinatura inativa) mostra aviso destacando o cupom `SOUIBMR` (50% off) para estudantes.
+- Tela de upgrade (assinatura inativa) mostra aviso de que o selo acadêmico não substitui assinatura PRO (sem cupom — SOUIBMR expirou em 19/06/2026).
 
 ---
 
