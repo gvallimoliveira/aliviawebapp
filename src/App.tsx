@@ -143,6 +143,7 @@ const App = () => {
                   <Route path="/casos-de-estudo" element={<CasosDeEstudo />} />
                   <Route path="/trilhas" element={<AcademicTracks />} />
                   <Route path="/academico" element={<AcademicLanding />} />
+                  <Route path="/academico/suporte" element={<AcademicSupport />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
