@@ -152,6 +152,12 @@ const categories: ToolCategory[] = [
         title: "Modo acadêmico e trilhas do Mentor",
         desc: "Alunos e profissionais PRO podem estudar pelo Agente com /professor, /quiz, /caso, /traduzir e /trilha [tema] [1-5]. As trilhas entregam aulas didáticas por módulo — conceitos, avaliação, diagnóstico, tratamento e caso aplicado — com XP por conclusão.",
       },
+      {
+        key: "evidence_library",
+        icon: BookOpen,
+        title: "Biblioteca de Evidências por Nicho (PEDro ≥ 7)",
+        desc: "Acesso integrado, dentro do Agente Clínico, à curadoria de artigos aprovados e usados pela própria IA — separados por nicho (ombro, lombar, cervical, quadril, joelho, etc.), com filtro por ano e por nota PEDro. Disponível para Acadêmico, PRO e Clínica. Estudos podem ser favoritados e ficam acessíveis em 1 clique. Em versão beta: nichos sem artigos aprovados ainda exibem aviso de curadoria em andamento.",
+      },
     ],
   },
   {
