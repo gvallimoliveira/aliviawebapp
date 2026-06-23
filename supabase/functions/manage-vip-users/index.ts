@@ -529,6 +529,14 @@ serve(async (req) => {
           // is_partner — se o admin quiser revogar PRO, usa o toggle PRO ou
           // o botão "Remover da lista".
           updates.active_profile_mode = "professional";
+          // Se a pessoa NÃO é parceira PRO ativa, encerra também o acesso
+          // que o toggle Acadêmico tinha concedido (subscription_status=active
+          // espelhado). Sem isto, o ex-acadêmico continuava com PRO grátis
+          // até o próximo check-pro-subscription rodar.
+          if (!pro.is_partner) {
+            updates.subscription_status = "inactive";
+            updates.is_partner_account = false;
+          }
         }
         const { error } = await supabaseClient
           .from("professionals")
