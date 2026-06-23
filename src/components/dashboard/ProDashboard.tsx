@@ -630,7 +630,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     (activeClinic.subscription_status === "active" || activeClinic.subscription_status === "trialing");
 
   // ── Plan Selection Screen (mandatory for new registrants without subscription) ──
-  if (!isDemoMode && !clinicCoversAccess && !subscription?.subscribed && !(professional as any)?.is_student && (isSubscribeFlow || professional.subscription_status === "inactive")) {
+  if (!isDemoMode && !clinicCoversAccess && !subscription?.subscribed && (isSubscribeFlow || professional.subscription_status === "inactive")) {
     return (
       <div className="space-y-6 max-w-lg mx-auto py-4">
         <div className="text-center space-y-2">
