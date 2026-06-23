@@ -22,6 +22,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
 import MentorCommandsPopover from "@/components/agent/MentorCommandsPopover";
 import ProBottomTabBar from "@/components/dashboard/ProBottomTabBar";
+import AgentKnowledgeBrowser from "@/components/agent/AgentKnowledgeBrowser";
 
 type Thread = {
   id: string;
