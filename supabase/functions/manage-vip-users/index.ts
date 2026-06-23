@@ -491,22 +491,25 @@ serve(async (req) => {
         if (error) throw error;
       } else if (access_type === "academic") {
         // Marca/desmarca parceiro como Acadêmico (Alivia Acadêmico).
-        // Service role bypassa a trava do trigger validate_crefito_format,
-        // então CREFITO é preservado e podemos alternar livremente.
+        // REGRA: parceiro acadêmico = acesso PRO liberado gratuitamente +
+        // operando obrigatoriamente como estudante (selo Alivia Acadêmico).
+        // O toggle Acadêmico, portanto, também liga is_partner (gate de PRO).
         const updates: Record<string, any> = {
           is_student: enabled,
         };
         if (enabled) {
           updates.is_partner_account = true;
-          updates.approved = false; // tira do marketplace
+          updates.is_partner = true;                    // libera ferramentas PRO grátis
+          updates.subscription_status = "active";        // espelha o acesso liberado
+          updates.approved = false;                      // tira do marketplace público
+          updates.active_profile_mode = "student";       // força modo acadêmico SEMPRE
           if (body.student_institution) updates.student_institution = body.student_institution;
           if (body.student_period) updates.student_period = body.student_period;
-          // Sem CREFITO → não há perfil profissional válido, então força modo acadêmico
-          // para que PDFs e links já saiam com o selo Alivia Acadêmico automaticamente.
-          // Com CREFITO → preserva o modo atual; o parceiro decide via /minha-conta.
-          if (!pro.crefito || String(pro.crefito).trim().length === 0) {
-            updates.active_profile_mode = "student";
-          }
+        } else {
+          // Desligar Acadêmico volta o seletor para profissional. NÃO mexe em
+          // is_partner — se o admin quiser revogar PRO, usa o toggle PRO ou
+          // o botão "Remover da lista".
+          updates.active_profile_mode = "professional";
         }
         const { error } = await supabaseClient
           .from("professionals")
