@@ -767,6 +767,7 @@ const ClinicalAgent = () => {
                 title="Renomear conversa"
               >
                 <h1 className="text-sm font-semibold truncate">{activeThread?.title || (creatingThread ? "Criando conversa…" : "Agente Clínico")}</h1>
+                <Badge variant="outline" className="h-4 text-[9px] px-1.5 border-primary/30 text-primary shrink-0">BETA</Badge>
                 {activeThread && <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60 shrink-0" />}
               </button>
             )}
