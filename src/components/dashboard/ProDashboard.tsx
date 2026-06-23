@@ -895,7 +895,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                   <Settings className="h-3.5 w-3.5" />
                   {t("pro.edit_profile")}
                 </Button>
-                {!clinicCoversAccess && !subscription?.is_partner && (
+                {!clinicCoversAccess && !subscription?.is_partner && !subscription?.is_student && !(professional as any)?.is_student && (
                   <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl h-8">
                     {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
                     {t("pro.manage_subscription")}
