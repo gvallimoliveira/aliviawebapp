@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   GraduationCap, HelpCircle, BookOpen, Stamp, ShieldCheck, ArrowRightLeft,
   Sparkles, FileText, Brain, Users, Heart, CreditCard, Lock, Lightbulb,
+  Layers as Layers2Icon,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
