@@ -123,6 +123,7 @@ const ClinicalAgent = () => {
   const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [showCitations, setShowCitations] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const [generatingHep, setGeneratingHep] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
