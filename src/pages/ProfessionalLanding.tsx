@@ -22,6 +22,7 @@ import {
   LayoutDashboard, Brain, User, FileBarChart, Zap,
   RefreshCw, Dumbbell, Palette, TrendingUp, GraduationCap,
   BarChart3, ListChecks, ShieldCheck, DollarSign, Timer, Users,
+  BookOpen, Filter, Star, Sparkles,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
