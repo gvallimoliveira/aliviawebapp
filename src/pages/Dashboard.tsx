@@ -934,10 +934,12 @@ const Dashboard = () => {
               )
             );
             const isPartner = !!professional && professional.is_partner === true;
+            const isAcademicPartner = !!professional && professional.is_partner_account === true && professional.is_student === true;
             const isVipAdmin = isFallbackVip(user?.email);
             const hasProAccess = isVipAdmin || (!isProDemo && !!professional && (
               hasPaidProSubscription
               || isPartner
+              || isAcademicPartner
             ));
             const isStudentLocked = !!professional?.is_student && !hasProAccess;
             const ProLockedCard = ({ title, desc }: { title: string; desc: string }) => (

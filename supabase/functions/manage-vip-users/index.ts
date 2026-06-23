@@ -265,6 +265,11 @@ serve(async (req) => {
           .eq("owner_user_id", p.user_id)
           .maybeSingle();
 
+        const effectiveActiveMode =
+          p.is_student && !p.is_partner
+            ? "student"
+            : (p.active_profile_mode || (p.is_student ? "student" : "professional"));
+
         return {
           id: p.id,
           full_name: p.full_name,
@@ -275,7 +280,7 @@ serve(async (req) => {
           is_partner_account: p.is_partner_account,
           premium_granted: p.premium_granted,
           is_student: !!p.is_student,
-          active_profile_mode: p.active_profile_mode || (p.is_student ? "student" : "professional"),
+          active_profile_mode: effectiveActiveMode,
           student_institution: p.student_institution || null,
           student_period: p.student_period || null,
           has_clinic: !!clinic,
@@ -383,7 +388,7 @@ serve(async (req) => {
 
       const { data: pro, error: proErr } = await supabaseClient
         .from("professionals")
-        .select("id, user_id, full_name, is_partner, crefito")
+        .select("id, user_id, full_name, is_partner, is_partner_account, is_student, crefito")
         .eq("id", professional_id)
         .single();
 
@@ -396,13 +401,19 @@ serve(async (req) => {
 
       if (access_type === "pro") {
         // Liga/desliga apenas PRO; "is_partner_account" permanece para manter pessoa na lista
+        const isAcademicOnlyPartner = !enabled && !!pro.is_partner_account && !!pro.is_student;
         const updates: Record<string, any> = {
           is_partner: enabled,
-          subscription_status: enabled ? "active" : "inactive",
+          subscription_status: enabled || isAcademicOnlyPartner ? "active" : "inactive",
         };
         if (enabled) {
           updates.approved = true;
           updates.is_partner_account = true; // garante que está marcado como parceiro
+        } else if (isAcademicOnlyPartner) {
+          // Se só o Acadêmico ficar ligado, o parceiro continua com acesso
+          // liberado e deve operar/ser exibido como Acadêmico.
+          updates.approved = false;
+          updates.active_profile_mode = "student";
         }
         const { error } = await supabaseClient
           .from("professionals")
@@ -491,16 +502,16 @@ serve(async (req) => {
         if (error) throw error;
       } else if (access_type === "academic") {
         // Marca/desmarca parceiro como Acadêmico (Alivia Acadêmico).
-        // REGRA: parceiro acadêmico = acesso PRO liberado gratuitamente +
-        // operando obrigatoriamente como estudante (selo Alivia Acadêmico).
-        // O toggle Acadêmico, portanto, também liga is_partner (gate de PRO).
+        // REGRA: parceiro acadêmico = is_partner_account + is_student.
+        // O toggle Acadêmico sozinho concede acesso às ferramentas como
+        // parceiro acadêmico e força a operação visual como estudante.
+        // O toggle PRO permanece independente para parceiros profissionais.
         const updates: Record<string, any> = {
           is_student: enabled,
         };
         if (enabled) {
           updates.is_partner_account = true;
-          updates.is_partner = true;                    // libera ferramentas PRO grátis
-          updates.subscription_status = "active";        // espelha o acesso liberado
+          updates.subscription_status = "active";        // espelha o acesso acadêmico liberado
           updates.approved = false;                      // tira do marketplace público
           updates.active_profile_mode = "student";       // força modo acadêmico SEMPRE
           if (body.student_institution) updates.student_institution = body.student_institution;
