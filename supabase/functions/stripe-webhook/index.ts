@@ -54,6 +54,10 @@ serve(async (req) => {
       case "checkout.session.async_payment_failed":
         await handleAsyncPaymentFailed(event.data.object as Stripe.Checkout.Session);
         break;
+      case "customer.subscription.deleted":
+      case "customer.subscription.updated":
+        await handleSubscriptionLifecycle(event.data.object as Stripe.Subscription, event.type);
+        break;
       default:
         log("Unhandled event type", { type: event.type });
     }
@@ -516,5 +520,126 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
 
     default:
       log("Unknown payment type, skipping fulfillment", { paymentType });
+  }
+}
+
+/**
+ * Reage a customer.subscription.deleted/updated:
+ * - PRO pessoal: aplica janela de carência de 7 dias antes de derrubar acesso.
+ * - Clinic subscription: marca como inactive (sem grace, dono recontrata).
+ * Mantém o DB em sincronia com o Stripe sem depender do usuário abrir o app.
+ */
+async function handleSubscriptionLifecycle(sub: Stripe.Subscription, eventType: string) {
+  const proProductIds = ["prod_UHdISwfBcfWftS", "prod_UA4lNoezZmPwvs"];
+  const isProSub = sub.items.data.some((i: any) => proProductIds.includes(i.price?.product as string));
+  const isActive = sub.status === "active" || sub.status === "trialing";
+
+  log("subscription lifecycle", { eventType, subId: sub.id, status: sub.status, isProSub });
+
+  if (isProSub) {
+    // Encontra o profissional pelo subscription_stripe_id OU pelo customer email
+    let proRow: any = null;
+    const { data: byId } = await supabase
+      .from("professionals")
+      .select("id, user_id, subscription_status, subscription_grace_until")
+      .eq("subscription_stripe_id", sub.id)
+      .maybeSingle();
+    proRow = byId;
+
+    if (!proRow && sub.customer) {
+      try {
+        const customer = await stripe.customers.retrieve(sub.customer as string);
+        const email = (customer as any)?.email;
+        if (email) {
+          const { data: authUser } = await supabase.auth.admin.listUsers();
+          const match = authUser?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+          if (match) {
+            const { data: byEmail } = await supabase
+              .from("professionals")
+              .select("id, user_id, subscription_status, subscription_grace_until")
+              .eq("user_id", match.id)
+              .maybeSingle();
+            proRow = byEmail;
+          }
+        }
+      } catch (e) {
+        log("Customer lookup failed", { error: String(e) });
+      }
+    }
+
+    if (!proRow) {
+      log("No professional row matched for PRO subscription event", { subId: sub.id });
+      return;
+    }
+
+    if (isActive && eventType === "customer.subscription.updated") {
+      // renovação / reativação
+      await supabase
+        .from("professionals")
+        .update({
+          subscription_status: "active",
+          subscription_stripe_id: sub.id,
+          approved: true,
+          subscription_grace_until: null,
+        })
+        .eq("id", proRow.id);
+      log("PRO subscription reactivated", { proId: proRow.id });
+      return;
+    }
+
+    // Cancelada / expirada / inadimplente — aplicar carência se ainda não houver
+    const wasActive = proRow.subscription_status === "active";
+    const existingGrace = proRow.subscription_grace_until ? new Date(proRow.subscription_grace_until) : null;
+    const stillInGrace = existingGrace && existingGrace > new Date();
+
+    const updates: Record<string, any> = {
+      subscription_status: "inactive",
+      subscription_stripe_id: null,
+    };
+    if (wasActive && !stillInGrace) {
+      updates.subscription_grace_until = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    await supabase.from("professionals").update(updates).eq("id", proRow.id);
+    log("PRO subscription deactivated", { proId: proRow.id, graceApplied: !!updates.subscription_grace_until });
+
+    if (proRow.user_id && eventType === "customer.subscription.deleted") {
+      await sendPushToUser(proRow.user_id, {
+        title: "⚠️ Assinatura PRO cancelada",
+        body: "Você tem 7 dias de tolerância antes de perder acesso. Renove para continuar.",
+        url: "/account",
+      });
+    }
+    return;
+  }
+
+  // Clinic subscription
+  const { data: clinic } = await supabase
+    .from("clinics")
+    .select("id, owner_user_id, subscription_status")
+    .eq("subscription_stripe_id", sub.id)
+    .maybeSingle();
+
+  if (clinic) {
+    if (isActive) {
+      await supabase
+        .from("clinics")
+        .update({ subscription_status: "active" })
+        .eq("id", clinic.id);
+      log("Clinic subscription reactivated", { clinicId: clinic.id });
+    } else {
+      await supabase
+        .from("clinics")
+        .update({ subscription_status: "inactive", subscription_stripe_id: null })
+        .eq("id", clinic.id);
+      log("Clinic subscription deactivated", { clinicId: clinic.id });
+      if (clinic.owner_user_id && eventType === "customer.subscription.deleted") {
+        await sendPushToUser(clinic.owner_user_id, {
+          title: "⚠️ Assinatura da clínica cancelada",
+          body: "O acesso da equipe foi suspenso. Renove para reativar.",
+          url: "/dashboard?tab=clinic",
+        });
+      }
+    }
   }
 }
