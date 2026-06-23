@@ -39,6 +39,20 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { email: user.email });
 
+    // VIP/Admin fallback: hardcoded owner emails always have full PRO access.
+    // Mantém o app funcionando mesmo se vip_users falhar por RLS/timing.
+    const VIP_EMAILS = ["gvallimoliveira@gmail.com", "gvallim.fisio@gmail.com"];
+    if (VIP_EMAILS.includes((user.email || "").trim().toLowerCase())) {
+      logStep("VIP admin email — granting full access");
+      await supabaseClient
+        .from("professionals")
+        .update({ subscription_status: "active", approved: true })
+        .eq("user_id", user.id);
+      return new Response(JSON.stringify({ subscribed: true, is_vip: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Check professional profile first. IMPORTANT: `is_student` alone never
     // grants PRO access. Free PRO is allowed only for admin-created Academic
     // Partners: `is_partner=true` AND `is_student=true`.

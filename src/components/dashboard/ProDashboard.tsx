@@ -3,6 +3,7 @@ import AddPatientModal from "./AddPatientModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { isFallbackVip } from "@/lib/vipEmails";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -634,7 +635,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     || (professional?.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
   );
   const isAcademicPartner = professional?.is_partner === true && professional?.is_student === true;
-  const hasEffectiveProAccess = !!subscription?.subscribed || hasPaidProSubscription || isAcademicPartner;
+  const isVipAdmin = isFallbackVip(user?.email);
+  const hasEffectiveProAccess = isVipAdmin || !!subscription?.subscribed || hasPaidProSubscription || isAcademicPartner;
 
   // ── Plan Selection Screen (mandatory for new registrants without subscription) ──
   if (!isDemoMode && !clinicCoversAccess && !hasEffectiveProAccess) {
