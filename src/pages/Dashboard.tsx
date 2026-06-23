@@ -487,12 +487,14 @@ const Dashboard = () => {
   }, [activeTab, activeContext, activeClinic, professional, isClinicMode]);
 
 
-  // Sync professional profile flag
+  // Sync professional profile flag.
+  // Regra: is_student é a fonte de verdade do "Modo Acadêmico". Se o perfil
+  // está marcado como estudante (acadêmico), o seletor mostra "Modo Acadêmico"
+  // independentemente de active_profile_mode (campo legado que podia ficar
+  // dessincronizado em contas criadas pelo card acadêmico vs. botão pro).
   useEffect(() => {
     setHasProfessionalProfile(!!professional);
-    const mode = (professional as any)?.active_profile_mode
-      ?? ((professional as any)?.is_student ? "student" : "professional");
-    setIsStudentProfessional(mode === "student");
+    setIsStudentProfessional(!!(professional as any)?.is_student);
   }, [professional]);
 
   // Auto-switch to "professional" context once on first load when arriving
