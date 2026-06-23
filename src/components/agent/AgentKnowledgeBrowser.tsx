@@ -138,9 +138,25 @@ export default function AgentKnowledgeBrowser() {
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
             </div>
           ) : filtered.length === 0 ? (
-            <p className="text-center text-xs text-muted-foreground py-10">
-              Nenhum artigo encontrado para esses filtros.
-            </p>
+            niche !== "all" ? (
+              <div className="mx-1 my-6 rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">BETA</Badge>
+                  <span className="text-xs font-semibold">Nicho em curadoria</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Ainda não há artigos aprovados para <strong>{AGENT_NICHE_LABEL[niche] || niche}</strong> nos filtros atuais.
+                  Esta biblioteca está em versão beta — em breve constarão estudos selecionados e validados (PubMed / PEDro) sobre este tema.
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Dica: experimente relaxar o filtro de PEDro ou ano, ou escolha “Todos os nichos”.
+                </p>
+              </div>
+            ) : (
+              <p className="text-center text-xs text-muted-foreground py-10">
+                Nenhum artigo encontrado para esses filtros.
+              </p>
+            )
           ) : (
             <>
               <p className="text-[11px] text-muted-foreground px-1">
