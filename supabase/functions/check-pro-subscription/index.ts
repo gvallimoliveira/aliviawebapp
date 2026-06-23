@@ -55,26 +55,33 @@ serve(async (req) => {
 
     const { data: proData } = await supabaseClient
       .from("professionals")
-      .select("id, is_partner, is_student, subscription_status, pro_access_expires_at, premium_granted, subscription_grace_until")
+      .select("id, is_partner, is_partner_account, is_student, active_profile_mode, subscription_status, pro_access_expires_at, premium_granted, subscription_grace_until")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // Partner Access Model: qualquer profissional marcado como parceiro pelo
-    // admin tem acesso PRO liberado (acadêmico ou não). Estudantes SEM o flag
-    // de parceiro continuam precisando assinar.
+    // Partner Access Model:
+    // - PRO partner: is_partner=true (parceiro profissional)
+    // - Academic partner: is_partner_account=true + is_student=true
+    //   (apenas o toggle Acadêmico ativo também libera ferramentas)
+    // Estudantes SEM cadastro de parceiro no painel admin continuam precisando assinar.
     const isPartner = proData?.is_partner === true;
+    const isAcademicPartner = proData?.is_partner_account === true && proData?.is_student === true;
 
-    if (isPartner) {
-      logStep("User is an admin-granted Partner — granting access without Stripe", { is_student: !!proData?.is_student });
-      if (proData?.subscription_status !== "active") {
+    if (isPartner || isAcademicPartner) {
+      logStep("User is an admin-granted Partner — granting access without Stripe", { is_partner: isPartner, is_academic_partner: isAcademicPartner });
+      const partnerUpdates: Record<string, any> = {};
+      if (proData?.subscription_status !== "active") partnerUpdates.subscription_status = "active";
+      if (isAcademicPartner && proData?.active_profile_mode !== "student") partnerUpdates.active_profile_mode = "student";
+      if (Object.keys(partnerUpdates).length > 0) {
         await supabaseClient
           .from("professionals")
-          .update({ subscription_status: "active" })
+          .update(partnerUpdates)
           .eq("user_id", user.id);
       }
       return new Response(JSON.stringify({
         subscribed: true,
         is_partner: true,
+        is_academic_partner: isAcademicPartner,
         is_student: !!proData?.is_student,
         premium_granted: proData?.premium_granted,
       }), {

@@ -297,10 +297,16 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
 
     setPartners(prev => prev.map(p => {
       if (p.id !== partnerId) return p;
-      if (accessType === "pro") return { ...p, is_partner: enabled };
+      if (accessType === "pro") {
+        return {
+          ...p,
+          is_partner: enabled,
+          active_profile_mode: !enabled && p.is_student ? "student" : p.active_profile_mode,
+        };
+      }
       if (accessType === "clinic") return { ...p, clinic_active: enabled, has_clinic: enabled ? true : p.has_clinic };
       if (accessType === "premium") return { ...p, premium_granted: enabled };
-      if (accessType === "academic") return { ...p, is_student: enabled };
+      if (accessType === "academic") return { ...p, is_student: enabled, active_profile_mode: enabled ? "student" : "professional" };
       return p;
     }));
 
@@ -517,6 +523,9 @@ interface PartnerCardProps {
 }
 
 const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRequestRemove }: PartnerCardProps) => {
+  const effectiveActiveMode = partner.is_student && !partner.is_partner
+    ? "student"
+    : (partner.active_profile_mode || (partner.is_student ? "student" : "professional"));
   const toggles: { type: "pro" | "clinic" | "premium" | "academic"; label: string; icon: React.ReactNode; checked: boolean }[] = [
     { type: "pro", label: t.pro_label, icon: <Stethoscope className="h-3.5 w-3.5" />, checked: partner.is_partner },
     { type: "clinic", label: t.clinic_label, icon: <Building2 className="h-3.5 w-3.5" />, checked: partner.clinic_active },
@@ -540,9 +549,9 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRe
           <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
             <GraduationCap className="h-3 w-3" />
             🎓 Alivia Acadêmico
-            {partner.active_profile_mode && (
+            {effectiveActiveMode && (
               <span className="text-[10px] text-muted-foreground ml-1">
-                · {t.operating_as} <strong>{partner.active_profile_mode === "student" ? t.mode_student : t.mode_professional}</strong>
+                · {t.operating_as} <strong>{effectiveActiveMode === "student" ? t.mode_student : t.mode_professional}</strong>
               </span>
             )}
           </p>

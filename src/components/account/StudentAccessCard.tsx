@@ -117,7 +117,7 @@ const StudentAccessCard = () => {
       const [profRes, vipRes] = await Promise.all([
         supabase
           .from("professionals")
-          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, student_name_locked, subscription_status, subscription_stripe_id, is_partner, lifetime_treatment, premium_granted, pro_access_expires_at")
+          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, student_name_locked, subscription_status, subscription_stripe_id, is_partner, is_partner_account, lifetime_treatment, premium_granted, pro_access_expires_at")
           .eq("user_id", user.id)
           .maybeSingle(),
         user.email
@@ -143,7 +143,8 @@ const StudentAccessCard = () => {
           || (data.pro_access_expires_at && new Date(data.pro_access_expires_at) > new Date())
         );
         const isPartner = data.is_partner === true;
-        setHasProAccess(hasPaidProSubscription || isPartner);
+        const isAcademicPartner = data.is_partner_account === true && data.is_student === true;
+        setHasProAccess(hasPaidProSubscription || isPartner || isAcademicPartner);
       } else {
         const { data: prof } = await supabase
           .from("profiles")
