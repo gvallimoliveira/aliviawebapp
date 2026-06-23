@@ -923,12 +923,17 @@ const Dashboard = () => {
           /* ── Professional Autonomous Mode (real or demo): 3 tabs ── */
           (() => {
             const isProDemo = activeContext === "professional_demo";
-            const hasProAccess = !isProDemo && !!professional && (
+            const hasPaidProSubscription = !!professional && (
               professional.subscription_status === "active"
-              || professional.is_partner === true
-              || professional.lifetime_treatment === true
-              || professional.premium_granted === true
-              || (professional.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
+              && (
+                !!professional.subscription_stripe_id
+                || (professional.pro_access_expires_at && new Date(professional.pro_access_expires_at) > new Date())
+              )
+            );
+            const isAcademicPartner = !!professional && professional.is_partner === true && professional.is_student === true;
+            const hasProAccess = !isProDemo && !!professional && (
+              hasPaidProSubscription
+              || isAcademicPartner
             );
             const isStudentLocked = !!professional?.is_student && !hasProAccess;
             const ProLockedCard = ({ title, desc }: { title: string; desc: string }) => (
