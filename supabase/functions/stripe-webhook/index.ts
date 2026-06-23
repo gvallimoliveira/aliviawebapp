@@ -54,6 +54,10 @@ serve(async (req) => {
       case "checkout.session.async_payment_failed":
         await handleAsyncPaymentFailed(event.data.object as Stripe.Checkout.Session);
         break;
+      case "customer.subscription.deleted":
+      case "customer.subscription.updated":
+        await handleSubscriptionLifecycle(event.data.object as Stripe.Subscription, event.type);
+        break;
       default:
         log("Unhandled event type", { type: event.type });
     }
