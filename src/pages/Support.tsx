@@ -257,6 +257,43 @@ const Support = () => {
                 </h2>
               </div>
 
+              {/* Evidence library highlight — professional/academic */}
+              {profile === "professional" && (
+                <div className="mb-8 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 p-5 md:p-6">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 shrink-0">
+                      <BookOpen className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4 className="font-semibold text-foreground">
+                          {language === "pt"
+                            ? "Biblioteca de Evidências por Nicho"
+                            : language === "es"
+                            ? "Biblioteca de Evidencia por Nicho"
+                            : "Evidence Library by Niche"}
+                        </h4>
+                        <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary tracking-wide">BETA</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed mb-2">
+                        {language === "pt"
+                          ? "Acesse, dentro da página do Agente Clínico, a curadoria de artigos aprovados (PEDro ≥ 7) que alimenta a IA — separados por nicho clínico, com filtros de ano e nota PEDro. Favorite estudos para consultar em 1 clique."
+                          : language === "es"
+                          ? "Accede, dentro del Agente Clínico, a la curaduría de artículos aprobados (PEDro ≥ 7) que alimenta la IA — separados por nicho clínico, con filtros de año y nota PEDro. Marca favoritos para acceso en 1 clic."
+                          : "Inside the Clinical Agent page, browse the curated studies (PEDro ≥ 7) that power the AI — sorted by clinical niche, with year and PEDro score filters. Favorite studies for 1-click access."}
+                      </p>
+                      <p className="text-xs text-muted-foreground italic">
+                        {language === "pt"
+                          ? "Disponível para Acadêmico, PRO e Clínica. Nichos sem artigos aprovados ainda exibem aviso de curadoria em andamento."
+                          : language === "es"
+                          ? "Disponible para Académico, PRO y Clínica. Nichos sin artículos aprobados muestran aviso de curaduría en curso."
+                          : "Available for Academic, PRO and Clinic. Niches without approved studies show a curation-in-progress notice."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Tools accordion */}
               <div className="mb-12">
                 <h3 className="text-lg font-semibold text-foreground mb-4">{t("support.tools_title")}</h3>
