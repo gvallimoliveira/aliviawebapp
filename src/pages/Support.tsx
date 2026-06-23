@@ -227,10 +227,10 @@ const Support = () => {
                   <h2 className="text-xl font-semibold text-foreground">Alivia Acadêmico</h2>
                   <p className="text-sm text-muted-foreground">
                     {language === "pt"
-                      ? "Suporte para alunos: CREFITO, selo acadêmico, supervisão e transição para PRO."
+                      ? "Suporte para alunos: assinatura PRO, CREFITO, selo acadêmico, supervisão e transição profissional."
                       : language === "es"
-                      ? "Soporte para estudiantes: matrícula, sello, supervisión y transición a PRO."
-                      : "Student support: license, academic seal, supervision and PRO transition."}
+                      ? "Soporte para estudiantes: suscripción PRO, matrícula, sello, supervisión y transición profesional."
+                      : "Student support: PRO subscription, license, academic seal, supervision and professional transition."}
                   </p>
                 </CardContent>
               </Card>
@@ -303,10 +303,10 @@ const Support = () => {
                       </p>
                       <p className="text-xs text-muted-foreground italic">
                         {language === "pt"
-                          ? "Disponível para Acadêmico, PRO e Clínica. Nichos sem artigos aprovados ainda exibem aviso de curadoria em andamento."
+                          ? "Disponível para Acadêmico assinante, PRO e Clínica. Nichos sem artigos aprovados ainda exibem aviso de curadoria em andamento."
                           : language === "es"
-                          ? "Disponible para Académico, PRO y Clínica. Nichos sin artículos aprobados muestran aviso de curaduría en curso."
-                          : "Available for Academic, PRO and Clinic. Niches without approved studies show a curation-in-progress notice."}
+                          ? "Disponible para Académico suscriptor, PRO y Clínica. Nichos sin artículos aprobados muestran aviso de curaduría en curso."
+                          : "Available for subscribed Academic, PRO and Clinic. Niches without approved studies show a curation-in-progress notice."}
                       </p>
                     </div>
                   </div>
