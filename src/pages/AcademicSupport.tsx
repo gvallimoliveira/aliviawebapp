@@ -229,8 +229,6 @@ const faqKeys = [
   },
 ];
 
-// Layers2 icon shim — fallback if not in lucide bundled (Layers exists; use it)
-import { Layers as Layers2Icon } from "lucide-react";
 
 const AcademicSupport = () => {
   const { user, loading } = useAuth();
