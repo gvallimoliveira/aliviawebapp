@@ -189,14 +189,14 @@ const faqKeys = [
     key: "pricing",
     icon: CreditCard,
     q: {
-      pt: "Qual o preço do Alivia Acadêmico? Existe cupom de estudante?",
-      en: "How much is Alivia Academic? Is there a student discount?",
-      es: "¿Cuánto cuesta Alivia Académico? ¿Hay cupón estudiante?",
+      pt: "Qual o preço do Alivia Acadêmico?",
+      en: "How much is Alivia Academic?",
+      es: "¿Cuánto cuesta Alivia Académico?",
     },
     a: {
-      pt: "O Acadêmico usa a mesma estrutura de plano do PRO. Estudantes recebem o cupom SOUIBMR (50% off) destacado na tela de assinatura. O cupom é por verificação acadêmica — guarde seu comprovante de matrícula.",
-      en: "Academic uses the same plan structure as PRO. Students get the SOUIBMR coupon (50% off) highlighted on the subscription screen. Keep your enrollment proof.",
-      es: "Académico usa la misma estructura de plan que PRO. Los estudiantes reciben el cupón SOUIBMR (50% off) destacado en la pantalla de suscripción.",
+      pt: "O Acadêmico usa a mesma estrutura de plano do PRO. Campanhas de desconto para estudantes são pontuais — quando estiverem ativas, o cupom aparece destacado na tela de assinatura. Fique de olho nos nossos canais.",
+      en: "Academic uses the same plan structure as PRO. Student discount campaigns are occasional — when active, the coupon is highlighted on the subscription screen. Follow our channels for updates.",
+      es: "Académico usa la misma estructura de plan que PRO. Las campañas de descuento estudiantil son puntuales — cuando estén activas, el cupón aparece destacado en la pantalla de suscripción.",
     },
   },
   {
