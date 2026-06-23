@@ -59,6 +59,7 @@ const ClinicalAgent = lazy(() => import("./pages/ClinicalAgent"));
 const CasosDeEstudo = lazy(() => import("./pages/CasosDeEstudo"));
 const AcademicTracks = lazy(() => import("./pages/AcademicTracks"));
 const AcademicLanding = lazy(() => import("./pages/AcademicLanding"));
+const AcademicSupport = lazy(() => import("./pages/AcademicSupport"));
 
 const queryClient = new QueryClient();
 
@@ -142,6 +143,7 @@ const App = () => {
                   <Route path="/casos-de-estudo" element={<CasosDeEstudo />} />
                   <Route path="/trilhas" element={<AcademicTracks />} />
                   <Route path="/academico" element={<AcademicLanding />} />
+                  <Route path="/academico/suporte" element={<AcademicSupport />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>

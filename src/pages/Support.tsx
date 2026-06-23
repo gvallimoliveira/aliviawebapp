@@ -188,7 +188,7 @@ const Support = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto"
+              className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto"
             >
               <Card
                 className="cursor-pointer border-2 border-transparent hover:border-primary/40 transition-all hover:shadow-lg group"
@@ -213,6 +213,25 @@ const Support = () => {
                   </div>
                   <h2 className="text-xl font-semibold text-foreground">{t("support.pro.card_title")}</h2>
                   <p className="text-sm text-muted-foreground">{t("support.pro.card_desc")}</p>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="cursor-pointer border-2 border-transparent hover:border-primary/40 transition-all hover:shadow-lg group"
+                onClick={() => navigate("/academico/suporte")}
+              >
+                <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                  <div className="rounded-2xl bg-primary/10 p-4 group-hover:bg-primary/20 transition-colors">
+                    <GraduationCap className="h-8 w-8 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-foreground">Alivia Acadêmico</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {language === "pt"
+                      ? "Suporte para alunos: CREFITO, selo acadêmico, supervisão e transição para PRO."
+                      : language === "es"
+                      ? "Soporte para estudiantes: matrícula, sello, supervisión y transición a PRO."
+                      : "Student support: license, academic seal, supervision and PRO transition."}
+                  </p>
                 </CardContent>
               </Card>
 
