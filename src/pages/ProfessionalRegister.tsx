@@ -347,8 +347,8 @@ const ProfessionalRegister = () => {
         try {
           await (supabase as any).from("profiles").update({ professional_register_skipped: false }).eq("user_id", user.id);
         } catch { /* noop */ }
-        toast({ title: "Cadastro acadêmico salvo!", description: "Você está no modo Alivia Acadêmico." });
-        navigate("/dashboard?tab=professional");
+        toast({ title: "Cadastro acadêmico salvo!", description: "O selo acadêmico está ativo. Para usar as ferramentas, assine o PRO." });
+        navigate("/dashboard?tab=professional&subscribe=true");
       } catch (err: any) {
         toast({ title: t("prof.error"), description: err?.message, variant: "destructive" });
       } finally {
@@ -541,7 +541,7 @@ const ProfessionalRegister = () => {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                        Estudantes de fisioterapia sem CREFITO. Libera todas as ferramentas do plano profissional; relatórios e links exibem o selo acadêmico.
+                        Estudantes de fisioterapia sem CREFITO. Ativa o selo acadêmico; as ferramentas profissionais exigem assinatura PRO ativa.
                       </p>
                     </div>
                   </div>
@@ -909,7 +909,7 @@ const ProfessionalRegister = () => {
               <Button type="submit" className="w-full rounded-xl py-5" disabled={saving || !termsAccepted}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 {isStudent
-                  ? (existing ? "Atualizar cadastro acadêmico" : "Entrar no modo Alivia Acadêmico")
+                  ? (existing ? "Atualizar cadastro acadêmico" : "Criar cadastro acadêmico")
                   : (existing ? t("prof.update") : t("prof.register"))}
               </Button>
               {!existing && (
