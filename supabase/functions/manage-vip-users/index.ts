@@ -358,6 +358,9 @@ serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      // Zera TODOS os flags de acesso/perfil. Sem isso o ex-parceiro acadêmico
+      // mantinha is_student/active_profile_mode='student' e continuava com
+      // selo acadêmico em PDFs + acesso PRO grátis em check-pro-subscription.
       const { error } = await supabaseClient
         .from("professionals")
         .update({
@@ -365,6 +368,11 @@ serve(async (req) => {
           is_partner: false,
           premium_granted: false,
           subscription_status: "inactive",
+          is_student: false,
+          active_profile_mode: "professional",
+          student_institution: null,
+          student_period: null,
+          approved: false,
         })
         .eq("id", professional_id);
       if (error) throw error;
@@ -521,6 +529,14 @@ serve(async (req) => {
           // is_partner — se o admin quiser revogar PRO, usa o toggle PRO ou
           // o botão "Remover da lista".
           updates.active_profile_mode = "professional";
+          // Se a pessoa NÃO é parceira PRO ativa, encerra também o acesso
+          // que o toggle Acadêmico tinha concedido (subscription_status=active
+          // espelhado). Sem isto, o ex-acadêmico continuava com PRO grátis
+          // até o próximo check-pro-subscription rodar.
+          if (!pro.is_partner) {
+            updates.subscription_status = "inactive";
+            updates.is_partner_account = false;
+          }
         }
         const { error } = await supabaseClient
           .from("professionals")

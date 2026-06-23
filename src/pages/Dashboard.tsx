@@ -506,7 +506,10 @@ const Dashboard = () => {
       || p.is_partner_account === true
     );
     setHasProfessionalProfile(isRealProProfile);
-    setIsStudentProfessional(!!p?.is_student);
+    // Modo acadêmico é decidido por active_profile_mode (fonte de verdade
+    // atual). Fallback para is_student em contas legadas sem o campo.
+    const mode = p?.active_profile_mode ?? (p?.is_student ? "student" : "professional");
+    setIsStudentProfessional(mode === "student");
   }, [professional]);
 
   // Auto-switch to "professional" context once on first load when arriving
