@@ -420,6 +420,7 @@ const ProfessionalRegister = () => {
         user_id: user.id,
         approved: true,
         is_student: false,
+        active_profile_mode: "professional",
         student_institution: null,
         student_period: null,
         terms_accepted_at: new Date().toISOString(),
