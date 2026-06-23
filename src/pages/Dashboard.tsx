@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isFallbackVip } from "@/lib/vipEmails";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
