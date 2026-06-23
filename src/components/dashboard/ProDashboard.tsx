@@ -133,7 +133,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasAccess: hasAgentAccess, isBetaInternal: agentBetaInternal } = useClinicalAgentAccess();
 
-  const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean } | null>(null);
+  const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean; is_student?: boolean } | null>(null);
   const [subLoading, setSubLoading] = useState(true);
   const [linkCopied, setLinkCopied] = useState(false);
   const [patientAssessments, setPatientAssessments] = useState<any[]>([]);
@@ -870,7 +870,9 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                     <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
                       {clinicCoversAccess
                         ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
-                        : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
+                        : subscription?.is_partner ? t("pro.badge_partner")
+                        : (subscription?.is_student || (professional as any)?.is_student) ? "Acadêmico"
+                        : t("dashboard.active")}
                     </Badge>
                   </p>
                   {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
@@ -895,7 +897,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                   <Settings className="h-3.5 w-3.5" />
                   {t("pro.edit_profile")}
                 </Button>
-                {!clinicCoversAccess && !subscription?.is_partner && (
+                {!clinicCoversAccess && !subscription?.is_partner && !subscription?.is_student && !(professional as any)?.is_student && (
                   <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl h-8">
                     {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
                     {t("pro.manage_subscription")}
