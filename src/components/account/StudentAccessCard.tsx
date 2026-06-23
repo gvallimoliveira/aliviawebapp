@@ -142,8 +142,8 @@ const StudentAccessCard = () => {
           !!data.subscription_stripe_id
           || (data.pro_access_expires_at && new Date(data.pro_access_expires_at) > new Date())
         );
-        const isAcademicPartner = data.is_partner === true && data.is_student === true;
-        setHasProAccess(hasPaidProSubscription || isAcademicPartner);
+        const isPartner = data.is_partner === true;
+        setHasProAccess(hasPaidProSubscription || isPartner);
       } else {
         const { data: prof } = await supabase
           .from("profiles")
