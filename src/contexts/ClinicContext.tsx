@@ -132,6 +132,12 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setActiveContextState("professional");
         setActiveClinicIdState(null);
         setHasRestoredFromStorage(true);
+      } else if (storedType === "professional_demo") {
+        // Terapeuta de clínica sem PRO próprio que escolheu o demo:
+        // restaura a escolha para não reabrir o seletor a cada login.
+        setActiveContextState("professional_demo");
+        setActiveClinicIdState(null);
+        setHasRestoredFromStorage(true);
       } else if (storedType === "personal") {
         setActiveContextState("personal");
         setActiveClinicIdState(null);
