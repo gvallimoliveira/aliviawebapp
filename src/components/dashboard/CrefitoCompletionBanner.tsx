@@ -77,10 +77,21 @@ const CrefitoCompletionBanner = () => {
     setSaving(true);
     try {
       const formattedCrefito = crefito.trim().toUpperCase();
+      // Explicitly graduate from academic mode (the DB trigger
+      // `auto_graduate_on_crefito_trg` enforces the same change as a safety net
+      // for any other entry point).
       if (hasProfRecord) {
         const { error } = await supabase
           .from("professionals")
-          .update({ crefito: formattedCrefito, full_name: fullName.trim() })
+          .update({
+            crefito: formattedCrefito,
+            full_name: fullName.trim(),
+            is_student: false,
+            active_profile_mode: "professional",
+            student_institution: null,
+            student_period: null,
+            approved: true,
+          } as any)
           .eq("user_id", user.id);
         if (error) throw error;
       } else {
@@ -91,14 +102,29 @@ const CrefitoCompletionBanner = () => {
           city: "",
           state: "",
           email: user.email || null,
-          active: false,
-          approved: false,
+          active: true,
+          approved: true,
+          is_student: false,
+          active_profile_mode: "professional",
         } as any);
         if (error) throw error;
       }
-      toast({ title: lang === "pt" ? "CREFITO salvo!" : "CREFITO saved!" });
+      // Refresh PRO subscription cache so the dashboard unlocks the
+      // professional tools immediately, without requiring a re-login.
+      try {
+        await supabase.functions.invoke("check-pro-subscription");
+      } catch {}
+      toast({
+        title: lang === "pt" ? "CREFITO salvo! Modo profissional ativado." : "CREFITO saved! Professional mode active.",
+        description: lang === "pt"
+          ? "Sua assinatura PRO foi mantida — sem nova cobrança."
+          : "Your PRO subscription was kept — no new charge.",
+      });
       setNeedsCrefito(false);
       setOpen(false);
+      // Soft reload so any cached "student" UI state across the dashboard
+      // (badges, gates, marketplace visibility) refreshes immediately.
+      setTimeout(() => window.location.reload(), 600);
     } catch (e: any) {
       toast({
         title: lang === "pt" ? "Erro ao salvar" : "Save error",
