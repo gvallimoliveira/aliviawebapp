@@ -109,8 +109,11 @@ const SIMPLIFIED_EXCLUDED_IDS = new Set<string>([
   "head_right", "cervical_right", "shoulder_right", "arm_right", "elbow_right",
   "forearm_right", "hand_right", "thoracic_right", "lumbar_right", "hip_right",
   "thigh_right", "knee_right", "shin_right", "ankle_right", "foot_right",
-  // Vista posterior — duplicatas de cabeça, pescoço e membros
-  "head_back", "cervical",
+  // Vista posterior — duplicatas de cabeça e membros
+  // (mantemos `cervical` da vista posterior, pois "dor cervical" é anatomicamente
+  // posterior/postero-lateral; `cervical_front` permanece na lista como
+  // "Pescoço (anterior)" para queixas antero-laterais.)
+  "head_back",
   "left_shoulder_back", "right_shoulder_back",
   "left_arm_back", "right_arm_back",
   "left_elbow_back", "right_elbow_back",

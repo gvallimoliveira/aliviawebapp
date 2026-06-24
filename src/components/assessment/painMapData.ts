@@ -22,7 +22,7 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
   front: [
     { id: "head", label_pt: "Cabeça", label_en: "Head",
       d: "M100,6 C86,6 78,14 78,24 C78,32 84,38 92,40 L108,40 C116,38 122,32 122,24 C122,14 114,6 100,6Z" },
-    { id: "cervical_front", label_pt: "Cervical", label_en: "Cervical",
+    { id: "cervical_front", label_pt: "Pescoço (anterior)", label_en: "Neck (anterior)",
       d: "M84,58 L109,58 L112,75 L84,77 Z" },
     { id: "right_shoulder", label_pt: "Ombro Direito", label_en: "Right Shoulder",
       d: "M72,71 L76,72 C62,70 40,85 40,104 L59,103 C60,80 69,77 76,70 L78,70 Z" },
@@ -80,7 +80,7 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
   back: [
     { id: "head_back", label_pt: "Cabeça (post.)", label_en: "Head (post.)",
       d: "M97,14 C86,14 78,14 78,22 C74,41 78,51 89,57 L111,52 C116,36 116,32 111,27 C113,20 108,17 100,15 Z" },
-    { id: "cervical", label_pt: "Cervical", label_en: "Cervical",
+    { id: "cervical", label_pt: "Cervical (posterior)", label_en: "Cervical (posterior)",
       d: "M81,53 L109,55 L114,82 L79,82 Z" },
     { id: "left_shoulder_back", label_pt: "Ombro Esq. (post.)", label_en: "L. Shoulder (post.)",
       d: "M55,87 L49,81 C60,66 41,91 41,108 L72,112 C60,80 66,94 65,82 L71,91 Z" },
