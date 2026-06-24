@@ -944,6 +944,13 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         return (
           <div className="space-y-6">
             <h3 className="text-lg font-semibold">{t("anamnesis.pain_score_title")}</h3>
+            {typeof previousPainScore === "number" && (
+              <div className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary/90">
+                <span>📊</span>
+                <span>{t("assessment.prefilled.lastPainScore").replace("{{value}}", String(previousPainScore))}</span>
+              </div>
+            )}
+
 
             {/* Mode selector for multiple regions */}
             {hasMultipleRegions && (
