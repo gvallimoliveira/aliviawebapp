@@ -374,11 +374,41 @@ export default function AdminAgentKnowledge() {
             </p>
           ) : (
             <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/30 px-3 py-2">
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={(v) => v ? selectAllVisible() : clearSelection()}
+                  />
+                  <span>
+                    {selectedIds.size > 0
+                      ? `${selectedIds.size} selecionado(s)`
+                      : `Selecionar todos (${articles.length})`}
+                  </span>
+                </label>
+                {selectedIds.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="ghost" onClick={clearSelection} disabled={bulkBusy} className="gap-1.5">
+                      <X className="h-3.5 w-3.5" /> Limpar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleBulkReject} disabled={bulkBusy} className="gap-1.5 text-destructive hover:text-destructive">
+                      {bulkBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      {status === "pending" ? "Reprovar e excluir" : "Remover"} ({selectedIds.size})
+                    </Button>
+                  </div>
+                )}
+              </div>
               {articles.map((a) => (
-                <div key={a.id} className="border rounded-lg p-4 bg-card hover:shadow-sm transition-shadow">
+                <div key={a.id} className={`border rounded-lg p-4 bg-card hover:shadow-sm transition-shadow ${selectedIds.has(a.id) ? "ring-2 ring-primary/40" : ""}`}>
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2">
+                        <Checkbox
+                          checked={selectedIds.has(a.id)}
+                          onCheckedChange={() => toggleSelect(a.id)}
+                          className="mt-1 shrink-0"
+                          aria-label="Selecionar artigo"
+                        />
                         <button
                           type="button"
                           onClick={() => handleToggleFavorite(a.id, !!a.is_favorite)}
