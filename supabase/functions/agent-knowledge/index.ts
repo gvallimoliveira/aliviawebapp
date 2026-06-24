@@ -768,23 +768,26 @@ serve(async (req) => {
       }
       const prompt = `Você é um curador de evidências em fisioterapia.
 
-Liste ${count} estudos REAIS, de alta qualidade (preferencialmente indexados na base PEDro) para o nicho:
+Liste ${count} estudos REAIS, de alta qualidade para o nicho:
 "${nicheDescription}"
 
-CRITÉRIOS OBRIGATÓRIOS:
-- A nota PEDro NUNCA deve ser estimada. Só informe pedro_score numérico quando você tiver certeza de que a própria base PEDro mostra essa nota.
+PRIORIZE FORTEMENTE artigos publicados nestes periódicos exigentes (fator de impacto ≥ 3 na área de Fisioterapia, ranking 2026):
+${priorityJournalListForPrompt()}
+Pelo menos 60% dos estudos devem ser desses periódicos. Eles têm revisão por pares rigorosa e são referência mundial.
+
+CRITÉRIOS:
+- A nota PEDro NUNCA deve ser estimada. Só informe pedro_score numérico quando você tiver certeza absoluta que a própria base PEDro mostra essa nota. Em dúvida, use pedro_score=null — a falta de nota PEDro NÃO desqualifica o artigo se o periódico for exigente.
 - Para revisões sistemáticas/meta-análises, se a PEDro mostrar Score N/A ou sem nota definida, use pedro_score=null. NUNCA use 8 como padrão.
-- Para RCTs/ensaios clínicos, inclua apenas se a nota oficial PEDro for ≥ 7/10; se não souber a nota oficial, não inclua.
 - Priorize meta-análises, revisões sistemáticas e RCTs recentes (últimos 15 anos).
 - NÃO invente estudos. Se não tiver certeza absoluta da existência do estudo, NÃO o inclua.
 - IDENTIFICADORES: **prefira fornecer o PMID** (mais estável que DOI). Se não souber o DOI com 100% de certeza, deixe DOI=null e forneça apenas PMID. NUNCA chute um DOI — todo par título↔DOI é checado contra o PubMed por similaridade de título e pares inconsistentes são descartados.
-- NÃO gere URLs para PEDro (search.pedro.org.au, pedro.org.au/...) — os IDs internos da PEDro não são previsíveis e qualquer link fabricado retorna 404. Use SOMENTE DOI e/ou PMID verificáveis.
+- NÃO gere URLs para PEDro — IDs internos da PEDro não são previsíveis e qualquer link fabricado retorna 404. Use SOMENTE DOI e/ou PMID verificáveis.
 - Campos por estudo:
   • title (string)
   • authors (string "Sobrenome A, Sobrenome B")
   • year (int)
-  • journal (string)
-  • pedro_score (int 0-10 ou null quando a PEDro estiver como N/A/sem nota, especialmente revisões)
+  • journal (string — nome completo do periódico)
+  • pedro_score (int 0-10 ou null)
   • study_type ("RCT" | "Systematic Review" | "Meta-analysis")
   • abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado)
   • key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável)
