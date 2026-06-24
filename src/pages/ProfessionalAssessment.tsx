@@ -117,11 +117,18 @@ const ProfessionalAssessment = () => {
           if (anam?.activityLevel) setPrefilledActivityLevel(anam.activityLevel);
           if (anam?.hasGymAccess) setPrefilledGymAccess(anam.hasGymAccess);
           // Stable demographics + clinical history pre-fill
+          // Fallback: pull demographics from `patients` row when older assessments
+          // didn't store sex/ageRange/birthDate/cpf inside anamnesis_data.
+          const patientFallback = await fetchPatientPrefillExtras({
+            professionalId,
+            patientName: orig.patient_name,
+            patientEmail: orig.patient_email,
+          });
           setPrefilledExtras({
-            sex: anam?.sex,
-            ageRange: anam?.ageRange,
-            birthDate: anam?.birthDate,
-            cpf: anam?.cpf,
+            sex: anam?.sex || patientFallback.sex,
+            ageRange: anam?.ageRange || patientFallback.ageRange,
+            birthDate: anam?.birthDate || patientFallback.birthDate,
+            cpf: anam?.cpf || patientFallback.cpf,
             hadTwist: anam?.hadTwist,
             hadSprain: anam?.hadSprain,
             hadDislocation: anam?.hadDislocation,
