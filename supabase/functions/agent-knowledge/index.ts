@@ -602,22 +602,9 @@ serve(async (req) => {
       const finalPmid = v.pmid || cleanPmidStr(cur.pmid) || pmidFromUrl;
       const finalUrl = v.sourceUrl || (finalPmid ? `https://pubmed.ncbi.nlm.nih.gov/${finalPmid}/` : finalDoi ? `https://doi.org/${finalDoi}` : null);
       const pedroV = await verifyPedroScore({ title: cur.title, study_type: cur.study_type, pedro_score: cur.pedro_score });
-      if (!isAcceptablePedro(pedroV)) {
-        await adminClient.from("knowledge_articles")
-          .update({
-            approved: false,
-            ...verificationPatch(v, "verified"),
-            ...pedroPatch(pedroV),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", body.id);
-        return new Response(JSON.stringify({
-          error: "Artigo não aprovado: nota PEDro não confirmada ou abaixo do corte mínimo.",
-          reason: pedroV.reason,
-          pedroStatus: pedroV.status,
-          pedroMatchedTitle: pedroV.matchedTitle || null,
-        }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
+      // PEDro é apenas um sinal amarelo: registramos o resultado mas NÃO bloqueamos
+      // a aprovação. Um bom artigo pode estar no PubMed sem constar na PEDro
+      // (especialmente em periódicos exigentes como JOSPT, BJPT, etc.).
       const patch: any = {
         approved: true,
         doi: finalDoi,
