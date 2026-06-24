@@ -421,6 +421,15 @@ serve(async (req) => {
         if (k in body) patch[k] = body[k];
       }
       if ("pmid" in patch) patch.pmid = cleanPmidStr(patch.pmid);
+      if ("doi" in patch || "pmid" in patch || "source_url" in patch || "title" in patch) {
+        patch.approved = false;
+        patch.verification_status = "needs_review";
+        patch.verification_checked_at = null;
+        patch.verification_source = null;
+        patch.verification_matched_title = null;
+        patch.verification_similarity = null;
+        patch.verification_reason = "manual_edit_requires_revalidation";
+      }
       patch.updated_at = new Date().toISOString();
       // If text fields changed, re-embed
       if (patch.title || patch.abstract || patch.key_findings) {
