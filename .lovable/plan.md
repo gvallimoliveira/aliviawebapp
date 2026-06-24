@@ -1,79 +1,121 @@
-## Problema
 
-Hoje a função `verifyArticle` em `supabase/functions/agent-knowledge/index.ts` confirma um artigo se o DOI **existe** no PubMed/Crossref — mas **não compara o título** retornado com o título proposto pela IA. Resultado: a IA pode alucinar um DOI que casualmente resolve para outro artigo real (ex.: link de "laser de baixa intensidade" cair em paper de ultrassom terapêutico) e o sistema marca como verificado e aprovado.
+## Diagnóstico
 
-Existem 66 artigos aprovados e 90 totais — todos potencialmente afetados, principalmente os ingeridos via "DOI sem PMID" (rota `crossref_doi`, que sequer compara título).
+Hoje o `action: "ingest"` do edge `agent-knowledge` **não pesquisa em base nenhuma** — ele só pede para o Gemini "listar estudos reais" sobre o nicho e depois tenta verificar cada título contra PubMed/Crossref. Resultado:
 
-## Objetivo
+- Em nichos onde o modelo "lembra" de bons papers (Aquiles/fascite plantar, lombalgia) ele acerta.
+- Em nichos onde ele alucina menos itens ou inventa DOIs (capsulite adesiva / frozen shoulder), todos caem no filtro `verifyArticle` e o `inserted=0` chega ao admin como "não retornou nada".
+- O critério de busca é, na prática, **a memória do LLM**, não uma query reprodutível. Por isso a mesma chamada se comporta de forma desigual entre nichos.
 
-Tornar a validação por título **obrigatória e bloqueante** em toda inclusão, e revalidar 100% da base aprovada agora — preservando como fonte canônica o **PMID** (mais estável que DOI).
-
----
+A solução é inverter o fluxo: **buscar primeiro nas bases (PubMed como motor principal, Crossref e PEDro como complementares) e usar a IA só para resumo/curadoria**.
 
 ## Mudanças
 
-### 1. Schema — `knowledge_articles`
-Adicionar coluna `pmid text` (nullable, indexada). DOI continua existindo; PMID passa a ser preferido como link de validação quando disponível.
+### 1. Mapa de termos de busca por nicho (`agent-knowledge/index.ts`)
 
-### 2. Endurecer `verifyArticle` (agent-knowledge/index.ts)
-Trocar a lógica "DOI existe = válido" por **validação cruzada de título** em todas as rotas:
+Criar `NICHE_SEARCH_TERMS: Record<string, { mesh?: string[]; keywords: string[] }>` com sinônimos pt/en para cada slug. Exemplo:
 
 ```text
-1. Se DOI fornecido:
-   a) esearch pubmed por [doi] → pega PMID → esummary → compara título (sim ≥ 0.6)
-      ✓ match → verified {pmid, doi}
-      ✗ mismatch → loga conflito e CAI no passo 2 (não aceita o DOI)
-   b) Se não achou PMID, Crossref → exige título Crossref com sim ≥ 0.6
-      ✗ mismatch → descarta DOI e cai no passo 2
-2. Se PMID fornecido: esummary → exige sim ≥ 0.6 (já existe, manter)
-3. Busca por título: já exige sim ≥ 0.7 (manter)
-4. Nenhum casou → verified=false
+capsulite_adesiva_ombro_congelado:
+  mesh: ["Bursitis"], 
+  keywords: ["adhesive capsulitis", "frozen shoulder", "shoulder stiffness"]
+tendinopatia_aquiles_fascite_plantar:
+  keywords: ["achilles tendinopathy", "plantar fasciitis", "plantar fasciopathy"]
+... (uma entrada por slug existente em NICHE_DESCRIPTIONS)
 ```
 
-Quando o DOI fornecido pela IA não bate com o título, mas a busca por título encontra o paper correto, **sobrescrevemos o DOI** com o que veio do PubMed/Crossref. Nunca aceitamos um par (título, DOI) inconsistente.
+Slugs sem entrada caem em fallback que usa `nicheDescription` traduzido pelo LLM (mesmo prompt curto, só para gerar 3-5 termos).
 
-Persistir `pmid` retornado em todas as inserções; `source_url` passa a ser sempre o PubMed (`/pubmed/{pmid}/`) quando houver PMID, com DOI apenas como fallback.
+### 2. Nova função `searchPubmedForNiche(niche, count)`
 
-### 3. Ingest (`action: "ingest"`)
-- Já chama `verifyArticle`; com a mudança acima, candidatos com par título×DOI inconsistente são automaticamente rejeitados (incrementam `rejectedUnverified`).
-- Gravar `pmid` no insert.
-- Endurecer prompt: "Se não tiver certeza ABSOLUTA do DOI, deixe DOI=null e forneça PMID. Não invente DOI."
+Monta uma query PubMed canônica:
 
-### 4. Nova ação `revalidate` (substitui/estende `verify`)
-Versão estrita usada para a **varredura da base atual**:
+```text
+( "adhesive capsulitis"[tiab] OR "frozen shoulder"[tiab] OR "Bursitis"[MeSH] )
+AND ( Randomized Controlled Trial[pt] OR Systematic Review[pt] OR Meta-Analysis[pt] )
+AND ( "last 15 years"[dp] )
+AND English[lang]
+```
 
-- Para cada artigo: rodar a nova `verifyArticle` ignorando o `source_url` atual e usando `title + doi` salvos.
-- Casos:
-  - **OK** (DOI confirma e título bate): atualiza `pmid` e normaliza `source_url` para PubMed.
-  - **DOI errado mas título encontrado em outro PMID**: atualiza `doi`, `pmid`, `source_url` para os corretos. Loga em `mismatchFixed`.
-  - **Sem como confirmar** (nem DOI nem título resolvem): em modo estrito, **desaprovar** (`approved=false`) em vez de deletar, e devolver lista para revisão manual no admin. Mais seguro que deletar silenciosamente.
-- Suporta `dryRun: true` para relatório sem mudanças.
-- Suporta filtro `scope` (approved/pending/all) e `niche`.
+Fluxo:
 
-### 5. UI — `AdminAgentKnowledge.tsx`
-- Botão **"Revalidar base (estrito)"** que chama `revalidate` em todos os aprovados, mostra contagens (verified / mismatchFixed / unverified→pending) e lista os que viraram pending para revisão humana.
-- Coluna/badge mostrando PMID quando existir.
-- Botão "Abrir no PubMed" usando PMID.
+1. `esearch` com `retmax = count * 4` (sobre-amostragem para sobreviver à dedup/filtros), `sort=relevance`.
+2. `esummary` em lote (`id=...,...`) para obter título, autores, ano, journal, DOI, PMID.
+3. `efetch rettype=abstract&retmode=xml` em lote para puxar abstracts.
+4. Filtros server-side: idioma EN/PT/ES, ano ≥ now-15, `study_type` em RCT/SR/MA, descarta retractions.
+5. Dedup contra `knowledge_articles` por PMID e por DOI (consulta `select pmid, doi where niche_tags @> {niche}` + global por id).
 
-### 6. UI — `AgentKnowledgeBrowser.tsx`
-- Preferir link **PubMed (PMID)** como botão principal de validação; DOI vira link secundário "DOI".
-- Se só houver DOI, mantém DOI; nunca cair para busca por título (atual `pubmed.ncbi.nlm.nih.gov/?term=` é frágil).
+### 3. Complementos opcionais (mesma chamada, em paralelo)
 
-### 7. Executar a varredura
-Após o deploy, rodar `revalidate { scope: "approved", dryRun: false }` uma vez. Itens que não passarem voltam para a aba "Pendentes" do admin com flag `needs_review`, sem perder dados.
+- **Crossref** (`api.crossref.org/works?query.bibliographic=...&filter=type:journal-article,from-pub-date:YYYY`): pega itens que não estão no PubMed (ex.: BJPT/JOSPT recentes). Filtra por journal whitelist e dedup por DOI.
+- **PEDro**: a busca pública já tem scraper (`verifyPedroScore`). Adicionar `searchPedroForNiche` que usa os mesmos `keywords`, filtra por método (RCT/SR) e devolve {title, pedro_score, pedro_record_id}. Usado como **cross-source enrichment**, não como fonte primária (PEDro só indexa MSK selecionado).
+- **ScienceDirect**: requer API key da Elsevier que o projeto não tem. **Não vou adicionar nesta iteração**; deixo TODO comentado no código. (Se quiser, pedimos a chave via `add_secret` em rodada futura.)
 
----
+Cada fonte devolve `{ source, items[] }` e tudo é mesclado por PMID/DOI/título normalizado.
 
-## Detalhes técnicos
+### 4. Curadoria via IA agora vira passo 2 (enriquecimento, não geração)
 
-**Arquivos a editar**
-- `supabase/migrations/<novo>.sql` — adicionar `pmid text` + índice; coluna opcional `validation_status text` ou usar `approved=false` (preferir o segundo para simplicidade).
-- `supabase/functions/agent-knowledge/index.ts` — reforçar `verifyArticle`, adicionar `revalidate`, persistir `pmid`, normalizar `source_url`.
-- `src/components/admin/AdminAgentKnowledge.tsx` — botão revalidar + exibir PMID.
-- `src/components/agent/AgentKnowledgeBrowser.tsx` — ordem PubMed → DOI nos links.
+Para cada candidato real do PubMed/Crossref, montar uma chamada única ao LLM:
 
-**Critério de similaridade de título**: manter `titleSimilarity` (Jaccard de tokens > 3 chars). Limiar para DOI: **≥ 0.6** (mais permissivo que título-livre porque o DOI já é uma pista forte, mas suficiente para barrar paper completamente diferente).
+```text
+Para cada artigo abaixo (título + abstract original), produza:
+- abstract: 3-5 frases em pt-BR
+- key_findings: 1-2 frases em pt-BR
+- study_type: RCT | Systematic Review | Meta-analysis
+- pedro_score: número se você TIVER CERTEZA pela base PEDro; senão null
+Resposta: JSON array preservando a ordem.
+```
 
-**Throttle PubMed**: manter `setTimeout(350ms)` por item — 66 artigos ≈ 25s.
+A IA não inventa título/autor/DOI — só traduz/resume. Isso elimina a classe de erros "DOI alucinado".
 
-**Memória do projeto**: atualizar `mem://features/agent-research-niches` registrando: "Todo artigo aprovado precisa ter par título↔DOI verificado por título; PMID é o link primário; ingestão rejeita pares inconsistentes."
+### 5. `verifyArticle` continua rodando
+
+Como agora os candidatos vêm do próprio PubMed, `verifyArticle` praticamente sempre passa (PMID conhecido). Mantemos a chamada por defesa: itens vindos só do Crossref ainda precisam confirmar título.
+
+### 6. PEDro continua "amarelo opcional"
+
+Mantemos a política atual: PEDro falho não bloqueia. Só muda que agora a maioria dos candidatos terá PEDro confirmado porque a busca já passou pelo cross-check.
+
+### 7. Resposta de ingest
+
+Devolver para o admin:
+
+```json
+{
+  "ok": true,
+  "inserted": 7,
+  "candidates": 32,
+  "bySource": { "pubmed": 25, "crossref": 6, "pedro": 1 },
+  "rejectedUnverified": 2,
+  "pedroWarning": 3,
+  "priorityJournalCount": 5,
+  "queryUsed": "..."
+}
+```
+
+Atualizar o toast em `AdminAgentKnowledge.tsx` para mostrar a query usada e a contagem por fonte — útil para o admin entender o que rodou.
+
+### 8. Botão "Buscar mais" sem mudar UI
+
+A UI atual permanece igual; só passa a respeitar o mesmo `count` (1-10) e mostra os contadores novos no toast.
+
+## Critérios técnicos
+
+- **Rate limit PubMed/NCBI**: respeitar 3 req/s sem API key; já temos `setTimeout(350ms)`. Para `esearch + esummary + efetch` em lote isso é suficiente.
+- **Idioma**: aceitar `eng`, `por`, `spa`. Restringir abstract para esses três.
+- **Janela temporal**: padrão 15 anos; permitir override via body `yearsBack`.
+- **Dedup**: chave composta `(pmid || doi || normalize(title))`. Consulta `knowledge_articles` filtrando por essas chaves antes de inserir.
+- **Memória do projeto**: atualizar `mem://features/agent-knowledge-validation` registrando "Ingest agora é PubMed-first com Crossref/PEDro complementares; LLM só enriquece".
+
+## Arquivos a editar
+
+- `supabase/functions/agent-knowledge/index.ts` — novas funções `getNicheSearchTerms`, `searchPubmedForNiche`, `searchCrossrefForNiche`, `searchPedroForNiche`, `enrichWithAi`; refatorar `action === "ingest"`.
+- `supabase/functions/_shared/niche-search-terms.ts` (novo) — mapa pt/en de termos por slug.
+- `src/components/admin/AdminAgentKnowledge.tsx` — mostrar `bySource` e `queryUsed` no toast/log.
+- `.agents/memory/features/agent-knowledge-validation.md` — adicionar seção "Fontes de busca".
+
+## Fora de escopo desta iteração
+
+- Integração ScienceDirect/Elsevier (precisa chave paga — pergunto depois).
+- Mudanças no fluxo de revalidação dos artigos já aprovados (continua igual).
+- Mudanças na UI da biblioteca pública.
