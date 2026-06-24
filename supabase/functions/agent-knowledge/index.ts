@@ -842,7 +842,8 @@ Responda APENAS um JSON array. Sem texto adicional.`;
 
       let inserted = 0;
       let rejectedUnverified = 0;
-      let rejectedPedro = 0;
+      let pedroWarning = 0;
+      let priorityJournalCount = 0;
       for (const it of items) {
         try {
           const pedro = Number(it.pedro_score);
@@ -856,12 +857,13 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             continue;
           }
 
-          // *** Nota PEDro obrigatoriamente checada na base PEDro — nunca confiar na IA ***
+          // *** Nota PEDro checada na base PEDro, mas NÃO bloqueia ingestão.
+          // Falha PEDro = sinal amarelo: admin decide se aprova (artigo em
+          // periódico exigente pode não constar na PEDro).
           const pedroV = await verifyPedroScore({ title: it.title, study_type: it.study_type, pedro_score: isNaN(pedro) ? null : pedro });
           if (!isAcceptablePedro(pedroV)) {
-            rejectedPedro++;
-            console.warn(`[ingest] PEDro rejected, skipping: ${it.title} (${pedroV.reason})`);
-            continue;
+            pedroWarning++;
+            console.log(`[ingest] PEDro warning (admin review): ${it.title} (${pedroV.reason})`);
           }
 
           const text = [it.title, it.abstract, it.key_findings].filter(Boolean).join("\n\n");
@@ -874,6 +876,8 @@ Responda APENAS um JSON array. Sem texto adicional.`;
               : finalDoi ? `https://doi.org/${finalDoi}` : null);
 
           if (!sourceUrl) { rejectedUnverified++; continue; }
+
+          if (isPriorityJournal(it.journal)) priorityJournalCount++;
 
           const row: any = {
             title: String(it.title).slice(0, 500),
@@ -902,7 +906,7 @@ Responda APENAS um JSON array. Sem texto adicional.`;
         }
       }
 
-      return new Response(JSON.stringify({ ok: true, inserted, candidates: items.length, rejectedUnverified, rejectedPedro }), {
+      return new Response(JSON.stringify({ ok: true, inserted, candidates: items.length, rejectedUnverified, pedroWarning, priorityJournalCount }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
