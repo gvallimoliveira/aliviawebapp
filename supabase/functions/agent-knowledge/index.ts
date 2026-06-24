@@ -507,6 +507,7 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             abstract: it.abstract || null,
             key_findings: it.key_findings || null,
             doi: finalDoi,
+            pmid: finalPmid,
             source_url: sourceUrl,
             approved: false,
             added_by: user.id,
