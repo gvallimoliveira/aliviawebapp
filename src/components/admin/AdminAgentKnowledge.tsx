@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen, ShieldCheck, Star } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen, ShieldCheck, Star, Pencil, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { AGENT_NICHES, AGENT_NICHE_LABEL } from "@/lib/agentNiches";
 
@@ -60,6 +61,55 @@ export default function AdminAgentKnowledge() {
   const [ingesting, setIngesting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDoi, setEditDoi] = useState("");
+  const [editPmid, setEditPmid] = useState("");
+  const [verifyingOne, setVerifyingOne] = useState(false);
+
+  const startEdit = (a: Article) => {
+    setEditingId(a.id);
+    setEditDoi(a.doi || "");
+    setEditPmid(a.pmid || "");
+  };
+  const cancelEdit = () => { setEditingId(null); setEditDoi(""); setEditPmid(""); };
+
+  const handleVerifyOne = async (id: string, approveIfVerified: boolean) => {
+    setVerifyingOne(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("agent-knowledge", {
+        body: {
+          action: "verify_one",
+          id,
+          doi: editDoi.trim() || null,
+          pmid: editPmid.trim() || null,
+          approveIfVerified,
+        },
+      });
+      if (error) throw new Error(await agentErrorMessage(error, "Falha ao validar."));
+      if (data?.error) throw new Error(data.error);
+      if (data.verified) {
+        toast({
+          title: approveIfVerified ? "Validado e aprovado" : "Validado",
+          description: data.matchedTitle ? `Título no PubMed: ${data.matchedTitle}` : "Identificador confirmado.",
+        });
+        cancelEdit();
+        fetchList();
+      } else {
+        toast({
+          title: "Não foi possível validar",
+          description: data.matchedTitle
+            ? `Título do PubMed/Crossref (${data.matchedTitle}) não bate com o registro. DOI/PMID salvos mas não aprovados.`
+            : "DOI/PMID não encontrados ou não confirmam o título. Os valores foram salvos para nova tentativa.",
+          variant: "destructive",
+        });
+        fetchList();
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setVerifyingOne(false);
+    }
+  };
   const selectedIngestNiche = useMemo(
     () => AGENT_NICHES.find((n) => n.slug === ingestNiche),
     [ingestNiche],
@@ -344,23 +394,77 @@ export default function AdminAgentKnowledge() {
                   </div>
 
 
-                  {status === "pending" && (
-                    <div className="flex gap-2 mt-3 justify-end">
-                      <Button size="sm" variant="outline" onClick={() => handleReject(a.id)} disabled={busyId === a.id} className="gap-1.5 text-destructive hover:text-destructive">
-                        <Trash2 className="h-3.5 w-3.5" /> Reprovar
-                      </Button>
-                      <Button size="sm" onClick={() => handleApprove(a.id)} disabled={busyId === a.id} className="gap-1.5">
-                        {busyId === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                        Aprovar
-                      </Button>
+                  {editingId === a.id ? (
+                    <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+                      <p className="text-xs font-medium text-foreground">
+                        Editar identificadores e revalidar contra PubMed/Crossref
+                      </p>
+                      <div className="grid sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[11px] text-muted-foreground">PMID (preferido)</label>
+                          <Input
+                            value={editPmid}
+                            onChange={(e) => setEditPmid(e.target.value)}
+                            placeholder="ex.: 31234567"
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-muted-foreground">DOI</label>
+                          <Input
+                            value={editDoi}
+                            onChange={(e) => setEditDoi(e.target.value)}
+                            placeholder="ex.: 10.1016/j.xxx.2020.01.001"
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        O sistema vai resolver no PubMed/Crossref e <strong>só aprovar se o título bater</strong> com este registro.
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-end">
+                        <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={verifyingOne} className="gap-1.5">
+                          <X className="h-3.5 w-3.5" /> Cancelar
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleVerifyOne(a.id, false)} disabled={verifyingOne} className="gap-1.5">
+                          {verifyingOne ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+                          Validar
+                        </Button>
+                        {status === "pending" && (
+                          <Button size="sm" onClick={() => handleVerifyOne(a.id, true)} disabled={verifyingOne} className="gap-1.5">
+                            {verifyingOne ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                            Validar e aprovar
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  {status === "approved" && (
-                    <div className="flex gap-2 mt-3 justify-end">
-                      <Button size="sm" variant="outline" onClick={() => handleReject(a.id)} disabled={busyId === a.id} className="gap-1.5 text-destructive hover:text-destructive">
-                        <Trash2 className="h-3.5 w-3.5" /> Remover
-                      </Button>
-                    </div>
+                  ) : (
+                    <>
+                      {status === "pending" && (
+                        <div className="flex flex-wrap gap-2 mt-3 justify-end">
+                          <Button size="sm" variant="ghost" onClick={() => startEdit(a)} disabled={busyId === a.id} className="gap-1.5">
+                            <Pencil className="h-3.5 w-3.5" /> Editar DOI/PMID
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleReject(a.id)} disabled={busyId === a.id} className="gap-1.5 text-destructive hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" /> Reprovar
+                          </Button>
+                          <Button size="sm" onClick={() => handleApprove(a.id)} disabled={busyId === a.id} className="gap-1.5">
+                            {busyId === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                            Aprovar
+                          </Button>
+                        </div>
+                      )}
+                      {status === "approved" && (
+                        <div className="flex flex-wrap gap-2 mt-3 justify-end">
+                          <Button size="sm" variant="ghost" onClick={() => startEdit(a)} disabled={busyId === a.id} className="gap-1.5">
+                            <Pencil className="h-3.5 w-3.5" /> Editar DOI/PMID
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleReject(a.id)} disabled={busyId === a.id} className="gap-1.5 text-destructive hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" /> Remover
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ))}

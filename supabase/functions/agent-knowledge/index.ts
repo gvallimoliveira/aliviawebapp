@@ -368,9 +368,10 @@ serve(async (req) => {
     // ---------- UPDATE ----------
     if (action === "update") {
       const patch: any = {};
-      for (const k of ["title","authors","year","journal","pedro_score","study_type","abstract","key_findings","doi","source_url","niche_tags"]) {
+      for (const k of ["title","authors","year","journal","pedro_score","study_type","abstract","key_findings","doi","pmid","source_url","niche_tags"]) {
         if (k in body) patch[k] = body[k];
       }
+      if ("pmid" in patch) patch.pmid = cleanPmidStr(patch.pmid);
       patch.updated_at = new Date().toISOString();
       // If text fields changed, re-embed
       if (patch.title || patch.abstract || patch.key_findings) {
@@ -389,6 +390,63 @@ serve(async (req) => {
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ---------- VERIFY ONE (manual edit flow) ----------
+    // Admin edits DOI/PMID manually and we revalidate that single article against PubMed/Crossref.
+    // If verified, persist normalized doi/pmid/source_url and (optionally) approve.
+    if (action === "verify_one") {
+      const id: string = body.id;
+      if (!id) {
+        return new Response(JSON.stringify({ error: "id obrigatório" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: row, error: rowErr } = await adminClient
+        .from("knowledge_articles")
+        .select("id, title, doi, pmid, source_url, approved")
+        .eq("id", id)
+        .maybeSingle();
+      if (rowErr) throw rowErr;
+      if (!row) {
+        return new Response(JSON.stringify({ error: "Artigo não encontrado" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const overrideDoi = typeof body.doi === "string" ? body.doi.trim() || null : row.doi;
+      const overridePmid = typeof body.pmid === "string" ? cleanPmidStr(body.pmid) : cleanPmidStr(row.pmid);
+      const approveIfVerified = body.approveIfVerified === true;
+
+      const v = await verifyArticle({ title: row.title, doi: overrideDoi, pmid: overridePmid });
+
+      if (!v.verified) {
+        // Persist what the admin typed (so they don't lose their edit), but do NOT approve.
+        await adminClient.from("knowledge_articles")
+          .update({ doi: overrideDoi, pmid: overridePmid, updated_at: new Date().toISOString() })
+          .eq("id", id);
+        return new Response(JSON.stringify({
+          ok: true, verified: false, reason: v.reason || "not_found",
+          matchedTitle: v.matchedTitle || null,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const newDoi = v.doi ?? (v.doiMismatch ? null : overrideDoi);
+      const newPmid = v.pmid || overridePmid;
+      const newUrl = v.sourceUrl || (newPmid ? `https://pubmed.ncbi.nlm.nih.gov/${newPmid}/` : row.source_url);
+      const patch: any = {
+        doi: newDoi,
+        pmid: newPmid,
+        source_url: newUrl,
+        updated_at: new Date().toISOString(),
+      };
+      if (approveIfVerified) patch.approved = true;
+      await adminClient.from("knowledge_articles").update(patch).eq("id", id);
+
+      return new Response(JSON.stringify({
+        ok: true, verified: true, doi: newDoi, pmid: newPmid,
+        sourceUrl: newUrl, matchedTitle: v.matchedTitle || null,
+        approved: approveIfVerified || row.approved,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ---------- INGEST ----------
