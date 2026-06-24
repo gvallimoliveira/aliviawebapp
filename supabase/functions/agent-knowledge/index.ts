@@ -479,7 +479,7 @@ interface CandidateArticle {
   pmid?: string | null;
   abstract?: string | null;
   studyType?: string | null;
-  source: "pubmed" | "crossref" | "pedro";
+  source: "pubmed" | "crossref" | "pedro" | "cochrane";
 }
 
 function parsePubmedPubType(pubtypes: any[]): string | null {
