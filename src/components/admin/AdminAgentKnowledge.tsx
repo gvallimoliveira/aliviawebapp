@@ -272,6 +272,7 @@ export default function AdminAgentKnowledge() {
     if (!confirm(
       `Revalidar ${scopeLabel} de ${nicheLabel} contra o PubMed/Crossref?\n\n` +
       `• O título de cada artigo será confirmado contra o paper resolvido pelo DOI/PMID.\n` +
+      `• A nota PEDro será checada na base PEDro; notas N/A/sem nota terão o número removido.\n` +
       `• DOIs que apontarem para outro paper serão corrigidos automaticamente.\n` +
       `• Artigos que não puderem ser confirmados serão DESAPROVADOS (movidos para "Pendentes") para revisão manual — nada é deletado.\n\n` +
       `Pode levar alguns minutos.`,
@@ -285,14 +286,16 @@ export default function AdminAgentKnowledge() {
       if (data?.error) throw new Error(data.error);
       const mismatch = data.mismatchFixed ?? 0;
       const demoted = data.demoted ?? 0;
+      const pedroRejected = data.pedroRejected ?? 0;
       toast({
         title: "Revalidação concluída",
         description:
-          `${data.checked} checados · ${data.verified} confirmados · ${mismatch} DOI corrigido(s) · ${data.updated} link(s) normalizado(s) · ${demoted} desaprovado(s) p/ revisão.`,
+          `${data.checked} checados · ${data.verified} confirmados · ${mismatch} DOI corrigido(s) · ${pedroRejected} reprovado(s) no crivo PEDro · ${demoted} desaprovado(s) p/ revisão.`,
       });
-      if (mismatch > 0 || demoted > 0) {
+      if (mismatch > 0 || demoted > 0 || pedroRejected > 0) {
         console.warn("[revalidate] mismatchFixed", data.mismatchFixedItems);
         console.warn("[revalidate] demoted", data.demotedItems);
+        console.warn("[revalidate] pedroRejected", data.pedroRejectedItems);
       }
       fetchList();
     } catch (e: any) {
