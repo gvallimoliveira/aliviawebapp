@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen, ShieldCheck, Star, Pencil, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { AGENT_NICHES, AGENT_NICHE_LABEL } from "@/lib/agentNiches";
 
