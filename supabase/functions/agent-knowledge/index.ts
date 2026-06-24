@@ -133,6 +133,10 @@ interface VerifyResult {
   sourceUrl?: string;
   source?: "pubmed_doi" | "pubmed_pmid" | "pubmed_title" | "crossref_doi";
   matchedTitle?: string;
+  /** Reason verification failed or fell back (helps debugging revalidation). */
+  reason?: string;
+  /** True when the supplied DOI was discarded because its title didn't match. */
+  doiMismatch?: boolean;
 }
 
 async function fetchJsonSafe(url: string, timeoutMs = 9000): Promise<any | null> {
@@ -146,55 +150,104 @@ async function fetchJsonSafe(url: string, timeoutMs = 9000): Promise<any | null>
   } catch { return null; }
 }
 
+async function pubmedTitleFor(pmid: string): Promise<string | null> {
+  const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${pmid}`);
+  return j?.result?.[pmid]?.title || null;
+}
+
+// Title-match thresholds:
+//   ≥0.6 when we already have a strong external identifier (DOI/PMID).
+//   ≥0.7 when we only have free-text title lookup.
+const SIM_ID = 0.6;
+const SIM_TITLE = 0.7;
+
+/**
+ * Verifies an article against PubMed/Crossref AND cross-checks the resolved
+ * title against the supplied title. A DOI that resolves to a *different* paper
+ * is rejected (the historical bug — laser DOI pointing to an ultrasound paper).
+ */
 async function verifyArticle(item: { title?: string; doi?: string | null; pmid?: string | null }): Promise<VerifyResult> {
   const doi = cleanDoiStr(item.doi);
   const pmid = cleanPmidStr(item.pmid);
   const title = (item.title || "").trim();
+  let doiMismatch = false;
 
-  // 1) DOI → PubMed
+  // 1) DOI → PubMed (esearch by [doi], then esummary to compare titles)
   if (doi) {
     const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&term=${encodeURIComponent(doi)}%5Bdoi%5D`);
     const id = j?.esearchresult?.idlist?.[0];
-    if (id) return { verified: true, pmid: id, doi, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_doi" };
-    // Crossref fallback (DOI exists at publisher even if not indexed in PubMed)
-    const cr = await fetchJsonSafe(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
-    if (cr?.message?.DOI) {
-      const crTitle = Array.isArray(cr.message.title) ? cr.message.title[0] : "";
-      return { verified: true, doi, sourceUrl: `https://doi.org/${doi}`, source: "crossref_doi", matchedTitle: crTitle };
-    }
-  }
-
-  // 2) PMID direto
-  if (pmid) {
-    const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${pmid}`);
-    const rec = j?.result?.[pmid];
-    if (rec && rec.title) {
-      const sim = title ? titleSimilarity(title, rec.title) : 1;
-      if (sim >= 0.5 || !title) {
-        return { verified: true, pmid, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, source: "pubmed_pmid", matchedTitle: rec.title };
+    if (id) {
+      const pmTitle = await pubmedTitleFor(id);
+      const sim = title && pmTitle ? titleSimilarity(title, pmTitle) : 0;
+      if (!title || sim >= SIM_ID) {
+        return { verified: true, pmid: id, doi, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_doi", matchedTitle: pmTitle || undefined };
+      }
+      // DOI resolves but to a different paper — discard DOI and try title route.
+      doiMismatch = true;
+      console.warn(`[verify] DOI ${doi} resolves to PMID ${id} ("${pmTitle}") but title "${title}" sim=${sim.toFixed(2)}`);
+    } else {
+      // Crossref fallback — also requires title match.
+      const cr = await fetchJsonSafe(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+      if (cr?.message?.DOI) {
+        const crTitle = Array.isArray(cr.message.title) ? cr.message.title[0] : "";
+        const sim = title && crTitle ? titleSimilarity(title, crTitle) : 0;
+        if (!title || sim >= SIM_ID) {
+          return { verified: true, doi, sourceUrl: `https://doi.org/${doi}`, source: "crossref_doi", matchedTitle: crTitle };
+        }
+        doiMismatch = true;
+        console.warn(`[verify] Crossref DOI ${doi} title "${crTitle}" vs "${title}" sim=${sim.toFixed(2)}`);
       }
     }
   }
 
-  // 3) Busca por título
+  // 2) PMID direto (cross-check title)
+  if (pmid) {
+    const pmTitle = await pubmedTitleFor(pmid);
+    if (pmTitle) {
+      const sim = title ? titleSimilarity(title, pmTitle) : 1;
+      if (sim >= SIM_ID || !title) {
+        return { verified: true, pmid, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, source: "pubmed_pmid", matchedTitle: pmTitle, doiMismatch };
+      }
+    }
+  }
+
+  // 3) Busca por título (fallback que pode "recuperar" o paper correto quando o DOI da IA estava errado)
   if (title && title.length > 12) {
     const term = normalizeTitle(title).split(" ").slice(0, 12).join(" ");
     const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=5&term=${encodeURIComponent(term)}%5BTitle%5D`);
     const ids: string[] = j?.esearchresult?.idlist || [];
     if (ids.length) {
       const sj = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${ids.join(",")}`);
+      let best: { id: string; sim: number; title: string } | null = null;
       for (const id of ids) {
         const rec = sj?.result?.[id];
-        if (!rec) continue;
-        const sim = titleSimilarity(title, rec.title || "");
-        if (sim >= 0.7) {
-          return { verified: true, pmid: id, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_title", matchedTitle: rec.title };
+        if (!rec?.title) continue;
+        const sim = titleSimilarity(title, rec.title);
+        if (!best || sim > best.sim) best = { id, sim, title: rec.title };
+      }
+      if (best && best.sim >= SIM_TITLE) {
+        // Try to discover the correct DOI for this PMID.
+        let resolvedDoi: string | undefined;
+        const ej = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${best.id}`);
+        const aids = ej?.result?.[best.id]?.articleids || [];
+        for (const a of aids) {
+          if (a?.idtype === "doi" && typeof a.value === "string") { resolvedDoi = cleanDoiStr(a.value) || undefined; break; }
         }
+        return {
+          verified: true,
+          pmid: best.id,
+          doi: resolvedDoi,
+          sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${best.id}/`,
+          source: "pubmed_title",
+          matchedTitle: best.title,
+          doiMismatch,
+          reason: doiMismatch ? "doi_mismatch_recovered_by_title" : undefined,
+        };
       }
     }
   }
 
-  return { verified: false };
+  return { verified: false, doiMismatch, reason: doiMismatch ? "doi_mismatch_no_title_match" : "not_found" };
 }
 
 serve(async (req) => {
@@ -232,7 +285,7 @@ serve(async (req) => {
     // Available to any authenticated user — UI gates access by plan (PRO/clinic/academic).
     if (action === "list_public") {
       let q = adminClient.from("knowledge_articles")
-        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, source_url, created_at")
+        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, created_at")
         .eq("approved", true)
         .order("year", { ascending: false, nullsFirst: false })
         .order("pedro_score", { ascending: false, nullsFirst: false })
@@ -258,7 +311,7 @@ serve(async (req) => {
     if (action === "list") {
       const status = body.status === "approved" ? true : body.status === "pending" ? false : null;
       let q = adminClient.from("knowledge_articles")
-        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, source_url, approved, is_favorite, created_at")
+        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, approved, is_favorite, created_at")
         .order("is_favorite", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(200);
@@ -357,6 +410,7 @@ CRITÉRIOS OBRIGATÓRIOS:
 - PEDro score ≥ 7/10 (se RCT). Para revisões sistemáticas/meta-análises, pode listar mesmo sem PEDro (usar 8 como padrão).
 - Priorize meta-análises, revisões sistemáticas e RCTs recentes (últimos 15 anos).
 - NÃO invente estudos. Se não tiver certeza absoluta da existência do estudo, NÃO o inclua.
+- IDENTIFICADORES: **prefira fornecer o PMID** (mais estável que DOI). Se não souber o DOI com 100% de certeza, deixe DOI=null e forneça apenas PMID. NUNCA chute um DOI — todo par título↔DOI é checado contra o PubMed por similaridade de título e pares inconsistentes são descartados.
 - NÃO gere URLs para PEDro (search.pedro.org.au, pedro.org.au/...) — os IDs internos da PEDro não são previsíveis e qualquer link fabricado retorna 404. Use SOMENTE DOI e/ou PMID verificáveis.
 - Campos por estudo:
   • title (string)
@@ -367,8 +421,8 @@ CRITÉRIOS OBRIGATÓRIOS:
   • study_type ("RCT" | "Systematic Review" | "Meta-analysis")
   • abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado)
   • key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável)
-  • doi (string, formato "10.xxxx/yyyy" — sem "https://doi.org/". Null se não souber.)
-  • pmid (string apenas numérica, ex: "31234567". Null se não souber.)
+  • doi (string, formato "10.xxxx/yyyy" — sem "https://doi.org/". Null se não souber com certeza.)
+  • pmid (string apenas numérica, ex: "31234567". Preferencial.)
 - NÃO inclua o campo "url" / "source_url".
 
 Responda APENAS um JSON array. Sem texto adicional.`;
@@ -453,6 +507,7 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             abstract: it.abstract || null,
             key_findings: it.key_findings || null,
             doi: finalDoi,
+            pmid: finalPmid,
             source_url: sourceUrl,
             approved: false,
             added_by: user.id,
@@ -471,56 +526,94 @@ Responda APENAS um JSON array. Sem texto adicional.`;
       });
     }
 
-    // ---------- VERIFY (varredura: remove artigos não confirmáveis) ----------
-    if (action === "verify") {
+    // ---------- VERIFY / REVALIDATE ----------
+    // Both actions use the SAME strict verifyArticle (title cross-check obrigatório).
+    // Diferença: "verify" (legacy) DELETA não-confirmáveis.
+    //            "revalidate" (novo, preferido) DESAPROVA (approved=false) para revisão humana,
+    //                          sem perder o registro.
+    if (action === "verify" || action === "revalidate") {
+      const isRevalidate = action === "revalidate";
       const scope = body.scope === "approved" ? "approved" : body.scope === "pending" ? "pending" : "all";
       const nicheFilter: string | undefined = body.niche;
       const dryRun = body.dryRun === true;
 
-      let q = adminClient.from("knowledge_articles").select("id, title, doi, source_url, approved, niche_tags").limit(1000);
+      let q = adminClient.from("knowledge_articles")
+        .select("id, title, doi, pmid, source_url, approved, niche_tags")
+        .limit(1000);
       if (scope === "approved") q = q.eq("approved", true);
       if (scope === "pending") q = q.eq("approved", false);
       if (nicheFilter) q = q.contains("niche_tags", [nicheFilter]);
       const { data: rows, error } = await q;
       if (error) throw error;
 
-      let checked = 0, verified = 0, removed = 0, updated = 0;
+      let checked = 0, verified = 0, removed = 0, updated = 0, mismatchFixed = 0, demoted = 0;
       const removedItems: any[] = [];
+      const demotedItems: any[] = [];
+      const mismatchFixedItems: any[] = [];
+
       for (const r of rows || []) {
         checked++;
-        // tentar extrair PMID da source_url se já for um link PubMed
-        const pmidMatch = typeof r.source_url === "string"
-          ? r.source_url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d{4,})/i)
+        // Prefer stored pmid; fall back to extracting from source_url for legacy rows.
+        const pmidStored = cleanPmidStr((r as any).pmid);
+        const pmidFromUrl = typeof r.source_url === "string"
+          ? r.source_url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d{4,})/i)?.[1] || null
           : null;
-        const pmidGuess = pmidMatch ? pmidMatch[1] : null;
-        const v = await verifyArticle({ title: r.title, doi: r.doi, pmid: pmidGuess });
+        const pmidHint = pmidStored || pmidFromUrl;
+
+        const v = await verifyArticle({ title: r.title, doi: r.doi, pmid: pmidHint });
+
         if (v.verified) {
           verified++;
-          const newUrl = v.sourceUrl;
-          const newDoi = v.doi || r.doi;
-          if (newUrl && (newUrl !== r.source_url || newDoi !== r.doi)) {
+          const newUrl = v.sourceUrl || (v.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${v.pmid}/` : r.source_url);
+          // Trust the verifier's DOI (may be null if the original was wrong & PubMed has no DOI).
+          const newDoi = v.doi ?? (v.doiMismatch ? null : r.doi);
+          const newPmid = v.pmid || pmidStored;
+          const wasMismatch = !!v.doiMismatch;
+          if (wasMismatch) {
+            mismatchFixed++;
+            mismatchFixedItems.push({ id: r.id, title: r.title, oldDoi: r.doi, newDoi, newPmid, matchedTitle: v.matchedTitle });
+          }
+          const changed = newUrl !== r.source_url || newDoi !== r.doi || newPmid !== pmidStored;
+          if (changed) {
             if (!dryRun) {
               await adminClient.from("knowledge_articles")
-                .update({ source_url: newUrl, doi: newDoi, updated_at: new Date().toISOString() })
+                .update({ source_url: newUrl, doi: newDoi, pmid: newPmid, updated_at: new Date().toISOString() })
                 .eq("id", r.id);
             }
             updated++;
           }
         } else {
-          removed++;
-          removedItems.push({ id: r.id, title: r.title, doi: r.doi });
-          if (!dryRun) {
-            await adminClient.from("knowledge_articles").delete().eq("id", r.id);
+          if (isRevalidate) {
+            // Soft: demote to pending for manual review instead of deleting.
+            demoted++;
+            demotedItems.push({ id: r.id, title: r.title, doi: r.doi, pmid: pmidStored, reason: v.reason || "not_found" });
+            if (!dryRun && r.approved) {
+              await adminClient.from("knowledge_articles")
+                .update({ approved: false, updated_at: new Date().toISOString() })
+                .eq("id", r.id);
+            }
+          } else {
+            // Legacy hard delete path.
+            removed++;
+            removedItems.push({ id: r.id, title: r.title, doi: r.doi });
+            if (!dryRun) {
+              await adminClient.from("knowledge_articles").delete().eq("id", r.id);
+            }
           }
         }
         // throttle leve para respeitar NCBI (~3 req/s sem API key)
         await new Promise((res) => setTimeout(res, 350));
       }
 
-      return new Response(JSON.stringify({ ok: true, scope, niche: nicheFilter || null, checked, verified, removed, updated, dryRun, removedItems }), {
+      return new Response(JSON.stringify({
+        ok: true, action, scope, niche: nicheFilter || null,
+        checked, verified, updated, mismatchFixed, removed, demoted,
+        dryRun, removedItems, demotedItems, mismatchFixedItems,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

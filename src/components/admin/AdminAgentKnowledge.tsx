@@ -22,6 +22,7 @@ interface Article {
   abstract: string | null;
   key_findings: string | null;
   doi: string | null;
+  pmid: string | null;
   source_url: string | null;
   approved: boolean;
   is_favorite?: boolean;
@@ -130,18 +131,31 @@ export default function AdminAgentKnowledge() {
   const handleVerifyAll = async () => {
     const scopeLabel = status === "approved" ? "aprovados" : "pendentes";
     const nicheLabel = nicheFilter === "all" ? "todos os nichos" : (AGENT_NICHES.find(n => n.slug === nicheFilter)?.label || nicheFilter);
-    if (!confirm(`Verificar ${scopeLabel} de ${nicheLabel} no PubMed/Crossref?\n\nArtigos que não puderem ser confirmados serão REMOVIDOS automaticamente. Pode levar alguns minutos.`)) return;
+    if (!confirm(
+      `Revalidar ${scopeLabel} de ${nicheLabel} contra o PubMed/Crossref?\n\n` +
+      `• O título de cada artigo será confirmado contra o paper resolvido pelo DOI/PMID.\n` +
+      `• DOIs que apontarem para outro paper serão corrigidos automaticamente.\n` +
+      `• Artigos que não puderem ser confirmados serão DESAPROVADOS (movidos para "Pendentes") para revisão manual — nada é deletado.\n\n` +
+      `Pode levar alguns minutos.`,
+    )) return;
     setVerifying(true);
     try {
       const { data, error } = await supabase.functions.invoke("agent-knowledge", {
-        body: { action: "verify", scope: status, niche: nicheFilter !== "all" ? nicheFilter : undefined },
+        body: { action: "revalidate", scope: status, niche: nicheFilter !== "all" ? nicheFilter : undefined },
       });
-      if (error) throw new Error(await agentErrorMessage(error, "Falha ao verificar artigos."));
+      if (error) throw new Error(await agentErrorMessage(error, "Falha ao revalidar artigos."));
       if (data?.error) throw new Error(data.error);
+      const mismatch = data.mismatchFixed ?? 0;
+      const demoted = data.demoted ?? 0;
       toast({
-        title: "Verificação concluída",
-        description: `${data.checked} checados · ${data.verified} confirmados · ${data.removed} removidos · ${data.updated} links atualizados.`,
+        title: "Revalidação concluída",
+        description:
+          `${data.checked} checados · ${data.verified} confirmados · ${mismatch} DOI corrigido(s) · ${data.updated} link(s) normalizado(s) · ${demoted} desaprovado(s) p/ revisão.`,
       });
+      if (mismatch > 0 || demoted > 0) {
+        console.warn("[revalidate] mismatchFixed", data.mismatchFixedItems);
+        console.warn("[revalidate] demoted", data.demotedItems);
+      }
       fetchList();
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
@@ -241,9 +255,9 @@ export default function AdminAgentKnowledge() {
                 <Star className={`h-4 w-4 ${favoritesOnly ? "fill-current" : ""}`} />
                 {favoritesOnly ? "Só favoritos" : "Favoritos"}
               </Button>
-              <Button variant="outline" size="sm" onClick={handleVerifyAll} disabled={verifying || loading} className="gap-2">
+              <Button variant="outline" size="sm" onClick={handleVerifyAll} disabled={verifying || loading} className="gap-2" title="Cruza título×DOI/PMID no PubMed. Não deleta — desaprova para revisão.">
                 {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                {verifying ? "Verificando..." : "Verificar e limpar"}
+                {verifying ? "Revalidando..." : "Revalidar (estrito)"}
               </Button>
             </div>
           </div>
@@ -302,15 +316,29 @@ export default function AdminAgentKnowledge() {
                     ))}
                     {(() => {
                       const cleanDoi = a.doi?.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
-                      const href = cleanDoi
-                        ? `https://doi.org/${cleanDoi}`
-                        : `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(a.title)}`;
-                      const label = cleanDoi ? "DOI" : "PubMed";
+                      const pubmedHref = a.pmid
+                        ? `https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`
+                        : a.source_url?.includes("pubmed") ? a.source_url : null;
+                      const doiHref = cleanDoi ? `https://doi.org/${cleanDoi}` : null;
                       return (
-                        <a href={href} target="_blank" rel="noreferrer"
-                           className="text-xs text-primary hover:underline inline-flex items-center gap-1 ml-auto">
-                          {label} <ExternalLink className="h-3 w-3" />
-                        </a>
+                        <div className="ml-auto flex items-center gap-2">
+                          {pubmedHref && (
+                            <a href={pubmedHref} target="_blank" rel="noreferrer"
+                               className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                               title={a.pmid ? `PMID ${a.pmid}` : "PubMed"}>
+                              PubMed{a.pmid ? ` ${a.pmid}` : ""} <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          {doiHref && (
+                            <a href={doiHref} target="_blank" rel="noreferrer"
+                               className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1">
+                              DOI <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          {!pubmedHref && !doiHref && (
+                            <span className="text-xs text-destructive">sem link validável</span>
+                          )}
+                        </div>
                       );
                     })()}
                   </div>

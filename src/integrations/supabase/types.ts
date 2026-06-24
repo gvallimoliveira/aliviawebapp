@@ -1345,6 +1345,7 @@ export type Database = {
           key_findings: string | null
           niche_tags: string[]
           pedro_score: number | null
+          pmid: string | null
           source_url: string | null
           study_type: string | null
           title: string
@@ -1365,6 +1366,7 @@ export type Database = {
           key_findings?: string | null
           niche_tags?: string[]
           pedro_score?: number | null
+          pmid?: string | null
           source_url?: string | null
           study_type?: string | null
           title: string
@@ -1385,6 +1387,7 @@ export type Database = {
           key_findings?: string | null
           niche_tags?: string[]
           pedro_score?: number | null
+          pmid?: string | null
           source_url?: string | null
           study_type?: string | null
           title?: string
