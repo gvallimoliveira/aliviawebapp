@@ -471,10 +471,18 @@ serve(async (req) => {
       if (!v.verified) {
         // Persist what the admin typed (so they don't lose their edit), but do NOT approve.
         await adminClient.from("knowledge_articles")
-          .update({ doi: overrideDoi, pmid: overridePmid, updated_at: new Date().toISOString() })
+          .update({
+            doi: overrideDoi,
+            pmid: overridePmid,
+            source_url: null,
+            approved: false,
+            ...verificationPatch(v, "invalid"),
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", id);
         return new Response(JSON.stringify({
           ok: true, verified: false, reason: v.reason || "not_found",
+          similarity: v.similarity ?? null,
           matchedTitle: v.matchedTitle || null,
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -486,6 +494,7 @@ serve(async (req) => {
         doi: newDoi,
         pmid: newPmid,
         source_url: newUrl,
+        ...verificationPatch(v, "verified"),
         updated_at: new Date().toISOString(),
       };
       if (approveIfVerified) patch.approved = true;
@@ -494,6 +503,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         ok: true, verified: true, doi: newDoi, pmid: newPmid,
         sourceUrl: newUrl, matchedTitle: v.matchedTitle || null,
+        similarity: v.similarity ?? null,
         approved: approveIfVerified || row.approved,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
