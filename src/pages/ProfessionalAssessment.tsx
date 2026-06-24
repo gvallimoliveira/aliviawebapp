@@ -71,6 +71,7 @@ const ProfessionalAssessment = () => {
   const [prefilledActivityLevel, setPrefilledActivityLevel] = useState<string | undefined>(undefined);
   const [prefilledGymAccess, setPrefilledGymAccess] = useState<string | undefined>(undefined);
   const [prefilledExtras, setPrefilledExtras] = useState<Record<string, any> | undefined>(undefined);
+  const [previousPainScore, setPreviousPainScore] = useState<number | undefined>(undefined);
   const [previousQuestionnaireAnswers, setPreviousQuestionnaireAnswers] = useState<Record<string, Record<string, number>> | undefined>(undefined);
 
   // Validate professional exists and has active subscription
@@ -97,7 +98,7 @@ const ProfessionalAssessment = () => {
       if (reassessmentId) {
         const { data: orig } = await supabase
           .from("assessments")
-          .select("patient_name, patient_email, pain_regions, anamnesis_data, test_results")
+          .select("patient_name, patient_email, pain_regions, pain_score, anamnesis_data, test_results")
           .eq("id", reassessmentId)
           .eq("professional_id", professionalId)
           .maybeSingle();
@@ -117,6 +118,8 @@ const ProfessionalAssessment = () => {
           if (anam?.surgeryDetails) setPrefilledSurgeryDetails(anam.surgeryDetails);
           if (anam?.activityLevel) setPrefilledActivityLevel(anam.activityLevel);
           if (anam?.hasGymAccess) setPrefilledGymAccess(anam.hasGymAccess);
+          if (typeof orig.pain_score === "number") setPreviousPainScore(orig.pain_score);
+          else if (typeof anam?.painScore === "number") setPreviousPainScore(anam.painScore);
           // Stable demographics + clinical history pre-fill
           // Fallback: pull demographics from `patients` row when older assessments
           // didn't store sex/ageRange/birthDate/cpf inside anamnesis_data.
@@ -130,15 +133,29 @@ const ProfessionalAssessment = () => {
             ageRange: anam?.ageRange || patientFallback.ageRange,
             birthDate: anam?.birthDate || patientFallback.birthDate,
             cpf: anam?.cpf || patientFallback.cpf,
+            // Pain characterization (estável o suficiente para confirmar/editar)
+            painType: anam?.painType || (Array.isArray(anam?.painTypes) ? anam.painTypes[0] : undefined),
+            painTypes: anam?.painTypes,
+            painDuration: anam?.painDuration,
+            painPattern: anam?.painPattern,
+            painWeeklyFrequency: anam?.painWeeklyFrequency,
+            painNightWaking: anam?.painNightWaking,
+            evolution: anam?.evolution,
+            aggravatingFactors: anam?.aggravatingFactors,
+            relievingFactors: anam?.relievingFactors,
+            // Histórico estável
             hadTwist: anam?.hadTwist,
             hadSprain: anam?.hadSprain,
             hadDislocation: anam?.hadDislocation,
+            ottawaPositive: anam?.ottawaPositive,
             hasScapulaPain: anam?.hasScapulaPain,
             hasLocalSwelling: anam?.hasLocalSwelling,
+            // Cefaleia
             hasPhotophobia: anam?.hasPhotophobia,
             hasVisualAura: anam?.hasVisualAura,
             hasNausea: anam?.hasNausea,
             headacheCrisisFrequency: anam?.headacheCrisisFrequency,
+            // Refinamento do mapa de dor
             painSubArea: anam?.painSubArea,
           });
 
@@ -714,6 +731,7 @@ const ProfessionalAssessment = () => {
             initialActivityLevel={prefilledActivityLevel}
             initialHasGymAccess={prefilledGymAccess}
             initialExtras={prefilledExtras}
+            previousPainScore={previousPainScore}
             enabledSubs={reassessAnamSubs || undefined}
           />
         )}

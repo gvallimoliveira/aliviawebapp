@@ -75,7 +75,7 @@ interface AnamnesisFormProps {
    * Each key is merged only if truthy/non-empty so the form falls back to
    * the user's input when nothing was stored before.
    */
-  initialExtras?: Partial<AnamnesisData>;
+  initialExtras?: Partial<AnamnesisData> & Record<string, any>;
   /** Optional stable key (e.g. token, professionalId+email) to persist draft across reloads. */
   draftScopeKey?: string | null;
   /**
@@ -84,9 +84,14 @@ interface AnamnesisFormProps {
    * "surgery", "painscore", "activity". If undefined, every step is shown (default).
    */
   enabledSubs?: string[];
+  /**
+   * Optional previous EVA score (general). Displayed as a non-anchoring reference chip
+   * on the painscore step during reassessment. Slider still starts neutral.
+   */
+  previousPainScore?: number;
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras, draftScopeKey, enabledSubs }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras, draftScopeKey, enabledSubs, previousPainScore }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -145,20 +150,28 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     if (p.data) setData((prev) => ({ ...prev, ...p.data }));
   };
 
+  // Track which fields were pre-filled from a previous assessment so we can render
+  // a subtle "from previous" badge next to their labels.
+  const [prefilledKeys, setPrefilledKeys] = useState<Set<string>>(new Set());
+  const isPrefilled = useCallback((k: string) => prefilledKeys.has(k), [prefilledKeys]);
+
   // Pre-fill all reassessment fields
   useEffect(() => {
+    const filledNow = new Set<string>();
     setData((prev) => {
       const updates: Partial<AnamnesisData> = {};
-      if (initialPainRegions?.length) updates.painRegions = initialPainRegions;
+      const mark = (k: string) => filledNow.add(k);
+      if (initialPainRegions?.length) { updates.painRegions = initialPainRegions; mark("painRegions"); }
       if (initialChiefComplaints?.length) {
         updates.chiefComplaints = initialChiefComplaints;
         updates.chiefComplaint = initialChiefComplaints[0] || "";
+        mark("chiefComplaints");
       }
-      if (initialOnset) updates.onset = initialOnset;
-      if (initialHasPriorSurgery) updates.hasPriorSurgery = initialHasPriorSurgery;
-      if (initialSurgeryDetails) updates.surgeryDetails = initialSurgeryDetails;
-      if (initialActivityLevel) updates.activityLevel = initialActivityLevel;
-      if (initialHasGymAccess) updates.hasGymAccess = initialHasGymAccess;
+      if (initialOnset) { updates.onset = initialOnset; mark("onset"); }
+      if (initialHasPriorSurgery) { updates.hasPriorSurgery = initialHasPriorSurgery; mark("hasPriorSurgery"); }
+      if (initialSurgeryDetails) { updates.surgeryDetails = initialSurgeryDetails; mark("surgeryDetails"); }
+      if (initialActivityLevel) { updates.activityLevel = initialActivityLevel; mark("activityLevel"); }
+      if (initialHasGymAccess) { updates.hasGymAccess = initialHasGymAccess; mark("hasGymAccess"); }
       // Merge extras (demographics + stable clinical history). Skip empty values.
       if (initialExtras) {
         for (const [k, v] of Object.entries(initialExtras)) {
@@ -166,11 +179,45 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
           if (typeof v === "string" && v.trim() === "") continue;
           if (Array.isArray(v) && v.length === 0) continue;
           (updates as any)[k] = v;
+          mark(k);
         }
       }
       return { ...prev, ...updates };
     });
+    if (filledNow.size > 0) {
+      setPrefilledKeys((prev) => {
+        const merged = new Set(prev);
+        filledNow.forEach((k) => merged.add(k));
+        return merged;
+      });
+    }
   }, [initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras]);
+
+  // Subtle "from previous assessment" badge.
+  const PrefilledBadge = () => (
+    <span className="ml-2 inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary/80 border border-primary/20 whitespace-nowrap align-middle">
+      {t("assessment.prefilled.badge")}
+    </span>
+  );
+
+  const stepHasPrefill = (id: string): boolean => {
+    const keysByStep: Record<string, string[]> = {
+      complaint: ["chiefComplaints"],
+      onset: ["onset"],
+      surgery: ["hasPriorSurgery", "surgeryDetails"],
+      painmap: ["painRegions"],
+      region_detail: ["painSubArea", "hadTwist", "hadSprain", "hadDislocation", "ottawaPositive"],
+      migraine_screening: ["hasPhotophobia", "hasVisualAura", "hasNausea", "headacheCrisisFrequency"],
+      sex_age: ["sex", "ageRange"],
+      paintype: ["painType", "painTypes"],
+      evolution: ["evolution"],
+      factors: ["aggravatingFactors", "relievingFactors", "activityLevel"],
+      duration: ["painDuration"],
+      pain_frequency: ["painPattern", "painWeeklyFrequency", "painNightWaking"],
+      gym: ["hasGymAccess"],
+    };
+    return (keysByStep[id] || []).some((k) => prefilledKeys.has(k));
+  };
 
   const complaints = [
     "anamnesis.complaint.neck_pain",
@@ -420,7 +467,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "complaint":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.complaint_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.complaint_title")}{stepHasPrefill("complaint") && <PrefilledBadge />}</h3>
             <p className="text-xs text-muted-foreground">{language === "pt" ? "Selecione uma ou mais regiões relacionadas" : "Select one or more related regions"}</p>
             <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800">
               <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -460,7 +507,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "onset":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.onset_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.onset_title")}{stepHasPrefill("onset") && <PrefilledBadge />}</h3>
             <div className="grid gap-3">
               {["anamnesis.onset.sudden", "anamnesis.onset.gradual", "anamnesis.onset.trauma", "anamnesis.onset.post_surgery"].map((o) => (
                 <Card key={o} className={`cursor-pointer transition-all ${data.onset === o ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, onset: o })}>
@@ -473,7 +520,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "surgery":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.surgery_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.surgery_title")}{stepHasPrefill("surgery") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.surgery_subtitle")}</p>
             <p className="text-xs text-muted-foreground/80 italic">{t("anamnesis.surgery_disclaimer")}</p>
             <div className="grid grid-cols-2 gap-3">
@@ -515,7 +562,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
 
         return (
           <div className="space-y-5">
-            <h3 className="text-lg font-semibold">{t("anamnesis.region_detail_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.region_detail_title")}{stepHasPrefill("region_detail") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.region_detail_subtitle")}</p>
             <div className="grid gap-3">
               {subAreas.map((area) => {
@@ -601,7 +648,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "migraine_screening":
         return (
           <div className="space-y-5">
-            <h3 className="text-lg font-semibold">{t("anamnesis.migraine_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.migraine_title")}{stepHasPrefill("migraine_screening") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.migraine_subtitle")}</p>
 
             <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
@@ -652,7 +699,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "sex_age":
         return (
           <div className="space-y-5">
-            <h3 className="text-lg font-semibold">{t("anamnesis.sex_age_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.sex_age_title")}{stepHasPrefill("sex_age") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.sex_age_subtitle")}</p>
             <div className="space-y-3">
               <Label>{t("anamnesis.sex_label")}</Label>
@@ -691,7 +738,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "paintype":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.pain_type_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_type_title")}{stepHasPrefill("paintype") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.pain_type_subtitle")}</p>
             <div className="grid grid-cols-2 gap-2">
               {painTypes.map((pt) => (
@@ -705,7 +752,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "evolution":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.evolution_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.evolution_title")}{stepHasPrefill("evolution") && <PrefilledBadge />}</h3>
             <div className="grid gap-3">
               {["anamnesis.evolution.improving", "anamnesis.evolution.stable", "anamnesis.evolution.worsening"].map((e) => (
                 <Card key={e} className={`cursor-pointer transition-all ${data.evolution === e ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, evolution: e })}>
@@ -724,15 +771,15 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         return (
           <div className="space-y-5">
             <div className="space-y-2">
-              <Label>{t("anamnesis.aggravating")}</Label>
+              <Label>{t("anamnesis.aggravating")}{isPrefilled("aggravatingFactors") && <PrefilledBadge />}</Label>
               <Textarea value={data.aggravatingFactors} onChange={(e) => setData({ ...data, aggravatingFactors: e.target.value.slice(0, 500) })} placeholder={t("anamnesis.aggravating_placeholder")} rows={2} maxLength={500} />
             </div>
             <div className="space-y-2">
-              <Label>{t("anamnesis.relieving")}</Label>
+              <Label>{t("anamnesis.relieving")}{isPrefilled("relievingFactors") && <PrefilledBadge />}</Label>
               <Textarea value={data.relievingFactors} onChange={(e) => setData({ ...data, relievingFactors: e.target.value.slice(0, 500) })} placeholder={t("anamnesis.relieving_placeholder")} rows={2} maxLength={500} />
             </div>
             <div className="space-y-3">
-              <Label>{t("anamnesis.activity_level")}</Label>
+              <Label>{t("anamnesis.activity_level")}{isPrefilled("activityLevel") && <PrefilledBadge />}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {activityLevels.map((a) => (
                   <Button key={a} variant={data.activityLevel === a ? "default" : "outline"} size="sm" className="rounded-xl h-auto py-2.5" onClick={() => setData({ ...data, activityLevel: a })}>
@@ -746,7 +793,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "duration":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.pain_duration_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_duration_title")}{stepHasPrefill("duration") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.pain_duration_subtitle")}</p>
             <div className="grid gap-3">
               {["anamnesis.duration.less_week", "anamnesis.duration.one_month", "anamnesis.duration.three_six_months", "anamnesis.duration.one_year_plus"].map((option) => (
@@ -760,7 +807,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "pain_frequency":
         return (
           <div className="space-y-5">
-            <h3 className="text-lg font-semibold">{t("anamnesis.pain_frequency_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_frequency_title")}{stepHasPrefill("pain_frequency") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.pain_frequency_subtitle")}</p>
 
             <div className="space-y-3">
@@ -807,7 +854,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "gym":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.gym_access_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.gym_access_title")}{stepHasPrefill("gym") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.gym_access_subtitle")}</p>
             <div className="grid gap-3">
               {["anamnesis.gym.yes", "anamnesis.gym.no"].map((option) => (
@@ -897,6 +944,13 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         return (
           <div className="space-y-6">
             <h3 className="text-lg font-semibold">{t("anamnesis.pain_score_title")}</h3>
+            {typeof previousPainScore === "number" && (
+              <div className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary/90">
+                <span>📊</span>
+                <span>{t("assessment.prefilled.lastPainScore").replace("{{value}}", String(previousPainScore))}</span>
+              </div>
+            )}
+
 
             {/* Mode selector for multiple regions */}
             {hasMultipleRegions && (
@@ -1039,6 +1093,14 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
           onRestore={handleRestoreDraft}
           onDiscard={() => void draft.discard()}
         />
+      )}
+      {prefilledKeys.size > 0 && (
+        <Alert className="bg-primary/5 border-primary/20">
+          <Info className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-xs text-foreground/80 leading-relaxed">
+            {t("assessment.prefilled.banner")}
+          </AlertDescription>
+        </Alert>
       )}
       {/* Progress */}
       <div className="space-y-2">
