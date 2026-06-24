@@ -204,7 +204,14 @@ export default function AgentKnowledgeBrowser() {
                     )}
                     <div className="flex flex-wrap items-center gap-1 mt-2">
                       <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ID validado</Badge>
-                      <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PEDro validado</Badge>
+                      {a.pedro_score_status === "verified" || a.pedro_score_status === "not_applicable" ? (
+                        <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PEDro validado</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] border-amber-500/50 text-amber-700 dark:text-amber-300">PEDro não confirmado</Badge>
+                      )}
+                      {isPriorityJournal(a.journal) && (
+                        <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-600 text-white">★ IF {journalImpactFactor(a.journal)?.toFixed(1)}</Badge>
+                      )}
                       {a.study_type && (
                         <Badge variant="outline" className="text-[10px]">{a.study_type}</Badge>
                       )}
