@@ -256,10 +256,18 @@ export default function AdminAgentKnowledge() {
       });
       if (error) throw new Error(await agentErrorMessage(error, "Erro ao buscar artigos para este tema."));
       if (data?.error) throw new Error(data.error);
+      const bySrc = data.bySourceFound || {};
+      const bySrcIns = data.bySourceInserted || {};
       toast({
         title: "Busca concluída",
-        description: `${data.inserted} adicionado(s) (de ${data.candidates}) · ${data.rejectedUnverified ?? 0} descartado(s) por DOI/PMID · ${data.pedroWarning ?? 0} com PEDro como aviso amarelo (você decide) · ${data.priorityJournalCount ?? 0} em periódico prioritário (IF ≥ 3).`,
+        description:
+          `${data.inserted} adicionado(s) de ${data.candidates ?? 0} candidato(s) ` +
+          `(PubMed ${bySrc.pubmed ?? 0} · Crossref ${bySrc.crossref ?? 0}; ` +
+          `inseridos: PubMed ${bySrcIns.pubmed ?? 0} · Crossref ${bySrcIns.crossref ?? 0}). ` +
+          `${data.afterDedup ?? 0} novo(s) após dedup · ${data.rejectedUnverified ?? 0} descartado(s) por DOI/PMID · ` +
+          `${data.pedroWarning ?? 0} com aviso PEDro · ${data.priorityJournalCount ?? 0} em periódico IF ≥ 3.`,
       });
+      if (data.queryUsed) console.log("[ingest] query PubMed:", data.queryUsed);
       setStatus("pending");
       setNicheFilter(ingestNiche);
       fetchList();
