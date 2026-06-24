@@ -1907,6 +1907,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       ? "Na próxima etapa você define a intensidade e o tipo de dor para cada região marcada aqui."
                       : "In the next step you set intensity and pain type for each region marked here."}
                   </p>
+                </div>
               </div>
             )}
 
