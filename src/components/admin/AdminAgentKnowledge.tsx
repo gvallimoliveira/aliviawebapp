@@ -19,6 +19,7 @@ interface Article {
   year: number | null;
   journal: string | null;
   pedro_score: number | null;
+  pedro_score_status?:
   study_type: string | null;
   niche_tags: string[] | null;
   abstract: string | null;
