@@ -88,7 +88,7 @@ export default function AgentKnowledgeBrowser() {
           <Badge variant="outline" className="text-[10px]">Aprovados · PEDro validado</Badge>
         </div>
         <p className="text-[11px] text-muted-foreground leading-snug">
-          Artigos verificados no PubMed/Crossref e com nota checada na PEDro. Revisões com PEDro N/A aparecem sem nota numérica.
+          Artigos verificados no PubMed/Crossref e aprovados manualmente. ★ marca periódicos com fator de impacto ≥ 3 (Journal of Physiotherapy, JOSPT, BJPT, Physical Therapy etc.). PEDro é sinal complementar — quando ausente, o artigo foi liberado pelo admin com base no rigor do periódico.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
