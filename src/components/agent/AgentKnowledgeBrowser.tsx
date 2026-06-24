@@ -17,6 +17,9 @@ type Article = {
   year: number | null;
   journal: string | null;
   pedro_score: number | null;
+  pedro_score_status?: string | null;
+  pedro_score_reason?: string | null;
+  pedro_record_id?: string | null;
   study_type: string | null;
   niche_tags: string[] | null;
   abstract: string | null;
@@ -81,10 +84,10 @@ export default function AgentKnowledgeBrowser() {
         <div className="flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-semibold">Biblioteca de evidências</h2>
-          <Badge variant="outline" className="text-[10px]">Aprovados · PEDro ≥ 7</Badge>
+          <Badge variant="outline" className="text-[10px]">Aprovados · PEDro validado</Badge>
         </div>
         <p className="text-[11px] text-muted-foreground leading-snug">
-          Artigos verificados no PubMed/Crossref que alimentam o raciocínio do agente. Use os filtros para explorar por nicho, nota PEDro ou ano.
+          Artigos verificados no PubMed/Crossref e com nota checada na PEDro. Revisões com PEDro N/A aparecem sem nota numérica.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -173,15 +176,19 @@ export default function AgentKnowledgeBrowser() {
                   ? `https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`
                   : isVerified && a.source_url?.includes("pubmed") ? a.source_url : null;
                 const doiHref = isVerified && cleanDoi ? `https://doi.org/${cleanDoi}` : null;
+                const pedroHref = a.pedro_record_id ? `https://search.pedro.org.au/search-results/record-detail/${a.pedro_record_id}` : null;
                 return (
                   <div key={a.id} className="rounded-lg border border-border/60 bg-card p-3 hover:shadow-sm transition-shadow">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-sm font-semibold leading-snug flex-1 min-w-0">{a.title}</h3>
                       <div className="flex flex-col gap-1 items-end shrink-0">
-                        {a.pedro_score != null && (
+                        {a.pedro_score_status === "verified" && a.pedro_score != null && (
                           <Badge variant={a.pedro_score >= 8 ? "default" : "secondary"} className="text-[10px]">
                             PEDro {a.pedro_score}/10
                           </Badge>
+                        )}
+                        {a.pedro_score_status === "not_applicable" && (
+                          <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PEDro N/A</Badge>
                         )}
                       </div>
                     </div>
@@ -196,6 +203,7 @@ export default function AgentKnowledgeBrowser() {
                     )}
                     <div className="flex flex-wrap items-center gap-1 mt-2">
                       <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ID validado</Badge>
+                      <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PEDro validado</Badge>
                       {a.study_type && (
                         <Badge variant="outline" className="text-[10px]">{a.study_type}</Badge>
                       )}
@@ -224,6 +232,16 @@ export default function AgentKnowledgeBrowser() {
                             className="text-[11px] text-muted-foreground hover:underline inline-flex items-center gap-1"
                           >
                             DOI <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                        {pedroHref && (
+                          <a
+                            href={pedroHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-muted-foreground hover:underline inline-flex items-center gap-1"
+                          >
+                            PEDro <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
                       </div>
