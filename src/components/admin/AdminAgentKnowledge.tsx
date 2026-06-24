@@ -61,6 +61,55 @@ export default function AdminAgentKnowledge() {
   const [ingesting, setIngesting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDoi, setEditDoi] = useState("");
+  const [editPmid, setEditPmid] = useState("");
+  const [verifyingOne, setVerifyingOne] = useState(false);
+
+  const startEdit = (a: Article) => {
+    setEditingId(a.id);
+    setEditDoi(a.doi || "");
+    setEditPmid(a.pmid || "");
+  };
+  const cancelEdit = () => { setEditingId(null); setEditDoi(""); setEditPmid(""); };
+
+  const handleVerifyOne = async (id: string, approveIfVerified: boolean) => {
+    setVerifyingOne(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("agent-knowledge", {
+        body: {
+          action: "verify_one",
+          id,
+          doi: editDoi.trim() || null,
+          pmid: editPmid.trim() || null,
+          approveIfVerified,
+        },
+      });
+      if (error) throw new Error(await agentErrorMessage(error, "Falha ao validar."));
+      if (data?.error) throw new Error(data.error);
+      if (data.verified) {
+        toast({
+          title: approveIfVerified ? "Validado e aprovado" : "Validado",
+          description: data.matchedTitle ? `Título no PubMed: ${data.matchedTitle}` : "Identificador confirmado.",
+        });
+        cancelEdit();
+        fetchList();
+      } else {
+        toast({
+          title: "Não foi possível validar",
+          description: data.matchedTitle
+            ? `Título do PubMed/Crossref (${data.matchedTitle}) não bate com o registro. DOI/PMID salvos mas não aprovados.`
+            : "DOI/PMID não encontrados ou não confirmam o título. Os valores foram salvos para nova tentativa.",
+          variant: "destructive",
+        });
+        fetchList();
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setVerifyingOne(false);
+    }
+  };
   const selectedIngestNiche = useMemo(
     () => AGENT_NICHES.find((n) => n.slug === ingestNiche),
     [ingestNiche],
