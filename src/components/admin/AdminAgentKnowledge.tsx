@@ -365,7 +365,7 @@ export default function AdminAgentKnowledge() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            A IA propõe ~6 candidatos por nicho. Cada candidato é <strong>verificado no PubMed/Crossref</strong> e a nota é <strong>checada na base PEDro</strong> antes de ser salvo — RCTs só entram com PEDro ≥ 7 oficial; revisões/meta-análises com PEDro N/A entram sem nota numérica.
+            A IA propõe ~6 candidatos priorizando periódicos exigentes (Journal of Physiotherapy, JOSPT, BJPT, Physical Therapy, Physiotherapy, etc.). Cada candidato é <strong>verificado no PubMed/Crossref (bloqueante)</strong>; a checagem PEDro entra como <strong>sinal amarelo opcional</strong> — você decide se aprova mesmo quando o artigo não consta na base PEDro.
           </p>
         </CardContent>
       </Card>
