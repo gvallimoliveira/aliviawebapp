@@ -316,15 +316,29 @@ export default function AdminAgentKnowledge() {
                     ))}
                     {(() => {
                       const cleanDoi = a.doi?.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
-                      const href = cleanDoi
-                        ? `https://doi.org/${cleanDoi}`
-                        : `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(a.title)}`;
-                      const label = cleanDoi ? "DOI" : "PubMed";
+                      const pubmedHref = a.pmid
+                        ? `https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`
+                        : a.source_url?.includes("pubmed") ? a.source_url : null;
+                      const doiHref = cleanDoi ? `https://doi.org/${cleanDoi}` : null;
                       return (
-                        <a href={href} target="_blank" rel="noreferrer"
-                           className="text-xs text-primary hover:underline inline-flex items-center gap-1 ml-auto">
-                          {label} <ExternalLink className="h-3 w-3" />
-                        </a>
+                        <div className="ml-auto flex items-center gap-2">
+                          {pubmedHref && (
+                            <a href={pubmedHref} target="_blank" rel="noreferrer"
+                               className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                               title={a.pmid ? `PMID ${a.pmid}` : "PubMed"}>
+                              PubMed{a.pmid ? ` ${a.pmid}` : ""} <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          {doiHref && (
+                            <a href={doiHref} target="_blank" rel="noreferrer"
+                               className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1">
+                              DOI <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          {!pubmedHref && !doiHref && (
+                            <span className="text-xs text-destructive">sem link validável</span>
+                          )}
+                        </div>
                       );
                     })()}
                   </div>
