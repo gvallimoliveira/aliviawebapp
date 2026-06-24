@@ -298,8 +298,9 @@ serve(async (req) => {
     // Available to any authenticated user — UI gates access by plan (PRO/clinic/academic).
     if (action === "list_public") {
       let q = adminClient.from("knowledge_articles")
-        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, created_at")
+        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, verification_status, created_at")
         .eq("approved", true)
+        .eq("verification_status", "verified")
         .order("year", { ascending: false, nullsFirst: false })
         .order("pedro_score", { ascending: false, nullsFirst: false })
         .limit(500);
@@ -324,7 +325,7 @@ serve(async (req) => {
     if (action === "list") {
       const status = body.status === "approved" ? true : body.status === "pending" ? false : null;
       let q = adminClient.from("knowledge_articles")
-        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, approved, is_favorite, created_at")
+        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, approved, is_favorite, verification_status, verification_checked_at, verification_source, verification_matched_title, verification_similarity, verification_reason, created_at")
         .order("is_favorite", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(200);
@@ -353,10 +354,45 @@ serve(async (req) => {
     if (action === "approve") {
       // Backfill embedding if missing so the article is actually usable by RAG
       const { data: cur } = await adminClient.from("knowledge_articles")
-        .select("title, abstract, key_findings, embedding").eq("id", body.id).maybeSingle();
-      const patch: any = { approved: true, updated_at: new Date().toISOString() };
+        .select("title, doi, pmid, source_url, abstract, key_findings, embedding").eq("id", body.id).maybeSingle();
+      if (!cur) {
+        return new Response(JSON.stringify({ error: "Artigo não encontrado" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const pmidFromUrl = typeof cur.source_url === "string"
+        ? cur.source_url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d{4,})/i)?.[1] || null
+        : null;
+      const v = await verifyArticle({ title: cur.title, doi: cur.doi, pmid: cleanPmidStr(cur.pmid) || pmidFromUrl });
+      if (!v.verified) {
+        await adminClient.from("knowledge_articles")
+          .update({
+            approved: false,
+            ...verificationPatch(v, "invalid"),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", body.id);
+        return new Response(JSON.stringify({
+          error: "Artigo não aprovado: DOI/PMID não confirmou o título no PubMed/Crossref.",
+          reason: v.reason || "not_found",
+          matchedTitle: v.matchedTitle || null,
+        }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const finalDoi = v.doi ?? (v.doiMismatch ? null : cleanDoiStr(cur.doi));
+      const finalPmid = v.pmid || cleanPmidStr(cur.pmid) || pmidFromUrl;
+      const finalUrl = v.sourceUrl || (finalPmid ? `https://pubmed.ncbi.nlm.nih.gov/${finalPmid}/` : finalDoi ? `https://doi.org/${finalDoi}` : null);
+      const patch: any = {
+        approved: true,
+        doi: finalDoi,
+        pmid: finalPmid,
+        source_url: finalUrl,
+        ...verificationPatch(v, "verified"),
+        updated_at: new Date().toISOString(),
+      };
       let embeddingBackfilled = false;
-      if (cur && !cur.embedding) {
+      if (!cur.embedding) {
         const text = [cur.title, cur.abstract, cur.key_findings].filter(Boolean).join("\n\n");
         const vec = text ? await embed(LOVABLE_API_KEY, text) : null;
         if (vec) { patch.embedding = vec; embeddingBackfilled = true; }
