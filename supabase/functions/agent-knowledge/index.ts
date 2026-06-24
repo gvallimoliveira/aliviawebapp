@@ -492,21 +492,29 @@ function parsePubmedPubType(pubtypes: any[]): string | null {
   return null;
 }
 
+/**
+ * Splits the efetch payload into per-article blocks and returns the abstract
+ * of the article whose own PMID (first <PMID> inside <MedlineCitation>) matches.
+ * Avoids the previous bug where a reference PMID could match the wrong block.
+ */
 function extractAbstractFromXml(xml: string, pmid: string): string | null {
-  // very small parser: locate <PubmedArticle> bloc for PMID then AbstractText nodes
-  const blockRe = new RegExp(`<PubmedArticle>([\\s\\S]*?<PMID[^>]*>${pmid}</PMID>[\\s\\S]*?)</PubmedArticle>`, "i");
-  const m = xml.match(blockRe);
-  const block = m ? m[1] : "";
-  if (!block) return null;
-  const parts: string[] = [];
-  const re = /<AbstractText(?:\s+[^>]*Label="([^"]*)"[^>]*)?[^>]*>([\s\S]*?)<\/AbstractText>/gi;
-  let mm: RegExpExecArray | null;
-  while ((mm = re.exec(block)) !== null) {
-    const label = mm[1] ? `${mm[1]}: ` : "";
-    parts.push(label + htmlToText(mm[2]));
+  if (!xml) return null;
+  const blocks = xml.split(/<PubmedArticle>/i).slice(1).map((b) => b.split(/<\/PubmedArticle>/i)[0] || "");
+  for (const block of blocks) {
+    const ownPmidMatch = block.match(/<MedlineCitation[^>]*>[\s\S]*?<PMID[^>]*>(\d+)<\/PMID>/i);
+    const ownPmid = ownPmidMatch?.[1];
+    if (ownPmid !== pmid) continue;
+    const parts: string[] = [];
+    const re = /<AbstractText(?:\s+[^>]*Label="([^"]*)"[^>]*)?[^>]*>([\s\S]*?)<\/AbstractText>/gi;
+    let mm: RegExpExecArray | null;
+    while ((mm = re.exec(block)) !== null) {
+      const label = mm[1] ? `${mm[1]}: ` : "";
+      parts.push(label + htmlToText(mm[2]));
+    }
+    const out = parts.join(" ").trim();
+    return out || null;
   }
-  const out = parts.join(" ").trim();
-  return out || null;
+  return null;
 }
 
 async function searchPubmedForNiche(terms: NicheSearchTerms, retmax: number, yearsBack: number): Promise<{ items: CandidateArticle[]; query: string }> {
