@@ -328,7 +328,7 @@ export default function AdminAgentKnowledge() {
               </SelectTrigger>
               <SelectContent>
                 {AGENT_NICHES.map((n) => (
-                  <SelectItem key={n.slug} value={n.slug}>{n.label}</SelectItem>
+                  <SelectItem key={n.slug} value={n.slug}>{labelWithCount(n.slug, n.label, "ingest")}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
