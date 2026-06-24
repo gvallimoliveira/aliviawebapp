@@ -475,6 +475,11 @@ export default function AdminAgentKnowledge() {
                     </div>
                     <div className="flex flex-col gap-1 items-end shrink-0">
                       {pedroBadge(a)}
+                      {isPriorityJournal(a.journal) && (
+                        <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-600 text-white">
+                          ★ Periódico IF {journalImpactFactor(a.journal)?.toFixed(1)}
+                        </Badge>
+                      )}
                       {a.study_type && <Badge variant="outline" className="text-[10px]">{a.study_type}</Badge>}
                       {a.verification_status === "verified" ? (
                         <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ID validado</Badge>
@@ -485,6 +490,7 @@ export default function AdminAgentKnowledge() {
                       )}
                     </div>
                   </div>
+
 
                   {a.abstract && <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{a.abstract}</p>}
                   {a.key_findings && (
