@@ -72,6 +72,45 @@ export default function AdminAgentKnowledge() {
   const [editDoi, setEditDoi] = useState("");
   const [editPmid, setEditPmid] = useState("");
   const [verifyingOne, setVerifyingOne] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const clearSelection = () => setSelectedIds(new Set());
+  const selectAllVisible = () => setSelectedIds(new Set(articles.map((a) => a.id)));
+  const allSelected = articles.length > 0 && selectedIds.size === articles.length;
+
+  const handleBulkReject = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!confirm(`Reprovar e excluir ${ids.length} artigo(s) selecionado(s)? Esta ação não pode ser desfeita.`)) return;
+    setBulkBusy(true);
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      try {
+        const { error } = await supabase.functions.invoke("agent-knowledge", { body: { action: "reject", id } });
+        if (error) throw error;
+        ok++;
+      } catch (e) {
+        console.error("[bulk reject]", id, e);
+        fail++;
+      }
+    }
+    setBulkBusy(false);
+    toast({
+      title: "Reprovação em lote concluída",
+      description: `${ok} removido(s)${fail ? ` · ${fail} falha(s)` : ""}.`,
+      variant: fail ? "destructive" : "default",
+    });
+    clearSelection();
+    fetchList();
+  };
 
   const startEdit = (a: Article) => {
     setEditingId(a.id);
