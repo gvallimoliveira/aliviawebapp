@@ -22,6 +22,7 @@ type Article = {
   abstract: string | null;
   key_findings: string | null;
   doi: string | null;
+  pmid: string | null;
   source_url: string | null;
 };
 
