@@ -954,35 +954,13 @@ Responda APENAS um JSON array. Sem texto adicional.`;
           const newDoi = v.doi ?? (v.doiMismatch ? null : r.doi);
           const newPmid = v.pmid || pmidStored;
           const pedroV = await verifyPedroScore({ title: r.title, study_type: (r as any).study_type, pedro_score: (r as any).pedro_score });
+          // PEDro vira aviso amarelo: registramos o status mas NÃO desaprovamos
+          // automaticamente. Admin decide manualmente.
           if (!isAcceptablePedro(pedroV)) {
             pedroRejected++;
             pedroRejectedItems.push({ id: r.id, title: r.title, pedroStatus: pedroV.status, pedroScore: pedroV.score, pedroMatchedTitle: pedroV.matchedTitle || null, reason: pedroV.reason });
-            if (isRevalidate) {
-              demoted++;
-              demotedItems.push({ id: r.id, title: r.title, doi: r.doi, pmid: pmidStored, matchedTitle: v.matchedTitle || null, similarity: v.similarity ?? null, reason: pedroV.reason || "pedro_score_failed" });
-              if (!dryRun) {
-                await adminClient.from("knowledge_articles")
-                  .update({
-                    approved: false,
-                    source_url: newUrl,
-                    doi: newDoi,
-                    pmid: newPmid,
-                    ...verificationPatch(v, "verified"),
-                    ...pedroPatch(pedroV),
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq("id", r.id);
-              }
-            } else {
-              removed++;
-              removedItems.push({ id: r.id, title: r.title, doi: r.doi, reason: pedroV.reason });
-              if (!dryRun) {
-                await adminClient.from("knowledge_articles").delete().eq("id", r.id);
-              }
-            }
-            await new Promise((res) => setTimeout(res, 350));
-            continue;
           }
+
 
           verified++;
           const wasMismatch = !!v.doiMismatch;
