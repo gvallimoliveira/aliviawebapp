@@ -1114,7 +1114,7 @@ serve(async (req) => {
       let rejectedUnverified = 0;
       let pedroWarning = 0;
       let priorityJournalCount = 0;
-      const bySourceInserted: Record<string, number> = { pubmed: 0, crossref: 0 };
+      const bySourceInserted: Record<string, number> = { pubmed: 0, cochrane: 0, crossref: 0 };
 
       for (let i = 0; i < toEnrich.length && inserted < count; i++) {
         const c = toEnrich[i];
