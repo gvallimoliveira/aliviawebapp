@@ -162,11 +162,6 @@ async function pubmedTitleFor(pmid: string): Promise<string | null> {
   return j?.result?.[pmid]?.title || null;
 }
 
-async function pubmedSummaryFor(pmid: string): Promise<any | null> {
-  const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${pmid}`);
-  return j?.result?.[pmid] || null;
-}
-
 function verificationPatch(v: VerifyResult, status?: "verified" | "invalid" | "needs_review") {
   return {
     verification_status: status || (v.verified ? "verified" : "invalid"),
