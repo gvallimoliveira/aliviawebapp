@@ -133,6 +133,7 @@ interface VerifyResult {
   sourceUrl?: string;
   source?: "pubmed_doi" | "pubmed_pmid" | "pubmed_title" | "crossref_doi";
   matchedTitle?: string;
+  similarity?: number;
   /** Reason verification failed or fell back (helps debugging revalidation). */
   reason?: string;
   /** True when the supplied DOI was discarded because its title didn't match. */
@@ -153,6 +154,17 @@ async function fetchJsonSafe(url: string, timeoutMs = 9000): Promise<any | null>
 async function pubmedTitleFor(pmid: string): Promise<string | null> {
   const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${pmid}`);
   return j?.result?.[pmid]?.title || null;
+}
+
+function verificationPatch(v: VerifyResult, status?: "verified" | "invalid" | "needs_review") {
+  return {
+    verification_status: status || (v.verified ? "verified" : "invalid"),
+    verification_checked_at: new Date().toISOString(),
+    verification_source: v.source || null,
+    verification_matched_title: v.matchedTitle || null,
+    verification_similarity: typeof v.similarity === "number" ? Number(v.similarity.toFixed(3)) : null,
+    verification_reason: v.reason || (v.verified ? "title_identifier_match" : "not_found"),
+  };
 }
 
 // Title-match thresholds:
@@ -180,7 +192,7 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
       const pmTitle = await pubmedTitleFor(id);
       const sim = title && pmTitle ? titleSimilarity(title, pmTitle) : 0;
       if (!title || sim >= SIM_ID) {
-        return { verified: true, pmid: id, doi, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_doi", matchedTitle: pmTitle || undefined };
+        return { verified: true, pmid: id, doi, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_doi", matchedTitle: pmTitle || undefined, similarity: sim, reason: "title_identifier_match" };
       }
       // DOI resolves but to a different paper — discard DOI and try title route.
       doiMismatch = true;
@@ -192,7 +204,7 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
         const crTitle = Array.isArray(cr.message.title) ? cr.message.title[0] : "";
         const sim = title && crTitle ? titleSimilarity(title, crTitle) : 0;
         if (!title || sim >= SIM_ID) {
-          return { verified: true, doi, sourceUrl: `https://doi.org/${doi}`, source: "crossref_doi", matchedTitle: crTitle };
+          return { verified: true, doi, sourceUrl: `https://doi.org/${doi}`, source: "crossref_doi", matchedTitle: crTitle, similarity: sim, reason: "title_identifier_match" };
         }
         doiMismatch = true;
         console.warn(`[verify] Crossref DOI ${doi} title "${crTitle}" vs "${title}" sim=${sim.toFixed(2)}`);
@@ -206,7 +218,7 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
     if (pmTitle) {
       const sim = title ? titleSimilarity(title, pmTitle) : 1;
       if (sim >= SIM_ID || !title) {
-        return { verified: true, pmid, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, source: "pubmed_pmid", matchedTitle: pmTitle, doiMismatch };
+        return { verified: true, pmid, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, source: "pubmed_pmid", matchedTitle: pmTitle, similarity: sim, reason: "title_identifier_match", doiMismatch };
       }
     }
   }
@@ -240,6 +252,7 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
           sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${best.id}/`,
           source: "pubmed_title",
           matchedTitle: best.title,
+          similarity: best.sim,
           doiMismatch,
           reason: doiMismatch ? "doi_mismatch_recovered_by_title" : undefined,
         };
