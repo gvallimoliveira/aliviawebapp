@@ -28,6 +28,7 @@ import {
   buildAnamnesisFromOriginal,
   ANAMNESIS_SUB_IDS,
 } from "@/lib/reassessmentSteps";
+import { fetchPatientPrefillExtras } from "@/lib/reassessmentPrefill";
 
 type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
@@ -114,11 +115,16 @@ const ClinicAssessment = () => {
           if (anam?.activityLevel) setPrefilledActivityLevel(anam.activityLevel);
           if (anam?.hasGymAccess) setPrefilledGymAccess(anam.hasGymAccess);
           // Stable demographics + clinical history pre-fill
+          const patientFallback = await fetchPatientPrefillExtras({
+            clinicId,
+            patientName: orig.patient_name,
+            patientEmail: orig.patient_email,
+          });
           setPrefilledExtras({
-            sex: anam?.sex,
-            ageRange: anam?.ageRange,
-            birthDate: anam?.birthDate,
-            cpf: anam?.cpf,
+            sex: anam?.sex || patientFallback.sex,
+            ageRange: anam?.ageRange || patientFallback.ageRange,
+            birthDate: anam?.birthDate || patientFallback.birthDate,
+            cpf: anam?.cpf || patientFallback.cpf,
             hadTwist: anam?.hadTwist,
             hadSprain: anam?.hadSprain,
             hadDislocation: anam?.hadDislocation,
