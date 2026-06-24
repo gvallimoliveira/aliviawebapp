@@ -159,9 +159,18 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       if (initialSurgeryDetails) updates.surgeryDetails = initialSurgeryDetails;
       if (initialActivityLevel) updates.activityLevel = initialActivityLevel;
       if (initialHasGymAccess) updates.hasGymAccess = initialHasGymAccess;
+      // Merge extras (demographics + stable clinical history). Skip empty values.
+      if (initialExtras) {
+        for (const [k, v] of Object.entries(initialExtras)) {
+          if (v === undefined || v === null) continue;
+          if (typeof v === "string" && v.trim() === "") continue;
+          if (Array.isArray(v) && v.length === 0) continue;
+          (updates as any)[k] = v;
+        }
+      }
       return { ...prev, ...updates };
     });
-  }, [initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess]);
+  }, [initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras]);
 
   const complaints = [
     "anamnesis.complaint.neck_pain",
