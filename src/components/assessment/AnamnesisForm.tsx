@@ -75,7 +75,7 @@ interface AnamnesisFormProps {
    * Each key is merged only if truthy/non-empty so the form falls back to
    * the user's input when nothing was stored before.
    */
-  initialExtras?: Partial<AnamnesisData>;
+  initialExtras?: Partial<AnamnesisData> & Record<string, any>;
   /** Optional stable key (e.g. token, professionalId+email) to persist draft across reloads. */
   draftScopeKey?: string | null;
   /**
@@ -84,9 +84,14 @@ interface AnamnesisFormProps {
    * "surgery", "painscore", "activity". If undefined, every step is shown (default).
    */
   enabledSubs?: string[];
+  /**
+   * Optional previous EVA score (general). Displayed as a non-anchoring reference chip
+   * on the painscore step during reassessment. Slider still starts neutral.
+   */
+  previousPainScore?: number;
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras, draftScopeKey, enabledSubs }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras, draftScopeKey, enabledSubs, previousPainScore }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
