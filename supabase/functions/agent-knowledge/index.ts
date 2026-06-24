@@ -133,6 +133,10 @@ interface VerifyResult {
   sourceUrl?: string;
   source?: "pubmed_doi" | "pubmed_pmid" | "pubmed_title" | "crossref_doi";
   matchedTitle?: string;
+  /** Reason verification failed or fell back (helps debugging revalidation). */
+  reason?: string;
+  /** True when the supplied DOI was discarded because its title didn't match. */
+  doiMismatch?: boolean;
 }
 
 async function fetchJsonSafe(url: string, timeoutMs = 9000): Promise<any | null> {
@@ -146,55 +150,104 @@ async function fetchJsonSafe(url: string, timeoutMs = 9000): Promise<any | null>
   } catch { return null; }
 }
 
+async function pubmedTitleFor(pmid: string): Promise<string | null> {
+  const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${pmid}`);
+  return j?.result?.[pmid]?.title || null;
+}
+
+// Title-match thresholds:
+//   ≥0.6 when we already have a strong external identifier (DOI/PMID).
+//   ≥0.7 when we only have free-text title lookup.
+const SIM_ID = 0.6;
+const SIM_TITLE = 0.7;
+
+/**
+ * Verifies an article against PubMed/Crossref AND cross-checks the resolved
+ * title against the supplied title. A DOI that resolves to a *different* paper
+ * is rejected (the historical bug — laser DOI pointing to an ultrasound paper).
+ */
 async function verifyArticle(item: { title?: string; doi?: string | null; pmid?: string | null }): Promise<VerifyResult> {
   const doi = cleanDoiStr(item.doi);
   const pmid = cleanPmidStr(item.pmid);
   const title = (item.title || "").trim();
+  let doiMismatch = false;
 
-  // 1) DOI → PubMed
+  // 1) DOI → PubMed (esearch by [doi], then esummary to compare titles)
   if (doi) {
     const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&term=${encodeURIComponent(doi)}%5Bdoi%5D`);
     const id = j?.esearchresult?.idlist?.[0];
-    if (id) return { verified: true, pmid: id, doi, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_doi" };
-    // Crossref fallback (DOI exists at publisher even if not indexed in PubMed)
-    const cr = await fetchJsonSafe(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
-    if (cr?.message?.DOI) {
-      const crTitle = Array.isArray(cr.message.title) ? cr.message.title[0] : "";
-      return { verified: true, doi, sourceUrl: `https://doi.org/${doi}`, source: "crossref_doi", matchedTitle: crTitle };
-    }
-  }
-
-  // 2) PMID direto
-  if (pmid) {
-    const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${pmid}`);
-    const rec = j?.result?.[pmid];
-    if (rec && rec.title) {
-      const sim = title ? titleSimilarity(title, rec.title) : 1;
-      if (sim >= 0.5 || !title) {
-        return { verified: true, pmid, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, source: "pubmed_pmid", matchedTitle: rec.title };
+    if (id) {
+      const pmTitle = await pubmedTitleFor(id);
+      const sim = title && pmTitle ? titleSimilarity(title, pmTitle) : 0;
+      if (!title || sim >= SIM_ID) {
+        return { verified: true, pmid: id, doi, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_doi", matchedTitle: pmTitle || undefined };
+      }
+      // DOI resolves but to a different paper — discard DOI and try title route.
+      doiMismatch = true;
+      console.warn(`[verify] DOI ${doi} resolves to PMID ${id} ("${pmTitle}") but title "${title}" sim=${sim.toFixed(2)}`);
+    } else {
+      // Crossref fallback — also requires title match.
+      const cr = await fetchJsonSafe(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+      if (cr?.message?.DOI) {
+        const crTitle = Array.isArray(cr.message.title) ? cr.message.title[0] : "";
+        const sim = title && crTitle ? titleSimilarity(title, crTitle) : 0;
+        if (!title || sim >= SIM_ID) {
+          return { verified: true, doi, sourceUrl: `https://doi.org/${doi}`, source: "crossref_doi", matchedTitle: crTitle };
+        }
+        doiMismatch = true;
+        console.warn(`[verify] Crossref DOI ${doi} title "${crTitle}" vs "${title}" sim=${sim.toFixed(2)}`);
       }
     }
   }
 
-  // 3) Busca por título
+  // 2) PMID direto (cross-check title)
+  if (pmid) {
+    const pmTitle = await pubmedTitleFor(pmid);
+    if (pmTitle) {
+      const sim = title ? titleSimilarity(title, pmTitle) : 1;
+      if (sim >= SIM_ID || !title) {
+        return { verified: true, pmid, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, source: "pubmed_pmid", matchedTitle: pmTitle, doiMismatch };
+      }
+    }
+  }
+
+  // 3) Busca por título (fallback que pode "recuperar" o paper correto quando o DOI da IA estava errado)
   if (title && title.length > 12) {
     const term = normalizeTitle(title).split(" ").slice(0, 12).join(" ");
     const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=5&term=${encodeURIComponent(term)}%5BTitle%5D`);
     const ids: string[] = j?.esearchresult?.idlist || [];
     if (ids.length) {
       const sj = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${ids.join(",")}`);
+      let best: { id: string; sim: number; title: string } | null = null;
       for (const id of ids) {
         const rec = sj?.result?.[id];
-        if (!rec) continue;
-        const sim = titleSimilarity(title, rec.title || "");
-        if (sim >= 0.7) {
-          return { verified: true, pmid: id, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_title", matchedTitle: rec.title };
+        if (!rec?.title) continue;
+        const sim = titleSimilarity(title, rec.title);
+        if (!best || sim > best.sim) best = { id, sim, title: rec.title };
+      }
+      if (best && best.sim >= SIM_TITLE) {
+        // Try to discover the correct DOI for this PMID.
+        let resolvedDoi: string | undefined;
+        const ej = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${best.id}`);
+        const aids = ej?.result?.[best.id]?.articleids || [];
+        for (const a of aids) {
+          if (a?.idtype === "doi" && typeof a.value === "string") { resolvedDoi = cleanDoiStr(a.value) || undefined; break; }
         }
+        return {
+          verified: true,
+          pmid: best.id,
+          doi: resolvedDoi,
+          sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${best.id}/`,
+          source: "pubmed_title",
+          matchedTitle: best.title,
+          doiMismatch,
+          reason: doiMismatch ? "doi_mismatch_recovered_by_title" : undefined,
+        };
       }
     }
   }
 
-  return { verified: false };
+  return { verified: false, doiMismatch, reason: doiMismatch ? "doi_mismatch_no_title_match" : "not_found" };
 }
 
 serve(async (req) => {
