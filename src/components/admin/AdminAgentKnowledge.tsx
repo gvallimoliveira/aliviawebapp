@@ -359,7 +359,7 @@ export default function AdminAgentKnowledge() {
                 <SelectContent>
                   <SelectItem value="all">Todos os nichos</SelectItem>
                   {AGENT_NICHES.map((n) => (
-                    <SelectItem key={n.slug} value={n.slug}>{n.label}</SelectItem>
+                    <SelectItem key={n.slug} value={n.slug}>{labelWithCount(n.slug, n.label, "tab")}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
