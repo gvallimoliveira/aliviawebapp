@@ -771,15 +771,15 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         return (
           <div className="space-y-5">
             <div className="space-y-2">
-              <Label>{t("anamnesis.aggravating")}</Label>
+              <Label>{t("anamnesis.aggravating")}{isPrefilled("aggravatingFactors") && <PrefilledBadge />}</Label>
               <Textarea value={data.aggravatingFactors} onChange={(e) => setData({ ...data, aggravatingFactors: e.target.value.slice(0, 500) })} placeholder={t("anamnesis.aggravating_placeholder")} rows={2} maxLength={500} />
             </div>
             <div className="space-y-2">
-              <Label>{t("anamnesis.relieving")}</Label>
+              <Label>{t("anamnesis.relieving")}{isPrefilled("relievingFactors") && <PrefilledBadge />}</Label>
               <Textarea value={data.relievingFactors} onChange={(e) => setData({ ...data, relievingFactors: e.target.value.slice(0, 500) })} placeholder={t("anamnesis.relieving_placeholder")} rows={2} maxLength={500} />
             </div>
             <div className="space-y-3">
-              <Label>{t("anamnesis.activity_level")}</Label>
+              <Label>{t("anamnesis.activity_level")}{isPrefilled("activityLevel") && <PrefilledBadge />}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {activityLevels.map((a) => (
                   <Button key={a} variant={data.activityLevel === a ? "default" : "outline"} size="sm" className="rounded-xl h-auto py-2.5" onClick={() => setData({ ...data, activityLevel: a })}>
