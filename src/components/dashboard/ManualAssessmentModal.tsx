@@ -109,8 +109,11 @@ const SIMPLIFIED_EXCLUDED_IDS = new Set<string>([
   "head_right", "cervical_right", "shoulder_right", "arm_right", "elbow_right",
   "forearm_right", "hand_right", "thoracic_right", "lumbar_right", "hip_right",
   "thigh_right", "knee_right", "shin_right", "ankle_right", "foot_right",
-  // Vista posterior — duplicatas de cabeça, pescoço e membros
-  "head_back", "cervical",
+  // Vista posterior — duplicatas de cabeça e membros
+  // (mantemos `cervical` da vista posterior, pois "dor cervical" é anatomicamente
+  // posterior/postero-lateral; `cervical_front` permanece na lista como
+  // "Pescoço (anterior)" para queixas antero-laterais.)
+  "head_back",
   "left_shoulder_back", "right_shoulder_back",
   "left_arm_back", "right_arm_back",
   "left_elbow_back", "right_elbow_back",
@@ -334,30 +337,168 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   })();
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Refinamento anatômico por região (planos e eixos do corpo humano).
-  // - Esqueleto AXIAL (linha média, sem medial/lateral): cabeça, cervical,
-  //   torácica, lombar, tórax, abdômen → lado D / lado E / central.
-  // - Esqueleto APENDICULAR (membros, simétricos e afastados da linha média):
-  //   medial/lateral, anterior/posterior e proximal/distal (multi-seleção).
-  // Os valores são persistidos em anamnesis_data.painRegionRefinements e
-  // anexados ao label das regiões no payload da IA.
+  // Refinamento anatômico por região — opções específicas e clinicamente
+  // significativas para cada articulação/segmento. Multi-seleção permitida.
+  // Persistido em anamnesis_data.painRegionRefinements e anexado ao label
+  // das regiões no payload da IA.
   // ─────────────────────────────────────────────────────────────────────────
+  type Axis = { value: string; label_pt: string; label_en: string };
+
+  const AXES_BY_GROUP: Record<string, { label_pt: string; label_en: string; axes: Axis[] }> = {
+    cervical_posterior: {
+      label_pt: "Coluna cervical", label_en: "Cervical spine",
+      axes: [
+        { value: "central", label_pt: "Central", label_en: "Central" },
+        { value: "posterolateral_right", label_pt: "Postero-lateral D", label_en: "Postero-lateral R" },
+        { value: "posterolateral_left", label_pt: "Postero-lateral E", label_en: "Postero-lateral L" },
+      ],
+    },
+    cervical_anterior: {
+      label_pt: "Pescoço (anterior)", label_en: "Neck (anterior)",
+      axes: [
+        { value: "central", label_pt: "Central", label_en: "Central" },
+        { value: "anterolateral_right", label_pt: "Antero-lateral D", label_en: "Antero-lateral R" },
+        { value: "anterolateral_left", label_pt: "Antero-lateral E", label_en: "Antero-lateral L" },
+      ],
+    },
+    lumbar: {
+      label_pt: "Coluna lombar", label_en: "Lumbar spine",
+      axes: [
+        { value: "central", label_pt: "Central (processos espinhosos)", label_en: "Central (spinous processes)" },
+        { value: "unilateral_right", label_pt: "Unilateral D", label_en: "Unilateral R" },
+        { value: "unilateral_left", label_pt: "Unilateral E", label_en: "Unilateral L" },
+        { value: "bilateral_band", label_pt: "Bilateral (em faixa)", label_en: "Bilateral (band-like)" },
+      ],
+    },
+    thoracic: {
+      label_pt: "Coluna torácica", label_en: "Thoracic spine",
+      axes: [
+        { value: "central", label_pt: "Central", label_en: "Central" },
+        { value: "paravertebral_right", label_pt: "Paravertebral D", label_en: "Paravertebral R" },
+        { value: "paravertebral_left", label_pt: "Paravertebral E", label_en: "Paravertebral L" },
+        { value: "bilateral", label_pt: "Bilateral", label_en: "Bilateral" },
+      ],
+    },
+    head: {
+      label_pt: "Cabeça", label_en: "Head",
+      axes: [
+        { value: "frontal", label_pt: "Frontal", label_en: "Frontal" },
+        { value: "temporal_right", label_pt: "Temporal D", label_en: "Temporal R" },
+        { value: "temporal_left", label_pt: "Temporal E", label_en: "Temporal L" },
+        { value: "occipital", label_pt: "Occipital", label_en: "Occipital" },
+        { value: "diffuse", label_pt: "Difusa", label_en: "Diffuse" },
+      ],
+    },
+    trunk_axial: {
+      label_pt: "Tórax / Abdômen", label_en: "Chest / Abdomen",
+      axes: [
+        { value: "central", label_pt: "Central", label_en: "Central" },
+        { value: "right_side", label_pt: "Lado D", label_en: "Right side" },
+        { value: "left_side", label_pt: "Lado E", label_en: "Left side" },
+      ],
+    },
+    shoulder: {
+      label_pt: "Ombro", label_en: "Shoulder",
+      axes: [
+        { value: "anterior", label_pt: "Anterior", label_en: "Anterior" },
+        { value: "lateral", label_pt: "Lateral", label_en: "Lateral" },
+        { value: "posterior", label_pt: "Posterior", label_en: "Posterior" },
+        { value: "superior", label_pt: "Superior (acrômio)", label_en: "Superior (acromion)" },
+      ],
+    },
+    elbow: {
+      label_pt: "Cotovelo", label_en: "Elbow",
+      axes: [
+        { value: "medial", label_pt: "Medial (epitróclea)", label_en: "Medial (epitrochlea)" },
+        { value: "lateral", label_pt: "Lateral (epicôndilo)", label_en: "Lateral (epicondyle)" },
+        { value: "anterior", label_pt: "Anterior", label_en: "Anterior" },
+        { value: "posterior", label_pt: "Posterior (olécrano)", label_en: "Posterior (olecranon)" },
+      ],
+    },
+    hip: {
+      label_pt: "Quadril", label_en: "Hip",
+      axes: [
+        { value: "anterior", label_pt: "Anterior (virilha)", label_en: "Anterior (groin)" },
+        { value: "lateral", label_pt: "Lateral (trocânter)", label_en: "Lateral (trochanter)" },
+        { value: "posterior", label_pt: "Posterior (glúteo)", label_en: "Posterior (gluteal)" },
+        { value: "medial", label_pt: "Medial", label_en: "Medial" },
+      ],
+    },
+    knee: {
+      label_pt: "Joelho", label_en: "Knee",
+      axes: [
+        { value: "anterior", label_pt: "Anterior (patelar)", label_en: "Anterior (patellar)" },
+        { value: "posterior", label_pt: "Posterior (poplítea)", label_en: "Posterior (popliteal)" },
+        { value: "medial", label_pt: "Medial", label_en: "Medial" },
+        { value: "lateral", label_pt: "Lateral", label_en: "Lateral" },
+      ],
+    },
+    ankle: {
+      label_pt: "Tornozelo", label_en: "Ankle",
+      axes: [
+        { value: "anterior", label_pt: "Anterior", label_en: "Anterior" },
+        { value: "posterior", label_pt: "Posterior (Aquiles)", label_en: "Posterior (Achilles)" },
+        { value: "medial", label_pt: "Medial", label_en: "Medial" },
+        { value: "lateral", label_pt: "Lateral", label_en: "Lateral" },
+      ],
+    },
+    foot: {
+      label_pt: "Pé", label_en: "Foot",
+      axes: [
+        { value: "plantar", label_pt: "Plantar", label_en: "Plantar" },
+        { value: "dorsal", label_pt: "Dorsal", label_en: "Dorsal" },
+        { value: "medial", label_pt: "Medial", label_en: "Medial" },
+        { value: "lateral", label_pt: "Lateral", label_en: "Lateral" },
+        { value: "heel", label_pt: "Calcâneo", label_en: "Heel" },
+        { value: "forefoot", label_pt: "Antepé", label_en: "Forefoot" },
+      ],
+    },
+    hand: {
+      label_pt: "Mão", label_en: "Hand",
+      axes: [
+        { value: "palmar", label_pt: "Palmar", label_en: "Palmar" },
+        { value: "dorsal", label_pt: "Dorsal", label_en: "Dorsal" },
+        { value: "radial", label_pt: "Radial", label_en: "Radial" },
+        { value: "ulnar", label_pt: "Ulnar", label_en: "Ulnar" },
+      ],
+    },
+    limb_segment: {
+      label_pt: "Segmento", label_en: "Segment",
+      axes: [
+        { value: "anterior", label_pt: "Anterior", label_en: "Anterior" },
+        { value: "posterior", label_pt: "Posterior", label_en: "Posterior" },
+        { value: "medial", label_pt: "Medial", label_en: "Medial" },
+        { value: "lateral", label_pt: "Lateral", label_en: "Lateral" },
+        { value: "proximal", label_pt: "Proximal", label_en: "Proximal" },
+        { value: "distal", label_pt: "Distal", label_en: "Distal" },
+      ],
+    },
+  };
+
+  const getRegionGroupKey = (id: string): keyof typeof AXES_BY_GROUP => {
+    // Ordem importa: testar prefixos/ids mais específicos primeiro.
+    if (id === "cervical_front") return "cervical_anterior";
+    if (id.startsWith("cervical")) return "cervical_posterior";
+    if (id === "lower_back" || id.includes("lumbar")) return "lumbar";
+    if (id.includes("thoracic")) return "thoracic";
+    if (id.startsWith("head")) return "head";
+    if (id === "chest" || id === "abdomen") return "trunk_axial";
+    if (id.includes("shoulder")) return "shoulder";
+    if (id.includes("elbow")) return "elbow";
+    if (id.includes("hip") || id.includes("gluteal")) return "hip";
+    if (id.includes("knee")) return "knee";
+    if (id.includes("ankle")) return "ankle";
+    if (id.includes("foot")) return "foot";
+    if (id.includes("hand")) return "hand";
+    return "limb_segment"; // braço, antebraço, coxa, perna/canela/panturrilha
+  };
+
+  const getRegionGroup = (id: string) => AXES_BY_GROUP[getRegionGroupKey(id)];
+  const getRefinementAxes = (id: string): Axis[] => getRegionGroup(id).axes;
+  // Mantido por compatibilidade com texto explicativo; classifica como axial
+  // qualquer região da linha média (coluna, cabeça, tronco).
   const AXIAL_KEYWORDS = ["head", "cervical", "thoracic", "lower_back", "lumbar", "chest", "abdomen"];
   const isAxialRegion = (id: string) => AXIAL_KEYWORDS.some((k) => id.includes(k));
-  const AXIAL_AXES: { value: string; label_pt: string; label_en: string }[] = [
-    { value: "right_side", label_pt: "Lado direito", label_en: "Right side" },
-    { value: "left_side", label_pt: "Lado esquerdo", label_en: "Left side" },
-    { value: "central", label_pt: "Central", label_en: "Central" },
-  ];
-  const APPENDICULAR_AXES: { value: string; label_pt: string; label_en: string }[] = [
-    { value: "medial", label_pt: "Medial", label_en: "Medial" },
-    { value: "lateral", label_pt: "Lateral", label_en: "Lateral" },
-    { value: "anterior", label_pt: "Anterior", label_en: "Anterior" },
-    { value: "posterior", label_pt: "Posterior", label_en: "Posterior" },
-    { value: "proximal", label_pt: "Proximal", label_en: "Proximal" },
-    { value: "distal", label_pt: "Distal", label_en: "Distal" },
-  ];
-  const getRefinementAxes = (id: string) => (isAxialRegion(id) ? AXIAL_AXES : APPENDICULAR_AXES);
   const toggleRegionRefinement = (regionId: string, axisValue: string) => {
     setPainRegionRefinements((prev) => {
       const current = prev[regionId] || [];
@@ -1780,14 +1921,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       </Label>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
                         {isPt
-                          ? "Especifique a localização dentro de cada região com base nos planos e eixos do corpo. Membros aceitam medial/lateral, anterior/posterior e proximal/distal; regiões axiais (cabeça, cervical, torácica, lombar, tórax e abdômen) aceitam lado direito/esquerdo ou central."
-                          : "Refine the location inside each region using anatomical planes and axes. Limbs accept medial/lateral, anterior/posterior and proximal/distal; axial regions (head, cervical, thoracic, lumbar, chest, abdomen) accept right side / left side / central."}
+                          ? "Cada região oferece as opções clinicamente relevantes daquela articulação ou segmento (ex.: lombar → central, unilateral D/E ou bilateral em faixa; joelho → anterior/posterior/medial/lateral; cotovelo → medial, lateral, anterior ou posterior)."
+                          : "Each region offers the clinically relevant options for that joint or segment (e.g., lumbar → central, unilateral R/L or bilateral band-like; knee → anterior/posterior/medial/lateral; elbow → medial, lateral, anterior or posterior)."}
                       </p>
                     </div>
                     <div className="space-y-2">
                       {painRegions.map((id) => {
                         const lbl = regionLabelMap[id];
                         const axes = getRefinementAxes(id);
+                        const group = getRegionGroup(id);
                         const selected = painRegionRefinements[id] || [];
                         return (
                           <div key={id} className="rounded-md border bg-card p-2">
@@ -1796,9 +1938,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                                 {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
                               </span>
                               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                {isAxialRegion(id)
-                                  ? (isPt ? "Axial" : "Axial")
-                                  : (isPt ? "Apendicular" : "Appendicular")}
+                                {isPt ? group.label_pt : group.label_en}
                               </span>
                             </div>
                             <div className="flex flex-wrap gap-1.5">
