@@ -265,8 +265,8 @@ async function searchEvidence(adminClient: any, lovableKey: string, query: strin
 // ---- System prompt ----
 function buildSystemPrompt(patientCtx: any, evidence: any[], mentorMode = false) {
   const ev = evidence.length
-    ? `\n\nEVIDÊNCIAS RELEVANTES (use e cite no formato [Autor, ano, PEDro X]):\n${evidence
-        .map((e: any) => `- ${e.title} (${e.authors || "—"}, ${e.year || "—"}, PEDro ${e.pedro_score ?? "—"}) — ${e.key_findings || e.journal || ""}`)
+    ? `\n\nEVIDÊNCIAS RELEVANTES (use e cite no formato [Autor, ano, PEDro X] ou [Autor, ano, PEDro N/A] quando a base PEDro não define nota para revisão/meta-análise):\n${evidence
+        .map((e: any) => `- ${e.title} (${e.authors || "—"}, ${e.year || "—"}, PEDro ${e.pedro_score ?? "N/A"}) — ${e.key_findings || e.journal || ""}`)
         .join("\n")}`
     : "\n\n(Base de evidências vazia neste nicho — responda com base em STEPS/D.I.F.I e diretrizes gerais, sinalize a ausência ao usuário.)";
 

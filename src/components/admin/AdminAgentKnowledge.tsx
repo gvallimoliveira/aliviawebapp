@@ -19,6 +19,11 @@ interface Article {
   year: number | null;
   journal: string | null;
   pedro_score: number | null;
+  pedro_score_status?: "verified" | "not_applicable" | "unscored" | "mismatch" | "not_found" | "needs_review" | string;
+  pedro_score_reason?: string | null;
+  pedro_score_source?: string | null;
+  pedro_record_id?: string | null;
+  pedro_score_verified_at?: string | null;
   study_type: string | null;
   niche_tags: string[] | null;
   abstract: string | null;
@@ -43,7 +48,9 @@ const agentErrorMessage = async (error: any, fallback = "Falha ao processar a so
   if (response && typeof response.clone === "function") {
     try {
       const payload = await response.clone().json();
-      code = payload?.error || payload?.message || code;
+      code = payload?.reason
+        ? `${payload?.error || payload?.message || code}: ${payload.reason}`
+        : payload?.error || payload?.message || code;
     } catch { /* keep fallback */ }
   }
   const messages: Record<string, string> = {
@@ -92,6 +99,21 @@ export default function AdminAgentKnowledge() {
     if (!c) return label;
     if (kind === "ingest") return `${label} (${c.approved}✓ · ${c.pending}⏳)`;
     return `${label} (${nicheCountFor(slug)})`;
+  };
+  const pedroBadge = (a: Article) => {
+    if (a.pedro_score_status === "verified" && a.pedro_score != null) {
+      return <Badge variant={a.pedro_score >= 8 ? "default" : "secondary"}>PEDro {a.pedro_score}/10 validado</Badge>;
+    }
+    if (a.pedro_score_status === "not_applicable") {
+      return <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PEDro N/A validado</Badge>;
+    }
+    if (["unscored", "mismatch", "not_found"].includes(a.pedro_score_status || "")) {
+      return <Badge variant="destructive" className="text-[10px]">PEDro reprovado</Badge>;
+    }
+    if (a.pedro_score != null) {
+      return <Badge variant="outline" className="text-[10px]">PEDro {a.pedro_score}/10 não revalidado</Badge>;
+    }
+    return <Badge variant="outline" className="text-[10px]">PEDro pendente</Badge>;
   };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -157,7 +179,7 @@ export default function AdminAgentKnowledge() {
       if (data.verified) {
         toast({
           title: approveIfVerified ? "Validado e aprovado" : "Validado",
-          description: data.matchedTitle ? `Título no PubMed: ${data.matchedTitle}` : "Identificador confirmado.",
+          description: data.pedroReason || (data.matchedTitle ? `Título no PubMed: ${data.matchedTitle}` : "Identificador confirmado."),
         });
         cancelEdit();
         fetchList();
@@ -234,7 +256,7 @@ export default function AdminAgentKnowledge() {
       if (data?.error) throw new Error(data.error);
       toast({
         title: "Busca concluída",
-        description: `${data.inserted} verificado(s) e adicionado(s) · ${data.rejectedUnverified ?? 0} descartado(s) por não serem confirmáveis no PubMed/Crossref (de ${data.candidates} candidatos).`,
+        description: `${data.inserted} verificado(s) e adicionado(s) · ${data.rejectedUnverified ?? 0} descartado(s) por DOI/PMID · ${data.rejectedPedro ?? 0} descartado(s) por crivo PEDro (de ${data.candidates} candidatos).`,
       });
       setStatus("pending");
       setNicheFilter(ingestNiche);
@@ -252,6 +274,7 @@ export default function AdminAgentKnowledge() {
     if (!confirm(
       `Revalidar ${scopeLabel} de ${nicheLabel} contra o PubMed/Crossref?\n\n` +
       `• O título de cada artigo será confirmado contra o paper resolvido pelo DOI/PMID.\n` +
+      `• A nota PEDro será checada na base PEDro; notas N/A/sem nota terão o número removido.\n` +
       `• DOIs que apontarem para outro paper serão corrigidos automaticamente.\n` +
       `• Artigos que não puderem ser confirmados serão DESAPROVADOS (movidos para "Pendentes") para revisão manual — nada é deletado.\n\n` +
       `Pode levar alguns minutos.`,
@@ -265,14 +288,16 @@ export default function AdminAgentKnowledge() {
       if (data?.error) throw new Error(data.error);
       const mismatch = data.mismatchFixed ?? 0;
       const demoted = data.demoted ?? 0;
+      const pedroRejected = data.pedroRejected ?? 0;
       toast({
         title: "Revalidação concluída",
         description:
-          `${data.checked} checados · ${data.verified} confirmados · ${mismatch} DOI corrigido(s) · ${data.updated} link(s) normalizado(s) · ${demoted} desaprovado(s) p/ revisão.`,
+          `${data.checked} checados · ${data.verified} confirmados · ${mismatch} DOI corrigido(s) · ${pedroRejected} reprovado(s) no crivo PEDro · ${demoted} desaprovado(s) p/ revisão.`,
       });
-      if (mismatch > 0 || demoted > 0) {
+      if (mismatch > 0 || demoted > 0 || pedroRejected > 0) {
         console.warn("[revalidate] mismatchFixed", data.mismatchFixedItems);
         console.warn("[revalidate] demoted", data.demotedItems);
+        console.warn("[revalidate] pedroRejected", data.pedroRejectedItems);
       }
       fetchList();
     } catch (e: any) {
@@ -317,7 +342,7 @@ export default function AdminAgentKnowledge() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Buscar novos artigos (PEDro ≥ 7)
+            Buscar novos artigos (PEDro validado)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -338,7 +363,7 @@ export default function AdminAgentKnowledge() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            A IA propõe ~6 candidatos por nicho (RCTs/RS/meta-análises com PEDro ≥ 7). Cada candidato é <strong>verificado no PubMed/Crossref antes de ser salvo</strong> — estudos que não puderem ser confirmados são descartados automaticamente. Os aprovados entram como <strong>pendentes</strong> para sua revisão.
+            A IA propõe ~6 candidatos por nicho. Cada candidato é <strong>verificado no PubMed/Crossref</strong> e a nota é <strong>checada na base PEDro</strong> antes de ser salvo — RCTs só entram com PEDro ≥ 7 oficial; revisões/meta-análises com PEDro N/A entram sem nota numérica.
           </p>
         </CardContent>
       </Card>
@@ -374,7 +399,7 @@ export default function AdminAgentKnowledge() {
                 <Star className={`h-4 w-4 ${favoritesOnly ? "fill-current" : ""}`} />
                 {favoritesOnly ? "Só favoritos" : "Favoritos"}
               </Button>
-              <Button variant="outline" size="sm" onClick={handleVerifyAll} disabled={verifying || loading} className="gap-2" title="Cruza título×DOI/PMID no PubMed. Não deleta — desaprova para revisão.">
+              <Button variant="outline" size="sm" onClick={handleVerifyAll} disabled={verifying || loading} className="gap-2" title="Cruza título×DOI/PMID e nota PEDro oficial. Não deleta — desaprova para revisão.">
                 {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                 {verifying ? "Revalidando..." : "Revalidar (estrito)"}
               </Button>
@@ -447,9 +472,7 @@ export default function AdminAgentKnowledge() {
                       </p>
                     </div>
                     <div className="flex flex-col gap-1 items-end shrink-0">
-                      {a.pedro_score != null && (
-                        <Badge variant={a.pedro_score >= 8 ? "default" : "secondary"}>PEDro {a.pedro_score}/10</Badge>
-                      )}
+                      {pedroBadge(a)}
                       {a.study_type && <Badge variant="outline" className="text-[10px]">{a.study_type}</Badge>}
                       {a.verification_status === "verified" ? (
                         <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ID validado</Badge>
@@ -509,6 +532,21 @@ export default function AdminAgentKnowledge() {
                         ? <>O identificador resolve para “{a.verification_matched_title}”{typeof a.verification_similarity === "number" ? ` (similaridade ${Math.round(a.verification_similarity * 100)}%)` : ""}, não para o título cadastrado.</>
                         : "Não foi possível confirmar esse título por DOI/PMID no PubMed/Crossref."}
                       {a.verification_reason ? ` Motivo: ${a.verification_reason}.` : ""}
+                    </div>
+                  )}
+
+                  {a.pedro_score_status && a.pedro_score_status !== "verified" && a.pedro_score_status !== "not_applicable" && (
+                    <div className="mt-2 rounded-md border border-destructive/20 bg-destructive/5 p-2 text-[11px] text-muted-foreground">
+                      <span className="font-medium text-destructive">Crivo PEDro falhou.</span>{" "}
+                      {a.pedro_score_reason || "A nota PEDro não foi confirmada na base PEDro."}
+                      {a.pedro_record_id ? ` Registro PEDro: ${a.pedro_record_id}.` : ""}
+                    </div>
+                  )}
+
+                  {a.pedro_score_status === "not_applicable" && (
+                    <div className="mt-2 rounded-md border border-primary/20 bg-primary/5 p-2 text-[11px] text-muted-foreground">
+                      <span className="font-medium text-primary">PEDro validado como N/A.</span>{" "}
+                      Revisão/meta-análise mantida, mas sem nota numérica para não alucinar score.
                     </div>
                   )}
 

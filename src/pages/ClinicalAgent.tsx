@@ -575,7 +575,7 @@ const ClinicalAgent = () => {
               </p>
 
               <ul className="text-sm text-muted-foreground space-y-1.5">
-                <li className="flex gap-2"><Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Discussão clínica com base em estudos (PEDro ≥ 7)</li>
+                <li className="flex gap-2"><Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Discussão clínica com base em estudos com DOI/PMID e crivo PEDro validados</li>
                 <li className="flex gap-2"><BookOpen className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Citações verificáveis das evidências</li>
                 <li className="flex gap-2"><UserPlus className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Geração de HEP personalizada</li>
               </ul>
@@ -879,7 +879,7 @@ const ClinicalAgent = () => {
                 <BookOpen className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium">Biblioteca de evidências</div>
-                  <p className="text-[11px] text-muted-foreground leading-snug">Artigos aprovados (PEDro ≥ 7) por nicho clínico.</p>
+                  <p className="text-[11px] text-muted-foreground leading-snug">Artigos aprovados com DOI/PMID e crivo PEDro por nicho clínico.</p>
                 </div>
               </button>
 
@@ -927,7 +927,7 @@ const ClinicalAgent = () => {
                 <div className="space-y-2">
                   <h2 className="text-xl font-semibold">Agente de Raciocínio Clínico</h2>
                   <p className="text-sm text-muted-foreground max-w-sm">
-                    Comece uma nova conversa para discutir um caso com base em evidências (PEDro ≥ 7).
+                    Comece uma nova conversa para discutir um caso com base em evidências validadas.
                   </p>
                 </div>
                 <Button
@@ -987,7 +987,7 @@ const ClinicalAgent = () => {
                 <div>
                   <h2 className="text-lg font-semibold">Vamos raciocinar juntos?</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Discuta casos clínicos com base em evidências (PEDro ≥ 7).<br/>
+                    Discuta casos clínicos com base em evidências com crivo bibliográfico e PEDro.<br/>
                     Dados do paciente são anonimizados antes do processamento.
                   </p>
                 </div>
@@ -1043,7 +1043,7 @@ const ClinicalAgent = () => {
                       <div className="mt-2 flex flex-wrap gap-1">
                         {m.citations.map(c => (
                           <Badge key={c.id} variant="outline" className="text-[10px] bg-background/60">
-                            {(c.authors?.split(",")[0] || "—")}, {c.year || "—"} · PEDro {c.pedro_score ?? "—"}
+                            {(c.authors?.split(",")[0] || "—")}, {c.year || "—"} · PEDro {c.pedro_score ?? "N/A"}
                           </Badge>
                         ))}
                       </div>
@@ -1138,7 +1138,7 @@ const ClinicalAgent = () => {
                   <div key={c.id} className="border border-border/40 rounded-lg p-3 space-y-1">
                     <div className="text-sm font-medium">{c.title}</div>
                     <div className="text-xs text-muted-foreground">
-                      {c.authors || "—"} · {c.year || "—"} · <span className="text-primary">PEDro {c.pedro_score ?? "—"}</span>
+                      {c.authors || "—"} · {c.year || "—"} · <span className="text-primary">PEDro {c.pedro_score ?? "N/A"}</span>
                     </div>
                     {(c.doi || c.source_url) && (
                       <a

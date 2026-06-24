@@ -155,8 +155,8 @@ const categories: ToolCategory[] = [
       {
         key: "evidence_library",
         icon: BookOpen,
-        title: "Biblioteca de Evidências por Nicho (PEDro ≥ 7)",
-        desc: "Acesso integrado, dentro do Agente Clínico, à curadoria de artigos aprovados e usados pela própria IA — separados por nicho (ombro, lombar, cervical, quadril, joelho, etc.), com filtro por ano e por nota PEDro. Disponível para Acadêmico assinante/parceiro acadêmico, PRO e Clínica. Estudos podem ser favoritados e ficam acessíveis em 1 clique. Em versão beta: nichos sem artigos aprovados ainda exibem aviso de curadoria em andamento.",
+        title: "Biblioteca de Evidências por Nicho (PEDro validado)",
+        desc: "Acesso integrado, dentro do Agente Clínico, à curadoria de artigos aprovados e usados pela própria IA — separados por nicho, com DOI/PMID e crivo PEDro. RCTs só entram com nota oficial PEDro ≥ 7; revisões/meta-análises com PEDro N/A ficam sem nota numérica. Disponível para Acadêmico assinante/parceiro acadêmico, PRO e Clínica.",
       },
     ],
   },

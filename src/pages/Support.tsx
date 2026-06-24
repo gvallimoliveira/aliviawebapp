@@ -296,10 +296,10 @@ const Support = () => {
                       </div>
                       <p className="text-sm text-muted-foreground leading-relaxed mb-2">
                         {language === "pt"
-                          ? "Acesse, dentro da página do Agente Clínico, a curadoria de artigos aprovados (PEDro ≥ 7) que alimenta a IA — separados por nicho clínico, com filtros de ano e nota PEDro. Favorite estudos para consultar em 1 clique."
+                          ? "Acesse, dentro da página do Agente Clínico, a curadoria de artigos aprovados com DOI/PMID e nota PEDro validados — RCTs só entram com PEDro ≥ 7 oficial; revisões com PEDro N/A ficam sem nota numérica. Favorite estudos para consultar em 1 clique."
                           : language === "es"
-                          ? "Accede, dentro del Agente Clínico, a la curaduría de artículos aprobados (PEDro ≥ 7) que alimenta la IA — separados por nicho clínico, con filtros de año y nota PEDro. Marca favoritos para acceso en 1 clic."
-                          : "Inside the Clinical Agent page, browse the curated studies (PEDro ≥ 7) that power the AI — sorted by clinical niche, with year and PEDro score filters. Favorite studies for 1-click access."}
+                          ? "Accede, dentro del Agente Clínico, a artículos aprobados con DOI/PMID y puntuación PEDro validados — los RCT solo entran con PEDro ≥ 7 oficial; revisiones con PEDro N/A quedan sin puntuación numérica."
+                          : "Inside the Clinical Agent page, browse approved studies with validated DOI/PMID and PEDro status — RCTs require official PEDro ≥ 7; reviews with PEDro N/A are kept without a numeric score."}
                       </p>
                       <p className="text-xs text-muted-foreground italic">
                         {language === "pt"

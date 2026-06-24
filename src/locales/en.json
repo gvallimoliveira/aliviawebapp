@@ -939,7 +939,7 @@
   "onboarding.pro.messages.title": "Messages tab 💬",
   "onboarding.pro.messages.desc": "Chat securely with patients, run P2P video calls and rely on the automatic clinical disclaimer.",
   "onboarding.pro.agent.title": "Clinical Reasoning Agent 🧠",
-  "onboarding.pro.agent.desc": "Consult the AI agent grounded in PEDro ≥ 7 evidence. Open it via the Agent tab whenever you want to dig deeper into a hypothesis.",
+  "onboarding.pro.agent.desc": "Consult the AI agent grounded in evidence with validated DOI/PMID and PEDro status. Open it via the Agent tab whenever you want to dig deeper into a hypothesis.",
   "onboarding.clinic.step1.title": "Your clinic schedule 📅",
   "onboarding.clinic.step1.desc": "Start your day here: daily view of the team, drag-and-drop between slots, and quick access to today's patients.",
   "onboarding.clinic.step2.title": "Clinic patients",
