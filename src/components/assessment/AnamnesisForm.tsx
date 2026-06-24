@@ -278,7 +278,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
   const ankleRegions = ["right_ankle", "left_ankle", "right_ankle_back", "left_ankle_back", "ankle_side"];
   const hipRegions = ["right_hip", "left_hip", "right_hip_back", "left_hip_back", "hip_side"];
   const shoulderRegionsAll = ["right_shoulder", "left_shoulder", "right_shoulder_back", "left_shoulder_back", "shoulder_side"];
-  const cervicalRegions = ["neck_front", "neck_back", "neck_side"];
+  const cervicalRegions = ["cervical", "cervical_front", "cervical_left", "cervical_right"];
+  const elbowRegions = ["right_elbow", "left_elbow", "right_elbow_back", "left_elbow_back", "elbow_left", "elbow_right"];
 
   const getSelectedSingleRegionType = (): string | null => {
     const regions = data.painRegions;
@@ -290,6 +291,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       [hipRegions, "hip"],
       [shoulderRegionsAll, "shoulder"],
       [cervicalRegions, "cervical"],
+      [elbowRegions, "elbow"],
     ];
     for (const [regionList, type] of checks) {
       if (regions.every(r => regionList.includes(r)) && regions.some(r => regionList.includes(r))) {
@@ -303,6 +305,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       "anamnesis.complaint.hip_pain": "hip",
       "anamnesis.complaint.shoulder_pain": "shoulder",
       "anamnesis.complaint.neck_pain": "cervical",
+      "anamnesis.complaint.elbow_pain": "elbow",
     };
     for (const cc of data.chiefComplaints) {
       if (complaintMap[cc] && regions.length <= 2) {
@@ -323,14 +326,16 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.knee.posterior_desc" },
       ];
       case "ankle": return [
+        { id: "anterior", label: "anamnesis.subarea.front", desc: "anamnesis.ankle.anterior_desc" },
         { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.ankle.lateral_desc" },
         { id: "medial", label: "anamnesis.subarea.medial", desc: "anamnesis.ankle.medial_desc" },
         { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.ankle.posterior_desc" },
-        { id: "anterolateral", label: "anamnesis.subarea.anterolateral", desc: "anamnesis.ankle.anterolateral_desc" },
       ];
       case "hip": return [
-        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.hip.lateral_desc" },
         { id: "anterior", label: "anamnesis.subarea.front", desc: "anamnesis.hip.anterior_desc" },
+        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.hip.lateral_desc" },
+        { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.hip.posterior_desc" },
+        { id: "medial", label: "anamnesis.subarea.medial", desc: "anamnesis.hip.medial_desc" },
       ];
       case "shoulder": return [
         { id: "anterior", label: "anamnesis.subarea.front", desc: "anamnesis.shoulder.anterior_desc" },
@@ -338,8 +343,15 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         { id: "superior", label: "anamnesis.subarea.superior_shoulder", desc: "anamnesis.shoulder.superior_desc" },
         { id: "posterior", label: "anamnesis.subarea.posterior_shoulder", desc: "anamnesis.shoulder.posterior_desc" },
       ];
+      case "elbow": return [
+        { id: "medial", label: "anamnesis.subarea.medial", desc: "anamnesis.elbow.medial_desc" },
+        { id: "lateral", label: "anamnesis.subarea.lateral", desc: "anamnesis.elbow.lateral_desc" },
+        { id: "anterior", label: "anamnesis.subarea.front", desc: "anamnesis.elbow.anterior_desc" },
+        { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.elbow.posterior_desc" },
+      ];
       case "cervical": return [
         { id: "posterior", label: "anamnesis.subarea.posterior", desc: "anamnesis.cervical.posterior_desc" },
+        { id: "posterolateral", label: "anamnesis.subarea.posterolateral", desc: "anamnesis.cervical.posterolateral_desc" },
         { id: "anterolateral", label: "anamnesis.subarea.anterolateral", desc: "anamnesis.cervical.anterolateral_desc" },
       ];
       default: return [];
