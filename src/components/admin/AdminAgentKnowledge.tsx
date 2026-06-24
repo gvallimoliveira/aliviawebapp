@@ -11,6 +11,7 @@ import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen, ShieldCheck, 
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { AGENT_NICHES, AGENT_NICHE_LABEL } from "@/lib/agentNiches";
+import { isPriorityJournal, journalImpactFactor } from "@/lib/priorityJournals";
 
 interface Article {
   id: string;
