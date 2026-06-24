@@ -627,6 +627,7 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             pmid: finalPmid,
             source_url: sourceUrl,
             approved: false,
+            ...verificationPatch(verification, "verified"),
             added_by: user.id,
           };
           if (vec) row.embedding = vec;
