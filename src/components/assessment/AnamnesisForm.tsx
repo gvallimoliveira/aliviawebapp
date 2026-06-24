@@ -467,7 +467,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "complaint":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.complaint_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.complaint_title")}{stepHasPrefill("complaint") && <PrefilledBadge />}</h3>
             <p className="text-xs text-muted-foreground">{language === "pt" ? "Selecione uma ou mais regiões relacionadas" : "Select one or more related regions"}</p>
             <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800">
               <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -507,7 +507,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "onset":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.onset_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.onset_title")}{stepHasPrefill("onset") && <PrefilledBadge />}</h3>
             <div className="grid gap-3">
               {["anamnesis.onset.sudden", "anamnesis.onset.gradual", "anamnesis.onset.trauma", "anamnesis.onset.post_surgery"].map((o) => (
                 <Card key={o} className={`cursor-pointer transition-all ${data.onset === o ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, onset: o })}>
@@ -520,7 +520,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "surgery":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.surgery_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.surgery_title")}{stepHasPrefill("surgery") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.surgery_subtitle")}</p>
             <p className="text-xs text-muted-foreground/80 italic">{t("anamnesis.surgery_disclaimer")}</p>
             <div className="grid grid-cols-2 gap-3">
@@ -562,7 +562,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
 
         return (
           <div className="space-y-5">
-            <h3 className="text-lg font-semibold">{t("anamnesis.region_detail_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.region_detail_title")}{stepHasPrefill("region_detail") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.region_detail_subtitle")}</p>
             <div className="grid gap-3">
               {subAreas.map((area) => {
@@ -648,7 +648,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "migraine_screening":
         return (
           <div className="space-y-5">
-            <h3 className="text-lg font-semibold">{t("anamnesis.migraine_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.migraine_title")}{stepHasPrefill("migraine_screening") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.migraine_subtitle")}</p>
 
             <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
@@ -699,7 +699,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "sex_age":
         return (
           <div className="space-y-5">
-            <h3 className="text-lg font-semibold">{t("anamnesis.sex_age_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.sex_age_title")}{stepHasPrefill("sex_age") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.sex_age_subtitle")}</p>
             <div className="space-y-3">
               <Label>{t("anamnesis.sex_label")}</Label>
@@ -738,7 +738,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "paintype":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.pain_type_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_type_title")}{stepHasPrefill("paintype") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.pain_type_subtitle")}</p>
             <div className="grid grid-cols-2 gap-2">
               {painTypes.map((pt) => (
@@ -752,7 +752,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "evolution":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.evolution_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.evolution_title")}{stepHasPrefill("evolution") && <PrefilledBadge />}</h3>
             <div className="grid gap-3">
               {["anamnesis.evolution.improving", "anamnesis.evolution.stable", "anamnesis.evolution.worsening"].map((e) => (
                 <Card key={e} className={`cursor-pointer transition-all ${data.evolution === e ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, evolution: e })}>
@@ -793,7 +793,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "duration":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.pain_duration_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_duration_title")}{stepHasPrefill("duration") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.pain_duration_subtitle")}</p>
             <div className="grid gap-3">
               {["anamnesis.duration.less_week", "anamnesis.duration.one_month", "anamnesis.duration.three_six_months", "anamnesis.duration.one_year_plus"].map((option) => (
@@ -807,7 +807,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "pain_frequency":
         return (
           <div className="space-y-5">
-            <h3 className="text-lg font-semibold">{t("anamnesis.pain_frequency_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.pain_frequency_title")}{stepHasPrefill("pain_frequency") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.pain_frequency_subtitle")}</p>
 
             <div className="space-y-3">
@@ -854,7 +854,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "gym":
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("anamnesis.gym_access_title")}</h3>
+            <h3 className="text-lg font-semibold">{t("anamnesis.gym_access_title")}{stepHasPrefill("gym") && <PrefilledBadge />}</h3>
             <p className="text-sm text-muted-foreground">{t("anamnesis.gym_access_subtitle")}</p>
             <div className="grid gap-3">
               {["anamnesis.gym.yes", "anamnesis.gym.no"].map((option) => (
