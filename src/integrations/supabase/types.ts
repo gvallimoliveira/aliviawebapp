@@ -1350,6 +1350,12 @@ export type Database = {
           study_type: string | null
           title: string
           updated_at: string
+          verification_checked_at: string | null
+          verification_matched_title: string | null
+          verification_reason: string | null
+          verification_similarity: number | null
+          verification_source: string | null
+          verification_status: string
           year: number | null
         }
         Insert: {
@@ -1371,6 +1377,12 @@ export type Database = {
           study_type?: string | null
           title: string
           updated_at?: string
+          verification_checked_at?: string | null
+          verification_matched_title?: string | null
+          verification_reason?: string | null
+          verification_similarity?: number | null
+          verification_source?: string | null
+          verification_status?: string
           year?: number | null
         }
         Update: {
@@ -1392,6 +1404,12 @@ export type Database = {
           study_type?: string | null
           title?: string
           updated_at?: string
+          verification_checked_at?: string | null
+          verification_matched_title?: string | null
+          verification_reason?: string | null
+          verification_similarity?: number | null
+          verification_source?: string | null
+          verification_status?: string
           year?: number | null
         }
         Relationships: []
