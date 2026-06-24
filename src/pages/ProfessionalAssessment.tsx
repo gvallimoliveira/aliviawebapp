@@ -29,6 +29,7 @@ import {
   ANAMNESIS_SUB_IDS,
   type ReassessStepId,
 } from "@/lib/reassessmentSteps";
+import { fetchPatientPrefillExtras } from "@/lib/reassessmentPrefill";
 
 type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
