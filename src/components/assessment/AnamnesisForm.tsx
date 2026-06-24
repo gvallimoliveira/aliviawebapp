@@ -1068,6 +1068,14 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
           onDiscard={() => void draft.discard()}
         />
       )}
+      {prefilledKeys.size > 0 && (
+        <Alert className="bg-primary/5 border-primary/20">
+          <Info className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-xs text-foreground/80 leading-relaxed">
+            {t("assessment.prefilled.banner")}
+          </AlertDescription>
+        </Alert>
+      )}
       {/* Progress */}
       <div className="space-y-2">
         <div className="flex justify-between text-xs text-muted-foreground">
