@@ -666,10 +666,11 @@ async function enrichCandidatesWithAi(
     year: c.year,
     study_type: c.studyType,
     abstract: (c.abstract || "").slice(0, 1800),
+    has_abstract: !!(c.abstract && c.abstract.trim().length > 50),
   }));
   const prompt = `Para CADA artigo abaixo, responda com:
-- abstract: 3 a 5 frases em pt-BR resumindo objetivo, método e resultado.
-- key_findings: 1 a 2 frases em pt-BR com o achado clínico mais aplicável.
+- abstract: 3 a 5 frases em pt-BR resumindo objetivo, método e resultado, BASEADAS ESTRITAMENTE no campo "abstract" fornecido. Se "has_abstract" for false, retorne null — NÃO invente conteúdo a partir do título.
+- key_findings: 1 a 2 frases em pt-BR com o achado clínico mais aplicável EXTRAÍDO do abstract. Se não houver abstract, retorne null. NUNCA escreva frases genéricas do tipo "este estudo aborda...". Cada artigo deve ter um achado distinto e específico — se vários artigos parecerem ter o mesmo achado, você está alucinando: retorne null.
 - study_type: um de "RCT" | "Systematic Review" | "Meta-analysis" | "Review" | "Clinical Trial".
 - pedro_score: número inteiro 0-10 SOMENTE se você TIVER CERTEZA pela base PEDro; senão null. NUNCA estime.
 
