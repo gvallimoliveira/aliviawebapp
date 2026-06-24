@@ -394,23 +394,77 @@ export default function AdminAgentKnowledge() {
                   </div>
 
 
-                  {status === "pending" && (
-                    <div className="flex gap-2 mt-3 justify-end">
-                      <Button size="sm" variant="outline" onClick={() => handleReject(a.id)} disabled={busyId === a.id} className="gap-1.5 text-destructive hover:text-destructive">
-                        <Trash2 className="h-3.5 w-3.5" /> Reprovar
-                      </Button>
-                      <Button size="sm" onClick={() => handleApprove(a.id)} disabled={busyId === a.id} className="gap-1.5">
-                        {busyId === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                        Aprovar
-                      </Button>
+                  {editingId === a.id ? (
+                    <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+                      <p className="text-xs font-medium text-foreground">
+                        Editar identificadores e revalidar contra PubMed/Crossref
+                      </p>
+                      <div className="grid sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[11px] text-muted-foreground">PMID (preferido)</label>
+                          <Input
+                            value={editPmid}
+                            onChange={(e) => setEditPmid(e.target.value)}
+                            placeholder="ex.: 31234567"
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-muted-foreground">DOI</label>
+                          <Input
+                            value={editDoi}
+                            onChange={(e) => setEditDoi(e.target.value)}
+                            placeholder="ex.: 10.1016/j.xxx.2020.01.001"
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        O sistema vai resolver no PubMed/Crossref e <strong>só aprovar se o título bater</strong> com este registro.
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-end">
+                        <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={verifyingOne} className="gap-1.5">
+                          <X className="h-3.5 w-3.5" /> Cancelar
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleVerifyOne(a.id, false)} disabled={verifyingOne} className="gap-1.5">
+                          {verifyingOne ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+                          Validar
+                        </Button>
+                        {status === "pending" && (
+                          <Button size="sm" onClick={() => handleVerifyOne(a.id, true)} disabled={verifyingOne} className="gap-1.5">
+                            {verifyingOne ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                            Validar e aprovar
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  {status === "approved" && (
-                    <div className="flex gap-2 mt-3 justify-end">
-                      <Button size="sm" variant="outline" onClick={() => handleReject(a.id)} disabled={busyId === a.id} className="gap-1.5 text-destructive hover:text-destructive">
-                        <Trash2 className="h-3.5 w-3.5" /> Remover
-                      </Button>
-                    </div>
+                  ) : (
+                    <>
+                      {status === "pending" && (
+                        <div className="flex flex-wrap gap-2 mt-3 justify-end">
+                          <Button size="sm" variant="ghost" onClick={() => startEdit(a)} disabled={busyId === a.id} className="gap-1.5">
+                            <Pencil className="h-3.5 w-3.5" /> Editar DOI/PMID
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleReject(a.id)} disabled={busyId === a.id} className="gap-1.5 text-destructive hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" /> Reprovar
+                          </Button>
+                          <Button size="sm" onClick={() => handleApprove(a.id)} disabled={busyId === a.id} className="gap-1.5">
+                            {busyId === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                            Aprovar
+                          </Button>
+                        </div>
+                      )}
+                      {status === "approved" && (
+                        <div className="flex flex-wrap gap-2 mt-3 justify-end">
+                          <Button size="sm" variant="ghost" onClick={() => startEdit(a)} disabled={busyId === a.id} className="gap-1.5">
+                            <Pencil className="h-3.5 w-3.5" /> Editar DOI/PMID
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleReject(a.id)} disabled={busyId === a.id} className="gap-1.5 text-destructive hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" /> Remover
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ))}
