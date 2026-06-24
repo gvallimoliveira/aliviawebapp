@@ -116,6 +116,23 @@ const ProfessionalAssessment = () => {
           if (anam?.surgeryDetails) setPrefilledSurgeryDetails(anam.surgeryDetails);
           if (anam?.activityLevel) setPrefilledActivityLevel(anam.activityLevel);
           if (anam?.hasGymAccess) setPrefilledGymAccess(anam.hasGymAccess);
+          // Stable demographics + clinical history pre-fill
+          setPrefilledExtras({
+            sex: anam?.sex,
+            ageRange: anam?.ageRange,
+            birthDate: anam?.birthDate,
+            cpf: anam?.cpf,
+            hadTwist: anam?.hadTwist,
+            hadSprain: anam?.hadSprain,
+            hadDislocation: anam?.hadDislocation,
+            hasScapulaPain: anam?.hasScapulaPain,
+            hasLocalSwelling: anam?.hasLocalSwelling,
+            hasPhotophobia: anam?.hasPhotophobia,
+            hasVisualAura: anam?.hasVisualAura,
+            hasNausea: anam?.hasNausea,
+            headacheCrisisFrequency: anam?.headacheCrisisFrequency,
+            painSubArea: anam?.painSubArea,
+          });
 
           // Extract previous questionnaire answers for highlighting
           const testResults = orig.test_results as any;
