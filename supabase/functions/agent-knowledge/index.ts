@@ -741,18 +741,9 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       };
       if (pedroV) Object.assign(patch, pedroPatch(pedroV));
-      if (approveIfVerified) patch.approved = !!pedroV && isAcceptablePedro(pedroV);
+      // PEDro é sinal opcional (amarelo). Não bloqueia aprovação manual do admin.
+      if (approveIfVerified) patch.approved = true;
       await adminClient.from("knowledge_articles").update(patch).eq("id", id);
-
-      if (approveIfVerified && pedroV && !isAcceptablePedro(pedroV)) {
-        return new Response(JSON.stringify({
-          error: "Identificador validado, mas o artigo não foi aprovado porque a nota PEDro não foi confirmada.",
-          reason: pedroV.reason,
-          pedroStatus: pedroV.status,
-          matchedTitle: v.matchedTitle || null,
-          pedroMatchedTitle: pedroV.matchedTitle || null,
-        }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
 
       return new Response(JSON.stringify({
         ok: true, verified: true, doi: newDoi, pmid: newPmid,
@@ -760,7 +751,8 @@ serve(async (req) => {
         similarity: v.similarity ?? null,
         pedroStatus: pedroV?.status || null,
         pedroReason: pedroV?.reason || null,
-        approved: (approveIfVerified && !!pedroV && isAcceptablePedro(pedroV)) || row.approved,
+        pedroWarning: pedroV ? !isAcceptablePedro(pedroV) : false,
+        approved: approveIfVerified ? true : row.approved,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
