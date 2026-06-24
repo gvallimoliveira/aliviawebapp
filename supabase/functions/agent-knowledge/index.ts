@@ -490,11 +490,13 @@ serve(async (req) => {
     // ---------- PUBLIC LIST (read-only, approved articles) ----------
     // Available to any authenticated user — UI gates access by plan (PRO/clinic/academic).
     if (action === "list_public") {
+      // Public-facing list: requer ID verificado, mas PEDro vira sinal opcional
+      // (admin pode aprovar artigos sem nota PEDro confirmada — ex.: paper em
+      // periódico exigente que não consta na base PEDro).
       let q = adminClient.from("knowledge_articles")
         .select("id, title, authors, year, journal, pedro_score, pedro_score_status, pedro_score_reason, pedro_score_source, pedro_record_id, pedro_score_verified_at, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, verification_status, created_at")
         .eq("approved", true)
         .eq("verification_status", "verified")
-        .in("pedro_score_status", ["verified", "not_applicable"])
         .order("year", { ascending: false, nullsFirst: false })
         .order("pedro_score", { ascending: false, nullsFirst: false })
         .limit(500);
