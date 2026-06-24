@@ -700,14 +700,24 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             }
             updated++;
           }
+          if (!dryRun) {
+            await adminClient.from("knowledge_articles")
+              .update({ ...verificationPatch(v, "verified"), updated_at: new Date().toISOString() })
+              .eq("id", r.id);
+          }
         } else {
           if (isRevalidate) {
             // Soft: demote to pending for manual review instead of deleting.
             demoted++;
-            demotedItems.push({ id: r.id, title: r.title, doi: r.doi, pmid: pmidStored, reason: v.reason || "not_found" });
-            if (!dryRun && r.approved) {
+            demotedItems.push({ id: r.id, title: r.title, doi: r.doi, pmid: pmidStored, matchedTitle: v.matchedTitle || null, similarity: v.similarity ?? null, reason: v.reason || "not_found" });
+            if (!dryRun) {
               await adminClient.from("knowledge_articles")
-                .update({ approved: false, updated_at: new Date().toISOString() })
+                .update({
+                  approved: false,
+                  source_url: null,
+                  ...verificationPatch(v, "invalid"),
+                  updated_at: new Date().toISOString(),
+                })
                 .eq("id", r.id);
             }
           } else {
