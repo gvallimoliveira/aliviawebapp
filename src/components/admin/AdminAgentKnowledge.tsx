@@ -72,6 +72,27 @@ export default function AdminAgentKnowledge() {
   const [editDoi, setEditDoi] = useState("");
   const [editPmid, setEditPmid] = useState("");
   const [verifyingOne, setVerifyingOne] = useState(false);
+  const [nicheCounts, setNicheCounts] = useState<Record<string, { pending: number; approved: number; total: number }>>({});
+
+  const fetchCounts = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("agent-knowledge", { body: { action: "counts" } });
+      if (error || data?.error) return;
+      setNicheCounts(data?.counts || {});
+    } catch (e) { console.warn("[counts]", e); }
+  };
+
+  const nicheCountFor = (slug: string) => {
+    const c = nicheCounts[slug];
+    if (!c) return 0;
+    return status === "approved" ? c.approved : c.pending;
+  };
+  const labelWithCount = (slug: string, label: string, kind: "tab" | "ingest" = "tab") => {
+    const c = nicheCounts[slug];
+    if (!c) return label;
+    if (kind === "ingest") return `${label} (${c.approved}✓ · ${c.pending}⏳)`;
+    return `${label} (${nicheCountFor(slug)})`;
+  };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
 
