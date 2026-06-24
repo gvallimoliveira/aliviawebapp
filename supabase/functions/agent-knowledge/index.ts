@@ -237,7 +237,7 @@ function isAcceptablePedro(v: PedroVerifyResult): boolean {
 
 function parsePedroRows(html: string): Array<{ id: string; title: string; method: string; scoreText: string; url: string }> {
   const rows: Array<{ id: string; title: string; method: string; scoreText: string; url: string }> = [];
-  const re = /<tr>\s*<td><a\s+href="([^"]*record-detail\/(\d+)[^"]*)"[^>]*>([\s\S]*?)<\/a><\/td>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>/gi;
+  const re = /<tr[^>]*>\s*<td[^>]*><a\s+href="([^"]*record-detail\/(\d+)[^"]*)"[^>]*>([\s\S]*?)<\/a><\/td>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
     rows.push({
