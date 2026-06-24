@@ -134,7 +134,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasAccess: hasAgentAccess, isBetaInternal: agentBetaInternal } = useClinicalAgentAccess();
 
-  const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean; is_student?: boolean } | null>(null);
+  const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean; is_student?: boolean; is_vip?: boolean } | null>(null);
   const [subLoading, setSubLoading] = useState(true);
   const [linkCopied, setLinkCopied] = useState(false);
   const [patientAssessments, setPatientAssessments] = useState<any[]>([]);
@@ -909,7 +909,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                   <Settings className="h-3.5 w-3.5" />
                   {t("pro.edit_profile")}
                 </Button>
-                {!clinicCoversAccess && !subscription?.is_partner && (
+                {!clinicCoversAccess && !subscription?.is_partner && !subscription?.is_vip && !isVipAdmin && (
                   <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl h-8">
                     {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
                     {t("pro.manage_subscription")}

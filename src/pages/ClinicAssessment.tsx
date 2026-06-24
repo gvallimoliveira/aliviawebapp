@@ -29,6 +29,7 @@ import {
   ANAMNESIS_SUB_IDS,
 } from "@/lib/reassessmentSteps";
 import { fetchPatientPrefillExtras } from "@/lib/reassessmentPrefill";
+import { normalizeAnamnesisForReassessment } from "@/lib/reassessmentNormalize";
 
 type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
@@ -108,12 +109,12 @@ const ClinicAssessment = () => {
           setPatientEmail(orig.patient_email || "");
           if (orig.pain_regions?.length) setPrefilledRegions(orig.pain_regions);
           const anam = orig.anamnesis_data as any;
-          const complaints = anam?.chiefComplaints || (anam?.chiefComplaint ? [anam.chiefComplaint] : []);
-          if (complaints.length > 0) setPrefilledComplaints(complaints);
-          if (anam?.onset) setPrefilledOnset(anam.onset);
+          const normalized = normalizeAnamnesisForReassessment(anam, orig.pain_regions);
+          if (normalized.chiefComplaints?.length) setPrefilledComplaints(normalized.chiefComplaints);
+          if (normalized.onset) setPrefilledOnset(normalized.onset);
           if (anam?.hasPriorSurgery) setPrefilledSurgery(anam.hasPriorSurgery);
           if (anam?.surgeryDetails) setPrefilledSurgeryDetails(anam.surgeryDetails);
-          if (anam?.activityLevel) setPrefilledActivityLevel(anam.activityLevel);
+          if (normalized.activityLevel) setPrefilledActivityLevel(normalized.activityLevel);
           if (anam?.hasGymAccess) setPrefilledGymAccess(anam.hasGymAccess);
           if (typeof orig.pain_score === "number") setPreviousPainScore(orig.pain_score);
           else if (typeof anam?.painScore === "number") setPreviousPainScore(anam.painScore);
@@ -128,8 +129,8 @@ const ClinicAssessment = () => {
             ageRange: anam?.ageRange || patientFallback.ageRange,
             birthDate: anam?.birthDate || patientFallback.birthDate,
             cpf: anam?.cpf || patientFallback.cpf,
-            painType: anam?.painType || (Array.isArray(anam?.painTypes) ? anam.painTypes[0] : undefined),
-            painTypes: anam?.painTypes,
+            painType: normalized.painType,
+            painTypes: normalized.painTypes,
             painDuration: anam?.painDuration,
             painPattern: anam?.painPattern,
             painWeeklyFrequency: anam?.painWeeklyFrequency,
