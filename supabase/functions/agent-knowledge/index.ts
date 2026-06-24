@@ -479,7 +479,7 @@ interface CandidateArticle {
   pmid?: string | null;
   abstract?: string | null;
   studyType?: string | null;
-  source: "pubmed" | "crossref" | "pedro";
+  source: "pubmed" | "crossref" | "pedro" | "cochrane";
 }
 
 function parsePubmedPubType(pubtypes: any[]): string | null {
@@ -492,21 +492,29 @@ function parsePubmedPubType(pubtypes: any[]): string | null {
   return null;
 }
 
+/**
+ * Splits the efetch payload into per-article blocks and returns the abstract
+ * of the article whose own PMID (first <PMID> inside <MedlineCitation>) matches.
+ * Avoids the previous bug where a reference PMID could match the wrong block.
+ */
 function extractAbstractFromXml(xml: string, pmid: string): string | null {
-  // very small parser: locate <PubmedArticle> bloc for PMID then AbstractText nodes
-  const blockRe = new RegExp(`<PubmedArticle>([\\s\\S]*?<PMID[^>]*>${pmid}</PMID>[\\s\\S]*?)</PubmedArticle>`, "i");
-  const m = xml.match(blockRe);
-  const block = m ? m[1] : "";
-  if (!block) return null;
-  const parts: string[] = [];
-  const re = /<AbstractText(?:\s+[^>]*Label="([^"]*)"[^>]*)?[^>]*>([\s\S]*?)<\/AbstractText>/gi;
-  let mm: RegExpExecArray | null;
-  while ((mm = re.exec(block)) !== null) {
-    const label = mm[1] ? `${mm[1]}: ` : "";
-    parts.push(label + htmlToText(mm[2]));
+  if (!xml) return null;
+  const blocks = xml.split(/<PubmedArticle>/i).slice(1).map((b) => b.split(/<\/PubmedArticle>/i)[0] || "");
+  for (const block of blocks) {
+    const ownPmidMatch = block.match(/<MedlineCitation[^>]*>[\s\S]*?<PMID[^>]*>(\d+)<\/PMID>/i);
+    const ownPmid = ownPmidMatch?.[1];
+    if (ownPmid !== pmid) continue;
+    const parts: string[] = [];
+    const re = /<AbstractText(?:\s+[^>]*Label="([^"]*)"[^>]*)?[^>]*>([\s\S]*?)<\/AbstractText>/gi;
+    let mm: RegExpExecArray | null;
+    while ((mm = re.exec(block)) !== null) {
+      const label = mm[1] ? `${mm[1]}: ` : "";
+      parts.push(label + htmlToText(mm[2]));
+    }
+    const out = parts.join(" ").trim();
+    return out || null;
   }
-  const out = parts.join(" ").trim();
-  return out || null;
+  return null;
 }
 
 async function searchPubmedForNiche(terms: NicheSearchTerms, retmax: number, yearsBack: number): Promise<{ items: CandidateArticle[]; query: string }> {
@@ -564,7 +572,62 @@ async function searchPubmedForNiche(terms: NicheSearchTerms, retmax: number, yea
   return { items, query };
 }
 
-async function searchCrossrefForNiche(terms: NicheSearchTerms, rows: number, yearsBack: number): Promise<CandidateArticle[]> {
+/**
+ * Busca focada na Cochrane Database of Systematic Reviews via PubMed.
+ * Cochrane é tratada como fonte prioritária para revisões sistemáticas
+ * de alta qualidade — sem ela, nichos como capsulite adesiva perdem cobertura.
+ */
+async function searchCochraneForNiche(terms: NicheSearchTerms, retmax: number, yearsBack: number): Promise<{ items: CandidateArticle[]; query: string }> {
+  const themeTerms: NicheSearchTerms = { keywords: terms.keywords, mesh: terms.mesh };
+  const baseQuery = buildPubmedQuery({ terms: themeTerms, yearsBack, studyTypes: false });
+  if (!baseQuery) return { items: [], query: "" };
+  const query = `${baseQuery} AND ("Cochrane Database Syst Rev"[Journal])`;
+  const esearchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&sort=relevance&retmax=${retmax}&term=${encodeURIComponent(query)}`;
+  const es = await fetchJsonSafe(esearchUrl);
+  const ids: string[] = es?.esearchresult?.idlist || [];
+  if (!ids.length) return { items: [], query };
+
+  await SLEEP(350);
+  const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${ids.join(",")}`;
+  const sj = await fetchJsonSafe(summaryUrl);
+
+  await SLEEP(350);
+  const efetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&rettype=abstract&id=${ids.join(",")}`;
+  const xml = await fetchTextWithRetry(efetchUrl, 15000) || "";
+
+  const items: CandidateArticle[] = [];
+  for (const id of ids) {
+    const rec = sj?.result?.[id];
+    if (!rec?.title) continue;
+    const pubtypes = rec.pubtype || [];
+    if ((pubtypes as string[]).some((p) => /retracted|retraction|withdrawn/i.test(p))) continue;
+    let doi: string | null = null;
+    for (const a of rec.articleids || []) {
+      if (a?.idtype === "doi" && typeof a.value === "string") {
+        doi = cleanDoiStr(a.value);
+        if (doi) break;
+      }
+    }
+    const year = Number(String(rec.pubdate || "").match(/(\d{4})/)?.[1]) || null;
+    const authors = Array.isArray(rec.authors)
+      ? rec.authors.slice(0, 6).map((a: any) => a.name).filter(Boolean).join(", ")
+      : null;
+    items.push({
+      title: htmlToText(rec.title),
+      authors,
+      year,
+      journal: rec.fulljournalname || rec.source || "Cochrane Database of Systematic Reviews",
+      doi,
+      pmid: id,
+      abstract: extractAbstractFromXml(xml, id),
+      studyType: "Systematic Review",
+      source: "cochrane",
+    });
+  }
+  return { items, query };
+}
+
+
   const minYear = new Date().getFullYear() - yearsBack;
   const q = (terms.keywords || []).slice(0, 4).join(" OR ");
   if (!q) return [];
@@ -658,10 +721,11 @@ async function enrichCandidatesWithAi(
     year: c.year,
     study_type: c.studyType,
     abstract: (c.abstract || "").slice(0, 1800),
+    has_abstract: !!(c.abstract && c.abstract.trim().length > 50),
   }));
   const prompt = `Para CADA artigo abaixo, responda com:
-- abstract: 3 a 5 frases em pt-BR resumindo objetivo, método e resultado.
-- key_findings: 1 a 2 frases em pt-BR com o achado clínico mais aplicável.
+- abstract: 3 a 5 frases em pt-BR resumindo objetivo, método e resultado, BASEADAS ESTRITAMENTE no campo "abstract" fornecido. Se "has_abstract" for false, retorne null — NÃO invente conteúdo a partir do título.
+- key_findings: 1 a 2 frases em pt-BR com o achado clínico mais aplicável EXTRAÍDO do abstract. Se não houver abstract, retorne null. NUNCA escreva frases genéricas do tipo "este estudo aborda...". Cada artigo deve ter um achado distinto e específico — se vários artigos parecerem ter o mesmo achado, você está alucinando: retorne null.
 - study_type: um de "RCT" | "Systematic Review" | "Meta-analysis" | "Review" | "Clinical Trial".
 - pedro_score: número inteiro 0-10 SOMENTE se você TIVER CERTEZA pela base PEDro; senão null. NUNCA estime.
 
@@ -1022,18 +1086,21 @@ serve(async (req) => {
       // 1) Termos de busca canônicos por nicho (PubMed-first, reprodutível)
       const terms = getNicheSearchTerms(niche, nicheDescription);
 
-      // 2) Busca em paralelo: PubMed (motor principal) + Crossref (complemento p/ IF≥3)
-      const [pubmedRes, crossrefRes] = await Promise.all([
+      // 2) Busca em paralelo: PubMed (motor principal) + Cochrane (RS prioritárias) + Crossref (complemento p/ IF≥3)
+      const [pubmedRes, cochraneRes, crossrefRes] = await Promise.all([
         searchPubmedForNiche(terms, count * 4, yearsBack),
+        searchCochraneForNiche(terms, Math.max(count, 3), yearsBack),
         searchCrossrefForNiche(terms, count * 3, yearsBack),
       ]);
 
-      const merged = dedupeCandidates([...pubmedRes.items, ...crossrefRes]);
+      // Cochrane primeiro no merge — dedup mantém a primeira ocorrência (revisão Cochrane prevalece sobre o mesmo PMID indexado em PubMed genérico).
+      const merged = dedupeCandidates([...cochraneRes.items, ...pubmedRes.items, ...crossrefRes]);
       const bySourceFound = {
         pubmed: pubmedRes.items.length,
+        cochrane: cochraneRes.items.length,
         crossref: crossrefRes.length,
       };
-      console.log(`[ingest] niche=${niche} pubmed=${bySourceFound.pubmed} crossref=${bySourceFound.crossref} merged=${merged.length}`);
+      console.log(`[ingest] niche=${niche} pubmed=${bySourceFound.pubmed} cochrane=${bySourceFound.cochrane} crossref=${bySourceFound.crossref} merged=${merged.length}`);
 
       // 3) Remove duplicados já existentes na base
       const fresh = await filterAlreadyStored(adminClient, merged);
@@ -1047,7 +1114,7 @@ serve(async (req) => {
       let rejectedUnverified = 0;
       let pedroWarning = 0;
       let priorityJournalCount = 0;
-      const bySourceInserted: Record<string, number> = { pubmed: 0, crossref: 0 };
+      const bySourceInserted: Record<string, number> = { pubmed: 0, cochrane: 0, crossref: 0 };
 
       for (let i = 0; i < toEnrich.length && inserted < count; i++) {
         const c = toEnrich[i];
@@ -1124,6 +1191,7 @@ serve(async (req) => {
         bySourceFound,
         bySourceInserted,
         queryUsed: pubmedRes.query,
+        cochraneQuery: cochraneRes.query,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

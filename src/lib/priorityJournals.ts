@@ -1,5 +1,7 @@
 // Mirror of supabase/functions/_shared/priority-journals.ts for client UI.
 export const PRIORITY_JOURNALS: { name: string; impact: number }[] = [
+  { name: "Cochrane Database of Systematic Reviews", impact: 8.4 },
+  { name: "Cochrane Database Syst Rev", impact: 8.4 },
   { name: "Journal of Physiotherapy", impact: 9.0 },
   { name: "Journal of Orthopaedic & Sports Physical Therapy", impact: 6.9 },
   { name: "JOSPT", impact: 6.9 },
