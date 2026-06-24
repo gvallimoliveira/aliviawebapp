@@ -5,7 +5,7 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, Stethoscope, Crown, RotateCcw, Building2, Star, Briefcase, ClipboardList, UserCog } from "lucide-react";
+import { Shield, Stethoscope, Crown, RotateCcw, Building2, Star, Briefcase, ClipboardList, UserCog, GraduationCap } from "lucide-react";
 import AdminSupportInboxButton from "./AdminSupportInboxButton";
 
 
