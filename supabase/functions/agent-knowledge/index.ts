@@ -410,6 +410,7 @@ CRITÉRIOS OBRIGATÓRIOS:
 - PEDro score ≥ 7/10 (se RCT). Para revisões sistemáticas/meta-análises, pode listar mesmo sem PEDro (usar 8 como padrão).
 - Priorize meta-análises, revisões sistemáticas e RCTs recentes (últimos 15 anos).
 - NÃO invente estudos. Se não tiver certeza absoluta da existência do estudo, NÃO o inclua.
+- IDENTIFICADORES: **prefira fornecer o PMID** (mais estável que DOI). Se não souber o DOI com 100% de certeza, deixe DOI=null e forneça apenas PMID. NUNCA chute um DOI — todo par título↔DOI é checado contra o PubMed por similaridade de título e pares inconsistentes são descartados.
 - NÃO gere URLs para PEDro (search.pedro.org.au, pedro.org.au/...) — os IDs internos da PEDro não são previsíveis e qualquer link fabricado retorna 404. Use SOMENTE DOI e/ou PMID verificáveis.
 - Campos por estudo:
   • title (string)
@@ -420,8 +421,8 @@ CRITÉRIOS OBRIGATÓRIOS:
   • study_type ("RCT" | "Systematic Review" | "Meta-analysis")
   • abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado)
   • key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável)
-  • doi (string, formato "10.xxxx/yyyy" — sem "https://doi.org/". Null se não souber.)
-  • pmid (string apenas numérica, ex: "31234567". Null se não souber.)
+  • doi (string, formato "10.xxxx/yyyy" — sem "https://doi.org/". Null se não souber com certeza.)
+  • pmid (string apenas numérica, ex: "31234567". Preferencial.)
 - NÃO inclua o campo "url" / "source_url".
 
 Responda APENAS um JSON array. Sem texto adicional.`;
