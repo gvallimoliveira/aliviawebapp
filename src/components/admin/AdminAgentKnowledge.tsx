@@ -48,7 +48,9 @@ const agentErrorMessage = async (error: any, fallback = "Falha ao processar a so
   if (response && typeof response.clone === "function") {
     try {
       const payload = await response.clone().json();
-      code = payload?.error || payload?.message || code;
+      code = payload?.reason
+        ? `${payload?.error || payload?.message || code}: ${payload.reason}`
+        : payload?.error || payload?.message || code;
     } catch { /* keep fallback */ }
   }
   const messages: Record<string, string> = {
