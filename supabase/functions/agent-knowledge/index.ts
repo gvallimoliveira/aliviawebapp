@@ -526,56 +526,94 @@ Responda APENAS um JSON array. Sem texto adicional.`;
       });
     }
 
-    // ---------- VERIFY (varredura: remove artigos não confirmáveis) ----------
-    if (action === "verify") {
+    // ---------- VERIFY / REVALIDATE ----------
+    // Both actions use the SAME strict verifyArticle (title cross-check obrigatório).
+    // Diferença: "verify" (legacy) DELETA não-confirmáveis.
+    //            "revalidate" (novo, preferido) DESAPROVA (approved=false) para revisão humana,
+    //                          sem perder o registro.
+    if (action === "verify" || action === "revalidate") {
+      const isRevalidate = action === "revalidate";
       const scope = body.scope === "approved" ? "approved" : body.scope === "pending" ? "pending" : "all";
       const nicheFilter: string | undefined = body.niche;
       const dryRun = body.dryRun === true;
 
-      let q = adminClient.from("knowledge_articles").select("id, title, doi, source_url, approved, niche_tags").limit(1000);
+      let q = adminClient.from("knowledge_articles")
+        .select("id, title, doi, pmid, source_url, approved, niche_tags")
+        .limit(1000);
       if (scope === "approved") q = q.eq("approved", true);
       if (scope === "pending") q = q.eq("approved", false);
       if (nicheFilter) q = q.contains("niche_tags", [nicheFilter]);
       const { data: rows, error } = await q;
       if (error) throw error;
 
-      let checked = 0, verified = 0, removed = 0, updated = 0;
+      let checked = 0, verified = 0, removed = 0, updated = 0, mismatchFixed = 0, demoted = 0;
       const removedItems: any[] = [];
+      const demotedItems: any[] = [];
+      const mismatchFixedItems: any[] = [];
+
       for (const r of rows || []) {
         checked++;
-        // tentar extrair PMID da source_url se já for um link PubMed
-        const pmidMatch = typeof r.source_url === "string"
-          ? r.source_url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d{4,})/i)
+        // Prefer stored pmid; fall back to extracting from source_url for legacy rows.
+        const pmidStored = cleanPmidStr((r as any).pmid);
+        const pmidFromUrl = typeof r.source_url === "string"
+          ? r.source_url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d{4,})/i)?.[1] || null
           : null;
-        const pmidGuess = pmidMatch ? pmidMatch[1] : null;
-        const v = await verifyArticle({ title: r.title, doi: r.doi, pmid: pmidGuess });
+        const pmidHint = pmidStored || pmidFromUrl;
+
+        const v = await verifyArticle({ title: r.title, doi: r.doi, pmid: pmidHint });
+
         if (v.verified) {
           verified++;
-          const newUrl = v.sourceUrl;
-          const newDoi = v.doi || r.doi;
-          if (newUrl && (newUrl !== r.source_url || newDoi !== r.doi)) {
+          const newUrl = v.sourceUrl || (v.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${v.pmid}/` : r.source_url);
+          // Trust the verifier's DOI (may be null if the original was wrong & PubMed has no DOI).
+          const newDoi = v.doi ?? (v.doiMismatch ? null : r.doi);
+          const newPmid = v.pmid || pmidStored;
+          const wasMismatch = !!v.doiMismatch;
+          if (wasMismatch) {
+            mismatchFixed++;
+            mismatchFixedItems.push({ id: r.id, title: r.title, oldDoi: r.doi, newDoi, newPmid, matchedTitle: v.matchedTitle });
+          }
+          const changed = newUrl !== r.source_url || newDoi !== r.doi || newPmid !== pmidStored;
+          if (changed) {
             if (!dryRun) {
               await adminClient.from("knowledge_articles")
-                .update({ source_url: newUrl, doi: newDoi, updated_at: new Date().toISOString() })
+                .update({ source_url: newUrl, doi: newDoi, pmid: newPmid, updated_at: new Date().toISOString() })
                 .eq("id", r.id);
             }
             updated++;
           }
         } else {
-          removed++;
-          removedItems.push({ id: r.id, title: r.title, doi: r.doi });
-          if (!dryRun) {
-            await adminClient.from("knowledge_articles").delete().eq("id", r.id);
+          if (isRevalidate) {
+            // Soft: demote to pending for manual review instead of deleting.
+            demoted++;
+            demotedItems.push({ id: r.id, title: r.title, doi: r.doi, pmid: pmidStored, reason: v.reason || "not_found" });
+            if (!dryRun && r.approved) {
+              await adminClient.from("knowledge_articles")
+                .update({ approved: false, updated_at: new Date().toISOString() })
+                .eq("id", r.id);
+            }
+          } else {
+            // Legacy hard delete path.
+            removed++;
+            removedItems.push({ id: r.id, title: r.title, doi: r.doi });
+            if (!dryRun) {
+              await adminClient.from("knowledge_articles").delete().eq("id", r.id);
+            }
           }
         }
         // throttle leve para respeitar NCBI (~3 req/s sem API key)
         await new Promise((res) => setTimeout(res, 350));
       }
 
-      return new Response(JSON.stringify({ ok: true, scope, niche: nicheFilter || null, checked, verified, removed, updated, dryRun, removedItems }), {
+      return new Response(JSON.stringify({
+        ok: true, action, scope, niche: nicheFilter || null,
+        checked, verified, updated, mismatchFixed, removed, demoted,
+        dryRun, removedItems, demotedItems, mismatchFixedItems,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
