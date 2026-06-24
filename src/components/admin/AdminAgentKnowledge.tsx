@@ -470,9 +470,7 @@ export default function AdminAgentKnowledge() {
                       </p>
                     </div>
                     <div className="flex flex-col gap-1 items-end shrink-0">
-                      {a.pedro_score != null && (
-                        <Badge variant={a.pedro_score >= 8 ? "default" : "secondary"}>PEDro {a.pedro_score}/10</Badge>
-                      )}
+                      {pedroBadge(a)}
                       {a.study_type && <Badge variant="outline" className="text-[10px]">{a.study_type}</Badge>}
                       {a.verification_status === "verified" ? (
                         <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ID validado</Badge>
@@ -532,6 +530,21 @@ export default function AdminAgentKnowledge() {
                         ? <>O identificador resolve para “{a.verification_matched_title}”{typeof a.verification_similarity === "number" ? ` (similaridade ${Math.round(a.verification_similarity * 100)}%)` : ""}, não para o título cadastrado.</>
                         : "Não foi possível confirmar esse título por DOI/PMID no PubMed/Crossref."}
                       {a.verification_reason ? ` Motivo: ${a.verification_reason}.` : ""}
+                    </div>
+                  )}
+
+                  {a.pedro_score_status && a.pedro_score_status !== "verified" && a.pedro_score_status !== "not_applicable" && (
+                    <div className="mt-2 rounded-md border border-destructive/20 bg-destructive/5 p-2 text-[11px] text-muted-foreground">
+                      <span className="font-medium text-destructive">Crivo PEDro falhou.</span>{" "}
+                      {a.pedro_score_reason || "A nota PEDro não foi confirmada na base PEDro."}
+                      {a.pedro_record_id ? ` Registro PEDro: ${a.pedro_record_id}.` : ""}
+                    </div>
+                  )}
+
+                  {a.pedro_score_status === "not_applicable" && (
+                    <div className="mt-2 rounded-md border border-primary/20 bg-primary/5 p-2 text-[11px] text-muted-foreground">
+                      <span className="font-medium text-primary">PEDro validado como N/A.</span>{" "}
+                      Revisão/meta-análise mantida, mas sem nota numérica para não alucinar score.
                     </div>
                   )}
 
