@@ -544,10 +544,11 @@ export default function AdminAgentKnowledge() {
                   )}
 
                   {a.pedro_score_status && a.pedro_score_status !== "verified" && a.pedro_score_status !== "not_applicable" && (
-                    <div className="mt-2 rounded-md border border-destructive/20 bg-destructive/5 p-2 text-[11px] text-muted-foreground">
-                      <span className="font-medium text-destructive">Crivo PEDro falhou.</span>{" "}
+                    <div className="mt-2 rounded-md border border-amber-500/30 bg-amber-50 dark:bg-amber-950/20 p-2 text-[11px] text-amber-900 dark:text-amber-200">
+                      <span className="font-medium">⚠️ Aviso PEDro (opcional).</span>{" "}
                       {a.pedro_score_reason || "A nota PEDro não foi confirmada na base PEDro."}
-                      {a.pedro_record_id ? ` Registro PEDro: ${a.pedro_record_id}.` : ""}
+                      {a.pedro_record_id ? ` Registro PEDro: ${a.pedro_record_id}.` : ""}{" "}
+                      Não bloqueia aprovação — um bom artigo em periódico exigente pode não constar na PEDro. Avalie e decida.
                     </div>
                   )}
 
