@@ -179,7 +179,7 @@ export default function AdminAgentKnowledge() {
     }
   };
 
-  useEffect(() => { if (!authLoading && user) fetchList(); /* eslint-disable-next-line */ }, [status, nicheFilter, favoritesOnly, authLoading, user?.id]);
+  useEffect(() => { if (!authLoading && user) fetchList(); clearSelection(); /* eslint-disable-next-line */ }, [status, nicheFilter, favoritesOnly, authLoading, user?.id]);
 
   const handleToggleFavorite = async (id: string, current: boolean) => {
     // Optimistic update
