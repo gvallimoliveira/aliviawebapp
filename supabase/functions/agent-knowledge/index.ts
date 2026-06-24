@@ -115,6 +115,12 @@ function titleSimilarity(a: string, b: string): number {
   for (const w of ta) if (tb.has(w)) inter++;
   return inter / Math.max(ta.size, tb.size);
 }
+const TITLE_STOPWORDS = new Set(["does", "work", "with", "from", "into", "over", "under", "after", "before", "systematic", "review", "meta", "analysis", "trial", "study", "effect", "effects", "treatment", "therapy"]);
+function titleSearchTokens(title: string): string[] {
+  return Array.from(new Set(normalizeTitle(title).split(" ")
+    .filter((w) => w.length > 3 && !TITLE_STOPWORDS.has(w))))
+    .slice(0, 8);
+}
 function cleanDoiStr(doi: any): string | null {
   if (typeof doi !== "string") return null;
   const s = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "").trim();
@@ -156,6 +162,11 @@ async function pubmedTitleFor(pmid: string): Promise<string | null> {
   return j?.result?.[pmid]?.title || null;
 }
 
+async function pubmedSummaryFor(pmid: string): Promise<any | null> {
+  const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${pmid}`);
+  return j?.result?.[pmid] || null;
+}
+
 function verificationPatch(v: VerifyResult, status?: "verified" | "invalid" | "needs_review") {
   return {
     verification_status: status || (v.verified ? "verified" : "invalid"),
@@ -169,9 +180,10 @@ function verificationPatch(v: VerifyResult, status?: "verified" | "invalid" | "n
 
 // Title-match thresholds:
 //   ≥0.6 when we already have a strong external identifier (DOI/PMID).
-//   ≥0.7 when we only have free-text title lookup.
+//   ≥0.85 when we only have free-text title lookup (prevents replacing a bad DOI
+//   with a merely related paper — e.g. tennis elbow review → unrelated knee paper).
 const SIM_ID = 0.6;
-const SIM_TITLE = 0.7;
+const SIM_TITLE = 0.85;
 
 /**
  * Verifies an article against PubMed/Crossref AND cross-checks the resolved
@@ -183,6 +195,12 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
   const pmid = cleanPmidStr(item.pmid);
   const title = (item.title || "").trim();
   let doiMismatch = false;
+  let bestRejected: { matchedTitle?: string; similarity?: number; reason: string } | null = null;
+  const rememberRejected = (matchedTitle: string | null, similarity: number, reason: string) => {
+    if (!bestRejected || similarity > (bestRejected.similarity ?? -1)) {
+      bestRejected = { matchedTitle: matchedTitle || undefined, similarity, reason };
+    }
+  };
 
   // 1) DOI → PubMed (esearch by [doi], then esummary to compare titles)
   if (doi) {
@@ -196,6 +214,7 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
       }
       // DOI resolves but to a different paper — discard DOI and try title route.
       doiMismatch = true;
+      rememberRejected(pmTitle, sim, "doi_title_mismatch");
       console.warn(`[verify] DOI ${doi} resolves to PMID ${id} ("${pmTitle}") but title "${title}" sim=${sim.toFixed(2)}`);
     } else {
       // Crossref fallback — also requires title match.
@@ -207,6 +226,7 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
           return { verified: true, doi, sourceUrl: `https://doi.org/${doi}`, source: "crossref_doi", matchedTitle: crTitle, similarity: sim, reason: "title_identifier_match" };
         }
         doiMismatch = true;
+        rememberRejected(crTitle, sim, "doi_title_mismatch");
         console.warn(`[verify] Crossref DOI ${doi} title "${crTitle}" vs "${title}" sim=${sim.toFixed(2)}`);
       }
     }
@@ -220,18 +240,27 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
       if (sim >= SIM_ID || !title) {
         return { verified: true, pmid, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, source: "pubmed_pmid", matchedTitle: pmTitle, similarity: sim, reason: "title_identifier_match", doiMismatch };
       }
+      rememberRejected(pmTitle, sim, "pmid_title_mismatch");
     }
   }
 
-  // 3) Busca por título (fallback que pode "recuperar" o paper correto quando o DOI da IA estava errado)
+  // 3) Busca por título: only accept near-exact matches. Related papers are NOT enough.
   if (title && title.length > 12) {
-    const term = normalizeTitle(title).split(" ").slice(0, 12).join(" ");
-    const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=5&term=${encodeURIComponent(term)}%5BTitle%5D`);
-    const ids: string[] = j?.esearchresult?.idlist || [];
+    const searches = [
+      `"${title.replace(/"/g, "")}"[Title]`,
+      titleSearchTokens(title).map((t) => `${t}[Title]`).join(" AND "),
+    ].filter(Boolean);
+    const ids = new Set<string>();
+    for (const term of searches) {
+      const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=5&term=${encodeURIComponent(term)}`);
+      for (const id of (j?.esearchresult?.idlist || [])) ids.add(id);
+      if (ids.size >= 5) break;
+    }
     if (ids.length) {
-      const sj = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${ids.join(",")}`);
+      const idList = Array.from(ids).slice(0, 5);
+      const sj = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${idList.join(",")}`);
       let best: { id: string; sim: number; title: string } | null = null;
-      for (const id of ids) {
+      for (const id of idList) {
         const rec = sj?.result?.[id];
         if (!rec?.title) continue;
         const sim = titleSimilarity(title, rec.title);
@@ -260,7 +289,13 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
     }
   }
 
-  return { verified: false, doiMismatch, reason: doiMismatch ? "doi_mismatch_no_title_match" : "not_found" };
+  return {
+    verified: false,
+    doiMismatch,
+    matchedTitle: bestRejected?.matchedTitle,
+    similarity: bestRejected?.similarity,
+    reason: bestRejected?.reason || (doiMismatch ? "doi_mismatch_no_title_match" : "not_found"),
+  };
 }
 
 serve(async (req) => {
