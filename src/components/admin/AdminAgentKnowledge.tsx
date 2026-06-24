@@ -258,7 +258,7 @@ export default function AdminAgentKnowledge() {
       if (data?.error) throw new Error(data.error);
       toast({
         title: "Busca concluída",
-        description: `${data.inserted} verificado(s) e adicionado(s) · ${data.rejectedUnverified ?? 0} descartado(s) por DOI/PMID · ${data.rejectedPedro ?? 0} descartado(s) por crivo PEDro (de ${data.candidates} candidatos).`,
+        description: `${data.inserted} adicionado(s) (de ${data.candidates}) · ${data.rejectedUnverified ?? 0} descartado(s) por DOI/PMID · ${data.pedroWarning ?? 0} com PEDro como aviso amarelo (você decide) · ${data.priorityJournalCount ?? 0} em periódico prioritário (IF ≥ 3).`,
       });
       setStatus("pending");
       setNicheFilter(ingestNiche);
