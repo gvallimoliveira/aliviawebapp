@@ -709,66 +709,89 @@ async function filterAlreadyStored(adminClient: any, candidates: CandidateArticl
   });
 }
 
+async function enrichOneWithAi(
+  lovableKey: string,
+  c: CandidateArticle,
+): Promise<{ abstract_pt: string | null; key_findings_pt: string | null; study_type: string | null; pedro_score: number | null }> {
+  const hasAbstract = !!(c.abstract && c.abstract.trim().length > 50);
+  if (!hasAbstract) {
+    // Sem abstract real: não inventar nada a partir do título.
+    return { abstract_pt: null, key_findings_pt: null, study_type: c.studyType ?? null, pedro_score: null };
+  }
+
+  const prompt = `Você receberá UM ÚNICO artigo científico com seu abstract original.
+Sua tarefa é traduzir/resumir ESTRITAMENTE com base nesse abstract específico.
+PROIBIDO usar conhecimento externo, memória de outros estudos, ou inferências além do texto fornecido.
+Se o abstract não menciona um número, intervenção ou desfecho — não invente.
+
+Responda APENAS um JSON objeto com as chaves:
+- abstract: 3 a 5 frases em pt-BR resumindo objetivo, método e resultado DESTE abstract.
+- key_findings: 1 a 2 frases em pt-BR com o achado clínico mais aplicável EXTRAÍDO LITERALMENTE deste abstract (cite intervenção/comparador/desfecho específicos quando o abstract trouxer). Se o abstract não traz achado claro, retorne null.
+- study_type: um de "RCT" | "Systematic Review" | "Meta-analysis" | "Review" | "Clinical Trial".
+- pedro_score: número 0-10 SOMENTE se tiver certeza pela base PEDro; senão null.
+
+Artigo:
+${JSON.stringify({
+    title: c.title,
+    journal: c.journal,
+    year: c.year,
+    study_type_hint: c.studyType,
+    abstract: (c.abstract || "").slice(0, 4000),
+  }, null, 2)}`;
+
+  const modelChain = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite", "google/gemini-2.5-pro"];
+  for (const model of modelChain) {
+    try {
+      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}` },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: "Você é um bibliotecário científico rigoroso. Responde apenas JSON válido. NUNCA mistura informação de outros estudos nem usa memória externa." },
+            { role: "user", content: prompt },
+          ],
+        }),
+      });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const raw = j.choices?.[0]?.message?.content || "";
+      const parsed = safeParseJson(raw);
+      const obj = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as any : null;
+      if (!obj) continue;
+      const ps = Number(obj.pedro_score);
+      return {
+        abstract_pt: typeof obj.abstract === "string" ? obj.abstract : null,
+        key_findings_pt: typeof obj.key_findings === "string" ? obj.key_findings : null,
+        study_type: typeof obj.study_type === "string" ? obj.study_type : (c.studyType ?? null),
+        pedro_score: Number.isFinite(ps) ? ps : null,
+      };
+    } catch (_e) {
+      // tenta próximo modelo
+    }
+  }
+  return { abstract_pt: null, key_findings_pt: null, study_type: c.studyType ?? null, pedro_score: null };
+}
+
 async function enrichCandidatesWithAi(
   lovableKey: string,
   candidates: CandidateArticle[],
 ): Promise<Array<{ abstract_pt: string | null; key_findings_pt: string | null; study_type: string | null; pedro_score: number | null }>> {
   if (!candidates.length) return [];
-  const payload = candidates.map((c, i) => ({
-    i,
-    title: c.title,
-    journal: c.journal,
-    year: c.year,
-    study_type: c.studyType,
-    abstract: (c.abstract || "").slice(0, 1800),
-    has_abstract: !!(c.abstract && c.abstract.trim().length > 50),
-  }));
-  const prompt = `Para CADA artigo abaixo, responda com:
-- abstract: 3 a 5 frases em pt-BR resumindo objetivo, método e resultado, BASEADAS ESTRITAMENTE no campo "abstract" fornecido. Se "has_abstract" for false, retorne null — NÃO invente conteúdo a partir do título.
-- key_findings: 1 a 2 frases em pt-BR com o achado clínico mais aplicável EXTRAÍDO do abstract. Se não houver abstract, retorne null. NUNCA escreva frases genéricas do tipo "este estudo aborda...". Cada artigo deve ter um achado distinto e específico — se vários artigos parecerem ter o mesmo achado, você está alucinando: retorne null.
-- study_type: um de "RCT" | "Systematic Review" | "Meta-analysis" | "Review" | "Clinical Trial".
-- pedro_score: número inteiro 0-10 SOMENTE se você TIVER CERTEZA pela base PEDro; senão null. NUNCA estime.
-
-NÃO altere título, autores, DOI, journal — eles vêm de fontes verificadas.
-Responda APENAS um JSON array preservando a ordem e o campo "i" de cada item.
-
-Artigos:
-${JSON.stringify(payload, null, 2)}`;
-
-  const modelChain = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite", "google/gemini-2.5-pro"];
-  for (const model of modelChain) {
-    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}` },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: "Você é um bibliotecário científico rigoroso. Responde apenas JSON válido." },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
-    if (!r.ok) continue;
-    const j = await r.json();
-    const raw = j.choices?.[0]?.message?.content || "";
-    const parsed = safeParseJson(raw);
-    const arr = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.articles) ? parsed.articles : null;
-    if (!arr) continue;
-    // map by `i`
-    const out = candidates.map((_c, idx) => {
-      const found = arr.find((x: any) => Number(x?.i) === idx) || arr[idx] || {};
-      const ps = Number(found.pedro_score);
-      return {
-        abstract_pt: typeof found.abstract === "string" ? found.abstract : null,
-        key_findings_pt: typeof found.key_findings === "string" ? found.key_findings : null,
-        study_type: typeof found.study_type === "string" ? found.study_type : null,
-        pedro_score: Number.isFinite(ps) ? ps : null,
-      };
-    });
-    return out;
+  // Enriquecimento POR ARTIGO (não em batch) para evitar contaminação cruzada
+  // entre abstracts semelhantes — causa raiz dos "achados repetidos".
+  const CONCURRENCY = 3;
+  const results: Array<{ abstract_pt: string | null; key_findings_pt: string | null; study_type: string | null; pedro_score: number | null }> = new Array(candidates.length);
+  let cursor = 0;
+  async function worker() {
+    while (true) {
+      const i = cursor++;
+      if (i >= candidates.length) return;
+      results[i] = await enrichOneWithAi(lovableKey, candidates[i]);
+    }
   }
-  // fallback vazio — ainda inserimos com abstract original do PubMed
-  return candidates.map(() => ({ abstract_pt: null, key_findings_pt: null, study_type: null, pedro_score: null }));
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, candidates.length) }, () => worker()));
+  return results;
 }
 
 serve(async (req) => {
