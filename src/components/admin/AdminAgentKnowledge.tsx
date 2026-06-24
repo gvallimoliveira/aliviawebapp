@@ -192,6 +192,7 @@ export default function AdminAgentKnowledge() {
       if (error) throw new Error(error.message || "Falha ao consultar artigos");
       if (data?.error) throw new Error(data.error);
       setArticles(data?.articles || []);
+      fetchCounts();
     } catch (e: any) {
       console.error("[AdminAgentKnowledge] list error", e);
       toast({ title: "Erro ao listar artigos", description: e.message, variant: "destructive" });
