@@ -256,7 +256,7 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
       for (const id of (j?.esearchresult?.idlist || [])) ids.add(id);
       if (ids.size >= 5) break;
     }
-    if (ids.length) {
+    if (ids.size) {
       const idList = Array.from(ids).slice(0, 5);
       const sj = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${idList.join(",")}`);
       let best: { id: string; sim: number; title: string } | null = null;
