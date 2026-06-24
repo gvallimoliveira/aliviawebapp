@@ -1191,6 +1191,7 @@ serve(async (req) => {
         bySourceFound,
         bySourceInserted,
         queryUsed: pubmedRes.query,
+        cochraneQuery: cochraneRes.query,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
