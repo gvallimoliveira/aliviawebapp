@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { isPriorityJournal, journalImpactFactor, priorityJournalListForPrompt } from "../_shared/priority-journals.ts";
+import { buildPubmedQuery, getNicheSearchTerms, type NicheSearchTerms } from "../_shared/niche-search-terms.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -456,6 +457,256 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
   };
 }
 
+// ---------- SEARCH (PubMed-first, Crossref complementar) ----------
+
+const SLEEP = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchTextWithRetry(url: string, timeoutMs = 12000, retries = 2): Promise<string | null> {
+  for (let i = 0; i <= retries; i++) {
+    const r = await fetchTextSafe(url, timeoutMs);
+    if (r) return r;
+    await SLEEP(400 + i * 400);
+  }
+  return null;
+}
+
+interface CandidateArticle {
+  title: string;
+  authors?: string | null;
+  year?: number | null;
+  journal?: string | null;
+  doi?: string | null;
+  pmid?: string | null;
+  abstract?: string | null;
+  studyType?: string | null;
+  source: "pubmed" | "crossref" | "pedro";
+}
+
+function parsePubmedPubType(pubtypes: any[]): string | null {
+  const t = (pubtypes || []).map((x: string) => String(x).toLowerCase());
+  if (t.some((x) => x.includes("meta-analysis"))) return "Meta-analysis";
+  if (t.some((x) => x.includes("systematic review"))) return "Systematic Review";
+  if (t.some((x) => x.includes("randomized controlled trial"))) return "RCT";
+  if (t.some((x) => x.includes("clinical trial"))) return "Clinical Trial";
+  if (t.some((x) => x.includes("review"))) return "Review";
+  return null;
+}
+
+function extractAbstractFromXml(xml: string, pmid: string): string | null {
+  // very small parser: locate <PubmedArticle> bloc for PMID then AbstractText nodes
+  const blockRe = new RegExp(`<PubmedArticle>([\\s\\S]*?<PMID[^>]*>${pmid}</PMID>[\\s\\S]*?)</PubmedArticle>`, "i");
+  const m = xml.match(blockRe);
+  const block = m ? m[1] : "";
+  if (!block) return null;
+  const parts: string[] = [];
+  const re = /<AbstractText(?:\s+[^>]*Label="([^"]*)"[^>]*)?[^>]*>([\s\S]*?)<\/AbstractText>/gi;
+  let mm: RegExpExecArray | null;
+  while ((mm = re.exec(block)) !== null) {
+    const label = mm[1] ? `${mm[1]}: ` : "";
+    parts.push(label + htmlToText(mm[2]));
+  }
+  const out = parts.join(" ").trim();
+  return out || null;
+}
+
+async function searchPubmedForNiche(terms: NicheSearchTerms, retmax: number, yearsBack: number): Promise<{ items: CandidateArticle[]; query: string }> {
+  const query = buildPubmedQuery({ terms, yearsBack });
+  if (!query) return { items: [], query: "" };
+
+  const esearchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&sort=relevance&retmax=${retmax}&term=${encodeURIComponent(query)}`;
+  const es = await fetchJsonSafe(esearchUrl);
+  const ids: string[] = es?.esearchresult?.idlist || [];
+  if (!ids.length) return { items: [], query };
+
+  await SLEEP(350);
+  const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${ids.join(",")}`;
+  const sj = await fetchJsonSafe(summaryUrl);
+
+  await SLEEP(350);
+  const efetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&rettype=abstract&id=${ids.join(",")}`;
+  const xml = await fetchTextWithRetry(efetchUrl, 15000) || "";
+
+  const items: CandidateArticle[] = [];
+  for (const id of ids) {
+    const rec = sj?.result?.[id];
+    if (!rec?.title) continue;
+    const pubtypes = rec.pubtype || [];
+    const studyType = parsePubmedPubType(pubtypes);
+    // skip plain editorials/letters/case reports
+    if (!studyType) continue;
+    // skip retractions
+    if ((pubtypes as string[]).some((p) => /retracted|retraction/i.test(p))) continue;
+
+    let doi: string | null = null;
+    for (const a of rec.articleids || []) {
+      if (a?.idtype === "doi" && typeof a.value === "string") {
+        doi = cleanDoiStr(a.value);
+        if (doi) break;
+      }
+    }
+    const year = Number(String(rec.pubdate || "").match(/(\d{4})/)?.[1]) || null;
+    const authors = Array.isArray(rec.authors)
+      ? rec.authors.slice(0, 6).map((a: any) => a.name).filter(Boolean).join(", ")
+      : null;
+
+    items.push({
+      title: htmlToText(rec.title),
+      authors,
+      year,
+      journal: rec.fulljournalname || rec.source || null,
+      doi,
+      pmid: id,
+      abstract: extractAbstractFromXml(xml, id),
+      studyType,
+      source: "pubmed",
+    });
+  }
+  return { items, query };
+}
+
+async function searchCrossrefForNiche(terms: NicheSearchTerms, rows: number, yearsBack: number): Promise<CandidateArticle[]> {
+  const minYear = new Date().getFullYear() - yearsBack;
+  const q = (terms.keywords || []).slice(0, 4).join(" OR ");
+  if (!q) return [];
+  const url = `https://api.crossref.org/works?rows=${rows}&query.bibliographic=${encodeURIComponent(q)}&filter=type:journal-article,from-pub-date:${minYear}`;
+  const j = await fetchJsonSafe(url, 12000);
+  const items: CandidateArticle[] = [];
+  for (const it of j?.message?.items || []) {
+    const journal = Array.isArray(it["container-title"]) ? it["container-title"][0] : null;
+    if (!isPriorityJournal(journal)) continue; // só priorizamos IF ≥ 3
+    const title = Array.isArray(it.title) ? htmlToText(it.title[0]) : null;
+    if (!title) continue;
+    const year = it.issued?.["date-parts"]?.[0]?.[0] || null;
+    const authors = Array.isArray(it.author)
+      ? it.author.slice(0, 6).map((a: any) => [a.family, a.given?.[0]].filter(Boolean).join(" ")).filter(Boolean).join(", ")
+      : null;
+    const type = String(it.type || "").toLowerCase();
+    const subtype = String(it.subtype || "").toLowerCase();
+    let studyType: string | null = null;
+    if (/meta-analysis/i.test(title)) studyType = "Meta-analysis";
+    else if (/systematic review/i.test(title)) studyType = "Systematic Review";
+    else if (/randomi[sz]ed/i.test(title) || /trial/i.test(title) || type === "proceedings-article") studyType = "RCT";
+    else studyType = "Journal Article";
+    items.push({
+      title,
+      authors,
+      year,
+      journal,
+      doi: cleanDoiStr(it.DOI),
+      pmid: null,
+      abstract: htmlToText(it.abstract || "") || null,
+      studyType,
+      source: "crossref",
+    });
+  }
+  return items;
+}
+
+function dedupeCandidates(list: CandidateArticle[]): CandidateArticle[] {
+  const seen = new Set<string>();
+  const out: CandidateArticle[] = [];
+  for (const c of list) {
+    const key = c.pmid ? `pmid:${c.pmid}` : c.doi ? `doi:${c.doi.toLowerCase()}` : `t:${normalizeTitle(c.title)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(c);
+  }
+  return out;
+}
+
+async function filterAlreadyStored(adminClient: any, candidates: CandidateArticle[]): Promise<CandidateArticle[]> {
+  if (!candidates.length) return [];
+  const pmids = candidates.map((c) => c.pmid).filter(Boolean) as string[];
+  const dois = candidates.map((c) => c.doi).filter(Boolean) as string[];
+  const titles = candidates.map((c) => normalizeTitle(c.title));
+
+  const existingPmids = new Set<string>();
+  const existingDois = new Set<string>();
+  const existingTitles = new Set<string>();
+
+  if (pmids.length) {
+    const { data } = await adminClient.from("knowledge_articles").select("pmid").in("pmid", pmids);
+    for (const r of data || []) if (r.pmid) existingPmids.add(String(r.pmid));
+  }
+  if (dois.length) {
+    const { data } = await adminClient.from("knowledge_articles").select("doi").in("doi", dois);
+    for (const r of data || []) if (r.doi) existingDois.add(String(r.doi).toLowerCase());
+  }
+  // Title check (mais caro): só para os que não casaram acima
+  if (titles.length) {
+    const { data } = await adminClient.from("knowledge_articles").select("title");
+    for (const r of data || []) if (r.title) existingTitles.add(normalizeTitle(r.title));
+  }
+
+  return candidates.filter((c) => {
+    if (c.pmid && existingPmids.has(c.pmid)) return false;
+    if (c.doi && existingDois.has(c.doi.toLowerCase())) return false;
+    if (existingTitles.has(normalizeTitle(c.title))) return false;
+    return true;
+  });
+}
+
+async function enrichCandidatesWithAi(
+  lovableKey: string,
+  candidates: CandidateArticle[],
+): Promise<Array<{ abstract_pt: string | null; key_findings_pt: string | null; study_type: string | null; pedro_score: number | null }>> {
+  if (!candidates.length) return [];
+  const payload = candidates.map((c, i) => ({
+    i,
+    title: c.title,
+    journal: c.journal,
+    year: c.year,
+    study_type: c.studyType,
+    abstract: (c.abstract || "").slice(0, 1800),
+  }));
+  const prompt = `Para CADA artigo abaixo, responda com:
+- abstract: 3 a 5 frases em pt-BR resumindo objetivo, método e resultado.
+- key_findings: 1 a 2 frases em pt-BR com o achado clínico mais aplicável.
+- study_type: um de "RCT" | "Systematic Review" | "Meta-analysis" | "Review" | "Clinical Trial".
+- pedro_score: número inteiro 0-10 SOMENTE se você TIVER CERTEZA pela base PEDro; senão null. NUNCA estime.
+
+NÃO altere título, autores, DOI, journal — eles vêm de fontes verificadas.
+Responda APENAS um JSON array preservando a ordem e o campo "i" de cada item.
+
+Artigos:
+${JSON.stringify(payload, null, 2)}`;
+
+  const modelChain = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite", "google/gemini-2.5-pro"];
+  for (const model of modelChain) {
+    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}` },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: "Você é um bibliotecário científico rigoroso. Responde apenas JSON válido." },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+    if (!r.ok) continue;
+    const j = await r.json();
+    const raw = j.choices?.[0]?.message?.content || "";
+    const parsed = safeParseJson(raw);
+    const arr = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.articles) ? parsed.articles : null;
+    if (!arr) continue;
+    // map by `i`
+    const out = candidates.map((_c, idx) => {
+      const found = arr.find((x: any) => Number(x?.i) === idx) || arr[idx] || {};
+      const ps = Number(found.pedro_score);
+      return {
+        abstract_pt: typeof found.abstract === "string" ? found.abstract : null,
+        key_findings_pt: typeof found.key_findings === "string" ? found.key_findings : null,
+        study_type: typeof found.study_type === "string" ? found.study_type : null,
+        pedro_score: Number.isFinite(ps) ? ps : null,
+      };
+    });
+    return out;
+  }
+  // fallback vazio — ainda inserimos com abstract original do PubMed
+  return candidates.map(() => ({ abstract_pt: null, key_findings_pt: null, study_type: null, pedro_score: null }));
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -761,134 +1012,85 @@ serve(async (req) => {
       const niche: string = body.niche;
       const nicheDescription = getNicheDescription(body);
       const count = Math.min(Math.max(Number(body.count) || 6, 1), 10);
-      if (!niche || !nicheDescription) {
+      const yearsBack = Math.min(Math.max(Number(body.yearsBack) || 15, 3), 25);
+      if (!niche) {
         return new Response(JSON.stringify({ error: "Nicho inválido" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const prompt = `Você é um curador de evidências em fisioterapia.
 
-Liste ${count} estudos REAIS, de alta qualidade para o nicho:
-"${nicheDescription}"
+      // 1) Termos de busca canônicos por nicho (PubMed-first, reprodutível)
+      const terms = getNicheSearchTerms(niche, nicheDescription);
 
-PRIORIZE FORTEMENTE artigos publicados nestes periódicos exigentes (fator de impacto ≥ 3 na área de Fisioterapia, ranking 2026):
-${priorityJournalListForPrompt()}
-Pelo menos 60% dos estudos devem ser desses periódicos. Eles têm revisão por pares rigorosa e são referência mundial.
+      // 2) Busca em paralelo: PubMed (motor principal) + Crossref (complemento p/ IF≥3)
+      const [pubmedRes, crossrefRes] = await Promise.all([
+        searchPubmedForNiche(terms, count * 4, yearsBack),
+        searchCrossrefForNiche(terms, count * 3, yearsBack),
+      ]);
 
-CRITÉRIOS:
-- A nota PEDro NUNCA deve ser estimada. Só informe pedro_score numérico quando você tiver certeza absoluta que a própria base PEDro mostra essa nota. Em dúvida, use pedro_score=null — a falta de nota PEDro NÃO desqualifica o artigo se o periódico for exigente.
-- Para revisões sistemáticas/meta-análises, se a PEDro mostrar Score N/A ou sem nota definida, use pedro_score=null. NUNCA use 8 como padrão.
-- Priorize meta-análises, revisões sistemáticas e RCTs recentes (últimos 15 anos).
-- NÃO invente estudos. Se não tiver certeza absoluta da existência do estudo, NÃO o inclua.
-- IDENTIFICADORES: **prefira fornecer o PMID** (mais estável que DOI). Se não souber o DOI com 100% de certeza, deixe DOI=null e forneça apenas PMID. NUNCA chute um DOI — todo par título↔DOI é checado contra o PubMed por similaridade de título e pares inconsistentes são descartados.
-- NÃO gere URLs para PEDro — IDs internos da PEDro não são previsíveis e qualquer link fabricado retorna 404. Use SOMENTE DOI e/ou PMID verificáveis.
-- Campos por estudo:
-  • title (string)
-  • authors (string "Sobrenome A, Sobrenome B")
-  • year (int)
-  • journal (string — nome completo do periódico)
-  • pedro_score (int 0-10 ou null)
-  • study_type ("RCT" | "Systematic Review" | "Meta-analysis")
-  • abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado)
-  • key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável)
-  • doi (string, formato "10.xxxx/yyyy" — sem "https://doi.org/". Null se não souber com certeza.)
-  • pmid (string apenas numérica, ex: "31234567". Preferencial.)
-- NÃO inclua o campo "url" / "source_url".
-
-Responda APENAS um JSON array. Sem texto adicional.`;
-
-
-      const callAi = async (model: string) => {
-        return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: "system", content: "Você é um bibliotecário científico rigoroso. Responde apenas JSON válido." },
-              { role: "user", content: prompt },
-            ],
-          }),
-        });
+      const merged = dedupeCandidates([...pubmedRes.items, ...crossrefRes]);
+      const bySourceFound = {
+        pubmed: pubmedRes.items.length,
+        crossref: crossrefRes.length,
       };
+      console.log(`[ingest] niche=${niche} pubmed=${bySourceFound.pubmed} crossref=${bySourceFound.crossref} merged=${merged.length}`);
 
-      const modelChain = ["google/gemini-2.5-pro", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"];
-      let aiResp: Response | null = null;
-      let usedModel = "";
-      let lastStatus = 0;
-      let lastBody = "";
-      for (const m of modelChain) {
-        const r = await callAi(m);
-        if (r.ok) { aiResp = r; usedModel = m; break; }
-        lastStatus = r.status;
-        lastBody = await r.text();
-        console.warn(`[ingest] ${m} returned ${r.status}: ${lastBody.slice(0, 200)}`);
-        // Only fall back on credit/rate issues; other errors are fatal
-        if (r.status !== 402 && r.status !== 429) break;
-      }
+      // 3) Remove duplicados já existentes na base
+      const fresh = await filterAlreadyStored(adminClient, merged);
+      // 4) Limita a `count*2` para enriquecer / inserir até `count`
+      const toEnrich = fresh.slice(0, Math.max(count, 1) * 2);
 
-      if (!aiResp) {
-        console.error("[ingest] all models failed", lastStatus, lastBody);
-        if (lastStatus === 429) return new Response(JSON.stringify({ error: "ai_rate_limit" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        if (lastStatus === 402) return new Response(JSON.stringify({ error: "ai_credits_exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        return new Response(JSON.stringify({ error: "ai_error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      console.log(`[ingest] using model ${usedModel} for niche ${niche}`);
-
-      const aiJson = await aiResp.json();
-      const raw = aiJson.choices?.[0]?.message?.content || "";
-      const parsed = safeParseJson(raw);
-      const items = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.articles) ? parsed.articles : [];
+      // 5) Enriquecimento via IA (apenas resumo/study_type — não inventa metadados)
+      const enriched = await enrichCandidatesWithAi(LOVABLE_API_KEY, toEnrich);
 
       let inserted = 0;
       let rejectedUnverified = 0;
       let pedroWarning = 0;
       let priorityJournalCount = 0;
-      for (const it of items) {
-        try {
-          const pedro = Number(it.pedro_score);
-          if (!it.title) continue;
+      const bySourceInserted: Record<string, number> = { pubmed: 0, crossref: 0 };
 
-          // *** Verificação obrigatória contra PubMed/Crossref ***
-          const verification = await verifyArticle({ title: it.title, doi: it.doi, pmid: it.pmid });
+      for (let i = 0; i < toEnrich.length && inserted < count; i++) {
+        const c = toEnrich[i];
+        const enr = enriched[i] || { abstract_pt: null, key_findings_pt: null, study_type: null, pedro_score: null };
+        try {
+          // Verificação cruzada — pubmed candidates já têm PMID, então passa quase sempre
+          const verification = await verifyArticle({ title: c.title, doi: c.doi, pmid: c.pmid });
           if (!verification.verified) {
             rejectedUnverified++;
-            console.warn(`[ingest] unverified, skipping: ${it.title}`);
+            console.warn(`[ingest] unverified, skipping: ${c.title}`);
             continue;
           }
 
-          // *** Nota PEDro checada na base PEDro, mas NÃO bloqueia ingestão.
-          // Falha PEDro = sinal amarelo: admin decide se aprova (artigo em
-          // periódico exigente pode não constar na PEDro).
-          const pedroV = await verifyPedroScore({ title: it.title, study_type: it.study_type, pedro_score: isNaN(pedro) ? null : pedro });
-          if (!isAcceptablePedro(pedroV)) {
-            pedroWarning++;
-            console.log(`[ingest] PEDro warning (admin review): ${it.title} (${pedroV.reason})`);
-          }
+          // PEDro = aviso amarelo opcional
+          const pedroV = await verifyPedroScore({ title: c.title, study_type: enr.study_type || c.studyType, pedro_score: enr.pedro_score });
+          if (!isAcceptablePedro(pedroV)) pedroWarning++;
 
-          const text = [it.title, it.abstract, it.key_findings].filter(Boolean).join("\n\n");
+          const abstractFinal = enr.abstract_pt || c.abstract || null;
+          const keyFindings = enr.key_findings_pt || null;
+          const studyType = enr.study_type || c.studyType || null;
+
+          const text = [c.title, abstractFinal, keyFindings].filter(Boolean).join("\n\n");
           const vec = await embed(LOVABLE_API_KEY, text);
 
-          const finalDoi = verification.doi || cleanDoiStr(it.doi);
-          const finalPmid = verification.pmid || cleanPmidStr(it.pmid);
+          const finalDoi = verification.doi || c.doi || null;
+          const finalPmid = verification.pmid || c.pmid || null;
           const sourceUrl = verification.sourceUrl
             || (finalPmid ? `https://pubmed.ncbi.nlm.nih.gov/${finalPmid}/`
               : finalDoi ? `https://doi.org/${finalDoi}` : null);
-
           if (!sourceUrl) { rejectedUnverified++; continue; }
 
-          if (isPriorityJournal(it.journal)) priorityJournalCount++;
+          if (isPriorityJournal(c.journal)) priorityJournalCount++;
 
           const row: any = {
-            title: String(it.title).slice(0, 500),
-            authors: it.authors || null,
-            year: it.year ? Number(it.year) : null,
-            journal: it.journal || null,
+            title: String(c.title).slice(0, 500),
+            authors: c.authors || null,
+            year: c.year || null,
+            journal: c.journal || null,
             pedro_score: pedroV.score,
-            study_type: it.study_type || null,
+            study_type: studyType,
             niche_tags: [niche],
-            abstract: it.abstract || null,
-            key_findings: it.key_findings || null,
+            abstract: abstractFinal,
+            key_findings: keyFindings,
             doi: finalDoi,
             pmid: finalPmid,
             source_url: sourceUrl,
@@ -899,17 +1101,35 @@ Responda APENAS um JSON array. Sem texto adicional.`;
           };
           if (vec) row.embedding = vec;
           const { error: insErr } = await adminClient.from("knowledge_articles").insert(row);
-          if (!insErr) inserted++;
-          else console.warn("[ingest] insert error", insErr);
+          if (!insErr) {
+            inserted++;
+            bySourceInserted[c.source] = (bySourceInserted[c.source] || 0) + 1;
+          } else {
+            console.warn("[ingest] insert error", insErr);
+          }
+          await SLEEP(300);
         } catch (e) {
           console.warn("[ingest] item error", e);
         }
       }
 
-      return new Response(JSON.stringify({ ok: true, inserted, candidates: items.length, rejectedUnverified, pedroWarning, priorityJournalCount }), {
+      return new Response(JSON.stringify({
+        ok: true,
+        inserted,
+        candidates: merged.length,
+        afterDedup: fresh.length,
+        rejectedUnverified,
+        pedroWarning,
+        priorityJournalCount,
+        bySourceFound,
+        bySourceInserted,
+        queryUsed: pubmedRes.query,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+
 
     // ---------- VERIFY / REVALIDATE ----------
     // Both actions use the SAME strict verifyArticle (title cross-check obrigatório).
