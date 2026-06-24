@@ -150,20 +150,28 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     if (p.data) setData((prev) => ({ ...prev, ...p.data }));
   };
 
+  // Track which fields were pre-filled from a previous assessment so we can render
+  // a subtle "from previous" badge next to their labels.
+  const [prefilledKeys, setPrefilledKeys] = useState<Set<string>>(new Set());
+  const isPrefilled = useCallback((k: string) => prefilledKeys.has(k), [prefilledKeys]);
+
   // Pre-fill all reassessment fields
   useEffect(() => {
+    const filledNow = new Set<string>();
     setData((prev) => {
       const updates: Partial<AnamnesisData> = {};
-      if (initialPainRegions?.length) updates.painRegions = initialPainRegions;
+      const mark = (k: string) => filledNow.add(k);
+      if (initialPainRegions?.length) { updates.painRegions = initialPainRegions; mark("painRegions"); }
       if (initialChiefComplaints?.length) {
         updates.chiefComplaints = initialChiefComplaints;
         updates.chiefComplaint = initialChiefComplaints[0] || "";
+        mark("chiefComplaints");
       }
-      if (initialOnset) updates.onset = initialOnset;
-      if (initialHasPriorSurgery) updates.hasPriorSurgery = initialHasPriorSurgery;
-      if (initialSurgeryDetails) updates.surgeryDetails = initialSurgeryDetails;
-      if (initialActivityLevel) updates.activityLevel = initialActivityLevel;
-      if (initialHasGymAccess) updates.hasGymAccess = initialHasGymAccess;
+      if (initialOnset) { updates.onset = initialOnset; mark("onset"); }
+      if (initialHasPriorSurgery) { updates.hasPriorSurgery = initialHasPriorSurgery; mark("hasPriorSurgery"); }
+      if (initialSurgeryDetails) { updates.surgeryDetails = initialSurgeryDetails; mark("surgeryDetails"); }
+      if (initialActivityLevel) { updates.activityLevel = initialActivityLevel; mark("activityLevel"); }
+      if (initialHasGymAccess) { updates.hasGymAccess = initialHasGymAccess; mark("hasGymAccess"); }
       // Merge extras (demographics + stable clinical history). Skip empty values.
       if (initialExtras) {
         for (const [k, v] of Object.entries(initialExtras)) {
@@ -171,11 +179,26 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
           if (typeof v === "string" && v.trim() === "") continue;
           if (Array.isArray(v) && v.length === 0) continue;
           (updates as any)[k] = v;
+          mark(k);
         }
       }
       return { ...prev, ...updates };
     });
+    if (filledNow.size > 0) {
+      setPrefilledKeys((prev) => {
+        const merged = new Set(prev);
+        filledNow.forEach((k) => merged.add(k));
+        return merged;
+      });
+    }
   }, [initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras]);
+
+  // Subtle "from previous assessment" badge.
+  const PrefilledBadge = () => (
+    <span className="ml-2 inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary/80 border border-primary/20 whitespace-nowrap">
+      {t("assessment.prefilled.badge")}
+    </span>
+  );
 
   const complaints = [
     "anamnesis.complaint.neck_pain",
