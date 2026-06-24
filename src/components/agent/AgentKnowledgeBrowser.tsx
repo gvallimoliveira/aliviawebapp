@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, ExternalLink, Search, BookOpen } from "lucide-react";
 import { AGENT_NICHES, AGENT_NICHE_LABEL } from "@/lib/agentNiches";
+import { isPriorityJournal, journalImpactFactor } from "@/lib/priorityJournals";
 
 type Article = {
   id: string;
