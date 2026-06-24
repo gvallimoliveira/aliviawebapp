@@ -98,6 +98,21 @@ export default function AdminAgentKnowledge() {
     if (kind === "ingest") return `${label} (${c.approved}✓ · ${c.pending}⏳)`;
     return `${label} (${nicheCountFor(slug)})`;
   };
+  const pedroBadge = (a: Article) => {
+    if (a.pedro_score_status === "verified" && a.pedro_score != null) {
+      return <Badge variant={a.pedro_score >= 8 ? "default" : "secondary"}>PEDro {a.pedro_score}/10 validado</Badge>;
+    }
+    if (a.pedro_score_status === "not_applicable") {
+      return <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PEDro N/A validado</Badge>;
+    }
+    if (["unscored", "mismatch", "not_found"].includes(a.pedro_score_status || "")) {
+      return <Badge variant="destructive" className="text-[10px]">PEDro reprovado</Badge>;
+    }
+    if (a.pedro_score != null) {
+      return <Badge variant="outline" className="text-[10px]">PEDro {a.pedro_score}/10 não revalidado</Badge>;
+    }
+    return <Badge variant="outline" className="text-[10px]">PEDro pendente</Badge>;
+  };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
 
