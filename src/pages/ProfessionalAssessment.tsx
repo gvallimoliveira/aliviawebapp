@@ -69,6 +69,7 @@ const ProfessionalAssessment = () => {
   const [prefilledSurgeryDetails, setPrefilledSurgeryDetails] = useState<string | undefined>(undefined);
   const [prefilledActivityLevel, setPrefilledActivityLevel] = useState<string | undefined>(undefined);
   const [prefilledGymAccess, setPrefilledGymAccess] = useState<string | undefined>(undefined);
+  const [prefilledExtras, setPrefilledExtras] = useState<Record<string, any> | undefined>(undefined);
   const [previousQuestionnaireAnswers, setPreviousQuestionnaireAnswers] = useState<Record<string, Record<string, number>> | undefined>(undefined);
 
   // Validate professional exists and has active subscription
