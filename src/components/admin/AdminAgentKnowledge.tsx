@@ -72,6 +72,27 @@ export default function AdminAgentKnowledge() {
   const [editDoi, setEditDoi] = useState("");
   const [editPmid, setEditPmid] = useState("");
   const [verifyingOne, setVerifyingOne] = useState(false);
+  const [nicheCounts, setNicheCounts] = useState<Record<string, { pending: number; approved: number; total: number }>>({});
+
+  const fetchCounts = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("agent-knowledge", { body: { action: "counts" } });
+      if (error || data?.error) return;
+      setNicheCounts(data?.counts || {});
+    } catch (e) { console.warn("[counts]", e); }
+  };
+
+  const nicheCountFor = (slug: string) => {
+    const c = nicheCounts[slug];
+    if (!c) return 0;
+    return status === "approved" ? c.approved : c.pending;
+  };
+  const labelWithCount = (slug: string, label: string, kind: "tab" | "ingest" = "tab") => {
+    const c = nicheCounts[slug];
+    if (!c) return label;
+    if (kind === "ingest") return `${label} (${c.approved}✓ · ${c.pending}⏳)`;
+    return `${label} (${nicheCountFor(slug)})`;
+  };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
 
@@ -171,6 +192,7 @@ export default function AdminAgentKnowledge() {
       if (error) throw new Error(error.message || "Falha ao consultar artigos");
       if (data?.error) throw new Error(data.error);
       setArticles(data?.articles || []);
+      fetchCounts();
     } catch (e: any) {
       console.error("[AdminAgentKnowledge] list error", e);
       toast({ title: "Erro ao listar artigos", description: e.message, variant: "destructive" });
@@ -306,7 +328,7 @@ export default function AdminAgentKnowledge() {
               </SelectTrigger>
               <SelectContent>
                 {AGENT_NICHES.map((n) => (
-                  <SelectItem key={n.slug} value={n.slug}>{n.label}</SelectItem>
+                  <SelectItem key={n.slug} value={n.slug}>{labelWithCount(n.slug, n.label, "ingest")}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -337,7 +359,7 @@ export default function AdminAgentKnowledge() {
                 <SelectContent>
                   <SelectItem value="all">Todos os nichos</SelectItem>
                   {AGENT_NICHES.map((n) => (
-                    <SelectItem key={n.slug} value={n.slug}>{n.label}</SelectItem>
+                    <SelectItem key={n.slug} value={n.slug}>{labelWithCount(n.slug, n.label, "tab")}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

@@ -351,6 +351,28 @@ serve(async (req) => {
       });
     }
 
+    // ---------- COUNTS BY NICHE ----------
+    if (action === "counts") {
+      const { data, error } = await adminClient
+        .from("knowledge_articles")
+        .select("niche_tags, approved")
+        .limit(5000);
+      if (error) throw error;
+      const byNiche: Record<string, { pending: number; approved: number; total: number }> = {};
+      for (const row of (data || []) as any[]) {
+        const tags: string[] = Array.isArray(row.niche_tags) ? row.niche_tags : [];
+        for (const t of tags) {
+          if (!byNiche[t]) byNiche[t] = { pending: 0, approved: 0, total: 0 };
+          byNiche[t].total++;
+          if (row.approved) byNiche[t].approved++;
+          else byNiche[t].pending++;
+        }
+      }
+      return new Response(JSON.stringify({ counts: byNiche }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ---------- LIST ----------
     if (action === "list") {
       const status = body.status === "approved" ? true : body.status === "pending" ? false : null;
