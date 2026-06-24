@@ -165,10 +165,12 @@ export default function AgentKnowledgeBrowser() {
               </p>
               {filtered.map((a) => {
                 const cleanDoi = a.doi?.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
-                const href = cleanDoi
-                  ? `https://doi.org/${cleanDoi}`
-                  : a.source_url || `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(a.title)}`;
-                const linkLabel = cleanDoi ? "DOI" : a.source_url?.includes("pubmed") ? "PubMed" : "Abrir";
+                // Prefer PubMed (PMID) as the primary validation link — PMID is more stable
+                // than DOI and lets the user confirm the article matches the title.
+                const pubmedHref = a.pmid
+                  ? `https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`
+                  : a.source_url?.includes("pubmed") ? a.source_url : null;
+                const doiHref = cleanDoi ? `https://doi.org/${cleanDoi}` : null;
                 return (
                   <div key={a.id} className="rounded-lg border border-border/60 bg-card p-3 hover:shadow-sm transition-shadow">
                     <div className="flex items-start justify-between gap-2">
@@ -199,14 +201,29 @@ export default function AgentKnowledgeBrowser() {
                           {AGENT_NICHE_LABEL[t] || t}
                         </Badge>
                       ))}
-                      <a
-                        href={href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] text-primary hover:underline inline-flex items-center gap-1 ml-auto"
-                      >
-                        {linkLabel} <ExternalLink className="h-3 w-3" />
-                      </a>
+                      <div className="ml-auto flex items-center gap-2">
+                        {pubmedHref && (
+                          <a
+                            href={pubmedHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-primary hover:underline inline-flex items-center gap-1"
+                            title={a.pmid ? `PMID ${a.pmid}` : "PubMed"}
+                          >
+                            PubMed{a.pmid ? ` ${a.pmid}` : ""} <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                        {doiHref && (
+                          <a
+                            href={doiHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-muted-foreground hover:underline inline-flex items-center gap-1"
+                          >
+                            DOI <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
