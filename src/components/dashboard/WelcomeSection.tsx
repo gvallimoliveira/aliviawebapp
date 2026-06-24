@@ -87,8 +87,24 @@ const WelcomeSection = ({
           })()
         : null;
 
+    // Academic mode: always show academic badge (overrides PRO branch even when
+    // subscription_status='active' was granted by the admin Academic toggle).
+    const isAcademicMode =
+      professional?.active_profile_mode === "student" ||
+      (professional?.is_student && !professional?.is_partner);
+
     // Professional/Clinic context: show Pro badge
     if (activeContext === "professional" || activeContext === "clinic") {
+      if (isAcademicMode) {
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            {clinicRoleBadge}
+            <Badge className="bg-emerald-600 text-white text-[10px] px-2 py-0.5 gap-1">
+              <GraduationCap className="h-3 w-3" />Acadêmico
+            </Badge>
+          </div>
+        );
+      }
       if (professional?.is_partner) {
         return (
           <div className="flex flex-wrap gap-1.5">
