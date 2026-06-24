@@ -177,7 +177,7 @@ export default function AdminAgentKnowledge() {
       if (data.verified) {
         toast({
           title: approveIfVerified ? "Validado e aprovado" : "Validado",
-          description: data.matchedTitle ? `Título no PubMed: ${data.matchedTitle}` : "Identificador confirmado.",
+          description: data.pedroReason || (data.matchedTitle ? `Título no PubMed: ${data.matchedTitle}` : "Identificador confirmado."),
         });
         cancelEdit();
         fetchList();
