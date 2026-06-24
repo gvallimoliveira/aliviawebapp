@@ -132,6 +132,28 @@ function cleanPmidStr(pmid: any): string | null {
   return s.length >= 4 ? s : null;
 }
 
+function isReviewType(studyType?: string | null): boolean {
+  return /systematic|review|meta/i.test(studyType || "");
+}
+
+function htmlToText(html: string): string {
+  return (html || "")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#039;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function cleanPedroTitle(title: string): string {
+  return htmlToText(title).replace(/\s*\[with consumer summary\]\s*$/i, "").trim();
+}
+
 interface VerifyResult {
   verified: boolean;
   pmid?: string;
@@ -157,6 +179,17 @@ async function fetchJsonSafe(url: string, timeoutMs = 9000): Promise<any | null>
   } catch { return null; }
 }
 
+async function fetchTextSafe(url: string, timeoutMs = 12000): Promise<string | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    const r = await fetch(url, { signal: ctrl.signal, headers: { "User-Agent": "AliviA-Agent/1.0 (mailto:contato@aliviaweb.com.br)" } });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    return await r.text();
+  } catch { return null; }
+}
+
 async function pubmedTitleFor(pmid: string): Promise<string | null> {
   const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${pmid}`);
   return j?.result?.[pmid]?.title || null;
@@ -170,6 +203,135 @@ function verificationPatch(v: VerifyResult, status?: "verified" | "invalid" | "n
     verification_matched_title: v.matchedTitle || null,
     verification_similarity: typeof v.similarity === "number" ? Number(v.similarity.toFixed(3)) : null,
     verification_reason: v.reason || (v.verified ? "title_identifier_match" : "not_found"),
+  };
+}
+
+type PedroScoreStatus = "verified" | "not_applicable" | "unscored" | "mismatch" | "not_found" | "needs_review";
+
+interface PedroVerifyResult {
+  status: PedroScoreStatus;
+  score: number | null;
+  source: "pedro" | null;
+  recordId?: string | null;
+  sourceUrl?: string | null;
+  matchedTitle?: string | null;
+  method?: string | null;
+  similarity?: number | null;
+  reason: string;
+}
+
+function pedroPatch(v: PedroVerifyResult) {
+  return {
+    pedro_score: v.score,
+    pedro_score_status: v.status,
+    pedro_score_verified_at: new Date().toISOString(),
+    pedro_score_source: v.source,
+    pedro_record_id: v.recordId || null,
+    pedro_score_reason: v.reason,
+  };
+}
+
+function isAcceptablePedro(v: PedroVerifyResult): boolean {
+  return v.status === "verified" || v.status === "not_applicable";
+}
+
+function parsePedroRows(html: string): Array<{ id: string; title: string; method: string; scoreText: string; url: string }> {
+  const rows: Array<{ id: string; title: string; method: string; scoreText: string; url: string }> = [];
+  const re = /<tr>\s*<td><a\s+href="([^"]*record-detail\/(\d+)[^"]*)"[^>]*>([\s\S]*?)<\/a><\/td>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    rows.push({
+      url: m[1].replace(/&amp;/g, "&"),
+      id: m[2],
+      title: cleanPedroTitle(m[3]),
+      method: htmlToText(m[4]),
+      scoreText: htmlToText(m[5]),
+    });
+  }
+  return rows;
+}
+
+/**
+ * PEDro score is never trusted from the AI. We query search.pedro.org.au,
+ * match the PEDro result title against our title, and only keep numeric scores
+ * when PEDro itself shows them. Systematic reviews/meta-analyses commonly show
+ * N/A in PEDro; in that case the article may stay, but pedro_score is nulled.
+ */
+async function verifyPedroScore(item: { title?: string; study_type?: string | null; pedro_score?: number | null }): Promise<PedroVerifyResult> {
+  const title = (item.title || "").trim();
+  if (!title || title.length < 8) {
+    return { status: "not_found", score: null, source: null, reason: "Título insuficiente para buscar na PEDro." };
+  }
+
+  const tokens = titleSearchTokens(title);
+  const queries = Array.from(new Set([
+    tokens.slice(0, 6).join(" "),
+    tokens.slice(0, 5).join(" "),
+    tokens.slice(0, 4).join(" "),
+  ].filter((q) => q.length > 3)));
+
+  let best: { id: string; title: string; method: string; scoreText: string; url: string; sim: number } | null = null;
+  for (const q of queries) {
+    const html = await fetchTextSafe(`https://search.pedro.org.au/search-results?calc_text=${encodeURIComponent(q)}`);
+    if (!html) continue;
+    for (const row of parsePedroRows(html)) {
+      const sim = titleSimilarity(title, row.title);
+      if (!best || sim > best.sim) best = { ...row, sim };
+    }
+    if (best && best.sim >= SIM_TITLE) break;
+  }
+
+  if (!best) {
+    return { status: "not_found", score: null, source: null, reason: "Artigo não encontrado na busca pública da PEDro." };
+  }
+
+  const common = {
+    source: "pedro" as const,
+    recordId: best.id,
+    sourceUrl: `https://search.pedro.org.au/search-results/record-detail/${best.id}`,
+    matchedTitle: best.title,
+    method: best.method,
+    similarity: Number(best.sim.toFixed(3)),
+  };
+
+  if (best.sim < SIM_TITLE) {
+    return {
+      ...common,
+      status: "not_found",
+      score: null,
+      reason: `PEDro encontrou apenas resultado parecido (${Math.round(best.sim * 100)}%): “${best.title}”.`,
+    };
+  }
+
+  const scoreMatch = best.scoreText.match(/\b(10|[0-9])\b/);
+  const pedroScore = scoreMatch ? Number(scoreMatch[1]) : null;
+  const review = isReviewType(best.method) || isReviewType(item.study_type);
+
+  if (pedroScore == null) {
+    return {
+      ...common,
+      status: review ? "not_applicable" : "unscored",
+      score: null,
+      reason: review
+        ? "Registro PEDro é revisão/meta-análise com Score N/A; nota numérica removida para evitar alucinação."
+        : "Registro PEDro encontrado, mas está sem nota definida.",
+    };
+  }
+
+  if (pedroScore < 7) {
+    return {
+      ...common,
+      status: "mismatch",
+      score: pedroScore,
+      reason: `Nota PEDro oficial é ${pedroScore}/10, abaixo do corte mínimo 7/10.`,
+    };
+  }
+
+  return {
+    ...common,
+    status: "verified",
+    score: pedroScore,
+    reason: `Nota PEDro confirmada na base PEDro: ${pedroScore}/10.`,
   };
 }
 
@@ -328,16 +490,17 @@ serve(async (req) => {
     // Available to any authenticated user — UI gates access by plan (PRO/clinic/academic).
     if (action === "list_public") {
       let q = adminClient.from("knowledge_articles")
-        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, verification_status, created_at")
+        .select("id, title, authors, year, journal, pedro_score, pedro_score_status, pedro_score_reason, pedro_score_source, pedro_record_id, pedro_score_verified_at, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, verification_status, created_at")
         .eq("approved", true)
         .eq("verification_status", "verified")
+        .in("pedro_score_status", ["verified", "not_applicable"])
         .order("year", { ascending: false, nullsFirst: false })
         .order("pedro_score", { ascending: false, nullsFirst: false })
         .limit(500);
       if (body.niche) q = q.contains("niche_tags", [body.niche]);
       const yearMin = Number(body.yearMin); if (!Number.isNaN(yearMin) && yearMin > 0) q = q.gte("year", yearMin);
       const yearMax = Number(body.yearMax); if (!Number.isNaN(yearMax) && yearMax > 0) q = q.lte("year", yearMax);
-      const pedroMin = Number(body.pedroMin); if (!Number.isNaN(pedroMin) && pedroMin > 0) q = q.gte("pedro_score", pedroMin);
+      const pedroMin = Number(body.pedroMin); if (!Number.isNaN(pedroMin) && pedroMin > 0) q = q.eq("pedro_score_status", "verified").gte("pedro_score", pedroMin);
       const { data, error } = await q;
       if (error) throw error;
       return new Response(JSON.stringify({ articles: data || [] }), {
@@ -377,7 +540,7 @@ serve(async (req) => {
     if (action === "list") {
       const status = body.status === "approved" ? true : body.status === "pending" ? false : null;
       let q = adminClient.from("knowledge_articles")
-        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, approved, is_favorite, verification_status, verification_checked_at, verification_source, verification_matched_title, verification_similarity, verification_reason, created_at")
+        .select("id, title, authors, year, journal, pedro_score, pedro_score_status, pedro_score_reason, pedro_score_source, pedro_record_id, pedro_score_verified_at, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, approved, is_favorite, verification_status, verification_checked_at, verification_source, verification_matched_title, verification_similarity, verification_reason, created_at")
         .order("is_favorite", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(200);
@@ -406,7 +569,7 @@ serve(async (req) => {
     if (action === "approve") {
       // Backfill embedding if missing so the article is actually usable by RAG
       const { data: cur } = await adminClient.from("knowledge_articles")
-        .select("title, doi, pmid, source_url, abstract, key_findings, embedding").eq("id", body.id).maybeSingle();
+        .select("title, doi, pmid, source_url, abstract, key_findings, embedding, pedro_score, study_type").eq("id", body.id).maybeSingle();
       if (!cur) {
         return new Response(JSON.stringify({ error: "Artigo não encontrado" }), {
           status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -435,12 +598,30 @@ serve(async (req) => {
       const finalDoi = v.doi ?? (v.doiMismatch ? null : cleanDoiStr(cur.doi));
       const finalPmid = v.pmid || cleanPmidStr(cur.pmid) || pmidFromUrl;
       const finalUrl = v.sourceUrl || (finalPmid ? `https://pubmed.ncbi.nlm.nih.gov/${finalPmid}/` : finalDoi ? `https://doi.org/${finalDoi}` : null);
+      const pedroV = await verifyPedroScore({ title: cur.title, study_type: cur.study_type, pedro_score: cur.pedro_score });
+      if (!isAcceptablePedro(pedroV)) {
+        await adminClient.from("knowledge_articles")
+          .update({
+            approved: false,
+            ...verificationPatch(v, "verified"),
+            ...pedroPatch(pedroV),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", body.id);
+        return new Response(JSON.stringify({
+          error: "Artigo não aprovado: nota PEDro não confirmada ou abaixo do corte mínimo.",
+          reason: pedroV.reason,
+          pedroStatus: pedroV.status,
+          pedroMatchedTitle: pedroV.matchedTitle || null,
+        }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       const patch: any = {
         approved: true,
         doi: finalDoi,
         pmid: finalPmid,
         source_url: finalUrl,
         ...verificationPatch(v, "verified"),
+        ...pedroPatch(pedroV),
         updated_at: new Date().toISOString(),
       };
       let embeddingBackfilled = false;
@@ -482,6 +663,14 @@ serve(async (req) => {
         patch.verification_similarity = null;
         patch.verification_reason = "manual_edit_requires_revalidation";
       }
+      if ("title" in patch || "study_type" in patch || "pedro_score" in patch) {
+        patch.approved = false;
+        patch.pedro_score_status = "needs_review";
+        patch.pedro_score_verified_at = null;
+        patch.pedro_score_source = null;
+        patch.pedro_record_id = null;
+        patch.pedro_score_reason = "manual_edit_requires_pedro_revalidation";
+      }
       patch.updated_at = new Date().toISOString();
       // If text fields changed, re-embed
       if (patch.title || patch.abstract || patch.key_findings) {
@@ -514,7 +703,7 @@ serve(async (req) => {
       }
       const { data: row, error: rowErr } = await adminClient
         .from("knowledge_articles")
-        .select("id, title, doi, pmid, source_url, approved")
+        .select("id, title, doi, pmid, source_url, approved, pedro_score, study_type")
         .eq("id", id)
         .maybeSingle();
       if (rowErr) throw rowErr;
@@ -551,6 +740,9 @@ serve(async (req) => {
       const newDoi = v.doi ?? (v.doiMismatch ? null : overrideDoi);
       const newPmid = v.pmid || overridePmid;
       const newUrl = v.sourceUrl || (newPmid ? `https://pubmed.ncbi.nlm.nih.gov/${newPmid}/` : row.source_url);
+      const pedroV = approveIfVerified
+        ? await verifyPedroScore({ title: row.title, study_type: row.study_type, pedro_score: row.pedro_score })
+        : null;
       const patch: any = {
         doi: newDoi,
         pmid: newPmid,
@@ -558,14 +750,27 @@ serve(async (req) => {
         ...verificationPatch(v, "verified"),
         updated_at: new Date().toISOString(),
       };
-      if (approveIfVerified) patch.approved = true;
+      if (pedroV) Object.assign(patch, pedroPatch(pedroV));
+      if (approveIfVerified) patch.approved = !!pedroV && isAcceptablePedro(pedroV);
       await adminClient.from("knowledge_articles").update(patch).eq("id", id);
+
+      if (approveIfVerified && pedroV && !isAcceptablePedro(pedroV)) {
+        return new Response(JSON.stringify({
+          error: "Identificador validado, mas o artigo não foi aprovado porque a nota PEDro não foi confirmada.",
+          reason: pedroV.reason,
+          pedroStatus: pedroV.status,
+          matchedTitle: v.matchedTitle || null,
+          pedroMatchedTitle: pedroV.matchedTitle || null,
+        }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
 
       return new Response(JSON.stringify({
         ok: true, verified: true, doi: newDoi, pmid: newPmid,
         sourceUrl: newUrl, matchedTitle: v.matchedTitle || null,
         similarity: v.similarity ?? null,
-        approved: approveIfVerified || row.approved,
+        pedroStatus: pedroV?.status || null,
+        pedroReason: pedroV?.reason || null,
+        approved: (approveIfVerified && !!pedroV && isAcceptablePedro(pedroV)) || row.approved,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -585,7 +790,9 @@ Liste ${count} estudos REAIS, de alta qualidade (preferencialmente indexados na 
 "${nicheDescription}"
 
 CRITÉRIOS OBRIGATÓRIOS:
-- PEDro score ≥ 7/10 (se RCT). Para revisões sistemáticas/meta-análises, pode listar mesmo sem PEDro (usar 8 como padrão).
+- A nota PEDro NUNCA deve ser estimada. Só informe pedro_score numérico quando você tiver certeza de que a própria base PEDro mostra essa nota.
+- Para revisões sistemáticas/meta-análises, se a PEDro mostrar Score N/A ou sem nota definida, use pedro_score=null. NUNCA use 8 como padrão.
+- Para RCTs/ensaios clínicos, inclua apenas se a nota oficial PEDro for ≥ 7/10; se não souber a nota oficial, não inclua.
 - Priorize meta-análises, revisões sistemáticas e RCTs recentes (últimos 15 anos).
 - NÃO invente estudos. Se não tiver certeza absoluta da existência do estudo, NÃO o inclua.
 - IDENTIFICADORES: **prefira fornecer o PMID** (mais estável que DOI). Se não souber o DOI com 100% de certeza, deixe DOI=null e forneça apenas PMID. NUNCA chute um DOI — todo par título↔DOI é checado contra o PubMed por similaridade de título e pares inconsistentes são descartados.
@@ -595,7 +802,7 @@ CRITÉRIOS OBRIGATÓRIOS:
   • authors (string "Sobrenome A, Sobrenome B")
   • year (int)
   • journal (string)
-  • pedro_score (int 0-10)
+  • pedro_score (int 0-10 ou null quando a PEDro estiver como N/A/sem nota, especialmente revisões)
   • study_type ("RCT" | "Systematic Review" | "Meta-analysis")
   • abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado)
   • key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável)
@@ -650,16 +857,25 @@ Responda APENAS um JSON array. Sem texto adicional.`;
 
       let inserted = 0;
       let rejectedUnverified = 0;
+      let rejectedPedro = 0;
       for (const it of items) {
         try {
           const pedro = Number(it.pedro_score);
-          if (!it.title || isNaN(pedro) || pedro < 7) continue;
+          if (!it.title) continue;
 
           // *** Verificação obrigatória contra PubMed/Crossref ***
           const verification = await verifyArticle({ title: it.title, doi: it.doi, pmid: it.pmid });
           if (!verification.verified) {
             rejectedUnverified++;
             console.warn(`[ingest] unverified, skipping: ${it.title}`);
+            continue;
+          }
+
+          // *** Nota PEDro obrigatoriamente checada na base PEDro — nunca confiar na IA ***
+          const pedroV = await verifyPedroScore({ title: it.title, study_type: it.study_type, pedro_score: isNaN(pedro) ? null : pedro });
+          if (!isAcceptablePedro(pedroV)) {
+            rejectedPedro++;
+            console.warn(`[ingest] PEDro rejected, skipping: ${it.title} (${pedroV.reason})`);
             continue;
           }
 
@@ -679,7 +895,7 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             authors: it.authors || null,
             year: it.year ? Number(it.year) : null,
             journal: it.journal || null,
-            pedro_score: pedro,
+            pedro_score: pedroV.score,
             study_type: it.study_type || null,
             niche_tags: [niche],
             abstract: it.abstract || null,
@@ -689,6 +905,7 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             source_url: sourceUrl,
             approved: false,
             ...verificationPatch(verification, "verified"),
+            ...pedroPatch(pedroV),
             added_by: user.id,
           };
           if (vec) row.embedding = vec;
@@ -700,7 +917,7 @@ Responda APENAS um JSON array. Sem texto adicional.`;
         }
       }
 
-      return new Response(JSON.stringify({ ok: true, inserted, candidates: items.length, rejectedUnverified }), {
+      return new Response(JSON.stringify({ ok: true, inserted, candidates: items.length, rejectedUnverified, rejectedPedro }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -717,7 +934,7 @@ Responda APENAS um JSON array. Sem texto adicional.`;
       const dryRun = body.dryRun === true;
 
       let q = adminClient.from("knowledge_articles")
-        .select("id, title, doi, pmid, source_url, approved, niche_tags")
+        .select("id, title, doi, pmid, source_url, approved, niche_tags, pedro_score, study_type")
         .limit(1000);
       if (scope === "approved") q = q.eq("approved", true);
       if (scope === "pending") q = q.eq("approved", false);
@@ -725,10 +942,11 @@ Responda APENAS um JSON array. Sem texto adicional.`;
       const { data: rows, error } = await q;
       if (error) throw error;
 
-      let checked = 0, verified = 0, removed = 0, updated = 0, mismatchFixed = 0, demoted = 0;
+      let checked = 0, verified = 0, removed = 0, updated = 0, mismatchFixed = 0, demoted = 0, pedroRejected = 0;
       const removedItems: any[] = [];
       const demotedItems: any[] = [];
       const mismatchFixedItems: any[] = [];
+      const pedroRejectedItems: any[] = [];
 
       for (const r of rows || []) {
         checked++;
@@ -742,11 +960,42 @@ Responda APENAS um JSON array. Sem texto adicional.`;
         const v = await verifyArticle({ title: r.title, doi: r.doi, pmid: pmidHint });
 
         if (v.verified) {
-          verified++;
           const newUrl = v.sourceUrl || (v.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${v.pmid}/` : r.source_url);
           // Trust the verifier's DOI (may be null if the original was wrong & PubMed has no DOI).
           const newDoi = v.doi ?? (v.doiMismatch ? null : r.doi);
           const newPmid = v.pmid || pmidStored;
+          const pedroV = await verifyPedroScore({ title: r.title, study_type: (r as any).study_type, pedro_score: (r as any).pedro_score });
+          if (!isAcceptablePedro(pedroV)) {
+            pedroRejected++;
+            pedroRejectedItems.push({ id: r.id, title: r.title, pedroStatus: pedroV.status, pedroScore: pedroV.score, pedroMatchedTitle: pedroV.matchedTitle || null, reason: pedroV.reason });
+            if (isRevalidate) {
+              demoted++;
+              demotedItems.push({ id: r.id, title: r.title, doi: r.doi, pmid: pmidStored, matchedTitle: v.matchedTitle || null, similarity: v.similarity ?? null, reason: pedroV.reason || "pedro_score_failed" });
+              if (!dryRun) {
+                await adminClient.from("knowledge_articles")
+                  .update({
+                    approved: false,
+                    source_url: newUrl,
+                    doi: newDoi,
+                    pmid: newPmid,
+                    ...verificationPatch(v, "verified"),
+                    ...pedroPatch(pedroV),
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", r.id);
+              }
+            } else {
+              removed++;
+              removedItems.push({ id: r.id, title: r.title, doi: r.doi, reason: pedroV.reason });
+              if (!dryRun) {
+                await adminClient.from("knowledge_articles").delete().eq("id", r.id);
+              }
+            }
+            await new Promise((res) => setTimeout(res, 350));
+            continue;
+          }
+
+          verified++;
           const wasMismatch = !!v.doiMismatch;
           if (wasMismatch) {
             mismatchFixed++;
@@ -756,14 +1005,14 @@ Responda APENAS um JSON array. Sem texto adicional.`;
           if (changed) {
             if (!dryRun) {
               await adminClient.from("knowledge_articles")
-                .update({ source_url: newUrl, doi: newDoi, pmid: newPmid, updated_at: new Date().toISOString() })
+                .update({ source_url: newUrl, doi: newDoi, pmid: newPmid, ...pedroPatch(pedroV), updated_at: new Date().toISOString() })
                 .eq("id", r.id);
             }
             updated++;
           }
           if (!dryRun) {
             await adminClient.from("knowledge_articles")
-              .update({ ...verificationPatch(v, "verified"), updated_at: new Date().toISOString() })
+              .update({ ...verificationPatch(v, "verified"), ...pedroPatch(pedroV), updated_at: new Date().toISOString() })
               .eq("id", r.id);
           }
         } else {
@@ -796,8 +1045,8 @@ Responda APENAS um JSON array. Sem texto adicional.`;
 
       return new Response(JSON.stringify({
         ok: true, action, scope, niche: nicheFilter || null,
-        checked, verified, updated, mismatchFixed, removed, demoted,
-        dryRun, removedItems, demotedItems, mismatchFixedItems,
+        checked, verified, updated, mismatchFixed, removed, demoted, pedroRejected,
+        dryRun, removedItems, demotedItems, mismatchFixedItems, pedroRejectedItems,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

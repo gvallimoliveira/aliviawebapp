@@ -1344,7 +1344,12 @@ export type Database = {
           journal: string | null
           key_findings: string | null
           niche_tags: string[]
+          pedro_record_id: string | null
           pedro_score: number | null
+          pedro_score_reason: string | null
+          pedro_score_source: string | null
+          pedro_score_status: string
+          pedro_score_verified_at: string | null
           pmid: string | null
           source_url: string | null
           study_type: string | null
@@ -1371,7 +1376,12 @@ export type Database = {
           journal?: string | null
           key_findings?: string | null
           niche_tags?: string[]
+          pedro_record_id?: string | null
           pedro_score?: number | null
+          pedro_score_reason?: string | null
+          pedro_score_source?: string | null
+          pedro_score_status?: string
+          pedro_score_verified_at?: string | null
           pmid?: string | null
           source_url?: string | null
           study_type?: string | null
@@ -1398,7 +1408,12 @@ export type Database = {
           journal?: string | null
           key_findings?: string | null
           niche_tags?: string[]
+          pedro_record_id?: string | null
           pedro_score?: number | null
+          pedro_score_reason?: string | null
+          pedro_score_source?: string | null
+          pedro_score_status?: string
+          pedro_score_verified_at?: string | null
           pmid?: string | null
           source_url?: string | null
           study_type?: string | null
