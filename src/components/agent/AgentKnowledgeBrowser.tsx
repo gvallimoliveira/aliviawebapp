@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, ExternalLink, Search, BookOpen } from "lucide-react";
 import { AGENT_NICHES, AGENT_NICHE_LABEL } from "@/lib/agentNiches";
+import { isPriorityJournal, journalImpactFactor } from "@/lib/priorityJournals";
 
 type Article = {
   id: string;
@@ -87,7 +88,7 @@ export default function AgentKnowledgeBrowser() {
           <Badge variant="outline" className="text-[10px]">Aprovados · PEDro validado</Badge>
         </div>
         <p className="text-[11px] text-muted-foreground leading-snug">
-          Artigos verificados no PubMed/Crossref e com nota checada na PEDro. Revisões com PEDro N/A aparecem sem nota numérica.
+          Artigos verificados no PubMed/Crossref e aprovados manualmente. ★ marca periódicos com fator de impacto ≥ 3 (Journal of Physiotherapy, JOSPT, BJPT, Physical Therapy etc.). PEDro é sinal complementar — quando ausente, o artigo foi liberado pelo admin com base no rigor do periódico.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -203,7 +204,14 @@ export default function AgentKnowledgeBrowser() {
                     )}
                     <div className="flex flex-wrap items-center gap-1 mt-2">
                       <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ID validado</Badge>
-                      <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PEDro validado</Badge>
+                      {a.pedro_score_status === "verified" || a.pedro_score_status === "not_applicable" ? (
+                        <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PEDro validado</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] border-amber-500/50 text-amber-700 dark:text-amber-300">PEDro não confirmado</Badge>
+                      )}
+                      {isPriorityJournal(a.journal) && (
+                        <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-600 text-white">★ IF {journalImpactFactor(a.journal)?.toFixed(1)}</Badge>
+                      )}
                       {a.study_type && (
                         <Badge variant="outline" className="text-[10px]">{a.study_type}</Badge>
                       )}

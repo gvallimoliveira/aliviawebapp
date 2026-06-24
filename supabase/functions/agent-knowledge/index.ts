@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { isPriorityJournal, journalImpactFactor, priorityJournalListForPrompt } from "../_shared/priority-journals.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -489,11 +490,13 @@ serve(async (req) => {
     // ---------- PUBLIC LIST (read-only, approved articles) ----------
     // Available to any authenticated user — UI gates access by plan (PRO/clinic/academic).
     if (action === "list_public") {
+      // Public-facing list: requer ID verificado, mas PEDro vira sinal opcional
+      // (admin pode aprovar artigos sem nota PEDro confirmada — ex.: paper em
+      // periódico exigente que não consta na base PEDro).
       let q = adminClient.from("knowledge_articles")
         .select("id, title, authors, year, journal, pedro_score, pedro_score_status, pedro_score_reason, pedro_score_source, pedro_record_id, pedro_score_verified_at, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, verification_status, created_at")
         .eq("approved", true)
         .eq("verification_status", "verified")
-        .in("pedro_score_status", ["verified", "not_applicable"])
         .order("year", { ascending: false, nullsFirst: false })
         .order("pedro_score", { ascending: false, nullsFirst: false })
         .limit(500);
@@ -599,22 +602,9 @@ serve(async (req) => {
       const finalPmid = v.pmid || cleanPmidStr(cur.pmid) || pmidFromUrl;
       const finalUrl = v.sourceUrl || (finalPmid ? `https://pubmed.ncbi.nlm.nih.gov/${finalPmid}/` : finalDoi ? `https://doi.org/${finalDoi}` : null);
       const pedroV = await verifyPedroScore({ title: cur.title, study_type: cur.study_type, pedro_score: cur.pedro_score });
-      if (!isAcceptablePedro(pedroV)) {
-        await adminClient.from("knowledge_articles")
-          .update({
-            approved: false,
-            ...verificationPatch(v, "verified"),
-            ...pedroPatch(pedroV),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", body.id);
-        return new Response(JSON.stringify({
-          error: "Artigo não aprovado: nota PEDro não confirmada ou abaixo do corte mínimo.",
-          reason: pedroV.reason,
-          pedroStatus: pedroV.status,
-          pedroMatchedTitle: pedroV.matchedTitle || null,
-        }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
+      // PEDro é apenas um sinal amarelo: registramos o resultado mas NÃO bloqueamos
+      // a aprovação. Um bom artigo pode estar no PubMed sem constar na PEDro
+      // (especialmente em periódicos exigentes como JOSPT, BJPT, etc.).
       const patch: any = {
         approved: true,
         doi: finalDoi,
@@ -751,18 +741,9 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       };
       if (pedroV) Object.assign(patch, pedroPatch(pedroV));
-      if (approveIfVerified) patch.approved = !!pedroV && isAcceptablePedro(pedroV);
+      // PEDro é sinal opcional (amarelo). Não bloqueia aprovação manual do admin.
+      if (approveIfVerified) patch.approved = true;
       await adminClient.from("knowledge_articles").update(patch).eq("id", id);
-
-      if (approveIfVerified && pedroV && !isAcceptablePedro(pedroV)) {
-        return new Response(JSON.stringify({
-          error: "Identificador validado, mas o artigo não foi aprovado porque a nota PEDro não foi confirmada.",
-          reason: pedroV.reason,
-          pedroStatus: pedroV.status,
-          matchedTitle: v.matchedTitle || null,
-          pedroMatchedTitle: pedroV.matchedTitle || null,
-        }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
 
       return new Response(JSON.stringify({
         ok: true, verified: true, doi: newDoi, pmid: newPmid,
@@ -770,7 +751,8 @@ serve(async (req) => {
         similarity: v.similarity ?? null,
         pedroStatus: pedroV?.status || null,
         pedroReason: pedroV?.reason || null,
-        approved: (approveIfVerified && !!pedroV && isAcceptablePedro(pedroV)) || row.approved,
+        pedroWarning: pedroV ? !isAcceptablePedro(pedroV) : false,
+        approved: approveIfVerified ? true : row.approved,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -786,23 +768,26 @@ serve(async (req) => {
       }
       const prompt = `Você é um curador de evidências em fisioterapia.
 
-Liste ${count} estudos REAIS, de alta qualidade (preferencialmente indexados na base PEDro) para o nicho:
+Liste ${count} estudos REAIS, de alta qualidade para o nicho:
 "${nicheDescription}"
 
-CRITÉRIOS OBRIGATÓRIOS:
-- A nota PEDro NUNCA deve ser estimada. Só informe pedro_score numérico quando você tiver certeza de que a própria base PEDro mostra essa nota.
+PRIORIZE FORTEMENTE artigos publicados nestes periódicos exigentes (fator de impacto ≥ 3 na área de Fisioterapia, ranking 2026):
+${priorityJournalListForPrompt()}
+Pelo menos 60% dos estudos devem ser desses periódicos. Eles têm revisão por pares rigorosa e são referência mundial.
+
+CRITÉRIOS:
+- A nota PEDro NUNCA deve ser estimada. Só informe pedro_score numérico quando você tiver certeza absoluta que a própria base PEDro mostra essa nota. Em dúvida, use pedro_score=null — a falta de nota PEDro NÃO desqualifica o artigo se o periódico for exigente.
 - Para revisões sistemáticas/meta-análises, se a PEDro mostrar Score N/A ou sem nota definida, use pedro_score=null. NUNCA use 8 como padrão.
-- Para RCTs/ensaios clínicos, inclua apenas se a nota oficial PEDro for ≥ 7/10; se não souber a nota oficial, não inclua.
 - Priorize meta-análises, revisões sistemáticas e RCTs recentes (últimos 15 anos).
 - NÃO invente estudos. Se não tiver certeza absoluta da existência do estudo, NÃO o inclua.
 - IDENTIFICADORES: **prefira fornecer o PMID** (mais estável que DOI). Se não souber o DOI com 100% de certeza, deixe DOI=null e forneça apenas PMID. NUNCA chute um DOI — todo par título↔DOI é checado contra o PubMed por similaridade de título e pares inconsistentes são descartados.
-- NÃO gere URLs para PEDro (search.pedro.org.au, pedro.org.au/...) — os IDs internos da PEDro não são previsíveis e qualquer link fabricado retorna 404. Use SOMENTE DOI e/ou PMID verificáveis.
+- NÃO gere URLs para PEDro — IDs internos da PEDro não são previsíveis e qualquer link fabricado retorna 404. Use SOMENTE DOI e/ou PMID verificáveis.
 - Campos por estudo:
   • title (string)
   • authors (string "Sobrenome A, Sobrenome B")
   • year (int)
-  • journal (string)
-  • pedro_score (int 0-10 ou null quando a PEDro estiver como N/A/sem nota, especialmente revisões)
+  • journal (string — nome completo do periódico)
+  • pedro_score (int 0-10 ou null)
   • study_type ("RCT" | "Systematic Review" | "Meta-analysis")
   • abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado)
   • key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável)
@@ -857,7 +842,8 @@ Responda APENAS um JSON array. Sem texto adicional.`;
 
       let inserted = 0;
       let rejectedUnverified = 0;
-      let rejectedPedro = 0;
+      let pedroWarning = 0;
+      let priorityJournalCount = 0;
       for (const it of items) {
         try {
           const pedro = Number(it.pedro_score);
@@ -871,12 +857,13 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             continue;
           }
 
-          // *** Nota PEDro obrigatoriamente checada na base PEDro — nunca confiar na IA ***
+          // *** Nota PEDro checada na base PEDro, mas NÃO bloqueia ingestão.
+          // Falha PEDro = sinal amarelo: admin decide se aprova (artigo em
+          // periódico exigente pode não constar na PEDro).
           const pedroV = await verifyPedroScore({ title: it.title, study_type: it.study_type, pedro_score: isNaN(pedro) ? null : pedro });
           if (!isAcceptablePedro(pedroV)) {
-            rejectedPedro++;
-            console.warn(`[ingest] PEDro rejected, skipping: ${it.title} (${pedroV.reason})`);
-            continue;
+            pedroWarning++;
+            console.log(`[ingest] PEDro warning (admin review): ${it.title} (${pedroV.reason})`);
           }
 
           const text = [it.title, it.abstract, it.key_findings].filter(Boolean).join("\n\n");
@@ -889,6 +876,8 @@ Responda APENAS um JSON array. Sem texto adicional.`;
               : finalDoi ? `https://doi.org/${finalDoi}` : null);
 
           if (!sourceUrl) { rejectedUnverified++; continue; }
+
+          if (isPriorityJournal(it.journal)) priorityJournalCount++;
 
           const row: any = {
             title: String(it.title).slice(0, 500),
@@ -917,7 +906,7 @@ Responda APENAS um JSON array. Sem texto adicional.`;
         }
       }
 
-      return new Response(JSON.stringify({ ok: true, inserted, candidates: items.length, rejectedUnverified, rejectedPedro }), {
+      return new Response(JSON.stringify({ ok: true, inserted, candidates: items.length, rejectedUnverified, pedroWarning, priorityJournalCount }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -965,35 +954,13 @@ Responda APENAS um JSON array. Sem texto adicional.`;
           const newDoi = v.doi ?? (v.doiMismatch ? null : r.doi);
           const newPmid = v.pmid || pmidStored;
           const pedroV = await verifyPedroScore({ title: r.title, study_type: (r as any).study_type, pedro_score: (r as any).pedro_score });
+          // PEDro vira aviso amarelo: registramos o status mas NÃO desaprovamos
+          // automaticamente. Admin decide manualmente.
           if (!isAcceptablePedro(pedroV)) {
             pedroRejected++;
             pedroRejectedItems.push({ id: r.id, title: r.title, pedroStatus: pedroV.status, pedroScore: pedroV.score, pedroMatchedTitle: pedroV.matchedTitle || null, reason: pedroV.reason });
-            if (isRevalidate) {
-              demoted++;
-              demotedItems.push({ id: r.id, title: r.title, doi: r.doi, pmid: pmidStored, matchedTitle: v.matchedTitle || null, similarity: v.similarity ?? null, reason: pedroV.reason || "pedro_score_failed" });
-              if (!dryRun) {
-                await adminClient.from("knowledge_articles")
-                  .update({
-                    approved: false,
-                    source_url: newUrl,
-                    doi: newDoi,
-                    pmid: newPmid,
-                    ...verificationPatch(v, "verified"),
-                    ...pedroPatch(pedroV),
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq("id", r.id);
-              }
-            } else {
-              removed++;
-              removedItems.push({ id: r.id, title: r.title, doi: r.doi, reason: pedroV.reason });
-              if (!dryRun) {
-                await adminClient.from("knowledge_articles").delete().eq("id", r.id);
-              }
-            }
-            await new Promise((res) => setTimeout(res, 350));
-            continue;
           }
+
 
           verified++;
           const wasMismatch = !!v.doiMismatch;

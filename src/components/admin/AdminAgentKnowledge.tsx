@@ -11,6 +11,7 @@ import { Loader2, Sparkles, Check, Trash2, ExternalLink, BookOpen, ShieldCheck, 
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { AGENT_NICHES, AGENT_NICHE_LABEL } from "@/lib/agentNiches";
+import { isPriorityJournal, journalImpactFactor } from "@/lib/priorityJournals";
 
 interface Article {
   id: string;
@@ -107,8 +108,9 @@ export default function AdminAgentKnowledge() {
     if (a.pedro_score_status === "not_applicable") {
       return <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PEDro N/A validado</Badge>;
     }
+    // Sinal amarelo (opcional) — não bloqueia aprovação.
     if (["unscored", "mismatch", "not_found"].includes(a.pedro_score_status || "")) {
-      return <Badge variant="destructive" className="text-[10px]">PEDro reprovado</Badge>;
+      return <Badge variant="outline" className="text-[10px] border-amber-500/60 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">PEDro não confirmado · opcional</Badge>;
     }
     if (a.pedro_score != null) {
       return <Badge variant="outline" className="text-[10px]">PEDro {a.pedro_score}/10 não revalidado</Badge>;
@@ -256,7 +258,7 @@ export default function AdminAgentKnowledge() {
       if (data?.error) throw new Error(data.error);
       toast({
         title: "Busca concluída",
-        description: `${data.inserted} verificado(s) e adicionado(s) · ${data.rejectedUnverified ?? 0} descartado(s) por DOI/PMID · ${data.rejectedPedro ?? 0} descartado(s) por crivo PEDro (de ${data.candidates} candidatos).`,
+        description: `${data.inserted} adicionado(s) (de ${data.candidates}) · ${data.rejectedUnverified ?? 0} descartado(s) por DOI/PMID · ${data.pedroWarning ?? 0} com PEDro como aviso amarelo (você decide) · ${data.priorityJournalCount ?? 0} em periódico prioritário (IF ≥ 3).`,
       });
       setStatus("pending");
       setNicheFilter(ingestNiche);
@@ -274,9 +276,9 @@ export default function AdminAgentKnowledge() {
     if (!confirm(
       `Revalidar ${scopeLabel} de ${nicheLabel} contra o PubMed/Crossref?\n\n` +
       `• O título de cada artigo será confirmado contra o paper resolvido pelo DOI/PMID.\n` +
-      `• A nota PEDro será checada na base PEDro; notas N/A/sem nota terão o número removido.\n` +
+      `• A nota PEDro será checada (sinal amarelo opcional — não bloqueia).\n` +
       `• DOIs que apontarem para outro paper serão corrigidos automaticamente.\n` +
-      `• Artigos que não puderem ser confirmados serão DESAPROVADOS (movidos para "Pendentes") para revisão manual — nada é deletado.\n\n` +
+      `• Artigos cujo ID NÃO puder ser confirmado serão DESAPROVADOS (movidos para "Pendentes") para revisão manual — nada é deletado.\n\n` +
       `Pode levar alguns minutos.`,
     )) return;
     setVerifying(true);
@@ -292,12 +294,12 @@ export default function AdminAgentKnowledge() {
       toast({
         title: "Revalidação concluída",
         description:
-          `${data.checked} checados · ${data.verified} confirmados · ${mismatch} DOI corrigido(s) · ${pedroRejected} reprovado(s) no crivo PEDro · ${demoted} desaprovado(s) p/ revisão.`,
+          `${data.checked} checados · ${data.verified} confirmados · ${mismatch} DOI corrigido(s) · ${pedroRejected} com aviso PEDro · ${demoted} desaprovado(s) por ID p/ revisão.`,
       });
       if (mismatch > 0 || demoted > 0 || pedroRejected > 0) {
         console.warn("[revalidate] mismatchFixed", data.mismatchFixedItems);
         console.warn("[revalidate] demoted", data.demotedItems);
-        console.warn("[revalidate] pedroRejected", data.pedroRejectedItems);
+        console.warn("[revalidate] pedroWarning", data.pedroRejectedItems);
       }
       fetchList();
     } catch (e: any) {
@@ -363,7 +365,7 @@ export default function AdminAgentKnowledge() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            A IA propõe ~6 candidatos por nicho. Cada candidato é <strong>verificado no PubMed/Crossref</strong> e a nota é <strong>checada na base PEDro</strong> antes de ser salvo — RCTs só entram com PEDro ≥ 7 oficial; revisões/meta-análises com PEDro N/A entram sem nota numérica.
+            A IA propõe ~6 candidatos priorizando periódicos exigentes (Journal of Physiotherapy, JOSPT, BJPT, Physical Therapy, Physiotherapy, etc.). Cada candidato é <strong>verificado no PubMed/Crossref (bloqueante)</strong>; a checagem PEDro entra como <strong>sinal amarelo opcional</strong> — você decide se aprova mesmo quando o artigo não consta na base PEDro.
           </p>
         </CardContent>
       </Card>
@@ -473,6 +475,11 @@ export default function AdminAgentKnowledge() {
                     </div>
                     <div className="flex flex-col gap-1 items-end shrink-0">
                       {pedroBadge(a)}
+                      {isPriorityJournal(a.journal) && (
+                        <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-600 text-white">
+                          ★ Periódico IF {journalImpactFactor(a.journal)?.toFixed(1)}
+                        </Badge>
+                      )}
                       {a.study_type && <Badge variant="outline" className="text-[10px]">{a.study_type}</Badge>}
                       {a.verification_status === "verified" ? (
                         <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ID validado</Badge>
@@ -483,6 +490,7 @@ export default function AdminAgentKnowledge() {
                       )}
                     </div>
                   </div>
+
 
                   {a.abstract && <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{a.abstract}</p>}
                   {a.key_findings && (
@@ -536,10 +544,11 @@ export default function AdminAgentKnowledge() {
                   )}
 
                   {a.pedro_score_status && a.pedro_score_status !== "verified" && a.pedro_score_status !== "not_applicable" && (
-                    <div className="mt-2 rounded-md border border-destructive/20 bg-destructive/5 p-2 text-[11px] text-muted-foreground">
-                      <span className="font-medium text-destructive">Crivo PEDro falhou.</span>{" "}
+                    <div className="mt-2 rounded-md border border-amber-500/30 bg-amber-50 dark:bg-amber-950/20 p-2 text-[11px] text-amber-900 dark:text-amber-200">
+                      <span className="font-medium">⚠️ Aviso PEDro (opcional).</span>{" "}
                       {a.pedro_score_reason || "A nota PEDro não foi confirmada na base PEDro."}
-                      {a.pedro_record_id ? ` Registro PEDro: ${a.pedro_record_id}.` : ""}
+                      {a.pedro_record_id ? ` Registro PEDro: ${a.pedro_record_id}.` : ""}{" "}
+                      Não bloqueia aprovação — um bom artigo em periódico exigente pode não constar na PEDro. Avalie e decida.
                     </div>
                   )}
 
@@ -607,7 +616,7 @@ export default function AdminAgentKnowledge() {
                           </Button>
                           <Button size="sm" onClick={() => handleApprove(a.id)} disabled={busyId === a.id} className="gap-1.5">
                             {busyId === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                            Aprovar (só validado)
+                            Aprovar
                           </Button>
                         </div>
                       )}
