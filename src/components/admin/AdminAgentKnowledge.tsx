@@ -27,6 +27,12 @@ interface Article {
   source_url: string | null;
   approved: boolean;
   is_favorite?: boolean;
+  verification_status?: "verified" | "invalid" | "needs_review" | string;
+  verification_checked_at?: string | null;
+  verification_source?: string | null;
+  verification_matched_title?: string | null;
+  verification_similarity?: number | null;
+  verification_reason?: string | null;
   created_at: string;
 }
 
@@ -217,8 +223,9 @@ export default function AdminAgentKnowledge() {
   const handleApprove = async (id: string) => {
     setBusyId(id);
     try {
-      const { error } = await supabase.functions.invoke("agent-knowledge", { body: { action: "approve", id } });
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke("agent-knowledge", { body: { action: "approve", id } });
+      if (error) throw new Error(await agentErrorMessage(error, "Falha ao aprovar."));
+      if (data?.error) throw new Error(data.error);
       toast({ description: "Artigo aprovado." });
       setArticles((a) => a.filter((x) => x.id !== id));
     } catch (e: any) {
@@ -352,6 +359,13 @@ export default function AdminAgentKnowledge() {
                         <Badge variant={a.pedro_score >= 8 ? "default" : "secondary"}>PEDro {a.pedro_score}/10</Badge>
                       )}
                       {a.study_type && <Badge variant="outline" className="text-[10px]">{a.study_type}</Badge>}
+                      {a.verification_status === "verified" ? (
+                        <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ID validado</Badge>
+                      ) : a.verification_status === "invalid" ? (
+                        <Badge variant="destructive" className="text-[10px]">ID reprovado</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px]">aguarda crivo</Badge>
+                      )}
                     </div>
                   </div>
 
@@ -366,10 +380,11 @@ export default function AdminAgentKnowledge() {
                     ))}
                     {(() => {
                       const cleanDoi = a.doi?.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
-                      const pubmedHref = a.pmid
+                      const isVerified = a.verification_status === "verified";
+                      const pubmedHref = isVerified && a.pmid
                         ? `https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`
-                        : a.source_url?.includes("pubmed") ? a.source_url : null;
-                      const doiHref = cleanDoi ? `https://doi.org/${cleanDoi}` : null;
+                        : isVerified && a.source_url?.includes("pubmed") ? a.source_url : null;
+                      const doiHref = isVerified && cleanDoi ? `https://doi.org/${cleanDoi}` : null;
                       return (
                         <div className="ml-auto flex items-center gap-2">
                           {pubmedHref && (
@@ -386,12 +401,24 @@ export default function AdminAgentKnowledge() {
                             </a>
                           )}
                           {!pubmedHref && !doiHref && (
-                            <span className="text-xs text-destructive">sem link validável</span>
+                            <span className="text-xs text-destructive">
+                              {isVerified ? "sem link validável" : "links bloqueados: ID não validado"}
+                            </span>
                           )}
                         </div>
                       );
                     })()}
                   </div>
+
+                  {a.verification_status && a.verification_status !== "verified" && (
+                    <div className="mt-2 rounded-md border border-destructive/20 bg-destructive/5 p-2 text-[11px] text-muted-foreground">
+                      <span className="font-medium text-destructive">Crivo bibliográfico falhou.</span>{" "}
+                      {a.verification_matched_title
+                        ? <>O identificador resolve para “{a.verification_matched_title}”{typeof a.verification_similarity === "number" ? ` (similaridade ${Math.round(a.verification_similarity * 100)}%)` : ""}, não para o título cadastrado.</>
+                        : "Não foi possível confirmar esse título por DOI/PMID no PubMed/Crossref."}
+                      {a.verification_reason ? ` Motivo: ${a.verification_reason}.` : ""}
+                    </div>
+                  )}
 
 
                   {editingId === a.id ? (
@@ -450,7 +477,7 @@ export default function AdminAgentKnowledge() {
                           </Button>
                           <Button size="sm" onClick={() => handleApprove(a.id)} disabled={busyId === a.id} className="gap-1.5">
                             {busyId === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                            Aprovar
+                            Aprovar (só validado)
                           </Button>
                         </div>
                       )}
