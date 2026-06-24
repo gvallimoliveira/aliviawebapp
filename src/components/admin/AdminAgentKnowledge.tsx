@@ -254,7 +254,7 @@ export default function AdminAgentKnowledge() {
       if (data?.error) throw new Error(data.error);
       toast({
         title: "Busca concluída",
-        description: `${data.inserted} verificado(s) e adicionado(s) · ${data.rejectedUnverified ?? 0} descartado(s) por não serem confirmáveis no PubMed/Crossref (de ${data.candidates} candidatos).`,
+        description: `${data.inserted} verificado(s) e adicionado(s) · ${data.rejectedUnverified ?? 0} descartado(s) por DOI/PMID · ${data.rejectedPedro ?? 0} descartado(s) por crivo PEDro (de ${data.candidates} candidatos).`,
       });
       setStatus("pending");
       setNicheFilter(ingestNiche);
@@ -337,7 +337,7 @@ export default function AdminAgentKnowledge() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Buscar novos artigos (PEDro ≥ 7)
+            Buscar novos artigos (PEDro validado)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -358,7 +358,7 @@ export default function AdminAgentKnowledge() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            A IA propõe ~6 candidatos por nicho (RCTs/RS/meta-análises com PEDro ≥ 7). Cada candidato é <strong>verificado no PubMed/Crossref antes de ser salvo</strong> — estudos que não puderem ser confirmados são descartados automaticamente. Os aprovados entram como <strong>pendentes</strong> para sua revisão.
+            A IA propõe ~6 candidatos por nicho. Cada candidato é <strong>verificado no PubMed/Crossref</strong> e a nota é <strong>checada na base PEDro</strong> antes de ser salvo — RCTs só entram com PEDro ≥ 7 oficial; revisões/meta-análises com PEDro N/A entram sem nota numérica.
           </p>
         </CardContent>
       </Card>
