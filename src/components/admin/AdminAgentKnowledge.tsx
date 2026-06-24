@@ -108,8 +108,9 @@ export default function AdminAgentKnowledge() {
     if (a.pedro_score_status === "not_applicable") {
       return <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PEDro N/A validado</Badge>;
     }
+    // Sinal amarelo (opcional) — não bloqueia aprovação.
     if (["unscored", "mismatch", "not_found"].includes(a.pedro_score_status || "")) {
-      return <Badge variant="destructive" className="text-[10px]">PEDro reprovado</Badge>;
+      return <Badge variant="outline" className="text-[10px] border-amber-500/60 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">PEDro não confirmado · opcional</Badge>;
     }
     if (a.pedro_score != null) {
       return <Badge variant="outline" className="text-[10px]">PEDro {a.pedro_score}/10 não revalidado</Badge>;
