@@ -1823,6 +1823,62 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 regiões marcadas aqui). */}
             {step === 2 && (
               <div className="space-y-4">
+                {/* Refinamento anatômico aparece NO TOPO assim que houver
+                    regiões marcadas — evita que fique escondido abaixo da
+                    lista de seleção. */}
+                {painRegions.length > 0 && (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
+                    <div>
+                      <Label className="text-xs font-semibold text-foreground">
+                        {isPt ? "Refinamento anatômico (opcional)" : "Anatomical refinement (optional)"}
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {isPt
+                          ? "Cada região oferece as opções clinicamente relevantes daquela articulação ou segmento (ex.: lombar → central, unilateral D/E ou bilateral em faixa; joelho → anterior/posterior/medial/lateral; cotovelo → medial, lateral, anterior ou posterior)."
+                          : "Each region offers the clinically relevant options for that joint or segment (e.g., lumbar → central, unilateral R/L or bilateral band-like; knee → anterior/posterior/medial/lateral; elbow → medial, lateral, anterior or posterior)."}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      {painRegions.map((id) => {
+                        const lbl = regionLabelMap[id];
+                        const axes = getRefinementAxes(id);
+                        const group = getRegionGroup(id);
+                        const selected = painRegionRefinements[id] || [];
+                        return (
+                          <div key={id} className="rounded-md border bg-card p-2">
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="text-xs font-medium text-foreground">
+                                {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
+                              </span>
+                              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {isPt ? group.label_pt : group.label_en}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {axes.map((ax) => {
+                                const active = selected.includes(ax.value);
+                                return (
+                                  <button
+                                    type="button"
+                                    key={ax.value}
+                                    onClick={() => toggleRegionRefinement(id, ax.value)}
+                                    className={`px-2.5 py-1 rounded-full text-[11px] border transition-colors ${
+                                      active
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "bg-background text-foreground border-border hover:bg-muted"
+                                    }`}
+                                  >
+                                    {isPt ? ax.label_pt : ax.label_en}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 <div>
                   <Label className="text-xs mb-2 block">
                     {isPt ? "Regiões com dor (proximais → distais, em ordem alfabética)" : "Pain regions (proximal → distal, alphabetical)"}
@@ -1908,64 +1964,6 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       : "In the next step you set intensity and pain type for each region marked here."}
                   </p>
                 </div>
-
-                {/* Refinamento anatômico por região (planos e eixos do corpo).
-                    Em membros (apendicular): medial/lateral, ant/post, prox/distal.
-                    Em regiões axiais (cabeça, cervical, torácica, lombar, tórax,
-                    abdômen): lado direito / lado esquerdo / central. */}
-                {painRegions.length > 0 && (
-                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3">
-                    <div>
-                      <Label className="text-xs font-semibold text-foreground">
-                        {isPt ? "Refinamento anatômico (opcional)" : "Anatomical refinement (optional)"}
-                      </Label>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {isPt
-                          ? "Cada região oferece as opções clinicamente relevantes daquela articulação ou segmento (ex.: lombar → central, unilateral D/E ou bilateral em faixa; joelho → anterior/posterior/medial/lateral; cotovelo → medial, lateral, anterior ou posterior)."
-                          : "Each region offers the clinically relevant options for that joint or segment (e.g., lumbar → central, unilateral R/L or bilateral band-like; knee → anterior/posterior/medial/lateral; elbow → medial, lateral, anterior or posterior)."}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      {painRegions.map((id) => {
-                        const lbl = regionLabelMap[id];
-                        const axes = getRefinementAxes(id);
-                        const group = getRegionGroup(id);
-                        const selected = painRegionRefinements[id] || [];
-                        return (
-                          <div key={id} className="rounded-md border bg-card p-2">
-                            <div className="flex items-center justify-between gap-2 mb-1.5">
-                              <span className="text-xs font-medium text-foreground">
-                                {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
-                              </span>
-                              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                {isPt ? group.label_pt : group.label_en}
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {axes.map((ax) => {
-                                const active = selected.includes(ax.value);
-                                return (
-                                  <button
-                                    type="button"
-                                    key={ax.value}
-                                    onClick={() => toggleRegionRefinement(id, ax.value)}
-                                    className={`px-2.5 py-1 rounded-full text-[11px] border transition-colors ${
-                                      active
-                                        ? "bg-primary text-primary-foreground border-primary"
-                                        : "bg-background text-foreground border-border hover:bg-muted"
-                                    }`}
-                                  >
-                                    {isPt ? ax.label_pt : ax.label_en}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
