@@ -940,7 +940,7 @@
   "onboarding.pro.messages.title": "Pestaña Mensajes 💬",
   "onboarding.pro.messages.desc": "Converse con pacientes en chat seguro, con videollamadas P2P y disclaimer clínico automático.",
   "onboarding.pro.agent.title": "Agente de Razonamiento Clínico 🧠",
-  "onboarding.pro.agent.desc": "Consulte al agente IA basado en evidencia PEDro ≥ 7. Acceda desde la pestaña Agente cuando quiera profundizar una hipótesis.",
+  "onboarding.pro.agent.desc": "Consulte al agente IA basado en evidencia con DOI/PMID y estado PEDro validados. Acceda desde la pestaña Agente cuando quiera profundizar una hipótesis.",
   "onboarding.clinic.step1.title": "Su agenda de la clínica 📅",
   "onboarding.clinic.step1.desc": "Empiece el día aquí: vista diaria del equipo, drag-and-drop entre horarios y acceso rápido a los pacientes del día.",
   "onboarding.clinic.step2.title": "Pacientes de la clínica",
