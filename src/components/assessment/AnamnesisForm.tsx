@@ -68,6 +68,14 @@ interface AnamnesisFormProps {
   initialSurgeryDetails?: string;
   initialActivityLevel?: string;
   initialHasGymAccess?: string;
+  /**
+   * Optional bundle of additional fields to pre-fill on reassessment links.
+   * Used for stable demographics and clinical history (sex, age, birthDate,
+   * cpf, traumas, headache crisis pattern, refined pain sub-area, etc.).
+   * Each key is merged only if truthy/non-empty so the form falls back to
+   * the user's input when nothing was stored before.
+   */
+  initialExtras?: Partial<AnamnesisData>;
   /** Optional stable key (e.g. token, professionalId+email) to persist draft across reloads. */
   draftScopeKey?: string | null;
   /**
@@ -78,7 +86,7 @@ interface AnamnesisFormProps {
   enabledSubs?: string[];
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, draftScopeKey, enabledSubs }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras, draftScopeKey, enabledSubs }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -151,9 +159,18 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       if (initialSurgeryDetails) updates.surgeryDetails = initialSurgeryDetails;
       if (initialActivityLevel) updates.activityLevel = initialActivityLevel;
       if (initialHasGymAccess) updates.hasGymAccess = initialHasGymAccess;
+      // Merge extras (demographics + stable clinical history). Skip empty values.
+      if (initialExtras) {
+        for (const [k, v] of Object.entries(initialExtras)) {
+          if (v === undefined || v === null) continue;
+          if (typeof v === "string" && v.trim() === "") continue;
+          if (Array.isArray(v) && v.length === 0) continue;
+          (updates as any)[k] = v;
+        }
+      }
       return { ...prev, ...updates };
     });
-  }, [initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess]);
+  }, [initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras]);
 
   const complaints = [
     "anamnesis.complaint.neck_pain",

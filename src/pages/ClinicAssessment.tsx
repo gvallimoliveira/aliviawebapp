@@ -68,6 +68,7 @@ const ClinicAssessment = () => {
   const [prefilledSurgeryDetails, setPrefilledSurgeryDetails] = useState<string | undefined>(undefined);
   const [prefilledActivityLevel, setPrefilledActivityLevel] = useState<string | undefined>(undefined);
   const [prefilledGymAccess, setPrefilledGymAccess] = useState<string | undefined>(undefined);
+  const [prefilledExtras, setPrefilledExtras] = useState<Record<string, any> | undefined>(undefined);
   const [previousQuestionnaireAnswers, setPreviousQuestionnaireAnswers] = useState<Record<string, Record<string, number>> | undefined>(undefined);
 
   useEffect(() => {
@@ -112,6 +113,23 @@ const ClinicAssessment = () => {
           if (anam?.surgeryDetails) setPrefilledSurgeryDetails(anam.surgeryDetails);
           if (anam?.activityLevel) setPrefilledActivityLevel(anam.activityLevel);
           if (anam?.hasGymAccess) setPrefilledGymAccess(anam.hasGymAccess);
+          // Stable demographics + clinical history pre-fill
+          setPrefilledExtras({
+            sex: anam?.sex,
+            ageRange: anam?.ageRange,
+            birthDate: anam?.birthDate,
+            cpf: anam?.cpf,
+            hadTwist: anam?.hadTwist,
+            hadSprain: anam?.hadSprain,
+            hadDislocation: anam?.hadDislocation,
+            hasScapulaPain: anam?.hasScapulaPain,
+            hasLocalSwelling: anam?.hasLocalSwelling,
+            hasPhotophobia: anam?.hasPhotophobia,
+            hasVisualAura: anam?.hasVisualAura,
+            hasNausea: anam?.hasNausea,
+            headacheCrisisFrequency: anam?.headacheCrisisFrequency,
+            painSubArea: anam?.painSubArea,
+          });
 
           const testResults = orig.test_results as any;
           if (Array.isArray(testResults) && testResults.length > 0) {
@@ -679,6 +697,7 @@ const ClinicAssessment = () => {
             initialSurgeryDetails={prefilledSurgeryDetails}
             initialActivityLevel={prefilledActivityLevel}
             initialHasGymAccess={prefilledGymAccess}
+            initialExtras={prefilledExtras}
             enabledSubs={reassessAnamSubs || undefined}
           />
         )}
