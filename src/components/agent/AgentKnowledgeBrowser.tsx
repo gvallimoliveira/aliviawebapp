@@ -85,10 +85,10 @@ export default function AgentKnowledgeBrowser() {
         <div className="flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-semibold">Biblioteca de evidências</h2>
-          <Badge variant="outline" className="text-[10px]">Aprovados · PEDro validado</Badge>
+          <Badge variant="outline" className="text-[10px]">Evidência verificada</Badge>
         </div>
         <p className="text-[11px] text-muted-foreground leading-snug">
-          Artigos verificados no PubMed/Crossref e aprovados manualmente. ★ marca periódicos com fator de impacto ≥ 3 (Journal of Physiotherapy, JOSPT, BJPT, Physical Therapy etc.). PEDro é sinal complementar — quando ausente, o artigo foi liberado pelo admin com base no rigor do periódico.
+          Artigos com identificação confirmada no PubMed/Crossref. ★ indica periódicos com fator de impacto ≥ 3 (Journal of Physiotherapy, JOSPT, BJPT, Physical Therapy, entre outros). A nota PEDro é exibida quando disponível; sua ausência não desqualifica o estudo, já que periódicos exigentes nem sempre são indexados na base PEDro.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
