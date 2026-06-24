@@ -1086,18 +1086,21 @@ serve(async (req) => {
       // 1) Termos de busca canônicos por nicho (PubMed-first, reprodutível)
       const terms = getNicheSearchTerms(niche, nicheDescription);
 
-      // 2) Busca em paralelo: PubMed (motor principal) + Crossref (complemento p/ IF≥3)
-      const [pubmedRes, crossrefRes] = await Promise.all([
+      // 2) Busca em paralelo: PubMed (motor principal) + Cochrane (RS prioritárias) + Crossref (complemento p/ IF≥3)
+      const [pubmedRes, cochraneRes, crossrefRes] = await Promise.all([
         searchPubmedForNiche(terms, count * 4, yearsBack),
+        searchCochraneForNiche(terms, Math.max(count, 3), yearsBack),
         searchCrossrefForNiche(terms, count * 3, yearsBack),
       ]);
 
-      const merged = dedupeCandidates([...pubmedRes.items, ...crossrefRes]);
+      // Cochrane primeiro no merge — dedup mantém a primeira ocorrência (revisão Cochrane prevalece sobre o mesmo PMID indexado em PubMed genérico).
+      const merged = dedupeCandidates([...cochraneRes.items, ...pubmedRes.items, ...crossrefRes]);
       const bySourceFound = {
         pubmed: pubmedRes.items.length,
+        cochrane: cochraneRes.items.length,
         crossref: crossrefRes.length,
       };
-      console.log(`[ingest] niche=${niche} pubmed=${bySourceFound.pubmed} crossref=${bySourceFound.crossref} merged=${merged.length}`);
+      console.log(`[ingest] niche=${niche} pubmed=${bySourceFound.pubmed} cochrane=${bySourceFound.cochrane} crossref=${bySourceFound.crossref} merged=${merged.length}`);
 
       // 3) Remove duplicados já existentes na base
       const fresh = await filterAlreadyStored(adminClient, merged);
