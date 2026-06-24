@@ -572,7 +572,62 @@ async function searchPubmedForNiche(terms: NicheSearchTerms, retmax: number, yea
   return { items, query };
 }
 
-async function searchCrossrefForNiche(terms: NicheSearchTerms, rows: number, yearsBack: number): Promise<CandidateArticle[]> {
+/**
+ * Busca focada na Cochrane Database of Systematic Reviews via PubMed.
+ * Cochrane é tratada como fonte prioritária para revisões sistemáticas
+ * de alta qualidade — sem ela, nichos como capsulite adesiva perdem cobertura.
+ */
+async function searchCochraneForNiche(terms: NicheSearchTerms, retmax: number, yearsBack: number): Promise<{ items: CandidateArticle[]; query: string }> {
+  const themeTerms: NicheSearchTerms = { keywords: terms.keywords, mesh: terms.mesh };
+  const baseQuery = buildPubmedQuery({ terms: themeTerms, yearsBack, studyTypes: false });
+  if (!baseQuery) return { items: [], query: "" };
+  const query = `${baseQuery} AND ("Cochrane Database Syst Rev"[Journal])`;
+  const esearchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&sort=relevance&retmax=${retmax}&term=${encodeURIComponent(query)}`;
+  const es = await fetchJsonSafe(esearchUrl);
+  const ids: string[] = es?.esearchresult?.idlist || [];
+  if (!ids.length) return { items: [], query };
+
+  await SLEEP(350);
+  const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${ids.join(",")}`;
+  const sj = await fetchJsonSafe(summaryUrl);
+
+  await SLEEP(350);
+  const efetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&rettype=abstract&id=${ids.join(",")}`;
+  const xml = await fetchTextWithRetry(efetchUrl, 15000) || "";
+
+  const items: CandidateArticle[] = [];
+  for (const id of ids) {
+    const rec = sj?.result?.[id];
+    if (!rec?.title) continue;
+    const pubtypes = rec.pubtype || [];
+    if ((pubtypes as string[]).some((p) => /retracted|retraction|withdrawn/i.test(p))) continue;
+    let doi: string | null = null;
+    for (const a of rec.articleids || []) {
+      if (a?.idtype === "doi" && typeof a.value === "string") {
+        doi = cleanDoiStr(a.value);
+        if (doi) break;
+      }
+    }
+    const year = Number(String(rec.pubdate || "").match(/(\d{4})/)?.[1]) || null;
+    const authors = Array.isArray(rec.authors)
+      ? rec.authors.slice(0, 6).map((a: any) => a.name).filter(Boolean).join(", ")
+      : null;
+    items.push({
+      title: htmlToText(rec.title),
+      authors,
+      year,
+      journal: rec.fulljournalname || rec.source || "Cochrane Database of Systematic Reviews",
+      doi,
+      pmid: id,
+      abstract: extractAbstractFromXml(xml, id),
+      studyType: "Systematic Review",
+      source: "cochrane",
+    });
+  }
+  return { items, query };
+}
+
+
   const minYear = new Date().getFullYear() - yearsBack;
   const q = (terms.keywords || []).slice(0, 4).join(" OR ");
   if (!q) return [];
