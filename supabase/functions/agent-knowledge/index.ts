@@ -115,6 +115,12 @@ function titleSimilarity(a: string, b: string): number {
   for (const w of ta) if (tb.has(w)) inter++;
   return inter / Math.max(ta.size, tb.size);
 }
+const TITLE_STOPWORDS = new Set(["does", "work", "with", "from", "into", "over", "under", "after", "before", "systematic", "review", "meta", "analysis", "trial", "study", "effect", "effects", "treatment", "therapy"]);
+function titleSearchTokens(title: string): string[] {
+  return Array.from(new Set(normalizeTitle(title).split(" ")
+    .filter((w) => w.length > 3 && !TITLE_STOPWORDS.has(w))))
+    .slice(0, 8);
+}
 function cleanDoiStr(doi: any): string | null {
   if (typeof doi !== "string") return null;
   const s = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "").trim();
@@ -133,6 +139,7 @@ interface VerifyResult {
   sourceUrl?: string;
   source?: "pubmed_doi" | "pubmed_pmid" | "pubmed_title" | "crossref_doi";
   matchedTitle?: string;
+  similarity?: number;
   /** Reason verification failed or fell back (helps debugging revalidation). */
   reason?: string;
   /** True when the supplied DOI was discarded because its title didn't match. */
@@ -155,11 +162,23 @@ async function pubmedTitleFor(pmid: string): Promise<string | null> {
   return j?.result?.[pmid]?.title || null;
 }
 
+function verificationPatch(v: VerifyResult, status?: "verified" | "invalid" | "needs_review") {
+  return {
+    verification_status: status || (v.verified ? "verified" : "invalid"),
+    verification_checked_at: new Date().toISOString(),
+    verification_source: v.source || null,
+    verification_matched_title: v.matchedTitle || null,
+    verification_similarity: typeof v.similarity === "number" ? Number(v.similarity.toFixed(3)) : null,
+    verification_reason: v.reason || (v.verified ? "title_identifier_match" : "not_found"),
+  };
+}
+
 // Title-match thresholds:
 //   ≥0.6 when we already have a strong external identifier (DOI/PMID).
-//   ≥0.7 when we only have free-text title lookup.
+//   ≥0.85 when we only have free-text title lookup (prevents replacing a bad DOI
+//   with a merely related paper — e.g. tennis elbow review → unrelated knee paper).
 const SIM_ID = 0.6;
-const SIM_TITLE = 0.7;
+const SIM_TITLE = 0.85;
 
 /**
  * Verifies an article against PubMed/Crossref AND cross-checks the resolved
@@ -171,6 +190,12 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
   const pmid = cleanPmidStr(item.pmid);
   const title = (item.title || "").trim();
   let doiMismatch = false;
+  let bestRejected: { matchedTitle?: string; similarity?: number; reason: string } | null = null;
+  const rememberRejected = (matchedTitle: string | null, similarity: number, reason: string) => {
+    if (!bestRejected || similarity > (bestRejected.similarity ?? -1)) {
+      bestRejected = { matchedTitle: matchedTitle || undefined, similarity, reason };
+    }
+  };
 
   // 1) DOI → PubMed (esearch by [doi], then esummary to compare titles)
   if (doi) {
@@ -180,10 +205,11 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
       const pmTitle = await pubmedTitleFor(id);
       const sim = title && pmTitle ? titleSimilarity(title, pmTitle) : 0;
       if (!title || sim >= SIM_ID) {
-        return { verified: true, pmid: id, doi, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_doi", matchedTitle: pmTitle || undefined };
+        return { verified: true, pmid: id, doi, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, source: "pubmed_doi", matchedTitle: pmTitle || undefined, similarity: sim, reason: "title_identifier_match" };
       }
       // DOI resolves but to a different paper — discard DOI and try title route.
       doiMismatch = true;
+      rememberRejected(pmTitle, sim, "doi_title_mismatch");
       console.warn(`[verify] DOI ${doi} resolves to PMID ${id} ("${pmTitle}") but title "${title}" sim=${sim.toFixed(2)}`);
     } else {
       // Crossref fallback — also requires title match.
@@ -192,9 +218,10 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
         const crTitle = Array.isArray(cr.message.title) ? cr.message.title[0] : "";
         const sim = title && crTitle ? titleSimilarity(title, crTitle) : 0;
         if (!title || sim >= SIM_ID) {
-          return { verified: true, doi, sourceUrl: `https://doi.org/${doi}`, source: "crossref_doi", matchedTitle: crTitle };
+          return { verified: true, doi, sourceUrl: `https://doi.org/${doi}`, source: "crossref_doi", matchedTitle: crTitle, similarity: sim, reason: "title_identifier_match" };
         }
         doiMismatch = true;
+        rememberRejected(crTitle, sim, "doi_title_mismatch");
         console.warn(`[verify] Crossref DOI ${doi} title "${crTitle}" vs "${title}" sim=${sim.toFixed(2)}`);
       }
     }
@@ -206,20 +233,29 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
     if (pmTitle) {
       const sim = title ? titleSimilarity(title, pmTitle) : 1;
       if (sim >= SIM_ID || !title) {
-        return { verified: true, pmid, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, source: "pubmed_pmid", matchedTitle: pmTitle, doiMismatch };
+        return { verified: true, pmid, sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, source: "pubmed_pmid", matchedTitle: pmTitle, similarity: sim, reason: "title_identifier_match", doiMismatch };
       }
+      rememberRejected(pmTitle, sim, "pmid_title_mismatch");
     }
   }
 
-  // 3) Busca por título (fallback que pode "recuperar" o paper correto quando o DOI da IA estava errado)
+  // 3) Busca por título: only accept near-exact matches. Related papers are NOT enough.
   if (title && title.length > 12) {
-    const term = normalizeTitle(title).split(" ").slice(0, 12).join(" ");
-    const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=5&term=${encodeURIComponent(term)}%5BTitle%5D`);
-    const ids: string[] = j?.esearchresult?.idlist || [];
-    if (ids.length) {
-      const sj = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${ids.join(",")}`);
+    const searches = [
+      `"${title.replace(/"/g, "")}"[Title]`,
+      titleSearchTokens(title).map((t) => `${t}[Title]`).join(" AND "),
+    ].filter(Boolean);
+    const ids = new Set<string>();
+    for (const term of searches) {
+      const j = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=5&term=${encodeURIComponent(term)}`);
+      for (const id of (j?.esearchresult?.idlist || [])) ids.add(id);
+      if (ids.size >= 5) break;
+    }
+    if (ids.size) {
+      const idList = Array.from(ids).slice(0, 5);
+      const sj = await fetchJsonSafe(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${idList.join(",")}`);
       let best: { id: string; sim: number; title: string } | null = null;
-      for (const id of ids) {
+      for (const id of idList) {
         const rec = sj?.result?.[id];
         if (!rec?.title) continue;
         const sim = titleSimilarity(title, rec.title);
@@ -240,6 +276,7 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
           sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${best.id}/`,
           source: "pubmed_title",
           matchedTitle: best.title,
+          similarity: best.sim,
           doiMismatch,
           reason: doiMismatch ? "doi_mismatch_recovered_by_title" : undefined,
         };
@@ -247,7 +284,13 @@ async function verifyArticle(item: { title?: string; doi?: string | null; pmid?:
     }
   }
 
-  return { verified: false, doiMismatch, reason: doiMismatch ? "doi_mismatch_no_title_match" : "not_found" };
+  return {
+    verified: false,
+    doiMismatch,
+    matchedTitle: bestRejected?.matchedTitle,
+    similarity: bestRejected?.similarity,
+    reason: bestRejected?.reason || (doiMismatch ? "doi_mismatch_no_title_match" : "not_found"),
+  };
 }
 
 serve(async (req) => {
@@ -285,8 +328,9 @@ serve(async (req) => {
     // Available to any authenticated user — UI gates access by plan (PRO/clinic/academic).
     if (action === "list_public") {
       let q = adminClient.from("knowledge_articles")
-        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, created_at")
+        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, verification_status, created_at")
         .eq("approved", true)
+        .eq("verification_status", "verified")
         .order("year", { ascending: false, nullsFirst: false })
         .order("pedro_score", { ascending: false, nullsFirst: false })
         .limit(500);
@@ -311,7 +355,7 @@ serve(async (req) => {
     if (action === "list") {
       const status = body.status === "approved" ? true : body.status === "pending" ? false : null;
       let q = adminClient.from("knowledge_articles")
-        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, approved, is_favorite, created_at")
+        .select("id, title, authors, year, journal, pedro_score, study_type, niche_tags, abstract, key_findings, doi, pmid, source_url, approved, is_favorite, verification_status, verification_checked_at, verification_source, verification_matched_title, verification_similarity, verification_reason, created_at")
         .order("is_favorite", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(200);
@@ -340,10 +384,45 @@ serve(async (req) => {
     if (action === "approve") {
       // Backfill embedding if missing so the article is actually usable by RAG
       const { data: cur } = await adminClient.from("knowledge_articles")
-        .select("title, abstract, key_findings, embedding").eq("id", body.id).maybeSingle();
-      const patch: any = { approved: true, updated_at: new Date().toISOString() };
+        .select("title, doi, pmid, source_url, abstract, key_findings, embedding").eq("id", body.id).maybeSingle();
+      if (!cur) {
+        return new Response(JSON.stringify({ error: "Artigo não encontrado" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const pmidFromUrl = typeof cur.source_url === "string"
+        ? cur.source_url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d{4,})/i)?.[1] || null
+        : null;
+      const v = await verifyArticle({ title: cur.title, doi: cur.doi, pmid: cleanPmidStr(cur.pmid) || pmidFromUrl });
+      if (!v.verified) {
+        await adminClient.from("knowledge_articles")
+          .update({
+            approved: false,
+            ...verificationPatch(v, "invalid"),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", body.id);
+        return new Response(JSON.stringify({
+          error: "Artigo não aprovado: DOI/PMID não confirmou o título no PubMed/Crossref.",
+          reason: v.reason || "not_found",
+          matchedTitle: v.matchedTitle || null,
+        }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const finalDoi = v.doi ?? (v.doiMismatch ? null : cleanDoiStr(cur.doi));
+      const finalPmid = v.pmid || cleanPmidStr(cur.pmid) || pmidFromUrl;
+      const finalUrl = v.sourceUrl || (finalPmid ? `https://pubmed.ncbi.nlm.nih.gov/${finalPmid}/` : finalDoi ? `https://doi.org/${finalDoi}` : null);
+      const patch: any = {
+        approved: true,
+        doi: finalDoi,
+        pmid: finalPmid,
+        source_url: finalUrl,
+        ...verificationPatch(v, "verified"),
+        updated_at: new Date().toISOString(),
+      };
       let embeddingBackfilled = false;
-      if (cur && !cur.embedding) {
+      if (!cur.embedding) {
         const text = [cur.title, cur.abstract, cur.key_findings].filter(Boolean).join("\n\n");
         const vec = text ? await embed(LOVABLE_API_KEY, text) : null;
         if (vec) { patch.embedding = vec; embeddingBackfilled = true; }
@@ -372,6 +451,15 @@ serve(async (req) => {
         if (k in body) patch[k] = body[k];
       }
       if ("pmid" in patch) patch.pmid = cleanPmidStr(patch.pmid);
+      if ("doi" in patch || "pmid" in patch || "source_url" in patch || "title" in patch) {
+        patch.approved = false;
+        patch.verification_status = "needs_review";
+        patch.verification_checked_at = null;
+        patch.verification_source = null;
+        patch.verification_matched_title = null;
+        patch.verification_similarity = null;
+        patch.verification_reason = "manual_edit_requires_revalidation";
+      }
       patch.updated_at = new Date().toISOString();
       // If text fields changed, re-embed
       if (patch.title || patch.abstract || patch.key_findings) {
@@ -422,10 +510,18 @@ serve(async (req) => {
       if (!v.verified) {
         // Persist what the admin typed (so they don't lose their edit), but do NOT approve.
         await adminClient.from("knowledge_articles")
-          .update({ doi: overrideDoi, pmid: overridePmid, updated_at: new Date().toISOString() })
+          .update({
+            doi: overrideDoi,
+            pmid: overridePmid,
+            source_url: null,
+            approved: false,
+            ...verificationPatch(v, "invalid"),
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", id);
         return new Response(JSON.stringify({
           ok: true, verified: false, reason: v.reason || "not_found",
+          similarity: v.similarity ?? null,
           matchedTitle: v.matchedTitle || null,
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -437,6 +533,7 @@ serve(async (req) => {
         doi: newDoi,
         pmid: newPmid,
         source_url: newUrl,
+        ...verificationPatch(v, "verified"),
         updated_at: new Date().toISOString(),
       };
       if (approveIfVerified) patch.approved = true;
@@ -445,6 +542,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         ok: true, verified: true, doi: newDoi, pmid: newPmid,
         sourceUrl: newUrl, matchedTitle: v.matchedTitle || null,
+        similarity: v.similarity ?? null,
         approved: approveIfVerified || row.approved,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -568,6 +666,7 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             pmid: finalPmid,
             source_url: sourceUrl,
             approved: false,
+            ...verificationPatch(verification, "verified"),
             added_by: user.id,
           };
           if (vec) row.embedding = vec;
@@ -640,14 +739,24 @@ Responda APENAS um JSON array. Sem texto adicional.`;
             }
             updated++;
           }
+          if (!dryRun) {
+            await adminClient.from("knowledge_articles")
+              .update({ ...verificationPatch(v, "verified"), updated_at: new Date().toISOString() })
+              .eq("id", r.id);
+          }
         } else {
           if (isRevalidate) {
             // Soft: demote to pending for manual review instead of deleting.
             demoted++;
-            demotedItems.push({ id: r.id, title: r.title, doi: r.doi, pmid: pmidStored, reason: v.reason || "not_found" });
-            if (!dryRun && r.approved) {
+            demotedItems.push({ id: r.id, title: r.title, doi: r.doi, pmid: pmidStored, matchedTitle: v.matchedTitle || null, similarity: v.similarity ?? null, reason: v.reason || "not_found" });
+            if (!dryRun) {
               await adminClient.from("knowledge_articles")
-                .update({ approved: false, updated_at: new Date().toISOString() })
+                .update({
+                  approved: false,
+                  source_url: null,
+                  ...verificationPatch(v, "invalid"),
+                  updated_at: new Date().toISOString(),
+                })
                 .eq("id", r.id);
             }
           } else {

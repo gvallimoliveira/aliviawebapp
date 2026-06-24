@@ -24,6 +24,7 @@ type Article = {
   doi: string | null;
   pmid: string | null;
   source_url: string | null;
+  verification_status?: string | null;
 };
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -167,10 +168,11 @@ export default function AgentKnowledgeBrowser() {
                 const cleanDoi = a.doi?.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
                 // Prefer PubMed (PMID) as the primary validation link — PMID is more stable
                 // than DOI and lets the user confirm the article matches the title.
-                const pubmedHref = a.pmid
+                const isVerified = a.verification_status === "verified";
+                const pubmedHref = isVerified && a.pmid
                   ? `https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`
-                  : a.source_url?.includes("pubmed") ? a.source_url : null;
-                const doiHref = cleanDoi ? `https://doi.org/${cleanDoi}` : null;
+                  : isVerified && a.source_url?.includes("pubmed") ? a.source_url : null;
+                const doiHref = isVerified && cleanDoi ? `https://doi.org/${cleanDoi}` : null;
                 return (
                   <div key={a.id} className="rounded-lg border border-border/60 bg-card p-3 hover:shadow-sm transition-shadow">
                     <div className="flex items-start justify-between gap-2">
@@ -193,6 +195,7 @@ export default function AgentKnowledgeBrowser() {
                       </p>
                     )}
                     <div className="flex flex-wrap items-center gap-1 mt-2">
+                      <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ID validado</Badge>
                       {a.study_type && (
                         <Badge variant="outline" className="text-[10px]">{a.study_type}</Badge>
                       )}
