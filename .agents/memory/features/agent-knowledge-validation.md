@@ -15,3 +15,5 @@ Política em vigor para `knowledge_articles` (admin: AdminAgentKnowledge, edge: 
 4. **list_public** — não filtra mais por pedro_score_status; só exige `approved=true` e `verification_status=verified`. Assim artigos sem PEDro mas aprovados pelo admin aparecem para os profissionais.
 
 5. **revalidate** — PEDro falho agora apenas atualiza metadados PEDro (sinal amarelo), não desaprova. Só desaprova quando o ID (DOI/PMID) não confirma o título.
+
+6. **Fontes de busca (ingest PubMed-first)** — `action: "ingest"` agora busca direto em PubMed (E-utilities esearch+esummary+efetch) como motor principal e Crossref como complemento (apenas periódicos IF ≥ 3 da whitelist). Cada nicho tem termos canônicos (MeSH+keywords pt/en) em `supabase/functions/_shared/niche-search-terms.ts`. A IA só é usada para resumir abstract em pt-BR e extrair key_findings — nunca para inventar metadados (título/autor/DOI/journal vêm das fontes verificadas). Dedup contra `knowledge_articles` por PMID, DOI e título normalizado antes de inserir. Resposta inclui `bySourceFound`, `bySourceInserted` e `queryUsed` para debug no admin.
