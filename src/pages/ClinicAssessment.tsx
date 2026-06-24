@@ -697,6 +697,7 @@ const ClinicAssessment = () => {
             initialSurgeryDetails={prefilledSurgeryDetails}
             initialActivityLevel={prefilledActivityLevel}
             initialHasGymAccess={prefilledGymAccess}
+            initialExtras={prefilledExtras}
             enabledSubs={reassessAnamSubs || undefined}
           />
         )}
