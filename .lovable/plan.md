@@ -1,62 +1,94 @@
 ## Problema
 
-Na avaliação manual, ao marcar "Cervical" o sistema seleciona `cervical_front` (vista anterior), porque na lista simplificada (`SIMPLIFIED_EXCLUDED_IDS` em `ManualAssessmentModal.tsx`) o id da vista posterior (`cervical`) está excluído e sobra apenas `cervical_front` rotulado como "Cervical". Anatomicamente, **dor cervical = posterior/postero-lateral**; "pescoço" = anterior/antero-lateral.
+Hoje a reavaliação só copia uma fração do `anamnesis_data` da avaliação de origem: queixas, onset, cirurgia, atividade e dados demográficos. Tudo que o profissional preencheu na **Avaliação Manual** (tipo de dor, duração, padrão, frequência semanal, despertar noturno, fatores de piora/alívio, refinamentos do mapa de dor, irradiação, inchaço, dados de cefaleia, etc.) é descartado. Resultado: o paciente do Luiz Eduardo respondeu tudo do zero, ignorando o trabalho clínico já feito.
 
-Além disso, o refinamento anatômico por região é genérico demais: regiões axiais só oferecem D/E/central e os membros oferecem todos os eixos juntos, sem refletir o que realmente faz sentido clinicamente em cada articulação.
+A correção é estrutural: a reavaliação deve enxergar a avaliação de origem como **fonte de verdade** para qualquer campo estável, sem ancorar variáveis sensíveis (EVA).
 
-## Solução
+## O que vai mudar
 
-### 1. Cervical no mapa de dor (manual + visualização)
-- Em `painMapData.ts`:
-  - Renomear o rótulo de `cervical_front` para **"Pescoço (anterior)" / "Neck (anterior)"** (id mantido por compatibilidade).
-  - Manter `cervical` (back view) com rótulo **"Cervical (posterior)" / "Cervical (posterior)"**.
-- Em `ManualAssessmentModal.tsx → SIMPLIFIED_EXCLUDED_IDS`:
-  - Remover `"cervical"` (passa a aparecer na lista, como cervical posterior — opção padrão para "dor cervical").
-  - Manter `cervical_front` na lista (agora claramente rotulado como pescoço anterior).
-- Como `PainMapView.tsx` já escolhe a vista com base nos ids selecionados, marcar `cervical` automaticamente renderiza a vista posterior. Nada a mudar lá.
+### 1. Expandir `prefilledExtras` (`ProfessionalAssessment.tsx` + `ClinicAssessment.tsx`)
 
-### 2. Refinamento anatômico específico por região (manual)
-Substituir o par único axial/apendicular por uma tabela por região em `getRefinementAxes`:
+Acrescentar ao objeto montado a partir de `originalAssessment.anamnesis_data`:
 
-| Região (id contém) | Opções de refinamento |
-|---|---|
-| `cervical` (post.) | Central, Postero-lateral D, Postero-lateral E |
-| `cervical_front` / pescoço anterior | Central, Antero-lateral D, Antero-lateral E |
-| `lower_back` / `lumbar` | Central (processos espinhosos), Unilateral D, Unilateral E, Bilateral (em faixa) |
-| `thoracic` | Central, Paravertebral D, Paravertebral E, Bilateral |
-| `head` | Frontal, Temporal D, Temporal E, Occipital, Difusa |
-| `chest` / `abdomen` | Central, Lado D, Lado E |
-| `shoulder` | Anterior, Lateral, Posterior, Superior |
-| `elbow` | Medial (epitróclea), Lateral (epicôndilo), Anterior, Posterior (olécrano) |
-| `hip` | Anterior (virilha), Lateral (trocânter), Posterior (glúteo), Medial |
-| `knee` | Anterior (patelar), Posterior (poplítea), Medial, Lateral |
-| `ankle` | Anterior, Posterior (Aquiles), Medial, Lateral |
-| `foot` | Plantar, Dorsal, Medial, Lateral, Calcâneo, Antepé |
-| `hand` | Palmar, Dorsal, Radial, Ulnar |
-| outros membros (braço, antebraço, coxa, perna/panturrilha) | Anterior, Posterior, Medial, Lateral, Proximal, Distal |
+**Caracterização da dor**
+- `painType`, `painTypes`
+- `painDuration`
+- `painPattern`
+- `painWeeklyFrequency`
+- `painNightWaking`
+- `evolution`
+- `aggravatingFactors`, `relievingFactors`
 
-Etiqueta "Axial / Apendicular" no card vira o nome do grupo anatômico real (ex.: "Coluna cervical", "Joelho"). Multi-seleção mantida.
+**Mapa de dor (refinamento)**
+- `painSubArea` (já incluso, manter)
+- `painRegionRefinements`
+- `painTypesPerRegion`
 
-### 3. Anamnesis Form (fluxo do paciente)
-Em `getSubAreasForRegion` de `AnamnesisForm.tsx`, expandir as opções para refletir a mesma granularidade:
-- `cervical`: Posterior, Postero-lateral, (remover antero-lateral daqui — pertence a pescoço, caso futuramente seja exposto).
-- `knee`: Anterior, Posterior, Medial, Lateral (já tem — manter).
-- `ankle`: Anterior, Posterior, Medial, Lateral.
-- `hip`: Anterior, Posterior, Lateral, Medial.
-- `shoulder`: Anterior, Lateral, Posterior, Superior (já tem — manter).
-- Adicionar `elbow`: Medial, Lateral, Anterior, Posterior — e expor quando a queixa for cotovelo.
+**Histórico clínico estável (completar o que faltou)**
+- `hadTwist`, `hadSprain`, `hadDislocation` (já parciais, garantir)
+- `hasLocalSwelling`, `hasScapulaPain`
+- `ottawaPositive`
 
-Strings novas (pt/en/es) adicionadas em `locales/*.json` sob `anamnesis.*.{...}_desc`.
+**Cefaleia**
+- `hasPhotophobia`, `hasVisualAura`, `hasNausea`, `headacheCrisisFrequency` (já inclusos, manter)
 
-### 4. Atualizar memória do projeto
-Adicionar `mem://features/pain-map-semantics` com a regra: "Cervical = posterior; Pescoço = anterior. Refinamento anatômico segue tabela por região (lombar central/uni/bilateral, joelho/tornozelo/quadril nos 4 quadrantes, cotovelo medial/lateral/ant/post)."
+**NÃO pré-preencher** (variáveis sensíveis da reavaliação)
+- `painScore` / `painScoresPerRegion` / `painScoreMode` — paciente responde do zero
+- Red flags — sempre re-triadas (já é o comportamento)
 
-## Arquivos afetados
-- `src/components/assessment/painMapData.ts` (relabels)
-- `src/components/dashboard/ManualAssessmentModal.tsx` (lista simplificada + `getRefinementAxes` por região)
-- `src/components/assessment/AnamnesisForm.tsx` (`getSubAreasForRegion`)
-- `src/locales/{pt,en,es}.json` (novas chaves de descrição)
-- `.agents/memory/features/pain-map-semantics.md` + atualização do `mem://index.md`
+### 2. EVA anterior visível, slider neutro
 
-## Fora do escopo
-Não tocar nas SVG paths nem mudar o renderer (`PainMapView.tsx`), nem na lógica de IA de diagnóstico — apenas semântica de seleção/rótulos e granularidade do refinamento.
+No componente do slider EVA dentro de `AnamnesisForm.tsx`:
+- Aceitar nova prop opcional `previousPainScore?: number` (passada pelas páginas de avaliação quando há `reassessmentId`).
+- Renderizar, abaixo do label, um chip discreto: `Última avaliação: 7/10` (com tradução pt/en/es).
+- Slider continua iniciando no valor neutro padrão atual — **sem ancoragem**.
+- Se `painScoreMode === 'per_region'`, mostrar o anterior por região na linha de cada região.
+
+### 3. Destaque visual "da avaliação anterior"
+
+Em `AnamnesisForm.tsx`:
+- Calcular um `Set<string>` `prefilledFieldKeys` no `useEffect` que aplica `initialExtras` + demais `initialX`. Cada campo realmente pré-preenchido entra no set.
+- Helper local `<PrefilledBadge />`: badge `text-[10px]` com fundo `bg-primary/5` e texto `text-primary/70`, label "Da avaliação anterior" / "From previous assessment" / "De la evaluación anterior".
+- Aplicar badge ao lado do label dos campos cujo `key` está no set. Leve realce visual: borda `border-primary/30` no controle enquanto valor === valor pré-preenchido. Ao usuário editar, a borda volta ao normal (sinaliza confirmação/alteração).
+
+### 4. Persistir corretamente no submit da reavaliação
+
+Já existe `mergeAnamnesisWithOriginal` em `src/lib/reassessmentSteps.ts`. Garantir que os novos campos pré-preenchidos sejam **mantidos** no `anamnesis_data` salvo da reavaliação mesmo que o paciente apenas confirme (não digite nada). Isso já acontece porque viram parte de `formData`, mas vamos validar lendo o submit handler.
+
+### 5. i18n
+
+Adicionar 3 chaves novas em `src/locales/pt.json` / `en.json` / `es.json`:
+- `assessment.prefilled.badge` — "Da avaliação anterior"
+- `assessment.prefilled.lastPainScore` — "Última EVA: {{value}}/10"
+- `assessment.prefilled.lastPainScoreRegion` — "Última EVA ({{region}}): {{value}}/10"
+
+## Detalhes técnicos
+
+```text
+ProfessionalAssessment / ClinicAssessment
+        │
+        │ (reassessmentId)
+        ▼
+   originalAssessment.anamnesis_data
+        │
+        ├──► prefilledExtras (expandido)  ──► AnamnesisForm.initialExtras
+        ├──► previousPainScore             ──► AnamnesisForm (chip, sem ancorar)
+        └──► previousQuestionnaireAnswers (já existe)
+```
+
+Arquivos tocados:
+- `src/pages/ProfessionalAssessment.tsx` — expandir `setPrefilledExtras({...})` e adicionar `previousPainScore`.
+- `src/pages/ClinicAssessment.tsx` — mesmo conjunto de mudanças.
+- `src/components/assessment/AnamnesisForm.tsx` — aceitar `previousPainScore`, rastrear `prefilledFieldKeys`, renderizar badge + chip de EVA anterior.
+- `src/lib/reassessmentSteps.ts` — conferir/garantir merge dos novos campos quando o sub-step `complaint` ou `painmap` estiver desabilitado.
+- `src/locales/{pt,en,es}.json` — novas chaves.
+
+Sem migrations. Sem novas tabelas. Sem mudança em edge functions.
+
+## Validação
+
+1. Abrir avaliação manual existente do Luiz Eduardo (admin).
+2. Gerar link de reavaliação.
+3. Conferir no fluxo do paciente que vêm pré-preenchidos: onset, tipo de dor, duração, padrão, frequência, despertar noturno, fatores, sub-área, refinamentos por região, cefaleia e histórico estável — todos com badge "Da avaliação anterior".
+4. Conferir EVA: slider neutro + chip "Última EVA: X/10" visível.
+5. Submeter sem editar nada → confirmar que `anamnesis_data` persistido contém todos os campos.
