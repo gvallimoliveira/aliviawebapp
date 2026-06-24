@@ -1012,134 +1012,85 @@ serve(async (req) => {
       const niche: string = body.niche;
       const nicheDescription = getNicheDescription(body);
       const count = Math.min(Math.max(Number(body.count) || 6, 1), 10);
-      if (!niche || !nicheDescription) {
+      const yearsBack = Math.min(Math.max(Number(body.yearsBack) || 15, 3), 25);
+      if (!niche) {
         return new Response(JSON.stringify({ error: "Nicho inválido" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const prompt = `Você é um curador de evidências em fisioterapia.
 
-Liste ${count} estudos REAIS, de alta qualidade para o nicho:
-"${nicheDescription}"
+      // 1) Termos de busca canônicos por nicho (PubMed-first, reprodutível)
+      const terms = getNicheSearchTerms(niche, nicheDescription);
 
-PRIORIZE FORTEMENTE artigos publicados nestes periódicos exigentes (fator de impacto ≥ 3 na área de Fisioterapia, ranking 2026):
-${priorityJournalListForPrompt()}
-Pelo menos 60% dos estudos devem ser desses periódicos. Eles têm revisão por pares rigorosa e são referência mundial.
+      // 2) Busca em paralelo: PubMed (motor principal) + Crossref (complemento p/ IF≥3)
+      const [pubmedRes, crossrefRes] = await Promise.all([
+        searchPubmedForNiche(terms, count * 4, yearsBack),
+        searchCrossrefForNiche(terms, count * 3, yearsBack),
+      ]);
 
-CRITÉRIOS:
-- A nota PEDro NUNCA deve ser estimada. Só informe pedro_score numérico quando você tiver certeza absoluta que a própria base PEDro mostra essa nota. Em dúvida, use pedro_score=null — a falta de nota PEDro NÃO desqualifica o artigo se o periódico for exigente.
-- Para revisões sistemáticas/meta-análises, se a PEDro mostrar Score N/A ou sem nota definida, use pedro_score=null. NUNCA use 8 como padrão.
-- Priorize meta-análises, revisões sistemáticas e RCTs recentes (últimos 15 anos).
-- NÃO invente estudos. Se não tiver certeza absoluta da existência do estudo, NÃO o inclua.
-- IDENTIFICADORES: **prefira fornecer o PMID** (mais estável que DOI). Se não souber o DOI com 100% de certeza, deixe DOI=null e forneça apenas PMID. NUNCA chute um DOI — todo par título↔DOI é checado contra o PubMed por similaridade de título e pares inconsistentes são descartados.
-- NÃO gere URLs para PEDro — IDs internos da PEDro não são previsíveis e qualquer link fabricado retorna 404. Use SOMENTE DOI e/ou PMID verificáveis.
-- Campos por estudo:
-  • title (string)
-  • authors (string "Sobrenome A, Sobrenome B")
-  • year (int)
-  • journal (string — nome completo do periódico)
-  • pedro_score (int 0-10 ou null)
-  • study_type ("RCT" | "Systematic Review" | "Meta-analysis")
-  • abstract (3-5 frases em pt-BR resumindo objetivo/método/resultado)
-  • key_findings (1-2 frases em pt-BR com o achado clínico mais aplicável)
-  • doi (string, formato "10.xxxx/yyyy" — sem "https://doi.org/". Null se não souber com certeza.)
-  • pmid (string apenas numérica, ex: "31234567". Preferencial.)
-- NÃO inclua o campo "url" / "source_url".
-
-Responda APENAS um JSON array. Sem texto adicional.`;
-
-
-      const callAi = async (model: string) => {
-        return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: "system", content: "Você é um bibliotecário científico rigoroso. Responde apenas JSON válido." },
-              { role: "user", content: prompt },
-            ],
-          }),
-        });
+      const merged = dedupeCandidates([...pubmedRes.items, ...crossrefRes]);
+      const bySourceFound = {
+        pubmed: pubmedRes.items.length,
+        crossref: crossrefRes.length,
       };
+      console.log(`[ingest] niche=${niche} pubmed=${bySourceFound.pubmed} crossref=${bySourceFound.crossref} merged=${merged.length}`);
 
-      const modelChain = ["google/gemini-2.5-pro", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"];
-      let aiResp: Response | null = null;
-      let usedModel = "";
-      let lastStatus = 0;
-      let lastBody = "";
-      for (const m of modelChain) {
-        const r = await callAi(m);
-        if (r.ok) { aiResp = r; usedModel = m; break; }
-        lastStatus = r.status;
-        lastBody = await r.text();
-        console.warn(`[ingest] ${m} returned ${r.status}: ${lastBody.slice(0, 200)}`);
-        // Only fall back on credit/rate issues; other errors are fatal
-        if (r.status !== 402 && r.status !== 429) break;
-      }
+      // 3) Remove duplicados já existentes na base
+      const fresh = await filterAlreadyStored(adminClient, merged);
+      // 4) Limita a `count*2` para enriquecer / inserir até `count`
+      const toEnrich = fresh.slice(0, Math.max(count, 1) * 2);
 
-      if (!aiResp) {
-        console.error("[ingest] all models failed", lastStatus, lastBody);
-        if (lastStatus === 429) return new Response(JSON.stringify({ error: "ai_rate_limit" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        if (lastStatus === 402) return new Response(JSON.stringify({ error: "ai_credits_exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        return new Response(JSON.stringify({ error: "ai_error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      console.log(`[ingest] using model ${usedModel} for niche ${niche}`);
-
-      const aiJson = await aiResp.json();
-      const raw = aiJson.choices?.[0]?.message?.content || "";
-      const parsed = safeParseJson(raw);
-      const items = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.articles) ? parsed.articles : [];
+      // 5) Enriquecimento via IA (apenas resumo/study_type — não inventa metadados)
+      const enriched = await enrichCandidatesWithAi(LOVABLE_API_KEY, toEnrich);
 
       let inserted = 0;
       let rejectedUnverified = 0;
       let pedroWarning = 0;
       let priorityJournalCount = 0;
-      for (const it of items) {
-        try {
-          const pedro = Number(it.pedro_score);
-          if (!it.title) continue;
+      const bySourceInserted: Record<string, number> = { pubmed: 0, crossref: 0 };
 
-          // *** Verificação obrigatória contra PubMed/Crossref ***
-          const verification = await verifyArticle({ title: it.title, doi: it.doi, pmid: it.pmid });
+      for (let i = 0; i < toEnrich.length && inserted < count; i++) {
+        const c = toEnrich[i];
+        const enr = enriched[i] || { abstract_pt: null, key_findings_pt: null, study_type: null, pedro_score: null };
+        try {
+          // Verificação cruzada — pubmed candidates já têm PMID, então passa quase sempre
+          const verification = await verifyArticle({ title: c.title, doi: c.doi, pmid: c.pmid });
           if (!verification.verified) {
             rejectedUnverified++;
-            console.warn(`[ingest] unverified, skipping: ${it.title}`);
+            console.warn(`[ingest] unverified, skipping: ${c.title}`);
             continue;
           }
 
-          // *** Nota PEDro checada na base PEDro, mas NÃO bloqueia ingestão.
-          // Falha PEDro = sinal amarelo: admin decide se aprova (artigo em
-          // periódico exigente pode não constar na PEDro).
-          const pedroV = await verifyPedroScore({ title: it.title, study_type: it.study_type, pedro_score: isNaN(pedro) ? null : pedro });
-          if (!isAcceptablePedro(pedroV)) {
-            pedroWarning++;
-            console.log(`[ingest] PEDro warning (admin review): ${it.title} (${pedroV.reason})`);
-          }
+          // PEDro = aviso amarelo opcional
+          const pedroV = await verifyPedroScore({ title: c.title, study_type: enr.study_type || c.studyType, pedro_score: enr.pedro_score });
+          if (!isAcceptablePedro(pedroV)) pedroWarning++;
 
-          const text = [it.title, it.abstract, it.key_findings].filter(Boolean).join("\n\n");
+          const abstractFinal = enr.abstract_pt || c.abstract || null;
+          const keyFindings = enr.key_findings_pt || null;
+          const studyType = enr.study_type || c.studyType || null;
+
+          const text = [c.title, abstractFinal, keyFindings].filter(Boolean).join("\n\n");
           const vec = await embed(LOVABLE_API_KEY, text);
 
-          const finalDoi = verification.doi || cleanDoiStr(it.doi);
-          const finalPmid = verification.pmid || cleanPmidStr(it.pmid);
+          const finalDoi = verification.doi || c.doi || null;
+          const finalPmid = verification.pmid || c.pmid || null;
           const sourceUrl = verification.sourceUrl
             || (finalPmid ? `https://pubmed.ncbi.nlm.nih.gov/${finalPmid}/`
               : finalDoi ? `https://doi.org/${finalDoi}` : null);
-
           if (!sourceUrl) { rejectedUnverified++; continue; }
 
-          if (isPriorityJournal(it.journal)) priorityJournalCount++;
+          if (isPriorityJournal(c.journal)) priorityJournalCount++;
 
           const row: any = {
-            title: String(it.title).slice(0, 500),
-            authors: it.authors || null,
-            year: it.year ? Number(it.year) : null,
-            journal: it.journal || null,
+            title: String(c.title).slice(0, 500),
+            authors: c.authors || null,
+            year: c.year || null,
+            journal: c.journal || null,
             pedro_score: pedroV.score,
-            study_type: it.study_type || null,
+            study_type: studyType,
             niche_tags: [niche],
-            abstract: it.abstract || null,
-            key_findings: it.key_findings || null,
+            abstract: abstractFinal,
+            key_findings: keyFindings,
             doi: finalDoi,
             pmid: finalPmid,
             source_url: sourceUrl,
@@ -1150,17 +1101,35 @@ Responda APENAS um JSON array. Sem texto adicional.`;
           };
           if (vec) row.embedding = vec;
           const { error: insErr } = await adminClient.from("knowledge_articles").insert(row);
-          if (!insErr) inserted++;
-          else console.warn("[ingest] insert error", insErr);
+          if (!insErr) {
+            inserted++;
+            bySourceInserted[c.source] = (bySourceInserted[c.source] || 0) + 1;
+          } else {
+            console.warn("[ingest] insert error", insErr);
+          }
+          await SLEEP(300);
         } catch (e) {
           console.warn("[ingest] item error", e);
         }
       }
 
-      return new Response(JSON.stringify({ ok: true, inserted, candidates: items.length, rejectedUnverified, pedroWarning, priorityJournalCount }), {
+      return new Response(JSON.stringify({
+        ok: true,
+        inserted,
+        candidates: merged.length,
+        afterDedup: fresh.length,
+        rejectedUnverified,
+        pedroWarning,
+        priorityJournalCount,
+        bySourceFound,
+        bySourceInserted,
+        queryUsed: pubmedRes.query,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+
 
     // ---------- VERIFY / REVALIDATE ----------
     // Both actions use the SAME strict verifyArticle (title cross-check obrigatório).
