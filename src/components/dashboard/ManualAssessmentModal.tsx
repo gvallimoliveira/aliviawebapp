@@ -1921,14 +1921,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       </Label>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
                         {isPt
-                          ? "Especifique a localização dentro de cada região com base nos planos e eixos do corpo. Membros aceitam medial/lateral, anterior/posterior e proximal/distal; regiões axiais (cabeça, cervical, torácica, lombar, tórax e abdômen) aceitam lado direito/esquerdo ou central."
-                          : "Refine the location inside each region using anatomical planes and axes. Limbs accept medial/lateral, anterior/posterior and proximal/distal; axial regions (head, cervical, thoracic, lumbar, chest, abdomen) accept right side / left side / central."}
+                          ? "Cada região oferece as opções clinicamente relevantes daquela articulação ou segmento (ex.: lombar → central, unilateral D/E ou bilateral em faixa; joelho → anterior/posterior/medial/lateral; cotovelo → medial, lateral, anterior ou posterior)."
+                          : "Each region offers the clinically relevant options for that joint or segment (e.g., lumbar → central, unilateral R/L or bilateral band-like; knee → anterior/posterior/medial/lateral; elbow → medial, lateral, anterior or posterior)."}
                       </p>
                     </div>
                     <div className="space-y-2">
                       {painRegions.map((id) => {
                         const lbl = regionLabelMap[id];
                         const axes = getRefinementAxes(id);
+                        const group = getRegionGroup(id);
                         const selected = painRegionRefinements[id] || [];
                         return (
                           <div key={id} className="rounded-md border bg-card p-2">
@@ -1937,9 +1938,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                                 {lbl ? (isPt ? lbl.label_pt : lbl.label_en) : id}
                               </span>
                               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                {isAxialRegion(id)
-                                  ? (isPt ? "Axial" : "Axial")
-                                  : (isPt ? "Apendicular" : "Appendicular")}
+                                {isPt ? group.label_pt : group.label_en}
                               </span>
                             </div>
                             <div className="flex flex-wrap gap-1.5">
