@@ -616,7 +616,7 @@ export default function AdminAgentKnowledge() {
                           </Button>
                           <Button size="sm" onClick={() => handleApprove(a.id)} disabled={busyId === a.id} className="gap-1.5">
                             {busyId === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                            Aprovar (só validado)
+                            Aprovar
                           </Button>
                         </div>
                       )}
