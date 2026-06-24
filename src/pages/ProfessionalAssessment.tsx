@@ -705,6 +705,7 @@ const ProfessionalAssessment = () => {
             initialSurgeryDetails={prefilledSurgeryDetails}
             initialActivityLevel={prefilledActivityLevel}
             initialHasGymAccess={prefilledGymAccess}
+            initialExtras={prefilledExtras}
             enabledSubs={reassessAnamSubs || undefined}
           />
         )}
