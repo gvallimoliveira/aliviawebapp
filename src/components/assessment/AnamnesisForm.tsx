@@ -195,10 +195,29 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
 
   // Subtle "from previous assessment" badge.
   const PrefilledBadge = () => (
-    <span className="ml-2 inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary/80 border border-primary/20 whitespace-nowrap">
+    <span className="ml-2 inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary/80 border border-primary/20 whitespace-nowrap align-middle">
       {t("assessment.prefilled.badge")}
     </span>
   );
+
+  const stepHasPrefill = (id: string): boolean => {
+    const keysByStep: Record<string, string[]> = {
+      complaint: ["chiefComplaints"],
+      onset: ["onset"],
+      surgery: ["hasPriorSurgery", "surgeryDetails"],
+      painmap: ["painRegions"],
+      region_detail: ["painSubArea", "hadTwist", "hadSprain", "hadDislocation", "ottawaPositive"],
+      migraine_screening: ["hasPhotophobia", "hasVisualAura", "hasNausea", "headacheCrisisFrequency"],
+      sex_age: ["sex", "ageRange"],
+      paintype: ["painType", "painTypes"],
+      evolution: ["evolution"],
+      factors: ["aggravatingFactors", "relievingFactors", "activityLevel"],
+      duration: ["painDuration"],
+      pain_frequency: ["painPattern", "painWeeklyFrequency", "painNightWaking"],
+      gym: ["hasGymAccess"],
+    };
+    return (keysByStep[id] || []).some((k) => prefilledKeys.has(k));
+  };
 
   const complaints = [
     "anamnesis.complaint.neck_pain",
