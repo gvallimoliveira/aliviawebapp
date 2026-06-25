@@ -9,10 +9,12 @@
 //
 // The `model` field in `body` is overridden by each attempt.
 
+// Default chain: Flash → Flash-Lite. Pro is only used when callers explicitly
+// pass it in their model chain (e.g. for hard reasoning fallbacks). Keeping Pro
+// out of the default chain prevents unnecessary credit spend on routine calls.
 export const DEFAULT_MODEL_CHAIN = [
   "google/gemini-2.5-flash",
   "google/gemini-2.5-flash-lite",
-  "google/gemini-2.5-pro",
 ];
 
 export async function callAiWithFallback(
