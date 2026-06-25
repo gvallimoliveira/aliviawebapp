@@ -201,6 +201,12 @@ const AssessmentView = () => {
         a.click();
         URL.revokeObjectURL(url);
       } else {
+        const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
+        const branding = await resolveAssessmentBranding({
+          clinicId: (assessment as any).clinic_id || null,
+          professionalId: (assessment as any).professional_id || null,
+          userId: user?.id || null,
+        });
         await generateAssessmentPdf({
           diagnosis: assessment.diagnosis,
           finalHypothesis,
@@ -214,6 +220,7 @@ const AssessmentView = () => {
           redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
           redFlagAnswers: (assessment.red_flags as any)?.answers,
           redFlagsAnsweredAt: (assessment.red_flags as any)?.answered_at,
+          ...branding,
         });
       }
     } catch {
