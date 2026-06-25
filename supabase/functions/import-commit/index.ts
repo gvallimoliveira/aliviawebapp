@@ -196,7 +196,11 @@ Deno.serve(async (req) => {
             status: "completed",
             patient_name: patientName,
             patient_email: patientEmail,
-            assessment_data: assessmentData,
+            pain_score: row.pain_score != null ? Number(row.pain_score) : null,
+            anamnesis_data: assessmentData,
+            diagnosis: row.diagnosis_text
+              ? { hypothesis: row.diagnosis_text, summary: row.diagnosis_text }
+              : null,
             professional_id: body.professionalId ?? null,
             clinic_id: body.clinicId ?? null,
             external_import_data: ext,
@@ -205,32 +209,49 @@ Deno.serve(async (req) => {
           if (insErr) errors.push({ index: i, error: insErr.message });
           else created++;
         } else if (body.entity === "session_notes") {
-          const p = await resolvePatient(row.patient_email, row.patient_name);
-          if (!p) { errors.push({ index: i, error: "patient_not_found" }); continue; }
+          if (!body.professionalId) { errors.push({ index: i, error: "professional_id_required" }); continue; }
+          const email = (row.patient_email ?? "").toString().trim();
+          if (!email) { errors.push({ index: i, error: "missing_patient_email" }); continue; }
           const content = row.content || [row.subjective, row.objective, row.assessment, row.plan]
             .filter(Boolean).join("\n\n");
           const { error: insErr } = await admin.from("session_notes").insert({
-            patient_id: p.id,
-            professional_id: body.professionalId ?? null,
+            patient_email: email,
+            professional_id: body.professionalId,
+            clinic_id: body.clinicId ?? null,
             content,
-            note_date: row.note_date ?? new Date().toISOString().slice(0, 10),
+            session_date: row.note_date ?? new Date().toISOString().slice(0, 10),
             external_import_data: ext,
             import_batch_id: batch.id,
           });
           if (insErr) errors.push({ index: i, error: insErr.message });
           else created++;
         } else if (body.entity === "pain_diary") {
-          // pain_diary lives on user_id; we need to resolve user by email
           const email = (row.patient_email ?? "").toString().trim();
           if (!email) { errors.push({ index: i, error: "missing_patient_email" }); continue; }
-          const { data: u } = await admin.rpc("get_user_id_by_email" as any, { _email: email }).maybeSingle?.() ?? { data: null };
-          // Fallback: skip if helper not available
-          if (!u) { errors.push({ index: i, error: "patient_user_not_found" }); continue; }
+          const { data: userRow } = await admin
+            .from("profiles" as any)
+            .select("user_id")
+            .limit(0);
+          // Resolve user by email via auth.admin
+          const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 1 });
+          let resolvedUserId: string | null = null;
+          // Use a direct SQL via rpc if available; fallback to listUsers filter (best-effort)
+          const { data: au } = await (admin as any)
+            .schema?.("auth")
+            ?.from?.("users")
+            ?.select?.("id")
+            ?.ilike?.("email", email)
+            ?.maybeSingle?.() ?? { data: null };
+          if (au?.id) resolvedUserId = au.id;
+          if (!resolvedUserId && list?.users) {
+            resolvedUserId = list.users.find((u: any) => (u.email ?? "").toLowerCase() === email.toLowerCase())?.id ?? null;
+          }
+          if (!resolvedUserId) { errors.push({ index: i, error: "patient_user_not_found" }); continue; }
           const { error: insErr } = await admin.from("pain_diary_entries").insert({
-            user_id: (u as any).id ?? u,
+            user_id: resolvedUserId,
             pain_score: Number(row.pain_score ?? 0),
-            note: row.note ?? null,
-            logged_at: row.logged_at ?? new Date().toISOString(),
+            notes: row.note ?? null,
+            logged_at: row.logged_at ?? new Date().toISOString().slice(0, 10),
             external_import_data: ext,
             import_batch_id: batch.id,
           });
