@@ -2608,7 +2608,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
 
   // ── Responsible Technician Block (last page, before footer) ──
   if (options.responsibleProfessional) {
-    y = drawResponsibleBlock(doc, y, isPt, options.responsibleProfessional);
+    y = await drawResponsibleBlock(doc, y, isPt, options.responsibleProfessional);
   }
 
   // ── Footer ──
