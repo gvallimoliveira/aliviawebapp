@@ -1458,16 +1458,15 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   // Header band
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
-  const logoH = 14;
-  const logoW = 14;
-  const logoY = (38 - logoH) / 2;
+  const logoMaxH = 14;
+  const logoMaxW = 28;
+  const logoY = (38 - logoMaxH) / 2;
   let textStartX = MARGIN;
   if (logoBase64) {
-    try {
-      doc.addImage(logoBase64, "PNG", MARGIN, logoY, logoW, logoH);
-      textStartX = MARGIN + logoW + 3;
-    } catch { /* fallback */ }
+    const drawnW = drawBrandLogo(doc, logoBase64, MARGIN, logoY, logoMaxW, logoMaxH);
+    textStartX = MARGIN + drawnW + 3;
   }
+  const logoH = logoMaxH; // kept for downstream y math
   doc.setFont("Inter", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
