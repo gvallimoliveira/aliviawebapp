@@ -2145,7 +2145,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
 
   // ── Responsible Technician Block (last page, before footer) ──
   if (responsibleProfessional) {
-    y = drawResponsibleBlock(doc, y, isPt, responsibleProfessional);
+    y = await drawResponsibleBlock(doc, y, isPt, responsibleProfessional);
   }
 
   // ── Footer on every page with logo ──
