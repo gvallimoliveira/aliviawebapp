@@ -168,8 +168,8 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
     } finally { setBusy(false); }
   }
 
-  function next() { setStep((s) => Math.min(6, (s + 1) as Step)); }
-  function back() { setStep((s) => Math.max(1, (s - 1) as Step)); }
+  function next() { setStep((s) => Math.min(6, s + 1) as Step); }
+  function back() { setStep((s) => Math.max(1, s - 1) as Step); }
 
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset(); }}>
