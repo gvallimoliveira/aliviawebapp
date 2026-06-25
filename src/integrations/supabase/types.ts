@@ -471,10 +471,12 @@ export type Database = {
           clinic_id: string | null
           created_at: string
           diagnosis: Json | null
+          external_import_data: Json | null
           final_hypothesis: string | null
           final_hypothesis_at: string | null
           final_hypothesis_by: string | null
           id: string
+          import_batch_id: string | null
           needs_reimpression: boolean
           original_assessment_id: string | null
           paid_at: string | null
@@ -505,10 +507,12 @@ export type Database = {
           clinic_id?: string | null
           created_at?: string
           diagnosis?: Json | null
+          external_import_data?: Json | null
           final_hypothesis?: string | null
           final_hypothesis_at?: string | null
           final_hypothesis_by?: string | null
           id?: string
+          import_batch_id?: string | null
           needs_reimpression?: boolean
           original_assessment_id?: string | null
           paid_at?: string | null
@@ -539,10 +543,12 @@ export type Database = {
           clinic_id?: string | null
           created_at?: string
           diagnosis?: Json | null
+          external_import_data?: Json | null
           final_hypothesis?: string | null
           final_hypothesis_at?: string | null
           final_hypothesis_by?: string | null
           id?: string
+          import_batch_id?: string | null
           needs_reimpression?: boolean
           original_assessment_id?: string | null
           paid_at?: string | null
@@ -573,6 +579,13 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_import_batch_id_fkey"
+            columns: ["import_batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
             referencedColumns: ["id"]
           },
           {
@@ -1330,6 +1343,73 @@ export type Database = {
         }
         Relationships: []
       }
+      import_batches: {
+        Row: {
+          clinic_id: string | null
+          created_at: string
+          expires_undo_at: string
+          id: string
+          professional_id: string | null
+          source_filename: string
+          source_format: string | null
+          status: string
+          summary: Json
+          undone_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clinic_id?: string | null
+          created_at?: string
+          expires_undo_at?: string
+          id?: string
+          professional_id?: string | null
+          source_filename: string
+          source_format?: string | null
+          status?: string
+          summary?: Json
+          undone_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string | null
+          created_at?: string
+          expires_undo_at?: string
+          id?: string
+          professional_id?: string | null
+          source_filename?: string
+          source_format?: string | null
+          status?: string
+          summary?: Json
+          undone_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_batches_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_batches_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_batches_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_articles: {
         Row: {
           abstract: string | null
@@ -1468,7 +1548,9 @@ export type Database = {
         Row: {
           assessment_id: string | null
           created_at: string
+          external_import_data: Json | null
           id: string
+          import_batch_id: string | null
           logged_at: string
           notes: string | null
           pain_score: number
@@ -1477,7 +1559,9 @@ export type Database = {
         Insert: {
           assessment_id?: string | null
           created_at?: string
+          external_import_data?: Json | null
           id?: string
+          import_batch_id?: string | null
           logged_at?: string
           notes?: string | null
           pain_score: number
@@ -1486,7 +1570,9 @@ export type Database = {
         Update: {
           assessment_id?: string | null
           created_at?: string
+          external_import_data?: Json | null
           id?: string
+          import_batch_id?: string | null
           logged_at?: string
           notes?: string | null
           pain_score?: number
@@ -1498,6 +1584,13 @@ export type Database = {
             columns: ["assessment_id"]
             isOneToOne: false
             referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pain_diary_entries_import_batch_id_fkey"
+            columns: ["import_batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -1672,8 +1765,10 @@ export type Database = {
           cpf: string | null
           created_at: string
           email: string | null
+          external_import_data: Json | null
           full_name: string
           id: string
+          import_batch_id: string | null
           is_study_case: boolean
           notes: string | null
           occupation: string | null
@@ -1690,8 +1785,10 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           email?: string | null
+          external_import_data?: Json | null
           full_name: string
           id?: string
+          import_batch_id?: string | null
           is_study_case?: boolean
           notes?: string | null
           occupation?: string | null
@@ -1708,8 +1805,10 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           email?: string | null
+          external_import_data?: Json | null
           full_name?: string
           id?: string
+          import_batch_id?: string | null
           is_study_case?: boolean
           notes?: string | null
           occupation?: string | null
@@ -1724,6 +1823,13 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patients_import_batch_id_fkey"
+            columns: ["import_batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
             referencedColumns: ["id"]
           },
           {
@@ -1836,7 +1942,9 @@ export type Database = {
           clinic_id: string | null
           created_at: string
           duration_minutes: number
+          external_import_data: Json | null
           id: string
+          import_batch_id: string | null
           notes: string | null
           patient_email: string | null
           patient_name: string
@@ -1852,7 +1960,9 @@ export type Database = {
           clinic_id?: string | null
           created_at?: string
           duration_minutes?: number
+          external_import_data?: Json | null
           id?: string
+          import_batch_id?: string | null
           notes?: string | null
           patient_email?: string | null
           patient_name?: string
@@ -1868,7 +1978,9 @@ export type Database = {
           clinic_id?: string | null
           created_at?: string
           duration_minutes?: number
+          external_import_data?: Json | null
           id?: string
+          import_batch_id?: string | null
           notes?: string | null
           patient_email?: string | null
           patient_name?: string
@@ -1890,6 +2002,13 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_appointments_import_batch_id_fkey"
+            columns: ["import_batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
             referencedColumns: ["id"]
           },
           {
@@ -2290,7 +2409,9 @@ export type Database = {
           clinic_id: string | null
           content: string
           created_at: string
+          external_import_data: Json | null
           id: string
+          import_batch_id: string | null
           patient_email: string
           professional_id: string
           session_date: string
@@ -2301,7 +2422,9 @@ export type Database = {
           clinic_id?: string | null
           content?: string
           created_at?: string
+          external_import_data?: Json | null
           id?: string
+          import_batch_id?: string | null
           patient_email: string
           professional_id: string
           session_date?: string
@@ -2312,7 +2435,9 @@ export type Database = {
           clinic_id?: string | null
           content?: string
           created_at?: string
+          external_import_data?: Json | null
           id?: string
+          import_batch_id?: string | null
           patient_email?: string
           professional_id?: string
           session_date?: string
@@ -2331,6 +2456,13 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_notes_import_batch_id_fkey"
+            columns: ["import_batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
             referencedColumns: ["id"]
           },
           {
@@ -2688,10 +2820,12 @@ export type Database = {
           clinic_id: string | null
           created_at: string
           diagnosis: Json | null
+          external_import_data: Json | null
           final_hypothesis: string | null
           final_hypothesis_at: string | null
           final_hypothesis_by: string | null
           id: string
+          import_batch_id: string | null
           needs_reimpression: boolean
           original_assessment_id: string | null
           paid_at: string | null

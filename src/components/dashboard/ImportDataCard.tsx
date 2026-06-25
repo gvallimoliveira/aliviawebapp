@@ -1,0 +1,59 @@
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Upload, ShieldCheck, FileInput } from "lucide-react";
+import ImportDataModal from "./ImportDataModal";
+
+interface Props {
+  mode: "professional" | "clinic" | "demo";
+  professionalId?: string;
+  clinicId?: string;
+  entityName?: string;
+}
+
+export default function ImportDataCard({ mode, professionalId, clinicId, entityName }: Props) {
+  const [open, setOpen] = useState(false);
+  const isDemo = mode === "demo";
+
+  return (
+    <>
+      <Card className="border-dashed">
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-full bg-primary/10 p-2"><FileInput className="w-5 h-5 text-primary" /></div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg">Importar dados</h3>
+              <p className="text-sm text-muted-foreground">
+                Trazer pacientes, avaliações, evoluções e agenda de outro sistema (CSV, JSON ou ZIP do Aliv.iA).
+                A IA mapeia colunas para o schema nativo e preserva o que não couber em <em>"Dados externos"</em>.
+                {isDemo && " Em modo demo nada é gravado."}
+              </p>
+            </div>
+          </div>
+          <ul className="text-xs text-muted-foreground space-y-1 ml-12 list-disc">
+            <li>Suporta CSV/TSV, JSON e ZIP exportado pelo próprio Aliv.iA</li>
+            <li>Deduplicação por e-mail com opção de mesclar ou criar novo</li>
+            <li>Janela de 24h para desfazer com um clique</li>
+            <li>Campos não correspondentes vão para <code>external_import_data</code></li>
+          </ul>
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3" /> Requer consentimento LGPD do paciente
+            </span>
+            <Button onClick={() => setOpen(true)} className="gap-2">
+              <Upload className="w-4 h-4" />
+              {isDemo ? "Simular importação" : "Importar dados"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <ImportDataModal
+        open={open}
+        onOpenChange={setOpen}
+        mode={mode}
+        professionalId={professionalId}
+        clinicId={clinicId}
+      />
+    </>
+  );
+}

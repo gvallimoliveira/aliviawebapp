@@ -37,6 +37,7 @@ import ProScheduleCard from "./ProScheduleCard";
 import ClinicVolumeAlert from "./ClinicVolumeAlert";
 import SoloUpgradeBanner from "./SoloUpgradeBanner";
 import ExportDataCard from "./ExportDataCard";
+import ImportDataCard from "./ImportDataCard";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
@@ -1149,8 +1150,13 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           </span>
           <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
         </summary>
-        <div className="px-2 pb-2">
+        <div className="px-2 pb-2 space-y-3">
           <ExportDataCard
+            mode={isDemoMode || isSimulated ? "demo" : "professional"}
+            professionalId={professional.id}
+            entityName={professional.full_name}
+          />
+          <ImportDataCard
             mode={isDemoMode || isSimulated ? "demo" : "professional"}
             professionalId={professional.id}
             entityName={professional.full_name}
