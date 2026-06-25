@@ -1,6 +1,9 @@
 // Suggest 2-6 functional/orthopedic/mobility tests based on assessment context.
 // Uses Lovable AI Gateway. CORS-enabled, public (verify_jwt=false).
+// Cached by input hash for 7 days to avoid repeated identical calls.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
