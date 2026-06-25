@@ -2268,33 +2268,33 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   // ── Header Band ──
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
   const logoH = 14;
-  const logoW = 14;
+  const logoMaxW = isClinicBranded ? 40 : 14;
   const logoY = (38 - logoH) / 2;
   let textStartX = MARGIN;
   if (logoBase64) {
-    try {
-      doc.addImage(logoBase64, "PNG", MARGIN, logoY, logoW, logoH);
-      textStartX = MARGIN + logoW + 3;
-    } catch { /* fallback */ }
+    const w = drawBrandLogo(doc, logoBase64, MARGIN, logoY, logoMaxW, logoH);
+    textStartX = MARGIN + w + 3;
+  }
+  let rightReservedW = 0;
+  if (proLogoBase64) {
+    const proMaxW = 28;
+    const w = drawBrandLogo(doc, proLogoBase64, PAGE_WIDTH - MARGIN - proMaxW, logoY, proMaxW, logoH, "right");
+    rightReservedW = w + 4;
   }
   doc.setFont("Inter", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
-  doc.text(isClinicBranded && options.clinicName ? options.clinicName : "Aliv.iA", textStartX, titleY);
+  const titleMaxW = PAGE_WIDTH - MARGIN - textStartX - Math.max(rightReservedW, 30);
+  const headerTitle = isClinicBranded && options.clinicName ? options.clinicName : "Aliv.iA";
+  doc.text(truncateToWidth(doc, headerTitle, titleMaxW), textStartX, titleY);
   doc.setFontSize(11);
   doc.setFont("Inter", "normal");
   const reportTitle = isPt ? "Relatório de Evolução" : isEs ? "Informe de Evolución" : "Evolution Report";
-  doc.text(reportTitle, textStartX, titleY + 9);
+  doc.text(truncateToWidth(doc, reportTitle, titleMaxW), textStartX, titleY + 9);
   doc.setFontSize(8);
   const dateStr = new Date().toLocaleDateString(isPt ? "pt-BR" : isEs ? "es-ES" : "en-US", { year: "numeric", month: "long", day: "numeric" });
   doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
-
-  if (proLogoBase64) {
-    try {
-      doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - logoW, logoY, logoW, logoH);
-    } catch { /* fallback */ }
-  }
   y = 48;
 
   // ── Patient Info + Period ──
