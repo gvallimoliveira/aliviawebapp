@@ -218,6 +218,35 @@ const ExportDataCard = ({ mode, clinicId, professionalId, entityName }: Props) =
                 </div>
               </label>
             </div>
+
+            <div className="mt-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5 space-y-2">
+              <div className="text-xs font-semibold text-foreground">
+                Como ler os arquivos do pacote
+              </div>
+              <div className="space-y-1.5 text-[11px] text-muted-foreground leading-relaxed">
+                <div>
+                  <span className="inline-flex items-center rounded-sm bg-blue-500/15 text-blue-700 dark:text-blue-300 px-1.5 py-px text-[10px] font-mono font-medium mr-1.5">
+                    .json
+                  </span>
+                  Registros ricos e aninhados (avaliação completa, programa de exercícios, perfil, manifest). Mantém estrutura e tipos. Abra com <strong>VS Code</strong>, navegador, ou qualquer leitor de texto. Ideal para reimportação ou processamento.
+                </div>
+                <div>
+                  <span className="inline-flex items-center rounded-sm bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-1.5 py-px text-[10px] font-mono font-medium mr-1.5">
+                    .csv
+                  </span>
+                  Listas tabulares — uma linha por registro (evoluções, diário de dor, agenda, índices). Abra direto no <strong>Excel</strong>, Google Sheets ou Numbers para filtrar, ordenar e analisar.
+                </div>
+                <div>
+                  <span className="inline-flex items-center rounded-sm bg-muted text-foreground px-1.5 py-px text-[10px] font-mono font-medium mr-1.5">
+                    pastas
+                  </span>
+                  <code className="text-[10px]">pacientes/</code> tem uma subpasta por paciente (nome + hash). <code className="text-[10px]">tabelas_brutas/</code> traz dumps planos em CSV <em>e</em> JSON para auditoria/LGPD. <code className="text-[10px]">manifest.json</code> lista contagens e checksums SHA-256.
+                </div>
+                <div className="pt-1 border-t border-border/40">
+                  <strong className="text-foreground">Recomendação:</strong> armazene o .zip em local seguro e criptografado (drive corporativo, HD externo). Os dados são clínicos e sensíveis — trate conforme LGPD/HIPAA.
+                </div>
+              </div>
+            </div>
           </CollapsibleContent>
         </Collapsible>
 
