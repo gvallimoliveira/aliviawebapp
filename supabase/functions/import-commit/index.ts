@@ -258,15 +258,16 @@ Deno.serve(async (req) => {
           if (insErr) errors.push({ index: i, error: insErr.message });
           else created++;
         } else if (body.entity === "appointments") {
+          if (!body.professionalId) { errors.push({ index: i, error: "professional_id_required" }); continue; }
+          if (!row.appointment_date) { errors.push({ index: i, error: "missing_appointment_date" }); continue; }
           const { error: insErr } = await admin.from("professional_appointments").insert({
-            professional_id: body.professionalId ?? null,
+            professional_id: body.professionalId,
             clinic_id: body.clinicId ?? null,
             patient_name: row.patient_name ?? "Paciente importado",
             patient_email: row.patient_email ?? null,
-            patient_phone: row.patient_phone ?? null,
             appointment_date: row.appointment_date,
-            appointment_time: row.appointment_time ?? null,
-            duration_minutes: row.duration_minutes ?? 60,
+            appointment_time: row.appointment_time ?? "09:00",
+            duration_minutes: Number(row.duration_minutes ?? 50),
             status: row.status ?? "scheduled",
             notes: row.notes ?? null,
             external_import_data: ext,
