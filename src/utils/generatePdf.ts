@@ -2616,25 +2616,30 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     doc.setLineWidth(1.5);
     doc.line(MARGIN, 284, PAGE_WIDTH - MARGIN, 284);
 
-    const footerLogoSize = 8;
+    const footerLogoH = 8;
+    const footerLogoMaxW = isClinicBranded ? 22 : 12;
     let footerTextX = MARGIN;
     if (logoBase64) {
-      try {
-        doc.addImage(logoBase64, "PNG", MARGIN, 285.5, footerLogoSize, footerLogoSize);
-        footerTextX = MARGIN + footerLogoSize + 2;
-      } catch { /* fallback */ }
+      const w = drawBrandLogo(doc, logoBase64, MARGIN, 285.5, footerLogoMaxW, footerLogoH);
+      footerTextX = MARGIN + w + 2;
     }
     doc.setFontSize(7);
     doc.setFont("Inter", "normal");
     doc.setTextColor(...COLORS.muted);
-    doc.text(`Aliv.iA — ${isPt ? "Relatório de Evolução" : "Evolution Report"}`, footerTextX, 290);
+    const footerLabel = isClinicBranded && options.clinicName
+      ? `${options.clinicName} · Powered by Aliv.iA`
+      : `Aliv.iA — ${isPt ? "Relatório de Evolução" : "Evolution Report"}`;
+    const rightReserveW = 16 + (proLogoBase64 ? 14 : 0);
+    const footerTextMaxW = PAGE_WIDTH - MARGIN - footerTextX - rightReserveW;
+    doc.text(truncateToWidth(doc, footerLabel, footerTextMaxW), footerTextX, 290);
 
+    let pageCounterRightOffset = 8;
     if (proLogoBase64) {
-      try {
-        doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - footerLogoSize, 285.5, footerLogoSize, footerLogoSize);
-      } catch { /* fallback */ }
+      const proFootMaxW = 18;
+      const w = drawBrandLogo(doc, proLogoBase64, PAGE_WIDTH - MARGIN - proFootMaxW, 285.5, proFootMaxW, footerLogoH, "right");
+      pageCounterRightOffset = w + 10;
     }
-    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - (proLogoBase64 ? footerLogoSize + 10 : 8), 290);
+    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - pageCounterRightOffset, 290);
   }
 
   return doc.output("blob");
