@@ -155,6 +155,10 @@ Generate the suggestions now.`;
       }
     }
 
+    if (admin && suggestions.length > 0) {
+      await setCachedAiResponse(admin, "suggest-functional-tests", cachePayload, { suggestions });
+    }
+
     return new Response(JSON.stringify({ suggestions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
