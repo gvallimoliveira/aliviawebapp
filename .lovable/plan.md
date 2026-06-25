@@ -1,94 +1,114 @@
-## Problema
+## Objetivo
 
-Hoje a reavaliação só copia uma fração do `anamnesis_data` da avaliação de origem: queixas, onset, cirurgia, atividade e dados demográficos. Tudo que o profissional preencheu na **Avaliação Manual** (tipo de dor, duração, padrão, frequência semanal, despertar noturno, fatores de piora/alívio, refinamentos do mapa de dor, irradiação, inchaço, dados de cefaleia, etc.) é descartado. Resultado: o paciente do Luiz Eduardo respondeu tudo do zero, ignorando o trabalho clínico já feito.
+Garantir que o botão **"Backup e exportação de dados"** (em `ExportDataCard.tsx`, usado no `ProDashboard` e na aba *Management* da clínica) realmente entregue um **prontuário completo, organizado e auditável** — não apenas dumps planos de tabelas com links que expiram em 1h.
 
-A correção é estrutural: a reavaliação deve enxergar a avaliação de origem como **fonte de verdade** para qualquer campo estável, sem ancorar variáveis sensíveis (EVA).
+## Diagnóstico atual (o que já levantei)
 
-## O que vai mudar
+Hoje o `ExportDataCard` exporta apenas 7 categorias como CSV/JSON planos:
+`patients · assessments · professional_appointments · professional_notes (solo) · assessment_voice_notes · patient_files (índice) · patient_photos (índice)`.
 
-### 1. Expandir `prefilledExtras` (`ProfessionalAssessment.tsx` + `ClinicAssessment.tsx`)
+Lacunas críticas vs. a promessa feita ao usuário:
 
-Acrescentar ao objeto montado a partir de `originalAssessment.anamnesis_data`:
+1. **Faltam tabelas essenciais do prontuário**
+  - `session_notes` (evoluções por sessão) ← **indispensável**
+  - `exercise_programs` + `exercise_program_items` + `exercise_completions` (HEP/plano)
+  - `pain_diary_entries` (diário de dor)
+  - `pending_questionnaires` (questionários respondidos pelo paciente)
+  - `follow_up_emails` (histórico de acompanhamento)
+  - `conversations` + `messages` (chat P2P)
+  - `clinic_assessment_logs` (auditoria de overrides de hipótese — exigência clínica/legal)
+  - `form_drafts` (rascunhos)
+2. **Arquivos binários não vão no zip** — só `signed_url_1h`. Quem abrir o backup depois de 1h perde fotos posturais e documentos. Para um backup real precisamos bundlear os bytes (`patient-files` e `patient-photos` buckets).
+3. **Sem organização por paciente** — tudo é dumpado como tabelas globais. O usuário pediu explicitamente *"pacientes em si com seus prontuários completos"*, sugerindo pastas.
+4. **Modo demo não simula export** — `ExportDataCard` recebe `clinicId`/`professionalId` reais; em demo (`professional_demo`) não há ID, então o botão sequer aparece ou falha. Não há como o usuário pré-visualizar o formato.
+5. **Notas privadas em clínica**: `professional_notes` só é incluída em modo solo. Em clínica o dono não consegue exportar notas dos terapeutas (pode ser proposital — confirmar).
 
-**Caracterização da dor**
-- `painType`, `painTypes`
-- `painDuration`
-- `painPattern`
-- `painWeeklyFrequency`
-- `painNightWaking`
-- `evolution`
-- `aggravatingFactors`, `relievingFactors`
+## Plano de investigação e entrega
 
-**Mapa de dor (refinamento)**
-- `painSubArea` (já incluso, manter)
-- `painRegionRefinements`
-- `painTypesPerRegion`
+Vou dividir em 3 fases. Fase 1 é só análise (entrego um relatório); só depois implemento.
 
-**Histórico clínico estável (completar o que faltou)**
-- `hadTwist`, `hadSprain`, `hadDislocation` (já parciais, garantir)
-- `hasLocalSwelling`, `hasScapulaPain`
-- `ottawaPositive`
+### Fase 1 — Auditoria (read-only, ~1 ciclo)
 
-**Cefaleia**
-- `hasPhotophobia`, `hasVisualAura`, `hasNausea`, `headacheCrisisFrequency` (já inclusos, manter)
+1. Mapear, via `supabase--read_query`, **todas as tabelas com `patient_email`/`patient_id`/`clinic_id`/`professional_id**` e cruzar com o que o export cobre hoje.
+2. Validar **RLS de leitura** para cada tabela do escopo, garantindo que o `select` no client com a sessão do dono da clínica/profissional realmente retorna tudo (sem precisar de service role).
+3. Conferir os buckets `patient-files` e `patient-photos`: tamanho médio, limites práticos para zipar no browser (JSZip aguenta ~500MB-1GB; acima disso precisamos de paginação/streaming ou edge function).
+4. Entregar um **relatório curto** listando: tabelas cobertas, tabelas faltantes, tamanho estimado do zip por perfil, e decisão sobre binários (incluir sempre vs. opcional).
 
-**NÃO pré-preencher** (variáveis sensíveis da reavaliação)
-- `painScore` / `painScoresPerRegion` / `painScoreMode` — paciente responde do zero
-- Red flags — sempre re-triadas (já é o comportamento)
+### Fase 2 — Reestruturação do export
 
-### 2. EVA anterior visível, slider neutro
+Estrutura proposta do `.zip` (independente de modo):
 
-No componente do slider EVA dentro de `AnamnesisForm.tsx`:
-- Aceitar nova prop opcional `previousPainScore?: number` (passada pelas páginas de avaliação quando há `reassessmentId`).
-- Renderizar, abaixo do label, um chip discreto: `Última avaliação: 7/10` (com tradução pt/en/es).
-- Slider continua iniciando no valor neutro padrão atual — **sem ancoragem**.
-- Se `painScoreMode === 'per_region'`, mostrar o anterior por região na linha de cada região.
+```text
+alivia-export-{slug}-{YYYY-MM-DD}.zip
+├── manifest.json                 ← versão, escopo, contagens, checksums
+├── README.txt                    ← como ler o pacote
+├── clinica/  (ou profissional/)
+│   ├── perfil.json + perfil.csv
+│   ├── equipe.csv                (clinic_members, só clínica)
+│   └── agenda.csv                (todos os appointments do escopo)
+├── pacientes/
+│   └── {iniciais}-{shortHash}/   ← uma pasta por paciente (anonimizada no nome)
+│       ├── paciente.json + .csv
+│       ├── avaliacoes/
+│       │   └── {data}-{id}.json  (assessment + voice_notes + pending_questionnaires + clinic_assessment_logs daquela avaliação)
+│       ├── evolucao/
+│       │   ├── session_notes.csv
+│       │   ├── pain_diary.csv
+│       │   └── follow_ups.csv
+│       ├── tratamento/
+│       │   ├── programas.json    (exercise_programs + items + completions)
+│       │   └── notas_privadas.csv (só do profissional logado)
+│       ├── chat/
+│       │   └── conversa-{id}.csv
+│       ├── documentos/
+│       │   ├── _index.csv
+│       │   └── {file_name}       ← binário real (opt-in via checkbox)
+│       └── fotos/
+│           ├── _index.csv
+│           └── {file_name}
+└── tabelas_brutas/               ← dumps planos (compatibilidade/auditoria)
+    ├── csv/*.csv
+    └── json/*.json
+```
 
-### 3. Destaque visual "da avaliação anterior"
+Mudanças no `ExportDataCard.tsx`:
 
-Em `AnamnesisForm.tsx`:
-- Calcular um `Set<string>` `prefilledFieldKeys` no `useEffect` que aplica `initialExtras` + demais `initialX`. Cada campo realmente pré-preenchido entra no set.
-- Helper local `<PrefilledBadge />`: badge `text-[10px]` com fundo `bg-primary/5` e texto `text-primary/70`, label "Da avaliação anterior" / "From previous assessment" / "De la evaluación anterior".
-- Aplicar badge ao lado do label dos campos cujo `key` está no set. Leve realce visual: borda `border-primary/30` no controle enquanto valor === valor pré-preenchido. Ao usuário editar, a borda volta ao normal (sinaliza confirmação/alteração).
+- Nova checkbox **"Incluir arquivos binários (fotos e documentos)"** — default **on**, com aviso de tamanho estimado.
+- Reescrever `handleExport`:
+  - Adicionar fetches das tabelas faltantes (lista acima).
+  - Agrupar por `patient_email` montando a árvore de pastas.
+  - Quando "binários" estiver ligado, baixar via `supabase.storage.from(...).download(path)` e adicionar com `zip.file(..., blob)`.
+  - Calcular SHA-256 dos binários e gravar no `manifest.json` (auditoria/LGPD).
+  - Anonimizar nomes de pasta com `initialsOf` + shortHash (helpers já existem em `src/lib/anonymizePatient.ts`); manter dados reais **dentro** dos arquivos.
+  - Streaming/progresso: trocar toast estático por progresso ("Baixando 12/87 arquivos…") usando `JSZip` + contador.
 
-### 4. Persistir corretamente no submit da reavaliação
+### Fase 3 — Simulação no modo demo
 
-Já existe `mergeAnamnesisWithOriginal` em `src/lib/reassessmentSteps.ts`. Garantir que os novos campos pré-preenchidos sejam **mantidos** no `anamnesis_data` salvo da reavaliação mesmo que o paciente apenas confirme (não digite nada). Isso já acontece porque viram parte de `formData`, mas vamos validar lendo o submit handler.
+Para o usuário conferir o formato sem precisar de dados reais:
 
-### 5. i18n
-
-Adicionar 3 chaves novas em `src/locales/pt.json` / `en.json` / `es.json`:
-- `assessment.prefilled.badge` — "Da avaliação anterior"
-- `assessment.prefilled.lastPainScore` — "Última EVA: {{value}}/10"
-- `assessment.prefilled.lastPainScoreRegion` — "Última EVA ({{region}}): {{value}}/10"
+1. Aceitar `mode="demo"` no `ExportDataCard` (renderizar quando `activeContext === "professional_demo"` ou em `ClinicDemo`).
+2. No `handleExport`, se `mode === "demo"`, **não chamar o Supabase** — montar o mesmo zip a partir de:
+  - `src/data/mockPatientData.ts`, `mockClinicData.ts`, `mockProDemoExtras.ts`, `mockManualAssessmentCase.ts`, `mockExternalAssessment.ts`.
+  - Um placeholder `.txt` no lugar dos binários (ex.: `foto_postural_anterior.jpg → README_demo.txt` explicando que em produção viria o arquivo real).
+3. Adicionar o card de export ao **ProfessionalDemo** e ao **ClinicDemo** com badge "(modo demo — dados fictícios)".
+4. Resultado: o usuário clica e baixa um zip de exemplo, abre, valida a estrutura.
 
 ## Detalhes técnicos
 
-```text
-ProfessionalAssessment / ClinicAssessment
-        │
-        │ (reassessmentId)
-        ▼
-   originalAssessment.anamnesis_data
-        │
-        ├──► prefilledExtras (expandido)  ──► AnamnesisForm.initialExtras
-        ├──► previousPainScore             ──► AnamnesisForm (chip, sem ancorar)
-        └──► previousQuestionnaireAnswers (já existe)
-```
+- **Edge function vs. client-side**: manter no client (JSZip) por simplicidade e privacidade (dados não saem para nosso server). Se a Fase 1 mostrar zips >500MB comuns, adicionamos um modo "via servidor" depois (fora do escopo atual).
+- **Performance**: paralelizar downloads de binários em lotes de 5 com `Promise.allSettled` para não travar a aba.
+- **RLS**: nenhuma migration necessária — todas as tabelas já têm policies de leitura para o dono/terapeuta. Apenas confirmar em Fase 1.
+- **Sem mudança no schema**, apenas no client (`ExportDataCard.tsx`, `Dashboard.tsx`, `ProDashboard.tsx`, `ProfessionalDemo.tsx`, `ClinicDemo.tsx`) + helpers novos em `src/lib/exportZipBuilder.ts`.
+- **i18n**: adicionar chaves em pt/en/es para os novos rótulos.
 
-Arquivos tocados:
-- `src/pages/ProfessionalAssessment.tsx` — expandir `setPrefilledExtras({...})` e adicionar `previousPainScore`.
-- `src/pages/ClinicAssessment.tsx` — mesmo conjunto de mudanças.
-- `src/components/assessment/AnamnesisForm.tsx` — aceitar `previousPainScore`, rastrear `prefilledFieldKeys`, renderizar badge + chip de EVA anterior.
-- `src/lib/reassessmentSteps.ts` — conferir/garantir merge dos novos campos quando o sub-step `complaint` ou `painmap` estiver desabilitado.
-- `src/locales/{pt,en,es}.json` — novas chaves.
+## Entregáveis
 
-Sem migrations. Sem novas tabelas. Sem mudança em edge functions.
+1. Após **Fase 1**, devolvo um relatório no chat com os achados e peço seu OK antes de codar.
+2. Em seguida implemento **Fase 2 + Fase 3** numa única PR.
+3. Verifico via Playwright: (a) export demo gera zip com estrutura esperada; (b) export real (com seu usuário admin) baixa, abre e contém binários.
 
-## Validação
+## Perguntas pendentes (vou pedir antes de implementar a Fase 2)
 
-1. Abrir avaliação manual existente do Luiz Eduardo (admin).
-2. Gerar link de reavaliação.
-3. Conferir no fluxo do paciente que vêm pré-preenchidos: onset, tipo de dor, duração, padrão, frequência, despertar noturno, fatores, sub-área, refinamentos por região, cefaleia e histórico estável — todos com badge "Da avaliação anterior".
-4. Conferir EVA: slider neutro + chip "Última EVA: X/10" visível.
-5. Submeter sem editar nada → confirmar que `anamnesis_data` persistido contém todos os campos.
+- Incluir binários por padrão ou opt-in? Opt-in 
+- Em clínica, o dono pode exportar `professional_notes` de todos os terapeutas, ou cada terapeuta exporta as suas? Cada um exporta as suas 
+- Limite máximo de tamanho antes de avisar/cancelar (ex.: alertar acima de 300MB)? Sim, verificar possibilidade de subdividir para conseguir fazer todo o backup/exportação desejada. 
