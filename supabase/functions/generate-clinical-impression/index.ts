@@ -48,42 +48,69 @@ Rules:
 - Respond in ${langLabel}.
 - Use the tool provided to return the structured output.${timelineInstruction}`;
 
-    const userPrompt = `Current assessment data:
-- Chief complaint: ${anamnesisData?.chiefComplaint || "N/A"}
-- Custom complaint: ${anamnesisData?.customComplaint || "N/A"}
-- Onset: ${anamnesisData?.onset || "N/A"}
-- Pain regions: ${(painRegions || []).join(", ") || "N/A"}${anamnesisData?.painRegionRefinements && Object.keys(anamnesisData.painRegionRefinements).length > 0 ? `
-- Anatomical refinement per region (medial/lateral, anterior/posterior, proximal/distal for limbs; right/left side or central for axial regions — use to characterize the pain generator more precisely in the impression):
-${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]) => `    • ${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join("\n")}` : ""}
-- Pain types: ${(anamnesisData?.painTypes || []).join(", ") || "N/A"}
-- Pain score (VAS, overall/average): ${painScore ?? "N/A"}/10
-- Pain score mode: ${anamnesisData?.painScoreMode || "general"}
-${anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0 ? `- **PAIN INTENSITY PER REGION (use as primary pain input; overall score is just an average):**
-${Object.entries(anamnesisData.painScoresPerRegion).map(([k, v]) => `    • ${k}: ${v}/10`).join("\n")}
-- When summarizing, explicitly mention which body region(s) carry the highest pain scores and let that asymmetry guide the clinical picture — do not collapse everything into the overall average.` : ""}
-- Evolution: ${anamnesisData?.evolution || "N/A"}
-- Aggravating factors: ${anamnesisData?.aggravatingFactors || "N/A"}
-- Relieving factors: ${anamnesisData?.relievingFactors || "N/A"}
-- Activity level: ${anamnesisData?.activityLevel || "N/A"}
-- Previous treatments: ${anamnesisData?.previousTreatments || "N/A"}
-- Has edema: ${anamnesisData?.hasEdema ?? "N/A"}
-- Had twist/sprain: ${anamnesisData?.hadTwist ?? "N/A"}
-- Pain pattern: ${anamnesisData?.painPattern || "N/A"}
-- Weekly frequency: ${anamnesisData?.painWeeklyFrequency || "N/A"}
-- Night waking: ${anamnesisData?.painNightWaking || "N/A"}
-- Photophobia: ${anamnesisData?.hasPhotophobia || "N/A"}
-- Visual aura: ${anamnesisData?.hasVisualAura || "N/A"}
-- Nausea: ${anamnesisData?.hasNausea || "N/A"}
-- Headache crisis frequency: ${anamnesisData?.headacheCrisisFrequency || "N/A"}
-- Diagnostic hypothesis: ${diagnosis?.hypothesis || "N/A"}
-- Diagnostic summary: ${diagnosis?.summary || "N/A"}
-- Questionnaire results: ${JSON.stringify(questionnaireResults || [])}${timelineBlock}
-${Array.isArray(anamnesisData?.romTable) && anamnesisData.romTable.length > 0 ? `- Joint mobility (ROM):
-${anamnesisData.romTable.filter((r: any) => r?.joint || r?.leftValue || r?.rightValue).map((r: any) => `    • ${r.joint || "?"}: L ${r.leftValue || "—"} | R ${r.rightValue || "—"}`).join("\n")}` : ""}
-${Array.isArray(anamnesisData?.strengthTable) && anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue).length > 0 ? `- Dynamometry (muscle strength, kgf) — weigh asymmetries > 20% as a sign of inhibition/weakness (D.I.F.I):
-${anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue).map((r: any) => `    • ${r.movement || "?"}: L ${r.leftValue || "—"} kgf | R ${r.rightValue || "—"} kgf`).join("\n")}` : `- Dynamometry: NOT RECORDED — do not infer or invent strength values; reason from the data above without speculating about objective strength.`}
+    // Build user prompt with only populated fields to reduce token spend.
+    const lines: string[] = ["Current assessment data:"];
+    const push = (label: string, value: unknown) => {
+      if (value === null || value === undefined) return;
+      if (typeof value === "string" && !value.trim()) return;
+      if (Array.isArray(value) && value.length === 0) return;
+      lines.push(`- ${label}: ${Array.isArray(value) ? value.join(", ") : value}`);
+    };
 
-Generate the clinical impression now.`;
+    push("Chief complaint", anamnesisData?.chiefComplaint);
+    push("Custom complaint", anamnesisData?.customComplaint);
+    push("Onset", anamnesisData?.onset);
+    push("Pain regions", painRegions);
+    if (anamnesisData?.painRegionRefinements && Object.keys(anamnesisData.painRegionRefinements).length > 0) {
+      lines.push(
+        `- Anatomical refinement per region (medial/lateral, anterior/posterior, proximal/distal for limbs; right/left side or central for axial regions — use to characterize the pain generator more precisely):\n${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]) => `    • ${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join("\n")}`
+      );
+    }
+    push("Pain types", anamnesisData?.painTypes);
+    if (painScore !== null && painScore !== undefined) push("Pain score (VAS, overall/average)", `${painScore}/10`);
+    if (anamnesisData?.painScoreMode && anamnesisData.painScoreMode !== "general") push("Pain score mode", anamnesisData.painScoreMode);
+    if (anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0) {
+      lines.push(
+        `- **PAIN INTENSITY PER REGION (use as primary pain input; overall score is just an average):**\n${Object.entries(anamnesisData.painScoresPerRegion).map(([k, v]) => `    • ${k}: ${v}/10`).join("\n")}\n- When summarizing, explicitly mention which body region(s) carry the highest pain scores and let that asymmetry guide the clinical picture — do not collapse everything into the overall average.`
+      );
+    }
+    push("Evolution", anamnesisData?.evolution);
+    push("Aggravating factors", anamnesisData?.aggravatingFactors);
+    push("Relieving factors", anamnesisData?.relievingFactors);
+    push("Activity level", anamnesisData?.activityLevel);
+    push("Previous treatments", anamnesisData?.previousTreatments);
+    if (anamnesisData?.hasEdema !== undefined && anamnesisData?.hasEdema !== null) push("Has edema", anamnesisData.hasEdema);
+    if (anamnesisData?.hadTwist !== undefined && anamnesisData?.hadTwist !== null) push("Had twist/sprain", anamnesisData.hadTwist);
+    push("Pain pattern", anamnesisData?.painPattern);
+    push("Weekly frequency", anamnesisData?.painWeeklyFrequency);
+    push("Night waking", anamnesisData?.painNightWaking);
+    push("Photophobia", anamnesisData?.hasPhotophobia);
+    push("Visual aura", anamnesisData?.hasVisualAura);
+    push("Nausea", anamnesisData?.hasNausea);
+    push("Headache crisis frequency", anamnesisData?.headacheCrisisFrequency);
+    push("Diagnostic hypothesis", diagnosis?.hypothesis);
+    push("Diagnostic summary", diagnosis?.summary);
+    if (Array.isArray(questionnaireResults) && questionnaireResults.length > 0) {
+      lines.push(`- Questionnaire results: ${JSON.stringify(questionnaireResults)}`);
+    }
+    if (timelineBlock) lines.push(timelineBlock);
+    if (Array.isArray(anamnesisData?.romTable) && anamnesisData.romTable.length > 0) {
+      const rom = anamnesisData.romTable.filter((r: any) => r?.joint || r?.leftValue || r?.rightValue);
+      if (rom.length > 0) {
+        lines.push(`- Joint mobility (ROM):\n${rom.map((r: any) => `    • ${r.joint || "?"}: L ${r.leftValue || "—"} | R ${r.rightValue || "—"}`).join("\n")}`);
+      }
+    }
+    const strength = Array.isArray(anamnesisData?.strengthTable)
+      ? anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue)
+      : [];
+    if (strength.length > 0) {
+      lines.push(`- Dynamometry (muscle strength, kgf) — weigh asymmetries > 20% as a sign of inhibition/weakness (D.I.F.I):\n${strength.map((r: any) => `    • ${r.movement || "?"}: L ${r.leftValue || "—"} kgf | R ${r.rightValue || "—"} kgf`).join("\n")}`);
+    } else {
+      lines.push(`- Dynamometry: NOT RECORDED — do not infer or invent strength values; reason from the data above without speculating about objective strength.`);
+    }
+
+    lines.push("\nGenerate the clinical impression now.");
+    const userPrompt = lines.join("\n");
 
     const tools = [
       {
