@@ -561,35 +561,96 @@ function renderRedFlagsAuditTable(
 
 
 
-async function loadLogoBase64(): Promise<string | null> {
+export type BrandImage = { dataUrl: string; natW: number; natH: number };
+
+async function _blobToDataUrl(blob: Blob): Promise<string | null> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function _measureImage(dataUrl: string): Promise<{ natW: number; natH: number }> {
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.onload = () => resolve({ natW: img.naturalWidth || 1, natH: img.naturalHeight || 1 });
+      img.onerror = () => resolve({ natW: 1, natH: 1 });
+      img.src = dataUrl;
+    } catch {
+      resolve({ natW: 1, natH: 1 });
+    }
+  });
+}
+
+async function loadLogoBase64(): Promise<BrandImage | null> {
   try {
     const { default: logoUrl } = await import("@/assets/logo-alivia.png");
     const response = await fetch(logoUrl);
     const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
+    const dataUrl = await _blobToDataUrl(blob);
+    if (!dataUrl) return null;
+    const { natW, natH } = await _measureImage(dataUrl);
+    return { dataUrl, natW, natH };
   } catch {
     return null;
   }
 }
 
-async function loadExternalImageAsBase64(url: string): Promise<string | null> {
+async function loadExternalImageAsBase64(url: string): Promise<BrandImage | null> {
   try {
     const response = await fetch(url);
     const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
+    const dataUrl = await _blobToDataUrl(blob);
+    if (!dataUrl) return null;
+    const { natW, natH } = await _measureImage(dataUrl);
+    return { dataUrl, natW, natH };
   } catch {
     return null;
   }
+}
+
+/** Compute width/height that fits inside maxW × maxH while preserving the
+ *  source aspect ratio. Returned dims are anchored to the top-left. */
+function fitContain(natW: number, natH: number, maxW: number, maxH: number) {
+  const ratio = Math.min(maxW / Math.max(natW, 1), maxH / Math.max(natH, 1));
+  return { w: natW * ratio, h: natH * ratio };
+}
+
+/** Draws a brand logo inside the given bounding box without distorting it.
+ *  Returns the actual rendered width (so callers can offset text). */
+function drawBrandLogo(
+  doc: jsPDF,
+  img: BrandImage,
+  x: number,
+  y: number,
+  maxW: number,
+  maxH: number,
+  align: "left" | "right" = "left",
+): number {
+  const { w, h } = fitContain(img.natW, img.natH, maxW, maxH);
+  const drawX = align === "right" ? x + (maxW - w) : x;
+  const drawY = y + (maxH - h) / 2; // vertically centered in the box
+  try {
+    doc.addImage(img.dataUrl, "PNG", drawX, drawY, w, h, undefined, "FAST");
+  } catch {
+    /* ignore */
+  }
+  return w;
+}
+
+/** Truncates text to fit within maxW at the current font size using an ellipsis. */
+function truncateToWidth(doc: jsPDF, text: string, maxW: number): string {
+  if (!text) return text;
+  if (doc.getTextWidth(text) <= maxW) return text;
+  const ell = "…";
+  let t = text;
+  while (t.length > 1 && doc.getTextWidth(t + ell) > maxW) {
+    t = t.slice(0, -1);
+  }
+  return t.replace(/[\s·]+$/, "") + ell;
 }
 
 async function loadImageAsBase64(importFn: () => Promise<{ default: string }>): Promise<string | null> {
