@@ -606,6 +606,7 @@ const ClinicDemo = () => {
               <TabsContent value="management" className="space-y-5">
                 <DemoManagementMock />
                 <ExportDataCard mode="demo" entityName={DEMO_CLINIC.name} clinicId="demo-clinic" />
+                <ImportDataCard mode="demo" entityName={DEMO_CLINIC.name} clinicId="demo-clinic" />
               </TabsContent>
             </Tabs>
           </TabsContent>
