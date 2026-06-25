@@ -1219,6 +1219,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         const { data: p } = await supabase.from("professionals").select("logo_url").eq("id", professionalId).maybeSingle();
         proLogoUrl = (p as any)?.logo_url || undefined;
       }
+      const { resolveResponsibleProfessional } = await import("@/lib/getResponsibleProfessional");
+      const responsibleProfessional = await resolveResponsibleProfessional({
+        userId: (await supabase.auth.getUser()).data.user?.id || null,
+        ownProfessional: null,
+        clinicId: clinicId || null,
+      });
       const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
       const blob = await generateAssessmentPdfBlob({
         diagnosis: diagnosisForPdf,
@@ -1232,6 +1238,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         professionalLogoUrl: proLogoUrl,
         clinicLogoUrl,
         clinicName,
+        responsibleProfessional,
       } as any);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");

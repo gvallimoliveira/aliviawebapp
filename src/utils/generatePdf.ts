@@ -132,17 +132,30 @@ interface PdfOptions {
 }
 
 /** Renders the "Responsável Técnico" signature block above the footer.
- *  Adds a new page if there isn't enough vertical room. */
-function drawResponsibleBlock(
+ *  Adds a new page if there isn't enough vertical room. Async because we
+ *  measure the signature image to preserve its aspect ratio. */
+async function drawResponsibleBlock(
   doc: jsPDF,
   y: number,
   isPt: boolean,
   prof: ResponsibleProfessional
-): number {
+): Promise<number> {
   const hasSignature = !!prof.signatureImageDataUrl;
-  const blockHeight = hasSignature ? 46 : 26;
-  // Footer line is at y=284, so usable bottom is ~282
-  if (y + blockHeight > 280) {
+  // Measure signature once so we know how much vertical room to reserve
+  const sigBoxMaxW = 60;
+  const sigBoxMaxH = 18;
+  let sigDrawW = 0;
+  let sigDrawH = 0;
+  if (hasSignature) {
+    const dims = await _measureImage(prof.signatureImageDataUrl!);
+    const fit = fitContain(dims.natW, dims.natH, sigBoxMaxW, sigBoxMaxH);
+    sigDrawW = fit.w;
+    sigDrawH = fit.h;
+  }
+  const blockHeight = hasSignature ? (sigDrawH + 28) : 26;
+  // Footer line is at y=284 — keep a 6mm buffer so credentials never touch it
+  const SAFE_BOTTOM = 276;
+  if (y + blockHeight > SAFE_BOTTOM) {
     doc.addPage();
     y = MARGIN;
   } else {
@@ -152,17 +165,15 @@ function drawResponsibleBlock(
   const lineW = 80;
   const lineX = (PAGE_WIDTH - lineW) / 2;
 
-  // Embed signature image (max 60x18mm) just above the line
-  if (hasSignature) {
-    const imgW = 60;
-    const imgH = 18;
-    const imgX = (PAGE_WIDTH - imgW) / 2;
+  // Embed signature image (aspect-ratio preserved) just above the line
+  if (hasSignature && sigDrawW > 0) {
+    const imgX = (PAGE_WIDTH - sigDrawW) / 2;
     try {
-      doc.addImage(prof.signatureImageDataUrl!, "PNG", imgX, y, imgW, imgH, undefined, "FAST");
+      doc.addImage(prof.signatureImageDataUrl!, "PNG", imgX, y, sigDrawW, sigDrawH, undefined, "FAST");
     } catch {
       // ignore image errors and fall back to text block
     }
-    y += imgH + 1;
+    y += sigDrawH + 1;
   }
 
   doc.setDrawColor(...COLORS.muted);
@@ -190,15 +201,7 @@ function drawResponsibleBlock(
       ? `CREFITO: ${prof.crefito}`
       : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
   }
-  // Guard against overflow beyond PDF margins on very long academic labels
-  const credMaxW = CONTENT_WIDTH - 4;
-  if (doc.getTextWidth(credentialTxt) > credMaxW) {
-    const ell = "…";
-    while (credentialTxt.length > 1 && doc.getTextWidth(credentialTxt + ell) > credMaxW) {
-      credentialTxt = credentialTxt.slice(0, -1);
-    }
-    credentialTxt = credentialTxt.replace(/[\s·]+$/, "") + ell;
-  }
+  credentialTxt = truncateToWidth(doc, credentialTxt, CONTENT_WIDTH - 4);
   doc.text(credentialTxt, PAGE_WIDTH / 2, y, { align: "center" });
   y += 4;
 
@@ -561,35 +564,96 @@ function renderRedFlagsAuditTable(
 
 
 
-async function loadLogoBase64(): Promise<string | null> {
+export type BrandImage = { dataUrl: string; natW: number; natH: number };
+
+async function _blobToDataUrl(blob: Blob): Promise<string | null> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function _measureImage(dataUrl: string): Promise<{ natW: number; natH: number }> {
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.onload = () => resolve({ natW: img.naturalWidth || 1, natH: img.naturalHeight || 1 });
+      img.onerror = () => resolve({ natW: 1, natH: 1 });
+      img.src = dataUrl;
+    } catch {
+      resolve({ natW: 1, natH: 1 });
+    }
+  });
+}
+
+async function loadLogoBase64(): Promise<BrandImage | null> {
   try {
     const { default: logoUrl } = await import("@/assets/logo-alivia.png");
     const response = await fetch(logoUrl);
     const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
+    const dataUrl = await _blobToDataUrl(blob);
+    if (!dataUrl) return null;
+    const { natW, natH } = await _measureImage(dataUrl);
+    return { dataUrl, natW, natH };
   } catch {
     return null;
   }
 }
 
-async function loadExternalImageAsBase64(url: string): Promise<string | null> {
+async function loadExternalImageAsBase64(url: string): Promise<BrandImage | null> {
   try {
     const response = await fetch(url);
     const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
+    const dataUrl = await _blobToDataUrl(blob);
+    if (!dataUrl) return null;
+    const { natW, natH } = await _measureImage(dataUrl);
+    return { dataUrl, natW, natH };
   } catch {
     return null;
   }
+}
+
+/** Compute width/height that fits inside maxW × maxH while preserving the
+ *  source aspect ratio. Returned dims are anchored to the top-left. */
+function fitContain(natW: number, natH: number, maxW: number, maxH: number) {
+  const ratio = Math.min(maxW / Math.max(natW, 1), maxH / Math.max(natH, 1));
+  return { w: natW * ratio, h: natH * ratio };
+}
+
+/** Draws a brand logo inside the given bounding box without distorting it.
+ *  Returns the actual rendered width (so callers can offset text). */
+function drawBrandLogo(
+  doc: jsPDF,
+  img: BrandImage,
+  x: number,
+  y: number,
+  maxW: number,
+  maxH: number,
+  align: "left" | "right" = "left",
+): number {
+  const { w, h } = fitContain(img.natW, img.natH, maxW, maxH);
+  const drawX = align === "right" ? x + (maxW - w) : x;
+  const drawY = y + (maxH - h) / 2; // vertically centered in the box
+  try {
+    doc.addImage(img.dataUrl, "PNG", drawX, drawY, w, h, undefined, "FAST");
+  } catch {
+    /* ignore */
+  }
+  return w;
+}
+
+/** Truncates text to fit within maxW at the current font size using an ellipsis. */
+function truncateToWidth(doc: jsPDF, text: string, maxW: number): string {
+  if (!text) return text;
+  if (doc.getTextWidth(text) <= maxW) return text;
+  const ell = "…";
+  let t = text;
+  while (t.length > 1 && doc.getTextWidth(t + ell) > maxW) {
+    t = t.slice(0, -1);
+  }
+  return t.replace(/[\s·]+$/, "") + ell;
 }
 
 async function loadImageAsBase64(importFn: () => Promise<{ default: string }>): Promise<string | null> {
@@ -1397,16 +1461,15 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   // Header band
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
-  const logoH = 14;
-  const logoW = 14;
-  const logoY = (38 - logoH) / 2;
+  const logoMaxH = 14;
+  const logoMaxW = 28;
+  const logoY = (38 - logoMaxH) / 2;
   let textStartX = MARGIN;
   if (logoBase64) {
-    try {
-      doc.addImage(logoBase64, "PNG", MARGIN, logoY, logoW, logoH);
-      textStartX = MARGIN + logoW + 3;
-    } catch { /* fallback */ }
+    const drawnW = drawBrandLogo(doc, logoBase64, MARGIN, logoY, logoMaxW, logoMaxH);
+    textStartX = MARGIN + drawnW + 3;
   }
+  const logoH = logoMaxH; // kept for downstream y math
   doc.setFont("Inter", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
@@ -1546,9 +1609,9 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.setFillColor(39, 124, 103); // primary
   doc.roundedRect(MARGIN + 6, motBoxY - 2, CONTENT_WIDTH - 12, motBoxH, 3, 3, "F");
   
-  // Logo in the right side of the green box
+  // Logo in the right side of the green box (preserves aspect ratio)
   if (logoBase64) {
-    doc.addImage(logoBase64, "PNG", MARGIN + CONTENT_WIDTH - 6 - logoMotSize - 2, motBoxY, logoMotSize, logoMotSize);
+    drawBrandLogo(doc, logoBase64, MARGIN + CONTENT_WIDTH - 6 - logoMotSize - 2, motBoxY, logoMotSize, logoMotSize);
   }
   
   doc.setFont("Inter", "bold");
@@ -1582,12 +1645,11 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     doc.line(MARGIN, 284, PAGE_WIDTH - MARGIN, 284);
 
     const footerLogoSize = 8;
+    const footerLogoMaxW = 18;
     let footerTextX = MARGIN;
     if (logoBase64) {
-      try {
-        doc.addImage(logoBase64, "PNG", MARGIN, 285.5, footerLogoSize, footerLogoSize);
-        footerTextX = MARGIN + footerLogoSize + 2;
-      } catch { /* fallback */ }
+      const w = drawBrandLogo(doc, logoBase64, MARGIN, 285.5, footerLogoMaxW, footerLogoSize);
+      footerTextX = MARGIN + w + 2;
     }
     doc.setFontSize(7);
     doc.setFont("Inter", "normal");
@@ -1619,36 +1681,39 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
   
   const logoH = 14;
-  const logoW = 14;
+  const logoMaxW = isClinicBranded ? 40 : 14; // clinic logos are usually wide
   const logoY = (38 - logoH) / 2;
   let textStartX = MARGIN;
+  let leftLogoWidth = 0;
   if (logoBase64) {
-    try {
-      doc.addImage(logoBase64, "PNG", MARGIN, logoY, logoW, logoH);
-      textStartX = MARGIN + logoW + 3;
-    } catch { /* fallback without logo */ }
+    leftLogoWidth = drawBrandLogo(doc, logoBase64, MARGIN, logoY, logoMaxW, logoH);
+    textStartX = MARGIN + leftLogoWidth + 3;
+  }
+
+  // Professional logo in top-right of header (only if NOT clinic-branded) — reserved area
+  const proLogoMaxW = 28;
+  let rightReservedW = 0;
+  if (proLogoBase64) {
+    const w = drawBrandLogo(doc, proLogoBase64, PAGE_WIDTH - MARGIN - proLogoMaxW, logoY, proLogoMaxW, logoH, "right");
+    rightReservedW = w + 4;
   }
 
   doc.setFont("Inter", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
-  doc.text(isClinicBranded && clinicName ? clinicName : "Aliv.iA", textStartX, titleY);
+  const titleMaxW = PAGE_WIDTH - MARGIN - textStartX - Math.max(rightReservedW, 30);
+  const headerTitle = isClinicBranded && clinicName ? clinicName : "Aliv.iA";
+  doc.text(truncateToWidth(doc, headerTitle, titleMaxW), textStartX, titleY);
   doc.setFontSize(11);
   doc.setFont("Inter", "normal");
-  doc.text(isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report", textStartX, titleY + 9);
+  const subtitle = isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report";
+  doc.text(truncateToWidth(doc, subtitle, titleMaxW), textStartX, titleY + 9);
   doc.setFontSize(8);
   const dateStr = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", {
     year: "numeric", month: "long", day: "numeric",
   });
   doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
-
-  // Professional logo in top-right of header (only if NOT clinic-branded)
-  if (proLogoBase64) {
-    try {
-      doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - logoW, logoY, logoW, logoH);
-    } catch { /* fallback */ }
-  }
 
   y = 48;
 
@@ -2080,7 +2145,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
 
   // ── Responsible Technician Block (last page, before footer) ──
   if (responsibleProfessional) {
-    y = drawResponsibleBlock(doc, y, isPt, responsibleProfessional);
+    y = await drawResponsibleBlock(doc, y, isPt, responsibleProfessional);
   }
 
   // ── Footer on every page with logo ──
@@ -2091,27 +2156,33 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     doc.setLineWidth(1.5);
     doc.line(MARGIN, 284, PAGE_WIDTH - MARGIN, 284);
 
-    const footerLogoSize = 8;
+    const footerLogoH = 8;
+    const footerLogoMaxW = isClinicBranded ? 22 : 12;
     let footerTextX = MARGIN;
     if (logoBase64) {
-      try {
-        doc.addImage(logoBase64, "PNG", MARGIN, 285.5, footerLogoSize, footerLogoSize);
-        footerTextX = MARGIN + footerLogoSize + 2;
-      } catch { /* fallback */ }
+      const w = drawBrandLogo(doc, logoBase64, MARGIN, 285.5, footerLogoMaxW, footerLogoH);
+      footerTextX = MARGIN + w + 2;
     }
     doc.setFontSize(7);
     doc.setFont("Inter", "normal");
     doc.setTextColor(...COLORS.muted);
-    doc.text(`Aliv.iA — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`, footerTextX, 290);
+    const footerLabel = isClinicBranded && clinicName
+      ? `${clinicName} · ${isPt ? "Powered by" : "Powered by"} Aliv.iA`
+      : `Aliv.iA — ${isPt ? "Relatório gerado por IA" : "AI-generated report"}`;
+    // Reserve room for page counter (and optional pro logo) on the right
+    const rightReserveW = 16 + (proLogoBase64 ? 14 : 0);
+    const footerTextMaxW = PAGE_WIDTH - MARGIN - footerTextX - rightReserveW;
+    doc.text(truncateToWidth(doc, footerLabel, footerTextMaxW), footerTextX, 290);
 
     // Professional logo on footer right side
+    let pageCounterRightOffset = 8;
     if (proLogoBase64) {
-      try {
-        doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - footerLogoSize, 285.5, footerLogoSize, footerLogoSize);
-      } catch { /* fallback */ }
+      const proFootMaxW = 18;
+      const w = drawBrandLogo(doc, proLogoBase64, PAGE_WIDTH - MARGIN - proFootMaxW, 285.5, proFootMaxW, footerLogoH, "right");
+      pageCounterRightOffset = w + 10;
     }
 
-    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - (proLogoBase64 ? footerLogoSize + 10 : 8), 290);
+    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - pageCounterRightOffset, 290);
   }
 
   return doc;
@@ -2200,33 +2271,33 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   // ── Header Band ──
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
   const logoH = 14;
-  const logoW = 14;
+  const logoMaxW = isClinicBranded ? 40 : 14;
   const logoY = (38 - logoH) / 2;
   let textStartX = MARGIN;
   if (logoBase64) {
-    try {
-      doc.addImage(logoBase64, "PNG", MARGIN, logoY, logoW, logoH);
-      textStartX = MARGIN + logoW + 3;
-    } catch { /* fallback */ }
+    const w = drawBrandLogo(doc, logoBase64, MARGIN, logoY, logoMaxW, logoH);
+    textStartX = MARGIN + w + 3;
+  }
+  let rightReservedW = 0;
+  if (proLogoBase64) {
+    const proMaxW = 28;
+    const w = drawBrandLogo(doc, proLogoBase64, PAGE_WIDTH - MARGIN - proMaxW, logoY, proMaxW, logoH, "right");
+    rightReservedW = w + 4;
   }
   doc.setFont("Inter", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
-  doc.text(isClinicBranded && options.clinicName ? options.clinicName : "Aliv.iA", textStartX, titleY);
+  const titleMaxW = PAGE_WIDTH - MARGIN - textStartX - Math.max(rightReservedW, 30);
+  const headerTitle = isClinicBranded && options.clinicName ? options.clinicName : "Aliv.iA";
+  doc.text(truncateToWidth(doc, headerTitle, titleMaxW), textStartX, titleY);
   doc.setFontSize(11);
   doc.setFont("Inter", "normal");
   const reportTitle = isPt ? "Relatório de Evolução" : isEs ? "Informe de Evolución" : "Evolution Report";
-  doc.text(reportTitle, textStartX, titleY + 9);
+  doc.text(truncateToWidth(doc, reportTitle, titleMaxW), textStartX, titleY + 9);
   doc.setFontSize(8);
   const dateStr = new Date().toLocaleDateString(isPt ? "pt-BR" : isEs ? "es-ES" : "en-US", { year: "numeric", month: "long", day: "numeric" });
   doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
-
-  if (proLogoBase64) {
-    try {
-      doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - logoW, logoY, logoW, logoH);
-    } catch { /* fallback */ }
-  }
   y = 48;
 
   // ── Patient Info + Period ──
@@ -2537,7 +2608,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
 
   // ── Responsible Technician Block (last page, before footer) ──
   if (options.responsibleProfessional) {
-    y = drawResponsibleBlock(doc, y, isPt, options.responsibleProfessional);
+    y = await drawResponsibleBlock(doc, y, isPt, options.responsibleProfessional);
   }
 
   // ── Footer ──
@@ -2548,25 +2619,30 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     doc.setLineWidth(1.5);
     doc.line(MARGIN, 284, PAGE_WIDTH - MARGIN, 284);
 
-    const footerLogoSize = 8;
+    const footerLogoH = 8;
+    const footerLogoMaxW = isClinicBranded ? 22 : 12;
     let footerTextX = MARGIN;
     if (logoBase64) {
-      try {
-        doc.addImage(logoBase64, "PNG", MARGIN, 285.5, footerLogoSize, footerLogoSize);
-        footerTextX = MARGIN + footerLogoSize + 2;
-      } catch { /* fallback */ }
+      const w = drawBrandLogo(doc, logoBase64, MARGIN, 285.5, footerLogoMaxW, footerLogoH);
+      footerTextX = MARGIN + w + 2;
     }
     doc.setFontSize(7);
     doc.setFont("Inter", "normal");
     doc.setTextColor(...COLORS.muted);
-    doc.text(`Aliv.iA — ${isPt ? "Relatório de Evolução" : "Evolution Report"}`, footerTextX, 290);
+    const footerLabel = isClinicBranded && options.clinicName
+      ? `${options.clinicName} · Powered by Aliv.iA`
+      : `Aliv.iA — ${isPt ? "Relatório de Evolução" : "Evolution Report"}`;
+    const rightReserveW = 16 + (proLogoBase64 ? 14 : 0);
+    const footerTextMaxW = PAGE_WIDTH - MARGIN - footerTextX - rightReserveW;
+    doc.text(truncateToWidth(doc, footerLabel, footerTextMaxW), footerTextX, 290);
 
+    let pageCounterRightOffset = 8;
     if (proLogoBase64) {
-      try {
-        doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - footerLogoSize, 285.5, footerLogoSize, footerLogoSize);
-      } catch { /* fallback */ }
+      const proFootMaxW = 18;
+      const w = drawBrandLogo(doc, proLogoBase64, PAGE_WIDTH - MARGIN - proFootMaxW, 285.5, proFootMaxW, footerLogoH, "right");
+      pageCounterRightOffset = w + 10;
     }
-    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - (proLogoBase64 ? footerLogoSize + 10 : 8), 290);
+    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN - pageCounterRightOffset, 290);
   }
 
   return doc.output("blob");

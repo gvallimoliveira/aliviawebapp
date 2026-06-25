@@ -118,6 +118,36 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
   // the patient's name, not the logged-in user's name.
   const reportUserName = patientName || user?.user_metadata?.full_name || "Paciente";
 
+  // Resolves clinic/professional/responsible branding when the assessment is
+  // already saved (PRO/clinic flows). For pure-patient flows assessmentId is
+  // absent and we fall back to the bare professionalLogoUrl prop.
+  const resolveBranding = async () => {
+    if (!assessmentId) return { professionalLogoUrl };
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: a } = await supabase
+        .from("assessments")
+        .select("clinic_id, professional_id")
+        .eq("id", assessmentId)
+        .maybeSingle();
+      if (!a) return { professionalLogoUrl };
+      const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
+      const branding = await resolveAssessmentBranding({
+        clinicId: (a as any).clinic_id || null,
+        professionalId: (a as any).professional_id || null,
+        userId: user?.id || null,
+      });
+      return {
+        professionalLogoUrl: branding.professionalLogoUrl ?? professionalLogoUrl,
+        clinicLogoUrl: branding.clinicLogoUrl,
+        clinicName: branding.clinicName,
+        responsibleProfessional: branding.responsibleProfessional,
+      };
+    } catch {
+      return { professionalLogoUrl };
+    }
+  };
+
   const handleExportPdf = async () => {
     if (!diagnosis) {
       toast({ title: t("pdf.no_data"), variant: "destructive" });
@@ -126,7 +156,8 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
     setPdfLoading(true);
     try {
       const { generateAssessmentPdf } = await import("@/utils/generatePdf");
-      await generateAssessmentPdf({ diagnosis, treatmentPlan: plan, language, userName: reportUserName, anamnesisData, painRegions, testResults, professionalLogoUrl });
+      const branding = await resolveBranding();
+      await generateAssessmentPdf({ diagnosis, treatmentPlan: plan, language, userName: reportUserName, anamnesisData, painRegions, testResults, ...branding });
       toast({ title: t("pdf.success") });
     } catch {
       toast({ title: t("pdf.error"), variant: "destructive" });
@@ -141,7 +172,8 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
     try {
       const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
       const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
-      const pdfBlob = await generateAssessmentPdfBlob({ diagnosis, treatmentPlan: plan, language, userName: reportUserName, anamnesisData, painRegions, testResults, professionalLogoUrl });
+      const branding = await resolveBranding();
+      const pdfBlob = await generateAssessmentPdfBlob({ diagnosis, treatmentPlan: plan, language, userName: reportUserName, anamnesisData, painRegions, testResults, ...branding });
 
       const fileId = assessmentId || crypto.randomUUID();
       const filePath = `${fileId}_premium.pdf`;

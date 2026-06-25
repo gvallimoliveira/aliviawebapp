@@ -818,13 +818,26 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     setBatchExporting(true);
     try {
       const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
+      const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
       const lang = document.documentElement.lang === "en" ? "en" : "pt";
       if (withDiagnosis.length === 1) {
         // Single PDF — just download directly
         if (onDownloadPdf) { onDownloadPdf(withDiagnosis[0]); }
       } else {
         const zip = new JSZip();
+        // Cache branding per (clinicId|professionalId) to avoid N queries
+        const brandingCache = new Map<string, Awaited<ReturnType<typeof resolveAssessmentBranding>>>();
         for (const a of withDiagnosis) {
+          const cKey = `${(a as any).clinic_id || ""}|${(a as any).professional_id || ""}`;
+          let branding = brandingCache.get(cKey);
+          if (!branding) {
+            branding = await resolveAssessmentBranding({
+              clinicId: (a as any).clinic_id || null,
+              professionalId: (a as any).professional_id || null,
+              userId: null,
+            });
+            brandingCache.set(cKey, branding);
+          }
           const blob = await generateAssessmentPdfBlob({
             diagnosis: a.diagnosis,
             treatmentPlan: a.treatment_plan,
@@ -840,6 +853,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
               reason: (a as any).red_flags_dismissed_reason,
             } : undefined,
             professionalNotes: noteIncludeInPdf[a.id] ? (notes[a.id] || undefined) : undefined,
+            ...branding,
           });
           const date = new Date(a.created_at).toISOString().slice(0, 10);
           const name = (a.patient_name || "paciente").replace(/\s+/g, "_");
