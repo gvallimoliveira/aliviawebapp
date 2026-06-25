@@ -1642,12 +1642,11 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     doc.line(MARGIN, 284, PAGE_WIDTH - MARGIN, 284);
 
     const footerLogoSize = 8;
+    const footerLogoMaxW = 18;
     let footerTextX = MARGIN;
     if (logoBase64) {
-      try {
-        doc.addImage(logoBase64, "PNG", MARGIN, 285.5, footerLogoSize, footerLogoSize);
-        footerTextX = MARGIN + footerLogoSize + 2;
-      } catch { /* fallback */ }
+      const w = drawBrandLogo(doc, logoBase64, MARGIN, 285.5, footerLogoMaxW, footerLogoSize);
+      footerTextX = MARGIN + w + 2;
     }
     doc.setFontSize(7);
     doc.setFont("Inter", "normal");
