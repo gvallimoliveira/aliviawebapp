@@ -224,7 +224,7 @@ const ExportDataCard = ({ mode, clinicId, professionalId, entityName }: Props) =
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
           <span>
-            Apenas dados aos quais você tem acesso são exportados. Nomes de pastas usam iniciais + hash (dados reais ficam dentro dos arquivos).
+            Apenas dados aos quais você tem acesso são exportados. Pastas de pacientes usam o nome completo cadastrado + hash curto para facilitar a localização.
           </span>
         </div>
 

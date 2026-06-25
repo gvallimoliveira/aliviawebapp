@@ -110,12 +110,24 @@ function toCsv(rows: any[]): string {
 }
 
 function patientFolderName(p: { full_name?: string | null; id?: string | null; email?: string | null }) {
-  const initials = initialsOf(p?.full_name ?? p?.email ?? null);
   const seed = String(p?.id ?? p?.email ?? Math.random());
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
   const hash = Math.abs(h).toString(36).slice(0, 4);
-  return fileSafe(`${initials.replace(/\.$/, "")}-${hash}`);
+  // Use full name when available so folders are easy to locate.
+  // Fall back to initials + hash when there's no name.
+  const rawName = (p?.full_name ?? "").trim();
+  if (rawName) {
+    // Normalize: strip diacritics, collapse spaces -> single space, keep readable.
+    const normalized = rawName
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    return fileSafe(`${normalized}-${hash}`);
+  }
+  const initials = initialsOf(p?.email ?? null).replace(/\.$/, "");
+  return fileSafe(`${initials}-${hash}`);
 }
 
 async function sha256Hex(buf: ArrayBuffer): Promise<string> {
@@ -609,7 +621,7 @@ export async function buildExportZip(opts: ExportOptions): Promise<ExportResult>
       "Estrutura:",
       "  manifest.json         — versão, escopo, contagens, checksums",
       "  {clinica|profissional}/ — perfil + agenda + (clínica: equipe)",
-      "  pacientes/{iniciais-hash}/ — uma pasta por paciente",
+      "  pacientes/{Nome do Paciente-hash}/ — uma pasta por paciente",
       "    paciente.json       — cadastro",
       "    avaliacoes/         — uma avaliação por arquivo (com voice notes, questionários e logs de auditoria)",
       "    evolucao/           — session_notes, pain_diary, follow_ups (CSV)",
@@ -622,8 +634,8 @@ export async function buildExportZip(opts: ExportOptions): Promise<ExportResult>
         ? `Os arquivos binários foram distribuídos em ${totalParts} partes devido ao tamanho. Extraia todas as partes no mesmo diretório.`
         : "",
       "",
-      "Os nomes das pastas de pacientes usam iniciais + hash curto (anonimizados).",
-      "Os dados reais ficam dentro dos arquivos JSON/CSV.",
+      "As pastas de pacientes usam o nome completo cadastrado (acentos removidos) + hash curto para evitar colisões.",
+      "Pacientes sem nome usam iniciais do e-mail + hash.",
     ]
       .filter(Boolean)
       .join("\n"),
