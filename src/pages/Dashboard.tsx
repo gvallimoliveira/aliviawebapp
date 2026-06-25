@@ -923,11 +923,18 @@ const Dashboard = () => {
                     <TabsContent value="management" className="space-y-6">
                       <ClinicOwnerDashboard clinicId={activeClinic.clinic_id} />
                       {isClinicOwner && (
-                        <ExportDataCard
-                          mode="clinic"
-                          clinicId={activeClinic.clinic_id}
-                          entityName={activeClinic.clinic_name}
-                        />
+                        <>
+                          <ExportDataCard
+                            mode="clinic"
+                            clinicId={activeClinic.clinic_id}
+                            entityName={activeClinic.clinic_name}
+                          />
+                          <ImportDataCard
+                            mode="clinic"
+                            clinicId={activeClinic.clinic_id}
+                            entityName={activeClinic.clinic_name}
+                          />
+                        </>
                       )}
                     </TabsContent>
                   )}
