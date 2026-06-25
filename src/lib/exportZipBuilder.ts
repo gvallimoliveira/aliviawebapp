@@ -110,12 +110,24 @@ function toCsv(rows: any[]): string {
 }
 
 function patientFolderName(p: { full_name?: string | null; id?: string | null; email?: string | null }) {
-  const initials = initialsOf(p?.full_name ?? p?.email ?? null);
   const seed = String(p?.id ?? p?.email ?? Math.random());
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
   const hash = Math.abs(h).toString(36).slice(0, 4);
-  return fileSafe(`${initials.replace(/\.$/, "")}-${hash}`);
+  // Use full name when available so folders are easy to locate.
+  // Fall back to initials + hash when there's no name.
+  const rawName = (p?.full_name ?? "").trim();
+  if (rawName) {
+    // Normalize: strip diacritics, collapse spaces -> single space, keep readable.
+    const normalized = rawName
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    return fileSafe(`${normalized}-${hash}`);
+  }
+  const initials = initialsOf(p?.email ?? null).replace(/\.$/, "");
+  return fileSafe(`${initials}-${hash}`);
 }
 
 async function sha256Hex(buf: ArrayBuffer): Promise<string> {
