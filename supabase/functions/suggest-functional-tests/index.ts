@@ -29,9 +29,24 @@ serve(async (req) => {
       language,
     } = await req.json();
 
+    // Cache lookup — same clinical context returns same suggestions for 7 days.
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { anamnesis, painScore, painType, painRegions, redFlags, questionnaireResults, currentTestsText, language };
+    if (admin) {
+      const cached = await getCachedAiResponse<{ suggestions: unknown[] }>(admin, "suggest-functional-tests", cachePayload);
+      if (cached) {
+        return new Response(JSON.stringify({ ...cached, cached: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const isPt = language === "pt";
     const isEs = language === "es";
     const langLabel = isEs ? "español" : isPt ? "português brasileiro" : "English";
+
 
     const systemPrompt = `You are a senior musculoskeletal physiotherapy clinician.
 Your task: based on the assessment data already gathered, suggest between 2 and 6 ADDITIONAL clinical tests the therapist should consider performing, to confirm or rule out hypotheses.
