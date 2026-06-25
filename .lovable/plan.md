@@ -1,114 +1,147 @@
-## Objetivo
+# Importação de Dados Externos → Dados Nativos Aliv.iA
 
-Garantir que o botão **"Backup e exportação de dados"** (em `ExportDataCard.tsx`, usado no `ProDashboard` e na aba *Management* da clínica) realmente entregue um **prontuário completo, organizado e auditável** — não apenas dumps planos de tabelas com links que expiram em 1h.
+Transformar arquivos vindos de outros softwares (CSV, JSON, Excel, PDF, ZIP exportado pelo próprio Aliv.iA) em registros nativos: pacientes, avaliações, evoluções, sessões, programas, anexos — com o **mesmo DNA** dos dados criados dentro do sistema.
 
-## Diagnóstico atual (o que já levantei)
+---
 
-Hoje o `ExportDataCard` exporta apenas 7 categorias como CSV/JSON planos:
-`patients · assessments · professional_appointments · professional_notes (solo) · assessment_voice_notes · patient_files (índice) · patient_photos (índice)`.
+## 1. Onde fica o acesso — opções para você escolher
 
-Lacunas críticas vs. a promessa feita ao usuário:
+Recomendo **A** como padrão; **B** como alternativa.
 
-1. **Faltam tabelas essenciais do prontuário**
-  - `session_notes` (evoluções por sessão) ← **indispensável**
-  - `exercise_programs` + `exercise_program_items` + `exercise_completions` (HEP/plano)
-  - `pain_diary_entries` (diário de dor)
-  - `pending_questionnaires` (questionários respondidos pelo paciente)
-  - `follow_up_emails` (histórico de acompanhamento)
-  - `conversations` + `messages` (chat P2P)
-  - `clinic_assessment_logs` (auditoria de overrides de hipótese — exigência clínica/legal)
-  - `form_drafts` (rascunhos)
-2. **Arquivos binários não vão no zip** — só `signed_url_1h`. Quem abrir o backup depois de 1h perde fotos posturais e documentos. Para um backup real precisamos bundlear os bytes (`patient-files` e `patient-photos` buckets).
-3. **Sem organização por paciente** — tudo é dumpado como tabelas globais. O usuário pediu explicitamente *"pacientes em si com seus prontuários completos"*, sugerindo pastas.
-4. **Modo demo não simula export** — `ExportDataCard` recebe `clinicId`/`professionalId` reais; em demo (`professional_demo`) não há ID, então o botão sequer aparece ou falha. Não há como o usuário pré-visualizar o formato.
-5. **Notas privadas em clínica**: `professional_notes` só é incluída em modo solo. Em clínica o dono não consegue exportar notas dos terapeutas (pode ser proposital — confirmar).
+**Opção A — Card próprio "Importar dados", lado a lado com Exportar** (recomendada)
+- Mesma aba `Configurações / Dados` do ProDashboard, ClinicDashboard e ClinicDemo.
+- Dois cards irmãos: `ExportDataCard` e `ImportDataCard`.
+- Vantagem: simetria visual, separação mental clara entre "tirar" e "trazer", permite descrições e avisos próprios (LGPD, deduplicação, rollback).
 
-## Plano de investigação e entrega
+**Opção B — Card único "Backup & Migração" com 2 abas internas**
+- Um card com tabs `Exportar | Importar`.
+- Vantagem: ocupa menos espaço; desvantagem: mistura fluxos com riscos bem diferentes (export é seguro, import muta o banco).
 
-Vou dividir em 3 fases. Fase 1 é só análise (entrego um relatório); só depois implemento.
+**Opção C — Página dedicada `/migrar` acessível pelos dois cards**
+- Útil se quisermos um wizard multi-step em tela cheia (Upload → Pré-visualização → Mapeamento → Confirmação → Resultado).
+- Recomendado **só se** prevemos importações grandes/recorrentes.
 
-### Fase 1 — Auditoria (read-only, ~1 ciclo)
+**Acesso adicional em ambos os modos**: dentro de `Pacientes`, botão "Importar pacientes" no header da lista, abrindo o mesmo modal já filtrado para escopo "apenas pacientes" — atalho para o caso mais comum.
 
-1. Mapear, via `supabase--read_query`, **todas as tabelas com `patient_email`/`patient_id`/`clinic_id`/`professional_id**` e cruzar com o que o export cobre hoje.
-2. Validar **RLS de leitura** para cada tabela do escopo, garantindo que o `select` no client com a sessão do dono da clínica/profissional realmente retorna tudo (sem precisar de service role).
-3. Conferir os buckets `patient-files` e `patient-photos`: tamanho médio, limites práticos para zipar no browser (JSZip aguenta ~500MB-1GB; acima disso precisamos de paginação/streaming ou edge function).
-4. Entregar um **relatório curto** listando: tabelas cobertas, tabelas faltantes, tamanho estimado do zip por perfil, e decisão sobre binários (incluir sempre vs. opcional).
+> Minha sugestão: **A** + atalho no header de Pacientes. Confirme antes de eu implementar.
 
-### Fase 2 — Reestruturação do export
+---
 
-Estrutura proposta do `.zip` (independente de modo):
+## 2. Formatos aceitos
+
+| Formato | Uso típico | Estratégia |
+|---|---|---|
+| `.zip` Aliv.iA | Migração entre contas/clínicas | Leitura direta do `manifest.json` + JSONs nativos, sem IA |
+| `.csv` / `.xlsx` | Planilhas de pacientes, agenda, evoluções | Parser tabular + IA para mapear colunas |
+| `.json` | Exports de outros sistemas | IA infere shape e mapeia |
+| `.pdf` / imagem | Avaliações soltas | Reusa fluxo `interpret-external-assessment` |
+| Múltiplos arquivos | Mistura dos acima | Processados em lote |
+
+Limite inicial: **20 MB por arquivo**, **até 50 arquivos** por importação (mesmo limite atual de uploads).
+
+---
+
+## 3. Pipeline de transformação (o "DNA" Aliv.iA)
 
 ```text
-alivia-export-{slug}-{YYYY-MM-DD}.zip
-├── manifest.json                 ← versão, escopo, contagens, checksums
-├── README.txt                    ← como ler o pacote
-├── clinica/  (ou profissional/)
-│   ├── perfil.json + perfil.csv
-│   ├── equipe.csv                (clinic_members, só clínica)
-│   └── agenda.csv                (todos os appointments do escopo)
-├── pacientes/
-│   └── {iniciais}-{shortHash}/   ← uma pasta por paciente (anonimizada no nome)
-│       ├── paciente.json + .csv
-│       ├── avaliacoes/
-│       │   └── {data}-{id}.json  (assessment + voice_notes + pending_questionnaires + clinic_assessment_logs daquela avaliação)
-│       ├── evolucao/
-│       │   ├── session_notes.csv
-│       │   ├── pain_diary.csv
-│       │   └── follow_ups.csv
-│       ├── tratamento/
-│       │   ├── programas.json    (exercise_programs + items + completions)
-│       │   └── notas_privadas.csv (só do profissional logado)
-│       ├── chat/
-│       │   └── conversa-{id}.csv
-│       ├── documentos/
-│       │   ├── _index.csv
-│       │   └── {file_name}       ← binário real (opt-in via checkbox)
-│       └── fotos/
-│           ├── _index.csv
-│           └── {file_name}
-└── tabelas_brutas/               ← dumps planos (compatibilidade/auditoria)
-    ├── csv/*.csv
-    └── json/*.json
+Upload
+  → Parse (papaparse / xlsx / JSON.parse / pdf+IA)
+  → Normalização (UTF-8, datas ISO, trim, telefone/CPF mask)
+  → Detecção de schema via IA (Gemini Flash, edge function nova)
+  → Mapeamento coluna→campo Aliv.iA + score de confiança
+  → Pré-visualização editável pelo usuário
+  → Deduplicação (email/CPF/nome+nascimento)
+  → Validação Zod por entidade
+  → Inserção transacional + rollback em erro
+  → Relatório final (criados/atualizados/ignorados/erros)
 ```
 
-Mudanças no `ExportDataCard.tsx`:
+### 3.1 Quando a IA entra
+- **Detecção de cabeçalho/shape**: dado um sample de 20 linhas, IA retorna mapa `{ colunaOrigem → campoAlivia | "external" | "ignore" }` + confiança.
+- **Classificação de entidade**: se o arquivo não declara, IA decide se é `patients`, `assessments`, `session_notes`, `appointments`, `pain_diary`, etc.
+- **Normalização de texto livre**: queixa principal, história clínica, exames complementares — IA limpa formatação mas **não inventa** conteúdo.
+- **Nunca**: IA não preenche campos clínicos vazios, não infere diagnóstico, não cria red flags.
 
-- Nova checkbox **"Incluir arquivos binários (fotos e documentos)"** — default **on**, com aviso de tamanho estimado.
-- Reescrever `handleExport`:
-  - Adicionar fetches das tabelas faltantes (lista acima).
-  - Agrupar por `patient_email` montando a árvore de pastas.
-  - Quando "binários" estiver ligado, baixar via `supabase.storage.from(...).download(path)` e adicionar com `zip.file(..., blob)`.
-  - Calcular SHA-256 dos binários e gravar no `manifest.json` (auditoria/LGPD).
-  - Anonimizar nomes de pasta com `initialsOf` + shortHash (helpers já existem em `src/lib/anonymizePatient.ts`); manter dados reais **dentro** dos arquivos.
-  - Streaming/progresso: trocar toast estático por progresso ("Baixando 12/87 arquivos…") usando `JSZip` + contador.
+### 3.2 Campo "Informações externas" (reuso do padrão dinamometria/avaliação externa)
+Toda entidade nativa ganha um campo JSON `external_import_data` (já existe lógica análoga em assessments). Tudo que **não** mapear para campo conhecido vai pra lá, preservando 100% dos dados originais e exibido em accordion "Dados importados de outro sistema" no prontuário.
 
-### Fase 3 — Simulação no modo demo
+---
 
-Para o usuário conferir o formato sem precisar de dados reais:
+## 4. Mapeamento por entidade
 
-1. Aceitar `mode="demo"` no `ExportDataCard` (renderizar quando `activeContext === "professional_demo"` ou em `ClinicDemo`).
-2. No `handleExport`, se `mode === "demo"`, **não chamar o Supabase** — montar o mesmo zip a partir de:
-  - `src/data/mockPatientData.ts`, `mockClinicData.ts`, `mockProDemoExtras.ts`, `mockManualAssessmentCase.ts`, `mockExternalAssessment.ts`.
-  - Um placeholder `.txt` no lugar dos binários (ex.: `foto_postural_anterior.jpg → README_demo.txt` explicando que em produção viria o arquivo real).
-3. Adicionar o card de export ao **ProfessionalDemo** e ao **ClinicDemo** com badge "(modo demo — dados fictícios)".
-4. Resultado: o usuário clica e baixa um zip de exemplo, abre, valida a estrutura.
+Cada destino tem mapeadores determinísticos + fallback IA:
 
-## Detalhes técnicos
+- **Patients** → `full_name, email, phone, cpf, birth_date, gender, address, notes, external_import_data, professional_id, clinic_id`. Dedup por `email` (primário) ou `cpf` ou `nome+data_nascimento`.
+- **Assessments** → cria registro `type='professional'`, `status='completed'`, com `chiefComplaint, history, painScore, painRegions, romTable, strengthTable, functionalTests, diagnosis, clinicalImpression`. Campos não mapeados → `additional_external_info`.
+- **Session notes / evoluções** → vincula ao paciente por email/nome; texto preservado.
+- **Pain diary** → linhas `data, score` por paciente.
+- **Appointments / agenda** → reusa parser do `parse-schedule-image` para CSVs de agenda.
+- **Exercise programs** → opcional, fase 2.
+- **Anexos (PDFs/imagens dentro de ZIP)** → vão para `patient_files` / `patient_photos` com `source='imported'`.
 
-- **Edge function vs. client-side**: manter no client (JSZip) por simplicidade e privacidade (dados não saem para nosso server). Se a Fase 1 mostrar zips >500MB comuns, adicionamos um modo "via servidor" depois (fora do escopo atual).
-- **Performance**: paralelizar downloads de binários em lotes de 5 com `Promise.allSettled` para não travar a aba.
-- **RLS**: nenhuma migration necessária — todas as tabelas já têm policies de leitura para o dono/terapeuta. Apenas confirmar em Fase 1.
-- **Sem mudança no schema**, apenas no client (`ExportDataCard.tsx`, `Dashboard.tsx`, `ProDashboard.tsx`, `ProfessionalDemo.tsx`, `ClinicDemo.tsx`) + helpers novos em `src/lib/exportZipBuilder.ts`.
-- **i18n**: adicionar chaves em pt/en/es para os novos rótulos.
+---
 
-## Entregáveis
+## 5. Cuidados para alocar nos lugares certos
 
-1. Após **Fase 1**, devolvo um relatório no chat com os achados e peço seu OK antes de codar.
-2. Em seguida implemento **Fase 2 + Fase 3** numa única PR.
-3. Verifico via Playwright: (a) export demo gera zip com estrutura esperada; (b) export real (com seu usuário admin) baixa, abre e contém binários.
+1. **Sempre vincular ao profissional/clínica logado**. Nunca permitir importar para outro professional_id.
+2. **Sandbox em modo demo**: import roda 100% client-side com mocks, não toca banco — útil para o usuário testar.
+3. **Dry-run obrigatório**: nenhuma inserção sem o usuário confirmar o preview.
+4. **Deduplicação configurável**: opções "criar novo", "mesclar no existente", "ignorar".
+5. **Idempotência**: cada importação recebe `import_batch_id`; permite desfazer em 1 clique nas próximas 24h.
+6. **Transação por entidade**: se falhar metade, faz rollback do batch.
+7. **LGPD**: aviso explícito de que o profissional declara ter consentimento dos pacientes; log em `clinic_assessment_logs`/novo `import_logs`.
+8. **PII em logs**: nunca logar conteúdo, só contagens e hashes.
+9. **Anti-abuso clínica**: secretárias/intern não podem importar (só owner/admin/therapist).
+10. **Validação Zod estrita**: linhas inválidas vão para `erros.csv` baixável, nunca para o banco.
 
-## Perguntas pendentes (vou pedir antes de implementar a Fase 2)
+---
 
-- Incluir binários por padrão ou opt-in? Opt-in 
-- Em clínica, o dono pode exportar `professional_notes` de todos os terapeutas, ou cada terapeuta exporta as suas? Cada um exporta as suas 
-- Limite máximo de tamanho antes de avisar/cancelar (ex.: alertar acima de 300MB)? Sim, verificar possibilidade de subdividir para conseguir fazer todo o backup/exportação desejada. 
+## 6. UX do wizard (modal `ImportDataModal`)
+
+```text
+Step 1 – Upload         arrasta arquivos, mostra tamanho/tipo
+Step 2 – Detecção       IA classifica cada arquivo; usuário confirma/ajusta tipo
+Step 3 – Mapeamento     tabela "Coluna origem → Campo Aliv.iA" editável,
+                         badge de confiança, opção "Enviar para external_import_data"
+Step 4 – Pré-visualização  10 primeiras linhas já como ficariam no Aliv.iA,
+                            destaca duplicatas e erros
+Step 5 – Confirmação    contagens + checkbox LGPD
+Step 6 – Resultado      criados/atualizados/erros + botão "Desfazer"
+```
+
+Progresso por etapa (igual ao export), cancelável.
+
+---
+
+## 7. Backend
+
+- Nova migration: `import_batches (id, user_id, clinic_id, source_filename, status, summary jsonb, created_at, expires_undo_at)` + GRANTs + RLS.
+- Coluna `external_import_data jsonb` em `patients`, `assessments`, `session_notes`, `pain_diary_entries`, `professional_appointments` (se ainda não houver) + `import_batch_id` em todas.
+- Edge function `import-detect-schema` (Gemini Flash) — só recebe **amostras anonimizadas** (reusa `anonymizePatient`/`scrubText`).
+- Edge function `import-commit` (service role) — recebe payload já validado do client, executa em transação, retorna relatório.
+- Edge function `import-undo` — apaga por `import_batch_id` enquanto `expires_undo_at > now()`.
+
+---
+
+## 8. Modo demo
+
+Reusar `mockPatientData` para simular um CSV externo. O wizard roda inteiro sem chamar edge functions: detecção devolve resultado fixo, commit apenas mostra "X pacientes seriam criados". Mesmo padrão do export demo.
+
+---
+
+## 9. Fora de escopo nesta primeira versão
+
+- Importação contínua/integração via API de terceiros (Vivo Saúde, iClinic etc.).
+- Migração de fotos/vídeos > 20 MB.
+- Mapeamento automático de exercícios para a `exercise_library`.
+
+---
+
+## 10. Perguntas antes de implementar
+
+1. **Onde colocar?** Opção A, B ou C da seção 1?
+2. **Quem pode importar em clínica?** Apenas `owner/admin/therapist`, ou também `intern`?
+3. **Undo**: janela de 24h é suficiente, ou prefere 7 dias?
+4. **Atalho extra no header de Pacientes**: incluir já ou deixar pra v2?
+
+Posso seguir com defaults (A, sem intern, 24h, com atalho) se você só responder "ok".
