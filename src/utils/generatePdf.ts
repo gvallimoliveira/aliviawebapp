@@ -1606,9 +1606,9 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.setFillColor(39, 124, 103); // primary
   doc.roundedRect(MARGIN + 6, motBoxY - 2, CONTENT_WIDTH - 12, motBoxH, 3, 3, "F");
   
-  // Logo in the right side of the green box
+  // Logo in the right side of the green box (preserves aspect ratio)
   if (logoBase64) {
-    doc.addImage(logoBase64, "PNG", MARGIN + CONTENT_WIDTH - 6 - logoMotSize - 2, motBoxY, logoMotSize, logoMotSize);
+    drawBrandLogo(doc, logoBase64, MARGIN + CONTENT_WIDTH - 6 - logoMotSize - 2, motBoxY, logoMotSize, logoMotSize);
   }
   
   doc.setFont("Inter", "bold");
