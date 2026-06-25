@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { isPriorityJournal, journalImpactFactor, priorityJournalListForPrompt } from "../_shared/priority-journals.ts";
 import { buildPubmedQuery, getNicheSearchTerms, type NicheSearchTerms } from "../_shared/niche-search-terms.ts";
+import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -719,6 +720,20 @@ async function enrichOneWithAi(
     return { abstract_pt: null, key_findings_pt: null, study_type: c.studyType ?? null, pedro_score: null };
   }
 
+  // Cache por identidade do artigo (PMID > DOI > título). Enriquecimento é determinístico
+  // por abstract — mesmo artigo aparece em múltiplos nichos sem precisar re-rodar a IA.
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+  const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+  const cacheId = c.pmid || c.doi || c.title;
+  const cachePayload = { id: cacheId, abstractHash: (c.abstract || "").slice(0, 4000) };
+  if (admin) {
+    const cached = await getCachedAiResponse<{ abstract_pt: string | null; key_findings_pt: string | null; study_type: string | null; pedro_score: number | null }>(
+      admin, "agent-knowledge-enrich", cachePayload,
+    );
+    if (cached) return cached;
+  }
+
   const prompt = `Você receberá UM ÚNICO artigo científico com seu abstract original.
 Sua tarefa é traduzir/resumir ESTRITAMENTE com base nesse abstract específico.
 PROIBIDO usar conhecimento externo, memória de outros estudos, ou inferências além do texto fornecido.
@@ -760,12 +775,17 @@ ${JSON.stringify({
       const obj = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as any : null;
       if (!obj) continue;
       const ps = Number(obj.pedro_score);
-      return {
+      const enriched = {
         abstract_pt: typeof obj.abstract === "string" ? obj.abstract : null,
         key_findings_pt: typeof obj.key_findings === "string" ? obj.key_findings : null,
         study_type: typeof obj.study_type === "string" ? obj.study_type : (c.studyType ?? null),
         pedro_score: Number.isFinite(ps) ? ps : null,
       };
+      if (admin && (enriched.abstract_pt || enriched.key_findings_pt)) {
+        // TTL 30 dias — abstract do artigo não muda.
+        await setCachedAiResponse(admin, "agent-knowledge-enrich", cachePayload, enriched, 30 * 24 * 3600);
+      }
+      return enriched;
     } catch (_e) {
       // tenta próximo modelo
     }
