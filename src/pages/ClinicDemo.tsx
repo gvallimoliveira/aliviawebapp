@@ -33,6 +33,7 @@ import DemoDailySummaryMock from "@/components/demo/DemoDailySummaryMock";
 import DemoClinicalAgentMock from "@/components/demo/DemoClinicalAgentMock";
 import PatientEvolutionDashboard from "@/components/dashboard/PatientEvolutionDashboard";
 import { mockPatientAssessments } from "@/data/mockPatientData";
+import ExportDataCard from "@/components/dashboard/ExportDataCard";
 
 const TYPE_ICONS: Record<string, typeof Video> = {
   video_call: Video,
