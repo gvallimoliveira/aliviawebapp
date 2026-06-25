@@ -228,23 +228,13 @@ Deno.serve(async (req) => {
         } else if (body.entity === "pain_diary") {
           const email = (row.patient_email ?? "").toString().trim();
           if (!email) { errors.push({ index: i, error: "missing_patient_email" }); continue; }
-          const { data: userRow } = await admin
-            .from("profiles" as any)
-            .select("user_id")
-            .limit(0);
-          // Resolve user by email via auth.admin
-          const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 1 });
+          // Resolve user by email by paging through admin.listUsers (best-effort).
           let resolvedUserId: string | null = null;
-          // Use a direct SQL via rpc if available; fallback to listUsers filter (best-effort)
-          const { data: au } = await (admin as any)
-            .schema?.("auth")
-            ?.from?.("users")
-            ?.select?.("id")
-            ?.ilike?.("email", email)
-            ?.maybeSingle?.() ?? { data: null };
-          if (au?.id) resolvedUserId = au.id;
-          if (!resolvedUserId && list?.users) {
-            resolvedUserId = list.users.find((u: any) => (u.email ?? "").toLowerCase() === email.toLowerCase())?.id ?? null;
+          for (let page = 1; page <= 5 && !resolvedUserId; page++) {
+            const { data } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+            const hit = data?.users?.find((u: any) => (u.email ?? "").toLowerCase() === email.toLowerCase());
+            if (hit) resolvedUserId = hit.id;
+            if (!data?.users?.length) break;
           }
           if (!resolvedUserId) { errors.push({ index: i, error: "patient_user_not_found" }); continue; }
           const { error: insErr } = await admin.from("pain_diary_entries").insert({
