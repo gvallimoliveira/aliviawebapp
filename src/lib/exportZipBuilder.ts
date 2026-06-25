@@ -801,41 +801,35 @@ async function collectDemoData() {
 
   // session notes flattened, tagged with patient_email
   const sessionNotes: any[] = [];
-  for (const [patientId, notes] of Object.entries(mockSessionNotes)) {
-    // patientId in mock corresponds to assessment id; find email
-    const a: any = mockPatientAssessments.find((x: any) => x.id === patientId);
-    const email = a?.patient_email ?? patients[0]?.email;
+  for (const [email, notes] of Object.entries(mockSessionNotes)) {
     for (const n of notes) {
       sessionNotes.push({
         id: n.id,
         patient_email: email,
         professional_id: "demo-prof",
-        session_date: n.date,
-        subjective: n.subjective,
-        objective: n.objective,
-        assessment: n.assessment,
-        plan: n.plan,
-        pain_score: n.painScore,
+        session_date: n.session_date,
+        content: n.content,
+        appointment_id: n.appointment_id ?? null,
+        created_at: n.created_at,
+        updated_at: n.updated_at,
       });
     }
   }
 
   // files index (no binary content)
   const files: any[] = [];
-  for (const [patientId, fs] of Object.entries(mockPatientFiles)) {
-    const a: any = mockPatientAssessments.find((x: any) => x.id === patientId);
-    const email = a?.patient_email ?? patients[0]?.email;
-    for (const f of fs as any[]) {
+  for (const [email, fs] of Object.entries(mockPatientFiles)) {
+    for (const f of fs) {
       files.push({
         id: f.id,
         patient_email: email,
         professional_id: "demo-prof",
-        file_name: f.name,
-        file_path: `demo/${f.id}/${f.name}`,
-        mime_type: f.mimeType ?? "application/pdf",
-        file_size_bytes: f.sizeBytes ?? 120_000,
-        description: f.description ?? "Documento demo",
-        created_at: f.uploadedAt ?? new Date().toISOString(),
+        file_name: f.file_name,
+        file_path: `demo/${email}/${f.file_name}`,
+        mime_type: f.mime_type,
+        file_size_bytes: f.file_size_bytes,
+        description: f.description,
+        created_at: f.created_at,
       });
     }
   }
