@@ -7,8 +7,8 @@ import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 
 const MODEL_CHAIN = [
   "google/gemini-2.5-flash",
-  "google/gemini-2.5-pro",
   "google/gemini-2.5-flash-lite",
+  "google/gemini-2.5-pro",
 ];
 
 const PROMPTS: Record<string, string> = {

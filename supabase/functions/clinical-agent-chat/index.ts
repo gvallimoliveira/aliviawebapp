@@ -435,7 +435,7 @@ Foco: ${module.focus}`;
       { role: "user", content: `Crie a aula do nível ${level}/5 da trilha de ${niche}.` },
     ],
     temperature: 0.45,
-  }, ["google/gemini-3-flash-preview", "google/gemini-2.5-flash", "google/gemini-2.5-pro"]);
+  }, ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"]);
   if (!resp.ok) {
     console.error("[trilha] gateway error", resp.status, await resp.text().catch(() => ""));
     return null;
@@ -521,7 +521,7 @@ Regras:
     ],
     response_format: { type: "json_object" },
     temperature: 0.4,
-  }, ["google/gemini-3-flash-preview", "google/gemini-2.5-flash", "google/gemini-2.5-pro"]);
+  }, ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"]);
   if (!resp.ok) {
     console.error("[quiz] gateway error", resp.status, await resp.text().catch(() => ""));
     return null;
@@ -843,17 +843,12 @@ Classifique (Oxford CEBM 1-5) e, se for ensaio clínico, estime o **PEDro** (0-1
 Tradução fiel e fluente do trecho.
 
 Regras: nunca invente dados; se faltar informação, sinalize com "(não informado no input)".`;
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-pro",
-          messages: [
-            { role: "system", content: sys },
-            { role: "user", content: input },
-          ],
-        }),
-      });
+      const resp = await callAiWithFallback(LOVABLE_API_KEY, {
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: input },
+        ],
+      }, ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"]);
       let assistantText = "Não consegui traduzir agora. Tente novamente em alguns segundos.";
       if (resp.ok) {
         const j = await resp.json();
