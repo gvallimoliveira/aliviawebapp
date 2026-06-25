@@ -33,6 +33,7 @@ import DemoDailySummaryMock from "@/components/demo/DemoDailySummaryMock";
 import DemoClinicalAgentMock from "@/components/demo/DemoClinicalAgentMock";
 import PatientEvolutionDashboard from "@/components/dashboard/PatientEvolutionDashboard";
 import { mockPatientAssessments } from "@/data/mockPatientData";
+import ExportDataCard from "@/components/dashboard/ExportDataCard";
 
 const TYPE_ICONS: Record<string, typeof Video> = {
   video_call: Video,
@@ -603,22 +604,7 @@ const ClinicDemo = () => {
               {/* Gestão & KPIs */}
               <TabsContent value="management" className="space-y-5">
                 <DemoManagementMock />
-                <Card className="border-dashed">
-                  <CardContent className="py-5 flex items-center justify-between gap-3 flex-wrap">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Activity className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold">Exportação de dados</p>
-                        <p className="text-xs text-muted-foreground">CSV de pacientes, sessões, faturamento — backup completo da operação</p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" className="rounded-xl" onClick={() => demoToast("Exportação CSV disponível na assinatura.")}>
-                      Exportar CSV
-                    </Button>
-                  </CardContent>
-                </Card>
+                <ExportDataCard mode="demo" entityName={DEMO_CLINIC.name} clinicId="demo-clinic" />
               </TabsContent>
             </Tabs>
           </TabsContent>

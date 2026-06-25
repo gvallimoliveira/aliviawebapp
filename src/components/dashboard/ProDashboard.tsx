@@ -1136,24 +1136,28 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       {/* Referrals received moved to the Messages tab (see ReceivedReferralsCard). */}
 
       {/* Discreet backup/export — positioned above patient list to remain reachable with many patients */}
-      {!isDemoMode && !isSimulated && (
-        <details className="group rounded-xl border border-border/60 bg-muted/20">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground transition">
-            <span className="flex items-center gap-2">
-              <FileArchive className="h-3.5 w-3.5" />
-              {language === "pt" ? "Backup e exportação de dados" : "Data backup & export"}
-            </span>
-            <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="px-2 pb-2">
-            <ExportDataCard
-              mode="professional"
-              professionalId={professional.id}
-              entityName={professional.full_name}
-            />
-          </div>
-        </details>
-      )}
+      <details className="group rounded-xl border border-border/60 bg-muted/20">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground transition">
+          <span className="flex items-center gap-2">
+            <FileArchive className="h-3.5 w-3.5" />
+            {language === "pt" ? "Backup e exportação de dados" : "Data backup & export"}
+            {(isDemoMode || isSimulated) && (
+              <span className="rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-px text-[9px]">
+                demo
+              </span>
+            )}
+          </span>
+          <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="px-2 pb-2">
+          <ExportDataCard
+            mode={isDemoMode || isSimulated ? "demo" : "professional"}
+            professionalId={professional.id}
+            entityName={professional.full_name}
+          />
+        </div>
+      </details>
+
 
       {/* Patient list grouped by email */}
       <div data-onboarding="pro-patients">
