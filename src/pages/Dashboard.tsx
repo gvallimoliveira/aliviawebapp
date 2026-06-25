@@ -43,6 +43,7 @@ const ProMetricsSection = lazy(() => import("@/components/dashboard/ProMetricsSe
 const FeedbackSurveyCard = lazy(() => import("@/components/dashboard/FeedbackSurveyCard"));
 const FeedbackResultsCard = lazy(() => import("@/components/dashboard/FeedbackResultsCard"));
 const ExportDataCard = lazy(() => import("@/components/dashboard/ExportDataCard"));
+const ImportDataCard = lazy(() => import("@/components/dashboard/ImportDataCard"));
 const DemoUpsellBanner = lazy(() => import("@/components/demo/DemoUpsellBanner"));
 const DemoInsightsMock = lazy(() => import("@/components/demo/DemoInsightsMock"));
 const DemoMessagesMock = lazy(() => import("@/components/demo/DemoMessagesMock"));
