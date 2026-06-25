@@ -132,17 +132,30 @@ interface PdfOptions {
 }
 
 /** Renders the "Responsável Técnico" signature block above the footer.
- *  Adds a new page if there isn't enough vertical room. */
-function drawResponsibleBlock(
+ *  Adds a new page if there isn't enough vertical room. Async because we
+ *  measure the signature image to preserve its aspect ratio. */
+async function drawResponsibleBlock(
   doc: jsPDF,
   y: number,
   isPt: boolean,
   prof: ResponsibleProfessional
-): number {
+): Promise<number> {
   const hasSignature = !!prof.signatureImageDataUrl;
-  const blockHeight = hasSignature ? 46 : 26;
-  // Footer line is at y=284, so usable bottom is ~282
-  if (y + blockHeight > 280) {
+  // Measure signature once so we know how much vertical room to reserve
+  const sigBoxMaxW = 60;
+  const sigBoxMaxH = 18;
+  let sigDrawW = 0;
+  let sigDrawH = 0;
+  if (hasSignature) {
+    const dims = await _measureImage(prof.signatureImageDataUrl!);
+    const fit = fitContain(dims.natW, dims.natH, sigBoxMaxW, sigBoxMaxH);
+    sigDrawW = fit.w;
+    sigDrawH = fit.h;
+  }
+  const blockHeight = hasSignature ? (sigDrawH + 28) : 26;
+  // Footer line is at y=284 — keep a 6mm buffer so credentials never touch it
+  const SAFE_BOTTOM = 276;
+  if (y + blockHeight > SAFE_BOTTOM) {
     doc.addPage();
     y = MARGIN;
   } else {
@@ -152,17 +165,15 @@ function drawResponsibleBlock(
   const lineW = 80;
   const lineX = (PAGE_WIDTH - lineW) / 2;
 
-  // Embed signature image (max 60x18mm) just above the line
-  if (hasSignature) {
-    const imgW = 60;
-    const imgH = 18;
-    const imgX = (PAGE_WIDTH - imgW) / 2;
+  // Embed signature image (aspect-ratio preserved) just above the line
+  if (hasSignature && sigDrawW > 0) {
+    const imgX = (PAGE_WIDTH - sigDrawW) / 2;
     try {
-      doc.addImage(prof.signatureImageDataUrl!, "PNG", imgX, y, imgW, imgH, undefined, "FAST");
+      doc.addImage(prof.signatureImageDataUrl!, "PNG", imgX, y, sigDrawW, sigDrawH, undefined, "FAST");
     } catch {
       // ignore image errors and fall back to text block
     }
-    y += imgH + 1;
+    y += sigDrawH + 1;
   }
 
   doc.setDrawColor(...COLORS.muted);
@@ -190,15 +201,7 @@ function drawResponsibleBlock(
       ? `CREFITO: ${prof.crefito}`
       : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
   }
-  // Guard against overflow beyond PDF margins on very long academic labels
-  const credMaxW = CONTENT_WIDTH - 4;
-  if (doc.getTextWidth(credentialTxt) > credMaxW) {
-    const ell = "…";
-    while (credentialTxt.length > 1 && doc.getTextWidth(credentialTxt + ell) > credMaxW) {
-      credentialTxt = credentialTxt.slice(0, -1);
-    }
-    credentialTxt = credentialTxt.replace(/[\s·]+$/, "") + ell;
-  }
+  credentialTxt = truncateToWidth(doc, credentialTxt, CONTENT_WIDTH - 4);
   doc.text(credentialTxt, PAGE_WIDTH / 2, y, { align: "center" });
   y += 4;
 
