@@ -1678,36 +1678,39 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
   
   const logoH = 14;
-  const logoW = 14;
+  const logoMaxW = isClinicBranded ? 40 : 14; // clinic logos are usually wide
   const logoY = (38 - logoH) / 2;
   let textStartX = MARGIN;
+  let leftLogoWidth = 0;
   if (logoBase64) {
-    try {
-      doc.addImage(logoBase64, "PNG", MARGIN, logoY, logoW, logoH);
-      textStartX = MARGIN + logoW + 3;
-    } catch { /* fallback without logo */ }
+    leftLogoWidth = drawBrandLogo(doc, logoBase64, MARGIN, logoY, logoMaxW, logoH);
+    textStartX = MARGIN + leftLogoWidth + 3;
+  }
+
+  // Professional logo in top-right of header (only if NOT clinic-branded) — reserved area
+  const proLogoMaxW = 28;
+  let rightReservedW = 0;
+  if (proLogoBase64) {
+    const w = drawBrandLogo(doc, proLogoBase64, PAGE_WIDTH - MARGIN - proLogoMaxW, logoY, proLogoMaxW, logoH, "right");
+    rightReservedW = w + 4;
   }
 
   doc.setFont("Inter", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
-  doc.text(isClinicBranded && clinicName ? clinicName : "Aliv.iA", textStartX, titleY);
+  const titleMaxW = PAGE_WIDTH - MARGIN - textStartX - Math.max(rightReservedW, 30);
+  const headerTitle = isClinicBranded && clinicName ? clinicName : "Aliv.iA";
+  doc.text(truncateToWidth(doc, headerTitle, titleMaxW), textStartX, titleY);
   doc.setFontSize(11);
   doc.setFont("Inter", "normal");
-  doc.text(isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report", textStartX, titleY + 9);
+  const subtitle = isPt ? "Relatório Clínico Personalizado" : "Personalized Clinical Report";
+  doc.text(truncateToWidth(doc, subtitle, titleMaxW), textStartX, titleY + 9);
   doc.setFontSize(8);
   const dateStr = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", {
     year: "numeric", month: "long", day: "numeric",
   });
   doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
-
-  // Professional logo in top-right of header (only if NOT clinic-branded)
-  if (proLogoBase64) {
-    try {
-      doc.addImage(proLogoBase64, "PNG", PAGE_WIDTH - MARGIN - logoW, logoY, logoW, logoH);
-    } catch { /* fallback */ }
-  }
 
   y = 48;
 
