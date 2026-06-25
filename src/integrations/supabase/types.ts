@@ -356,6 +356,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_response_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          expires_at: string
+          function_name: string
+          hit_count: number
+          response: Json
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          expires_at: string
+          function_name: string
+          hit_count?: number
+          response: Json
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          expires_at?: string
+          function_name?: string
+          hit_count?: number
+          response?: Json
+        }
+        Relationships: []
+      }
       app_config: {
         Row: {
           key: string
