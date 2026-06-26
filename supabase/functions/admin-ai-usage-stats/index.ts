@@ -91,8 +91,9 @@ serve(async (req) => {
     for (const r of rows) {
       const credits = Number(r.credits_used || 0);
       totalCredits += credits;
-      totalTokensIn += Number(r.tokens_in || 0);
-      totalTokensOut += Number(r.tokens_out || 0);
+      const meta = (r.metadata || {}) as Record<string, any>;
+      totalTokensIn += Number(meta.tokens_in || meta.input_tokens || 0);
+      totalTokensOut += Number(meta.tokens_out || meta.output_tokens || 0);
       totalTranscriptions += Number(r.transcriptions_used || 0);
 
       const fn = r.function_name || "unknown";
