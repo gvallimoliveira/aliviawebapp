@@ -1,8 +1,11 @@
 // Detects whether a free-text note describes a relevant functional
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 // limitation tied to one of the low-pain regions the user already marked.
 // Returns a list of region IDs (subset of painRegions) for which we should
 // add an extra prioritized questionnaire.
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
