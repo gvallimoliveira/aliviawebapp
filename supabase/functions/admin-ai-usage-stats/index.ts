@@ -1,0 +1,181 @@
+// Admin-only aggregated AI credit usage stats.
+// Gated by vip_users membership. Returns last-30-day rollups across all users.
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    // Auth + VIP gate
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Not authenticated" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userErr } = await admin.auth.getUser(token);
+    if (userErr || !user?.email) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: vip } = await admin
+      .from("vip_users")
+      .select("id")
+      .eq("email", user.email)
+      .maybeSingle();
+    if (!vip) {
+      return new Response(JSON.stringify({ error: "Access denied" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const url = new URL(req.url);
+    const days = Math.max(1, Math.min(90, Number(url.searchParams.get("days") || "30")));
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+    // Pull all usage rows in window. With shadow-tracking-only usage this is
+    // small; paginate defensively.
+    const rows: any[] = [];
+    const PAGE = 1000;
+    for (let from = 0; from < 50_000; from += PAGE) {
+      const { data, error } = await admin
+        .from("ai_credit_usage")
+        .select("user_id, function_name, credits_used, tokens_in, tokens_out, transcriptions_used, created_at")
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      rows.push(...data);
+      if (data.length < PAGE) break;
+    }
+
+    // Aggregates
+    const byFunction: Record<string, { credits: number; calls: number }> = {};
+    const byDay: Record<string, number> = {};
+    const byUser: Record<string, { credits: number; calls: number }> = {};
+    let totalCredits = 0;
+    let totalTokensIn = 0;
+    let totalTokensOut = 0;
+    let totalTranscriptions = 0;
+
+    for (const r of rows) {
+      const credits = Number(r.credits_used || 0);
+      totalCredits += credits;
+      totalTokensIn += Number(r.tokens_in || 0);
+      totalTokensOut += Number(r.tokens_out || 0);
+      totalTranscriptions += Number(r.transcriptions_used || 0);
+
+      const fn = r.function_name || "unknown";
+      byFunction[fn] = byFunction[fn] || { credits: 0, calls: 0 };
+      byFunction[fn].credits += credits;
+      byFunction[fn].calls += 1;
+
+      const day = (r.created_at as string).slice(0, 10);
+      byDay[day] = (byDay[day] || 0) + credits;
+
+      const uid = r.user_id || "anonymous";
+      byUser[uid] = byUser[uid] || { credits: 0, calls: 0 };
+      byUser[uid].credits += credits;
+      byUser[uid].calls += 1;
+    }
+
+    // Resolve emails for top users
+    const topUserIds = Object.entries(byUser)
+      .sort((a, b) => b[1].credits - a[1].credits)
+      .slice(0, 20)
+      .map(([uid]) => uid)
+      .filter((u) => u !== "anonymous");
+
+    const userMap: Record<string, string> = {};
+    if (topUserIds.length > 0) {
+      const { data: profs } = await admin
+        .from("professionals")
+        .select("user_id, email, full_name")
+        .in("user_id", topUserIds);
+      for (const p of profs || []) {
+        userMap[p.user_id] = p.email || p.full_name || p.user_id;
+      }
+      // Fallback: try profiles
+      const missing = topUserIds.filter((u) => !userMap[u]);
+      if (missing.length > 0) {
+        const { data: profiles } = await admin
+          .from("profiles")
+          .select("id, email, full_name")
+          .in("id", missing);
+        for (const p of profiles || []) {
+          userMap[p.id] = p.email || p.full_name || p.id;
+        }
+      }
+    }
+
+    const topUsers = Object.entries(byUser)
+      .sort((a, b) => b[1].credits - a[1].credits)
+      .slice(0, 20)
+      .map(([uid, v]) => ({
+        user_id: uid,
+        label: userMap[uid] || (uid === "anonymous" ? "Anônimo / sem JWT" : uid.slice(0, 8) + "…"),
+        credits: Number(v.credits.toFixed(3)),
+        calls: v.calls,
+      }));
+
+    const functionsRanked = Object.entries(byFunction)
+      .map(([name, v]) => ({
+        name,
+        credits: Number(v.credits.toFixed(3)),
+        calls: v.calls,
+        avg: v.calls > 0 ? Number((v.credits / v.calls).toFixed(4)) : 0,
+      }))
+      .sort((a, b) => b.credits - a.credits);
+
+    const daily = Object.entries(byDay)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([day, credits]) => ({ day, credits: Number(credits.toFixed(3)) }));
+
+    const uniqueUsers = Object.keys(byUser).filter((u) => u !== "anonymous").length;
+
+    // Estimated USD: assume 1 credit ≈ $0.0008 (Lovable workspace pricing benchmark)
+    const estUsd = Number((totalCredits * 0.0008).toFixed(2));
+
+    return new Response(
+      JSON.stringify({
+        window_days: days,
+        total_rows: rows.length,
+        total_credits: Number(totalCredits.toFixed(3)),
+        total_tokens_in: totalTokensIn,
+        total_tokens_out: totalTokensOut,
+        total_transcriptions: totalTranscriptions,
+        unique_users: uniqueUsers,
+        estimated_usd: estUsd,
+        functions: functionsRanked,
+        daily,
+        top_users: topUsers,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (err: any) {
+    console.error("[admin-ai-usage-stats]", err);
+    return new Response(JSON.stringify({ error: err.message || "Internal error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
