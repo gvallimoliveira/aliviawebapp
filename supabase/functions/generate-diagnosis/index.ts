@@ -13,8 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults
-    shadowLogAiUsage(req, { function_name: "generate-diagnosis" });, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed } = await req.json();
+    shadowLogAiUsage(req, { function_name: "generate-diagnosis" });
     const redFlagsList: string[] = Array.isArray(bodyRedFlags)
       ? bodyRedFlags
       : Array.isArray(anamnesisData?.redFlags) ? anamnesisData.redFlags : [];
