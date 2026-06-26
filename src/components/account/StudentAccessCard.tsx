@@ -235,6 +235,7 @@ const StudentAccessCard = () => {
             active_profile_mode: effectiveMode,
             student_institution: isStudent ? institution.trim() : null,
             student_period: isStudent ? period.trim() : null,
+            ...(isStudent ? { cpf: cpfDigits } : {}),
             ...(nameLocked && !isVip ? {} : { full_name: fullName.trim() || undefined }),
             ...(lockNameNow ? { student_name_locked: true } : {}),
             ...(effectiveMode === "student" ? { approved: false } : {}),
@@ -257,6 +258,7 @@ const StudentAccessCard = () => {
           active_profile_mode: effectiveMode,
           student_institution: isStudent ? institution.trim() : null,
           student_period: isStudent ? period.trim() : null,
+          cpf: cpfDigits,
         } as any);
         if (error) throw error;
         setHasProfRecord(true);
