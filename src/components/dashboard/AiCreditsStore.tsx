@@ -19,7 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Sparkles, Check, Zap } from "lucide-react";
 
 interface Pkg {
-  key: "mini" | "plus" | "pro";
+  key: "starter" | "mini" | "plus";
   credits: number;
   price_brl: number;
   badge?: string;
@@ -27,9 +27,9 @@ interface Pkg {
 }
 
 const PACKAGES: Pkg[] = [
-  { key: "mini", credits: 50, price_brl: 15 },
-  { key: "plus", credits: 150, price_brl: 35, badge: "Popular", highlight: true },
-  { key: "pro", credits: 500, price_brl: 100, badge: "Melhor valor" },
+  { key: "starter", credits: 25, price_brl: 8 },
+  { key: "mini", credits: 50, price_brl: 15, badge: "Popular", highlight: true },
+  { key: "plus", credits: 150, price_brl: 35, badge: "Melhor valor" },
 ];
 
 // Estimativa de capacidade por pacote (avaliação completa ≈ 0,70 créditos:
