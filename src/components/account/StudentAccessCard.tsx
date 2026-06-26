@@ -385,6 +385,26 @@ const StudentAccessCard = () => {
                   )}
                 </div>
                 <div className="space-y-1.5">
+                  <Label htmlFor="student-cpf" className="text-xs text-muted-foreground">{t.cpf_label} *</Label>
+                  <Input
+                    id="student-cpf"
+                    value={cpf}
+                    placeholder={t.cpf_placeholder}
+                    inputMode="numeric"
+                    maxLength={14}
+                    onChange={(e) => {
+                      // Mask: 000.000.000-00
+                      const d = e.target.value.replace(/\D/g, "").slice(0, 11);
+                      let out = d;
+                      if (d.length > 9) out = `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+                      else if (d.length > 6) out = `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+                      else if (d.length > 3) out = `${d.slice(0, 3)}.${d.slice(3)}`;
+                      setCpf(out);
+                    }}
+                  />
+                  <p className="text-[11px] text-muted-foreground leading-snug">{t.cpf_hint}</p>
+                </div>
+                <div className="space-y-1.5">
                   <Label htmlFor="student-inst" className="text-xs text-muted-foreground">{t.institution}</Label>
                   <Input id="student-inst" value={institution} onChange={(e) => setInstitution(e.target.value)} />
                 </div>
