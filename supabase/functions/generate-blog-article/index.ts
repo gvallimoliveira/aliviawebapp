@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAiWithFallback } from "../_shared/ai-fallback.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,47 +44,39 @@ ${keywordsInstruction}`;
 
     const userPrompt = `Gere um artigo completo sobre o tema: "${topic}"`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "publish_article",
-              description: "Return the generated blog article with all fields.",
-              parameters: {
-                type: "object",
-                properties: {
-                  title_pt: { type: "string", description: "Título do artigo em português (BR), otimizado para SEO" },
-                  title_en: { type: "string", description: "Article title in English, SEO optimized" },
-                  content_pt: { type: "string", description: "Conteúdo completo do artigo em HTML (português BR)" },
-                  content_en: { type: "string", description: "Full article content in HTML (English)" },
-                  excerpt_pt: { type: "string", description: "Meta description em português (max 160 chars)" },
-                  excerpt_en: { type: "string", description: "Meta description in English (max 160 chars)" },
-                  tags: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "5-8 tags relevantes para o artigo",
-                  },
+    const response = await callAiWithFallback(LOVABLE_API_KEY, {
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "publish_article",
+            description: "Return the generated blog article with all fields.",
+            parameters: {
+              type: "object",
+              properties: {
+                title_pt: { type: "string", description: "Título do artigo em português (BR), otimizado para SEO" },
+                title_en: { type: "string", description: "Article title in English, SEO optimized" },
+                content_pt: { type: "string", description: "Conteúdo completo do artigo em HTML (português BR)" },
+                content_en: { type: "string", description: "Full article content in HTML (English)" },
+                excerpt_pt: { type: "string", description: "Meta description em português (max 160 chars)" },
+                excerpt_en: { type: "string", description: "Meta description in English (max 160 chars)" },
+                tags: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "5-8 tags relevantes para o artigo",
                 },
-                required: ["title_pt", "title_en", "content_pt", "content_en", "excerpt_pt", "excerpt_en", "tags"],
-                additionalProperties: false,
               },
+              required: ["title_pt", "title_en", "content_pt", "content_en", "excerpt_pt", "excerpt_en", "tags"],
+              additionalProperties: false,
             },
           },
-        ],
-        tool_choice: { type: "function", function: { name: "publish_article" } },
-      }),
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "publish_article" } },
     });
 
     if (!response.ok) {

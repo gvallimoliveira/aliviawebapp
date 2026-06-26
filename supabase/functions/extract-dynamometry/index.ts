@@ -3,8 +3,10 @@
 // The original file is NOT stored — only the extracted text is returned.
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 
 const MODEL_CHAIN = [
   "google/gemini-2.5-flash",
@@ -121,6 +123,22 @@ Deno.serve(async (req) => {
       : "pt";
     const systemPrompt = PROMPTS[lang] || PROMPTS.pt;
 
+    // Cache: same file bytes → same extraction (30d). Hash is computed inside
+    // buildCacheKey via stable stringify of the payload object.
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { fileBase64, mimeType: mimeType || "", lang };
+    if (admin) {
+      const cached = await getCachedAiResponse<{ rows: unknown[] }>(admin, "extract-dynamometry", cachePayload);
+      if (cached) {
+        return new Response(JSON.stringify({ ...cached, cached: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+
     const mt = (mimeType || "").toLowerCase();
     const isPdf = mt.includes("pdf");
     const isImage = mt.startsWith("image/") || !isPdf; // default to image when unknown
@@ -187,6 +205,10 @@ Deno.serve(async (req) => {
       }))
       .filter((r) => r.movement || r.leftValue || r.rightValue)
       .slice(0, 40); // safety cap
+
+    if (admin && rows.length > 0) {
+      await setCachedAiResponse(admin, "extract-dynamometry", cachePayload, { rows }, 30 * 24 * 3600);
+    }
 
     return new Response(JSON.stringify({ rows }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

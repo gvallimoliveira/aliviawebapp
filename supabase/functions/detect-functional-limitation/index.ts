@@ -1,8 +1,11 @@
 // Detects whether a free-text note describes a relevant functional
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 // limitation tied to one of the low-pain regions the user already marked.
 // Returns a list of region IDs (subset of painRegions) for which we should
 // add an extra prioritized questionnaire.
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,7 +67,22 @@ Deno.serve(async (req) => {
       pain_scores: painScoresPerRegion,
     });
 
+    // Cache: same note + same candidates → same answer (7d).
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { note: text, lowPainRegions, language: isPt ? "pt" : "en" };
+    if (admin) {
+      const cached = await getCachedAiResponse<{ regions: string[] }>(admin, "detect-functional-limitation", cachePayload);
+      if (cached) {
+        return new Response(JSON.stringify(cached), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
       body: JSON.stringify({
@@ -88,6 +106,10 @@ Deno.serve(async (req) => {
     const parsed = extractJson(content);
     const raw: string[] = Array.isArray(parsed?.regions) ? parsed.regions : [];
     const regions = raw.filter((r) => typeof r === "string" && lowPainRegions.includes(r)).slice(0, 1);
+
+    if (admin) {
+      await setCachedAiResponse(admin, "detect-functional-limitation", cachePayload, { regions }, 7 * 24 * 3600);
+    }
 
     return new Response(JSON.stringify({ regions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +19,24 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline } = await req.json();
+
+    // Cache: identical clinical context → identical impression (7d).
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline };
+    if (admin) {
+      const cached = await getCachedAiResponse<{ clinicalImpression: { overview: string; therapeuticObjectives: string[] } }>(
+        admin,
+        "generate-clinical-impression",
+        cachePayload,
+      );
+      if (cached) {
+        return new Response(JSON.stringify(cached), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
     const isPt = language === "pt";
     const isEs = language === "es";
 
@@ -196,6 +216,10 @@ Rules:
           therapeuticObjectives: [],
         };
       }
+    }
+
+    if (admin && clinicalImpression.overview && clinicalImpression.therapeuticObjectives.length === 2) {
+      await setCachedAiResponse(admin, "generate-clinical-impression", cachePayload, { clinicalImpression }, 7 * 24 * 3600);
     }
 
     return new Response(JSON.stringify({ clinicalImpression }), {
