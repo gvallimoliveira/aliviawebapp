@@ -74,7 +74,6 @@ async function isVip(adminClient: any, email?: string): Promise<boolean> {
 
 async function embed(lovableKey: string, text: string): Promise<number[] | null> {
   try {
-    shadowLogAiUsage(req, { function_name: "agent-knowledge" });
     const r = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}` },
@@ -831,6 +830,7 @@ serve(async (req) => {
   }
 
   try {
+    shadowLogAiUsage(req, { function_name: "agent-knowledge" });
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },

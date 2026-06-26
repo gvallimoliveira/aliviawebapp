@@ -241,7 +241,6 @@ async function checkAndIncrementQuota(adminClient: any, userId: string): Promise
 // ---- Knowledge RAG (uses embeddings; safe to no-op if base empty) ----
 async function searchEvidence(adminClient: any, lovableKey: string, query: string, niches?: string[]) {
   try {
-    shadowLogAiUsage(req, { function_name: "clinical-agent-chat" });
     const embResp = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}` },
@@ -605,6 +604,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    shadowLogAiUsage(req, { function_name: "clinical-agent-chat" });
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
