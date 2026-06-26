@@ -177,7 +177,7 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
                 </div>
                 <div className="border-t border-border pt-3 text-left space-y-1">
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-                    {isPt ? "Dá para fazer ~" : "Enough for ~"}
+                    {isPt ? "Dá para fazer até ~" : "Enough for up to ~"}
                   </p>
                   <ul className="text-[11px] text-muted-foreground space-y-0.5">
                     <li>
@@ -186,11 +186,17 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
                       </span>{" "}
                       {isPt ? "avaliações completas" : "full assessments"}
                     </li>
+                    <li className="text-center text-[10px] uppercase tracking-wide text-muted-foreground/70">
+                      {isPt ? "ou" : "or"}
+                    </li>
                     <li>
                       <span className="font-semibold text-foreground">
                         {estimateReassessments(p.credits)}
                       </span>{" "}
                       {isPt ? "reavaliações rápidas" : "quick reassessments"}
+                    </li>
+                    <li className="text-center text-[10px] uppercase tracking-wide text-muted-foreground/70">
+                      {isPt ? "ou" : "or"}
                     </li>
                     <li>
                       <span className="font-semibold text-foreground">
@@ -199,7 +205,13 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
                       {isPt ? "msgs no chat do agente" : "agent chat messages"}
                     </li>
                   </ul>
+                  <p className="text-[10px] text-muted-foreground/80 italic pt-1 leading-tight">
+                    {isPt
+                      ? "Máximos alternativos — não somam. Você escolhe como usar (ex.: metade avaliações + metade chat)."
+                      : "Alternative maximums — they don't add up. Mix usage as you like."}
+                  </p>
                 </div>
+
                 <Button
                   className="w-full"
                   variant={p.highlight ? "default" : "outline"}
