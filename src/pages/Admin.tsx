@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, ShieldCheck, Loader2, LayoutDashboard, Users, UserCheck, FileText, MessageSquare, Mail, Brain } from "lucide-react";
+import { Trash2, Plus, ShieldCheck, Loader2, LayoutDashboard, Users, UserCheck, FileText, MessageSquare, Mail, Brain, Zap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import ProfessionalManagement from "@/components/admin/ProfessionalManagement";
@@ -20,6 +20,7 @@ import BlogManagement from "@/components/admin/BlogManagement";
 import SupportTicketManagement from "@/components/admin/SupportTicketManagement";
 import LeadManagement from "@/components/admin/LeadManagement";
 import AdminAgentKnowledge from "@/components/admin/AdminAgentKnowledge";
+import AdminAiUsage from "@/components/admin/AdminAiUsage";
 
 interface VipUser {
   id: string;
@@ -85,7 +86,7 @@ const Admin = () => {
   // Sync active tab with URL ?tab= parameter
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
-    const validTabs = ["dashboard", "users", "professionals", "content", "support", "leads", "agent"];
+    const validTabs = ["dashboard", "users", "professionals", "content", "support", "leads", "agent", "ai-usage"];
     if (tabFromUrl && validTabs.includes(tabFromUrl)) {
       setActiveTab(tabFromUrl);
     }
@@ -258,6 +259,10 @@ const Admin = () => {
               <Brain className="h-3.5 w-3.5" />
               Agente
             </TabsTrigger>
+            <TabsTrigger value="ai-usage" className="gap-1.5">
+              <Zap className="h-3.5 w-3.5" />
+              {isPt ? "Uso de IA" : "AI Usage"}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -365,6 +370,10 @@ const Admin = () => {
 
           <TabsContent value="agent">
             <AdminAgentKnowledge />
+          </TabsContent>
+
+          <TabsContent value="ai-usage">
+            <AdminAiUsage isPt={isPt} />
           </TabsContent>
         </Tabs>
       </main>
