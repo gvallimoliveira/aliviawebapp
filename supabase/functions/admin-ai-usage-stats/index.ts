@@ -47,8 +47,19 @@ serve(async (req) => {
       });
     }
 
+    // Accept `days` from JSON body (POST via supabase.functions.invoke) or querystring.
+    let bodyDays: number | undefined;
+    if (req.method !== "GET") {
+      try {
+        const body = await req.json();
+        if (body && typeof body.days !== "undefined") bodyDays = Number(body.days);
+      } catch {
+        // ignore — empty/invalid body is fine
+      }
+    }
     const url = new URL(req.url);
-    const days = Math.max(1, Math.min(90, Number(url.searchParams.get("days") || "30")));
+    const rawDays = bodyDays ?? Number(url.searchParams.get("days") || "30");
+    const days = Math.max(1, Math.min(90, Number.isFinite(rawDays) ? rawDays : 30));
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
     // Pull all usage rows in window. With shadow-tracking-only usage this is

@@ -44,8 +44,8 @@ const AdminAiUsage = ({ isPt }: { isPt: boolean }) => {
     setError(null);
     try {
       const { data, error } = await supabase.functions.invoke(
-        `admin-ai-usage-stats?days=${d}`,
-        { method: "GET" as any },
+        "admin-ai-usage-stats",
+        { body: { days: d } },
       );
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);

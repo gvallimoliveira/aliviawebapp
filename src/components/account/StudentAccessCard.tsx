@@ -39,6 +39,7 @@ const StudentAccessCard = () => {
   const [nameLocked, setNameLocked] = useState(false);
   const [originalName, setOriginalName] = useState("");
   const [fullName, setFullName] = useState("");
+  const [cpf, setCpf] = useState("");
   const [institution, setInstitution] = useState("");
   const [period, setPeriod] = useState("");
   const [activeMode, setActiveMode] = useState<"professional" | "student">("professional");
@@ -52,13 +53,17 @@ const StudentAccessCard = () => {
         name: "Nome completo",
         name_lock_warn: "Atenção: por segurança contra compartilhamento de assinatura, você pode editar seu nome no modo acadêmico apenas 1 (uma) vez após o cadastro inicial (para corrigir erro de digitação). Após essa ratificação, o nome ficará bloqueado e aparecerá fixo nos PDFs e links públicos.",
         name_locked: "Nome bloqueado. Você já utilizou a ratificação permitida. O nome em relatórios acadêmicos não pode mais ser alterado para evitar compartilhamento de assinatura. Em caso de erro real (ex.: troca de nome civil), fale com o suporte.",
+        cpf_label: "CPF",
+        cpf_placeholder: "000.000.000-00",
+        cpf_hint: "Obrigatório para vinculação única da conta acadêmica (evita duplicidade e compartilhamento).",
         institution: "Instituição de ensino",
         period: "Período atual",
         period_placeholder: "Ex.: 5º período",
         save: "Salvar",
         saved: "Acesso estudante atualizado!",
         disabled: "Acesso estudante desativado.",
-        required: "Preencha nome, instituição e período.",
+        required: "Preencha nome, CPF, instituição e período.",
+        cpf_invalid: "CPF inválido. Use 11 dígitos.",
         error: "Erro ao salvar",
         graduate_title: "Concluiu o curso? Cadastre seu CREFITO",
         graduate_desc: "Para sair do modo Acadêmico você precisa cadastrar seu CREFITO no formulário profissional. Vamos te levar lá agora.",
@@ -87,13 +92,17 @@ const StudentAccessCard = () => {
         name: "Full name",
         name_lock_warn: "Warning: to prevent subscription sharing, you may edit your name in academic mode only once after the initial registration (to fix typos). After this single ratification, the name will be locked and shown fixed on PDFs and public links.",
         name_locked: "Name locked. You have already used the allowed ratification. The name on academic reports can no longer be changed to prevent subscription sharing. For a real correction (e.g. legal name change), contact support.",
+        cpf_label: "CPF (Brazilian ID)",
+        cpf_placeholder: "000.000.000-00",
+        cpf_hint: "Required to keep the academic account unique (prevents duplicate or shared accounts).",
         institution: "Institution",
         period: "Current term",
         period_placeholder: "e.g. 5th term",
         save: "Save",
         saved: "Student access updated!",
         disabled: "Student access disabled.",
-        required: "Fill name, institution and term.",
+        required: "Fill name, CPF, institution and term.",
+        cpf_invalid: "Invalid CPF — 11 digits required.",
         error: "Save error",
         graduate_title: "Graduated? Register your CREFITO",
         graduate_desc: "To leave Academic mode you must register your CREFITO in the professional form. We'll take you there now.",
@@ -121,7 +130,7 @@ const StudentAccessCard = () => {
       const [profRes, vipRes] = await Promise.all([
         supabase
           .from("professionals")
-          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, student_name_locked, subscription_status, subscription_stripe_id, is_partner, is_partner_account, lifetime_treatment, premium_granted, pro_access_expires_at")
+          .select("id, full_name, cpf, crefito, is_student, active_profile_mode, student_institution, student_period, student_name_locked, subscription_status, subscription_stripe_id, is_partner, is_partner_account, lifetime_treatment, premium_granted, pro_access_expires_at")
           .eq("user_id", user.id)
           .maybeSingle(),
         user.email
@@ -139,6 +148,7 @@ const StudentAccessCard = () => {
         setHasCrefito(!!(data.crefito && String(data.crefito).trim().length > 0));
         setFullName(data.full_name || "");
         setOriginalName(data.full_name || "");
+        setCpf(data.cpf || "");
         setInstitution(data.student_institution || "");
         setPeriod(data.student_period || "");
         setNameLocked(!!data.student_name_locked);
@@ -182,8 +192,13 @@ const StudentAccessCard = () => {
       navigate("/professional/register");
       return;
     }
-    if (isStudent && (!fullName.trim() || !institution.trim() || !period.trim())) {
+    const cpfDigits = cpf.replace(/\D/g, "");
+    if (isStudent && (!fullName.trim() || !institution.trim() || !period.trim() || !cpfDigits)) {
       toast({ title: t.required, variant: "destructive" });
+      return;
+    }
+    if (isStudent && cpfDigits.length !== 11) {
+      toast({ title: t.cpf_invalid, variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -220,6 +235,7 @@ const StudentAccessCard = () => {
             active_profile_mode: effectiveMode,
             student_institution: isStudent ? institution.trim() : null,
             student_period: isStudent ? period.trim() : null,
+            ...(isStudent ? { cpf: cpfDigits } : {}),
             ...(nameLocked && !isVip ? {} : { full_name: fullName.trim() || undefined }),
             ...(lockNameNow ? { student_name_locked: true } : {}),
             ...(effectiveMode === "student" ? { approved: false } : {}),
@@ -242,6 +258,7 @@ const StudentAccessCard = () => {
           active_profile_mode: effectiveMode,
           student_institution: isStudent ? institution.trim() : null,
           student_period: isStudent ? period.trim() : null,
+          cpf: cpfDigits,
         } as any);
         if (error) throw error;
         setHasProfRecord(true);
@@ -366,6 +383,26 @@ const StudentAccessCard = () => {
                       <span>{t.name_locked}</span>
                     </p>
                   )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="student-cpf" className="text-xs text-muted-foreground">{t.cpf_label} *</Label>
+                  <Input
+                    id="student-cpf"
+                    value={cpf}
+                    placeholder={t.cpf_placeholder}
+                    inputMode="numeric"
+                    maxLength={14}
+                    onChange={(e) => {
+                      // Mask: 000.000.000-00
+                      const d = e.target.value.replace(/\D/g, "").slice(0, 11);
+                      let out = d;
+                      if (d.length > 9) out = `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+                      else if (d.length > 6) out = `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+                      else if (d.length > 3) out = `${d.slice(0, 3)}.${d.slice(3)}`;
+                      setCpf(out);
+                    }}
+                  />
+                  <p className="text-[11px] text-muted-foreground leading-snug">{t.cpf_hint}</p>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="student-inst" className="text-xs text-muted-foreground">{t.institution}</Label>

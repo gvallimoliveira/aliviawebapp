@@ -69,14 +69,11 @@ const AiCreditsWidget = () => {
     };
   }, [user?.id]);
 
-  if (loading) return null;
+  // Render the card even while loading so the user always sees the
+  // "Buy credit pack" entry point on the Insights tab.
 
   const hasUsage = rows.length > 0;
   const hasPackages = packages.length > 0;
-  if (!hasUsage && !hasPackages) {
-    // Show nothing for users with no activity — store is reachable from elsewhere.
-    return null;
-  }
 
   const total = rows.reduce((s, r) => s + Number(r.credits_used || 0), 0);
   const callsByFn: Record<string, { credits: number; calls: number }> = {};
