@@ -83,22 +83,29 @@ async function resolveUserId(
 /**
  * Fire-and-forget shadow log. Never throws, never blocks.
  * Returns the resolved user id so callers can reuse it if needed.
+ *
+ * `admin` is optional — if omitted, the helper creates its own service-role
+ * client. Callers that already have one can pass it to avoid duplication.
  */
 export async function shadowLogAiUsage(
   req: Request,
-  admin: SupabaseClient,
   opts: LogOptions,
+  admin?: SupabaseClient,
 ): Promise<string | null> {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!supabaseUrl || !serviceKey) return null;
+
     const userId = opts.user_id ?? (await resolveUserId(req, supabaseUrl));
     if (!userId) return null;
 
+    const client = admin ?? createClient(supabaseUrl, serviceKey);
     const credits = opts.credits ?? CREDIT_COST[opts.function_name] ?? 0.05;
     const transcriptions = opts.transcriptions ?? 0;
 
     // Insert in the background — do not await to keep latency low.
-    admin
+    client
       .from("ai_credit_usage")
       .insert({
         user_id: userId,
