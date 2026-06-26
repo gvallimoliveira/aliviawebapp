@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 
 function normalizeAnamnesis(raw: any) {
   if (!raw || typeof raw !== "object") return raw;
@@ -240,6 +241,7 @@ async function checkAndIncrementQuota(adminClient: any, userId: string): Promise
 // ---- Knowledge RAG (uses embeddings; safe to no-op if base empty) ----
 async function searchEvidence(adminClient: any, lovableKey: string, query: string, niches?: string[]) {
   try {
+    shadowLogAiUsage(req, { function_name: "clinical-agent-chat" });
     const embResp = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}` },
