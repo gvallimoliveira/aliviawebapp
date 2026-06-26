@@ -104,8 +104,11 @@ export async function shadowLogAiUsage(
     const credits = opts.credits ?? CREDIT_COST[opts.function_name] ?? 0.05;
     const transcriptions = opts.transcriptions ?? 0;
 
-    // Insert in the background — do not await to keep latency low.
-    client
+    // IMPORTANT: Supabase Edge Functions kill the worker as soon as the
+    // response is sent, which cancels in-flight fetches (the insert ends up
+    // dropped). We must register the background work with `EdgeRuntime.waitUntil`
+    // so the runtime keeps the worker alive until the insert resolves.
+    const insertPromise = client
       .from("ai_credit_usage")
       .insert({
         user_id: userId,
@@ -118,7 +121,19 @@ export async function shadowLogAiUsage(
       })
       .then(({ error }) => {
         if (error) console.warn("[ai-credits] shadow log failed:", error.message);
+      })
+      .catch((e) => {
+        console.warn("[ai-credits] shadow log threw:", (e as Error).message);
       });
+
+    // `EdgeRuntime` is only defined inside Supabase Edge Functions; guard for
+    // local/test environments and fall back to awaiting inline.
+    const runtime = (globalThis as any).EdgeRuntime;
+    if (runtime && typeof runtime.waitUntil === "function") {
+      runtime.waitUntil(insertPromise);
+    } else {
+      await insertPromise;
+    }
 
     return userId;
   } catch (e) {
