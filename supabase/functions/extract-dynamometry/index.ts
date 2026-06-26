@@ -123,6 +123,22 @@ Deno.serve(async (req) => {
       : "pt";
     const systemPrompt = PROMPTS[lang] || PROMPTS.pt;
 
+    // Cache: same file bytes → same extraction (30d). Hash is computed inside
+    // buildCacheKey via stable stringify of the payload object.
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { fileBase64, mimeType: mimeType || "", lang };
+    if (admin) {
+      const cached = await getCachedAiResponse<{ rows: unknown[] }>(admin, "extract-dynamometry", cachePayload);
+      if (cached) {
+        return new Response(JSON.stringify({ ...cached, cached: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+
     const mt = (mimeType || "").toLowerCase();
     const isPdf = mt.includes("pdf");
     const isImage = mt.startsWith("image/") || !isPdf; // default to image when unknown
