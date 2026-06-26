@@ -206,6 +206,10 @@ Deno.serve(async (req) => {
       .filter((r) => r.movement || r.leftValue || r.rightValue)
       .slice(0, 40); // safety cap
 
+    if (admin && rows.length > 0) {
+      await setCachedAiResponse(admin, "extract-dynamometry", cachePayload, { rows }, 30 * 24 * 3600);
+    }
+
     return new Response(JSON.stringify({ rows }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
