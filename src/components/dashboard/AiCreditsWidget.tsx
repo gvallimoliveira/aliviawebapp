@@ -214,16 +214,32 @@ const AiCreditsWidget = () => {
 
         {top.length > 0 && (
           <div className="space-y-1.5">
-            {top.map(([fn, v]) => (
-              <div key={fn} className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground truncate mr-2">{fn}</span>
-                <Badge variant="secondary" className="shrink-0 font-mono">
-                  {v.credits.toFixed(2)} · {v.calls}×
-                </Badge>
-              </div>
-            ))}
+            <p className="text-[11px] font-medium text-muted-foreground">
+              {isPt ? "Onde foi gasto" : "Where it was spent"}
+            </p>
+            {top.map(([fn, v]) => {
+              const labelMap: Record<string, { pt: string; en: string }> = {
+                "generate-diagnosis": { pt: "Diagnóstico", en: "Diagnosis" },
+                "generate-treatment": { pt: "Tratamento", en: "Treatment" },
+                "generate-evolution-summary": { pt: "Evolução", en: "Evolution" },
+                "clinical-agent-chat": { pt: "Agente clínico", en: "Clinical agent" },
+                "agent-knowledge": { pt: "Busca de evidências", en: "Evidence search" },
+                "suggest-functional-tests": { pt: "Sugestão de testes", en: "Test suggestions" },
+                "assessment-voice-notes": { pt: "Notas por voz", en: "Voice notes" },
+              };
+              const label = labelMap[fn]?.[isPt ? "pt" : "en"] ?? fn;
+              return (
+                <div key={fn} className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground truncate mr-2">{label}</span>
+                  <Badge variant="secondary" className="shrink-0 font-mono">
+                    {v.credits.toFixed(2)} · {v.calls}×
+                  </Badge>
+                </div>
+              );
+            })}
           </div>
         )}
+
 
         <div className="pt-2 border-t border-border">
           <AiCreditsStore
