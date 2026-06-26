@@ -218,6 +218,10 @@ Rules:
       }
     }
 
+    if (admin && clinicalImpression.overview && clinicalImpression.therapeuticObjectives.length === 2) {
+      await setCachedAiResponse(admin, "generate-clinical-impression", cachePayload, { clinicalImpression }, 7 * 24 * 3600);
+    }
+
     return new Response(JSON.stringify({ clinicalImpression }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
