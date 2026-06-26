@@ -386,11 +386,14 @@ function parseSlash(raw: string): SlashCommand {
 }
 
 const NICHE_KEYWORDS: Record<string, string[]> = {
-  ombro: ["ombro", "shoulder", "manguito", "rotator", "subacromial"],
-  lombar: ["lombar", "lombalgia", "lumbar", "low back", "hérnia", "ciática"],
-  quadril: ["quadril", "hip", "femoroacetabular", "trocanter"],
-  joelho: ["joelho", "knee", "patelar", "lca", "acl", "menisc"],
-  cervical: ["cervical", "cervicalgia", "neck", "whiplash"],
+  ombro: ["ombro", "shoulder", "manguito", "rotator", "subacromial", "capsulite", "impacto"],
+  lombar: ["lombar", "lombalgia", "lumbar", "low back", "hérnia", "ciática", "estenose", "sacroil"],
+  quadril: ["quadril", "hip", "femoroacetabular", "trocanter", "coxartrose", "labr"],
+  joelho: ["joelho", "knee", "patelar", "lca", "acl", "menisc", "patelofemoral"],
+  cervical: ["cervical", "cervicalgia", "neck", "whiplash", "mielopatia", "cefaleia cerv"],
+  anatomia: ["anatomia", "anatomy"],
+  biomecanica: ["biomec", "biomechan", "carga", "alavanca", "torque"],
+  cinesiologia: ["cinesiolog", "kinesiolog", "cadeia cinética", "controle motor", "proprioc"],
 };
 function detectNicheSrv(text: string): string | null {
   const t = (text || "").toLowerCase();
@@ -701,11 +704,13 @@ Deno.serve(async (req) => {
       thread_id, role: "user", parts: [{ type: "text", text: userMsg }],
     });
 
-    // /quiz
+    // /quiz — usa banco de quizzes fixos (sem IA) para conter custo de workspace
     if (slash?.kind === "quiz") {
-      const quiz = await generateQuiz(LOVABLE_API_KEY, slash.topic, slash.n, !!thread.mentor_mode);
-      if (!quiz) {
-        const err = "Não consegui gerar o quiz agora. Tente novamente em alguns segundos ou refine o tema.";
+      const FIXED_NICHES = ["cervical", "lombar", "ombro", "joelho", "quadril", "anatomia", "biomecanica", "cinesiologia"];
+      const niche = detectNicheSrv(slash.topic);
+      if (!niche || !FIXED_NICHES.includes(niche)) {
+        const list = FIXED_NICHES.map(n => `\`/quiz ${n}\``).join(" · ");
+        const err = `🎓 No momento os quizzes acadêmicos cobrem apenas estes nichos:\n\n${list}\n\nEscolha um deles para receber um quiz com gabarito comentado. Vou ampliar a biblioteca em breve!`;
         await adminClient.from("agent_messages").insert({
           thread_id, role: "assistant", parts: [{ type: "text", text: err }],
         });
@@ -713,7 +718,20 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const intro = `🎓 Aqui está seu quiz sobre **${quiz.topic}** (${quiz.questions.length} questões). Responda cada uma e clique em "Finalizar" para ver o gabarito comentado.`;
+      const { data: pick, error: pickErr } = await adminClient
+        .rpc("get_next_fixed_quiz", { _user_id: user.id, _niche: niche });
+      const row = Array.isArray(pick) && pick.length > 0 ? pick[0] : null;
+      if (pickErr || !row) {
+        const err = "Não consegui carregar um quiz agora. Tente novamente em alguns segundos.";
+        await adminClient.from("agent_messages").insert({
+          thread_id, role: "assistant", parts: [{ type: "text", text: err }],
+        });
+        return new Response(JSON.stringify({ assistant: err, citations: [], quota }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const quiz = { topic: row.topic, questions: row.questions };
+      const intro = `🎓 Quiz sobre **${quiz.topic}** (${quiz.questions.length} questões). Responda e clique em "Finalizar" para ver o gabarito comentado.`;
       await adminClient.from("agent_messages").insert({
         thread_id, role: "assistant",
         parts: [{ type: "text", text: intro }, { type: "quiz", quiz }],

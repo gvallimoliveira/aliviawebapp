@@ -38,6 +38,44 @@ export type Database = {
         }
         Relationships: []
       }
+      academic_fixed_quizzes: {
+        Row: {
+          created_at: string
+          id: string
+          niche: string
+          order_index: number
+          questions: Json
+          topic: string
+          track_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          niche: string
+          order_index: number
+          questions: Json
+          topic: string
+          track_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          niche?: string
+          order_index?: number
+          questions?: Json
+          topic?: string
+          track_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_fixed_quizzes_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "academic_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academic_quiz_results: {
         Row: {
           correct: number
@@ -3170,6 +3208,14 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_next_fixed_quiz: {
+        Args: { _niche: string; _user_id: string }
+        Returns: {
+          id: string
+          questions: Json
+          topic: string
+        }[]
       }
       get_patient_adherence_scores: {
         Args: { _clinic_id: string }
