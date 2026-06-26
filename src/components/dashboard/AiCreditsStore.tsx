@@ -32,6 +32,14 @@ const PACKAGES: Pkg[] = [
   { key: "pro", credits: 1000, price_brl: 199, badge: "Melhor valor" },
 ];
 
+// Estimativa de capacidade por pacote (avaliação completa ≈ 0,70 créditos:
+// diagnóstico 0,30 + tratamento 0,30 + impressão clínica 0,10).
+const estimateAssessments = (credits: number) => Math.floor(credits / 0.7);
+// Reavaliação rápida ≈ 0,50 créditos (progressão + evolução).
+const estimateReassessments = (credits: number) => Math.floor(credits / 0.5);
+// Chat do agente ≈ 0,05 créditos/mensagem.
+const estimateChatMessages = (credits: number) => Math.floor(credits / 0.05);
+
 /**
  * Storefront for one-off AI credit packs. Opens Stripe Checkout in a new tab.
  * Credit fulfillment is server-side via the `stripe-webhook` (`ai_credits` case).
@@ -84,8 +92,20 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
       if (error) throw error;
       const url = (data as any)?.url;
       if (!url) throw new Error("Checkout URL missing");
-      window.open(url, "_blank", "noopener,noreferrer");
       setOpen(false);
+      // Mobile browsers block window.open() after an await (gesture lost),
+      // so we navigate in the same tab on touch devices and only open a new
+      // tab on desktop where popup blockers respect the original click.
+      const isTouch =
+        typeof window !== "undefined" &&
+        (window.matchMedia?.("(pointer: coarse)").matches ||
+          /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+      if (isTouch) {
+        window.location.href = url;
+      } else {
+        const w = window.open(url, "_blank", "noopener,noreferrer");
+        if (!w) window.location.href = url;
+      }
     } catch (err: any) {
       toast({
         title: isPt ? "Erro" : "Error",
@@ -154,6 +174,31 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
                   <p className="text-[11px] text-muted-foreground">
                     R$ {(p.price_brl / p.credits).toFixed(3)}/crédito
                   </p>
+                </div>
+                <div className="border-t border-border pt-3 text-left space-y-1">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                    {isPt ? "Dá para fazer ~" : "Enough for ~"}
+                  </p>
+                  <ul className="text-[11px] text-muted-foreground space-y-0.5">
+                    <li>
+                      <span className="font-semibold text-foreground">
+                        {estimateAssessments(p.credits)}
+                      </span>{" "}
+                      {isPt ? "avaliações completas" : "full assessments"}
+                    </li>
+                    <li>
+                      <span className="font-semibold text-foreground">
+                        {estimateReassessments(p.credits)}
+                      </span>{" "}
+                      {isPt ? "reavaliações rápidas" : "quick reassessments"}
+                    </li>
+                    <li>
+                      <span className="font-semibold text-foreground">
+                        {estimateChatMessages(p.credits).toLocaleString(isPt ? "pt-BR" : "en-US")}
+                      </span>{" "}
+                      {isPt ? "msgs no chat do agente" : "agent chat messages"}
+                    </li>
+                  </ul>
                 </div>
                 <Button
                   className="w-full"
