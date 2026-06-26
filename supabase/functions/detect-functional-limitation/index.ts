@@ -107,6 +107,10 @@ Deno.serve(async (req) => {
     const raw: string[] = Array.isArray(parsed?.regions) ? parsed.regions : [];
     const regions = raw.filter((r) => typeof r === "string" && lowPainRegions.includes(r)).slice(0, 1);
 
+    if (admin) {
+      await setCachedAiResponse(admin, "detect-functional-limitation", cachePayload, { regions }, 7 * 24 * 3600);
+    }
+
     return new Response(JSON.stringify({ regions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
