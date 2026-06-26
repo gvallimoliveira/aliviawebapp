@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import ProAnalyticsCharts from "./ProAnalyticsCharts";
+import AiCreditsWidget from "./AiCreditsWidget";
 
 interface Props {
   professionalId?: string;
@@ -112,6 +113,7 @@ const ProMetricsSection = ({ professionalId, clinicId }: Props) => {
         </Card>
       </div>
       <ProAnalyticsCharts assessments={assessments} />
+      <AiCreditsWidget />
     </div>
   );
 };
