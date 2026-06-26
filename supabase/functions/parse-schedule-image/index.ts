@@ -26,6 +26,20 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
+    // Cache: identical screenshot → identical extraction (30d).
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { imageBase64, mimeType: mimeType || "" };
+    if (admin) {
+      const cached = await getCachedAiResponse<{ appointments: unknown[] }>(admin, "parse-schedule-image", cachePayload);
+      if (cached) {
+        return new Response(JSON.stringify({ ...cached, cached: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const systemPrompt = `You are a schedule parser. Given a screenshot of a scheduling/calendar app, extract all visible appointments.
 
 Return a JSON array of appointments. Each appointment must have:
