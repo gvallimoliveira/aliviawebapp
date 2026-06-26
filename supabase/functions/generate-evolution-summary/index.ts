@@ -11,8 +11,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { assessments, language
-    shadowLogAiUsage(req, { function_name: "generate-evolution-summary" }); = "pt" } = await req.json();
+    const { assessments, language = "pt" } = await req.json();
+    shadowLogAiUsage(req, { function_name: "generate-evolution-summary" });
 
     if (!assessments || !Array.isArray(assessments) || assessments.length < 2) {
       return new Response(JSON.stringify({ error: "At least 2 assessments required" }), {
