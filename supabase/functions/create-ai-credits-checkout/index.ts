@@ -16,22 +16,22 @@ const PACKAGES: Record<
   { price_id: string; credits: number; price_brl: number; label: string }
 > = {
   mini: {
-    price_id: "price_1TmPeN2HgVhVBE8UEtFep6pP",
-    credits: 100,
-    price_brl: 29.0,
-    label: "Pacote IA Mini (100 créditos)",
+    price_id: "price_1TmR9S2HgVhVBE8UkDiP7iTx",
+    credits: 50,
+    price_brl: 15.0,
+    label: "Pacote IA Mini (50 créditos)",
   },
   plus: {
-    price_id: "price_1TmPew2HgVhVBE8UXx7J7IPy",
-    credits: 300,
-    price_brl: 69.0,
-    label: "Pacote IA Plus (300 créditos)",
+    price_id: "price_1TmR9i2HgVhVBE8URRd5yRSh",
+    credits: 150,
+    price_brl: 35.0,
+    label: "Pacote IA Plus (150 créditos)",
   },
   pro: {
-    price_id: "price_1TmPff2HgVhVBE8Ux0QWlJq7",
-    credits: 1000,
-    price_brl: 199.0,
-    label: "Pacote IA Pro (1000 créditos)",
+    price_id: "price_1TmR9u2HgVhVBE8UbHGApeCw",
+    credits: 500,
+    price_brl: 100.0,
+    label: "Pacote IA Pro (500 créditos)",
   },
 };
 
