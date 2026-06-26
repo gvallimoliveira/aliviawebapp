@@ -15,6 +15,12 @@ const PACKAGES: Record<
   string,
   { price_id: string; credits: number; price_brl: number; label: string }
 > = {
+  starter: {
+    price_id: "price_1TmRLn2HgVhVBE8UsHAPQlBe",
+    credits: 25,
+    price_brl: 8.0,
+    label: "Pacote IA Starter (25 créditos)",
+  },
   mini: {
     price_id: "price_1TmR9S2HgVhVBE8UkDiP7iTx",
     credits: 50,
@@ -26,12 +32,6 @@ const PACKAGES: Record<
     credits: 150,
     price_brl: 35.0,
     label: "Pacote IA Plus (150 créditos)",
-  },
-  pro: {
-    price_id: "price_1TmR9u2HgVhVBE8UbHGApeCw",
-    credits: 500,
-    price_brl: 100.0,
-    label: "Pacote IA Pro (500 créditos)",
   },
 };
 
