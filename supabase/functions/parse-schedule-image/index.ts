@@ -118,6 +118,10 @@ Rules:
       }
     }
 
+    if (admin && Array.isArray(appointments) && appointments.length > 0) {
+      await setCachedAiResponse(admin, "parse-schedule-image", cachePayload, { appointments }, 30 * 24 * 3600);
+    }
+
     return new Response(JSON.stringify({ appointments }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
