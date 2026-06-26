@@ -518,6 +518,72 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
       break;
     }
 
+    case "ai_credits": {
+      if (!userId) {
+        log("ai_credits: missing user_id", { sessionId: session.id });
+        break;
+      }
+      const credits = parseInt(session.metadata?.credits || "0", 10);
+      const priceBrl = parseFloat(session.metadata?.price_brl || "0");
+      const packageKey = session.metadata?.package_key || "unknown";
+
+      if (credits <= 0) {
+        log("ai_credits: invalid credits", { sessionId: session.id });
+        break;
+      }
+
+      // Idempotency: skip if a package already exists for this session.
+      const { data: existing } = await supabase
+        .from("ai_credit_packages")
+        .select("id")
+        .eq("stripe_session_id", session.id)
+        .maybeSingle();
+
+      if (existing) {
+        log("ai_credits: already fulfilled, skipping", { sessionId: session.id });
+        break;
+      }
+
+      const { error: pkgErr } = await supabase
+        .from("ai_credit_packages")
+        .insert({
+          user_id: userId,
+          package_type: packageKey,
+          credits_total: credits,
+          credits_remaining: credits,
+          transcriptions_total: 0,
+          transcriptions_remaining: 0,
+          price_paid: priceBrl,
+          stripe_session_id: session.id,
+          stripe_payment_intent_id:
+            (session.payment_intent as string) || null,
+        });
+      if (pkgErr) {
+        log("ai_credits: insert package failed", { error: String(pkgErr) });
+        break;
+      }
+
+      await supabase.from("ai_credit_transactions").insert({
+        user_id: userId,
+        transaction_type: "purchase",
+        product_key: `ai_credits_${packageKey}`,
+        amount_brl: priceBrl,
+        credits_delta: credits,
+        transcriptions_delta: 0,
+        stripe_session_id: session.id,
+        notes: `Pacote ${packageKey} comprado via Stripe Checkout`,
+      });
+
+      log("ai_credits fulfilled", { userId, credits, packageKey });
+
+      await sendPushToUser(userId, {
+        title: "✨ Créditos de IA adicionados!",
+        body: `+${credits} créditos disponíveis para usar nas funções de IA.`,
+        url: "/dashboard?tab=insights",
+      });
+      break;
+    }
+
     default:
       log("Unknown payment type, skipping fulfillment", { paymentType });
   }

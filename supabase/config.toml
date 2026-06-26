@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.admin-ai-usage-stats]
 verify_jwt = false
+
+[functions.create-ai-credits-checkout]
+verify_jwt = false

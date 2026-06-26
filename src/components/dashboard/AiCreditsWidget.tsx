@@ -4,8 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Info, Wallet } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import AiCreditsStore from "./AiCreditsStore";
 
 interface UsageRow {
   function_name: string;
@@ -13,16 +15,22 @@ interface UsageRow {
   created_at: string;
 }
 
+interface PackageRow {
+  credits_remaining: number;
+  expires_at: string;
+}
+
 /**
  * Personal AI credit usage widget for professionals.
- * Reads own rows via RLS (no edge function needed) and shows month-to-date
- * consumption. Acts as transparency surface ahead of enforcement (Phase 5).
+ * Shows month-to-date consumption (own RLS-readable rows) plus the user's
+ * purchased credit balance and a button to buy more packs.
  */
 const AiCreditsWidget = () => {
   const { user } = useAuth();
   const { language } = useLanguage();
   const isPt = language === "pt";
   const [rows, setRows] = useState<UsageRow[]>([]);
+  const [packages, setPackages] = useState<PackageRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,15 +41,26 @@ const AiCreditsWidget = () => {
       const start = new Date();
       start.setDate(1);
       start.setHours(0, 0, 0, 0);
-      const { data } = await supabase
-        .from("ai_credit_usage")
-        .select("function_name, credits_used, created_at")
-        .eq("user_id", user.id)
-        .gte("created_at", start.toISOString())
-        .order("created_at", { ascending: false })
-        .limit(2000);
+
+      const [usageRes, pkgRes] = await Promise.all([
+        supabase
+          .from("ai_credit_usage")
+          .select("function_name, credits_used, created_at")
+          .eq("user_id", user.id)
+          .gte("created_at", start.toISOString())
+          .order("created_at", { ascending: false })
+          .limit(2000),
+        supabase
+          .from("ai_credit_packages")
+          .select("credits_remaining, expires_at")
+          .eq("user_id", user.id)
+          .gt("credits_remaining", 0)
+          .gt("expires_at", new Date().toISOString()),
+      ]);
+
       if (!cancelled) {
-        setRows((data as any[]) || []);
+        setRows((usageRes.data as any[]) || []);
+        setPackages((pkgRes.data as any[]) || []);
         setLoading(false);
       }
     })();
@@ -50,7 +69,14 @@ const AiCreditsWidget = () => {
     };
   }, [user?.id]);
 
-  if (loading || rows.length === 0) return null;
+  if (loading) return null;
+
+  const hasUsage = rows.length > 0;
+  const hasPackages = packages.length > 0;
+  if (!hasUsage && !hasPackages) {
+    // Show nothing for users with no activity — store is reachable from elsewhere.
+    return null;
+  }
 
   const total = rows.reduce((s, r) => s + Number(r.credits_used || 0), 0);
   const callsByFn: Record<string, { credits: number; calls: number }> = {};
@@ -63,6 +89,11 @@ const AiCreditsWidget = () => {
   const top = Object.entries(callsByFn)
     .sort((a, b) => b[1].credits - a[1].credits)
     .slice(0, 4);
+
+  const availableCredits = packages.reduce(
+    (s, p) => s + Number(p.credits_remaining || 0),
+    0,
+  );
 
   const monthLabel = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", {
     month: "long",
@@ -84,29 +115,56 @@ const AiCreditsWidget = () => {
               </TooltipTrigger>
               <TooltipContent side="left" className="max-w-xs text-xs">
                 {isPt
-                  ? "Acompanhamos seu consumo de IA para transparência. Limites por plano serão anunciados antes de qualquer bloqueio."
-                  : "We track your AI usage for transparency. Per-plan limits will be announced before any blocking."}
+                  ? "Acompanhamos seu consumo de IA para transparência. Limites por plano serão anunciados antes de qualquer bloqueio. Pacotes avulsos já podem ser comprados."
+                  : "We track your AI usage for transparency. Per-plan limits will be announced before any blocking. One-off packs can already be purchased."}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div>
-          <p className="text-2xl font-bold text-foreground">{total.toFixed(1)}</p>
-          <p className="text-xs text-muted-foreground capitalize">
-            {isPt ? "créditos em" : "credits in"} {monthLabel}
-          </p>
-        </div>
-        <div className="space-y-1.5">
-          {top.map(([fn, v]) => (
-            <div key={fn} className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground truncate mr-2">{fn}</span>
-              <Badge variant="secondary" className="shrink-0 font-mono">
-                {v.credits.toFixed(2)} · {v.calls}×
-              </Badge>
+        <div className="flex items-end justify-between gap-2">
+          <div>
+            <p className="text-2xl font-bold text-foreground">{total.toFixed(1)}</p>
+            <p className="text-xs text-muted-foreground capitalize">
+              {isPt ? "créditos em" : "credits in"} {monthLabel}
+            </p>
+          </div>
+          {hasPackages && (
+            <div className="text-right">
+              <p className="text-lg font-semibold text-primary flex items-center gap-1 justify-end">
+                <Wallet className="h-3.5 w-3.5" />
+                {availableCredits}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {isPt ? "saldo comprado" : "purchased balance"}
+              </p>
             </div>
-          ))}
+          )}
+        </div>
+
+        {top.length > 0 && (
+          <div className="space-y-1.5">
+            {top.map(([fn, v]) => (
+              <div key={fn} className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground truncate mr-2">{fn}</span>
+                <Badge variant="secondary" className="shrink-0 font-mono">
+                  {v.credits.toFixed(2)} · {v.calls}×
+                </Badge>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="pt-2 border-t border-border">
+          <AiCreditsStore
+            trigger={
+              <Button size="sm" variant="outline" className="w-full gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                {isPt ? "Comprar pacote de créditos" : "Buy credit pack"}
+              </Button>
+            }
+          />
         </div>
       </CardContent>
     </Card>
