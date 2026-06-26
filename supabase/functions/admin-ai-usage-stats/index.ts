@@ -69,7 +69,7 @@ serve(async (req) => {
     for (let from = 0; from < 50_000; from += PAGE) {
       const { data, error } = await admin
         .from("ai_credit_usage")
-        .select("user_id, function_name, credits_used, tokens_in, tokens_out, transcriptions_used, created_at")
+        .select("user_id, function_name, credits_used, transcriptions_used, metadata, created_at")
         .gte("created_at", since)
         .order("created_at", { ascending: false })
         .range(from, from + PAGE - 1);
