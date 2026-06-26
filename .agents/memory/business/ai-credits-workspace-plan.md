@@ -47,11 +47,19 @@ Detalhes financeiros e premissas estratégicas: ver `.agents/memory/business/ai-
 
 ### ⏸ Fase 5 — Enforcement gradual (AGUARDANDO)
 - **Pré-requisito:** 5-7 dias de dados reais via shadow tracking após publish da Fase 4.
+- **Quotas-alvo por tier** (decisão 26/06: reduzir Pro, manter Clínica generosa pois nada foi anunciado externamente):
+  - `pro_monthly`: **100 créditos/mês** (antes considerado 150; reduzido — uso moderado real ≈33 cr)
+  - `pro_annual`: **120 créditos/mês** (leve premium pela fidelidade anual)
+  - `academic_monthly` / `academic_annual`: 40 / 50 cr (quizzes fixos já cortaram demanda)
+  - `clinic_small`: **200 cr/mês por terapeuta** (mantida generosa — diferencial competitivo)
+  - `clinic_medium` / `clinic_large`: 250 / 300 cr/mês por terapeuta
+  - `premium_b2c`: 15 cr/mês
+  - `unlimited` (VIP/admin): sem trava
 - Passos:
   1. Validar custos estimados vs reais no dashboard admin.
-  2. Definir quotas por tier em `ai_credit_quotas` (Pro mensal, Pro anual, Academic, Clinic).
+  2. Seedar `ai_credit_quotas` conforme tabela acima (job mensal via cron).
   3. Implementar warning a 80% de uso (banner + push).
-  4. Soft-block a 100% (modal "compre pacote ou aguarde reset").
+  4. Soft-block a 100% (modal "compre pacote ou aguarde reset"). **Clínica nunca bloqueia** — só warning; excedente vai pra fatura do dono.
   5. Ligar `app_config.ai_credits_enforced = true` (rollout gradual: VIP → 10% usuários → todos).
 - Consumir saldo: primeiro pacote comprado (FIFO por `expires_at`), depois quota mensal.
 
