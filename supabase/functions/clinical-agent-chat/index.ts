@@ -386,11 +386,14 @@ function parseSlash(raw: string): SlashCommand {
 }
 
 const NICHE_KEYWORDS: Record<string, string[]> = {
-  ombro: ["ombro", "shoulder", "manguito", "rotator", "subacromial"],
-  lombar: ["lombar", "lombalgia", "lumbar", "low back", "hérnia", "ciática"],
-  quadril: ["quadril", "hip", "femoroacetabular", "trocanter"],
-  joelho: ["joelho", "knee", "patelar", "lca", "acl", "menisc"],
-  cervical: ["cervical", "cervicalgia", "neck", "whiplash"],
+  ombro: ["ombro", "shoulder", "manguito", "rotator", "subacromial", "capsulite", "impacto"],
+  lombar: ["lombar", "lombalgia", "lumbar", "low back", "hérnia", "ciática", "estenose", "sacroil"],
+  quadril: ["quadril", "hip", "femoroacetabular", "trocanter", "coxartrose", "labr"],
+  joelho: ["joelho", "knee", "patelar", "lca", "acl", "menisc", "patelofemoral"],
+  cervical: ["cervical", "cervicalgia", "neck", "whiplash", "mielopatia", "cefaleia cerv"],
+  anatomia: ["anatomia", "anatomy"],
+  biomecanica: ["biomec", "biomechan", "carga", "alavanca", "torque"],
+  cinesiologia: ["cinesiolog", "kinesiolog", "cadeia cinética", "controle motor", "proprioc"],
 };
 function detectNicheSrv(text: string): string | null {
   const t = (text || "").toLowerCase();
