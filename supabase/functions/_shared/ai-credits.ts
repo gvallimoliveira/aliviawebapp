@@ -87,27 +87,25 @@ async function resolveUserId(
  * `admin` is optional — if omitted, the helper creates its own service-role
  * client. Callers that already have one can pass it to avoid duplication.
  */
-export async function shadowLogAiUsage(
+export function shadowLogAiUsage(
   req: Request,
   opts: LogOptions,
   admin?: SupabaseClient,
-): Promise<string | null> {
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    if (!supabaseUrl || !serviceKey) return null;
+): void {
+  const work = (async () => {
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      if (!supabaseUrl || !serviceKey) return;
 
-    const userId = opts.user_id ?? (await resolveUserId(req, supabaseUrl));
-    if (!userId) return null;
+      const userId = opts.user_id ?? (await resolveUserId(req, supabaseUrl));
+      if (!userId) return;
 
-    const client = admin ?? createClient(supabaseUrl, serviceKey);
-    const credits = opts.credits ?? CREDIT_COST[opts.function_name] ?? 0.05;
-    const transcriptions = opts.transcriptions ?? 0;
+      const client = admin ?? createClient(supabaseUrl, serviceKey);
+      const credits = opts.credits ?? CREDIT_COST[opts.function_name] ?? 0.05;
+      const transcriptions = opts.transcriptions ?? 0;
 
-    // Insert in the background — do not await to keep latency low.
-    client
-      .from("ai_credit_usage")
-      .insert({
+      const { error } = await client.from("ai_credit_usage").insert({
         user_id: userId,
         function_name: opts.function_name,
         credits_used: credits,
@@ -115,15 +113,18 @@ export async function shadowLogAiUsage(
         metadata: opts.metadata ?? {},
         was_blocked: false,
         was_bypassed: false,
-      })
-      .then(({ error }) => {
-        if (error) console.warn("[ai-credits] shadow log failed:", error.message);
       });
+      if (error) console.warn("[ai-credits] shadow log failed:", error.message);
+    } catch (e) {
+      console.warn("[ai-credits] shadow log exception:", (e as Error).message);
+    }
+  })();
 
-    return userId;
-  } catch (e) {
-    console.warn("[ai-credits] shadow log exception:", (e as Error).message);
-    return null;
+  // Keep the Edge worker alive until the insert completes — otherwise the
+  // response returning to the client cancels the in-flight Supabase fetch.
+  const runtime = (globalThis as any).EdgeRuntime;
+  if (runtime && typeof runtime.waitUntil === "function") {
+    runtime.waitUntil(work);
   }
 }
 
