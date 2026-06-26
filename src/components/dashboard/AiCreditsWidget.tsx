@@ -105,18 +105,22 @@ const AiCreditsWidget = () => {
             <Sparkles className="h-4 w-4 text-primary" />
             {isPt ? "Seu uso de IA" : "Your AI usage"}
           </CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="h-3.5 w-3.5 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent side="left" className="max-w-xs text-xs">
-                {isPt
-                  ? "Acompanhamos seu consumo de IA para transparência. Limites por plano serão anunciados antes de qualquer bloqueio. Pacotes avulsos já podem ser comprados."
-                  : "We track your AI usage for transparency. Per-plan limits will be announced before any blocking. One-off packs can already be purchased."}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label={isPt ? "Mais informações" : "More info"}
+                className="p-1 -m-1 rounded-md hover:bg-muted/60 active:bg-muted touch-manipulation"
+              >
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="left" align="end" className="max-w-xs text-xs">
+              {isPt
+                ? "Acompanhamos seu consumo de IA para transparência. Limites por plano serão anunciados antes de qualquer bloqueio. Pacotes avulsos já podem ser comprados."
+                : "We track your AI usage for transparency. Per-plan limits will be announced before any blocking. One-off packs can already be purchased."}
+            </PopoverContent>
+          </Popover>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
