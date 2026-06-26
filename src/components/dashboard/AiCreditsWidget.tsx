@@ -69,7 +69,8 @@ const AiCreditsWidget = () => {
     };
   }, [user?.id]);
 
-  if (loading) return null;
+  // Render the card even while loading so the user always sees the
+  // "Buy credit pack" entry point on the Insights tab.
 
   const hasUsage = rows.length > 0;
   const hasPackages = packages.length > 0;
