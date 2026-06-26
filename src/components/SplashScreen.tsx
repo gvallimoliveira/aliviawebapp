@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const SESSION_KEY = "alivia:splash-shown";
-const DURATION_MS = 1600;
+const DURATION_MS = 2600;
 
 /**
  * Opening splash screen — Aliv.iA logo zooms in from small to fill,
