@@ -13,8 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, diagnosis
-    shadowLogAiUsage(req, { function_name: "generate-treatment" });, mode, language } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language } = await req.json();
+    shadowLogAiUsage(req, { function_name: "generate-treatment" });
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const painScore = anamnesisData?.painScore ?? 5;
