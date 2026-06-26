@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
