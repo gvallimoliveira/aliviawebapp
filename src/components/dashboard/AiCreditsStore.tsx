@@ -175,6 +175,31 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
                     R$ {(p.price_brl / p.credits).toFixed(3)}/crédito
                   </p>
                 </div>
+                <div className="border-t border-border pt-3 text-left space-y-1">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                    {isPt ? "Dá para fazer ~" : "Enough for ~"}
+                  </p>
+                  <ul className="text-[11px] text-muted-foreground space-y-0.5">
+                    <li>
+                      <span className="font-semibold text-foreground">
+                        {estimateAssessments(p.credits)}
+                      </span>{" "}
+                      {isPt ? "avaliações completas" : "full assessments"}
+                    </li>
+                    <li>
+                      <span className="font-semibold text-foreground">
+                        {estimateReassessments(p.credits)}
+                      </span>{" "}
+                      {isPt ? "reavaliações rápidas" : "quick reassessments"}
+                    </li>
+                    <li>
+                      <span className="font-semibold text-foreground">
+                        {estimateChatMessages(p.credits).toLocaleString(isPt ? "pt-BR" : "en-US")}
+                      </span>{" "}
+                      {isPt ? "msgs no chat do agente" : "agent chat messages"}
+                    </li>
+                  </ul>
+                </div>
                 <Button
                   className="w-full"
                   variant={p.highlight ? "default" : "outline"}
