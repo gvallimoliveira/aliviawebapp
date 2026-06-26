@@ -356,6 +356,207 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_credit_packages: {
+        Row: {
+          clinic_id: string | null
+          created_at: string
+          credits_remaining: number
+          credits_total: number
+          expires_at: string
+          id: string
+          package_type: string
+          price_paid: number
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          transcriptions_remaining: number
+          transcriptions_total: number
+          user_id: string
+        }
+        Insert: {
+          clinic_id?: string | null
+          created_at?: string
+          credits_remaining?: number
+          credits_total?: number
+          expires_at?: string
+          id?: string
+          package_type: string
+          price_paid: number
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          transcriptions_remaining?: number
+          transcriptions_total?: number
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string | null
+          created_at?: string
+          credits_remaining?: number
+          credits_total?: number
+          expires_at?: string
+          id?: string
+          package_type?: string
+          price_paid?: number
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          transcriptions_remaining?: number
+          transcriptions_total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_packages_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_credit_quotas: {
+        Row: {
+          clinic_id: string | null
+          created_at: string
+          id: string
+          included_credits: number
+          included_transcriptions: number
+          period_end: string
+          period_start: string
+          rollover_credits: number
+          tier: string
+          updated_at: string
+          used_credits: number
+          used_transcriptions: number
+          user_id: string
+        }
+        Insert: {
+          clinic_id?: string | null
+          created_at?: string
+          id?: string
+          included_credits?: number
+          included_transcriptions?: number
+          period_end?: string
+          period_start?: string
+          rollover_credits?: number
+          tier: string
+          updated_at?: string
+          used_credits?: number
+          used_transcriptions?: number
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string | null
+          created_at?: string
+          id?: string
+          included_credits?: number
+          included_transcriptions?: number
+          period_end?: string
+          period_start?: string
+          rollover_credits?: number
+          tier?: string
+          updated_at?: string
+          used_credits?: number
+          used_transcriptions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_quotas_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_credit_transactions: {
+        Row: {
+          amount_brl: number
+          clinic_id: string | null
+          created_at: string
+          credits_delta: number
+          id: string
+          notes: string | null
+          product_key: string
+          stripe_session_id: string | null
+          transaction_type: string
+          transcriptions_delta: number
+          user_id: string
+        }
+        Insert: {
+          amount_brl?: number
+          clinic_id?: string | null
+          created_at?: string
+          credits_delta?: number
+          id?: string
+          notes?: string | null
+          product_key: string
+          stripe_session_id?: string | null
+          transaction_type: string
+          transcriptions_delta?: number
+          user_id: string
+        }
+        Update: {
+          amount_brl?: number
+          clinic_id?: string | null
+          created_at?: string
+          credits_delta?: number
+          id?: string
+          notes?: string | null
+          product_key?: string
+          stripe_session_id?: string | null
+          transaction_type?: string
+          transcriptions_delta?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_transactions_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_credit_usage: {
+        Row: {
+          bypass_reason: string | null
+          created_at: string
+          credits_used: number
+          function_name: string
+          id: string
+          metadata: Json
+          transcriptions_used: number
+          user_id: string
+          was_blocked: boolean
+          was_bypassed: boolean
+        }
+        Insert: {
+          bypass_reason?: string | null
+          created_at?: string
+          credits_used?: number
+          function_name: string
+          id?: string
+          metadata?: Json
+          transcriptions_used?: number
+          user_id: string
+          was_blocked?: boolean
+          was_bypassed?: boolean
+        }
+        Update: {
+          bypass_reason?: string | null
+          created_at?: string
+          credits_used?: number
+          function_name?: string
+          id?: string
+          metadata?: Json
+          transcriptions_used?: number
+          user_id?: string
+          was_blocked?: boolean
+          was_bypassed?: boolean
+        }
+        Relationships: []
+      }
       ai_response_cache: {
         Row: {
           cache_key: string
@@ -691,6 +892,53 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      clinic_addons: {
+        Row: {
+          addon_type: string
+          clinic_id: string
+          created_at: string
+          current_period_end: string | null
+          id: string
+          owner_user_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          addon_type: string
+          clinic_id: string
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          owner_user_id: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          addon_type?: string
+          clinic_id?: string
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          owner_user_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_addons_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clinic_assessment_logs: {
         Row: {
@@ -1961,6 +2209,42 @@ export type Database = {
           },
         ]
       }
+      professional_addons: {
+        Row: {
+          addon_type: string
+          created_at: string
+          current_period_end: string | null
+          id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          addon_type: string
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          addon_type?: string
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       professional_appointments: {
         Row: {
           appointment_date: string
@@ -2178,6 +2462,7 @@ export type Database = {
       }
       professionals: {
         Row: {
+          academic_period: number | null
           active: boolean
           active_profile_mode: string
           approved: boolean
@@ -2217,6 +2502,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          academic_period?: number | null
           active?: boolean
           active_profile_mode?: string
           approved?: boolean
@@ -2256,6 +2542,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          academic_period?: number | null
           active?: boolean
           active_profile_mode?: string
           approved?: boolean
@@ -2994,6 +3281,7 @@ export type Database = {
           user_name: string
         }[]
       }
+      get_user_ai_tier: { Args: { _user_id: string }; Returns: string }
       has_active_pro_subscription: {
         Args: { _professional_id: string }
         Returns: boolean

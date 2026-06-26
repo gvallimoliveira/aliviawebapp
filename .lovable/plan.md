@@ -1,147 +1,251 @@
-# Importação de Dados Externos → Dados Nativos Aliv.iA
+- Plano: Sistema de Créditos Aliv.iA + Monetização Inteligente
 
-Transformar arquivos vindos de outros softwares (CSV, JSON, Excel, PDF, ZIP exportado pelo próprio Aliv.iA) em registros nativos: pacientes, avaliações, evoluções, sessões, programas, anexos — com o **mesmo DNA** dos dados criados dentro do sistema.
-
----
-
-## 1. Onde fica o acesso — opções para você escolher
-
-Recomendo **A** como padrão; **B** como alternativa.
-
-**Opção A — Card próprio "Importar dados", lado a lado com Exportar** (recomendada)
-- Mesma aba `Configurações / Dados` do ProDashboard, ClinicDashboard e ClinicDemo.
-- Dois cards irmãos: `ExportDataCard` e `ImportDataCard`.
-- Vantagem: simetria visual, separação mental clara entre "tirar" e "trazer", permite descrições e avisos próprios (LGPD, deduplicação, rollback).
-
-**Opção B — Card único "Backup & Migração" com 2 abas internas**
-- Um card com tabs `Exportar | Importar`.
-- Vantagem: ocupa menos espaço; desvantagem: mistura fluxos com riscos bem diferentes (export é seguro, import muta o banco).
-
-**Opção C — Página dedicada `/migrar` acessível pelos dois cards**
-- Útil se quisermos um wizard multi-step em tela cheia (Upload → Pré-visualização → Mapeamento → Confirmação → Resultado).
-- Recomendado **só se** prevemos importações grandes/recorrentes.
-
-**Acesso adicional em ambos os modos**: dentro de `Pacientes`, botão "Importar pacientes" no header da lista, abrindo o mesmo modal já filtrado para escopo "apenas pacientes" — atalho para o caso mais comum.
-
-> Minha sugestão: **A** + atalho no header de Pacientes. Confirme antes de eu implementar.
+> **Princípio condutor:** otimismo e "copo meio cheio" em toda comunicação. Cada limite vira "presente generoso incluso no seu plano"; cada add-on vira "superpoder opcional". Nunca usar palavras como "bloqueio", "cota esgotada", "limite atingido" — usar "você já aproveitou todos os créditos deste mês 🎉" + CTA positivo.
 
 ---
 
-## 2. Formatos aceitos
+## 1. Regras de negócio consolidadas (memória do projeto)
 
-| Formato | Uso típico | Estratégia |
-|---|---|---|
-| `.zip` Aliv.iA | Migração entre contas/clínicas | Leitura direta do `manifest.json` + JSONs nativos, sem IA |
-| `.csv` / `.xlsx` | Planilhas de pacientes, agenda, evoluções | Parser tabular + IA para mapear colunas |
-| `.json` | Exports de outros sistemas | IA infere shape e mapeia |
-| `.pdf` / imagem | Avaliações soltas | Reusa fluxo `interpret-external-assessment` |
-| Múltiplos arquivos | Mistura dos acima | Processados em lote |
 
-Limite inicial: **20 MB por arquivo**, **até 50 arquivos** por importação (mesmo limite atual de uploads).
+| Regra                                                  | Detalhe                                                                                                                                       |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Admin** (`gvallimoliveira@gmail.com`, VIP)           | Bypass total: sem trava de créditos, sem necessidade de assinatura para Chat Agente / Transcrição / Planos / Agente.                          |
+| **Parceiros** (flag manual `professionals.is_partner`) | Seguem regra normal de créditos e assinaturas, **exceto Chat do Agente**: liberado, consome créditos do PRO pessoal deles (não pagam add-on). |
+| **PRO mensal/anual**                                   | Quota mensal de créditos + 5 transcrições/mês inclusas. Chat Agente = add-on pago.                                                            |
+| **Acadêmico**                                          | Quota equivalente ao PRO. Chat Agente **incluso** dentro da quota (sem add-on).                                                               |
+| **Clínicas**                                           | Quota proporcional ao porte. Chat Agente = add-on pago (1x por clínica, libera para todos os membros). Tratamentos continuam gratuitos.       |
+| **Premium B2C / Lifetime**                             | Quota enxuta (uso de paciente).                                                                                                               |
+| **Biblioteca de Evidências do Agente**                 | Livre para todos os planos pagos (sem add-on).                                                                                                |
 
----
-
-## 3. Pipeline de transformação (o "DNA" Aliv.iA)
-
-```text
-Upload
-  → Parse (papaparse / xlsx / JSON.parse / pdf+IA)
-  → Normalização (UTF-8, datas ISO, trim, telefone/CPF mask)
-  → Detecção de schema via IA (Gemini Flash, edge function nova)
-  → Mapeamento coluna→campo Aliv.iA + score de confiança
-  → Pré-visualização editável pelo usuário
-  → Deduplicação (email/CPF/nome+nascimento)
-  → Validação Zod por entidade
-  → Inserção transacional + rollback em erro
-  → Relatório final (criados/atualizados/ignorados/erros)
-```
-
-### 3.1 Quando a IA entra
-- **Detecção de cabeçalho/shape**: dado um sample de 20 linhas, IA retorna mapa `{ colunaOrigem → campoAlivia | "external" | "ignore" }` + confiança.
-- **Classificação de entidade**: se o arquivo não declara, IA decide se é `patients`, `assessments`, `session_notes`, `appointments`, `pain_diary`, etc.
-- **Normalização de texto livre**: queixa principal, história clínica, exames complementares — IA limpa formatação mas **não inventa** conteúdo.
-- **Nunca**: IA não preenche campos clínicos vazios, não infere diagnóstico, não cria red flags.
-
-### 3.2 Campo "Informações externas" (reuso do padrão dinamometria/avaliação externa)
-Toda entidade nativa ganha um campo JSON `external_import_data` (já existe lógica análoga em assessments). Tudo que **não** mapear para campo conhecido vai pra lá, preservando 100% dos dados originais e exibido em accordion "Dados importados de outro sistema" no prontuário.
 
 ---
 
-## 4. Mapeamento por entidade
+## 2. Estudo de preço (proposta fundamentada)
 
-Cada destino tem mapeadores determinísticos + fallback IA:
+### 2.1 Add-on Chat do Agente Clínico — **R$ 19,90/mês** ✅ (sua escolha)
 
-- **Patients** → `full_name, email, phone, cpf, birth_date, gender, address, notes, external_import_data, professional_id, clinic_id`. Dedup por `email` (primário) ou `cpf` ou `nome+data_nascimento`.
-- **Assessments** → cria registro `type='professional'`, `status='completed'`, com `chiefComplaint, history, painScore, painRegions, romTable, strengthTable, functionalTests, diagnosis, clinicalImpression`. Campos não mapeados → `additional_external_info`.
-- **Session notes / evoluções** → vincula ao paciente por email/nome; texto preservado.
-- **Pain diary** → linhas `data, score` por paciente.
-- **Appointments / agenda** → reusa parser do `parse-schedule-image` para CSVs de agenda.
-- **Exercise programs** → opcional, fase 2.
-- **Anexos (PDFs/imagens dentro de ZIP)** → vão para `patient_files` / `patient_photos` com `source='imported'`.
+- **Custo IA real:** ~15 cr Aliv.iA/mês uso médio = ~18 cr Lovable = **R$ 3,24**
+- **Margem bruta:** R$ 16,66 (~84%)
+- **Adesão esperada:** 40–55% dos PROs (preço acessível) + 60–70% das Clínicas
 
----
+### 2.2 Pacotes avulsos de Transcrição (sua escolha) — proposta:
 
-## 5. Cuidados para alocar nos lugares certos
 
-1. **Sempre vincular ao profissional/clínica logado**. Nunca permitir importar para outro professional_id.
-2. **Sandbox em modo demo**: import roda 100% client-side com mocks, não toca banco — útil para o usuário testar.
-3. **Dry-run obrigatório**: nenhuma inserção sem o usuário confirmar o preview.
-4. **Deduplicação configurável**: opções "criar novo", "mesclar no existente", "ignorar".
-5. **Idempotência**: cada importação recebe `import_batch_id`; permite desfazer em 1 clique nas próximas 24h.
-6. **Transação por entidade**: se falhar metade, faz rollback do batch.
-7. **LGPD**: aviso explícito de que o profissional declara ter consentimento dos pacientes; log em `clinic_assessment_logs`/novo `import_logs`.
-8. **PII em logs**: nunca logar conteúdo, só contagens e hashes.
-9. **Anti-abuso clínica**: secretárias/intern não podem importar (só owner/admin/therapist).
-10. **Validação Zod estrita**: linhas inválidas vão para `erros.csv` baixável, nunca para o banco.
+| Pacote               | Preço    | Custo IA  | Margem |
+| -------------------- | -------- | --------- | ------ |
+| **+5 transcrições**  | R$ 14,90 | ~R$ 2,70  | 82%    |
+| **+15 transcrições** | R$ 34,90 | ~R$ 8,10  | 77%    |
+| **+50 transcrições** | R$ 89,90 | ~R$ 27,00 | 70%    |
 
----
 
-## 6. UX do wizard (modal `ImportDataModal`)
+Validade 12 meses, não expira ao trocar de ciclo.
 
-```text
-Step 1 – Upload         arrasta arquivos, mostra tamanho/tipo
-Step 2 – Detecção       IA classifica cada arquivo; usuário confirma/ajusta tipo
-Step 3 – Mapeamento     tabela "Coluna origem → Campo Aliv.iA" editável,
-                         badge de confiança, opção "Enviar para external_import_data"
-Step 4 – Pré-visualização  10 primeiras linhas já como ficariam no Aliv.iA,
-                            destaca duplicatas e erros
-Step 5 – Confirmação    contagens + checkbox LGPD
-Step 6 – Resultado      criados/atualizados/erros + botão "Desfazer"
-```
+### 2.3 Reajuste Clínicas **+15%** (sua escolha)
 
-Progresso por etapa (igual ao export), cancelável.
+
+| Plano        | Atual mensal | Novo mensal | Atual anual/mês | Novo anual/mês |
+| ------------ | ------------ | ----------- | --------------- | -------------- |
+| Pequena (≤3) | R$ 197       | **R$ 227**  | R$ 112          | **R$ 129**     |
+| Média (≤8)   | R$ 347       | **R$ 399**  | R$ 198          | **R$ 228**     |
+| Grande (9+)  | R$ 497       | **R$ 572**  | R$ 283          | **R$ 326**     |
+
+
+Aplicação só para **novos assinantes**. Existentes mantêm preço atual (grandfathering — comunicação positiva: "Você está garantido no preço fundador").
+
+### 2.4 Pacotes de créditos extras (todos os tiers)
+
+
+| Pacote  | Preço     | Validade |
+| ------- | --------- | -------- |
+| +50 cr  | R$ 19,90  | 12 meses |
+| +150 cr | R$ 49,90  | 12 meses |
+| +500 cr | R$ 149,90 | 12 meses |
+
 
 ---
 
-## 7. Backend
+## 3. Quotas mensais por tier (créditos Aliv.iA)
 
-- Nova migration: `import_batches (id, user_id, clinic_id, source_filename, status, summary jsonb, created_at, expires_undo_at)` + GRANTs + RLS.
-- Coluna `external_import_data jsonb` em `patients`, `assessments`, `session_notes`, `pain_diary_entries`, `professional_appointments` (se ainda não houver) + `import_batch_id` em todas.
-- Edge function `import-detect-schema` (Gemini Flash) — só recebe **amostras anonimizadas** (reusa `anonymizePatient`/`scrubText`).
-- Edge function `import-commit` (service role) — recebe payload já validado do client, executa em transação, retorna relatório.
-- Edge function `import-undo` — apaga por `import_batch_id` enquanto `expires_undo_at > now()`.
+
+| Tier                 | Cr/mês              | Transcrições inclusas | Chat Agente                  |
+| -------------------- | ------------------- | --------------------- | ---------------------------- |
+| Pro Mensal           | 150                 | 5                     | Add-on R$19,90               |
+| Pro Anual            | 120 (rollover 30%)  | 5                     | Add-on R$19,90               |
+| Acadêmico Mensal     | 150                 | 5                     | **Incluso na quota**         |
+| Acadêmico Anual      | 120 (rollover 30%)  | 5                     | **Incluso na quota**         |
+| Clínica Pequena      | 400 (compartilhado) | 15                    | Add-on R$39,90/clínica       |
+| Clínica Média        | 900                 | 35                    | Add-on R$59,90/clínica       |
+| Clínica Grande       | 1.500               | 60                    | Add-on R$89,90/clínica       |
+| Premium B2C/Lifetime | 30                  | 1                     | —                            |
+| Trial Clínica (15d)  | 50 total            | 3                     | Trial inclui chat            |
+| Demo/Free            | 0                   | 0                     | —                            |
+| **Admin / VIP**      | **∞**               | **∞**                 | **∞**                        |
+| **Parceiro**         | Conforme tier acima | Conforme tier         | **Incluso (consome cr PRO)** |
+
+
+Custo IA por ação (cr Aliv.iA): diagnosis 2, treatment 2, clinical-impression 1, agent-chat 1/turno, transcribe 3/sessão (já fora da quota se usar pacote), suggest-tests 1 (cacheado), evolution 1, knowledge enrich 1/artigo.
 
 ---
 
-## 8. Modo demo
+## 4. Viabilidade financeira — 50 fisios + custos completos
 
-Reusar `mockPatientData` para simular um CSV externo. O wizard roda inteiro sem chamar edge functions: detecção devolve resultado fixo, commit apenas mostra "X pacientes seriam criados". Mesmo padrão do export demo.
+**Base de custos mensais fixos:**
+
+- Marketing: **R$ 1.500**
+- Lovable Business: ~R$ 500
+- Stripe (~5%): variável
+- Workspace IA: variável
+
+**Conversão:** 1 cr Lovable ≈ R$ 0,18 (mix incluído + add-on)
+
+### Cenário A — Conservador (30% uso da quota, 35% Chat, 10% transcrição extra)
+
+- Receita mensal: 35×R$97 + 10×R$67 + 5×R$227 = **R$ 5.220**
+- Add-ons: 17×R$19,90 (chat) + 5×R$14,90 (transcr) = **R$ 413**
+- **Receita total: R$ 5.633**
+- Custo IA: ~6.000 cr × R$0,18 = R$ 1.080
+- Custo total: R$ 1.080 + R$ 1.500 (mkt) + R$ 500 (Lovable) + R$ 282 (Stripe) = **R$ 3.362**
+- **Lucro líquido: R$ 2.271 (40%)**
+
+### Cenário B — Moderado (70% uso, 50% Chat, 25% transcrição) ⭐ esperado
+
+- Receita: **R$ 5.220 + 25×R$19,90 + 13×R$24,90 = R$ 6.041**
+- Custo IA: ~9.000 cr × R$0,18 = R$ 1.620
+- Custo total: R$ 1.620 + R$ 1.500 + R$ 500 + R$ 302 = **R$ 3.922**
+- **Lucro líquido: R$ 2.119 (35%)**
+
+### Cenário C — Intenso (100% uso + 30% compram pacotes extras)
+
+- Receita: R$ 5.220 + R$ 1.200 (add-ons recorrentes) + R$ 750 (pacotes pontuais) = **R$ 7.170**
+- Custo IA: ~12.000 cr × R$0,18 = R$ 2.160
+- Custo total: R$ 2.160 + R$ 1.500 + R$ 500 + R$ 358 = **R$ 4.518**
+- **Lucro líquido: R$ 2.652 (37%)**
+
+### Cenário D — Pessimista (soft limit primeiro mês, 50% uso)
+
+- Receita: R$ 5.220 + R$ 200 (add-ons mínimos) = **R$ 5.420**
+- Custo IA: ~7.500 cr × R$0,18 = R$ 1.350
+- Custo total: R$ 1.350 + R$ 1.500 + R$ 500 + R$ 271 = **R$ 3.621**
+- **Lucro líquido: R$ 1.799 (33%)**
+
+**Necessidade de créditos workspace:** ~12.000 cr/mês (Business + add-on com auto-topup).
+
+**Conclusões:**
+
+1. Todas as faixas operam com **lucro positivo** mesmo absorvendo R$1.500 de marketing.
+2. **Margem real 33–40%** (mais conservadora que estimativa anterior por incluir mkt).
+3. Add-on de Chat é o **multiplicador de margem** — 84% de margem unitária.
+4. Reajuste Clínicas +15% só impacta após ~6 meses (novos contratos).
+5. Ponto de equilíbrio: 38 fisios pagantes.
 
 ---
 
-## 9. Fora de escopo nesta primeira versão
+## 5. Ordem de implementação (7 fases, risco crescente)
 
-- Importação contínua/integração via API de terceiros (Vivo Saúde, iClinic etc.).
-- Migração de fotos/vídeos > 20 MB.
-- Mapeamento automático de exercícios para a `exercise_library`.
+**Princípio:** cada fase é independente, testável e reversível. Nunca tocar em fluxo de pagamento ativo no mesmo deploy que toca em quota.
+
+### Fase 1 — Fundação (zero risco operacional)
+
+- Migração: tabelas `ai_credit_quotas`, `ai_credit_usage`, `ai_credit_transactions`, `ai_credit_packages`, `professional_addons` (chat, transcrição).
+- Coluna `professionals.is_partner` (boolean, default false).
+- Tabela `clinic_addons` (chat por clínica).
+- Função SQL `get_user_tier()` que classifica usuário em tier sem afetar nada.
+- **Validação:** queries de leitura no admin, nenhuma trava ativa.
+
+### Fase 2 — Tracking shadow (modo observação)
+
+- Helper `_shared/ai-credits.ts` com `trackUsage()` (apenas registra, **não bloqueia**).
+- Integrar em todas as edge functions de IA.
+- Painel admin `/admin/ai-credits` para ver consumo real por usuário.
+- **Validação:** rodar 7 dias, comparar consumo registrado vs Lovable Gateway real (deve bater ±5%).
+
+### Fase 3 — Flag `is_partner` no admin
+
+- Toggle em `ProfessionalManagement.tsx` para marcar parceiros.
+- Hook `useIsPartner()` para gates condicionais.
+- **Validação:** marcar 2 parceiros teste, confirmar leitura correta.
+
+### Fase 4 — UI de visualização (sem bloqueios)
+
+- Badge no header: "IA: X/Y cr este mês" com progresso colorido.
+- Aba "Créditos de IA" em `/account` mostrando uso, quota, próxima recarga.
+- Alertas otimistas em 80% ("Você está aproveitando bem a IA!") e 95% ("Quase lá!").
+- Mensagens 100% positivas em todo lugar.
+- **Validação:** smoke test em 3 perfis (Pro, Acadêmico, Clínica).
+
+### Fase 5 — Stripe products + Add-ons (sem ativar bloqueio)
+
+- Criar no Stripe: chat-agent-pro (R$19,90), chat-agent-clinic-p/m/g, pacotes transcrição (3), pacotes créditos (3).
+- Novos prices para planos Clínica +15% (manter antigos ativos para grandfathering).
+- Edge functions: `subscribe-chat-addon`, `buy-transcription-pack`, `buy-credits-pack`, `check-addon-status`.
+- Páginas de upgrade com copy otimista.
+- Webhook handlers para confirmar compras.
+- **Validação:** comprar cada add-on em modo test, confirmar persistência em `professional_addons`/`clinic_addons`.
+
+### Fase 6 — Soft limit (1º mês — apenas avisa, não bloqueia)
+
+- Helper `assertCredits()` retorna warning mas permite uso.
+- Toast amigável quando ultrapassa: "Você foi além do incluso este mês — saiba mais sobre pacotes 🎁".
+- Banner persistente em `/account` para quem ultrapassou.
+- Gate funcional do Chat Agente: se PRO sem add-on e não-parceiro/não-acadêmico/não-admin → modal de upgrade (não bloqueio bruto).
+- Gate funcional da Transcrição: 5 inclusas; 6ª abre modal de pacote.
+- **Validação:** testar com conta dummy ultrapassando quota; verificar bypass admin/parceiro.
+
+### Fase 7 — Hard limit (2º mês em diante)
+
+- Após 30 dias de soft, ativar `BLOCK_ON_LIMIT=true`.
+- Quando atinge 100%: modal "Você aproveitou todos os créditos deste mês! 🎉 Continue agora com um pacote ou aguarde a recarga em X dias".
+- Cron mensal de reset + rollover (30% para anuais).
+- Auto-topup opcional configurável pelo usuário.
+- **Validação:** simular fim de ciclo, confirmar reset e rollover; testar bloqueio + bypass admin/parceiro.
 
 ---
 
-## 10. Perguntas antes de implementar
+## 6. Comunicação nas landing pages
 
-1. **Onde colocar?** Opção A, B ou C da seção 1?
-2. **Quem pode importar em clínica?** Apenas `owner/admin/therapist`, ou também `intern`?
-3. **Undo**: janela de 24h é suficiente, ou prefere 7 dias?
-4. **Atalho extra no header de Pacientes**: incluir já ou deixar pra v2?
+**Tom único:** "Você ganha. Use à vontade dentro do plano. Quer mais? A gente facilita."
 
-Posso seguir com defaults (A, sem intern, 24h, com atalho) se você só responder "ok".
+### Professional Landing
+
+- Seção "O que está incluso": "150 créditos de IA todo mês — suficiente para ~30 avaliações completas + 5 anamneses por voz"
+- Mini-FAQ: "E se eu precisar de mais? Pacotes a partir de R$19,90 que valem 12 meses, sem stress."
+- Chat Agente: "Adicione o Agente Clínico por R$19,90/mês — seu copiloto de raciocínio 24/7"
+
+### Academic Landing
+
+- "Acesso completo ao Agente Clínico **incluso** — sem add-on para você que está se formando 🎓"
+- 150 cr/mês, transcrição inclusa.
+
+### Clinic Landing
+
+- Tabela: Pequena 400cr | Média 900cr | Grande 1.500cr (compartilhados)
+- "Chat do Agente para toda equipe por +R$39,90/mês (Pequena) — uma assinatura, todos os fisios usam"
+- Reajuste +15% comunicado apenas em "Veja planos novos" sem destaque negativo.
+
+### Nova página `/creditos-ia`
+
+- Explica em linguagem simples: "1 crédito = 1 ação de IA"
+- Tabela de equivalências ("uma avaliação completa ≈ 5 créditos")
+- FAQ com 8 perguntas frequentes.
+
+---
+
+## 7. Detalhes técnicos críticos
+
+- **Bypass de Admin/VIP:** centralizar em `_shared/ai-credits.ts` via função `isUnlimitedUser(userId)` que checa `vip_users` table + email allowlist. Toda função de IA chama isso primeiro.
+- **Bypass parceiros (apenas Chat):** flag `is_partner` consultada dentro de `clinical-agent-chat`; débito vai para quota PRO pessoal do parceiro.
+- **Clínicas:** quota e add-ons no nível da clínica (não do membro); membros consomem do pool.
+- **Cache existente:** `ai_response_cache` continua reduzindo custo workspace mas **não desconta da quota do usuário** (cache = ganho da casa).
+- **Rollback:** flag global `AI_CREDITS_ENFORCED` em `app_config`; se algo quebrar, desliga e volta ao comportamento atual instantaneamente.
+- **Memória do projeto:** salvar regras finais em `mem://business/ai-credits-system.md` ao concluir Fase 1.
+
+---
+
+## 8. Perguntas finais antes de executar (responder em conjunto)
+
+1. **Grandfathering Clínicas:** confirmar manter preço antigo para clientes atuais (recomendo sim — evita churn).
+2. **Auto-topup:** ativar por padrão (opt-out) ou apenas opt-in? Recomendo opt-in com sugestão no 1º alerta de 80%.
+3. **Acadêmico — verificação:** validar status acadêmico anualmente (e-mail .edu ou comprovante)? Hoje como está? Hoje nao tem essa verificação, podemos pensar  e planejar em cima do periodo informado. ( fisio sao 10 semestres/periodos atualmente) . E travar esse item, nao deixar editar. Ao completar o 10 periodo, indica a mudança para pro.  Se nao mudar, o chat e transcrição deve operar segundo a regra do pro, mesmo que ainda academico " alem do 10 periodo" 
+4. **Trial Clínica 15d:** mantém 50 cr total ou prefere 100 para gerar mais "wow"?
+
+Após suas respostas a estes 4 pontos, inicio pela **Fase 1** (migração + tabelas — zero impacto em produção).
