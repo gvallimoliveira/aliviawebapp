@@ -130,7 +130,7 @@ const StudentAccessCard = () => {
       const [profRes, vipRes] = await Promise.all([
         supabase
           .from("professionals")
-          .select("id, full_name, crefito, is_student, active_profile_mode, student_institution, student_period, student_name_locked, subscription_status, subscription_stripe_id, is_partner, is_partner_account, lifetime_treatment, premium_granted, pro_access_expires_at")
+          .select("id, full_name, cpf, crefito, is_student, active_profile_mode, student_institution, student_period, student_name_locked, subscription_status, subscription_stripe_id, is_partner, is_partner_account, lifetime_treatment, premium_granted, pro_access_expires_at")
           .eq("user_id", user.id)
           .maybeSingle(),
         user.email
@@ -148,6 +148,7 @@ const StudentAccessCard = () => {
         setHasCrefito(!!(data.crefito && String(data.crefito).trim().length > 0));
         setFullName(data.full_name || "");
         setOriginalName(data.full_name || "");
+        setCpf(data.cpf || "");
         setInstitution(data.student_institution || "");
         setPeriod(data.student_period || "");
         setNameLocked(!!data.student_name_locked);
@@ -191,8 +192,13 @@ const StudentAccessCard = () => {
       navigate("/professional/register");
       return;
     }
-    if (isStudent && (!fullName.trim() || !institution.trim() || !period.trim())) {
+    const cpfDigits = cpf.replace(/\D/g, "");
+    if (isStudent && (!fullName.trim() || !institution.trim() || !period.trim() || !cpfDigits)) {
       toast({ title: t.required, variant: "destructive" });
+      return;
+    }
+    if (isStudent && cpfDigits.length !== 11) {
+      toast({ title: t.cpf_invalid, variant: "destructive" });
       return;
     }
     setSaving(true);
