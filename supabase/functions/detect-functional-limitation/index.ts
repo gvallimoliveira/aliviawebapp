@@ -67,7 +67,22 @@ Deno.serve(async (req) => {
       pain_scores: painScoresPerRegion,
     });
 
+    // Cache: same note + same candidates → same answer (7d).
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { note: text, lowPainRegions, language: isPt ? "pt" : "en" };
+    if (admin) {
+      const cached = await getCachedAiResponse<{ regions: string[] }>(admin, "detect-functional-limitation", cachePayload);
+      if (cached) {
+        return new Response(JSON.stringify(cached), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
       body: JSON.stringify({
