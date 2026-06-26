@@ -2,6 +2,7 @@
 // a partir de uma amostra anonimizada de linhas.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
 
@@ -62,6 +63,7 @@ Responda SOMENTE JSON válido:
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    shadowLogAiUsage(req, { function_name: "import-detect-schema" });
     const { filename, headers, sample } = await req.json();
     if (!Array.isArray(headers) || headers.length === 0) {
       return new Response(JSON.stringify({ error: "headers required" }), {

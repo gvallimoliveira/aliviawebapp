@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,7 @@ serve(async (req) => {
 
   try {
     const { assessments, language = "pt" } = await req.json();
+    shadowLogAiUsage(req, { function_name: "generate-evolution-summary" });
 
     if (!assessments || !Array.isArray(assessments) || assessments.length < 2) {
       return new Response(JSON.stringify({ error: "At least 2 assessments required" }), {

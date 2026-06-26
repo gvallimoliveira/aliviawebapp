@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 
 function normalizeAnamnesis(raw: any) {
   if (!raw || typeof raw !== "object") return raw;
@@ -603,6 +604,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    shadowLogAiUsage(req, { function_name: "clinical-agent-chat" });
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,7 @@ serve(async (req) => {
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    shadowLogAiUsage(req, { function_name: "generate-clinical-impression" });
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline } = await req.json();

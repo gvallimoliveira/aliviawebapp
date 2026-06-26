@@ -90,6 +90,8 @@ async function callAI(apiKey: string, body: any): Promise<any> {
   return await resp.json();
 }
 
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -184,8 +186,12 @@ Deno.serve(async (req) => {
       })
       .eq("id", voice_note_id);
 
+    // Shadow log this transcription chunk (no enforcement).
+    shadowLogAiUsage(req, { function_name: "transcribe-anamnesis-chunk", transcriptions: 1, metadata: { voice_note_id, chunk_index } }, admin);
+
     // 3) If final chunk → generate summary over the full transcript
     if (is_final) {
+      shadowLogAiUsage(req, { function_name: "transcribe-anamnesis-summary", metadata: { voice_note_id } }, admin);
       const summaryPrompt = isPt ? SUMMARY_PROMPT_PT : SUMMARY_PROMPT_EN;
       const summaryResp = await callAI(LOVABLE_API_KEY, {
         model: "google/gemini-2.5-flash",

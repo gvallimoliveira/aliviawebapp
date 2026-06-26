@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed } = await req.json();
+    shadowLogAiUsage(req, { function_name: "generate-diagnosis" });
     const redFlagsList: string[] = Array.isArray(bodyRedFlags)
       ? bodyRedFlags
       : Array.isArray(anamnesisData?.redFlags) ? anamnesisData.redFlags : [];

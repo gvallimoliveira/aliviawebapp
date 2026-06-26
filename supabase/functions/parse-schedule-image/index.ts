@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    shadowLogAiUsage(req, { function_name: "parse-schedule-image" });
     const { imageBase64, mimeType } = await req.json();
 
     if (!imageBase64) {

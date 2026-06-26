@@ -1,4 +1,5 @@
 // Detects whether a free-text note describes a relevant functional
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 // limitation tied to one of the low-pain regions the user already marked.
 // Returns a list of region IDs (subset of painRegions) for which we should
 // add an extra prioritized questionnaire.
@@ -33,6 +34,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    shadowLogAiUsage(req, { function_name: "detect-functional-limitation" });
     const { note, painRegions = [], painScoresPerRegion = {}, language = "pt" } = await req.json();
     const text = (note || "").toString().trim();
     if (!text || !Array.isArray(painRegions) || painRegions.length === 0) {
