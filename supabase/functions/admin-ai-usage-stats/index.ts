@@ -69,7 +69,7 @@ serve(async (req) => {
     for (let from = 0; from < 50_000; from += PAGE) {
       const { data, error } = await admin
         .from("ai_credit_usage")
-        .select("user_id, function_name, credits_used, tokens_in, tokens_out, transcriptions_used, created_at")
+        .select("user_id, function_name, credits_used, transcriptions_used, metadata, created_at")
         .gte("created_at", since)
         .order("created_at", { ascending: false })
         .range(from, from + PAGE - 1);
@@ -91,8 +91,9 @@ serve(async (req) => {
     for (const r of rows) {
       const credits = Number(r.credits_used || 0);
       totalCredits += credits;
-      totalTokensIn += Number(r.tokens_in || 0);
-      totalTokensOut += Number(r.tokens_out || 0);
+      const meta = (r.metadata || {}) as Record<string, any>;
+      totalTokensIn += Number(meta.tokens_in || meta.input_tokens || 0);
+      totalTokensOut += Number(meta.tokens_out || meta.output_tokens || 0);
       totalTranscriptions += Number(r.transcriptions_used || 0);
 
       const fn = r.function_name || "unknown";
