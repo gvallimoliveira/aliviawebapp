@@ -85,6 +85,8 @@ const t = (language: string) => {
   return translations[language] || translations.en;
 };
 
+type SortKey = "recent" | "oldest" | "az" | "za";
+
 const ProfessionalManagement = ({ language }: Props) => {
   const labels = t(language);
   const [professionals, setProfessionals] = useState<any[]>([]);
@@ -92,6 +94,8 @@ const ProfessionalManagement = ({ language }: Props) => {
   const [query, setQuery] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortKey>("recent");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     (async () => {
@@ -117,17 +121,40 @@ const ProfessionalManagement = ({ language }: Props) => {
     }
   };
 
-  const filtered = professionals.filter((p) => {
-    if (!query.trim()) return true;
-    const q = query.toLowerCase();
-    return (
-      (p.full_name || "").toLowerCase().includes(q) ||
-      (p.crefito || "").toLowerCase().includes(q) ||
-      (p.cpf || "").toLowerCase().includes(q) ||
-      (p.city || "").toLowerCase().includes(q) ||
-      (p.state || "").toLowerCase().includes(q)
-    );
-  });
+  const filtered = useMemo(() => {
+    const base = professionals.filter((p) => {
+      if (!query.trim()) return true;
+      const q = query.toLowerCase();
+      return (
+        (p.full_name || "").toLowerCase().includes(q) ||
+        (p.email || "").toLowerCase().includes(q) ||
+        (p.crefito || "").toLowerCase().includes(q) ||
+        (p.cpf || "").toLowerCase().includes(q) ||
+        (p.city || "").toLowerCase().includes(q) ||
+        (p.state || "").toLowerCase().includes(q)
+      );
+    });
+    const sorted = [...base];
+    sorted.sort((a, b) => {
+      if (sort === "az" || sort === "za") {
+        const cmp = (a.full_name || "").localeCompare(b.full_name || "", "pt", { sensitivity: "base" });
+        return sort === "az" ? cmp : -cmp;
+      }
+      const ta = new Date(a.created_at || 0).getTime();
+      const tb = new Date(b.created_at || 0).getTime();
+      return sort === "recent" ? tb - ta : ta - tb;
+    });
+    return sorted;
+  }, [professionals, query, sort]);
+
+  // Reset to first page whenever filter/sort changes the result set.
+  useEffect(() => {
+    setPage(1);
+  }, [query, sort, professionals.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   if (loading) {
     return (
@@ -152,98 +179,147 @@ const ProfessionalManagement = ({ language }: Props) => {
         <CardDescription>{labels.desc}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={labels.search}
-            className="pl-9"
-          />
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={labels.search}
+              className="pl-9"
+            />
+          </div>
+          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+            <SelectTrigger className="sm:w-[180px]">
+              <SelectValue placeholder={labels.sort_label} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recent">{labels.sort_recent}</SelectItem>
+              <SelectItem value="oldest">{labels.sort_oldest}</SelectItem>
+              <SelectItem value="az">{labels.sort_az}</SelectItem>
+              <SelectItem value="za">{labels.sort_za}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {filtered.length === 0 ? (
           <p className="text-muted-foreground text-center py-6">{labels.empty}</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{labels.name}</TableHead>
-                <TableHead>{labels.crefito}</TableHead>
-                <TableHead>{labels.cpf}</TableHead>
-                <TableHead>{labels.location}</TableHead>
-                <TableHead>{labels.specialties}</TableHead>
-                <TableHead className="w-[90px] text-right">{labels.actions}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.full_name}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5">
-                      {p.is_student ? (
-                        <Badge variant="outline" className="text-[10px] border-primary/40 text-primary bg-primary/5 gap-1">
-                          <GraduationCap className="h-3 w-3" />
-                          Alivia Acadêmico
-                        </Badge>
-                      ) : p.crefito ? (
-                        <>
-                          <span className="font-mono text-sm font-semibold">{p.crefito}</span>
-                          <a
-                            href="https://www.coffito.gov.br/nsite/?page_id=2350"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline"
-                          >
-                            {language === "pt" ? "Verificar" : "Verify"}
-                          </a>
-                        </>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {p.cpf || "—"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {p.city}/{p.state}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {(p.specialties || []).slice(0, 3).map((s: string) => (
-                        <Badge key={s} variant="outline" className="text-[10px]">
-                          {s}
-                        </Badge>
-                      ))}
-                      {(p.specialties || []).length > 3 && (
-                        <Badge variant="outline" className="text-[10px]">
-                          +{(p.specialties || []).length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setConfirmId(p.id)}
-                      disabled={deletingId === p.id}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      title={labels.delete}
-                    >
-                      {deletingId === p.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{labels.name}</TableHead>
+                    <TableHead>{labels.email}</TableHead>
+                    <TableHead>{labels.crefito}</TableHead>
+                    <TableHead>{labels.cpf}</TableHead>
+                    <TableHead>{labels.location}</TableHead>
+                    <TableHead>{labels.specialties}</TableHead>
+                    <TableHead className="w-[90px] text-right">{labels.actions}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pageRows.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.full_name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={p.email || ""}>
+                        {p.email || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          {p.is_student ? (
+                            <Badge variant="outline" className="text-[10px] border-primary/40 text-primary bg-primary/5 gap-1">
+                              <GraduationCap className="h-3 w-3" />
+                              Alivia Acadêmico
+                            </Badge>
+                          ) : p.crefito ? (
+                            <>
+                              <span className="font-mono text-sm font-semibold">{p.crefito}</span>
+                              <a
+                                href="https://www.coffito.gov.br/nsite/?page_id=2350"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline"
+                              >
+                                {language === "pt" ? "Verificar" : "Verify"}
+                              </a>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {p.cpf || "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {p.city}/{p.state}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {(p.specialties || []).slice(0, 3).map((s: string) => (
+                            <Badge key={s} variant="outline" className="text-[10px]">
+                              {s}
+                            </Badge>
+                          ))}
+                          {(p.specialties || []).length > 3 && (
+                            <Badge variant="outline" className="text-[10px]">
+                              +{(p.specialties || []).length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setConfirmId(p.id)}
+                          disabled={deletingId === p.id}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          title={labels.delete}
+                        >
+                          {deletingId === p.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 mt-4">
+              <p className="text-xs text-muted-foreground">
+                {labels.page_of.replace("{p}", String(currentPage)).replace("{t}", String(totalPages))}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </>
         )}
       </CardContent>
 
