@@ -39,6 +39,7 @@ const StudentAccessCard = () => {
   const [nameLocked, setNameLocked] = useState(false);
   const [originalName, setOriginalName] = useState("");
   const [fullName, setFullName] = useState("");
+  const [cpf, setCpf] = useState("");
   const [institution, setInstitution] = useState("");
   const [period, setPeriod] = useState("");
   const [activeMode, setActiveMode] = useState<"professional" | "student">("professional");
@@ -52,13 +53,17 @@ const StudentAccessCard = () => {
         name: "Nome completo",
         name_lock_warn: "Atenção: por segurança contra compartilhamento de assinatura, você pode editar seu nome no modo acadêmico apenas 1 (uma) vez após o cadastro inicial (para corrigir erro de digitação). Após essa ratificação, o nome ficará bloqueado e aparecerá fixo nos PDFs e links públicos.",
         name_locked: "Nome bloqueado. Você já utilizou a ratificação permitida. O nome em relatórios acadêmicos não pode mais ser alterado para evitar compartilhamento de assinatura. Em caso de erro real (ex.: troca de nome civil), fale com o suporte.",
+        cpf_label: "CPF",
+        cpf_placeholder: "000.000.000-00",
+        cpf_hint: "Obrigatório para vinculação única da conta acadêmica (evita duplicidade e compartilhamento).",
         institution: "Instituição de ensino",
         period: "Período atual",
         period_placeholder: "Ex.: 5º período",
         save: "Salvar",
         saved: "Acesso estudante atualizado!",
         disabled: "Acesso estudante desativado.",
-        required: "Preencha nome, instituição e período.",
+        required: "Preencha nome, CPF, instituição e período.",
+        cpf_invalid: "CPF inválido. Use 11 dígitos.",
         error: "Erro ao salvar",
         graduate_title: "Concluiu o curso? Cadastre seu CREFITO",
         graduate_desc: "Para sair do modo Acadêmico você precisa cadastrar seu CREFITO no formulário profissional. Vamos te levar lá agora.",
@@ -87,13 +92,17 @@ const StudentAccessCard = () => {
         name: "Full name",
         name_lock_warn: "Warning: to prevent subscription sharing, you may edit your name in academic mode only once after the initial registration (to fix typos). After this single ratification, the name will be locked and shown fixed on PDFs and public links.",
         name_locked: "Name locked. You have already used the allowed ratification. The name on academic reports can no longer be changed to prevent subscription sharing. For a real correction (e.g. legal name change), contact support.",
+        cpf_label: "CPF (Brazilian ID)",
+        cpf_placeholder: "000.000.000-00",
+        cpf_hint: "Required to keep the academic account unique (prevents duplicate or shared accounts).",
         institution: "Institution",
         period: "Current term",
         period_placeholder: "e.g. 5th term",
         save: "Save",
         saved: "Student access updated!",
         disabled: "Student access disabled.",
-        required: "Fill name, institution and term.",
+        required: "Fill name, CPF, institution and term.",
+        cpf_invalid: "Invalid CPF — 11 digits required.",
         error: "Save error",
         graduate_title: "Graduated? Register your CREFITO",
         graduate_desc: "To leave Academic mode you must register your CREFITO in the professional form. We'll take you there now.",
