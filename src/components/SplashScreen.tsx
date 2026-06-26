@@ -52,23 +52,38 @@ const SplashScreen = () => {
             "radial-gradient(circle at 50% 50%, hsl(var(--primary) / 0.18), transparent 60%)",
         }}
       />
-      <img
-        src={logoAlivia}
-        alt=""
-        className="splash-logo relative w-40 h-40 object-contain drop-shadow-xl"
-      />
+      <div className="relative flex flex-col items-center">
+        <img
+          src={logoAlivia}
+          alt=""
+          className="splash-logo w-40 h-40 object-contain drop-shadow-xl"
+        />
+        <p className="splash-slogan mt-6 max-w-[18rem] text-center text-sm md:text-base italic text-muted-foreground px-4">
+          ...sistema de raciocínio clínico com alma de fisioterapeuta
+        </p>
+      </div>
       <style>{`
         @keyframes splash-zoom {
           0%   { transform: scale(0.35); opacity: 0; }
           25%  { opacity: 1; }
-          100% { transform: scale(2.4); opacity: 1; }
+          100% { transform: scale(1.6); opacity: 1; }
+        }
+        @keyframes splash-slogan-in {
+          0%   { opacity: 0; transform: translateY(8px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
         .splash-logo {
           animation: splash-zoom 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
           will-change: transform, opacity;
         }
+        .splash-slogan {
+          opacity: 0;
+          animation: splash-slogan-in 0.7s ease-out forwards;
+          animation-delay: 1.3s;
+          will-change: transform, opacity;
+        }
         @media (prefers-reduced-motion: reduce) {
-          .splash-logo { animation: none; }
+          .splash-logo, .splash-slogan { animation: none; opacity: 1; }
         }
       `}</style>
     </div>
