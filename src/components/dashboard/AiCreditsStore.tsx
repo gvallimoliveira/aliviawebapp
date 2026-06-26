@@ -115,10 +115,10 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
 
     if (!accessToken) {
       toast({
-        title: isPt ? "Sessão ainda carregando" : "Session still loading",
+        title: isPt ? "Preparando pagamento" : "Preparing payment",
         description: isPt
-          ? "Aguarde um instante e toque em Comprar novamente."
-          : "Wait a moment and tap Buy again.",
+          ? "Aguarde um instante enquanto preparo o checkout seguro."
+          : "Please wait a moment while secure checkout is prepared.",
       });
       return;
     }
