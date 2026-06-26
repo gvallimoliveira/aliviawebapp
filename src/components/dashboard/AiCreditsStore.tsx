@@ -41,7 +41,7 @@ const estimateReassessments = (credits: number) => Math.floor(credits / 0.5);
 const estimateChatMessages = (credits: number) => Math.floor(credits / 0.05);
 
 /**
- * Storefront for one-off AI credit packs. Opens Stripe Checkout in a new tab.
+ * Storefront for one-off AI credit packs. Uses a native form POST redirect to Stripe Checkout.
  * Credit fulfillment is server-side via the `stripe-webhook` (`ai_credits` case).
  */
 const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
@@ -50,7 +50,9 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState(false);
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const isPt = language === "pt";
+  const checkoutAction = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-ai-credits-checkout`;
 
   // Toast after returning from Stripe Checkout.
   useEffect(() => {
@@ -69,10 +71,37 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
       const next = new URLSearchParams(searchParams);
       next.delete("ai_credits");
       setSearchParams(next, { replace: true });
+    } else if (status === "error") {
+      toast({
+        title: isPt ? "Não foi possível abrir o pagamento" : "Unable to open payment",
+        description: isPt
+          ? "Tente novamente. Se persistir, entre em contato com o suporte."
+          : "Please try again. If it persists, contact support.",
+        variant: "destructive",
+      });
+      const next = new URLSearchParams(searchParams);
+      next.delete("ai_credits");
+      setSearchParams(next, { replace: true });
     }
   }, [searchParams, setSearchParams, isPt]);
 
-  const handleBuy = async (key: string) => {
+  useEffect(() => {
+    let cancelled = false;
+    if (!open || !user) {
+      setAccessToken(null);
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!cancelled) setAccessToken(data.session?.access_token ?? null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, user]);
+
+  const handleBuy = (key: string) => {
     if (!user) {
       toast({
         title: isPt ? "Faça login" : "Sign in",
@@ -83,38 +112,44 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
       });
       return;
     }
-    setLoadingKey(key);
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "create-ai-credits-checkout",
-        { body: { package: key } },
-      );
-      if (error) throw error;
-      const url = (data as any)?.url;
-      if (!url) throw new Error("Checkout URL missing");
-      setOpen(false);
-      // Mobile browsers block window.open() after an await (gesture lost),
-      // so we navigate in the same tab on touch devices and only open a new
-      // tab on desktop where popup blockers respect the original click.
-      const isTouch =
-        typeof window !== "undefined" &&
-        (window.matchMedia?.("(pointer: coarse)").matches ||
-          /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
-      if (isTouch) {
-        window.location.href = url;
-      } else {
-        const w = window.open(url, "_blank", "noopener,noreferrer");
-        if (!w) window.location.href = url;
-      }
-    } catch (err: any) {
+
+    if (!accessToken) {
       toast({
-        title: isPt ? "Erro" : "Error",
-        description: err.message || "Failed to start checkout",
-        variant: "destructive",
+        title: isPt ? "Sessão ainda carregando" : "Session still loading",
+        description: isPt
+          ? "Aguarde um instante e toque em Comprar novamente."
+          : "Wait a moment and tap Buy again.",
       });
-    } finally {
-      setLoadingKey(null);
+      return;
     }
+
+    setLoadingKey(key);
+
+    // Mobile Safari/Chrome inside app previews can block JS redirects after an async fetch.
+    // Submit a native top-level POST instead; the edge function replies 303 directly to Stripe.
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = checkoutAction;
+    form.target = "_top";
+    form.style.display = "none";
+
+    const fields: Record<string, string> = {
+      package: key,
+      access_token: accessToken,
+      redirect: "1",
+      return_origin: window.location.origin,
+    };
+
+    Object.entries(fields).forEach(([name, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
   };
 
   return (
@@ -215,10 +250,10 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
                 <Button
                   className="w-full"
                   variant={p.highlight ? "default" : "outline"}
-                  disabled={loadingKey !== null}
+                  disabled={loadingKey !== null || (open && !!user && !accessToken)}
                   onClick={() => handleBuy(p.key)}
                 >
-                  {loadingKey === p.key ? (
+                  {loadingKey === p.key || (open && !!user && !accessToken) ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
