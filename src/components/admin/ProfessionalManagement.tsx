@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,8 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Users, Search, Trash2, GraduationCap } from "lucide-react";
+import { Loader2, Users, Search, Trash2, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+
+const PAGE_SIZE = 10;
 
 interface Props {
   language: string;
@@ -27,8 +30,9 @@ const t = (language: string) => {
     pt: {
       title: "Profissionais Cadastrados",
       desc: "Lista de todos os profissionais ativos no Aliv.iA. O acesso é liberado automaticamente após a assinatura e o preenchimento do cadastro profissional completo (obrigatórios: nome, CPF e CREFITO).",
-      search: "Buscar por nome, CREFITO, CPF ou cidade...",
+      search: "Buscar por nome, email, CREFITO, CPF ou cidade...",
       name: "Nome",
+      email: "Email",
       crefito: "CREFITO",
       cpf: "CPF",
       location: "Localização",
@@ -43,12 +47,19 @@ const t = (language: string) => {
       delete_ok: "Sim, excluir",
       deleted: "Profissional excluído.",
       delete_error: "Erro ao excluir profissional.",
+      sort_label: "Ordenar",
+      sort_recent: "Mais recentes",
+      sort_oldest: "Mais antigos",
+      sort_az: "A → Z",
+      sort_za: "Z → A",
+      page_of: "Página {p} de {t}",
     },
     en: {
       title: "Registered Professionals",
       desc: "All active professionals on Aliv.iA. Access is granted automatically after subscription and a complete professional registration (required: name, CPF and CREFITO).",
-      search: "Search by name, CREFITO, CPF or city...",
+      search: "Search by name, email, CREFITO, CPF or city...",
       name: "Name",
+      email: "Email",
       crefito: "CREFITO",
       cpf: "CPF",
       location: "Location",
@@ -63,6 +74,12 @@ const t = (language: string) => {
       delete_ok: "Yes, delete",
       deleted: "Professional deleted.",
       delete_error: "Error deleting professional.",
+      sort_label: "Sort",
+      sort_recent: "Newest first",
+      sort_oldest: "Oldest first",
+      sort_az: "A → Z",
+      sort_za: "Z → A",
+      page_of: "Page {p} of {t}",
     },
   };
   return translations[language] || translations.en;
