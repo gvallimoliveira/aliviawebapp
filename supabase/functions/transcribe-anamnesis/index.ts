@@ -90,6 +90,8 @@ async function callAI(apiKey: string, body: any): Promise<any> {
   return await resp.json();
 }
 
+import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
