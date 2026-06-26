@@ -32,6 +32,14 @@ const PACKAGES: Pkg[] = [
   { key: "pro", credits: 1000, price_brl: 199, badge: "Melhor valor" },
 ];
 
+// Estimativa de capacidade por pacote (avaliação completa ≈ 0,70 créditos:
+// diagnóstico 0,30 + tratamento 0,30 + impressão clínica 0,10).
+const estimateAssessments = (credits: number) => Math.floor(credits / 0.7);
+// Reavaliação rápida ≈ 0,50 créditos (progressão + evolução).
+const estimateReassessments = (credits: number) => Math.floor(credits / 0.5);
+// Chat do agente ≈ 0,05 créditos/mensagem.
+const estimateChatMessages = (credits: number) => Math.floor(credits / 0.05);
+
 /**
  * Storefront for one-off AI credit packs. Opens Stripe Checkout in a new tab.
  * Credit fulfillment is server-side via the `stripe-webhook` (`ai_credits` case).
