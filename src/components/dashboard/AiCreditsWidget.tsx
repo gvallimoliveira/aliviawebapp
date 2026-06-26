@@ -20,6 +20,15 @@ interface PackageRow {
   expires_at: string;
 }
 
+interface QuotaRow {
+  tier: string;
+  included_credits: number;
+  rollover_credits: number;
+  used_credits: number;
+  period_start: string;
+  period_end: string;
+}
+
 /**
  * Personal AI credit usage widget for professionals.
  * Shows month-to-date consumption (own RLS-readable rows) plus the user's
@@ -31,6 +40,7 @@ const AiCreditsWidget = () => {
   const isPt = language === "pt";
   const [rows, setRows] = useState<UsageRow[]>([]);
   const [packages, setPackages] = useState<PackageRow[]>([]);
+  const [quota, setQuota] = useState<QuotaRow | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,7 +52,7 @@ const AiCreditsWidget = () => {
       start.setDate(1);
       start.setHours(0, 0, 0, 0);
 
-      const [usageRes, pkgRes] = await Promise.all([
+      const [usageRes, pkgRes, quotaRes] = await Promise.all([
         supabase
           .from("ai_credit_usage")
           .select("function_name, credits_used, created_at")
@@ -56,11 +66,19 @@ const AiCreditsWidget = () => {
           .eq("user_id", user.id)
           .gt("credits_remaining", 0)
           .gt("expires_at", new Date().toISOString()),
+        supabase
+          .from("ai_credit_quotas")
+          .select("tier, included_credits, rollover_credits, used_credits, period_start, period_end")
+          .eq("user_id", user.id)
+          .order("period_start", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
 
       if (!cancelled) {
         setRows((usageRes.data as any[]) || []);
         setPackages((pkgRes.data as any[]) || []);
+        setQuota((quotaRes.data as any) || null);
         setLoading(false);
       }
     })();
@@ -68,6 +86,7 @@ const AiCreditsWidget = () => {
       cancelled = true;
     };
   }, [user?.id]);
+
 
   // Render the card even while loading so the user always sees the
   // "Buy credit pack" entry point on the Insights tab.
