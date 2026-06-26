@@ -84,8 +84,20 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
       if (error) throw error;
       const url = (data as any)?.url;
       if (!url) throw new Error("Checkout URL missing");
-      window.open(url, "_blank", "noopener,noreferrer");
       setOpen(false);
+      // Mobile browsers block window.open() after an await (gesture lost),
+      // so we navigate in the same tab on touch devices and only open a new
+      // tab on desktop where popup blockers respect the original click.
+      const isTouch =
+        typeof window !== "undefined" &&
+        (window.matchMedia?.("(pointer: coarse)").matches ||
+          /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+      if (isTouch) {
+        window.location.href = url;
+      } else {
+        const w = window.open(url, "_blank", "noopener,noreferrer");
+        if (!w) window.location.href = url;
+      }
     } catch (err: any) {
       toast({
         title: isPt ? "Erro" : "Error",
