@@ -708,6 +708,7 @@ Deno.serve(async (req) => {
     if (slash?.kind === "quiz") {
       const FIXED_NICHES = ["cervical", "lombar", "ombro", "joelho", "quadril", "anatomia", "biomecanica", "cinesiologia"];
       const niche = detectNicheSrv(slash.topic);
+      console.log("[quiz] fixed-quiz path", { topic: slash.topic, niche });
       if (!niche || !FIXED_NICHES.includes(niche)) {
         const list = FIXED_NICHES.map(n => `\`/quiz ${n}\``).join(" · ");
         const err = `🎓 No momento os quizzes acadêmicos cobrem apenas estes nichos:\n\n${list}\n\nEscolha um deles para receber um quiz com gabarito comentado. Vou ampliar a biblioteca em breve!`;
