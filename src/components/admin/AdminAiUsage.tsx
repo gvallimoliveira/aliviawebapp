@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Activity, Users, Zap, DollarSign } from "lucide-react";
+import { Loader2, RefreshCw, Activity, Users, Zap, DollarSign, Calculator, TrendingUp, AlertTriangle, Lightbulb, CheckCircle2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   ResponsiveContainer,
@@ -131,6 +131,10 @@ const AdminAiUsage = ({ isPt }: { isPt: boolean }) => {
               value={String(stats.unique_users)}
             />
           </div>
+
+          {/* AI Accountant — interpretation & recommendations */}
+          <AccountantCard stats={stats} days={days} isPt={isPt} />
+
 
           {/* Daily chart */}
           <Card>
@@ -305,5 +309,279 @@ const KpiCard = ({
     </CardContent>
   </Card>
 );
+
+// ----------------------------------------------------------------------------
+// AI Accountant — interprets the raw usage stats into plain-language insights,
+// projections and balance recommendations. Pure client-side math over the
+// payload already returned by admin-ai-usage-stats; no extra DB cost.
+// ----------------------------------------------------------------------------
+const AccountantCard = ({
+  stats,
+  days,
+  isPt,
+}: {
+  stats: Stats;
+  days: number;
+  isPt: boolean;
+}) => {
+  const t = (pt: string, en: string) => (isPt ? pt : en);
+  const fmt = (n: number, d = 2) => n.toFixed(d);
+
+  // --- projections ---------------------------------------------------------
+  const dailyAvg = stats.total_credits / Math.max(days, 1);
+  const monthlyProjection = dailyAvg * 30;
+  const activeUsers = Math.max(stats.unique_users, 1);
+  const perUserMonth = monthlyProjection / activeUsers;
+
+  // Recommended on-hand balance (1.5x monthly burn, classic safety buffer).
+  const recommendedBuffer = monthlyProjection * 1.5;
+
+  // Scenarios for different team sizes — extrapolation assumes same mix.
+  const scenarios = [10, 25, 50, 100].map((n) => ({
+    users: n,
+    monthly: perUserMonth * n,
+    buffer: perUserMonth * n * 1.5,
+  }));
+
+  // --- function-level signals ---------------------------------------------
+  const topFn = stats.functions[0];
+  const topFnShare = topFn && stats.total_credits > 0
+    ? (topFn.credits / stats.total_credits) * 100
+    : 0;
+
+  // Functions with high avg cost are caching candidates if calls > 5.
+  const cacheCandidates = stats.functions
+    .filter((f) => f.calls >= 5 && f.avg > 0.08)
+    .slice(0, 3);
+
+  // --- user concentration --------------------------------------------------
+  const top3UserCredits = stats.top_users
+    .slice(0, 3)
+    .reduce((s, u) => s + u.credits, 0);
+  const concentration = stats.total_credits > 0
+    ? (top3UserCredits / stats.total_credits) * 100
+    : 0;
+
+  // --- trend (last 7d vs previous 7d) -------------------------------------
+  const sortedDaily = [...stats.daily].sort((a, b) => a.day.localeCompare(b.day));
+  const last7 = sortedDaily.slice(-7).reduce((s, d) => s + d.credits, 0);
+  const prev7 = sortedDaily.slice(-14, -7).reduce((s, d) => s + d.credits, 0);
+  const trendPct = prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : 0;
+
+  // --- generate recommendations -------------------------------------------
+  type Insight = {
+    tone: "ok" | "warn" | "info" | "tip";
+    title: string;
+    body: string;
+  };
+  const insights: Insight[] = [];
+
+  if (stats.total_rows < 50) {
+    insights.push({
+      tone: "info",
+      title: t("Volume ainda baixo — projeções aproximadas", "Volume still low — rough projections"),
+      body: t(
+        `Apenas ${stats.total_rows} chamadas em ${days}d. As médias e projeções abaixo ficam mais confiáveis depois de ~200 chamadas. Continue em modo shadow antes de calibrar limites.`,
+        `Only ${stats.total_rows} calls in ${days}d. Averages and projections become reliable after ~200 calls. Keep shadow mode before tuning limits.`,
+      ),
+    });
+  }
+
+  if (topFn && topFnShare > 40) {
+    insights.push({
+      tone: "warn",
+      title: t(
+        `${topFn.name} concentra ${fmt(topFnShare, 0)}% do gasto`,
+        `${topFn.name} drives ${fmt(topFnShare, 0)}% of spend`,
+      ),
+      body: t(
+        `Vale revisar prompt, modelo ou cache desta função primeiro — qualquer otimização aqui tem impacto desproporcional na fatura.`,
+        `Worth reviewing prompt, model or cache here first — any optimization has outsized impact.`,
+      ),
+    });
+  }
+
+  if (cacheCandidates.length > 0) {
+    insights.push({
+      tone: "tip",
+      title: t("Candidatos a cache", "Cache candidates"),
+      body: t(
+        `${cacheCandidates.map((c) => c.name).join(", ")} têm custo médio alto e volume relevante. Aplicar ai_response_cache nesses fluxos pode reduzir 20–40% do gasto delas.`,
+        `${cacheCandidates.map((c) => c.name).join(", ")} have high avg cost and meaningful volume. Adding ai_response_cache there can cut 20–40% of their spend.`,
+      ),
+    });
+  }
+
+  if (concentration > 60 && stats.top_users.length >= 3) {
+    insights.push({
+      tone: "warn",
+      title: t(
+        `Top 3 usuários = ${fmt(concentration, 0)}% do consumo`,
+        `Top 3 users = ${fmt(concentration, 0)}% of spend`,
+      ),
+      body: t(
+        `Concentração alta — esses usuários se beneficiariam de quota dedicada (Clínica ou compra de pacotes). Considere conversa proativa antes de hard-block.`,
+        `High concentration — those users would benefit from dedicated quota (Clinic tier or packs). Consider proactive outreach before hard-blocking.`,
+      ),
+    });
+  }
+
+  if (Math.abs(trendPct) > 25 && prev7 > 0) {
+    insights.push({
+      tone: trendPct > 0 ? "warn" : "ok",
+      title: t(
+        `Tendência ${trendPct > 0 ? "+" : ""}${fmt(trendPct, 0)}% nos últimos 7 dias`,
+        `Trend ${trendPct > 0 ? "+" : ""}${fmt(trendPct, 0)}% in the last 7 days`,
+      ),
+      body: trendPct > 0
+        ? t("Crescimento relevante — confirme se é onboarding novo ou aumento de uso real antes de provisionar mais saldo.", "Notable growth — confirm whether it's new onboarding or real usage uptick before provisioning more balance.")
+        : t("Queda no consumo — provavelmente cache começou a fazer efeito ou sazonalidade. Bom momento para revisar metas.", "Spend dropped — likely cache kicked in or seasonality. Good time to revisit targets."),
+    });
+  }
+
+  if (insights.length === 0) {
+    insights.push({
+      tone: "ok",
+      title: t("Tudo equilibrado", "All balanced"),
+      body: t(
+        "Distribuição saudável entre funções e usuários, sem outliers preocupantes na janela analisada.",
+        "Healthy distribution across functions and users, no concerning outliers in this window.",
+      ),
+    });
+  }
+
+  const toneStyles: Record<Insight["tone"], { icon: React.ReactNode; ring: string }> = {
+    ok: { icon: <CheckCircle2 className="h-4 w-4 text-emerald-600" />, ring: "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20" },
+    warn: { icon: <AlertTriangle className="h-4 w-4 text-amber-600" />, ring: "border-amber-200 bg-amber-50/50 dark:bg-amber-950/20" },
+    info: { icon: <TrendingUp className="h-4 w-4 text-sky-600" />, ring: "border-sky-200 bg-sky-50/50 dark:bg-sky-950/20" },
+    tip: { icon: <Lightbulb className="h-4 w-4 text-primary" />, ring: "border-primary/30 bg-primary/5" },
+  };
+
+  return (
+    <Card className="border-primary/40">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Calculator className="h-4 w-4 text-primary" />
+          {t("Contador IA — análise & recomendações", "AI Accountant — analysis & recommendations")}
+        </CardTitle>
+        <CardDescription>
+          {t(
+            "Interpretação automática dos números acima para guiar provisionamento de saldo.",
+            "Automatic read of the numbers above to guide balance provisioning.",
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {/* Burn-rate summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <MetricBox
+            label={t("Média/dia", "Avg/day")}
+            value={`${fmt(dailyAvg)} cr`}
+          />
+          <MetricBox
+            label={t("Projeção mensal", "Monthly projection")}
+            value={`${fmt(monthlyProjection)} cr`}
+          />
+          <MetricBox
+            label={t("Custo/usuário/mês", "Cost/user/month")}
+            value={`${fmt(perUserMonth)} cr`}
+            hint={t(`base: ${activeUsers} ativos`, `base: ${activeUsers} active`)}
+          />
+          <MetricBox
+            label={t("Saldo recomendado", "Recommended balance")}
+            value={`${fmt(recommendedBuffer)} cr`}
+            hint={t("buffer 1.5×", "1.5× buffer")}
+            highlight
+          />
+        </div>
+
+        {/* Scenario table */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">
+            {t("Cenários por tamanho de base", "Scenarios by user base")}
+          </p>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("Usuários", "Users")}</TableHead>
+                  <TableHead className="text-right">{t("Consumo/mês", "Monthly burn")}</TableHead>
+                  <TableHead className="text-right">{t("Saldo sugerido", "Suggested balance")}</TableHead>
+                  <TableHead className="text-right">{t("Custo (USD)*", "Cost (USD)*")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {scenarios.map((s) => (
+                  <TableRow key={s.users}>
+                    <TableCell className="font-medium">{s.users}</TableCell>
+                    <TableCell className="text-right">{fmt(s.monthly, 0)} cr</TableCell>
+                    <TableCell className="text-right font-semibold text-primary">
+                      {fmt(s.buffer, 0)} cr
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      ${fmt(s.buffer * 0.0008)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              {t(
+                "* Estimativa a 1 cr ≈ US$ 0,0008 (referência Lovable). Extrapolação assume mesmo mix de uso observado nesta janela.",
+                "* Estimate at 1 cr ≈ $0.0008 (Lovable benchmark). Extrapolation assumes the same usage mix observed in this window.",
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Insights list */}
+        <div className="space-y-2">
+          {insights.map((ins, i) => {
+            const s = toneStyles[ins.tone];
+            return (
+              <div
+                key={i}
+                className={`flex gap-3 rounded-lg border p-3 ${s.ring}`}
+              >
+                <div className="mt-0.5 shrink-0">{s.icon}</div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{ins.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                    {ins.body}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const MetricBox = ({
+  label,
+  value,
+  hint,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  highlight?: boolean;
+}) => (
+  <div
+    className={`rounded-lg border p-3 ${
+      highlight ? "border-primary/40 bg-primary/5" : "border-border bg-muted/30"
+    }`}
+  >
+    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+    <p className={`text-lg font-bold mt-0.5 ${highlight ? "text-primary" : "text-foreground"}`}>
+      {value}
+    </p>
+    {hint && <p className="text-[10px] text-muted-foreground mt-0.5">{hint}</p>}
+  </div>
+);
+
 
 export default AdminAiUsage;
