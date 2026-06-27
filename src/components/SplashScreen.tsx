@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
-const SESSION_KEY = "alivia:splash-shown";
+const STORAGE_KEY = "alivia:splash-last-shown";
 const DURATION_MS = 2600;
+const TTL_MS = 24 * 60 * 60 * 1000; // 24h — robust for PWA standalone (sessionStorage dies on cold start in iOS)
 
 /**
  * Opening splash screen — Aliv.iA logo zooms in from small to fill,
- * then fades out and reveals the app. Shows once per browser session.
+ * then fades out and reveals the app. Shows at most once per 24h window
+ * (uses localStorage so PWA cold starts don't replay on every reopen).
  */
 const SplashScreen = () => {
   const [visible, setVisible] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
-      return sessionStorage.getItem(SESSION_KEY) !== "1";
+      const last = Number(localStorage.getItem(STORAGE_KEY) || "0");
+      return !last || Date.now() - last > TTL_MS;
     } catch {
       return true;
     }
@@ -22,7 +25,7 @@ const SplashScreen = () => {
   useEffect(() => {
     if (!visible) return;
     try {
-      sessionStorage.setItem(SESSION_KEY, "1");
+      localStorage.setItem(STORAGE_KEY, String(Date.now()));
     } catch {
       /* noop */
     }
