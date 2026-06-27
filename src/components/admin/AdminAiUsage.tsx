@@ -132,6 +132,10 @@ const AdminAiUsage = ({ isPt }: { isPt: boolean }) => {
             />
           </div>
 
+          {/* AI Accountant — interpretation & recommendations */}
+          <AccountantCard stats={stats} days={days} isPt={isPt} />
+
+
           {/* Daily chart */}
           <Card>
             <CardHeader className="pb-2">
