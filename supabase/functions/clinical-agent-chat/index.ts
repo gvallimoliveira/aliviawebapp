@@ -620,35 +620,50 @@ Deno.serve(async (req) => {
       });
     }
 
-    // A5: se o usuário tem o Chat Addon ativo e ainda dentro da franquia mensal,
-    // consumimos 1 msg do addon e NÃO logamos crédito padrão (zera o cost desta call).
-    // Caso contrário cai no shadowLog padrão (0.05cr).
-    let addonConsumed = false;
-    try {
-      await adminClient.rpc("reset_chat_addon_period_if_needed", { _user_id: user.id });
-      const { data: profile } = await adminClient
-        .from("profiles")
-        .select("chat_addon_status, chat_addon_msgs_used, chat_addon_quota")
+    // A5: VIP/parceiros são isentos — não contam para o addon nem para crédito.
+    // Buscamos o status uma vez aqui para reusar no gate abaixo.
+    const [vipEarly, partnerRow] = await Promise.all([
+      isVipEmail(adminClient, user.email),
+      adminClient
+        .from("professionals")
+        .select("is_partner")
         .eq("user_id", user.id)
-        .maybeSingle();
-      if (
-        profile?.chat_addon_status === "active" &&
-        (profile.chat_addon_msgs_used ?? 0) < (profile.chat_addon_quota ?? 150)
-      ) {
-        await adminClient
+        .maybeSingle()
+        .then((r: any) => !!r.data?.is_partner),
+    ]);
+    const isExempt = vipEarly || partnerRow;
+
+    let addonConsumed = false;
+    if (!isExempt) {
+      try {
+        await adminClient.rpc("reset_chat_addon_period_if_needed", { _user_id: user.id });
+        const { data: profile } = await adminClient
           .from("profiles")
-          .update({ chat_addon_msgs_used: (profile.chat_addon_msgs_used ?? 0) + 1 })
-          .eq("user_id", user.id);
-        addonConsumed = true;
+          .select("chat_addon_status, chat_addon_msgs_used, chat_addon_quota")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (
+          profile?.chat_addon_status === "active" &&
+          (profile.chat_addon_msgs_used ?? 0) < (profile.chat_addon_quota ?? 150)
+        ) {
+          await adminClient
+            .from("profiles")
+            .update({ chat_addon_msgs_used: (profile.chat_addon_msgs_used ?? 0) + 1 })
+            .eq("user_id", user.id);
+          addonConsumed = true;
+        }
+      } catch (e) {
+        console.warn("[agent] chat addon check failed (non-blocking):", (e as Error).message);
       }
-    } catch (e) {
-      console.warn("[agent] chat addon check failed (non-blocking):", (e as Error).message);
     }
     shadowLogAiUsage(req, {
       function_name: "clinical-agent-chat",
-      credits: addonConsumed ? 0 : undefined,
-      metadata: addonConsumed ? { chat_addon: true } : undefined,
+      credits: isExempt ? 0 : (addonConsumed ? 0 : undefined),
+      metadata: isExempt
+        ? { exempt: vipEarly ? "vip" : "partner" }
+        : (addonConsumed ? { chat_addon: true } : undefined),
     });
+
 
     // Access gate
     const [vip, globalOn] = await Promise.all([
