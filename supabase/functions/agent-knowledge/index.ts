@@ -629,7 +629,7 @@ async function searchCochraneForNiche(terms: NicheSearchTerms, retmax: number, y
   return { items, query };
 }
 
-
+async function searchCrossrefForNiche(terms: NicheSearchTerms, rows: number, yearsBack: number): Promise<CandidateArticle[]> {
   const minYear = new Date().getFullYear() - yearsBack;
   const q = (terms.keywords || []).slice(0, 4).join(" OR ");
   if (!q) return [];
