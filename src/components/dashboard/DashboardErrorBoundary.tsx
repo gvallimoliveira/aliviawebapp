@@ -2,6 +2,7 @@ import { Component, type ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { logAppError } from "@/lib/logAppError";
 
 interface Props {
   children: ReactNode;
@@ -21,6 +22,10 @@ class DashboardErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[DashboardErrorBoundary]", error, info.componentStack);
+    logAppError(error, {
+      severity: "fatal",
+      metadata: { boundary: "dashboard", component_stack: (info.componentStack || "").slice(0, 2000) },
+    });
     // Stale chunk after a redeploy: the old index.html references chunk
     // filenames that no longer exist. Trigger the global reload guard
     // in main.tsx so the user gets the fresh manifest automatically.
