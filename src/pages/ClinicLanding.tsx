@@ -42,6 +42,7 @@ const ClinicLanding = () => {
   const [trialForm, setTrialForm] = useState<string | null>(null);
   const [trialEmail, setTrialEmail] = useState("");
   const [trialPhone, setTrialPhone] = useState("");
+  const [trialCnpj, setTrialCnpj] = useState("");
 
   useEffect(() => {
     setSeo({
@@ -71,10 +72,12 @@ const ClinicLanding = () => {
   const handleStartTrial = async (tier: "small" | "medium" | "large") => {
     if (!trialEmail.trim()) { toast.error("Informe seu e-mail"); return; }
     if (!trialPhone.trim()) { toast.error("Informe seu WhatsApp"); return; }
+    const cnpjDigits = trialCnpj.replace(/\D/g, "");
+    if (cnpjDigits.length !== 14) { toast.error("Informe um CNPJ válido (14 dígitos)"); return; }
     setLoading(tier);
     try {
       const { data, error } = await supabase.functions.invoke("start-clinic-trial", {
-        body: { tier, email: trialEmail.trim(), phone: trialPhone.trim() },
+        body: { tier, email: trialEmail.trim(), phone: trialPhone.trim(), cnpj: cnpjDigits },
       });
       if (error) throw error;
       if (data?.success) {
@@ -582,6 +585,21 @@ const ClinicLanding = () => {
                               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input type="tel" placeholder="WhatsApp (ex: 11999999999)" value={trialPhone} onChange={(e) => setTrialPhone(e.target.value)} className="pl-9" />
                             </div>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground tracking-wider">CNPJ</span>
+                              <Input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="00.000.000/0000-00"
+                                value={trialCnpj}
+                                onChange={(e) => setTrialCnpj(e.target.value)}
+                                className="pl-14"
+                                maxLength={18}
+                              />
+                            </div>
+                            <p className="text-[11px] text-muted-foreground -mt-1">
+                              CNPJ obrigatório (MEI também é aceito). Limite de 75 créditos de IA durante o trial.
+                            </p>
                             <Button onClick={() => handleStartTrial(tier.key)} disabled={loading !== null} className="w-full rounded-xl">
                               {loading === tier.key ? "Processando..." : "Ativar trial grátis"}
                               <ArrowRight className="h-4 w-4 ml-2" />
