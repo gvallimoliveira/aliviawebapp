@@ -29,7 +29,7 @@ interface Pkg {
 const PACKAGES: Pkg[] = [
   { key: "starter", credits: 25, price_brl: 8 },
   { key: "mini", credits: 50, price_brl: 15, badge: "Popular", highlight: true },
-  { key: "plus", credits: 150, price_brl: 35, badge: "Melhor valor" },
+  { key: "plus", credits: 150, price_brl: 39, badge: "Melhor valor" },
 ];
 
 // Estimativa de capacidade por pacote (avaliação completa ≈ 0,70 créditos:

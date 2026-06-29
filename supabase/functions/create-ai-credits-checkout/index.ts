@@ -46,9 +46,10 @@ const PACKAGES: Record<
     label: "Pacote IA Mini (50 créditos)",
   },
   plus: {
-    price_id: "price_1TmR9i2HgVhVBE8URRd5yRSh",
+    // 2026-06 reprice: R$35 → R$39 (margem 23% → 32%) — novo price criado em 29/06.
+    price_id: "price_1TnmWF2HgVhVBE8UokvoKgGZ",
     credits: 150,
-    price_brl: 35.0,
+    price_brl: 39.0,
     label: "Pacote IA Plus (150 créditos)",
   },
 };

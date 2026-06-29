@@ -640,6 +640,48 @@ export type Database = {
         }
         Relationships: []
       }
+      app_errors: {
+        Row: {
+          created_at: string
+          error_message: string
+          error_stack: string | null
+          function_name: string | null
+          id: string
+          metadata: Json
+          route: string | null
+          scope: string
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message: string
+          error_stack?: string | null
+          function_name?: string | null
+          id?: string
+          metadata?: Json
+          route?: string | null
+          scope?: string
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string
+          error_stack?: string | null
+          function_name?: string | null
+          id?: string
+          metadata?: Json
+          route?: string | null
+          scope?: string
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       assessment_voice_notes: {
         Row: {
           assessment_id: string | null

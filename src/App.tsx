@@ -7,6 +7,7 @@ import { useEffect, lazy, Suspense } from "react";
 import ScrollToTop from "@/components/ScrollToTop";
 import { startVersionChecker } from "@/lib/versionChecker";
 import { startIdlePreloads } from "@/lib/preloader";
+import { installGlobalErrorLogging } from "@/lib/logAppError";
 
 import GlobalMobileMenu from "@/components/GlobalMobileMenu";
 import DashboardErrorBoundary from "@/components/dashboard/DashboardErrorBoundary";
@@ -77,6 +78,7 @@ const App = () => {
   useEffect(() => {
     startVersionChecker();
     startIdlePreloads();
+    installGlobalErrorLogging();
   }, []);
 
   return (
