@@ -584,6 +584,50 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
       break;
     }
 
+    case "chat_addon": {
+      // A5: assinatura do Chat do Agente. Ativa o addon; o handler de lifecycle
+      // (handleSubscriptionLifecycle) cuida de cancelamentos/renovações.
+      if (!userId) {
+        log("chat_addon: missing user_id", { sessionId: session.id });
+        break;
+      }
+      const subId = (session.subscription as string) || null;
+      const periodStart = new Date();
+      const periodEnd = new Date(periodStart);
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+      await supabase
+        .from("profiles")
+        .update({
+          chat_addon_status: "active",
+          chat_addon_period_start: periodStart.toISOString(),
+          chat_addon_period_end: periodEnd.toISOString(),
+          chat_addon_msgs_used: 0,
+          chat_addon_quota: 150,
+          chat_addon_stripe_subscription_id: subId,
+        })
+        .eq("user_id", userId);
+
+      await supabase.from("ai_credit_transactions").insert({
+        user_id: userId,
+        transaction_type: "subscription",
+        product_key: "chat_addon_monthly",
+        amount_brl: 14.9,
+        credits_delta: 0,
+        transcriptions_delta: 0,
+        stripe_session_id: session.id,
+        notes: "Assinatura Chat do Agente (150 msgs/mês) ativada",
+      });
+
+      log("chat_addon activated", { userId, subId });
+      await sendPushToUser(userId, {
+        title: "💬 Chat do Agente ativado!",
+        body: "Você tem 150 mensagens/mês inclusas. Bom uso!",
+        url: "/dashboard?tab=insights",
+      });
+      break;
+    }
+
     default:
       log("Unknown payment type, skipping fulfillment", { paymentType });
   }
@@ -597,10 +641,53 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
  */
 async function handleSubscriptionLifecycle(sub: Stripe.Subscription, eventType: string) {
   const proProductIds = ["prod_UHdISwfBcfWftS", "prod_UA4lNoezZmPwvs"];
+  const chatAddonProductId = "prod_UnNT6mwJcRis9B";
   const isProSub = sub.items.data.some((i: any) => proProductIds.includes(i.price?.product as string));
+  const isChatAddonSub = sub.items.data.some((i: any) => i.price?.product === chatAddonProductId);
   const isActive = sub.status === "active" || sub.status === "trialing";
 
-  log("subscription lifecycle", { eventType, subId: sub.id, status: sub.status, isProSub });
+  log("subscription lifecycle", { eventType, subId: sub.id, status: sub.status, isProSub, isChatAddonSub });
+
+  // A5: Chat addon lifecycle
+  if (isChatAddonSub) {
+    const userIdFromMeta = (sub.metadata as any)?.user_id || null;
+    let targetUserId = userIdFromMeta;
+    if (!targetUserId) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("chat_addon_stripe_subscription_id", sub.id)
+        .maybeSingle();
+      targetUserId = prof?.user_id || null;
+    }
+    if (targetUserId) {
+      if (isActive) {
+        const periodEnd = new Date(((sub as any).current_period_end || Math.floor(Date.now() / 1000) + 30 * 86400) * 1000);
+        await supabase
+          .from("profiles")
+          .update({
+            chat_addon_status: "active",
+            chat_addon_period_end: periodEnd.toISOString(),
+            chat_addon_stripe_subscription_id: sub.id,
+          })
+          .eq("user_id", targetUserId);
+        log("chat_addon renewed", { userId: targetUserId });
+      } else {
+        await supabase
+          .from("profiles")
+          .update({
+            chat_addon_status: "inactive",
+            chat_addon_stripe_subscription_id: null,
+          })
+          .eq("user_id", targetUserId);
+        log("chat_addon deactivated", { userId: targetUserId });
+      }
+    } else {
+      log("chat_addon: no user matched", { subId: sub.id });
+    }
+    return;
+  }
+
 
   if (isProSub) {
     // Encontra o profissional pelo subscription_stripe_id OU pelo customer email
