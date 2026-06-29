@@ -6,23 +6,26 @@ type: feature
 
 # Créditos Aliv.iA — Fonte Única de Verdade (canônica)
 
-**Última atualização:** 27/06/2026
+**Última atualização:** 29/06/2026
 **Status:** este documento sobrescreve qualquer número diferente em `.lovable/plan.md` ou outras memórias. Em caso de conflito, **este arquivo vence**.
 
 ---
 
-## 1. Pacotes Stripe ativos (BRL, one-off)
+## 1. Pacotes Stripe ativos (BRL, one-off) — **o que está realmente rodando no app**
 
-| SKU | Créditos | Preço | Stripe price_id | Stripe product_id |
+| SKU | Créditos | Preço | Stripe price_id | Notas |
 |---|---|---|---|---|
-| **Mini** | 100 cr | R$ 29 | `price_1TmPeN2HgVhVBE8UEtFep6pP` | `prod_UlxZoOjS4UjkOT` |
-| **Plus** | 300 cr | R$ 69 | `price_1TmPew2HgVhVBE8UXx7J7IPy` | `prod_Ulxa8zRS8Oyd3T` |
-| **Pro** | 1000 cr | R$ 199 | `price_1TmPff2HgVhVBE8Ux0QWlJq7` | `prod_UlxajKyKLj4Lnd` |
+| **Starter** | 25 cr | R$ 8 | `price_1TmRLn2HgVhVBE8UsHAPQlBe` | Entrada |
+| **Mini** | 50 cr | R$ 15 | `price_1TmR9S2HgVhVBE8UkDiP7iTx` | "Popular" |
+| **Plus** | 150 cr | R$ 39 | `price_1TnmWF2HgVhVBE8UokvoKgGZ` | "Melhor valor" — repricing 29/06/2026 (R$35 → R$39, margem 23% → 32%) |
 
 Validade: 12 meses a partir da compra. Idempotência via `stripe_session_id`.
 
-> **Obsoleto — NÃO usar:** Starter 25cr/R$8, Mini 50cr/R$15, Plus 150cr/R$35 (eram propostas intermediárias, nunca foram ativadas no Stripe e foram descartadas).
-> **Obsoleto — NÃO usar:** "+50 / +150 / +500 cr a R$19,90/R$49,90/R$149,90" do `.lovable/plan.md` antigo.
+> **Histórico de preços do Plus:**
+> - 28/06/2026: R$ 35 (`price_1TmR9i2HgVhVBE8URRd5yRSh`) — desativado por margem insuficiente.
+> - 29/06/2026: R$ 39 (`price_1TnmWF2HgVhVBE8UokvoKgGZ`) — em produção.
+>
+> **Proposta NÃO implementada (Mini 100cr/R$29, Plus 300cr/R$69, Pro 1000cr/R$199):** existia em rascunhos anteriores, mas nunca foi ativada no Stripe nem no edge function. Para implementar, criar novos price_ids e fazer migração coordenada (UI + edge + cache de quotas).
 
 ## 2. Quotas mensais por tier (Fase 5 — aguardando seed)
 
