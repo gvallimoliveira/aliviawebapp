@@ -565,7 +565,7 @@ export type Database = {
           id: string
           metadata: Json
           transcriptions_used: number
-          user_id: string
+          user_id: string | null
           was_blocked: boolean
           was_bypassed: boolean
         }
@@ -577,7 +577,7 @@ export type Database = {
           id?: string
           metadata?: Json
           transcriptions_used?: number
-          user_id: string
+          user_id?: string | null
           was_blocked?: boolean
           was_bypassed?: boolean
         }
@@ -589,7 +589,7 @@ export type Database = {
           id?: string
           metadata?: Json
           transcriptions_used?: number
-          user_id?: string
+          user_id?: string | null
           was_blocked?: boolean
           was_bypassed?: boolean
         }
