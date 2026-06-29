@@ -43,12 +43,21 @@ Validade: 12 meses a partir da compra. Idempotência via `stripe_session_id`.
 
 ## 3. Add-ons recorrentes (Fase 5/7)
 
-| Add-on | Preço | Inclui | Observação |
-|---|---|---|---|
-| Chat Agente Clínico | R$ 19,90/mês | Ilimitado dentro do bom-senso | Proposto híbrido (R$14,90 + R$0,10/msg >100) — pendente decisão A5 |
-| Transcrição +5 | R$ 14,90 | 5 transcrições, val. 12 meses | Base inclui 5/mês no PRO |
-| Transcrição +15 | R$ 34,90 | 15 transcrições | |
-| Transcrição +50 | R$ 89,90 | 50 transcrições | |
+| Add-on | Preço | Inclui | Stripe price_id | Status |
+|---|---|---|---|---|
+| **Chat do Agente — Mensal** | R$ 14,90/mês | 150 mensagens/mês; excedente consome créditos normais | `price_1Tnmik2HgVhVBE8UH8xK7t5H` | **ATIVO (A5, 29/06/2026)** — instrumentado em `clinical-agent-chat` via `profiles.chat_addon_status` + `chat_addon_msgs_used` (reset mensal por `reset_chat_addon_period_if_needed`). Quando ativo e dentro da franquia, shadow-log registra `credits: 0` + `chat_addon: true`. |
+| **Pacote IA Anual** | R$ 299 (one-off) | 1200 créditos, val. 12 meses | `price_1Tnmj52HgVhVBE8UJfS8V5lF` | **ATIVO (A5, 29/06/2026)** — ~R$ 0,25/cr (~4% off vs Plus avulso). Fulfilled via `stripe-webhook` com metadata `package=annual`. |
+| Transcrição +5 | R$ 14,90 | 5 transcrições, val. 12 meses | — | Base inclui 5/mês no PRO |
+| Transcrição +15 | R$ 34,90 | 15 transcrições | — | |
+| Transcrição +50 | R$ 89,90 | 50 transcrições | — | |
+
+### 3.1 Trial Clínica (A5)
+
+- **Limite de IA durante trial:** 75 créditos totais (campo `clinics.trial_credits_cap`, default 75).
+- **CNPJ obrigatório:** validado por dígitos verificadores (mod 11) em `_shared/cnpj.ts`. Bloqueio de duplicidade (1 trial por CNPJ).
+- **MEI aceito.** Campo `clinics.cnpj` único.
+- Front: `ClinicLanding.tsx` exige 14 dígitos antes de enviar.
+
 
 ## 4. Custo unitário Lovable assumido
 
