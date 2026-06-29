@@ -16,10 +16,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Sparkles, Check, Zap } from "lucide-react";
+import { Loader2, Sparkles, Check, Zap, MessageCircle, Calendar } from "lucide-react";
 
 interface Pkg {
-  key: "starter" | "mini" | "plus";
+  key: "starter" | "mini" | "plus" | "annual";
   credits: number;
   price_brl: number;
   badge?: string;
@@ -31,6 +31,9 @@ const PACKAGES: Pkg[] = [
   { key: "mini", credits: 50, price_brl: 15, badge: "Popular", highlight: true },
   { key: "plus", credits: 150, price_brl: 39, badge: "Melhor valor" },
 ];
+
+// A5: pacote anual em card próprio, separado dos avulsos.
+const ANNUAL_PKG = { key: "annual" as const, credits: 1200, price_brl: 299 };
 
 // Estimativa de capacidade por pacote (avaliação completa ≈ 0,70 créditos:
 // diagnóstico 0,30 + tratamento 0,30 + impressão clínica 0,10).
@@ -53,10 +56,23 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const isPt = language === "pt";
   const checkoutAction = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-ai-credits-checkout`;
+  const chatAddonAction = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-chat-addon-checkout`;
 
   // Toast after returning from Stripe Checkout.
   useEffect(() => {
     const status = searchParams.get("ai_credits");
+    const chatStatus = searchParams.get("chat_addon");
+    if (chatStatus === "success") {
+      toast({
+        title: isPt ? "💬 Chat do Agente ativado!" : "💬 Agent Chat activated!",
+        description: isPt
+          ? "Você tem 150 mensagens/mês inclusas. Pode usar à vontade."
+          : "You now have 150 messages/month included.",
+      });
+      const next = new URLSearchParams(searchParams);
+      next.delete("chat_addon");
+      setSearchParams(next, { replace: true });
+    }
     if (status === "success") {
       toast({
         title: isPt ? "✨ Pagamento confirmado!" : "✨ Payment confirmed!",
@@ -101,13 +117,13 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
     };
   }, [open, user]);
 
-  const handleBuy = (key: string) => {
+  const handleBuy = (key: string, action: string = checkoutAction) => {
     if (!user) {
       toast({
         title: isPt ? "Faça login" : "Sign in",
         description: isPt
-          ? "Você precisa estar logado para comprar créditos."
-          : "You must be signed in to buy credits.",
+          ? "Você precisa estar logado para comprar."
+          : "You must be signed in to purchase.",
         variant: "destructive",
       });
       return;
@@ -125,11 +141,9 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
 
     setLoadingKey(key);
 
-    // Mobile Safari/Chrome inside app previews can block JS redirects after an async fetch.
-    // Submit a native top-level POST instead; the edge function replies 303 directly to Stripe.
     const form = document.createElement("form");
     form.method = "POST";
-    form.action = checkoutAction;
+    form.action = action;
     form.target = "_top";
     form.style.display = "none";
 
