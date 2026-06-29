@@ -565,6 +565,60 @@ const AccountantCard = ({
           </div>
         </div>
 
+        {/* Churn modeling — same per-user burn, three retention scenarios */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">
+            {t(
+              "Modelo de churn — coorte de 100 usuários em 12 meses",
+              "Churn model — 100-user cohort over 12 months",
+            )}
+          </p>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("Cenário", "Scenario")}</TableHead>
+                  <TableHead className="text-right">{t("Churn/mês", "Monthly churn")}</TableHead>
+                  <TableHead className="text-right">{t("Retidos no m12", "Retained at m12")}</TableHead>
+                  <TableHead className="text-right">{t("Consumo m12", "Burn at m12")}</TableHead>
+                  <TableHead className="text-right">{t("Créditos 12m", "12m credits")}</TableHead>
+                  <TableHead className="text-right">{t("Pico de saldo", "Peak balance")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {churnProjection.map((p) => (
+                  <TableRow key={p.key}>
+                    <TableCell className="font-medium">{p.label}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {fmt(p.rate * 100, 0)}%
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {fmt(p.retainedAfter12m, 0)}{" "}
+                      <span className="text-[10px] text-muted-foreground">
+                        ({fmt(p.retentionPct, 0)}%)
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">{fmt(p.monthlyAtMonth12, 0)} cr</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {fmt(p.totalYearCredits, 0)} cr
+                    </TableCell>
+                    <TableCell className="text-right text-primary">
+                      {fmt(p.peakBuffer, 0)} cr
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              {t(
+                "Coorte fictícia de 100 usuários. Churn aplicado mensalmente e composto. Pico de saldo = saldo recomendado no mês 0 (buffer 1.5×). Use o cenário base para provisionar; o pessimista para entender risco.",
+                "Hypothetical 100-user cohort. Monthly churn compounded. Peak balance = recommended balance at month 0 (1.5× buffer). Use base scenario to provision; pessimistic to gauge risk.",
+              )}
+            </p>
+          </div>
+        </div>
+
+
         {/* Insights list */}
         <div className="space-y-2">
           {insights.map((ins, i) => {
