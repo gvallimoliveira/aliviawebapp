@@ -44,7 +44,7 @@ export function logAppError(error: unknown, opts: LogOptions = {}): void {
 
     const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : null;
 
-    void supabase.from("app_errors").insert({
+    void supabase.from("app_errors").insert([{
       scope: opts.scope ?? "frontend",
       severity: opts.severity ?? "error",
       error_message: message.slice(0, 2000),
@@ -52,8 +52,8 @@ export function logAppError(error: unknown, opts: LogOptions = {}): void {
       function_name: opts.functionName ?? null,
       route,
       user_agent: userAgent,
-      metadata: opts.metadata ?? {},
-    });
+      metadata: (opts.metadata ?? {}) as Record<string, unknown>,
+    }]);
   } catch {
     // Logger itself must never throw.
   }
