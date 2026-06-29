@@ -1242,6 +1242,7 @@ export type Database = {
         Row: {
           address: string | null
           brand_color: string | null
+          cnpj: string | null
           created_at: string
           default_session_price: number | null
           id: string
@@ -1257,12 +1258,14 @@ export type Database = {
           saturday_hours_start: string | null
           subscription_status: string
           subscription_stripe_id: string | null
+          trial_credits_cap: number
           updated_at: string
           working_days: number[] | null
         }
         Insert: {
           address?: string | null
           brand_color?: string | null
+          cnpj?: string | null
           created_at?: string
           default_session_price?: number | null
           id?: string
@@ -1278,12 +1281,14 @@ export type Database = {
           saturday_hours_start?: string | null
           subscription_status?: string
           subscription_stripe_id?: string | null
+          trial_credits_cap?: number
           updated_at?: string
           working_days?: number[] | null
         }
         Update: {
           address?: string | null
           brand_color?: string | null
+          cnpj?: string | null
           created_at?: string
           default_session_price?: number | null
           id?: string
@@ -1299,6 +1304,7 @@ export type Database = {
           saturday_hours_start?: string | null
           subscription_status?: string
           subscription_stripe_id?: string | null
+          trial_credits_cap?: number
           updated_at?: string
           working_days?: number[] | null
         }
@@ -2666,6 +2672,12 @@ export type Database = {
       profiles: {
         Row: {
           age: number | null
+          chat_addon_msgs_used: number
+          chat_addon_period_end: string | null
+          chat_addon_period_start: string | null
+          chat_addon_quota: number
+          chat_addon_status: string
+          chat_addon_stripe_subscription_id: string | null
           created_at: string
           full_name: string | null
           id: string
@@ -2679,6 +2691,12 @@ export type Database = {
         }
         Insert: {
           age?: number | null
+          chat_addon_msgs_used?: number
+          chat_addon_period_end?: string | null
+          chat_addon_period_start?: string | null
+          chat_addon_quota?: number
+          chat_addon_status?: string
+          chat_addon_stripe_subscription_id?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -2692,6 +2710,12 @@ export type Database = {
         }
         Update: {
           age?: number | null
+          chat_addon_msgs_used?: number
+          chat_addon_period_end?: string | null
+          chat_addon_period_start?: string | null
+          chat_addon_quota?: number
+          chat_addon_status?: string
+          chat_addon_stripe_subscription_id?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -3403,6 +3427,10 @@ export type Database = {
           title: string
           year: number
         }[]
+      }
+      reset_chat_addon_period_if_needed: {
+        Args: { _user_id: string }
+        Returns: undefined
       }
       revert_assessment_red_flags_dismissal: {
         Args: { _assessment_id: string }

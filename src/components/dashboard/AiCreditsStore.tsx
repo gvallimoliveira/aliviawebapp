@@ -16,10 +16,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Sparkles, Check, Zap } from "lucide-react";
+import { Loader2, Sparkles, Check, Zap, MessageCircle, Calendar } from "lucide-react";
 
 interface Pkg {
-  key: "starter" | "mini" | "plus";
+  key: "starter" | "mini" | "plus" | "annual";
   credits: number;
   price_brl: number;
   badge?: string;
@@ -31,6 +31,9 @@ const PACKAGES: Pkg[] = [
   { key: "mini", credits: 50, price_brl: 15, badge: "Popular", highlight: true },
   { key: "plus", credits: 150, price_brl: 39, badge: "Melhor valor" },
 ];
+
+// A5: pacote anual em card próprio, separado dos avulsos.
+const ANNUAL_PKG = { key: "annual" as const, credits: 1200, price_brl: 299 };
 
 // Estimativa de capacidade por pacote (avaliação completa ≈ 0,70 créditos:
 // diagnóstico 0,30 + tratamento 0,30 + impressão clínica 0,10).
@@ -53,10 +56,23 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const isPt = language === "pt";
   const checkoutAction = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-ai-credits-checkout`;
+  const chatAddonAction = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-chat-addon-checkout`;
 
   // Toast after returning from Stripe Checkout.
   useEffect(() => {
     const status = searchParams.get("ai_credits");
+    const chatStatus = searchParams.get("chat_addon");
+    if (chatStatus === "success") {
+      toast({
+        title: isPt ? "💬 Chat do Agente ativado!" : "💬 Agent Chat activated!",
+        description: isPt
+          ? "Você tem 150 mensagens/mês inclusas. Pode usar à vontade."
+          : "You now have 150 messages/month included.",
+      });
+      const next = new URLSearchParams(searchParams);
+      next.delete("chat_addon");
+      setSearchParams(next, { replace: true });
+    }
     if (status === "success") {
       toast({
         title: isPt ? "✨ Pagamento confirmado!" : "✨ Payment confirmed!",
@@ -101,13 +117,13 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
     };
   }, [open, user]);
 
-  const handleBuy = (key: string) => {
+  const handleBuy = (key: string, action: string = checkoutAction) => {
     if (!user) {
       toast({
         title: isPt ? "Faça login" : "Sign in",
         description: isPt
-          ? "Você precisa estar logado para comprar créditos."
-          : "You must be signed in to buy credits.",
+          ? "Você precisa estar logado para comprar."
+          : "You must be signed in to purchase.",
         variant: "destructive",
       });
       return;
@@ -125,11 +141,9 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
 
     setLoadingKey(key);
 
-    // Mobile Safari/Chrome inside app previews can block JS redirects after an async fetch.
-    // Submit a native top-level POST instead; the edge function replies 303 directly to Stripe.
     const form = document.createElement("form");
     form.method = "POST";
-    form.action = checkoutAction;
+    form.action = action;
     form.target = "_top";
     form.style.display = "none";
 
@@ -266,6 +280,80 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
             </Card>
           ))}
         </div>
+
+        {/* A5: pacote anual — para clínicas/pros que querem travar custo do ano. */}
+        <Card className="border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10">
+          <CardContent className="pt-5 pb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="rounded-lg bg-amber-100 dark:bg-amber-900/40 p-2.5">
+                <Calendar className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground text-sm flex items-center gap-2">
+                  {isPt ? "Pacote Anual" : "Annual Pack"}
+                  <Badge variant="secondary" className="text-[10px]">
+                    {isPt ? "Travar preço por 12 meses" : "Lock-in 12 months"}
+                  </Badge>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {isPt
+                    ? `${ANNUAL_PKG.credits} créditos por R$ ${ANNUAL_PKG.price_brl.toFixed(2)} (R$ ${(ANNUAL_PKG.price_brl / ANNUAL_PKG.credits).toFixed(3)}/cr, ~4% off vs Plus)`
+                    : `${ANNUAL_PKG.credits} credits for R$ ${ANNUAL_PKG.price_brl.toFixed(2)} (~4% off Plus)`}
+                </p>
+                <p className="text-[11px] text-muted-foreground/80 mt-1">
+                  {isPt
+                    ? `Equivale a ${estimateAssessments(ANNUAL_PKG.credits)} avaliações completas ou ${estimateChatMessages(ANNUAL_PKG.credits).toLocaleString("pt-BR")} mensagens de chat.`
+                    : `Equivalent to ${estimateAssessments(ANNUAL_PKG.credits)} full assessments or ${estimateChatMessages(ANNUAL_PKG.credits).toLocaleString("en-US")} chat messages.`}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="default"
+              className="w-full sm:w-auto"
+              disabled={loadingKey !== null || (open && !!user && !accessToken)}
+              onClick={() => handleBuy("annual")}
+            >
+              {loadingKey === "annual" ? <Loader2 className="h-4 w-4 animate-spin" /> : (isPt ? "Assinar pacote anual" : "Get annual pack")}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* A5: assinatura do Chat do Agente (R$ 14,90/mês, 150 msgs). */}
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="pt-5 pb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="rounded-lg bg-primary/15 p-2.5">
+                <MessageCircle className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground text-sm flex items-center gap-2">
+                  {isPt ? "Chat do Agente — Mensal" : "Agent Chat — Monthly"}
+                  <Badge variant="secondary" className="text-[10px]">R$ 14,90/mês</Badge>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {isPt
+                    ? "150 mensagens/mês inclusas. Excedentes consomem créditos do seu saldo normalmente."
+                    : "150 messages/month included. Overflow uses your regular credit balance."}
+                </p>
+                <p className="text-[11px] text-muted-foreground/80 mt-1">
+                  {isPt
+                    ? "Ideal para quem usa o agente como copiloto diário e quer custo previsível."
+                    : "For heavy daily agent users who want predictable cost."}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="default"
+              className="w-full sm:w-auto"
+              disabled={loadingKey !== null || (open && !!user && !accessToken)}
+              onClick={() => handleBuy("chat_addon", chatAddonAction)}
+            >
+              {loadingKey === "chat_addon" ? <Loader2 className="h-4 w-4 animate-spin" /> : (isPt ? "Assinar chat" : "Subscribe")}
+            </Button>
+          </CardContent>
+        </Card>
+
+
 
         <DialogFooter className="text-xs text-muted-foreground sm:justify-start">
           {isPt

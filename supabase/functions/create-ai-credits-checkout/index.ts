@@ -52,6 +52,13 @@ const PACKAGES: Record<
     price_brl: 39.0,
     label: "Pacote IA Plus (150 créditos)",
   },
+  annual: {
+    // 2026-06 A5: pacote anual de 1200 créditos a R$ 299 (R$ 0,25/cr, ~4% off vs Plus).
+    price_id: "price_1Tnmj52HgVhVBE8UJfS8V5lF",
+    credits: 1200,
+    price_brl: 299.0,
+    label: "Pacote IA Anual (1200 créditos)",
+  },
 };
 
 serve(async (req) => {

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { normalizeAndValidateCnpj } from "../_shared/cnpj.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,7 +32,7 @@ serve(async (req) => {
     logStep("Function started");
 
     const body = await req.json();
-    const { tier, email, phone } = body;
+    const { tier, email, phone, cnpj } = body;
 
     if (!tier || !["small", "medium", "large"].includes(tier)) {
       throw new Error("Invalid tier. Must be small, medium, or large");
@@ -40,10 +41,19 @@ serve(async (req) => {
       throw new Error("Email is required");
     }
 
+    // A5: CNPJ obrigatório no trial (anti-abuso). MEI/EI também passam.
+    const normalizedCnpj = normalizeAndValidateCnpj(cnpj);
+    if (!normalizedCnpj) {
+      return new Response(
+        JSON.stringify({ error: "invalid_cnpj", message: "CNPJ inválido ou ausente. O trial de clínica exige um CNPJ válido." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedPhone = phone?.trim() || null;
 
-    logStep("Trial request", { email: normalizedEmail, tier, phone: normalizedPhone });
+    logStep("Trial request", { email: normalizedEmail, tier, phone: normalizedPhone, cnpj: normalizedCnpj });
 
     // Check if user already exists in auth
     let userId: string;
@@ -113,6 +123,21 @@ serve(async (req) => {
 
     const maxMembers = MAX_MEMBERS[tier] || 3;
 
+    // A5: bloqueio de CNPJ duplicado (1 trial por CNPJ).
+    const { data: existingByCnpj } = await supabaseAdmin
+      .from("clinics")
+      .select("id, owner_user_id")
+      .eq("cnpj", normalizedCnpj)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingByCnpj && existingByCnpj.owner_user_id !== userId) {
+      return new Response(
+        JSON.stringify({ error: "cnpj_already_used", message: "Já existe um trial de clínica registrado para este CNPJ." }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // Create clinic with trial status
     const { data: newClinic, error: clinicError } = await supabaseAdmin
       .from("clinics")
@@ -122,6 +147,8 @@ serve(async (req) => {
         subscription_status: "trialing",
         max_members: maxMembers,
         phone: normalizedPhone,
+        cnpj: normalizedCnpj,
+        trial_credits_cap: 75, // A5: cota de IA durante o trial
       })
       .select("id")
       .single();
