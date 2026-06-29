@@ -52,7 +52,7 @@ export function logAppError(error: unknown, opts: LogOptions = {}): void {
       function_name: opts.functionName ?? null,
       route,
       user_agent: userAgent,
-      metadata: (opts.metadata ?? {}) as Record<string, unknown>,
+      metadata: (opts.metadata ?? {}) as never,
     }]);
   } catch {
     // Logger itself must never throw.
