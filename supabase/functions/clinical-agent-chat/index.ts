@@ -607,7 +607,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    shadowLogAiUsage(req, { function_name: "clinical-agent-chat" });
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
@@ -620,6 +619,36 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // A5: se o usuário tem o Chat Addon ativo e ainda dentro da franquia mensal,
+    // consumimos 1 msg do addon e NÃO logamos crédito padrão (zera o cost desta call).
+    // Caso contrário cai no shadowLog padrão (0.05cr).
+    let addonConsumed = false;
+    try {
+      await adminClient.rpc("reset_chat_addon_period_if_needed", { _user_id: user.id });
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("chat_addon_status, chat_addon_msgs_used, chat_addon_quota")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (
+        profile?.chat_addon_status === "active" &&
+        (profile.chat_addon_msgs_used ?? 0) < (profile.chat_addon_quota ?? 150)
+      ) {
+        await adminClient
+          .from("profiles")
+          .update({ chat_addon_msgs_used: (profile.chat_addon_msgs_used ?? 0) + 1 })
+          .eq("user_id", user.id);
+        addonConsumed = true;
+      }
+    } catch (e) {
+      console.warn("[agent] chat addon check failed (non-blocking):", (e as Error).message);
+    }
+    shadowLogAiUsage(req, {
+      function_name: "clinical-agent-chat",
+      credits: addonConsumed ? 0 : undefined,
+      metadata: addonConsumed ? { chat_addon: true } : undefined,
+    });
 
     // Access gate
     const [vip, globalOn] = await Promise.all([
