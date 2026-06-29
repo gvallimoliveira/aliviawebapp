@@ -665,12 +665,11 @@ Deno.serve(async (req) => {
     });
 
 
-    // Access gate
-    const [vip, globalOn] = await Promise.all([
-      isVipEmail(adminClient, user.email),
-      agentEnabledGlobally(adminClient),
-    ]);
+    // Access gate (reusa vipEarly)
+    const globalOn = await agentEnabledGlobally(adminClient);
+    const vip = vipEarly;
     if (!vip && !globalOn) {
+
       return new Response(JSON.stringify({ error: "Agent not available yet" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
