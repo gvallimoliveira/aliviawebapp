@@ -343,6 +343,37 @@ const AccountantCard = ({
     buffer: perUserMonth * n * 1.5,
   }));
 
+  // --- churn modeling ------------------------------------------------------
+  // Three monthly churn scenarios (industry SaaS benchmarks for early-stage
+  // health/B2B SaaS: 5% optimistic, 10% base, 18% pessimistic). We project
+  // a 100-user cohort over 12 months, applying churn compounded monthly and
+  // back-out the implied 12m credit burn + balance buffer to keep in stock.
+  const CHURN_SCENARIOS = [
+    { key: "low", label: t("Otimista", "Optimistic"), rate: 0.05 },
+    { key: "base", label: t("Base", "Base"), rate: 0.10 },
+    { key: "high", label: t("Pessimista", "Pessimistic"), rate: 0.18 },
+  ];
+  const cohortStart = 100;
+  const churnProjection = CHURN_SCENARIOS.map((sc) => {
+    let retained = cohortStart;
+    let cumulativeCreditMonths = 0; // soma de (usuarios * meses ativos)
+    for (let m = 1; m <= 12; m++) {
+      retained = retained * (1 - sc.rate);
+      cumulativeCreditMonths += retained;
+    }
+    const monthly12 = retained * perUserMonth;
+    const totalYearCredits = cumulativeCreditMonths * perUserMonth;
+    const peakBuffer = cohortStart * perUserMonth * 1.5; // pico = mês 0
+    return {
+      ...sc,
+      retainedAfter12m: retained,
+      retentionPct: (retained / cohortStart) * 100,
+      monthlyAtMonth12: monthly12,
+      totalYearCredits,
+      peakBuffer,
+    };
+  });
+
   // --- function-level signals ---------------------------------------------
   const topFn = stats.functions[0];
   const topFnShare = topFn && stats.total_credits > 0
