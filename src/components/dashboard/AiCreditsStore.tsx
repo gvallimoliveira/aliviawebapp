@@ -281,6 +281,80 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
           ))}
         </div>
 
+        {/* A5: pacote anual — para clínicas/pros que querem travar custo do ano. */}
+        <Card className="border-amber-300/60 bg-amber-50/40 dark:bg-amber-950/10">
+          <CardContent className="pt-5 pb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="rounded-lg bg-amber-100 dark:bg-amber-900/40 p-2.5">
+                <Calendar className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground text-sm flex items-center gap-2">
+                  {isPt ? "Pacote Anual" : "Annual Pack"}
+                  <Badge variant="secondary" className="text-[10px]">
+                    {isPt ? "Travar preço por 12 meses" : "Lock-in 12 months"}
+                  </Badge>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {isPt
+                    ? `${ANNUAL_PKG.credits} créditos por R$ ${ANNUAL_PKG.price_brl.toFixed(2)} (R$ ${(ANNUAL_PKG.price_brl / ANNUAL_PKG.credits).toFixed(3)}/cr, ~4% off vs Plus)`
+                    : `${ANNUAL_PKG.credits} credits for R$ ${ANNUAL_PKG.price_brl.toFixed(2)} (~4% off Plus)`}
+                </p>
+                <p className="text-[11px] text-muted-foreground/80 mt-1">
+                  {isPt
+                    ? `Equivale a ${estimateAssessments(ANNUAL_PKG.credits)} avaliações completas ou ${estimateChatMessages(ANNUAL_PKG.credits).toLocaleString("pt-BR")} mensagens de chat.`
+                    : `Equivalent to ${estimateAssessments(ANNUAL_PKG.credits)} full assessments or ${estimateChatMessages(ANNUAL_PKG.credits).toLocaleString("en-US")} chat messages.`}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="default"
+              className="w-full sm:w-auto"
+              disabled={loadingKey !== null || (open && !!user && !accessToken)}
+              onClick={() => handleBuy("annual")}
+            >
+              {loadingKey === "annual" ? <Loader2 className="h-4 w-4 animate-spin" /> : (isPt ? "Assinar pacote anual" : "Get annual pack")}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* A5: assinatura do Chat do Agente (R$ 14,90/mês, 150 msgs). */}
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="pt-5 pb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="rounded-lg bg-primary/15 p-2.5">
+                <MessageCircle className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground text-sm flex items-center gap-2">
+                  {isPt ? "Chat do Agente — Mensal" : "Agent Chat — Monthly"}
+                  <Badge variant="secondary" className="text-[10px]">R$ 14,90/mês</Badge>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {isPt
+                    ? "150 mensagens/mês inclusas. Excedentes consomem créditos do seu saldo normalmente."
+                    : "150 messages/month included. Overflow uses your regular credit balance."}
+                </p>
+                <p className="text-[11px] text-muted-foreground/80 mt-1">
+                  {isPt
+                    ? "Ideal para quem usa o agente como copiloto diário e quer custo previsível."
+                    : "For heavy daily agent users who want predictable cost."}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="default"
+              className="w-full sm:w-auto"
+              disabled={loadingKey !== null || (open && !!user && !accessToken)}
+              onClick={() => handleBuy("chat_addon", chatAddonAction)}
+            >
+              {loadingKey === "chat_addon" ? <Loader2 className="h-4 w-4 animate-spin" /> : (isPt ? "Assinar chat" : "Subscribe")}
+            </Button>
+          </CardContent>
+        </Card>
+
+
+
         <DialogFooter className="text-xs text-muted-foreground sm:justify-start">
           {isPt
             ? "Pagamento processado pela Stripe. Validade: 12 meses a partir da compra."
