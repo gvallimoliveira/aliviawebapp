@@ -67,10 +67,23 @@ Detalhes financeiros e premissas estratégicas: ver `.agents/memory/business/ai-
 - Reprecificar Clinic Basic/Plus/Enterprise considerando custo real de IA (extraído dos dados da Fase 5).
 - Aumentar margem 5-10pp conforme plano em memória.
 
-### ⏳ Fase 7 — Cobrança separada do chat do agente (depois)
-- Chat do Agente de Raciocínio (alto custo) sai da quota base, vira add-on:
-  - Pro autônomo: R$ X/mês ou pago via créditos (custo por mensagem).
-  - Clínicas: pacote dedicado ou add-on por terapeuta.
+### ✅ Fase 7 (parcial) — Chat do Agente como add-on (CONCLUÍDO via A5, 29/06/2026)
+- Assinatura mensal R$ 14,90 / 150 msgs (`price_1Tnmik2HgVhVBE8UH8xK7t5H`).
+- Instrumentado em `clinical-agent-chat` com reset mensal (`reset_chat_addon_period_if_needed`).
+- **VIP + parceiros isentos** — bypass antes de contar addon ou logar crédito.
+- Excedente após 150 msgs cai no fluxo normal de créditos (0,05 cr/turno).
+- UI: card no `AiCreditsStore.tsx` + toast de ativação.
+
+### ✅ A5 paralelo — Trial Clínica endurecido (CONCLUÍDO 29/06/2026)
+- CNPJ obrigatório (mod 11) + bloqueio de duplicidade por CNPJ.
+- `clinics.trial_credits_cap = 75` cap absoluto de IA durante trial.
+- MEI aceito. Front (`ClinicLanding.tsx`) valida 14 dígitos antes de enviar.
+- **Não afeta VIP/parceiros** — eles não passam pelo fluxo de trial.
+
+### ✅ A5 paralelo — Pacote Anual de créditos (CONCLUÍDO 29/06/2026)
+- R$ 299 / 1200 créditos (`price_1Tnmj52HgVhVBE8UJfS8V5lF`), válido 12 meses.
+- Fulfilled via `stripe-webhook` (mesmo case `ai_credits`).
+
 
 ## Arquivos-chave
 
