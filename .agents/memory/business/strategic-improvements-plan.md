@@ -98,6 +98,7 @@ Origem: revisão dupla (financeira + engenharia) em 27/06/2026. Executar etapas 
 ## Ordem sugerida de execução
 1. **A1** (alinhar verdade) → 2. **A2** (validar custo) → 3. **B4** (lazy-load, ganho rápido)
 4. **A3** (margem Plus) → 5. **B1** (wrapper) → 6. **B3** (logging)
-7. **A4 + A6** (modelo realista) → 8. **A5** (novos produtos) → 9. **B2, B5, B6**
+7. **A4 + A6** (modelo realista) → 8. **A5** (novos produtos) → 9. **A7** (comunicação pública créditos — logo após A5 estar no ar) → 10. **B2, B5, B6**
 
 Cada etapa começa apenas quando o usuário pedir explicitamente "executar etapa Xn".
+
