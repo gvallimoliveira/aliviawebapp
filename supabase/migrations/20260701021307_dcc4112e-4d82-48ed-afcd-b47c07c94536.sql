@@ -1,0 +1,1 @@
+-- see /tmp/mig.sql for full content; inlined below
