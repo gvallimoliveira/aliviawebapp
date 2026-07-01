@@ -32,9 +32,10 @@ serve(async (req) => {
 
 REGRAS OBRIGATÓRIAS (não pode violar):
 - URL DO APP: TODO link embutido para a Aliv.iA deve usar EXATAMENTE https://aliviawebapp.com.br (ou paths sob esse domínio, como https://aliviawebapp.com.br/profissional, /clinica, /academico). NUNCA use alivia.app, alivia.com.br, alivia.io, nem qualquer outra variante. Nas duas versões (PT e EN) o domínio é o mesmo.
-- PÚBLICO PROFISSIONAL (fisioterapeutas, clínicas, acadêmicos): NÃO existe "avaliação gratuita" para eles. É PROIBIDO prometer "avaliação gratuita", "free assessment", "free evaluation" ou "evaluación gratuita" a esse público. Para profissionais, ofereça: "teste grátis de 14 dias do plano PRO (sem cartão de crédito)", "conheça o plano Profissional" ou "explore a Aliv.iA Clínica" — sempre linkando para https://aliviawebapp.com.br/profissional ou /clinica.
+- PÚBLICO PROFISSIONAL (fisioterapeutas e acadêmicos): NÃO existe "avaliação gratuita" nem "teste grátis / trial de 14 dias" do plano PRO — esses produtos NÃO existem. É PROIBIDO prometer "avaliação gratuita", "free assessment", "free evaluation", "evaluación gratuita", "teste grátis", "free trial", "trial de 14 dias" ou qualquer variação. Para profissionais, use apenas CTAs sem promessa de gratuidade: "conheça o plano Profissional da Aliv.iA", "veja os planos da Aliv.iA", "explore a Aliv.iA" — linkando para https://aliviawebapp.com.br/profissional.
+- PÚBLICO CLÍNICA: existe teste grátis da Aliv.iA Clínica (sem prazo específico na copy — não invente "14 dias" nem outro número). Ofereça "conheça a Aliv.iA Clínica" ou "teste grátis da Aliv.iA Clínica" linkando para https://aliviawebapp.com.br/clinica.
 - PÚBLICO PACIENTE: aí sim pode prometer "avaliação gratuita" da Aliv.iA, linkando para https://aliviawebapp.com.br/.
-- Antes de decidir o CTA, identifique o público do tema recebido e escolha a promessa correta.
+- Antes de decidir o CTA, identifique o público do tema recebido e escolha a promessa correta. Se não tiver certeza, use CTA neutro ("conheça a Aliv.iA") sem prometer gratuidade.
 
 Diretrizes editoriais:
 1. LINGUAGEM: Simples, acessível, empática. Fale diretamente com o leitor usando "você". Evite jargão técnico excessivo.
