@@ -46,7 +46,21 @@ Origem: revisão dupla (financeira + engenharia) em 27/06/2026. Executar etapas 
 - Recalcular ponto de equilíbrio.
 - **Entregável:** atualização do estudo.
 
+### Etapa A7 — Comunicação pública sobre créditos IA (transparência)
+- **Contexto:** hoje só `ClinicLanding.tsx` menciona créditos (apenas o cap de 75 no trial). Não há explicação em `ProfessionalLanding.tsx`, `AcademicLanding.tsx`, `Support.tsx`, `AcademicSupport.tsx`, e `ClinicSupport.tsx` só cita "cartão de crédito" (não IA).
+- **Problema:** usuários compram/assinam sem entender o que são créditos IA, quanto vem incluso, o que consome, o que fazer se acabar. Gera ticket de suporte, churn e sensação de "cobrança escondida" — principalmente após A5 (chat addon + trial 75cr) começar a bloquear ações.
+- **Escopo:**
+  1. **Landings** (Pro, Clínica, Acadêmico): seção "Como funcionam os créditos Aliv.iA" com (a) o que é 1 crédito ≈ (avaliação, chat, transcrição), (b) quanto vem incluso no plano (tabela de suficiência de `mem://features/credits-sufficiency-table-landings`), (c) o que acontece se acabar (compra de pacote/warning/soft-block), (d) exceções (biblioteca de evidências sempre livre, clínica não bloqueia).
+  2. **Chat Agente add-on** na landing Pro/Clínica: card explicando R$14,90/150 msgs, quando faz sentido, isenções (VIP/parceiro).
+  3. **Trial Clínica**: destaque de "75 créditos IA durante trial" + link para "como estender" na `ClinicLanding` (já parcialmente feito) e página `/clinica/suporte`.
+  4. **FAQ nas 3 páginas de suporte** (`Support.tsx`, `ClinicSupport.tsx`, `AcademicSupport.tsx`): perguntas fixas — "O que são créditos IA?", "Como vejo meu saldo?", "O que consome créditos?", "Meus créditos acabaram, e agora?", "Créditos comprados expiram?", "Chat do agente cobra separado?".
+  5. **Copy consistente**: um único glossário em `src/constants/creditsCopy.ts` reutilizado em landings, suporte e widget, evitando divergência de números.
+- **Risco:** mínimo (só conteúdo/UI). Reversível.
+- **Entregável:** 3 landings + 3 suporte + glossário compartilhado + i18n pt/en/es.
+
 ---
+
+
 
 ## TRILHA B — Engenharia
 
@@ -84,6 +98,7 @@ Origem: revisão dupla (financeira + engenharia) em 27/06/2026. Executar etapas 
 ## Ordem sugerida de execução
 1. **A1** (alinhar verdade) → 2. **A2** (validar custo) → 3. **B4** (lazy-load, ganho rápido)
 4. **A3** (margem Plus) → 5. **B1** (wrapper) → 6. **B3** (logging)
-7. **A4 + A6** (modelo realista) → 8. **A5** (novos produtos) → 9. **B2, B5, B6**
+7. **A4 + A6** (modelo realista) → 8. **A5** (novos produtos) → 9. **A7** (comunicação pública créditos — logo após A5 estar no ar) → 10. **B2, B5, B6**
 
 Cada etapa começa apenas quando o usuário pedir explicitamente "executar etapa Xn".
+
