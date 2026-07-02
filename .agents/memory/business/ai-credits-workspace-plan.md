@@ -45,23 +45,29 @@ Detalhes financeiros e premissas estratégicas: ver `.agents/memory/business/ai-
 - `src/components/dashboard/AiCreditsStore.tsx` — modal 3 cards, abre Checkout em nova aba, trata `?ai_credits=success|canceled`.
 - Widget atualizado: mostra saldo comprado + botão "Comprar pacote de créditos".
 
-### ⏸ Fase 5 — Enforcement gradual (AGUARDANDO)
-- **Pré-requisito:** 5-7 dias de dados reais via shadow tracking após publish da Fase 4.
-- **Quotas-alvo por tier** (decisão 26/06: reduzir Pro, manter Clínica generosa pois nada foi anunciado externamente):
-  - `pro_monthly`: **100 créditos/mês** (antes considerado 150; reduzido — uso moderado real ≈33 cr)
-  - `pro_annual`: **120 créditos/mês** (leve premium pela fidelidade anual)
-  - `academic_monthly` / `academic_annual`: 40 / 50 cr (quizzes fixos já cortaram demanda)
-  - `clinic_small`: **200 cr/mês por terapeuta** (mantida generosa — diferencial competitivo)
-  - `clinic_medium` / `clinic_large`: 250 / 300 cr/mês por terapeuta
-  - `premium_b2c`: 15 cr/mês
-  - `unlimited` (VIP/admin): sem trava
-- Passos:
-  1. Validar custos estimados vs reais no dashboard admin.
-  2. Seedar `ai_credit_quotas` conforme tabela acima (job mensal via cron).
-  3. Implementar warning a 80% de uso (banner + push).
-  4. Soft-block a 100% (modal "compre pacote ou aguarde reset"). **Clínica nunca bloqueia** — só warning; excedente vai pra fatura do dono.
-  5. Ligar `app_config.ai_credits_enforced = true` (rollout gradual: VIP → 10% usuários → todos).
-- Consumir saldo: primeiro pacote comprado (FIFO por `expires_at`), depois quota mensal.
+### 🟡 Fase 5 — Enforcement gradual (EM ANDAMENTO — subdividida 5.0–5.5)
+
+Ver `.lovable/plan.md` para detalhe completo. Trilhos de segurança em todas:
+flag `app_config.ai_credits_enforced` false até 5.3; bypass VIP + `is_partner` sempre respeitado; clínica nunca bloqueia.
+
+- **✅ 5.0 — Leitura consolidada (02/07/2026)**
+  - Fix crítico em `get_user_ai_tier`: usava `clinics.subscription_tier` e `professionals.plan_type`, ambos inexistentes. Agora deriva porte via `clinics.max_members` e classifica PRO por `subscription_status`/`lifetime_treatment`/`premium_granted`.
+  - Nova função `get_included_credits_for_tier(text)` — fonte única das quotas (pro_monthly 100, pro_annual 120, academic 40/50, clinic 200/250/300, premium_b2c 15).
+  - Nova função `ensure_current_credit_quota(uuid)` — cria linha do mês corrente e reagrega `used_credits` de `ai_credit_usage`.
+  - Nova função `get_user_credit_status(uuid)` → jsonb com `{tier, is_partner, unlimited, included, used, purchased, pct, clinic_size}`. Grants para authenticated + service_role.
+  - Verificado com 6 profissionais reais: parceiros → `unlimited: true`, clínica derivada corretamente, PRO comum retorna 100 cr.
+- **✅ 5.1 — Widget honesto (02/07/2026)**
+  - `AiCreditsWidget.tsx` reescrito consumindo RPC `get_user_credit_status`.
+  - VIP/parceiro veem card "Uso ilimitado 💚" sem barra, sem botão de compra, com badge da razão do ilimitado (Parceiro / Admin).
+  - Demais usuários veem barra `used/included`, saldo de pacotes comprados e CTA de compra.
+  - Ainda **zero bloqueio ou warning** — só apresentação.
+- **⏳ 5.2 — Warning a 80%** — banner + push opcional. Ainda não iniciado.
+- **⏳ 5.3 — Path de enforcement em canário (VIP/parceiro)** — validar que bypass não regride latência antes de bloquear ninguém.
+- **⏳ 5.4 — Soft-block real em PRO/Acadêmico/Premium** — retorno 402 + modal otimista, rollout em 3 ondas. Clínica fica de fora.
+- **⏳ 5.5 — Soft-block em clínica** — só se dados mostrarem abuso; nunca bloqueia atendimento.
+- Consumir saldo (Fase 5.4): primeiro pacote comprado (FIFO por `expires_at`), depois quota mensal.
+
+
 
 ### ⏳ Fase 6 — Ajuste de margem dos planos de clínica (depois)
 - Reprecificar Clinic Basic/Plus/Enterprise considerando custo real de IA (extraído dos dados da Fase 5).
