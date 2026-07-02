@@ -3145,6 +3145,30 @@ export type Database = {
         Args: { _assessment_id: string; _reason: string }
         Returns: undefined
       }
+      ensure_current_credit_quota: {
+        Args: { _user_id: string }
+        Returns: {
+          clinic_id: string | null
+          created_at: string
+          id: string
+          included_credits: number
+          included_transcriptions: number
+          period_end: string
+          period_start: string
+          rollover_credits: number
+          tier: string
+          updated_at: string
+          used_credits: number
+          used_transcriptions: number
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ai_credit_quotas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_clinic_all_patients: {
         Args: { _clinic_id: string }
         Returns: {
@@ -3217,6 +3241,10 @@ export type Database = {
           sessions_remaining: number
           weeks_estimate: number
         }[]
+      }
+      get_included_credits_for_tier: {
+        Args: { _tier: string }
+        Returns: number
       }
       get_my_active_exercise_programs: {
         Args: never
@@ -3394,6 +3422,7 @@ export type Database = {
         }[]
       }
       get_user_ai_tier: { Args: { _user_id: string }; Returns: string }
+      get_user_credit_status: { Args: { _user_id: string }; Returns: Json }
       has_active_pro_subscription: {
         Args: { _professional_id: string }
         Returns: boolean
