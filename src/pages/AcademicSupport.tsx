@@ -84,6 +84,20 @@ const tools = [
       es: "En /conta ves cuántas evaluaciones hiciste, cuántos casos resolviste y cómo evolucionó tu razonamiento clínico — útil para portfolio de prácticas.",
     },
   },
+  {
+    key: "ai_credits",
+    icon: Sparkles,
+    title: {
+      pt: "Controle de créditos de IA (widget 'Seu uso de IA')",
+      en: "AI credits control ('Your AI usage' widget)",
+      es: "Control de créditos de IA (widget 'Tu uso de IA')",
+    },
+    desc: {
+      pt: "Todo o consumo mensal de IA (Agente Clínico, Modo Mentor, /quiz, /caso, /traduzir, /trilha, avaliações etc.) é medido em créditos. Para acompanhar em tempo real, acesse o Dashboard → aba Insights e role até o card 'Seu uso de IA'. Lá você vê a barra de progresso do mês, quantos créditos restam e recebe avisos automáticos ao atingir 80% (banner âmbar) e 100% (banner vermelho — sem bloquear o uso).",
+      en: "All monthly AI usage (Clinical Agent, Mentor Mode, /quiz, /caso, /traduzir, /trilha, assessments, etc.) is metered in credits. To track it in real time, open Dashboard → Insights tab and scroll to the 'Your AI usage' card. You'll see the monthly progress bar, remaining credits and automatic warnings at 80% (amber banner) and 100% (red banner — usage is not blocked).",
+      es: "Todo el consumo mensual de IA (Agente Clínico, Modo Mentor, /quiz, /caso, /traduzir, /trilha, evaluaciones, etc.) se mide en créditos. Para acompañarlo en tiempo real, entra en Dashboard → pestaña Insights y baja hasta la tarjeta 'Tu uso de IA'. Verás la barra de progreso mensual, cuántos créditos quedan y avisos automáticos al alcanzar el 80% (banner ámbar) y el 100% (banner rojo — sin bloquear el uso).",
+    },
+  },
 ];
 
 const faqKeys = [
