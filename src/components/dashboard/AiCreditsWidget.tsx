@@ -59,26 +59,36 @@ const AiCreditsWidget = () => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const start = new Date();
-      start.setDate(1);
-      start.setHours(0, 0, 0, 0);
 
-      const [usageRes, statusRes] = await Promise.all([
-        supabase
-          .from("ai_credit_usage")
-          .select("function_name, credits_used, created_at")
-          .eq("user_id", user.id)
-          .gte("created_at", start.toISOString())
-          .order("created_at", { ascending: false })
-          .limit(2000),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase.rpc as any)("get_user_credit_status", { _user_id: user.id }),
-      ]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const statusRes = await (supabase.rpc as any)("get_user_credit_status", { _user_id: user.id });
+      const s = (statusRes.data as CreditStatus | null) || null;
+
+      // Use the same period boundary as the RPC so the total and the breakdown always match.
+      const periodStart = s?.period_start
+        ? new Date(s.period_start).toISOString()
+        : (() => {
+            const d = new Date();
+            d.setUTCDate(1);
+            d.setUTCHours(0, 0, 0, 0);
+            return d.toISOString();
+          })();
+      const periodEnd = s?.period_end ? new Date(s.period_end).toISOString() : undefined;
+
+      let q = supabase
+        .from("ai_credit_usage")
+        .select("function_name, credits_used, created_at")
+        .eq("user_id", user.id)
+        .eq("was_bypassed", false)
+        .gte("created_at", periodStart)
+        .order("created_at", { ascending: false })
+        .limit(2000);
+      if (periodEnd) q = q.lt("created_at", periodEnd);
+      const usageRes = await q;
 
       if (!cancelled) {
         setRows((usageRes.data as UsageRow[]) || []);
-        const s = statusRes.data as CreditStatus | null;
-        setStatus(s || null);
+        setStatus(s);
         setLoading(false);
       }
     })();
