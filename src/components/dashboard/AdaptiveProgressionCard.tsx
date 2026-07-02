@@ -94,11 +94,21 @@ const AdaptiveProgressionCard = ({ premiumAccess, assessments }: AdaptiveProgres
     }
   }, [user, hasEligibleAssessment, language]);
 
+  // Hydrate from cache only — never auto-invoke the AI (saves credits).
+  // User must explicitly click to generate a fresh suggestion.
   useEffect(() => {
-    if (hasEligibleAssessment && premiumAccess?.has_access) {
-      fetchSuggestion();
-    }
-  }, [hasEligibleAssessment, premiumAccess?.has_access, fetchSuggestion]);
+    if (!user || !hasEligibleAssessment || !premiumAccess?.has_access) return;
+    const cached = localStorage.getItem(`progression_suggestion_${user.id}`);
+    if (!cached) return;
+    try {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.timestamp < 6 * 60 * 60 * 1000) {
+        setSuggestion(parsed.suggestion);
+        setMetrics(parsed.metrics);
+        setLastFetched(new Date(parsed.timestamp).toLocaleTimeString());
+      }
+    } catch {}
+  }, [user, hasEligibleAssessment, premiumAccess?.has_access]);
 
   // Don't render if not eligible
   if (!hasEligibleAssessment || !premiumAccess?.has_access) return null;
