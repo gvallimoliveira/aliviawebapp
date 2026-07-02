@@ -61,7 +61,7 @@ flag `app_config.ai_credits_enforced` false até 5.3; bypass VIP + `is_partner` 
   - VIP/parceiro veem card "Uso ilimitado 💚" sem barra, sem botão de compra, com badge da razão do ilimitado (Parceiro / Admin).
   - Demais usuários veem barra `used/included`, saldo de pacotes comprados e CTA de compra.
   - Ainda **zero bloqueio ou warning** — só apresentação.
-- **⏳ 5.2 — Warning a 80%** — banner + push opcional. Ainda não iniciado.
+- **✅ 5.2 — Warning a 80% (02/07/2026)** — `AiCreditsWidget.tsx` mostra barra âmbar + banner amigável a partir de 80% e banner vermelho (ainda sem bloqueio) a partir de 100%. Nada bloqueia uso; VIP/parceiro seguem no card "Uso ilimitado". Push opcional adiado para junto de 5.3.
 - **⏳ 5.3 — Path de enforcement em canário (VIP/parceiro)** — validar que bypass não regride latência antes de bloquear ninguém.
 - **⏳ 5.4 — Soft-block real em PRO/Acadêmico/Premium** — retorno 402 + modal otimista, rollout em 3 ondas. Clínica fica de fora.
 - **⏳ 5.5 — Soft-block em clínica** — só se dados mostrarem abuso; nunca bloqueia atendimento.

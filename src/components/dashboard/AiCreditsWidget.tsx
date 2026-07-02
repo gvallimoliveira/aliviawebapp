@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Info, Wallet, Infinity as InfinityIcon } from "lucide-react";
+import { Sparkles, Info, Wallet, Infinity as InfinityIcon, AlertTriangle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import AiCreditsStore from "./AiCreditsStore";
 
@@ -189,7 +189,7 @@ const AiCreditsWidget = () => {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold text-primary leading-none">
+                <p className={`text-sm font-semibold leading-none ${pct >= 100 ? "text-destructive" : pct >= 80 ? "text-amber-600" : "text-primary"}`}>
                   {remaining.toFixed(0)}
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-1">
@@ -200,9 +200,30 @@ const AiCreditsWidget = () => {
             {included > 0 && (
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full bg-primary transition-all"
-                  style={{ width: `${pct}%` }}
+                  className={`h-full transition-all ${pct >= 100 ? "bg-destructive" : pct >= 80 ? "bg-amber-500" : "bg-primary"}`}
+                  style={{ width: `${Math.min(pct, 100)}%` }}
                 />
+              </div>
+            )}
+            {/* Fase 5.2 — warning a 80% (sem bloqueio) */}
+            {pct >= 80 && pct < 100 && (
+              <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+                  {isPt
+                    ? `Você já usou ${pct.toFixed(0)}% dos créditos do mês. Nada é bloqueado — mas se quiser folga, considere um pacote avulso.`
+                    : `You've used ${pct.toFixed(0)}% of this month's credits. Nothing is blocked — but a top-up pack gives you room to breathe.`}
+                </p>
+              </div>
+            )}
+            {pct >= 100 && (
+              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-relaxed text-destructive-foreground/90">
+                  {isPt
+                    ? `Cota do mês atingida (${pct.toFixed(0)}%). Continuamos sem bloquear seu uso — um pacote avulso ou o saldo comprado seguem cobrindo tudo.`
+                    : `Monthly quota reached (${pct.toFixed(0)}%). We're not blocking anything — top-up packs or purchased balance keep everything covered.`}
+                </p>
               </div>
             )}
           </div>
