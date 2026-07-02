@@ -52,7 +52,7 @@ flag `app_config.ai_credits_enforced` false até 5.3; bypass VIP + `is_partner` 
 
 - **✅ 5.0 — Leitura consolidada (02/07/2026)**
   - Fix crítico em `get_user_ai_tier`: usava `clinics.subscription_tier` e `professionals.plan_type`, ambos inexistentes. Agora deriva porte via `clinics.max_members` e classifica PRO por `subscription_status`/`lifetime_treatment`/`premium_granted`.
-  - Nova função `get_included_credits_for_tier(text)` — fonte única das quotas (pro_monthly 100, pro_annual 120, academic 40/50, clinic 200/250/300, premium_b2c 15).
+  - Nova função `get_included_credits_for_tier(text)` — fonte única das quotas (pro/academic 100 mensal, 120 anual — **iguais pois pagam o mesmo preço**; clinic 200/250/300, premium_b2c 15). Ajustado 02/07/2026: academic 40/50 → 100/120.
   - Nova função `ensure_current_credit_quota(uuid)` — cria linha do mês corrente e reagrega `used_credits` de `ai_credit_usage`.
   - Nova função `get_user_credit_status(uuid)` → jsonb com `{tier, is_partner, unlimited, included, used, purchased, pct, clinic_size}`. Grants para authenticated + service_role.
   - Verificado com 6 profissionais reais: parceiros → `unlimited: true`, clínica derivada corretamente, PRO comum retorna 100 cr.
