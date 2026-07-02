@@ -150,7 +150,39 @@ const AdaptiveProgressionCard = ({ premiumAccess, assessments }: AdaptiveProgres
     );
   }
 
-  if (!suggestion) return null;
+  if (!suggestion) {
+    return (
+      <Card className="border-border/60 border-dashed">
+        <CardContent className="py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                {t("progression.title") || "Sugestão de Progressão"}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {t("progression.cta_hint") || "Gere uma análise personalizada com base no seu diário de dor e adesão (custa 0,25 crédito)."}
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={fetchSuggestion}
+            disabled={loading}
+            className="shrink-0 w-full sm:w-auto"
+          >
+            {loading ? (
+              <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />{t("progression.analyzing") || "Analisando..."}</>
+            ) : (
+              <><Sparkles className="h-3.5 w-3.5 mr-1.5" />{t("progression.generate") || "Gerar sugestão"}</>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const config = phaseConfig[suggestion.phase];
   const PhaseIcon = config.icon;
