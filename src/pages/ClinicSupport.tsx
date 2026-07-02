@@ -158,6 +158,12 @@ const categories: ToolCategory[] = [
         title: "Biblioteca de Evidências por Nicho (PEDro validado)",
         desc: "Acesso integrado, dentro do Agente Clínico, à curadoria de artigos aprovados e usados pela própria IA — separados por nicho, com DOI/PMID e crivo PEDro. RCTs só entram com nota oficial PEDro ≥ 7; revisões/meta-análises com PEDro N/A ficam sem nota numérica. Disponível para Acadêmico assinante/parceiro acadêmico, PRO e Clínica.",
       },
+      {
+        key: "ai_credits_control",
+        icon: Sparkles,
+        title: "Controle de créditos de IA (widget 'Seu uso de IA')",
+        desc: "Todo consumo mensal de IA da clínica (hipóteses, planos de tratamento, impressão clínica, HEP, sugestões de teste, notas de voz, Agente Clínico) é medido em créditos. Para acompanhar em tempo real, acesse o Dashboard da clínica → aba Insights e role até o card 'Seu uso de IA'. Você vê a barra de progresso do mês, quantos créditos restam e recebe avisos automáticos ao atingir 80% (banner âmbar) e 100% (banner vermelho — sem bloquear a operação). Clínicas com plano ativo não têm interrupção de uso.",
+      },
     ],
   },
   {
