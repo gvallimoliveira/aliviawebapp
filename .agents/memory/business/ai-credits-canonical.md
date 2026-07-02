@@ -33,8 +33,8 @@ Validade: 12 meses a partir da compra. Idempotência via `stripe_session_id`.
 |---|---|---|
 | `pro_monthly` | 100 cr | Reduzido de 150; uso moderado real ≈ 33 cr |
 | `pro_annual` | 120 cr | +20% pela fidelidade |
-| `academic_monthly` | 40 cr | Quizzes fixos cortaram demanda |
-| `academic_annual` | 50 cr | |
+| `academic_monthly` | 100 cr | **Igual ao PRO** — Acadêmico paga o mesmo preço que Profissional, então cota deve ser idêntica (corrigido 02/07/2026). |
+| `academic_annual` | 120 cr | **Igual ao PRO anual** pelo mesmo motivo. |
 | `clinic_small` (≤3 ther.) | 200 cr/terapeuta | **Generoso por estratégia — sem hard block, só warning + overage** |
 | `clinic_medium` (≤8) | 250 cr/terapeuta | idem |
 | `clinic_large` (9+) | 300 cr/terapeuta | idem |
