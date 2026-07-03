@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { shadowLogAiUsage, assertCreditsAvailable } from "../_shared/ai-credits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,7 +14,23 @@ serve(async (req) => {
 
   try {
     const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed } = await req.json();
-    shadowLogAiUsage(req, { function_name: "generate-diagnosis" });
+    const creditDecision = await assertCreditsAvailable(req, { function_name: "generate-diagnosis" });
+    console.log("[ai-credits] generate-diagnosis decision:", JSON.stringify({
+      reason: creditDecision.reason,
+      remaining: creditDecision.remaining,
+      enforced: creditDecision.enforced,
+      blocked: creditDecision.blocked,
+      tier: creditDecision.tier,
+    }));
+    // Shadow mode: never blocks. Phase 5.4 will translate blocked=true into 402.
+    shadowLogAiUsage(req, {
+      function_name: "generate-diagnosis",
+      metadata: {
+        credit_reason: creditDecision.reason,
+        credit_remaining: creditDecision.remaining,
+        credit_enforced: creditDecision.enforced,
+      },
+    });
     const redFlagsList: string[] = Array.isArray(bodyRedFlags)
       ? bodyRedFlags
       : Array.isArray(anamnesisData?.redFlags) ? anamnesisData.redFlags : [];
