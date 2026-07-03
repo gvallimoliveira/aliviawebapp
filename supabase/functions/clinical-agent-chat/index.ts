@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { shadowLogAiUsage, assertCreditsAvailable } from "../_shared/ai-credits.ts";
 
 function normalizeAnamnesis(raw: any) {
   if (!raw || typeof raw !== "object") return raw;
