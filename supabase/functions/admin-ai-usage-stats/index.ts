@@ -126,15 +126,28 @@ serve(async (req) => {
       for (const p of profs || []) {
         userMap[p.user_id] = p.email || p.full_name || p.user_id;
       }
-      // Fallback: try profiles
-      const missing = topUserIds.filter((u) => !userMap[u]);
+      // Fallback 1: profiles table (uses user_id, not id)
+      let missing = topUserIds.filter((u) => !userMap[u]);
       if (missing.length > 0) {
         const { data: profiles } = await admin
           .from("profiles")
-          .select("id, email, full_name")
-          .in("id", missing);
+          .select("user_id, full_name")
+          .in("user_id", missing);
         for (const p of profiles || []) {
-          userMap[p.id] = p.email || p.full_name || p.id;
+          if (p.full_name) userMap[p.user_id] = p.full_name;
+        }
+      }
+      // Fallback 2: auth.users via admin API — guarantees email for every uid
+      missing = topUserIds.filter((u) => !userMap[u]);
+      for (const uid of missing) {
+        try {
+          const { data } = await admin.auth.admin.getUserById(uid);
+          const email = data?.user?.email;
+          const name = (data?.user?.user_metadata as Record<string, unknown> | undefined)?.full_name as string | undefined;
+          if (email) userMap[uid] = name ? `${name} <${email}>` : email;
+          else if (name) userMap[uid] = name;
+        } catch {
+          // ignore — will fall back to uid slice below
         }
       }
     }
