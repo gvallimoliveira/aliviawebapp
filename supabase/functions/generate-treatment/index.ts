@@ -14,7 +14,23 @@ serve(async (req) => {
 
   try {
     const { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language } = await req.json();
-    shadowLogAiUsage(req, { function_name: "generate-treatment" });
+    const creditDecision = await assertCreditsAvailable(req, { function_name: "generate-treatment" });
+    console.log("[ai-credits] generate-treatment decision:", JSON.stringify({
+      reason: creditDecision.reason,
+      remaining: creditDecision.remaining,
+      enforced: creditDecision.enforced,
+      blocked: creditDecision.blocked,
+      tier: creditDecision.tier,
+    }));
+    // Shadow mode: never blocks. Phase 5.4 will translate blocked=true into 402.
+    shadowLogAiUsage(req, {
+      function_name: "generate-treatment",
+      metadata: {
+        credit_reason: creditDecision.reason,
+        credit_remaining: creditDecision.remaining,
+        credit_enforced: creditDecision.enforced,
+      },
+    });
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const painScore = anamnesisData?.painScore ?? 5;
