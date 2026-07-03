@@ -656,12 +656,33 @@ Deno.serve(async (req) => {
         console.warn("[agent] chat addon check failed (non-blocking):", (e as Error).message);
       }
     }
+    // Phase 5.3 canary — shadow-mode credit check. Never blocks the agent;
+    // simply records the decision so we can audit VIP/partner bypass paths
+    // and remaining balance before enabling 402s in Phase 5.4.
+    const creditDecision = await assertCreditsAvailable(req, {
+      function_name: "clinical-agent-chat",
+      user_id: user.id,
+    });
+    console.log("[ai-credits] clinical-agent-chat decision:", JSON.stringify({
+      reason: creditDecision.reason,
+      remaining: creditDecision.remaining,
+      enforced: creditDecision.enforced,
+      blocked: creditDecision.blocked,
+      tier: creditDecision.tier,
+      addon_consumed: addonConsumed,
+      legacy_exempt: isExempt,
+    }));
     shadowLogAiUsage(req, {
       function_name: "clinical-agent-chat",
+      user_id: user.id,
       credits: isExempt ? 0 : (addonConsumed ? 0 : undefined),
-      metadata: isExempt
-        ? { exempt: vipEarly ? "vip" : "partner" }
-        : (addonConsumed ? { chat_addon: true } : undefined),
+      metadata: {
+        ...(isExempt ? { exempt: vipEarly ? "vip" : "partner" } : {}),
+        ...(addonConsumed ? { chat_addon: true } : {}),
+        credit_reason: creditDecision.reason,
+        credit_remaining: creditDecision.remaining,
+        credit_enforced: creditDecision.enforced,
+      },
     });
 
 
