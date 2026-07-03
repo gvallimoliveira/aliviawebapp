@@ -9,6 +9,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const ANON_SENTINEL = "00000000-0000-0000-0000-000000000000";
+
+const isAnonymousUsageId = (uid: string) => uid === "anonymous" || uid === ANON_SENTINEL;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -115,7 +119,7 @@ serve(async (req) => {
       .sort((a, b) => b[1].credits - a[1].credits)
       .slice(0, 20)
       .map(([uid]) => uid)
-      .filter((u) => u !== "anonymous");
+      .filter((u) => !isAnonymousUsageId(u));
 
     const userMap: Record<string, string> = {};
     if (topUserIds.length > 0) {
@@ -157,7 +161,9 @@ serve(async (req) => {
       .slice(0, 20)
       .map(([uid, v]) => ({
         user_id: uid,
-        label: userMap[uid] || (uid === "anonymous" ? "Anônimo / sem JWT" : uid.slice(0, 8) + "…"),
+        label: userMap[uid]
+          || (isAnonymousUsageId(uid) ? "Sem conta — fluxo gratuito anônimo" : `UID não resolvido: ${uid}`),
+        attribution: isAnonymousUsageId(uid) ? "anonymous" : (userMap[uid] ? "account" : "unresolved"),
         credits: Number(v.credits.toFixed(3)),
         calls: v.calls,
       }));
@@ -175,7 +181,7 @@ serve(async (req) => {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([day, credits]) => ({ day, credits: Number(credits.toFixed(3)) }));
 
-    const uniqueUsers = Object.keys(byUser).filter((u) => u !== "anonymous").length;
+    const uniqueUsers = Object.keys(byUser).filter((u) => !isAnonymousUsageId(u)).length;
 
     // Estimated USD: assume 1 credit ≈ $0.0008 (Lovable workspace pricing benchmark)
     const estUsd = Number((totalCredits * 0.0008).toFixed(2));
