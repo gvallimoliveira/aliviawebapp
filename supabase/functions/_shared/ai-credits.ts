@@ -131,3 +131,212 @@ export function shadowLogAiUsage(
 
 export const AI_CREDIT_COST = CREDIT_COST;
 export const AI_USAGE_ANON_SENTINEL = ANON_SENTINEL;
+
+// ---------------------------------------------------------------------------
+// Phase 5.3 — assertCreditsAvailable() [shadow / canary]
+// ---------------------------------------------------------------------------
+// Consulta o "quota + saldo" do usuário e decide se a chamada tem crédito
+// suficiente. **Nunca lança e nunca bloqueia por conta própria** — quem
+// bloqueia é o edge function chamador, olhando o campo `.ok` retornado.
+//
+// Enquanto `app_config.ai_credits_enforced` estiver `false` (padrão), o
+// helper roda em modo *shadow*: registra motivo e `remaining`, mas `ok`
+// sempre volta `true`. Isso permite validar em produção o caminho de
+// "consulta quota → decide" antes de qualquer 402 real (Fase 5.4).
+//
+// Bypass sempre respeitado ANTES de consultar quota:
+//   1. VIP (vip_users por email + fallback hardcoded)
+//   2. professionals.is_partner
+//   3. tier == 'unlimited' (fallback do RPC)
+//
+// Clínica nunca bloqueia (decisão canônica): quando o RPC devolve
+// clinic_id não-nulo, força `ok:true` mesmo em enforce mode e marca
+// `reason:'clinic_no_block'`.
+
+const VIP_FALLBACK_EMAILS = [
+  "gvallimoliveira@gmail.com",
+  "gvallim.fisio@gmail.com",
+];
+
+export type CreditDecision = {
+  ok: boolean;
+  unlimited: boolean;
+  reason:
+    | "vip"
+    | "partner"
+    | "unlimited_tier"
+    | "clinic_no_block"
+    | "sufficient"
+    | "insufficient"
+    | "anonymous"
+    | "no_user"
+    | "shadow_error"
+    | "error";
+  remaining: number | null;
+  cost: number;
+  enforced: boolean;
+  blocked: boolean; // true apenas quando enforced && !ok
+  tier?: string;
+  metadata?: Record<string, unknown>;
+};
+
+async function isEnforcementOn(admin: SupabaseClient): Promise<boolean> {
+  try {
+    const { data } = await admin
+      .from("app_config")
+      .select("value")
+      .eq("key", "ai_credits_enforced")
+      .maybeSingle();
+    const v = (data as { value: unknown } | null)?.value;
+    return v === true || v === "true";
+  } catch {
+    return false;
+  }
+}
+
+async function isVipEmail(admin: SupabaseClient, email: string | null): Promise<boolean> {
+  if (!email) return false;
+  const norm = email.trim().toLowerCase();
+  if (VIP_FALLBACK_EMAILS.includes(norm)) return true;
+  try {
+    const { data } = await admin
+      .from("vip_users")
+      .select("email")
+      .ilike("email", norm)
+      .maybeSingle();
+    return !!data;
+  } catch {
+    return false;
+  }
+}
+
+function decodeJwtEmail(authHeader: string | null): string | null {
+  if (!authHeader) return null;
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token || token.split(".").length !== 3) return null;
+  try {
+    const payload = token.split(".")[1];
+    const b64 = payload.replace(/-/g, "+").replace(/_/g, "/").padEnd(
+      payload.length + (4 - (payload.length % 4)) % 4,
+      "=",
+    );
+    const json = JSON.parse(atob(b64));
+    return typeof json?.email === "string" ? json.email : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Consulta status de créditos e devolve decisão. Nunca throws.
+ * O caller decide: `if (!decision.ok && decision.enforced) return 402;`
+ */
+export async function assertCreditsAvailable(
+  req: Request,
+  opts: { function_name: string; credits?: number; user_id?: string | null },
+): Promise<CreditDecision> {
+  const cost = opts.credits ?? AI_CREDIT_COST[opts.function_name] ?? 0.05;
+  const base = {
+    cost,
+    enforced: false,
+    blocked: false,
+    remaining: null as number | null,
+    unlimited: false,
+  };
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!supabaseUrl || !serviceKey) {
+      return { ...base, ok: true, reason: "shadow_error" };
+    }
+    const admin = createClient(supabaseUrl, serviceKey);
+    const enforced = await isEnforcementOn(admin);
+
+    // Resolve user_id + email
+    const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
+    const userId = opts.user_id ?? decodeJwtSub(authHeader);
+    if (!userId || userId === ANON_SENTINEL) {
+      return { ...base, enforced, ok: true, reason: "anonymous" };
+    }
+
+    // Email para VIP: tenta do JWT, senão profiles/auth
+    let email = decodeJwtEmail(authHeader);
+    if (!email) {
+      try {
+        const { data: u } = await admin.auth.admin.getUserById(userId);
+        email = u?.user?.email ?? null;
+      } catch { /* noop */ }
+    }
+
+    if (await isVipEmail(admin, email)) {
+      return { ...base, enforced, ok: true, unlimited: true, reason: "vip" };
+    }
+
+    // Partner
+    try {
+      const { data: prof } = await admin
+        .from("professionals")
+        .select("is_partner")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (prof?.is_partner) {
+        return { ...base, enforced, ok: true, unlimited: true, reason: "partner" };
+      }
+    } catch { /* noop */ }
+
+    // Consulta consolidada
+    const { data: statusData, error: statusError } = await admin.rpc(
+      "get_user_credit_status",
+      { _user_id: userId },
+    );
+    if (statusError || !statusData) {
+      return { ...base, enforced, ok: true, reason: "shadow_error" };
+    }
+    const s = statusData as {
+      tier: string;
+      unlimited: boolean;
+      included: number;
+      used: number;
+      purchased: number;
+      clinic_id: string | null;
+    };
+
+    if (s.unlimited) {
+      return { ...base, enforced, ok: true, unlimited: true, reason: "unlimited_tier", tier: s.tier };
+    }
+
+    if (s.clinic_id) {
+      // Clínica nunca bloqueia — só reporta
+      const remaining = Math.max(0, (s.included ?? 0) - (s.used ?? 0)) + (s.purchased ?? 0);
+      return {
+        ...base,
+        enforced,
+        ok: true,
+        remaining,
+        reason: "clinic_no_block",
+        tier: s.tier,
+        metadata: { included: s.included, used: s.used, purchased: s.purchased },
+      };
+    }
+
+    const remainingIncluded = Math.max(0, (s.included ?? 0) - (s.used ?? 0));
+    const remaining = remainingIncluded + (s.purchased ?? 0);
+    const sufficient = remaining >= cost;
+
+    return {
+      ...base,
+      enforced,
+      ok: sufficient || !enforced, // shadow mode nunca bloqueia
+      blocked: enforced && !sufficient,
+      remaining,
+      reason: sufficient ? "sufficient" : "insufficient",
+      tier: s.tier,
+      metadata: { included: s.included, used: s.used, purchased: s.purchased },
+    };
+  } catch (e) {
+    console.error("[ai-credits] assertCreditsAvailable error:", (e as Error).message);
+    return { ...base, ok: true, reason: "error" };
+  }
+}
+
