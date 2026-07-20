@@ -181,7 +181,8 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
     if (!renameTarget || !renameValue.trim()) return;
     setRenaming(true);
     let newName = renameValue.trim();
-    if (!/\.pdf$/i.test(newName)) newName += ".pdf";
+    const origExt = renameTarget.file_name.match(/\.[a-z0-9]+$/i)?.[0] || "";
+    if (origExt && !new RegExp(`${origExt.replace(".", "\\.")}$`, "i").test(newName)) newName += origExt;
     const { error } = await supabase
       .from("patient_files")
       .update({ file_name: newName })
@@ -272,7 +273,7 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
                 </Button>
                 {!readOnly && (
                   <>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setRenameTarget(f); setRenameValue(f.file_name.replace(/\.pdf$/i, "")); }} title={lang === "pt" ? "Renomear" : "Rename"}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setRenameTarget(f); setRenameValue(f.file_name.replace(/\.[a-z0-9]+$/i, "")); }} title={lang === "pt" ? "Renomear" : "Rename"}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(f)} title={lang === "pt" ? "Excluir" : "Delete"}>
@@ -322,7 +323,7 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
               placeholder={lang === "pt" ? "Novo nome" : "New name"}
               autoFocus
             />
-            <p className="text-[11px] text-muted-foreground">.pdf</p>
+            <p className="text-[11px] text-muted-foreground">{renameTarget?.file_name.match(/\.[a-z0-9]+$/i)?.[0] || ""}</p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setRenameTarget(null); setRenameValue(""); }}>
