@@ -131,6 +131,17 @@ const ClinicalAgent = () => {
   const [professionalId, setProfessionalId] = useState<string>("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const bootstrappedRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  type Attachment = {
+    id: string;
+    name: string;
+    mime: string;
+    status: "analyzing" | "ready" | "error";
+    extracted?: string;
+    error?: string;
+  };
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+
 
   // Subscription gate — instead of redirecting when there's no active plan,
   // we render a CTA screen (same pattern as the other gated tabs).
