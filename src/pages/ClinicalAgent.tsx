@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Pencil, Check, Brain, Lock, GraduationCap, Terminal, Home, BookText,
+  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Pencil, Check, Brain, Lock, GraduationCap, Terminal, Home, BookText, Paperclip, FileText, Image as ImageIcon,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
@@ -131,6 +131,17 @@ const ClinicalAgent = () => {
   const [professionalId, setProfessionalId] = useState<string>("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const bootstrappedRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  type Attachment = {
+    id: string;
+    name: string;
+    mime: string;
+    status: "analyzing" | "ready" | "error";
+    extracted?: string;
+    error?: string;
+  };
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+
 
   // Subscription gate — instead of redirecting when there's no active plan,
   // we render a CTA screen (same pattern as the other gated tabs).
@@ -455,17 +466,97 @@ const ClinicalAgent = () => {
     if (error) toast.error("Não foi possível renomear");
   };
 
+  const readFileAsBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const idx = result.indexOf(",");
+        resolve(idx >= 0 ? result.slice(idx + 1) : result);
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+
+  const handleAttachFiles = async (files: FileList | null) => {
+    if (!files || !files.length || !activeThread) return;
+    const ALLOWED = new Set([
+      "application/pdf",
+      "image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif",
+    ]);
+    const MAX = 8 * 1024 * 1024;
+    for (const file of Array.from(files)) {
+      if (!ALLOWED.has(file.type)) {
+        toast.error(`"${file.name}": formato não suportado. Envie PDF ou imagem.`);
+        continue;
+      }
+      if (file.size > MAX) {
+        toast.error(`"${file.name}": arquivo maior que 8MB.`);
+        continue;
+      }
+      const id = `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      setAttachments(prev => [...prev, { id, name: file.name, mime: file.type, status: "analyzing" }]);
+      try {
+        const base64 = await readFileAsBase64(file);
+        const { data, error } = await supabase.functions.invoke("agent-analyze-attachment", {
+          body: { file_base64: base64, mime_type: file.type, file_name: file.name },
+        });
+        if (error || data?.error) {
+          const msg = data?.error === "ai_credits_exhausted"
+            ? "Créditos de IA esgotados."
+            : data?.error === "ai_rate_limit"
+              ? "Muitas requisições. Aguarde alguns segundos."
+              : (typeof data?.error === "string" ? data.error : "Falha ao ler o arquivo.");
+          setAttachments(prev => prev.map(a => a.id === id ? { ...a, status: "error", error: msg } : a));
+          toast.error(`"${file.name}": ${msg}`);
+        } else {
+          setAttachments(prev => prev.map(a => a.id === id ? { ...a, status: "ready", extracted: data.extracted } : a));
+        }
+      } catch (e: any) {
+        setAttachments(prev => prev.map(a => a.id === id ? { ...a, status: "error", error: e?.message } : a));
+        toast.error(`"${file.name}": erro ao processar.`);
+      }
+    }
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
+
   const send = async () => {
-    if (!input.trim() || !activeThread || sending) return;
-    const text = input.trim();
+    if (!activeThread || sending) return;
+    const readyAttachments = attachments.filter(a => a.status === "ready" && a.extracted);
+    if (!input.trim() && !readyAttachments.length) return;
+    if (attachments.some(a => a.status === "analyzing")) {
+      toast.info("Aguarde a análise dos anexos terminar.");
+      return;
+    }
+    const userText = input.trim();
+
+    // Build the message sent to the agent: prepend the AI-interpreted content
+    // of each attachment so it becomes part of the turn AND the thread history.
+    const attachmentBlocks = readyAttachments.map(a =>
+      `📎 **Anexo enviado pelo profissional:** ${a.name}\n\n_[Conteúdo interpretado pela IA a partir do arquivo]_\n\n${a.extracted}`
+    ).join("\n\n---\n\n");
+    const messageForAgent = [
+      attachmentBlocks,
+      userText || (readyAttachments.length ? "Considere este anexo na discussão clínica. O que ele acrescenta ao caso?" : ""),
+    ].filter(Boolean).join("\n\n");
+
+    // Optimistic user bubble shows both the attachment chips and the user text.
+    const displayText = [
+      readyAttachments.map(a => `📎 ${a.name}`).join("\n"),
+      userText,
+    ].filter(Boolean).join("\n\n");
+
     setInput("");
+    setAttachments([]);
     setSending(true);
 
-    // Optimistic user message
     const optimistic: Message = {
       id: `tmp-${Date.now()}`,
       role: "user",
-      parts: [{ type: "text", text }],
+      parts: [{ type: "text", text: displayText }],
       citations: null,
       created_at: new Date().toISOString(),
     };
@@ -473,8 +564,9 @@ const ClinicalAgent = () => {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     const { data, error } = await supabase.functions.invoke("clinical-agent-chat", {
-      body: { thread_id: activeThread.id, message: text },
+      body: { thread_id: activeThread.id, message: messageForAgent },
     });
+
 
     if (error || data?.error) {
       setMessages(prev => prev.filter(m => m.id !== optimistic.id));
@@ -1065,33 +1157,85 @@ const ClinicalAgent = () => {
 
         {/* Composer */}
         <div className="border-t border-border/40 bg-card/80 backdrop-blur-sm p-3">
-          <div className="max-w-3xl mx-auto flex items-end gap-2">
-            <Textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-              }}
-              placeholder="Pergunte ao agente…"
-              className="min-h-[44px] max-h-[160px] resize-none rounded-xl"
-              style={{ fontSize: "16px" }}
-              rows={1}
-              disabled={sending || !activeThread || creatingThread}
-            />
-            <Button
-              size="icon"
-              className="h-11 w-11 rounded-xl shrink-0"
-              onClick={send}
-              disabled={!input.trim() || sending || !activeThread}
-            >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
+          <div className="max-w-3xl mx-auto space-y-2">
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {attachments.map(a => (
+                  <div
+                    key={a.id}
+                    className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-2 py-1 text-xs max-w-full"
+                  >
+                    {a.mime === "application/pdf"
+                      ? <FileText className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                      : <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
+                    <span className="truncate max-w-[160px]" title={a.name}>{a.name}</span>
+                    {a.status === "analyzing" && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground shrink-0" />}
+                    {a.status === "ready" && <Check className="h-3 w-3 text-emerald-600 shrink-0" />}
+                    {a.status === "error" && <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />}
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(a.id)}
+                      className="ml-0.5 text-muted-foreground hover:text-foreground shrink-0"
+                      aria-label="Remover anexo"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-end gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf,image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
+                multiple
+                className="hidden"
+                onChange={e => { handleAttachFiles(e.target.files); e.target.value = ""; }}
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="h-11 w-11 rounded-xl shrink-0"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={sending || !activeThread || creatingThread}
+                title="Anexar laudo (PDF) ou imagem"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <Textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+                }}
+                placeholder={attachments.some(a => a.status === "ready") ? "Adicione uma pergunta ou envie só o anexo…" : "Pergunte ao agente…"}
+                className="min-h-[44px] max-h-[160px] resize-none rounded-xl"
+                style={{ fontSize: "16px" }}
+                rows={1}
+                disabled={sending || !activeThread || creatingThread}
+              />
+              <Button
+                size="icon"
+                className="h-11 w-11 rounded-xl shrink-0"
+                onClick={send}
+                disabled={
+                  sending || !activeThread ||
+                  (!input.trim() && !attachments.some(a => a.status === "ready")) ||
+                  attachments.some(a => a.status === "analyzing")
+                }
+              >
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
           <p className="max-w-3xl mx-auto text-[10px] text-muted-foreground mt-2 px-1">
             Dados do paciente são anonimizados antes do processamento por IA. Este é um apoio ao raciocínio — a decisão clínica é sua.
           </p>
         </div>
       </main>
+
 
       {/* Patient picker modal */}
       {showPatientPicker && (
