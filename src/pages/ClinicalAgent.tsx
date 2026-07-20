@@ -1157,33 +1157,85 @@ const ClinicalAgent = () => {
 
         {/* Composer */}
         <div className="border-t border-border/40 bg-card/80 backdrop-blur-sm p-3">
-          <div className="max-w-3xl mx-auto flex items-end gap-2">
-            <Textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-              }}
-              placeholder="Pergunte ao agente…"
-              className="min-h-[44px] max-h-[160px] resize-none rounded-xl"
-              style={{ fontSize: "16px" }}
-              rows={1}
-              disabled={sending || !activeThread || creatingThread}
-            />
-            <Button
-              size="icon"
-              className="h-11 w-11 rounded-xl shrink-0"
-              onClick={send}
-              disabled={!input.trim() || sending || !activeThread}
-            >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
+          <div className="max-w-3xl mx-auto space-y-2">
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {attachments.map(a => (
+                  <div
+                    key={a.id}
+                    className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-2 py-1 text-xs max-w-full"
+                  >
+                    {a.mime === "application/pdf"
+                      ? <FileText className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                      : <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
+                    <span className="truncate max-w-[160px]" title={a.name}>{a.name}</span>
+                    {a.status === "analyzing" && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground shrink-0" />}
+                    {a.status === "ready" && <Check className="h-3 w-3 text-emerald-600 shrink-0" />}
+                    {a.status === "error" && <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />}
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(a.id)}
+                      className="ml-0.5 text-muted-foreground hover:text-foreground shrink-0"
+                      aria-label="Remover anexo"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-end gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf,image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
+                multiple
+                className="hidden"
+                onChange={e => { handleAttachFiles(e.target.files); e.target.value = ""; }}
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="h-11 w-11 rounded-xl shrink-0"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={sending || !activeThread || creatingThread}
+                title="Anexar laudo (PDF) ou imagem"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <Textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+                }}
+                placeholder={attachments.some(a => a.status === "ready") ? "Adicione uma pergunta ou envie só o anexo…" : "Pergunte ao agente…"}
+                className="min-h-[44px] max-h-[160px] resize-none rounded-xl"
+                style={{ fontSize: "16px" }}
+                rows={1}
+                disabled={sending || !activeThread || creatingThread}
+              />
+              <Button
+                size="icon"
+                className="h-11 w-11 rounded-xl shrink-0"
+                onClick={send}
+                disabled={
+                  sending || !activeThread ||
+                  (!input.trim() && !attachments.some(a => a.status === "ready")) ||
+                  attachments.some(a => a.status === "analyzing")
+                }
+              >
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
           <p className="max-w-3xl mx-auto text-[10px] text-muted-foreground mt-2 px-1">
             Dados do paciente são anonimizados antes do processamento por IA. Este é um apoio ao raciocínio — a decisão clínica é sua.
           </p>
         </div>
       </main>
+
 
       {/* Patient picker modal */}
       {showPatientPicker && (
