@@ -91,19 +91,29 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
       return;
     }
 
-    if (file.type !== "application/pdf") {
-      toast({ title: lang === "pt" ? "Apenas arquivos PDF são aceitos" : "Only PDF files accepted", variant: "destructive" });
+    const ACCEPTED = ["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+    const isAccepted = ACCEPTED.includes(file.type) || /\.(pdf|jpe?g|png|webp|heic|heif)$/i.test(file.name);
+    if (!isAccepted) {
+      toast({ title: lang === "pt" ? "Formato não suportado (use PDF ou imagem)" : "Unsupported format (use PDF or image)", variant: "destructive" });
       return;
     }
 
     setUploading(true);
     try {
+      // Sanitize path: Storage keys must be ASCII-safe (no accents, spaces, or special chars).
+      const sanitize = (s: string) =>
+        s.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9._-]+/g, "_")
+          .replace(/_+/g, "_")
+          .replace(/^_|_$/g, "");
+      const safeEmail = sanitize(patientEmail).toLowerCase() || "patient";
+      const safeName = sanitize(file.name) || "file";
       const prefix = clinicId ? `clinic/${clinicId}` : `pro/${professionalId}`;
-      const filePath = `${prefix}/${patientEmail}/${Date.now()}_${file.name}`;
+      const filePath = `${prefix}/${safeEmail}/${Date.now()}_${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("patient-files")
-        .upload(filePath, file, { contentType: file.type });
+        .upload(filePath, file, { contentType: file.type || "application/octet-stream" });
 
       if (uploadError) throw uploadError;
 
@@ -171,7 +181,8 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
     if (!renameTarget || !renameValue.trim()) return;
     setRenaming(true);
     let newName = renameValue.trim();
-    if (!/\.pdf$/i.test(newName)) newName += ".pdf";
+    const origExt = renameTarget.file_name.match(/\.[a-z0-9]+$/i)?.[0] || "";
+    if (origExt && !new RegExp(`${origExt.replace(".", "\\.")}$`, "i").test(newName)) newName += origExt;
     const { error } = await supabase
       .from("patient_files")
       .update({ file_name: newName })
@@ -209,7 +220,7 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
           <div className="relative">
             <Input
               type="file"
-              accept="application/pdf"
+              accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif"
               onChange={handleUpload}
               disabled={uploading || files.length >= MAX_FILES}
               className="hidden"
@@ -227,7 +238,7 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
                   {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                   {uploading
                     ? (lang === "pt" ? "Enviando..." : "Uploading...")
-                    : (lang === "pt" ? "Enviar PDF (laudo, exame)" : "Upload PDF (report, exam)")}
+                    : (lang === "pt" ? "Enviar PDF ou imagem (laudo, exame)" : "Upload PDF or image (report, exam)")}
                 </span>
               </Button>
             </label>
@@ -262,7 +273,7 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
                 </Button>
                 {!readOnly && (
                   <>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setRenameTarget(f); setRenameValue(f.file_name.replace(/\.pdf$/i, "")); }} title={lang === "pt" ? "Renomear" : "Rename"}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setRenameTarget(f); setRenameValue(f.file_name.replace(/\.[a-z0-9]+$/i, "")); }} title={lang === "pt" ? "Renomear" : "Rename"}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(f)} title={lang === "pt" ? "Excluir" : "Delete"}>
@@ -312,7 +323,7 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
               placeholder={lang === "pt" ? "Novo nome" : "New name"}
               autoFocus
             />
-            <p className="text-[11px] text-muted-foreground">.pdf</p>
+            <p className="text-[11px] text-muted-foreground">{renameTarget?.file_name.match(/\.[a-z0-9]+$/i)?.[0] || ""}</p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setRenameTarget(null); setRenameValue(""); }}>
