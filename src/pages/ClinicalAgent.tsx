@@ -466,17 +466,97 @@ const ClinicalAgent = () => {
     if (error) toast.error("Não foi possível renomear");
   };
 
+  const readFileAsBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const idx = result.indexOf(",");
+        resolve(idx >= 0 ? result.slice(idx + 1) : result);
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+
+  const handleAttachFiles = async (files: FileList | null) => {
+    if (!files || !files.length || !activeThread) return;
+    const ALLOWED = new Set([
+      "application/pdf",
+      "image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif",
+    ]);
+    const MAX = 8 * 1024 * 1024;
+    for (const file of Array.from(files)) {
+      if (!ALLOWED.has(file.type)) {
+        toast.error(`"${file.name}": formato não suportado. Envie PDF ou imagem.`);
+        continue;
+      }
+      if (file.size > MAX) {
+        toast.error(`"${file.name}": arquivo maior que 8MB.`);
+        continue;
+      }
+      const id = `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      setAttachments(prev => [...prev, { id, name: file.name, mime: file.type, status: "analyzing" }]);
+      try {
+        const base64 = await readFileAsBase64(file);
+        const { data, error } = await supabase.functions.invoke("agent-analyze-attachment", {
+          body: { file_base64: base64, mime_type: file.type, file_name: file.name },
+        });
+        if (error || data?.error) {
+          const msg = data?.error === "ai_credits_exhausted"
+            ? "Créditos de IA esgotados."
+            : data?.error === "ai_rate_limit"
+              ? "Muitas requisições. Aguarde alguns segundos."
+              : (typeof data?.error === "string" ? data.error : "Falha ao ler o arquivo.");
+          setAttachments(prev => prev.map(a => a.id === id ? { ...a, status: "error", error: msg } : a));
+          toast.error(`"${file.name}": ${msg}`);
+        } else {
+          setAttachments(prev => prev.map(a => a.id === id ? { ...a, status: "ready", extracted: data.extracted } : a));
+        }
+      } catch (e: any) {
+        setAttachments(prev => prev.map(a => a.id === id ? { ...a, status: "error", error: e?.message } : a));
+        toast.error(`"${file.name}": erro ao processar.`);
+      }
+    }
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
+
   const send = async () => {
-    if (!input.trim() || !activeThread || sending) return;
-    const text = input.trim();
+    if (!activeThread || sending) return;
+    const readyAttachments = attachments.filter(a => a.status === "ready" && a.extracted);
+    if (!input.trim() && !readyAttachments.length) return;
+    if (attachments.some(a => a.status === "analyzing")) {
+      toast.info("Aguarde a análise dos anexos terminar.");
+      return;
+    }
+    const userText = input.trim();
+
+    // Build the message sent to the agent: prepend the AI-interpreted content
+    // of each attachment so it becomes part of the turn AND the thread history.
+    const attachmentBlocks = readyAttachments.map(a =>
+      `📎 **Anexo enviado pelo profissional:** ${a.name}\n\n_[Conteúdo interpretado pela IA a partir do arquivo]_\n\n${a.extracted}`
+    ).join("\n\n---\n\n");
+    const messageForAgent = [
+      attachmentBlocks,
+      userText || (readyAttachments.length ? "Considere este anexo na discussão clínica. O que ele acrescenta ao caso?" : ""),
+    ].filter(Boolean).join("\n\n");
+
+    // Optimistic user bubble shows both the attachment chips and the user text.
+    const displayText = [
+      readyAttachments.map(a => `📎 ${a.name}`).join("\n"),
+      userText,
+    ].filter(Boolean).join("\n\n");
+
     setInput("");
+    setAttachments([]);
     setSending(true);
 
-    // Optimistic user message
     const optimistic: Message = {
       id: `tmp-${Date.now()}`,
       role: "user",
-      parts: [{ type: "text", text }],
+      parts: [{ type: "text", text: displayText }],
       citations: null,
       created_at: new Date().toISOString(),
     };
@@ -484,8 +564,9 @@ const ClinicalAgent = () => {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     const { data, error } = await supabase.functions.invoke("clinical-agent-chat", {
-      body: { thread_id: activeThread.id, message: text },
+      body: { thread_id: activeThread.id, message: messageForAgent },
     });
+
 
     if (error || data?.error) {
       setMessages(prev => prev.filter(m => m.id !== optimistic.id));
