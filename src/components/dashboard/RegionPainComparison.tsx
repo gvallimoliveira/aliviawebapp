@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowDown, ArrowUp, Minus, MapPin } from "lucide-react";
+import { regionsByView } from "@/components/assessment/painMapData";
 
 interface Assessment {
   id: string;
@@ -17,44 +18,79 @@ interface Props {
   assessments: Assessment[];
 }
 
-const REGION_LABELS: Record<string, string> = {
-  head: "Cabeça", neck: "Pescoço",
-  right_shoulder: "Ombro D.", left_shoulder: "Ombro E.",
-  upper_back: "Coluna Torácica", lower_back: "Lombar", chest: "Tórax",
-  right_elbow: "Cotovelo D.", left_elbow: "Cotovelo E.",
-  right_wrist: "Punho D.", left_wrist: "Punho E.",
-  right_hand: "Mão D.", left_hand: "Mão E.",
-  right_hip: "Quadril D.", left_hip: "Quadril E.",
-  right_knee: "Joelho D.", left_knee: "Joelho E.",
-  right_ankle: "Tornozelo D.", left_ankle: "Tornozelo E.",
-  right_foot: "Pé D.", left_foot: "Pé E.",
-  right_gluteal: "Glúteo D.", left_gluteal: "Glúteo E.",
-  right_hamstring: "Posterior Coxa D.", left_hamstring: "Posterior Coxa E.",
-  right_quadriceps: "Anterior Coxa D.", left_quadriceps: "Anterior Coxa E.",
-  right_calf: "Panturrilha D.", left_calf: "Panturrilha E.",
-  abdomen: "Abdômen",
+// Authoritative PT labels built from the pain map data (covers every region id
+// rendered by the assessment SVGs — front/back/left/right views).
+const REGION_LABELS: Record<string, string> = (() => {
+  const out: Record<string, string> = {};
+  for (const view of Object.values(regionsByView)) {
+    for (const r of view) {
+      if (!out[r.id]) out[r.id] = r.label_pt;
+    }
+  }
+  return out;
+})();
+
+// Human-readable fallback: "right_thigh_post" → "Coxa Post. Dir."
+const SEGMENT_PT: Record<string, string> = {
+  right: "Dir.", left: "Esq.",
+  post: "Post.", posterior: "Post.",
+  ant: "Ant.", anterior: "Ant.",
+  lat: "Lat.", lateral: "Lat.", medial: "Medial",
+  thigh: "Coxa", calf: "Panturrilha", shin: "Canela",
+  knee: "Joelho", ankle: "Tornozelo", foot: "Pé",
+  hip: "Quadril", gluteal: "Glúteo", hamstring: "Post. Coxa",
+  quadriceps: "Ant. Coxa",
+  shoulder: "Ombro", elbow: "Cotovelo", forearm: "Antebraço",
+  arm: "Braço", wrist: "Punho", hand: "Mão",
+  head: "Cabeça", neck: "Pescoço", cervical: "Cervical",
+  thoracic: "Torácica", lumbar: "Lombar",
+  lower: "Lombar", upper: "Torácica", back: "Costas",
+  chest: "Tórax", abdomen: "Abdômen",
+};
+
+const prettifyId = (id: string): string => {
+  const parts = id.split("_").filter(Boolean);
+  const mapped = parts.map((p) => SEGMENT_PT[p] ?? (p.charAt(0).toUpperCase() + p.slice(1)));
+  return mapped.join(" ");
 };
 
 // Group bilateral regions into a single "anatomical zone".
 const ZONE_OF: Record<string, string> = {
-  head: "Cabeça", neck: "Pescoço", upper_back: "Coluna Torácica",
+  head: "Cabeça", head_back: "Cabeça",
+  neck: "Pescoço", cervical: "Cervical (posterior)", cervical_front: "Pescoço (anterior)",
+  thoracic: "Coluna Torácica", upper_back: "Coluna Torácica",
   lower_back: "Lombar", chest: "Tórax", abdomen: "Abdômen",
   right_shoulder: "Ombros", left_shoulder: "Ombros",
+  right_shoulder_back: "Ombros", left_shoulder_back: "Ombros",
+  right_arm: "Braços", left_arm: "Braços",
+  right_arm_back: "Braços", left_arm_back: "Braços",
   right_elbow: "Cotovelos", left_elbow: "Cotovelos",
+  right_elbow_back: "Cotovelos", left_elbow_back: "Cotovelos",
+  right_forearm: "Antebraços", left_forearm: "Antebraços",
+  right_forearm_back: "Antebraços", left_forearm_back: "Antebraços",
   right_wrist: "Punhos", left_wrist: "Punhos",
   right_hand: "Mãos", left_hand: "Mãos",
+  right_hand_back: "Mãos", left_hand_back: "Mãos",
   right_hip: "Quadril", left_hip: "Quadril",
   right_knee: "Joelhos", left_knee: "Joelhos",
+  right_knee_back: "Joelhos", left_knee_back: "Joelhos",
   right_ankle: "Tornozelos", left_ankle: "Tornozelos",
+  right_ankle_back: "Tornozelos", left_ankle_back: "Tornozelos",
   right_foot: "Pés", left_foot: "Pés",
+  right_foot_back: "Pés", left_foot_back: "Pés",
   right_gluteal: "Glúteos", left_gluteal: "Glúteos",
   right_hamstring: "Posterior Coxa", left_hamstring: "Posterior Coxa",
+  right_thigh_post: "Posterior Coxa", left_thigh_post: "Posterior Coxa",
   right_quadriceps: "Anterior Coxa", left_quadriceps: "Anterior Coxa",
+  right_thigh_ant: "Anterior Coxa", left_thigh_ant: "Anterior Coxa",
+  right_thigh: "Coxa", left_thigh: "Coxa",
+  right_shin: "Canelas", left_shin: "Canelas",
   right_calf: "Panturrilhas", left_calf: "Panturrilhas",
 };
 
-const labelFor = (regionId: string) => REGION_LABELS[regionId] || regionId;
+const labelFor = (regionId: string) => REGION_LABELS[regionId] || prettifyId(regionId);
 const zoneOf = (regionId: string) => ZONE_OF[regionId] || labelFor(regionId);
+
 
 interface ZoneRow {
   zone: string;
