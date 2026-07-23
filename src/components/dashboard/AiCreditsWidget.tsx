@@ -252,9 +252,14 @@ const AiCreditsWidget = () => {
 
         {top.length > 0 && (
           <div className="space-y-1.5">
-            <p className="text-[11px] font-medium text-muted-foreground">
-              {isPt ? "Onde foi gasto" : "Where it was spent"}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {isPt ? "Onde foi gasto" : "Where it was spent"}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {isPt ? "total de créditos" : "total credits"}
+              </p>
+            </div>
             {top.map(([fn, v]) => {
               const labelMap: Record<string, { pt: string; en: string }> = {
                 "generate-diagnosis": { pt: "Diagnóstico", en: "Diagnosis" },
@@ -279,11 +284,18 @@ const AiCreditsWidget = () => {
                 "assessment-voice-notes": { pt: "Notas por voz", en: "Voice notes" },
               };
               const label = labelMap[fn]?.[isPt ? "pt" : "en"] ?? fn;
+              const perCall = v.calls > 0 ? v.credits / v.calls : 0;
+              const callsLabel = isPt
+                ? `${v.calls} ${v.calls === 1 ? "uso" : "usos"} · ${perCall.toFixed(2)} cr cada`
+                : `${v.calls} ${v.calls === 1 ? "use" : "uses"} · ${perCall.toFixed(2)} cr each`;
               return (
-                <div key={fn} className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground truncate mr-2">{label}</span>
-                  <Badge variant="secondary" className="shrink-0 font-mono">
-                    {v.credits.toFixed(2)} · {v.calls}×
+                <div key={fn} className="flex items-start justify-between gap-2 text-xs py-1">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-foreground truncate">{label}</p>
+                    <p className="text-[10px] text-muted-foreground">{callsLabel}</p>
+                  </div>
+                  <Badge variant="secondary" className="shrink-0 font-mono tabular-nums">
+                    {v.credits.toFixed(2)} cr
                   </Badge>
                 </div>
               );
