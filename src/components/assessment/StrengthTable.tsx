@@ -69,6 +69,10 @@ const STR: Record<string, Record<string, string>> = {
     colMovement: "Movimento testado",
     colLeft: "Esquerda (kgf)",
     colRight: "Direita (kgf)",
+    shortLeft: "Esquerda",
+    shortRight: "Direita",
+    initialLeft: "E",
+    initialRight: "D",
     placeholderMovement: "Ex.: Preensão manual",
     placeholderValue: "Ex.: 32.5",
     addRow: "Adicionar linha",
@@ -101,6 +105,10 @@ const STR: Record<string, Record<string, string>> = {
     colMovement: "Tested movement",
     colLeft: "Left (kgf)",
     colRight: "Right (kgf)",
+    shortLeft: "Left",
+    shortRight: "Right",
+    initialLeft: "L",
+    initialRight: "R",
     placeholderMovement: "e.g. Handgrip",
     placeholderValue: "e.g. 32.5",
     addRow: "Add row",
@@ -133,6 +141,10 @@ const STR: Record<string, Record<string, string>> = {
     colMovement: "Movimiento evaluado",
     colLeft: "Izquierda (kgf)",
     colRight: "Derecha (kgf)",
+    shortLeft: "Izquierda",
+    shortRight: "Derecha",
+    initialLeft: "I",
+    initialRight: "D",
     placeholderMovement: "Ej.: Prensión manual",
     placeholderValue: "Ej.: 32.5",
     addRow: "Agregar fila",
@@ -328,14 +340,20 @@ export default function StrengthTable({
                     <td className="px-3 py-2 text-foreground">{r.movement || "—"}</td>
                     <td className="px-3 py-2 text-center">
                       {r.leftValue ? (
-                        <Badge variant="secondary" className="font-mono">{r.leftValue}</Badge>
+                        <Badge variant="secondary" className="font-mono">
+                          <span className="mr-1 opacity-70">{s(lang, "initialLeft")}</span>
+                          {r.leftValue}
+                        </Badge>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-center">
                       {r.rightValue ? (
-                        <Badge variant="secondary" className="font-mono">{r.rightValue}</Badge>
+                        <Badge variant="secondary" className="font-mono">
+                          <span className="mr-1 opacity-70">{s(lang, "initialRight")}</span>
+                          {r.rightValue}
+                        </Badge>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
@@ -474,21 +492,39 @@ export default function StrengthTable({
                   placeholder={s(lang, "placeholderMovement")}
                   className="h-9 text-sm"
                 />
-                <div className="grid grid-cols-[1fr_1fr_36px] gap-1.5 items-center">
-                  <Input
-                    value={row.leftValue}
-                    onChange={(e) => update(i, "leftValue", e.target.value)}
-                    placeholder={s(lang, "colLeft")}
-                    inputMode="decimal"
-                    className="h-9 text-sm text-center font-mono"
-                  />
-                  <Input
-                    value={row.rightValue}
-                    onChange={(e) => update(i, "rightValue", e.target.value)}
-                    placeholder={s(lang, "colRight")}
-                    inputMode="decimal"
-                    className="h-9 text-sm text-center font-mono"
-                  />
+                <div className="grid grid-cols-[1fr_1fr_36px] gap-1.5 items-end">
+                  <div className="space-y-1">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+                        {s(lang, "initialLeft")}
+                      </span>
+                      {s(lang, "shortLeft")}
+                    </span>
+                    <Input
+                      value={row.leftValue}
+                      onChange={(e) => update(i, "leftValue", e.target.value)}
+                      placeholder="kgf"
+                      inputMode="decimal"
+                      aria-label={s(lang, "colLeft")}
+                      className="h-9 text-sm text-center font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+                        {s(lang, "initialRight")}
+                      </span>
+                      {s(lang, "shortRight")}
+                    </span>
+                    <Input
+                      value={row.rightValue}
+                      onChange={(e) => update(i, "rightValue", e.target.value)}
+                      placeholder="kgf"
+                      inputMode="decimal"
+                      aria-label={s(lang, "colRight")}
+                      className="h-9 text-sm text-center font-mono"
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
