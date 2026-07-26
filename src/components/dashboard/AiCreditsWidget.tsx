@@ -282,12 +282,18 @@ const AiCreditsWidget = () => {
                 <li>
                   {isPt
                     ? pooled
-                      ? "Clínicas nunca são bloqueadas: se a equipe passar do incluso, o excedente vira apenas aviso ao dono da clínica."
-                      : "Se a cota acabar, o saldo de pacotes avulsos entra automaticamente. Sem pacote, as funções de IA pausam até a renovação (soft-block) — o restante do app continua normal."
+                      ? "Se a equipe passar do incluso, avisamos o dono da clínica e o excedente é consumido do saldo de pacotes avulsos da clínica. Não interrompemos atendimento no meio do caminho."
+                      : "Se a cota acabar, o saldo de pacotes que você já comprou é consumido automaticamente. Não fazemos nenhuma cobrança automática no cartão — a compra é sempre manual, por você."
                     : pooled
-                      ? "Clinics are never blocked: if the team goes over, the overage is only a heads-up to the clinic owner."
-                      : "If the quota runs out, purchased packs are used automatically. Without a pack, AI features pause until renewal (soft-block) — the rest of the app keeps working."}
+                      ? "If the team goes over, we notify the clinic owner and the overage draws from the clinic's purchased pack balance. We don't cut care mid-session."
+                      : "If the quota runs out, credits from packs you already bought are used automatically. We never charge your card automatically — purchases are always manual."}
                 </li>
+                <li>
+                  {isPt
+                    ? "Sem saldo de pacote, as funções de IA pausam até a renovação (soft-block) — o restante do app continua funcionando normalmente."
+                    : "With no pack balance left, AI features pause until renewal (soft-block) — the rest of the app keeps working normally."}
+                </li>
+
               </ul>
             </div>
           </div>
