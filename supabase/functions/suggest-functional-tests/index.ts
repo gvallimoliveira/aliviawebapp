@@ -3,7 +3,7 @@
 // Cached by input hash for 7 days to avoid repeated identical calls.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
+import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 
 const corsHeaders = {
@@ -29,6 +29,7 @@ serve(async (req) => {
       questionnaireResults,
       currentTestsText,    // what the professional has already written
       language,
+      forceRefresh,
     } = await req.json();
 
     // Cache lookup — same clinical context returns same suggestions for 7 days.
@@ -36,7 +37,7 @@ serve(async (req) => {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
     const cachePayload = { anamnesis, painScore, painType, painRegions, redFlags, questionnaireResults, currentTestsText, language };
-    if (admin) {
+    if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ suggestions: unknown[] }>(admin, "suggest-functional-tests", cachePayload);
       if (cached) {
         return new Response(JSON.stringify({ ...cached, cached: true }), {
@@ -158,7 +159,7 @@ Generate the suggestions now.`;
     }
 
     if (admin && suggestions.length > 0) {
-      await setCachedAiResponse(admin, "suggest-functional-tests", cachePayload, { suggestions });
+      await setCachedAiResponse(admin, "suggest-functional-tests", cachePayload, { suggestions }, AI_CACHE_TTL_30D);
     }
 
     return new Response(JSON.stringify({ suggestions }), {

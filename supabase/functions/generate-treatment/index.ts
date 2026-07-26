@@ -1,7 +1,9 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { shadowLogAiUsage, assertCreditsAvailable } from "../_shared/ai-credits.ts";
 import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
+import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, forceRefresh } = await req.json();
     const creditDecision = await assertCreditsAvailable(req, { function_name: "generate-treatment" });
     console.log("[ai-credits] generate-treatment decision:", JSON.stringify({
       reason: creditDecision.reason,
@@ -32,6 +34,24 @@ serve(async (req) => {
         credit_enforced: creditDecision.enforced,
       },
     });
+
+    // --- Content-addressed cache (TTL 30d) ---
+    // Key = hash of the full clinical payload (anamnesis + tests + questionnaires
+    // + diagnosis). Any update to the patient's record changes the key and forces
+    // a fresh, case-specific plan. `forceRefresh: true` bypasses the cache.
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language };
+    if (admin && !forceRefresh) {
+      const cached = await getCachedAiResponse<{ treatmentPlan: unknown }>(admin, "generate-treatment", cachePayload);
+      if (cached) {
+        return new Response(JSON.stringify({ ...cached, cached: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const painScore = anamnesisData?.painScore ?? 5;
@@ -436,6 +456,10 @@ Generate a personalized 3-phase treatment plan in valid JSON format. Focus exerc
         .replace(/,\s*]/g, ']')
         .replace(/[\x00-\x1F\x7F]/g, (ch: string) => ch === '\n' || ch === '\r' || ch === '\t' ? ch : '');
       treatmentPlan = JSON.parse(cleaned);
+    }
+
+    if (admin && treatmentPlan && typeof treatmentPlan === "object") {
+      await setCachedAiResponse(admin, "generate-treatment", cachePayload, { treatmentPlan }, AI_CACHE_TTL_30D);
     }
 
     return new Response(JSON.stringify({ treatmentPlan }), {

@@ -9,6 +9,13 @@
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Standard TTLs. 30 days is used for the expensive clinical generators
+// (diagnosis, treatment, impression, evolution). Safe because every cache key
+// is a hash of the full clinical payload: if the patient's record changes,
+// the key changes and the AI re-interprets the updated case.
+export const AI_CACHE_TTL_30D = 30 * 24 * 3600;
+export const AI_CACHE_TTL_7D = 7 * 24 * 3600;
+
 async function sha256(input: string): Promise<string> {
   const data = new TextEncoder().encode(input);
   const hash = await crypto.subtle.digest("SHA-256", data);
