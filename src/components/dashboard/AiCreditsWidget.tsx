@@ -258,12 +258,16 @@ const AiCreditsWidget = () => {
                 <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
                 <p className="text-[11px] leading-relaxed text-destructive-foreground/90">
                   {isPt
-                    ? purchased > 0
-                      ? `Cota do mês atingida (${pct.toFixed(0)}%). Seu saldo de pacotes (${purchased} créditos) está cobrindo o uso a partir de agora.`
-                      : `Cota do mês atingida (${pct.toFixed(0)}%). Sem saldo de pacotes, as funções de IA podem pausar até a renovação. Você pode comprar um pacote abaixo.`
-                    : purchased > 0
-                      ? `Monthly quota reached (${pct.toFixed(0)}%). Your pack balance (${purchased} credits) is covering usage from now on.`
-                      : `Monthly quota reached (${pct.toFixed(0)}%). With no pack balance, AI features may pause until renewal. You can buy a pack below.`}
+                    ? pooled && pct < 120
+                      ? `Cota do mês atingida (${pct.toFixed(0)}%). A clínica está na carência de 20% — a equipe continua usando IA normalmente até 120% da cota.`
+                      : purchased > 0
+                        ? `Cota do mês atingida (${pct.toFixed(0)}%). Seu saldo de pacotes (${purchased} créditos) está cobrindo o uso a partir de agora.`
+                        : `Cota do mês atingida (${pct.toFixed(0)}%). Sem saldo de pacotes, as funções de IA podem pausar até a renovação. Você pode comprar um pacote abaixo.`
+                    : pooled && pct < 120
+                      ? `Monthly quota reached (${pct.toFixed(0)}%). The clinic is inside the 20% grace buffer — the team keeps using AI up to 120% of the quota.`
+                      : purchased > 0
+                        ? `Monthly quota reached (${pct.toFixed(0)}%). Your pack balance (${purchased} credits) is covering usage from now on.`
+                        : `Monthly quota reached (${pct.toFixed(0)}%). With no pack balance, AI features may pause until renewal. You can buy a pack below.`}
 
                 </p>
               </div>
@@ -287,17 +291,22 @@ const AiCreditsWidget = () => {
                 <li>
                   {isPt
                     ? pooled
-                      ? "Se a equipe passar do incluso, avisamos o dono da clínica e o excedente é consumido do saldo de pacotes avulsos da clínica. Não interrompemos atendimento no meio do caminho."
+                      ? "Se a equipe passar do incluso, a clínica tem uma carência de 20% (até 120% da cota) para não interromper atendimento. Avisamos o dono da clínica quando isso acontece."
                       : "Se a cota acabar, o saldo de pacotes que você já comprou é consumido automaticamente. Não fazemos nenhuma cobrança automática no cartão — a compra é sempre manual, por você."
                     : pooled
-                      ? "If the team goes over, we notify the clinic owner and the overage draws from the clinic's purchased pack balance. We don't cut care mid-session."
+                      ? "If the team goes over, the clinic gets a 20% grace buffer (up to 120% of the quota) so care isn't interrupted. We notify the clinic owner when that happens."
                       : "If the quota runs out, credits from packs you already bought are used automatically. We never charge your card automatically — purchases are always manual."}
                 </li>
                 <li>
                   {isPt
-                    ? "Sem saldo de pacote, as funções de IA pausam até a renovação (soft-block) — o restante do app continua funcionando normalmente."
-                    : "With no pack balance left, AI features pause until renewal (soft-block) — the rest of the app keeps working normally."}
+                    ? pooled
+                      ? "Depois da carência, o excedente consome o saldo de pacotes da clínica. Sem saldo, as funções de IA pausam até a renovação — nunca cobramos o cartão automaticamente."
+                      : "Sem saldo de pacote, as funções de IA pausam até a renovação (soft-block) — o restante do app continua funcionando normalmente."
+                    : pooled
+                      ? "After the grace buffer, usage draws from the clinic's purchased pack balance. With no balance, AI features pause until renewal — we never charge the card automatically."
+                      : "With no pack balance left, AI features pause until renewal (soft-block) — the rest of the app keeps working normally."}
                 </li>
+
 
               </ul>
             </div>
