@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Sparkles, Check, Zap, MessageCircle, Calendar } from "lucide-react";
+import { Loader2, Sparkles, Check, Zap, MessageCircle } from "lucide-react";
 
 interface Pkg {
   key: "mini" | "plus" | "pro";
