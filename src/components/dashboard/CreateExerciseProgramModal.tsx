@@ -15,12 +15,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload, Sparkles, Save, X, BookmarkPlus, GripVertical,
+  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload, Sparkles, Save, X, BookmarkPlus, GripVertical, Globe, Undo2,
 } from "lucide-react";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { HEP_TEMPLATES, type HepTemplate } from "@/data/hepTemplates";
 import { openWhatsAppDeferred } from "@/lib/whatsappShare";
+import { useAuth } from "@/contexts/AuthContext";
+import { isFallbackVip } from "@/lib/vipEmails";
 
 interface SavedTemplate {
   id: string;
