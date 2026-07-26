@@ -118,3 +118,32 @@ flag `app_config.ai_credits_enforced` false até 5.3; bypass VIP + `is_partner` 
 1. Conferir `/admin?tab=ai-usage` — devem ter ≥5 dias de dados reais.
 2. Calibrar quotas por tier baseado no consumo P50/P90.
 3. Implementar Fase 5 (warning + soft-block + flag rollout).
+
+## Fase 7 (objetivo futuro) — Dashboard de Rentabilidade Agregada (Admin)
+
+**Status:** planejado, não iniciado.
+
+**Objetivo:** painel em `/admin` mostrando rentabilidade real por período e por tipo de cliente.
+
+**Recortes obrigatórios**
+- Período (mês corrente, mês anterior, intervalo custom).
+- Tipo de cliente: Autônomo (PRO) x Clínica (por porte) x Acadêmico x VIP/parceiro (custo sem receita).
+
+**Métricas por recorte**
+- Receita bruta (assinaturas Stripe + pacotes avulsos de créditos).
+- Custo de IA real (a partir de `ai_token_usage` → tokens × preço por modelo; fallback `ai_credit_usage` × custo médio/crédito).
+- Custos fixos rateados: taxa Stripe, impostos, infra.
+- Margem bruta (R$ e %), margem por cliente, e ARPU.
+- Top ofensores: usuários e edge functions com maior custo de IA.
+- Créditos inclusos vs consumidos (taxa de utilização da cota) e receita de pacotes avulsos.
+
+**Fontes de dados**
+- `ai_token_usage`, `ai_credit_usage`, `ai_credit_decisions`, `ai_credit_transactions`.
+- `professionals` / `clinics` (tier, porte, status de assinatura, Stripe IDs).
+
+**Implementação sugerida**
+- Edge function `admin-profitability-stats` (service role, restrito a VIP/admin) agregando por período/tipo.
+- Componente `src/components/admin/AdminProfitability.tsx` em `Admin.tsx` (`?tab=profitability`).
+- Tabela de preços por modelo em `app_config` para o custo de IA não ficar hardcoded.
+
+**Pré-requisito:** ≥30 dias de `ai_token_usage` populado para que o custo real seja confiável.
