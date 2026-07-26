@@ -210,7 +210,7 @@ Generate a progression suggestion.`;
         },
       ],
       tool_choice: { type: "function", function: { name: "progression_suggestion" } },
-    });
+    }, undefined, { functionName: "generate-progression-suggestion", maxTokens: 1200 });
 
     if (!response.ok) {
       const errorText = await response.text();

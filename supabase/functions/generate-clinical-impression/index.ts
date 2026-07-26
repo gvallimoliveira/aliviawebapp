@@ -169,7 +169,7 @@ Rules:
       ],
       tools,
       tool_choice: { type: "function", function: { name: "return_clinical_impression" } },
-    });
+    }, undefined, { functionName: "generate-clinical-impression", maxTokens: 1500 });
 
     if (!response.ok) {
       const errText = await response.text();

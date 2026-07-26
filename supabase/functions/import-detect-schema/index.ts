@@ -82,7 +82,7 @@ Amostra (anonimizada): ${JSON.stringify((sample ?? []).slice(0, 10))}`;
       ],
       response_format: { type: "json_object" },
       temperature: 0.1,
-    });
+    }, undefined, { functionName: "import-detect-schema", maxTokens: 1500 });
 
     if (!resp.ok) {
       const txt = await resp.text();

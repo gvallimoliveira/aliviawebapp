@@ -168,7 +168,7 @@ Responda APENAS em JSON válido no formato:
         { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" },
-    });
+    }, undefined, { functionName: "agent-generate-hep", maxTokens: 2000 });
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();

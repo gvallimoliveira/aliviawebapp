@@ -75,7 +75,7 @@ Rules:
           ],
         },
       ],
-    });
+    }, undefined, { functionName: "parse-schedule-image", maxTokens: 2000 });
 
     if (!response.ok) {
       if (response.status === 429) {

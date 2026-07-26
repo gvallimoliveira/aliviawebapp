@@ -11,7 +11,6 @@ import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts
 const MODEL_CHAIN = [
   "google/gemini-2.5-flash",
   "google/gemini-2.5-flash-lite",
-  "google/gemini-2.5-pro",
 ];
 
 const PROMPTS: Record<string, string> = {
@@ -174,6 +173,7 @@ Deno.serve(async (req) => {
         temperature: 0.1,
       },
       MODEL_CHAIN,
+      { functionName: "extract-dynamometry", maxTokens: 1500 },
     );
 
     if (!aiResp.ok) {

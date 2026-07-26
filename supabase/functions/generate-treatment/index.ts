@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { shadowLogAiUsage, assertCreditsAvailable } from "../_shared/ai-credits.ts";
+import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -376,16 +377,20 @@ Generate a personalized 3-phase treatment plan in valid JSON format. Focus exerc
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3,
+        max_tokens: 4000,
       }),
     });
 
-    const modelChain = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite", "google/gemini-2.5-pro"];
+    // Cost control: Pro removed from the chain (routine structured generation).
+    const modelChain = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"];
     let response: Response | null = null;
+    let usedModel = "";
+    let usedIndex = 0;
     let lastStatus = 0;
     let lastBody = "";
     for (const m of modelChain) {
       const r = await callAi(m);
-      if (r.ok) { response = r; console.log(`[generate-treatment] using ${m}`); break; }
+      if (r.ok) { response = r; usedModel = m; usedIndex = modelChain.indexOf(m); console.log(`[generate-treatment] using ${m}`); break; }
       lastStatus = r.status;
       lastBody = await r.text();
       console.warn(`[generate-treatment] ${m} failed ${r.status}: ${lastBody.slice(0,200)}`);
@@ -400,6 +405,7 @@ Generate a personalized 3-phase treatment plan in valid JSON format. Focus exerc
     }
 
     const aiResult = await response.json();
+    logAiTokenUsage({ functionName: "generate-treatment", model: usedModel, usage: aiResult?.usage, fallbackIndex: usedIndex });
     const content = aiResult.choices[0].message.content;
 
     // Extract JSON from response — robust multi-layer parsing
