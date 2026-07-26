@@ -594,6 +594,75 @@ export default function PatientDetailView(props: any) {
                   {patient.name} · {new Date(summaryTarget.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "long", year: "numeric" })}
                 </DialogDescription>
               </DialogHeader>
+              {(() => {
+                if (summaryTarget.diagnosis) return null;
+                const ad: any = summaryTarget.anamnesis_data || {};
+                const strengthRows: any[] = Array.isArray(ad.strengthTable) ? ad.strengthTable : [];
+                const filledRows = strengthRows.filter((r: any) => r && (r.left != null || r.right != null || r.leftValue != null || r.rightValue != null));
+                const hasAnamnesis = !!(ad.chiefComplaint || (ad.chiefComplaints?.length) || (ad.painRegions?.length) || ad.onset || summaryTarget.pain_score != null);
+                return (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 p-3 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                          {language === "pt" ? "Avaliação incompleta — sem diagnóstico" : language === "es" ? "Evaluación incompleta — sin diagnóstico" : "Incomplete assessment — no diagnosis"}
+                        </p>
+                        <p className="text-xs text-amber-700 dark:text-amber-400">
+                          {language === "pt"
+                            ? "Esta avaliação ainda não gerou raciocínio clínico. Complete a anamnese para liberar o resumo, o PDF e o plano de tratamento."
+                            : language === "es"
+                            ? "Esta evaluación aún no generó razonamiento clínico. Complete la anamnesis para liberar el resumen, el PDF y el plan."
+                            : "This assessment has no clinical reasoning yet. Complete the anamnesis to unlock the summary, PDF and treatment plan."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex items-center gap-2">
+                        {filledRows.length > 0 ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                        <span className={filledRows.length > 0 ? "text-foreground" : "text-muted-foreground"}>
+                          {language === "pt" ? "Dinamometria (importada)" : language === "es" ? "Dinamometría (importada)" : "Dynamometry (imported)"}
+                          {filledRows.length > 0 && ` — ${filledRows.length} ${language === "pt" ? "movimento(s) registrado(s)" : language === "es" ? "movimiento(s)" : "movement(s)"}`}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {hasAnamnesis ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                        <span className={hasAnamnesis ? "text-foreground" : "text-muted-foreground"}>
+                          {language === "pt" ? "Anamnese (queixa, dor, histórico)" : language === "es" ? "Anamnesis (queja, dolor, historial)" : "Anamnesis (complaint, pain, history)"}
+                          {!hasAnamnesis && ` — ${language === "pt" ? "pendente" : language === "es" ? "pendiente" : "pending"}`}
+                        </span>
+                      </div>
+                    </div>
+
+                    {filledRows.length > 0 && (
+                      <div className="rounded-md bg-background/70 border border-amber-200 p-2 space-y-1">
+                        {filledRows.slice(0, 6).map((r: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between gap-2 text-[11px]">
+                            <span className="text-muted-foreground truncate">{r.label || r.movement || r.name || `#${i + 1}`}</span>
+                            <span className="font-mono text-foreground shrink-0">
+                              E {r.left ?? r.leftValue ?? "—"} · D {r.right ?? r.rightValue ?? "—"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {!readOnly && (
+                      <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                        <Button size="sm" className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => { setSummaryDialogOpen(false); setResumeAssessment(summaryTarget); }}>
+                          <RotateCcw className="h-3.5 w-3.5" />
+                          {language === "pt" ? "Retomar esta avaliação" : language === "es" ? "Retomar esta evaluación" : "Resume this assessment"}
+                        </Button>
+                        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => { setSummaryDialogOpen(false); setManualAssessmentOpen(true); }}>
+                          <FilePlus2 className="h-3.5 w-3.5" />
+                          {language === "pt" ? "Nova avaliação manual" : language === "es" ? "Nueva evaluación manual" : "New manual assessment"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               <AssessmentSummaryView
                 assessment={summaryTarget}
                 embedded
