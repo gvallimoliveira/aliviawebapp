@@ -288,6 +288,7 @@ export async function assertCreditsAvailable(
   req: Request,
   opts: { function_name: string; credits?: number; user_id?: string | null },
 ): Promise<CreditDecision> {
+  const t0 = Date.now();
   const cost = opts.credits ?? AI_CREDIT_COST[opts.function_name] ?? 0.05;
   const base = {
     cost,
@@ -297,20 +298,38 @@ export async function assertCreditsAvailable(
     unlimited: false,
   };
 
+  // Helper: finalize decision with latency + fire-and-forget telemetry insert.
+  const finalize = (
+    admin: SupabaseClient | null,
+    userId: string | null,
+    partial: Omit<CreditDecision, "latency_ms">,
+  ): CreditDecision => {
+    const decision: CreditDecision = { ...partial, latency_ms: Date.now() - t0 };
+    if (admin) {
+      logDecisionTelemetry(admin, userId, opts.function_name, decision);
+    }
+    return decision;
+  };
+
+  let admin: SupabaseClient | null = null;
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     if (!supabaseUrl || !serviceKey) {
-      return { ...base, ok: true, reason: "shadow_error" };
+      return finalize(null, null, {
+        ...base, ok: true, reason: "shadow_error", path_taken: "shadow_error",
+      });
     }
-    const admin = createClient(supabaseUrl, serviceKey);
+    admin = createClient(supabaseUrl, serviceKey);
     const enforced = await isEnforcementOn(admin);
 
     // Resolve user_id + email
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
     const userId = opts.user_id ?? decodeJwtSub(authHeader);
     if (!userId || userId === ANON_SENTINEL) {
-      return { ...base, enforced, ok: true, reason: "anonymous" };
+      return finalize(admin, null, {
+        ...base, enforced, ok: true, reason: "anonymous", path_taken: "anonymous",
+      });
     }
 
     // Email para VIP: tenta do JWT, senão profiles/auth
@@ -323,7 +342,9 @@ export async function assertCreditsAvailable(
     }
 
     if (await isVipEmail(admin, email)) {
-      return { ...base, enforced, ok: true, unlimited: true, reason: "vip" };
+      return finalize(admin, userId, {
+        ...base, enforced, ok: true, unlimited: true, reason: "vip", path_taken: "vip",
+      });
     }
 
     // Partner
@@ -334,7 +355,9 @@ export async function assertCreditsAvailable(
         .eq("user_id", userId)
         .maybeSingle();
       if (prof?.is_partner) {
-        return { ...base, enforced, ok: true, unlimited: true, reason: "partner" };
+        return finalize(admin, userId, {
+          ...base, enforced, ok: true, unlimited: true, reason: "partner", path_taken: "partner",
+        });
       }
     } catch { /* noop */ }
 
@@ -344,7 +367,10 @@ export async function assertCreditsAvailable(
       { _user_id: userId },
     );
     if (statusError || !statusData) {
-      return { ...base, enforced, ok: true, reason: "shadow_error" };
+      return finalize(admin, userId, {
+        ...base, enforced, ok: true, reason: "shadow_error", path_taken: "shadow_error",
+        metadata: { error: statusError?.message },
+      });
     }
     const s = statusData as {
       tier: string;
@@ -356,40 +382,43 @@ export async function assertCreditsAvailable(
     };
 
     if (s.unlimited) {
-      return { ...base, enforced, ok: true, unlimited: true, reason: "unlimited_tier", tier: s.tier };
+      return finalize(admin, userId, {
+        ...base, enforced, ok: true, unlimited: true, reason: "unlimited_tier",
+        path_taken: "unlimited_tier", tier: s.tier,
+      });
     }
 
     if (s.clinic_id) {
-      // Clínica nunca bloqueia — só reporta
       const remaining = Math.max(0, (s.included ?? 0) - (s.used ?? 0)) + (s.purchased ?? 0);
-      return {
-        ...base,
-        enforced,
-        ok: true,
-        remaining,
-        reason: "clinic_no_block",
-        tier: s.tier,
-        metadata: { included: s.included, used: s.used, purchased: s.purchased },
-      };
+      return finalize(admin, userId, {
+        ...base, enforced, ok: true, remaining, reason: "clinic_no_block",
+        path_taken: "clinic_no_block", tier: s.tier,
+        metadata: { included: s.included, used: s.used, purchased: s.purchased, clinic_id: s.clinic_id },
+      });
     }
 
     const remainingIncluded = Math.max(0, (s.included ?? 0) - (s.used ?? 0));
     const remaining = remainingIncluded + (s.purchased ?? 0);
     const sufficient = remaining >= cost;
 
-    return {
+    return finalize(admin, userId, {
       ...base,
       enforced,
       ok: sufficient || !enforced, // shadow mode nunca bloqueia
       blocked: enforced && !sufficient,
       remaining,
       reason: sufficient ? "sufficient" : "insufficient",
+      path_taken: "quota_check",
       tier: s.tier,
       metadata: { included: s.included, used: s.used, purchased: s.purchased },
-    };
+    });
   } catch (e) {
     console.error("[ai-credits] assertCreditsAvailable error:", (e as Error).message);
-    return { ...base, ok: true, reason: "error" };
+    return finalize(admin, null, {
+      ...base, ok: true, reason: "error", path_taken: "error",
+      metadata: { error: (e as Error).message },
+    });
   }
 }
+
 
