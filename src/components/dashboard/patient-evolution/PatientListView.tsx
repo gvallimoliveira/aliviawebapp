@@ -154,8 +154,23 @@ export default function PatientListView(props: any) {
         const isPlaceholderAssessment = (a: any) => {
           const ad = a?.anamnesis_data;
           if (!ad || typeof ad !== "object") return false;
-          return !!(ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder);
+          const flagged = !!(ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder);
+          if (!flagged) return false;
+          // A record flagged as placeholder but that already carries real clinical
+          // content (diagnosis, pain data, questionnaires, strength table…) must NOT
+          // be hidden — otherwise it becomes an unreachable "ghost" assessment.
+          const hasRealContent = !!(
+            a.diagnosis ||
+            a.treatment_plan ||
+            a.pain_score != null ||
+            (Array.isArray(a.pain_regions) && a.pain_regions.length > 0) ||
+            (Array.isArray(ad.strengthTable) && ad.strengthTable.length > 0) ||
+            a.test_results ||
+            a.questionnaire_results
+          );
+          return !hasRealContent;
         };
+
         const realAssessmentsOf = (p: any) =>
           (p.assessments || []).filter((a: any) => !isPlaceholderAssessment(a));
 
