@@ -676,6 +676,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_token_usage: {
+        Row: {
+          completion_tokens: number | null
+          created_at: string
+          fallback_index: number
+          function_name: string
+          id: string
+          latency_ms: number | null
+          metadata: Json
+          model: string | null
+          prompt_tokens: number | null
+          total_tokens: number | null
+        }
+        Insert: {
+          completion_tokens?: number | null
+          created_at?: string
+          fallback_index?: number
+          function_name: string
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json
+          model?: string | null
+          prompt_tokens?: number | null
+          total_tokens?: number | null
+        }
+        Update: {
+          completion_tokens?: number | null
+          created_at?: string
+          fallback_index?: number
+          function_name?: string
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json
+          model?: string | null
+          prompt_tokens?: number | null
+          total_tokens?: number | null
+        }
+        Relationships: []
+      }
       app_config: {
         Row: {
           key: string
