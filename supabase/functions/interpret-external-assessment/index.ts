@@ -231,7 +231,10 @@ RULES:
       ],
       tools,
       tool_choice: { type: "function", function: { name: "return_external_assessment" } },
-    }, ["google/gemini-2.5-flash", "google/gemini-2.5-pro"]);
+    }, ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"], {
+      functionName: "interpret-external-assessment",
+      maxTokens: 3000,
+    });
 
     if (!response.ok) {
       const errText = await response.text();

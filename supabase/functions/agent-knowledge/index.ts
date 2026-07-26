@@ -755,7 +755,8 @@ ${JSON.stringify({
     abstract: (c.abstract || "").slice(0, 4000),
   }, null, 2)}`;
 
-  const modelChain = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite", "google/gemini-2.5-pro"];
+  // Cost control: Pro removed — per-article enrichment is a short structured task.
+  const modelChain = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"];
   for (const model of modelChain) {
     try {
       const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -767,10 +768,12 @@ ${JSON.stringify({
             { role: "system", content: "Você é um bibliotecário científico rigoroso. Responde apenas JSON válido. NUNCA mistura informação de outros estudos nem usa memória externa." },
             { role: "user", content: prompt },
           ],
+          max_tokens: 900,
         }),
       });
       if (!r.ok) continue;
       const j = await r.json();
+      logAiTokenUsage({ functionName: "agent-knowledge", model, usage: j?.usage, fallbackIndex: modelChain.indexOf(model) });
       const raw = j.choices?.[0]?.message?.content || "";
       const parsed = safeParseJson(raw);
       const obj = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as any : null;

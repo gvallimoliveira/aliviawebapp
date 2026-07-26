@@ -562,16 +562,21 @@ Generate the diagnostic hypothesis in valid JSON format.`;
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3,
+        max_tokens: 2500,
       }),
     });
 
-    const modelChain = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite", "google/gemini-2.5-pro"];
+    // Cost control: Pro removed from the chain — Flash/Flash-Lite are sufficient
+    // for this structured task and cost a fraction per call.
+    const modelChain = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"];
     let response: Response | null = null;
+    let usedModel = "";
+    let usedIndex = 0;
     let lastStatus = 0;
     let lastBody = "";
     for (const m of modelChain) {
       const r = await callAi(m);
-      if (r.ok) { response = r; console.log(`[generate-diagnosis] using ${m}`); break; }
+      if (r.ok) { response = r; usedModel = m; usedIndex = modelChain.indexOf(m); console.log(`[generate-diagnosis] using ${m}`); break; }
       lastStatus = r.status;
       lastBody = await r.text();
       console.warn(`[generate-diagnosis] ${m} failed ${r.status}: ${lastBody.slice(0,200)}`);
@@ -586,6 +591,7 @@ Generate the diagnostic hypothesis in valid JSON format.`;
     }
 
     const aiResult = await response.json();
+    logAiTokenUsage({ functionName: "generate-diagnosis", model: usedModel, usage: aiResult?.usage, fallbackIndex: usedIndex });
     const content = aiResult.choices[0].message.content;
 
     // Extract JSON from response — robust multi-layer parsing
