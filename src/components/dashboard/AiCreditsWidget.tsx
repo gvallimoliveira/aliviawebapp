@@ -197,6 +197,13 @@ const AiCreditsWidget = () => {
               <span className="text-xs font-medium text-foreground">{tierLabel}</span>
               <span className="text-[11px] text-muted-foreground capitalize">{monthLabel}</span>
             </div>
+            {pooled && (
+              <p className="text-[11px] text-muted-foreground">
+                {isPt
+                  ? `Cota agregada da equipe: ${perMember} créditos × ${clinicMembers} ${clinicMembers === 1 ? "terapeuta" : "terapeutas"} = ${included} créditos compartilhados no mês.`
+                  : `Team-wide pooled quota: ${perMember} credits × ${clinicMembers} ${clinicMembers === 1 ? "therapist" : "therapists"} = ${included} shared credits this month.`}
+              </p>
+            )}
             <div className="flex items-end justify-between gap-2">
               <div>
                 <p className="text-2xl font-bold text-foreground leading-none">
@@ -206,7 +213,9 @@ const AiCreditsWidget = () => {
                   </span>
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  {isPt ? "créditos do plano usados no mês" : "plan credits used this month"}
+                  {pooled
+                    ? (isPt ? "créditos da equipe usados no mês" : "team credits used this month")
+                    : (isPt ? "créditos do plano usados no mês" : "plan credits used this month")}
                 </p>
               </div>
               <div className="text-right">
@@ -225,6 +234,13 @@ const AiCreditsWidget = () => {
                   style={{ width: `${Math.min(pct, 100)}%` }}
                 />
               </div>
+            )}
+            {pooled && (
+              <p className="text-[11px] text-muted-foreground">
+                {isPt
+                  ? `Seu consumo pessoal dentro do pool: ${personalUsed.toFixed(1)} créditos.`
+                  : `Your personal usage inside the pool: ${personalUsed.toFixed(1)} credits.`}
+              </p>
             )}
             {/* Fase 5.2 — warning a 80% (sem bloqueio) */}
             {pct >= 80 && pct < 100 && (
@@ -247,6 +263,33 @@ const AiCreditsWidget = () => {
                 </p>
               </div>
             )}
+            {/* Como funcionam os limites */}
+            <div className="rounded-md border border-border bg-background/60 p-2 space-y-1">
+              <p className="text-[11px] font-medium text-foreground">
+                {isPt ? "Como funcionam os limites" : "How the limits work"}
+              </p>
+              <ul className="text-[11px] text-muted-foreground leading-relaxed list-disc pl-4 space-y-0.5">
+                <li>
+                  {isPt
+                    ? `Seu plano inclui ${included} créditos por mês${pooled ? " para toda a equipe" : ""}, renovados${daysToReset !== null ? ` em ${daysToReset} ${daysToReset === 1 ? "dia" : "dias"}` : " todo mês"}.`
+                    : `Your plan includes ${included} credits per month${pooled ? " for the whole team" : ""}, renewing${daysToReset !== null ? ` in ${daysToReset} ${daysToReset === 1 ? "day" : "days"}` : " every month"}.`}
+                </li>
+                <li>
+                  {isPt
+                    ? "Ao chegar em 80%, mostramos um aviso amarelo aqui — só para você se organizar. Nada é bloqueado."
+                    : "At 80% we show an amber warning here — just so you can plan ahead. Nothing is blocked."}
+                </li>
+                <li>
+                  {isPt
+                    ? pooled
+                      ? "Clínicas nunca são bloqueadas: se a equipe passar do incluso, o excedente vira apenas aviso ao dono da clínica."
+                      : "Se a cota acabar, o saldo de pacotes avulsos entra automaticamente. Sem pacote, as funções de IA pausam até a renovação (soft-block) — o restante do app continua normal."
+                    : pooled
+                      ? "Clinics are never blocked: if the team goes over, the overage is only a heads-up to the clinic owner."
+                      : "If the quota runs out, purchased packs are used automatically. Without a pack, AI features pause until renewal (soft-block) — the rest of the app keeps working."}
+                </li>
+              </ul>
+            </div>
           </div>
         )}
 
