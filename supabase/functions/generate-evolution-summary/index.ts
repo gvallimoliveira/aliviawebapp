@@ -96,7 +96,7 @@ Total assessments in period: ${assessments.length}
         },
       ],
       tool_choice: { type: "function", function: { name: "evolution_summary" } },
-    });
+    }, undefined, { functionName: "generate-evolution-summary", maxTokens: 1500 });
 
     if (!response.ok) {
       if (response.status === 429) {
