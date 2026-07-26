@@ -1765,6 +1765,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_system: boolean
           items: Json
           name: string
           notes: string | null
@@ -1777,6 +1778,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_system?: boolean
           items?: Json
           name: string
           notes?: string | null
@@ -1789,6 +1791,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_system?: boolean
           items?: Json
           name?: string
           notes?: string | null

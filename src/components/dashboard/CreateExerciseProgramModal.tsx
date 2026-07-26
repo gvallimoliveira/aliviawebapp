@@ -15,12 +15,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload, Sparkles, Save, X, BookmarkPlus, GripVertical,
+  Loader2, Search, Plus, Minus, Dumbbell, Copy, Share2, Check, Link2, PenLine, Trash2, CloudUpload, Sparkles, Save, X, BookmarkPlus, GripVertical, Globe, Undo2,
 } from "lucide-react";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { HEP_TEMPLATES, type HepTemplate } from "@/data/hepTemplates";
 import { openWhatsAppDeferred } from "@/lib/whatsappShare";
+import { useAuth } from "@/contexts/AuthContext";
+import { isFallbackVip } from "@/lib/vipEmails";
 
 interface SavedTemplate {
   id: string;
@@ -30,6 +32,7 @@ interface SavedTemplate {
   body_region: string;
   professional_id: string | null;
   clinic_id: string | null;
+  is_system?: boolean;
   items: Array<{
     exerciseId?: string;
     customName?: string;
@@ -109,6 +112,7 @@ const regionLabels: Record<string, Record<string, string>> = {
 const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId, clinicId, demoMode = false }: Props) => {
   const { language } = useLanguage();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -138,6 +142,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   });
 
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
+  const [systemTemplates, setSystemTemplates] = useState<SavedTemplate[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [promotingId, setPromotingId] = useState<string | null>(null);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
@@ -152,6 +159,21 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     setNotes(payload.notes || "");
   };
 
+  // Admin (VIP) detection — enables promoting/removing system-wide templates
+  useEffect(() => {
+    if (!open || !user?.email) { setIsAdmin(false); return; }
+    const email = user.email.toLowerCase();
+    if (isFallbackVip(email)) { setIsAdmin(true); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("vip_users").select("id").eq("email", email).maybeSingle();
+      if (!cancelled) setIsAdmin(!!data);
+    })();
+    return () => { cancelled = true; };
+  }, [open, user?.email]);
+
+
+
   useEffect(() => {
     if (!open) return;
     const load = async () => {
@@ -163,18 +185,29 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         .order("category");
       setExercises(data || []);
 
-      // Load saved templates: own professional + (if in clinic mode) all clinic templates
+      // Load templates: own professional + (if in clinic mode) clinic templates + system-wide ones
+      const tplCols = "id, name, description, notes, body_region, items, professional_id, clinic_id, is_system";
       let tplsQuery = (supabase as any)
         .from("hep_templates")
-        .select("id, name, description, notes, body_region, items, professional_id, clinic_id")
+        .select(tplCols)
+        .eq("is_system", false)
         .order("created_at", { ascending: false });
       if (clinicId) {
         tplsQuery = tplsQuery.or(`professional_id.eq.${professionalId},clinic_id.eq.${clinicId}`);
       } else {
         tplsQuery = tplsQuery.eq("professional_id", professionalId);
       }
-      const { data: tpls } = await tplsQuery;
+      const [{ data: tpls }, { data: sysTpls }] = await Promise.all([
+        tplsQuery,
+        (supabase as any)
+          .from("hep_templates")
+          .select(tplCols)
+          .eq("is_system", true)
+          .order("created_at", { ascending: false }),
+      ]);
       setSavedTemplates((tpls || []) as SavedTemplate[]);
+      setSystemTemplates((sysTpls || []) as SavedTemplate[]);
+
 
 
       // If editing, load existing program items
@@ -562,17 +595,55 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     }
   };
 
-  const deleteSavedTemplate = async (id: string) => {
-    const ok = window.confirm(language === "en" ? "Delete this template?" : "Excluir este template?");
+  const deleteSavedTemplate = async (id: string, isSystem = false) => {
+    const ok = window.confirm(
+      isSystem
+        ? (language === "en" ? "Delete this SYSTEM template for everyone?" : "Excluir este template PADRÃO do sistema para todos?")
+        : (language === "en" ? "Delete this template?" : "Excluir este template?")
+    );
     if (!ok) return;
     const { error } = await (supabase as any).from("hep_templates").delete().eq("id", id);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
       return;
     }
-    setSavedTemplates(savedTemplates.filter((t) => t.id !== id));
+    if (isSystem) setSystemTemplates(systemTemplates.filter((t) => t.id !== id));
+    else setSavedTemplates(savedTemplates.filter((t) => t.id !== id));
     toast({ title: language === "en" ? "Template deleted" : "Template excluído" });
   };
+
+  /** Admin-only: promote a personal/clinic template to a system-wide default (or revert it). */
+  const toggleSystemTemplate = async (tpl: SavedTemplate, makeSystem: boolean) => {
+    if (!isAdmin) return;
+    setPromotingId(tpl.id);
+    try {
+      const patch = makeSystem
+        ? { is_system: true, professional_id: null, clinic_id: null }
+        : { is_system: false, professional_id: professionalId || null, clinic_id: null };
+      const { data, error } = await (supabase as any)
+        .from("hep_templates")
+        .update(patch)
+        .eq("id", tpl.id)
+        .select("id, name, description, notes, body_region, items, professional_id, clinic_id, is_system")
+        .single();
+      if (error) throw error;
+      const updated = data as SavedTemplate;
+      if (makeSystem) {
+        setSavedTemplates(savedTemplates.filter((t) => t.id !== tpl.id));
+        setSystemTemplates([updated, ...systemTemplates]);
+        toast({ title: language === "en" ? "Now a system template" : "Agora é template padrão do sistema" });
+      } else {
+        setSystemTemplates(systemTemplates.filter((t) => t.id !== tpl.id));
+        setSavedTemplates([updated, ...savedTemplates]);
+        toast({ title: language === "en" ? "Reverted to personal template" : "Voltou a ser template pessoal" });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro", description: err?.message, variant: "destructive" });
+    } finally {
+      setPromotingId(null);
+    }
+  };
+
 
   const handleCreate = async () => {
     if (totalCount === 0) return;
@@ -824,7 +895,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                   {language === "en" ? "Reusable templates" : "Templates reutilizáveis"}
                 </div>
                 <div className="flex items-center gap-1">
-                  {savedTemplates.length > 0 && (
+                  {(savedTemplates.length > 0 || (isAdmin && systemTemplates.length > 0)) && (
                     <Button
                       type="button"
                       size="sm"
@@ -852,9 +923,14 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 </div>
               </div>
 
-              {/* Built-in templates */}
-              {HEP_TEMPLATES.length > 0 && (
+              {/* Built-in + system-wide (DB) templates */}
+              {(HEP_TEMPLATES.length > 0 || systemTemplates.length > 0) && (
                 <Select onValueChange={(id) => {
+                  if (id.startsWith("sys:")) {
+                    const sys = systemTemplates.find((t) => t.id === id.slice(4));
+                    if (sys) applySavedTemplate(sys);
+                    return;
+                  }
                   const tpl = HEP_TEMPLATES.find((t) => t.id === id);
                   if (tpl) applyTemplate(tpl);
                 }}>
@@ -867,6 +943,23 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                         <div className="flex flex-col py-0.5">
                           <span className="font-medium">{language === "en" ? tpl.name_en : tpl.name_pt}</span>
                           <span className="text-[10px] text-muted-foreground">{tpl.items.length} {language === "en" ? "exercises" : "exercícios"}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    {systemTemplates.map((tpl) => (
+                      <SelectItem key={tpl.id} value={`sys:${tpl.id}`} className="text-xs">
+                        <div className="flex flex-col py-0.5">
+                          <span className="font-medium flex items-center gap-1.5">
+                            {tpl.name}
+                            <Badge variant="secondary" className="h-4 px-1.5 text-[9px] gap-1">
+                              <Globe className="h-2.5 w-2.5" />
+                              {language === "en" ? "System" : "Sistema"}
+                            </Badge>
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {(tpl.items?.length ?? 0)} {language === "en" ? "exercises" : "exercícios"}
+                            {tpl.description ? ` · ${tpl.description}` : ""}
+                          </span>
                         </div>
                       </SelectItem>
                     ))}
@@ -907,9 +1000,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 </Select>
               )}
 
-              {/* Manage saved templates */}
-              {savedTemplates.length > 0 && showManageTemplates && (
-                <div className="space-y-1 max-h-[140px] overflow-y-auto bg-background rounded-md p-1.5 border border-border">
+              {/* Manage templates (personal/clinic + system for admins) */}
+              {showManageTemplates && (savedTemplates.length > 0 || (isAdmin && systemTemplates.length > 0)) && (
+                <div className="space-y-1 max-h-[180px] overflow-y-auto bg-background rounded-md p-1.5 border border-border">
                   {savedTemplates.map((tpl) => (
                     <div key={tpl.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-muted">
                       <div className="flex-1 min-w-0">
@@ -926,6 +1019,20 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                           {tpl.description ? ` · ${tpl.description}` : ""}
                         </p>
                       </div>
+                      {isAdmin && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-[10px] gap-1 shrink-0 text-primary"
+                          disabled={promotingId === tpl.id}
+                          onClick={() => toggleSystemTemplate(tpl, true)}
+                          title={language === "en" ? "Make it a system default" : "Tornar template padrão do sistema"}
+                        >
+                          {promotingId === tpl.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Globe className="h-3 w-3" />}
+                          {language === "en" ? "System" : "Padrão"}
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         size="icon"
@@ -938,6 +1045,51 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                     </div>
                   ))}
 
+                  {isAdmin && systemTemplates.length > 0 && (
+                    <>
+                      <p className="text-[10px] font-semibold text-muted-foreground px-2 pt-1">
+                        {language === "en" ? "System templates (all users)" : "Templates padrão do sistema (todos os usuários)"}
+                      </p>
+                      {systemTemplates.map((tpl) => (
+                        <div key={tpl.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-muted">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate flex items-center gap-1.5">
+                              {tpl.name}
+                              <Badge variant="secondary" className="h-4 px-1.5 text-[9px] gap-1">
+                                <Globe className="h-2.5 w-2.5" />
+                                {language === "en" ? "System" : "Sistema"}
+                              </Badge>
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {(tpl.items?.length ?? 0)} {language === "en" ? "exercises" : "exercícios"}
+                              {tpl.description ? ` · ${tpl.description}` : ""}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-[10px] gap-1 shrink-0"
+                            disabled={promotingId === tpl.id}
+                            onClick={() => toggleSystemTemplate(tpl, false)}
+                            title={language === "en" ? "Revert to personal template" : "Voltar a template pessoal"}
+                          >
+                            {promotingId === tpl.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Undo2 className="h-3 w-3" />}
+                            {language === "en" ? "Personal" : "Pessoal"}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-destructive shrink-0"
+                            onClick={() => deleteSavedTemplate(tpl.id, true)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
 
