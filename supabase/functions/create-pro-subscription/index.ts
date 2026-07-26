@@ -63,15 +63,95 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
+    let customerId: string | undefined;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Existing customer found", { customerId });
     }
 
+    // ── Idempotência 1: assinatura PRO já ATIVA ────────────────────────────
+    // Se o customer já tem uma assinatura PRO ativa (mensal ou anual),
+    // nunca criamos nova sessão. Sincronizamos o DB e devolvemos flag para
+    // o front-end tratar (mostrar toast e evitar redirect ao Stripe).
+    if (customerId) {
+      const PRO_PRODUCT_IDS = ["prod_UHdISwfBcfWftS", "prod_UA4lNoezZmPwvs"];
+      const activeSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 10,
+      });
+      const activePro = activeSubs.data.find((s: any) =>
+        s.items.data.some((i: any) => PRO_PRODUCT_IDS.includes(i.price?.product as string))
+      );
+      if (activePro) {
+        logStep("Already has active PRO subscription — refusing to create duplicate", { subId: activePro.id });
+        // Sincroniza DB imediatamente (defensivo, caso webhook tenha falhado antes)
+        try {
+          const supabaseAdmin = createClient(
+            Deno.env.get("SUPABASE_URL") ?? "",
+            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+          );
+          const updates: Record<string, any> = {
+            subscription_status: "active",
+            subscription_stripe_id: activePro.id,
+            approved: true,
+            subscription_grace_until: null,
+          };
+          // Se for anual, propaga expiração
+          const isAnnual = activePro.items.data.some((i: any) => i.price?.recurring?.interval === "year");
+          if (isAnnual && (activePro as any).current_period_end) {
+            updates.pro_access_expires_at = new Date((activePro as any).current_period_end * 1000).toISOString();
+          }
+          await supabaseAdmin.from("professionals").update(updates).eq("user_id", user.id);
+        } catch (e) {
+          logStep("DB sync during idempotency check failed (non-blocking)", { error: String(e) });
+        }
+        return new Response(
+          JSON.stringify({
+            already_active: true,
+            subscription_id: activePro.id,
+            message: "Você já possui uma assinatura PRO ativa.",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
+    }
+
     const origin = req.headers.get("origin") || "https://alivia.app";
 
     const successUrl = `${origin}/dashboard?subscription=success`;
+
+    // ── Idempotência 2: sessão de Checkout recente e ainda aberta ─────────
+    // Evita gerar segunda cobrança quando o usuário volta e clica de novo
+    // no botão de comprar dentro de poucos minutos (Stripe mantém a sessão
+    // válida por 24h por padrão; usamos janela de 15min para reaproveitar).
+    if (customerId) {
+      try {
+        const recent = await stripe.checkout.sessions.list({
+          customer: customerId,
+          limit: 5,
+        });
+        const fifteenMinAgo = Math.floor(Date.now() / 1000) - 15 * 60;
+        const openMatch = recent.data.find(
+          (s: any) =>
+            s.status === "open" &&
+            s.mode === "subscription" &&
+            s.created >= fifteenMinAgo &&
+            s.metadata?.user_id === user.id &&
+            s.metadata?.plan === plan &&
+            s.url
+        );
+        if (openMatch?.url) {
+          logStep("Reusing recent open checkout session", { sessionId: openMatch.id });
+          return new Response(JSON.stringify({ url: openMatch.url, reused: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+      } catch (e) {
+        logStep("Recent-session lookup failed (non-blocking)", { error: String(e) });
+      }
+    }
 
     // Try to pre-apply coupon if provided
     let discounts: Array<{ promotion_code: string }> | undefined;
@@ -88,6 +168,12 @@ serve(async (req) => {
         logStep("Promotion code lookup failed", { error: String(e) });
       }
     }
+
+    // Idempotency key na criação do Checkout Session: impede que duas
+    // requisições concorrentes (double-click / retry de rede) gerem duas
+    // sessões — e, portanto, duas assinaturas — para o mesmo usuário/plano
+    // no mesmo minuto.
+    const idempotencyKey = `create-pro-${user.id}-${plan}-${Math.floor(Date.now() / 60000)}`;
 
     const sessionParams: any = {
       customer: customerId,
@@ -107,6 +193,13 @@ serve(async (req) => {
         plan,
         type: plan === "annual" ? "pro_annual" : "pro_subscription",
       },
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          plan,
+          type: plan === "annual" ? "pro_annual" : "pro_subscription",
+        },
+      },
     };
 
     if (discounts) {
@@ -115,9 +208,11 @@ serve(async (req) => {
       sessionParams.allow_promotion_codes = true;
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    const session = await stripe.checkout.sessions.create(sessionParams, {
+      idempotencyKey,
+    });
 
-    logStep("Checkout session created", { sessionId: session.id });
+    logStep("Checkout session created", { sessionId: session.id, idempotencyKey });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
