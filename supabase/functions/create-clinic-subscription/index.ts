@@ -93,7 +93,6 @@ serve(async (req) => {
         status: "active",
         limit: 10,
       });
-      const clinicProductIds = Object.values(PRICE_MAP); // placeholder – filtered by price
       const activeClinicSub = activeSubs.data.find((s: any) =>
         s.items.data.some((i: any) => Object.values(PRICE_MAP).includes(i.price?.id))
       );
