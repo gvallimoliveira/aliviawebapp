@@ -1,0 +1,1 @@
+UPDATE public.professionals SET pro_access_expires_at = NULL WHERE email = 'ritachagas.391@gmail.com';
