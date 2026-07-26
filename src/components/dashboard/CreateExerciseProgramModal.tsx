@@ -595,17 +595,55 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     }
   };
 
-  const deleteSavedTemplate = async (id: string) => {
-    const ok = window.confirm(language === "en" ? "Delete this template?" : "Excluir este template?");
+  const deleteSavedTemplate = async (id: string, isSystem = false) => {
+    const ok = window.confirm(
+      isSystem
+        ? (language === "en" ? "Delete this SYSTEM template for everyone?" : "Excluir este template PADRÃO do sistema para todos?")
+        : (language === "en" ? "Delete this template?" : "Excluir este template?")
+    );
     if (!ok) return;
     const { error } = await (supabase as any).from("hep_templates").delete().eq("id", id);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
       return;
     }
-    setSavedTemplates(savedTemplates.filter((t) => t.id !== id));
+    if (isSystem) setSystemTemplates(systemTemplates.filter((t) => t.id !== id));
+    else setSavedTemplates(savedTemplates.filter((t) => t.id !== id));
     toast({ title: language === "en" ? "Template deleted" : "Template excluído" });
   };
+
+  /** Admin-only: promote a personal/clinic template to a system-wide default (or revert it). */
+  const toggleSystemTemplate = async (tpl: SavedTemplate, makeSystem: boolean) => {
+    if (!isAdmin) return;
+    setPromotingId(tpl.id);
+    try {
+      const patch = makeSystem
+        ? { is_system: true, professional_id: null, clinic_id: null }
+        : { is_system: false, professional_id: professionalId || null, clinic_id: null };
+      const { data, error } = await (supabase as any)
+        .from("hep_templates")
+        .update(patch)
+        .eq("id", tpl.id)
+        .select("id, name, description, notes, body_region, items, professional_id, clinic_id, is_system")
+        .single();
+      if (error) throw error;
+      const updated = data as SavedTemplate;
+      if (makeSystem) {
+        setSavedTemplates(savedTemplates.filter((t) => t.id !== tpl.id));
+        setSystemTemplates([updated, ...systemTemplates]);
+        toast({ title: language === "en" ? "Now a system template" : "Agora é template padrão do sistema" });
+      } else {
+        setSystemTemplates(systemTemplates.filter((t) => t.id !== tpl.id));
+        setSavedTemplates([updated, ...savedTemplates]);
+        toast({ title: language === "en" ? "Reverted to personal template" : "Voltou a ser template pessoal" });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro", description: err?.message, variant: "destructive" });
+    } finally {
+      setPromotingId(null);
+    }
+  };
+
 
   const handleCreate = async () => {
     if (totalCount === 0) return;
