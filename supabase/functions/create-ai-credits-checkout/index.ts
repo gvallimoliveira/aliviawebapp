@@ -29,35 +29,30 @@ function htmlError(message: string, status = 400) {
 }
 
 // Server-side catalog — never trust client to set prices or credit amounts.
+// 2026-07 reescala: pacotes avulsos são um EXTRA da assinatura (60 cr/mês),
+// não um substituto. Escala pequena e preço por crédito crescente para
+// desincentivar a compra do pacote maior no lugar da assinatura.
 const PACKAGES: Record<
   string,
   { price_id: string; credits: number; price_brl: number; label: string }
 > = {
-  starter: {
-    price_id: "price_1TmRLn2HgVhVBE8UsHAPQlBe",
-    credits: 25,
-    price_brl: 8.0,
-    label: "Pacote IA Starter (25 créditos)",
-  },
   mini: {
-    price_id: "price_1TmR9S2HgVhVBE8UkDiP7iTx",
-    credits: 50,
-    price_brl: 15.0,
-    label: "Pacote IA Mini (50 créditos)",
+    price_id: "price_1TxbDh2HgVhVBE8UhMrZcf0l",
+    credits: 15,
+    price_brl: 29.0,
+    label: "Pacote IA Mini (15 créditos)",
   },
   plus: {
-    // 2026-06 reprice: R$35 → R$39 (margem 23% → 32%) — novo price criado em 29/06.
-    price_id: "price_1TnmWF2HgVhVBE8UokvoKgGZ",
-    credits: 150,
-    price_brl: 39.0,
-    label: "Pacote IA Plus (150 créditos)",
+    price_id: "price_1TxbE22HgVhVBE8Ura1ksREZ",
+    credits: 30,
+    price_brl: 59.0,
+    label: "Pacote IA Plus (30 créditos)",
   },
-  annual: {
-    // 2026-06 A5: pacote anual de 1200 créditos a R$ 299 (R$ 0,25/cr, ~4% off vs Plus).
-    price_id: "price_1Tnmj52HgVhVBE8UJfS8V5lF",
-    credits: 1200,
-    price_brl: 299.0,
-    label: "Pacote IA Anual (1200 créditos)",
+  pro: {
+    price_id: "price_1TxbEQ2HgVhVBE8UYUA34mfm",
+    credits: 60,
+    price_brl: 89.0,
+    label: "Pacote IA Pro (60 créditos)",
   },
 };
 
