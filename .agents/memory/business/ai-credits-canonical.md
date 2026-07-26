@@ -6,26 +6,27 @@ type: feature
 
 # Créditos Aliv.iA — Fonte Única de Verdade (canônica)
 
-**Última atualização:** 29/06/2026
+**Última atualização:** 26/07/2026
 **Status:** este documento sobrescreve qualquer número diferente em `.lovable/plan.md` ou outras memórias. Em caso de conflito, **este arquivo vence**.
 
 ---
 
 ## 1. Pacotes Stripe ativos (BRL, one-off) — **o que está realmente rodando no app**
 
-| SKU | Créditos | Preço | Stripe price_id | Notas |
-|---|---|---|---|---|
-| **Starter** | 25 cr | R$ 8 | `price_1TmRLn2HgVhVBE8UsHAPQlBe` | Entrada |
-| **Mini** | 50 cr | R$ 15 | `price_1TmR9S2HgVhVBE8UkDiP7iTx` | "Popular" |
-| **Plus** | 150 cr | R$ 39 | `price_1TnmWF2HgVhVBE8UokvoKgGZ` | "Melhor valor" — repricing 29/06/2026 (R$35 → R$39, margem 23% → 32%) |
+| SKU | Créditos | Preço | Stripe price_id | R$/cr | Notas |
+|---|---|---|---|---|---|
+| **Mini** | 15 cr | R$ 29 | `price_1TxbDh2HgVhVBE8UhMrZcf0l` | 1,93 | "Mais recomendado" — complemento típico de 1 mês |
+| **Plus** | 30 cr | R$ 59 | `price_1TxbE22HgVhVBE8Ura1ksREZ` | 1,97 | |
+| **Pro** | 60 cr | R$ 89 | `price_1TxbEQ2HgVhVBE8UYUA34mfm` | 1,48 | Teto proposital abaixo da assinatura (R$ 97) para não canibalizá-la |
 
 Validade: 12 meses a partir da compra. Idempotência via `stripe_session_id`.
 
-> **Histórico de preços do Plus:**
-> - 28/06/2026: R$ 35 (`price_1TmR9i2HgVhVBE8URRd5yRSh`) — desativado por margem insuficiente.
-> - 29/06/2026: R$ 39 (`price_1TnmWF2HgVhVBE8UokvoKgGZ`) — em produção.
->
-> **Proposta NÃO implementada (Mini 100cr/R$29, Plus 300cr/R$69, Pro 1000cr/R$199):** existia em rascunhos anteriores, mas nunca foi ativada no Stripe nem no edge function. Para implementar, criar novos price_ids e fazer migração coordenada (UI + edge + cache de quotas).
+**Princípio de precificação (26/07/2026):** pacotes são **complemento**, nunca substituto da assinatura. Preço por crédito é propositalmente alto e a escala é curta — o objetivo é incentivar o SKU **menor** (Mini), evitando que alguém acumule pacotes e cancele a assinatura. Nenhum desconto agressivo por volume.
+
+> **Histórico:**
+> - 28–29/06/2026: catálogo Starter 25cr/R$8, Mini 50cr/R$15, Plus 150cr/R$39 e Pacote Anual 1200cr/R$299 — **todos desativados em 26/07/2026** (lastro excessivo frente à cota de 60 cr/mês da assinatura e risco de canibalização).
+> - Rascunhos antigos (Mini 100cr/R$29, Plus 300cr/R$69, Pro 1000cr/R$199) nunca foram ativados. Ignorar.
+> - Saldos já comprados nos SKUs antigos são preservados (grandfathering); apenas os price_ids novos são vendidos.
 
 ## 2. Quotas mensais por tier (Fase 5 — aguardando seed)
 
@@ -46,7 +47,6 @@ Validade: 12 meses a partir da compra. Idempotência via `stripe_session_id`.
 | Add-on | Preço | Inclui | Stripe price_id | Status |
 |---|---|---|---|---|
 | **Chat do Agente — Mensal** | R$ 14,90/mês | 150 mensagens/mês; excedente consome créditos normais | `price_1Tnmik2HgVhVBE8UH8xK7t5H` | **ATIVO (A5, 29/06/2026)** — instrumentado em `clinical-agent-chat` via `profiles.chat_addon_status` + `chat_addon_msgs_used` (reset mensal por `reset_chat_addon_period_if_needed`). Quando ativo e dentro da franquia, shadow-log registra `credits: 0` + `chat_addon: true`. |
-| **Pacote IA Anual** | R$ 299 (one-off) | 1200 créditos, val. 12 meses | `price_1Tnmj52HgVhVBE8UJfS8V5lF` | **ATIVO (A5, 29/06/2026)** — ~R$ 0,25/cr (~4% off vs Plus avulso). Fulfilled via `stripe-webhook` com metadata `package=annual`. |
 | Transcrição +5 | R$ 14,90 | 5 transcrições, val. 12 meses | — | Base inclui 5/mês no PRO |
 | Transcrição +15 | R$ 34,90 | 15 transcrições | — | |
 | Transcrição +50 | R$ 89,90 | 50 transcrições | — | |
