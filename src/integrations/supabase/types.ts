@@ -394,6 +394,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_credit_decisions: {
+        Row: {
+          blocked: boolean
+          cost: number
+          created_at: string
+          decision: string
+          enforced: boolean
+          function_name: string
+          id: string
+          latency_ms: number
+          metadata: Json
+          ok: boolean
+          path_taken: string
+          remaining: number | null
+          tier: string | null
+          unlimited: boolean
+          user_id: string | null
+        }
+        Insert: {
+          blocked?: boolean
+          cost?: number
+          created_at?: string
+          decision: string
+          enforced?: boolean
+          function_name: string
+          id?: string
+          latency_ms?: number
+          metadata?: Json
+          ok: boolean
+          path_taken: string
+          remaining?: number | null
+          tier?: string | null
+          unlimited?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          blocked?: boolean
+          cost?: number
+          created_at?: string
+          decision?: string
+          enforced?: boolean
+          function_name?: string
+          id?: string
+          latency_ms?: number
+          metadata?: Json
+          ok?: boolean
+          path_taken?: string
+          remaining?: number | null
+          tier?: string | null
+          unlimited?: boolean
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_credit_packages: {
         Row: {
           clinic_id: string | null
