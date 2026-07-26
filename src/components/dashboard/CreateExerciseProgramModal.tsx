@@ -1000,9 +1000,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 </Select>
               )}
 
-              {/* Manage saved templates */}
-              {savedTemplates.length > 0 && showManageTemplates && (
-                <div className="space-y-1 max-h-[140px] overflow-y-auto bg-background rounded-md p-1.5 border border-border">
+              {/* Manage templates (personal/clinic + system for admins) */}
+              {showManageTemplates && (savedTemplates.length > 0 || (isAdmin && systemTemplates.length > 0)) && (
+                <div className="space-y-1 max-h-[180px] overflow-y-auto bg-background rounded-md p-1.5 border border-border">
                   {savedTemplates.map((tpl) => (
                     <div key={tpl.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-muted">
                       <div className="flex-1 min-w-0">
@@ -1019,6 +1019,20 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                           {tpl.description ? ` · ${tpl.description}` : ""}
                         </p>
                       </div>
+                      {isAdmin && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-[10px] gap-1 shrink-0 text-primary"
+                          disabled={promotingId === tpl.id}
+                          onClick={() => toggleSystemTemplate(tpl, true)}
+                          title={language === "en" ? "Make it a system default" : "Tornar template padrão do sistema"}
+                        >
+                          {promotingId === tpl.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Globe className="h-3 w-3" />}
+                          {language === "en" ? "System" : "Padrão"}
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         size="icon"
@@ -1031,6 +1045,51 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                     </div>
                   ))}
 
+                  {isAdmin && systemTemplates.length > 0 && (
+                    <>
+                      <p className="text-[10px] font-semibold text-muted-foreground px-2 pt-1">
+                        {language === "en" ? "System templates (all users)" : "Templates padrão do sistema (todos os usuários)"}
+                      </p>
+                      {systemTemplates.map((tpl) => (
+                        <div key={tpl.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-muted">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate flex items-center gap-1.5">
+                              {tpl.name}
+                              <Badge variant="secondary" className="h-4 px-1.5 text-[9px] gap-1">
+                                <Globe className="h-2.5 w-2.5" />
+                                {language === "en" ? "System" : "Sistema"}
+                              </Badge>
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {(tpl.items?.length ?? 0)} {language === "en" ? "exercises" : "exercícios"}
+                              {tpl.description ? ` · ${tpl.description}` : ""}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-[10px] gap-1 shrink-0"
+                            disabled={promotingId === tpl.id}
+                            onClick={() => toggleSystemTemplate(tpl, false)}
+                            title={language === "en" ? "Revert to personal template" : "Voltar a template pessoal"}
+                          >
+                            {promotingId === tpl.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Undo2 className="h-3 w-3" />}
+                            {language === "en" ? "Personal" : "Pessoal"}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-destructive shrink-0"
+                            onClick={() => deleteSavedTemplate(tpl.id, true)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
 
