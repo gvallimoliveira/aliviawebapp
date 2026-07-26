@@ -4,6 +4,7 @@ import { isPriorityJournal, journalImpactFactor, priorityJournalListForPrompt } 
 import { buildPubmedQuery, getNicheSearchTerms, type NicheSearchTerms } from "../_shared/niche-search-terms.ts";
 import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

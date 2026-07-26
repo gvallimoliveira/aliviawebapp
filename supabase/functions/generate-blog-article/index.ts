@@ -84,7 +84,7 @@ ${keywordsInstruction}`;
         },
       ],
       tool_choice: { type: "function", function: { name: "publish_article" } },
-    });
+    }, undefined, { functionName: "generate-blog-article", maxTokens: 6000 });
 
     if (!response.ok) {
       const status = response.status;

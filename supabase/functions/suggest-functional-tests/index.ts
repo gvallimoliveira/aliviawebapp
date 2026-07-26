@@ -118,7 +118,7 @@ Generate the suggestions now.`;
       ],
       tools,
       tool_choice: { type: "function", function: { name: "return_test_suggestions" } },
-    });
+    }, undefined, { functionName: "suggest-functional-tests", maxTokens: 900 });
 
     if (!response.ok) {
       const errText = await response.text();
