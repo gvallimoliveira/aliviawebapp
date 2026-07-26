@@ -31,10 +31,10 @@ Validade: 12 meses a partir da compra. Idempotência via `stripe_session_id`.
 
 | Tier | Quota mensal | Observações |
 |---|---|---|
-| `pro_monthly` | 100 cr | Reduzido de 150; uso moderado real ≈ 33 cr |
-| `pro_annual` | 120 cr | +20% pela fidelidade |
-| `academic_monthly` | 100 cr | **Igual ao PRO** — Acadêmico paga o mesmo preço que Profissional, então cota deve ser idêntica (corrigido 02/07/2026). |
-| `academic_annual` | 120 cr | **Igual ao PRO anual** pelo mesmo motivo. |
+| `pro_monthly` | 60 cr | **Ajustado 26/07/2026** (150 → 100 → 60). Cobre uso intenso do autônomo real (≤8 avaliações/mês + chat): ~8×0,78 + impressões/HEP + chat ≈ 25–40 cr. |
+| `pro_annual` | 72 cr | +20% pela fidelidade |
+| `academic_monthly` | 60 cr | **Igual ao PRO** — Acadêmico paga o mesmo preço que Profissional, então cota deve ser idêntica. |
+| `academic_annual` | 72 cr | **Igual ao PRO anual** pelo mesmo motivo. |
 | `clinic_small` (≤3 ther.) | 200 cr/terapeuta | **Generoso por estratégia — sem hard block, só warning + overage** |
 | `clinic_medium` (≤8) | 250 cr/terapeuta | idem |
 | `clinic_large` (9+) | 300 cr/terapeuta | idem |
