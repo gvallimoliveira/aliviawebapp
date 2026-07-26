@@ -201,6 +201,52 @@ const Dashboard = () => {
     if (!user) navigate("/auth", { replace: true });
   }, [user, authLoading, authReady, navigate]);
 
+  // Sincronização imediata pós-Checkout: quando o usuário volta do Stripe
+  // com ?subscription=success ou ?clinic=success, chamamos a função de
+  // verificação com retries curtos (webhook pode chegar segundos depois),
+  // atualizando o DB ANTES do usuário perceber que "não recebeu o acesso".
+  // Isso elimina a janela de tempo em que o pagamento aparece no Stripe
+  // mas a tabela `professionals`/`clinics` ainda está desatualizada.
+  useEffect(() => {
+    if (!authReady || !user) return;
+    const subStatus = searchParams.get("subscription");
+    const clinicStatus = searchParams.get("clinic");
+    if (subStatus !== "success" && clinicStatus !== "success") return;
+
+    let cancelled = false;
+    (async () => {
+      const fn = clinicStatus === "success" ? "check-clinic-subscription" : "check-pro-subscription";
+      // Retry até 5x com backoff (0.5s, 1s, 2s, 3s, 5s) — dá tempo do
+      // webhook processar sem travar a UI.
+      const delays = [500, 1000, 2000, 3000, 5000];
+      for (let i = 0; i < delays.length && !cancelled; i++) {
+        try {
+          const { data } = await supabase.functions.invoke(fn);
+          const active =
+            data?.subscribed === true ||
+            data?.is_partner === true ||
+            data?.subscription_status === "active";
+          if (active) break;
+        } catch {
+          // segue para próxima tentativa
+        }
+        await new Promise((r) => setTimeout(r, delays[i]));
+      }
+      if (cancelled) return;
+      // Limpa os query params para que refreshs futuros não redisparem o sync
+      const next = new URLSearchParams(searchParams);
+      next.delete("subscription");
+      next.delete("clinic");
+      setSearchParams(next, { replace: true });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady, user?.id]);
+
+
   useEffect(() => {
     const nextParams = new URLSearchParams(searchParams);
     const currentTab = nextParams.get("tab");
