@@ -74,6 +74,6 @@ Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário en
 - [Agent Research Niches](mem://features/agent-research-niches) — 10 nichos iniciais do Agente de Raciocínio Clínico (PEDro ≥ 7) salvos em `agent_settings.preferred_niches`.
 - [Agent Knowledge Validation](mem://features/agent-knowledge-validation) — Cross-check obrigatório de título contra PubMed/Crossref; PMID como link primário; action `revalidate` para varredura.
 - [External Assessment Upload](mem://features/external-assessment-upload) — Upload PDF/imagem de avaliação externa, IA mapeia para o padrão Aliv.iA, vira avaliação nativa via prefillData no ManualAssessmentModal.
-- [AI Credits Workspace Plan](mem://business/ai-credits-workspace-plan) — Plano de 7 fases para créditos de IA: tabelas, edge functions, IDs Stripe dos 3 pacotes, status (Fases 1-4 concluídas; 5 aguarda 5-7 dias de dados).
+- [AI Credits Workspace Plan](mem://business/ai-credits-workspace-plan) — Plano de créditos de IA: tabelas, edge functions, IDs Stripe, carência 20% da clínica e Fase 7 futura (dashboard admin de rentabilidade por período/tipo de cliente).
 - [Credits Sufficiency Table on Landings](mem://features/credits-sufficiency-table-landings) — Tabela de "quantas vezes cabem no plano" para landings Pro/Clínica/Acadêmico, tranquilizando sobre suficiência dos créditos.
 - [Blog AI Generation Rules](mem://features/blog-ai-generation-rules) — URL oficial https://aliviawebapp.com.br e proibição de "avaliação gratuita" para público profissional no gerador de artigos.
