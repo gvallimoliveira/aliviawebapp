@@ -258,8 +258,13 @@ const AiCreditsWidget = () => {
                 <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
                 <p className="text-[11px] leading-relaxed text-destructive-foreground/90">
                   {isPt
-                    ? `Cota do mês atingida (${pct.toFixed(0)}%). Continuamos sem bloquear seu uso — um pacote avulso ou o saldo comprado seguem cobrindo tudo.`
-                    : `Monthly quota reached (${pct.toFixed(0)}%). We're not blocking anything — top-up packs or purchased balance keep everything covered.`}
+                    ? purchased > 0
+                      ? `Cota do mês atingida (${pct.toFixed(0)}%). Seu saldo de pacotes (${purchased} créditos) está cobrindo o uso a partir de agora.`
+                      : `Cota do mês atingida (${pct.toFixed(0)}%). Sem saldo de pacotes, as funções de IA podem pausar até a renovação. Você pode comprar um pacote abaixo.`
+                    : purchased > 0
+                      ? `Monthly quota reached (${pct.toFixed(0)}%). Your pack balance (${purchased} credits) is covering usage from now on.`
+                      : `Monthly quota reached (${pct.toFixed(0)}%). With no pack balance, AI features may pause until renewal. You can buy a pack below.`}
+
                 </p>
               </div>
             )}
@@ -282,12 +287,18 @@ const AiCreditsWidget = () => {
                 <li>
                   {isPt
                     ? pooled
-                      ? "Clínicas nunca são bloqueadas: se a equipe passar do incluso, o excedente vira apenas aviso ao dono da clínica."
-                      : "Se a cota acabar, o saldo de pacotes avulsos entra automaticamente. Sem pacote, as funções de IA pausam até a renovação (soft-block) — o restante do app continua normal."
+                      ? "Se a equipe passar do incluso, avisamos o dono da clínica e o excedente é consumido do saldo de pacotes avulsos da clínica. Não interrompemos atendimento no meio do caminho."
+                      : "Se a cota acabar, o saldo de pacotes que você já comprou é consumido automaticamente. Não fazemos nenhuma cobrança automática no cartão — a compra é sempre manual, por você."
                     : pooled
-                      ? "Clinics are never blocked: if the team goes over, the overage is only a heads-up to the clinic owner."
-                      : "If the quota runs out, purchased packs are used automatically. Without a pack, AI features pause until renewal (soft-block) — the rest of the app keeps working."}
+                      ? "If the team goes over, we notify the clinic owner and the overage draws from the clinic's purchased pack balance. We don't cut care mid-session."
+                      : "If the quota runs out, credits from packs you already bought are used automatically. We never charge your card automatically — purchases are always manual."}
                 </li>
+                <li>
+                  {isPt
+                    ? "Sem saldo de pacote, as funções de IA pausam até a renovação (soft-block) — o restante do app continua funcionando normalmente."
+                    : "With no pack balance left, AI features pause until renewal (soft-block) — the rest of the app keeps working normally."}
+                </li>
+
               </ul>
             </div>
           </div>
@@ -357,18 +368,24 @@ const AiCreditsWidget = () => {
           </div>
         )}
 
-        {!unlimited && (
-          <div className="pt-2 border-t border-border">
-            <AiCreditsStore
-              trigger={
-                <Button size="sm" variant="outline" className="w-full gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  {isPt ? "Comprar pacote de créditos" : "Buy credit pack"}
-                </Button>
-              }
-            />
-          </div>
-        )}
+        <div className="pt-2 border-t border-border space-y-1.5">
+          <AiCreditsStore
+            trigger={
+              <Button size="sm" variant="outline" className="w-full gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                {isPt ? "Comprar pacote de créditos" : "Buy credit pack"}
+              </Button>
+            }
+          />
+          {unlimited && (
+            <p className="text-[10px] text-muted-foreground text-center">
+              {isPt
+                ? "Você não precisa de pacotes — visível apenas para conferência."
+                : "You don't need packs — shown for reference only."}
+            </p>
+          )}
+        </div>
+
       </CardContent>
     </Card>
   );
