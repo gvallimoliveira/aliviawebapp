@@ -176,7 +176,8 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
       const pdfBlob = await generateAssessmentPdfBlob({ diagnosis, treatmentPlan: plan, language, userName: reportUserName, anamnesisData, painRegions, testResults, ...branding });
 
       const fileId = assessmentId || crypto.randomUUID();
-      const filePath = `${fileId}_premium.pdf`;
+      const { data: { user: _authUser } } = await supabase.auth.getUser();
+      const filePath = _authUser ? `${_authUser.id}/${fileId}_premium.pdf` : `${fileId}_premium.pdf`;
       const patientLabel = reportUserName || diagnosis.hypothesis || "Paciente";
       const nativeShareResult = await sharePdfFile({
         blob: pdfBlob,
