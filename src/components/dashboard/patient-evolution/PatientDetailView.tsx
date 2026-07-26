@@ -596,25 +596,37 @@ export default function PatientDetailView(props: any) {
                 </DialogDescription>
               </DialogHeader>
               {(() => {
-                if (summaryTarget.diagnosis) return null;
+                if (!isAssessmentIncomplete(summaryTarget)) return null;
                 const ad: any = summaryTarget.anamnesis_data || {};
                 const strengthRows: any[] = Array.isArray(ad.strengthTable) ? ad.strengthTable : [];
                 const filledRows = strengthRows.filter((r: any) => r && (r.left != null || r.right != null || r.leftValue != null || r.rightValue != null));
-                const hasAnamnesis = !!(ad.chiefComplaint || (ad.chiefComplaints?.length) || (ad.painRegions?.length) || ad.onset || summaryTarget.pain_score != null);
+                const hasAnamnesis = hasAnamnesisCore(summaryTarget);
+                const hasReasoning = hasClinicalReasoning(summaryTarget);
+                const hasImpression = !!summaryTarget.diagnosis?.clinicalImpression;
                 return (
                   <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 p-3 space-y-3">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                          {language === "pt" ? "Avaliação incompleta — sem diagnóstico" : language === "es" ? "Evaluación incompleta — sin diagnóstico" : "Incomplete assessment — no diagnosis"}
+                          {language === "pt"
+                            ? (hasAnamnesis ? "Avaliação incompleta — sem hipótese diagnóstica" : "Avaliação incompleta — anamnese pendente")
+                            : language === "es"
+                            ? (hasAnamnesis ? "Evaluación incompleta — sin hipótesis" : "Evaluación incompleta — anamnesis pendiente")
+                            : (hasAnamnesis ? "Incomplete assessment — no hypothesis" : "Incomplete assessment — anamnesis pending")}
                         </p>
                         <p className="text-xs text-amber-700 dark:text-amber-400">
                           {language === "pt"
-                            ? "Esta avaliação ainda não gerou raciocínio clínico. Complete a anamnese para liberar o resumo, o PDF e o plano de tratamento."
+                            ? (hasImpression && !hasAnamnesis
+                                ? "A impressão clínica foi gerada apenas com dados objetivos (ex.: dinamometria). Sem queixa principal, histórico e demais dados fundamentais, o raciocínio clínico fica limitado — complete a anamnese."
+                                : "Esta avaliação ainda não está completa. Complete a anamnese para liberar o resumo, o PDF e o plano de tratamento.")
                             : language === "es"
-                            ? "Esta evaluación aún no generó razonamiento clínico. Complete la anamnesis para liberar el resumen, el PDF y el plan."
-                            : "This assessment has no clinical reasoning yet. Complete the anamnesis to unlock the summary, PDF and treatment plan."}
+                            ? (hasImpression && !hasAnamnesis
+                                ? "La impresión clínica se generó solo con datos objetivos. Complete la anamnesis para un razonamiento clínico confiable."
+                                : "Esta evaluación aún no está completa. Complete la anamnesis para liberar el resumen, el PDF y el plan.")
+                            : (hasImpression && !hasAnamnesis
+                                ? "The clinical impression was generated from objective data only. Complete the anamnesis for reliable clinical reasoning."
+                                : "This assessment is not complete yet. Complete the anamnesis to unlock the summary, PDF and treatment plan.")}
                         </p>
                       </div>
                     </div>
@@ -634,6 +646,13 @@ export default function PatientDetailView(props: any) {
                           {!hasAnamnesis && ` — ${language === "pt" ? "pendente" : language === "es" ? "pendiente" : "pending"}`}
                         </span>
                       </div>
+                      <div className="flex items-center gap-2">
+                        {hasReasoning ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                        <span className={hasReasoning ? "text-foreground" : "text-muted-foreground"}>
+                          {language === "pt" ? "Hipótese diagnóstica" : language === "es" ? "Hipótesis diagnóstica" : "Diagnostic hypothesis"}
+                          {!hasReasoning && hasImpression && ` — ${language === "pt" ? "apenas impressão clínica" : language === "es" ? "solo impresión clínica" : "clinical impression only"}`}
+                        </span>
+                      </div>
                     </div>
 
                     {filledRows.length > 0 && (
@@ -650,20 +669,34 @@ export default function PatientDetailView(props: any) {
                     )}
 
                     {!readOnly && (
-                      <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                        <Button size="sm" className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => { setSummaryDialogOpen(false); setResumeAssessment(summaryTarget); }}>
-                          <RotateCcw className="h-3.5 w-3.5" />
-                          {language === "pt" ? "Retomar esta avaliação" : language === "es" ? "Retomar esta evaluación" : "Resume this assessment"}
-                        </Button>
-                        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => { setSummaryDialogOpen(false); setManualAssessmentOpen(true); }}>
-                          <FilePlus className="h-3.5 w-3.5" />
-                          {language === "pt" ? "Nova avaliação manual" : language === "es" ? "Nueva evaluación manual" : "New manual assessment"}
-                        </Button>
+                      <div className="space-y-2 pt-1">
+                        <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+                          {language === "pt" ? "Como completar esta avaliação:" : language === "es" ? "Cómo completar esta evaluación:" : "How to complete this assessment:"}
+                        </p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <Button size="sm" className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white justify-start" onClick={() => { setSummaryDialogOpen(false); setResumeAssessment(summaryTarget); }}>
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            {language === "pt" ? "Retomar esta avaliação" : language === "es" ? "Retomar esta evaluación" : "Resume this assessment"}
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-1.5 justify-start" onClick={() => { setSummaryDialogOpen(false); setManualAssessmentOpen(true); }}>
+                            <FilePlus className="h-3.5 w-3.5" />
+                            {language === "pt" ? "Nova avaliação manual" : language === "es" ? "Nueva evaluación manual" : "New manual assessment"}
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-1.5 justify-start" onClick={() => { setSummaryDialogOpen(false); setExternalUploadOpen(true); }}>
+                            <FileUp className="h-3.5 w-3.5" />
+                            {language === "pt" ? "Enviar prontuário externo" : language === "es" ? "Subir historia externa" : "Upload external record"}
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-1.5 justify-start" disabled={!latestWithDiagnosis} title={!latestWithDiagnosis ? (language === "pt" ? "Disponível após a primeira avaliação com hipótese" : "Available after the first assessment with hypothesis") : undefined} onClick={() => { setSummaryDialogOpen(false); openReassessmentLinkDialog(); }}>
+                            <Share2 className="h-3.5 w-3.5" />
+                            {language === "pt" ? "Link de autoavaliação" : language === "es" ? "Enlace de autoevaluación" : "Self-assessment link"}
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
                 );
               })()}
+
               <AssessmentSummaryView
                 assessment={summaryTarget}
                 embedded
