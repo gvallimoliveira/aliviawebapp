@@ -166,18 +166,29 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
         .order("category");
       setExercises(data || []);
 
-      // Load saved templates: own professional + (if in clinic mode) all clinic templates
+      // Load templates: own professional + (if in clinic mode) clinic templates + system-wide ones
+      const tplCols = "id, name, description, notes, body_region, items, professional_id, clinic_id, is_system";
       let tplsQuery = (supabase as any)
         .from("hep_templates")
-        .select("id, name, description, notes, body_region, items, professional_id, clinic_id")
+        .select(tplCols)
+        .eq("is_system", false)
         .order("created_at", { ascending: false });
       if (clinicId) {
         tplsQuery = tplsQuery.or(`professional_id.eq.${professionalId},clinic_id.eq.${clinicId}`);
       } else {
         tplsQuery = tplsQuery.eq("professional_id", professionalId);
       }
-      const { data: tpls } = await tplsQuery;
+      const [{ data: tpls }, { data: sysTpls }] = await Promise.all([
+        tplsQuery,
+        (supabase as any)
+          .from("hep_templates")
+          .select(tplCols)
+          .eq("is_system", true)
+          .order("created_at", { ascending: false }),
+      ]);
       setSavedTemplates((tpls || []) as SavedTemplate[]);
+      setSystemTemplates((sysTpls || []) as SavedTemplate[]);
+
 
 
       // If editing, load existing program items
