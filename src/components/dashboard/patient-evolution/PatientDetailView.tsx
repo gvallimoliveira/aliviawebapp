@@ -35,6 +35,7 @@ import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessme
 import ReassessmentConfigDialog from "./ReassessmentConfigDialog";
 import type { ReassessStepId } from "@/lib/reassessmentSteps";
 import { createShortAppLink } from "@/lib/shortLink";
+import { isAssessmentIncomplete, hasAnamnesisCore, hasClinicalReasoning } from "@/lib/assessmentCompleteness";
 import { openWhatsAppDeferred } from "@/lib/whatsappShare";
 import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
