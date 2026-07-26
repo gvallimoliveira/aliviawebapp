@@ -13,7 +13,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { assessments, language = "pt" } = await req.json();
+    const { assessments, language = "pt", forceRefresh } = await req.json();
     shadowLogAiUsage(req, { function_name: "generate-evolution-summary" });
 
     if (!assessments || !Array.isArray(assessments) || assessments.length < 2) {
@@ -22,6 +22,23 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // --- Content-addressed cache (TTL 30d) ---
+    // Key = hash of the assessments timeline. A new assessment or any edit to an
+    // existing one changes the key, so the comparative summary is regenerated.
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { assessments, language };
+    if (admin && !forceRefresh) {
+      const cached = await getCachedAiResponse<Record<string, unknown>>(admin, "generate-evolution-summary", cachePayload);
+      if (cached) {
+        return new Response(JSON.stringify({ ...cached, cached: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
