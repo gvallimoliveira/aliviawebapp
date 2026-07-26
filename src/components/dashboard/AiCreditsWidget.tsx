@@ -258,8 +258,13 @@ const AiCreditsWidget = () => {
                 <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
                 <p className="text-[11px] leading-relaxed text-destructive-foreground/90">
                   {isPt
-                    ? `Cota do mês atingida (${pct.toFixed(0)}%). Continuamos sem bloquear seu uso — um pacote avulso ou o saldo comprado seguem cobrindo tudo.`
-                    : `Monthly quota reached (${pct.toFixed(0)}%). We're not blocking anything — top-up packs or purchased balance keep everything covered.`}
+                    ? purchased > 0
+                      ? `Cota do mês atingida (${pct.toFixed(0)}%). Seu saldo de pacotes (${purchased} créditos) está cobrindo o uso a partir de agora.`
+                      : `Cota do mês atingida (${pct.toFixed(0)}%). Sem saldo de pacotes, as funções de IA podem pausar até a renovação. Você pode comprar um pacote abaixo.`
+                    : purchased > 0
+                      ? `Monthly quota reached (${pct.toFixed(0)}%). Your pack balance (${purchased} credits) is covering usage from now on.`
+                      : `Monthly quota reached (${pct.toFixed(0)}%). With no pack balance, AI features may pause until renewal. You can buy a pack below.`}
+
                 </p>
               </div>
             )}
