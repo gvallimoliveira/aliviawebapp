@@ -149,9 +149,14 @@ export const AI_USAGE_ANON_SENTINEL = ANON_SENTINEL;
 //   2. professionals.is_partner
 //   3. tier == 'unlimited' (fallback do RPC)
 //
-// Clínica nunca bloqueia (decisão canônica): quando o RPC devolve
-// clinic_id não-nulo, força `ok:true` mesmo em enforce mode e marca
-// `reason:'clinic_no_block'`.
+// Clínica tem política de carência (canônico 2026-07): quando o RPC devolve
+// clinic_id não-nulo, o pool da equipe ganha 20% de carência sobre o incluso
+// antes de qualquer bloqueio. A ordem é:
+//   incluso → carência 20% → saldo de pacotes avulsos → soft-block
+// Enquanto estiver dentro da carência, `ok:true` e `reason:'clinic_grace'`.
+
+// Carência da clínica: 20% acima da cota inclusa antes de consumir pacotes.
+export const CLINIC_GRACE_RATIO = 1.2;
 
 const VIP_FALLBACK_EMAILS = [
   "gvallimoliveira@gmail.com",
@@ -163,7 +168,8 @@ export type CreditPath =
   | "vip"
   | "partner"
   | "unlimited_tier"
-  | "clinic_no_block"
+  | "clinic_grace"
+  | "clinic_quota_check"
   | "quota_check"
   | "shadow_error"
   | "error";
@@ -175,7 +181,7 @@ export type CreditDecision = {
     | "vip"
     | "partner"
     | "unlimited_tier"
-    | "clinic_no_block"
+    | "clinic_grace"
     | "sufficient"
     | "insufficient"
     | "anonymous"
@@ -389,11 +395,28 @@ export async function assertCreditsAvailable(
     }
 
     if (s.clinic_id) {
-      const remaining = Math.max(0, (s.included ?? 0) - (s.used ?? 0)) + (s.purchased ?? 0);
+      // Política de carência: 20% acima do incluso antes de tocar em pacotes.
+      const included = s.included ?? 0;
+      const used = s.used ?? 0;
+      const purchased = s.purchased ?? 0;
+      const graceLimit = included * CLINIC_GRACE_RATIO;
+      const remainingWithGrace = Math.max(0, graceLimit - used);
+      const remaining = remainingWithGrace + purchased;
+      const inGrace = used > included && remainingWithGrace > 0;
+      const sufficient = remaining >= cost;
       return finalize(admin, userId, {
-        ...base, enforced, ok: true, remaining, reason: "clinic_no_block",
-        path_taken: "clinic_no_block", tier: s.tier,
-        metadata: { included: s.included, used: s.used, purchased: s.purchased, clinic_id: s.clinic_id },
+        ...base,
+        enforced,
+        ok: sufficient || !enforced,
+        blocked: enforced && !sufficient,
+        remaining,
+        reason: inGrace ? "clinic_grace" : sufficient ? "sufficient" : "insufficient",
+        path_taken: inGrace ? "clinic_grace" : "clinic_quota_check",
+        tier: s.tier,
+        metadata: {
+          included, used, purchased, clinic_id: s.clinic_id,
+          grace_limit: graceLimit, grace_ratio: CLINIC_GRACE_RATIO,
+        },
       });
     }
 
