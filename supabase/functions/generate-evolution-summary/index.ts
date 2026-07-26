@@ -160,6 +160,10 @@ Total assessments in period: ${assessments.length}
       });
     }
 
+    if (admin && summary && typeof summary === "object") {
+      await setCachedAiResponse(admin, "generate-evolution-summary", cachePayload, summary, AI_CACHE_TTL_30D);
+    }
+
     return new Response(JSON.stringify(summary), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
