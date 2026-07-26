@@ -124,6 +124,13 @@ const AiCreditsWidget = () => {
   const remaining = Math.max(included - used, 0);
   const pct = status?.pct ?? 0;
   const purchased = status?.purchased ?? 0;
+  const pooled = !!status?.pooled;
+  const perMember = status?.per_member ?? included;
+  const clinicMembers = status?.clinic_members ?? 0;
+  const personalUsed = status?.personal_used ?? total;
+  const daysToReset = status?.period_end
+    ? Math.max(0, Math.ceil((new Date(status.period_end).getTime() - Date.now()) / 86400000))
+    : null;
 
   const tierKey = status?.tier || (loading ? "" : "premium_b2c");
   const tierLabel = TIER_LABEL[tierKey]?.[isPt ? "pt" : "en"]
