@@ -112,6 +112,7 @@ const regionLabels: Record<string, Record<string, string>> = {
 const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId, clinicId, demoMode = false }: Props) => {
   const { language } = useLanguage();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
