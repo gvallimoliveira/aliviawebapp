@@ -141,6 +141,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   });
 
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
+  const [systemTemplates, setSystemTemplates] = useState<SavedTemplate[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [promotingId, setPromotingId] = useState<string | null>(null);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
