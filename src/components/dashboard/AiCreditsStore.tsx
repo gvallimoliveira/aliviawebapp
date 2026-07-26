@@ -220,8 +220,9 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
                     R$ {p.price_brl.toFixed(2)}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    R$ {(p.price_brl / p.credits).toFixed(3)}/crédito
+                    {isPt ? "pagamento único" : "one-time payment"}
                   </p>
+
                 </div>
                 <div className="border-t border-border pt-3 text-left space-y-1">
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
