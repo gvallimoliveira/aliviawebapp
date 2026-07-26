@@ -35,6 +35,24 @@ serve(async (req) => {
       },
     });
 
+    // --- Content-addressed cache (TTL 30d) ---
+    // Key = hash of the full clinical payload (anamnesis + tests + questionnaires
+    // + diagnosis). Any update to the patient's record changes the key and forces
+    // a fresh, case-specific plan. `forceRefresh: true` bypasses the cache.
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language };
+    if (admin && !forceRefresh) {
+      const cached = await getCachedAiResponse<{ treatmentPlan: unknown }>(admin, "generate-treatment", cachePayload);
+      if (cached) {
+        return new Response(JSON.stringify({ ...cached, cached: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const painScore = anamnesisData?.painScore ?? 5;
     const isHighPain = painScore >= 6;
