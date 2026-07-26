@@ -158,6 +158,16 @@ const VIP_FALLBACK_EMAILS = [
   "gvallim.fisio@gmail.com",
 ];
 
+export type CreditPath =
+  | "anonymous"
+  | "vip"
+  | "partner"
+  | "unlimited_tier"
+  | "clinic_no_block"
+  | "quota_check"
+  | "shadow_error"
+  | "error";
+
 export type CreditDecision = {
   ok: boolean;
   unlimited: boolean;
@@ -177,8 +187,51 @@ export type CreditDecision = {
   enforced: boolean;
   blocked: boolean; // true apenas quando enforced && !ok
   tier?: string;
+  path_taken: CreditPath;
+  latency_ms: number;
   metadata?: Record<string, unknown>;
 };
+
+/**
+ * Fire-and-forget telemetry insert for a credit decision. Never throws.
+ * Feeds Phase 5.3 canary — used to validate path distribution, latency,
+ * and blocked-count before enabling real 402s in Phase 5.4.
+ */
+function logDecisionTelemetry(
+  admin: SupabaseClient,
+  userId: string | null,
+  function_name: string,
+  decision: CreditDecision,
+): void {
+  const work = (async () => {
+    try {
+      const { error } = await admin.from("ai_credit_decisions").insert({
+        user_id: userId && userId !== ANON_SENTINEL ? userId : null,
+        function_name,
+        tier: decision.tier ?? null,
+        path_taken: decision.path_taken,
+        decision: decision.reason,
+        ok: decision.ok,
+        blocked: decision.blocked,
+        enforced: decision.enforced,
+        unlimited: decision.unlimited,
+        remaining: decision.remaining,
+        cost: decision.cost,
+        latency_ms: decision.latency_ms,
+        metadata: decision.metadata ?? {},
+      });
+      if (error) {
+        console.error("[ai-credits] telemetry insert failed:", error.message, "fn=", function_name);
+      }
+    } catch (e) {
+      console.error("[ai-credits] telemetry exception:", (e as Error).message);
+    }
+  })();
+  const runtime = (globalThis as any).EdgeRuntime;
+  if (runtime && typeof runtime.waitUntil === "function") {
+    try { runtime.waitUntil(work); } catch { /* noop */ }
+  }
+}
 
 async function isEnforcementOn(admin: SupabaseClient): Promise<boolean> {
   try {
