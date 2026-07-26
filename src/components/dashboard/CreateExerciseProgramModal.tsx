@@ -159,6 +159,21 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     setNotes(payload.notes || "");
   };
 
+  // Admin (VIP) detection — enables promoting/removing system-wide templates
+  useEffect(() => {
+    if (!open || !user?.email) { setIsAdmin(false); return; }
+    const email = user.email.toLowerCase();
+    if (isFallbackVip(email)) { setIsAdmin(true); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("vip_users").select("id").eq("email", email).maybeSingle();
+      if (!cancelled) setIsAdmin(!!data);
+    })();
+    return () => { cancelled = true; };
+  }, [open, user?.email]);
+
+
+
   useEffect(() => {
     if (!open) return;
     const load = async () => {
