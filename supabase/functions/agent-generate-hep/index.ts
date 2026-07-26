@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,7 +34,7 @@ serve(async (req) => {
       });
     }
 
-    const { thread_id, patient_id } = await req.json();
+    const { thread_id, patient_id, forceRefresh } = await req.json();
     if (!thread_id || !patient_id) {
       return new Response(JSON.stringify({ error: "missing_params" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -162,28 +164,60 @@ Responda APENAS em JSON válido no formato:
   "notes": "Orientação geral curta para o paciente (3-5 frases)."
 }`;
 
-    const aiResp = await callAiWithFallback(LOVABLE_API_KEY, {
-      messages: [
-        { role: "system", content: "Você é fisioterapeuta. Responda apenas JSON válido." },
-        { role: "user", content: prompt },
-      ],
-      response_format: { type: "json_object" },
-    }, undefined, { functionName: "agent-generate-hep", maxTokens: 2000 });
+    // Cache key = clinical case snapshot (not the conversation), so identical
+    // cases don't re-burn credits. Any change in hypothesis/complaint/pain/
+    // anamnesis or in the exercise library produces a new key.
+    const cachePayload = {
+      assessment_id: assessment.id,
+      hypothesis,
+      chiefComplaint,
+      painRegions,
+      pain_score: assessment.pain_score ?? null,
+      anamnesis: assessment.anamnesis_data ?? null,
+      library: lib.map((e: any) => e.id).sort(),
+    };
 
-    if (!aiResp.ok) {
-      const errText = await aiResp.text();
-      console.error("[agent-hep] AI error", aiResp.status, errText);
-      return new Response(JSON.stringify({ error: "ai_error" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let parsed: any = null;
+    if (!forceRefresh) {
+      const cached = await getCachedAiResponse<any>(adminClient, "agent-generate-hep", cachePayload);
+      if (cached && Array.isArray(cached.items) && cached.items.length > 0) {
+        parsed = cached;
+        console.log("[agent-hep] cache hit");
+      }
     }
-    const aiJson = await aiResp.json();
-    let parsed: any;
-    try {
-      parsed = JSON.parse(aiJson.choices?.[0]?.message?.content || "{}");
-    } catch {
-      parsed = {};
+
+    if (!parsed) {
+      const aiResp = await callAiWithFallback(LOVABLE_API_KEY, {
+        messages: [
+          { role: "system", content: "Você é fisioterapeuta. Responda apenas JSON válido." },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+      }, undefined, { functionName: "agent-generate-hep", maxTokens: 2000 });
+
+      if (!aiResp.ok) {
+        const errText = await aiResp.text();
+        console.error("[agent-hep] AI error", aiResp.status, errText);
+        return new Response(JSON.stringify({ error: "ai_error" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const aiJson = await aiResp.json();
+      try {
+        parsed = JSON.parse(aiJson.choices?.[0]?.message?.content || "{}");
+      } catch {
+        parsed = {};
+      }
+
+      if (Array.isArray(parsed?.items) && parsed.items.length > 0) {
+        await setCachedAiResponse(
+          adminClient, "agent-generate-hep", cachePayload,
+          { items: parsed.items, notes: parsed.notes ?? null },
+          AI_CACHE_TTL_30D,
+        );
+      }
     }
+
 
     const validIds = new Set(lib.map((e: any) => e.id));
     const items = (parsed.items || [])
