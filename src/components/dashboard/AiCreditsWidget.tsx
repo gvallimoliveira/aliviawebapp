@@ -368,18 +368,24 @@ const AiCreditsWidget = () => {
           </div>
         )}
 
-        {(
-          <div className="pt-2 border-t border-border">
-            <AiCreditsStore
-              trigger={
-                <Button size="sm" variant="outline" className="w-full gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  {isPt ? "Comprar pacote de créditos" : "Buy credit pack"}
-                </Button>
-              }
-            />
-          </div>
-        )}
+        <div className="pt-2 border-t border-border space-y-1.5">
+          <AiCreditsStore
+            trigger={
+              <Button size="sm" variant="outline" className="w-full gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                {isPt ? "Comprar pacote de créditos" : "Buy credit pack"}
+              </Button>
+            }
+          />
+          {unlimited && (
+            <p className="text-[10px] text-muted-foreground text-center">
+              {isPt
+                ? "Você não precisa de pacotes — visível apenas para conferência."
+                : "You don't need packs — shown for reference only."}
+            </p>
+          )}
+        </div>
+
       </CardContent>
     </Card>
   );
