@@ -35,6 +35,7 @@ import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessme
 import ReassessmentConfigDialog from "./ReassessmentConfigDialog";
 import type { ReassessStepId } from "@/lib/reassessmentSteps";
 import { createShortAppLink } from "@/lib/shortLink";
+import { isAssessmentIncomplete, hasAnamnesisCore, hasClinicalReasoning } from "@/lib/assessmentCompleteness";
 import { openWhatsAppDeferred } from "@/lib/whatsappShare";
 import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
@@ -595,25 +596,37 @@ export default function PatientDetailView(props: any) {
                 </DialogDescription>
               </DialogHeader>
               {(() => {
-                if (summaryTarget.diagnosis) return null;
+                if (!isAssessmentIncomplete(summaryTarget)) return null;
                 const ad: any = summaryTarget.anamnesis_data || {};
                 const strengthRows: any[] = Array.isArray(ad.strengthTable) ? ad.strengthTable : [];
                 const filledRows = strengthRows.filter((r: any) => r && (r.left != null || r.right != null || r.leftValue != null || r.rightValue != null));
-                const hasAnamnesis = !!(ad.chiefComplaint || (ad.chiefComplaints?.length) || (ad.painRegions?.length) || ad.onset || summaryTarget.pain_score != null);
+                const hasAnamnesis = hasAnamnesisCore(summaryTarget);
+                const hasReasoning = hasClinicalReasoning(summaryTarget);
+                const hasImpression = !!summaryTarget.diagnosis?.clinicalImpression;
                 return (
                   <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 p-3 space-y-3">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                          {language === "pt" ? "Avaliação incompleta — sem diagnóstico" : language === "es" ? "Evaluación incompleta — sin diagnóstico" : "Incomplete assessment — no diagnosis"}
+                          {language === "pt"
+                            ? (hasAnamnesis ? "Avaliação incompleta — sem hipótese diagnóstica" : "Avaliação incompleta — anamnese pendente")
+                            : language === "es"
+                            ? (hasAnamnesis ? "Evaluación incompleta — sin hipótesis" : "Evaluación incompleta — anamnesis pendiente")
+                            : (hasAnamnesis ? "Incomplete assessment — no hypothesis" : "Incomplete assessment — anamnesis pending")}
                         </p>
                         <p className="text-xs text-amber-700 dark:text-amber-400">
                           {language === "pt"
-                            ? "Esta avaliação ainda não gerou raciocínio clínico. Complete a anamnese para liberar o resumo, o PDF e o plano de tratamento."
+                            ? (hasImpression && !hasAnamnesis
+                                ? "A impressão clínica foi gerada apenas com dados objetivos (ex.: dinamometria). Sem queixa principal, histórico e demais dados fundamentais, o raciocínio clínico fica limitado — complete a anamnese."
+                                : "Esta avaliação ainda não está completa. Complete a anamnese para liberar o resumo, o PDF e o plano de tratamento.")
                             : language === "es"
-                            ? "Esta evaluación aún no generó razonamiento clínico. Complete la anamnesis para liberar el resumen, el PDF y el plan."
-                            : "This assessment has no clinical reasoning yet. Complete the anamnesis to unlock the summary, PDF and treatment plan."}
+                            ? (hasImpression && !hasAnamnesis
+                                ? "La impresión clínica se generó solo con datos objetivos. Complete la anamnesis para un razonamiento clínico confiable."
+                                : "Esta evaluación aún no está completa. Complete la anamnesis para liberar el resumen, el PDF y el plan.")
+                            : (hasImpression && !hasAnamnesis
+                                ? "The clinical impression was generated from objective data only. Complete the anamnesis for reliable clinical reasoning."
+                                : "This assessment is not complete yet. Complete the anamnesis to unlock the summary, PDF and treatment plan.")}
                         </p>
                       </div>
                     </div>
@@ -633,6 +646,13 @@ export default function PatientDetailView(props: any) {
                           {!hasAnamnesis && ` — ${language === "pt" ? "pendente" : language === "es" ? "pendiente" : "pending"}`}
                         </span>
                       </div>
+                      <div className="flex items-center gap-2">
+                        {hasReasoning ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                        <span className={hasReasoning ? "text-foreground" : "text-muted-foreground"}>
+                          {language === "pt" ? "Hipótese diagnóstica" : language === "es" ? "Hipótesis diagnóstica" : "Diagnostic hypothesis"}
+                          {!hasReasoning && hasImpression && ` — ${language === "pt" ? "apenas impressão clínica" : language === "es" ? "solo impresión clínica" : "clinical impression only"}`}
+                        </span>
+                      </div>
                     </div>
 
                     {filledRows.length > 0 && (
@@ -649,20 +669,34 @@ export default function PatientDetailView(props: any) {
                     )}
 
                     {!readOnly && (
-                      <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                        <Button size="sm" className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => { setSummaryDialogOpen(false); setResumeAssessment(summaryTarget); }}>
-                          <RotateCcw className="h-3.5 w-3.5" />
-                          {language === "pt" ? "Retomar esta avaliação" : language === "es" ? "Retomar esta evaluación" : "Resume this assessment"}
-                        </Button>
-                        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => { setSummaryDialogOpen(false); setManualAssessmentOpen(true); }}>
-                          <FilePlus className="h-3.5 w-3.5" />
-                          {language === "pt" ? "Nova avaliação manual" : language === "es" ? "Nueva evaluación manual" : "New manual assessment"}
-                        </Button>
+                      <div className="space-y-2 pt-1">
+                        <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+                          {language === "pt" ? "Como completar esta avaliação:" : language === "es" ? "Cómo completar esta evaluación:" : "How to complete this assessment:"}
+                        </p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <Button size="sm" className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white justify-start" onClick={() => { setSummaryDialogOpen(false); setResumeAssessment(summaryTarget); }}>
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            {language === "pt" ? "Retomar esta avaliação" : language === "es" ? "Retomar esta evaluación" : "Resume this assessment"}
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-1.5 justify-start" onClick={() => { setSummaryDialogOpen(false); setManualAssessmentOpen(true); }}>
+                            <FilePlus className="h-3.5 w-3.5" />
+                            {language === "pt" ? "Nova avaliação manual" : language === "es" ? "Nueva evaluación manual" : "New manual assessment"}
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-1.5 justify-start" onClick={() => { setSummaryDialogOpen(false); setExternalUploadOpen(true); }}>
+                            <FileUp className="h-3.5 w-3.5" />
+                            {language === "pt" ? "Enviar prontuário externo" : language === "es" ? "Subir historia externa" : "Upload external record"}
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-1.5 justify-start" disabled={!latestWithDiagnosis} title={!latestWithDiagnosis ? (language === "pt" ? "Disponível após a primeira avaliação com hipótese" : "Available after the first assessment with hypothesis") : undefined} onClick={() => { setSummaryDialogOpen(false); openReassessmentLinkDialog(); }}>
+                            <Share2 className="h-3.5 w-3.5" />
+                            {language === "pt" ? "Link de autoavaliação" : language === "es" ? "Enlace de autoevaluación" : "Self-assessment link"}
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
                 );
               })()}
+
               <AssessmentSummaryView
                 assessment={summaryTarget}
                 embedded
@@ -996,7 +1030,7 @@ export default function PatientDetailView(props: any) {
             </div>
           }
         >
-          <div className="space-y-3 pt-2">{patient.assessments.filter((a: any) => showArchivedAssessments ? true : !a.archived_at).map((a: any) => { const qResults = getQuestionnaireResults(a); const isInProgress = a.status === "in_progress"; const isArchived = !!a.archived_at; const isIncomplete = !a.diagnosis && !isInProgress && !isArchived; const resumeCtx = clinicId ? { clinicId } : professionalId ? { professionalId } : null; const canResume = (isInProgress || isIncomplete) && !!resumeCtx; return <Card key={a.id} className={`overflow-hidden ${isInProgress ? "border-blue-300/60 bg-blue-50/30" : ""} ${isArchived ? "opacity-60 border-dashed" : ""}`}><CardContent className="py-3 px-4 space-y-3"><div className="flex items-center justify-between gap-2"><div className={`space-y-0.5 min-w-0 rounded-md -mx-1 px-1 py-0.5 transition-colors ${!!a.diagnosis && !isArchived ? "cursor-pointer hover:bg-muted/40 active:bg-muted/60" : ""}`} role={!!a.diagnosis && !isArchived ? "button" : undefined} tabIndex={!!a.diagnosis && !isArchived ? 0 : undefined} onClick={!!a.diagnosis && !isArchived ? () => navigate(buildAssessmentViewUrl(a.id, selectedEmail)) : undefined} onKeyDown={!!a.diagnosis && !isArchived ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(buildAssessmentViewUrl(a.id, selectedEmail)); } } : undefined} title={!!a.diagnosis && !isArchived ? t("pro.view_full_assessment") : undefined}><div className="flex items-center gap-2 flex-wrap"><p className="text-sm font-semibold text-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>{isInProgress && <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-blue-300 text-blue-700 bg-blue-50"><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === "pt" ? "Em andamento" : "In progress"}</Badge>}{isIncomplete && <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-amber-300 text-amber-700 bg-amber-50">{language === "pt" ? "Incompleta — sem diagnóstico" : language === "es" ? "Incompleta — sin diagnóstico" : "Incomplete — no diagnosis"}</Badge>}{isArchived && <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-muted-foreground/30 text-muted-foreground bg-muted/30"><Archive className="h-3 w-3 mr-1" />{language === "pt" ? "Arquivada" : "Archived"}</Badge>}</div><div className="flex items-center gap-2 text-xs text-muted-foreground">{a.pain_score != null && <span>Dor: {a.pain_score}/10</span>}{a.diagnosis?.hypothesis && <span className="line-clamp-1">• {a.diagnosis.hypothesis}</span>}</div></div><div className="flex items-center gap-1 shrink-0">{canResume && !readOnly && !isArchived && <Button variant="default" size="sm" className="h-8 gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white" title={language === "pt" ? (isIncomplete ? "Retomar e concluir esta avaliação incompleta" : "Continuar avaliação de onde parou") : "Continue assessment from where it stopped"} onClick={() => setResumeAssessment(a)}><RotateCcw className="h-3.5 w-3.5" />{language === "pt" ? (isIncomplete ? "Retomar" : "Continuar") : "Continue"}</Button>}{a.diagnosis && onShareWhatsApp && !isArchived && <Button variant="ghost" size="icon" className="h-8 w-8" title="WhatsApp" onClick={() => onShareWhatsApp(a)}><Share2 className="h-4 w-4 text-emerald-600" /></Button>}{a.diagnosis && onDownloadPdf && !isArchived && <Button variant="ghost" size="icon" className="h-8 w-8" title="PDF" onClick={() => onDownloadPdf(a)}><FileText className="h-4 w-4 text-primary" /></Button>}{a.diagnosis && !isArchived && <Button variant="ghost" size="icon" className="h-8 w-8" title={t("pro.view_full_assessment")} onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}><ChevronRight className="h-4 w-4 text-muted-foreground" /></Button>}{!readOnly && (isArchived ? <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Restaurar avaliação" : "Restore assessment"} disabled={archivingAssessmentId === a.id} onClick={(e) => handleRestoreAssessment(a.id, e)}>{archivingAssessmentId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-emerald-600" />}</Button> : <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Arquivar avaliação" : "Archive assessment"} disabled={archivingAssessmentId === a.id} onClick={(e) => handleArchiveAssessment(a.id, e)}>{archivingAssessmentId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}</Button>)}{!readOnly && <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Excluir avaliação" : "Delete assessment"} onClick={(e) => { e.stopPropagation(); setDeleteAssessmentTarget({ id: a.id, date: new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }) }); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></div>{qResults.length > 0 && <div className="space-y-2 border-t border-border pt-3"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"><ClipboardList className="h-3 w-3" /> Questionários</p>{qResults.map((r: any, idx: number) => <QuestionnaireResultCard key={idx} result={r} language={language} compact />)}</div>}<div className="border-t border-border pt-3"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><NotebookPen className="h-3 w-3" />{t("pro.private_notes")}{noteSaving[a.id] && <Loader2 className="h-3 w-3 animate-spin text-primary" />}{notes[a.id] && !noteSaving[a.id] && <Badge variant="outline" className="text-[9px] py-0 px-1.5">{t("pro.notes_saved")}</Badge>}</p><Textarea placeholder={t("pro.private_notes_placeholder")} value={notes[a.id] || ""} onChange={(e) => saveNote(a.id, e.target.value)} className="text-xs min-h-[60px] resize-y" /><label className="flex items-center gap-2 mt-2 cursor-pointer group"><Checkbox checked={!!noteIncludeInPdf[a.id]} onCheckedChange={(checked) => toggleNoteInPdf(a.id, !!checked)} /><span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">{t("pro.include_notes_in_pdf")}</span>{noteIncludeInPdf[a.id] && <Badge variant="outline" className="text-[9px] py-0 px-1.5 border-amber-300 text-amber-600 bg-amber-50">{t("pro.notes_will_appear_in_pdf")}</Badge>}</label></div></CardContent></Card>; })}</div>
+          <div className="space-y-3 pt-2">{patient.assessments.filter((a: any) => showArchivedAssessments ? true : !a.archived_at).map((a: any) => { const qResults = getQuestionnaireResults(a); const isInProgress = a.status === "in_progress"; const isArchived = !!a.archived_at; const isIncomplete = isAssessmentIncomplete(a) && !isInProgress && !isArchived; const resumeCtx = clinicId ? { clinicId } : professionalId ? { professionalId } : null; const canResume = (isInProgress || isIncomplete) && !!resumeCtx; return <Card key={a.id} className={`overflow-hidden ${isInProgress ? "border-blue-300/60 bg-blue-50/30" : ""} ${isArchived ? "opacity-60 border-dashed" : ""}`}><CardContent className="py-3 px-4 space-y-3"><div className="flex items-center justify-between gap-2"><div className={`space-y-0.5 min-w-0 rounded-md -mx-1 px-1 py-0.5 transition-colors ${!!a.diagnosis && !isArchived ? "cursor-pointer hover:bg-muted/40 active:bg-muted/60" : ""}`} role={!!a.diagnosis && !isArchived ? "button" : undefined} tabIndex={!!a.diagnosis && !isArchived ? 0 : undefined} onClick={!!a.diagnosis && !isArchived ? () => navigate(buildAssessmentViewUrl(a.id, selectedEmail)) : undefined} onKeyDown={!!a.diagnosis && !isArchived ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(buildAssessmentViewUrl(a.id, selectedEmail)); } } : undefined} title={!!a.diagnosis && !isArchived ? t("pro.view_full_assessment") : undefined}><div className="flex items-center gap-2 flex-wrap"><p className="text-sm font-semibold text-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>{isInProgress && <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-blue-300 text-blue-700 bg-blue-50"><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === "pt" ? "Em andamento" : "In progress"}</Badge>}{isIncomplete && <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-amber-300 text-amber-700 bg-amber-50">{language === "pt" ? "Incompleta" : language === "es" ? "Incompleta" : "Incomplete"}</Badge>}{isArchived && <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-muted-foreground/30 text-muted-foreground bg-muted/30"><Archive className="h-3 w-3 mr-1" />{language === "pt" ? "Arquivada" : "Archived"}</Badge>}</div><div className="flex items-center gap-2 text-xs text-muted-foreground">{a.pain_score != null && <span>Dor: {a.pain_score}/10</span>}{a.diagnosis?.hypothesis && <span className="line-clamp-1">• {a.diagnosis.hypothesis}</span>}</div></div><div className="flex items-center gap-1 shrink-0">{canResume && !readOnly && !isArchived && <Button variant="default" size="sm" className="h-8 gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white" title={language === "pt" ? (isIncomplete ? "Retomar e concluir esta avaliação incompleta" : "Continuar avaliação de onde parou") : "Continue assessment from where it stopped"} onClick={() => setResumeAssessment(a)}><RotateCcw className="h-3.5 w-3.5" />{language === "pt" ? (isIncomplete ? "Retomar" : "Continuar") : "Continue"}</Button>}{a.diagnosis && onShareWhatsApp && !isArchived && <Button variant="ghost" size="icon" className="h-8 w-8" title="WhatsApp" onClick={() => onShareWhatsApp(a)}><Share2 className="h-4 w-4 text-emerald-600" /></Button>}{a.diagnosis && onDownloadPdf && !isArchived && <Button variant="ghost" size="icon" className="h-8 w-8" title="PDF" onClick={() => onDownloadPdf(a)}><FileText className="h-4 w-4 text-primary" /></Button>}{a.diagnosis && !isArchived && <Button variant="ghost" size="icon" className="h-8 w-8" title={t("pro.view_full_assessment")} onClick={() => navigate(buildAssessmentViewUrl(a.id, selectedEmail))}><ChevronRight className="h-4 w-4 text-muted-foreground" /></Button>}{!readOnly && (isArchived ? <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Restaurar avaliação" : "Restore assessment"} disabled={archivingAssessmentId === a.id} onClick={(e) => handleRestoreAssessment(a.id, e)}>{archivingAssessmentId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArchiveRestore className="h-4 w-4 text-emerald-600" />}</Button> : <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Arquivar avaliação" : "Archive assessment"} disabled={archivingAssessmentId === a.id} onClick={(e) => handleArchiveAssessment(a.id, e)}>{archivingAssessmentId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4 text-muted-foreground" />}</Button>)}{!readOnly && <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Excluir avaliação" : "Delete assessment"} onClick={(e) => { e.stopPropagation(); setDeleteAssessmentTarget({ id: a.id, date: new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }) }); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></div>{qResults.length > 0 && <div className="space-y-2 border-t border-border pt-3"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"><ClipboardList className="h-3 w-3" /> Questionários</p>{qResults.map((r: any, idx: number) => <QuestionnaireResultCard key={idx} result={r} language={language} compact />)}</div>}<div className="border-t border-border pt-3"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><NotebookPen className="h-3 w-3" />{t("pro.private_notes")}{noteSaving[a.id] && <Loader2 className="h-3 w-3 animate-spin text-primary" />}{notes[a.id] && !noteSaving[a.id] && <Badge variant="outline" className="text-[9px] py-0 px-1.5">{t("pro.notes_saved")}</Badge>}</p><Textarea placeholder={t("pro.private_notes_placeholder")} value={notes[a.id] || ""} onChange={(e) => saveNote(a.id, e.target.value)} className="text-xs min-h-[60px] resize-y" /><label className="flex items-center gap-2 mt-2 cursor-pointer group"><Checkbox checked={!!noteIncludeInPdf[a.id]} onCheckedChange={(checked) => toggleNoteInPdf(a.id, !!checked)} /><span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">{t("pro.include_notes_in_pdf")}</span>{noteIncludeInPdf[a.id] && <Badge variant="outline" className="text-[9px] py-0 px-1.5 border-amber-300 text-amber-600 bg-amber-50">{t("pro.notes_will_appear_in_pdf")}</Badge>}</label></div></CardContent></Card>; })}</div>
         </CollapsibleSection>
       </div>
 
