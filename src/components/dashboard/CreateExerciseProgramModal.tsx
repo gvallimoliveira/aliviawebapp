@@ -32,6 +32,7 @@ interface SavedTemplate {
   body_region: string;
   professional_id: string | null;
   clinic_id: string | null;
+  is_system?: boolean;
   items: Array<{
     exerciseId?: string;
     customName?: string;
