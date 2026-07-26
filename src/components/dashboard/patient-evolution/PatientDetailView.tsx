@@ -543,8 +543,11 @@ export default function PatientDetailView(props: any) {
                         const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
                         const nativeShareResult = await sharePdfFile({ blob, fileName: `AliviA_Evolucao_${patient.name.replace(/\s+/g, "_")}.pdf`, title: "Aliv.iA", text: `${t("evolution.title")} - ${patient.name}` });
                         if (nativeShareResult === "shared" || nativeShareResult === "cancelled") { toast({ title: t("evolution.success") }); return; }
-                        const fileName = `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
-                        const { error: uploadError } = await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
+                        const { data: { user: _authUser } } = await supabase.auth.getUser();
+                        const fileName = _authUser ? `${_authUser.id}/evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf` : `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
+                        const { error: uploadError } = _authUser
+                          ? await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true })
+                          : { error: new Error("anonymous_upload_blocked") } as any;
                         if (!uploadError) {
                           const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
                           if (publicUrl?.publicUrl) await shareTextOrOpenWhatsApp(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`, "Aliv.iA");

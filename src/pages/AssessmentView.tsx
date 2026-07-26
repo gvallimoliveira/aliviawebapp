@@ -288,11 +288,14 @@ const AssessmentView = () => {
         return;
       }
 
-      const filePath = `${assessment.id}_view_${Date.now()}.pdf`;
       const { supabase } = await import("@/integrations/supabase/client");
-      const { error: uploadError } = await supabase.storage
-        .from("assessment-reports")
-        .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
+      const { data: { user: _authUser } } = await supabase.auth.getUser();
+      const filePath = _authUser ? `${_authUser.id}/${assessment.id}_view_${Date.now()}.pdf` : `${assessment.id}_view_${Date.now()}.pdf`;
+      const { error: uploadError } = _authUser
+        ? await supabase.storage
+            .from("assessment-reports")
+            .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true })
+        : { error: new Error("anonymous_upload_blocked") } as any;
 
       let pdfUrl = "";
       if (!uploadError) {
