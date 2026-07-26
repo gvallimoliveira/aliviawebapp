@@ -80,12 +80,72 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
+    let customerId: string | undefined;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
     }
 
+    // Idempotência: se já existe assinatura de clínica ativa para este
+    // customer, sincroniza DB e recusa criar duplicata.
+    if (customerId) {
+      const activeSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 10,
+      });
+      const clinicProductIds = Object.values(PRICE_MAP); // placeholder – filtered by price
+      const activeClinicSub = activeSubs.data.find((s: any) =>
+        s.items.data.some((i: any) => Object.values(PRICE_MAP).includes(i.price?.id))
+      );
+      if (activeClinicSub) {
+        logStep("Already has active clinic subscription — refusing to create duplicate", { subId: activeClinicSub.id });
+        try {
+          await supabaseAdmin
+            .from("clinics")
+            .update({ subscription_status: "active", subscription_stripe_id: activeClinicSub.id })
+            .eq("owner_user_id", user.id);
+        } catch (e) {
+          logStep("DB sync during clinic idempotency failed (non-blocking)", { error: String(e) });
+        }
+        return new Response(
+          JSON.stringify({
+            already_active: true,
+            subscription_id: activeClinicSub.id,
+            message: "Você já possui uma assinatura de clínica ativa.",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
+
+      // Reaproveita Checkout Session aberta recente (< 15 min)
+      try {
+        const recent = await stripe.checkout.sessions.list({ customer: customerId, limit: 5 });
+        const fifteenMinAgo = Math.floor(Date.now() / 1000) - 15 * 60;
+        const openMatch = recent.data.find(
+          (s: any) =>
+            s.status === "open" &&
+            s.mode === "subscription" &&
+            s.created >= fifteenMinAgo &&
+            s.metadata?.user_id === user.id &&
+            s.metadata?.tier === tier &&
+            s.metadata?.plan === plan &&
+            s.url
+        );
+        if (openMatch?.url) {
+          logStep("Reusing recent open clinic checkout session", { sessionId: openMatch.id });
+          return new Response(JSON.stringify({ url: openMatch.url, reused: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+      } catch (e) {
+        logStep("Recent-session lookup failed (non-blocking)", { error: String(e) });
+      }
+    }
+
     const origin = req.headers.get("origin") || "https://alivia.app";
+
+    const idempotencyKey = `create-clinic-${user.id}-${tier}-${plan}-${Math.floor(Date.now() / 60000)}`;
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -103,9 +163,17 @@ serve(async (req) => {
         clinic_name: clinic_name.trim(),
         max_members: String(MAX_MEMBERS[tier]),
       },
-    });
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          type: "clinic_subscription",
+          tier,
+          plan,
+        },
+      },
+    }, { idempotencyKey });
 
-    logStep("Checkout session created", { sessionId: session.id });
+    logStep("Checkout session created", { sessionId: session.id, idempotencyKey });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
