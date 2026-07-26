@@ -19,21 +19,20 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Sparkles, Check, Zap, MessageCircle, Calendar } from "lucide-react";
 
 interface Pkg {
-  key: "starter" | "mini" | "plus" | "annual";
+  key: "mini" | "plus" | "pro";
   credits: number;
   price_brl: number;
   badge?: string;
   highlight?: boolean;
 }
 
+// 2026-07: pacotes são um COMPLEMENTO da assinatura (60 cr/mês inclusos).
+// Escala pequena e preço/crédito crescente — o menor é o mais recomendado.
 const PACKAGES: Pkg[] = [
-  { key: "starter", credits: 25, price_brl: 8 },
-  { key: "mini", credits: 50, price_brl: 15, badge: "Popular", highlight: true },
-  { key: "plus", credits: 150, price_brl: 39, badge: "Melhor valor" },
+  { key: "mini", credits: 15, price_brl: 29, badge: "Mais recomendado", highlight: true },
+  { key: "plus", credits: 30, price_brl: 59 },
+  { key: "pro", credits: 60, price_brl: 89 },
 ];
-
-// A5: pacote anual em card próprio, separado dos avulsos.
-const ANNUAL_PKG = { key: "annual" as const, credits: 1200, price_brl: 299 };
 
 // Estimativa de capacidade por pacote (avaliação completa ≈ 0,70 créditos:
 // diagnóstico 0,30 + tratamento 0,30 + impressão clínica 0,10).
