@@ -5,7 +5,7 @@
 **Trilho de segurança em toda fase:**
 - Flag global `app_config.ai_credits_enforced` continua **false** durante 5.0–5.2 (só UI e telemetria). Só vira `true` na 5.3, com rollout escalonado.
 - Bypass **sempre respeitado** antes de qualquer débito ou aviso: VIP (`vip_users` + fallback hardcoded), `professionals.is_partner`, admin.
-- Clínica: **nunca bloqueia** — só avisa. Excedente é observação, não trava (decisão já registrada no plano canônico).
+- Clínica: política de **carência de 20%** acima da cota inclusa antes de consumir pacotes ou bloquear (canônico 2026-07). Dentro da carência, só avisa.
 - Reversão: um `UPDATE app_config SET value='false' WHERE key='ai_credits_enforced'` volta tudo ao comportamento atual em segundos.
 
 ---
@@ -15,8 +15,8 @@
 Popular `ai_credit_quotas` com os valores canônicos e criar helper `get_user_credit_status(user_id)` que retorna `{tier, used, quota, purchased_balance, pct}`. **Nada aparece pro usuário ainda.**
 
 Quotas (por mês):
-- pro_monthly 100 · pro_annual 120
-- academic_monthly 40 · academic_annual 50
+- pro_monthly 60 · pro_annual 72  *(valor canônico atual — ver `mem://business/ai-credits-canonical`)*
+- academic_monthly 60 · academic_annual 72
 - clinic_small 200/terapeuta · clinic_medium 250 · clinic_large 300
 - premium_b2c 15 · unlimited (VIP/partner) sem trava
 
