@@ -34,6 +34,25 @@ serve(async (req) => {
         credit_enforced: creditDecision.enforced,
       },
     });
+
+    // --- Content-addressed cache (TTL 30d) ---
+    // The cache key is a hash of the FULL clinical payload. Any change in the
+    // patient's record (anamnesis, tests, questionnaires, red flags, language)
+    // produces a different key, so an updated chart always gets a fresh,
+    // personalized AI interpretation. `forceRefresh: true` bypasses it entirely.
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+    const cachePayload = { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed };
+    if (admin && !forceRefresh) {
+      const cached = await getCachedAiResponse<{ diagnosis: unknown }>(admin, "generate-diagnosis", cachePayload);
+      if (cached) {
+        return new Response(JSON.stringify({ ...cached, cached: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const redFlagsList: string[] = Array.isArray(bodyRedFlags)
       ? bodyRedFlags
       : Array.isArray(anamnesisData?.redFlags) ? anamnesisData.redFlags : [];
