@@ -61,7 +61,7 @@ export function logAiTokenUsage(params: {
         prompt_tokens: u.prompt_tokens ?? null,
         completion_tokens: u.completion_tokens ?? null,
         total_tokens: u.total_tokens ??
-          ((u.prompt_tokens ?? 0) + (u.completion_tokens ?? 0)) || null,
+          (((u.prompt_tokens ?? 0) + (u.completion_tokens ?? 0)) || null),
         fallback_index: params.fallbackIndex ?? 0,
         latency_ms: params.latencyMs ?? null,
         metadata: params.metadata ?? {},
