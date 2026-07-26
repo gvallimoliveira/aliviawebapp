@@ -895,7 +895,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                   {language === "en" ? "Reusable templates" : "Templates reutilizáveis"}
                 </div>
                 <div className="flex items-center gap-1">
-                  {savedTemplates.length > 0 && (
+                  {(savedTemplates.length > 0 || (isAdmin && systemTemplates.length > 0)) && (
                     <Button
                       type="button"
                       size="sm"
