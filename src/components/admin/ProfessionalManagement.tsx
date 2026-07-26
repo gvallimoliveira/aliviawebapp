@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Users, Search, Trash2, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Users, Search, Trash2, GraduationCap, ChevronLeft, ChevronRight, Crown, CreditCard, ShieldCheck, Clock, XCircle, Circle, Infinity as InfinityIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const PAGE_SIZE = 10;
@@ -53,6 +53,23 @@ const t = (language: string) => {
       sort_az: "A → Z",
       sort_za: "Z → A",
       page_of: "Página {p} de {t}",
+      client_type: "Tipo de cliente",
+      subscription: "Assinatura",
+      filter_label: "Tipo de cliente",
+      filter_all: "Todos os tipos",
+      type_partner: "Parceiro / VIP",
+      type_student: "Acadêmico",
+      type_active: "Assinante ativo",
+      type_grace: "Em carência",
+      type_canceled: "Cancelado",
+      type_basic: "Básico (sem assinatura)",
+      lifetime: "Tratamento vitalício",
+      expires: "Expira em",
+      grace_until: "Carência até",
+      no_subscription: "Sem assinatura",
+      stripe_linked: "Stripe vinculado",
+      stripe_missing: "Sem ID Stripe",
+      since: "Cadastrado em",
     },
     en: {
       title: "Registered Professionals",
@@ -80,12 +97,58 @@ const t = (language: string) => {
       sort_az: "A → Z",
       sort_za: "Z → A",
       page_of: "Page {p} of {t}",
+      client_type: "Client type",
+      subscription: "Subscription",
+      filter_label: "Client type",
+      filter_all: "All types",
+      type_partner: "Partner / VIP",
+      type_student: "Academic",
+      type_active: "Active subscriber",
+      type_grace: "In grace period",
+      type_canceled: "Canceled",
+      type_basic: "Basic (no subscription)",
+      lifetime: "Lifetime treatment",
+      expires: "Expires on",
+      grace_until: "Grace until",
+      no_subscription: "No subscription",
+      stripe_linked: "Stripe linked",
+      stripe_missing: "No Stripe ID",
+      since: "Registered on",
     },
   };
   return translations[language] || translations.en;
 };
 
 type SortKey = "recent" | "oldest" | "az" | "za";
+
+type ClientType = "partner" | "student" | "active" | "grace" | "canceled" | "basic";
+
+const TYPE_META: Record<ClientType, { labelKey: string; className: string; Icon: any }> = {
+  partner: { labelKey: "type_partner", className: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400", Icon: Crown },
+  student: { labelKey: "type_student", className: "border-primary/40 bg-primary/5 text-primary", Icon: GraduationCap },
+  active: { labelKey: "type_active", className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400", Icon: ShieldCheck },
+  grace: { labelKey: "type_grace", className: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400", Icon: Clock },
+  canceled: { labelKey: "type_canceled", className: "border-destructive/40 bg-destructive/10 text-destructive", Icon: XCircle },
+  basic: { labelKey: "type_basic", className: "border-border bg-muted text-muted-foreground", Icon: Circle },
+};
+
+const TYPE_ORDER: ClientType[] = ["active", "grace", "partner", "student", "canceled", "basic"];
+
+const classifyClient = (p: any): ClientType => {
+  const now = Date.now();
+  const status = String(p?.subscription_status || "").toLowerCase();
+  const expires = p?.pro_access_expires_at ? new Date(p.pro_access_expires_at).getTime() : null;
+  const grace = p?.subscription_grace_until ? new Date(p.subscription_grace_until).getTime() : null;
+  if (p?.is_partner || p?.is_partner_account || p?.premium_granted) return "partner";
+  if (p?.is_student) return "student";
+  if (status === "active" || status === "trialing" || (expires != null && expires > now)) return "active";
+  if (grace != null && grace > now) return "grace";
+  if (status === "canceled" || status === "cancelled" || status === "past_due" || status === "unpaid") return "canceled";
+  return "basic";
+};
+
+const fmtDate = (v?: string | null, lang = "pt") =>
+  v ? new Date(v).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US", { day: "2-digit", month: "short", year: "numeric" }) : null;
 
 const ProfessionalManagement = ({ language }: Props) => {
   const labels = t(language);
@@ -96,6 +159,7 @@ const ProfessionalManagement = ({ language }: Props) => {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>("recent");
   const [page, setPage] = useState(1);
+  const [typeFilter, setTypeFilter] = useState<"all" | ClientType>("all");
 
   useEffect(() => {
     (async () => {
@@ -123,6 +187,7 @@ const ProfessionalManagement = ({ language }: Props) => {
 
   const filtered = useMemo(() => {
     const base = professionals.filter((p) => {
+      if (typeFilter !== "all" && classifyClient(p) !== typeFilter) return false;
       if (!query.trim()) return true;
       const q = query.toLowerCase();
       return (
@@ -145,12 +210,18 @@ const ProfessionalManagement = ({ language }: Props) => {
       return sort === "recent" ? tb - ta : ta - tb;
     });
     return sorted;
-  }, [professionals, query, sort]);
+  }, [professionals, query, sort, typeFilter]);
+
+  const counts = useMemo(() => {
+    const acc: Record<ClientType, number> = { partner: 0, student: 0, active: 0, grace: 0, canceled: 0, basic: 0 };
+    professionals.forEach((p) => { acc[classifyClient(p)] += 1; });
+    return acc;
+  }, [professionals]);
 
   // Reset to first page whenever filter/sort changes the result set.
   useEffect(() => {
     setPage(1);
-  }, [query, sort, professionals.length]);
+  }, [query, sort, typeFilter, professionals.length]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -200,6 +271,44 @@ const ProfessionalManagement = ({ language }: Props) => {
               <SelectItem value="za">{labels.sort_za}</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
+            <SelectTrigger className="sm:w-[210px]">
+              <SelectValue placeholder={labels.filter_label} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{labels.filter_all}</SelectItem>
+              {TYPE_ORDER.map((k) => (
+                <SelectItem key={k} value={k}>
+                  {labels[TYPE_META[k].labelKey]} ({counts[k]})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Client-type overview */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
+          {TYPE_ORDER.map((k) => {
+            const meta = TYPE_META[k];
+            const Icon = meta.Icon;
+            const selected = typeFilter === k;
+            return (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setTypeFilter(selected ? "all" : k)}
+                className={`rounded-xl border p-2.5 text-left transition-colors ${meta.className} ${selected ? "ring-2 ring-primary/40" : "hover:opacity-80"}`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wide leading-tight">
+                    {labels[meta.labelKey]}
+                  </span>
+                </div>
+                <p className="text-xl font-bold tabular-nums mt-0.5">{counts[k]}</p>
+              </button>
+            );
+          })}
         </div>
 
         {filtered.length === 0 ? (
@@ -212,6 +321,8 @@ const ProfessionalManagement = ({ language }: Props) => {
                   <TableRow>
                     <TableHead>{labels.name}</TableHead>
                     <TableHead>{labels.email}</TableHead>
+                    <TableHead>{labels.client_type}</TableHead>
+                    <TableHead>{labels.subscription}</TableHead>
                     <TableHead>{labels.crefito}</TableHead>
                     <TableHead>{labels.cpf}</TableHead>
                     <TableHead>{labels.location}</TableHead>
@@ -225,6 +336,53 @@ const ProfessionalManagement = ({ language }: Props) => {
                       <TableCell className="font-medium">{p.full_name}</TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={p.email || ""}>
                         {p.email || "—"}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const type = classifyClient(p);
+                          const meta = TYPE_META[type];
+                          const Icon = meta.Icon;
+                          return (
+                            <div className="flex flex-col gap-1 items-start">
+                              <Badge variant="outline" className={`text-[10px] gap-1 ${meta.className}`}>
+                                <Icon className="h-3 w-3" />
+                                {labels[meta.labelKey]}
+                              </Badge>
+                              {p.lifetime_treatment && (
+                                <Badge variant="outline" className="text-[10px] gap-1 border-border text-muted-foreground">
+                                  <InfinityIcon className="h-3 w-3" />
+                                  {labels.lifetime}
+                                </Badge>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <div className="space-y-0.5">
+                          <p className="font-medium text-foreground capitalize">
+                            {p.subscription_status && p.subscription_status !== "inactive"
+                              ? String(p.subscription_status).replace(/_/g, " ")
+                              : labels.no_subscription}
+                          </p>
+                          {fmtDate(p.pro_access_expires_at, language) && (
+                            <p className="text-muted-foreground">
+                              {labels.expires}: {fmtDate(p.pro_access_expires_at, language)}
+                            </p>
+                          )}
+                          {fmtDate(p.subscription_grace_until, language) && (
+                            <p className="text-amber-600 dark:text-amber-400">
+                              {labels.grace_until}: {fmtDate(p.subscription_grace_until, language)}
+                            </p>
+                          )}
+                          <p className="flex items-center gap-1 text-muted-foreground">
+                            <CreditCard className="h-3 w-3" />
+                            {p.subscription_stripe_id ? labels.stripe_linked : labels.stripe_missing}
+                          </p>
+                          <p className="text-muted-foreground/80">
+                            {labels.since}: {fmtDate(p.created_at, language) || "—"}
+                          </p>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
