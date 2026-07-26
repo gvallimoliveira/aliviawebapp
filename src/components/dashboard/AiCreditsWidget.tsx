@@ -368,7 +368,7 @@ const AiCreditsWidget = () => {
           </div>
         )}
 
-        {!unlimited && (
+        {(
           <div className="pt-2 border-t border-border">
             <AiCreditsStore
               trigger={
