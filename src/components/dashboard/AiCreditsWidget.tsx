@@ -20,7 +20,11 @@ interface CreditStatus {
   is_partner: boolean;
   unlimited: boolean;
   included: number;
+  per_member?: number;
+  pooled?: boolean;
+  clinic_members?: number;
   used: number;
+  personal_used?: number;
   purchased: number;
   pct: number;
   period_start: string;
