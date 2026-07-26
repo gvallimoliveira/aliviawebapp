@@ -923,9 +923,14 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 </div>
               </div>
 
-              {/* Built-in templates */}
-              {HEP_TEMPLATES.length > 0 && (
+              {/* Built-in + system-wide (DB) templates */}
+              {(HEP_TEMPLATES.length > 0 || systemTemplates.length > 0) && (
                 <Select onValueChange={(id) => {
+                  if (id.startsWith("sys:")) {
+                    const sys = systemTemplates.find((t) => t.id === id.slice(4));
+                    if (sys) applySavedTemplate(sys);
+                    return;
+                  }
                   const tpl = HEP_TEMPLATES.find((t) => t.id === id);
                   if (tpl) applyTemplate(tpl);
                 }}>
@@ -938,6 +943,23 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                         <div className="flex flex-col py-0.5">
                           <span className="font-medium">{language === "en" ? tpl.name_en : tpl.name_pt}</span>
                           <span className="text-[10px] text-muted-foreground">{tpl.items.length} {language === "en" ? "exercises" : "exercícios"}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    {systemTemplates.map((tpl) => (
+                      <SelectItem key={tpl.id} value={`sys:${tpl.id}`} className="text-xs">
+                        <div className="flex flex-col py-0.5">
+                          <span className="font-medium flex items-center gap-1.5">
+                            {tpl.name}
+                            <Badge variant="secondary" className="h-4 px-1.5 text-[9px] gap-1">
+                              <Globe className="h-2.5 w-2.5" />
+                              {language === "en" ? "System" : "Sistema"}
+                            </Badge>
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {(tpl.items?.length ?? 0)} {language === "en" ? "exercises" : "exercícios"}
+                            {tpl.description ? ` · ${tpl.description}` : ""}
+                          </span>
                         </div>
                       </SelectItem>
                     ))}
