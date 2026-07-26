@@ -458,6 +458,10 @@ Generate a personalized 3-phase treatment plan in valid JSON format. Focus exerc
       treatmentPlan = JSON.parse(cleaned);
     }
 
+    if (admin && treatmentPlan && typeof treatmentPlan === "object") {
+      await setCachedAiResponse(admin, "generate-treatment", cachePayload, { treatmentPlan }, AI_CACHE_TTL_30D);
+    }
+
     return new Response(JSON.stringify({ treatmentPlan }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
