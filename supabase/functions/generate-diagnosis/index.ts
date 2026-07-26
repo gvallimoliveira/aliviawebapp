@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, forceRefresh } = await req.json();
     const creditDecision = await assertCreditsAvailable(req, { function_name: "generate-diagnosis" });
     console.log("[ai-credits] generate-diagnosis decision:", JSON.stringify({
       reason: creditDecision.reason,
