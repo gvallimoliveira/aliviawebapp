@@ -439,7 +439,7 @@ Foco: ${module.focus}`;
       { role: "user", content: `Crie a aula do nível ${level}/5 da trilha de ${niche}.` },
     ],
     temperature: 0.45,
-  }, ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"]);
+  }, ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"], { functionName: "clinical-agent-trilha", maxTokens: 1800 });
   if (!resp.ok) {
     console.error("[trilha] gateway error", resp.status, await resp.text().catch(() => ""));
     return null;
@@ -525,7 +525,7 @@ Regras:
     ],
     response_format: { type: "json_object" },
     temperature: 0.4,
-  }, ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"]);
+  }, ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"], { functionName: "clinical-agent-quiz", maxTokens: 2200 });
   if (!resp.ok) {
     console.error("[quiz] gateway error", resp.status, await resp.text().catch(() => ""));
     return null;
@@ -933,7 +933,7 @@ Regras: nunca invente dados; se faltar informação, sinalize com "(não informa
           { role: "system", content: sys },
           { role: "user", content: input },
         ],
-      }, ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"]);
+      }, ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"], { functionName: "clinical-agent-translate", maxTokens: 1200 });
       let assistantText = "Não consegui traduzir agora. Tente novamente em alguns segundos.";
       if (resp.ok) {
         const j = await resp.json();
@@ -975,7 +975,7 @@ Regras: nunca invente dados; se faltar informação, sinalize com "(não informa
       { role: "user", content: userMsg },
     ];
 
-    const aiResp = await callAiWithFallback(LOVABLE_API_KEY, { messages });
+    const aiResp = await callAiWithFallback(LOVABLE_API_KEY, { messages }, undefined, { functionName: "clinical-agent-chat", maxTokens: 1200 });
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();
@@ -1053,6 +1053,7 @@ Regras: nunca invente dados; se faltar informação, sinalize com "(não informa
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
           body: JSON.stringify({
             model: "google/gemini-2.5-flash-lite",
+            max_tokens: 40,
             messages: [
               {
                 role: "system",

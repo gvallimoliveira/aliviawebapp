@@ -78,8 +78,8 @@ function audioFormatFromMime(mime: string): string {
 
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 
-async function callAI(apiKey: string, body: any): Promise<any> {
-  const resp = await callAiWithFallback(apiKey, body);
+async function callAI(apiKey: string, body: any, fnName = "transcribe-anamnesis"): Promise<any> {
+  const resp = await callAiWithFallback(apiKey, body, undefined, { functionName: fnName, maxTokens: 2000 });
   if (!resp.ok) {
     const errText = await resp.text();
     console.error("AI gateway error:", resp.status, errText);

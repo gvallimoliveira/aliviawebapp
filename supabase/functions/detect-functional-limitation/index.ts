@@ -87,6 +87,7 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite",
+        max_tokens: 400,
         messages: [
           { role: "system", content: isPt ? sysPt : sysEn },
           { role: "user", content: userMsg },
