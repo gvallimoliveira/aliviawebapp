@@ -51,6 +51,16 @@ export function useProSubscription({ professional }: UseProSubscriptionOptions) 
         body: { plan, coupon },
       });
       if (error) throw error;
+      // Idempotência: se o backend detectou assinatura ativa preexistente
+      // não abre novo checkout; ressincroniza estado e avisa o usuário.
+      if (data?.already_active) {
+        toast({
+          title: "Você já é PRO",
+          description: data.message || "Detectamos uma assinatura PRO ativa. Atualizando seu acesso...",
+        });
+        await checkSubscription();
+        return;
+      }
       if (data?.url) window.location.href = data.url;
     } catch {
       toast({ title: t("payment.error_title"), description: t("payment.error_desc"), variant: "destructive" });
