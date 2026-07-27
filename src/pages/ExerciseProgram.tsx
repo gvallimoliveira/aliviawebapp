@@ -132,7 +132,16 @@ const ExerciseProgram = () => {
         return;
       }
 
-      setProgram(prog);
+      // The public (anon) link can't read `professionals` directly via RLS,
+      // so fall back to a security-definer RPC scoped to this token.
+      let resolved = prog;
+      if (!prog.professional?.full_name) {
+        const { data: proRows } = await (supabase as any).rpc("get_hep_professional", { _token: token });
+        const pro = Array.isArray(proRows) ? proRows[0] : proRows;
+        if (pro) resolved = { ...prog, professional: pro };
+      }
+
+      setProgram(resolved);
 
       const { data: exerciseItems } = await (supabase as any)
         .from("exercise_program_items")
