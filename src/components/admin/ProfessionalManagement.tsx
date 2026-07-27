@@ -16,8 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Users, Search, Trash2, GraduationCap, ChevronLeft, ChevronRight, Crown, CreditCard, ShieldCheck, Clock, XCircle, Circle, Infinity as InfinityIcon } from "lucide-react";
+import { Loader2, Users, Search, Trash2, GraduationCap, ChevronLeft, ChevronRight, Crown, CreditCard, ShieldCheck, ShieldAlert, Clock, XCircle, Circle, Infinity as InfinityIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import SubscriptionAdminDialog from "./SubscriptionAdminDialog";
+
 
 const PAGE_SIZE = 10;
 
