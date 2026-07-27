@@ -429,21 +429,33 @@ const ProfessionalManagement = ({ language }: Props) => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setConfirmId(p.id)}
-                          disabled={deletingId === p.id}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          title={labels.delete}
-                        >
-                          {deletingId === p.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setManageProf(p)}
+                            className="h-8 w-8 p-0"
+                            title="Gerenciar acesso e assinatura"
+                          >
+                            <ShieldAlert className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setConfirmId(p.id)}
+                            disabled={deletingId === p.id}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title={labels.delete}
+                          >
+                            {deletingId === p.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>
