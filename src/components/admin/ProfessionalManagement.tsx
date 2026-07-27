@@ -514,7 +514,19 @@ const ProfessionalManagement = ({ language }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {manageProf && (
+        <SubscriptionAdminDialog
+          professional={manageProf}
+          open={!!manageProf}
+          onOpenChange={(v) => !v && setManageProf(null)}
+          onUpdated={(patch) =>
+            setProfessionals((prev) => prev.map((x) => (x.id === manageProf.id ? { ...x, ...patch } : x)))
+          }
+        />
+      )}
     </Card>
+
   );
 };
 
