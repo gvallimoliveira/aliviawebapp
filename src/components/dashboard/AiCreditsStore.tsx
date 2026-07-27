@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSearchParams } from "react-router-dom";
+import { ENABLE_CHAT_ADDON } from "@/lib/featureFlags";
 import {
   Dialog,
   DialogContent,
@@ -289,7 +290,9 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
 
 
 
-        {/* A5: assinatura do Chat do Agente (R$ 14,90/mês, 150 msgs). */}
+        {/* A5: assinatura do Chat do Agente (R$ 14,90/mês, 150 msgs).
+            Oculto até o enforcement do chat entrar em vigor (ENABLE_CHAT_ADDON). */}
+        {ENABLE_CHAT_ADDON && (
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="pt-5 pb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <div className="flex items-center gap-3 flex-1">
@@ -323,6 +326,7 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
             </Button>
           </CardContent>
         </Card>
+        )}
 
 
 
