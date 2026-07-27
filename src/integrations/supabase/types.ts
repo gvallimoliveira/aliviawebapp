@@ -3386,6 +3386,18 @@ export type Database = {
           weeks_estimate: number
         }[]
       }
+      get_hep_professional: {
+        Args: { _token: string }
+        Returns: {
+          active_profile_mode: string
+          clinic_name: string
+          full_name: string
+          is_student: boolean
+          logo_url: string
+          student_institution: string
+          student_period: string
+        }[]
+      }
       get_included_credits_for_tier: {
         Args: { _tier: string }
         Returns: number
