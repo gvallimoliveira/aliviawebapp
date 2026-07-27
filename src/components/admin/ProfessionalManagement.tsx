@@ -162,6 +162,8 @@ const ProfessionalManagement = ({ language }: Props) => {
   const [sort, setSort] = useState<SortKey>("recent");
   const [page, setPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState<"all" | ClientType>("all");
+  const [manageProf, setManageProf] = useState<any | null>(null);
+
 
   useEffect(() => {
     (async () => {
