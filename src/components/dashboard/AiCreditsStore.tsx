@@ -289,7 +289,9 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
 
 
 
-        {/* A5: assinatura do Chat do Agente (R$ 14,90/mês, 150 msgs). */}
+        {/* A5: assinatura do Chat do Agente (R$ 14,90/mês, 150 msgs).
+            Oculto até o enforcement do chat entrar em vigor (ENABLE_CHAT_ADDON). */}
+        {ENABLE_CHAT_ADDON && (
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="pt-5 pb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <div className="flex items-center gap-3 flex-1">
