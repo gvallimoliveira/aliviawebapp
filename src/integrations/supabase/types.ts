@@ -3028,6 +3028,54 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_admin_actions: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_status: string | null
+          performed_by: string | null
+          performed_by_email: string | null
+          previous_status: string | null
+          professional_id: string | null
+          reason: string | null
+          stripe_result: Json | null
+          stripe_subscription_id: string | null
+          target_email: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          performed_by?: string | null
+          performed_by_email?: string | null
+          previous_status?: string | null
+          professional_id?: string | null
+          reason?: string | null
+          stripe_result?: Json | null
+          stripe_subscription_id?: string | null
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          performed_by?: string | null
+          performed_by_email?: string | null
+          previous_status?: string | null
+          professional_id?: string | null
+          reason?: string | null
+          stripe_result?: Json | null
+          stripe_subscription_id?: string | null
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       support_tickets: {
         Row: {
           admin_reply: string | null

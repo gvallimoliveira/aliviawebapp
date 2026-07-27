@@ -78,3 +78,4 @@ Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário en
 - [Credits Sufficiency Table on Landings](mem://features/credits-sufficiency-table-landings) — Tabela de "quantas vezes cabem no plano" para landings Pro/Clínica/Acadêmico, tranquilizando sobre suficiência dos créditos.
 - [Chat Addon Flag](mem://features/chat-addon-flag) — `ENABLE_CHAT_ADDON=false`: card de venda do Chat do Agente só volta a aparecer no mesmo deploy do enforcement do chat.
 - [Blog AI Generation Rules](mem://features/blog-ai-generation-rules) — URL oficial https://aliviawebapp.com.br e proibição de "avaliação gratuita" para público profissional no gerador de artigos.
+- [Admin Subscription Management](mem://features/admin-subscription-management) — Reembolso não rebaixa; cancelar/rebaixar/reativar via painel Admin → Profissionais com auditoria.

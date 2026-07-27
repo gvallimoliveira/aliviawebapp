@@ -16,8 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Users, Search, Trash2, GraduationCap, ChevronLeft, ChevronRight, Crown, CreditCard, ShieldCheck, Clock, XCircle, Circle, Infinity as InfinityIcon } from "lucide-react";
+import { Loader2, Users, Search, Trash2, GraduationCap, ChevronLeft, ChevronRight, Crown, CreditCard, ShieldCheck, ShieldAlert, Clock, XCircle, Circle, Infinity as InfinityIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import SubscriptionAdminDialog from "./SubscriptionAdminDialog";
+
 
 const PAGE_SIZE = 10;
 
@@ -160,6 +162,8 @@ const ProfessionalManagement = ({ language }: Props) => {
   const [sort, setSort] = useState<SortKey>("recent");
   const [page, setPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState<"all" | ClientType>("all");
+  const [manageProf, setManageProf] = useState<any | null>(null);
+
 
   useEffect(() => {
     (async () => {
@@ -429,21 +433,33 @@ const ProfessionalManagement = ({ language }: Props) => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setConfirmId(p.id)}
-                          disabled={deletingId === p.id}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          title={labels.delete}
-                        >
-                          {deletingId === p.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setManageProf(p)}
+                            className="h-8 w-8 p-0"
+                            title="Gerenciar acesso e assinatura"
+                          >
+                            <ShieldAlert className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setConfirmId(p.id)}
+                            disabled={deletingId === p.id}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title={labels.delete}
+                          >
+                            {deletingId === p.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>
@@ -498,7 +514,19 @@ const ProfessionalManagement = ({ language }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {manageProf && (
+        <SubscriptionAdminDialog
+          professional={manageProf}
+          open={!!manageProf}
+          onOpenChange={(v) => !v && setManageProf(null)}
+          onUpdated={(patch) =>
+            setProfessionals((prev) => prev.map((x) => (x.id === manageProf.id ? { ...x, ...patch } : x)))
+          }
+        />
+      )}
     </Card>
+
   );
 };
 
