@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSearchParams } from "react-router-dom";
+import { ENABLE_CHAT_ADDON } from "@/lib/featureFlags";
 import {
   Dialog,
   DialogContent,
