@@ -325,6 +325,7 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
             </Button>
           </CardContent>
         </Card>
+        )}
 
 
 
