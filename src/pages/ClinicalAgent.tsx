@@ -126,6 +126,7 @@ const ClinicalAgent = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [generatingHep, setGeneratingHep] = useState(false);
+  const [hepLevel, setHepLevel] = useState<"auto" | "beginner" | "intermediate" | "advanced">("auto");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [professionalId, setProfessionalId] = useState<string>("");
