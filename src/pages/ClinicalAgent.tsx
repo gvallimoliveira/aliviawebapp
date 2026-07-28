@@ -909,7 +909,7 @@ const ClinicalAgent = () => {
                   disabled={generatingHep}
                   title="Gera um HEP real (com link) baseado na última avaliação deste paciente"
                 >
-                  {generatingHep ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  {generatingHep ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Dumbbell className="h-3.5 w-3.5" />}
                   <span className="hidden md:inline">Gerar HEP</span>
                 </Button>
               </PopoverTrigger>
