@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Pencil, Check, Brain, Lock, GraduationCap, Terminal, Home, BookText, Paperclip, FileText, Image as ImageIcon,
+  UserPlus, X, BookOpen, Sparkles, Dumbbell, AlertTriangle, Pencil, Check, Brain, Lock, GraduationCap, Terminal, Home, BookText, Paperclip, FileText, Image as ImageIcon,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
