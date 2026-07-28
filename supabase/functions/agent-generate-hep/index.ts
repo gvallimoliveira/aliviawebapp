@@ -182,10 +182,11 @@ DISPONIBILIDADE POR DIFICULDADE: ${availability}
 
 REGRAS:
 - Use APENAS ids existentes na biblioteca.
-- Composição por nível escolhido:
-  * beginner → maioria "beginner", no máximo 1 "intermediate";
-  * intermediate → maioria "intermediate", 1-2 "beginner" como aquecimento/mobilidade, no máximo 1 "advanced";
-  * advanced → maioria "advanced"/"intermediate", no máximo 1 "beginner".
+- PRINCÍPIO DE COMPOSIÇÃO (não use números fixos, use o bom senso clínico): o nível define o CENTRO DE GRAVIDADE do programa, não a exclusividade. Todo HEP deve ser uma pirâmide: alguns exercícios de mobilidade/ativação mais fáceis servindo de aquecimento e preparo, o núcleo do estímulo no nível escolhido, e opcionalmente 1 exercício acima do nível como desafio/progressão.
+  * beginner → núcleo em "beginner"; pode haver 1 "intermediate" como progressão final.
+  * intermediate → núcleo em "intermediate"; 1-2 "beginner" como aquecimento e eventualmente 1 "advanced" como desafio.
+  * advanced → a MAIORIA em "advanced", complementada por alguns "intermediate" e 1-2 "beginner" apenas como aquecimento/mobilidade preparatória (ex.: em 10 exercícios, algo próximo de 6 avançados, 2 intermediários e 2 básicos — proporção ilustrativa, ajuste ao caso).
+- Deixe claro nas observações quais exercícios são aquecimento/preparo e quais são o estímulo principal.
 - Se a região da queixa não tiver exercícios suficientes no nível escolhido, complete com exercícios de região adjacente/geral no mesmo nível e AUMENTE a dose (séries/reps/carga descrita nas observações) em vez de rebaixar o programa.
 - Cubra mobilidade → ativação → fortalecimento progressivo.
 - Ajuste dose ao nível: básico (2-3 séries, cargas leves), intermediário (3 séries, tempo sob tensão maior), avançado (3-4 séries, progressão de carga/velocidade/unilateral).
