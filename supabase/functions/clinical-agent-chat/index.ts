@@ -446,7 +446,9 @@ Regras obrigatórias:
 - No final, diga como avançar: /trilha ${niche} ${Math.min(level + 1, 5)} ou /quiz ${niche}.
 
 Módulo ${module.level}/5: ${module.title}
-Foco: ${module.focus}`;
+Foco: ${module.focus}
+
+${SECURITY_POLICY}`;
 
   const resp = await callAiWithFallback(apiKey, {
     messages: [
@@ -531,7 +533,9 @@ Regras:
 - Cada múltipla escolha tem 4 alternativas (A-D) e UMA correta.
 - Linguagem em pt-BR, clínica, fiel à evidência atual.
 - Dificuldade média-alta, estilo COFFITO/residência.
-- NUNCA gere alternativas absurdas ou pegadinhas injustas.`;
+- NUNCA gere alternativas absurdas ou pegadinhas injustas.
+
+${SECURITY_POLICY}`;
 
   const resp = await callAiWithFallback(apiKey, {
     messages: [
@@ -583,7 +587,9 @@ Responda SOMENTE com JSON válido, sem markdown, sem texto antes/depois, neste f
 Regras:
 - Caso realista e clinicamente coerente sobre o tema fornecido.
 - Nome fictício (não use celebridades nem nomes reais conhecidos).
-- pt-BR, linguagem clínica.`;
+- pt-BR, linguagem clínica.
+
+${SECURITY_POLICY}`;
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -942,7 +948,9 @@ Classifique (Oxford CEBM 1-5) e, se for ensaio clínico, estime o **PEDro** (0-1
 ### Tradução (se houver texto colado)
 Tradução fiel e fluente do trecho.
 
-Regras: nunca invente dados; se faltar informação, sinalize com "(não informado no input)".`;
+Regras: nunca invente dados; se faltar informação, sinalize com "(não informado no input)".
+
+${SECURITY_POLICY}`;
       const resp = await callAiWithFallback(LOVABLE_API_KEY, {
         messages: [
           { role: "system", content: sys },
