@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2, Send, Plus, Menu, Trash2, ArrowLeft,
-  UserPlus, X, BookOpen, Sparkles, AlertTriangle, Pencil, Check, Brain, Lock, GraduationCap, Terminal, Home, BookText, Paperclip, FileText, Image as ImageIcon,
+  UserPlus, X, BookOpen, Sparkles, Dumbbell, AlertTriangle, Pencil, Check, Brain, Lock, GraduationCap, Terminal, Home, BookText, Paperclip, FileText, Image as ImageIcon,
 } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import QuizCard, { type Quiz } from "@/components/agent/QuizCard";
@@ -909,7 +909,7 @@ const ClinicalAgent = () => {
                   disabled={generatingHep}
                   title="Gera um HEP real (com link) baseado na última avaliação deste paciente"
                 >
-                  {generatingHep ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  {generatingHep ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Dumbbell className="h-3.5 w-3.5" />}
                   <span className="hidden md:inline">Gerar HEP</span>
                 </Button>
               </PopoverTrigger>
