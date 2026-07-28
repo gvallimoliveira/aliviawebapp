@@ -30,6 +30,7 @@ Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário en
 - [Clinical Methodology](mem://clinical/methodology) — Core clinical concepts STEPS and D.I.F.I.
 - [VIP Users](mem://features/vip-users) — Access rules for VIP admin emails.
 - [Pain Map Editor](mem://features/pain-map-editor) — Visual debug mode for admins to adjust SVG map paths.
+- [Balance Training Preference](mem://clinical/balance-training-preference) — Sem superfícies instáveis; estabilidade em solo firme com perturbações e base reduzida (foot core).
 - [Diagnosis Sharing](mem://features/diagnosis) — Fallback logic and versioning for PDF sharing.
 - [Follow-Up System](mem://features/follow-up-system) — Automated check-in emails at weeks 1, 2, 4, 6.
 - [Pain Diary](mem://features/pain-diary) — Daily pain tracking with 0-10 slider and gamification.
