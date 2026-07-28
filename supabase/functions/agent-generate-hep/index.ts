@@ -251,7 +251,7 @@ Responda APENAS em JSON válido no formato:
       if (Array.isArray(parsed?.items) && parsed.items.length > 0) {
         await setCachedAiResponse(
           adminClient, "agent-generate-hep", cachePayload,
-          { items: parsed.items, notes: parsed.notes ?? null },
+          { items: parsed.items, notes: parsed.notes ?? null, level: parsed.level ?? null, level_rationale: parsed.level_rationale ?? null },
           AI_CACHE_TTL_30D,
         );
       }
@@ -268,6 +268,24 @@ Responda APENAS em JSON válido no formato:
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const effectiveLevel = requestedLevel !== "auto"
+      ? requestedLevel
+      : (LEVELS.includes(parsed?.level) ? parsed.level : "beginner");
+    const LEVEL_PT: Record<string, string> = {
+      beginner: "Básico", intermediate: "Intermediário", advanced: "Avançado",
+    };
+    const diffById = new Map(lib.map((e: any) => [e.id, e.difficulty]));
+    const mix = items.reduce((acc: Record<string, number>, it: any) => {
+      const d = String(diffById.get(it.exercise_id) || "beginner");
+      acc[d] = (acc[d] || 0) + 1;
+      return acc;
+    }, {});
+    const mixLabel = LEVELS
+      .filter((d) => mix[d])
+      .map((d) => `${mix[d]} ${LEVEL_PT[d].toLowerCase()}`)
+      .join(" · ");
+
 
     // Create the program
     const { data: program, error: progErr } = await adminClient
