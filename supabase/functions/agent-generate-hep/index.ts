@@ -189,6 +189,7 @@ REGRAS:
 - Deixe claro nas observações quais exercícios são aquecimento/preparo e quais são o estímulo principal.
 - Se a região da queixa não tiver exercícios suficientes no nível escolhido, complete com exercícios de região adjacente/geral no mesmo nível e AUMENTE a dose (séries/reps/carga descrita nas observações) em vez de rebaixar o programa.
 - Cubra mobilidade → ativação → fortalecimento progressivo.
+- EVITE exercícios em superfície instável (bosu, disco, almofada). Prefira estabilidade em solo firme com perturbações por carga, elásticos ou mudança do centro de gravidade, e redução da base de apoio (ponta de pé, apoio em anilhas para demanda de foot core).
 - Ajuste dose ao nível: básico (2-3 séries, cargas leves), intermediário (3 séries, tempo sob tensão maior), avançado (3-4 séries, progressão de carga/velocidade/unilateral).
 - Observações curtas (máx 120 caracteres) explicando o objetivo e a progressão.
 
