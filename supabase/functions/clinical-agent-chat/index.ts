@@ -724,6 +724,11 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (message.length > 8000) {
+      return new Response(JSON.stringify({ error: "Mensagem muito longa (limite 8000 caracteres)." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Validate thread ownership + load context
     const { data: thread } = await adminClient
