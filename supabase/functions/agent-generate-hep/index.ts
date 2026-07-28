@@ -158,7 +158,7 @@ serve(async (req) => {
 Se houver conflito, prevalece o critério mais conservador entre dor aguda e capacidade basal, mas NÃO subestime pacientes ativos e com dor baixa: nesses casos escolha intermediate ou advanced.`
       : `O PROFISSIONAL FIXOU O NÍVEL DE DESAFIO: "${requestedLevel}". Respeite-o e selecione exercícios coerentes com esse nível (a menos que haja risco clínico evidente — nesse caso explique em level_rationale).`;
 
-    const prompt = `Você é fisioterapeuta. Selecione 5 a 8 exercícios da BIBLIOTECA abaixo para compor um HEP (programa de exercícios domiciliares) para o paciente, considerando hipótese, queixa, regiões de dor, capacidade basal e a conversa recente entre o profissional e o agente.
+    const prompt = `Você é fisioterapeuta. Selecione de 5 a 10 exercícios da BIBLIOTECA abaixo para compor um HEP (programa de exercícios domiciliares) para o paciente, considerando hipótese, queixa, regiões de dor, capacidade basal e a conversa recente entre o profissional e o agente. Programas de nível mais alto tendem a ter mais exercícios (8-10); os básicos podem ter menos (5-6).
 
 PACIENTE: ${patient.full_name}
 HIPÓTESE: ${hypothesis}
