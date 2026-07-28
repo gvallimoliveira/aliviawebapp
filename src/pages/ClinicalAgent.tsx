@@ -126,6 +126,7 @@ const ClinicalAgent = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [generatingHep, setGeneratingHep] = useState(false);
+  const [hepLevel, setHepLevel] = useState<"auto" | "beginner" | "intermediate" | "advanced">("auto");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [professionalId, setProfessionalId] = useState<string>("");
@@ -396,12 +397,16 @@ const ClinicalAgent = () => {
     return linkedThread;
   };
 
-  const generateHep = async () => {
+  const generateHep = async (level: "auto" | "beginner" | "intermediate" | "advanced" = hepLevel) => {
     if (!activeThread?.patient_id || generatingHep) return;
     setGeneratingHep(true);
     try {
       const { data, error } = await supabase.functions.invoke("agent-generate-hep", {
-        body: { thread_id: activeThread.id, patient_id: activeThread.patient_id },
+        body: {
+          thread_id: activeThread.id,
+          patient_id: activeThread.patient_id,
+          ...(level !== "auto" ? { challenge_level: level } : {}),
+        },
       });
       if (error || data?.error) {
         const code = data?.error || error?.message;
@@ -895,18 +900,47 @@ const ClinicalAgent = () => {
           )}
 
           {activeThread && linkedPatient && (
-            <Button
-              variant="default"
-              size="sm"
-              className="h-9 shrink-0 gap-1.5 px-2 md:px-3"
-              onClick={generateHep}
-              disabled={generatingHep}
-              title="Gera um HEP real (com link) baseado na última avaliação deste paciente"
-            >
-              {generatingHep ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-              <span className="hidden md:inline">Gerar HEP</span>
-            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-9 shrink-0 gap-1.5 px-2 md:px-3"
+                  disabled={generatingHep}
+                  title="Gera um HEP real (com link) baseado na última avaliação deste paciente"
+                >
+                  {generatingHep ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  <span className="hidden md:inline">Gerar HEP</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 p-2">
+                <p className="px-2 pb-1 pt-1 text-xs font-medium text-muted-foreground">
+                  Nível de desafio do HEP
+                </p>
+                {([
+                  { key: "auto", label: "IA decide (recomendado)", hint: "Pondera dor, estágio da lesão e capacidade basal do paciente" },
+                  { key: "beginner", label: "Básico", hint: "Dor alta, fase aguda ou paciente sedentário" },
+                  { key: "intermediate", label: "Intermediário", hint: "Dor controlada, praticante regular" },
+                  { key: "advanced", label: "Avançado", hint: "Dor baixa, histórico atlético / retorno ao esporte" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    disabled={generatingHep}
+                    onClick={() => {
+                      setHepLevel(opt.key);
+                      void generateHep(opt.key);
+                    }}
+                    className="w-full rounded-md px-2 py-2 text-left transition hover:bg-muted disabled:opacity-50"
+                  >
+                    <span className="block text-sm font-medium">{opt.label}</span>
+                    <span className="block text-xs text-muted-foreground">{opt.hint}</span>
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           )}
+
 
           <Popover>
             <PopoverTrigger asChild>
