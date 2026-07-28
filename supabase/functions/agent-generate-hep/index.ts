@@ -34,7 +34,7 @@ serve(async (req) => {
       });
     }
 
-    const { thread_id, patient_id, forceRefresh } = await req.json();
+    const { thread_id, patient_id, forceRefresh, challenge_level } = await req.json();
     if (!thread_id || !patient_id) {
       return new Response(JSON.stringify({ error: "missing_params" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
