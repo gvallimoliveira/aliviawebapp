@@ -397,12 +397,16 @@ const ClinicalAgent = () => {
     return linkedThread;
   };
 
-  const generateHep = async () => {
+  const generateHep = async (level: "auto" | "beginner" | "intermediate" | "advanced" = hepLevel) => {
     if (!activeThread?.patient_id || generatingHep) return;
     setGeneratingHep(true);
     try {
       const { data, error } = await supabase.functions.invoke("agent-generate-hep", {
-        body: { thread_id: activeThread.id, patient_id: activeThread.patient_id },
+        body: {
+          thread_id: activeThread.id,
+          patient_id: activeThread.patient_id,
+          ...(level !== "auto" ? { challenge_level: level } : {}),
+        },
       });
       if (error || data?.error) {
         const code = data?.error || error?.message;
