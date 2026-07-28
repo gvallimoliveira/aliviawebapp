@@ -294,7 +294,10 @@ Responda APENAS em JSON válido no formato:
         professional_id: pro.id,
         assessment_id: assessment.id,
         patient_name: patient.full_name,
-        notes: parsed.notes || null,
+        notes: [
+          `Nível de desafio: ${LEVEL_PT[effectiveLevel]}${parsed.level_rationale ? ` — ${parsed.level_rationale}` : ""}`,
+          parsed.notes || null,
+        ].filter(Boolean).join("\n\n"),
       })
       .select("id, token")
       .single();
@@ -321,6 +324,9 @@ Responda APENAS em JSON válido no formato:
     // Post assistant message in the thread with the link
     const message = `✅ **HEP gerado com sucesso** com ${items.length} exercícios baseados na última avaliação de ${patient.full_name}.
 
+**Nível de desafio:** ${LEVEL_PT[effectiveLevel]}${requestedLevel === "auto" ? " (definido pela IA)" : " (definido por você)"}${mixLabel ? ` · composição: ${mixLabel}` : ""}
+${parsed.level_rationale ? `**Por quê:** ${parsed.level_rationale}` : ""}
+
 [👉 Abrir HEP](${hepUrl})
 
 ${parsed.notes ? `**Orientação:** ${parsed.notes}` : ""}
@@ -336,7 +342,9 @@ Você pode editar o HEP a partir do prontuário do paciente.`;
 
     return new Response(JSON.stringify({
       url: hepUrl, token: program.token, items_count: items.length,
+      level: effectiveLevel, level_rationale: parsed.level_rationale ?? null,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
 
   } catch (err: any) {
     console.error("[agent-generate-hep] fatal", err);
