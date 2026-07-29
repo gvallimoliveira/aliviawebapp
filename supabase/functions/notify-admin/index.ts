@@ -162,16 +162,7 @@ async function dispatch(alert: AlertInput) {
   const emails = await adminEmails();
   const results: Record<string, { status: string; detail: string | null }> = {};
 
-  for (const [channel, fn] of [
-    ["telegram", () => sendTelegram(alert)],
-    ["email", () => sendEmail(alert, emails)],
-    ["push", () => sendPush(alert, emails)],
-  ] as const) {
-    try {
-      results[channel] = (await fn()) as any;
-    } catch (e) {
-      results[channel] = { status: "failed", detail: String(e).slice(0, 300) };
-    }
+  const logChannel = async (channel: string) => {
     await supabase.from("admin_alert_log").insert({
       event_type: alert.event_type,
       channel,
@@ -181,7 +172,36 @@ async function dispatch(alert: AlertInput) {
       detail: results[channel].detail,
       payload: { fields: alert.fields || {}, url: alert.url || null },
     });
+  };
+
+  // Primary channels
+  for (const [channel, fn] of [
+    ["telegram", () => sendTelegram(alert)],
+    ["email", () => sendEmail(alert, emails)],
+  ] as const) {
+    try {
+      results[channel] = (await fn()) as any;
+    } catch (e) {
+      results[channel] = { status: "failed", detail: String(e).slice(0, 300) };
+    }
+    await logChannel(channel);
   }
+
+  // Push is the automatic fallback: only fires when no primary channel delivered.
+  const primaryDelivered = Object.values(results).some((r) => r.status === "sent");
+  if (primaryDelivered) {
+    results.push = { status: "skipped", detail: "primary channel delivered" };
+  } else {
+    try {
+      results.push = (await sendPush(alert, emails)) as any;
+      if (results.push.status === "sent") {
+        results.push.detail = `fallback: ${results.push.detail ?? ""}`.trim();
+      }
+    } catch (e) {
+      results.push = { status: "failed", detail: String(e).slice(0, 300) };
+    }
+  }
+  await logChannel("push");
 
   const delivered = Object.values(results).some((r) => r.status === "sent");
   log("dispatched", { event: alert.event_type, delivered, results });
@@ -269,12 +289,16 @@ Deno.serve(async (req) => {
       token === SERVICE_ROLE_KEY ||
       (!!INTERNAL_SECRET && internal === INTERNAL_SECRET);
     let allowed = isService;
+    let callerUser: { id: string; email: string | null } | null = null;
 
     // A signed-in user (e.g. admin triggering a manual test) is also allowed
     // for the non-arbitrary actions below.
     if (!allowed && token) {
       const { data } = await supabase.auth.getUser(token);
-      if (data?.user) allowed = true;
+      if (data?.user) {
+        allowed = true;
+        callerUser = { id: data.user.id, email: data.user.email ?? null };
+      }
     }
     if (!allowed) return json({ error: "Unauthorized" }, 401);
 
@@ -288,6 +312,37 @@ Deno.serve(async (req) => {
       if (!payload?.ticket_id) return json({ error: "ticket_id required" }, 400);
       return json(await notifyTicket(String(payload.ticket_id)));
     }
+    if (action === "push_status" || action === "test_push") {
+      if (!callerUser) return json({ error: "Forbidden" }, 403);
+      const emails = await adminEmails();
+      const isAdmin = emails.some(
+        (e) => e.toLowerCase() === (callerUser!.email || "").toLowerCase(),
+      );
+      if (!isAdmin) return json({ error: "Forbidden" }, 403);
+
+      const { data: subs } = await supabase
+        .from("push_subscriptions")
+        .select("endpoint")
+        .eq("user_id", callerUser.id);
+      const devices = subs?.length || 0;
+
+      if (action === "push_status") return json({ devices, admin_emails: emails.length });
+
+      if (devices === 0) return json({ sent: 0, devices, error: "no devices registered" }, 400);
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/send-push-notification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE_KEY}` },
+        body: JSON.stringify({
+          user_id: callerUser.id,
+          title: "🔔 Teste da Central de Alertas",
+          body: "Se você recebeu isto, o push de fallback está funcionando.",
+          url: "/admin",
+        }),
+      });
+      const out = await r.json().catch(() => ({}));
+      return json({ ok: r.ok, devices, result: out });
+    }
+
     if (action === "alert") {
       // Arbitrary alerts are server-to-server only (stripe webhook, cron, etc.)
       if (!isService) return json({ error: "Forbidden" }, 403);
