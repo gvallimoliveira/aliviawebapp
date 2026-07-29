@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, UserCheck, MessageSquare, Mail, FileText, Loader2 } from "lucide-react";
+import AdminAlertDevices from "@/components/admin/AdminAlertDevices";
 
 interface DashboardMetrics {
   totalVips: number;
