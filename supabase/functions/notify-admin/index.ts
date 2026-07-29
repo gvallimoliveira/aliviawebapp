@@ -251,8 +251,16 @@ Deno.serve(async (req) => {
     const token = (req.headers.get("Authorization") || "").replace("Bearer ", "").trim();
     const apikey = req.headers.get("apikey") || "";
     const isService = token === SERVICE_ROLE_KEY;
-    const isAnon = token === ANON_KEY || apikey === ANON_KEY;
+    let isAnon = token === ANON_KEY || apikey === ANON_KEY;
+
+    // A signed-in user (e.g. admin triggering a manual test) is also allowed
+    // for the non-arbitrary actions below.
+    if (!isService && !isAnon && token) {
+      const { data } = await supabase.auth.getUser(token);
+      if (data?.user) isAnon = true;
+    }
     if (!isService && !isAnon) return json({ error: "Unauthorized" }, 401);
+
 
     const payload = await req.json().catch(() => ({}));
     const action = payload?.action || "alert";
