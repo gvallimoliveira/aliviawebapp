@@ -174,10 +174,11 @@ async function dispatch(alert: AlertInput) {
     });
   };
 
-  // Primary channels
+  // All channels fire in parallel (email, telegram and push are equal peers).
   for (const [channel, fn] of [
     ["telegram", () => sendTelegram(alert)],
     ["email", () => sendEmail(alert, emails)],
+    ["push", () => sendPush(alert, emails)],
   ] as const) {
     try {
       results[channel] = (await fn()) as any;
@@ -187,21 +188,6 @@ async function dispatch(alert: AlertInput) {
     await logChannel(channel);
   }
 
-  // Push is the automatic fallback: only fires when no primary channel delivered.
-  const primaryDelivered = Object.values(results).some((r) => r.status === "sent");
-  if (primaryDelivered) {
-    results.push = { status: "skipped", detail: "primary channel delivered" };
-  } else {
-    try {
-      results.push = (await sendPush(alert, emails)) as any;
-      if (results.push.status === "sent") {
-        results.push.detail = `fallback: ${results.push.detail ?? ""}`.trim();
-      }
-    } catch (e) {
-      results.push = { status: "failed", detail: String(e).slice(0, 300) };
-    }
-  }
-  await logChannel("push");
 
   const delivered = Object.values(results).some((r) => r.status === "sent");
   log("dispatched", { event: alert.event_type, delivered, results });
