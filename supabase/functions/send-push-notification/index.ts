@@ -179,8 +179,9 @@ Deno.serve(async (req) => {
           expiredEndpoints.push(sub.endpoint);
           console.log(`[Push] Subscription expired, removing: ${sub.endpoint.slice(0, 60)}...`);
         } else {
-          errors.push(`Failed (${statusCode}): ${e?.message || e}`);
-          console.error(`[Push] Error for ${sub.endpoint.slice(0, 60)}:`, e?.message);
+          const detail = `${e?.message || e} | status=${statusCode} | body=${String(e?.body || "").slice(0, 200)} | headers=${JSON.stringify(e?.headers || {}).slice(0, 200)}`;
+          errors.push(`Failed (${statusCode}): ${detail}`);
+          console.error(`[Push] Error for ${sub.endpoint.slice(0, 60)}:`, detail);
         }
       }
     }
