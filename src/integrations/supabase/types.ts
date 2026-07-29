@@ -257,6 +257,42 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_alert_log: {
+        Row: {
+          channel: string
+          created_at: string
+          detail: string | null
+          event_type: string
+          id: string
+          payload: Json
+          ref: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          detail?: string | null
+          event_type: string
+          id?: string
+          payload?: Json
+          ref?: string | null
+          status: string
+          title: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          detail?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          ref?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
       agent_messages: {
         Row: {
           citations: Json | null
@@ -3083,6 +3119,7 @@ export type Database = {
           created_at: string
           id: string
           message: string
+          notified_at: string | null
           status: string
           subject: string
           updated_at: string
@@ -3094,6 +3131,7 @@ export type Database = {
           created_at?: string
           id?: string
           message: string
+          notified_at?: string | null
           status?: string
           subject: string
           updated_at?: string
@@ -3105,6 +3143,7 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string
+          notified_at?: string | null
           status?: string
           subject?: string
           updated_at?: string

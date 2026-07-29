@@ -84,3 +84,10 @@ verify_jwt = false
 [functions.admin-manage-subscription]
 verify_jwt = false
 
+[functions.notify-admin]
+verify_jwt = false
+
+[functions.notify-admin-support]
+verify_jwt = false
+
+

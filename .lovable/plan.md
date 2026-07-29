@@ -1,81 +1,64 @@
-# Fase 5 — Enforcement gradual dos créditos IA (subdividida)
+## O que eu verifiquei (causas reais)
 
-**Contexto:** parceiros usando, sem vendas ainda, conta workspace absorvendo o custo. Objetivo: deixar o sistema pronto pra quando começarem as vendas, sem risco de bloquear parceiro/VIP por engano e sem susto de comunicação.
+Diagnóstico feito agora no backend, não é suposição:
 
-**Trilho de segurança em toda fase:**
-- Flag global `app_config.ai_credits_enforced` continua **false** durante 5.0–5.2 (só UI e telemetria). Só vira `true` na 5.3, com rollout escalonado.
-- Bypass **sempre respeitado** antes de qualquer débito ou aviso: VIP (`vip_users` + fallback hardcoded), `professionals.is_partner`, admin.
-- Clínica: política de **carência de 20%** acima da cota inclusa antes de consumir pacotes ou bloquear (canônico 2026-07). Dentro da carência, só avisa.
-- Reversão: um `UPDATE app_config SET value='false' WHERE key='ai_credits_enforced'` volta tudo ao comportamento atual em segundos.
+1. **O ticket da Rita existe** (`Conta pro`, 25/jul). Ou seja: o formulário gravou certo — o que falhou foi só o aviso.
+2. **Push era impossível**: seus dois e-mails VIP têm **0 dispositivos registrados** para notificação push. Nunca houve destino.
+3. **E-mail era impossível**: o app envia como `onboarding@resend.dev`. Esse remetente de teste só entrega para o e-mail dono da conta de envio — para qualquer outro destinatário a chamada é recusada. E o projeto **não tem domínio de e-mail verificado** configurado.
+4. **Disparo frágil**: o aviso é disparado pelo navegador em modo "dispara e esquece". Se der erro, se a aba fechar, se a rede cair — ninguém percebe e nada reenvia.
+5. **Stripe**: o app nunca teve alerta de venda. O webhook recebe `checkout.session.completed` mas só atualiza acesso, não avisa você. E as notificações nativas da Stripe são uma configuração da conta (fora do código).
 
----
+Ou seja: as três camadas falharam por motivos diferentes. Por isso a tentativa anterior "não rodou".
 
-## 5.0 — Seed de quotas + função de leitura (zero UX)
+## Nova abordagem
 
-Popular `ai_credit_quotas` com os valores canônicos e criar helper `get_user_credit_status(user_id)` que retorna `{tier, used, quota, purchased_balance, pct}`. **Nada aparece pro usuário ainda.**
+Sair do modelo "o navegador avisa" e ir para **um canal central de alertas admin, disparado pelo servidor, com reenvio automático**.
 
-Quotas (por mês):
-- pro_monthly 60 · pro_annual 72  *(valor canônico atual — ver `mem://business/ai-credits-canonical`)*
-- academic_monthly 60 · academic_annual 72
-- clinic_small 200/terapeuta · clinic_medium 250 · clinic_large 300
-- premium_b2c 15 · unlimited (VIP/partner) sem trava
+### 1. Canal central de alertas
+Uma única função `notify-admin` que recebe qualquer evento (`support_ticket`, `stripe_sale`, `stripe_refund`, `erro crítico`) e dispara nos canais ativos. Todas as origens passam por ela — nunca mais três implementações diferentes.
 
-**Portão de prova:** `SELECT * FROM get_user_credit_status('<uid teste>')` retorna valores certos para VIP, parceiro, PRO comum e clínica.
+### 2. Telegram (canal primário — funciona hoje mesmo)
+Grátis, instantâneo, sem DNS, sem dispositivo registrado. Você cria um bot pelo @BotFather e me passa o token; eu descubro seu chat ID e guardo como segredo. É o único canal que fica 100% operacional já no dia da implementação.
 
-## 5.1 — Widget honesto no dashboard (só informa)
+### 3. E-mail próprio (canal formal)
+Configurar `aliviawebapp.com.br` como remetente verificado e trocar todos os envios que hoje usam o remetente de teste (suporte, VIP, follow-up). Exige uma ação sua: completar o assistente de domínio (registros de DNS). Ativa quando o DNS propagar.
 
-`AiCreditsWidget` passa a mostrar barra "X / Y créditos usados este mês" com tom otimista. VIP/parceiro vê badge "Uso ilimitado 🎁" sem barra. Ainda nenhum bloqueio ou warning.
+### 4. Push (canal de conveniência)
+Adicionar no painel Admin um cartão "Meus dispositivos de notificação": mostra quantos dispositivos estão registrados, botão para ativar no aparelho atual e botão "Enviar teste". Assim nunca mais fica invisível que o push está com zero destinos.
 
-**Portão de prova:** screenshot Playwright de 3 perfis (VIP, parceiro, PRO comum) no dashboard mobile e desktop.
+### 5. Garantia de entrega (o ponto que faltou antes)
+- Coluna `notified_at` em `support_tickets`.
+- Disparo pelo servidor no momento do insert, não pelo navegador.
+- **Varredura automática a cada 5 minutos**: qualquer ticket sem `notified_at` é reenviado. Se um canal cair, o alerta chega assim que voltar.
+- Tabela de log de alertas para você auditar o que saiu e o que falhou.
 
-## 5.2 — Warning a 80% + toast informativo (ainda sem bloqueio)
+### 6. Stripe (os dois caminhos, como você pediu)
+- **No app**: no webhook, ao confirmar pagamento (e em reembolso/assinatura cancelada), enviar alerta com nome, e-mail, produto, valor bruto e taxa.
+- **Na Stripe**: te passo o passo a passo para ligar as notificações nativas de pagamento na conta — redundância independente do nosso código.
 
-- Banner soft no topo do dashboard quando `pct ≥ 80%`: "Você já usou 80% dos créditos deste mês — a recarga acontece em X dias, ou você pode complementar com um pacote."
-- Push notification opcional (1 vez por ciclo) via `send-push-notification`.
-- VIP/parceiro nunca recebem.
-- Clínica: warning vai pro dono, não pra cada terapeuta.
+## Detalhes técnicos
 
-**Portão de prova:** simular usuário com 85% via `INSERT` em `ai_credit_usage`, ver banner aparecer; conferir que VIP não vê.
+- Nova edge function `notify-admin` (Telegram + e-mail + push, cada canal isolado em try/catch — um canal quebrado não derruba os outros).
+- `notify-admin-support` vira um cliente fino de `notify-admin`; `SupportContactForm` deixa de ser responsável pelo envio.
+- Trigger no insert de `support_tickets` chamando a função via `pg_net`, mais job `pg_cron` de 5 em 5 minutos como rede de segurança.
+- Migração: `support_tickets.notified_at`, tabela `admin_alert_log` (RLS: leitura só admin, escrita só service role, com GRANTs).
+- `stripe-webhook`: chamada a `notify-admin` dentro de `EdgeRuntime.waitUntil` para não atrasar o ACK da Stripe.
+- Segredos novos: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`.
 
-## 5.3 — Enforcement em VIP + parceiros primeiro (canário paradoxal)
+## Prova antes de declarar pronto (Portão 3)
 
-Ligar `ai_credits_enforced=true` **somente** em ambiente de canário: código lê a flag, mas o bypass VIP/parceiro continua explícito. Objetivo: garantir que o caminho de "consultar quota + decidir" não introduz regressão nem latência nas contas críticas.
+1. Inserir um ticket de teste e mostrar o `admin_alert_log` com status `sent` no Telegram.
+2. Reprocessar um evento de pagamento real de teste e mostrar o alerta gerado.
+3. Consulta mostrando o ticket da Rita com `notified_at` preenchido após o reenvio da varredura.
 
-- Instrumentar `_shared/ai-credits.ts` com `assertCreditsAvailable()` que:
-  1. Checa VIP → retorna `{ok:true, unlimited:true}` sem consultar quota.
-  2. Checa `is_partner` → mesmo.
-  3. Consulta saldo (pacote comprado FIFO por `expires_at` → quota mensal).
-  4. Se `ok`, débito é logado normalmente pelo helper atual.
+## O que precisa de você
 
-**Portão de prova:** rodar 24h com flag ligada; verificar em logs que VIP/parceiros nunca entram no ramo "consulta quota" e que latência p95 das edge functions de IA não subiu.
+- Token do bot do Telegram (2 minutos no @BotFather).
+- Completar o assistente de domínio de e-mail (DNS) — só para o canal e-mail.
+- Ativar notificações no celular quando o cartão novo aparecer no Admin.
 
-## 5.4 — Soft-block real para PRO/Acadêmico/Premium (Clínica fica de fora)
+## Ordem sugerida
 
-Quando `pct ≥ 100%` em PRO/Acadêmico/Premium:
-- Edge functions de IA retornam 402 com payload `{error:"credits_exhausted", reset_at, buy_url}`.
-- Frontend mostra modal otimista: "Você aproveitou todos os créditos deste mês 🎉 — recarga em X dias, ou complete agora com um pacote."
-- Botão CTA abre `AiCreditsStore`.
-- Clínica **não entra nesta sub-fase**: continua só com warning.
-
-Rollout: começar por 1 email teste (você), depois 10% dos PROs por hash do user_id, depois 100%.
-
-**Portão de prova:** conta de teste PRO com quota zerada → chamada a `generate-diagnosis` retorna 402 e modal aparece corretamente. VIP/parceiro na mesma condição continuam funcionando.
-
-## 5.5 — Soft-block em Clínica (opcional, só se dados mostrarem abuso)
-
-Só ativar se o painel admin mostrar clínica consistentemente >150% da quota. Modelo: dono da clínica recebe email + banner "sua equipe passou do incluso; considere upgrade ou pacote". Terapeutas continuam usando (nunca bloqueia atendimento).
-
-**Portão de prova:** manual — só decidimos com dados na mão.
-
----
-
-## O que fica pra depois (fora da Fase 5)
-
-- **Fase 6** — reajuste dos planos de clínica com base em custo real (só faz sentido após 60d de dados enforced).
-- **A7** — landings/páginas de suporte falando abertamente dos créditos (planejado no `strategic-improvements-plan.md`; melhor entrar junto ou logo depois da 5.4 pra alinhar comunicação com comportamento).
-
-## Ordem sugerida de execução
-
-Fazer 5.0 e 5.1 juntos num deploy (baixo risco, ambos só informativos). Depois pausa curta pra observar. 5.2 sozinho. 5.3 sozinho (crítico pra confirmar bypass). 5.4 em rollout de 3 ondas. 5.5 sob demanda.
-
-Posso começar por 5.0 + 5.1 no próximo passo, se você aprovar.
+Fase 1 (mesma sessão): canal central + Telegram + garantia de entrega + alerta Stripe no webhook + reenvio do ticket da Rita.
+Fase 2: domínio de e-mail e troca do remetente em todas as funções.
+Fase 3: cartão de dispositivos push no Admin.

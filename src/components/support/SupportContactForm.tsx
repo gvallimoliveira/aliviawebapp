@@ -68,15 +68,8 @@ export default function SupportContactForm() {
       });
       if (error) throw error;
 
-      // Notify admins via push + email (fire-and-forget)
-      supabase.functions.invoke("notify-admin-support", {
-        body: {
-          subject: subject.trim(),
-          message: message.trim(),
-          userEmail: user.email,
-          userName: (user.user_metadata as any)?.full_name || user.email,
-        },
-      }).catch(() => {});
+      // Admins are notified server-side (DB trigger + cron sweep on notify-admin).
+
 
       toast({ description: t("support.contact.success") });
       setSubject("");
