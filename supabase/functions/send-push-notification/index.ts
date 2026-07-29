@@ -86,7 +86,9 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { user_id, clinic_id, email, title, body, url, kind, tag, call_id } = await req.json();
+    const { user_id, clinic_id, email, title, body, url, kind, tag, call_id, category } =
+      await req.json();
+
 
     if (!title || (!user_id && !clinic_id && !email)) {
       return new Response(
