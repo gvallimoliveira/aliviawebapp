@@ -143,6 +143,7 @@ async function sendPush(alert: AlertInput, emails: string[]) {
     if (!subs || subs.length === 0) return { status: "skipped", detail: "no devices registered" };
 
     let sent = 0;
+    let lastErr = "";
     for (const uid of [...new Set(subs.map((s: any) => s.user_id))]) {
       const r = await fetch(`${SUPABASE_URL}/functions/v1/send-push-notification`, {
         method: "POST",
@@ -154,12 +155,15 @@ async function sendPush(alert: AlertInput, emails: string[]) {
           url: alert.url || "/admin",
         }),
       });
-      await r.text();
-      if (r.ok) sent++;
+      const out = await r.json().catch(() => ({} as any));
+      // The push function answers 200 even when every endpoint rejects, so
+      // only count a real delivery.
+      if (r.ok && Number(out?.sent || 0) > 0) sent++;
+      else if (!lastErr) lastErr = JSON.stringify(out?.errors || out).slice(0, 200);
     }
     return sent > 0
       ? { status: "sent", detail: `${sent} device group(s)` }
-      : { status: "failed", detail: "push function errors" };
+      : { status: "failed", detail: lastErr || "push function errors" };
   } catch (e) {
     return { status: "failed", detail: String(e).slice(0, 300) };
   }
@@ -332,8 +336,8 @@ Deno.serve(async (req) => {
           url: "/admin",
         }),
       });
-      const out = await r.json().catch(() => ({}));
-      return json({ ok: r.ok, devices, result: out });
+      const out: any = await r.json().catch(() => ({}));
+      return json({ ok: r.ok && Number(out?.sent || 0) > 0, devices, result: out });
     }
 
     if (action === "alert") {
