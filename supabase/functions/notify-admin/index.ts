@@ -123,10 +123,17 @@ async function sendEmail(alert: AlertInput, emails: string[]) {
 
 async function sendPush(alert: AlertInput, emails: string[]) {
   try {
-    const { data: authData } = await supabase.auth.admin.listUsers();
-    const ids = (authData?.users || [])
-      .filter((u: any) => emails.some((e) => e.toLowerCase() === (u.email || "").toLowerCase()))
-      .map((u: any) => u.id);
+    // listUsers() is paginated (50 by default) — walk all pages so admin
+    // accounts created later are still found.
+    const ids: string[] = [];
+    for (let page = 1; page <= 20; page++) {
+      const { data: authData } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+      const users = authData?.users || [];
+      for (const u of users as any[]) {
+        if (emails.some((e) => e.toLowerCase() === (u.email || "").toLowerCase())) ids.push(u.id);
+      }
+      if (users.length < 1000) break;
+    }
     if (ids.length === 0) return { status: "skipped", detail: "no admin users" };
 
     const { data: subs } = await supabase
