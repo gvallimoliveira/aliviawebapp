@@ -86,7 +86,9 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { user_id, clinic_id, email, title, body, url, kind, tag, call_id } = await req.json();
+    const { user_id, clinic_id, email, title, body, url, kind, tag, call_id, category } =
+      await req.json();
+
 
     if (!title || (!user_id && !clinic_id && !email)) {
       return new Response(
@@ -128,7 +130,33 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Basic input sanity caps to limit abuse
+    // Per-user category preferences (defaults to opted-in when no row exists).
+    const VALID_CATEGORIES = [
+      "assessments",
+      "messages",
+      "red_flags",
+      "questionnaires",
+      "billing",
+    ];
+    const cat = category ? String(category) : null;
+    if (cat && VALID_CATEGORIES.includes(cat) && targetUserIds.length > 0) {
+      const { data: prefs } = await supabase
+        .from("notification_preferences")
+        .select(`user_id, ${cat}`)
+        .in("user_id", targetUserIds);
+      const optedOut = new Set(
+        (prefs || []).filter((p: any) => p[cat] === false).map((p: any) => p.user_id),
+      );
+      targetUserIds = targetUserIds.filter((uid) => !optedOut.has(uid));
+      if (targetUserIds.length === 0) {
+        return new Response(
+          JSON.stringify({ message: "All recipients opted out of this category", sent: 0 }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+
     const safeTitle = String(title).slice(0, 200);
     const safeBody = body ? String(body).slice(0, 500) : "";
     const safeUrl = url ? String(url).slice(0, 500) : "/";

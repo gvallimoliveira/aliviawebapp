@@ -742,6 +742,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 body: "Seu fisioterapeuta enviou um novo HEP. Toque para iniciar.",
                 url: link,
                 tag: `hep-${programId}`,
+                category: "questionnaires",
               },
             });
           }

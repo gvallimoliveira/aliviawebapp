@@ -17,7 +17,9 @@ import StudentAccessCard from "@/components/account/StudentAccessCard";
 import AcademicPerformanceCard from "@/components/account/AcademicPerformanceCard";
 import PasskeyAccountCard from "@/components/account/PasskeyAccountCard";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import NotificationPreferences from "@/components/account/NotificationPreferences";
 import { Bell, BellOff, Send, Smartphone } from "lucide-react";
+
 
 const Account = () => {
   const { user, loading: authLoading } = useAuth();
@@ -257,7 +259,9 @@ const Account = () => {
                 {t.test_push}
               </Button>
             </div>
+            <NotificationPreferences />
           </CardContent>
+
         </Card>
 
         <Card>

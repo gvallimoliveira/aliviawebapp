@@ -28,11 +28,12 @@ Deno.serve(async (req) => {
       inactivity_alerts: 0,
       reassessment_suggestions: 0,
       streak_milestones: 0,
+      subscription_expiring: 0,
       errors: [] as string[],
     };
 
     // Helper: send push to a single user
-    async function notifyUser(userId: string, title: string, body: string, url: string) {
+    async function notifyUser(userId: string, title: string, body: string, url: string, category?: string) {
       const { data: subs } = await supabase
         .from("push_subscriptions")
         .select("endpoint")
@@ -45,7 +46,7 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${serviceRoleKey}`,
         },
-        body: JSON.stringify({ user_id: userId, title, body, url }),
+        body: JSON.stringify({ user_id: userId, title, body, url, category }),
       });
       return res.ok;
     }
@@ -541,6 +542,30 @@ Deno.serve(async (req) => {
         }
       }
     } catch (e) { results.errors.push(`streak_block: ${e}`); }
+
+    // 11. SUBSCRIPTION EXPIRING — warn the subscriber 3 days before access ends
+    try {
+      const in3 = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+      const nowIso = new Date().toISOString();
+      const { data: expiring } = await supabase
+        .from("professionals")
+        .select("user_id, pro_access_expires_at")
+        .not("pro_access_expires_at", "is", null)
+        .gte("pro_access_expires_at", nowIso)
+        .lte("pro_access_expires_at", in3);
+      for (const p of expiring || []) {
+        try {
+          const sent = await notifyUser(
+            p.user_id,
+            "⏳ Seu plano está para vencer",
+            "Renove para manter o acesso PRO sem interrupção.",
+            "/dashboard",
+            "billing",
+          );
+          if (sent) results.subscription_expiring++;
+        } catch (e) { results.errors.push(`expiring ${p.user_id}: ${e}`); }
+      }
+    } catch (e) { results.errors.push(`expiring_block: ${e}`); }
 
 
     return new Response(

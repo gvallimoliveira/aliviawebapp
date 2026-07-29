@@ -299,6 +299,7 @@ const ProfessionalAssessment = () => {
             ? `Patient ${patientName || "Unknown"} completed the assessment`
             : `O paciente ${patientName || "Sem nome"} completou a avaliação`,
           url: "/dashboard",
+          category: "assessments",
         },
       });
     } catch (err) {
@@ -322,6 +323,7 @@ const ProfessionalAssessment = () => {
             body: `${patientName || "Paciente"} ativou sinais de alerta. Revise imediatamente.`,
             url: id ? `/assessment/view/${id}` : "/dashboard?tab=professional",
             tag: `redflag-${id || "x"}`,
+            category: "red_flags",
           },
         });
       } catch (err) {

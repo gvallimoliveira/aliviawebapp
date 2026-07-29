@@ -78,9 +78,45 @@ serve(async (req) => {
         });
       }
 
+      // Notify the professional / clinic team that the patient answered.
+      try {
+        let proUserId: string | null = null;
+        if (pending.professional_id) {
+          const { data: pro } = await supabase
+            .from("professionals")
+            .select("user_id")
+            .eq("id", pending.professional_id)
+            .maybeSingle();
+          proUserId = pro?.user_id ?? null;
+        }
+        if (proUserId || pending.clinic_id) {
+          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push-notification`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({
+              user_id: proUserId ?? undefined,
+              clinic_id: pending.clinic_id ?? undefined,
+              title: "📝 Questionário respondido",
+              body: "Um paciente concluiu o questionário enviado.",
+              url: pending.assessment_id
+                ? `/assessment/view/${pending.assessment_id}`
+                : "/dashboard",
+              tag: `questionnaire-${pending.id}`,
+              category: "questionnaires",
+            }),
+          });
+        }
+      } catch (e) {
+        console.warn("questionnaire push failed", e);
+      }
+
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+
     }
 
     return new Response(JSON.stringify({ error: "unknown_action" }), {

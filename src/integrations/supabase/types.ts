@@ -2037,6 +2037,39 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          assessments: boolean
+          billing: boolean
+          created_at: string
+          messages: boolean
+          questionnaires: boolean
+          red_flags: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessments?: boolean
+          billing?: boolean
+          created_at?: string
+          messages?: boolean
+          questionnaires?: boolean
+          red_flags?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assessments?: boolean
+          billing?: boolean
+          created_at?: string
+          messages?: boolean
+          questionnaires?: boolean
+          red_flags?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pain_diary_entries: {
         Row: {
           assessment_id: string | null

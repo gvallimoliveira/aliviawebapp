@@ -302,6 +302,27 @@ const ClinicAssessment = () => {
     }
   };
 
+  /** Push to the clinic team when a patient finishes an assessment/reassessment. */
+  const notifyClinicAssessment = async (id: string | null) => {
+    if (!clinicId) return;
+    try {
+      await supabase.functions.invoke("send-push-notification", {
+        body: {
+          clinic_id: clinicId,
+          title: reassessmentId ? "🔁 Nova reavaliação recebida" : "📋 Nova avaliação recebida",
+          body: `${patientName || "Paciente"} respondeu o link da clínica.`,
+          url: id ? `/assessment/view/${id}` : "/dashboard?tab=clinic",
+          tag: `assessment-${id || "x"}`,
+          category: "assessments",
+        },
+      });
+    } catch (err) {
+      console.warn("Assessment push (clinic) failed:", err);
+    }
+  };
+
+
+
   const handleRedFlagged = async (flaggedItems: Record<string, boolean>) => {
     setRedFlagData(flaggedItems);
     const id = await createAssessment();
@@ -318,6 +339,7 @@ const ClinicAssessment = () => {
             body: `${patientName || "Paciente"} ativou sinais de alerta na avaliação.`,
             url: id ? `/assessment/view/${id}` : "/dashboard?tab=clinic",
             tag: `redflag-${id || "x"}`,
+            category: "red_flags",
           },
         });
       } catch (err) {
@@ -397,6 +419,7 @@ const ClinicAssessment = () => {
       if (id) {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "completed" });
         await logClinicAction("assessment_completed", id);
+        await notifyClinicAssessment(id);
       }
       // Save/update patient: if linked via personalized token, update existing record
       try {
@@ -431,6 +454,7 @@ const ClinicAssessment = () => {
       if (id) {
         await updateAssessment(id, { status: "completed" });
         await logClinicAction("assessment_completed_no_ai", id, { error: err?.message || String(err) });
+        await notifyClinicAssessment(id);
       }
       // Still save patient record so it appears for the clinic
       try {

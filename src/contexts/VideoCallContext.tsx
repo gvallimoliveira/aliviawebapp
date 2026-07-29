@@ -385,6 +385,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
                 url: `/dashboard?tab=messages&conv=${convId}`,
                 kind: "video-call-cancel",
                 tag: `video-call-${convId}`,
+                category: "messages",
               },
             });
           }
@@ -926,6 +927,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
               url: `/dashboard?tab=messages&conv=${conversationId}`,
               kind: "video-call",
               tag: `video-call-${conversationId}`,
+              category: "messages",
               call_id: callId,
             },
           });
