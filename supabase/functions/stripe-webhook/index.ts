@@ -98,8 +98,26 @@ serve(async (req) => {
       case "customer.subscription.updated":
         await handleSubscriptionLifecycle(event.data.object as Stripe.Subscription, event.type);
         break;
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        EdgeRuntime.waitUntil(
+          notifyAdmin({
+            event_type: "stripe_refund",
+            title: "↩️ Reembolso processado",
+            ref: charge.id,
+            fields: {
+              "E-mail": charge.billing_details?.email || charge.receipt_email || "—",
+              "Reembolsado": brl(charge.amount_refunded, charge.currency),
+              "Valor original": brl(charge.amount, charge.currency),
+            },
+            url: "https://dashboard.stripe.com/payments",
+          }),
+        );
+        break;
+      }
       default:
         log("Unhandled event type", { type: event.type });
+
     }
   } catch (err) {
     log("ERROR processing event", { type: event.type, error: String(err) });
