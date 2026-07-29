@@ -15,6 +15,46 @@ const log = (step: string, details?: any) => {
   console.log(`[stripe-webhook] ${step}`, details ? JSON.stringify(details) : "");
 };
 
+/** Central admin alert (Telegram / e-mail / push). Never blocks the webhook. */
+async function notifyAdmin(payload: Record<string, unknown>) {
+  try {
+    const url = Deno.env.get("SUPABASE_URL") ?? "";
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const resp = await fetch(`${url}/functions/v1/notify-admin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ action: "alert", ...payload }),
+    });
+    await resp.text();
+  } catch (e) {
+    log("notifyAdmin failed (non-blocking)", { error: String(e) });
+  }
+}
+
+const brl = (cents?: number | null, currency?: string | null) =>
+  cents === null || cents === undefined
+    ? "—"
+    : `${(currency || "brl").toUpperCase()} ${(cents / 100).toFixed(2)}`;
+
+async function alertSale(session: Stripe.Checkout.Session, kind: string) {
+  const email =
+    session.customer_details?.email || session.customer_email || "—";
+  await notifyAdmin({
+    event_type: "stripe_sale",
+    title: kind === "async" ? "💰 Pagamento (boleto/pix) confirmado" : "💰 Nova venda confirmada",
+    ref: session.id,
+    fields: {
+      "Cliente": session.customer_details?.name || "—",
+      "E-mail": email,
+      "Produto": session.metadata?.type || "—",
+      "Valor": brl(session.amount_total, session.currency),
+      "Modo": session.mode,
+    },
+    url: "https://dashboard.stripe.com/payments",
+  });
+}
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200 });
