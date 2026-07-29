@@ -302,6 +302,27 @@ const ClinicAssessment = () => {
     }
   };
 
+  /** Push to the clinic team when a patient finishes an assessment/reassessment. */
+  const notifyClinicAssessment = async (id: string | null) => {
+    if (!clinicId) return;
+    try {
+      await supabase.functions.invoke("send-push-notification", {
+        body: {
+          clinic_id: clinicId,
+          title: reassessmentId ? "🔁 Nova reavaliação recebida" : "📋 Nova avaliação recebida",
+          body: `${patientName || "Paciente"} respondeu o link da clínica.`,
+          url: id ? `/assessment/view/${id}` : "/dashboard?tab=clinic",
+          tag: `assessment-${id || "x"}`,
+          category: "assessments",
+        },
+      });
+    } catch (err) {
+      console.warn("Assessment push (clinic) failed:", err);
+    }
+  };
+
+
+
   const handleRedFlagged = async (flaggedItems: Record<string, boolean>) => {
     setRedFlagData(flaggedItems);
     const id = await createAssessment();
