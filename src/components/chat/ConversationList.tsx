@@ -197,6 +197,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, 
                 title: "Nova conversa",
                 body: `${patientName} iniciou uma conversa com você.`,
                 url: "/dashboard?tab=messages&conv=" + convId,
+                category: "messages",
               },
             });
           }

@@ -318,6 +318,7 @@ const ClinicAssessment = () => {
             body: `${patientName || "Paciente"} ativou sinais de alerta na avaliação.`,
             url: id ? `/assessment/view/${id}` : "/dashboard?tab=clinic",
             tag: `redflag-${id || "x"}`,
+            category: "red_flags",
           },
         });
       } catch (err) {

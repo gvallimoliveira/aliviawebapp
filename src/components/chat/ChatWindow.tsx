@@ -203,6 +203,7 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
               title: "Nova mensagem — Aliv.iA",
               body: `${senderName}: ${content.slice(0, 80)}${content.length > 80 ? "…" : ""}`,
               url: `/dashboard?tab=messages&conv=${conversationId}`,
+              category: "messages",
             },
           });
         }
