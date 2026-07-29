@@ -98,25 +98,29 @@ const AdminDashboard = ({ language, onNavigate }: Props) => {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-      {cards.map((card) => (
-        <Card
-          key={card.tab}
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => onNavigate(card.tab)}
-        >
-          <CardContent className="pt-4 pb-3 px-4 text-center relative">
-            <card.icon className={`h-6 w-6 mx-auto mb-2 ${card.color}`} />
-            <p className="text-2xl font-bold text-foreground">{card.value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{card.label}</p>
-            {card.urgent && (
-              <Badge className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5">
-                !
-              </Badge>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {cards.map((card) => (
+          <Card
+            key={card.tab}
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => onNavigate(card.tab)}
+          >
+            <CardContent className="pt-4 pb-3 px-4 text-center relative">
+              <card.icon className={`h-6 w-6 mx-auto mb-2 ${card.color}`} />
+              <p className="text-2xl font-bold text-foreground">{card.value}</p>
+              <p className="text-xs text-muted-foreground mt-1">{card.label}</p>
+              {card.urgent && (
+                <Badge className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5">
+                  !
+                </Badge>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <AdminAlertDevices language={language} />
     </div>
   );
 };
