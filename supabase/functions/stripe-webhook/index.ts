@@ -143,6 +143,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   if (session.payment_status === "paid") {
     await fulfillOrder(session);
+    EdgeRuntime.waitUntil(alertSale(session, "sync"));
   } else {
     log("Async payment pending", { paymentType, userId });
   }
@@ -155,6 +156,8 @@ async function handleAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
     userId,
   });
   await fulfillOrder(session);
+  EdgeRuntime.waitUntil(alertSale(session, "async"));
+
 
   if (userId) {
     await sendPushToUser(userId, {
