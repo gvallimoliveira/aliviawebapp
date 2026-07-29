@@ -98,6 +98,11 @@ serve(async (req) => {
       case "customer.subscription.updated":
         await handleSubscriptionLifecycle(event.data.object as Stripe.Subscription, event.type);
         break;
+      case "invoice.paid":
+      case "invoice.payment_failed":
+        await handleInvoiceEvent(event.data.object as Stripe.Invoice, event.type);
+        break;
+
       case "charge.refunded": {
         const charge = event.data.object as Stripe.Charge;
         EdgeRuntime.waitUntil(
