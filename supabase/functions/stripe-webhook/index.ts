@@ -203,7 +203,10 @@ async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
   }
 }
 
-async function sendPushToUser(userId: string, notification: { title: string; body: string; url: string }) {
+async function sendPushToUser(
+  userId: string,
+  notification: { title: string; body: string; url: string; category?: string },
+) {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -219,6 +222,7 @@ async function sendPushToUser(userId: string, notification: { title: string; bod
         title: notification.title,
         body: notification.body,
         url: notification.url,
+        category: notification.category ?? "billing",
       }),
     });
 
@@ -228,6 +232,60 @@ async function sendPushToUser(userId: string, notification: { title: string; bod
     log("ERROR sending push notification", { userId, error: String(e) });
   }
 }
+
+/** Resolve the app user behind a Stripe subscription (professional or clinic owner). */
+async function userIdForSubscription(subscriptionId: string | null): Promise<string | null> {
+  if (!subscriptionId) return null;
+  const { data: pro } = await supabaseAdmin
+    .from("professionals")
+    .select("user_id")
+    .eq("subscription_stripe_id", subscriptionId)
+    .maybeSingle();
+  if (pro?.user_id) return pro.user_id;
+  const { data: clinic } = await supabaseAdmin
+    .from("clinics")
+    .select("owner_user_id")
+    .eq("subscription_stripe_id", subscriptionId)
+    .maybeSingle();
+  return clinic?.owner_user_id ?? null;
+}
+
+/** Renewal confirmed / payment failed notices for the subscriber (not the admin). */
+async function handleInvoiceEvent(invoice: Stripe.Invoice, eventType: string) {
+  const subId =
+    typeof (invoice as any).subscription === "string"
+      ? (invoice as any).subscription
+      : (invoice as any).subscription?.id ?? null;
+  const userId = await userIdForSubscription(subId);
+  if (!userId) {
+    log("Invoice event without matching user", { type: eventType, sub: subId });
+    return;
+  }
+
+  const amount = brl(invoice.amount_due ?? invoice.amount_paid ?? 0, invoice.currency || "brl");
+
+  if (eventType === "invoice.paid") {
+    // Only the recurring renewals — the first invoice is already covered by checkout.
+    if ((invoice as any).billing_reason === "subscription_create") return;
+    await sendPushToUser(userId, {
+      title: "✅ Assinatura renovada",
+      body: `Sua renovação de ${amount} foi confirmada. Acesso segue ativo.`,
+      url: "/dashboard",
+      category: "billing",
+    });
+    return;
+  }
+
+  if (eventType === "invoice.payment_failed") {
+    await sendPushToUser(userId, {
+      title: "⚠️ Cobrança recusada",
+      body: `Não conseguimos cobrar ${amount}. Atualize seu pagamento para não perder o acesso.`,
+      url: "/dashboard",
+      category: "billing",
+    });
+  }
+}
+
 
 /**
  * Process referral code ONLY after confirmed payment.
