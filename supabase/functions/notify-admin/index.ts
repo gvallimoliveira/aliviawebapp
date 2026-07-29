@@ -249,17 +249,20 @@ Deno.serve(async (req) => {
 
   try {
     const token = (req.headers.get("Authorization") || "").replace("Bearer ", "").trim();
-    const apikey = req.headers.get("apikey") || "";
-    const isService = token === SERVICE_ROLE_KEY;
-    let isAnon = token === ANON_KEY || apikey === ANON_KEY;
+    const internal = (req.headers.get("x-internal-secret") || "").trim();
+    const isService =
+      token === SERVICE_ROLE_KEY ||
+      (!!INTERNAL_SECRET && internal === INTERNAL_SECRET);
+    let allowed = isService;
 
     // A signed-in user (e.g. admin triggering a manual test) is also allowed
     // for the non-arbitrary actions below.
-    if (!isService && !isAnon && token) {
+    if (!allowed && token) {
       const { data } = await supabase.auth.getUser(token);
-      if (data?.user) isAnon = true;
+      if (data?.user) allowed = true;
     }
-    if (!isService && !isAnon) return json({ error: "Unauthorized" }, 401);
+    if (!allowed) return json({ error: "Unauthorized" }, 401);
+
 
 
     const payload = await req.json().catch(() => ({}));
