@@ -236,13 +236,13 @@ async function sendPushToUser(
 /** Resolve the app user behind a Stripe subscription (professional or clinic owner). */
 async function userIdForSubscription(subscriptionId: string | null): Promise<string | null> {
   if (!subscriptionId) return null;
-  const { data: pro } = await supabaseAdmin
+  const { data: pro } = await supabase
     .from("professionals")
     .select("user_id")
     .eq("subscription_stripe_id", subscriptionId)
     .maybeSingle();
   if (pro?.user_id) return pro.user_id;
-  const { data: clinic } = await supabaseAdmin
+  const { data: clinic } = await supabase
     .from("clinics")
     .select("owner_user_id")
     .eq("subscription_stripe_id", subscriptionId)
