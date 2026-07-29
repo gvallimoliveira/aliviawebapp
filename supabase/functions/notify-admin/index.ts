@@ -88,23 +88,38 @@ async function sendEmail(alert: AlertInput, emails: string[]) {
         .join("")}
     </div>`;
 
-  const resp = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: Deno.env.get("ALERT_EMAIL_FROM") || "Aliv.iA <onboarding@resend.dev>",
-      to: emails,
-      subject: `[Aliv.iA] ${alert.title}`,
-      html,
-    }),
-  });
-  const raw = await resp.text();
+  const post = (to: string[]) =>
+    fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: Deno.env.get("ALERT_EMAIL_FROM") || "Aliv.iA <onboarding@resend.dev>",
+        to,
+        subject: `[Aliv.iA] ${alert.title}`,
+        html,
+      }),
+    });
+
+  let resp = await post(emails);
+  let raw = await resp.text();
+
+  // Resend sandbox mode: only the account owner address is deliverable.
+  if (!resp.ok && resp.status === 403) {
+    const owner = raw.match(/own email address \(([^)]+)\)/)?.[1];
+    if (owner) {
+      resp = await post([owner]);
+      raw = await resp.text();
+      if (resp.ok) return { status: "sent", detail: `fallback: ${owner}` };
+    }
+  }
+
   if (!resp.ok) return { status: "failed", detail: `[${resp.status}] ${raw.slice(0, 300)}` };
   return { status: "sent", detail: null };
 }
+
 
 async function sendPush(alert: AlertInput, emails: string[]) {
   try {
