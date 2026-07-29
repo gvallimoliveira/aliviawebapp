@@ -162,16 +162,7 @@ async function dispatch(alert: AlertInput) {
   const emails = await adminEmails();
   const results: Record<string, { status: string; detail: string | null }> = {};
 
-  for (const [channel, fn] of [
-    ["telegram", () => sendTelegram(alert)],
-    ["email", () => sendEmail(alert, emails)],
-    ["push", () => sendPush(alert, emails)],
-  ] as const) {
-    try {
-      results[channel] = (await fn()) as any;
-    } catch (e) {
-      results[channel] = { status: "failed", detail: String(e).slice(0, 300) };
-    }
+  const logChannel = async (channel: string) => {
     await supabase.from("admin_alert_log").insert({
       event_type: alert.event_type,
       channel,
@@ -181,7 +172,36 @@ async function dispatch(alert: AlertInput) {
       detail: results[channel].detail,
       payload: { fields: alert.fields || {}, url: alert.url || null },
     });
+  };
+
+  // Primary channels
+  for (const [channel, fn] of [
+    ["telegram", () => sendTelegram(alert)],
+    ["email", () => sendEmail(alert, emails)],
+  ] as const) {
+    try {
+      results[channel] = (await fn()) as any;
+    } catch (e) {
+      results[channel] = { status: "failed", detail: String(e).slice(0, 300) };
+    }
+    await logChannel(channel);
   }
+
+  // Push is the automatic fallback: only fires when no primary channel delivered.
+  const primaryDelivered = Object.values(results).some((r) => r.status === "sent");
+  if (primaryDelivered) {
+    results.push = { status: "skipped", detail: "primary channel delivered" };
+  } else {
+    try {
+      results.push = (await sendPush(alert, emails)) as any;
+      if (results.push.status === "sent") {
+        results.push.detail = `fallback: ${results.push.detail ?? ""}`.trim();
+      }
+    } catch (e) {
+      results.push = { status: "failed", detail: String(e).slice(0, 300) };
+    }
+  }
+  await logChannel("push");
 
   const delivered = Object.values(results).some((r) => r.status === "sent");
   log("dispatched", { event: alert.event_type, delivered, results });
