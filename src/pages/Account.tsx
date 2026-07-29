@@ -257,7 +257,9 @@ const Account = () => {
                 {t.test_push}
               </Button>
             </div>
+            <NotificationPreferences />
           </CardContent>
+
         </Card>
 
         <Card>
