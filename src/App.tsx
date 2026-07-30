@@ -62,6 +62,9 @@ const CasosDeEstudo = lazy(() => import("./pages/CasosDeEstudo"));
 const AcademicTracks = lazy(() => import("./pages/AcademicTracks"));
 const AcademicLanding = lazy(() => import("./pages/AcademicLanding"));
 const AcademicSupport = lazy(() => import("./pages/AcademicSupport"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Terms = lazy(() => import("./pages/Terms"));
+
 
 const queryClient = new QueryClient();
 
