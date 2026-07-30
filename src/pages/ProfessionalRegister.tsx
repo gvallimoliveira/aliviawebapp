@@ -15,6 +15,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { formatCpf } from "@/utils/masks";
 import { isFallbackVip } from "@/lib/vipEmails";
+import { hasRealCrefito, isPlaceholderCrefito } from "@/lib/crefito";
+
 
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -82,8 +84,11 @@ const ProfessionalRegister = () => {
   const [studentInstitution, setStudentInstitution] = useState("");
   const [studentPeriod, setStudentPeriod] = useState("");
   const [isVip, setIsVip] = useState(false);
-  // Lock when the existing professional already has a CREFITO and is not VIP
-  const studentLocked = !!(existing?.crefito && String(existing.crefito).trim().length > 0) && !isVip;
+  // Lock when the existing professional already has a REAL CREFITO and is not
+  // VIP. Placeholder CREFITOs (`NNNNNN-X`, auto-created for admin partners)
+  // never lock the academic mode.
+  const studentLocked = hasRealCrefito(existing?.crefito) && !isVip;
+
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -107,7 +112,7 @@ const ProfessionalRegister = () => {
         setExisting(data);
         setForm({
           full_name: data.full_name || "",
-          crefito: data.crefito || "",
+          crefito: isPlaceholderCrefito(data.crefito) ? "" : (data.crefito || ""),
           cpf: data.cpf ? formatCpf(data.cpf) : "",
           social_media: data.social_media || "",
           specialties: data.specialties || [],
@@ -122,7 +127,7 @@ const ProfessionalRegister = () => {
         if (data.terms_accepted_at) setTermsAccepted(true);
         if (data.profile_photo_url) setPhotoPreview(data.profile_photo_url);
         if (data.logo_url) setLogoPreview(data.logo_url);
-        const hasCrefito = !!(data.crefito && String(data.crefito).trim().length > 0);
+        const hasCrefito = hasRealCrefito(data.crefito);
         if (forceStudent && !hasCrefito) {
           // Veio do card "Estudante" no /auth → ativa o modo acadêmico por padrão
           // (somente quando ainda não há CREFITO cadastrado, para respeitar a trava).

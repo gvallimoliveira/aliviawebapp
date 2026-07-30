@@ -12,6 +12,8 @@ import { Loader2, UserCheck, Sparkles, KeyRound, ChevronDown, ChevronUp, ShieldC
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatCpf } from "@/utils/masks";
 import logoAlivia from "@/assets/logo-alivia.png";
+import { isPlaceholderCrefito } from "@/lib/crefito";
+
 
 const STATES = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS",
@@ -62,7 +64,7 @@ const CompleteProfile = () => {
           return;
         }
         // If profile is already complete, redirect
-        if (data.crefito !== "000000-X" && data.city !== "A definir") {
+        if (!isPlaceholderCrefito(data.crefito) && data.city !== "A definir") {
           navigate("/dashboard");
           return;
         }

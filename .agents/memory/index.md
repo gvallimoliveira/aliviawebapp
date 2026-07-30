@@ -69,6 +69,8 @@ Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário en
 - [Clinic Archive Patients](mem://features/clinic-archive-patients) — Soft archive at clinic level shared by team; secretaries can hide/restore without losing history.
 - [Pro Demo for Clinic Therapist](mem://features/pro-demo-for-clinic-therapist) — Clinic therapists without PRO profile get a "Profissional Autônomo (Demo)" option that opens the simulated Pro dashboard with subscription CTA.
 - [Partner Access Model](mem://business/partner-access-model) — Desacoplamento PRO/Clínica/Premium e tabela granted_premium_users para Premium B2C por e-mail.
+- [Partner Temporary CREFITO](mem://features/partner-temporary-crefito) — CREFITO placeholder `NNNNNN-X` criado no painel de parceiros nunca classifica a conta como profissional formado.
+
 - [Final Hypothesis Overrule](mem://features/final-hypothesis-overrule) — Profissional pode sobrescrever hipótese da IA no prontuário e PDF.
 - [Support Page Maintenance](mem://process/support-page-maintenance) — Toda feature relevante exige atualização imediata de Support.tsx + ClinicSupport.tsx + pt/en/es na mesma loop.
 - [AI Voice Recorder](mem://features/ai-voice-recorder) — FAB de gravação durante avaliação manual; Gemini transcreve+resume; áudio descartado, texto fica em `assessment_voice_notes`.

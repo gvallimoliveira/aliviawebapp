@@ -61,6 +61,8 @@ import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import { hasRealCrefito, isPlaceholderCrefito } from "@/lib/crefito";
+
 
 const TabFallback = () => (
   <div className="flex items-center justify-center py-10">
@@ -389,7 +391,7 @@ const Dashboard = () => {
         nextProfessional = professionalResult.value.data || null;
       }
 
-      if (nextProfessional?.is_partner && (nextProfessional.crefito === "000000-X" || nextProfessional.city === "A definir")) {
+      if (nextProfessional?.is_partner && !nextProfessional?.is_student && (isPlaceholderCrefito(nextProfessional.crefito) || nextProfessional.city === "A definir")) {
         navigate("/complete-profile", { replace: true });
         return;
       }
@@ -547,7 +549,7 @@ const Dashboard = () => {
     const p: any = professional;
     const isRealProProfile = !!p && (
       p.active === true
-      || !!p.crefito
+      || hasRealCrefito(p.crefito)
       || !!p.subscription_stripe_id
       || p.is_partner === true
       || p.is_partner_account === true

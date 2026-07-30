@@ -422,7 +422,10 @@ serve(async (req) => {
           // liberado e deve operar/ser exibido como Acadêmico.
           updates.approved = false;
           updates.active_profile_mode = "student";
+          // Remove o CREFITO temporário criado na abertura da conta de parceiro.
+          if (pro.crefito && /^\d{1,6}-X$/i.test(String(pro.crefito).trim())) updates.crefito = null;
         }
+
         const { error } = await supabaseClient
           .from("professionals")
           .update(updates)
@@ -514,17 +517,26 @@ serve(async (req) => {
         // O toggle Acadêmico sozinho concede acesso às ferramentas como
         // parceiro acadêmico e força a operação visual como estudante.
         // O toggle PRO permanece independente para parceiros profissionais.
+        // CREFITO temporário (`NNNNNN-X`) é gerado quando o admin cria a conta
+        // do parceiro. Ele NÃO é um registro real: se ficar na linha, o sistema
+        // inteiro (card Acadêmico, PDF, marketplace, trigger de CREFITO) passa a
+        // tratar a conta como fisioterapeuta formado. Ao virar Acadêmico,
+        // limpamos o placeholder para que a categoria mude de verdade.
+        const isPlaceholderCrefito = !!pro.crefito && /^\d{1,6}-X$/i.test(String(pro.crefito).trim());
         const updates: Record<string, any> = {
           is_student: enabled,
         };
+
         if (enabled) {
           updates.is_partner_account = true;
           updates.subscription_status = "active";        // espelha o acesso acadêmico liberado
           updates.approved = false;                      // tira do marketplace público
           updates.active_profile_mode = "student";       // força modo acadêmico SEMPRE
+          if (isPlaceholderCrefito) updates.crefito = null; // conta acadêmica de verdade
           if (body.student_institution) updates.student_institution = body.student_institution;
           if (body.student_period) updates.student_period = body.student_period;
         } else {
+
           // Desligar Acadêmico volta o seletor para profissional. NÃO mexe em
           // is_partner — se o admin quiser revogar PRO, usa o toggle PRO ou
           // o botão "Remover da lista".

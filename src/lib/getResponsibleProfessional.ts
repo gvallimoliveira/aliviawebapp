@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
+import { displayCrefito, hasRealCrefito } from "@/lib/crefito";
 import type { ResponsibleProfessional } from "@/utils/generatePdf";
+
 
 const AUTOSIGN_KEY = "aliv:autosign-pdf";
 
@@ -81,10 +83,10 @@ export async function resolveResponsibleProfessional(opts: {
   } | null = null;
 
   // Students don't need a CREFITO to be considered the responsible
-  if (opts.ownProfessional?.full_name && (opts.ownProfessional?.crefito || opts.ownProfessional?.is_student)) {
+  if (opts.ownProfessional?.full_name && (hasRealCrefito(opts.ownProfessional?.crefito) || opts.ownProfessional?.is_student)) {
     resolved = {
       name: opts.ownProfessional.full_name,
-      crefito: opts.ownProfessional.crefito ?? undefined,
+      crefito: displayCrefito(opts.ownProfessional.crefito),
       signaturePath: opts.ownProfessional.signature_image_url ?? null,
       isStudent: isActiveStudent(opts.ownProfessional),
       studentInstitution: opts.ownProfessional.student_institution ?? undefined,
@@ -92,16 +94,18 @@ export async function resolveResponsibleProfessional(opts: {
     };
   }
 
+
   if (!resolved && opts.userId) {
     const { data: mine } = await supabase
       .from("professionals")
       .select("full_name, crefito, signature_image_url, is_student, active_profile_mode, student_institution, student_period")
       .eq("user_id", opts.userId)
       .maybeSingle();
-    if (mine?.full_name && (mine?.crefito || (mine as any)?.is_student)) {
+    if (mine?.full_name && (hasRealCrefito(mine?.crefito) || (mine as any)?.is_student)) {
       resolved = {
         name: mine.full_name,
-        crefito: mine.crefito ?? undefined,
+        crefito: displayCrefito(mine.crefito),
+
         signaturePath: (mine as any).signature_image_url ?? null,
         isStudent: isActiveStudent(mine),
         studentInstitution: (mine as any).student_institution ?? undefined,
@@ -129,7 +133,7 @@ export async function resolveResponsibleProfessional(opts: {
       if (owner?.full_name) {
         resolved = {
           name: owner.full_name,
-          crefito: owner.crefito || undefined,
+          crefito: displayCrefito(owner.crefito),
           signaturePath: (owner as any).signature_image_url ?? null,
           isStudent: isActiveStudent(owner),
           studentInstitution: (owner as any).student_institution ?? undefined,
@@ -142,7 +146,7 @@ export async function resolveResponsibleProfessional(opts: {
   if (!resolved && opts.ownProfessional?.full_name) {
     resolved = {
       name: opts.ownProfessional.full_name,
-      crefito: opts.ownProfessional.crefito || undefined,
+      crefito: displayCrefito(opts.ownProfessional.crefito),
       signaturePath: opts.ownProfessional.signature_image_url ?? null,
       isStudent: isActiveStudent(opts.ownProfessional),
       studentInstitution: opts.ownProfessional.student_institution ?? undefined,

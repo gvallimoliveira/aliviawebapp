@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Loader2, Lock, Sparkles, AlertTriangle, CreditCard, Stethoscope, Info } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { isFallbackVip } from "@/lib/vipEmails";
+import { hasRealCrefito } from "@/lib/crefito";
+
 
 /**
  * "Acesso Estudante" — toggle that turns a regular professional account into an
@@ -148,7 +150,10 @@ const StudentAccessCard = () => {
         setIsStudent(!!data.is_student);
         setStudentGranted(!!data.is_student);
         setActiveMode((data.active_profile_mode ?? (data.is_student ? "student" : "professional")) as "professional" | "student");
-        setHasCrefito(!!(data.crefito && String(data.crefito).trim().length > 0));
+        // Placeholder CREFITOs (auto-generated when an admin adds a partner)
+        // must not classify the account as a licensed professional.
+        setHasCrefito(hasRealCrefito(data.crefito));
+
         setFullName(data.full_name || "");
         setOriginalName(data.full_name || "");
         setCpf(data.cpf || "");
