@@ -81,16 +81,17 @@ export async function resolveResponsibleProfessional(opts: {
   } | null = null;
 
   // Students don't need a CREFITO to be considered the responsible
-  if (opts.ownProfessional?.full_name && (opts.ownProfessional?.crefito || opts.ownProfessional?.is_student)) {
+  if (opts.ownProfessional?.full_name && (hasRealCrefito(opts.ownProfessional?.crefito) || opts.ownProfessional?.is_student)) {
     resolved = {
       name: opts.ownProfessional.full_name,
-      crefito: opts.ownProfessional.crefito ?? undefined,
+      crefito: displayCrefito(opts.ownProfessional.crefito),
       signaturePath: opts.ownProfessional.signature_image_url ?? null,
       isStudent: isActiveStudent(opts.ownProfessional),
       studentInstitution: opts.ownProfessional.student_institution ?? undefined,
       studentPeriod: opts.ownProfessional.student_period ?? undefined,
     };
   }
+
 
   if (!resolved && opts.userId) {
     const { data: mine } = await supabase
