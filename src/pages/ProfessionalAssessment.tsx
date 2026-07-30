@@ -907,6 +907,7 @@ const ProfessionalAssessment = () => {
             onComplete={handleAnamnesisComplete}
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
             draftScopeKey={progressScopeKey}
+            autoRestoreDraft={resumeConfirmed}
             initialPainRegions={prefilledRegions}
             initialChiefComplaints={prefilledComplaints}
             initialOnset={prefilledOnset}
