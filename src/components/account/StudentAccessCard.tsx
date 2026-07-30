@@ -32,6 +32,8 @@ const StudentAccessCard = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
+  /** Academic access already granted in the DB (admin partner panel or self signup). */
+  const [studentGranted, setStudentGranted] = useState(false);
   const [hasProfRecord, setHasProfRecord] = useState(false);
   const [hasCrefito, setHasCrefito] = useState(false);
   const [isVip, setIsVip] = useState(false);
