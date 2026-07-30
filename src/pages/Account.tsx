@@ -318,6 +318,9 @@ const Account = () => {
           <AcademicPerformanceCard />
         </div>
 
+        <PrivacyRightsCard />
+
+
         <PasskeyAccountCard />
 
         <Card className="mt-6">
