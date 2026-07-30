@@ -324,7 +324,7 @@ const StudentAccessCard = () => {
               <p className="text-xs text-muted-foreground -mt-2 ml-3">{t.toggle_hint}</p>
             )}
 
-            {isStudent && hasCrefito && (
+            {isStudent && (hasCrefito || isVip) && (
               <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
                 <div>
                   <p className="text-sm font-semibold flex items-center gap-1.5">
