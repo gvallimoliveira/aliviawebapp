@@ -412,7 +412,7 @@ const ClinicAssessment = () => {
   const generateDiagnosis = async (data: AnamnesisData, qResults: QuestionnaireResult[], currentId?: string | null) => {
     setStep("loading");
     try {
-      const bodyData: any = { anamnesisData: data, testResults: [], questionnaireResults: qResults, mode: "professional", language };
+      const bodyData: any = { anamnesisData: data, testResults: [], questionnaireResults: qResults, mode: "professional", language, assessmentId: currentId || assessmentId };
       const result = await invokeDiagnosisWithRetry(bodyData);
 
       const id = currentId || assessmentId;
