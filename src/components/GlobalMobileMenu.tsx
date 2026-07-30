@@ -281,6 +281,10 @@ const GlobalMobileMenu = () => {
               <HelpCircle className="h-4 w-4" />
               {L.support}
             </button>
+            <button onClick={() => go("/privacidade")} className={itemCls}>
+              <Shield className="h-4 w-4" />
+              {L.privacy}
+            </button>
             <button
               onClick={() => {
                 toggleLanguage();
