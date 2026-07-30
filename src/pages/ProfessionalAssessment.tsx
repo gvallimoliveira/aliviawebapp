@@ -589,7 +589,14 @@ const ProfessionalAssessment = () => {
 
   // For reassessment, skip red flags. Route based on which steps the professional enabled.
   const handlePatientInfoContinue = async () => {
+    // Link genérico: só agora sabemos quem está preenchendo. Se houver rascunho
+    // desta MESMA pessoa (mesmo e-mail/nome), oferecemos a retomada; caso
+    // contrário segue uma avaliação nova, sem herdar nada de outro paciente.
+    if (isGenericLink && !identityScope) {
+      if (tryIdentityResume(patientName, patientEmail)) return;
+    }
     if (reassessmentId && originalAssessment) {
+
       if (reassessHasAnamnesis) {
         setStep("anamnesis");
       } else {
