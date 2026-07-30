@@ -39,9 +39,83 @@ export interface AssessmentProgressSnapshot {
   questionnaireResults: any[];
   redFlagData: Record<string, boolean> | null;
   savedAt: number;
+  /** Identidade normalizada (e-mail, ou nome quando não houver e-mail). */
+  identity?: string | null;
 }
 
 const key = (scopeKey: string) => `${PREFIX}${scopeKey}`;
+
+/* ------------------------------------------------------------------ *
+ * Identidade — protege links genéricos (públicos, de primeiro contato)
+ * ------------------------------------------------------------------ */
+
+const normalize = (v?: string | null) =>
+  (v || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+/** Identidade estável do preenchimento: e-mail quando existir, senão o nome. */
+export const identityOf = (name?: string | null, email?: string | null) => {
+  const e = normalize(email);
+  if (e) return `e:${e}`;
+  const n = normalize(name);
+  return n ? `n:${n}` : "";
+};
+
+const hash = (input: string) => {
+  let h = 5381;
+  for (let i = 0; i < input.length; i++) h = ((h << 5) + h + input.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+};
+
+/**
+ * Chave de escopo por identidade, usada apenas em links genéricos: garante que
+ * dois pacientes no mesmo aparelho nunca compartilhem o mesmo backup.
+ */
+export const identityScopeKey = (
+  baseScopeKey: string,
+  name?: string | null,
+  email?: string | null,
+) => {
+  const id = identityOf(name, email);
+  return id ? `${baseScopeKey}#${hash(id)}` : baseScopeKey;
+};
+
+/** O backup pertence mesmo a quem está preenchendo agora? */
+export const matchesIdentity = (
+  snapshot: AssessmentProgressSnapshot | null,
+  name?: string | null,
+  email?: string | null,
+) => {
+  if (!snapshot) return false;
+  const current = identityOf(name, email);
+  if (!current) return false;
+  const stored = snapshot.identity || identityOf(snapshot.patientName, snapshot.patientEmail);
+  return !!stored && stored === current;
+};
+
+/**
+ * Remove backups de OUTRAS identidades do mesmo link genérico (e o backup
+ * "legado" sem identidade), para nunca vazar respostas entre pacientes que
+ * usam o mesmo aparelho.
+ */
+export const clearOtherIdentityProgress = (baseScopeKey: string, keepScopeKey: string) => {
+  try {
+    const prefix = `${PREFIX}${baseScopeKey}`;
+    const draftPrefix = `alivia:draft:anamnesis:${baseScopeKey}`;
+    const keep = key(keepScopeKey);
+    const keepDraft = `alivia:draft:anamnesis:${keepScopeKey}`;
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k.startsWith(prefix) && k !== keep) toRemove.push(k);
+      if (k.startsWith(draftPrefix) && k !== keepDraft) toRemove.push(k);
+    }
+    toRemove.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    /* noop */
+  }
+};
+
 
 export const saveAssessmentProgress = (
   scopeKey: string,
