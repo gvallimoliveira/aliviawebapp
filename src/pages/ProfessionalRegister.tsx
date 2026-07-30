@@ -127,7 +127,7 @@ const ProfessionalRegister = () => {
         if (data.terms_accepted_at) setTermsAccepted(true);
         if (data.profile_photo_url) setPhotoPreview(data.profile_photo_url);
         if (data.logo_url) setLogoPreview(data.logo_url);
-        const hasCrefito = !!(data.crefito && String(data.crefito).trim().length > 0);
+        const hasCrefito = hasRealCrefito(data.crefito);
         if (forceStudent && !hasCrefito) {
           // Veio do card "Estudante" no /auth → ativa o modo acadêmico por padrão
           // (somente quando ainda não há CREFITO cadastrado, para respeitar a trava).
