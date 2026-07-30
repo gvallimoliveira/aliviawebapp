@@ -82,8 +82,11 @@ const ProfessionalRegister = () => {
   const [studentInstitution, setStudentInstitution] = useState("");
   const [studentPeriod, setStudentPeriod] = useState("");
   const [isVip, setIsVip] = useState(false);
-  // Lock when the existing professional already has a CREFITO and is not VIP
-  const studentLocked = !!(existing?.crefito && String(existing.crefito).trim().length > 0) && !isVip;
+  // Lock when the existing professional already has a REAL CREFITO and is not
+  // VIP. Placeholder CREFITOs (`NNNNNN-X`, auto-created for admin partners)
+  // never lock the academic mode.
+  const studentLocked = hasRealCrefito(existing?.crefito) && !isVip;
+
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
