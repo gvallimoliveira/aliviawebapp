@@ -101,10 +101,11 @@ export async function resolveResponsibleProfessional(opts: {
       .select("full_name, crefito, signature_image_url, is_student, active_profile_mode, student_institution, student_period")
       .eq("user_id", opts.userId)
       .maybeSingle();
-    if (mine?.full_name && (mine?.crefito || (mine as any)?.is_student)) {
+    if (mine?.full_name && (hasRealCrefito(mine?.crefito) || (mine as any)?.is_student)) {
       resolved = {
         name: mine.full_name,
-        crefito: mine.crefito ?? undefined,
+        crefito: displayCrefito(mine.crefito),
+
         signaturePath: (mine as any).signature_image_url ?? null,
         isStudent: isActiveStudent(mine),
         studentInstitution: (mine as any).student_institution ?? undefined,
