@@ -18,7 +18,7 @@ import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import ClinicalThinkingSkeleton from "@/components/assessment/ClinicalThinkingSkeleton";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
-import ResumeSummary from "@/components/assessment/ResumeSummary";
+import ResumeSummary, { type ResumeConflictInfo } from "@/components/assessment/ResumeSummary";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 import {
   parseStepsParam,
@@ -36,9 +36,14 @@ import {
   getAssessmentProgress,
   clearAssessmentProgress,
   hasMeaningfulProgress,
+  reconcileAssessmentProgress,
+  saveAssessmentProgressRemote,
+  clearAssessmentProgressRemote,
   RESUMABLE_STEPS,
   type ResumableStep,
+  type AssessmentProgressSnapshot,
 } from "@/lib/assessmentAutoResume";
+
 
 type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
