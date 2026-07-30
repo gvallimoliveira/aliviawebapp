@@ -93,9 +93,16 @@ const ClinicAssessment = () => {
   const [previousQuestionnaireAnswers, setPreviousQuestionnaireAnswers] = useState<Record<string, Record<string, number>> | undefined>(undefined);
 
   // ---------- Retomada automática (backup local + nuvem, validade de 24h) ----------
-  const progressScopeKey = `clinic:${clinicId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`;
+  // Link personalizado / reavaliação => escopo único por paciente (com nuvem).
+  // Link genérico (público) => escopo só local e SEMPRE amarrado à identidade.
+  const baseScopeKey = `clinic:${clinicId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`;
+  const isGenericLink = !isSyncableScope(baseScopeKey);
+  const [identityScope, setIdentityScope] = useState<string | null>(null);
+  const progressScopeKey = isGenericLink ? identityScope || baseScopeKey : baseScopeKey;
+  const canPersistProgress = !isGenericLink || !!identityScope;
   const autoResumedRef = useRef(false);
   const [resumeConflict, setResumeConflict] = useState<ResumeConflictInfo | null>(null);
+  const [genericResume, setGenericResume] = useState(false);
 
   const applyProgressSnapshot = (snap: AssessmentProgressSnapshot) => {
     setAssessmentId(snap.assessmentId || null);
@@ -112,7 +119,23 @@ const ClinicAssessment = () => {
     setResumeNextStep(snap.step as ClinicStep);
   };
 
+  /** Link genérico: procura um rascunho DESTA pessoa (e-mail/nome informados). */
+  const tryIdentityResume = (name: string, email: string) => {
+    const scoped = identityScopeKey(baseScopeKey, name, email);
+    setIdentityScope(scoped);
+    clearOtherIdentityProgress(baseScopeKey, scoped);
+    const snap = getAssessmentProgress(scoped);
+    if (!snap || !hasMeaningfulProgress(snap) || !matchesIdentity(snap, name, email)) return false;
+    autoResumedRef.current = true;
+    applyProgressSnapshot(snap);
+    setResumeConflict(null);
+    setGenericResume(true);
+    setStep("resume_summary");
+    return true;
+  };
+
   useEffect(() => {
+    if (isGenericLink) return;
     if (step !== "welcome" || resumeId || autoResumedRef.current || !clinicId) return;
     let cancelled = false;
     (async () => {
@@ -147,10 +170,10 @@ const ClinicAssessment = () => {
     return () => {
       cancelled = true;
     };
-  }, [step, resumeId, clinicId, progressScopeKey]);
+  }, [step, resumeId, clinicId, progressScopeKey, isGenericLink]);
 
   useEffect(() => {
-    if (!clinicId) return;
+    if (!clinicId || !canPersistProgress) return;
     if (!RESUMABLE_STEPS.includes(step as ResumableStep)) return;
     const snapshot = {
       step: step as ResumableStep,
@@ -163,7 +186,7 @@ const ClinicAssessment = () => {
     };
     saveAssessmentProgress(progressScopeKey, snapshot);
     void saveAssessmentProgressRemote(progressScopeKey, snapshot);
-  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, redFlagData, clinicId, progressScopeKey]);
+  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, redFlagData, clinicId, progressScopeKey, canPersistProgress]);
 
   useEffect(() => {
     if (step === "thank_you" || step === "redflag_alert") {
@@ -171,6 +194,7 @@ const ClinicAssessment = () => {
       void clearAssessmentProgressRemote(progressScopeKey);
     }
   }, [step, progressScopeKey]);
+
 
 
 
