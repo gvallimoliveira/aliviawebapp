@@ -75,7 +75,15 @@ const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeS
           JSON.stringify({ ts: new Date().toISOString(), mode, lang: language }),
         );
       } catch { /* storage may be unavailable */ }
+      // Registro auditável do consentimento (LGPD, art. 8º §1º)
+      void logConsent({
+        consentType: "self_assessment",
+        subjectEmail: email.trim() || null,
+        subjectName: name.trim() || null,
+        scopeRef: mode,
+      });
     }
+
     setIsTransitioning(true);
     setTimeout(() => onContinue(needsEmail ? { email: email.trim(), name: name.trim() } : undefined), 600);
   };
