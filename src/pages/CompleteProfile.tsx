@@ -62,7 +62,7 @@ const CompleteProfile = () => {
           return;
         }
         // If profile is already complete, redirect
-        if (data.crefito !== "000000-X" && data.city !== "A definir") {
+        if (!isPlaceholderCrefito(data.crefito) && data.city !== "A definir") {
           navigate("/dashboard");
           return;
         }
