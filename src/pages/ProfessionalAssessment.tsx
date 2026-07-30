@@ -105,6 +105,8 @@ const ProfessionalAssessment = () => {
   const autoResumedRef = useRef(false);
   const [resumeConflict, setResumeConflict] = useState<ResumeConflictInfo | null>(null);
   const [genericResume, setGenericResume] = useState(false);
+  /** Paciente já confirmou a retomada → restaurar rascunho sem pedir de novo. */
+  const [resumeConfirmed, setResumeConfirmed] = useState(false);
 
   const applyProgressSnapshot = (snap: AssessmentProgressSnapshot) => {
     setAssessmentId(snap.assessmentId || null);
@@ -733,8 +735,12 @@ const ProfessionalAssessment = () => {
             anamnesisData={anamnesisData}
             questionnaireResults={questionnaireResults}
             conflict={resumeConflict}
-            onContinue={() => setStep(resumeNextStep || "anamnesis")}
+            onContinue={() => {
+              setResumeConfirmed(true);
+              setStep(resumeNextStep || "anamnesis");
+            }}
             onRestart={() => {
+              setResumeConfirmed(false);
               clearAssessmentProgress(progressScopeKey);
               void clearAssessmentProgressRemote(progressScopeKey);
               setResumeConflict(null);
@@ -901,6 +907,7 @@ const ProfessionalAssessment = () => {
             onComplete={handleAnamnesisComplete}
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
             draftScopeKey={progressScopeKey}
+            autoRestoreDraft={resumeConfirmed}
             initialPainRegions={prefilledRegions}
             initialChiefComplaints={prefilledComplaints}
             initialOnset={prefilledOnset}

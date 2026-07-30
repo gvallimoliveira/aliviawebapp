@@ -79,6 +79,11 @@ interface AnamnesisFormProps {
   /** Optional stable key (e.g. token, professionalId+email) to persist draft across reloads. */
   draftScopeKey?: string | null;
   /**
+   * Quando o paciente já confirmou a retomada na tela anterior, restauramos o
+   * rascunho automaticamente (sem pedir uma segunda confirmação com banner).
+   */
+  autoRestoreDraft?: boolean;
+  /**
    * Optional sub-step filter for reassessment links. When provided, only the listed
    * groups are shown to the patient. Possible values: "complaint", "painmap",
    * "surgery", "painscore", "activity". If undefined, every step is shown (default).
@@ -91,7 +96,7 @@ interface AnamnesisFormProps {
   previousPainScore?: number;
 }
 
-const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras, draftScopeKey, enabledSubs, previousPainScore }: AnamnesisFormProps) => {
+const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras, draftScopeKey, autoRestoreDraft, enabledSubs, previousPainScore }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -143,12 +148,23 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     state: { step, data },
     enabled: !!draftScopeKey,
   });
-  const handleRestoreDraft = () => {
+  const handleRestoreDraft = useCallback(() => {
     const p = draft.restore();
     if (!p) return;
     if (typeof p.step === "number") setStep(p.step);
     if (p.data) setData((prev) => ({ ...prev, ...p.data }));
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.draftPayload]);
+
+  // Retomada já confirmada pelo paciente → restaura sozinho, sem segundo clique.
+  const autoRestoredRef = useRef(false);
+  useEffect(() => {
+    if (!autoRestoreDraft || autoRestoredRef.current) return;
+    if (!draft.hasDraft || !draft.draftPayload) return;
+    autoRestoredRef.current = true;
+    handleRestoreDraft();
+  }, [autoRestoreDraft, draft.hasDraft, draft.draftPayload, handleRestoreDraft]);
+
 
   // Track which fields were pre-filled from a previous assessment so we can render
   // a subtle "from previous" badge next to their labels.
@@ -1086,7 +1102,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      {draft.hasDraft && draft.draftMeta && (
+      {!autoRestoreDraft && draft.hasDraft && draft.draftMeta && (
         <DraftResumeBanner
           updatedAt={draft.draftMeta.updatedAt}
           source={draft.draftMeta.source}
