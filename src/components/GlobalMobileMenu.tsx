@@ -15,6 +15,7 @@ import {
   Building2,
   Smartphone,
   GraduationCap,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -63,6 +64,7 @@ const LABELS = {
     account: "Minha Conta",
     install: "Instalar como App",
     support: "Suporte",
+    privacy: "Privacidade",
     language: "Idioma: Português",
     languageNext: "EN",
     admin: "Admin",
@@ -82,6 +84,7 @@ const LABELS = {
     account: "My Account",
     install: "Install as App",
     support: "Support",
+    privacy: "Privacy",
     language: "Language: English",
     languageNext: "ES",
     admin: "Admin",
@@ -101,6 +104,7 @@ const LABELS = {
     account: "Mi Cuenta",
     install: "Instalar como App",
     support: "Soporte",
+    privacy: "Privacidad",
     language: "Idioma: Español",
     languageNext: "PT",
     admin: "Admin",
@@ -276,6 +280,10 @@ const GlobalMobileMenu = () => {
             >
               <HelpCircle className="h-4 w-4" />
               {L.support}
+            </button>
+            <button onClick={() => go("/privacidade")} className={itemCls}>
+              <Shield className="h-4 w-4" />
+              {L.privacy}
             </button>
             <button
               onClick={() => {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   BookOpen, Building2, Globe, GraduationCap, Heart, HelpCircle, Home, LayoutDashboard,
-  LogOut, Menu, ShieldCheck, Smartphone, Stethoscope, UserCog,
+  LogOut, Menu, Shield, ShieldCheck, Smartphone, Stethoscope, UserCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -75,9 +75,9 @@ const MobileNavSheet = ({ open: controlledOpen, onOpenChange, hideTrigger, trigg
   const groupCls = "px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70";
 
   const L = {
-    pt: { dashboard: "Meu Painel", home: "Início", explore: "Conheça o Aliv.iA", patients: "Para Pacientes", professionals: "Para Profissionais", academic: "Aliv.iA Acadêmico", clinic: "Aliv.iA Clínica", account: "Conta & Utilidades", myAccount: "Minha Conta", install: "Instalar como App", lang: "Idioma: Português", signout: "Sair" },
-    en: { dashboard: "My Dashboard", home: "Home", explore: "Discover Aliv.iA", patients: "For Patients", professionals: "For Professionals", academic: "Aliv.iA Academic", clinic: "Aliv.iA Clinic", account: "Account & Utilities", myAccount: "My Account", install: "Install as App", lang: "Language: English", signout: "Sign out" },
-    es: { dashboard: "Mi Panel", home: "Inicio", explore: "Conoce Aliv.iA", patients: "Para Pacientes", professionals: "Para Profesionales", academic: "Aliv.iA Académico", clinic: "Aliv.iA Clínica", account: "Cuenta y Utilidades", myAccount: "Mi Cuenta", install: "Instalar como App", lang: "Idioma: Español", signout: "Salir" },
+    pt: { dashboard: "Meu Painel", home: "Início", explore: "Conheça o Aliv.iA", patients: "Para Pacientes", professionals: "Para Profissionais", academic: "Aliv.iA Acadêmico", clinic: "Aliv.iA Clínica", account: "Conta & Utilidades", myAccount: "Minha Conta", install: "Instalar como App", support: "Suporte", privacy: "Privacidade", lang: "Idioma: Português", signout: "Sair" },
+    en: { dashboard: "My Dashboard", home: "Home", explore: "Discover Aliv.iA", patients: "For Patients", professionals: "For Professionals", academic: "Aliv.iA Academic", clinic: "Aliv.iA Clinic", account: "Account & Utilities", myAccount: "My Account", install: "Install as App", support: "Support", privacy: "Privacy", lang: "Language: English", signout: "Sign out" },
+    es: { dashboard: "Mi Panel", home: "Inicio", explore: "Conoce Aliv.iA", patients: "Para Pacientes", professionals: "Para Profesionales", academic: "Aliv.iA Académico", clinic: "Aliv.iA Clínica", account: "Cuenta y Utilidades", myAccount: "Mi Cuenta", install: "Instalar como App", support: "Soporte", privacy: "Privacidad", lang: "Idioma: Español", signout: "Salir" },
   }[language as "pt" | "en" | "es"] || ({} as any);
 
   const langNext = language === "pt" ? "EN" : language === "en" ? "ES" : "PT";
@@ -143,6 +143,9 @@ const MobileNavSheet = ({ open: controlledOpen, onOpenChange, hideTrigger, trigg
             </button>
             <button onClick={() => go(supportPath)} className={item}>
               <HelpCircle className="h-4 w-4" />{t("support.badge")}
+            </button>
+            <button onClick={() => go("/privacidade")} className={item}>
+              <Shield className="h-4 w-4" />{L.privacy}
             </button>
             <button onClick={() => { toggleLanguage(); setOpen(false); }} className={item}>
               <Globe className="h-4 w-4" />{L.lang}
