@@ -514,9 +514,16 @@ serve(async (req) => {
         // O toggle Acadêmico sozinho concede acesso às ferramentas como
         // parceiro acadêmico e força a operação visual como estudante.
         // O toggle PRO permanece independente para parceiros profissionais.
+        // CREFITO temporário (`NNNNNN-X`) é gerado quando o admin cria a conta
+        // do parceiro. Ele NÃO é um registro real: se ficar na linha, o sistema
+        // inteiro (card Acadêmico, PDF, marketplace, trigger de CREFITO) passa a
+        // tratar a conta como fisioterapeuta formado. Ao virar Acadêmico,
+        // limpamos o placeholder para que a categoria mude de verdade.
+        const isPlaceholderCrefito = !!pro.crefito && /^\d{1,6}-X$/i.test(String(pro.crefito).trim());
         const updates: Record<string, any> = {
           is_student: enabled,
         };
+
         if (enabled) {
           updates.is_partner_account = true;
           updates.subscription_status = "active";        // espelha o acesso acadêmico liberado
