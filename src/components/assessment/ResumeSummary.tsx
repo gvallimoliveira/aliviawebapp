@@ -26,6 +26,8 @@ interface ResumeSummaryProps {
   conflict?: ResumeConflictInfo | null;
   onContinue: () => void;
   onRestart?: () => void;
+  /** Descarta o rascunho por não pertencer a quem está preenchendo agora. */
+  onNotMe?: () => void;
 }
 
 const ResumeSummary = ({
@@ -37,7 +39,9 @@ const ResumeSummary = ({
   conflict,
   onContinue,
   onRestart,
+  onNotMe,
 }: ResumeSummaryProps) => {
+
 
   const { language } = useLanguage();
   const isPt = language === "pt";
