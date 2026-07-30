@@ -112,7 +112,7 @@ const ProfessionalRegister = () => {
         setExisting(data);
         setForm({
           full_name: data.full_name || "",
-          crefito: data.crefito || "",
+          crefito: isPlaceholderCrefito(data.crefito) ? "" : (data.crefito || ""),
           cpf: data.cpf ? formatCpf(data.cpf) : "",
           social_media: data.social_media || "",
           specialties: data.specialties || [],
