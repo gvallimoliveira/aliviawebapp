@@ -35,6 +35,8 @@ Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário en
 - [Follow-Up System](mem://features/follow-up-system) — Automated check-in emails at weeks 1, 2, 4, 6.
 - [Pain Diary](mem://features/pain-diary) — Daily pain tracking with 0-10 slider and gamification.
 - [Assessment Comparison](mem://features/assessment-comparison) — Before & After comparison for users with 2+ premium assessments.
+- [Assessment Resume Identity](mem://features/assessment-resume-identity) — Retomada 24h: link com token retoma por dispositivo/nuvem; link genérico só retoma após e-mail/nome baterem.
+
 - [Professional Marketplace](mem://features/professional-marketplace) — Requirements and rules for professional listings.
 - [Dashboard Tabs](mem://features/dashboard-tabs) — Adaptive layout based on Clinic, Solo, or Patient mode.
 - [Pricing and Tiers](mem://business/pricing-and-tiers) — Professional plan pricing and billing toggle behavior.

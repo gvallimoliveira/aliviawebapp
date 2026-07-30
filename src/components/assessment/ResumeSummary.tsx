@@ -26,6 +26,8 @@ interface ResumeSummaryProps {
   conflict?: ResumeConflictInfo | null;
   onContinue: () => void;
   onRestart?: () => void;
+  /** Descarta o rascunho por não pertencer a quem está preenchendo agora. */
+  onNotMe?: () => void;
 }
 
 const ResumeSummary = ({
@@ -37,7 +39,9 @@ const ResumeSummary = ({
   conflict,
   onContinue,
   onRestart,
+  onNotMe,
 }: ResumeSummaryProps) => {
+
 
   const { language } = useLanguage();
   const isPt = language === "pt";
@@ -75,10 +79,15 @@ const ResumeSummary = ({
         </h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           {isPt
-            ? "Revise abaixo o que já foi preenchido. Se estiver tudo certo, continue de onde parou."
+            ? patientName
+              ? `Encontramos um preenchimento em andamento de ${patientName}. Revise abaixo e continue de onde parou.`
+              : "Revise abaixo o que já foi preenchido. Se estiver tudo certo, continue de onde parou."
+            : patientName
+            ? `We found an assessment in progress for ${patientName}. Review it below and continue.`
             : "Review what was already filled in below. If it looks right, continue from where you left off."}
         </p>
       </div>
+
 
       {conflict && (conflict.fromOtherDevice || conflict.alternativeSavedAt) && (
         <Card className="rounded-xl border-amber-300 bg-amber-50 dark:bg-amber-950/20">
@@ -253,6 +262,19 @@ const ResumeSummary = ({
           </Button>
         )}
       </div>
+
+      {onNotMe && (
+        <button
+          type="button"
+          onClick={onNotMe}
+          className="w-full text-center text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          {isPt
+            ? "Não sou eu — começar uma avaliação nova do zero"
+            : "This isn't me — start a brand new assessment"}
+        </button>
+      )}
+
     </motion.div>
   );
 };
