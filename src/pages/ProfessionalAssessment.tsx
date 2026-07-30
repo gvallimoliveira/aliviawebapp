@@ -648,6 +648,15 @@ const ProfessionalAssessment = () => {
             anamnesisData={anamnesisData}
             questionnaireResults={questionnaireResults}
             onContinue={() => setStep(resumeNextStep || "anamnesis")}
+            onRestart={() => {
+              clearAssessmentProgress(progressScopeKey);
+              setAnamnesisData(null);
+              setQuestionnaireResults([]);
+              setAssessmentId(null);
+              setRedFlagData(null);
+              setResumeNextStep(null);
+              setStep("welcome");
+            }}
           />
         )}
 
