@@ -79,6 +79,11 @@ interface AnamnesisFormProps {
   /** Optional stable key (e.g. token, professionalId+email) to persist draft across reloads. */
   draftScopeKey?: string | null;
   /**
+   * Quando o paciente já confirmou a retomada na tela anterior, restauramos o
+   * rascunho automaticamente (sem pedir uma segunda confirmação com banner).
+   */
+  autoRestoreDraft?: boolean;
+  /**
    * Optional sub-step filter for reassessment links. When provided, only the listed
    * groups are shown to the patient. Possible values: "complaint", "painmap",
    * "surgery", "painscore", "activity". If undefined, every step is shown (default).
