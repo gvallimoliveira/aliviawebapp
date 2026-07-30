@@ -148,12 +148,23 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     state: { step, data },
     enabled: !!draftScopeKey,
   });
-  const handleRestoreDraft = () => {
+  const handleRestoreDraft = useCallback(() => {
     const p = draft.restore();
     if (!p) return;
     if (typeof p.step === "number") setStep(p.step);
     if (p.data) setData((prev) => ({ ...prev, ...p.data }));
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.draftPayload]);
+
+  // Retomada já confirmada pelo paciente → restaura sozinho, sem segundo clique.
+  const autoRestoredRef = useRef(false);
+  useEffect(() => {
+    if (!autoRestoreDraft || autoRestoredRef.current) return;
+    if (!draft.hasDraft || !draft.draftPayload) return;
+    autoRestoredRef.current = true;
+    handleRestoreDraft();
+  }, [autoRestoreDraft, draft.hasDraft, draft.draftPayload, handleRestoreDraft]);
+
 
   // Track which fields were pre-filled from a previous assessment so we can render
   // a subtle "from previous" badge next to their labels.
