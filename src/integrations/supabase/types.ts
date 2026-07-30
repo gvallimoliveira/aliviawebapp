@@ -811,6 +811,39 @@ export type Database = {
         }
         Relationships: []
       }
+      assessment_progress: {
+        Row: {
+          created_at: string
+          device_id: string
+          device_label: string | null
+          expires_at: string
+          id: string
+          scope_key: string
+          snapshot: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          device_label?: string | null
+          expires_at?: string
+          id?: string
+          scope_key: string
+          snapshot: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          device_label?: string | null
+          expires_at?: string
+          id?: string
+          scope_key?: string
+          snapshot?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       assessment_voice_notes: {
         Row: {
           assessment_id: string | null
@@ -3337,6 +3370,10 @@ export type Database = {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
       }
+      clear_assessment_progress: {
+        Args: { _scope_key: string }
+        Returns: undefined
+      }
       create_conversation_for_clinic_patient: {
         Args: {
           _clinic_id: string
@@ -3384,6 +3421,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_assessment_progress: {
+        Args: { _scope_key: string }
+        Returns: {
+          device_id: string
+          device_label: string
+          snapshot: Json
+          updated_at: string
+        }[]
       }
       get_clinic_all_patients: {
         Args: { _clinic_id: string }
@@ -3692,6 +3738,15 @@ export type Database = {
       revert_assessment_red_flags_dismissal: {
         Args: { _assessment_id: string }
         Returns: undefined
+      }
+      save_assessment_progress: {
+        Args: {
+          _device_id: string
+          _device_label?: string
+          _scope_key: string
+          _snapshot: Json
+        }
+        Returns: string
       }
       try_direct_clinic_add: {
         Args: {
