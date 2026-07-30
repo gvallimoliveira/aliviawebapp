@@ -146,7 +146,7 @@ export async function resolveResponsibleProfessional(opts: {
   if (!resolved && opts.ownProfessional?.full_name) {
     resolved = {
       name: opts.ownProfessional.full_name,
-      crefito: opts.ownProfessional.crefito || undefined,
+      crefito: displayCrefito(opts.ownProfessional.crefito),
       signaturePath: opts.ownProfessional.signature_image_url ?? null,
       isStudent: isActiveStudent(opts.ownProfessional),
       studentInstitution: opts.ownProfessional.student_institution ?? undefined,
