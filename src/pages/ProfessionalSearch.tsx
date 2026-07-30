@@ -12,6 +12,8 @@ import { ArrowLeft, Loader2, MapPin, Phone, Mail, Search, UserCheck, Crown, Lock
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { hasRealCrefito } from "@/lib/crefito";
+
 
 const STATES = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS",
@@ -270,9 +272,10 @@ const ProfessionalSearch = () => {
                             </Badge>
                           )}
                         </div>
-                        {p.crefito && (
+                        {hasRealCrefito(p.crefito) && (
                           <p className="text-xs text-muted-foreground">CREFITO: {p.crefito}</p>
                         )}
+
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">

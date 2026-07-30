@@ -16,3 +16,7 @@ Consumidores ajustados: `StudentAccessCard` (trava do modo Acadêmico), `Profess
 Backend `toggle_partner_access`:
 - `access_type='academic'` com `enabled=true` → limpa o CREFITO placeholder, força `is_student=true`, `active_profile_mode='student'`, `approved=false`, `subscription_status='active'`.
 - `access_type='pro'` com `enabled=false` numa conta acadêmica → também limpa o placeholder e força modo `student`.
+
+## Garantia global (banco)
+
+Trigger `clear_placeholder_crefito_for_students_trg` em `public.professionals` (BEFORE INSERT OR UPDATE OF is_student, crefito): sempre que `is_student=true` e o CREFITO casa com `^[0-9]{1,6}-X$`, o valor é zerado automaticamente. Vale para qualquer caminho — parceiro acadêmico, estudante assinante, cadastro manual, admin ou edge function. Não depende do frontend.
