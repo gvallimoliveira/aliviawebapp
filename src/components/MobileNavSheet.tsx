@@ -144,6 +144,9 @@ const MobileNavSheet = ({ open: controlledOpen, onOpenChange, hideTrigger, trigg
             <button onClick={() => go(supportPath)} className={item}>
               <HelpCircle className="h-4 w-4" />{t("support.badge")}
             </button>
+            <button onClick={() => go("/privacidade")} className={item}>
+              <Shield className="h-4 w-4" />{L.privacy}
+            </button>
             <button onClick={() => { toggleLanguage(); setOpen(false); }} className={item}>
               <Globe className="h-4 w-4" />{L.lang}
               <span className="ml-auto text-xs text-primary">→ {langNext}</span>
