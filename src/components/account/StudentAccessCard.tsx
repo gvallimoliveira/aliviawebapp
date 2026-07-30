@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Loader2, Lock, Sparkles, AlertTriangle, CreditCard, Stethoscope, Info } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { isFallbackVip } from "@/lib/vipEmails";
+import { hasRealCrefito } from "@/lib/crefito";
+
 
 /**
  * "Acesso Estudante" — toggle that turns a regular professional account into an
