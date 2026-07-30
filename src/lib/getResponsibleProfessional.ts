@@ -133,7 +133,7 @@ export async function resolveResponsibleProfessional(opts: {
       if (owner?.full_name) {
         resolved = {
           name: owner.full_name,
-          crefito: owner.crefito || undefined,
+          crefito: displayCrefito(owner.crefito),
           signaturePath: (owner as any).signature_image_url ?? null,
           isStudent: isActiveStudent(owner),
           studentInstitution: (owner as any).student_institution ?? undefined,
