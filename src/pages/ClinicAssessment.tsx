@@ -731,8 +731,12 @@ const ClinicAssessment = () => {
             anamnesisData={anamnesisData}
             questionnaireResults={questionnaireResults}
             conflict={resumeConflict}
-            onContinue={() => setStep(resumeNextStep || "anamnesis")}
+            onContinue={() => {
+              setResumeConfirmed(true);
+              setStep(resumeNextStep || "anamnesis");
+            }}
             onRestart={() => {
+              setResumeConfirmed(false);
               clearAssessmentProgress(progressScopeKey);
               void clearAssessmentProgressRemote(progressScopeKey);
               setResumeConflict(null);
