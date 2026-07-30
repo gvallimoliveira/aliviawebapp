@@ -32,6 +32,8 @@ const StudentAccessCard = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
+  /** Academic access already granted in the DB (admin partner panel or self signup). */
+  const [studentGranted, setStudentGranted] = useState(false);
   const [hasProfRecord, setHasProfRecord] = useState(false);
   const [hasCrefito, setHasCrefito] = useState(false);
   const [isVip, setIsVip] = useState(false);
@@ -144,6 +146,7 @@ const StudentAccessCard = () => {
       if (data) {
         setHasProfRecord(true);
         setIsStudent(!!data.is_student);
+        setStudentGranted(!!data.is_student);
         setActiveMode((data.active_profile_mode ?? (data.is_student ? "student" : "professional")) as "professional" | "student");
         setHasCrefito(!!(data.crefito && String(data.crefito).trim().length > 0));
         setFullName(data.full_name || "");
@@ -171,8 +174,11 @@ const StudentAccessCard = () => {
     })();
   }, [user?.id, user?.email]);
 
-  // Hard lock when CREFITO is present and user is not VIP.
-  const locked = hasCrefito && !isVip;
+  // Hard lock only for accounts that have a CREFITO and never received academic
+  // access. Once academic access is granted (admin partner panel or self
+  // signup), the user keeps full control of the academic fields and of the
+  // active profile switch — even with a CREFITO on file.
+  const locked = hasCrefito && !isVip && !studentGranted;
 
   // Wanting to leave student mode without a CREFITO on file → DB trigger
   // would reject the update. Send the user to the professional registration
