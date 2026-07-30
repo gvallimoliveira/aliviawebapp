@@ -83,6 +83,52 @@ const ProfessionalAssessment = () => {
   const [previousPainScore, setPreviousPainScore] = useState<number | undefined>(undefined);
   const [previousQuestionnaireAnswers, setPreviousQuestionnaireAnswers] = useState<Record<string, Record<string, number>> | undefined>(undefined);
 
+  // ---------- Retomada automática (backup local com validade de 24h) ----------
+  const progressScopeKey = `pro:${professionalId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`;
+  const autoResumedRef = useRef(false);
+
+  // Restaura o progresso salvo assim que o link é reaberto (mesma janela de 24h)
+  useEffect(() => {
+    if (step !== "welcome" || resumeId || autoResumedRef.current || !professionalId) return;
+    const snap = getAssessmentProgress(progressScopeKey);
+    if (!hasMeaningfulProgress(snap) || !snap) return;
+    autoResumedRef.current = true;
+    if (snap.assessmentId) setAssessmentId(snap.assessmentId);
+    if (snap.patientName) setPatientName(snap.patientName);
+    if (snap.patientEmail) setPatientEmail(snap.patientEmail);
+    if (snap.redFlagData) setRedFlagData(snap.redFlagData);
+    if (snap.anamnesisData) {
+      setAnamnesisData(snap.anamnesisData as AnamnesisData);
+      if (snap.anamnesisData.painRegions?.length) setPrefilledRegions(snap.anamnesisData.painRegions);
+    }
+    if (snap.questionnaireResults?.length) setQuestionnaireResults(snap.questionnaireResults);
+    setResumeNextStep(snap.step as ProfStep);
+    setStep("resume_summary");
+  }, [step, resumeId, professionalId, progressScopeKey]);
+
+  // Salva o progresso a cada avanço de etapa
+  useEffect(() => {
+    if (!professionalId) return;
+    if (!RESUMABLE_STEPS.includes(step as ResumableStep)) return;
+    saveAssessmentProgress(progressScopeKey, {
+      step: step as ResumableStep,
+      assessmentId,
+      patientName,
+      patientEmail,
+      anamnesisData,
+      questionnaireResults,
+      redFlagData,
+    });
+  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, redFlagData, professionalId, progressScopeKey]);
+
+  // Limpa o backup quando a avaliação chega ao fim
+  useEffect(() => {
+    if (step === "thank_you" || step === "redflag_alert") {
+      clearAssessmentProgress(progressScopeKey);
+    }
+  }, [step, progressScopeKey]);
+
+
   // Validate professional exists and has active subscription
   useEffect(() => {
     if (!professionalId) return;
