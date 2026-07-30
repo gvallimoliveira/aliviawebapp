@@ -61,6 +61,8 @@ import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import { hasRealCrefito, isPlaceholderCrefito } from "@/lib/crefito";
+
 
 const TabFallback = () => (
   <div className="flex items-center justify-center py-10">
