@@ -740,10 +740,31 @@ const ClinicAssessment = () => {
               setAssessmentId(null);
               setRedFlagData(null);
               setResumeNextStep(null);
-              setStep("welcome");
+              setGenericResume(false);
+              setStep(genericResume ? "patient_info" : "welcome");
             }}
+            onNotMe={
+              genericResume
+                ? () => {
+                    clearAssessmentProgress(progressScopeKey);
+                    setResumeConflict(null);
+                    setAnamnesisData(null);
+                    setQuestionnaireResults([]);
+                    setAssessmentId(null);
+                    setRedFlagData(null);
+                    setResumeNextStep(null);
+                    setPatientName("");
+                    setPatientEmail("");
+                    setIdentityScope(null);
+                    autoResumedRef.current = false;
+                    setGenericResume(false);
+                    setStep("patient_info");
+                  }
+                : undefined
+            }
           />
         )}
+
 
         {step === "welcome" && clinic && (
           <WelcomeStep
