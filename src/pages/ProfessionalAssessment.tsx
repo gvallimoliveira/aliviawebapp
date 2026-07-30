@@ -853,12 +853,12 @@ const ProfessionalAssessment = () => {
               </CardContent>
             </Card>
 
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col-reverse sm:flex-row gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setStep("welcome")}
-                className="rounded-xl gap-2 sm:w-auto"
+                className="rounded-xl gap-2 h-12 w-full sm:w-auto"
                 size="lg"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -867,7 +867,7 @@ const ProfessionalAssessment = () => {
               <Button
                 onClick={handlePatientInfoContinue}
                 disabled={!patientName.trim()}
-                className="flex-1 rounded-xl gap-2"
+                className="flex-1 rounded-xl gap-2 h-12 text-base font-semibold"
                 size="lg"
               >
                 {t("patient_info.continue")}
