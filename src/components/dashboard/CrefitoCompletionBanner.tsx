@@ -44,7 +44,10 @@ const CrefitoCompletionBanner = () => {
         setNeedsCrefito(false);
         return;
       }
-      if (!data || !data.crefito) {
+      // Placeholder CREFITOs (`NNNNNN-X`) count as "missing": they are only
+      // auto-generated to create partner accounts, never a real registration.
+      if (!data || !hasRealCrefito(data.crefito)) {
+
         setNeedsCrefito(true);
         setHasProfRecord(!!data);
         if (data?.full_name) setFullName(data.full_name);
