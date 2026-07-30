@@ -669,6 +669,8 @@ Generate the diagnostic hypothesis in valid JSON format.`;
       await setCachedAiResponse(admin, "generate-diagnosis", cachePayload, { diagnosis }, AI_CACHE_TTL_30D);
     }
 
+    await persistAssessment(diagnosis);
+
     return new Response(JSON.stringify({ diagnosis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
