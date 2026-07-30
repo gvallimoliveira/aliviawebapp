@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ChevronRight, RotateCcw, CheckCircle2 } from "lucide-react";
+import { ChevronRight, RotateCcw, CheckCircle2, Smartphone, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,12 +7,23 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import type { AnamnesisData } from "@/components/assessment/AnamnesisForm";
 import type { QuestionnaireResult } from "@/data/questionnaireData";
 
+export interface ResumeConflictInfo {
+  /** true quando o preenchimento exibido veio de outro aparelho. */
+  fromOtherDevice: boolean;
+  otherDeviceLabel?: string | null;
+  chosenSavedAt: number;
+  /** Existe um preenchimento mais antigo que será substituído ao continuar. */
+  alternativeSavedAt?: number | null;
+  onUseAlternative?: () => void;
+}
+
 interface ResumeSummaryProps {
   patientName?: string;
   patientEmail?: string;
   anamnesisData: AnamnesisData | null;
   questionnaireResults: QuestionnaireResult[];
   nextStepLabel?: string;
+  conflict?: ResumeConflictInfo | null;
   onContinue: () => void;
   onRestart?: () => void;
 }
@@ -23,9 +34,11 @@ const ResumeSummary = ({
   anamnesisData,
   questionnaireResults,
   nextStepLabel,
+  conflict,
   onContinue,
   onRestart,
 }: ResumeSummaryProps) => {
+
   const { language } = useLanguage();
   const isPt = language === "pt";
 
@@ -34,6 +47,18 @@ const ResumeSummary = ({
   const complaints =
     anamnesisData?.chiefComplaints ||
     (anamnesisData?.chiefComplaint ? [anamnesisData.chiefComplaint] : []);
+
+  const fmt = (ts?: number | null) =>
+    ts
+      ? new Date(ts).toLocaleString(isPt ? "pt-BR" : "en-US", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "";
+
+
 
   return (
     <motion.div
@@ -54,6 +79,55 @@ const ResumeSummary = ({
             : "Review what was already filled in below. If it looks right, continue from where you left off."}
         </p>
       </div>
+
+      {conflict && (conflict.fromOtherDevice || conflict.alternativeSavedAt) && (
+        <Card className="rounded-xl border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+          <CardContent className="pt-5 space-y-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-foreground">
+                  {isPt
+                    ? "Encontramos este preenchimento em mais de um aparelho"
+                    : "We found this assessment on more than one device"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isPt ? "Estamos mostrando o mais recente" : "We are showing the most recent one"}
+                  {conflict.fromOtherDevice && conflict.otherDeviceLabel
+                    ? isPt
+                      ? `, feito em ${conflict.otherDeviceLabel}`
+                      : `, from ${conflict.otherDeviceLabel}`
+                    : ""}
+                  {conflict.chosenSavedAt ? ` (${fmt(conflict.chosenSavedAt)})` : ""}.
+                </p>
+                {conflict.alternativeSavedAt ? (
+                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                    {isPt
+                      ? `Ao continuar, o preenchimento mais antigo (${fmt(conflict.alternativeSavedAt)}) será substituído.`
+                      : `If you continue, the older version (${fmt(conflict.alternativeSavedAt)}) will be replaced.`}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            {conflict.alternativeSavedAt && conflict.onUseAlternative && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-lg gap-2 w-full sm:w-auto"
+                onClick={conflict.onUseAlternative}
+              >
+                <Smartphone className="h-4 w-4" />
+                {isPt
+                  ? `Usar o outro preenchimento (${fmt(conflict.alternativeSavedAt)})`
+                  : `Use the other version (${fmt(conflict.alternativeSavedAt)})`}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+
 
       <Card className="rounded-xl">
         <CardContent className="pt-6 space-y-4">
