@@ -7,6 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import logoAlivia from "@/assets/logo-alivia.png";
+import { logConsent } from "@/lib/consentLog";
+
 
 const CONSENT_KEY = "alivia_self_assessment_consent_v1";
 
