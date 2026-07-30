@@ -742,6 +742,7 @@ const ProfessionalAssessment = () => {
             onRestart={() => {
               setResumeConfirmed(false);
               clearAssessmentProgress(progressScopeKey);
+              void clearAssessmentProgressRemote(progressScopeKey);
               setResumeConflict(null);
               setAnamnesisData(null);
 
