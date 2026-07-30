@@ -89,9 +89,17 @@ const ProfessionalAssessment = () => {
   const [previousQuestionnaireAnswers, setPreviousQuestionnaireAnswers] = useState<Record<string, Record<string, number>> | undefined>(undefined);
 
   // ---------- Retomada automática (backup local + nuvem, validade de 24h) ----------
-  const progressScopeKey = `pro:${professionalId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`;
+  // Link personalizado / reavaliação => escopo único por paciente (com nuvem).
+  // Link genérico (público) => escopo só local e SEMPRE amarrado à identidade
+  // informada (e-mail/nome), nunca ao dispositivo.
+  const baseScopeKey = `pro:${professionalId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`;
+  const isGenericLink = !isSyncableScope(baseScopeKey);
+  const [identityScope, setIdentityScope] = useState<string | null>(null);
+  const progressScopeKey = isGenericLink ? identityScope || baseScopeKey : baseScopeKey;
+  const canPersistProgress = !isGenericLink || !!identityScope;
   const autoResumedRef = useRef(false);
   const [resumeConflict, setResumeConflict] = useState<ResumeConflictInfo | null>(null);
+  const [genericResume, setGenericResume] = useState(false);
 
   const applyProgressSnapshot = (snap: AssessmentProgressSnapshot) => {
     setAssessmentId(snap.assessmentId || null);
@@ -108,8 +116,28 @@ const ProfessionalAssessment = () => {
     setResumeNextStep(snap.step as ProfStep);
   };
 
-  // Restaura o progresso salvo, conciliando local x nuvem (prioriza o mais recente)
+  /**
+   * Link genérico: procura um rascunho DESTA pessoa (e-mail/nome informados).
+   * Retorna true quando encontrou e abriu a tela de retomada.
+   */
+  const tryIdentityResume = (name: string, email: string) => {
+    const scoped = identityScopeKey(baseScopeKey, name, email);
+    setIdentityScope(scoped);
+    clearOtherIdentityProgress(baseScopeKey, scoped);
+    const snap = getAssessmentProgress(scoped);
+    if (!snap || !hasMeaningfulProgress(snap) || !matchesIdentity(snap, name, email)) return false;
+    autoResumedRef.current = true;
+    applyProgressSnapshot(snap);
+    setResumeConflict(null);
+    setGenericResume(true);
+    setStep("resume_summary");
+    return true;
+  };
+
+  // Restaura o progresso salvo, conciliando local x nuvem (prioriza o mais recente).
+  // Só para links com token/reavaliação — o link genérico nunca retoma no welcome.
   useEffect(() => {
+    if (isGenericLink) return;
     if (step !== "welcome" || resumeId || autoResumedRef.current || !professionalId) return;
     let cancelled = false;
     (async () => {
@@ -144,11 +172,11 @@ const ProfessionalAssessment = () => {
     return () => {
       cancelled = true;
     };
-  }, [step, resumeId, professionalId, progressScopeKey]);
+  }, [step, resumeId, professionalId, progressScopeKey, isGenericLink]);
 
   // Salva o progresso a cada avanço de etapa (local + nuvem)
   useEffect(() => {
-    if (!professionalId) return;
+    if (!professionalId || !canPersistProgress) return;
     if (!RESUMABLE_STEPS.includes(step as ResumableStep)) return;
     const snapshot = {
       step: step as ResumableStep,
@@ -161,7 +189,7 @@ const ProfessionalAssessment = () => {
     };
     saveAssessmentProgress(progressScopeKey, snapshot);
     void saveAssessmentProgressRemote(progressScopeKey, snapshot);
-  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, redFlagData, professionalId, progressScopeKey]);
+  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, redFlagData, professionalId, progressScopeKey, canPersistProgress]);
 
   // Limpa o backup quando a avaliação chega ao fim
   useEffect(() => {
@@ -170,6 +198,7 @@ const ProfessionalAssessment = () => {
       void clearAssessmentProgressRemote(progressScopeKey);
     }
   }, [step, progressScopeKey]);
+
 
 
 
