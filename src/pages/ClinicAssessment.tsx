@@ -614,7 +614,12 @@ const ClinicAssessment = () => {
   };
 
   const handlePatientInfoContinue = async () => {
+    // Link genérico: retomada só quando a identidade informada bate com o rascunho.
+    if (isGenericLink && !identityScope) {
+      if (tryIdentityResume(patientName, patientEmail)) return;
+    }
     if (reassessmentId && originalAssessment) {
+
       if (reassessHasAnamnesis) {
         setStep("anamnesis");
       } else {
