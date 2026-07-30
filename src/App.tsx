@@ -151,6 +151,9 @@ const App = () => {
                   <Route path="/trilhas" element={<AcademicTracks />} />
                   <Route path="/academico" element={<AcademicLanding />} />
                   <Route path="/academico/suporte" element={<AcademicSupport />} />
+                  <Route path="/privacidade" element={<PrivacyPolicy />} />
+                  <Route path="/termos" element={<Terms />} />
+
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
