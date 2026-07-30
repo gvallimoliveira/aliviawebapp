@@ -48,6 +48,18 @@ const ResumeSummary = ({
     anamnesisData?.chiefComplaints ||
     (anamnesisData?.chiefComplaint ? [anamnesisData.chiefComplaint] : []);
 
+  const fmt = (ts?: number | null) =>
+    ts
+      ? new Date(ts).toLocaleString(isPt ? "pt-BR" : "en-US", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "";
+
+
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
