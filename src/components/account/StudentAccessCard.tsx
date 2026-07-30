@@ -188,7 +188,8 @@ const StudentAccessCard = () => {
   // Wanting to leave student mode without a CREFITO on file → DB trigger
   // would reject the update. Send the user to the professional registration
   // form so they can input their CREFITO (with skip option still available).
-  const needsCrefitoFlow = !isStudent && hasProfRecord && !hasCrefito;
+  // VIP/admin accounts navigate freely between modes (test/admin accounts).
+  const needsCrefitoFlow = !isStudent && hasProfRecord && !hasCrefito && !isVip;
 
   const handleSave = async () => {
     if (!user?.id) return;
