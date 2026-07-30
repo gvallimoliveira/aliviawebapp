@@ -272,9 +272,10 @@ const ProfessionalSearch = () => {
                             </Badge>
                           )}
                         </div>
-                        {p.crefito && (
+                        {hasRealCrefito(p.crefito) && (
                           <p className="text-xs text-muted-foreground">CREFITO: {p.crefito}</p>
                         )}
+
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
