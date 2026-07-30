@@ -79,10 +79,15 @@ const ResumeSummary = ({
         </h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           {isPt
-            ? "Revise abaixo o que já foi preenchido. Se estiver tudo certo, continue de onde parou."
+            ? patientName
+              ? `Encontramos um preenchimento em andamento de ${patientName}. Revise abaixo e continue de onde parou.`
+              : "Revise abaixo o que já foi preenchido. Se estiver tudo certo, continue de onde parou."
+            : patientName
+            ? `We found an assessment in progress for ${patientName}. Review it below and continue.`
             : "Review what was already filled in below. If it looks right, continue from where you left off."}
         </p>
       </div>
+
 
       {conflict && (conflict.fromOtherDevice || conflict.alternativeSavedAt) && (
         <Card className="rounded-xl border-amber-300 bg-amber-50 dark:bg-amber-950/20">
