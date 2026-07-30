@@ -15,6 +15,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { formatCpf } from "@/utils/masks";
 import { isFallbackVip } from "@/lib/vipEmails";
+import { hasRealCrefito, isPlaceholderCrefito } from "@/lib/crefito";
+
 
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
