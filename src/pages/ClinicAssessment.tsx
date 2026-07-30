@@ -82,6 +82,49 @@ const ClinicAssessment = () => {
   const [previousPainScore, setPreviousPainScore] = useState<number | undefined>(undefined);
   const [previousQuestionnaireAnswers, setPreviousQuestionnaireAnswers] = useState<Record<string, Record<string, number>> | undefined>(undefined);
 
+  // ---------- Retomada automática (backup local com validade de 24h) ----------
+  const progressScopeKey = `clinic:${clinicId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`;
+  const autoResumedRef = useRef(false);
+
+  useEffect(() => {
+    if (step !== "welcome" || resumeId || autoResumedRef.current || !clinicId) return;
+    const snap = getAssessmentProgress(progressScopeKey);
+    if (!hasMeaningfulProgress(snap) || !snap) return;
+    autoResumedRef.current = true;
+    if (snap.assessmentId) setAssessmentId(snap.assessmentId);
+    if (snap.patientName) setPatientName(snap.patientName);
+    if (snap.patientEmail) setPatientEmail(snap.patientEmail);
+    if (snap.redFlagData) setRedFlagData(snap.redFlagData);
+    if (snap.anamnesisData) {
+      setAnamnesisData(snap.anamnesisData as AnamnesisData);
+      if (snap.anamnesisData.painRegions?.length) setPrefilledRegions(snap.anamnesisData.painRegions);
+    }
+    if (snap.questionnaireResults?.length) setQuestionnaireResults(snap.questionnaireResults);
+    setResumeNextStep(snap.step as ClinicStep);
+    setStep("resume_summary");
+  }, [step, resumeId, clinicId, progressScopeKey]);
+
+  useEffect(() => {
+    if (!clinicId) return;
+    if (!RESUMABLE_STEPS.includes(step as ResumableStep)) return;
+    saveAssessmentProgress(progressScopeKey, {
+      step: step as ResumableStep,
+      assessmentId,
+      patientName,
+      patientEmail,
+      anamnesisData,
+      questionnaireResults,
+      redFlagData,
+    });
+  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, redFlagData, clinicId, progressScopeKey]);
+
+  useEffect(() => {
+    if (step === "thank_you" || step === "redflag_alert") {
+      clearAssessmentProgress(progressScopeKey);
+    }
+  }, [step, progressScopeKey]);
+
+
   useEffect(() => {
     if (!clinicId) return;
     const checkClinic = async () => {
