@@ -31,6 +31,14 @@ import {
 } from "@/lib/reassessmentSteps";
 import { fetchPatientPrefillExtras } from "@/lib/reassessmentPrefill";
 import { normalizeAnamnesisForReassessment } from "@/lib/reassessmentNormalize";
+import {
+  saveAssessmentProgress,
+  getAssessmentProgress,
+  clearAssessmentProgress,
+  hasMeaningfulProgress,
+  RESUMABLE_STEPS,
+  type ResumableStep,
+} from "@/lib/assessmentAutoResume";
 
 type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
