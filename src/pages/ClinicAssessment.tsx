@@ -103,6 +103,8 @@ const ClinicAssessment = () => {
   const autoResumedRef = useRef(false);
   const [resumeConflict, setResumeConflict] = useState<ResumeConflictInfo | null>(null);
   const [genericResume, setGenericResume] = useState(false);
+  /** Paciente já confirmou a retomada → restaurar rascunho sem pedir de novo. */
+  const [resumeConfirmed, setResumeConfirmed] = useState(false);
 
   const applyProgressSnapshot = (snap: AssessmentProgressSnapshot) => {
     setAssessmentId(snap.assessmentId || null);
