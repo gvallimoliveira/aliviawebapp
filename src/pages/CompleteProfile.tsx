@@ -74,7 +74,7 @@ const CompleteProfile = () => {
         if (data.is_partner) setShowPasswordField(true);
         setForm({
           full_name: data.full_name === data.email?.split("@")[0] ? "" : data.full_name || "",
-          crefito: data.crefito === "000000-X" ? "" : data.crefito || "",
+          crefito: isPlaceholderCrefito(data.crefito) ? "" : data.crefito || "",
           cpf: data.cpf ? formatCpf(data.cpf) : "",
           city: data.city === "A definir" ? "" : data.city || "",
           state: data.state === "XX" ? "" : data.state || "",
