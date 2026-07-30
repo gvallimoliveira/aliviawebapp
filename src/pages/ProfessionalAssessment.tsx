@@ -40,9 +40,14 @@ import {
   saveAssessmentProgressRemote,
   clearAssessmentProgressRemote,
   RESUMABLE_STEPS,
+  isSyncableScope,
+  identityScopeKey,
+  matchesIdentity,
+  clearOtherIdentityProgress,
   type ResumableStep,
   type AssessmentProgressSnapshot,
 } from "@/lib/assessmentAutoResume";
+
 
 
 type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
