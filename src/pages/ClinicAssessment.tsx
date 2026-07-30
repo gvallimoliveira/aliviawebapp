@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Globe, Loader2, ChevronRight, Building2, AlertTriangle, User, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -30,6 +30,14 @@ import {
 } from "@/lib/reassessmentSteps";
 import { fetchPatientPrefillExtras } from "@/lib/reassessmentPrefill";
 import { normalizeAnamnesisForReassessment } from "@/lib/reassessmentNormalize";
+import {
+  saveAssessmentProgress,
+  getAssessmentProgress,
+  clearAssessmentProgress,
+  hasMeaningfulProgress,
+  RESUMABLE_STEPS,
+  type ResumableStep,
+} from "@/lib/assessmentAutoResume";
 
 type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
@@ -73,6 +81,49 @@ const ClinicAssessment = () => {
   const [prefilledExtras, setPrefilledExtras] = useState<Record<string, any> | undefined>(undefined);
   const [previousPainScore, setPreviousPainScore] = useState<number | undefined>(undefined);
   const [previousQuestionnaireAnswers, setPreviousQuestionnaireAnswers] = useState<Record<string, Record<string, number>> | undefined>(undefined);
+
+  // ---------- Retomada automática (backup local com validade de 24h) ----------
+  const progressScopeKey = `clinic:${clinicId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`;
+  const autoResumedRef = useRef(false);
+
+  useEffect(() => {
+    if (step !== "welcome" || resumeId || autoResumedRef.current || !clinicId) return;
+    const snap = getAssessmentProgress(progressScopeKey);
+    if (!hasMeaningfulProgress(snap) || !snap) return;
+    autoResumedRef.current = true;
+    if (snap.assessmentId) setAssessmentId(snap.assessmentId);
+    if (snap.patientName) setPatientName(snap.patientName);
+    if (snap.patientEmail) setPatientEmail(snap.patientEmail);
+    if (snap.redFlagData) setRedFlagData(snap.redFlagData);
+    if (snap.anamnesisData) {
+      setAnamnesisData(snap.anamnesisData as AnamnesisData);
+      if (snap.anamnesisData.painRegions?.length) setPrefilledRegions(snap.anamnesisData.painRegions);
+    }
+    if (snap.questionnaireResults?.length) setQuestionnaireResults(snap.questionnaireResults);
+    setResumeNextStep(snap.step as ClinicStep);
+    setStep("resume_summary");
+  }, [step, resumeId, clinicId, progressScopeKey]);
+
+  useEffect(() => {
+    if (!clinicId) return;
+    if (!RESUMABLE_STEPS.includes(step as ResumableStep)) return;
+    saveAssessmentProgress(progressScopeKey, {
+      step: step as ResumableStep,
+      assessmentId,
+      patientName,
+      patientEmail,
+      anamnesisData,
+      questionnaireResults,
+      redFlagData,
+    });
+  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, redFlagData, clinicId, progressScopeKey]);
+
+  useEffect(() => {
+    if (step === "thank_you" || step === "redflag_alert") {
+      clearAssessmentProgress(progressScopeKey);
+    }
+  }, [step, progressScopeKey]);
+
 
   useEffect(() => {
     if (!clinicId) return;
@@ -600,6 +651,15 @@ const ClinicAssessment = () => {
             anamnesisData={anamnesisData}
             questionnaireResults={questionnaireResults}
             onContinue={() => setStep(resumeNextStep || "anamnesis")}
+            onRestart={() => {
+              clearAssessmentProgress(progressScopeKey);
+              setAnamnesisData(null);
+              setQuestionnaireResults([]);
+              setAssessmentId(null);
+              setRedFlagData(null);
+              setResumeNextStep(null);
+              setStep("welcome");
+            }}
           />
         )}
 
@@ -733,7 +793,7 @@ const ClinicAssessment = () => {
             mode="professional"
             onComplete={handleAnamnesisComplete}
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
-            draftScopeKey={`clinic:${clinicId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`}
+            draftScopeKey={progressScopeKey}
             initialPainRegions={prefilledRegions}
             initialChiefComplaints={prefilledComplaints}
             initialOnset={prefilledOnset}
