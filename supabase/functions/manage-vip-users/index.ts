@@ -529,9 +529,11 @@ serve(async (req) => {
           updates.subscription_status = "active";        // espelha o acesso acadêmico liberado
           updates.approved = false;                      // tira do marketplace público
           updates.active_profile_mode = "student";       // força modo acadêmico SEMPRE
+          if (isPlaceholderCrefito) updates.crefito = null; // conta acadêmica de verdade
           if (body.student_institution) updates.student_institution = body.student_institution;
           if (body.student_period) updates.student_period = body.student_period;
         } else {
+
           // Desligar Acadêmico volta o seletor para profissional. NÃO mexe em
           // is_partner — se o admin quiser revogar PRO, usa o toggle PRO ou
           // o botão "Remover da lista".
