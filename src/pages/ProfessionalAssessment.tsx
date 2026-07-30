@@ -83,34 +83,69 @@ const ProfessionalAssessment = () => {
   const [previousPainScore, setPreviousPainScore] = useState<number | undefined>(undefined);
   const [previousQuestionnaireAnswers, setPreviousQuestionnaireAnswers] = useState<Record<string, Record<string, number>> | undefined>(undefined);
 
-  // ---------- Retomada automática (backup local com validade de 24h) ----------
+  // ---------- Retomada automática (backup local + nuvem, validade de 24h) ----------
   const progressScopeKey = `pro:${professionalId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`;
   const autoResumedRef = useRef(false);
+  const [resumeConflict, setResumeConflict] = useState<ResumeConflictInfo | null>(null);
 
-  // Restaura o progresso salvo assim que o link é reaberto (mesma janela de 24h)
-  useEffect(() => {
-    if (step !== "welcome" || resumeId || autoResumedRef.current || !professionalId) return;
-    const snap = getAssessmentProgress(progressScopeKey);
-    if (!hasMeaningfulProgress(snap) || !snap) return;
-    autoResumedRef.current = true;
-    if (snap.assessmentId) setAssessmentId(snap.assessmentId);
-    if (snap.patientName) setPatientName(snap.patientName);
-    if (snap.patientEmail) setPatientEmail(snap.patientEmail);
-    if (snap.redFlagData) setRedFlagData(snap.redFlagData);
+  const applyProgressSnapshot = (snap: AssessmentProgressSnapshot) => {
+    setAssessmentId(snap.assessmentId || null);
+    setPatientName(snap.patientName || "");
+    setPatientEmail(snap.patientEmail || "");
+    setRedFlagData(snap.redFlagData || null);
     if (snap.anamnesisData) {
       setAnamnesisData(snap.anamnesisData as AnamnesisData);
       if (snap.anamnesisData.painRegions?.length) setPrefilledRegions(snap.anamnesisData.painRegions);
+    } else {
+      setAnamnesisData(null);
     }
-    if (snap.questionnaireResults?.length) setQuestionnaireResults(snap.questionnaireResults);
+    setQuestionnaireResults(snap.questionnaireResults || []);
     setResumeNextStep(snap.step as ProfStep);
-    setStep("resume_summary");
+  };
+
+  // Restaura o progresso salvo, conciliando local x nuvem (prioriza o mais recente)
+  useEffect(() => {
+    if (step !== "welcome" || resumeId || autoResumedRef.current || !professionalId) return;
+    let cancelled = false;
+    (async () => {
+      const rec = await reconcileAssessmentProgress(progressScopeKey);
+      if (cancelled || !rec || autoResumedRef.current) return;
+      autoResumedRef.current = true;
+      applyProgressSnapshot(rec.chosen);
+      setResumeConflict({
+        fromOtherDevice: rec.fromOtherDevice,
+        otherDeviceLabel: rec.otherDeviceLabel,
+        chosenSavedAt: rec.chosenSavedAt,
+        alternativeSavedAt: rec.alternativeSavedAt,
+        onUseAlternative: rec.alternative
+          ? () => {
+              applyProgressSnapshot(rec.alternative!);
+              setResumeConflict((c) =>
+                c
+                  ? {
+                      ...c,
+                      chosenSavedAt: rec.alternativeSavedAt || c.chosenSavedAt,
+                      alternativeSavedAt: rec.chosenSavedAt,
+                      fromOtherDevice: !rec.fromOtherDevice,
+                      onUseAlternative: undefined,
+                    }
+                  : c,
+              );
+            }
+          : undefined,
+      });
+      setStep("resume_summary");
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [step, resumeId, professionalId, progressScopeKey]);
 
-  // Salva o progresso a cada avanço de etapa
+  // Salva o progresso a cada avanço de etapa (local + nuvem)
   useEffect(() => {
     if (!professionalId) return;
     if (!RESUMABLE_STEPS.includes(step as ResumableStep)) return;
-    saveAssessmentProgress(progressScopeKey, {
+    const snapshot = {
       step: step as ResumableStep,
       assessmentId,
       patientName,
@@ -118,15 +153,19 @@ const ProfessionalAssessment = () => {
       anamnesisData,
       questionnaireResults,
       redFlagData,
-    });
+    };
+    saveAssessmentProgress(progressScopeKey, snapshot);
+    void saveAssessmentProgressRemote(progressScopeKey, snapshot);
   }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, redFlagData, professionalId, progressScopeKey]);
 
   // Limpa o backup quando a avaliação chega ao fim
   useEffect(() => {
     if (step === "thank_you" || step === "redflag_alert") {
       clearAssessmentProgress(progressScopeKey);
+      void clearAssessmentProgressRemote(progressScopeKey);
     }
   }, [step, progressScopeKey]);
+
 
 
   // Validate professional exists and has active subscription
