@@ -124,9 +124,15 @@ export const saveAssessmentProgress = (
   try {
     localStorage.setItem(
       key(scopeKey),
-      JSON.stringify({ ...snapshot, savedAt: Date.now() }),
+      JSON.stringify({
+        ...snapshot,
+        identity:
+          snapshot.identity ?? identityOf(snapshot.patientName, snapshot.patientEmail),
+        savedAt: Date.now(),
+      }),
     );
   } catch {
+
     /* quota cheia — ignora */
   }
 };
