@@ -221,7 +221,7 @@ const StudentAccessCard = () => {
       // - otherwise honor user choice
       const effectiveMode: "professional" | "student" =
         !isStudent ? "professional"
-        : (!hasCrefito ? "student" : activeMode);
+        : (!hasCrefito && !isVip ? "student" : activeMode);
 
       if (hasProfRecord) {
         // IMPORTANT: never touch the existing `crefito` here so VIP testers
