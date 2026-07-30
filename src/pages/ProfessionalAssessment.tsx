@@ -790,7 +790,7 @@ const ProfessionalAssessment = () => {
             mode="professional"
             onComplete={handleAnamnesisComplete}
             onBack={() => reassessmentId ? setStep("patient_info") : setStep("redflags")}
-            draftScopeKey={`pro:${professionalId}:${patientToken || reassessmentId || "anon"}:${stepsParam || "full"}`}
+            draftScopeKey={progressScopeKey}
             initialPainRegions={prefilledRegions}
             initialChiefComplaints={prefilledComplaints}
             initialOnset={prefilledOnset}
