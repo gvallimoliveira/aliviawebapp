@@ -12,6 +12,8 @@ import { ArrowLeft, Loader2, MapPin, Phone, Mail, Search, UserCheck, Crown, Lock
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE_FORMATTED } from "@/constants/pricing";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { hasRealCrefito } from "@/lib/crefito";
+
 
 const STATES = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS",
