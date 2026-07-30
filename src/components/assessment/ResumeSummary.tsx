@@ -262,6 +262,19 @@ const ResumeSummary = ({
           </Button>
         )}
       </div>
+
+      {onNotMe && (
+        <button
+          type="button"
+          onClick={onNotMe}
+          className="w-full text-center text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          {isPt
+            ? "Não sou eu — começar uma avaliação nova do zero"
+            : "This isn't me — start a brand new assessment"}
+        </button>
+      )}
+
     </motion.div>
   );
 };
