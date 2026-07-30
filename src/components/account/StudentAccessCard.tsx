@@ -148,7 +148,10 @@ const StudentAccessCard = () => {
         setIsStudent(!!data.is_student);
         setStudentGranted(!!data.is_student);
         setActiveMode((data.active_profile_mode ?? (data.is_student ? "student" : "professional")) as "professional" | "student");
-        setHasCrefito(!!(data.crefito && String(data.crefito).trim().length > 0));
+        // Placeholder CREFITOs (auto-generated when an admin adds a partner)
+        // must not classify the account as a licensed professional.
+        setHasCrefito(hasRealCrefito(data.crefito));
+
         setFullName(data.full_name || "");
         setOriginalName(data.full_name || "");
         setCpf(data.cpf || "");
