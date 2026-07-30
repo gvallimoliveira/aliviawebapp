@@ -691,10 +691,14 @@ const ProfessionalAssessment = () => {
             patientEmail={patientEmail}
             anamnesisData={anamnesisData}
             questionnaireResults={questionnaireResults}
+            conflict={resumeConflict}
             onContinue={() => setStep(resumeNextStep || "anamnesis")}
             onRestart={() => {
               clearAssessmentProgress(progressScopeKey);
+              void clearAssessmentProgressRemote(progressScopeKey);
+              setResumeConflict(null);
               setAnamnesisData(null);
+
               setQuestionnaireResults([]);
               setAssessmentId(null);
               setRedFlagData(null);
