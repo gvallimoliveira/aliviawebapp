@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Globe, Loader2, ChevronRight, Building2, AlertTriangle, User, CheckCircle2, ArrowLeft } from "lucide-react";
