@@ -391,7 +391,7 @@ const Dashboard = () => {
         nextProfessional = professionalResult.value.data || null;
       }
 
-      if (nextProfessional?.is_partner && (nextProfessional.crefito === "000000-X" || nextProfessional.city === "A definir")) {
+      if (nextProfessional?.is_partner && !nextProfessional?.is_student && (isPlaceholderCrefito(nextProfessional.crefito) || nextProfessional.city === "A definir")) {
         navigate("/complete-profile", { replace: true });
         return;
       }
