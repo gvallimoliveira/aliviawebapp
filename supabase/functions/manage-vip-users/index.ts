@@ -422,7 +422,10 @@ serve(async (req) => {
           // liberado e deve operar/ser exibido como Acadêmico.
           updates.approved = false;
           updates.active_profile_mode = "student";
+          // Remove o CREFITO temporário criado na abertura da conta de parceiro.
+          if (pro.crefito && /^\d{1,6}-X$/i.test(String(pro.crefito).trim())) updates.crefito = null;
         }
+
         const { error } = await supabaseClient
           .from("professionals")
           .update(updates)
