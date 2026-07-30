@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ChevronRight, RotateCcw, CheckCircle2 } from "lucide-react";
+import { ChevronRight, RotateCcw, CheckCircle2, Smartphone, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,12 +7,23 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import type { AnamnesisData } from "@/components/assessment/AnamnesisForm";
 import type { QuestionnaireResult } from "@/data/questionnaireData";
 
+export interface ResumeConflictInfo {
+  /** true quando o preenchimento exibido veio de outro aparelho. */
+  fromOtherDevice: boolean;
+  otherDeviceLabel?: string | null;
+  chosenSavedAt: number;
+  /** Existe um preenchimento mais antigo que será substituído ao continuar. */
+  alternativeSavedAt?: number | null;
+  onUseAlternative?: () => void;
+}
+
 interface ResumeSummaryProps {
   patientName?: string;
   patientEmail?: string;
   anamnesisData: AnamnesisData | null;
   questionnaireResults: QuestionnaireResult[];
   nextStepLabel?: string;
+  conflict?: ResumeConflictInfo | null;
   onContinue: () => void;
   onRestart?: () => void;
 }
@@ -23,9 +34,11 @@ const ResumeSummary = ({
   anamnesisData,
   questionnaireResults,
   nextStepLabel,
+  conflict,
   onContinue,
   onRestart,
 }: ResumeSummaryProps) => {
+
   const { language } = useLanguage();
   const isPt = language === "pt";
 
