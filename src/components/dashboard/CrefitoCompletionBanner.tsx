@@ -10,6 +10,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { ShieldAlert, Loader2 } from "lucide-react";
+import { hasRealCrefito } from "@/lib/crefito";
+
 
 /**
  * Shown to clinic therapists who don't yet have a CREFITO registered.
