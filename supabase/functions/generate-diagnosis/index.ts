@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, forceRefresh } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, forceRefresh, assessmentId } = await req.json();
     const creditDecision = await assertCreditsAvailable(req, { function_name: "generate-diagnosis" });
     console.log("[ai-credits] generate-diagnosis decision:", JSON.stringify({
       reason: creditDecision.reason,
@@ -43,10 +43,29 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
+
+    // Persist the finished assessment server-side so completion never depends
+    // on the patient's browser staying open (mobile tabs get suspended).
+    const persistAssessment = async (diag: unknown) => {
+      if (!admin || !assessmentId || !diag) return;
+      try {
+        const { error } = await admin
+          .from("assessments")
+          .update({ diagnosis: diag as any, status: "completed" })
+          .eq("id", assessmentId)
+          .neq("status", "completed");
+        if (error) console.error("[generate-diagnosis] persist failed:", error.message);
+        else console.log("[generate-diagnosis] assessment persisted:", assessmentId);
+      } catch (e) {
+        console.error("[generate-diagnosis] persist exception:", String(e));
+      }
+    };
+
     const cachePayload = { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ diagnosis: unknown }>(admin, "generate-diagnosis", cachePayload);
       if (cached) {
+        await persistAssessment((cached as any)?.diagnosis);
         return new Response(JSON.stringify({ ...cached, cached: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -649,6 +668,8 @@ Generate the diagnostic hypothesis in valid JSON format.`;
     if (admin && diagnosis && typeof diagnosis === "object") {
       await setCachedAiResponse(admin, "generate-diagnosis", cachePayload, { diagnosis }, AI_CACHE_TTL_30D);
     }
+
+    await persistAssessment(diagnosis);
 
     return new Response(JSON.stringify({ diagnosis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
