@@ -549,7 +549,7 @@ const Dashboard = () => {
     const p: any = professional;
     const isRealProProfile = !!p && (
       p.active === true
-      || !!p.crefito
+      || hasRealCrefito(p.crefito)
       || !!p.subscription_stripe_id
       || p.is_partner === true
       || p.is_partner_account === true
