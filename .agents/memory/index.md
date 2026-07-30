@@ -15,6 +15,8 @@ Auth is critical: NO global Service Workers / PWA cache layers may intercept Sup
 Final Hypothesis: PRO/Clinic owner+therapist podem sobrescrever hipótese da IA; override substitui em prontuário, PDF e WhatsApp.
 Support page: ao lançar/mudar feature relevante, atualizar Support.tsx + ClinicSupport.tsx + pt/en/es na MESMA loop.
 Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário entra direto, sem etapa /verificar-email. NÃO criar gates de email_confirmed_at em checkout/reset.
+LGPD: proibido script de rastreamento/session replay (Clarity removido). Controlador/DPO: Guilherme Vallim de Oliveira (aliviawebapp@gmail.com). Consentimento versionado via `POLICY_VERSION` em src/lib/consentLog.ts.
+
 
 ## Memories
 - [No Email Confirmation](mem://constraints/no-email-confirmation) — Signup sem etapa de confirmação; implicações e como reverter.
@@ -82,6 +84,8 @@ Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário en
 - [External Assessment Upload](mem://features/external-assessment-upload) — Upload PDF/imagem de avaliação externa, IA mapeia para o padrão Aliv.iA, vira avaliação nativa via prefillData no ManualAssessmentModal.
 - [AI Credits Workspace Plan](mem://business/ai-credits-workspace-plan) — Plano de créditos de IA: tabelas, edge functions, IDs Stripe, carência 20% da clínica e Fase 7 futura (dashboard admin de rentabilidade por período/tipo de cliente).
 - [Credits Sufficiency Table on Landings](mem://features/credits-sufficiency-table-landings) — Tabela de "quantas vezes cabem no plano" para landings Pro/Clínica/Acadêmico, tranquilizando sobre suficiência dos créditos.
+- [LGPD Compliance](mem://features/lgpd-compliance) — Controlador/DPO, páginas /privacidade e /termos, consentimento versionado, direitos do titular e proibição de session replay.
+
 - [Chat Addon Flag](mem://features/chat-addon-flag) — `ENABLE_CHAT_ADDON=false`: card de venda do Chat do Agente só volta a aparecer no mesmo deploy do enforcement do chat.
 - [Blog AI Generation Rules](mem://features/blog-ai-generation-rules) — URL oficial https://aliviawebapp.com.br e proibição de "avaliação gratuita" para público profissional no gerador de artigos.
 - [Admin Subscription Management](mem://features/admin-subscription-management) — Reembolso não rebaixa; cancelar/rebaixar/reativar via painel Admin → Profissionais com auditoria.

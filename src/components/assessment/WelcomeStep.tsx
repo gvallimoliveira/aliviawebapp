@@ -7,6 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import logoAlivia from "@/assets/logo-alivia.png";
+import { logConsent } from "@/lib/consentLog";
+
 
 const CONSENT_KEY = "alivia_self_assessment_consent_v1";
 
@@ -75,7 +77,15 @@ const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeS
           JSON.stringify({ ts: new Date().toISOString(), mode, lang: language }),
         );
       } catch { /* storage may be unavailable */ }
+      // Registro auditável do consentimento (LGPD, art. 8º §1º)
+      void logConsent({
+        consentType: "self_assessment",
+        subjectEmail: email.trim() || null,
+        subjectName: name.trim() || null,
+        scopeRef: mode,
+      });
     }
+
     setIsTransitioning(true);
     setTimeout(() => onContinue(needsEmail ? { email: email.trim(), name: name.trim() } : undefined), 600);
   };
@@ -295,6 +305,28 @@ const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeS
                     ? "I am answering this questionnaire myself, guided by the app's method. The result is not a medical diagnosis and does not replace an in-person consultation. In an emergency, I will call 192 (SAMU — Brazil)."
                     : "Eu mesmo(a) respondo este questionário, guiado(a) pelo método do app. O resultado não é diagnóstico médico nem substitui consulta presencial. Em caso de emergência, ligarei 192 (SAMU)."}
                 </p>
+                <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                  {language === "es"
+                    ? "Autorizo el tratamiento de mis datos de salud para esta evaluación, según la "
+                    : language === "en"
+                    ? "I authorize the processing of my health data for this assessment, per the "
+                    : "Autorizo o tratamento dos meus dados de saúde para esta avaliação, conforme a "}
+                  <a
+                    href="/privacidade"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {language === "es"
+                      ? "Política de Privacidad"
+                      : language === "en"
+                      ? "Privacy Policy"
+                      : "Política de Privacidade"}
+                  </a>
+                  .
+                </p>
+
               </div>
             </label>
             {consentError && (

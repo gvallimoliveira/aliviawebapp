@@ -16,6 +16,8 @@ import SignatureManager from "@/components/account/SignatureManager";
 import StudentAccessCard from "@/components/account/StudentAccessCard";
 import AcademicPerformanceCard from "@/components/account/AcademicPerformanceCard";
 import PasskeyAccountCard from "@/components/account/PasskeyAccountCard";
+import PrivacyRightsCard from "@/components/account/PrivacyRightsCard";
+
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
 import { Bell, BellOff, Send, Smartphone } from "lucide-react";
@@ -317,6 +319,9 @@ const Account = () => {
         <div className="mt-6">
           <AcademicPerformanceCard />
         </div>
+
+        <PrivacyRightsCard />
+
 
         <PasskeyAccountCard />
 
