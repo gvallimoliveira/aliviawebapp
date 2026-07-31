@@ -86,13 +86,12 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { user_id, clinic_id, email, title, body, url, kind, tag, call_id, category } =
+    const { user_id, clinic_id, conversation_id, email, title, body, url, kind, tag, call_id, category } =
       await req.json();
 
-
-    if (!title || (!user_id && !clinic_id && !email)) {
+    if (!title || (!user_id && !clinic_id && !conversation_id && !email)) {
       return new Response(
-        JSON.stringify({ error: "title and (user_id, clinic_id or email) are required" }),
+        JSON.stringify({ error: "title and (user_id, clinic_id, conversation_id or email) are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -100,6 +99,57 @@ Deno.serve(async (req) => {
     // Resolve recipient user_ids
     let targetUserIds: string[] = [];
     if (user_id) targetUserIds.push(user_id);
+
+    // Video calls and chat alerts should not depend on a client-side query to
+    // discover the recipient. Resolve the counterpart here with service-level
+    // reads, while still requiring the authenticated caller to be a participant.
+    if (conversation_id) {
+      if (!callerUserId && !isServiceRole) {
+        return new Response(
+          JSON.stringify({ error: "Authenticated user required for conversation notifications" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const { data: conversation, error: conversationError } = await supabase
+        .from("conversations")
+        .select("patient_user_id, professional_id, recipient_user_id")
+        .eq("id", String(conversation_id))
+        .maybeSingle();
+
+      if (conversationError || !conversation) {
+        return new Response(
+          JSON.stringify({ error: "Conversation not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      let professionalUserId: string | null = null;
+      if (conversation.professional_id) {
+        const { data: professional } = await supabase
+          .from("professionals")
+          .select("user_id")
+          .eq("id", conversation.professional_id)
+          .maybeSingle();
+        professionalUserId = professional?.user_id || null;
+      }
+
+      const participants = new Set(
+        [conversation.patient_user_id, conversation.recipient_user_id, professionalUserId].filter(Boolean),
+      );
+      if (!isServiceRole && (!callerUserId || !participants.has(callerUserId))) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: caller is not a conversation participant" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const counterpart = callerUserId
+        ? [conversation.patient_user_id, conversation.recipient_user_id, professionalUserId]
+            .find((id) => id && id !== callerUserId)
+        : null;
+      if (counterpart && !targetUserIds.includes(counterpart)) targetUserIds.push(counterpart);
+    }
 
     if (email && (isServiceRole || isAnonKey)) {
       const { data: u } = await supabase.auth.admin.listUsers();

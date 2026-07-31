@@ -1025,45 +1025,27 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     void (async () => {
       try {
-        const { data: conversation } = await supabase
-          .from("conversations")
-          .select("patient_user_id, professional_id")
-          .eq("id", conversationId)
-          .single();
-
-        if (!conversation) {
+        const { data, error } = await supabase.functions.invoke("send-push-notification", {
+          body: {
+            conversation_id: conversationId,
+            title: "📹 Chamada recebida",
+            body: `${callerName} está te chamando…`,
+            url: `/dashboard?tab=messages&conv=${conversationId}&call=${callId}&callname=${encodeURIComponent(callerName)}`,
+            kind: "video-call",
+            tag: `video-call-${conversationId}`,
+            category: "messages",
+            call_id: callId,
+          },
+        });
+        if (error) {
+          console.error("[VideoCall] Push request failed:", error);
           return;
         }
-
-        let recipientUserId: string | null = null;
-        if (conversation.patient_user_id === user.id) {
-          const { data: professional } = await supabase
-            .from("professionals")
-            .select("user_id")
-            .eq("id", conversation.professional_id)
-            .single();
-
-          recipientUserId = professional?.user_id || null;
-        } else {
-          recipientUserId = conversation.patient_user_id;
-        }
-
-        if (recipientUserId) {
-          await supabase.functions.invoke("send-push-notification", {
-            body: {
-              user_id: recipientUserId,
-              title: "📹 Chamada recebida",
-              body: `${callerName} está te chamando…`,
-              url: `/dashboard?tab=messages&conv=${conversationId}&call=${callId}&callname=${encodeURIComponent(callerName)}`,
-              kind: "video-call",
-              tag: `video-call-${conversationId}`,
-              category: "messages",
-              call_id: callId,
-            },
-          });
+        if (!data?.sent) {
+          console.warn("[VideoCall] Push reached backend but no device received it:", data);
         }
       } catch (error) {
-        console.warn("Push for video failed:", error);
+        console.error("[VideoCall] Push for video failed:", error);
       }
     })();
 
