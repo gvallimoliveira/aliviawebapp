@@ -71,7 +71,7 @@ const proTools = [
 ];
 
 const patientFaqKeys = ["pf_signup", "pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11", "pf12"];
-const proFaqKeys = ["rf_signup", "rf_student", "rf1", "rf2", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9", "rf10", "rf11", "rf12", "rf13"];
+const proFaqKeys = ["rf_signup", "rf_student", "rf1", "rf2", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9", "rf10", "rf11", "rf12", "rf13", "rf14"];
 
 const Support = () => {
   const { t, language } = useLanguage();
