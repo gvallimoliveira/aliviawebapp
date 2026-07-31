@@ -72,6 +72,8 @@ const VideoCallOverlay = ({
   const statusLabel =
     state === "calling"
       ? t("chat.video_calling")
+      : state === "connecting"
+      ? t("chat.video_connecting") || "Conectando..."
       : state === "ringing"
       ? t("chat.video_ringing")
       : state === "connected"
