@@ -907,6 +907,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     if (stateRef.current !== "idle") return;
 
     joinedFromPushRef.current = callId;
+    const callerName = params.get("callname") || "Usuário";
 
     // Clean the URL so a refresh doesn't re-ring an old call.
     try {
@@ -918,7 +919,6 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       /* noop */
     }
 
-    const callerName = new URLSearchParams(window.location.search).get("callname") || "Usuário";
 
     callIdRef.current = callId;
     activeConvIdRef.current = convId;
