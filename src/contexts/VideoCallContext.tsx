@@ -127,6 +127,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const connectedOnceRef = useRef(false);
   const disconnectRestartAttemptsRef = useRef(0);
   const handleSignalRef = useRef<(convId: string, payload: SignalPayload) => Promise<void>>(async () => {});
+  // Set when the user opened the app from a push notification: we show the
+  // ringing UI optimistically and wait for the caller to re-affirm the call.
+  const joinConfirmTimeoutRef = useRef<number | null>(null);
+  const joinedFromPushRef = useRef<string | null>(null);
 
   const setStateSync = useCallback((nextState: VideoCallState) => {
     stateRef.current = nextState;
