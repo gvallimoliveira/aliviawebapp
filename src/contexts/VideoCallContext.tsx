@@ -1052,27 +1052,32 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       return;
     }
 
-    const { data: sessionResult, error: sessionError } = await supabase.functions.invoke("video-call-session", {
-      body: { action: "start", conversation_id: conversationId, caller_name: callerName },
-    });
-    const call = sessionResult?.call as PersistedCallSession | undefined;
-    if (sessionError || !call) {
-      stopStream(stream);
-      toast({ title: "Não foi possível notificar o destinatário", variant: "destructive" });
-      void insertSystemMessage(conversationId, "Videochamada não iniciada — falha ao criar o convite");
-      return;
-    }
-    const callId = call.id;
-
+    const requestedCallId = crypto.randomUUID();
     localStreamRef.current = stream;
-    persistedCallRef.current = call;
-    callIdRef.current = callId;
+    callIdRef.current = requestedCallId;
     activeConvIdRef.current = conversationId;
     setActiveConvId(conversationId);
     setIncomingCallerName("");
     setRemoteUserName(otherName);
     setStateSync("calling");
     endingRef.current = false;
+    createRealtimeChannel(conversationId);
+
+    const { data: sessionResult, error: sessionError } = await supabase.functions.invoke("video-call-session", {
+      body: { action: "start", call_id: requestedCallId, conversation_id: conversationId, caller_name: callerName },
+    });
+    const call = sessionResult?.call as PersistedCallSession | undefined;
+    if (sessionError || !call) {
+      stopStream(stream);
+      resetToIdle();
+      toast({ title: "Não foi possível notificar o destinatário", variant: "destructive" });
+      void insertSystemMessage(conversationId, "Videochamada não iniciada — falha ao criar o convite");
+      return;
+    }
+    const callId = call.id;
+
+    persistedCallRef.current = call;
+    callIdRef.current = callId;
 
     if (localVideoRef.current) {
       safeAttach(localVideoRef.current, stream);
@@ -1105,6 +1110,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     }, CALL_TIMEOUT_MS);
   }, [
     clearCallTimeout,
+    createRealtimeChannel,
     endCallInternal,
     getMedia,
     insertSystemMessage,

@@ -4,6 +4,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const StartSchema = z.object({
   action: z.literal("start"),
+  call_id: z.string().uuid(),
   conversation_id: z.string().uuid(),
   caller_name: z.string().trim().min(1).max(120),
 });
@@ -115,6 +116,7 @@ Deno.serve(async (req) => {
     const { data: call, error: createError } = await admin
       .from("video_call_sessions")
       .insert({
+        id: body.call_id,
         conversation_id: body.conversation_id,
         caller_user_id: user.id,
         recipient_user_id: recipientUserId,
