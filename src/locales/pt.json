@@ -779,6 +779,8 @@
   "chat.video_calling": "Chamando...",
   "chat.video_ringing": "Tocando...",
   "chat.video_connected": "Conectado",
+  "chat.video_connecting": "Conectando...",
+  "chat.video_call_expired": "A chamada não está mais ativa",
   "chat.video_ended": "Chamada encerrada",
   "chat.video_incoming": "Videochamada recebida",
   "chat.video_accept": "Aceitar",

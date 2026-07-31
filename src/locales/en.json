@@ -778,6 +778,8 @@
   "chat.video_calling": "Calling...",
   "chat.video_ringing": "Ringing...",
   "chat.video_connected": "Connected",
+  "chat.video_connecting": "Connecting...",
+  "chat.video_call_expired": "This call is no longer active",
   "chat.video_ended": "Call ended",
   "chat.video_incoming": "Incoming video call",
   "chat.video_accept": "Accept",
