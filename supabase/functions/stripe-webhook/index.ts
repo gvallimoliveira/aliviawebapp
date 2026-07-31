@@ -96,12 +96,36 @@ serve(async (req) => {
         break;
       case "customer.subscription.deleted":
       case "customer.subscription.updated":
+        EdgeRuntime.waitUntil(
+          alertSubscriptionChange(
+            event.data.object as Stripe.Subscription,
+            event.type,
+            (event.data as any).previous_attributes || {},
+          ),
+        );
         await handleSubscriptionLifecycle(event.data.object as Stripe.Subscription, event.type);
         break;
       case "invoice.paid":
       case "invoice.payment_failed":
+        if (event.type === "invoice.payment_failed") {
+          const inv = event.data.object as Stripe.Invoice;
+          EdgeRuntime.waitUntil(
+            notifyAdmin({
+              event_type: "stripe_payment_failed",
+              title: "⚠️ Cobrança recusada",
+              ref: inv.id,
+              fields: {
+                "E-mail": (inv as any).customer_email || "—",
+                "Valor": brl(inv.amount_due ?? 0, inv.currency),
+                "Tentativa": String((inv as any).attempt_count ?? "—"),
+              },
+              url: "https://dashboard.stripe.com/invoices",
+            }),
+          );
+        }
         await handleInvoiceEvent(event.data.object as Stripe.Invoice, event.type);
         break;
+
 
       case "charge.refunded": {
         const charge = event.data.object as Stripe.Charge;
