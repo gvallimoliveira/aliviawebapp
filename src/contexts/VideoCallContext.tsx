@@ -644,10 +644,41 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     const currentCallId = callIdRef.current;
 
     switch (payload.type) {
+      case "call-ready": {
+        // Receiver opened the app from a push notification and is waiting for
+        // the caller to re-announce the call. Only the caller answers this.
+        if (stateRef.current === "calling" && payload.callId === currentCallId) {
+          console.log("[VideoCall][Caller] call-ready received — re-sending call-request");
+          void sendSignal(convId, {
+            type: "call-request",
+            callId: payload.callId,
+            fromName: user.user_metadata?.full_name || remoteUserName || "Usuário",
+          });
+        }
+        return;
+      }
+
       case "call-request": {
-        if (stateRef.current !== "idle") {
+        const isPushJoinConfirm =
+          stateRef.current === "ringing" && payload.callId === currentCallId;
+
+        if (stateRef.current !== "idle" && !isPushJoinConfirm) {
           console.log("[VideoCall][Receiver] call-request ignored — state:", stateRef.current);
           await sendSignal(convId, { type: "call-reject", callId: payload.callId }, false);
+          return;
+        }
+
+        if (joinConfirmTimeoutRef.current) {
+          clearTimeout(joinConfirmTimeoutRef.current);
+          joinConfirmTimeoutRef.current = null;
+        }
+
+        if (isPushJoinConfirm) {
+          // Call is confirmed alive: just refresh the caller name.
+          if (payload.fromName) {
+            setIncomingCallerName(payload.fromName);
+            setRemoteUserName(payload.fromName);
+          }
           return;
         }
 
@@ -666,6 +697,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         }
         return;
       }
+
 
       case "call-accept": {
         if (payload.callId !== currentCallId || stateRef.current !== "calling") {
