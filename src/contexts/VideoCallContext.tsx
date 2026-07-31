@@ -382,7 +382,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
               body: "",
               url: `/dashboard?tab=messages&conv=${convId}`,
               kind: "video-call-cancel",
-              tag: `video-call-${convId}`,
+              tag: `video-call-${convId}-${callId}`,
               category: "messages",
             },
           });
@@ -1012,7 +1012,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           body: `${callerName} está te chamando…`,
           url: `/dashboard?tab=messages&conv=${conversationId}&call=${callId}&callname=${encodeURIComponent(callerName)}`,
           kind: "video-call",
-          tag: `video-call-${conversationId}`,
+          tag: `video-call-${conversationId}-${callId}`,
           category: "messages",
           call_id: callId,
         };
