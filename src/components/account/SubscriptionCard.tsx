@@ -180,15 +180,23 @@ const SubscriptionCard = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="text-base flex items-center gap-2 flex-wrap">
           <CreditCard className="h-4 w-4" />
           Minha assinatura
+          {demo && <Badge variant="secondary" className="text-[10px]">Modo simulação</Badge>}
         </CardTitle>
         <CardDescription>
           Veja o plano, a próxima cobrança e cancele ou mude de plano quando quiser.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {demo && (
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+            Conta VIP: esta é uma assinatura mensal fictícia (R$ 0,00, renovação automática) só para você conferir
+            layout e fluxo. Cancelar, reativar ou mudar para anual aqui <strong>não</strong> altera nada no Stripe.
+          </div>
+        )}
+
         {loading ? (
           <div className="py-6 flex justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
