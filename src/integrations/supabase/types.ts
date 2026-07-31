@@ -3008,6 +3008,9 @@ export type Database = {
           created_at: string
           endpoint: string
           id: string
+          last_failure_at: string | null
+          last_success_at: string | null
+          last_used_at: string | null
           p256dh: string
           user_id: string
         }
@@ -3016,6 +3019,9 @@ export type Database = {
           created_at?: string
           endpoint: string
           id?: string
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          last_used_at?: string | null
           p256dh: string
           user_id: string
         }
@@ -3024,6 +3030,9 @@ export type Database = {
           created_at?: string
           endpoint?: string
           id?: string
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          last_used_at?: string | null
           p256dh?: string
           user_id?: string
         }
@@ -3333,6 +3342,74 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      video_call_sessions: {
+        Row: {
+          accepted_at: string | null
+          caller_name: string
+          caller_user_id: string
+          connected_at: string | null
+          conversation_id: string
+          created_at: string
+          ended_at: string | null
+          expires_at: string
+          failure_reason: string | null
+          id: string
+          push_devices_found: number
+          push_errors: Json
+          push_sent: number
+          recipient_name: string | null
+          recipient_user_id: string
+          status: Database["public"]["Enums"]["video_call_status"]
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          caller_name?: string
+          caller_user_id: string
+          connected_at?: string | null
+          conversation_id: string
+          created_at?: string
+          ended_at?: string | null
+          expires_at: string
+          failure_reason?: string | null
+          id?: string
+          push_devices_found?: number
+          push_errors?: Json
+          push_sent?: number
+          recipient_name?: string | null
+          recipient_user_id: string
+          status?: Database["public"]["Enums"]["video_call_status"]
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          caller_name?: string
+          caller_user_id?: string
+          connected_at?: string | null
+          conversation_id?: string
+          created_at?: string
+          ended_at?: string | null
+          expires_at?: string
+          failure_reason?: string | null
+          id?: string
+          push_devices_found?: number
+          push_errors?: Json
+          push_sent?: number
+          recipient_name?: string | null
+          recipient_user_id?: string
+          status?: Database["public"]["Enums"]["video_call_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_call_sessions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vip_users: {
         Row: {
@@ -3849,6 +3926,15 @@ export type Database = {
         | "massage_therapist"
         | "admin"
         | "intern"
+      video_call_status:
+        | "ringing"
+        | "accepted"
+        | "connecting"
+        | "connected"
+        | "rejected"
+        | "missed"
+        | "ended"
+        | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3987,6 +4073,16 @@ export const Constants = {
         "massage_therapist",
         "admin",
         "intern",
+      ],
+      video_call_status: [
+        "ringing",
+        "accepted",
+        "connecting",
+        "connected",
+        "rejected",
+        "missed",
+        "ended",
+        "failed",
       ],
     },
   },

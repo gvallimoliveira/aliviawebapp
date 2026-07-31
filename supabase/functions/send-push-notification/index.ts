@@ -276,7 +276,7 @@ Deno.serve(async (req) => {
 
     if (error || !subscriptions || subscriptions.length === 0) {
       return new Response(
-        JSON.stringify({ message: "No push subscriptions found", sent: 0, targets: targetUserIds.length }),
+        JSON.stringify({ message: "No push subscriptions found", sent: 0, devices: 0, targets: targetUserIds.length }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -311,6 +311,10 @@ Deno.serve(async (req) => {
           topic: safeTag ? safeTag.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32) : undefined,
         });
         sent++;
+        await supabase
+          .from("push_subscriptions")
+          .update({ last_used_at: new Date().toISOString(), last_success_at: new Date().toISOString() })
+          .eq("id", sub.id);
         console.log(`[Push] Sent to ${sub.endpoint.slice(0, 60)}...`);
       } catch (e: any) {
         const statusCode = e?.statusCode;
@@ -321,6 +325,10 @@ Deno.serve(async (req) => {
           const detail = `${e?.message || e} | status=${statusCode} | body=${String(e?.body || "").slice(0, 200)} | headers=${JSON.stringify(e?.headers || {}).slice(0, 200)}`;
           errors.push(`Failed (${statusCode}): ${detail}`);
           console.error(`[Push] Error for ${sub.endpoint.slice(0, 60)}:`, detail);
+          await supabase
+            .from("push_subscriptions")
+            .update({ last_used_at: new Date().toISOString(), last_failure_at: new Date().toISOString() })
+            .eq("id", sub.id);
         }
       }
     }
@@ -333,7 +341,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ sent, cleaned: expiredEndpoints.length, errors }),
+      JSON.stringify({ sent, devices: subscriptions.length, cleaned: expiredEndpoints.length, errors }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
