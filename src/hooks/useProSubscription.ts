@@ -72,15 +72,33 @@ export function useProSubscription({ professional }: UseProSubscriptionOptions) 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
-      if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-    } catch {
-      toast({ title: "Erro", description: "Não foi possível abrir o portal de assinatura.", variant: "destructive" });
+      const { data, error } = await supabase.functions.invoke("customer-portal", {
+        body: { return_path: "/conta" },
+      });
+      let payload: any = data;
+      if (error) {
+        try {
+          payload = await (error as any)?.context?.json?.();
+        } catch {
+          payload = null;
+        }
+      }
+      if (payload?.url) {
+        window.location.href = payload.url;
+        return;
+      }
+      toast({
+        title: "Portal indisponível",
+        description: payload?.message || "Não foi possível abrir o portal de assinatura.",
+        variant: "destructive",
+      });
+    } catch (e: any) {
+      toast({ title: "Portal indisponível", description: e?.message || "Não foi possível abrir o portal de assinatura.", variant: "destructive" });
     } finally {
       setPortalLoading(false);
     }
   };
+
 
   const handleLifetimeCheckout = async () => {
     setLifetimeLoading(true);

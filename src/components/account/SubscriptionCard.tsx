@@ -108,8 +108,12 @@ const SubscriptionCard = () => {
 
 
   useEffect(() => {
+    // Reconcilia o estado interno (acesso PRO) com o Stripe sempre que o usuário
+    // abre "Minha conta" — inclusive ao voltar do portal de pagamentos.
+    void supabase.functions.invoke("check-pro-subscription").catch(() => {});
     void load();
   }, []);
+
 
 
   const run = async (action: string, sub: Sub, withReason?: string) => {
@@ -171,21 +175,46 @@ const SubscriptionCard = () => {
     if (demo) {
       toast({
         title: "Simulação",
-        description: "Aqui o usuário real abriria o portal de pagamento e faturas.",
+        description: "Aqui o usuário real abriria o portal Stripe com faturas, recibos e cartão de crédito.",
       });
       return;
     }
     setPortalLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
-      if (error) throw error;
-      if ((data as any)?.url) window.location.href = (data as any).url;
-    } catch {
-      toast({ title: "Erro", description: "Não foi possível abrir o portal de pagamento.", variant: "destructive" });
+      const { data, error } = await supabase.functions.invoke("customer-portal", {
+        body: { return_path: "/conta" },
+      });
+      // Erros HTTP (404/502) chegam com o corpo em error.context — leia a mensagem amigável.
+      let payload: any = data;
+      if (error) {
+        try {
+          payload = await (error as any)?.context?.json?.();
+        } catch {
+          payload = null;
+        }
+      }
+      if (payload?.url) {
+        window.location.href = payload.url;
+        return;
+      }
+      toast({
+        title: "Portal indisponível",
+        description:
+          payload?.message ||
+          "Não foi possível abrir o portal de pagamentos agora. Tente novamente ou fale com o suporte.",
+        variant: "destructive",
+      });
+    } catch (e: any) {
+      toast({
+        title: "Portal indisponível",
+        description: e?.message || "Não foi possível abrir o portal de pagamentos.",
+        variant: "destructive",
+      });
     } finally {
       setPortalLoading(false);
     }
   };
+
 
 
   return (
