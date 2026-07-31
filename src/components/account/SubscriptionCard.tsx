@@ -329,6 +329,12 @@ const SubscriptionCard = () => {
           O cancelamento é sempre agendado para o fim do período já pago — você mantém o acesso até a data indicada e
           pode reativar antes disso sem perder nada.
         </p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Pagamentos e faturas são processados pela Stripe, nossa operadora. Ao assinar, a Stripe cria automaticamente
+          seu cadastro de cobrança com o mesmo e-mail da sua conta Aliv.iA — você não precisa criar senha nem conta lá.
+          O botão acima abre uma sessão segura e temporária desse cadastro, sem login extra.
+        </p>
+
       </CardContent>
 
       <AlertDialog open={!!confirm} onOpenChange={(v) => { if (!v) { setConfirm(null); setReason(""); } }}>
