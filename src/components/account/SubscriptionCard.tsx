@@ -233,10 +233,12 @@ const SubscriptionCard = () => {
       <CardContent className="space-y-4">
         {demo && (
           <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
-            Conta VIP: esta é uma assinatura mensal fictícia (R$ 0,00, renovação automática) só para você conferir
-            layout e fluxo. Cancelar, reativar ou mudar para anual aqui <strong>não</strong> altera nada no Stripe.
+            Conta VIP/parceiro: seu acesso real é <strong>Clínica Enterprise sem cobrança</strong>. O plano abaixo é
+            fictício, apenas para conferir layout e fluxo — cancelar, reativar ou trocar aqui <strong>não</strong>
+            {" "}altera nada no Stripe.
           </div>
         )}
+
 
         {loading ? (
           <div className="py-6 flex justify-center">
