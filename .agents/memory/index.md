@@ -77,6 +77,9 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 
 - [Final Hypothesis Overrule](mem://features/final-hypothesis-overrule) — Profissional pode sobrescrever hipótese da IA no prontuário e PDF.
 - [Support Page Maintenance](mem://process/support-page-maintenance) — Toda feature relevante exige atualização imediata de Support.tsx + ClinicSupport.tsx + pt/en/es na mesma loop.
+- [Autogestão de Assinatura](mem://features/subscription-self-service) — Usuário cancela/retoma/muda para anual em Minha Conta; admin avisado na hora; auditoria self_*.
+- [LGPD Pendências](mem://features/lgpd-pending) — Ajustes finais de LGPD adiados: banner de cookies, consentimento nos cadastros, fila de pedidos no Admin, retenção, e-mails.
+
 - [AI Voice Recorder](mem://features/ai-voice-recorder) — FAB de gravação durante avaliação manual; Gemini transcreve+resume; áudio descartado, texto fica em `assessment_voice_notes`.
 - [Agent Security Protocol](mem://tech/agent-security-protocol) — Blindagem anti-prompt-injection do Agente Clínico: papéis só via backend, sigilo total de internals/usuários.
 - [Agent Research Niches](mem://features/agent-research-niches) — 10 nichos iniciais do Agente de Raciocínio Clínico (PEDro ≥ 7) salvos em `agent_settings.preferred_niches`.

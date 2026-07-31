@@ -40,6 +40,7 @@ const SubscriptionAdminDialog = ({ professional, open, onOpenChange, onUpdated }
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [reason, setReason] = useState("");
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
+  const [selfActions, setSelfActions] = useState<any[]>([]);
 
   const call = async (action: string, subscription_id?: string) => {
     const { data, error } = await supabase.functions.invoke("admin-manage-subscription", {
@@ -56,12 +57,21 @@ const SubscriptionAdminDialog = ({ professional, open, onOpenChange, onUpdated }
       const data = await call("inspect");
       setSnapshot(data);
       setSelectedSub(data?.active_subscriptions?.[0]?.id ?? null);
+      const { data: acts } = await supabase
+        .from("subscription_admin_actions")
+        .select("action, reason, created_at, new_status")
+        .eq("professional_id", professional.id)
+        .like("action", "self_%")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      setSelfActions(acts || []);
     } catch (e: any) {
       toast({ title: "Erro ao consultar Stripe", description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
+
 
   // Load on first open
   if (open && !snapshot && !loading) {
@@ -165,6 +175,27 @@ const SubscriptionAdminDialog = ({ professional, open, onOpenChange, onUpdated }
                 )}
               </div>
             </div>
+
+            {selfActions.length > 0 && (
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 space-y-1.5">
+                <p className="text-sm font-semibold">Ações feitas pelo próprio usuário</p>
+                {selfActions.map((a, i) => (
+                  <p key={i} className="text-xs text-muted-foreground">
+                    {a.action === "self_cancel_at_period_end"
+                      ? "Cancelamento solicitado"
+                      : a.action === "self_resume"
+                        ? "Cancelamento desfeito"
+                        : a.action === "self_switch_to_annual"
+                          ? "Mudou para o plano anual"
+                          : a.action}{" "}
+                    em {fmt(a.created_at)}
+                    {a.reason ? ` · “${a.reason}”` : ""}
+                  </p>
+                ))}
+              </div>
+            )}
+
+
 
             {/* Reason */}
             <div className="space-y-1.5">

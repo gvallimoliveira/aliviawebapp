@@ -9,7 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, KeyRound, User, Mail, ArrowLeft, RotateCcw } from "lucide-react";
+import {
+  Loader2,
+  KeyRound,
+  User,
+  Mail,
+  ArrowLeft,
+  RotateCcw,
+  CreditCard,
+  Shield,
+  Stethoscope,
+  HelpCircle,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import SignatureManager from "@/components/account/SignatureManager";
@@ -17,10 +28,25 @@ import StudentAccessCard from "@/components/account/StudentAccessCard";
 import AcademicPerformanceCard from "@/components/account/AcademicPerformanceCard";
 import PasskeyAccountCard from "@/components/account/PasskeyAccountCard";
 import PrivacyRightsCard from "@/components/account/PrivacyRightsCard";
+import SubscriptionCard from "@/components/account/SubscriptionCard";
 
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
 import { Bell, BellOff, Send, Smartphone } from "lucide-react";
+
+const SectionTitle = ({
+  icon: Icon,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) => (
+  <h2 className="mt-10 mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <Icon className="h-3.5 w-3.5" />
+    {children}
+  </h2>
+);
+
 
 
 const Account = () => {
@@ -65,6 +91,13 @@ const Account = () => {
     test_push: "Enviar teste",
     test_sent: "Notificação de teste enviada.",
     test_error: "Não foi possível enviar o teste agora.",
+    sec_account: "Conta",
+    sec_billing: "Assinatura e cobrança",
+    sec_notifications: "Notificações",
+    sec_professional: "Perfil profissional",
+    sec_privacy: "Privacidade e dados",
+    sec_help: "Ajuda",
+
   } : {
     title: "My Account",
     desc: "Manage your access information",
@@ -95,6 +128,13 @@ const Account = () => {
     test_push: "Send test",
     test_sent: "Test notification sent.",
     test_error: "Could not send the test right now.",
+    sec_account: "Account",
+    sec_billing: "Subscription & billing",
+    sec_notifications: "Notifications",
+    sec_professional: "Professional profile",
+    sec_privacy: "Privacy & data",
+    sec_help: "Help",
+
   };
 
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
@@ -189,6 +229,8 @@ const Account = () => {
           </div>
         </div>
 
+        <SectionTitle icon={User}>{t.sec_account}</SectionTitle>
+
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -204,7 +246,59 @@ const Account = () => {
           </CardContent>
         </Card>
 
-        <Card className="mb-6">
+
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <KeyRound className="h-4 w-4" />
+              {t.change_password}
+            </CardTitle>
+            <CardDescription>{t.change_password_desc}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">{t.new_password}</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t.placeholder}
+                  autoComplete="new-password"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">{t.confirm_password}</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder={t.placeholder}
+                  autoComplete="new-password"
+                  required
+                />
+              </div>
+              <Button type="submit" disabled={saving || !password || !confirmPassword} className="gap-2">
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {t.save}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="mt-6">
+          <PasskeyAccountCard />
+        </div>
+
+        <SectionTitle icon={CreditCard}>{t.sec_billing}</SectionTitle>
+        <SubscriptionCard />
+
+        <SectionTitle icon={Bell}>{t.sec_notifications}</SectionTitle>
+        <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               {push.subscribed ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
@@ -263,54 +357,10 @@ const Account = () => {
             </div>
             <NotificationPreferences />
           </CardContent>
-
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <KeyRound className="h-4 w-4" />
-              {t.change_password}
-            </CardTitle>
-            <CardDescription>{t.change_password_desc}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-password">{t.new_password}</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={t.placeholder}
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">{t.confirm_password}</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder={t.placeholder}
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
-              <Button type="submit" disabled={saving || !password || !confirmPassword} className="gap-2">
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {t.save}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6">
-          <SignatureManager />
-        </div>
+        <SectionTitle icon={Stethoscope}>{t.sec_professional}</SectionTitle>
+        <SignatureManager />
 
         <div className="mt-6">
           <StudentAccessCard />
@@ -320,10 +370,11 @@ const Account = () => {
           <AcademicPerformanceCard />
         </div>
 
+        <SectionTitle icon={Shield}>{t.sec_privacy}</SectionTitle>
         <PrivacyRightsCard />
 
+        <SectionTitle icon={HelpCircle}>{t.sec_help}</SectionTitle>
 
-        <PasskeyAccountCard />
 
         <Card className="mt-6">
           <CardHeader>
