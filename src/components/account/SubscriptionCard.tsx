@@ -52,11 +52,11 @@ const makeDemoSub = (): Sub => {
   return {
     id: "sub_demo_vip",
     status: "active",
-    label: "Profissional PRO — Mensal (cortesia VIP)",
+    label: "Profissional PRO — Mensal",
     kind: "pro",
     interval: "month",
     can_switch_to_annual: true,
-    amount: 0,
+    amount: 8990,
     currency: "brl",
     cancel_at_period_end: false,
     current_period_end: end.toISOString(),
@@ -74,9 +74,10 @@ const SubscriptionCard = () => {
 
   const load = async () => {
     setLoading(true);
+    let isDemoAccount = false;
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const isDemoAccount = user?.email?.trim().toLowerCase() === DEMO_EMAIL;
+      isDemoAccount = user?.email?.trim().toLowerCase() === DEMO_EMAIL;
 
       const { data, error } = await supabase.functions.invoke("manage-my-subscription", {
         body: { action: "inspect" },
@@ -92,11 +93,19 @@ const SubscriptionCard = () => {
       }
     } catch (e) {
       console.error("subscription inspect failed", e);
-      setSubs([]);
+      // Conta VIP de simulação continua exibindo o card completo mesmo se a
+      // consulta ao Stripe falhar (sem customer/assinatura real).
+      if (isDemoAccount) {
+        setDemo(true);
+        setSubs([makeDemoSub()]);
+      } else {
+        setSubs([]);
+      }
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     void load();
