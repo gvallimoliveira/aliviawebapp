@@ -893,6 +893,54 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     };
   }, [cleanup]);
 
+  // Opened from a push notification ("Atender"): the call-request broadcast was
+  // missed while the app was closed, so we ring locally and ask the caller to
+  // re-announce the call. If nobody re-announces, we drop back to idle.
+  useEffect(() => {
+    if (!user) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const convId = params.get("conv");
+    const callId = params.get("call");
+    if (!convId || !callId) return;
+    if (joinedFromPushRef.current === callId) return;
+    if (stateRef.current !== "idle") return;
+
+    joinedFromPushRef.current = callId;
+
+    // Clean the URL so a refresh doesn't re-ring an old call.
+    try {
+      params.delete("call");
+      params.delete("callname");
+      const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
+      window.history.replaceState({}, "", next);
+    } catch {
+      /* noop */
+    }
+
+    const callerName = new URLSearchParams(window.location.search).get("callname") || "Usuário";
+
+    callIdRef.current = callId;
+    activeConvIdRef.current = convId;
+    setActiveConvId(convId);
+    setIncomingCallerName(callerName);
+    setRemoteUserName(callerName);
+    setIsRinging(true);
+    setStateSync("ringing");
+
+    void sendSignal(convId, { type: "call-ready", callId });
+
+    if (joinConfirmTimeoutRef.current) clearTimeout(joinConfirmTimeoutRef.current);
+    joinConfirmTimeoutRef.current = window.setTimeout(() => {
+      joinConfirmTimeoutRef.current = null;
+      if (stateRef.current === "ringing" && callIdRef.current === callId) {
+        toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
+        resetToIdle();
+      }
+    }, 12_000);
+  }, [resetToIdle, sendSignal, setStateSync, t, user?.id]);
+
+
   const startCall = useCallback(async (
     conversationId: string,
     callerName: string,
