@@ -1156,7 +1156,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     toggleCamera,
   };
 
-  const overlayState = state === "connecting" ? "calling" : state;
+  const overlayState = state;
   const showOverlay = state === "calling" || state === "connecting" || state === "connected" || state === "ended";
 
   return (
