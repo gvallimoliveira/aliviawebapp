@@ -106,11 +106,37 @@ const SubscriptionCard = () => {
   const run = async (action: string, sub: Sub, withReason?: string) => {
     setActing(`${action}:${sub.id}`);
     try {
+      if (demo) {
+        // Simulação: nada é enviado ao Stripe, só o estado local muda.
+        await new Promise((r) => setTimeout(r, 600));
+        setSubs((prev) =>
+          (prev || []).map((s) =>
+            s.id !== sub.id
+              ? s
+              : action === "cancel_at_period_end"
+                ? { ...s, cancel_at_period_end: true }
+                : action === "resume"
+                  ? { ...s, cancel_at_period_end: false }
+                  : {
+                      ...s,
+                      label: "Profissional PRO — Anual (cortesia VIP)",
+                      interval: "year",
+                      can_switch_to_annual: false,
+                    },
+          ),
+        );
+        toast({
+          title: "Simulação concluída",
+          description: "Nenhuma cobrança ou alteração real foi feita — este é o modo de teste da conta VIP.",
+        });
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("manage-my-subscription", {
         body: { action, subscription_id: sub.id, reason: withReason || undefined },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
+
       toast({
         title:
           action === "cancel_at_period_end"
