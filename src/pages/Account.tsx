@@ -32,7 +32,8 @@ import SubscriptionCard from "@/components/account/SubscriptionCard";
 
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
-import { Bell, BellOff, Send, Smartphone } from "lucide-react";
+import InstallAppDialog from "@/components/InstallAppDialog";
+import { Bell, BellOff, Send, Smartphone, Download } from "lucide-react";
 
 const SectionTitle = ({
   icon: Icon,
