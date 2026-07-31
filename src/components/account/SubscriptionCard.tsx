@@ -108,8 +108,12 @@ const SubscriptionCard = () => {
 
 
   useEffect(() => {
+    // Reconcilia o estado interno (acesso PRO) com o Stripe sempre que o usuário
+    // abre "Minha conta" — inclusive ao voltar do portal de pagamentos.
+    void supabase.functions.invoke("check-pro-subscription").catch(() => {});
     void load();
   }, []);
+
 
 
   const run = async (action: string, sub: Sub, withReason?: string) => {
