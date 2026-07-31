@@ -62,7 +62,15 @@ const DISCONNECT_GRACE_MS = 6_000;
 const SYSTEM_PREFIX = "📹 ";
 
 interface SignalPayload {
-  type: "offer" | "answer" | "ice-candidate" | "call-request" | "call-accept" | "call-reject" | "call-end";
+  type:
+    | "offer"
+    | "answer"
+    | "ice-candidate"
+    | "call-request"
+    | "call-accept"
+    | "call-reject"
+    | "call-end"
+    | "call-ready";
   callId: string;
   sdp?: string;
   candidate?: RTCIceCandidateInit;
