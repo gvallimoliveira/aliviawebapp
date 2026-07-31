@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { resolveStripeContext } from "../_shared/stripeSubs.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,46 +48,37 @@ serve(async (req) => {
     }
     const user = userData.user;
 
+    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+    const requestedPath = typeof (body as any)?.return_path === "string" ? (body as any).return_path : "";
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Pode existir mais de um customer com o mesmo e-mail (checkouts de guest,
-    // ambientes distintos). Escolhemos o que realmente tem histórico de assinatura.
-    const customers = await stripe.customers.list({ email: user.email, limit: 5 });
-    if (customers.data.length === 0) {
+    // Vínculo resolvido do mesmo jeito para todos os usuários (PRO, clínica,
+    // premium): id salvo no banco -> metadata.user_id -> e-mails conhecidos.
+    const ctx = await resolveStripeContext(stripe, supabaseClient, user);
+    if (!ctx.primaryCustomerId) {
       log("no customer", { email: user.email });
       return json({
         error: "no_customer",
-        message: "Não encontramos um cadastro de pagamento com este e-mail. Se você tem acesso de cortesia, não há faturas para gerenciar.",
+        message: "Não encontramos um cadastro de pagamento vinculado à sua conta. Se seu acesso é de cortesia (parceiro, acadêmico ou concedido), não há faturas para gerenciar.",
       }, 404);
     }
 
-    let customerId = customers.data[0].id;
-    for (const c of customers.data) {
-      const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 1 });
-      if (subs.data.length > 0) {
-        customerId = c.id;
-        break;
-      }
-    }
-
     const reqOrigin = req.headers.get("origin") || "";
-    const bodyOrigin = req.method === "POST"
-      ? await req.json().catch(() => ({})).then((b: any) => (typeof b?.return_path === "string" ? b.return_path : ""))
-      : "";
     const origin = ALLOWED_ORIGINS.includes(reqOrigin) || reqOrigin.startsWith("http://localhost")
       ? reqOrigin
       : ALLOWED_ORIGINS[0];
-    const returnPath = bodyOrigin && bodyOrigin.startsWith("/") ? bodyOrigin : "/conta";
+    const returnPath = requestedPath.startsWith("/") ? requestedPath : "/conta";
 
     let portalSession;
     try {
       portalSession = await stripe.billingPortal.sessions.create({
-        customer: customerId,
+        customer: ctx.primaryCustomerId,
         return_url: `${origin}${returnPath}`,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      log("portal creation failed", { customerId, msg });
+      log("portal creation failed", { customerId: ctx.primaryCustomerId, msg });
       return json({
         error: "portal_unavailable",
         message: "O portal de pagamentos está temporariamente indisponível. Tente novamente em instantes ou fale com o suporte.",
@@ -94,8 +86,8 @@ serve(async (req) => {
       }, 502);
     }
 
-    log("portal created", { customerId, sessionId: portalSession.id });
-    return json({ url: portalSession.url, customer_id: customerId });
+    log("portal created", { customerId: ctx.primaryCustomerId, sessionId: portalSession.id });
+    return json({ url: portalSession.url, customer_id: ctx.primaryCustomerId });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     log("ERROR", { msg });

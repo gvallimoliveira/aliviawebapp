@@ -43,25 +43,26 @@ const statusLabel = (s: Sub) => {
   return { text: s.status, variant: "secondary" as const };
 };
 
-/** Conta VIP usada para revisar layout/fluxo sem ter assinatura real. */
+/** Conta VIP usada apenas para revisar layout/fluxo (acesso real é Clínica Enterprise de parceiro, sem cobrança). */
 const DEMO_EMAIL = "gvallim.fisio@gmail.com";
 
 const makeDemoSub = (): Sub => {
   const end = new Date();
-  end.setMonth(end.getMonth() + 1);
+  end.setFullYear(end.getFullYear() + 1);
   return {
     id: "sub_demo_vip",
     status: "active",
-    label: "Profissional PRO — Mensal",
-    kind: "pro",
-    interval: "month",
-    can_switch_to_annual: true,
-    amount: 9700,
+    label: "Clínica Enterprise — Parceiro Aliv.iA",
+    kind: "clinic",
+    interval: "year",
+    can_switch_to_annual: false,
+    amount: 0,
     currency: "brl",
     cancel_at_period_end: false,
     current_period_end: end.toISOString(),
   };
 };
+
 
 const SubscriptionCard = () => {
   const [loading, setLoading] = useState(true);
@@ -232,10 +233,12 @@ const SubscriptionCard = () => {
       <CardContent className="space-y-4">
         {demo && (
           <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
-            Conta VIP: esta é uma assinatura mensal fictícia (R$ 0,00, renovação automática) só para você conferir
-            layout e fluxo. Cancelar, reativar ou mudar para anual aqui <strong>não</strong> altera nada no Stripe.
+            Conta VIP/parceiro: seu acesso real é <strong>Clínica Enterprise sem cobrança</strong>. O plano abaixo é
+            fictício, apenas para conferir layout e fluxo — cancelar, reativar ou trocar aqui <strong>não</strong>
+            {" "}altera nada no Stripe.
           </div>
         )}
+
 
         {loading ? (
           <div className="py-6 flex justify-center">
@@ -243,12 +246,17 @@ const SubscriptionCard = () => {
           </div>
         ) : !subs || subs.length === 0 ? (
           <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-            <p className="text-sm text-foreground font-medium">Nenhuma assinatura ativa vinculada a este e-mail.</p>
+            <p className="text-sm text-foreground font-medium">Nenhuma assinatura ativa vinculada a esta conta.</p>
             <p className="text-xs text-muted-foreground">
               Se você tem acesso de cortesia (parceiro, acadêmico ou plano concedido), não há cobrança recorrente para
-              gerenciar aqui.
+              gerenciar aqui. Se já assinou antes, pode consultar faturas e recibos anteriores abaixo.
             </p>
+            <Button size="sm" variant="ghost" className="gap-2" disabled={portalLoading} onClick={openPortal}>
+              {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
+              Ver faturas anteriores
+            </Button>
           </div>
+
         ) : (
           subs.map((s) => {
             const st = statusLabel(s);
@@ -321,6 +329,12 @@ const SubscriptionCard = () => {
           O cancelamento é sempre agendado para o fim do período já pago — você mantém o acesso até a data indicada e
           pode reativar antes disso sem perder nada.
         </p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Pagamentos e faturas são processados pela Stripe, nossa operadora. Ao assinar, a Stripe cria automaticamente
+          seu cadastro de cobrança com o mesmo e-mail da sua conta Aliv.iA — você não precisa criar senha nem conta lá.
+          O botão acima abre uma sessão segura e temporária desse cadastro, sem login extra.
+        </p>
+
       </CardContent>
 
       <AlertDialog open={!!confirm} onOpenChange={(v) => { if (!v) { setConfirm(null); setReason(""); } }}>

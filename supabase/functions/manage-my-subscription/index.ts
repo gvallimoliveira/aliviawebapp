@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { PRICE_CATALOG, describeSub, resolveStripeContext } from "../_shared/stripeSubs.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,25 +11,6 @@ const corsHeaders = {
 
 const log = (step: string, details?: unknown) =>
   console.log(`[manage-my-subscription] ${step}`, details ? JSON.stringify(details) : "");
-
-/** Catálogo mínimo para rotular planos e permitir upgrade mensal -> anual. */
-const PRICE_CATALOG: Record<
-  string,
-  { label: string; kind: "pro" | "premium" | "clinic" | "addon"; interval: "month" | "year"; annual_price?: string }
-> = {
-  // PRO
-  price_1TJ4252HgVhVBE8URcx5fMZB: { label: "Profissional PRO — Mensal", kind: "pro", interval: "month", annual_price: "price_1TJ42L2HgVhVBE8U2fhXuqYT" },
-  price_1TJ42L2HgVhVBE8U2fhXuqYT: { label: "Profissional PRO — Anual", kind: "pro", interval: "year" },
-  // Premium B2C
-  price_1TBkbt2HgVhVBE8UWGL7zPGZ: { label: "Premium Mensal", kind: "premium", interval: "month" },
-  // Clínica
-  price_1TKjS22HgVhVBE8UKPH1p0SR: { label: "Clínica até 3 — Mensal", kind: "clinic", interval: "month", annual_price: "price_1TKjSV2HgVhVBE8UAltRZTlh" },
-  price_1TKjSV2HgVhVBE8UAltRZTlh: { label: "Clínica até 3 — Anual", kind: "clinic", interval: "year" },
-  price_1TKjaS2HgVhVBE8UrpLrMFVU: { label: "Clínica 4-8 — Mensal", kind: "clinic", interval: "month", annual_price: "price_1TKjas2HgVhVBE8UtqMAGInP" },
-  price_1TKjas2HgVhVBE8UtqMAGInP: { label: "Clínica 4-8 — Anual", kind: "clinic", interval: "year" },
-  price_1TKjbC2HgVhVBE8U3ANhCbHs: { label: "Clínica 9+ — Mensal", kind: "clinic", interval: "month", annual_price: "price_1TKjbT2HgVhVBE8UzG25AfhI" },
-  price_1TKjbT2HgVhVBE8UzG25AfhI: { label: "Clínica 9+ — Anual", kind: "clinic", interval: "year" },
-};
 
 async function notifyAdmin(payload: Record<string, unknown>) {
   try {
@@ -48,26 +30,8 @@ async function notifyAdmin(payload: Record<string, unknown>) {
 const money = (cents?: number | null, currency?: string | null) =>
   cents === null || cents === undefined ? "—" : `${(currency || "brl").toUpperCase()} ${(cents / 100).toFixed(2)}`;
 
-const describe = (sub: Stripe.Subscription) => {
-  const item = sub.items.data[0];
-  const priceId = (item?.price?.id as string) || "";
-  const meta = PRICE_CATALOG[priceId];
-  return {
-    id: sub.id,
-    status: sub.status,
-    label: meta?.label || item?.price?.nickname || "Assinatura",
-    kind: meta?.kind || "other",
-    interval: meta?.interval || (item?.price?.recurring?.interval as string) || null,
-    can_switch_to_annual: !!meta?.annual_price,
-    amount: item?.price?.unit_amount ?? null,
-    currency: sub.currency,
-    cancel_at_period_end: sub.cancel_at_period_end,
-    current_period_end: (sub as any).current_period_end
-      ? new Date((sub as any).current_period_end * 1000).toISOString()
-      : null,
-    created: sub.created ? new Date(sub.created * 1000).toISOString() : null,
-  };
-};
+const describe = describeSub;
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -107,27 +71,20 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // O cliente Stripe é sempre resolvido pelo e-mail do próprio usuário autenticado.
-    const customers = await stripe.customers.list({ email: user.email, limit: 3 });
-    if (customers.data.length === 0) {
-      return new Response(JSON.stringify({ subscriptions: [], customer_found: false }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const ownSubs: Stripe.Subscription[] = [];
-    for (const c of customers.data) {
-      const list = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 20 });
-      ownSubs.push(...list.data);
-    }
-    const liveSubs = ownSubs.filter((s) => ["active", "trialing", "past_due", "unpaid"].includes(s.status));
+    // Vínculo global: id salvo no banco -> metadata.user_id -> e-mails conhecidos.
+    const ctx = await resolveStripeContext(stripe, admin, user);
+    const liveSubs = ctx.liveSubscriptions;
 
     if (action === "inspect") {
       return new Response(
-        JSON.stringify({ customer_found: true, subscriptions: liveSubs.map(describe) }),
+        JSON.stringify({
+          customer_found: ctx.customerIds.length > 0,
+          subscriptions: liveSubs.map(describe),
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
 
     // Ações mutantes: a assinatura DEVE pertencer ao customer do próprio usuário.
     const target = requestedSubId
