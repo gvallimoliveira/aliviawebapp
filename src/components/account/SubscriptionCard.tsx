@@ -56,7 +56,7 @@ const makeDemoSub = (): Sub => {
     kind: "pro",
     interval: "month",
     can_switch_to_annual: true,
-    amount: 8990,
+    amount: 9700,
     currency: "brl",
     cancel_at_period_end: false,
     current_period_end: end.toISOString(),
@@ -134,7 +134,7 @@ const SubscriptionCard = () => {
                       ...s,
                       label: "Profissional PRO — Anual",
                       interval: "year",
-                      amount: 89900,
+                      amount: 80400,
                       can_switch_to_annual: false,
                     },
 
