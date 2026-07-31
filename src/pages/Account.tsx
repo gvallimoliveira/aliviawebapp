@@ -229,6 +229,8 @@ const Account = () => {
           </div>
         </div>
 
+        <SectionTitle icon={User}>{t.sec_account}</SectionTitle>
+
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -244,67 +246,7 @@ const Account = () => {
           </CardContent>
         </Card>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              {push.subscribed ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-              {t.notifications}
-            </CardTitle>
-            <CardDescription>{t.notifications_desc}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
-              <Smartphone className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              <div className="space-y-1 text-sm">
-                <p className="font-medium text-foreground">
-                  {push.subscribed ? t.push_enabled : t.push_disabled}
-                </p>
-                {push.permission === "denied" && (
-                  <p className="text-xs text-muted-foreground">{t.push_denied}</p>
-                )}
-                {iosNeedsInstall && (
-                  <p className="text-xs text-muted-foreground">{t.push_ios_install}</p>
-                )}
-                {!push.isSupported && !iosNeedsInstall && (
-                  <p className="text-xs text-muted-foreground">{t.push_unsupported}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {!push.subscribed ? (
-                <Button
-                  size="sm"
-                  className="gap-2"
-                  onClick={async () => {
-                    const ok = await push.subscribe();
-                    if (ok) toast({ title: "✅", description: t.push_enabled });
-                  }}
-                  disabled={push.loading || push.permission === "denied" || iosNeedsInstall || !push.isSupported}
-                >
-                  {push.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
-                  {t.enable_push}
-                </Button>
-              ) : (
-                <Button size="sm" variant="outline" className="gap-2" onClick={push.unsubscribe} disabled={push.loading}>
-                  {push.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellOff className="h-4 w-4" />}
-                  {t.disable_push}
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2"
-                onClick={handleTestPush}
-                disabled={!push.subscribed || testingPush}
-              >
-                {testingPush ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                {t.test_push}
-              </Button>
-            </div>
-            <NotificationPreferences />
-          </CardContent>
 
-        </Card>
 
         <Card>
           <CardHeader>
