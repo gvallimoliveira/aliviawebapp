@@ -157,6 +157,13 @@ const SubscriptionCard = () => {
   };
 
   const openPortal = async () => {
+    if (demo) {
+      toast({
+        title: "Simulação",
+        description: "Aqui o usuário real abriria o portal de pagamento e faturas.",
+      });
+      return;
+    }
     setPortalLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
@@ -168,6 +175,7 @@ const SubscriptionCard = () => {
       setPortalLoading(false);
     }
   };
+
 
   return (
     <Card>
