@@ -55,16 +55,31 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || "/";
+  const data = event.notification.data || {};
+  const url = data.url || "/";
+  const isCall = data.kind === "video-call";
+
   // "reject" action just closes; "accept" or default click opens the app.
   if (event.action === "reject") {
     return;
   }
+
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
-          client.navigate(url);
+          if (isCall) {
+            // Do NOT reload an open tab: it would destroy a call already
+            // ringing there. Hand the call over via postMessage instead.
+            client.postMessage({
+              type: "notification-click",
+              kind: data.kind,
+              url,
+              callId: data.callId || null,
+            });
+          } else {
+            client.navigate(url);
+          }
           return client.focus();
         }
       }
