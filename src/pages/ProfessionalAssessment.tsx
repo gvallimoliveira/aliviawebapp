@@ -567,8 +567,7 @@ const ProfessionalAssessment = () => {
 
       await persistPatientRecord(data);
 
-      // Push notification to professional
-      notifyProfessional();
+      // Push notification is sent server-side by the assessments trigger.
 
       setStep("thank_you");
     } catch (err: any) {
@@ -578,7 +577,6 @@ const ProfessionalAssessment = () => {
         await updateAssessment(id, { status: "completed" });
       }
       await persistPatientRecord(data);
-      notifyProfessional();
       setStep("diagnosis_error");
     }
   };

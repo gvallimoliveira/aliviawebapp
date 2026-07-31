@@ -32,7 +32,8 @@ import SubscriptionCard from "@/components/account/SubscriptionCard";
 
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
-import { Bell, BellOff, Send, Smartphone } from "lucide-react";
+import InstallAppDialog from "@/components/InstallAppDialog";
+import { Bell, BellOff, Send, Smartphone, Download } from "lucide-react";
 
 const SectionTitle = ({
   icon: Icon,
@@ -59,6 +60,7 @@ const Account = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [testingPush, setTestingPush] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
   const push = usePushNotifications();
 
   const t = isPt ? {
@@ -86,6 +88,10 @@ const Account = () => {
     push_unsupported: "Este navegador não suporta notificações push.",
     push_denied: "A permissão foi bloqueada no navegador. Libere nas configurações do site/celular e volte aqui.",
     push_ios_install: "No iPhone, instale o app na Tela de Início e abra pelo ícone para ativar notificações em segundo plano.",
+    push_bg_title: "Avisos com o app fechado",
+    push_bg_desc: "Mensagens, chamadas de vídeo, novas avaliações, red flags, questionários e cobrança chegam mesmo com o Aliv.iA fechado ou minimizado — desde que o app esteja instalado na tela de início do celular.",
+    push_bg_installed: "App instalado na tela de início: você recebe os avisos com o app fechado.",
+    push_install_cta: "Como instalar o app",
     enable_push: "Ativar notificações",
     disable_push: "Desativar",
     test_push: "Enviar teste",
@@ -123,6 +129,10 @@ const Account = () => {
     push_unsupported: "This browser does not support push notifications.",
     push_denied: "Permission was blocked in the browser. Allow it in site/device settings and come back here.",
     push_ios_install: "On iPhone, install the app to the Home Screen and open it from the icon to enable background notifications.",
+    push_bg_title: "Alerts while the app is closed",
+    push_bg_desc: "Messages, video calls, new assessments, red flags, questionnaires and billing alerts arrive even with Aliv.iA closed or minimized — as long as the app is installed on your phone's home screen.",
+    push_bg_installed: "App installed on the home screen: you receive alerts while the app is closed.",
+    push_install_cta: "How to install the app",
     enable_push: "Enable notifications",
     disable_push: "Disable",
     test_push: "Send test",
@@ -324,6 +334,25 @@ const Account = () => {
                 )}
               </div>
             </div>
+            <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <Download className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div className="space-y-1 text-sm">
+                <p className="font-medium text-foreground">{t.push_bg_title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {isStandalone ? t.push_bg_installed : t.push_bg_desc}
+                </p>
+                {!isStandalone && (
+                  <Button
+                    size="sm"
+                    variant="link"
+                    className="h-auto p-0 text-xs"
+                    onClick={() => setInstallOpen(true)}
+                  >
+                    {t.push_install_cta}
+                  </Button>
+                )}
+              </div>
+            </div>
             <div className="flex flex-wrap gap-2">
               {!push.subscribed ? (
                 <Button
@@ -356,6 +385,7 @@ const Account = () => {
               </Button>
             </div>
             <NotificationPreferences />
+            <InstallAppDialog open={installOpen} onOpenChange={setInstallOpen} />
           </CardContent>
         </Card>
 

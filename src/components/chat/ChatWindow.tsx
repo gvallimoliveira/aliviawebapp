@@ -167,50 +167,10 @@ const ChatWindow = ({ conversationId, otherName, onBack, onMinimize }: ChatWindo
       content,
     });
 
-    // Push notification (fire-and-forget)
-    (async () => {
-      try {
-        const { data: conv } = await supabase
-          .from("conversations")
-          .select("patient_user_id, professional_id, recipient_user_id")
-          .eq("id", conversationId)
-          .single();
-        if (!conv) return;
-
-        let recipientUserId: string | null = null;
-        if (conv.patient_user_id === user.id) {
-          // Patient is sending — recipient is the professional OR the direct staff recipient
-          if (conv.professional_id) {
-            const { data: pro } = await supabase
-              .from("professionals")
-              .select("user_id")
-              .eq("id", conv.professional_id)
-              .single();
-            recipientUserId = pro?.user_id || null;
-          } else {
-            recipientUserId = (conv as any).recipient_user_id || null;
-          }
-        } else {
-          recipientUserId = conv.patient_user_id;
-        }
+    // Push notification is sent server-side by the messages trigger, so it
+    // reaches the recipient even if this device goes offline right after send.
 
 
-        if (recipientUserId) {
-          const senderName = user.user_metadata?.full_name || "Alguém";
-          await supabase.functions.invoke("send-push-notification", {
-            body: {
-              user_id: recipientUserId,
-              title: "Nova mensagem — Aliv.iA",
-              body: `${senderName}: ${content.slice(0, 80)}${content.length > 80 ? "…" : ""}`,
-              url: `/dashboard?tab=messages&conv=${conversationId}`,
-              category: "messages",
-            },
-          });
-        }
-      } catch (e) {
-        console.warn("Push notification for message failed:", e);
-      }
-    })();
 
     setSending(false);
   };
