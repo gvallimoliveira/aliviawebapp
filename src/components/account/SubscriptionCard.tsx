@@ -43,9 +43,30 @@ const statusLabel = (s: Sub) => {
   return { text: s.status, variant: "secondary" as const };
 };
 
+/** Conta VIP usada para revisar layout/fluxo sem ter assinatura real. */
+const DEMO_EMAIL = "gvallim.fisio@gmail.com";
+
+const makeDemoSub = (): Sub => {
+  const end = new Date();
+  end.setMonth(end.getMonth() + 1);
+  return {
+    id: "sub_demo_vip",
+    status: "active",
+    label: "Profissional PRO — Mensal (cortesia VIP)",
+    kind: "pro",
+    interval: "month",
+    can_switch_to_annual: true,
+    amount: 0,
+    currency: "brl",
+    cancel_at_period_end: false,
+    current_period_end: end.toISOString(),
+  };
+};
+
 const SubscriptionCard = () => {
   const [loading, setLoading] = useState(true);
   const [subs, setSubs] = useState<Sub[] | null>(null);
+  const [demo, setDemo] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [confirm, setConfirm] = useState<{ action: "cancel_at_period_end" | "switch_to_annual"; sub: Sub } | null>(null);
@@ -54,11 +75,21 @@ const SubscriptionCard = () => {
   const load = async () => {
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const isDemoAccount = user?.email?.trim().toLowerCase() === DEMO_EMAIL;
+
       const { data, error } = await supabase.functions.invoke("manage-my-subscription", {
         body: { action: "inspect" },
       });
       if (error) throw error;
-      setSubs((data as any)?.subscriptions || []);
+      const real = ((data as any)?.subscriptions || []) as Sub[];
+      if (real.length === 0 && isDemoAccount) {
+        setDemo(true);
+        setSubs([makeDemoSub()]);
+      } else {
+        setDemo(false);
+        setSubs(real);
+      }
     } catch (e) {
       console.error("subscription inspect failed", e);
       setSubs([]);
@@ -71,14 +102,41 @@ const SubscriptionCard = () => {
     void load();
   }, []);
 
+
   const run = async (action: string, sub: Sub, withReason?: string) => {
     setActing(`${action}:${sub.id}`);
     try {
+      if (demo) {
+        // Simulação: nada é enviado ao Stripe, só o estado local muda.
+        await new Promise((r) => setTimeout(r, 600));
+        setSubs((prev) =>
+          (prev || []).map((s) =>
+            s.id !== sub.id
+              ? s
+              : action === "cancel_at_period_end"
+                ? { ...s, cancel_at_period_end: true }
+                : action === "resume"
+                  ? { ...s, cancel_at_period_end: false }
+                  : {
+                      ...s,
+                      label: "Profissional PRO — Anual (cortesia VIP)",
+                      interval: "year",
+                      can_switch_to_annual: false,
+                    },
+          ),
+        );
+        toast({
+          title: "Simulação concluída",
+          description: "Nenhuma cobrança ou alteração real foi feita — este é o modo de teste da conta VIP.",
+        });
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("manage-my-subscription", {
         body: { action, subscription_id: sub.id, reason: withReason || undefined },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
+
       toast({
         title:
           action === "cancel_at_period_end"
@@ -99,6 +157,13 @@ const SubscriptionCard = () => {
   };
 
   const openPortal = async () => {
+    if (demo) {
+      toast({
+        title: "Simulação",
+        description: "Aqui o usuário real abriria o portal de pagamento e faturas.",
+      });
+      return;
+    }
     setPortalLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
@@ -111,18 +176,27 @@ const SubscriptionCard = () => {
     }
   };
 
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="text-base flex items-center gap-2 flex-wrap">
           <CreditCard className="h-4 w-4" />
           Minha assinatura
+          {demo && <Badge variant="secondary" className="text-[10px]">Modo simulação</Badge>}
         </CardTitle>
         <CardDescription>
           Veja o plano, a próxima cobrança e cancele ou mude de plano quando quiser.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {demo && (
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+            Conta VIP: esta é uma assinatura mensal fictícia (R$ 0,00, renovação automática) só para você conferir
+            layout e fluxo. Cancelar, reativar ou mudar para anual aqui <strong>não</strong> altera nada no Stripe.
+          </div>
+        )}
+
         {loading ? (
           <div className="py-6 flex justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
