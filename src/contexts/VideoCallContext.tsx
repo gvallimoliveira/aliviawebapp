@@ -415,7 +415,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
               body: "",
               url: `/dashboard?tab=messages&conv=${convId}`,
               kind: "video-call-cancel",
-              tag: `video-call-${convId}-${callId}`,
+              tag: `video-call-${callId}`,
               category: "messages",
             },
           });
