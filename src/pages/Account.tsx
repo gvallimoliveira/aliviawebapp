@@ -91,6 +91,13 @@ const Account = () => {
     test_push: "Enviar teste",
     test_sent: "Notificação de teste enviada.",
     test_error: "Não foi possível enviar o teste agora.",
+    sec_account: "Conta",
+    sec_billing: "Assinatura e cobrança",
+    sec_notifications: "Notificações",
+    sec_professional: "Perfil profissional",
+    sec_privacy: "Privacidade e dados",
+    sec_help: "Ajuda",
+
   } : {
     title: "My Account",
     desc: "Manage your access information",
