@@ -176,6 +176,27 @@ const SubscriptionAdminDialog = ({ professional, open, onOpenChange, onUpdated }
               </div>
             </div>
 
+            {selfActions.length > 0 && (
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 space-y-1.5">
+                <p className="text-sm font-semibold">Ações feitas pelo próprio usuário</p>
+                {selfActions.map((a, i) => (
+                  <p key={i} className="text-xs text-muted-foreground">
+                    {a.action === "self_cancel_at_period_end"
+                      ? "Cancelamento solicitado"
+                      : a.action === "self_resume"
+                        ? "Cancelamento desfeito"
+                        : a.action === "self_switch_to_annual"
+                          ? "Mudou para o plano anual"
+                          : a.action}{" "}
+                    em {fmt(a.created_at)}
+                    {a.reason ? ` · “${a.reason}”` : ""}
+                  </p>
+                ))}
+              </div>
+            )}
+
+
+
             {/* Reason */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold">Motivo (obrigatório, fica na auditoria)</label>
