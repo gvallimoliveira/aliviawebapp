@@ -43,25 +43,26 @@ const statusLabel = (s: Sub) => {
   return { text: s.status, variant: "secondary" as const };
 };
 
-/** Conta VIP usada para revisar layout/fluxo sem ter assinatura real. */
+/** Conta VIP usada apenas para revisar layout/fluxo (acesso real é Clínica Enterprise de parceiro, sem cobrança). */
 const DEMO_EMAIL = "gvallim.fisio@gmail.com";
 
 const makeDemoSub = (): Sub => {
   const end = new Date();
-  end.setMonth(end.getMonth() + 1);
+  end.setFullYear(end.getFullYear() + 1);
   return {
     id: "sub_demo_vip",
     status: "active",
-    label: "Profissional PRO — Mensal",
-    kind: "pro",
-    interval: "month",
-    can_switch_to_annual: true,
-    amount: 9700,
+    label: "Clínica Enterprise — Parceiro Aliv.iA",
+    kind: "clinic",
+    interval: "year",
+    can_switch_to_annual: false,
+    amount: 0,
     currency: "brl",
     cancel_at_period_end: false,
     current_period_end: end.toISOString(),
   };
 };
+
 
 const SubscriptionCard = () => {
   const [loading, setLoading] = useState(true);
