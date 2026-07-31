@@ -194,9 +194,24 @@ const Auth = () => {
       // query string é o canal mais seguro.
       let originParam: string | null = null;
       try { originParam = sessionStorage.getItem("signupOrigin"); } catch {}
+
+      // A sessão do Supabase fica presa ao ORIGIN onde os tokens são
+      // gravados. Se o login começa em aliviawebapp.lovable.app e o
+      // usuário depois abre aliviawebapp.com.br (bookmark/PWA), ele
+      // aparece deslogado. Por isso canonizamos o domínio público:
+      // qualquer login iniciado no *.lovable.app termina no domínio
+      // oficial. Preview/localhost seguem no próprio origin.
+      const currentOrigin = window.location.origin;
+      const base = currentOrigin.includes("aliviawebapp.lovable.app")
+        ? "https://aliviawebapp.com.br"
+        : currentOrigin;
+
+      // Sempre passamos por /auth/callback: rota pública que hidrata a
+      // sessão (PKCE ou hash) antes de mandar para o dashboard.
       const redirectUri = originParam
-        ? `${window.location.origin}/auth/callback?signup_origin=${encodeURIComponent(originParam)}`
-        : window.location.origin;
+        ? `${base}/auth/callback?signup_origin=${encodeURIComponent(originParam)}`
+        : `${base}/auth/callback`;
+
 
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: redirectUri,
