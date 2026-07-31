@@ -248,6 +248,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
   const cleanup = useCallback(() => {
     clearCallTimeout();
+    if (joinConfirmTimeoutRef.current) {
+      clearTimeout(joinConfirmTimeoutRef.current);
+      joinConfirmTimeoutRef.current = null;
+    }
     resetPeerSession();
     resetVisualState();
   }, [clearCallTimeout, resetPeerSession, resetVisualState]);
