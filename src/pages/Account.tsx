@@ -9,7 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, KeyRound, User, Mail, ArrowLeft, RotateCcw } from "lucide-react";
+import {
+  Loader2,
+  KeyRound,
+  User,
+  Mail,
+  ArrowLeft,
+  RotateCcw,
+  CreditCard,
+  Shield,
+  Stethoscope,
+  HelpCircle,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import SignatureManager from "@/components/account/SignatureManager";
@@ -17,10 +28,25 @@ import StudentAccessCard from "@/components/account/StudentAccessCard";
 import AcademicPerformanceCard from "@/components/account/AcademicPerformanceCard";
 import PasskeyAccountCard from "@/components/account/PasskeyAccountCard";
 import PrivacyRightsCard from "@/components/account/PrivacyRightsCard";
+import SubscriptionCard from "@/components/account/SubscriptionCard";
 
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
 import { Bell, BellOff, Send, Smartphone } from "lucide-react";
+
+const SectionTitle = ({
+  icon: Icon,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) => (
+  <h2 className="mt-10 mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <Icon className="h-3.5 w-3.5" />
+    {children}
+  </h2>
+);
+
 
 
 const Account = () => {
