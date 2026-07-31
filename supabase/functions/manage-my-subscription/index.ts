@@ -71,27 +71,20 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // O cliente Stripe é sempre resolvido pelo e-mail do próprio usuário autenticado.
-    const customers = await stripe.customers.list({ email: user.email, limit: 3 });
-    if (customers.data.length === 0) {
-      return new Response(JSON.stringify({ subscriptions: [], customer_found: false }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const ownSubs: Stripe.Subscription[] = [];
-    for (const c of customers.data) {
-      const list = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 20 });
-      ownSubs.push(...list.data);
-    }
-    const liveSubs = ownSubs.filter((s) => ["active", "trialing", "past_due", "unpaid"].includes(s.status));
+    // Vínculo global: id salvo no banco -> metadata.user_id -> e-mails conhecidos.
+    const ctx = await resolveStripeContext(stripe, admin, user);
+    const liveSubs = ctx.liveSubscriptions;
 
     if (action === "inspect") {
       return new Response(
-        JSON.stringify({ customer_found: true, subscriptions: liveSubs.map(describe) }),
+        JSON.stringify({
+          customer_found: ctx.customerIds.length > 0,
+          subscriptions: liveSubs.map(describe),
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
 
     // Ações mutantes: a assinatura DEVE pertencer ao customer do próprio usuário.
     const target = requestedSubId
