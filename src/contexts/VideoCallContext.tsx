@@ -1035,8 +1035,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     localStreamRef.current = stream;
     setIncomingCallerName("");
 
-    const pc = createPeerConnection(stream, convId, callId);
+    // IMPORTANT: read the buffered offer BEFORE creating the peer connection —
+    // createPeerConnection() resets the session and clears this ref.
     const pendingOfferSdp = incomingOfferSdpRef.current;
+    const pc = createPeerConnection(stream, convId, callId);
     console.log("[VideoCall][Receiver] PC created — hasPendingOffer:", Boolean(pendingOfferSdp), "sdpLen:", pendingOfferSdp?.length);
 
     if (pendingOfferSdp) {
