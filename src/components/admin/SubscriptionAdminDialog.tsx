@@ -40,6 +40,7 @@ const SubscriptionAdminDialog = ({ professional, open, onOpenChange, onUpdated }
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [reason, setReason] = useState("");
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
+  const [selfActions, setSelfActions] = useState<any[]>([]);
 
   const call = async (action: string, subscription_id?: string) => {
     const { data, error } = await supabase.functions.invoke("admin-manage-subscription", {
@@ -56,12 +57,21 @@ const SubscriptionAdminDialog = ({ professional, open, onOpenChange, onUpdated }
       const data = await call("inspect");
       setSnapshot(data);
       setSelectedSub(data?.active_subscriptions?.[0]?.id ?? null);
+      const { data: acts } = await supabase
+        .from("subscription_admin_actions")
+        .select("action, reason, created_at, new_status")
+        .eq("professional_id", professional.id)
+        .like("action", "self_%")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      setSelfActions(acts || []);
     } catch (e: any) {
       toast({ title: "Erro ao consultar Stripe", description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
+
 
   // Load on first open
   if (open && !snapshot && !loading) {
