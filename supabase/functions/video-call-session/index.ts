@@ -119,6 +119,9 @@ Deno.serve(async (req) => {
         caller_user_id: user.id,
         recipient_user_id: recipientUserId,
         caller_name: body.caller_name,
+        // Do not expose the invitation through Realtime until push delivery has
+        // been attempted and the caller has received the durable call ID.
+        status: "connecting",
         expires_at: expiresAt,
       })
       .select()
@@ -143,18 +146,16 @@ Deno.serve(async (req) => {
     const sent = Number(pushResult?.sent || 0);
     const devices = Number(pushResult?.devices || pushResult?.targets || 0);
     const errors = Array.isArray(pushResult?.errors) ? pushResult.errors : pushResult?.error ? [String(pushResult.error)] : [];
-    const status = sent > 0 ? "ringing" : "ringing";
-
-    await admin.from("video_call_sessions").update({
-      status,
+    const { data: readyCall } = await admin.from("video_call_sessions").update({
+      status: "ringing",
       push_devices_found: devices,
       push_sent: sent,
       push_errors: errors,
       failure_reason: sent > 0 ? null : (devices === 0 ? "no_registered_device" : "push_delivery_failed"),
-    }).eq("id", call.id);
+    }).eq("id", call.id).select().single();
 
     console.log(`[VideoCallSession] call=${call.id} caller=${user.id} recipient=${recipientUserId} devices=${devices} sent=${sent}`);
-    return json({ call: { ...call, push_devices_found: devices, push_sent: sent }, delivery: { devices, sent, errors } });
+    return json({ call: readyCall || { ...call, status: "ringing", push_devices_found: devices, push_sent: sent }, delivery: { devices, sent, errors } });
   } catch (error) {
     console.error("[VideoCallSession] Unexpected error", error);
     return json({ error: error instanceof Error ? error.message : String(error) }, 500);
