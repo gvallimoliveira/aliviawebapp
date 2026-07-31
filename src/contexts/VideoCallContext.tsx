@@ -56,7 +56,7 @@ const ICE_SERVERS: RTCIceServer[] = [
   },
 ];
 
-const CALL_TIMEOUT_MS = 60_000;
+const CALL_TIMEOUT_MS = 90_000;
 const CONNECTION_TIMEOUT_MS = 30_000;
 const DISCONNECT_GRACE_MS = 6_000;
 const SYSTEM_PREFIX = "📹 ";
