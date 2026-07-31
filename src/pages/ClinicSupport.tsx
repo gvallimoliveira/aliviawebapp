@@ -300,6 +300,11 @@ const faqKeys = [
     a: "Não. Ao se cadastrar, você entra direto no painel — sem esperar email de confirmação. Isso evita atrasos em provedores que costumam filtrar nossos emails. Você ainda pode usar normalmente recuperação de senha e receber notificações no email cadastrado.",
   },
   {
+    q: "Como cancelo, retomo ou mudo minha assinatura da clínica para anual?",
+    a: "Direto no app: Minha Conta → seção 'Assinatura e cobrança' → card 'Minha assinatura'. Ali aparecem plano, valor, status e data da próxima cobrança, e você pode cancelar (o acesso continua até o fim do período já pago), desfazer um cancelamento agendado, mudar de mensal para anual (com crédito proporcional) ou abrir o portal do Stripe para trocar cartão e baixar recibos. Não precisa acionar o suporte — toda alteração é registrada e a equipe Aliv.iA é avisada na hora.",
+  },
+
+  {
     q: "Como funciona o trial de 15 dias?",
     a: "Você ativa o trial sem precisar de cartão de crédito. Tem acesso completo a todas as funcionalidades por 15 dias. Ao fim do período, escolhe um plano para continuar — ou seus dados ficam preservados caso retome depois.",
   },
