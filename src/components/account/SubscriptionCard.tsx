@@ -246,12 +246,17 @@ const SubscriptionCard = () => {
           </div>
         ) : !subs || subs.length === 0 ? (
           <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-            <p className="text-sm text-foreground font-medium">Nenhuma assinatura ativa vinculada a este e-mail.</p>
+            <p className="text-sm text-foreground font-medium">Nenhuma assinatura ativa vinculada a esta conta.</p>
             <p className="text-xs text-muted-foreground">
               Se você tem acesso de cortesia (parceiro, acadêmico ou plano concedido), não há cobrança recorrente para
-              gerenciar aqui.
+              gerenciar aqui. Se já assinou antes, pode consultar faturas e recibos anteriores abaixo.
             </p>
+            <Button size="sm" variant="ghost" className="gap-2" disabled={portalLoading} onClick={openPortal}>
+              {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
+              Ver faturas anteriores
+            </Button>
           </div>
+
         ) : (
           subs.map((s) => {
             const st = statusLabel(s);
