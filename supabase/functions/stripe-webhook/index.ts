@@ -54,6 +54,58 @@ async function alertSale(session: Stripe.Checkout.Session, kind: string) {
   });
 }
 
+/**
+ * Avisa o admin sobre mudanças relevantes de assinatura (cancelamento agendado,
+ * cancelamento efetivo, retomada, troca de plano) — inclusive quando feitas
+ * direto no portal Stripe, fora do app.
+ */
+async function alertSubscriptionChange(
+  sub: Stripe.Subscription,
+  eventType: string,
+  prev: Record<string, any>,
+) {
+  let title: string | null = null;
+
+  if (eventType === "customer.subscription.deleted") {
+    title = "🚪 Assinatura encerrada";
+  } else if ("cancel_at_period_end" in prev) {
+    title = sub.cancel_at_period_end ? "🚪 Cancelamento agendado" : "↩️ Cancelamento desfeito";
+  } else if (prev.items) {
+    title = "🔁 Plano da assinatura alterado";
+  } else if (prev.status && sub.status !== prev.status) {
+    title = `ℹ️ Status da assinatura: ${sub.status}`;
+  }
+
+  if (!title) return; // renovações comuns não geram alerta
+
+  let email = "—";
+  try {
+    const customer = await stripe.customers.retrieve(sub.customer as string);
+    email = (customer as any)?.email || "—";
+  } catch {
+    // ignore
+  }
+
+  const item = sub.items.data[0];
+  await notifyAdmin({
+    event_type: "subscription_change",
+    title,
+    ref: sub.id,
+    fields: {
+      "E-mail": email,
+      "Status": sub.status,
+      "Valor": brl(item?.price?.unit_amount ?? null, sub.currency),
+      "Intervalo": (item?.price?.recurring?.interval as string) || "—",
+      "Fim do período": (sub as any).current_period_end
+        ? new Date((sub as any).current_period_end * 1000).toLocaleDateString("pt-BR")
+        : "—",
+    },
+    url: "https://dashboard.stripe.com/subscriptions",
+  });
+}
+
+
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
