@@ -56,7 +56,7 @@ const ICE_SERVERS: RTCIceServer[] = [
   },
 ];
 
-const CALL_TIMEOUT_MS = 90_000;
+const CALL_TIMEOUT_MS = 45_000;
 const CONNECTION_TIMEOUT_MS = 30_000;
 const DISCONNECT_GRACE_MS = 6_000;
 const SYSTEM_PREFIX = "📹 ";
@@ -76,6 +76,19 @@ interface SignalPayload {
   candidate?: RTCIceCandidateInit;
   from: string;
   fromName?: string;
+}
+
+interface PersistedCallSession {
+  id: string;
+  conversation_id: string;
+  caller_user_id: string;
+  recipient_user_id: string;
+  caller_name: string;
+  status: "ringing" | "accepted" | "connecting" | "connected" | "rejected" | "missed" | "ended" | "failed";
+  expires_at: string;
+  push_devices_found?: number;
+  push_sent?: number;
+  failure_reason?: string | null;
 }
 
 interface VideoCallProviderProps {
@@ -127,6 +140,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const connectedOnceRef = useRef(false);
   const disconnectRestartAttemptsRef = useRef(0);
   const handleSignalRef = useRef<(convId: string, payload: SignalPayload) => Promise<void>>(async () => {});
+  const persistedCallRef = useRef<PersistedCallSession | null>(null);
   // Set when the user opened the app from a push notification: we show the
   // ringing UI optimistically and wait for the caller to re-affirm the call.
   const joinConfirmTimeoutRef = useRef<number | null>(null);
@@ -355,8 +369,26 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     setRemoteUserName("");
     activeConvIdRef.current = null;
     callIdRef.current = null;
+    persistedCallRef.current = null;
     endingRef.current = false;
   }, [cleanup, setStateSync]);
+
+  const updatePersistedCall = useCallback(async (
+    status: Exclude<PersistedCallSession["status"], "ringing">,
+    failureReason?: string,
+  ) => {
+    const callId = callIdRef.current;
+    if (!callId) return false;
+    const { data, error } = await supabase.functions.invoke("video-call-session", {
+      body: { action: "update", call_id: callId, status, failure_reason: failureReason },
+    });
+    if (error || data?.error) {
+      console.warn("[VideoCall] Failed to persist status", status, error || data?.error);
+      return false;
+    }
+    if (data?.call) persistedCallRef.current = data.call as PersistedCallSession;
+    return true;
+  }, []);
 
   const endCallInternal = useCallback((sendEndSignal: boolean, endMessage?: string) => {
     if (endingRef.current) {
@@ -371,6 +403,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     if (sendEndSignal && convId && callId) {
       void sendSignal(convId, { type: "call-end", callId }, false);
+      void updatePersistedCall("ended");
 
       // Silent push to clear the incoming-call notification on the other side.
       void (async () => {
@@ -415,7 +448,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       setRemoteUserName("");
       endingRef.current = false;
     }, 2000);
-  }, [cleanup, insertSystemMessage, sendSignal, setStateSync, user]);
+  }, [cleanup, insertSystemMessage, sendSignal, setStateSync, updatePersistedCall, user]);
 
   const startConnectionTimeout = useCallback((message = "Falha ao conectar a videochamada") => {
     clearConnectionTimeout();
@@ -440,6 +473,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     disconnectRestartAttemptsRef.current = 0;
 
     setStateSync("connected");
+    void updatePersistedCall("connected");
 
     if (!callStartTimeRef.current) {
       callStartTimeRef.current = Date.now();
@@ -455,7 +489,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     if (convId) {
       void insertSystemMessage(convId, "Videochamada iniciada");
     }
-  }, [clearCallTimeout, clearConnectionTimeout, clearDisconnectGrace, insertSystemMessage, setStateSync]);
+  }, [clearCallTimeout, clearConnectionTimeout, clearDisconnectGrace, insertSystemMessage, setStateSync, updatePersistedCall]);
 
   const queueCandidate = useCallback(async (candidate: RTCIceCandidateInit) => {
     const pc = pcRef.current;
