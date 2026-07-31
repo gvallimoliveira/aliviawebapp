@@ -1020,7 +1020,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
               user_id: recipientUserId,
               title: "📹 Chamada recebida",
               body: `${callerName} está te chamando…`,
-              url: `/dashboard?tab=messages&conv=${conversationId}`,
+              url: `/dashboard?tab=messages&conv=${conversationId}&call=${callId}&callname=${encodeURIComponent(callerName)}`,
               kind: "video-call",
               tag: `video-call-${conversationId}`,
               category: "messages",
