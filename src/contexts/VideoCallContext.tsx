@@ -56,13 +56,21 @@ const ICE_SERVERS: RTCIceServer[] = [
   },
 ];
 
-const CALL_TIMEOUT_MS = 60_000;
+const CALL_TIMEOUT_MS = 90_000;
 const CONNECTION_TIMEOUT_MS = 30_000;
 const DISCONNECT_GRACE_MS = 6_000;
 const SYSTEM_PREFIX = "📹 ";
 
 interface SignalPayload {
-  type: "offer" | "answer" | "ice-candidate" | "call-request" | "call-accept" | "call-reject" | "call-end";
+  type:
+    | "offer"
+    | "answer"
+    | "ice-candidate"
+    | "call-request"
+    | "call-accept"
+    | "call-reject"
+    | "call-end"
+    | "call-ready";
   callId: string;
   sdp?: string;
   candidate?: RTCIceCandidateInit;
@@ -119,6 +127,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const connectedOnceRef = useRef(false);
   const disconnectRestartAttemptsRef = useRef(0);
   const handleSignalRef = useRef<(convId: string, payload: SignalPayload) => Promise<void>>(async () => {});
+  // Set when the user opened the app from a push notification: we show the
+  // ringing UI optimistically and wait for the caller to re-affirm the call.
+  const joinConfirmTimeoutRef = useRef<number | null>(null);
+  const joinedFromPushRef = useRef<string | null>(null);
 
   const setStateSync = useCallback((nextState: VideoCallState) => {
     stateRef.current = nextState;
@@ -236,6 +248,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
   const cleanup = useCallback(() => {
     clearCallTimeout();
+    if (joinConfirmTimeoutRef.current) {
+      clearTimeout(joinConfirmTimeoutRef.current);
+      joinConfirmTimeoutRef.current = null;
+    }
     resetPeerSession();
     resetVisualState();
   }, [clearCallTimeout, resetPeerSession, resetVisualState]);
@@ -632,10 +648,41 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     const currentCallId = callIdRef.current;
 
     switch (payload.type) {
+      case "call-ready": {
+        // Receiver opened the app from a push notification and is waiting for
+        // the caller to re-announce the call. Only the caller answers this.
+        if (stateRef.current === "calling" && payload.callId === currentCallId) {
+          console.log("[VideoCall][Caller] call-ready received — re-sending call-request");
+          void sendSignal(convId, {
+            type: "call-request",
+            callId: payload.callId,
+            fromName: user.user_metadata?.full_name || remoteUserName || "Usuário",
+          });
+        }
+        return;
+      }
+
       case "call-request": {
-        if (stateRef.current !== "idle") {
+        const isPushJoinConfirm =
+          stateRef.current === "ringing" && payload.callId === currentCallId;
+
+        if (stateRef.current !== "idle" && !isPushJoinConfirm) {
           console.log("[VideoCall][Receiver] call-request ignored — state:", stateRef.current);
           await sendSignal(convId, { type: "call-reject", callId: payload.callId }, false);
+          return;
+        }
+
+        if (joinConfirmTimeoutRef.current) {
+          clearTimeout(joinConfirmTimeoutRef.current);
+          joinConfirmTimeoutRef.current = null;
+        }
+
+        if (isPushJoinConfirm) {
+          // Call is confirmed alive: just refresh the caller name.
+          if (payload.fromName) {
+            setIncomingCallerName(payload.fromName);
+            setRemoteUserName(payload.fromName);
+          }
           return;
         }
 
@@ -654,6 +701,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         }
         return;
       }
+
 
       case "call-accept": {
         if (payload.callId !== currentCallId || stateRef.current !== "calling") {
@@ -849,6 +897,88 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     };
   }, [cleanup]);
 
+  // Opened from a push notification ("Atender"): the call-request broadcast was
+  // missed while the app was closed, so we ring locally and ask the caller to
+  // re-announce the call. If nobody re-announces, we drop back to idle.
+  const joinCallFromPush = useCallback((convId: string, callId: string, callerName: string) => {
+    if (joinedFromPushRef.current === callId) return;
+    if (stateRef.current !== "idle") return;
+
+    joinedFromPushRef.current = callId;
+
+    callIdRef.current = callId;
+    activeConvIdRef.current = convId;
+    setActiveConvId(convId);
+    setIncomingCallerName(callerName);
+    setRemoteUserName(callerName);
+    setIsRinging(true);
+    setStateSync("ringing");
+
+    createRealtimeChannel(convId);
+    void sendSignal(convId, { type: "call-ready", callId });
+
+    if (joinConfirmTimeoutRef.current) clearTimeout(joinConfirmTimeoutRef.current);
+    joinConfirmTimeoutRef.current = window.setTimeout(() => {
+      joinConfirmTimeoutRef.current = null;
+      if (stateRef.current === "ringing" && callIdRef.current === callId) {
+        toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
+        resetToIdle();
+      }
+    }, 12_000);
+  }, [createRealtimeChannel, resetToIdle, sendSignal, setStateSync, t]);
+
+  // 1) App was opened/reloaded by the notification (URL carries the call).
+  useEffect(() => {
+    if (!user) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const convId = params.get("conv");
+    const callId = params.get("call");
+    if (!convId || !callId) return;
+
+    const callerName = params.get("callname") || "Usuário";
+
+    // Clean the URL so a refresh doesn't re-ring an old call.
+    try {
+      params.delete("call");
+      params.delete("callname");
+      const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
+      window.history.replaceState({}, "", next);
+    } catch {
+      /* noop */
+    }
+
+    joinCallFromPush(convId, callId, decodeURIComponent(callerName));
+  }, [joinCallFromPush, user?.id]);
+
+  // 2) App was already open: the service worker hands the call over.
+  useEffect(() => {
+    if (!user || !("serviceWorker" in navigator)) return;
+
+    const onMessage = (event: MessageEvent) => {
+      const msg = event.data;
+      if (!msg || msg.type !== "notification-click" || msg.kind !== "video-call") return;
+
+      try {
+        const target = new URL(msg.url, window.location.origin);
+        const convId = target.searchParams.get("conv");
+        const callId = msg.callId || target.searchParams.get("call");
+        const callerName = target.searchParams.get("callname") || "Usuário";
+        if (convId && callId) {
+          joinCallFromPush(convId, callId, decodeURIComponent(callerName));
+        }
+      } catch {
+        /* noop */
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, [joinCallFromPush, user?.id]);
+
+
+
+
   const startCall = useCallback(async (
     conversationId: string,
     callerName: string,
@@ -924,7 +1054,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
               user_id: recipientUserId,
               title: "📹 Chamada recebida",
               body: `${callerName} está te chamando…`,
-              url: `/dashboard?tab=messages&conv=${conversationId}`,
+              url: `/dashboard?tab=messages&conv=${conversationId}&call=${callId}&callname=${encodeURIComponent(callerName)}`,
               kind: "video-call",
               tag: `video-call-${conversationId}`,
               category: "messages",
@@ -991,8 +1121,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     localStreamRef.current = stream;
     setIncomingCallerName("");
 
-    const pc = createPeerConnection(stream, convId, callId);
+    // IMPORTANT: read the buffered offer BEFORE creating the peer connection —
+    // createPeerConnection() resets the session and clears this ref.
     const pendingOfferSdp = incomingOfferSdpRef.current;
+    const pc = createPeerConnection(stream, convId, callId);
     console.log("[VideoCall][Receiver] PC created — hasPendingOffer:", Boolean(pendingOfferSdp), "sdpLen:", pendingOfferSdp?.length);
 
     if (pendingOfferSdp) {
@@ -1110,7 +1242,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     toggleCamera,
   };
 
-  const overlayState = state === "connecting" ? "calling" : state;
+  const overlayState = state;
   const showOverlay = state === "calling" || state === "connecting" || state === "connected" || state === "ended";
 
   return (
