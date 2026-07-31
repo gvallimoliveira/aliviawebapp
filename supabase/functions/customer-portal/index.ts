@@ -7,6 +7,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const log = (step: string, details?: unknown) =>
+  console.log(`[customer-portal] ${step}`, details ? JSON.stringify(details) : "");
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const ALLOWED_ORIGINS = [
+  "https://aliviawebapp.com.br",
+  "https://www.aliviawebapp.com.br",
+  "https://aliviawebapp.lovable.app",
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -23,32 +38,67 @@ serve(async (req) => {
     );
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    if (!authHeader) return json({ error: "no_auth", message: "Sessão expirada. Entre novamente." }, 401);
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Auth error: ${userError.message}`);
+    if (userError || !userData.user?.email) {
+      return json({ error: "invalid_session", message: "Sessão expirada. Entre novamente." }, 401);
+    }
     const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    if (customers.data.length === 0) throw new Error("No Stripe customer found");
 
-    const origin = req.headers.get("origin") || "https://alivia.app";
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customers.data[0].id,
-      return_url: `${origin}/dashboard`,
-    });
+    // Pode existir mais de um customer com o mesmo e-mail (checkouts de guest,
+    // ambientes distintos). Escolhemos o que realmente tem histórico de assinatura.
+    const customers = await stripe.customers.list({ email: user.email, limit: 5 });
+    if (customers.data.length === 0) {
+      log("no customer", { email: user.email });
+      return json({
+        error: "no_customer",
+        message: "Não encontramos um cadastro de pagamento com este e-mail. Se você tem acesso de cortesia, não há faturas para gerenciar.",
+      }, 404);
+    }
 
-    return new Response(JSON.stringify({ url: portalSession.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    let customerId = customers.data[0].id;
+    for (const c of customers.data) {
+      const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 1 });
+      if (subs.data.length > 0) {
+        customerId = c.id;
+        break;
+      }
+    }
+
+    const reqOrigin = req.headers.get("origin") || "";
+    const bodyOrigin = req.method === "POST"
+      ? await req.json().catch(() => ({})).then((b: any) => (typeof b?.return_path === "string" ? b.return_path : ""))
+      : "";
+    const origin = ALLOWED_ORIGINS.includes(reqOrigin) || reqOrigin.startsWith("http://localhost")
+      ? reqOrigin
+      : ALLOWED_ORIGINS[0];
+    const returnPath = bodyOrigin && bodyOrigin.startsWith("/") ? bodyOrigin : "/conta";
+
+    let portalSession;
+    try {
+      portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${origin}${returnPath}`,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      log("portal creation failed", { customerId, msg });
+      return json({
+        error: "portal_unavailable",
+        message: "O portal de pagamentos está temporariamente indisponível. Tente novamente em instantes ou fale com o suporte.",
+        detail: msg,
+      }, 502);
+    }
+
+    log("portal created", { customerId, sessionId: portalSession.id });
+    return json({ url: portalSession.url, customer_id: customerId });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: msg }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    log("ERROR", { msg });
+    return json({ error: "unexpected", message: "Não foi possível abrir o portal de pagamentos.", detail: msg }, 500);
   }
 });
