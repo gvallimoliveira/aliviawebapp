@@ -52,10 +52,13 @@ Deno.serve(async (req) => {
     }
 
     const isServiceRole = token === serviceRoleKey;
-    const isAnonKey = token === anonKey || apikeyHeader === anonKey;
+    // The client always sends the project anon key in `apikey`, including
+    // authenticated requests. Do not let that header erase the user's JWT.
+    const hasUserToken = Boolean(token && token !== anonKey && token !== serviceRoleKey);
+    const isAnonKey = !hasUserToken && (token === anonKey || apikeyHeader === anonKey);
     let callerUserId: string | null = null;
 
-    if (!isServiceRole && !isAnonKey) {
+    if (hasUserToken) {
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: `Bearer ${token}` } },
       });

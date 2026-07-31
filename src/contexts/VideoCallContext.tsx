@@ -375,36 +375,17 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       // Silent push to clear the incoming-call notification on the other side.
       void (async () => {
         try {
-          const { data: conversation } = await supabase
-            .from("conversations")
-            .select("patient_user_id, professional_id")
-            .eq("id", convId)
-            .single();
-          if (!conversation || !user) return;
-          let recipientUserId: string | null = null;
-          if (conversation.patient_user_id === user.id) {
-            const { data: professional } = await supabase
-              .from("professionals")
-              .select("user_id")
-              .eq("id", conversation.professional_id)
-              .single();
-            recipientUserId = professional?.user_id || null;
-          } else {
-            recipientUserId = conversation.patient_user_id;
-          }
-          if (recipientUserId) {
-            await supabase.functions.invoke("send-push-notification", {
-              body: {
-                user_id: recipientUserId,
-                title: "Chamada encerrada",
-                body: "",
-                url: `/dashboard?tab=messages&conv=${convId}`,
-                kind: "video-call-cancel",
-                tag: `video-call-${convId}`,
-                category: "messages",
-              },
-            });
-          }
+          await supabase.functions.invoke("send-push-notification", {
+            body: {
+              conversation_id: convId,
+              title: "Chamada encerrada",
+              body: "",
+              url: `/dashboard?tab=messages&conv=${convId}`,
+              kind: "video-call-cancel",
+              tag: `video-call-${convId}`,
+              category: "messages",
+            },
+          });
         } catch {}
       })();
     }
