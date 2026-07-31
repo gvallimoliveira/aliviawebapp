@@ -300,7 +300,13 @@ Deno.serve(async (req) => {
           },
         };
 
-        await webpush.sendNotification(pushSubscription, payload);
+        await webpush.sendNotification(pushSubscription, payload, {
+          // Incoming calls are time-sensitive. Apple Web Push may otherwise
+          // defer delivery while the installed PWA is backgrounded.
+          TTL: safeKind === "video-call" ? 120 : 86_400,
+          urgency: safeKind === "video-call" ? "high" : "normal",
+          topic: safeTag ? safeTag.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32) : undefined,
+        });
         sent++;
         console.log(`[Push] Sent to ${sub.endpoint.slice(0, 60)}...`);
       } catch (e: any) {

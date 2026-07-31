@@ -1025,24 +1025,27 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     void (async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("send-push-notification", {
-          body: {
-            conversation_id: conversationId,
-            title: "📹 Chamada recebida",
-            body: `${callerName} está te chamando…`,
-            url: `/dashboard?tab=messages&conv=${conversationId}&call=${callId}&callname=${encodeURIComponent(callerName)}`,
-            kind: "video-call",
-            tag: `video-call-${conversationId}`,
-            category: "messages",
-            call_id: callId,
-          },
-        });
-        if (error) {
-          console.error("[VideoCall] Push request failed:", error);
-          return;
-        }
-        if (!data?.sent) {
-          console.warn("[VideoCall] Push reached backend but no device received it:", data);
+        const pushBody = {
+          conversation_id: conversationId,
+          title: "Chamada de vídeo recebida",
+          body: `${callerName} está te chamando…`,
+          url: `/dashboard?tab=messages&conv=${conversationId}&call=${callId}&callname=${encodeURIComponent(callerName)}`,
+          kind: "video-call",
+          tag: `video-call-${conversationId}`,
+          category: "messages",
+          call_id: callId,
+        };
+
+        // A duplicate uses the same notification tag and call id, so devices
+        // collapse it into one visible alert. Retrying protects the call from a
+        // transient function/network failure without ringing twice.
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+          const { data, error } = await supabase.functions.invoke("send-push-notification", {
+            body: pushBody,
+          });
+          if (!error && data?.sent > 0) return;
+          console.warn(`[VideoCall] Push attempt ${attempt} did not deliver:`, error || data);
+          if (attempt === 1) await new Promise((resolve) => window.setTimeout(resolve, 900));
         }
       } catch (error) {
         console.error("[VideoCall] Push for video failed:", error);
