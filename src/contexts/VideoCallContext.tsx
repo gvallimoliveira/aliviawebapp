@@ -900,6 +900,34 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   // Opened from a push notification ("Atender"): the call-request broadcast was
   // missed while the app was closed, so we ring locally and ask the caller to
   // re-announce the call. If nobody re-announces, we drop back to idle.
+  const joinCallFromPush = useCallback((convId: string, callId: string, callerName: string) => {
+    if (joinedFromPushRef.current === callId) return;
+    if (stateRef.current !== "idle") return;
+
+    joinedFromPushRef.current = callId;
+
+    callIdRef.current = callId;
+    activeConvIdRef.current = convId;
+    setActiveConvId(convId);
+    setIncomingCallerName(callerName);
+    setRemoteUserName(callerName);
+    setIsRinging(true);
+    setStateSync("ringing");
+
+    createRealtimeChannel(convId);
+    void sendSignal(convId, { type: "call-ready", callId });
+
+    if (joinConfirmTimeoutRef.current) clearTimeout(joinConfirmTimeoutRef.current);
+    joinConfirmTimeoutRef.current = window.setTimeout(() => {
+      joinConfirmTimeoutRef.current = null;
+      if (stateRef.current === "ringing" && callIdRef.current === callId) {
+        toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
+        resetToIdle();
+      }
+    }, 12_000);
+  }, [createRealtimeChannel, resetToIdle, sendSignal, setStateSync, t]);
+
+  // 1) App was opened/reloaded by the notification (URL carries the call).
   useEffect(() => {
     if (!user) return;
 
@@ -907,10 +935,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     const convId = params.get("conv");
     const callId = params.get("call");
     if (!convId || !callId) return;
-    if (joinedFromPushRef.current === callId) return;
-    if (stateRef.current !== "idle") return;
 
-    joinedFromPushRef.current = callId;
     const callerName = params.get("callname") || "Usuário";
 
     // Clean the URL so a refresh doesn't re-ring an old call.
@@ -923,26 +948,35 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       /* noop */
     }
 
+    joinCallFromPush(convId, callId, decodeURIComponent(callerName));
+  }, [joinCallFromPush, user?.id]);
 
-    callIdRef.current = callId;
-    activeConvIdRef.current = convId;
-    setActiveConvId(convId);
-    setIncomingCallerName(callerName);
-    setRemoteUserName(callerName);
-    setIsRinging(true);
-    setStateSync("ringing");
+  // 2) App was already open: the service worker hands the call over.
+  useEffect(() => {
+    if (!user || !("serviceWorker" in navigator)) return;
 
-    void sendSignal(convId, { type: "call-ready", callId });
+    const onMessage = (event: MessageEvent) => {
+      const msg = event.data;
+      if (!msg || msg.type !== "notification-click" || msg.kind !== "video-call") return;
 
-    if (joinConfirmTimeoutRef.current) clearTimeout(joinConfirmTimeoutRef.current);
-    joinConfirmTimeoutRef.current = window.setTimeout(() => {
-      joinConfirmTimeoutRef.current = null;
-      if (stateRef.current === "ringing" && callIdRef.current === callId) {
-        toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
-        resetToIdle();
+      try {
+        const target = new URL(msg.url, window.location.origin);
+        const convId = target.searchParams.get("conv");
+        const callId = msg.callId || target.searchParams.get("call");
+        const callerName = target.searchParams.get("callname") || "Usuário";
+        if (convId && callId) {
+          joinCallFromPush(convId, callId, decodeURIComponent(callerName));
+        }
+      } catch {
+        /* noop */
       }
-    }, 12_000);
-  }, [resetToIdle, sendSignal, setStateSync, t, user?.id]);
+    };
+
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, [joinCallFromPush, user?.id]);
+
+
 
 
   const startCall = useCallback(async (
