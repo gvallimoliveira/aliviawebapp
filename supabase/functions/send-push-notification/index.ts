@@ -119,9 +119,60 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Non-service-role, non-anon callers can only target themselves
+    // Non-service-role, non-anon callers may target themselves OR any user who
+    // shares a conversation with them (chat messages / video calls). Anything
+    // else is rejected.
     if (!isServiceRole && !isAnonKey) {
-      targetUserIds = targetUserIds.filter((uid) => uid === callerUserId);
+      const others = targetUserIds.filter((uid) => uid !== callerUserId);
+      const allowed = new Set(targetUserIds.filter((uid) => uid === callerUserId));
+
+      if (others.length > 0 && callerUserId) {
+        // Resolve the caller's professional profile (if any) so both sides of a
+        // conversation can be matched.
+        const { data: callerPro } = await supabase
+          .from("professionals")
+          .select("id")
+          .eq("user_id", callerUserId)
+          .maybeSingle();
+
+        // Conversations where the caller is the patient side
+        const { data: asPatient } = await supabase
+          .from("conversations")
+          .select("id, patient_user_id, professional_id, recipient_user_id")
+          .eq("patient_user_id", callerUserId);
+
+        // Conversations where the caller is the professional / recipient side
+        const orFilters = [`recipient_user_id.eq.${callerUserId}`];
+        if (callerPro?.id) orFilters.push(`professional_id.eq.${callerPro.id}`);
+        const { data: asPro } = await supabase
+          .from("conversations")
+          .select("id, patient_user_id, professional_id, recipient_user_id")
+          .or(orFilters.join(","));
+
+        const convs = [...(asPatient || []), ...(asPro || [])];
+        const proIds = Array.from(
+          new Set(convs.map((c: any) => c.professional_id).filter(Boolean)),
+        );
+        let proUserIds: string[] = [];
+        if (proIds.length > 0) {
+          const { data: pros } = await supabase
+            .from("professionals")
+            .select("user_id")
+            .in("id", proIds);
+          proUserIds = (pros || []).map((p: any) => p.user_id).filter(Boolean);
+        }
+
+        const counterparts = new Set<string>([
+          ...convs.map((c: any) => c.patient_user_id).filter(Boolean),
+          ...convs.map((c: any) => c.recipient_user_id).filter(Boolean),
+          ...proUserIds,
+        ]);
+        counterparts.delete(callerUserId);
+
+        for (const uid of others) if (counterparts.has(uid)) allowed.add(uid);
+      }
+
+      targetUserIds = targetUserIds.filter((uid) => allowed.has(uid));
       if (targetUserIds.length === 0) {
         return new Response(
           JSON.stringify({ error: "Forbidden: cannot send notifications to other users" }),
@@ -129,6 +180,7 @@ Deno.serve(async (req) => {
         );
       }
     }
+
 
     // Per-user category preferences (defaults to opted-in when no row exists).
     const VALID_CATEGORIES = [
