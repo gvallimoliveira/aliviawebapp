@@ -43,9 +43,30 @@ const statusLabel = (s: Sub) => {
   return { text: s.status, variant: "secondary" as const };
 };
 
+/** Conta VIP usada para revisar layout/fluxo sem ter assinatura real. */
+const DEMO_EMAIL = "gvallim.fisio@gmail.com";
+
+const makeDemoSub = (): Sub => {
+  const end = new Date();
+  end.setMonth(end.getMonth() + 1);
+  return {
+    id: "sub_demo_vip",
+    status: "active",
+    label: "Profissional PRO — Mensal (cortesia VIP)",
+    kind: "pro",
+    interval: "month",
+    can_switch_to_annual: true,
+    amount: 0,
+    currency: "brl",
+    cancel_at_period_end: false,
+    current_period_end: end.toISOString(),
+  };
+};
+
 const SubscriptionCard = () => {
   const [loading, setLoading] = useState(true);
   const [subs, setSubs] = useState<Sub[] | null>(null);
+  const [demo, setDemo] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [confirm, setConfirm] = useState<{ action: "cancel_at_period_end" | "switch_to_annual"; sub: Sub } | null>(null);
@@ -54,11 +75,21 @@ const SubscriptionCard = () => {
   const load = async () => {
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const isDemoAccount = user?.email?.trim().toLowerCase() === DEMO_EMAIL;
+
       const { data, error } = await supabase.functions.invoke("manage-my-subscription", {
         body: { action: "inspect" },
       });
       if (error) throw error;
-      setSubs((data as any)?.subscriptions || []);
+      const real = ((data as any)?.subscriptions || []) as Sub[];
+      if (real.length === 0 && isDemoAccount) {
+        setDemo(true);
+        setSubs([makeDemoSub()]);
+      } else {
+        setDemo(false);
+        setSubs(real);
+      }
     } catch (e) {
       console.error("subscription inspect failed", e);
       setSubs([]);
@@ -70,6 +101,7 @@ const SubscriptionCard = () => {
   useEffect(() => {
     void load();
   }, []);
+
 
   const run = async (action: string, sub: Sub, withReason?: string) => {
     setActing(`${action}:${sub.id}`);
