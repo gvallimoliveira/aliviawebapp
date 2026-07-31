@@ -912,35 +912,80 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     };
   }, [cleanup]);
 
-  // Opened from a push notification ("Atender"): the call-request broadcast was
-  // missed while the app was closed, so we ring locally and ask the caller to
-  // re-announce the call. If nobody re-announces, we drop back to idle.
-  const joinCallFromPush = useCallback((convId: string, callId: string, callerName: string) => {
+  const presentPersistedIncomingCall = useCallback((call: PersistedCallSession) => {
+    if (call.recipient_user_id !== user?.id || call.status !== "ringing") return;
+    if (new Date(call.expires_at).getTime() <= Date.now()) {
+      void supabase.functions.invoke("video-call-session", {
+        body: { action: "update", call_id: call.id, status: "missed", failure_reason: "expired" },
+      });
+      return;
+    }
+    if (stateRef.current !== "idle" && callIdRef.current !== call.id) return;
+
+    persistedCallRef.current = call;
+    callIdRef.current = call.id;
+    activeConvIdRef.current = call.conversation_id;
+    setActiveConvId(call.conversation_id);
+    setIncomingCallerName(call.caller_name || "Usuário");
+    setRemoteUserName(call.caller_name || "Usuário");
+    setIsRinging(true);
+    setStateSync("ringing");
+    createRealtimeChannel(call.conversation_id);
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+  }, [createRealtimeChannel, setStateSync, user?.id]);
+
+  // A notification only carries the durable call ID. The current database row
+  // is authoritative, so a delayed click can never resurrect an expired call.
+  const joinCallFromPush = useCallback(async (convId: string, callId: string) => {
     if (joinedFromPushRef.current === callId) return;
     if (stateRef.current !== "idle") return;
 
     joinedFromPushRef.current = callId;
-
-    callIdRef.current = callId;
-    activeConvIdRef.current = convId;
-    setActiveConvId(convId);
-    setIncomingCallerName(callerName);
-    setRemoteUserName(callerName);
-    setIsRinging(true);
-    setStateSync("ringing");
-
-    createRealtimeChannel(convId);
+    const { data, error } = await (supabase.from("video_call_sessions" as any) as any)
+      .select("*")
+      .eq("id", callId)
+      .eq("conversation_id", convId)
+      .maybeSingle();
+    if (error || !data || data.status !== "ringing" || new Date(data.expires_at).getTime() <= Date.now()) {
+      toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
+      return;
+    }
+    presentPersistedIncomingCall(data as PersistedCallSession);
     void sendSignal(convId, { type: "call-ready", callId });
+  }, [presentPersistedIncomingCall, sendSignal, t]);
 
-    if (joinConfirmTimeoutRef.current) clearTimeout(joinConfirmTimeoutRef.current);
-    joinConfirmTimeoutRef.current = window.setTimeout(() => {
-      joinConfirmTimeoutRef.current = null;
-      if (stateRef.current === "ringing" && callIdRef.current === callId) {
-        toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
-        resetToIdle();
-      }
-    }, 12_000);
-  }, [createRealtimeChannel, resetToIdle, sendSignal, setStateSync, t]);
+  // Durable recovery path: realtime while open, plus a pending-call lookup on
+  // login, app resume and visibility restoration.
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    const recoverPending = async () => {
+      const { data, error } = await supabase.functions.invoke("video-call-session", { body: { action: "pending" } });
+      if (active && !error && data?.call) presentPersistedIncomingCall(data.call as PersistedCallSession);
+    };
+    void recoverPending();
+    const onResume = () => { if (document.visibilityState === "visible") void recoverPending(); };
+    document.addEventListener("visibilitychange", onResume);
+
+    const channel = supabase
+      .channel(`video-call-sessions-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "video_call_sessions" }, (event: any) => {
+        const call = event.new as PersistedCallSession | undefined;
+        if (!call) return;
+        if (call.recipient_user_id === user.id && call.status === "ringing") presentPersistedIncomingCall(call);
+        if (call.id === callIdRef.current && ["rejected", "missed", "ended", "failed"].includes(call.status)) {
+          if (stateRef.current === "calling" && call.status === "missed") toast({ title: t("chat.video_no_answer") });
+          resetToIdle();
+        }
+      })
+      .subscribe();
+
+    return () => {
+      active = false;
+      document.removeEventListener("visibilitychange", onResume);
+      supabase.removeChannel(channel);
+    };
+  }, [presentPersistedIncomingCall, resetToIdle, t, user?.id]);
 
   // 1) App was opened/reloaded by the notification (URL carries the call).
   useEffect(() => {
@@ -950,8 +995,6 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     const convId = params.get("conv");
     const callId = params.get("call");
     if (!convId || !callId) return;
-
-    const callerName = params.get("callname") || "Usuário";
 
     // Clean the URL so a refresh doesn't re-ring an old call.
     try {
@@ -963,7 +1006,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       /* noop */
     }
 
-    joinCallFromPush(convId, callId, decodeURIComponent(callerName));
+    void joinCallFromPush(convId, callId);
   }, [joinCallFromPush, user?.id]);
 
   // 2) App was already open: the service worker hands the call over.
@@ -978,9 +1021,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         const target = new URL(msg.url, window.location.origin);
         const convId = target.searchParams.get("conv");
         const callId = msg.callId || target.searchParams.get("call");
-        const callerName = target.searchParams.get("callname") || "Usuário";
         if (convId && callId) {
-          joinCallFromPush(convId, callId, decodeURIComponent(callerName));
+          void joinCallFromPush(convId, callId);
         }
       } catch {
         /* noop */
@@ -1010,9 +1052,20 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       return;
     }
 
-    const callId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const { data: sessionResult, error: sessionError } = await supabase.functions.invoke("video-call-session", {
+      body: { action: "start", conversation_id: conversationId, caller_name: callerName },
+    });
+    const call = sessionResult?.call as PersistedCallSession | undefined;
+    if (sessionError || !call) {
+      stopStream(stream);
+      toast({ title: "Não foi possível notificar o destinatário", variant: "destructive" });
+      void insertSystemMessage(conversationId, "Videochamada não iniciada — falha ao criar o convite");
+      return;
+    }
+    const callId = call.id;
 
     localStreamRef.current = stream;
+    persistedCallRef.current = call;
     callIdRef.current = callId;
     activeConvIdRef.current = conversationId;
     setActiveConvId(conversationId);
@@ -1038,34 +1091,9 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       return;
     }
 
-    void (async () => {
-      try {
-        const pushBody = {
-          conversation_id: conversationId,
-          title: "Chamada de vídeo recebida",
-          body: `${callerName} está te chamando…`,
-          url: `/dashboard?tab=messages&conv=${conversationId}&call=${callId}&callname=${encodeURIComponent(callerName)}`,
-          kind: "video-call",
-          tag: `video-call-${conversationId}-${callId}`,
-          category: "messages",
-          call_id: callId,
-        };
-
-        // A duplicate uses the same notification tag and call id, so devices
-        // collapse it into one visible alert. Retrying protects the call from a
-        // transient function/network failure without ringing twice.
-        for (let attempt = 1; attempt <= 2; attempt += 1) {
-          const { data, error } = await supabase.functions.invoke("send-push-notification", {
-            body: pushBody,
-          });
-          if (!error && data?.sent > 0) return;
-          console.warn(`[VideoCall] Push attempt ${attempt} did not deliver:`, error || data);
-          if (attempt === 1) await new Promise((resolve) => window.setTimeout(resolve, 900));
-        }
-      } catch (error) {
-        console.error("[VideoCall] Push for video failed:", error);
-      }
-    })();
+    if (sessionResult?.delivery?.sent === 0) {
+      toast({ title: "Destinatário sem push disponível; tentando pelo app aberto" });
+    }
 
     clearCallTimeout();
     timeoutRef.current = window.setTimeout(() => {
@@ -1084,6 +1112,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     safeAttach,
     sendSignal,
     setStateSync,
+    stopStream,
     t,
     user,
   ]);
@@ -1106,6 +1135,12 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     setIsRinging(false);
     setStateSync("connecting");
     endingRef.current = false;
+    const persisted = await updatePersistedCall("accepted");
+    if (!persisted) {
+      toast({ title: "Não foi possível confirmar a chamada", variant: "destructive" });
+      resetToIdle();
+      return;
+    }
 
     console.log("[VideoCall][Receiver] handleAcceptCall — acquiring media...");
     const stream = await getMedia();
@@ -1190,6 +1225,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     sendSignal,
     setStateSync,
     startConnectionTimeout,
+    updatePersistedCall,
     user,
   ]);
 
@@ -1198,12 +1234,13 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     const callId = callIdRef.current;
 
     if (convId && callId) {
+      void updatePersistedCall("rejected");
       void sendSignal(convId, { type: "call-reject", callId }, false);
       void insertSystemMessage(convId, "Videochamada recusada");
     }
 
     resetToIdle();
-  }, [insertSystemMessage, resetToIdle, sendSignal]);
+  }, [insertSystemMessage, resetToIdle, sendSignal, updatePersistedCall]);
 
   const endCall = useCallback(() => {
     endCallInternal(true);
