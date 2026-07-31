@@ -121,6 +121,13 @@ const Account = () => {
     test_push: "Send test",
     test_sent: "Test notification sent.",
     test_error: "Could not send the test right now.",
+    sec_account: "Account",
+    sec_billing: "Subscription & billing",
+    sec_notifications: "Notifications",
+    sec_professional: "Professional profile",
+    sec_privacy: "Privacy & data",
+    sec_help: "Help",
+
   };
 
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
