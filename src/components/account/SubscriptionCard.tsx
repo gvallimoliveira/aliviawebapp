@@ -128,10 +128,12 @@ const SubscriptionCard = () => {
                   ? { ...s, cancel_at_period_end: false }
                   : {
                       ...s,
-                      label: "Profissional PRO — Anual (cortesia VIP)",
+                      label: "Profissional PRO — Anual",
                       interval: "year",
+                      amount: 89900,
                       can_switch_to_annual: false,
                     },
+
           ),
         );
         toast({
