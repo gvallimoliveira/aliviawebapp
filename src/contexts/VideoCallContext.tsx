@@ -375,36 +375,17 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       // Silent push to clear the incoming-call notification on the other side.
       void (async () => {
         try {
-          const { data: conversation } = await supabase
-            .from("conversations")
-            .select("patient_user_id, professional_id")
-            .eq("id", convId)
-            .single();
-          if (!conversation || !user) return;
-          let recipientUserId: string | null = null;
-          if (conversation.patient_user_id === user.id) {
-            const { data: professional } = await supabase
-              .from("professionals")
-              .select("user_id")
-              .eq("id", conversation.professional_id)
-              .single();
-            recipientUserId = professional?.user_id || null;
-          } else {
-            recipientUserId = conversation.patient_user_id;
-          }
-          if (recipientUserId) {
-            await supabase.functions.invoke("send-push-notification", {
-              body: {
-                user_id: recipientUserId,
-                title: "Chamada encerrada",
-                body: "",
-                url: `/dashboard?tab=messages&conv=${convId}`,
-                kind: "video-call-cancel",
-                tag: `video-call-${convId}`,
-                category: "messages",
-              },
-            });
-          }
+          await supabase.functions.invoke("send-push-notification", {
+            body: {
+              conversation_id: convId,
+              title: "Chamada encerrada",
+              body: "",
+              url: `/dashboard?tab=messages&conv=${convId}`,
+              kind: "video-call-cancel",
+              tag: `video-call-${convId}-${callId}`,
+              category: "messages",
+            },
+          });
         } catch {}
       })();
     }
@@ -1025,45 +1006,30 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     void (async () => {
       try {
-        const { data: conversation } = await supabase
-          .from("conversations")
-          .select("patient_user_id, professional_id")
-          .eq("id", conversationId)
-          .single();
+        const pushBody = {
+          conversation_id: conversationId,
+          title: "Chamada de vídeo recebida",
+          body: `${callerName} está te chamando…`,
+          url: `/dashboard?tab=messages&conv=${conversationId}&call=${callId}&callname=${encodeURIComponent(callerName)}`,
+          kind: "video-call",
+          tag: `video-call-${conversationId}-${callId}`,
+          category: "messages",
+          call_id: callId,
+        };
 
-        if (!conversation) {
-          return;
-        }
-
-        let recipientUserId: string | null = null;
-        if (conversation.patient_user_id === user.id) {
-          const { data: professional } = await supabase
-            .from("professionals")
-            .select("user_id")
-            .eq("id", conversation.professional_id)
-            .single();
-
-          recipientUserId = professional?.user_id || null;
-        } else {
-          recipientUserId = conversation.patient_user_id;
-        }
-
-        if (recipientUserId) {
-          await supabase.functions.invoke("send-push-notification", {
-            body: {
-              user_id: recipientUserId,
-              title: "📹 Chamada recebida",
-              body: `${callerName} está te chamando…`,
-              url: `/dashboard?tab=messages&conv=${conversationId}&call=${callId}&callname=${encodeURIComponent(callerName)}`,
-              kind: "video-call",
-              tag: `video-call-${conversationId}`,
-              category: "messages",
-              call_id: callId,
-            },
+        // A duplicate uses the same notification tag and call id, so devices
+        // collapse it into one visible alert. Retrying protects the call from a
+        // transient function/network failure without ringing twice.
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+          const { data, error } = await supabase.functions.invoke("send-push-notification", {
+            body: pushBody,
           });
+          if (!error && data?.sent > 0) return;
+          console.warn(`[VideoCall] Push attempt ${attempt} did not deliver:`, error || data);
+          if (attempt === 1) await new Promise((resolve) => window.setTimeout(resolve, 900));
         }
       } catch (error) {
-        console.warn("Push for video failed:", error);
+        console.error("[VideoCall] Push for video failed:", error);
       }
     })();
 
