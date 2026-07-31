@@ -545,7 +545,7 @@ const ClinicAssessment = () => {
       if (id) {
         await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "completed" });
         await logClinicAction("assessment_completed", id);
-        await notifyClinicAssessment(id);
+        // Push is sent server-side by the assessments trigger.
       }
       // Save/update patient: if linked via personalized token, update existing record
       try {
@@ -580,7 +580,7 @@ const ClinicAssessment = () => {
       if (id) {
         await updateAssessment(id, { status: "completed" });
         await logClinicAction("assessment_completed_no_ai", id, { error: err?.message || String(err) });
-        await notifyClinicAssessment(id);
+        // Push is sent server-side by the assessments trigger.
       }
       // Still save patient record so it appears for the clinic
       try {
