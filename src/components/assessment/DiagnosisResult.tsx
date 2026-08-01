@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Timer } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Timer, FileText, Download, Share2, Loader2, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 import EmergencyBanner from "@/components/EmergencyBanner";
+
 
 
 interface Diagnosis {
