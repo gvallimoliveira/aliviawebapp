@@ -707,8 +707,11 @@ const Dashboard = () => {
 
       <AssessmentHistory
         assessments={conditionAssessments}
+        allAssessments={assessments}
+        conditionLabels={conditionLabelById}
         onDeleted={(ids) => setAssessments((prev) => prev.filter((a) => !ids.includes(a.id)))}
       />
+
     </>
   );
 
