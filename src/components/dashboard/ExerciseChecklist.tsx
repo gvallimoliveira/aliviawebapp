@@ -201,10 +201,23 @@ const ExerciseChecklist = ({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+      <h2 className="text-xl font-semibold text-foreground flex items-center gap-2 flex-wrap">
         <Dumbbell className="h-5 w-5 text-muted-foreground" />
         {t("exercise_checklist.title") || "Exercícios do Dia"}
+        {filterByCondition && conditionLabel && (
+          <Badge variant="outline" className="text-[10px] font-normal max-w-[200px] truncate">
+            {conditionLabel}
+          </Badge>
+        )}
       </h2>
+      {hiddenCount > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {hiddenCount === 1
+            ? t("exercise_checklist.hidden_one") || "1 programa de outra condição está oculto."
+            : (t("exercise_checklist.hidden_many") || "{n} programas de outras condições estão ocultos.").replace("{n}", String(hiddenCount))}
+        </p>
+      )}
+
 
       {/* Progress Card */}
       <Card className="border-border/60">
