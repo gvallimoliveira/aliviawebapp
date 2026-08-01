@@ -1429,5 +1429,9 @@
   "dashboard.continue_assessment": "Continuar avaliação",
   "assessment.prefilled.badge": "Da avaliação anterior",
   "assessment.prefilled.banner": "Alguns campos foram pré-preenchidos com base na avaliação anterior. Revise e edite se algo mudou.",
-  "assessment.prefilled.lastPainScore": "EVA da avaliação anterior: {{value}}/10 (apenas referência)"
+  "assessment.prefilled.lastPainScore": "EVA da avaliação anterior: {{value}}/10 (apenas referência)",
+  "diagnosis.report_title": "Laudo da avaliação",
+  "diagnosis.download_report": "Baixar laudo em PDF",
+  "diagnosis.report_hint_full": "Você já pode baixar ou enviar o laudo com a hipótese clínica. Se gerar o plano de tratamento, um novo laudo completo (com exercícios e fases) ficará disponível na tela seguinte.",
+  "diagnosis.report_hint": "Baixe ou envie o laudo com a hipótese clínica."
 }

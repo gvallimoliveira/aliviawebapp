@@ -1429,5 +1429,9 @@
   "dashboard.continue_assessment": "Continue assessment",
   "assessment.prefilled.badge": "From previous assessment",
   "assessment.prefilled.banner": "Some fields were pre-filled from your previous assessment. Review and edit anything that changed.",
-  "assessment.prefilled.lastPainScore": "Previous VAS: {{value}}/10 (reference only)"
+  "assessment.prefilled.lastPainScore": "Previous VAS: {{value}}/10 (reference only)",
+  "diagnosis.report_title": "Assessment report",
+  "diagnosis.download_report": "Download PDF report",
+  "diagnosis.report_hint_full": "You can already download or send the report with the clinical hypothesis. If you generate the treatment plan, a new complete report (with exercises and phases) will be available on the next screen.",
+  "diagnosis.report_hint": "Download or send the report with the clinical hypothesis."
 }
