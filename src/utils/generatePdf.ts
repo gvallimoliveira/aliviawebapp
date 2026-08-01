@@ -569,7 +569,7 @@ function renderRedFlagsAuditTable(
       doc,
       isYes ? yesLabel : noLabel,
       answerColX,
-      y + 2,
+      y + 4.7,
       isYes ? COLORS.red : COLORS.green,
       COLORS.white,
     );
