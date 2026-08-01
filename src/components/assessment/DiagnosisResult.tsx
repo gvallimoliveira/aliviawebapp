@@ -132,6 +132,39 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         </CardContent>
       </Card>
 
+      {/* Continuity: hypothesis refined/changed vs. the basic assessment */}
+      {mode === "premium" && diagnosis.hypothesisChange?.reason && (
+        <Card className="rounded-xl border-primary/30 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" />
+              {language === "en"
+                ? "Your hypothesis was refined"
+                : language === "es"
+                ? "Tu hipótesis fue refinada"
+                : "Sua hipótese foi refinada"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {diagnosis.hypothesisChange.previousHypothesis && (
+              <p className="text-sm text-foreground">
+                <span className="text-muted-foreground">
+                  {language === "en" ? "Initial assessment" : language === "es" ? "Evaluación inicial" : "Avaliação inicial"}:
+                </span>{" "}
+                {diagnosis.hypothesisChange.previousHypothesis}
+                {" → "}
+                <span className="font-medium">
+                  {diagnosis.hypothesisChange.currentHypothesis || diagnosis.hypothesis}
+                </span>
+              </p>
+            )}
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {diagnosis.hypothesisChange.reason}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Premium-only sections (shown normally for premium, blurred for basic) */}
       {mode === "premium" && diagnosis.explanation && (
         <Card className="rounded-xl">
