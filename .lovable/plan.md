@@ -1,32 +1,63 @@
-## 1. Red flags respondidas uma única vez
+## Objetivo
 
-Hoje o handoff básico → premium (`DiagnosisResult.tsx` → `alivia-basic-upgrade-data` → `Assessment.tsx`) carrega apenas anamnese, regiões, dor, nome e e-mail. As respostas de red flag do fluxo básico ficam só no estado React da avaliação básica, então o premium abre a triagem de novo (`step === "payment_check" && premiumPreScreen === "screening"`).
+Hoje o painel pessoal trata tudo como um único quadro: `EvolutionSummary`, `PainDiary`, `AssessmentTimeline` e `AssessmentHistory` misturam lombar, ombro e cotovelo na mesma curva de dor. Vamos introduzir o conceito de **Condição** (caso clínico) e dar a cada uma seu próprio acompanhamento: nota de dor, gráfico, histórico de avaliações e HEP associado.
 
-Mudanças:
-- Incluir `redFlagPayload` (o payload probatório completo de `buildRedFlagPayload`, com respostas, timestamp e outcome) no pacote de upgrade salvo em `DiagnosisResult.tsx`, nos dois botões (pagamento único e plano mensal), e repassá-lo em `getBasicUpgradePayload()` para o caminho de boleto/pagamento assíncrono (`basic_upgrade_data` → `pending_upgrade_data`).
-- No `Assessment.tsx` em modo premium: ao restaurar os dados de upgrade (localStorage/sessionStorage ou banco), se existir um payload de red flag válido e recente (mesma janela de 30 min do upgrade) com `outcome === "passed"`, hidratar `redFlagAnswers`/`redFlagPayload` e ir direto para `premiumPreScreen = "passed"` — a etapa nem aparece.
-- Se o payload restaurado tiver red flag positiva, manter o comportamento de bloqueio/ressalva atual (não pular).
-- Para não perder rastreabilidade, o payload reaproveitado é gravado normalmente em `assessments.red_flags` no `createAssessment()` do premium, com uma marcação de origem (`carried_from_basic: true`) para o relatório/PDF.
-- Fallback seguro: sem payload (ex.: outro dispositivo, sessão nova), a triagem continua sendo exibida como hoje.
+## Como o agrupamento vai funcionar (automático)
 
-## 2. Coerência entre hipótese básica e premium
+Nova biblioteca `src/lib/painConditions.ts`:
 
-Hoje `generate-diagnosis` é chamado no premium sem qualquer referência à hipótese gerada na básica, então os dois textos podem divergir sem explicação.
+1. Cada região de dor é mapeada para um **cluster corporal**: `lombar`, `cervical`, `torácica`, `ombro D/E`, `cotovelo D/E`, `punho/mão D/E`, `quadril D/E`, `joelho D/E`, `tornozelo/pé D/E`, `coxa/panturrilha D/E`.
+2. A avaliação é atribuída ao cluster da região **principal** (primeira região / maior peso).
+3. Dentro do mesmo cluster, avaliações entram na **mesma condição** quando: mesma lateralidade **e** hipótese com similaridade textual suficiente **ou** distância ≤ 180 dias da última avaliação do grupo (reavaliação da mesma queixa). Fora disso, abre uma **nova condição** ("Lombar — episódio 2").
+4. Rótulo da condição = nome do cluster + hipótese curta (ex.: "Lombar — componente facetário"). Avaliações sem região vão para **"Geral"**.
+5. HEP: `exercise_programs.assessment_id` já existe → o programa herda a condição da avaliação de origem.
 
-Mudanças:
-- Levar também o diagnóstico da básica (`hypothesis`, `confidence`, `summary`) no pacote de upgrade e restaurá-lo no `Assessment.tsx`.
-- Enviar como `previousBasicDiagnosis` no corpo de `generate-diagnosis` (entra também na chave de cache, portanto sem colisão com respostas antigas).
-- No prompt da função: quando houver hipótese prévia, instruir a IA a **manter a linha diagnóstica iniciada** se os novos dados (questionários + testes funcionais) não a contradisserem — refinando/detalhando em vez de renomear; e, se os novos dados realmente exigirem mudança, mudar e preencher um novo campo `hypothesisChange` no JSON com: hipótese anterior, hipótese atual e a justificativa objetiva (quais respostas/testes do premium motivaram a revisão).
-- No `DiagnosisResult.tsx` (modo premium), exibir um bloco discreto de continuidade quando `hypothesisChange` existir: "Sua hipótese foi refinada" + antes → depois + motivo, em pt/en/es.
+Nada disso exige que o usuário escolha algo. Regra pura e determinística, testada com casos sintéticos.
 
-## 3. Botão "Doloroso / Desconfortável" mal dimensionado
+## Estrutura do painel pessoal (nova)
 
-Em `FunctionalTests.tsx` os dois botões estão num `grid grid-cols-2 gap-3` com `h-auto py-3`, e o texto longo em português estoura a coluna no mobile (como na imagem).
+```text
+[ Minhas condições ]  ← cards horizontais (peek no mobile)
+  Lombar · dor 4/10 ↓ 30% · 3 avaliações · HEP ativo
+  Ombro D. · dor 7/10 ↑ · 1 avaliação
+  Cotovelo E. · alta/inativa (sem registro > 60 dias)
 
-Mudança: permitir quebra de linha e centralizar (`whitespace-normal`, `text-center`, `leading-snug`, ícone com `shrink-0`) e usar coluna única no mobile com duas colunas a partir de `sm`, mantendo os dois botões com a mesma altura.
+[ Condição em foco: Lombar ]        (troca por chip/tab)
+  → Evolução (gráfico só dessa condição)
+  → Diário de dor dessa condição
+  → Linha do tempo + histórico de avaliações dessa condição
+  → HEP e progressão associados
+```
 
-## Notas técnicas
+- Condição "em foco" persiste em `localStorage`; padrão = a com atividade mais recente.
+- Se o usuário tem só **uma** condição, o painel fica visualmente igual ao de hoje (sem seletor) — nenhuma fricção nova para o caso comum.
 
-- Arquivos: `src/components/assessment/DiagnosisResult.tsx`, `src/pages/Assessment.tsx`, `src/components/assessment/FunctionalTests.tsx`, `supabase/functions/generate-diagnosis/index.ts`, locales pt/en/es.
-- Nenhuma migração de banco necessária: `red_flags` e `diagnosis` já são `jsonb`.
-- Ajuste apenas do fluxo self-service (básico → premium); os fluxos profissional e clínica não mudam.
+## Diário de dor multi-condição
+
+- `pain_diary_entries` ganha `condition_key text` (nulo = "Geral", histórico antigo preservado como escolhido).
+- Unicidade passa a ser (user, data, condition_key), permitindo registrar lombar 4 e ombro 7 no mesmo dia.
+- UI: slider registra a **condição em foco**; abaixo, linha compacta "Também registrar: Ombro D. · Cotovelo E." com slider inline por condição.
+- Streak e progresso semanal contam o dia como registrado se **qualquer** condição foi registrada (não pune quem tem 3 quadros).
+- Gráficos por condição usam apenas as entradas daquela `condition_key`; a aba "Geral" mostra todas as curvas sobrepostas para visão global.
+
+## Detalhes técnicos
+
+- **Migração**: `ALTER TABLE public.pain_diary_entries ADD COLUMN condition_key text;` + índice `(user_id, condition_key, logged_at)` + ajuste da restrição de unicidade diária. Sem novas tabelas; grants/RLS existentes seguem valendo.
+- **Novos arquivos**: `src/lib/painConditions.ts` (clusters + agrupamento + rótulos), `src/components/dashboard/ConditionSelector.tsx`, `src/components/dashboard/ConditionOverviewCards.tsx`, `src/hooks/usePainConditions.ts`.
+- **Alterados**: `src/pages/Dashboard.tsx` (aba paciente passa a filtrar por condição), `PainDiary.tsx` (multi-condição), `EvolutionSummary.tsx`, `AssessmentTimeline.tsx`, `AssessmentHistory.tsx` (recebem lista já filtrada + agrupamento visual quando em "Geral"), `AdaptiveProgressionCard.tsx` (usa avaliação da condição em foco).
+- **i18n**: novas chaves em pt/en/es (`conditions.*`, `diary.also_log`, etc.).
+- **Testes**: unitários de `painConditions` cobrindo o cenário lombar + cotovelo + ombro no mesmo ano, condições em paralelo e reabertura de episódio.
+
+## Sugestões extras (posso incluir, diga sim/não)
+
+1. **Status da condição**: ativa / em manutenção / arquivada automaticamente após 90 dias sem registro, com botão "reabrir".
+2. **Comparativo entre condições**: um painel "qual quadro está melhorando" — útil para quem tem dois em paralelo.
+3. **Alerta clínico leve**: condição com dor subindo por 7 dias sugere reavaliação ou contato com profissional (usa o fluxo de reavaliação express já existente).
+4. **PDF/laudo por condição**: exportação do histórico de uma condição só, em vez de tudo junto.
+5. **Aderência ao HEP por condição**, aproveitando `exercise_completions`.
+
+Itens 1 e 2 são baratos e recomendo entrar já; 3–5 podem vir numa segunda etapa.
+
+## Fora de escopo
+
+Painel profissional/clínica e agrupamento retroativo do histórico antigo (fica em "Geral", conforme decidido).
