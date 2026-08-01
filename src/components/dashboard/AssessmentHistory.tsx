@@ -254,7 +254,13 @@ const AssessmentHistory = ({
                               day: "2-digit", month: "short", year: "numeric",
                             })}
                           </div>
+                          {(showAll || selectMode) && conditionLabels?.[a.id] && (
+                            <Badge variant="outline" className="text-[10px] px-2 py-0.5 max-w-[140px] truncate">
+                              {conditionLabels[a.id]}
+                            </Badge>
+                          )}
                         </div>
+
 
                         <Badge variant="outline" className={`text-[10px] px-2 py-0.5 gap-1 ${statusConfig.color}`}>
                           <StatusIcon className={`h-3 w-3 ${a.status === "in_progress" ? "animate-spin" : ""}`} />
