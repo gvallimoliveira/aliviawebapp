@@ -1443,5 +1443,7 @@
   "conditions.tracking_for": "Acompanhando",
   "diary.also_log": "Registrar também:",
   "exercise_checklist.hidden_one": "1 programa de outra condição está oculto.",
-  "exercise_checklist.hidden_many": "{n} programas de outras condições estão ocultos."
+  "exercise_checklist.hidden_many": "{n} programas de outras condições estão ocultos.",
+  "progression.cta_hint": "Gere uma análise personalizada com base no seu diário de dor e adesão (custa 0,25 crédito).",
+  "progression.generate": "Gerar sugestão"
 }

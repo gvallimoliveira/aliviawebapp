@@ -1443,5 +1443,7 @@
   "conditions.tracking_for": "Tracking",
   "diary.also_log": "Also log:",
   "exercise_checklist.hidden_one": "1 program from another condition is hidden.",
-  "exercise_checklist.hidden_many": "{n} programs from other conditions are hidden."
+  "exercise_checklist.hidden_many": "{n} programs from other conditions are hidden.",
+  "progression.cta_hint": "Generate a personalized analysis based on your pain diary and adherence (costs 0.25 credit).",
+  "progression.generate": "Generate suggestion"
 }
