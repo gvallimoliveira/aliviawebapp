@@ -3553,6 +3553,8 @@ export type Database = {
         Returns: string
       }
       credit_period_start: { Args: never; Returns: string }
+      delete_all_my_assessments: { Args: never; Returns: number }
+      delete_my_assessments: { Args: { _ids: string[] }; Returns: number }
       dismiss_assessment_red_flags: {
         Args: { _assessment_id: string; _reason: string }
         Returns: undefined
