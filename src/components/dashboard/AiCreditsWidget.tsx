@@ -127,6 +127,11 @@ const AiCreditsWidget = () => {
 
   const unlimited = !!status?.unlimited;
   const included = status?.included ?? 0;
+  const purchased = status?.purchased ?? 0;
+  const pooled = !!status?.pooled;
+  const perMember = status?.per_member ?? included;
+  const clinicMembers = status?.clinic_members ?? 0;
+  const personalUsed = status?.personal_used ?? total;
   // Shield: never under-report. If the aggregate and the itemized rows disagree,
   // show the larger value (the itemized list is the raw ledger).
   const rpcUsed = status?.used ?? 0;
@@ -136,11 +141,6 @@ const AiCreditsWidget = () => {
   const remaining = Math.max(included - used, 0);
   const pct = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : (status?.pct ?? 0);
 
-  const purchased = status?.purchased ?? 0;
-  const pooled = !!status?.pooled;
-  const perMember = status?.per_member ?? included;
-  const clinicMembers = status?.clinic_members ?? 0;
-  const personalUsed = status?.personal_used ?? total;
   const daysToReset = status?.period_end
     ? Math.max(0, Math.ceil((new Date(status.period_end).getTime() - Date.now()) / 86400000))
     : null;
