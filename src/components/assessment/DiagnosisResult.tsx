@@ -508,11 +508,18 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
             <ArrowLeft className="h-4 w-4" />
             {t("diagnosis.back")}
           </Button>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {user && (
+              <Button variant="secondary" onClick={() => navigate("/dashboard")} className="rounded-xl gap-2">
+                <LayoutDashboard className="h-4 w-4" />
+                {t("diagnosis.back_to_dashboard") || "Voltar ao meu painel"}
+              </Button>
+            )}
             <Button onClick={onNewAssessment} className="rounded-xl">
               {t("diagnosis.new_assessment")}
             </Button>
           </div>
+
         </div>
       )}
     </motion.div>
