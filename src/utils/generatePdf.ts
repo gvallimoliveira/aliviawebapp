@@ -2240,37 +2240,43 @@ function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number
 
 // ── Helper: Sub-section with body text ──
 function renderSubSection(doc: jsPDF, y: number, title: string, body: string): number {
+  const LH = 3.5;
   doc.setFontSize(8);
-  const lines = doc.splitTextToSize(body, SECTION_TEXT_W);
-  const minBodyLines = Math.min(lines.length, 4);
-  const neededForGroup = 5 + minBodyLines * 3.5 + 6;
-  y = checkPage(doc, y, neededForGroup);
+  const lines: string[] = doc.splitTextToSize(body, SECTION_TEXT_W);
 
   const drawTitle = (yy: number) => {
     doc.setFont("Inter", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...COLORS.foreground);
     doc.text(title, SECTION_X, yy);
-    return yy + 5;
-  };
-
-  y = drawTitle(y);
-
-  doc.setFont("Inter", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(...COLORS.muted);
-  // Never leave the title orphaned: if the body needs a new page, move the
-  // title along with it instead of printing it alone at the bottom.
-  const yAfterCheck = checkPage(doc, y, Math.min(lines.length, 4) * 3.5);
-  if (yAfterCheck !== y) {
-    y = drawTitle(yAfterCheck);
     doc.setFont("Inter", "normal");
     doc.setFontSize(8);
     doc.setTextColor(...COLORS.muted);
+    return yy + 5;
+  };
+
+  // Keep the title with at least 5 lines of body — otherwise start a new page.
+  const minGroup = 5 + Math.min(lines.length, 5) * LH + 4;
+  y = checkPage(doc, y, minGroup);
+  y = drawTitle(y);
+
+  // Paginate the body line by line so text never runs over the footer.
+  let i = 0;
+  while (i < lines.length) {
+    const fit = Math.max(1, Math.floor((PAGE_BOTTOM - y) / LH));
+    const chunk = lines.slice(i, i + fit);
+    doc.text(chunk, SECTION_X, y);
+    y += chunk.length * LH;
+    i += chunk.length;
+    if (i < lines.length) {
+      doc.addPage();
+      y = MARGIN;
+      doc.setFont("Inter", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.muted);
+    }
   }
-  doc.text(lines, SECTION_X, y);
-  y += lines.length * 3.5 + 6;
-  return y;
+  return y + 6;
 }
 
 // ── Evolution Report PDF ──
