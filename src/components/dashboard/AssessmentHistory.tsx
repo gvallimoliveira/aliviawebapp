@@ -55,24 +55,9 @@ const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) =
     if (selected.length === 0) return;
     setDeleting(true);
     try {
-      let count = 0;
       const { data, error } = await supabase.rpc("delete_my_assessments", { _ids: selected });
-      if (!error) {
-        count = typeof data === "number" ? data : 0;
-      } else {
-        console.warn("[AssessmentHistory] RPC delete falhou, usando exclusão direta:", error);
-      }
-
-      // Fallback: exclusão direta (RLS permite o próprio dono/paciente).
-      if (count === 0) {
-        const { data: rows, error: delError } = await supabase
-          .from("assessments")
-          .delete()
-          .in("id", selected)
-          .select("id");
-        if (delError) throw delError;
-        count = rows?.length || 0;
-      }
+      if (error) throw error;
+      const count = typeof data === "number" ? data : 0;
 
       if (count === 0) {
         toast.error("Nenhuma avaliação foi excluída", {
