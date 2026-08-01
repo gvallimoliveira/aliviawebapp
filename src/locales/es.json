@@ -1433,5 +1433,13 @@
   "diagnosis.report_title": "Informe de la evaluación",
   "diagnosis.download_report": "Descargar informe en PDF",
   "diagnosis.report_hint_full": "Ya puedes descargar o enviar el informe con la hipótesis clínica. Si generas el plan de tratamiento, un nuevo informe completo (con ejercicios y fases) estará disponible en la pantalla siguiente.",
-  "diagnosis.report_hint": "Descarga o envía el informe con la hipótesis clínica."
+  "diagnosis.report_hint": "Descarga o envía el informe con la hipótesis clínica.",
+  "conditions.title": "Mis condiciones",
+  "conditions.subtitle": "Cada región/diagnóstico tiene su propio seguimiento de dolor, historial y ejercicios.",
+  "conditions.assessments_short": "eval.",
+  "conditions.status_active": "Activa",
+  "conditions.status_inactive": "Inactiva",
+  "conditions.last_update": "Última actualización",
+  "conditions.tracking_for": "Siguiendo",
+  "diary.also_log": "Registrar también:"
 }
