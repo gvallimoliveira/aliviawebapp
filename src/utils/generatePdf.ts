@@ -1303,31 +1303,50 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
     y += 2;
   }
 
-  // Render generic test results (non-questionnaire)
-  if (genericItems.length > 0) {
+  // Render generic test results (non-questionnaire).
+  // Functional tests are stored as { testId, painful } — resolve name/result first
+  // and only draw the section when there is something to show (avoids blank block).
+  const painfulLabel = isPt
+    ? "Doloroso / desconfortável"
+    : lang === "es" ? "Doloroso / incómodo" : "Painful / uncomfortable";
+  const okLabel = isPt
+    ? "Sem desconforto"
+    : lang === "es" ? "Sin molestias" : "No discomfort";
+
+  const genericRows = genericItems
+    .map((test: any) => {
+      const name = test.name || test.testName
+        || (test.testId ? resolveFunctionalTestName(test.testId, isPt, lang) : "")
+        || (typeof test.id === "string" ? resolveFunctionalTestName(test.id, isPt, lang) : "");
+      let result = test.result ?? test.score ?? test.value ?? "";
+      if (result === "" && typeof test.painful === "boolean") {
+        result = test.painful ? painfulLabel : okLabel;
+      }
+      return { name, result: String(result), painful: test.painful === true };
+    })
+    .filter((r) => r.name);
+
+  if (genericRows.length > 0) {
     y = checkPage(doc, y, 16);
     y = renderSectionTitle(doc, y, isPt ? "Resultados dos Testes" : "Test Results", COLORS.primary);
 
-    for (const test of genericItems) {
+    for (const row of genericRows) {
       y = checkPage(doc, y, 10);
-      const name = test.name || test.testName || test.id || "";
-      const result = test.result || test.score || test.value || "";
-      if (name) {
-        doc.setFont("Inter", "bold");
-        doc.setFontSize(8);
-        doc.setTextColor(...COLORS.foreground);
-        doc.text(`${name}: `, SECTION_X, y);
-        const lw = doc.getTextWidth(`${name}: `);
-        doc.setFont("Inter", "normal");
-        doc.setTextColor(...COLORS.muted);
-        const availW = SECTION_TEXT_W - lw;
-        const resultLines = doc.splitTextToSize(String(result), availW > 30 ? availW : SECTION_TEXT_W);
-        doc.text(resultLines, SECTION_X + lw, y);
-        y += resultLines.length * 3.5 + 1.5;
-      }
+      doc.setFont("Inter", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.foreground);
+      doc.text(`${row.name}: `, SECTION_X, y);
+      const lw = doc.getTextWidth(`${row.name}: `);
+      doc.setFont("Inter", "normal");
+      doc.setTextColor(...(row.painful ? COLORS.red : COLORS.muted));
+      const availW = SECTION_TEXT_W - lw;
+      const resultLines = doc.splitTextToSize(row.result, availW > 30 ? availW : SECTION_TEXT_W);
+      doc.text(resultLines, SECTION_X + lw, y);
+      y += resultLines.length * 3.5 + 1.5;
     }
     y += 4;
   }
+
 
   return y;
 }
