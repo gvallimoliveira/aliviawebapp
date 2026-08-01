@@ -256,7 +256,7 @@ const ExerciseChecklist = ({
       </Card>
 
       {/* Exercise Items */}
-      {programs.map((prog) => (
+      {visiblePrograms.map((prog) => (
         <Card key={prog.programId}>
           <CardHeader className="pb-2 pt-4 px-4">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
