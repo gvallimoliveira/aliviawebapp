@@ -2184,6 +2184,7 @@ export type Database = {
       pain_diary_entries: {
         Row: {
           assessment_id: string | null
+          condition_key: string | null
           created_at: string
           external_import_data: Json | null
           id: string
@@ -2195,6 +2196,7 @@ export type Database = {
         }
         Insert: {
           assessment_id?: string | null
+          condition_key?: string | null
           created_at?: string
           external_import_data?: Json | null
           id?: string
@@ -2206,6 +2208,7 @@ export type Database = {
         }
         Update: {
           assessment_id?: string | null
+          condition_key?: string | null
           created_at?: string
           external_import_data?: Json | null
           id?: string
